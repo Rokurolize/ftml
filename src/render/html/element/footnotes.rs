@@ -68,7 +68,7 @@ pub fn render_footnote(ctx: &mut HtmlContext) {
 
                     // Actual tooltip contents
                     ctx.html()
-                        .span()
+                        .div()
                         .attr(attr!("class" => "wj-footnote-ref-contents"))
                         .contents(contents);
                 });
@@ -136,7 +136,7 @@ pub fn render_footnote_block(ctx: &mut HtmlContext, title: Option<&str>) {
 
                             // Footnote contents
                             ctx.html()
-                                .span()
+                                .div()
                                 .attr(attr!("class" => "wj-footnote-list-item-contents"))
                                 .contents(contents);
                         });

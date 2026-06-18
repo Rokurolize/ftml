@@ -185,3 +185,117 @@ fn image_alignment() {
     test!("F>IMAGE", Alignment::Right, true);
     test!("F<IMAGE", Alignment::Left, true);
 }
+
+#[test]
+fn alignment_helpers_cover_all_variants() {
+    let cases = [
+        (
+            Alignment::Left,
+            "<",
+            "left",
+            "text-align: left;",
+            "wj-align-left",
+        ),
+        (
+            Alignment::Right,
+            ">",
+            "right",
+            "text-align: right;",
+            "wj-align-right",
+        ),
+        (
+            Alignment::Center,
+            "=",
+            "center",
+            "text-align: center;",
+            "wj-align-center",
+        ),
+        (
+            Alignment::Justify,
+            "==",
+            "justify",
+            "text-align: justify;",
+            "wj-align-justify",
+        ),
+    ];
+
+    for (alignment, token, name, wd_style, wj_class) in cases {
+        assert_eq!(alignment.name(), name);
+        assert_eq!(alignment.wd_html_style(), wd_style);
+        assert_eq!(alignment.wj_html_class(), wj_class);
+        assert_eq!(Alignment::try_from(token), Ok(alignment));
+    }
+
+    assert_eq!(Alignment::try_from(""), Err(()));
+    assert_eq!(Alignment::try_from("f<"), Err(()));
+}
+
+#[test]
+fn float_alignment_helpers_cover_classes() {
+    let cases = [
+        (
+            FloatAlignment::try_from("<").unwrap(),
+            "alignleft",
+            "wj-align-left",
+        ),
+        (
+            FloatAlignment::try_from(">").unwrap(),
+            "alignright",
+            "wj-align-right",
+        ),
+        (
+            FloatAlignment::try_from("=").unwrap(),
+            "aligncenter",
+            "wj-align-center",
+        ),
+        (
+            FloatAlignment::try_from("f<").unwrap(),
+            "floatleft",
+            "wj-float-left",
+        ),
+        (
+            FloatAlignment::try_from("f>").unwrap(),
+            "floatright",
+            "wj-float-right",
+        ),
+        (
+            FloatAlignment {
+                align: Alignment::Center,
+                float: true,
+            },
+            "floatcenter",
+            "wj-float-center",
+        ),
+    ];
+
+    for (alignment, wd_class, wj_class) in cases {
+        assert_eq!(alignment.wd_html_class(), wd_class);
+        assert_eq!(alignment.wj_html_class(), wj_class);
+    }
+
+    let justify_float = FloatAlignment {
+        align: Alignment::Justify,
+        float: true,
+    };
+    assert_eq!(justify_float.wj_html_class(), "wj-float-justify");
+    assert_eq!(
+        FloatAlignment::try_from("F<"),
+        Ok(FloatAlignment {
+            align: Alignment::Left,
+            float: true,
+        }),
+    );
+    assert_eq!(FloatAlignment::try_from("f="), Err(()));
+    assert_eq!(FloatAlignment::try_from("=="), Err(()));
+}
+
+#[test]
+#[should_panic(expected = "Attempted to return HTML class for Wikidot justify alignment")]
+fn float_alignment_rejects_wikidot_justify_class() {
+    let alignment = FloatAlignment {
+        align: Alignment::Justify,
+        float: false,
+    };
+
+    let _class = alignment.wd_html_class();
+}

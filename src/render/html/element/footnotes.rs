@@ -54,7 +54,7 @@ pub fn render_footnote(ctx: &mut HtmlContext) {
             // tooltip and link to work. A screen reader can still navigate
             // through to the link and read the footnote directly.
             ctx.html()
-                .span()
+                .div()
                 .attr(attr!(
                     "class" => "wj-footnote-ref-tooltip",
                     "aria-hidden" => "true",

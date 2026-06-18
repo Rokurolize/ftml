@@ -71,3 +71,37 @@ pub fn render_embed(ctx: &mut HtmlContext, embed: &Embed) {
             }
         });
 }
+
+#[test]
+fn embed_renders_script_variants() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{Element, SyntaxTree};
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+    let tree = SyntaxTree {
+        elements: vec![
+            Element::Embed(Embed::GithubGist {
+                username: cow!("octocat"),
+                hash: cow!("abc123"),
+            }),
+            Element::Embed(Embed::GitlabSnippet {
+                snippet_id: cow!("98765"),
+            }),
+        ],
+        ..SyntaxTree::default()
+    };
+
+    let output = HtmlRender.render(&tree, &page_info, &settings);
+
+    let expected = concat!(
+        r#"<div class="wj-embed"><script src="https://gist.github.com/octocat/abc123.js"></script></div>"#,
+        r#"<div class="wj-embed"><script src="https://gitlab.com/-/snippets/98765.js"></script></div>"#,
+    );
+
+    assert_eq!(output.body, expected);
+}

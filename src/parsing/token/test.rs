@@ -19,6 +19,32 @@
  */
 
 use super::*;
+use crate::utf16::Utf16IndexMap;
+
+#[test]
+fn extracted_token_to_utf16_indices_converts_span() {
+    let text = "a🦀bc";
+    let map = Utf16IndexMap::new(text);
+    let token = ExtractedToken {
+        token: Token::Identifier,
+        slice: "🦀b",
+        span: 1..6,
+    };
+
+    let converted = token.to_utf16_indices(&map);
+
+    assert_eq!(converted.token, Token::Identifier);
+    assert_eq!(converted.slice, "🦀b");
+    assert_eq!(converted.span, 1..4);
+    assert_eq!(token.span, 1..6);
+}
+
+#[test]
+fn token_names_match_variant_names() {
+    assert_eq!(Token::LeftBracketStar.name(), "LeftBracketStar");
+    assert_eq!(Token::ParagraphBreak.name(), "ParagraphBreak");
+    assert_eq!(Token::InputEnd.name(), "InputEnd");
+}
 
 #[test]
 fn tokens() {

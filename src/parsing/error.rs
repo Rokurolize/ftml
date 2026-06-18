@@ -234,3 +234,42 @@ where
     tuple.serialize_element(&span.end)?;
     tuple.end()
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::utf16::Utf16IndexMap;
+
+    #[test]
+    fn parse_error_kind_names_match_variant_names() {
+        assert_eq!(
+            ParseErrorKind::RecursionDepthExceeded.name(),
+            "RecursionDepthExceeded",
+        );
+        assert_eq!(
+            ParseErrorKind::BlockMalformedArguments.name(),
+            "BlockMalformedArguments",
+        );
+        assert_eq!(ParseErrorKind::InvalidUrl.name(), "InvalidUrl");
+    }
+
+    #[test]
+    fn parse_error_to_utf16_indices_converts_span() {
+        let text = "a🦀bc";
+        let map = Utf16IndexMap::new(text);
+        let error = ParseError {
+            token: Token::Identifier,
+            rule: Cow::Borrowed("rule-text"),
+            span: 1..6,
+            kind: ParseErrorKind::RuleFailed,
+        };
+
+        let converted = error.to_utf16_indices(&map);
+
+        assert_eq!(converted.token(), Token::Identifier);
+        assert_eq!(converted.rule(), "rule-text");
+        assert_eq!(converted.span(), 1..4);
+        assert_eq!(converted.kind(), ParseErrorKind::RuleFailed);
+        assert_eq!(error.span(), 1..6);
+    }
+}

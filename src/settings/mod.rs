@@ -195,3 +195,28 @@ impl WikitextMode {
         matches!(self, WikitextMode::PageNav)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn only_page_nav_is_nav_content() {
+        let cases = [
+            (WikitextMode::Page, false),
+            (WikitextMode::PageNav, true),
+            (WikitextMode::Draft, false),
+            (WikitextMode::ForumPost, false),
+            (WikitextMode::DirectMessage, false),
+            (WikitextMode::List, false),
+        ];
+
+        for (mode, expected) in cases {
+            assert_eq!(
+                mode.is_nav_content(),
+                expected,
+                "unexpected nav content result for {mode:?}",
+            );
+        }
+    }
+}

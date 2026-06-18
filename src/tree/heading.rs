@@ -210,6 +210,62 @@ fn heading() {
 }
 
 #[test]
+fn heading_level_helpers_cover_all_variants() {
+    let cases = [
+        (HeadingLevel::One, 1, "+", "+ ", "h1"),
+        (HeadingLevel::Two, 2, "++", "++ ", "h2"),
+        (HeadingLevel::Three, 3, "+++", "+++ ", "h3"),
+        (HeadingLevel::Four, 4, "++++", "++++ ", "h4"),
+        (HeadingLevel::Five, 5, "+++++", "+++++ ", "h5"),
+        (HeadingLevel::Six, 6, "++++++", "++++++ ", "h6"),
+    ];
+
+    for (level, value, prefix, prefix_with_space, tag) in cases {
+        assert_eq!(level.value(), value);
+        assert_eq!(level.prefix(), prefix);
+        assert_eq!(level.prefix_with_space(), prefix_with_space);
+        assert_eq!(level.html_tag(), tag);
+        assert_eq!(HeadingLevel::try_from(value as usize), Ok(level));
+        assert_eq!(HeadingLevel::try_from(value), Ok(level));
+        assert_eq!(HtmlTag::from(level), HtmlTag::Tag(tag));
+    }
+
+    assert_eq!(HeadingLevel::try_from(0_usize), Err(()));
+    assert_eq!(HeadingLevel::try_from(7_usize), Err(()));
+    assert_eq!(HeadingLevel::try_from(0_u8), Err(()));
+    assert_eq!(HeadingLevel::try_from(7_u8), Err(()));
+}
+
+#[test]
+fn heading_helpers_cover_invalid_and_no_toc_paths() {
+    use crate::next_index::Incrementer;
+
+    assert_eq!(Heading::try_from(""), Err(()));
+    assert_eq!(Heading::try_from("+x"), Err(()));
+    assert_eq!(Heading::try_from("+++++++"), Err(()));
+    assert_eq!(Heading::try_from("+++++++*"), Err(()));
+
+    let mut indexer = Incrementer::default();
+    let no_toc = Heading {
+        level: HeadingLevel::Two,
+        has_toc: false,
+    };
+    assert_eq!(no_toc.html_tag(&mut indexer), HtmlTag::Tag("h2"));
+
+    let with_toc = Heading {
+        level: HeadingLevel::Two,
+        has_toc: true,
+    };
+    assert_eq!(
+        with_toc.html_tag(&mut indexer),
+        HtmlTag::TagAndId {
+            tag: "h2",
+            id: str!("toc0"),
+        },
+    );
+}
+
+#[test]
 fn true_ids() {
     use crate::next_index::Incrementer;
 

@@ -269,3 +269,110 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
         Element::Partial(_) => panic!("Encountered partial element during parsing"),
     }
 }
+
+#[test]
+fn text_render_skips_non_textual_elements_and_expands_include_variables() {
+    use super::TextRender;
+    use crate::data::{PageInfo, PageRef};
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{
+        Alignment, AttributeMap, Container, ContainerType, ListType, Module, SyntaxTree,
+        VariableMap,
+    };
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+    let mut variables = VariableMap::new();
+    variables.insert(cow!("name"), cow!("included"));
+
+    let tree = SyntaxTree {
+        elements: vec![
+            Element::Text(cow!("start ")),
+            Element::Container(Container::new(
+                ContainerType::Hidden,
+                vec![Element::Text(cow!("hidden"))],
+                AttributeMap::new(),
+            )),
+            Element::Module(Module::Rate),
+            Element::Include {
+                paragraph_safe: true,
+                variables,
+                location: PageRef::page_only(cow!("component:text")),
+                elements: vec![Element::Variable(cow!("name"))],
+            },
+            Element::List {
+                ltype: ListType::Bullet,
+                attributes: AttributeMap::new(),
+                items: vec![
+                    ListItem::Elements {
+                        attributes: AttributeMap::new(),
+                        elements: vec![],
+                    },
+                    ListItem::Elements {
+                        attributes: AttributeMap::new(),
+                        elements: vec![Element::Text(cow!("list item"))],
+                    },
+                ],
+            },
+            Element::RadioButton {
+                name: cow!("choice"),
+                checked: true,
+                attributes: AttributeMap::new(),
+            },
+            Element::CheckBox {
+                checked: true,
+                attributes: AttributeMap::new(),
+            },
+            Element::TableOfContents {
+                align: Some(Alignment::Left),
+                attributes: AttributeMap::new(),
+            },
+            Element::Footnote,
+            Element::FootnoteBlock {
+                title: Some(cow!("Notes")),
+                hide: false,
+            },
+            Element::BibliographyCite {
+                label: cow!("ref"),
+                brackets: true,
+            },
+            Element::BibliographyBlock {
+                index: 0,
+                title: Some(cow!("References")),
+                hide: false,
+            },
+        ],
+        ..SyntaxTree::default()
+    };
+
+    let output = TextRender.render(&tree, &page_info, &settings);
+
+    assert_eq!(output, "start included\nlist item");
+}
+
+#[test]
+#[should_panic(expected = "Encountered partial element during parsing")]
+fn text_render_rejects_partial_elements() {
+    use super::TextRender;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{AttributeMap, PartialElement, SyntaxTree};
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+    let tree = SyntaxTree {
+        elements: vec![Element::Partial(PartialElement::ListItem(
+            ListItem::Elements {
+                attributes: AttributeMap::new(),
+                elements: vec![Element::Text(cow!("partial"))],
+            },
+        ))],
+        ..SyntaxTree::default()
+    };
+
+    TextRender.render(&tree, &page_info, &settings);
+}

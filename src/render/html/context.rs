@@ -369,3 +369,62 @@ impl NextIndex<TableOfContentsIndex> for HtmlContext<'_, '_, '_, '_> {
         self.next_table_of_contents_index()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use std::sync::LazyLock;
+
+    fn context<'a>(info: &'a PageInfo<'a>) -> HtmlContext<'a, 'static, 'static, 'static> {
+        static HANDLE: Handle = Handle;
+        static SETTINGS: LazyLock<WikitextSettings> = LazyLock::new(|| {
+            WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump)
+        });
+        static ELEMENTS: [Element<'static>; 0] = [];
+        static FOOTNOTES: [Vec<Element<'static>>; 0] = [];
+        static BIBLIOGRAPHIES: LazyLock<BibliographyList<'static>> =
+            LazyLock::new(BibliographyList::new);
+
+        HtmlContext::new(
+            info,
+            &HANDLE,
+            &SETTINGS,
+            &ELEMENTS,
+            &FOOTNOTES,
+            &BIBLIOGRAPHIES,
+            0,
+        )
+    }
+
+    #[test]
+    fn initial_metadata_includes_alt_title_in_description() {
+        let mut info = PageInfo::dummy();
+        info.alt_title = Some(cow!("Alternate"));
+
+        let output = HtmlOutput::from(context(&info));
+        let description = output
+            .meta
+            .iter()
+            .find(|meta| meta.name == "description")
+            .expect("description metadata should be present");
+
+        assert_eq!(description.value, "A page for the age - Alternate");
+    }
+
+    #[test]
+    fn html_context_add_include_records_backlink() {
+        let info = PageInfo::dummy();
+        let mut ctx = context(&info);
+        let page_ref = PageRef::page_only("component:box");
+
+        ctx.add_include(page_ref.clone());
+
+        let output = HtmlOutput::from(ctx);
+        assert_eq!(output.backlinks.included_pages, vec![page_ref]);
+        assert!(output.backlinks.internal_links.is_empty());
+        assert!(output.backlinks.external_links.is_empty());
+    }
+}

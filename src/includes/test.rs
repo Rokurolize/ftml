@@ -18,9 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use super::{DebugIncluder, PageRef, include};
+use super::{DebugIncluder, FetchedPage, IncludeRef, Includer, PageRef, include};
 use crate::layout::Layout;
 use crate::settings::{WikitextMode, WikitextSettings};
+use std::borrow::Cow;
 
 #[test]
 fn includes() {
@@ -390,4 +391,113 @@ fn includes() {
         "[[include component:multi-line | contents= \nSome content here \nMore stuff",
         vec![],
     );
+}
+
+#[derive(Debug)]
+struct PanicIncluder;
+
+impl<'t> Includer<'t> for PanicIncluder {
+    type Error = &'static str;
+
+    fn include_pages(
+        &mut self,
+        _includes: &[IncludeRef<'t>],
+    ) -> Result<Vec<FetchedPage<'t>>, Self::Error> {
+        panic!("includer should not be called when page syntax is disabled");
+    }
+
+    fn no_such_include(
+        &mut self,
+        _page_ref: &PageRef,
+    ) -> Result<Cow<'t, str>, Self::Error> {
+        panic!("includer should not be called when page syntax is disabled");
+    }
+}
+
+#[test]
+fn include_is_noop_when_page_syntax_is_disabled() {
+    let settings = WikitextSettings::from_mode(WikitextMode::ForumPost, Layout::Wikidot);
+    let input = "A [[include component:box name=Alice]] B";
+
+    let (output, pages) = include(
+        input,
+        &settings,
+        PanicIncluder,
+        || "invalid include response",
+    )
+    .expect("include should not fail when page syntax is disabled");
+
+    assert_eq!(output, input);
+    assert!(pages.is_empty());
+}
+
+#[derive(Debug)]
+struct EmptyResponseIncluder;
+
+impl<'t> Includer<'t> for EmptyResponseIncluder {
+    type Error = &'static str;
+
+    fn include_pages(
+        &mut self,
+        _includes: &[IncludeRef<'t>],
+    ) -> Result<Vec<FetchedPage<'t>>, Self::Error> {
+        Ok(Vec::new())
+    }
+
+    fn no_such_include(
+        &mut self,
+        _page_ref: &PageRef,
+    ) -> Result<Cow<'t, str>, Self::Error> {
+        panic!("missing page rendering is not reached for response count mismatches");
+    }
+}
+
+#[test]
+fn include_rejects_includer_result_count_mismatch() {
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let result = include(
+        "[[include page]]",
+        &settings,
+        EmptyResponseIncluder,
+        || "invalid include response",
+    );
+
+    assert_eq!(result.unwrap_err(), "invalid include response");
+}
+
+#[derive(Debug)]
+struct MismatchedPageIncluder;
+
+impl<'t> Includer<'t> for MismatchedPageIncluder {
+    type Error = &'static str;
+
+    fn include_pages(
+        &mut self,
+        _includes: &[IncludeRef<'t>],
+    ) -> Result<Vec<FetchedPage<'t>>, Self::Error> {
+        Ok(vec![FetchedPage {
+            page_ref: PageRef::page_only("other"),
+            content: Some(Cow::Borrowed("ignored")),
+        }])
+    }
+
+    fn no_such_include(
+        &mut self,
+        _page_ref: &PageRef,
+    ) -> Result<Cow<'t, str>, Self::Error> {
+        panic!("missing page rendering is not reached for page ref mismatches");
+    }
+}
+
+#[test]
+fn include_rejects_includer_page_ref_mismatch() {
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let result = include(
+        "[[include page]]",
+        &settings,
+        MismatchedPageIncluder,
+        || "invalid include response",
+    );
+
+    assert_eq!(result.unwrap_err(), "invalid include response");
 }

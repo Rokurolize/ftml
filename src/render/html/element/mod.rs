@@ -234,3 +234,28 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         Element::Partial(_) => panic!("Encountered partial element during rendering"),
     }
 }
+
+#[test]
+#[should_panic(expected = "Encountered partial element during rendering")]
+fn html_render_rejects_partial_elements() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{AttributeMap, ListItem, PartialElement, SyntaxTree};
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+    let tree = SyntaxTree {
+        elements: vec![Element::Partial(PartialElement::ListItem(
+            ListItem::Elements {
+                attributes: AttributeMap::new(),
+                elements: vec![Element::Text(cow!("partial"))],
+            },
+        ))],
+        ..SyntaxTree::default()
+    };
+
+    HtmlRender.render(&tree, &page_info, &settings);
+}

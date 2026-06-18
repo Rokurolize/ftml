@@ -55,3 +55,44 @@ pub fn render_variable(ctx: &mut HtmlContext, name: &str) {
     // Append the formatted string
     ctx.push_escaped(&value);
 }
+
+#[test]
+fn html_include_variables_are_scoped_and_escaped() {
+    use crate::data::{PageInfo, PageRef};
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::SyntaxTree;
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+    let mut variables = VariableMap::new();
+    variables.insert(cow!("name"), cow!("Alice & Bob"));
+
+    let tree = SyntaxTree {
+        elements: vec![
+            Element::Include {
+                paragraph_safe: true,
+                variables,
+                location: PageRef::page_only(cow!("component:html")),
+                elements: vec![
+                    Element::Text(cow!("inside ")),
+                    Element::Variable(cow!("name")),
+                    Element::Text(cow!(" / ")),
+                    Element::Variable(cow!("missing")),
+                ],
+            },
+            Element::Text(cow!(" after ")),
+            Element::Variable(cow!("name")),
+        ],
+        ..SyntaxTree::default()
+    };
+
+    let output = HtmlRender.render(&tree, &page_info, &settings);
+
+    assert_eq!(
+        output.body,
+        "inside Alice &amp; Bob / {$missing} after {$name}",
+    );
+}

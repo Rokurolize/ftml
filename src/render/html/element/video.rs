@@ -129,3 +129,35 @@ fn render_video_missing(ctx: &mut HtmlContext) {
         .attr(attr!("class" => "wj-error-block"))
         .contents(message);
 }
+
+#[test]
+fn video_renders_missing_when_local_paths_are_disabled() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{Element, SyntaxTree};
+
+    let page_info = PageInfo::dummy();
+    let mut settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+    settings.allow_local_paths = false;
+
+    let tree = SyntaxTree {
+        elements: vec![Element::Video {
+            source: FileSource::File1 {
+                file: cow!("local.mp4"),
+            },
+            alignment: None,
+            attributes: AttributeMap::new(),
+        }],
+        ..SyntaxTree::default()
+    };
+
+    let output = HtmlRender.render(&tree, &page_info, &settings);
+
+    assert_eq!(
+        output.body,
+        r#"<div class="wj-error-block">No videos in this context</div>"#
+    );
+}

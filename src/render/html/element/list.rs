@@ -48,7 +48,9 @@ pub fn render_list(
                         .contents(elements);
                 }
                 ListItem::SubList { element } => {
-                    render_element(ctx, element);
+                    ctx.html().li().inner(|ctx| {
+                        render_element(ctx, element);
+                    });
                 }
             }
         }

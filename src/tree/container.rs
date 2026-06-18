@@ -186,3 +186,84 @@ impl ContainerType {
         }
     }
 }
+
+#[test]
+fn container_helpers_preserve_attributes_and_elements() {
+    let mut attributes = AttributeMap::new();
+    assert!(attributes.insert("class", cow!("marker")));
+
+    let element = Element::Text(cow!("contents"));
+    let mut container =
+        Container::new(ContainerType::Span, vec![element.clone()], attributes);
+
+    assert_eq!(container.ctype(), ContainerType::Span);
+    assert_eq!(container.elements(), std::slice::from_ref(&element));
+    assert!(container.attributes().get().contains_key("class"));
+    assert!(container.attributes_mut().insert("id", cow!("sample")));
+
+    let owned = container.to_owned();
+    assert_eq!(owned.ctype(), ContainerType::Span);
+    assert_eq!(owned.elements(), std::slice::from_ref(&element));
+    assert!(owned.attributes().get().contains_key("id"));
+
+    let elements: Vec<Element<'_>> = container.into();
+    assert_eq!(elements, vec![element]);
+}
+
+#[test]
+fn container_type_html_tags_and_paragraph_safety() {
+    use crate::layout::Layout;
+    use crate::next_index::Incrementer;
+
+    let cases = [
+        (ContainerType::Bold, "strong", true),
+        (ContainerType::Italics, "em", true),
+        (ContainerType::Underline, "u", true),
+        (ContainerType::Superscript, "sup", true),
+        (ContainerType::Subscript, "sub", true),
+        (ContainerType::Strikethrough, "s", true),
+        (ContainerType::Monospace, "code", true),
+        (ContainerType::Span, "span", true),
+        (ContainerType::Div, "div", false),
+        (ContainerType::Mark, "mark", true),
+        (ContainerType::Blockquote, "blockquote", false),
+        (ContainerType::Insertion, "ins", true),
+        (ContainerType::Deletion, "del", true),
+        (ContainerType::Hidden, "span", true),
+        (ContainerType::Invisible, "span", true),
+        (ContainerType::Size, "span", true),
+        (ContainerType::Ruby, "ruby", true),
+        (ContainerType::RubyText, "rt", true),
+        (ContainerType::Paragraph, "p", false),
+        (ContainerType::Align(Alignment::Left), "div", false),
+        (
+            ContainerType::Header(Heading {
+                level: crate::tree::HeadingLevel::Two,
+                has_toc: false,
+            }),
+            "h2",
+            false,
+        ),
+    ];
+
+    for (ctype, expected_tag, expected_paragraph_safe) in cases {
+        let mut indexer = Incrementer::disabled();
+        assert_eq!(
+            ctype.html_tag(Layout::Wikijump, &mut indexer).tag(),
+            expected_tag
+        );
+        assert_eq!(ctype.paragraph_safe(), expected_paragraph_safe);
+    }
+
+    let mut indexer = Incrementer::default();
+    assert_eq!(
+        ContainerType::Align(Alignment::Right).html_tag(Layout::Wikidot, &mut indexer),
+        HtmlTag::with_style("div", "text-align: right;"),
+    );
+
+    let mut indexer = Incrementer::default();
+    assert_eq!(
+        ContainerType::Align(Alignment::Right).html_tag(Layout::Wikijump, &mut indexer),
+        HtmlTag::with_class("div", "wj-align-right"),
+    );
+}

@@ -25,7 +25,7 @@ mod loader;
 mod runner;
 
 use crate::parsing::ParseError;
-use crate::tree::SyntaxTree;
+use crate::tree::{Element, ListItem, PartialElement, RubyText, SyntaxTree};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::LazyLock;
@@ -251,4 +251,129 @@ fn ast() {
     let stats = tests.run(SKIP_TESTS, ONLY_TESTS);
     stats.print();
     stats.exit();
+}
+
+#[test]
+fn ast_elements_exercise_surface_helpers() {
+    let tests = TestUniverse::load(&TEST_DIRECTORY);
+    let mut element_count = 0;
+
+    for test in tests.tests.values() {
+        if let Some(tree) = &test.tree {
+            let _owned_tree = tree.to_owned();
+            element_count += exercise_syntax_tree_helpers(tree);
+        }
+    }
+
+    assert!(
+        element_count > 0,
+        "AST fixtures did not contain any elements"
+    );
+}
+
+#[test]
+fn partial_element_surface_helpers() {
+    let partial = Element::Partial(PartialElement::RubyText(RubyText::default()));
+
+    assert_eq!(partial.name(), "RubyText");
+    let _owned_partial = partial.to_owned();
+}
+
+#[test]
+#[should_panic(expected = "Should not check for paragraph safety of partials")]
+fn partial_element_paragraph_safe_panics() {
+    let partial = Element::Partial(PartialElement::RubyText(RubyText::default()));
+
+    partial.paragraph_safe();
+}
+
+fn exercise_syntax_tree_helpers(tree: &SyntaxTree<'_>) -> usize {
+    let mut count = 0;
+
+    count += exercise_elements_helpers(&tree.elements);
+    count += exercise_elements_helpers(&tree.table_of_contents);
+
+    for footnote in &tree.footnotes {
+        count += exercise_elements_helpers(footnote);
+    }
+
+    for index in 0..tree.bibliographies.next_index() {
+        for (_, elements) in tree.bibliographies.get_bibliography(index).slice() {
+            count += exercise_elements_helpers(elements);
+        }
+    }
+
+    count
+}
+
+fn exercise_elements_helpers(elements: &[Element<'_>]) -> usize {
+    elements.iter().map(exercise_element_helpers).sum()
+}
+
+fn exercise_element_helpers(element: &Element<'_>) -> usize {
+    let _name = element.name();
+    let _owned = element.to_owned();
+
+    if !matches!(element, Element::Partial(_)) {
+        let _paragraph_safe = element.paragraph_safe();
+    }
+
+    let nested_count = match element {
+        Element::Container(container) => exercise_elements_helpers(container.elements()),
+        Element::Table(table) => table
+            .rows
+            .iter()
+            .map(|row| {
+                row.cells
+                    .iter()
+                    .map(|cell| exercise_elements_helpers(&cell.elements))
+                    .sum::<usize>()
+            })
+            .sum(),
+        Element::TabView(tabs) => tabs
+            .iter()
+            .map(|tab| exercise_elements_helpers(&tab.elements))
+            .sum(),
+        Element::Anchor { elements, .. } => exercise_elements_helpers(elements),
+        Element::List { items, .. } => items.iter().map(exercise_list_item_helpers).sum(),
+        Element::DefinitionList(items) => items
+            .iter()
+            .map(|item| {
+                exercise_elements_helpers(&item.key_elements)
+                    + exercise_elements_helpers(&item.value_elements)
+            })
+            .sum(),
+        Element::Collapsible { elements, .. } => exercise_elements_helpers(elements),
+        Element::Color { elements, .. } => exercise_elements_helpers(elements),
+        Element::Include { elements, .. } => exercise_elements_helpers(elements),
+        Element::Partial(partial) => exercise_partial_element_helpers(partial),
+        _ => 0,
+    };
+
+    nested_count + 1
+}
+
+fn exercise_list_item_helpers(item: &ListItem<'_>) -> usize {
+    match item {
+        ListItem::Elements { elements, .. } => exercise_elements_helpers(elements),
+        ListItem::SubList { element } => exercise_element_helpers(element),
+    }
+}
+
+fn exercise_partial_element_helpers(partial: &PartialElement<'_>) -> usize {
+    let _name = partial.name();
+    let _error_kind = partial.parse_error_kind();
+    let _owned = partial.to_owned();
+
+    match partial {
+        PartialElement::ListItem(item) => exercise_list_item_helpers(item),
+        PartialElement::TableRow(row) => row
+            .cells
+            .iter()
+            .map(|cell| exercise_elements_helpers(&cell.elements))
+            .sum(),
+        PartialElement::TableCell(cell) => exercise_elements_helpers(&cell.elements),
+        PartialElement::Tab(tab) => exercise_elements_helpers(&tab.elements),
+        PartialElement::RubyText(text) => exercise_elements_helpers(&text.elements),
+    }
 }

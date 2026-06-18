@@ -44,3 +44,41 @@ impl<'t> Includer<'t> for NullIncluder {
         Ok(Cow::Borrowed(""))
     }
 }
+
+#[test]
+fn null_includer_returns_no_pages_for_empty_include_list() {
+    let mut includer = NullIncluder;
+    let includes: Vec<IncludeRef<'static>> = Vec::new();
+
+    let pages = includer
+        .include_pages(&includes)
+        .expect("null includer should not fail");
+
+    assert!(pages.is_empty());
+}
+
+#[test]
+fn null_includer_ignores_non_empty_include_lists() {
+    let mut includer = NullIncluder;
+    let includes = vec![IncludeRef::page_only(PageRef::page_only(
+        "component:example",
+    ))];
+
+    let pages = includer
+        .include_pages(&includes)
+        .expect("null includer should not fail");
+
+    assert!(pages.is_empty());
+}
+
+#[test]
+fn null_includer_renders_missing_includes_as_empty_borrowed_text() {
+    let mut includer = NullIncluder;
+    let page_ref = PageRef::page_only("missing");
+
+    let replacement = includer
+        .no_such_include(&page_ref)
+        .expect("null includer should not fail");
+
+    assert_eq!(replacement, Cow::Borrowed(""));
+}

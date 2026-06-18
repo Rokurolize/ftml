@@ -269,3 +269,88 @@ where
         self.buffer().write_str(s)
     }
 }
+
+#[test]
+fn text_context_tracks_state_and_buffering() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{Bibliography, Element, VariableMap};
+
+    let info = PageInfo::dummy();
+    let handle = Handle;
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+    let table_of_contents = vec![Element::Text(cow!("toc"))];
+    let footnotes = vec![vec![Element::Text(cow!("footnote"))]];
+    let reference = vec![Element::Text(cow!("reference"))];
+
+    let mut bibliography = Bibliography::new();
+    bibliography.add(cow!("alpha"), reference.clone());
+
+    let mut bibliographies = BibliographyList::new();
+    bibliographies.push(bibliography);
+
+    let mut ctx = TextContext::new(
+        &info,
+        &handle,
+        &settings,
+        &table_of_contents,
+        &footnotes,
+        &bibliographies,
+        64,
+    );
+
+    assert_eq!(ctx.info().page, "some-page");
+    assert_eq!(ctx.settings(), &settings);
+    assert_eq!(ctx.language(), "default");
+    assert!(std::ptr::eq(ctx.handle(), &handle));
+    assert_eq!(ctx.table_of_contents(), table_of_contents.as_slice());
+    assert_eq!(ctx.footnotes(), footnotes.as_slice());
+    assert_eq!(
+        ctx.get_bibliography(0).get("alpha"),
+        Some((1, reference.as_slice()))
+    );
+    assert_eq!(
+        ctx.get_bibliography_ref("alpha"),
+        Some((1, reference.as_slice()))
+    );
+    assert!(ctx.get_bibliography_ref("missing").is_none());
+
+    let mut scope = VariableMap::new();
+    scope.insert(cow!("name"), cow!("value"));
+    ctx.variables_mut().push_scope(&scope);
+    assert_eq!(ctx.variables().get("name"), Some("value"));
+    ctx.variables_mut().pop_scope();
+    assert_eq!(ctx.variables().get("name"), None);
+
+    assert_eq!(ctx.next_equation_index().get(), 1);
+    assert_eq!(ctx.next_equation_index().get(), 2);
+    assert_eq!(ctx.next_footnote_index().get(), 1);
+    assert_eq!(ctx.next_footnote_index().get(), 2);
+
+    assert_eq!(ctx.list_depth(), 1);
+    assert_eq!(ctx.next_list_index(), 1);
+    assert_eq!(ctx.next_list_index(), 2);
+    ctx.incr_list_depth();
+    assert_eq!(ctx.list_depth(), 2);
+    assert_eq!(ctx.next_list_index(), 1);
+    ctx.decr_list_depth();
+    assert_eq!(ctx.list_depth(), 1);
+    assert_eq!(ctx.next_list_index(), 3);
+
+    ctx.push_str("alpha");
+    ctx.add_newline();
+    assert!(ctx.ends_with_newline());
+    ctx.push_prefix("> ");
+    ctx.add_newline();
+    ctx.pop_prefix();
+    ctx.enable_invisible();
+    ctx.push_str("βx");
+    ctx.push('!');
+    ctx.add_newline();
+    ctx.disable_invisible();
+    write!(&mut ctx, "done").unwrap();
+
+    let output = String::from(ctx);
+    assert_eq!(output, "alpha\n\n>    \ndone");
+}

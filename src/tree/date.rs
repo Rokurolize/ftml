@@ -544,6 +544,51 @@ fn date_format_rejects_invalid_strftime() {
 }
 
 #[test]
+fn date_items_without_timezone_assume_utc() {
+    assert_eq!(
+        DateItem::from(time::macros::date!(2010 - 01 - 01)).to_datetime_tz(),
+        time::macros::datetime!(2010-01-01 00:00:00 +00:00),
+    );
+    assert_eq!(
+        DateItem::from(time::macros::datetime!(2010-01-01 08:10:00)).to_datetime_tz(),
+        time::macros::datetime!(2010-01-01 08:10:00 +00:00),
+    );
+}
+
+#[test]
+fn date_format_supports_escaped_percent_and_padding_modifiers() {
+    let date = DateItem::from(time::macros::datetime!(2010-01-01 08:10:00 +00:00));
+
+    assert_eq!(
+        date.format(Some("%% [%_d] [%-m] [%0H]"), "en").unwrap(),
+        "% [ 1] [1] [08]",
+    );
+}
+
+#[test]
+fn date_format_rejects_trailing_percent_and_padding_modifier() {
+    let date = DateItem::from(time::macros::datetime!(2010-01-01 08:10:00 +00:00));
+
+    let error = date.format(Some("%"), "en").unwrap_err();
+    assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
+    assert_eq!(
+        error.to_string(),
+        "invalid strftime format string '%': unexpected end of input after '%'",
+    );
+
+    for format in ["%_", "%-", "%0"] {
+        let error = date.format(Some(format), "en").unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
+        assert_eq!(
+            error.to_string(),
+            format!(
+                "invalid strftime format string '{format}': unexpected end of input after padding modifier"
+            ),
+        );
+    }
+}
+
+#[test]
 fn date_format_falls_back_to_default() {
     let date = DateItem::from(time::macros::datetime!(2010-01-01 08:10:00 +00:00));
 
@@ -567,6 +612,57 @@ fn date_format_uses_localized_relative_time_patterns() {
 
     assert_eq!(past_date.format(Some("%O"), "fr").unwrap(), "hier");
     assert_eq!(future_date.format(Some("%O"), "fr").unwrap(), "demain");
+}
+
+#[test]
+fn date_format_relative_time_covers_seconds_minutes_hours() {
+    let cases = [
+        (
+            time::macros::datetime!(2010-01-01 08:10:45 +00:00),
+            "in 45 seconds",
+        ),
+        (
+            time::macros::datetime!(2010-01-01 08:12:00 +00:00),
+            "in 2 minutes",
+        ),
+        (
+            time::macros::datetime!(2010-01-01 10:10:00 +00:00),
+            "in 2 hours",
+        ),
+    ];
+
+    for (datetime, expected) in cases {
+        assert_eq!(
+            DateItem::from(datetime)
+                .format(Some("%O"), "en-US")
+                .unwrap(),
+            expected,
+        );
+    }
+}
+
+#[test]
+fn date_error_adapters_map_to_io_errors() {
+    use time::error::Format;
+
+    let error = map_format_result(Err(Format::StdIo(io::Error::new(
+        io::ErrorKind::BrokenPipe,
+        "writer stopped",
+    ))))
+    .unwrap_err();
+    assert_eq!(error.kind(), io::ErrorKind::BrokenPipe);
+    assert_eq!(error.to_string(), "writer stopped");
+
+    let error = map_format_result(Err(Format::InvalidComponent("year"))).unwrap_err();
+    assert_eq!(error.kind(), io::ErrorKind::Other);
+    assert_eq!(
+        error.to_string(),
+        "The year component cannot be formatted into the requested format.",
+    );
+
+    let error = localization_error("icu failed");
+    assert_eq!(error.kind(), io::ErrorKind::Other);
+    assert_eq!(error.to_string(), "icu failed");
 }
 
 #[test]

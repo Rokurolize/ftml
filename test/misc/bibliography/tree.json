@@ -172,6 +172,51 @@
             }
         },
         {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "Block"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "citations"
+                    },
+                    {
+                        "element": "text",
+                        "data": ":"
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "bibliography-cite",
+                        "data": {
+                            "label": "bell",
+                            "brackets": true
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "bibliography-cite",
+                        "data": {
+                            "label": "guy",
+                            "brackets": false
+                        }
+                    }
+                ]
+            }
+        },
+        {
             "element": "bibliography-block",
             "data": {
                 "index": 0,

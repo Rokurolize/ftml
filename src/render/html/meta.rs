@@ -56,3 +56,29 @@ impl HtmlMeta {
         buffer.push_str("\" />");
     }
 }
+
+#[test]
+fn html_meta_renders_supported_tag_types() {
+    let cases = [
+        (HtmlMetaType::Name, "name"),
+        (HtmlMetaType::HttpEquiv, "http-equiv"),
+        (HtmlMetaType::Property, "property"),
+    ];
+
+    for (tag_type, tag_name) in cases {
+        assert_eq!(tag_type.tag_name(), tag_name);
+
+        let meta = HtmlMeta {
+            tag_type,
+            name: str!("alpha&beta"),
+            value: str!("one < two"),
+        };
+        let mut buffer = String::new();
+        meta.render(&mut buffer);
+
+        assert_eq!(
+            buffer,
+            format!("<meta {tag_name}=\"alpha&amp;beta\" content=\"one &lt; two\" />",),
+        );
+    }
+}

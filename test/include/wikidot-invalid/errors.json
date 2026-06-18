@@ -1,0 +1,29 @@
+[
+    {
+        "token": "identifier",
+        "rule": "block-include",
+        "span": [
+            17,
+            21
+        ],
+        "kind": "invalid-include"
+    },
+    {
+        "token": "left-block",
+        "rule": "fallback",
+        "span": [
+            7,
+            9
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-block",
+        "rule": "fallback",
+        "span": [
+            21,
+            23
+        ],
+        "kind": "no-rules-match"
+    }
+]

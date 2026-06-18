@@ -112,3 +112,98 @@ impl AcceptsPartial {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tree::{AttributeMap, ListItem, RubyText, Tab, TableCell, TableRow};
+    use std::num::NonZeroU32;
+
+    fn partials() -> Vec<(PartialElement<'static>, &'static str, ParseErrorKind)> {
+        vec![
+            (
+                PartialElement::ListItem(ListItem::Elements {
+                    attributes: AttributeMap::new(),
+                    elements: vec![text!("item")],
+                }),
+                "ListItem",
+                ParseErrorKind::ListItemOutsideList,
+            ),
+            (
+                PartialElement::TableRow(TableRow {
+                    attributes: AttributeMap::new(),
+                    cells: vec![],
+                }),
+                "TableRow",
+                ParseErrorKind::TableRowOutsideTable,
+            ),
+            (
+                PartialElement::TableCell(TableCell {
+                    header: false,
+                    column_span: NonZeroU32::new(1).unwrap(),
+                    align: None,
+                    attributes: AttributeMap::new(),
+                    elements: vec![text!("cell")],
+                }),
+                "TableCell",
+                ParseErrorKind::TableCellOutsideTable,
+            ),
+            (
+                PartialElement::Tab(Tab {
+                    label: cow!("tab"),
+                    elements: vec![text!("contents")],
+                }),
+                "Tab",
+                ParseErrorKind::TabOutsideTabView,
+            ),
+            (
+                PartialElement::RubyText(RubyText {
+                    attributes: AttributeMap::new(),
+                    elements: vec![text!("annotation")],
+                }),
+                "RubyText",
+                ParseErrorKind::RubyTextOutsideRuby,
+            ),
+        ]
+    }
+
+    #[test]
+    fn partial_element_helpers_cover_all_variants() {
+        for (partial, name, parse_error_kind) in partials() {
+            assert_eq!(partial.name(), name);
+            assert_eq!(partial.parse_error_kind(), parse_error_kind);
+            assert_eq!(partial.to_owned(), partial);
+        }
+    }
+
+    #[test]
+    fn accepts_partial_matches_only_expected_variants() {
+        let partials = partials();
+        let acceptances = [
+            AcceptsPartial::ListItem,
+            AcceptsPartial::TableRow,
+            AcceptsPartial::TableCell,
+            AcceptsPartial::Tab,
+            AcceptsPartial::Ruby,
+        ];
+        assert_eq!(
+            partials.len(),
+            acceptances.len(),
+            "partials and acceptances arrays must have the same length",
+        );
+
+        for (index, (partial, _, _)) in partials.iter().enumerate() {
+            assert!(!AcceptsPartial::None.matches(partial));
+
+            for (acceptance_index, acceptance) in acceptances.iter().copied().enumerate()
+            {
+                assert_eq!(
+                    acceptance.matches(partial),
+                    acceptance_index == index,
+                    "{acceptance:?} matched {} unexpectedly",
+                    partial.name(),
+                );
+            }
+        }
+    }
+}

@@ -219,4 +219,19 @@ mod test {
             );
         }
     }
+
+    #[test]
+    fn page_nav_settings_keep_page_features_without_true_ids() {
+        let settings =
+            WikitextSettings::from_mode(WikitextMode::PageNav, Layout::Wikijump);
+
+        assert_eq!(settings.mode, WikitextMode::PageNav);
+        assert_eq!(settings.layout, Layout::Wikijump);
+        assert!(settings.enable_page_syntax);
+        assert!(!settings.use_true_ids);
+        assert!(!settings.isolate_user_ids);
+        assert!(settings.minify_css);
+        assert!(settings.allow_local_paths);
+        assert_eq!(settings.interwiki, *DEFAULT_INTERWIKI);
+    }
 }

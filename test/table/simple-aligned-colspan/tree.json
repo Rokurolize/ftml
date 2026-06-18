@@ -1,0 +1,63 @@
+{
+    "elements": [
+        {
+            "element": "table",
+            "data": {
+                "type": "simple",
+                "attributes": {},
+                "rows": [
+                    {
+                        "attributes": {},
+                        "cells": [
+                            {
+                                "header": false,
+                                "column-span": 2,
+                                "align": "center",
+                                "attributes": {},
+                                "elements": [
+                                    {
+                                        "element": "text",
+                                        "data": "Center"
+                                    },
+                                    {
+                                        "element": "text",
+                                        "data": " "
+                                    },
+                                    {
+                                        "element": "text",
+                                        "data": "span"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "attributes": {},
+                        "cells": [
+                            {
+                                "header": false,
+                                "column-span": 2,
+                                "align": "right",
+                                "attributes": {},
+                                "elements": [
+                                    {
+                                        "element": "text",
+                                        "data": "Right"
+                                    },
+                                    {
+                                        "element": "text",
+                                        "data": " "
+                                    },
+                                    {
+                                        "element": "text",
+                                        "data": "span"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

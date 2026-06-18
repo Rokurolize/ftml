@@ -1,0 +1,7 @@
+[[table]]
+[[row]]
+[[cell colspan="0" data-name="zero"]]Zero[[/cell]]
+[[cell colspan="abc" data-name="bad"]]Bad[[/cell]]
+[[hcell colspan="2" data-name="good"]]Good[[/hcell]]
+[[/row]]
+[[/table]]

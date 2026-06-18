@@ -71,6 +71,17 @@ fn info() {
     assert!(VERSION.starts_with(PKG_NAME));
     assert!(VERSION.ends_with(&*VERSION_INFO));
 
+    assert!(FULL_VERSION.starts_with(&*VERSION_INFO));
+    assert!(FULL_VERSION.contains("\n\nCompiled:\n"));
+    assert!(FULL_VERSION.contains(&format!("* across {NUM_JOBS} threads")));
+    assert!(FULL_VERSION.contains(RUSTC_VERSION));
+    assert!(FULL_VERSION.contains(TARGET));
+    assert!(FULL_VERSION.contains(BUILT_TIME_UTC));
+    assert_eq!(
+        &*FULL_VERSION_WITH_NAME,
+        &format!("{PKG_NAME} {}", *FULL_VERSION),
+    );
+
     if let Some(hash) = *GIT_COMMIT_HASH_SHORT {
         assert_eq!(hash.len(), 8);
     }

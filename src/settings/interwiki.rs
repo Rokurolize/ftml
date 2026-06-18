@@ -180,3 +180,16 @@ fn interwiki_prefixes() {
     test!(":empty", None);
     test!("no-link:", None);
 }
+
+#[test]
+fn interwiki_new_has_no_prefixes_and_defaults_encode_spaces() {
+    use ref_map::*;
+
+    assert_eq!(InterwikiSettings::new().build("wp:SCP Foundation"), None);
+
+    let actual = DEFAULT_INTERWIKI.build("wp:SCP Foundation");
+    assert_eq!(
+        actual.ref_map(|s| s.as_str()),
+        Some("https://wikipedia.org/wiki/SCP%20Foundation"),
+    );
+}

@@ -1,0 +1,12 @@
+Apple[quadratic-formula]
+
+Banana cherry[quadratic-formula] Gooseberry
+
+Pineapple[navier-stokes]Blueberry
+
+FAIL
+
+EMPTY[[math]]
+[[/math]]
+
+Durian[[eref]]

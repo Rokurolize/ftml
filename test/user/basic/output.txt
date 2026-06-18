@@ -1,0 +1,4 @@
+User normal: Alice
+User with star: Bob
+
+Weird: SYSTEM anonyMOUs

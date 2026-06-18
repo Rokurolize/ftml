@@ -1,0 +1,30 @@
+BASIC
+
+apple
+banana
+
+EMPTY
+
+
+
+ESCAPES
+
+[[div]]
+not a div test
+[[/div]]
+
+**also not bold**
+
+LANG
+
+import antigravity
+
+INLINE
+
+a { display: none; }
+
+NAMED
+
+public static final objective abstract interface class Foo {}
+
+You can refer to this code block via /code/b instead of by its numerical index.

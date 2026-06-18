@@ -1,0 +1,29 @@
+EMPTY 
+BASIC click
+ATTRS my link
+DEPTH my awesome link
+
+STAR
+
+EMPTY 
+BASIC click
+ATTRS my link
+
+SCORE
+
+EMPTY 
+BASIC click
+ATTRS my link
+
+BOTH
+
+EMPTY 
+BASIC click
+ATTRS my link
+
+NAMED
+
+ A
+ B
+ C
+ D

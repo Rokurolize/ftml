@@ -1,0 +1,49 @@
+SINGLE:
+solo
+
+data here
+
+
+NORMAL:
+Apple
+
+1
+
+2
+
+3
+
+Banana Smoothie
+
+4
+
+Cherry
+
+5
+
+empty
+
+
+INLINE:
+A
+
+ 1 
+
+B
+
+ 2 
+
+
+NESTED AND ALIAS:
+1
+
+A
+2
+
+B
+3
+
+C
+4
+
+D

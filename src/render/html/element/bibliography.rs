@@ -134,6 +134,7 @@ pub fn render_bibliography(
                 .contents(title);
 
             let mut id = String::new();
+            let mut class = String::new();
             for (entry_index, (_, elements)) in bibliography.slice().iter().enumerate() {
                 // Convert to 1-indexing
                 let bibliography_index = bibliography_index + 1;
@@ -143,17 +144,18 @@ pub fn render_bibliography(
                 id.clear();
                 str_write!(
                     id,
-                    "wj-bibliography-item-{}-{} bibitem-{}-{}",
-                    bibliography_index,
-                    entry_index,
-                    bibliography_index,
-                    entry_index,
+                    "wj-bibliography-item-{bibliography_index}-{entry_index}",
+                );
+                class.clear();
+                str_write!(
+                    class,
+                    "wj-bibliography-item bibitem bibitem-{bibliography_index}-{entry_index}",
                 );
 
                 // Make bibliography row
                 ctx.html()
                     .div()
-                    .attr(attr!("class" => "wj-bibliography-item bibitem", "id" => &id))
+                    .attr(attr!("class" => &class, "id" => &id))
                     .inner(|ctx| {
                         // Number and clickable anchor
                         ctx.html()

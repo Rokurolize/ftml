@@ -1,0 +1,29 @@
+Cell
+Another
+no spaces
+
+Apple
+BananaCherry__Pineapple
+
+
+Melon
+
+LeftCenter
+NormalRight
+Empty
+
+Missing
+CellCorner
+
+BlueberryRaspberryGooseberry
+Very Berry
+
+Durian
+
+Bold stuff, and also color
+inline block
+
+«french quotes»<div>
+
+ab
+cd

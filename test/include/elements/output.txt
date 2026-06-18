@@ -1,0 +1,9 @@
+Apple
+<INCLUDED PAGE (ELEMENTS)>
+Banana
+<INCLUDED PAGE (ELEMENTS)>
+Cherry
+<INCLUDED PAGE (ELEMENTS)>
+Mango
+
+FAIL[[include-elements ::invalid-page]]

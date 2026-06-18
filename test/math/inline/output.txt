@@ -1,0 +1,12 @@
+Strawberry 
+
+Apple  Banana  Cherry  Pineapple
+
+FAIL
+
+NEWLINES
+[[$ E =
+
+mc^2 $]]
+
+SYNTAX

@@ -53,7 +53,7 @@ pub fn render_embed(ctx: &mut HtmlContext, embed: &Embed) {
                 ctx.html().iframe().attr(attr!(
                     "src" => &url,
                     "frameborder" => "0",
-                    "allow" => "autoplay; fullscreen; picture-inpicture",
+                    "allow" => "autoplay; fullscreen; picture-in-picture",
                     "allowfullscreen",
                 ));
             }

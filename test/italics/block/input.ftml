@@ -1,0 +1,9 @@
+Empty [[i]][[/i]]
+[[i]]Apple[[/i]]
+[[italics]]Banana[[/italics]]
+[[em]]Cherry[[/em]]
+[[emphasis]]Date[[/emphasis]]
+
+[[i]]Nested [[span]]blocks [[italics]][[span]]even[[em]]more[[/em]][[/span]][[/italics]][[/span]][[/i]]
+
+[[italics id="leaning" style="color: teal"]]attributes[[/italics]]

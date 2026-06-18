@@ -1,0 +1,23 @@
+BASIC語 (go)漢(kan)字(ji)
+
+ALIAS語 (go)
+
+ATTRS語 (go) ruby-attributes.json"
+
+NESTED
+
+
+語 (go)  
+
+
+NEWLINES漢 (kan)
+字 (ji)
+
+漢 (kan)
+字 (ji)
+
+ALT
+語(go)
+語(go)
+漢(kan) 字(ji)
+漢(kan) 字(ji)

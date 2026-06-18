@@ -224,6 +224,21 @@ fn split_page() {
 }
 
 #[test]
+fn page_ref_new_normalizes_site_and_extra_parts() {
+    let off_site = PageRef::new(
+        Some(String::from("SCP Wiki")),
+        String::from("Main Page/edit"),
+    );
+    let on_site = PageRef::new(None::<String>, String::from("Sandbox Page#toc2"));
+
+    assert_eq!(
+        off_site.fields(),
+        (Some("scp-wiki"), "main-page", Some("/edit"))
+    );
+    assert_eq!(on_site.fields(), (None, "sandbox-page", Some("#toc2")));
+}
+
+#[test]
 fn page_ref() {
     macro_rules! test {
         ($input:expr $(,)?) => {

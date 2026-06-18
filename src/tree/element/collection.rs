@@ -100,3 +100,80 @@ impl<'t> From<Vec<Element<'t>>> for Elements<'t> {
         Elements::Multiple(elements)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn empty_and_len_cover_all_shapes() {
+        let cases = [
+            (Elements::None, true, 0),
+            (Elements::Single(text!("single")), false, 1),
+            (Elements::Multiple(vec![]), true, 0),
+            (Elements::Multiple(vec![text!("a"), text!("b")]), false, 2),
+        ];
+
+        for (elements, is_empty, len) in cases {
+            assert_eq!(elements.is_empty(), is_empty);
+            assert_eq!(elements.len(), len);
+        }
+    }
+
+    #[test]
+    fn paragraph_safe_uses_element_safety_for_each_shape() {
+        assert!(Elements::None.paragraph_safe());
+        assert!(Elements::Multiple(vec![]).paragraph_safe());
+        assert!(Elements::Single(text!("single")).paragraph_safe());
+        assert!(
+            Elements::Multiple(vec![
+                text!("a"),
+                Element::Raw(cow!("raw")),
+                Element::LineBreak,
+            ])
+            .paragraph_safe(),
+        );
+        assert!(!Elements::Single(Element::HorizontalRule).paragraph_safe());
+        assert!(
+            !Elements::Multiple(vec![text!("a"), Element::HorizontalRule])
+                .paragraph_safe(),
+        );
+    }
+
+    #[test]
+    fn as_ref_returns_element_slices_for_each_shape() {
+        assert_eq!(Elements::None.as_ref(), &[]);
+
+        let single = Elements::Single(text!("single"));
+        assert_eq!(single.as_ref(), &[text!("single")]);
+
+        let multiple = Elements::Multiple(vec![text!("a"), text!("b")]);
+        assert_eq!(multiple.as_ref(), &[text!("a"), text!("b")]);
+    }
+
+    #[test]
+    fn from_element_creates_single() {
+        assert_eq!(
+            Elements::from(text!("present")),
+            Elements::Single(text!("present")),
+        );
+    }
+
+    #[test]
+    fn from_option_element_preserves_some_and_none() {
+        assert_eq!(
+            Elements::from(Some(text!("present"))),
+            Elements::Single(text!("present")),
+        );
+        assert_eq!(Elements::from(None), Elements::None);
+    }
+
+    #[test]
+    fn from_vec_element_preserves_vector_shape() {
+        assert_eq!(
+            Elements::from(vec![text!("a"), text!("b")]),
+            Elements::Multiple(vec![text!("a"), text!("b")]),
+        );
+        assert_eq!(Elements::from(Vec::new()), Elements::Multiple(vec![]));
+    }
+}

@@ -132,3 +132,62 @@ impl<'t> BibliographyList<'t> {
         BibliographyList(self.0.iter().map(|b| b.to_owned()).collect())
     }
 }
+
+#[test]
+fn bibliography_helpers_preserve_first_reference() {
+    let first = vec![Element::Text(cow!("first"))];
+    let duplicate = vec![Element::Text(cow!("duplicate"))];
+    let second = vec![Element::Text(cow!("second"))];
+
+    let mut bibliography = Bibliography::new();
+    assert!(bibliography.get("alpha").is_none());
+
+    bibliography.add(cow!("alpha"), first.clone());
+    bibliography.add(cow!("alpha"), duplicate);
+    bibliography.add(cow!("beta"), second.clone());
+
+    assert_eq!(bibliography.get("alpha"), Some((1, first.as_slice())));
+    assert_eq!(bibliography.get("beta"), Some((2, second.as_slice())));
+    assert_eq!(bibliography.slice().len(), 2);
+    assert_eq!(
+        bibliography.to_owned().get("alpha"),
+        Some((1, first.as_slice()))
+    );
+}
+
+#[test]
+fn bibliography_list_helpers_cover_lookup_and_append() {
+    let alpha = vec![Element::Text(cow!("alpha"))];
+    let beta = vec![Element::Text(cow!("beta"))];
+
+    let mut first = Bibliography::new();
+    first.add(cow!("alpha"), alpha.clone());
+
+    let mut second = Bibliography::new();
+    second.add(cow!("beta"), beta.clone());
+
+    let mut list = BibliographyList::new();
+    assert!(list.is_empty());
+
+    list.push(first);
+    assert!(!list.is_empty());
+    assert_eq!(list.next_index(), 1);
+    assert_eq!(list.get_reference("alpha"), Some((1, alpha.as_slice())));
+    assert!(list.get_reference("missing").is_none());
+    assert_eq!(
+        list.get_bibliography(0).get("alpha"),
+        Some((1, alpha.as_slice()))
+    );
+
+    let mut other = BibliographyList::new();
+    other.push(second);
+    list.append(&mut other);
+
+    assert_eq!(list.next_index(), 2);
+    assert!(other.is_empty());
+    assert_eq!(list.get_reference("beta"), Some((1, beta.as_slice())));
+    assert_eq!(
+        list.to_owned().get_reference("beta"),
+        Some((1, beta.as_slice()))
+    );
+}

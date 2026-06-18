@@ -101,3 +101,41 @@ impl TableItem<'_> {
         }
     }
 }
+
+#[test]
+fn table_to_owned_covers_nested_items() {
+    let mut table_attributes = AttributeMap::new();
+    assert!(table_attributes.insert("class", cow!("data")));
+
+    let mut row_attributes = AttributeMap::new();
+    assert!(row_attributes.insert("id", cow!("row-one")));
+
+    let mut cell_attributes = AttributeMap::new();
+    assert!(cell_attributes.insert("style", cow!("color:red")));
+
+    let cell = TableCell {
+        header: true,
+        column_span: NonZeroU32::new(2).unwrap(),
+        align: Some(Alignment::Center),
+        attributes: cell_attributes,
+        elements: vec![Element::Text(cow!("cell"))],
+    };
+    let row = TableRow {
+        attributes: row_attributes,
+        cells: vec![cell.clone()],
+    };
+    let table = Table {
+        table_type: TableType::Advanced,
+        attributes: table_attributes,
+        rows: vec![row.clone()],
+    };
+
+    assert_eq!(table.to_owned(), table);
+    assert_eq!(row.to_owned(), row);
+    assert_eq!(cell.to_owned(), cell);
+    assert_eq!(TableItem::Row(row.clone()).to_owned(), TableItem::Row(row));
+    assert_eq!(
+        TableItem::Cell(cell.clone()).to_owned(),
+        TableItem::Cell(cell)
+    );
+}

@@ -83,3 +83,44 @@ impl Embed<'_> {
         }
     }
 }
+
+#[test]
+fn embed_helpers_cover_all_variants() {
+    let cases = [
+        (
+            Embed::Youtube {
+                video_id: cow!("yt-id"),
+            },
+            "YouTube",
+            "https://youtu.be/yt-id",
+        ),
+        (
+            Embed::Vimeo {
+                video_id: cow!("12345"),
+            },
+            "Vimeo",
+            "https://vimeo.com/12345",
+        ),
+        (
+            Embed::GithubGist {
+                username: cow!("user"),
+                hash: cow!("abc123"),
+            },
+            "GithubGist",
+            "https://gist.github.com/user/abc123",
+        ),
+        (
+            Embed::GitlabSnippet {
+                snippet_id: cow!("98765"),
+            },
+            "GitlabSnippet",
+            "https://gitlab.com/-/snippets/98765",
+        ),
+    ];
+
+    for (embed, expected_name, expected_url) in cases {
+        assert_eq!(embed.name(), expected_name);
+        assert_eq!(embed.direct_url(), expected_url);
+        assert_eq!(embed.to_owned().direct_url(), expected_url);
+    }
+}

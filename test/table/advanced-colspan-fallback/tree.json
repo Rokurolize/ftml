@@ -1,0 +1,60 @@
+{
+    "elements": [
+        {
+            "element": "table",
+            "data": {
+                "type": "advanced",
+                "attributes": {},
+                "rows": [
+                    {
+                        "attributes": {},
+                        "cells": [
+                            {
+                                "header": false,
+                                "column-span": 1,
+                                "align": null,
+                                "attributes": {
+                                    "data-name": "zero"
+                                },
+                                "elements": [
+                                    {
+                                        "element": "text",
+                                        "data": "Zero"
+                                    }
+                                ]
+                            },
+                            {
+                                "header": false,
+                                "column-span": 1,
+                                "align": null,
+                                "attributes": {
+                                    "data-name": "bad"
+                                },
+                                "elements": [
+                                    {
+                                        "element": "text",
+                                        "data": "Bad"
+                                    }
+                                ]
+                            },
+                            {
+                                "header": true,
+                                "column-span": 2,
+                                "align": null,
+                                "attributes": {
+                                    "data-name": "good"
+                                },
+                                "elements": [
+                                    {
+                                        "element": "text",
+                                        "data": "Good"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

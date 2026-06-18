@@ -1,0 +1,29 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "JOIN"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "raw",
+                        "data": ""
+                    },
+                    {
+                        "element": "text",
+                        "data": "!"
+                    }
+                ]
+            }
+        }
+    ]
+}

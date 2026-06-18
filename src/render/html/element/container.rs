@@ -91,3 +91,120 @@ fn choose_id(ctx: &mut HtmlContext, tag_spec: &HtmlTag) -> Option<String> {
         None
     }
 }
+
+#[test]
+fn container_rendering_covers_special_tag_variants() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{
+        Alignment, AttributeMap, Container, Heading, HeadingLevel, SyntaxTree,
+    };
+
+    let page_info = PageInfo::dummy();
+    let wikijump = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+
+    let wikijump_tree = SyntaxTree {
+        elements: vec![
+            Element::Container(Container::new(
+                ContainerType::RubyText,
+                vec![Element::Text(cow!("go"))],
+                AttributeMap::new(),
+            )),
+            Element::Container(Container::new(
+                ContainerType::Monospace,
+                vec![Element::Text(cow!("mono"))],
+                AttributeMap::new(),
+            )),
+            Element::Container(Container::new(
+                ContainerType::Header(Heading {
+                    level: HeadingLevel::Two,
+                    has_toc: true,
+                }),
+                vec![Element::Text(cow!("Heading"))],
+                AttributeMap::new(),
+            )),
+        ],
+        ..SyntaxTree::default()
+    };
+    let wikijump_output = HtmlRender.render(&wikijump_tree, &page_info, &wikijump);
+
+    assert!(
+        wikijump_output
+            .body
+            .contains("<rp>(</rp><rt>go</rt><rp>)</rp>")
+    );
+    assert!(
+        wikijump_output
+            .body
+            .contains(r#"<code class="wj-monospace">mono</code>"#)
+    );
+    assert!(
+        wikijump_output
+            .body
+            .contains(r#"<h2 id="toc0">Heading</h2>"#)
+    );
+
+    let wikidot = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let wikidot_tree = SyntaxTree {
+        elements: vec![Element::Container(Container::new(
+            ContainerType::Align(Alignment::Right),
+            vec![Element::Text(cow!("right"))],
+            AttributeMap::new(),
+        ))],
+        ..SyntaxTree::default()
+    };
+    let wikidot_output = HtmlRender.render(&wikidot_tree, &page_info, &wikidot);
+
+    assert_eq!(
+        wikidot_output.body,
+        r#"<div style="text-align: right;">right</div>"#
+    );
+}
+
+#[test]
+fn choose_id_generates_random_ids_only_when_true_ids_are_disabled() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Handle;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::BibliographyList;
+
+    let page_info = PageInfo::dummy();
+    let handle = Handle;
+    let bibliographies = BibliographyList::new();
+    let tag_with_id = HtmlTag::with_id("h2", str!("toc0"));
+
+    let mut random_id_settings =
+        WikitextSettings::from_mode(WikitextMode::Draft, Layout::Wikijump);
+    random_id_settings.use_true_ids = false;
+    let mut random_id_ctx = HtmlContext::new(
+        &page_info,
+        &handle,
+        &random_id_settings,
+        &[],
+        &[],
+        &bibliographies,
+        0,
+    );
+    assert_eq!(
+        choose_id(&mut random_id_ctx, &tag_with_id).as_deref(),
+        Some("wj-id-zvGvLlhGI6VEZFKj"),
+    );
+
+    let true_id_settings =
+        WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+    let mut true_id_ctx = HtmlContext::new(
+        &page_info,
+        &handle,
+        &true_id_settings,
+        &[],
+        &[],
+        &bibliographies,
+        0,
+    );
+    assert_eq!(choose_id(&mut true_id_ctx, &tag_with_id), None);
+    assert_eq!(choose_id(&mut true_id_ctx, &HtmlTag::new("h2")), None);
+}

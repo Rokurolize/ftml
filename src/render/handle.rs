@@ -57,6 +57,13 @@ impl Handle {
 
     pub fn get_user_info<'a>(&self, name: &'a str) -> Option<UserInfo<'a>> {
         debug!("Fetching user info (name '{name}')");
+
+        // For testing
+        #[cfg(test)]
+        if name == "missing" {
+            return None;
+        }
+
         let mut info = UserInfo::dummy();
         info.user_name = cow!(name);
         info.user_profile_url = Cow::Owned(format!("/user:info/{name}"));

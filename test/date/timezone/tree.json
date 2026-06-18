@@ -1,0 +1,32 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "date",
+                        "data": {
+                            "value": "2009-12-25 00:00:00.0 +08:00:00",
+                            "format": "%Y-%m-%d %Z",
+                            "hover": false
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "date",
+                        "data": {
+                            "value": "2009-12-25 08:18:05.0 -05:30:00",
+                            "format": "%Y-%m-%d %H:%M %Z",
+                            "hover": false
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

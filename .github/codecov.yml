@@ -2,6 +2,10 @@ comment:
   layout: "reach, diff, flags, files"
   show_carryforward_flags: true
 
+ignore:
+  # Test harness utilities are not part of the library coverage target.
+  - "src/test/**/*"
+
 flags:
   # ftml parser and renderer
   ftml:

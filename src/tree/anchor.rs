@@ -56,7 +56,7 @@ impl AnchorTarget {
             AnchorTarget::NewTab => "_blank",
             AnchorTarget::Parent => "_parent",
             AnchorTarget::Top => "_top",
-            AnchorTarget::Same => "_same",
+            AnchorTarget::Same => "_self",
         }
     }
 }
@@ -80,4 +80,33 @@ impl<'a> TryFrom<&'a str> for AnchorTarget {
 
         Err(())
     }
+}
+
+#[test]
+fn anchor_target_html_attributes_match_standard_targets() {
+    assert_eq!(AnchorTarget::NewTab.html_attr(), "_blank");
+    assert_eq!(AnchorTarget::Parent.html_attr(), "_parent");
+    assert_eq!(AnchorTarget::Top.html_attr(), "_top");
+    assert_eq!(AnchorTarget::Same.html_attr(), "_self");
+}
+
+#[test]
+fn anchor_target_parses_named_and_html_attribute_forms() {
+    assert_eq!(AnchorTarget::try_from("blank"), Ok(AnchorTarget::NewTab));
+    assert_eq!(AnchorTarget::try_from("_blank"), Ok(AnchorTarget::NewTab));
+    assert_eq!(AnchorTarget::try_from("PARENT"), Ok(AnchorTarget::Parent));
+    assert_eq!(AnchorTarget::try_from("_parent"), Ok(AnchorTarget::Parent));
+    assert_eq!(AnchorTarget::try_from("top"), Ok(AnchorTarget::Top));
+    assert_eq!(AnchorTarget::try_from("_top"), Ok(AnchorTarget::Top));
+    assert_eq!(AnchorTarget::try_from("self"), Ok(AnchorTarget::Same));
+    assert_eq!(AnchorTarget::try_from("_self"), Ok(AnchorTarget::Same));
+    assert_eq!(AnchorTarget::try_from("popup"), Err(()));
+}
+
+#[test]
+fn anchor_target_names_are_available_for_all_variants() {
+    assert!(!AnchorTarget::NewTab.name().is_empty());
+    assert!(!AnchorTarget::Parent.name().is_empty());
+    assert!(!AnchorTarget::Top.name().is_empty());
+    assert!(!AnchorTarget::Same.name().is_empty());
 }

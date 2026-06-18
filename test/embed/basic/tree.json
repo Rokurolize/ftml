@@ -1,0 +1,22 @@
+{
+    "elements": [
+        {
+            "element": "embed",
+            "data": {
+                "embed": "youtube",
+                "data": {
+                    "video-id": "abc123DEF45"
+                }
+            }
+        },
+        {
+            "element": "embed",
+            "data": {
+                "embed": "vimeo",
+                "data": {
+                    "video-id": "123456789"
+                }
+            }
+        }
+    ]
+}

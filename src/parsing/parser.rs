@@ -663,3 +663,164 @@ fn parser_newline_flag() {
         [true, true, false, true, false, true, false, false],
     );
 }
+
+#[test]
+fn parser_token_pair_conditions_cover_all_outcomes() {
+    use crate::layout::Layout;
+    use crate::settings::WikitextMode;
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize("a");
+    let mut parser = Parser::new(&tokenization, &page_info, &settings);
+
+    assert!(parser.evaluate(ParseCondition::token_pair(
+        Token::InputStart,
+        Token::Identifier,
+    )));
+    assert!(!parser.evaluate(ParseCondition::token_pair(
+        Token::Identifier,
+        Token::InputEnd,
+    )));
+
+    parser.step().expect("identifier should follow input start");
+    assert!(!parser.evaluate(ParseCondition::token_pair(
+        Token::Identifier,
+        Token::Whitespace,
+    )));
+
+    parser.step().expect("input end should follow identifier");
+    assert!(!parser.evaluate(ParseCondition::token_pair(
+        Token::InputEnd,
+        Token::Identifier,
+    )));
+    assert!(parser.evaluate_any(&[ParseCondition::current(Token::InputEnd)]));
+    assert!(!parser.evaluate_any(&[]));
+}
+
+#[test]
+fn parser_mutable_state_helpers_reset_and_remove_collections() {
+    use crate::layout::Layout;
+    use crate::settings::WikitextMode;
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize("body");
+    let mut parser = Parser::new(&tokenization, &page_info, &settings);
+    let state = parser.get_mutable_state();
+
+    parser.push_footnote(vec![text!("note")]);
+    parser.push_html_block(cow!("html"));
+    parser.push_code_block(CodeBlock {
+        contents: cow!("code"),
+        language: Some(cow!("rust")),
+        name: Some(cow!("sample")),
+    });
+    parser.push_table_of_contents_entry(HeadingLevel::One, &[text!("Heading")]);
+
+    parser.reset_mutable_state(state);
+
+    assert_eq!(parser.footnote_count(), 0);
+    assert!(parser.remove_html_blocks().is_empty());
+    assert!(parser.remove_code_blocks().is_empty());
+    assert!(parser.remove_table_of_contents().is_empty());
+
+    parser.push_footnote(vec![text!("after")]);
+    assert_eq!(parser.footnote_count(), 1);
+    parser.truncate_footnotes(0);
+    assert_eq!(parser.footnote_count(), 0);
+
+    parser.push_html_block(cow!("html"));
+    parser.push_code_block(CodeBlock {
+        contents: cow!("code"),
+        language: None,
+        name: None,
+    });
+    parser.push_table_of_contents_entry(HeadingLevel::Two, &[text!("Heading")]);
+
+    assert_eq!(parser.remove_html_blocks(), vec![cow!("html")]);
+    assert_eq!(
+        parser.remove_code_blocks(),
+        vec![CodeBlock {
+            contents: cow!("code"),
+            language: None,
+            name: None,
+        }],
+    );
+    assert_eq!(
+        parser.remove_table_of_contents(),
+        vec![(1, String::from("Heading"))],
+    );
+
+    let mut bibliography = Bibliography::new();
+    bibliography.add(cow!("alpha"), vec![text!("reference")]);
+    assert_eq!(parser.push_bibliography(bibliography), 0);
+
+    let bibliographies = parser.remove_bibliographies();
+    assert_eq!(bibliographies.next_index(), 1);
+    assert!(parser.remove_bibliographies().is_empty());
+}
+
+#[test]
+fn parser_append_shared_items_and_optional_spaces_cover_helpers() {
+    use crate::layout::Layout;
+    use crate::settings::WikitextMode;
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize(" \n\n=tail");
+    let mut parser = Parser::new(&tokenization, &page_info, &settings);
+    parser.step().expect("whitespace should follow input start");
+
+    parser
+        .get_optional_spaces_any()
+        .expect("all optional spacing tokens should be consumed");
+    assert_eq!(parser.current().token, Token::Identifier);
+    assert_eq!(parser.current().slice, "tail");
+
+    parser.step().expect("input end should follow identifier");
+    assert_eq!(parser.next_two_tokens(), (Token::InputEnd, None));
+
+    let mut html_blocks = vec![cow!("html")];
+    let mut code_blocks = vec![CodeBlock {
+        contents: cow!("code"),
+        language: None,
+        name: None,
+    }];
+    let mut table_of_contents = vec![(2, String::from("Heading"))];
+    let mut footnotes = vec![vec![text!("note")]];
+    let mut bibliography = Bibliography::new();
+    bibliography.add(cow!("alpha"), vec![text!("reference")]);
+    let mut bibliographies = BibliographyList::new();
+    bibliographies.push(bibliography);
+
+    parser.append_shared_items(
+        &mut html_blocks,
+        &mut code_blocks,
+        &mut table_of_contents,
+        &mut footnotes,
+        &mut bibliographies,
+    );
+
+    assert!(html_blocks.is_empty());
+    assert!(code_blocks.is_empty());
+    assert!(table_of_contents.is_empty());
+    assert!(footnotes.is_empty());
+    assert!(bibliographies.is_empty());
+
+    assert_eq!(parser.remove_html_blocks(), vec![cow!("html")]);
+    assert_eq!(
+        parser.remove_code_blocks(),
+        vec![CodeBlock {
+            contents: cow!("code"),
+            language: None,
+            name: None,
+        }],
+    );
+    assert_eq!(
+        parser.remove_table_of_contents(),
+        vec![(2, String::from("Heading"))],
+    );
+    assert_eq!(parser.remove_footnotes(), vec![vec![text!("note")]]);
+    assert_eq!(parser.remove_bibliographies().next_index(), 1);
+}

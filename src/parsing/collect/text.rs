@@ -149,4 +149,47 @@ mod tests {
         assert_eq!(last.token, Token::RightBlock);
         assert_eq!(parser.current().slice, "tail");
     }
+
+    #[test]
+    fn collect_text_keep_returns_nonempty_slice_and_terminator() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("alpha beta]]tail");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("identifier should follow input start");
+
+        let (slice, last) = collect_text_keep(
+            &mut parser,
+            RULE_TEXT,
+            &[ParseCondition::current(Token::RightBlock)],
+            &[],
+            None,
+        )
+        .expect("text should collect until the right block token");
+
+        assert_eq!(slice, "alpha beta");
+        assert_eq!(last.token, Token::RightBlock);
+        assert_eq!(parser.current().slice, "tail");
+    }
+
+    #[test]
+    fn collect_text_propagates_invalid_condition_error() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("alpha\nbeta");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("identifier should follow input start");
+
+        let error = collect_text(
+            &mut parser,
+            RULE_TEXT,
+            &[ParseCondition::current(Token::RightBlock)],
+            &[ParseCondition::current(Token::LineBreak)],
+            Some(ParseErrorKind::BlockMalformedArguments),
+        )
+        .expect_err("line break should abort text collection");
+
+        assert_eq!(error.kind(), ParseErrorKind::BlockMalformedArguments);
+        assert_eq!(parser.current().token, Token::LineBreak);
+    }
 }

@@ -37,6 +37,8 @@ mod result;
 mod rule;
 mod string;
 mod strip;
+#[cfg(test)]
+mod test_logging;
 mod token;
 
 mod prelude {

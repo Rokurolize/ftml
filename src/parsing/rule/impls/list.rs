@@ -170,3 +170,94 @@ fn build_list_element(
         attributes,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::parsing::test_logging;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    fn parse_native_list(input: &str) -> Result<(ListType, usize, bool), ParseError> {
+        test_logging::enable();
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(input);
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("first content token should follow input start");
+
+        let elements = RULE_LIST.try_consume(&mut parser)?.item;
+        assert_eq!(elements.len(), 1);
+
+        match elements
+            .as_ref()
+            .first()
+            .expect("list element should exist")
+        {
+            Element::List { ltype, items, .. } => {
+                let has_regular_item = matches!(
+                    items.first(),
+                    Some(ListItem::Elements { elements, .. }) if !elements.is_empty()
+                );
+                Ok((*ltype, items.len(), has_regular_item))
+            }
+            element => panic!("expected list element, got {element:?}"),
+        }
+    }
+
+    fn native_list_error_kind(input: &str) -> ParseErrorKind {
+        test_logging::enable();
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(input);
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("first content token should follow input start");
+
+        RULE_LIST
+            .try_consume(&mut parser)
+            .expect_err("list should fail")
+            .kind()
+    }
+
+    #[test]
+    fn native_list_without_space_after_marker_fails() {
+        assert_eq!(
+            native_list_error_kind("*No space"),
+            ParseErrorKind::RuleFailed,
+        );
+    }
+
+    #[test]
+    fn native_list_indented_non_marker_fails() {
+        assert_eq!(
+            native_list_error_kind("  plain"),
+            ParseErrorKind::RuleFailed,
+        );
+    }
+
+    #[test]
+    fn native_list_depth_limit_returns_error() {
+        let input = format!("{}* too deep", " ".repeat(MAX_LIST_DEPTH + 1));
+        assert_eq!(
+            native_list_error_kind(&input),
+            ParseErrorKind::ListDepthExceeded,
+        );
+    }
+
+    #[test]
+    fn native_list_skips_empty_rows_and_builds_item() {
+        let (list_type, item_count, has_regular_item) =
+            parse_native_list("* \n* item").expect("list should parse");
+
+        assert_eq!(list_type, ListType::Bullet);
+        assert_eq!(item_count, 1);
+        assert!(has_regular_item);
+    }
+}

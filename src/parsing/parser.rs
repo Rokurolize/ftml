@@ -623,36 +623,6 @@ fn make_shared_vec<T>() -> Rc<RefCell<Vec<T>>> {
 
 // Tests
 
-#[cfg(test)]
-#[derive(Debug)]
-struct TestLogger;
-
-#[cfg(test)]
-impl log::Log for TestLogger {
-    fn enabled(&self, _metadata: &log::Metadata<'_>) -> bool {
-        true
-    }
-
-    // This test logger only exercises logging call sites; it does not capture output.
-    fn log(&self, _record: &log::Record<'_>) {}
-
-    fn flush(&self) {}
-}
-
-#[cfg(test)]
-static TEST_LOGGER: TestLogger = TestLogger;
-
-#[cfg(test)]
-static TEST_LOGGER_INIT: std::sync::Once = std::sync::Once::new();
-
-#[cfg(test)]
-fn enable_test_logging() {
-    TEST_LOGGER_INIT.call_once(|| {
-        let _ = log::set_logger(&TEST_LOGGER);
-        log::set_max_level(log::LevelFilter::Trace);
-    });
-}
-
 #[test]
 fn parser_newline_flag() {
     use crate::layout::Layout;
@@ -699,7 +669,7 @@ fn parser_token_pair_conditions_cover_all_outcomes() {
     use crate::layout::Layout;
     use crate::settings::WikitextMode;
 
-    enable_test_logging();
+    super::test_logging::enable();
 
     let page_info = PageInfo::dummy();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
@@ -798,7 +768,7 @@ fn parser_append_shared_items_and_optional_spaces_cover_helpers() {
     use crate::layout::Layout;
     use crate::settings::WikitextMode;
 
-    enable_test_logging();
+    super::test_logging::enable();
 
     let page_info = PageInfo::dummy();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);

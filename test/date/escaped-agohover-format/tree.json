@@ -1,0 +1,32 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "date",
+                        "data": {
+                            "value": "2009-12-25",
+                            "format": "%Y\t",
+                            "hover": true
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "date",
+                        "data": {
+                            "value": "2009-12-25",
+                            "format": "%Y\t",
+                            "hover": false
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -188,6 +188,20 @@ mod tests {
         assert!(all_errors.is_empty());
         assert!(!all_paragraph_safe);
 
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("errors");
+        let parser = Parser::new(&tokenization, &page_info, &settings);
+        let existing_error = parser.make_err(ParseErrorKind::NoRulesMatch);
+        let appended_error = parser.make_err(ParseErrorKind::RuleFailed);
+        let mut all_errors = vec![existing_error.clone()];
+        let mut all_paragraph_safe = true;
+        let chained = ParseSuccess::new("errors", vec![appended_error.clone()], true)
+            .chain(&mut all_errors, &mut all_paragraph_safe);
+        assert_eq!(chained, "errors");
+        assert_eq!(all_errors, vec![existing_error, appended_error]);
+        assert!(all_paragraph_safe);
+
         assert!(
             ParseSuccess::new((), Vec::new(), true)
                 .into_errors()

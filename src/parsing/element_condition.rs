@@ -122,3 +122,15 @@ impl ElementConditionType {
         self.into()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn element_condition_type_names_match_variant_names() {
+        assert_eq!(ElementConditionType::Required.name(), "Required");
+        assert_eq!(ElementConditionType::Prohibited.name(), "Prohibited");
+        assert_eq!(ElementConditionType::Present.name(), "Present");
+    }
+}

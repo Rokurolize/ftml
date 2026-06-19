@@ -46,3 +46,15 @@ pub fn parse_boolean<S: AsRef<str>>(s: S) -> Result<bool, NonBooleanValue> {
 /// for instance `"yes"` or `"true"`.
 #[derive(Debug)]
 pub struct NonBooleanValue;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_boolean_rejects_non_boolean_values() {
+        assert!(parse_boolean("maybe").is_err());
+        assert!(parse_boolean("").is_err());
+        assert!(parse_boolean("2").is_err());
+    }
+}

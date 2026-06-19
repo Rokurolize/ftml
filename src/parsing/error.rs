@@ -272,4 +272,32 @@ mod test {
         assert_eq!(converted.kind(), ParseErrorKind::RuleFailed);
         assert_eq!(error.span(), 1..6);
     }
+
+    #[test]
+    fn parse_error_serializes_span_as_tuple() {
+        let error = ParseError {
+            token: Token::Identifier,
+            rule: Cow::Borrowed("rule-text"),
+            span: 2..5,
+            kind: ParseErrorKind::RuleFailed,
+        };
+
+        let value = serde_json::to_value(&error).expect("parse error should serialize");
+
+        assert_eq!(value["span"], serde_json::json!([2, 5]));
+
+        let round_tripped: ParseError = serde_json::from_value(value.clone())
+            .expect("serialized parse error should deserialize");
+        assert_eq!(round_tripped, error);
+
+        let mut object_span_value = value;
+        object_span_value["span"] = serde_json::json!({
+            "start": 2,
+            "end": 5,
+        });
+
+        let object_span_error: ParseError = serde_json::from_value(object_span_value)
+            .expect("object-shaped spans should remain deserializable");
+        assert_eq!(object_span_error, error);
+    }
 }

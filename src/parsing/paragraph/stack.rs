@@ -171,3 +171,40 @@ impl<'t> ParagraphStack<'t> {
         self.finished
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn paragraph<'t>(elements: Vec<Element<'t>>) -> Element<'t> {
+        Element::Container(Container::new(
+            ContainerType::Paragraph,
+            elements,
+            AttributeMap::new(),
+        ))
+    }
+
+    #[test]
+    fn pop_line_break_removes_trailing_break_before_finishing() {
+        let mut stack = ParagraphStack::new();
+
+        stack.push_element(text!("alpha"), true);
+        stack.push_element(Element::LineBreak, true);
+        stack.pop_line_break();
+
+        assert_eq!(stack.into_elements(), vec![paragraph(vec![text!("alpha")])]);
+    }
+
+    #[test]
+    fn non_paragraph_safe_elements_finish_pending_paragraph() {
+        let mut stack = ParagraphStack::new();
+
+        stack.push_element(text!("alpha"), true);
+        stack.push_element(Element::HorizontalRule, false);
+
+        assert_eq!(
+            stack.into_elements(),
+            vec![paragraph(vec![text!("alpha")]), Element::HorizontalRule],
+        );
+    }
+}

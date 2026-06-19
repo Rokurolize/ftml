@@ -68,19 +68,37 @@ mod tests {
 
     #[test]
     fn module_parse_output_converts_into_elements() {
-        let module_output = ModuleParseOutput::from(Module::Rate);
+        let module_output = ModuleParseOutput::Module(Module::Rate);
         let module_elements = Elements::from(module_output);
         assert_eq!(
             module_elements,
             Elements::Single(Element::Module(Module::Rate))
         );
 
-        let element_output = ModuleParseOutput::from(Element::LineBreak);
+        let element_output = ModuleParseOutput::Element(Element::LineBreak);
         let element_elements = Elements::from(element_output);
         assert_eq!(element_elements, Elements::Single(Element::LineBreak));
 
-        let none_output = ModuleParseOutput::from(None::<()>);
+        let none_output = ModuleParseOutput::None;
         let none_elements = Elements::from(none_output);
         assert_eq!(none_elements, Elements::None);
+    }
+
+    #[test]
+    fn module_parse_output_from_conversions_preserve_variants() {
+        assert!(matches!(
+            ModuleParseOutput::from(Module::Rate),
+            ModuleParseOutput::Module(Module::Rate),
+        ));
+
+        assert!(matches!(
+            ModuleParseOutput::from(Element::LineBreak),
+            ModuleParseOutput::Element(Element::LineBreak),
+        ));
+
+        assert!(matches!(
+            ModuleParseOutput::from(None::<()>),
+            ModuleParseOutput::None,
+        ));
     }
 }

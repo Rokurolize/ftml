@@ -95,3 +95,21 @@ fn test_parse() {
     assert_eq!(KarmaLevel::new(9), None);
     assert_eq!(KarmaLevel::new(10), None);
 }
+
+#[test]
+fn karma_level_values_and_display() {
+    let cases = [
+        (KarmaLevel::Zero, 0, "0"),
+        (KarmaLevel::One, 1, "1"),
+        (KarmaLevel::Two, 2, "2"),
+        (KarmaLevel::Three, 3, "3"),
+        (KarmaLevel::Four, 4, "4"),
+        (KarmaLevel::Five, 5, "5"),
+    ];
+
+    for (level, value, display) in cases {
+        assert_eq!(level.value(), value);
+        assert_eq!(u8::from(level), value);
+        assert_eq!(level.to_string(), display);
+    }
+}

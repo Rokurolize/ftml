@@ -148,3 +148,80 @@ impl<'r, 't, T> From<ParseSuccess<'r, 't, T>> for ParseSuccessTuple<T> {
         (item, errors, paragraph_safe)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::parsing::{ParseErrorKind, ParserWrap};
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{
+        AcceptsPartial, AttributeMap, Element, Elements, ListItem, PartialElement,
+    };
+
+    #[test]
+    fn parse_success_helpers_preserve_state() {
+        let mapped =
+            ParseSuccess::new(7, Vec::new(), false).map(|value| value.to_string());
+        assert_eq!(mapped.item, "7");
+        assert!(mapped.errors.is_empty());
+        assert!(!mapped.paragraph_safe);
+
+        let mapped_ok = ParseSuccess::new(5, Vec::new(), true)
+            .map_ok(|value| value + 1)
+            .expect("map_ok should wrap mapped output");
+        assert_eq!(mapped_ok.item, 6);
+        assert!(mapped_ok.paragraph_safe);
+
+        let (item, errors, paragraph_safe): ParseSuccessTuple<_> =
+            ParseSuccess::new("tuple", Vec::new(), true).into();
+        assert_eq!(item, "tuple");
+        assert!(errors.is_empty());
+        assert!(paragraph_safe);
+
+        let mut all_errors = Vec::new();
+        let mut all_paragraph_safe = true;
+        let chained = ParseSuccess::new("chained", Vec::new(), false)
+            .chain(&mut all_errors, &mut all_paragraph_safe);
+        assert_eq!(chained, "chained");
+        assert!(all_errors.is_empty());
+        assert!(!all_paragraph_safe);
+
+        assert!(
+            ParseSuccess::new((), Vec::new(), true)
+                .into_errors()
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn check_partials_accepts_matching_partial_only() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("* item");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+
+        let item = Element::Partial(PartialElement::ListItem(ListItem::Elements {
+            attributes: AttributeMap::new(),
+            elements: vec![text!("item")],
+        }));
+
+        let rejected =
+            ParseSuccess::new(Elements::Single(item.clone()), Vec::new(), true)
+                .check_partials(&parser);
+        let error = rejected.expect_err("partial should be rejected outside its parent");
+        assert_eq!(error.kind(), ParseErrorKind::ListItemOutsideList);
+
+        {
+            let parser = ParserWrap::new(&mut parser, AcceptsPartial::ListItem);
+            ParseSuccess::new(Elements::Single(item), Vec::new(), true)
+                .check_partials(&parser)
+                .expect("matching partial should be accepted");
+        }
+
+        ParseSuccess::new(Elements::None, Vec::new(), true)
+            .check_partials(&parser)
+            .expect("plain element list should not require a partial context");
+    }
+}

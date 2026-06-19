@@ -145,8 +145,38 @@ struct RenderPartial<'a> {
 }
 
 #[cfg(test)]
+#[derive(Debug)]
+struct TestLogger;
+
+#[cfg(test)]
+impl log::Log for TestLogger {
+    fn enabled(&self, _metadata: &log::Metadata<'_>) -> bool {
+        true
+    }
+
+    // This test logger only exercises logging call sites; it does not capture output.
+    fn log(&self, _record: &log::Record<'_>) {}
+
+    fn flush(&self) {}
+}
+
+#[cfg(test)]
+static TEST_LOGGER: TestLogger = TestLogger;
+
+#[cfg(test)]
+static TEST_LOGGER_INIT: std::sync::Once = std::sync::Once::new();
+
+#[cfg(test)]
+fn enable_test_logging() {
+    TEST_LOGGER_INIT.call_once(|| {
+        let _ = log::set_logger(&TEST_LOGGER);
+        log::set_max_level(log::LevelFilter::Trace);
+    });
+}
+
+#[cfg(test)]
 mod tests {
-    use super::TextRender;
+    use super::{TextRender, enable_test_logging};
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::render::Render;
@@ -155,6 +185,8 @@ mod tests {
 
     #[test]
     fn text_render_entrypoints_trim_outer_newlines() {
+        enable_test_logging();
+
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let elements = vec![Element::LineBreak, text!("body"), Element::LineBreak];

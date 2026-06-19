@@ -1,0 +1,26 @@
+QUOTE
+> quoted
+
+BULLET
+* bullet
+
+NUMBERED
+# numbered
+
+HEADING
++* heading
+
+CENTER
+= centered
+
+HORIZONTAL
+----
+
+CLEAR LEFT
+~~~~<
+
+CLEAR RIGHT
+~~~~>
+
+CLEAR BOTH
+~~~~

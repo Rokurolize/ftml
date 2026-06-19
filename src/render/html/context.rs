@@ -376,6 +376,7 @@ mod tests {
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::VariableMap;
     use std::sync::LazyLock;
 
     fn context<'a>(info: &'a PageInfo<'a>) -> HtmlContext<'a, 'static, 'static, 'static> {
@@ -426,5 +427,108 @@ mod tests {
         assert_eq!(output.backlinks.included_pages, vec![page_ref]);
         assert!(output.backlinks.internal_links.is_empty());
         assert!(output.backlinks.external_links.is_empty());
+    }
+
+    #[test]
+    fn html_context_exposes_render_state_and_output() {
+        static HANDLE: Handle = Handle;
+
+        let mut info = PageInfo::dummy();
+        info.tags = vec![cow!("alpha"), cow!("beta")];
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let table_of_contents = [Element::Text(cow!("toc entry"))];
+        let footnotes = [vec![Element::Text(cow!("footnote"))]];
+        let mut bibliography = Bibliography::new();
+        bibliography.add(cow!("ref"), vec![Element::Text(cow!("reference"))]);
+        let mut bibliographies = BibliographyList::new();
+        bibliographies.push(bibliography);
+
+        let mut ctx = HtmlContext::new(
+            &info,
+            &HANDLE,
+            &settings,
+            &table_of_contents,
+            &footnotes,
+            &bibliographies,
+            16,
+        );
+
+        assert_eq!(ctx.info().page, "some-page");
+        assert_eq!(ctx.settings().layout, Layout::Wikidot);
+        assert_eq!(ctx.layout(), Layout::Wikidot);
+        assert!(std::ptr::eq(ctx.handle(), &HANDLE));
+        assert_eq!(ctx.language(), "default");
+        assert_eq!(ctx.table_of_contents(), table_of_contents.as_slice());
+        assert_eq!(ctx.footnotes(), footnotes.as_slice());
+        assert_eq!(
+            ctx.get_footnote(NonZeroUsize::new(1).unwrap()),
+            Some(footnotes[0].as_slice()),
+        );
+        assert!(ctx.get_footnote(NonZeroUsize::new(2).unwrap()).is_none());
+        assert_eq!(ctx.get_bibliography(0).get("ref").unwrap().0, 1);
+        assert_eq!(ctx.get_bibliography_ref("ref").unwrap().0, 1);
+        assert!(ctx.get_bibliography_ref("missing").is_none());
+
+        assert_eq!(ctx.variables().get("name"), None);
+        let mut variables = VariableMap::new();
+        variables.insert(cow!("name"), cow!("value"));
+        ctx.variables_mut().push_scope(&variables);
+        assert_eq!(ctx.variables().get("name"), Some("value"));
+        ctx.variables_mut().pop_scope();
+        assert_eq!(ctx.variables().get("name"), None);
+
+        assert_eq!(ctx.next_code_snippet_index().get(), 1);
+        assert_eq!(ctx.next_code_snippet_index().get(), 2);
+        assert_eq!(ctx.next_equation_index().get(), 1);
+        assert_eq!(ctx.next_equation_index().get(), 2);
+        assert_eq!(ctx.next_footnote_index().get(), 1);
+        assert_eq!(ctx.next_footnote_index().get(), 2);
+        assert_eq!(ctx.next_table_of_contents_index(), Some(0));
+        assert_eq!(NextIndex::<TableOfContentsIndex>::next(&mut ctx), Some(1));
+
+        write!(&mut ctx, "raw").expect("context write should succeed");
+        ctx.push_raw(' ');
+        ctx.push_raw_str("<tag>");
+        ctx.push_escaped(" & ");
+
+        let output = HtmlOutput::from(ctx);
+        assert_eq!(output.body, "raw <tag> &amp; ");
+        assert_eq!(output.meta.len(), 4);
+        assert_eq!(output.meta[0].tag_type, HtmlMetaType::HttpEquiv);
+        assert_eq!(output.meta[0].name, "Content-Type");
+        assert!(output.meta[1].value.contains("Wikidot (legacy)"));
+        assert_eq!(output.meta[2].value, "A page for the age");
+        assert_eq!(output.meta[3].value, "alpha,beta");
+    }
+
+    #[test]
+    fn html_context_tracks_links_and_page_existence() {
+        let info = PageInfo::dummy();
+        let mut ctx = context(&info);
+        let local_page = PageRef::page_only("local page");
+        let target_page = PageRef::page_only("target page");
+        let missing_page = PageRef::page_only("missing");
+        let present_page = PageRef::page_and_site("other site", "present page");
+
+        ctx.add_link(&LinkLocation::Url(cow!("javascript:;")));
+        ctx.add_link(&LinkLocation::Url(cow!("/local page")));
+        ctx.add_link(&LinkLocation::Url(cow!("https://example.com/path")));
+        ctx.add_link(&LinkLocation::Page(target_page.clone()));
+
+        assert!(!ctx.page_exists(&missing_page));
+        assert!(!ctx.page_exists(&missing_page));
+        assert!(ctx.page_exists(&present_page));
+        assert!(ctx.page_exists(&present_page));
+
+        let output = HtmlOutput::from(ctx);
+        assert_eq!(output.backlinks.included_pages, Vec::<PageRef>::new());
+        assert_eq!(
+            output.backlinks.internal_links,
+            vec![local_page, target_page]
+        );
+        assert_eq!(
+            output.backlinks.external_links,
+            vec![cow!("https://example.com/path")]
+        );
     }
 }

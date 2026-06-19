@@ -100,3 +100,53 @@ where
 
     Ok((slice, last))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::parsing::rule::impls::RULE_TEXT;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn collect_text_entrypoints_return_slice_and_terminator() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        let tokenization = crate::tokenize("alpha]]tail");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("identifier should follow input start");
+
+        let slice = collect_text(
+            &mut parser,
+            RULE_TEXT,
+            &[ParseCondition::current(Token::RightBlock)],
+            &[],
+            None,
+        )
+        .expect("text should collect until the right block token");
+
+        assert_eq!(slice, "alpha");
+        assert_eq!(parser.current().slice, "tail");
+
+        let tokenization = crate::tokenize("]]tail");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("right block should follow input start");
+
+        let (slice, last) = collect_text_keep(
+            &mut parser,
+            RULE_TEXT,
+            &[ParseCondition::current(Token::RightBlock)],
+            &[],
+            None,
+        )
+        .expect("empty text should still stop at the right block token");
+
+        assert_eq!(slice, "");
+        assert_eq!(last.token, Token::RightBlock);
+        assert_eq!(parser.current().slice, "tail");
+    }
+}

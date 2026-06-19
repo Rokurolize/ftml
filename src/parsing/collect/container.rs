@@ -73,3 +73,45 @@ pub fn collect_container<'r, 't>(
         errors,
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::parsing::rule::impls::RULE_TEXT;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn collect_container_wraps_consumed_elements() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("alpha]]tail");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("identifier should follow input start");
+
+        let success = collect_container(
+            &mut parser,
+            RULE_TEXT,
+            ContainerType::Bold,
+            &[ParseCondition::current(Token::RightBlock)],
+            &[],
+            None,
+        )
+        .expect("container should collect until the right block token");
+
+        assert!(success.paragraph_safe);
+        assert!(success.errors.is_empty());
+
+        match success.item {
+            Elements::Single(Element::Container(container)) => {
+                assert_eq!(container.ctype(), ContainerType::Bold);
+                assert_eq!(container.elements(), &[text!("alpha")]);
+                assert!(container.attributes().get().is_empty());
+            }
+            other => panic!("expected one container, got {other:?}"),
+        }
+
+        assert_eq!(parser.current().slice, "tail");
+    }
+}

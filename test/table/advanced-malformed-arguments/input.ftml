@@ -1,0 +1,19 @@
+[[table bad=1]]
+[[/table]]
+
+[[table]]
+[[row bad=1]]
+[[/row]]
+[[/table]]
+
+[[table]]
+[[row]]
+[[cell bad=1]]x[[/cell]]
+[[/row]]
+[[/table]]
+
+[[table]]
+[[row]]
+[[hcell bad=1]]x[[/hcell]]
+[[/row]]
+[[/table]]

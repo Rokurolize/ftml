@@ -35,7 +35,7 @@ fn try_consume_fn<'r, 't>(
     // This is like a poor man's block, it's "((bibcite <label>))"
     let current = parser.current();
     if current.token != Token::Identifier
-        && !current.slice.eq_ignore_ascii_case("bibcite")
+        || !current.slice.eq_ignore_ascii_case("bibcite")
     {
         warn!("'((' not followed by 'bibcite', failing rule");
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -65,4 +65,63 @@ fn try_consume_fn<'r, 't>(
         label: cow!(label),
         brackets: false,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn inline_bibcite_rejects_wrong_marker() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("(( label))");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("left parentheses should follow input start");
+        parser.set_rule(RULE_BIBCITE);
+
+        let error = RULE_BIBCITE
+            .try_consume(&mut parser)
+            .expect_err("non-bibcite marker should fail");
+        assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+    }
+
+    #[test]
+    fn inline_bibcite_rejects_wrong_identifier() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("((notbibcite label))");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("left parentheses should follow input start");
+        parser.set_rule(RULE_BIBCITE);
+
+        let error = RULE_BIBCITE
+            .try_consume(&mut parser)
+            .expect_err("wrong marker identifier should fail");
+        assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+    }
+
+    #[test]
+    fn inline_bibcite_requires_label_separator() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("((bibcite))");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("left parentheses should follow input start");
+        parser.set_rule(RULE_BIBCITE);
+
+        let error = RULE_BIBCITE
+            .try_consume(&mut parser)
+            .expect_err("missing separator should fail");
+        assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+    }
 }

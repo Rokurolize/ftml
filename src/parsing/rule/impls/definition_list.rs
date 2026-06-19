@@ -178,3 +178,100 @@ fn parse_item<'r, 't>(
 
     ok!(false; (item, should_break), errors)
 }
+
+#[cfg(test)]
+#[derive(Debug)]
+struct TestLogger;
+
+#[cfg(test)]
+impl log::Log for TestLogger {
+    fn enabled(&self, _metadata: &log::Metadata<'_>) -> bool {
+        true
+    }
+
+    // This test logger only exercises logging call sites; it does not capture output.
+    fn log(&self, _record: &log::Record<'_>) {}
+
+    fn flush(&self) {}
+}
+
+#[cfg(test)]
+static TEST_LOGGER: TestLogger = TestLogger;
+
+#[cfg(test)]
+static TEST_LOGGER_INIT: std::sync::Once = std::sync::Once::new();
+
+#[cfg(test)]
+fn enable_test_logging() {
+    TEST_LOGGER_INIT.call_once(|| {
+        let _ = log::set_logger(&TEST_LOGGER);
+        log::set_max_level(log::LevelFilter::Trace);
+    });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn definition_list_stops_before_following_paragraph() {
+        enable_test_logging();
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(": Key : Value\nPlain paragraph");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty());
+        assert_eq!(tree.elements.len(), 2);
+
+        match &tree.elements[0] {
+            Element::DefinitionList(items) => {
+                assert_eq!(items.len(), 1);
+                assert_eq!(items[0].key_string, "Key");
+                assert_eq!(items[0].key_elements, [text!("Key")]);
+                assert_eq!(items[0].value_elements, [text!("Value")]);
+            }
+            other => panic!("expected definition list, got {other:?}"),
+        }
+
+        match &tree.elements[1] {
+            Element::Container(container) => {
+                assert_eq!(
+                    container.elements(),
+                    &[text!("Plain"), text!(" "), text!("paragraph")],
+                );
+            }
+            other => panic!("expected following paragraph, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_item_rejects_non_definition_starts() {
+        enable_test_logging();
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        let tokenization = crate::tokenize("alpha beta");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("identifier should follow input start");
+        parser.step().expect("whitespace should follow identifier");
+
+        let error = parse_item(&mut parser)
+            .expect_err("mid-line whitespace should not start an item");
+        assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+
+        let tokenization = crate::tokenize(":Key:Value");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("colon should follow input start");
+        parser.set_rule(RULE_DEFINITION_LIST);
+
+        let error =
+            parse_item(&mut parser).expect_err("missing space should reject the item");
+        assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+    }
+}

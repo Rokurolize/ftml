@@ -1,0 +1,20 @@
+[
+    {
+        "token": "input-end",
+        "rule": "link-triple",
+        "span": [30, 30],
+        "kind": "rule-failed"
+    },
+    {
+        "token": "left-link",
+        "rule": "fallback",
+        "span": [0, 3],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-link",
+        "rule": "fallback",
+        "span": [27, 30],
+        "kind": "no-rules-match"
+    }
+]

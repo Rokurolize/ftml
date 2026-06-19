@@ -1,0 +1,45 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "[[["
+                    },
+                    {
+                        "element": "text",
+                        "data": "!"
+                    },
+                    {
+                        "element": "text",
+                        "data": "banana"
+                    },
+                    {
+                        "element": "text",
+                        "data": ":"
+                    },
+                    {
+                        "element": "text",
+                        "data": "Missing"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "provider"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]]"
+                    }
+                ]
+            }
+        }
+    ]
+}

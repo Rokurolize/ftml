@@ -38,3 +38,22 @@ pub const RULE_PAGE: Rule = Rule {
 fn try_consume_fn<'r, 't>(_: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
     panic!("Manual page rule should not be executed directly!")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    #[should_panic(expected = "Manual page rule should not be executed directly")]
+    fn page_rule_panics_when_executed_directly() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("text");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+
+        let _ = RULE_PAGE.try_consume(&mut parser);
+    }
+}

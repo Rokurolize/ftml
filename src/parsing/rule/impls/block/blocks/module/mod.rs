@@ -95,3 +95,36 @@ pub type ModuleParseFn = for<'r, 't> fn(
     &'t str,
     Arguments<'t>,
 ) -> ParseResult<'r, 't, ModuleParseOutput<'t>>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn module_rule_metadata_helpers_cover_debug_and_rule() {
+        let rule = modules::MODULE_RATE.rule();
+        assert_eq!(rule.name(), "module-rate");
+
+        let debug = format!("{:?}", modules::MODULE_RATE);
+        assert!(debug.contains("ModuleRule"));
+        assert!(debug.contains("module-rate"));
+        assert!(debug.contains("accepts_names"));
+        assert!(debug.contains("parse_fn"));
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Pseudo rule for this module should not be executed directly"
+    )]
+    fn module_rule_pseudo_rule_panics_when_executed() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[module Rate]]");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+
+        let _ = modules::MODULE_RATE.rule().try_consume(&mut parser);
+    }
+}

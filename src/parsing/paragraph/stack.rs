@@ -207,4 +207,52 @@ mod tests {
             vec![paragraph(vec![text!("alpha")]), Element::HorizontalRule],
         );
     }
+
+    #[test]
+    fn empty_stack_and_errors_convert_into_result() {
+        use crate::data::PageInfo;
+        use crate::layout::Layout;
+        use crate::parsing::Parser;
+        use crate::settings::{WikitextMode, WikitextSettings};
+
+        let mut stack = ParagraphStack::new();
+        assert!(stack.current_empty());
+
+        stack.reserve_elements(2);
+        assert!(stack.build_paragraph().is_none());
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("body");
+        let parser = Parser::new(&tokenization, &page_info, &settings);
+        let error = parser.make_err(ParseErrorKind::RuleFailed);
+        let mut errors = vec![error.clone()];
+
+        stack.push_errors(&mut errors);
+
+        assert!(errors.is_empty());
+
+        let success = stack
+            .into_result()
+            .expect("empty paragraph stack should still produce a result");
+
+        assert!(success.item.is_empty());
+        assert_eq!(success.errors, vec![error]);
+        assert!(success.paragraph_safe);
+    }
+
+    #[test]
+    fn build_paragraph_returns_container_and_clears_current_stack() {
+        let mut stack = ParagraphStack::new();
+
+        stack.push_element(text!("alpha"), true);
+
+        assert_eq!(
+            stack.build_paragraph(),
+            Some(paragraph(vec![text!("alpha")]))
+        );
+        assert!(stack.current_empty());
+        assert!(stack.build_paragraph().is_none());
+        assert!(stack.into_elements().is_empty());
+    }
 }

@@ -137,3 +137,39 @@ pub type BlockParseFn = for<'r, 't> fn(
     bool,
     bool,
 ) -> ParseResult<'r, 't, Elements<'t>>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn block_rule_metadata_helpers_cover_debug_and_rule() {
+        let rule = blocks::BLOCK_DIV.rule();
+        assert_eq!(rule.name(), "block-div");
+
+        let debug = format!("{:?}", blocks::BLOCK_DIV);
+        assert!(debug.contains("BlockRule"));
+        assert!(debug.contains("block-div"));
+        assert!(debug.contains("accepts_names"));
+        assert!(debug.contains("accepts_star"));
+        assert!(debug.contains("accepts_score"));
+        assert!(debug.contains("accepts_newlines"));
+        assert!(debug.contains("parse_fn"));
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Pseudo rule for this block should not be executed directly"
+    )]
+    fn block_rule_pseudo_rule_panics_when_executed() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[div]]");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+
+        let _ = blocks::BLOCK_DIV.rule().try_consume(&mut parser);
+    }
+}

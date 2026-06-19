@@ -82,6 +82,16 @@ fn isolate_user_ids() {
     // Trivial
     test!("", vec![]);
 
+    // Named anchors [[#]]
+    test!(
+        r#"[[# apple]] X"#,
+        vec![Element::Container(Container::new(
+            ContainerType::Paragraph,
+            vec![Element::AnchorName(cow!("u-apple")), text!(" "), text!("X"),],
+            AttributeMap::new(),
+        ))],
+    );
+
     // Anchor block [[a]]
     test!(
         r#"[[a id="apple"]]X[[/a]]"#,

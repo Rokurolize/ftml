@@ -1,0 +1,50 @@
+{
+    "elements": [
+        {
+            "element": "table",
+            "data": {
+                "type": "advanced",
+                "attributes": {
+                    "class": "data"
+                },
+                "rows": [
+                    {
+                        "attributes": {
+                            "data-id": "r1"
+                        },
+                        "cells": [
+                            {
+                                "header": true,
+                                "column-span": 2,
+                                "align": null,
+                                "attributes": {
+                                    "data-name": "heading"
+                                },
+                                "elements": [
+                                    {
+                                        "element": "text",
+                                        "data": "Group"
+                                    }
+                                ]
+                            },
+                            {
+                                "header": false,
+                                "column-span": 1,
+                                "align": null,
+                                "attributes": {
+                                    "data-name": "value"
+                                },
+                                "elements": [
+                                    {
+                                        "element": "text",
+                                        "data": "Value"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

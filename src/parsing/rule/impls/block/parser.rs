@@ -448,3 +448,192 @@ where
         self.set_rule(block_rule.rule());
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::super::blocks::{
+        BLOCK_CODE, BLOCK_IFRAME, BLOCK_LATER, BLOCK_LINES, BLOCK_SPAN,
+    };
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn block_parser_reads_block_names_and_end_blocks() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+
+        let tokenization = crate::tokenize("[[span]]");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("block start should follow input start");
+
+        let (name, in_head) = parser
+            .get_block_name(false)
+            .expect("block name should be parsed");
+        assert_eq!(name, "span");
+        assert!(!in_head);
+        assert_eq!(parser.current().token, Token::InputEnd);
+
+        let tokenization = crate::tokenize("[[*user Example]]");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("star block should follow input start");
+
+        let (name, in_head) = parser
+            .get_block_name(true)
+            .expect("star block name should be parsed");
+        assert_eq!(name, "user");
+        assert!(in_head);
+        assert_eq!(parser.current().slice, "Example");
+
+        let tokenization = crate::tokenize("[[/span]]");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("end block should follow input start");
+        parser.set_block(&BLOCK_SPAN);
+
+        let name = parser
+            .get_end_block()
+            .expect("end block name should be parsed");
+        assert_eq!(name, "span");
+        assert_eq!(parser.current().token, Token::InputEnd);
+    }
+
+    #[test]
+    fn block_parser_reads_head_argument_forms() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+
+        let tokenization =
+            crate::tokenize("[[span class=\"one\" data-test=\"two\"]]body[[/span]]");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("block start should follow input start");
+        parser.set_block(&BLOCK_SPAN);
+
+        let (name, in_head) = parser
+            .get_block_name(false)
+            .expect("block name should be parsed");
+        assert_eq!(name, "span");
+        assert!(in_head);
+
+        let mut arguments = parser
+            .get_head_map(&BLOCK_SPAN, in_head)
+            .expect("head map should be parsed");
+        assert_eq!(arguments.get("class").as_deref(), Some("one"));
+        assert_eq!(arguments.get("data-test").as_deref(), Some("two"));
+        assert!(arguments.is_empty());
+        assert_eq!(parser.current().slice, "body");
+
+        let tokenization = crate::tokenize("[[iframe https://example.com width=\"5\"]]");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("block start should follow input start");
+        parser.set_block(&BLOCK_IFRAME);
+
+        let (name, in_head) = parser
+            .get_block_name(false)
+            .expect("block name should be parsed");
+        assert_eq!(name, "iframe");
+        assert!(in_head);
+
+        let (subname, mut arguments) = parser
+            .get_head_name_map(&BLOCK_IFRAME, in_head)
+            .expect("head name map should be parsed");
+        assert_eq!(subname, "https://example.com");
+        assert_eq!(arguments.get("width").as_deref(), Some("5"));
+        assert!(arguments.is_empty());
+
+        let tokenization = crate::tokenize("[[lines 3]]");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("block start should follow input start");
+        parser.set_block(&BLOCK_LINES);
+
+        let (name, in_head) = parser
+            .get_block_name(false)
+            .expect("block name should be parsed");
+        assert_eq!(name, "lines");
+        assert!(in_head);
+
+        let value = parser
+            .get_head_value(&BLOCK_LINES, in_head, |_, value| {
+                Ok(value
+                    .expect("value should be present")
+                    .parse::<usize>()
+                    .unwrap())
+            })
+            .expect("head value should be parsed");
+        assert_eq!(value, 3);
+
+        let tokenization = crate::tokenize("[[later]]");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("block start should follow input start");
+        parser.set_block(&BLOCK_LATER);
+
+        let (name, in_head) = parser
+            .get_block_name(false)
+            .expect("block name should be parsed");
+        assert_eq!(name, "later");
+        assert!(!in_head);
+        parser
+            .get_head_none(&BLOCK_LATER, in_head)
+            .expect("empty head should be accepted");
+    }
+
+    #[test]
+    fn block_parser_reads_body_text_and_head_errors() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+
+        let tokenization = crate::tokenize(
+            "[[code type=\"Rust\" name=\"Example\"]]\nfn main() {}\n[[/code]]",
+        );
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("block start should follow input start");
+        parser.set_block(&BLOCK_CODE);
+
+        let (name, in_head) = parser
+            .get_block_name(false)
+            .expect("block name should be parsed");
+        assert_eq!(name, "code");
+        assert!(in_head);
+
+        let mut arguments = parser
+            .get_head_map(&BLOCK_CODE, in_head)
+            .expect("code arguments should be parsed");
+        assert_eq!(arguments.get("type").as_deref(), Some("Rust"));
+        assert_eq!(arguments.get("name").as_deref(), Some("Example"));
+
+        let body = parser
+            .get_body_text(&BLOCK_CODE)
+            .expect("body text should be parsed");
+        assert_eq!(body, "fn main() {}");
+
+        let tokenization = crate::tokenize("[[iframe]]");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("block start should follow input start");
+        parser.set_block(&BLOCK_IFRAME);
+
+        let (name, in_head) = parser
+            .get_block_name(false)
+            .expect("block name should be parsed");
+        assert_eq!(name, "iframe");
+        assert!(!in_head);
+
+        let error = parser
+            .get_head_name_map(&BLOCK_IFRAME, in_head)
+            .expect_err("missing head name should be rejected");
+        assert_eq!(error.kind(), ParseErrorKind::BlockMissingName);
+    }
+}

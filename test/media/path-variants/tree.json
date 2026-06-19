@@ -1,0 +1,83 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "AUDIO"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "PAGE"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "audio",
+                        "data": {
+                            "source": {
+                                "type": "file2",
+                                "data": {
+                                    "page": "other-page",
+                                    "file": "sound.ogg"
+                                }
+                            },
+                            "alignment": null,
+                            "attributes": {}
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "VIDEO"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "SITE"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "video",
+                        "data": {
+                            "source": {
+                                "type": "file3",
+                                "data": {
+                                    "site": "other-site",
+                                    "page": "other-page",
+                                    "file": "movie.mp4"
+                                }
+                            },
+                            "alignment": null,
+                            "attributes": {}
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

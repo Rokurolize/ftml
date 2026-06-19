@@ -368,3 +368,11 @@ fn split_ago_hover_format_leaves_normal_format_unchanged() {
         (Some(Cow::Borrowed("%d. %m. %Y")), false)
     );
 }
+
+#[test]
+fn parse_date_supports_non_rfc3339_datetime_formats() {
+    assert_eq!(
+        parse_date("Tue, 1 Jul 2003 10:52:37 +0200").expect("RFC 2822 datetime"),
+        DateItem::from(datetime!(2003-07-01 10:52:37+02:00)),
+    );
+}

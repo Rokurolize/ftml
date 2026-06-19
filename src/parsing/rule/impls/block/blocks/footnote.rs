@@ -163,3 +163,72 @@ impl Drop for ParserWrap<'_, '_, '_> {
         self.parser.set_footnote_flag(false);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn footnote_rejects_nested_footnotes() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(
+            "[[footnote]]outer [[footnote]]inner[[/footnote]][[/footnote]]",
+        );
+        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.kind() == ParseErrorKind::FootnotesNested)
+        );
+    }
+
+    #[test]
+    fn footnote_keeps_single_non_paragraph_body_element() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[footnote]][[module Rate]][[/footnote]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty());
+        assert_eq!(tree.footnotes.len(), 1);
+        assert_eq!(tree.footnotes[0].len(), 1);
+        assert!(matches!(tree.footnotes[0][0], Element::Module(_)));
+    }
+
+    #[test]
+    fn footnote_block_rejects_unknown_arguments() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[footnoteblock bogus=\"true\"]]");
+        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments)
+        );
+    }
+
+    #[test]
+    fn parser_wrap_sets_and_resets_footnote_flag() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("text");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+
+        {
+            let mut wrapped = ParserWrap::new(&mut parser);
+            assert!(wrapped.in_footnote());
+
+            wrapped.set_footnote_block();
+        }
+
+        assert!(!parser.in_footnote());
+        assert!(parser.has_footnote_block());
+    }
+}

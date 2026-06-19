@@ -60,3 +60,25 @@ fn parse_fn<'r, 't>(
         brackets,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn block_bibcite_requires_label() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[bibcite]]");
+        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments)
+        );
+    }
+}

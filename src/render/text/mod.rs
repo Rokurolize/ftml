@@ -143,3 +143,36 @@ struct RenderPartial<'a> {
     bibliographies: &'a BibliographyList<'a>,
     wikitext_len: usize,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::TextRender;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{Element, SyntaxTree};
+
+    #[test]
+    fn text_render_entrypoints_trim_outer_newlines() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let elements = vec![Element::LineBreak, text!("body"), Element::LineBreak];
+
+        assert_eq!(
+            TextRender.render_partial(&elements, &page_info, &settings, 9),
+            "body",
+        );
+
+        let tree = SyntaxTree {
+            elements,
+            wikitext_len: 9,
+            ..SyntaxTree::default()
+        };
+        assert_eq!(TextRender.render(&tree, &page_info, &settings), "body");
+
+        let mut categorized = PageInfo::dummy();
+        categorized.category = Some(cow!("system"));
+        assert_eq!(TextRender.render(&tree, &categorized, &settings), "body");
+    }
+}

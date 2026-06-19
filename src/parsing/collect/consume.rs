@@ -70,3 +70,57 @@ pub fn collect_consume_keep<'r, 't>(
 
     ok!(paragraph_safe; (all_elements, last), errors)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::parsing::rule::impls::RULE_TEXT;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn collect_consume_entrypoints_return_elements_and_terminator() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        let tokenization = crate::tokenize("alpha]]tail");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("identifier should follow input start");
+
+        let success = collect_consume(
+            &mut parser,
+            RULE_TEXT,
+            &[ParseCondition::current(Token::RightBlock)],
+            &[],
+            None,
+        )
+        .expect("elements should collect until the right block token");
+
+        assert!(success.paragraph_safe);
+        assert!(success.errors.is_empty());
+        assert_eq!(success.item, vec![text!("alpha")]);
+        assert_eq!(parser.current().slice, "tail");
+
+        let tokenization = crate::tokenize("beta]]tail");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("identifier should follow input start");
+
+        let success = collect_consume_keep(
+            &mut parser,
+            RULE_TEXT,
+            &[ParseCondition::current(Token::RightBlock)],
+            &[],
+            None,
+        )
+        .expect("elements and terminator should collect until the right block token");
+
+        assert!(success.paragraph_safe);
+        assert!(success.errors.is_empty());
+
+        let (elements, last) = success.item;
+        assert_eq!(elements, vec![text!("beta")]);
+        assert_eq!(last.token, Token::RightBlock);
+        assert_eq!(parser.current().slice, "tail");
+    }
+}

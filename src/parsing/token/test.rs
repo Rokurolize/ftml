@@ -47,6 +47,18 @@ fn token_names_match_variant_names() {
 }
 
 #[test]
+#[should_panic(expected = "Received invalid pest rule")]
+fn get_from_rule_rejects_document_rule() {
+    Token::get_from_rule(Rule::document);
+}
+
+#[test]
+#[should_panic(expected = "Received invalid pest rule")]
+fn get_from_rule_rejects_token_rule() {
+    Token::get_from_rule(Rule::token);
+}
+
+#[test]
 fn tokens() {
     macro_rules! test {
         ($input:expr, $expected:expr $(,)?) => {{

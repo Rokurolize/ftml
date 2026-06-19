@@ -91,6 +91,14 @@ fn isolate_user_ids() {
             AttributeMap::new(),
         ))],
     );
+    test!(
+        r#"[[# u-apple]] X"#,
+        vec![Element::Container(Container::new(
+            ContainerType::Paragraph,
+            vec![Element::AnchorName(cow!("u-apple")), text!(" "), text!("X"),],
+            AttributeMap::new(),
+        ))],
+    );
 
     // Anchor block [[a]]
     test!(

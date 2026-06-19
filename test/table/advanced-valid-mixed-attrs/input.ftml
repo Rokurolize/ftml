@@ -1,0 +1,6 @@
+[[table class="data"]]
+[[row data-id="r1"]]
+[[hcell colspan="2" data-role="heading"]] Group [[/hcell]]
+[[cell colspan="0" data-role="value"]] Value [[/cell]]
+[[/row]]
+[[/table]]

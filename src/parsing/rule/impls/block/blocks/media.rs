@@ -149,3 +149,94 @@ fn parse_media_alignment<'r, 't>(
         float: false,
     }))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    fn parse_single_media(input: &str) -> Element<'static> {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let tokenization = crate::tokenize(input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "media block should parse cleanly");
+        assert_eq!(tree.elements.len(), 1);
+
+        let element = tree.elements.into_iter().next().unwrap().to_owned();
+        match element {
+            Element::Container(container) => {
+                assert_eq!(container.elements().len(), 1);
+                container.elements()[0].to_owned()
+            }
+            other => other,
+        }
+    }
+
+    #[test]
+    fn media_blocks_parse_audio_and_video_with_alignment() {
+        let audio = parse_single_media(
+            r#"[[audio filename.mp3 align="left" class="custom-audio"]]"#,
+        );
+        let video = parse_single_media(
+            r#"[[video filename.mp4 align="right" class="custom-video"]]"#,
+        );
+
+        match audio {
+            Element::Audio {
+                source,
+                alignment,
+                attributes,
+            } => {
+                assert_eq!(
+                    source,
+                    FileSource::File1 {
+                        file: cow!("filename.mp3"),
+                    },
+                );
+                assert_eq!(
+                    alignment,
+                    Some(FloatAlignment {
+                        align: Alignment::Left,
+                        float: false,
+                    }),
+                );
+                assert_eq!(
+                    attributes.get().get("class").map(|value| value.as_ref()),
+                    Some("custom-audio"),
+                );
+            }
+            other => panic!("expected audio element, got {other:?}"),
+        }
+
+        match video {
+            Element::Video {
+                source,
+                alignment,
+                attributes,
+            } => {
+                assert_eq!(
+                    source,
+                    FileSource::File1 {
+                        file: cow!("filename.mp4"),
+                    },
+                );
+                assert_eq!(
+                    alignment,
+                    Some(FloatAlignment {
+                        align: Alignment::Right,
+                        float: false,
+                    }),
+                );
+                assert_eq!(
+                    attributes.get().get("class").map(|value| value.as_ref()),
+                    Some("custom-video"),
+                );
+            }
+            other => panic!("expected video element, got {other:?}"),
+        }
+    }
+}

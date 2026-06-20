@@ -90,3 +90,28 @@ fn line_break_paragraph<'r, 't>(
 
     line_break(parser)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn line_break_skips_before_simple_table_starts() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for source in ["a\n|| b ||", "a\n||~ b ||", "a\n||> b ||", "a\n||= b ||"] {
+            let tokenization = crate::tokenize(source);
+            let mut parser = Parser::new(&tokenization, &page_info, &settings);
+
+            parser.step().expect("identifier should follow input start");
+            parser.step().expect("line break should follow identifier");
+
+            let result = line_break(&mut parser).expect("line break should parse");
+            assert_eq!(result.item, Elements::None);
+        }
+    }
+}

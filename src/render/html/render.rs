@@ -75,3 +75,22 @@ impl ItemRender for &'_ Vec<Element<'_>> {
         render_elements(ctx, self)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::super::test_utils::context;
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::render::html::output::HtmlOutput;
+
+    #[test]
+    fn item_render_for_element_delegates_to_element_renderer() {
+        let info = PageInfo::dummy();
+        let mut ctx = context(&info);
+        let element = Element::LineBreak;
+
+        (&element).render(&mut ctx);
+
+        assert_eq!(HtmlOutput::from(ctx).body, "<br>");
+    }
+}

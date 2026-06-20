@@ -148,3 +148,34 @@ pub fn render_link(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{Element, LinkLabel, LinkLocation, LinkType, SyntaxTree};
+
+    #[test]
+    fn wikijump_interwiki_links_include_interwiki_class() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let tree = SyntaxTree {
+            elements: vec![Element::Link {
+                ltype: LinkType::Interwiki,
+                link: LinkLocation::Url(cow!("https://example.com/wiki")),
+                label: LinkLabel::Text(cow!("Example Wiki")),
+                target: None,
+            }],
+            ..SyntaxTree::default()
+        };
+
+        let output = HtmlRender.render(&tree, &page_info, &settings);
+
+        assert!(output.body.contains("wj-link-interwiki"));
+        assert!(output.body.contains(r#"data-link-type="interwiki""#));
+        assert!(output.body.contains(">Example Wiki</a>"));
+    }
+}

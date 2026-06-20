@@ -180,3 +180,58 @@ pub fn render_bibliography(
             }
         });
 }
+
+#[cfg(test)]
+mod tests {
+    use super::super::super::context::HtmlContext;
+    use super::super::super::output::HtmlOutput;
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Handle;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{BibliographyList, Element};
+
+    #[test]
+    fn bibliography_rendering_covers_missing_and_block_variants() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let footnotes: [Vec<Element<'static>>; 0] = [];
+
+        let mut bibliography = Bibliography::new();
+        bibliography.add(cow!("alpha"), vec![text!("Alpha & source")]);
+
+        let mut bibliographies = BibliographyList::new();
+        bibliographies.push(bibliography);
+        let bibliography_ref = bibliographies.get_bibliography(0);
+
+        let mut ctx = HtmlContext::new(
+            &page_info,
+            &Handle,
+            &settings,
+            &[],
+            &footnotes,
+            &bibliographies,
+            0,
+        );
+
+        render_bibcite(&mut ctx, "missing", false);
+        render_bibcite(&mut ctx, "alpha", false);
+        render_bibliography(&mut ctx, Some("Works Cited"), 0, bibliography_ref);
+
+        let output = HtmlOutput::from(ctx);
+        assert!(output.body.contains(r#"<span class="wj-error-inline">"#));
+        assert!(output.body.contains("Bibliography item not found"));
+        assert!(
+            output.body.contains(
+                r#"<div class="wj-bibliography-title title">Works Cited</div>"#
+            )
+        );
+        assert!(
+            output
+                .body
+                .contains(r#"<span class="wj-bibliography-sep">.</span>"#)
+        );
+        assert!(output.body.contains("Alpha &amp; source"));
+    }
+}

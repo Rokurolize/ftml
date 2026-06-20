@@ -270,3 +270,50 @@ fn parse_cell_start(parser: &mut Parser) -> Result<Option<TableCellStart>, Parse
         column_span,
     }))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn simple_table_parses_headers_alignment_and_colspan() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization =
+            crate::tokenize("||~ Header |||| Wide ||\n||= Center ||> Right ||");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty());
+        let table = match tree.elements.as_slice() {
+            [Element::Table(table)] => table,
+            other => panic!("expected simple table, got {other:?}"),
+        };
+
+        assert_eq!(table.table_type, TableType::Simple);
+        assert_eq!(table.rows.len(), 2);
+        assert_eq!(table.rows[0].cells.len(), 2);
+        assert_eq!(table.rows[1].cells.len(), 2);
+
+        let header = &table.rows[0].cells[0];
+        assert!(header.header);
+        assert_eq!(header.align, None);
+        assert_eq!(header.column_span.get(), 1);
+        assert_eq!(header.elements, [text!("Header")]);
+
+        let wide = &table.rows[0].cells[1];
+        assert!(!wide.header);
+        assert_eq!(wide.column_span.get(), 2);
+        assert_eq!(wide.elements, [text!("Wide")]);
+
+        let center = &table.rows[1].cells[0];
+        assert_eq!(center.align, Some(Alignment::Center));
+        assert_eq!(center.elements, [text!("Center")]);
+
+        let right = &table.rows[1].cells[1];
+        assert_eq!(right.align, Some(Alignment::Right));
+        assert_eq!(right.elements, [text!("Right")]);
+    }
+}

@@ -99,3 +99,55 @@ fn parse_fn<'r, 't>(
 
     ok!(Element::BibliographyBlock { index, title, hide }, errors)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn bibliography_block_collects_definition_items_and_options() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(
+            "[[bibliography title=\"Works\" hide=\"true\"]]\n: alpha : Alpha reference\n[[/bibliography]]",
+        );
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty());
+        match tree.elements.as_slice() {
+            [Element::BibliographyBlock { index, title, hide }] => {
+                assert_eq!(*index, 0);
+                assert_eq!(title.as_deref(), Some("Works"));
+                assert!(*hide);
+            }
+            other => panic!("expected bibliography block, got {other:?}"),
+        }
+
+        let (reference_index, reference_elements) = tree
+            .bibliographies
+            .get_reference("alpha")
+            .expect("bibliography reference should be stored");
+        assert_eq!(reference_index, 1);
+        assert_eq!(
+            reference_elements,
+            [text!("Alpha"), text!(" "), text!("reference")]
+        );
+    }
+
+    #[test]
+    fn bibliography_block_rejects_non_definition_body() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization =
+            crate::tokenize("[[bibliography]]\nnot a definition\n[[/bibliography]]");
+        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(
+            errors.iter().any(|error| error.kind()
+                == ParseErrorKind::BibliographyContainsNonDefinitionList)
+        );
+    }
+}

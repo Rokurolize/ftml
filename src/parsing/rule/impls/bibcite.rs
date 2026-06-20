@@ -124,4 +124,24 @@ mod tests {
             .expect_err("missing separator should fail");
         assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
     }
+
+    #[test]
+    fn inline_bibcite_parses_label_as_bare_citation() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("((bibcite alpha))");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty());
+        match tree.elements.as_slice() {
+            [Element::Container(container)] => match container.elements() {
+                [Element::BibliographyCite { label, brackets }] => {
+                    assert_eq!(label, "alpha");
+                    assert!(!brackets);
+                }
+                other => panic!("expected bare bibliography cite, got {other:?}"),
+            },
+            other => panic!("expected citation paragraph, got {other:?}"),
+        }
+    }
 }

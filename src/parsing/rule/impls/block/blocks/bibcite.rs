@@ -81,4 +81,36 @@ mod tests {
                 .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments)
         );
     }
+
+    #[test]
+    fn block_bibcite_parses_bracketed_and_bare_variants() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[bibcite alpha]]\n[[bibcite_ beta]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty());
+        match tree.elements.as_slice() {
+            [Element::Container(container)] => match container.elements() {
+                [
+                    Element::BibliographyCite {
+                        label: first_label,
+                        brackets: first_brackets,
+                    },
+                    Element::LineBreak,
+                    Element::BibliographyCite {
+                        label: second_label,
+                        brackets: second_brackets,
+                    },
+                ] => {
+                    assert_eq!(first_label, "alpha");
+                    assert!(*first_brackets);
+                    assert_eq!(second_label, "beta");
+                    assert!(!second_brackets);
+                }
+                other => panic!("expected two bibliography cites, got {other:?}"),
+            },
+            other => panic!("expected citation paragraph, got {other:?}"),
+        }
+    }
 }

@@ -114,7 +114,6 @@ pub static SAFE_ATTRIBUTES: LazyLock<HashSet<UniCase<&'static str>>> =
             "spellcheck",
             "src",
             "srclang",
-            "srcset",
             "start",
             "step",
             "style",
@@ -182,10 +181,12 @@ pub static BOOLEAN_ATTRIBUTES: LazyLock<HashSet<UniCase<&'static str>>> =
 /// * `detect_dangerous_schemes()`
 /// * `normalize_href()`
 pub static URL_ATTRIBUTES: LazyLock<HashSet<UniCase<&'static str>>> =
-    LazyLock::new(|| hashset_unicase!["href", "src"]);
+    LazyLock::new(|| {
+        hashset_unicase!["background", "cite", "href", "poster", "src", "usemap"]
+    });
 
 static ATTRIBUTE_SUFFIX_SAFE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"[a-zA-z0-9\-]+").unwrap());
+    LazyLock::new(|| Regex::new(r"^[A-Za-z0-9-]+$").unwrap());
 
 pub const SAFE_ATTRIBUTE_PREFIXES: [&str; 2] = ["aria-", "data-"];
 
@@ -194,8 +195,20 @@ pub fn is_safe_attribute(attribute: UniCase<&str>) -> bool {
         return true;
     }
 
+    let attribute = attribute.as_ref();
     for prefix in &SAFE_ATTRIBUTE_PREFIXES {
-        if attribute.starts_with(prefix) && ATTRIBUTE_SUFFIX_SAFE.is_match(&attribute) {
+        let Some(head) = attribute.get(..prefix.len()) else {
+            continue;
+        };
+
+        let Some(suffix) = attribute.get(prefix.len()..) else {
+            continue;
+        };
+
+        if head.eq_ignore_ascii_case(prefix)
+            && !suffix.is_empty()
+            && ATTRIBUTE_SUFFIX_SAFE.is_match(suffix)
+        {
             return true;
         }
     }

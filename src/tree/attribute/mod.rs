@@ -52,27 +52,7 @@ impl<'t> AttributeMap<'t> {
             .iter()
             .filter(|&(key, _)| is_safe_attribute(*key))
             .filter_map(|(key, value)| {
-                let mut value = Cow::clone(value);
-
-                // Check for special boolean behavior
-                if BOOLEAN_ATTRIBUTES.contains(key)
-                    && let Ok(boolean_value) = parse_boolean(&value)
-                {
-                    // It's a boolean HTML attribute, like "checked".
-                    if boolean_value {
-                        // true: Have a key-only attribute
-                        value = cow!("");
-                    } else {
-                        // false: Exclude the key entirely
-                        return None;
-                    }
-                }
-
-                // Check for URL-sensitive attributes
-                if URL_ATTRIBUTES.contains(key) {
-                    let url = normalize_href(&value, None).into_owned();
-                    value = Cow::Owned(url);
-                }
+                let value = normalize_attribute_value(*key, Cow::clone(value))?;
 
                 // Add key/value pair to map
                 let key = key.into_inner().to_ascii_lowercase();
@@ -84,12 +64,18 @@ impl<'t> AttributeMap<'t> {
     }
 
     pub fn insert(&mut self, attribute: &'t str, value: Cow<'t, str>) -> bool {
-        let will_insert = is_safe_attribute(UniCase::ascii(attribute));
-        if will_insert {
-            self.inner.insert(cow!(attribute), value);
+        if !is_safe_attribute(UniCase::ascii(attribute)) {
+            return false;
         }
 
-        will_insert
+        let value = match normalize_attribute_value(UniCase::ascii(attribute), value) {
+            Some(value) => value,
+            None => return false,
+        };
+
+        let key = attribute.to_ascii_lowercase();
+        self.inner.insert(Cow::Owned(key), value);
+        true
     }
 
     #[inline]
@@ -125,6 +111,44 @@ impl<'t> AttributeMap<'t> {
     }
 }
 
+fn normalize_attribute_value<'t>(
+    attribute: UniCase<&str>,
+    mut value: Cow<'t, str>,
+) -> Option<Cow<'t, str>> {
+    // Check for special boolean behavior
+    if BOOLEAN_ATTRIBUTES.contains(&attribute)
+        && let Ok(boolean_value) = parse_boolean(&value)
+    {
+        // It's a boolean HTML attribute, like "checked".
+        if boolean_value {
+            // true: Have a key-only attribute
+            value = cow!("");
+        } else {
+            // false: Exclude the key entirely
+            return None;
+        }
+    }
+
+    // Check for URL-sensitive attributes
+    if attribute == UniCase::ascii("usemap") {
+        value = normalize_usemap(value);
+    } else if URL_ATTRIBUTES.contains(&attribute) {
+        let url = normalize_href(&value, None).into_owned();
+        value = Cow::Owned(url);
+    }
+
+    Some(value)
+}
+
+fn normalize_usemap(value: Cow<'_, str>) -> Cow<'_, str> {
+    // Unlike href/src, usemap is only a local hash-name reference.
+    if value.len() > 1 && value.starts_with('#') {
+        value
+    } else {
+        cow!("#invalid-url")
+    }
+}
+
 impl Debug for AttributeMap<'_> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -136,5 +160,118 @@ impl<'t> From<BTreeMap<Cow<'t, str>, Cow<'t, str>>> for AttributeMap<'t> {
     #[inline]
     fn from(map: BTreeMap<Cow<'t, str>, Cow<'t, str>>) -> AttributeMap<'t> {
         AttributeMap { inner: map }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn attribute_map_filters_and_normalizes_arguments() {
+        let arguments = hashmap! {
+            UniCase::ascii("CHECKED") => cow!("true"),
+            UniCase::ascii("DATA-UPPER") => cow!("caps"),
+            UniCase::ascii("ArIa-DeSc") => cow!("mixed"),
+            UniCase::ascii("disabled") => cow!("false"),
+            UniCase::ascii("href") => cow!("javascript:alert(1)"),
+            UniCase::ascii("srcset") => cow!("javascript:alert(1) 1x"),
+            UniCase::ascii("onclick") => cow!("alert(1)"),
+        };
+
+        let map = AttributeMap::from_arguments(&arguments);
+        let attributes = map.get();
+
+        assert_eq!(attributes.get("checked").map(Cow::as_ref), Some(""));
+        assert_eq!(attributes.get("data-upper").map(Cow::as_ref), Some("caps"));
+        assert_eq!(attributes.get("aria-desc").map(Cow::as_ref), Some("mixed"));
+        assert_eq!(
+            attributes.get("href").map(Cow::as_ref),
+            Some("#invalid-url"),
+        );
+        assert!(!attributes.contains_key("disabled"));
+        assert!(!attributes.contains_key("onclick"));
+        assert!(!attributes.contains_key("srcset"));
+        assert!(format!("{map:?}").contains("checked"));
+
+        for attribute in ["background", "cite", "poster", "src", "usemap"] {
+            let arguments = hashmap! {
+                UniCase::ascii(attribute) => cow!("javascript:alert(1)"),
+            };
+            let map = AttributeMap::from_arguments(&arguments);
+            assert_eq!(
+                map.get().get(attribute).map(Cow::as_ref),
+                Some("#invalid-url"),
+                "{attribute} should be URL-normalized",
+            );
+        }
+
+        for value in ["map", "#"] {
+            let arguments = hashmap! {
+                UniCase::ascii("usemap") => cow!(value),
+            };
+            let map = AttributeMap::from_arguments(&arguments);
+            assert_eq!(
+                map.get().get("usemap").map(Cow::as_ref),
+                Some("#invalid-url"),
+                "usemap should only preserve non-empty hash references",
+            );
+        }
+
+        let mut inserted = AttributeMap::new();
+        assert!(inserted.insert("data-value", cow!("ok")));
+        assert!(inserted.insert("DATA-UPPER", cow!("caps")));
+        assert!(inserted.insert("aria-label", cow!("label")));
+        assert!(inserted.insert("ArIa-DeSc", cow!("mixed")));
+        assert!(inserted.insert("HREF", cow!("javascript:alert(1)")));
+        assert!(inserted.insert("poster", cow!("javascript:alert(1)")));
+        assert!(inserted.insert("usemap", cow!("#map")));
+        assert!(inserted.insert("checked", cow!("true")));
+        assert!(!inserted.insert("disabled", cow!("false")));
+        assert!(!inserted.insert("data-x onclick", cow!("bad")));
+        assert!(!inserted.insert("aria-label\"", cow!("bad")));
+        assert!(!inserted.insert("data-", cow!("bad")));
+        assert!(!inserted.insert("srcset", cow!("javascript:alert(1) 1x")));
+        assert!(!inserted.insert("onclick", cow!("alert(1)")));
+        assert_eq!(
+            inserted.get().get("data-value").map(Cow::as_ref),
+            Some("ok")
+        );
+        assert_eq!(
+            inserted.get().get("data-upper").map(Cow::as_ref),
+            Some("caps")
+        );
+        assert_eq!(
+            inserted.get().get("aria-label").map(Cow::as_ref),
+            Some("label")
+        );
+        assert_eq!(
+            inserted.get().get("aria-desc").map(Cow::as_ref),
+            Some("mixed")
+        );
+        assert_eq!(
+            inserted.get().get("href").map(Cow::as_ref),
+            Some("#invalid-url")
+        );
+        assert_eq!(
+            inserted.get().get("poster").map(Cow::as_ref),
+            Some("#invalid-url")
+        );
+        assert_eq!(inserted.get().get("usemap").map(Cow::as_ref), Some("#map"));
+
+        let mut invalid_usemap = AttributeMap::new();
+        assert!(invalid_usemap.insert("usemap", cow!("map")));
+        assert_eq!(
+            invalid_usemap.get().get("usemap").map(Cow::as_ref),
+            Some("#invalid-url")
+        );
+        assert!(invalid_usemap.insert("usemap", cow!("#")));
+        assert_eq!(
+            invalid_usemap.get().get("usemap").map(Cow::as_ref),
+            Some("#invalid-url")
+        );
+        assert_eq!(inserted.get().get("checked").map(Cow::as_ref), Some(""));
+        assert!(!inserted.get().contains_key("disabled"));
+        assert!(!inserted.get().contains_key("srcset"));
     }
 }

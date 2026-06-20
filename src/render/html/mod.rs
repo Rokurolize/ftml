@@ -28,6 +28,8 @@ mod meta;
 mod output;
 mod random;
 mod render;
+#[cfg(test)]
+mod test_utils;
 
 pub use self::meta::{HtmlMeta, HtmlMetaType};
 pub use self::output::HtmlOutput;

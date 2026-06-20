@@ -315,3 +315,90 @@ fn is_alphanumeric(value: &str) -> bool {
 fn should_close_tag(tag: &str) -> bool {
     !SOLO_HTML_TAGS.contains(&tag)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::super::output::HtmlOutput;
+    use super::super::test_utils::context;
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::tree::AttributeMap;
+
+    #[test]
+    fn html_builder_renders_core_tag_shapes_and_escaped_text() {
+        let info = PageInfo::dummy();
+        let mut ctx = context(&info);
+
+        ctx.html().element("wj-box").contents("A&B");
+        ctx.html().table_cell(true).contents("Head");
+        ctx.html().table_cell(false).contents("Cell");
+        ctx.html().br();
+        ctx.html().input().attr(attr!(
+            "checked",
+            "disabled" => "",
+            "ignored"; if false,
+        ));
+
+        let mut builder = ctx.html();
+        builder.text("x < y");
+
+        let output = HtmlOutput::from(ctx);
+        assert_eq!(
+            output.body,
+            concat!(
+                "<wj-box>A&amp;B</wj-box>",
+                "<th>Head</th>",
+                "<td>Cell</td>",
+                "<br>",
+                "<input checked disabled>",
+                "x &lt; y",
+            ),
+        );
+    }
+
+    #[test]
+    fn html_builder_merges_renderer_and_user_attributes() {
+        let info = PageInfo::dummy();
+        let mut ctx = context(&info);
+        let mut attributes = AttributeMap::new();
+        assert!(attributes.insert("class", cow!("from-map")));
+        assert!(attributes.insert("data-extra", cow!("1&2")));
+
+        ctx.html()
+            .div()
+            .attr(attr!(
+                "class" => "base",
+                "data-skip" => "no"; if false;;
+                attributes
+            ))
+            .contents("body");
+
+        let output = HtmlOutput::from(ctx);
+        assert_eq!(
+            output.body,
+            r#"<div class="base from-map" data-extra="1&amp;2">body</div>"#,
+        );
+    }
+
+    #[test]
+    fn html_builder_renders_sprite_viewboxes() {
+        let info = PageInfo::dummy();
+        let mut ctx = context(&info);
+
+        ctx.html().sprite("wj-karma");
+        ctx.html().sprite("wj-clipboard");
+
+        let output = HtmlOutput::from(ctx);
+        assert_eq!(
+            output.body,
+            concat!(
+                r#"<svg class="wj-sprite sprite-wj-karma" "#,
+                r#"viewBox="0 0 64 114">"#,
+                r##"<use href="/files--static/media/ui.svg#wj-karma"></use></svg>"##,
+                r#"<svg class="wj-sprite sprite-wj-clipboard" "#,
+                r#"viewBox="0 0 24 24">"#,
+                r##"<use href="/files--static/media/ui.svg#wj-clipboard"></use></svg>"##,
+            ),
+        );
+    }
+}

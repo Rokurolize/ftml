@@ -372,32 +372,9 @@ impl NextIndex<TableOfContentsIndex> for HtmlContext<'_, '_, '_, '_> {
 
 #[cfg(test)]
 mod tests {
+    use super::super::test_utils::context;
     use super::*;
     use crate::data::PageInfo;
-    use crate::layout::Layout;
-    use crate::settings::{WikitextMode, WikitextSettings};
-    use std::sync::LazyLock;
-
-    fn context<'a>(info: &'a PageInfo<'a>) -> HtmlContext<'a, 'static, 'static, 'static> {
-        static HANDLE: Handle = Handle;
-        static SETTINGS: LazyLock<WikitextSettings> = LazyLock::new(|| {
-            WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump)
-        });
-        static ELEMENTS: [Element<'static>; 0] = [];
-        static FOOTNOTES: [Vec<Element<'static>>; 0] = [];
-        static BIBLIOGRAPHIES: LazyLock<BibliographyList<'static>> =
-            LazyLock::new(BibliographyList::new);
-
-        HtmlContext::new(
-            info,
-            &HANDLE,
-            &SETTINGS,
-            &ELEMENTS,
-            &FOOTNOTES,
-            &BIBLIOGRAPHIES,
-            0,
-        )
-    }
 
     #[test]
     fn initial_metadata_includes_alt_title_in_description() {
@@ -426,5 +403,36 @@ mod tests {
         assert_eq!(output.backlinks.included_pages, vec![page_ref]);
         assert!(output.backlinks.internal_links.is_empty());
         assert!(output.backlinks.external_links.is_empty());
+    }
+
+    #[test]
+    fn html_context_tracks_indices_and_link_backlinks() {
+        let info = PageInfo::dummy();
+        let mut ctx = context(&info);
+
+        assert_eq!(ctx.next_code_snippet_index().get(), 1);
+        assert_eq!(ctx.next_code_snippet_index().get(), 2);
+        assert_eq!(ctx.next_equation_index().get(), 1);
+        assert_eq!(ctx.next_equation_index().get(), 2);
+        assert_eq!(ctx.next_footnote_index().get(), 1);
+        assert_eq!(ctx.next_footnote_index().get(), 2);
+
+        ctx.add_link(&LinkLocation::Url(cow!("javascript:;")));
+        ctx.add_link(&LinkLocation::Url(cow!("/local-page")));
+        ctx.add_link(&LinkLocation::Url(cow!("https://example.com/path")));
+
+        let direct_page = PageRef::page_only("direct-page");
+        ctx.add_link(&LinkLocation::Page(direct_page.clone()));
+
+        let output = HtmlOutput::from(ctx);
+        assert_eq!(
+            output.backlinks.internal_links,
+            vec![PageRef::page_only("local-page"), direct_page],
+        );
+        assert_eq!(
+            output.backlinks.external_links,
+            vec![cow!("https://example.com/path")],
+        );
+        assert!(output.backlinks.included_pages.is_empty());
     }
 }

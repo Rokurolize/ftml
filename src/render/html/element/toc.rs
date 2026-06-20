@@ -77,3 +77,51 @@ pub fn render_table_of_contents(
                 .contents(table_of_contents);
         });
 }
+
+#[cfg(test)]
+mod tests {
+    use super::super::super::output::HtmlOutput;
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Handle;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::BibliographyList;
+
+    #[test]
+    fn table_of_contents_renders_aligned_class_ids_and_entries() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let toc_entries = [text!("Section & details")];
+        let footnotes: [Vec<Element<'static>>; 0] = [];
+        let bibliographies = BibliographyList::new();
+        let mut ctx = HtmlContext::new(
+            &page_info,
+            &Handle,
+            &settings,
+            &toc_entries,
+            &footnotes,
+            &bibliographies,
+            0,
+        );
+        let mut attributes = AttributeMap::new();
+        assert!(attributes.insert("class", cow!("custom-toc")));
+
+        render_table_of_contents(&mut ctx, Some(Alignment::Left), &attributes);
+
+        let output = HtmlOutput::from(ctx);
+        assert!(output.body.contains(r#"id="wj-toc""#));
+        assert!(output.body.contains(r#"class="wj-float-left custom-toc""#));
+        assert!(output.body.contains(r#"<div id="wj-toc-action-bar">"#));
+        assert!(
+            output
+                .body
+                .contains(r#"<div class="title">Table of Contents</div>"#)
+        );
+        assert!(
+            output
+                .body
+                .contains(r#"<div id="wj-toc-list">Section &amp; details</div>"#)
+        );
+    }
+}

@@ -1,0 +1,121 @@
+/*
+ * test/table_edges.rs
+ *
+ * ftml - Library to parse Wikidot text
+ * Copyright (C) 2019-2026 Wikijump Team
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+use crate::data::PageInfo;
+use crate::layout::Layout;
+use crate::parsing::ParseErrorKind;
+use crate::settings::{WikitextMode, WikitextSettings};
+use crate::tree::{Element, TableType};
+
+#[derive(Debug)]
+struct TestLogger;
+
+impl log::Log for TestLogger {
+    fn enabled(&self, _metadata: &log::Metadata<'_>) -> bool {
+        true
+    }
+
+    fn log(&self, _record: &log::Record<'_>) {}
+
+    fn flush(&self) {}
+}
+
+static TEST_LOGGER: TestLogger = TestLogger;
+static TEST_LOGGER_INIT: std::sync::Once = std::sync::Once::new();
+
+fn enable_test_logging() {
+    TEST_LOGGER_INIT.call_once(|| {
+        let _ = log::set_logger(&TEST_LOGGER);
+        log::set_max_level(log::LevelFilter::Trace);
+    });
+}
+
+fn assert_single_text(elements: &[Element<'_>], expected: &str) {
+    match elements {
+        [Element::Text(actual)] => assert_eq!(actual, expected),
+        _ => panic!("expected one text element, got {elements:?}"),
+    }
+}
+
+#[test]
+fn simple_table_parser_edges_preserve_rows_and_headers() {
+    enable_test_logging();
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+    let tokenization = crate::tokenize("|| A  || text ||\n|| B ||   \n|| C ||\n");
+    let result = crate::parse(&tokenization, &page_info, &settings);
+    let (tree, errors) = result.into();
+
+    assert!(errors.is_empty(), "unexpected parse errors: {errors:?}");
+
+    let [Element::Table(table)] = tree.elements.as_slice() else {
+        panic!("expected one table, got {:?}", tree.elements);
+    };
+
+    assert_eq!(table.table_type, TableType::Simple);
+    assert_eq!(table.rows.len(), 3);
+    assert_eq!(table.rows[0].cells.len(), 2);
+    assert_eq!(table.rows[1].cells.len(), 1);
+    assert_eq!(table.rows[2].cells.len(), 1);
+
+    assert_single_text(&table.rows[0].cells[0].elements, "A");
+    assert_single_text(&table.rows[0].cells[1].elements, "text");
+    assert_single_text(&table.rows[1].cells[0].elements, "B");
+    assert_single_text(&table.rows[2].cells[0].elements, "C");
+
+    let tokenization = crate::tokenize("|| Name ||~ Value ||\n");
+    let result = crate::parse(&tokenization, &page_info, &settings);
+    let (tree, errors) = result.into();
+
+    assert!(errors.is_empty(), "unexpected parse errors: {errors:?}");
+
+    let [Element::Table(table)] = tree.elements.as_slice() else {
+        panic!("expected one table, got {:?}", tree.elements);
+    };
+
+    assert_eq!(table.table_type, TableType::Simple);
+    assert_eq!(table.rows.len(), 1);
+    assert_eq!(table.rows[0].cells.len(), 2);
+    assert!(!table.rows[0].cells[0].header);
+    assert!(table.rows[0].cells[1].header);
+    assert_single_text(&table.rows[0].cells[0].elements, "Name");
+    assert_single_text(&table.rows[0].cells[1].elements, "Value");
+}
+
+#[test]
+fn simple_table_missing_end_reports_rule_failure() {
+    enable_test_logging();
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize("|| Missing end");
+    let result = crate::parse(&tokenization, &page_info, &settings);
+    let (_tree, errors) = result.into();
+
+    assert!(
+        errors
+            .iter()
+            .any(|error| error.rule() == "table"
+                && error.kind() == ParseErrorKind::RuleFailed),
+        "expected a table rule failure, got {errors:?}",
+    );
+}

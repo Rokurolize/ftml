@@ -162,6 +162,33 @@ fn test_link_location() {
     test!("multiple:category:page" => None, "multiple-category:page", None);
 }
 
+#[test]
+fn link_location_parse_with_interwiki_expands_known_prefixes() {
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+
+    let (location, ltype) =
+        LinkLocation::parse_with_interwiki(cow!("!wp:SCP Foundation"), &settings)
+            .expect("known interwiki prefix should expand");
+    assert_eq!(ltype, LinkType::Interwiki);
+    assert_eq!(
+        location,
+        LinkLocation::Url(cow!("https://wikipedia.org/wiki/SCP%20Foundation")),
+    );
+
+    let (location, ltype) =
+        LinkLocation::parse_with_interwiki(cow!("normal-page"), &settings)
+            .expect("normal page links should still parse");
+    assert_eq!(ltype, LinkType::Page);
+    assert!(matches!(location, LinkLocation::Page(_)));
+
+    assert!(
+        LinkLocation::parse_with_interwiki(cow!("!missing:target"), &settings).is_none()
+    );
+}
+
 #[derive(Serialize, Deserialize, Debug, Hash, Clone, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub enum LinkLabel<'a> {
@@ -276,4 +303,9 @@ fn link_type_name_serde() {
 
         assert_eq!(converted, variant, "Converted item does not match variant");
     }
+
+    assert_eq!(
+        LinkType::try_from("not-a-link-type"),
+        Err("not-a-link-type")
+    );
 }

@@ -53,3 +53,37 @@ fn parse_fn<'r, 't>(
 
     ok!(Element::EquationReference(cow!(name)))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn equation_reference_parses_name_and_requires_argument() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        let tokenization = crate::tokenize("[[eqref theorem-one]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:?}");
+        assert!(matches!(
+            tree.elements.as_slice(),
+            [Element::Container(paragraph)]
+                if paragraph.elements().iter().any(|element| matches!(
+                    element,
+                    Element::EquationReference(name) if name.as_ref() == "theorem-one"
+                ))
+        ));
+
+        let tokenization = crate::tokenize("[[eref]]");
+        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments)
+        );
+    }
+}

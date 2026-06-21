@@ -67,3 +67,22 @@ fn parse_count<'t>(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn parse_count_rejects_missing_argument() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[lines]]");
+        let parser = Parser::new(&tokenization, &page_info, &settings);
+
+        let error = parse_count(&parser, None).expect_err("missing count should fail");
+        assert_eq!(error.kind(), ParseErrorKind::BlockMissingArguments);
+    }
+}

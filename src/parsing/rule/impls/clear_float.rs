@@ -45,3 +45,25 @@ fn try_consume_fn<'r, 't>(
 
     ok!(Element::ClearFloat(clear_float))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn clear_float_rejects_non_clear_float_token() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("text");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.set_rule(RULE_CLEAR_FLOAT);
+
+        let error = RULE_CLEAR_FLOAT
+            .try_consume(&mut parser)
+            .expect_err("non-clear-float token should fail");
+        assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+    }
+}

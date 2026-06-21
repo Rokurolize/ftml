@@ -63,3 +63,46 @@ fn parse_fn<'r, 't>(
 
     ok!(paragraph_safe; element, errors)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn score_span_strips_line_breaks_from_body() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization =
+            crate::tokenize("[[span_ class=\"compact\"]]\nalpha\n[[/span]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let span = match tree.elements.as_slice() {
+            [Element::Container(paragraph)] => paragraph
+                .elements()
+                .iter()
+                .find_map(|element| match element {
+                    Element::Container(container)
+                        if container.ctype() == ContainerType::Span =>
+                    {
+                        Some(container)
+                    }
+                    _ => None,
+                })
+                .expect("paragraph should contain span container"),
+            other => panic!("expected paragraph containing span, got {other:?}"),
+        };
+
+        assert_eq!(span.elements(), &[text!("alpha")]);
+        assert_eq!(
+            span.attributes()
+                .get()
+                .get("class")
+                .map(|value| value.as_ref()),
+            Some("compact"),
+        );
+    }
+}

@@ -192,3 +192,81 @@ fn parse_shortcut<'r, 't>(
 
     ok!(ruby)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn ruby_block_converts_text_partials_to_containers() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(
+            "[[ruby]]base[[rt class=\"annotation\"]]reading[[/rt]][[/ruby]]",
+        );
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        match tree.elements.as_slice() {
+            [Element::Container(paragraph)] => {
+                let container = paragraph
+                    .elements()
+                    .iter()
+                    .find_map(|element| match element {
+                        Element::Container(container)
+                            if container.ctype() == ContainerType::Ruby =>
+                        {
+                            Some(container)
+                        }
+                        _ => None,
+                    })
+                    .expect("paragraph should contain a ruby container");
+                assert!(
+                    container
+                        .elements()
+                        .iter()
+                        .any(|element| matches!(element, Element::Container(inner) if inner.ctype() == ContainerType::RubyText))
+                );
+            }
+            other => panic!("expected ruby container, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn ruby_shortcut_parses_and_rejects_bad_arguments() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        let tokenization = crate::tokenize("[[rb base | reading]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:?}");
+        match tree.elements.as_slice() {
+            [Element::Container(paragraph)] => assert!(paragraph
+                .elements()
+                .iter()
+                .any(|element| matches!(
+                    element,
+                    Element::Container(container) if container.ctype() == ContainerType::Ruby
+                ))),
+            other => panic!("expected paragraph containing ruby shortcut, got {other:?}"),
+        }
+
+        for input in ["[[rb]]", "[[rb base]]", "[[rb a|b|c]]"] {
+            let tokenization = crate::tokenize(input);
+            let (_tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+
+            assert!(
+                errors.iter().any(|error| matches!(
+                    error.kind(),
+                    ParseErrorKind::BlockMissingArguments
+                        | ParseErrorKind::BlockMalformedArguments
+                )),
+                "{input} should report a ruby shortcut argument error: {errors:?}",
+            );
+        }
+    }
+}

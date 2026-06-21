@@ -451,9 +451,11 @@ where
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::parsing::ParseErrorKind;
+    use crate::parsing::rule::impls::block::blocks::BLOCK_DIV;
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
@@ -469,5 +471,21 @@ mod tests {
                 .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments),
             "invalid argument key should report BlockMalformedArguments: {errors:?}",
         );
+    }
+
+    #[test]
+    fn block_body_generic_accepts_matching_end_block() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[/div]]");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("end block should follow input start");
+
+        let (start, end) = parser
+            .get_body_generic(&BLOCK_DIV, |_| Ok(()))
+            .expect("matching end block should terminate the body");
+
+        assert_eq!(start.slice, "[[/");
+        assert_eq!(end.slice, "[[/");
     }
 }

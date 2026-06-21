@@ -144,4 +144,26 @@ mod tests {
             .expect_err("malformed boolean should fail");
         assert_eq!(error.kind(), ParseErrorKind::BlockMalformedArguments);
     }
+
+    #[test]
+    fn get_value_rejects_malformed_parseable_argument() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[module PageTree depth=\"many\"]]");
+        let parser = Parser::new(&tokenization, &page_info, &settings);
+        let mut arguments = Arguments::new();
+        arguments.insert("depth", cow!("many"));
+        arguments.insert("root", cow!("start"));
+
+        let snapshot = arguments.to_hash_map();
+        assert_eq!(
+            snapshot.get("root").map(|value| value.as_ref()),
+            Some("start")
+        );
+
+        let error = arguments
+            .get_value::<u32>(&parser, "depth")
+            .expect_err("malformed integer should fail");
+        assert_eq!(error.kind(), ParseErrorKind::BlockMalformedArguments);
+    }
 }

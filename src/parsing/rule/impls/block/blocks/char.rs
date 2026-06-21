@@ -177,6 +177,35 @@ fn test_get_entity() {
 }
 
 #[test]
+fn parse_entity_rejects_missing_argument() {
+    let page_info = crate::data::PageInfo::dummy();
+    let settings = crate::settings::WikitextSettings::from_mode(
+        crate::settings::WikitextMode::Page,
+        crate::layout::Layout::Wikidot,
+    );
+    let tokenization = crate::tokenize("[[char]]");
+    let parser = Parser::new(&tokenization, &page_info, &settings);
+
+    let error = parse_entity(&parser, None).expect_err("missing entity should fail");
+    assert_eq!(error.kind(), ParseErrorKind::BlockMissingArguments);
+}
+
+#[test]
+fn parse_entity_rejects_unknown_entity() {
+    let page_info = crate::data::PageInfo::dummy();
+    let settings = crate::settings::WikitextSettings::from_mode(
+        crate::settings::WikitextMode::Page,
+        crate::layout::Layout::Wikidot,
+    );
+    let tokenization = crate::tokenize("[[char not-an-entity]]");
+    let parser = Parser::new(&tokenization, &page_info, &settings);
+
+    let error = parse_entity(&parser, Some("not-an-entity"))
+        .expect_err("unknown entity should fail");
+    assert_eq!(error.kind(), ParseErrorKind::BlockMalformedArguments);
+}
+
+#[test]
 fn test_get_char() {
     macro_rules! test {
         ($value:expr, $radix:expr, $expected:expr $(,)?) => {{

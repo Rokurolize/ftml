@@ -448,3 +448,26 @@ where
         self.set_rule(block_rule.rule());
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::parsing::ParseErrorKind;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn block_head_rejects_invalid_argument_key_token() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[span @=\"value\"]]body[[/span]]");
+        let (_, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments),
+            "invalid argument key should report BlockMalformedArguments: {errors:?}",
+        );
+    }
+}

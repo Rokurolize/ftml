@@ -116,6 +116,8 @@ jobs:
           use_oidc: true
           slug: Rokurolize/ftml
           files: target/coverage/cobertura.xml
+          flags: ftml
+          disable_search: true
           fail_ci_if_error: true
 
   clippy_lint:

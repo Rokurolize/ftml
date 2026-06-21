@@ -33,6 +33,13 @@ pub struct ElementCondition<'t> {
 }
 
 impl<'t> ElementCondition<'t> {
+    fn new(ctype: ElementConditionType, value: &'t str) -> Self {
+        Self {
+            ctype,
+            value: Cow::Borrowed(value),
+        }
+    }
+
     /// Parse out a specification.
     ///
     /// The specification is a space separated list of strings, prefixed with
@@ -51,18 +58,13 @@ impl<'t> ElementCondition<'t> {
             (ElementConditionType::Present, value)
         }
 
-        raw_spec
-            .split(' ')
-            .filter(|s| !s.is_empty())
-            .map(|s| {
-                let (ctype, value) = get_spec(s);
+        let mut conditions = Vec::new();
+        for spec in raw_spec.split(' ').filter(|s| !s.is_empty()) {
+            let (ctype, value) = get_spec(spec);
+            conditions.push(Self::new(ctype, value));
+        }
 
-                ElementCondition {
-                    ctype,
-                    value: cow!(value),
-                }
-            })
-            .collect()
+        conditions
     }
 
     /// Determines if this condition is satisfied.
@@ -126,6 +128,37 @@ impl ElementConditionType {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn element_conditions_parse_prefixes_and_ignore_empty_segments() {
+        let conditions = ElementCondition::parse(" +alpha  -beta gamma ");
+
+        assert_eq!(
+            conditions,
+            vec![
+                ElementCondition {
+                    ctype: ElementConditionType::Required,
+                    value: cow!("alpha"),
+                },
+                ElementCondition {
+                    ctype: ElementConditionType::Prohibited,
+                    value: cow!("beta"),
+                },
+                ElementCondition {
+                    ctype: ElementConditionType::Present,
+                    value: cow!("gamma"),
+                },
+            ]
+        );
+        assert!(ElementCondition::check(
+            &conditions,
+            &[cow!("alpha"), cow!("gamma")]
+        ));
+        assert!(!ElementCondition::check(
+            &conditions,
+            &[cow!("alpha"), cow!("beta")]
+        ));
+    }
 
     #[test]
     fn element_condition_type_names_match_variant_names() {

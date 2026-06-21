@@ -50,3 +50,26 @@ fn parse_fn<'r, 't>(
     parser.get_head_none(&BLOCK_LATER, in_head)?;
     ok!(text!("later."))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn later_block_ignores_star_flag_and_outputs_literal_text() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[*later]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let [Element::Container(paragraph)] = tree.elements.as_slice() else {
+            panic!("expected one paragraph, got {:?}", tree.elements);
+        };
+        assert_eq!(paragraph.ctype(), ContainerType::Paragraph);
+        assert_eq!(paragraph.elements(), &[Element::Text(cow!("later."))]);
+    }
+}

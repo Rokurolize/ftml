@@ -64,3 +64,25 @@ fn parse_fn<'r, 't>(
 
     ok!(paragraph_safe; element, errors)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn size_block_requires_size_argument() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[size]]text[[/size]]");
+        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments)
+        );
+    }
+}

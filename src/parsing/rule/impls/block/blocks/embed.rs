@@ -102,3 +102,22 @@ fn embed_builder_types() {
     let _: EmbedBuilderFn = build_youtube;
     let _: EmbedBuilderFn = build_vimeo;
 }
+
+#[test]
+fn embed_rejects_unknown_provider() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize("[[embed unknown video=\"abc123\"]]");
+    let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+    assert!(
+        errors
+            .iter()
+            .any(|error| error.kind() == ParseErrorKind::NoSuchEmbed),
+        "unknown embed provider should report NoSuchEmbed: {errors:?}",
+    );
+}

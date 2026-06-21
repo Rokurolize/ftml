@@ -57,3 +57,30 @@ fn parse_fn<'r, 't>(
     let element = Element::Raw(cow!(content));
     ok!(element)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn raw_block_preserves_unparsed_multiline_text_without_outer_newlines() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[raw]]\n**not bold**\n[[/raw]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let [Element::Container(paragraph)] = tree.elements.as_slice() else {
+            panic!("expected one paragraph, got {:?}", tree.elements);
+        };
+        assert_eq!(paragraph.ctype(), ContainerType::Paragraph);
+
+        let [Element::Raw(text)] = paragraph.elements() else {
+            panic!("expected one raw element, got {:?}", paragraph.elements());
+        };
+        assert_eq!(text.as_ref(), "**not bold**");
+    }
+}

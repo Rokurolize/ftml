@@ -45,8 +45,8 @@ fn parse_fn<'r, 't>(
     // Gather paragraphs
     let arguments = parser.get_head_map(&BLOCK_PARAGRAPH, in_head)?;
     let attributes = arguments.to_attribute_map(parser.settings());
-    let (mut elements, errors, _) =
-        parser.get_body_elements(&BLOCK_PARAGRAPH, true)?.into();
+    let body = parser.get_body_elements(&BLOCK_PARAGRAPH, true)?;
+    let (mut elements, errors, _) = body.into();
 
     // Apply attributes to each paragraph
     for element in &mut elements {
@@ -59,4 +59,48 @@ fn parse_fn<'r, 't>(
 
     let element = Elements::Multiple(elements);
     ok!(element, errors)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn paragraph_block_applies_attributes_to_body_paragraph() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(
+            r#"[[p class="lead"]]
+paragraph text
+[[/p]]"#,
+        );
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let [Element::Container(paragraph)] = tree.elements.as_slice() else {
+            panic!("expected one paragraph, got {:?}", tree.elements);
+        };
+
+        assert_eq!(paragraph.ctype(), ContainerType::Paragraph);
+        assert_eq!(
+            paragraph
+                .attributes()
+                .get()
+                .get("class")
+                .map(|value| value.as_ref()),
+            Some("lead")
+        );
+        let body_text = paragraph
+            .elements()
+            .iter()
+            .map(|element| match element {
+                Element::Text(text) => text.as_ref(),
+                other => panic!("expected only paragraph text, got {other:?}"),
+            })
+            .collect::<String>();
+        assert_eq!(body_text, "paragraph text");
+    }
 }

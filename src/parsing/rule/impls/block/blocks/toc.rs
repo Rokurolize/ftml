@@ -49,3 +49,32 @@ fn parse_fn<'r, 't>(
     let element = Element::TableOfContents { align, attributes };
     ok!(false; element)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::Alignment;
+
+    #[test]
+    fn table_of_contents_block_parses_float_alignment_and_attributes() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(r#"[[f>toc id="contents"]]"#);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let [Element::TableOfContents { align, attributes }] = tree.elements.as_slice()
+        else {
+            panic!("expected one table of contents, got {:?}", tree.elements);
+        };
+
+        assert_eq!(*align, Some(Alignment::Right));
+        assert_eq!(
+            attributes.get().get("id").map(|value| value.as_ref()),
+            Some("contents")
+        );
+    }
+}

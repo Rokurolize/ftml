@@ -86,6 +86,7 @@ fn module_rule_map_accepts_case_insensitive_names() {
     }];
 
     let map = build_module_rule_map(&MODULE_RULES);
+    assert_eq!(map.len(), 1);
     assert_eq!(
         map.get(&UniCase::ascii("custommodule"))
             .map(|rule| rule.name),
@@ -94,11 +95,35 @@ fn module_rule_map_accepts_case_insensitive_names() {
 }
 
 #[test]
+fn module_rule_map_accepts_valid_rule_name_prefix() {
+    static MODULE_RULES: [ModuleRule; 1] = [ModuleRule {
+        name: "module-custom",
+        accepts_names: &["custom"],
+        parse_fn: MODULE_BACKLINKS.parse_fn,
+    }];
+
+    let map = build_module_rule_map(&MODULE_RULES);
+    assert_eq!(map.len(), 1);
+}
+
+#[test]
 #[should_panic(expected = "Module has no accepted names")]
 fn module_rule_map_rejects_empty_accepted_names() {
     static MODULE_RULES: [ModuleRule; 1] = [ModuleRule {
         name: "module-empty",
         accepts_names: &[],
+        parse_fn: MODULE_BACKLINKS.parse_fn,
+    }];
+
+    build_module_rule_map(&MODULE_RULES);
+}
+
+#[test]
+#[should_panic(expected = "Module name does not start with 'module-'.")]
+fn module_rule_map_rejects_invalid_rule_name_prefix() {
+    static MODULE_RULES: [ModuleRule; 1] = [ModuleRule {
+        name: "custom",
+        accepts_names: &["custom"],
         parse_fn: MODULE_BACKLINKS.parse_fn,
     }];
 

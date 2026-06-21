@@ -280,3 +280,44 @@ fn parse_cell<'r, 't>(
 
     ok!(false; element, errors)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+
+    #[test]
+    fn table_parse_block_rejects_disallowed_flags() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[table]]\n[[/table]]");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+
+        let star = catch_unwind(AssertUnwindSafe(|| {
+            parse_block(
+                &mut parser,
+                "table",
+                true,
+                false,
+                false,
+                (&BLOCK_TABLE, "table block"),
+            )
+        }));
+        assert!(star.is_err());
+
+        let score = catch_unwind(AssertUnwindSafe(|| {
+            parse_block(
+                &mut parser,
+                "table",
+                false,
+                true,
+                false,
+                (&BLOCK_TABLE, "table block"),
+            )
+        }));
+        assert!(score.is_err());
+    }
+}

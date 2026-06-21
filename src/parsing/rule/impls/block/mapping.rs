@@ -134,3 +134,62 @@ fn build_block_rule_map(block_rules: &'static [BlockRule]) -> BlockRuleMap {
 fn block_rule_map() {
     let _ = &*BLOCK_RULE_MAP;
 }
+
+#[test]
+fn block_rule_map_accepts_case_insensitive_names() {
+    static BLOCK_RULES: [BlockRule; 1] = [BlockRule {
+        name: "block-custom",
+        accepts_names: &["CustomBlock"],
+        accepts_star: false,
+        accepts_score: false,
+        accepts_newlines: false,
+        parse_fn: BLOCK_BOLD.parse_fn,
+    }];
+
+    let map = build_block_rule_map(&BLOCK_RULES);
+    assert_eq!(
+        map.get(&UniCase::ascii("customblock"))
+            .map(|rule| rule.name),
+        Some("block-custom"),
+    );
+}
+
+#[test]
+#[should_panic(expected = "Rule has no accepted names")]
+fn block_rule_map_rejects_empty_accepted_names() {
+    static BLOCK_RULES: [BlockRule; 1] = [BlockRule {
+        name: "block-empty",
+        accepts_names: &[],
+        accepts_star: false,
+        accepts_score: false,
+        accepts_newlines: false,
+        parse_fn: BLOCK_BOLD.parse_fn,
+    }];
+
+    build_block_rule_map(&BLOCK_RULES);
+}
+
+#[test]
+#[should_panic(expected = "Overwrote previous block rule")]
+fn block_rule_map_rejects_duplicate_names() {
+    static BLOCK_RULES: [BlockRule; 2] = [
+        BlockRule {
+            name: "block-first",
+            accepts_names: &["duplicate"],
+            accepts_star: false,
+            accepts_score: false,
+            accepts_newlines: false,
+            parse_fn: BLOCK_BOLD.parse_fn,
+        },
+        BlockRule {
+            name: "block-second",
+            accepts_names: &["DUPLICATE"],
+            accepts_star: false,
+            accepts_score: false,
+            accepts_newlines: false,
+            parse_fn: BLOCK_BOLD.parse_fn,
+        },
+    ];
+
+    build_block_rule_map(&BLOCK_RULES);
+}

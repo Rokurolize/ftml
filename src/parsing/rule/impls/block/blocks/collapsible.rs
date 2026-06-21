@@ -95,3 +95,47 @@ fn parse_hide_location(s: &str, parser: &Parser) -> Result<(bool, bool), ParseEr
     warn!("Unknown hideLocation argument '{s}'");
     Err(parser.make_err(ParseErrorKind::BlockMalformedArguments))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn collapsible_hide_location_controls_visible_handles() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        let tokenization = crate::tokenize(
+            "[[collapsible folded=\"no\" hideLocation=\"both\"]]Body[[/collapsible]]",
+        );
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:?}");
+        match tree.elements.as_slice() {
+            [
+                Element::Collapsible {
+                    start_open,
+                    show_top,
+                    show_bottom,
+                    ..
+                },
+            ] => {
+                assert!(*start_open);
+                assert!(*show_top);
+                assert!(*show_bottom);
+            }
+            other => panic!("expected collapsible element, got {other:?}"),
+        }
+
+        let tokenization =
+            crate::tokenize("[[collapsible hideLocation=\"side\"]]Body[[/collapsible]]");
+        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments)
+        );
+    }
+}

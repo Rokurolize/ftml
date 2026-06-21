@@ -20,6 +20,7 @@
 
 use super::prelude::*;
 use crate::tree::CodeBlock;
+use std::borrow::Cow;
 use wikidot_normalize::normalize;
 
 pub const BLOCK_CODE: BlockRule = BlockRule {
@@ -57,7 +58,7 @@ fn parse_fn<'r, 't>(
 
     let code = parser.get_body_text(&BLOCK_CODE)?;
     let code_block = CodeBlock {
-        contents: cow!(code),
+        contents: Cow::Borrowed(code),
         language,
         name,
     };
@@ -68,4 +69,39 @@ fn parse_fn<'r, 't>(
     let element = Element::Code(code_block.clone());
     parser.push_code_block(code_block);
     ok!(element)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn code_block_tracks_body_language_and_normalized_name() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(
+            "[[code type=\"RUST\" name=\"Sample Heading\"]]\nfn main() {}\n[[/code]]",
+        );
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let [Element::Code(element_code)] = tree.elements.as_slice() else {
+            panic!("expected one code block element, got {:?}", tree.elements);
+        };
+        let [tracked_code] = tree.code_blocks.as_slice() else {
+            panic!(
+                "expected one tracked code block, got {:?}",
+                tree.code_blocks
+            );
+        };
+
+        for code_block in [element_code, tracked_code] {
+            assert_eq!(code_block.contents, "fn main() {}");
+            assert_eq!(code_block.language.as_deref(), Some("rust"));
+            assert_eq!(code_block.name.as_deref(), Some("sample-heading"));
+        }
+    }
 }

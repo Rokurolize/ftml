@@ -44,8 +44,8 @@ fn parse_fn<'r, 't>(
     let arguments = parser.get_head_map(&BLOCK_INVISIBLE, in_head)?;
 
     // Get body content, without paragraphs
-    let (elements, errors, paragraph_safe) =
-        parser.get_body_elements(&BLOCK_INVISIBLE, false)?.into();
+    let body = parser.get_body_elements(&BLOCK_INVISIBLE, false)?;
+    let (elements, errors, paragraph_safe) = body.into();
 
     let element = Element::Container(Container::new(
         ContainerType::Invisible,
@@ -54,4 +54,45 @@ fn parse_fn<'r, 't>(
     ));
 
     ok!(paragraph_safe; element, errors)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn invisible_block_wraps_multiline_body() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization =
+            crate::tokenize("[[invisible]]\ninvisible text\n[[/invisible]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let [Element::Container(paragraph)] = tree.elements.as_slice() else {
+            panic!("expected one paragraph, got {:?}", tree.elements);
+        };
+        assert_eq!(paragraph.ctype(), ContainerType::Paragraph);
+        let [Element::Container(container)] = paragraph.elements() else {
+            panic!(
+                "expected one invisible container, got {:?}",
+                paragraph.elements()
+            );
+        };
+
+        assert_eq!(container.ctype(), ContainerType::Invisible);
+        assert!(container.attributes().get().is_empty());
+        let body_text = container
+            .elements()
+            .iter()
+            .map(|element| match element {
+                Element::Text(text) => text.as_ref(),
+                other => panic!("expected only text body elements, got {other:?}"),
+            })
+            .collect::<String>();
+        assert_eq!(body_text, "invisible text");
+    }
 }

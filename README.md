@@ -1,21 +1,39 @@
 ## ftml
 
 <p>
-  <a href="https://github.com/scpwiki/ftml/actions/workflows/build.yaml">
-    <img src="https://github.com/scpwiki/ftml/actions/workflows/build.yaml/badge.svg"
-         alt="Build status">
+  <a href="https://codecov.io/gh/Rokurolize/ftml">
+    <img src="https://codecov.io/gh/Rokurolize/ftml/branch/main/graph/badge.svg"
+         alt="Codecov report for Rokurolize/ftml main">
   </a>
 
-  <a href="https://github.com/scpwiki/ftml/actions/workflows/config.yaml">
-    <img src="https://github.com/scpwiki/ftml/actions/workflows/config.yaml/badge.svg"
-         alt="Configuration">
+  <a href="https://coderabbit.ai">
+    <img src="https://img.shields.io/coderabbit/prs/github/Rokurolize/ftml.svg?label=CodeRabbit%20Reviews"
+         alt="CodeRabbit Reviews for Rokurolize/ftml">
+  </a>
+
+  <a href="https://deepwiki.com/Rokurolize/ftml">
+    <img src="https://deepwiki.com/badge.svg?repository=Rokurolize/ftml"
+         alt="Ask DeepWiki about Rokurolize/ftml">
+  </a>
+
+  <a href="https://github.com/Rokurolize/ftml/actions/workflows/build.yaml?query=branch%3Amain">
+    <img src="https://github.com/Rokurolize/ftml/actions/workflows/build.yaml/badge.svg?branch=main"
+         alt="Rust build status on main">
+  </a>
+
+  <a href="https://github.com/Rokurolize/ftml/actions/workflows/config.yaml?query=branch%3Amain">
+    <img src="https://github.com/Rokurolize/ftml/actions/workflows/config.yaml/badge.svg?branch=main"
+         alt="Configuration check status on main">
   </a>
 
   <a href="https://docs.rs/ftml">
     <img src="https://docs.rs/ftml/badge.svg"
-         alt="docs.rs link">
+         alt="docs.rs documentation for ftml">
   </a>
 </p>
+
+This repository is Rokurolize's fork of [scpwiki/ftml](https://github.com/scpwiki/ftml).
+It is used for fork-local development, validation, and review support; upstream project links below describe the ftml project maintained for Wikijump.
 
 ### Foundation Text Markup Language
 
@@ -23,7 +41,7 @@
 
 A Rust library to parse Wikidot text ("Wikitext") into an abstract syntax tree (AST).
 This aims to be a replacement for the aging [Text\_Wiki](https://github.com/gabrys/wikidot/tree/master/lib/Text_Wiki/Text) from Wikidot.
-This is version aims to have a nearly fully compatible parser for common Wikidot, including common malformed constructs.
+This version aims to have a nearly fully compatible parser for common Wikidot, including common malformed constructs.
 The goal is to utilize a lexer generator, and consume the tokens in a custom parser to handle unusual cases with a lax approach.
 
 In addition to providing the speed and safety benefits of Rust, this also improves maintainability, and allows exposing an AST to consumers
@@ -31,11 +49,11 @@ for more advanced analysis and transformation.
 
 The lint `#![forbid(unsafe_code)]` is set, and therefore this crate has only safe code. However dependencies may have `unsafe` internals.
 
-Available under the terms of the GNU Affero General Public License. See [LICENSE.md](LICENSE.md). This library was originally part of [Wikijump](https://github.com/scpwiki/wikijump/) at `/ftml`, before being moved to an independent repository, per [WJ-1219](https://scuttle.atlassian.net/browse/WJ-1219). Issues for this project will remain in the `WJ` Jira project.
+Available under the terms of the GNU Affero General Public License. See [LICENSE.md](LICENSE.md). This library was originally part of [Wikijump](https://github.com/scpwiki/wikijump/) at `/ftml`, before being moved to an independent repository, per [WJ-1219](https://scuttle.atlassian.net/browse/WJ-1219). Upstream issues for this project remain in the `WJ` Jira project.
 
 ### Compilation
 
-This library targets the latest stable Rust. At time of writing, that is `1.92.0`.
+This library targets the latest stable Rust.
 
 ```sh
 $ cargo build --release

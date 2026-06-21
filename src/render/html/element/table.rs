@@ -95,13 +95,55 @@ pub fn render_table(ctx: &mut HtmlContext, table: &Table) {
                                 ),
                             };
 
-                            ctx.html()
-                                .table_cell(cell.header)
-                                .attr(attributes)
-                                .contents(elements);
+                            let mut table_cell = ctx.html().table_cell(cell.header);
+                            table_cell.attr(attributes);
+                            table_cell.contents(elements);
                         }
                     });
             }
         });
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{AttributeMap, SyntaxTree, TableCell, TableRow};
+
+    #[test]
+    fn table_render_outputs_cell_contents() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let table = Table {
+            table_type: TableType::Simple,
+            attributes: AttributeMap::new(),
+            rows: vec![TableRow {
+                attributes: AttributeMap::new(),
+                cells: vec![TableCell {
+                    header: false,
+                    column_span: NonZeroU32::new(1).unwrap(),
+                    align: None,
+                    attributes: AttributeMap::new(),
+                    elements: vec![Element::Text(cow!("cell <value>"))],
+                }],
+            }],
+        };
+        let tree = SyntaxTree {
+            elements: vec![Element::Table(table)],
+            ..SyntaxTree::default()
+        };
+
+        let output = HtmlRender.render(&tree, &page_info, &settings);
+
+        assert!(
+            output
+                .body
+                .contains(r#"<table class="wj-table wj-table-simple">"#)
+        );
+        assert!(output.body.contains("<td>cell &lt;value&gt;</td>"));
+    }
 }

@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use std::borrow::Cow;
 
 pub const BLOCK_HTML: BlockRule = BlockRule {
     name: "block-html",
@@ -44,9 +45,46 @@ fn parse_fn<'r, 't>(
     let arguments = parser.get_head_map(&BLOCK_HTML, in_head)?;
     let html = parser.get_body_text(&BLOCK_HTML)?;
     let element = Element::Html {
-        contents: cow!(html),
+        contents: Cow::Borrowed(html),
         attributes: arguments.to_attribute_map(parser.settings()),
     };
-    parser.push_html_block(cow!(html));
+    parser.push_html_block(Cow::Borrowed(html));
     ok!(element)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn html_block_tracks_body_and_element_contents() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[html]]\n<strong>raw</strong>\n[[/html]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let [
+            Element::Html {
+                contents,
+                attributes,
+            },
+        ] = tree.elements.as_slice()
+        else {
+            panic!("expected one HTML block element, got {:?}", tree.elements);
+        };
+        let [tracked_html] = tree.html_blocks.as_slice() else {
+            panic!(
+                "expected one tracked HTML block, got {:?}",
+                tree.html_blocks
+            );
+        };
+
+        assert_eq!(contents, "<strong>raw</strong>");
+        assert!(attributes.get().is_empty());
+        assert_eq!(tracked_html, "<strong>raw</strong>");
+    }
 }

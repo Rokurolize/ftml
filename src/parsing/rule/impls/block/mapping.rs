@@ -170,6 +170,21 @@ fn block_rule_map_rejects_empty_accepted_names() {
 }
 
 #[test]
+#[should_panic(expected = "Block name does not start with 'block-'.")]
+fn block_rule_map_rejects_invalid_rule_name_prefix() {
+    static BLOCK_RULES: [BlockRule; 1] = [BlockRule {
+        name: "custom",
+        accepts_names: &["custom"],
+        accepts_star: false,
+        accepts_score: false,
+        accepts_newlines: false,
+        parse_fn: BLOCK_BOLD.parse_fn,
+    }];
+
+    build_block_rule_map(&BLOCK_RULES);
+}
+
+#[test]
 #[should_panic(expected = "Overwrote previous block rule")]
 fn block_rule_map_rejects_duplicate_names() {
     static BLOCK_RULES: [BlockRule; 2] = [

@@ -76,3 +76,50 @@ fn build_module_rule_map(module_rules: &'static [ModuleRule]) -> ModuleRuleMap {
 fn module_rule_map() {
     let _ = &*MODULE_RULE_MAP;
 }
+
+#[test]
+fn module_rule_map_accepts_case_insensitive_names() {
+    static MODULE_RULES: [ModuleRule; 1] = [ModuleRule {
+        name: "module-custom",
+        accepts_names: &["CustomModule"],
+        parse_fn: MODULE_BACKLINKS.parse_fn,
+    }];
+
+    let map = build_module_rule_map(&MODULE_RULES);
+    assert_eq!(
+        map.get(&UniCase::ascii("custommodule"))
+            .map(|rule| rule.name),
+        Some("module-custom"),
+    );
+}
+
+#[test]
+#[should_panic(expected = "Module has no accepted names")]
+fn module_rule_map_rejects_empty_accepted_names() {
+    static MODULE_RULES: [ModuleRule; 1] = [ModuleRule {
+        name: "module-empty",
+        accepts_names: &[],
+        parse_fn: MODULE_BACKLINKS.parse_fn,
+    }];
+
+    build_module_rule_map(&MODULE_RULES);
+}
+
+#[test]
+#[should_panic(expected = "Overwrote previous module rule")]
+fn module_rule_map_rejects_duplicate_names() {
+    static MODULE_RULES: [ModuleRule; 2] = [
+        ModuleRule {
+            name: "module-first",
+            accepts_names: &["duplicate"],
+            parse_fn: MODULE_BACKLINKS.parse_fn,
+        },
+        ModuleRule {
+            name: "module-second",
+            accepts_names: &["DUPLICATE"],
+            parse_fn: MODULE_BACKLINKS.parse_fn,
+        },
+    ];
+
+    build_module_rule_map(&MODULE_RULES);
+}

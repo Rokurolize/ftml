@@ -61,4 +61,5 @@ fn test() {
         "S & C Plastic's location",
         "S &amp; C Plastic&#39;s location",
     );
+    test!("null\0byte", "null byte");
 }

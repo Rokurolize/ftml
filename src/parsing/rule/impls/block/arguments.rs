@@ -122,3 +122,26 @@ impl<'t> Arguments<'t> {
         map
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn get_bool_rejects_malformed_boolean_argument() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[collapsible folded=\"maybe\"]]");
+        let parser = Parser::new(&tokenization, &page_info, &settings);
+        let mut arguments = Arguments::new();
+        arguments.insert("folded", cow!("maybe"));
+
+        let error = arguments
+            .get_bool(&parser, "folded")
+            .expect_err("malformed boolean should fail");
+        assert_eq!(error.kind(), ParseErrorKind::BlockMalformedArguments);
+    }
+}

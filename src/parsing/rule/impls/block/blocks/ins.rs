@@ -44,8 +44,8 @@ fn parse_fn<'r, 't>(
     let arguments = parser.get_head_map(&BLOCK_INS, in_head)?;
 
     // Get body content, without paragraphs
-    let (elements, errors, paragraph_safe) =
-        parser.get_body_elements(&BLOCK_INS, false)?.into();
+    let body = parser.get_body_elements(&BLOCK_INS, false)?;
+    let (elements, errors, paragraph_safe) = body.into();
 
     // Build and return element
     let element = Element::Container(Container::new(
@@ -55,4 +55,43 @@ fn parse_fn<'r, 't>(
     ));
 
     ok!(paragraph_safe; element, errors)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn insertion_block_alias_wraps_inline_body() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[insertion]]inserted text[[/insertion]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let [Element::Container(paragraph)] = tree.elements.as_slice() else {
+            panic!("expected one paragraph, got {:?}", tree.elements);
+        };
+        assert_eq!(paragraph.ctype(), ContainerType::Paragraph);
+        let [Element::Container(container)] = paragraph.elements() else {
+            panic!(
+                "expected one insertion container, got {:?}",
+                paragraph.elements()
+            );
+        };
+
+        assert_eq!(container.ctype(), ContainerType::Insertion);
+        assert!(container.attributes().get().is_empty());
+        assert_eq!(
+            container.elements(),
+            &[
+                Element::Text(cow!("inserted")),
+                Element::Text(cow!(" ")),
+                Element::Text(cow!("text")),
+            ]
+        );
+    }
 }

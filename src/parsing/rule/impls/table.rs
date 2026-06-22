@@ -36,6 +36,53 @@ pub const RULE_TABLE: Rule = Rule {
     try_consume_fn,
 };
 
+fn take_row<'t>(cells: &mut Vec<TableCell<'t>>) -> TableRow<'t> {
+    TableRow {
+        cells: mem::take(cells),
+        attributes: AttributeMap::new(),
+    }
+}
+
+fn push_row<'t>(rows: &mut Vec<TableRow<'t>>, cells: &mut Vec<TableCell<'t>>) {
+    rows.push(take_row(cells));
+}
+
+fn take_cell<'t>(
+    elements: &mut Vec<Element<'t>>,
+    cell_start: TableCellStart,
+) -> TableCell<'t> {
+    let align = cell_start.align;
+    let header = cell_start.header;
+    let column_span = cell_start.column_span;
+    let elements = mem::take(elements);
+    let attributes = AttributeMap::new();
+    TableCell {
+        elements,
+        header,
+        column_span,
+        align,
+        attributes,
+    }
+}
+
+fn push_cell<'t>(
+    cells: &mut Vec<TableCell<'t>>,
+    elements: &mut Vec<Element<'t>>,
+    cell_start: TableCellStart,
+) {
+    cells.push(take_cell(elements, cell_start));
+}
+
+fn simple_table<'t>(rows: Vec<TableRow<'t>>) -> Element<'t> {
+    let attributes = AttributeMap::new();
+    let table = Table {
+        rows,
+        attributes,
+        table_type: TableType::Simple,
+    };
+    Element::Table(table)
+}
+
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
@@ -48,15 +95,6 @@ fn try_consume_fn<'r, 't>(
         debug!("Parsing next table row");
 
         let mut cells = Vec::new();
-
-        macro_rules! build_row {
-            () => {
-                rows.push(TableRow {
-                    cells: mem::take(&mut cells),
-                    attributes: AttributeMap::new(),
-                })
-            };
-        }
 
         macro_rules! finish_table {
             () => {
@@ -74,26 +112,10 @@ fn try_consume_fn<'r, 't>(
         'row: loop {
             debug!("Parsing next table cell");
             let mut elements = Vec::new();
-            let TableCellStart {
-                align,
-                header,
-                column_span,
-            } = match parse_cell_start(parser)? {
+            let cell_start = match parse_cell_start(parser)? {
                 Some(cell_start) => cell_start,
                 None => finish_table!(),
             };
-
-            macro_rules! build_cell {
-                () => {
-                    cells.push(TableCell {
-                        elements: mem::take(&mut elements),
-                        header,
-                        column_span,
-                        align,
-                        attributes: AttributeMap::new(),
-                    })
-                };
-            }
 
             // Loop for each element in the cell
             'cell: loop {
@@ -118,15 +140,15 @@ fn try_consume_fn<'r, 't>(
                             // For both ending the table and the row, we must step
                             // to consume the final table column token.
                             Token::ParagraphBreak | Token::InputEnd => {
-                                build_cell!();
-                                build_row!();
+                                push_cell(&mut cells, &mut elements, cell_start);
+                                push_row(&mut rows, &mut cells);
                                 parser.step()?;
                                 break 'table;
                             }
 
                             // Only end the row, continue the table.
                             Token::LineBreak => {
-                                build_cell!();
+                                push_cell(&mut cells, &mut elements, cell_start);
                                 parser.step_n(2)?;
                                 break 'row;
                             }
@@ -138,13 +160,13 @@ fn try_consume_fn<'r, 't>(
                                     Some(Token::ParagraphBreak)
                                     | Some(Token::InputEnd)
                                     | None => {
-                                        build_cell!();
-                                        build_row!();
+                                        push_cell(&mut cells, &mut elements, cell_start);
+                                        push_row(&mut rows, &mut cells);
                                         parser.step_n(2)?;
                                         break 'table;
                                     }
                                     Some(Token::LineBreak) => {
-                                        build_cell!();
+                                        push_cell(&mut cells, &mut elements, cell_start);
                                         parser.step_n(3)?;
                                         break 'row;
                                     }
@@ -196,20 +218,14 @@ fn try_consume_fn<'r, 't>(
                 }
             }
 
-            build_cell!();
+            push_cell(&mut cells, &mut elements, cell_start);
         }
 
-        build_row!();
+        push_row(&mut rows, &mut cells);
     }
 
     // Build table
-    let attributes = AttributeMap::new();
-    let table = Table {
-        rows,
-        attributes,
-        table_type: TableType::Simple,
-    };
-    ok!(false; Element::Table(table), errors)
+    ok!(false; simple_table(rows), errors)
 }
 
 /// Parse out the cell settings from the start.

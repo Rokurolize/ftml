@@ -51,9 +51,11 @@ fn take_cell<'t>(
     elements: &mut Vec<Element<'t>>,
     cell_start: TableCellStart,
 ) -> TableCell<'t> {
-    let align = cell_start.align;
-    let header = cell_start.header;
-    let column_span = cell_start.column_span;
+    let TableCellStart {
+        align,
+        header,
+        column_span,
+    } = cell_start;
     let elements = mem::take(elements);
     let attributes = AttributeMap::new();
     TableCell {

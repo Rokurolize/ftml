@@ -27,6 +27,12 @@ use time::format_description::well_known::{Iso8601, Rfc2822, Rfc3339};
 use time::{Date, OffsetDateTime, PrimitiveDateTime, UtcOffset};
 
 #[cfg(test)]
+use crate::data::PageInfo;
+#[cfg(test)]
+use crate::layout::Layout;
+#[cfg(test)]
+use crate::settings::{WikitextMode, WikitextSettings};
+#[cfg(test)]
 use time::macros::{date, datetime};
 
 pub const BLOCK_DATE: BlockRule = BlockRule {
@@ -67,26 +73,27 @@ fn parse_fn<'r, 't>(
         // Add timezone. If None, then conflicting timezones.
         date = match date.add_timezone(offset) {
             Some(date) => date,
-            None => {
-                warn!(
-                    "Date block has two specified timezones (argument {}, parsed {})",
-                    arg.as_ref(),
-                    offset,
-                );
-
-                return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
-            }
+            None => return Err(conflicting_timezone_error(parser, arg.as_ref(), offset)),
         };
     }
 
     // Build and return element
-    let element = Element::Date {
+    ok!(Element::Date {
         value: date,
         format,
-        hover,
-    };
+        hover
+    })
+}
 
-    ok!(element)
+fn conflicting_timezone_error(
+    parser: &Parser,
+    argument: &str,
+    parsed: UtcOffset,
+) -> ParseError {
+    warn!(
+        "Date block has two specified timezones (argument {argument}, parsed {parsed})"
+    );
+    parser.make_err(ParseErrorKind::BlockMalformedArguments)
 }
 
 fn split_ago_hover_format<'t>(
@@ -374,5 +381,48 @@ fn parse_date_supports_non_rfc3339_datetime_formats() {
     assert_eq!(
         parse_date("Tue, 1 Jul 2003 10:52:37 +0200").expect("RFC 2822 datetime"),
         DateItem::from(datetime!(2003-07-01 10:52:37+02:00)),
+    );
+}
+
+#[test]
+fn date_block_builds_element_with_format_and_ago_hover() {
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize(r#"[[date 2001-09-11 format="%Y|agohover"]]"#);
+    let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+    assert!(errors.is_empty(), "{errors:?}");
+    let [Element::Container(paragraph)] = tree.elements.as_slice() else {
+        panic!("expected paragraph, got {:?}", tree.elements);
+    };
+    let [
+        Element::Date {
+            value,
+            format,
+            hover,
+        },
+    ] = paragraph.elements()
+    else {
+        panic!("expected date element, got {:?}", paragraph.elements());
+    };
+
+    assert_eq!(*value, DateItem::from(date!(2001 - 09 - 11)));
+    assert_eq!(format.as_deref(), Some("%Y"));
+    assert!(*hover);
+}
+
+#[test]
+fn date_block_rejects_conflicting_parsed_and_argument_timezones() {
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization =
+        crate::tokenize(r#"[[date 2007-05-12T09:34:51+04:00 tz="+08:00"]]"#);
+    let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+    assert!(
+        errors
+            .iter()
+            .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments),
+        "{errors:?}",
     );
 }

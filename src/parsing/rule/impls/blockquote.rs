@@ -132,3 +132,29 @@ fn build_blockquote_element(list: DepthList<(), (Vec<Element>, bool)>) -> Elemen
         AttributeMap::new(),
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn native_blockquote_rejects_excessive_depth() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let input = format!("{} too deep", ">".repeat(MAX_BLOCKQUOTE_DEPTH + 1));
+        let tokenization = crate::tokenize(&input);
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("quote token should follow input start");
+        parser.set_rule(RULE_BLOCKQUOTE);
+
+        let error = RULE_BLOCKQUOTE
+            .try_consume(&mut parser)
+            .expect_err("excessive blockquote depth should fail");
+        assert_eq!(error.kind(), ParseErrorKind::BlockquoteDepthExceeded);
+    }
+}

@@ -46,19 +46,7 @@ fn parse_audio<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    parse_media_block(
-        parser,
-        &BLOCK_AUDIO,
-        name,
-        flag_star,
-        flag_score,
-        in_head,
-        |source, alignment, attributes| Element::Audio {
-            source,
-            alignment,
-            attributes,
-        },
-    )
+    parse_audio_block(parser, name, (flag_star, flag_score, in_head))
 }
 
 fn parse_video<'r, 't>(
@@ -68,28 +56,54 @@ fn parse_video<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    parse_media_block(
-        parser,
-        &BLOCK_VIDEO,
-        name,
-        flag_star,
-        flag_score,
-        in_head,
-        |source, alignment, attributes| Element::Video {
-            source,
-            alignment,
-            attributes,
-        },
-    )
+    parse_video_block(parser, name, (flag_star, flag_score, in_head))
+}
+
+fn parse_audio_block<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    name: &'t str,
+    flags: (bool, bool, bool),
+) -> ParseResult<'r, 't, Elements<'t>> {
+    parse_media_block(parser, &BLOCK_AUDIO, name, flags, build_audio)
+}
+
+fn parse_video_block<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    name: &'t str,
+    flags: (bool, bool, bool),
+) -> ParseResult<'r, 't, Elements<'t>> {
+    parse_media_block(parser, &BLOCK_VIDEO, name, flags, build_video)
+}
+
+fn build_audio<'t>(
+    source: FileSource<'t>,
+    alignment: Option<FloatAlignment>,
+    attributes: crate::tree::AttributeMap<'t>,
+) -> Element<'t> {
+    Element::Audio {
+        source,
+        alignment,
+        attributes,
+    }
+}
+
+fn build_video<'t>(
+    source: FileSource<'t>,
+    alignment: Option<FloatAlignment>,
+    attributes: crate::tree::AttributeMap<'t>,
+) -> Element<'t> {
+    Element::Video {
+        source,
+        alignment,
+        attributes,
+    }
 }
 
 fn parse_media_block<'r, 't, F>(
     parser: &mut Parser<'r, 't>,
     block_rule: &BlockRule,
     name: &'t str,
-    flag_star: bool,
-    flag_score: bool,
-    in_head: bool,
+    flags: (bool, bool, bool),
     build_element: F,
 ) -> ParseResult<'r, 't, Elements<'t>>
 where
@@ -99,6 +113,7 @@ where
         crate::tree::AttributeMap<'t>,
     ) -> Element<'t>,
 {
+    let (flag_star, flag_score, in_head) = flags;
     debug!(
         "Parsing media block (rule {}, name {name}, in-head {in_head})",
         block_rule.name
@@ -148,4 +163,94 @@ fn parse_media_alignment<'r, 't>(
         align,
         float: false,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn media_blocks_parse_audio_and_video_sources_alignment_and_attributes() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        let tokenization =
+            crate::tokenize(r#"[[audio page/song.mp3 align="right" class="player"]]"#);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:?}");
+
+        let [Element::Container(paragraph)] = tree.elements.as_slice() else {
+            panic!("expected paragraph, got {:?}", tree.elements);
+        };
+        let [
+            Element::Audio {
+                source,
+                alignment,
+                attributes,
+            },
+        ] = paragraph.elements()
+        else {
+            panic!("expected audio element, got {:?}", paragraph.elements());
+        };
+
+        assert_eq!(
+            source,
+            &FileSource::File2 {
+                page: cow!("page"),
+                file: cow!("song.mp3"),
+            },
+        );
+        assert_eq!(
+            *alignment,
+            Some(FloatAlignment {
+                align: Alignment::Right,
+                float: false,
+            }),
+        );
+        assert_eq!(
+            attributes.get().get("class").map(|value| value.as_ref()),
+            Some("player")
+        );
+        assert!(!attributes.get().contains_key("align"));
+
+        let tokenization = crate::tokenize(
+            r#"[[video https://example.com/video.mp4 align="center" title="Demo"]]"#,
+        );
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:?}");
+
+        let [Element::Container(paragraph)] = tree.elements.as_slice() else {
+            panic!("expected paragraph, got {:?}", tree.elements);
+        };
+        let [
+            Element::Video {
+                source,
+                alignment,
+                attributes,
+            },
+        ] = paragraph.elements()
+        else {
+            panic!("expected video element, got {:?}", paragraph.elements());
+        };
+
+        assert_eq!(
+            source,
+            &FileSource::Url(cow!("https://example.com/video.mp4"))
+        );
+        assert_eq!(
+            *alignment,
+            Some(FloatAlignment {
+                align: Alignment::Center,
+                float: false,
+            }),
+        );
+        assert_eq!(
+            attributes.get().get("title").map(|value| value.as_ref()),
+            Some("Demo")
+        );
+        assert!(!attributes.get().contains_key("align"));
+    }
 }

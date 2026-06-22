@@ -32,6 +32,26 @@ pub const RULE_LINE_BREAK_PARAGRAPH: Rule = Rule {
     try_consume_fn: line_break_paragraph,
 };
 
+const START_OF_LINE_RULE_TOKENS: &[Token] = &[
+    Token::Quote,
+    Token::BulletItem,
+    Token::NumberedItem,
+    Token::Heading,
+    Token::Equals,
+    Token::TripleDash,
+    Token::ClearFloatLeft,
+    Token::ClearFloatRight,
+    Token::ClearFloatBoth,
+    Token::TableColumn,
+    Token::TableColumnRight,
+    Token::TableColumnCenter,
+    Token::TableColumnTitle,
+];
+
+fn starts_own_line_rule(token: Token) -> bool {
+    START_OF_LINE_RULE_TOKENS.contains(&token)
+}
+
 fn line_break<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Consuming newline token as line break");
 
@@ -44,22 +64,7 @@ fn line_break<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
         parser.step()?;
         parser.get_optional_space()?;
 
-        Ok(matches!(
-            parser.current().token,
-            Token::Quote
-                | Token::BulletItem
-                | Token::NumberedItem
-                | Token::Heading
-                | Token::Equals
-                | Token::TripleDash
-                | Token::ClearFloatLeft
-                | Token::ClearFloatRight
-                | Token::ClearFloatBoth
-                | Token::TableColumn
-                | Token::TableColumnRight
-                | Token::TableColumnCenter
-                | Token::TableColumnTitle
-        ))
+        Ok(starts_own_line_rule(parser.current().token))
     });
 
     if upcoming_skip {

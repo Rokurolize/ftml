@@ -64,3 +64,28 @@ fn try_consume_fn<'r, 't>(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn comment_rule_rejects_unterminated_comment() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[!-- unfinished");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("left comment token should follow input start");
+        parser.set_rule(RULE_COMMENT);
+
+        let error = RULE_COMMENT
+            .try_consume(&mut parser)
+            .expect_err("unterminated comment should fail");
+        assert_eq!(error.kind(), ParseErrorKind::EndOfInput);
+    }
+}

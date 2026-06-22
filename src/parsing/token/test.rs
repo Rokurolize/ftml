@@ -241,6 +241,15 @@ fn tokens() {
     );
 
     test!(
+        r#"\""#,
+        vec![ExtractedToken {
+            token: Token::EscapedDoubleQuote,
+            slice: r#"\""#,
+            span: 0..2,
+        }],
+    );
+
+    test!(
         "[[[[quadLinkTest]]]]",
         vec![
             ExtractedToken {

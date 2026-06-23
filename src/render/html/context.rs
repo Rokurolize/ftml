@@ -94,18 +94,8 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
         // Looking at test data, the outputted HTML byte length usually stays
         // below ~12% of the wikitext input byte length, with the greatest differences
         // being small inputs.
-        let capacity = {
-            let input = wikitext_len as f32;
-            let output = input * 1.12;
-
-            // Basic sanity check, if this fails
-            // just return 0 to avoid weirdness.
-            if output.is_finite() {
-                output as usize
-            } else {
-                0
-            }
-        };
+        let input = wikitext_len as f32;
+        let capacity = (input * 1.12) as usize;
 
         // Build and return
         HtmlContext {
@@ -131,36 +121,33 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     fn initial_metadata(info: &PageInfo<'i>, layout: Layout) -> Vec<HtmlMeta> {
         // Initial version, we can tune how the metadata is generated later.
 
-        vec![
-            HtmlMeta {
-                tag_type: HtmlMetaType::HttpEquiv,
-                name: str!("Content-Type"),
-                value: str!("text/html"),
-            },
-            HtmlMeta {
-                tag_type: HtmlMetaType::Name,
-                name: str!("generator"),
-                value: format!("{} {}", *info::VERSION, layout.description()),
-            },
-            HtmlMeta {
-                tag_type: HtmlMetaType::Name,
-                name: str!("description"),
-                value: {
-                    let mut value = str!(info.title);
+        let content_type = HtmlMeta {
+            tag_type: HtmlMetaType::HttpEquiv,
+            name: str!("Content-Type"),
+            value: str!("text/html"),
+        };
+        let generator = HtmlMeta {
+            tag_type: HtmlMetaType::Name,
+            name: str!("generator"),
+            value: format!("{} {}", *info::VERSION, layout.description()),
+        };
+        let mut description_value = str!(info.title);
+        if let Some(ref alt_title) = info.alt_title {
+            description_value.push_str(" - ");
+            description_value.push_str(alt_title);
+        }
+        let description = HtmlMeta {
+            tag_type: HtmlMetaType::Name,
+            name: str!("description"),
+            value: description_value,
+        };
+        let keywords = HtmlMeta {
+            tag_type: HtmlMetaType::Name,
+            name: str!("keywords"),
+            value: info.tags.join(","),
+        };
 
-                    if let Some(ref alt_title) = info.alt_title {
-                        str_write!(value, " - {alt_title}");
-                    }
-
-                    value
-                },
-            },
-            HtmlMeta {
-                tag_type: HtmlMetaType::Name,
-                name: str!("keywords"),
-                value: info.tags.join(","),
-            },
-        ]
+        vec![content_type, generator, description, keywords]
     }
 
     // Field access
@@ -227,9 +214,8 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     }
 
     pub fn next_code_snippet_index(&mut self) -> NonZeroUsize {
-        let index = self.code_snippet_index;
-        self.code_snippet_index = NonZeroUsize::new(index.get() + 1).unwrap();
-        index
+        let next = NonZeroUsize::new(self.code_snippet_index.get() + 1).unwrap();
+        std::mem::replace(&mut self.code_snippet_index, next)
     }
 
     #[inline]
@@ -238,15 +224,13 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     }
 
     pub fn next_equation_index(&mut self) -> NonZeroUsize {
-        let index = self.equation_index;
-        self.equation_index = NonZeroUsize::new(index.get() + 1).unwrap();
-        index
+        let next = NonZeroUsize::new(self.equation_index.get() + 1).unwrap();
+        std::mem::replace(&mut self.equation_index, next)
     }
 
     pub fn next_footnote_index(&mut self) -> NonZeroUsize {
-        let index = self.footnote_index;
-        self.footnote_index = NonZeroUsize::new(index.get() + 1).unwrap();
-        index
+        let next = NonZeroUsize::new(self.footnote_index.get() + 1).unwrap();
+        std::mem::replace(&mut self.footnote_index, next)
     }
 
     #[inline]
@@ -341,17 +325,10 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
 impl<'i, 'h, 'e, 't> From<HtmlContext<'i, 'h, 'e, 't>> for HtmlOutput {
     #[inline]
     fn from(ctx: HtmlContext<'i, 'h, 'e, 't>) -> HtmlOutput {
-        let HtmlContext {
-            body,
-            meta,
-            backlinks,
-            ..
-        } = ctx;
-
         HtmlOutput {
-            body,
-            meta,
-            backlinks,
+            body: ctx.body,
+            meta: ctx.meta,
+            backlinks: ctx.backlinks,
         }
     }
 }
@@ -375,6 +352,8 @@ mod tests {
     use super::super::test_utils::context;
     use super::*;
     use crate::data::PageInfo;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{Bibliography, BibliographyList, VariableMap};
 
     #[test]
     fn initial_metadata_includes_alt_title_in_description() {
@@ -434,5 +413,62 @@ mod tests {
             vec![cow!("https://example.com/path")],
         );
         assert!(output.backlinks.included_pages.is_empty());
+    }
+
+    #[test]
+    fn html_context_accessors_cache_and_buffers() {
+        let info = PageInfo::dummy();
+        let handle = Handle;
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let table_of_contents = [Element::Text(cow!("toc"))];
+        let footnotes = [vec![Element::Text(cow!("footnote"))]];
+        let mut bibliography = Bibliography::new();
+        bibliography.add(cow!("alpha"), vec![Element::Text(cow!("reference"))]);
+        let mut bibliographies = BibliographyList::new();
+        bibliographies.push(bibliography);
+        let mut ctx = HtmlContext::new(
+            &info,
+            &handle,
+            &settings,
+            &table_of_contents,
+            &footnotes,
+            &bibliographies,
+            10,
+        );
+
+        assert_eq!(ctx.info().page, info.page);
+        assert_eq!(ctx.settings().layout, Layout::Wikijump);
+        assert_eq!(ctx.layout(), Layout::Wikijump);
+        assert!(ctx.handle().get_page_exists(&info.site, "present"));
+        assert_eq!(ctx.language(), info.language);
+        assert_eq!(ctx.table_of_contents(), &table_of_contents);
+        assert_eq!(ctx.footnotes(), &footnotes);
+        assert_eq!(
+            ctx.get_footnote(NonZeroUsize::new(1).unwrap()),
+            Some(footnotes[0].as_slice()),
+        );
+        assert_eq!(ctx.get_footnote(NonZeroUsize::new(2).unwrap()), None);
+        assert_eq!(ctx.get_bibliography(0).slice().len(), 1);
+        assert_eq!(ctx.get_bibliography_ref("alpha").unwrap().0, 1);
+
+        let mut variables = VariableMap::new();
+        variables.insert(cow!("name"), cow!("value"));
+        ctx.variables_mut().push_scope(&variables);
+        assert_eq!(ctx.variables().get("name"), Some("value"));
+        ctx.variables_mut().pop_scope();
+
+        let missing = PageRef::page_only("missing");
+        assert!(!ctx.page_exists(&missing));
+        assert!(!ctx.page_exists(&missing));
+        let present = PageRef::page_only("present");
+        assert!(ctx.page_exists(&present));
+
+        write!(ctx, "raw").expect("writing to HTML context should succeed");
+        ctx.push_raw('!');
+        ctx.push_raw_str(" ");
+        ctx.push_escaped("<tag>");
+
+        let output = HtmlOutput::from(ctx);
+        assert_eq!(output.body, "raw! &lt;tag&gt;");
     }
 }

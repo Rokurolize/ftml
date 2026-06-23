@@ -24,6 +24,7 @@
 //! on the current page, or is a fake link.
 
 use super::prelude::*;
+use crate::parsing::ParseSuccess;
 use crate::tree::{LinkLabel, LinkLocation, LinkType};
 use std::borrow::Cow;
 use wikidot_normalize::normalize;
@@ -41,17 +42,13 @@ fn try_consume_fn<'r, 't>(
     assert_step(parser, Token::LeftBracketAnchor)?;
 
     // Gather path for link
-    let url = collect_text(
-        parser,
-        RULE_LINK_ANCHOR,
-        &[ParseCondition::current(Token::Whitespace)],
-        &[
-            ParseCondition::current(Token::RightBracket),
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::current(Token::LineBreak),
-        ],
-        None,
-    )?;
+    let url_close = [ParseCondition::current(Token::Whitespace)];
+    let url_invalid = [
+        ParseCondition::current(Token::RightBracket),
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::current(Token::LineBreak),
+    ];
+    let url = collect_text(parser, RULE_LINK_ANCHOR, &url_close, &url_invalid, None)?;
 
     // Determine if this is an anchor link or fake link
     let url = if url.is_empty() {
@@ -66,16 +63,12 @@ fn try_consume_fn<'r, 't>(
     };
 
     // Gather label for link
-    let label = collect_text(
-        parser,
-        RULE_LINK_ANCHOR,
-        &[ParseCondition::current(Token::RightBracket)],
-        &[
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::current(Token::LineBreak),
-        ],
-        None,
-    )?;
+    let label_close = [ParseCondition::current(Token::RightBracket)];
+    let label_invalid = [
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::current(Token::LineBreak),
+    ];
+    let label = collect_anchor_text(parser, &label_close, &label_invalid)?;
 
     trace!("Retrieved label ('{label}') for link, building element");
 
@@ -83,10 +76,24 @@ fn try_consume_fn<'r, 't>(
     let label = label.trim();
 
     // Build and return link element
-    ok!(Element::Link {
+    let element = Element::Link {
         ltype: LinkType::Anchor,
         link: LinkLocation::Url(url),
         label: LinkLabel::Text(cow!(label)),
         target: None,
-    })
+    };
+    let elements: Elements = element.into();
+    let paragraph_safe = elements.paragraph_safe();
+    Ok(ParseSuccess::new(elements, Vec::new(), paragraph_safe))
+}
+
+fn collect_anchor_text<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    close: &[ParseCondition],
+    invalid: &[ParseCondition],
+) -> Result<&'t str, ParseError>
+where
+    'r: 't,
+{
+    collect_text(parser, RULE_LINK_ANCHOR, close, invalid, None)
 }

@@ -62,6 +62,14 @@ fn main() {}
 }
 
 #[test]
+fn public_api_text_render_covers_anchor_link_labels() {
+    let output = parse_and_render_text("[#section Jump]\n[# Fake]");
+
+    assert!(output.contains("Jump"));
+    assert!(output.contains("Fake"));
+}
+
+#[test]
 fn public_api_text_render_entrypoints_trim_outer_newlines() {
     let page_info = page_info();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);

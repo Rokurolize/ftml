@@ -53,25 +53,20 @@ pub fn collect_container<'r, 't>(
     );
 
     // Iterate and consume all the tokens
-    let (elements, errors, paragraph_safe) = collect_consume(
+    let collection = collect_consume(
         parser,
         rule,
         close_conditions,
         invalid_conditions,
         error_kind,
-    )?
-    .into();
+    )?;
+    let (elements, errors, paragraph_safe) = collection.into();
 
     // Package into a container
-    ok!(
-        paragraph_safe && container_type.paragraph_safe();
-        Element::Container(Container::new(
-            container_type,
-            elements,
-            AttributeMap::new(),
-        )),
-        errors,
-    )
+    let container = Container::new(container_type, elements, AttributeMap::new());
+    let element = Element::Container(container);
+    let safe = paragraph_safe && container_type.paragraph_safe();
+    Ok(ParseSuccess::new(Elements::Single(element), errors, safe))
 }
 
 #[cfg(test)]

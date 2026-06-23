@@ -17,6 +17,9 @@ html-attributes = true
 [Join.arguments]
 button = { type = "string", default = "" } # default message depends on language
 
+[ListPages]
+body = "raw"
+
 [PageTree]
 body = "none"
 [PageTree.arguments]

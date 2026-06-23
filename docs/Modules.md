@@ -16,6 +16,7 @@ The table below follows essentially the same schema as for blocks in general, wi
 | [Categories](#categories) | None | `Module::Categories` | `<div class="categories-module-box">`     | |
 | [CSS](#css)               | Raw  | N/A                  | `<style>`                                 | Outputs contents as CSS. Alias for `[[css]]`. |
 | [Join](#join)             | None | `Module::Join`       | `<div class="join-box">`                  | |
+| [ListPages](#listpages)   | Raw  | `Module::ListPages`  | N/A                                       | Delayed evaluation node; execution belongs to application code. |
 | [PageTree](#pagetree)     | None | `Module::PageTree`   | `<div class="pagetree-module-box"> <ul>`  | |
 | [Rate](#rate)             | None | `Module::Rate`       | `<div class="page-rate-widget-box">`      | |
 
@@ -82,6 +83,24 @@ Example:
 
 ```
 [[module Join]]
+```
+
+### ListPages
+
+Preserves a ListPages invocation for delayed evaluation by application code.
+
+Body: Raw
+
+Arguments:
+* Any arguments are preserved in source order, including duplicate names, empty values, and unknown names.
+
+Example:
+
+```text
+[[module ListPages category="-fragment" tag="+scp" order=""]]
+%%title_linked%%
+%%content%%
+[[/module]]
 ```
 
 ### PageTree

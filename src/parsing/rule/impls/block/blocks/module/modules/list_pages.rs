@@ -1,5 +1,5 @@
 /*
- * parsing/rule/impls/block/blocks/module/modules/mod.rs
+ * parsing/rule/impls/block/blocks/module/modules/list_pages.rs
  *
  * ftml - Library to parse Wikidot text
  * Copyright (C) 2019-2026 Wikijump Team
@@ -18,28 +18,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-mod prelude {
-    pub use super::super::{BLOCK_MODULE, ModuleParseOutput, ModuleRule, prelude::*};
-    pub use crate::tree::Module;
+use super::prelude::*;
+use std::borrow::Cow;
 
-    #[inline]
-    pub fn assert_module_name(module_rule: &ModuleRule, actual_name: &str) {
-        assert_generic_name(module_rule.accepts_names, actual_name, "module")
-    }
+pub const MODULE_LIST_PAGES: ModuleRule = ModuleRule {
+    name: "module-list-pages",
+    accepts_names: &["ListPages"],
+    parse_fn,
+};
+
+fn parse_fn<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    name: &'t str,
+    arguments: Arguments<'t>,
+) -> ParseResult<'r, 't, ModuleParseOutput<'t>> {
+    debug!("Parsing ListPages module");
+    assert_module_name(&MODULE_LIST_PAGES, name);
+
+    let body = parser.get_body_text(&BLOCK_MODULE)?;
+    let body = Cow::Borrowed(body);
+    ok!(false; Module::ListPages {
+        arguments: arguments.into_raw_vec(),
+        body,
+    })
 }
-
-mod backlinks;
-mod categories;
-mod css;
-mod join;
-mod list_pages;
-mod page_tree;
-mod rate;
-
-pub use self::backlinks::MODULE_BACKLINKS;
-pub use self::categories::MODULE_CATEGORIES;
-pub use self::css::MODULE_CSS;
-pub use self::join::MODULE_JOIN;
-pub use self::list_pages::MODULE_LIST_PAGES;
-pub use self::page_tree::MODULE_PAGE_TREE;
-pub use self::rate::MODULE_RATE;

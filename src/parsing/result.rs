@@ -61,12 +61,9 @@ impl<T> ParseSuccess<'_, '_, T> {
         all_errors: &mut Vec<ParseError>,
         all_paragraph_safe: &mut bool,
     ) -> T {
-        let ParseSuccess {
-            item,
-            mut errors,
-            paragraph_safe,
-            ..
-        } = self;
+        let item = self.item;
+        let mut errors = self.errors;
+        let paragraph_safe = self.paragraph_safe;
 
         // Append previous errors
         all_errors.append(&mut errors);
@@ -84,12 +81,9 @@ impl<'r, 't, T> ParseSuccess<'r, 't, T> {
     where
         F: FnOnce(T) -> U,
     {
-        let ParseSuccess {
-            item,
-            errors,
-            paragraph_safe,
-            ..
-        } = self;
+        let item = self.item;
+        let errors = self.errors;
+        let paragraph_safe = self.paragraph_safe;
 
         let new_item = f(item);
 
@@ -138,12 +132,9 @@ impl ParseSuccess<'_, '_, ()> {
 impl<'r, 't, T> From<ParseSuccess<'r, 't, T>> for ParseSuccessTuple<T> {
     #[inline]
     fn from(success: ParseSuccess<'r, 't, T>) -> ParseSuccessTuple<T> {
-        let ParseSuccess {
-            item,
-            errors,
-            paragraph_safe,
-            ..
-        } = success;
+        let item = success.item;
+        let errors = success.errors;
+        let paragraph_safe = success.paragraph_safe;
 
         (item, errors, paragraph_safe)
     }

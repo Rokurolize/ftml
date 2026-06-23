@@ -113,52 +113,16 @@ fn parse_item<'r, 't>(
     }
 
     // Ensure that it matches expected token state
-    if !matches!(
-        parser.next_two_tokens(),
-        (Token::Colon, Some(Token::Whitespace)),
-    ) {
+    if !starts_definition_item(parser) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
     parser.step_n(2)?;
 
-    // Gather key elements until colon
-    let start_token = parser.current();
-    let mut key_elements = collect_consume(
-        parser,
-        RULE_DEFINITION_LIST,
-        &[ParseCondition::token_pair(Token::Whitespace, Token::Colon)],
-        &[
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::current(Token::LineBreak),
-        ],
-        None,
-    )?
-    .chain(&mut errors, &mut _paragraph_safe);
-    let end_token = parser.current();
-
-    strip_whitespace(&mut key_elements);
-    parser.step_n(2)?;
-
-    // Gather key wikitext
-    let key_string = parser
-        .full_text()
-        .slice_partial(start_token, end_token)
-        .trim();
-
-    // Gather value elements until end of line
-    let (mut value_elements, last) = collect_consume_keep(
-        parser,
-        RULE_DEFINITION_LIST,
-        &[
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::current(Token::LineBreak),
-            ParseCondition::current(Token::InputEnd),
-        ],
-        &[],
-        None,
-    )?
-    .chain(&mut errors, &mut _paragraph_safe);
+    let key = collect_key(parser, &mut errors, &mut _paragraph_safe)?;
+    let value = collect_value(parser, &mut errors, &mut _paragraph_safe)?;
+    let (key_string, key_elements) = key;
+    let (value_elements, last) = value;
 
     // Some ending tokens designate a definite end
     let should_break = match last.token {
@@ -167,16 +131,71 @@ fn parse_item<'r, 't>(
         _ => panic!("Invalid close token: {}", last.token.name()),
     };
 
-    strip_whitespace(&mut value_elements);
-
     // Build and return
+    let key_string = std::borrow::Cow::Borrowed(key_string);
     let item = DefinitionListItem {
-        key_string: cow!(key_string),
+        key_string,
         key_elements,
         value_elements,
     };
 
     ok!(false; (item, should_break), errors)
+}
+
+fn starts_definition_item<'r, 't>(parser: &Parser<'r, 't>) -> bool {
+    parser.next_two_tokens() == (Token::Colon, Some(Token::Whitespace))
+}
+
+fn collect_key<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    errors: &mut Vec<ParseError>,
+    paragraph_safe: &mut bool,
+) -> Result<(&'t str, Vec<Element<'t>>), ParseError>
+where
+    'r: 't,
+{
+    let start_token = parser.current();
+    let close = [ParseCondition::token_pair(Token::Whitespace, Token::Colon)];
+    let invalid = [
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::current(Token::LineBreak),
+    ];
+    let rule = RULE_DEFINITION_LIST;
+
+    let collected = collect_consume(parser, rule, &close, &invalid, None)?;
+    let mut key_elements = collected.chain(errors, paragraph_safe);
+    let end_token = parser.current();
+
+    strip_whitespace(&mut key_elements);
+    parser.step_n(2)?;
+
+    let key_string = parser
+        .full_text()
+        .slice_partial(start_token, end_token)
+        .trim();
+    Ok((key_string, key_elements))
+}
+
+fn collect_value<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    errors: &mut Vec<ParseError>,
+    paragraph_safe: &mut bool,
+) -> Result<(Vec<Element<'t>>, &'r ExtractedToken<'t>), ParseError>
+where
+    'r: 't,
+{
+    let close = [
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::current(Token::LineBreak),
+        ParseCondition::current(Token::InputEnd),
+    ];
+    let rule = RULE_DEFINITION_LIST;
+
+    let collected = collect_consume_keep(parser, rule, &close, &[], None)?;
+    let (mut value_elements, last) = collected.chain(errors, paragraph_safe);
+
+    strip_whitespace(&mut value_elements);
+    Ok((value_elements, last))
 }
 
 #[cfg(test)]
@@ -246,6 +265,32 @@ mod tests {
                 );
             }
             other => panic!("expected following paragraph, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn definition_list_collects_multiple_items_through_input_end() {
+        enable_test_logging();
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(": Alpha : One\n: Beta : Two");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty());
+        assert_eq!(tree.elements.len(), 1);
+
+        match &tree.elements[0] {
+            Element::DefinitionList(items) => {
+                assert_eq!(items.len(), 2);
+                assert_eq!(items[0].key_string, "Alpha");
+                assert_eq!(items[0].key_elements, [text!("Alpha")]);
+                assert_eq!(items[0].value_elements, [text!("One")]);
+                assert_eq!(items[1].key_string, "Beta");
+                assert_eq!(items[1].key_elements, [text!("Beta")]);
+                assert_eq!(items[1].value_elements, [text!("Two")]);
+            }
+            other => panic!("expected definition list, got {other:?}"),
         }
     }
 

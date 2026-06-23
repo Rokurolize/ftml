@@ -42,28 +42,21 @@ fn try_consume_fn<'r, 't>(
     // ## [color-style] | [text to be colored] ##
 
     // Gather the color name until the separator
-    let color = collect_text(
-        parser,
-        RULE_COLOR,
-        &[ParseCondition::current(Token::Pipe)],
-        &[
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::current(Token::LineBreak),
-        ],
-        None,
-    )?;
+    let color_close = [ParseCondition::current(Token::Pipe)];
+    let color_invalid = [
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::current(Token::LineBreak),
+    ];
+    let color = collect_text(parser, RULE_COLOR, &color_close, &color_invalid, None)?;
 
     trace!("Retrieved color descriptor, now building container ('{color}')");
 
     // Build color container
-    let (elements, errors, paragraph_safe) = collect_consume(
-        parser,
-        RULE_COLOR,
-        &[ParseCondition::current(Token::Color)],
-        &[ParseCondition::current(Token::ParagraphBreak)],
-        None,
-    )?
-    .into();
+    let content_close = [ParseCondition::current(Token::Color)];
+    let content_invalid = [ParseCondition::current(Token::ParagraphBreak)];
+    let (elements, errors, paragraph_safe) =
+        collect_consume(parser, RULE_COLOR, &content_close, &content_invalid, None)?
+            .into();
 
     // Return result
     let element = Element::Color {

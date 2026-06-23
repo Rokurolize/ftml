@@ -95,16 +95,8 @@ fn parse_block<'r, 't>(
         ));
     }
 
-    // Ensure it contains no partials
-    cfg_if! {
-        if #[cfg(debug_assertions)] {
-            for element in &elements {
-                if let Element::Partial(_) = element {
-                    panic!("Found partial after conversion");
-                }
-            }
-        }
-    }
+    #[cfg(debug_assertions)]
+    assert_no_partials_after_conversion(&elements);
 
     // Remove leading and trailing whitespace
     strip_whitespace(&mut elements);
@@ -117,6 +109,14 @@ fn parse_block<'r, 't>(
     ));
 
     ok!(paragraph_safe; element, errors)
+}
+
+#[cfg(debug_assertions)]
+fn assert_no_partials_after_conversion(elements: &[Element]) {
+    for element in elements {
+        let is_partial = matches!(element, Element::Partial(_));
+        debug_assert!(!is_partial, "partial after conversion");
+    }
 }
 
 // Label block

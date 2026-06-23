@@ -91,10 +91,8 @@ where
             self.decrease_depth();
         }
 
-        debug_assert!(
-            self.stack.is_single(),
-            "Open layers remain after collapsing",
-        );
+        let stack_is_collapsed = self.stack.is_single();
+        debug_assert!(stack_is_collapsed, "open layers remain");
 
         // Return top-level layer
         let (ltype, list) = {

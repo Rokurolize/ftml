@@ -52,11 +52,8 @@ impl<'t> ParagraphStack<'t> {
 
     #[inline]
     pub fn push_element(&mut self, element: Element<'t>, paragraph_safe: bool) {
-        debug!(
-            "Pushing element {} to stack (paragraph safe: {}",
-            element.name(),
-            paragraph_safe,
-        );
+        let element_name = element.name();
+        debug!("Pushing {element_name} (paragraph safe: {paragraph_safe}");
 
         if paragraph_safe {
             // Add it to the current (or new) paragraph. Nothing special.
@@ -93,10 +90,8 @@ impl<'t> ParagraphStack<'t> {
 
     /// Creates a paragraph element out of this instance's current elements.
     pub fn build_paragraph(&mut self) -> Option<Element<'t>> {
-        trace!(
-            "Building paragraph from current stack state (length {})",
-            self.current.len(),
-        );
+        let current_len = self.current.len();
+        trace!("Building paragraph from current stack state (length {current_len})");
 
         // Don't create empty paragraphs
         if self.current.is_empty() {
@@ -106,8 +101,8 @@ impl<'t> ParagraphStack<'t> {
 
         // Pull out gathered elements, then make a new paragraph container
         let elements = mem::take(&mut self.current);
-        let container =
-            Container::new(ContainerType::Paragraph, elements, AttributeMap::new());
+        let attributes = AttributeMap::new();
+        let container = Container::new(ContainerType::Paragraph, elements, attributes);
         let element = Element::Container(container);
         Some(element)
     }
@@ -132,11 +127,8 @@ impl<'t> ParagraphStack<'t> {
         self.end_paragraph();
 
         // Deconstruct stack
-        let ParagraphStack {
-            current: _,
-            finished: elements,
-            errors,
-        } = self;
+        let elements = self.finished;
+        let errors = self.errors;
 
         // If this has any paragraphs in it, or other incompatible elements,
         // it's not fit to be wrapped in <p>.
@@ -162,10 +154,7 @@ impl<'t> ParagraphStack<'t> {
         self.end_paragraph();
 
         // Check that there are no errors
-        debug_assert!(
-            self.errors.is_empty(),
-            "Exceptions found in ParagraphStack::into_elements()!",
-        );
+        debug_assert!(self.errors.is_empty(), "ParagraphStack errors");
 
         // Deconstruct stack, return
         self.finished

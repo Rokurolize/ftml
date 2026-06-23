@@ -96,7 +96,7 @@ Arguments:
 
 Example:
 
-```
+```text
 [[module ListPages category="-fragment" tag="+scp" order=""]]
 %%title_linked%%
 %%content%%

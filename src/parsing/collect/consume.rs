@@ -33,14 +33,14 @@ pub fn collect_consume<'r, 't>(
     invalid_conditions: &[ParseCondition],
     error_kind: Option<ParseErrorKind>,
 ) -> ParseResult<'r, 't, Vec<Element<'t>>> {
-    collect_consume_keep(
+    let success = collect_consume_keep(
         parser,
         rule,
         close_conditions,
         invalid_conditions,
         error_kind,
-    )
-    .map(|success| success.map(|(elements, _)| elements))
+    )?;
+    Ok(success.map(|(elements, _)| elements))
 }
 
 /// Modified form of `collect_consume()` that also returns the last token.
@@ -58,15 +58,16 @@ pub fn collect_consume_keep<'r, 't>(
 ) -> ParseResult<'r, 't, (Vec<Element<'t>>, &'r ExtractedToken<'t>)> {
     let mut all_elements = Vec::new();
 
-    let (last, errors, paragraph_safe) = collect(
+    let collection = collect(
         parser,
         rule,
         close_conditions,
         invalid_conditions,
         error_kind,
         |parser| consume(parser)?.map_ok(|elements| all_elements.extend(elements)),
-    )?
-    .into();
+    )?;
+    let (last, errors, paragraph_safe) = collection.into();
 
-    ok!(paragraph_safe; (all_elements, last), errors)
+    let item = (all_elements, last);
+    Ok(ParseSuccess::new(item, errors, paragraph_safe))
 }

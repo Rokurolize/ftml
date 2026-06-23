@@ -36,14 +36,15 @@ pub fn collect_text<'p, 'r, 't>(
 where
     'r: 't,
 {
-    collect_text_keep(
+    let result = collect_text_keep(
         parser,
         rule,
         close_conditions,
         invalid_conditions,
         error_kind,
-    )
-    .map(|(slice, _)| slice)
+    )?;
+    let (slice, _) = result;
+    Ok(slice)
 }
 
 /// Modified form of `collect_text()` that also returns the last token.
@@ -70,7 +71,7 @@ where
     // Iterate and collect the tokens to merge.
     //
     // We know text is always paragraph safe, so we ignore that value.
-    let (last, errors, _) = collect(
+    let collection = collect(
         parser,
         rule,
         close_conditions,
@@ -82,8 +83,8 @@ where
             end = Some(parser.current());
             ok!(true; ())
         },
-    )?
-    .into();
+    )?;
+    let (last, errors, _) = collection.into();
 
     assert!(
         errors.is_empty(),

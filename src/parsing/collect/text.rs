@@ -86,10 +86,7 @@ where
     )?;
     let (last, errors, _) = collection.into();
 
-    assert!(
-        errors.is_empty(),
-        "Exceptions were returned during text token collection",
-    );
+    assert!(errors.is_empty(), "Text collection errors");
 
     let slice = match (start, end) {
         // We have a token span, use to get string slice

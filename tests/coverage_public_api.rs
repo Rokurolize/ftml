@@ -49,6 +49,8 @@ fn main() {}
 ||~ Head || Cell ||
 || A || B ||
 
+= centered
+
 * one
 * two
 "#,
@@ -57,6 +59,7 @@ fn main() {}
     assert!(output.contains("Visible text"));
     assert!(output.contains("fn main() {}"));
     assert!(output.contains("HeadCell"));
+    assert!(output.contains("centered"));
     assert!(output.contains("one"));
     assert!(output.contains("two"));
 }

@@ -27,25 +27,27 @@ pub const RULE_CENTER: Rule = Rule {
     try_consume_fn,
 };
 
+fn step_expected<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    token: Token,
+) -> Result<(), ParseError> {
+    let current = parser.current().token;
+    if current != token {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
+    parser.step()?;
+    Ok(())
+}
+
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create centered container");
 
     // Check that the rule has "= "
-    macro_rules! next {
-        ($token:expr) => {{
-            let token = parser.current().token;
-            if token != $token {
-                return Err(parser.make_err(ParseErrorKind::RuleFailed));
-            }
-
-            parser.step()?;
-        }};
-    }
-
-    next!(Token::Equals);
-    next!(Token::Whitespace);
+    step_expected(parser, Token::Equals)?;
+    step_expected(parser, Token::Whitespace)?;
 
     // Collect contents
     collect_container(

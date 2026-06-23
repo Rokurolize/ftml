@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use crate::tree::Heading;
 use std::convert::TryInto;
 
 pub const RULE_HEADER: Rule = Rule {
@@ -27,31 +28,37 @@ pub const RULE_HEADER: Rule = Rule {
     try_consume_fn,
 };
 
+fn step_expected<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    token: Token,
+) -> Result<&'r ExtractedToken<'t>, ParseError> {
+    let current = parser.current();
+    if current.token != token {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
+    parser.step()?;
+    Ok(current)
+}
+
+fn heading_from_token(token: &ExtractedToken<'_>) -> Heading {
+    token
+        .slice
+        .try_into()
+        .expect("Received invalid heading length token slice")
+}
+
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create header container");
 
-    macro_rules! step {
-        ($token:expr) => {{
-            let current = parser.current();
-            if current.token != $token {
-                return Err(parser.make_err(ParseErrorKind::RuleFailed));
-            }
-
-            parser.step()?;
-            current
-        }};
-    }
-
     // Get header depth
-    let heading = step!(Token::Heading)
-        .slice
-        .try_into()
-        .expect("Received invalid heading length token slice");
+    let heading_token = step_expected(parser, Token::Heading)?;
+    let heading = heading_from_token(heading_token);
 
     // Step over whitespace
-    step!(Token::Whitespace);
+    step_expected(parser, Token::Whitespace)?;
 
     let (elements, mut all_errors, _) = collect_container(
         parser,

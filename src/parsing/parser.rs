@@ -234,9 +234,8 @@ impl<'r, 't> Parser<'r, 't> {
         self.footnotes.borrow_mut().truncate(footnote_index);
         self.html_blocks.borrow_mut().truncate(html_block_index);
         self.code_blocks.borrow_mut().truncate(code_block_index);
-        self.table_of_contents
-            .borrow_mut()
-            .truncate(table_of_contents_index);
+        let mut table_of_contents = self.table_of_contents.borrow_mut();
+        table_of_contents.truncate(table_of_contents_index);
     }
 
     // Parse settings helpers
@@ -258,8 +257,9 @@ impl<'r, 't> Parser<'r, 't> {
         let level = usize::from(heading.value()) - 1;
 
         // Render name as text, so it lacks formatting
-        let name =
-            TextRender.render_partial(name_elements, self.page_info, self.settings, 0);
+        let page_info = self.page_info;
+        let settings = self.settings;
+        let name = TextRender.render_partial(name_elements, page_info, settings, 0);
 
         self.table_of_contents.borrow_mut().push((level, name));
     }
@@ -336,9 +336,8 @@ impl<'r, 't> Parser<'r, 't> {
 
         self.code_blocks.borrow_mut().append(code_blocks);
 
-        self.table_of_contents
-            .borrow_mut()
-            .append(table_of_contents);
+        let mut table_of_contents_guard = self.table_of_contents.borrow_mut();
+        table_of_contents_guard.append(table_of_contents);
 
         self.footnotes.borrow_mut().append(footnotes);
 
@@ -347,42 +346,34 @@ impl<'r, 't> Parser<'r, 't> {
 
     // State evaluation
     pub fn evaluate(&self, condition: ParseCondition) -> bool {
-        debug!(
-            "Evaluating parser condition (token {}, slice '{}', span {}..{})",
-            self.current.token.name(),
-            self.current.slice,
-            self.current.span.start,
-            self.current.span.end,
-        );
+        let token_name = self.current.token.name();
+        let current_slice = self.current.slice;
+        let span_start = self.current.span.start;
+        let span_end = self.current.span.end;
+        debug!("Eval condition {token_name} '{current_slice}' {span_start}..{span_end}");
 
         match condition {
             ParseCondition::CurrentToken(token) => self.current.token == token,
             ParseCondition::TokenPair(current, next) => {
                 if self.current().token != current {
-                    trace!(
-                        "Current token in pair doesn't match, failing (expected '{}', actual '{}')",
-                        current.name(),
-                        self.current().token.name(),
-                    );
+                    let expected = current.name();
+                    let actual = self.current().token.name();
+                    trace!("Token pair current mismatch ({expected}!={actual})");
                     return false;
                 }
 
                 match self.look_ahead(0) {
                     Some(actual) => {
                         if actual.token != next {
-                            trace!(
-                                "Second token in pair doesn't match, failing (expected {}, actual {})",
-                                next.name(),
-                                actual.token.name(),
-                            );
+                            let expected = next.name();
+                            let actual = actual.token.name();
+                            trace!("Token pair next mismatch ({expected}!={actual})");
                             return false;
                         }
                     }
                     None => {
-                        trace!(
-                            "Second token in pair doesn't exist (token {})",
-                            next.name(),
-                        );
+                        let expected = next.name();
+                        trace!("Token pair next missing ({expected})");
                         return false;
                     }
                 }
@@ -394,10 +385,8 @@ impl<'r, 't> Parser<'r, 't> {
 
     #[inline]
     pub fn evaluate_any(&self, conditions: &[ParseCondition]) -> bool {
-        debug!(
-            "Evaluating to see if any parser condition is true (conditions length {})",
-            conditions.len(),
-        );
+        let condition_count = conditions.len();
+        debug!("Evaluating parser conditions (count {condition_count})");
 
         conditions.iter().any(|&condition| self.evaluate(condition))
     }
@@ -465,10 +454,11 @@ impl<'r, 't> Parser<'r, 't> {
         trace!("Stepping to the next token");
 
         // Set the start-of-line flag.
-        self.start_of_line = matches!(
+        let starts_line = matches!(
             self.current.token,
             Token::InputStart | Token::LineBreak | Token::ParagraphBreak,
         );
+        self.start_of_line = starts_line;
 
         // Step to the next token.
         match self.remaining.split_first() {

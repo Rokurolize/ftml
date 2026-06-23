@@ -58,14 +58,9 @@ fn parse_unordered_block<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    parse_list_block(
-        (&BLOCK_UL, ListType::Bullet),
-        parser,
-        name,
-        flag_star,
-        flag_score,
-        in_head,
-    )
+    let block = (&BLOCK_UL, ListType::Bullet);
+
+    parse_list_block(block, parser, name, flag_star, flag_score, in_head)
 }
 
 fn parse_ordered_block<'r, 't>(
@@ -75,14 +70,9 @@ fn parse_ordered_block<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    parse_list_block(
-        (&BLOCK_OL, ListType::Numbered),
-        parser,
-        name,
-        flag_star,
-        flag_score,
-        in_head,
-    )
+    let block = (&BLOCK_OL, ListType::Numbered);
+
+    parse_list_block(block, parser, name, flag_star, flag_score, in_head)
 }
 
 // List block
@@ -95,13 +85,10 @@ fn parse_list_block<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    let rule_name = block_rule.name;
+    let list_type_name = list_type.name();
     debug!(
-        "Parsing list block (name '{}', rule {}, list type {}, in-head {}, score {})",
-        name,
-        block_rule.name,
-        list_type.name(),
-        in_head,
-        flag_score,
+        "List block: name={name}, rule={rule_name}, type={list_type_name}, in_head={in_head}, score={flag_score}"
     );
 
     let parser = &mut ParserWrap::new(parser, AcceptsPartial::ListItem);
@@ -109,22 +96,19 @@ fn parse_list_block<'r, 't>(
     assert!(!flag_star, "List block doesn't allow star flag");
     assert_block_name(block_rule, name);
 
-    // "ul" means we wrap interpret as-is
-    // "ul_" means we strip out any newlines or paragraph breaks
-    let strip_line_breaks = flag_score;
-
     // Get attributes
     let arguments = parser.get_head_map(block_rule, in_head)?;
     let attributes = arguments.to_attribute_map(parser.settings());
 
     // Get body and convert into list form.
-    let (mut elements, errors, _) = parser.get_body_elements(block_rule, false)?.into();
+    let body = parser.get_body_elements(block_rule, false)?;
+    let (mut elements, errors, _) = body.into();
 
     let items = {
         let mut items = Vec::new();
 
-        // Strip newlines, if desired
-        if strip_line_breaks {
+        // "ul_" strips outer newlines and paragraph breaks.
+        if flag_score {
             strip_newlines(&mut elements);
         }
 
@@ -142,17 +126,8 @@ fn parse_list_block<'r, 't>(
                 }
 
                 // Or sub-lists.
-                Element::List {
-                    ltype,
-                    attributes,
-                    items: sub_items,
-                } => {
-                    let element = Box::new(Element::List {
-                        ltype,
-                        attributes,
-                        items: sub_items,
-                    });
-
+                element @ Element::List { .. } => {
+                    let element = Box::new(element);
                     items.push(ListItem::SubList { element });
                 }
 
@@ -185,26 +160,20 @@ fn parse_list_item<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!(
-        "Parsing list item block (name '{}', in-head {}, score {})",
-        name, in_head, flag_score,
-    );
+    debug!("List item block: name={name}, in_head={in_head}, score={flag_score}");
     assert!(!flag_star, "List item block doesn't allow star flag");
     assert_block_name(&BLOCK_LI, name);
-
-    // "li" means we wrap interpret as-is
-    // "li_" means we strip out any newlines or paragraph breaks
-    let strip_line_breaks = flag_score;
 
     // Get attributes
     let arguments = parser.get_head_map(&BLOCK_LI, in_head)?;
     let attributes = arguments.to_attribute_map(parser.settings());
 
     // Get body elements
-    let (mut elements, errors, _) = parser.get_body_elements(&BLOCK_LI, false)?.into();
+    let body = parser.get_body_elements(&BLOCK_LI, false)?;
+    let (mut elements, errors, _) = body.into();
 
-    // Strip newlines, if desired
-    if strip_line_breaks {
+    // "li_" strips outer newlines and paragraph breaks.
+    if flag_score {
         strip_newlines(&mut elements);
     }
 
@@ -214,4 +183,176 @@ fn parse_list_item<'r, 't>(
     }));
 
     ok!(false; element, errors)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::parsing::ParseError;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    fn with_parse<R>(
+        source: &str,
+        check: impl for<'t> FnOnce(Vec<Element<'t>>, Vec<ParseError>) -> R,
+    ) -> R {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        check(tree.elements, errors)
+    }
+
+    fn element_text(elements: &[Element]) -> String {
+        elements
+            .iter()
+            .filter_map(|element| match element {
+                Element::Text(text) => Some(text.as_ref()),
+                _ => None,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn unordered_block_list_preserves_attributes_and_items() {
+        with_parse(
+            r#"[[ul class="menu"]]
+[[li class="first"]]Alpha[[/li]]
+[[li]]Beta[[/li]]
+[[/ul]]"#,
+            |tree, errors| {
+                assert!(errors.is_empty(), "{errors:?}");
+                let [
+                    Element::List {
+                        ltype,
+                        attributes,
+                        items,
+                    },
+                ] = tree.as_slice()
+                else {
+                    panic!("expected one unordered list, got {tree:?}");
+                };
+
+                assert_eq!(*ltype, ListType::Bullet);
+                assert_eq!(
+                    attributes.get().get("class").map(|value| value.as_ref()),
+                    Some("menu")
+                );
+                assert_eq!(items.len(), 2);
+
+                let ListItem::Elements {
+                    attributes,
+                    elements,
+                } = &items[0]
+                else {
+                    panic!("expected first list item, got {:?}", items[0]);
+                };
+                assert_eq!(
+                    attributes.get().get("class").map(|value| value.as_ref()),
+                    Some("first")
+                );
+                assert_eq!(element_text(elements), "Alpha");
+
+                let ListItem::Elements { elements, .. } = &items[1] else {
+                    panic!("expected second list item, got {:?}", items[1]);
+                };
+                assert_eq!(element_text(elements), "Beta");
+            },
+        );
+    }
+
+    #[test]
+    fn ordered_block_list_accepts_nested_sublist() {
+        with_parse(
+            r#"[[ol]]
+[[li]]Parent[[/li]]
+[[ul]]
+[[li]]Child[[/li]]
+[[/ul]]
+[[/ol]]"#,
+            |tree, errors| {
+                assert!(errors.is_empty(), "{errors:?}");
+                let [Element::List { ltype, items, .. }] = tree.as_slice() else {
+                    panic!("expected one ordered list, got {tree:?}");
+                };
+
+                assert_eq!(*ltype, ListType::Numbered);
+                assert_eq!(items.len(), 2);
+                let ListItem::Elements { elements, .. } = &items[0] else {
+                    panic!("expected parent item, got {:?}", items[0]);
+                };
+                assert_eq!(element_text(elements), "Parent");
+
+                let ListItem::SubList { element } = &items[1] else {
+                    panic!("expected nested sublist item, got {:?}", items[1]);
+                };
+                let Element::List {
+                    ltype,
+                    attributes,
+                    items,
+                } = element.as_ref()
+                else {
+                    panic!("expected nested list element, got {element:?}");
+                };
+
+                assert_eq!(*ltype, ListType::Bullet);
+                assert!(attributes.get().is_empty());
+                let [ListItem::Elements { elements, .. }] = items.as_slice() else {
+                    panic!("expected one nested list item, got {items:?}");
+                };
+                assert_eq!(element_text(elements), "Child");
+            },
+        );
+    }
+
+    #[test]
+    fn scored_block_and_item_strip_outer_line_breaks() {
+        with_parse(
+            r#"[[ul_]]
+[[li_]]
+Alpha
+[[/li]]
+[[/ul]]"#,
+            |tree, errors| {
+                assert!(errors.is_empty(), "{errors:?}");
+                let [Element::List { items, .. }] = tree.as_slice() else {
+                    panic!("expected one list, got {tree:?}");
+                };
+                let [ListItem::Elements { elements, .. }] = items.as_slice() else {
+                    panic!("expected one list item, got {items:?}");
+                };
+
+                assert!(
+                    !elements
+                        .iter()
+                        .any(|element| matches!(element, Element::LineBreak))
+                );
+                assert_eq!(element_text(elements), "Alpha");
+            },
+        );
+    }
+
+    #[test]
+    fn block_list_rejects_empty_body() {
+        with_parse("[[ul]][[/ul]]", |_tree, errors| {
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::ListEmpty)
+            );
+        });
+    }
+
+    #[test]
+    fn block_list_rejects_non_item_body() {
+        with_parse("[[ul]]plain text[[/ul]]", |_tree, errors| {
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::ListContainsNonItem)
+            );
+        });
+    }
 }

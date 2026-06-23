@@ -51,38 +51,24 @@ impl TextRender {
         })
     }
 
-    fn render_partial_direct(
-        &self,
-        RenderPartial {
-            elements,
-            page_info,
-            settings,
-            table_of_contents,
-            footnotes,
-            bibliographies,
-            wikitext_len,
-        }: RenderPartial,
-    ) -> String {
+    fn render_partial_direct(&self, partial: RenderPartial) -> String {
         debug!(
             "Rendering text (site {}, page {}, category {})",
-            page_info.site.as_ref(),
-            page_info.page.as_ref(),
-            match &page_info.category {
-                Some(category) => category.as_ref(),
-                None => "_default",
-            },
+            partial.page_info.site.as_ref(),
+            partial.page_info.page.as_ref(),
+            page_category(partial.page_info),
         );
 
         let mut ctx = TextContext::new(
-            page_info,
+            partial.page_info,
             &Handle,
-            settings,
-            table_of_contents,
-            footnotes,
-            bibliographies,
-            wikitext_len,
+            partial.settings,
+            partial.table_of_contents,
+            partial.footnotes,
+            partial.bibliographies,
+            partial.wikitext_len,
         );
-        render_elements(&mut ctx, elements);
+        render_elements(&mut ctx, partial.elements);
 
         // Remove leading and trailing newlines
         while ctx.buffer().starts_with('\n') {
@@ -117,16 +103,13 @@ impl Render for TextRender {
             },
         );
 
-        self.render_partial_direct(RenderPartial {
-            elements: &tree.elements,
-            page_info,
-            settings,
-            table_of_contents: &tree.table_of_contents,
-            footnotes: &tree.footnotes,
-            bibliographies: &tree.bibliographies,
-            wikitext_len: tree.wikitext_len,
-        })
+        let partial = RenderPartial::tree(tree, page_info, settings);
+        self.render_partial_direct(partial)
     }
+}
+
+fn page_category<'a>(page_info: &'a PageInfo) -> &'a str {
+    page_info.category.as_deref().unwrap_or("_default")
 }
 
 /// Helper structure to pass in values for `render_partial_direct()`.
@@ -142,6 +125,24 @@ struct RenderPartial<'a> {
     footnotes: &'a [Vec<Element<'a>>],
     bibliographies: &'a BibliographyList<'a>,
     wikitext_len: usize,
+}
+
+impl<'a> RenderPartial<'a> {
+    fn tree(
+        tree: &'a SyntaxTree<'a>,
+        page_info: &'a PageInfo<'a>,
+        settings: &'a WikitextSettings,
+    ) -> Self {
+        RenderPartial {
+            elements: &tree.elements,
+            page_info,
+            settings,
+            table_of_contents: &tree.table_of_contents,
+            footnotes: &tree.footnotes,
+            bibliographies: &tree.bibliographies,
+            wikitext_len: tree.wikitext_len,
+        }
+    }
 }
 
 #[cfg(test)]

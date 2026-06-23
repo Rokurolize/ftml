@@ -32,7 +32,6 @@ use crate::tree::{BibliographyList, Element, SyntaxTree};
 pub struct TextRender;
 
 impl TextRender {
-    #[inline]
     pub fn render_partial(
         &self,
         elements: &[Element],

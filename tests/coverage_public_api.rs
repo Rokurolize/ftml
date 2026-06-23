@@ -73,6 +73,16 @@ fn public_api_text_render_covers_anchor_link_labels() {
 }
 
 #[test]
+fn public_api_text_render_partial_trims_outer_newlines() {
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+    let elements = [Element::Text(Cow::Borrowed("\nPartial body\n"))];
+    let output = TextRender.render_partial(&elements, &page_info, &settings, 14);
+
+    assert_eq!(output, "Partial body");
+}
+
+#[test]
 fn public_api_html_render_tracks_metadata_backlinks_and_indices() {
     let mut page_info = page_info();
     page_info.alt_title = Some(Cow::Borrowed("Alt Coverage"));

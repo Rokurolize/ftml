@@ -109,18 +109,8 @@ fn try_consume_fn<'r, 't>(
         parser.step()?;
 
         // Parse elements until we hit the end of the line
-        let elements = collect_consume(
-            parser,
-            RULE_LIST,
-            &[
-                ParseCondition::current(Token::LineBreak),
-                ParseCondition::current(Token::ParagraphBreak),
-                ParseCondition::current(Token::InputEnd),
-            ],
-            &[],
-            None,
-        )?
-        .chain(&mut errors, &mut paragraph_safe);
+        let item_result = collect_list_item_elements(parser)?;
+        let elements = item_result.chain(&mut errors, &mut paragraph_safe);
 
         // Empty list lines are ignored
         if elements.is_empty() {
@@ -144,6 +134,18 @@ fn try_consume_fn<'r, 't>(
         .collect();
 
     ok!(paragraph_safe; elements, errors)
+}
+
+fn collect_list_item_elements<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> ParseResult<'r, 't, Vec<Element<'t>>> {
+    let close_conditions = [
+        ParseCondition::current(Token::LineBreak),
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::current(Token::InputEnd),
+    ];
+
+    collect_consume(parser, RULE_LIST, &close_conditions, &[], None)
 }
 
 fn build_list_element(

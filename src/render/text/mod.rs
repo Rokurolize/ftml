@@ -93,15 +93,10 @@ impl Render for TextRender {
         page_info: &PageInfo,
         settings: &WikitextSettings,
     ) -> String {
-        info!(
-            "Rendering text (site {}, page {}, category {})",
-            page_info.site.as_ref(),
-            page_info.page.as_ref(),
-            match &page_info.category {
-                Some(category) => category.as_ref(),
-                None => "_default",
-            },
-        );
+        let site = page_info.site.as_ref();
+        let page = page_info.page.as_ref();
+        let category = page_category(page_info);
+        info!("Rendering text (site {site}, page {page}, category {category})");
 
         let partial = RenderPartial::tree(tree, page_info, settings);
         self.render_partial_direct(partial)

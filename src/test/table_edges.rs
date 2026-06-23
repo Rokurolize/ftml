@@ -22,7 +22,7 @@ use crate::data::PageInfo;
 use crate::layout::Layout;
 use crate::parsing::ParseErrorKind;
 use crate::settings::{WikitextMode, WikitextSettings};
-use crate::tree::{Element, TableType};
+use crate::tree::{ContainerType, Element, TableType};
 
 #[derive(Debug)]
 struct TestLogger;
@@ -118,4 +118,51 @@ fn simple_table_missing_end_reports_rule_failure() {
                 && error.kind() == ParseErrorKind::RuleFailed),
         "expected a table rule failure, got {errors:?}",
     );
+}
+
+#[test]
+fn simple_table_finishes_before_following_paragraph() {
+    enable_test_logging();
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize("|| A ||\nfollowing");
+    let result = crate::parse(&tokenization, &page_info, &settings);
+    let (tree, errors) = result.into();
+
+    assert!(errors.is_empty(), "unexpected parse errors: {errors:?}");
+    let [Element::Table(table), Element::Container(paragraph)] = tree.elements.as_slice()
+    else {
+        panic!(
+            "expected table followed by paragraph, got {:?}",
+            tree.elements
+        );
+    };
+
+    assert_eq!(table.table_type, TableType::Simple);
+    assert_eq!(table.rows.len(), 1);
+    assert_eq!(table.rows[0].cells.len(), 1);
+    assert_single_text(&table.rows[0].cells[0].elements, "A");
+    assert_eq!(paragraph.ctype(), ContainerType::Paragraph);
+    assert_single_text(paragraph.elements(), "following");
+}
+
+#[test]
+fn simple_table_consumes_rich_cell_contents() {
+    enable_test_logging();
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize("|| **bold** ||");
+    let result = crate::parse(&tokenization, &page_info, &settings);
+    let (tree, errors) = result.into();
+
+    assert!(errors.is_empty(), "unexpected parse errors: {errors:?}");
+    let [Element::Table(table)] = tree.elements.as_slice() else {
+        panic!("expected one table, got {:?}", tree.elements);
+    };
+
+    assert_eq!(table.rows.len(), 1);
+    assert_eq!(table.rows[0].cells.len(), 1);
+    assert_eq!(table.rows[0].cells[0].elements.len(), 1);
 }

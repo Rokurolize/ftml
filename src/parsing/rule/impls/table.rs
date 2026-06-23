@@ -23,7 +23,7 @@ use crate::tree::{Alignment, Table, TableCell, TableRow, TableType};
 use std::mem;
 use std::num::NonZeroU32;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 struct TableCellStart {
     align: Option<Alignment>,
     header: bool,
@@ -44,7 +44,8 @@ fn take_row<'t>(cells: &mut Vec<TableCell<'t>>) -> TableRow<'t> {
 }
 
 fn push_row<'t>(rows: &mut Vec<TableRow<'t>>, cells: &mut Vec<TableCell<'t>>) {
-    rows.push(take_row(cells));
+    let row = take_row(cells);
+    rows.push(row);
 }
 
 fn take_cell<'t>(
@@ -72,17 +73,123 @@ fn push_cell<'t>(
     elements: &mut Vec<Element<'t>>,
     cell_start: TableCellStart,
 ) {
-    cells.push(take_cell(elements, cell_start));
+    let cell = take_cell(elements, cell_start);
+    cells.push(cell);
 }
 
 fn simple_table<'t>(rows: Vec<TableRow<'t>>) -> Element<'t> {
     let attributes = AttributeMap::new();
+    let table_type = TableType::Simple;
     let table = Table {
         rows,
         attributes,
-        table_type: TableType::Simple,
+        table_type,
     };
     Element::Table(table)
+}
+
+fn is_table_column_token(token: Token) -> bool {
+    matches!(
+        token,
+        Token::TableColumn
+            | Token::TableColumnTitle
+            | Token::TableColumnCenter
+            | Token::TableColumnRight
+    )
+}
+
+enum CellBoundary {
+    FinishTable,
+    FinishRow,
+    ContinueCell,
+}
+
+struct CellState<'a, 't> {
+    rows: &'a mut Vec<TableRow<'t>>,
+    cells: &'a mut Vec<TableCell<'t>>,
+    elements: &'a mut Vec<Element<'t>>,
+}
+
+impl<'a, 't> CellState<'a, 't> {
+    fn new(
+        rows: &'a mut Vec<TableRow<'t>>,
+        cells: &'a mut Vec<TableCell<'t>>,
+        elements: &'a mut Vec<Element<'t>>,
+    ) -> Self {
+        Self {
+            rows,
+            cells,
+            elements,
+        }
+    }
+}
+
+fn finish_simple_table<'r, 't>(
+    rows: Vec<TableRow<'t>>,
+    errors: Vec<ParseError>,
+) -> ParseResult<'r, 't, Elements<'t>> {
+    let table = simple_table(rows);
+    ok!(false; table, errors)
+}
+
+fn finish_table_or_fail<'r, 't>(
+    parser: &Parser<'r, 't>,
+    rows: Vec<TableRow<'t>>,
+    errors: Vec<ParseError>,
+) -> ParseResult<'r, 't, Elements<'t>> {
+    let has_rows = !rows.is_empty();
+    if has_rows {
+        finish_simple_table(rows, errors)
+    } else {
+        Err(parser.make_err(ParseErrorKind::RuleFailed))
+    }
+}
+
+fn finish_cell_and_table<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    state: &mut CellState<'_, 't>,
+    cell_start: TableCellStart,
+    steps: usize,
+) -> Result<CellBoundary, ParseError> {
+    push_cell(state.cells, state.elements, cell_start);
+    push_row(state.rows, state.cells);
+    parser.step_n(steps)?;
+    let boundary = CellBoundary::FinishTable;
+    Ok(boundary)
+}
+
+fn finish_cell_and_row<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    state: &mut CellState<'_, 't>,
+    cell_start: TableCellStart,
+    steps: usize,
+) -> Result<CellBoundary, ParseError> {
+    push_cell(state.cells, state.elements, cell_start);
+    parser.step_n(steps)?;
+    let boundary = CellBoundary::FinishRow;
+    Ok(boundary)
+}
+
+fn handle_cell_boundary<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    state: &mut CellState<'_, 't>,
+    cell_start: TableCellStart,
+    next: Token,
+) -> Result<CellBoundary, ParseError> {
+    match next {
+        Token::ParagraphBreak | Token::InputEnd => {
+            finish_cell_and_table(parser, state, cell_start, 1)
+        }
+        Token::LineBreak => finish_cell_and_row(parser, state, cell_start, 2),
+        Token::Whitespace => match parser.look_ahead(1).map(|t| t.token) {
+            Some(Token::ParagraphBreak) | Some(Token::InputEnd) | None => {
+                finish_cell_and_table(parser, state, cell_start, 2)
+            }
+            Some(Token::LineBreak) => finish_cell_and_row(parser, state, cell_start, 3),
+            _ => Ok(CellBoundary::ContinueCell),
+        },
+        _ => Ok(CellBoundary::ContinueCell),
+    }
 }
 
 fn try_consume_fn<'r, 't>(
@@ -91,24 +198,12 @@ fn try_consume_fn<'r, 't>(
     debug!("Trying to parse simple table");
     let mut rows = Vec::new();
     let mut errors = Vec::new();
-    let mut _paragraph_break = false;
+    let mut paragraph_break = false;
 
-    'table: loop {
+    loop {
         debug!("Parsing next table row");
 
         let mut cells = Vec::new();
-
-        macro_rules! finish_table {
-            () => {
-                if rows.is_empty() {
-                    // No rows were successfully parsed, fail.
-                    return Err(parser.make_err(ParseErrorKind::RuleFailed));
-                } else {
-                    // At least one row was created, end it here.
-                    break 'table;
-                }
-            };
-        }
 
         // Loop for each cell in the row
         'row: loop {
@@ -116,7 +211,7 @@ fn try_consume_fn<'r, 't>(
             let mut elements = Vec::new();
             let cell_start = match parse_cell_start(parser)? {
                 Some(cell_start) => cell_start,
-                None => finish_table!(),
+                None => return finish_table_or_fail(parser, rows, errors),
             };
 
             // Loop for each element in the cell
@@ -124,59 +219,19 @@ fn try_consume_fn<'r, 't>(
                 trace!("Parsing next element (length {})", elements.len());
                 match parser.next_two_tokens() {
                     // End the cell or row
-                    (
-                        Token::TableColumn
-                        | Token::TableColumnTitle
-                        | Token::TableColumnCenter
-                        | Token::TableColumnRight,
-                        Some(next),
-                    ) => {
-                        trace!(
-                            "Ending cell, row, or table (next token '{}')",
-                            next.name(),
-                        );
-                        match next {
-                            // End the table entirely, there's a newline in between,
-                            // or it's the end of input.
-                            //
-                            // For both ending the table and the row, we must step
-                            // to consume the final table column token.
-                            Token::ParagraphBreak | Token::InputEnd => {
-                                push_cell(&mut cells, &mut elements, cell_start);
-                                push_row(&mut rows, &mut cells);
-                                parser.step()?;
-                                break 'table;
-                            }
+                    (current, Some(next)) if is_table_column_token(current) => {
+                        trace!("Ending cell, row, or table");
+                        let mut state =
+                            CellState::new(&mut rows, &mut cells, &mut elements);
+                        let boundary =
+                            handle_cell_boundary(parser, &mut state, cell_start, next)?;
 
-                            // Only end the row, continue the table.
-                            Token::LineBreak => {
-                                push_cell(&mut cells, &mut elements, cell_start);
-                                parser.step_n(2)?;
-                                break 'row;
+                        match boundary {
+                            CellBoundary::FinishTable => {
+                                return finish_simple_table(rows, errors);
                             }
-
-                            // Trailing whitespace after the final `||` of a row:
-                            // peek past it to see whether the row or table actually ends.
-                            Token::Whitespace => {
-                                match parser.look_ahead(1).map(|t| t.token) {
-                                    Some(Token::ParagraphBreak)
-                                    | Some(Token::InputEnd)
-                                    | None => {
-                                        push_cell(&mut cells, &mut elements, cell_start);
-                                        push_row(&mut rows, &mut cells);
-                                        parser.step_n(2)?;
-                                        break 'table;
-                                    }
-                                    Some(Token::LineBreak) => {
-                                        push_cell(&mut cells, &mut elements, cell_start);
-                                        parser.step_n(3)?;
-                                        break 'row;
-                                    }
-                                    _ => break 'cell,
-                                }
-                            }
-
-                            _ => break 'cell,
+                            CellBoundary::FinishRow => break 'row,
+                            CellBoundary::ContinueCell => break 'cell,
                         }
                     }
 
@@ -188,15 +243,7 @@ fn try_consume_fn<'r, 't>(
                     }
 
                     // Ignore trailing whitespace
-                    (
-                        Token::Whitespace,
-                        Some(
-                            Token::TableColumn
-                            | Token::TableColumnTitle
-                            | Token::TableColumnCenter
-                            | Token::TableColumnRight,
-                        ),
-                    ) => {
+                    (Token::Whitespace, Some(next)) if is_table_column_token(next) => {
                         trace!("Ignoring trailing whitespace");
                         parser.step()?;
                         continue 'cell;
@@ -205,17 +252,17 @@ fn try_consume_fn<'r, 't>(
                     // Invalid tokens
                     (Token::LineBreak | Token::ParagraphBreak | Token::InputEnd, _) => {
                         trace!("Invalid termination tokens in table, ending");
-                        finish_table!();
+                        return finish_table_or_fail(parser, rows, errors);
                     }
 
                     // Consume tokens like normal
                     _ => {
                         trace!("Consuming cell contents as elements");
 
-                        let new_elements =
-                            consume(parser)?.chain(&mut errors, &mut _paragraph_break);
+                        let consumed = consume(parser)?;
+                        let new_items = consumed.chain(&mut errors, &mut paragraph_break);
 
-                        elements.extend(new_elements);
+                        elements.extend(new_items);
                     }
                 }
             }
@@ -225,9 +272,6 @@ fn try_consume_fn<'r, 't>(
 
         push_row(&mut rows, &mut cells);
     }
-
-    // Build table
-    ok!(false; simple_table(rows), errors)
 }
 
 /// Parse out the cell settings from the start.

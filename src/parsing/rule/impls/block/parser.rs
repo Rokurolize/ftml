@@ -34,6 +34,13 @@ use std::sync::LazyLock;
 static ARGUMENT_KEY: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"[A-Za-z0-9_\-]+").unwrap());
 
+fn token_ends_argument_key(token: Token) -> bool {
+    matches!(
+        token,
+        Token::Whitespace | Token::LineBreak | Token::ParagraphBreak | Token::Equals,
+    )
+}
+
 impl<'r, 't> Parser<'r, 't>
 where
     'r: 't,
@@ -60,27 +67,17 @@ where
         &mut self,
         kind: ParseErrorKind,
     ) -> Result<(&'t str, bool), ParseError> {
-        collect_text_keep(
-            self,
-            self.rule(),
-            &[
-                ParseCondition::current(Token::Whitespace),
-                ParseCondition::current(Token::LineBreak),
-                ParseCondition::current(Token::ParagraphBreak),
-                ParseCondition::current(Token::RightBlock),
-            ],
-            &[],
-            Some(kind),
-        )
-        .map(|(name, last)| {
+        let end_conditions = [
+            ParseCondition::current(Token::Whitespace),
+            ParseCondition::current(Token::LineBreak),
+            ParseCondition::current(Token::ParagraphBreak),
+            ParseCondition::current(Token::RightBlock),
+        ];
+        let rule = self.rule();
+        let stops = &end_conditions;
+        collect_text_keep(self, rule, stops, &[], Some(kind)).map(|(name, last)| {
             let name = name.trim();
-            let in_head = match last.token {
-                Token::Whitespace | Token::LineBreak | Token::ParagraphBreak => true,
-                Token::RightBlock => false,
-
-                // collect_text_keep() already checked the token
-                _ => unreachable!(),
-            };
+            let in_head = !matches!(last.token, Token::RightBlock);
 
             (name, in_head)
         })
@@ -154,10 +151,8 @@ where
     {
         trace!("Running generic in block body parser");
 
-        debug_assert!(
-            !block_rule.accepts_names.is_empty(),
-            "List of valid end block names is empty, no success is possible",
-        );
+        let has_end_names = !block_rule.accepts_names.is_empty();
+        debug_assert!(has_end_names, "block body has no valid end names");
 
         // Keep iterating until we find the end.
         // Preserve parse progress if we've hit the end block.
@@ -207,10 +202,8 @@ where
         block_rule: &BlockRule,
         as_paragraphs: bool,
     ) -> ParseResult<'r, 't, Vec<Element<'t>>> {
-        debug!(
-            "Getting block body as elements (block rule {}, as-paragraphs {})",
-            block_rule.name, as_paragraphs,
-        );
+        let block_name = block_rule.name;
+        debug!("Block body elements ({block_name}, paragraphs {as_paragraphs})");
 
         if as_paragraphs {
             self.get_body_elements_paragraphs(block_rule)
@@ -224,17 +217,15 @@ where
         block_rule: &BlockRule,
     ) -> ParseResult<'r, 't, Vec<Element<'t>>> {
         let mut first = true;
+        let rule = self.rule();
 
-        gather_paragraphs(
-            self,
-            self.rule(),
-            Some(move |parser: &mut Parser<'r, 't>| {
-                let result = parser.verify_end_block(first, block_rule);
-                first = false;
+        let is_end = move |parser: &mut Parser<'r, 't>| {
+            let result = parser.verify_end_block(first, block_rule);
+            first = false;
 
-                Ok(result.is_some())
-            }),
-        )
+            Ok(result.is_some())
+        };
+        gather_paragraphs(self, rule, Some(is_end))
     }
 
     fn get_body_elements_no_paragraphs(
@@ -302,10 +293,7 @@ where
                             }
 
                             // End parsing argument key
-                            Token::Whitespace
-                            | Token::LineBreak
-                            | Token::ParagraphBreak
-                            | Token::Equals => break,
+                            token if token_ends_argument_key(token) => break,
 
                             // Continue iterating to gather key
                             _ if ARGUMENT_KEY.is_match(current.slice) => {
@@ -360,8 +348,8 @@ where
         }
 
         // Get module's name
-        let (subname, in_head) =
-            self.get_block_name_internal(ParseErrorKind::ModuleMissingName)?;
+        let missing_name = ParseErrorKind::ModuleMissingName;
+        let (subname, in_head) = self.get_block_name_internal(missing_name)?;
 
         // Get arguments and end of block
         let arguments = self.get_head_map(block_rule, in_head)?;
@@ -382,16 +370,17 @@ where
 
         let argument = if in_head {
             // Gather slice of tokens in value
-            let slice = collect_text(
-                self,
-                self.rule(),
-                &[ParseCondition::current(Token::RightBlock)],
-                &[
-                    ParseCondition::current(Token::ParagraphBreak),
-                    ParseCondition::current(Token::LineBreak),
-                ],
-                Some(ParseErrorKind::BlockMalformedArguments),
-            )?;
+            let end_conditions = [ParseCondition::current(Token::RightBlock)];
+            let reject_conditions = [
+                ParseCondition::current(Token::ParagraphBreak),
+                ParseCondition::current(Token::LineBreak),
+            ];
+            let rule = self.rule();
+            let kind = ParseErrorKind::BlockMalformedArguments;
+            let malformed_arguments = Some(kind);
+            let stops = &end_conditions;
+            let rejects = &reject_conditions;
+            let slice = collect_text(self, rule, stops, rejects, malformed_arguments)?;
 
             Some(slice)
         } else {

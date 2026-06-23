@@ -4,6 +4,7 @@ use ftml::layout::Layout;
 use ftml::render::Render;
 use ftml::render::text::TextRender;
 use ftml::settings::{WikitextMode, WikitextSettings};
+use ftml::tree::{Element, Module, SyntaxTree};
 use std::borrow::Cow;
 use std::collections::HashMap;
 
@@ -49,6 +50,20 @@ fn render_text(input: &str) -> String {
 
     assert!(errors.is_empty(), "unexpected parse errors: {errors:?}");
     TextRender.render(&tree, &page_info, &settings)
+}
+
+fn with_parsed_tree(input: &str, visit: impl FnOnce(&SyntaxTree<'_>)) {
+    let page_info = page_info();
+    let settings = page_settings();
+    let mut text = input.to_owned();
+
+    ftml::preprocess(&mut text);
+    let tokens = ftml::tokenize(&text);
+    let result = ftml::parse(&tokens, &page_info, &settings);
+    let (tree, errors) = result.into();
+
+    assert!(errors.is_empty(), "unexpected parse errors: {errors:?}");
+    visit(&tree);
 }
 
 struct StaticIncluder {
@@ -153,8 +168,7 @@ fn scp9506_theme_and_component_includes_expand_with_variables() {
 }
 
 #[test]
-#[ignore = "RED: FTML does not currently support the ListPages module syntax needed by SCP-9506 author-tool components"]
-fn scp9506_expanded_dependency_syntax_parses_without_errors() {
+fn scp9506_listpages_syntax_is_preserved_as_delayed_node() {
     let expanded_source = r#"[[module CSS]]
 @import url(https://scp-wiki.wdfiles.com/local--code/theme%3Abasalt/3);
 .nfsi-grid { display: grid; }
@@ -168,7 +182,7 @@ National Fog Safety Initiative local compatibility page.
 [[image fog-map.svg]]
 [[image alert-card.svg]]
 
-[[module ListPages created_by="=" order="" category="-fragment" tag="+scp -co-authored" perPage="250"]]
+[[module ListPages created_by="=" tag="+scp" order="" category="-fragment" tag="-co-authored" perPage="250" custom="@URL" unknown="kept"]]
 [[div class="content-box no"]]
 %%title_linked%%
 %%content%%
@@ -185,6 +199,59 @@ Section two
 "#;
 
     assert_parses_without_errors(expanded_source);
+    with_parsed_tree(expanded_source, |tree| {
+        let (arguments, body) = tree
+            .elements
+            .iter()
+            .find_map(|element| match element {
+                Element::Module(Module::ListPages { arguments, body }) => {
+                    Some((arguments, body))
+                }
+                _ => None,
+            })
+            .expect("ListPages should be preserved as a delayed module node");
+
+        let argument_pairs: Vec<(&str, &str)> = arguments
+            .iter()
+            .map(|argument| (argument.name.as_ref(), argument.value.as_ref()))
+            .collect();
+        assert_eq!(
+            argument_pairs,
+            vec![
+                ("created_by", "="),
+                ("tag", "+scp"),
+                ("order", ""),
+                ("category", "-fragment"),
+                ("tag", "-co-authored"),
+                ("perPage", "250"),
+                ("custom", "@URL"),
+                ("unknown", "kept"),
+            ],
+        );
+        assert!(body.contains(r#"[[div class="content-box no"]]"#));
+        assert!(body.contains("%%content%%"));
+        assert!(body.contains("%%content{1}%%"));
+        assert!(body.contains("[[/div]]"));
+
+        let owned_tree = tree.to_owned();
+        let owned_module = owned_tree
+            .elements
+            .iter()
+            .find_map(|element| match element {
+                Element::Module(module @ Module::ListPages { .. }) => Some(module),
+                _ => None,
+            })
+            .expect("owned tree should preserve the ListPages module");
+        assert_eq!(owned_module.name(), "ListPages");
+        match owned_module {
+            Module::ListPages { arguments, body } => {
+                assert_eq!(arguments[1].name.as_ref(), "tag");
+                assert_eq!(arguments[1].value.as_ref(), "+scp");
+                assert!(body.contains("%%title_linked%%"));
+            }
+            _ => unreachable!("matched ListPages above"),
+        }
+    });
 
     let rendered = render_text(expanded_source);
     assert!(

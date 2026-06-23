@@ -20,7 +20,7 @@
 
 use crate::parsing::{ParseError, ParseErrorKind, Parser, parse_boolean};
 use crate::settings::WikitextSettings;
-use crate::tree::AttributeMap;
+use crate::tree::{AttributeMap, RawModuleArgument};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -35,6 +35,7 @@ macro_rules! make_err {
 #[derive(Debug, Clone, Default)]
 pub struct Arguments<'t> {
     inner: HashMap<UniCase<&'t str>, Cow<'t, str>>,
+    raw: Vec<RawModuleArgument<'t>>,
 }
 
 impl<'t> Arguments<'t> {
@@ -46,6 +47,10 @@ impl<'t> Arguments<'t> {
     /// Inserts a key / value pair into the list of arguments.
     pub fn insert(&mut self, key: &'t str, value: Cow<'t, str>) {
         let key = UniCase::ascii(key);
+        self.raw.push(RawModuleArgument {
+            name: cow!(key.into_inner()),
+            value: value.clone(),
+        });
         self.inner.insert(key, value);
     }
 
@@ -109,6 +114,10 @@ impl<'t> Arguments<'t> {
                 (key, value)
             })
             .collect()
+    }
+
+    pub fn into_raw_vec(self) -> Vec<RawModuleArgument<'t>> {
+        self.raw
     }
 
     /// Similar to `to_hash_map()`, but creates an `AttributeMap` instead.

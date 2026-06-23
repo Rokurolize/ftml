@@ -21,10 +21,26 @@
 //! Representation of Wikidot modules, along with their context.
 
 use super::AttributeMap;
-use super::clone::option_string_to_owned;
+use super::clone::{option_string_to_owned, string_to_owned};
 use std::borrow::Cow;
 use std::num::NonZeroU32;
 use strum_macros::IntoStaticStr;
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub struct RawModuleArgument<'t> {
+    pub name: Cow<'t, str>,
+    pub value: Cow<'t, str>,
+}
+
+impl RawModuleArgument<'_> {
+    pub fn to_owned(&self) -> RawModuleArgument<'static> {
+        RawModuleArgument {
+            name: string_to_owned(&self.name),
+            value: string_to_owned(&self.value),
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, IntoStaticStr, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case", tag = "module", content = "data")]
@@ -43,6 +59,15 @@ pub enum Module<'t> {
     Join {
         button_text: Option<Cow<'t, str>>,
         attributes: AttributeMap<'t>,
+    },
+
+    /// A delayed ListPages module invocation.
+    ///
+    /// FTML preserves the raw arguments and body. Runtime execution belongs to
+    /// the application layer, where page queries and permissions are available.
+    ListPages {
+        arguments: Vec<RawModuleArgument<'t>>,
+        body: Cow<'t, str>,
     },
 
     /// Lists the structure of pages as connected by parenthood.
@@ -80,6 +105,10 @@ impl Module<'_> {
             } => Module::Join {
                 button_text: option_string_to_owned(button_text),
                 attributes: attributes.to_owned(),
+            },
+            Module::ListPages { arguments, body } => Module::ListPages {
+                arguments: arguments.iter().map(RawModuleArgument::to_owned).collect(),
+                body: string_to_owned(body),
             },
             Module::PageTree {
                 root,

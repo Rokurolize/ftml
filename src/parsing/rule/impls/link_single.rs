@@ -69,17 +69,13 @@ fn try_consume_link<'r, 't>(
     );
 
     // Gather path for link
-    let url = collect_text(
-        parser,
-        rule,
-        &[ParseCondition::current(Token::Whitespace)],
-        &[
-            ParseCondition::current(Token::RightBracket),
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::current(Token::LineBreak),
-        ],
-        None,
-    )?;
+    let url_close = [ParseCondition::current(Token::Whitespace)];
+    let url_invalid = [
+        ParseCondition::current(Token::RightBracket),
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::current(Token::LineBreak),
+    ];
+    let url = collect_text(parser, rule, &url_close, &url_invalid, None)?;
 
     // Return error if the resultant URL is not valid.
     if !url_valid(url) {
@@ -89,16 +85,12 @@ fn try_consume_link<'r, 't>(
     trace!("Retrieved URL '{url}' for link, now fetching label");
 
     // Gather label for link
-    let label = collect_text(
-        parser,
-        rule,
-        &[ParseCondition::current(Token::RightBracket)],
-        &[
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::current(Token::LineBreak),
-        ],
-        None,
-    )?;
+    let label_close = [ParseCondition::current(Token::RightBracket)];
+    let label_invalid = [
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::current(Token::LineBreak),
+    ];
+    let label = collect_text(parser, rule, &label_close, &label_invalid, None)?;
 
     trace!("Retrieved label for link, now build element (label '{label}')");
 

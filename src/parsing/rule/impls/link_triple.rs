@@ -66,19 +66,15 @@ fn try_consume_link<'r, 't>(
     trace!("Trying to create a triple-bracket link");
 
     // Gather path for link
-    let (url, last) = collect_text_keep(
-        parser,
-        rule,
-        &[
-            ParseCondition::current(Token::Pipe),
-            ParseCondition::current(Token::RightLink),
-        ],
-        &[
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::current(Token::LineBreak),
-        ],
-        None,
-    )?;
+    let url_close = [
+        ParseCondition::current(Token::Pipe),
+        ParseCondition::current(Token::RightLink),
+    ];
+    let url_invalid = [
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::current(Token::LineBreak),
+    ];
+    let (url, last) = collect_text_keep(parser, rule, &url_close, &url_invalid, None)?;
 
     trace!("Retrieved url for link, now build element (url: '{url}')");
 
@@ -120,11 +116,10 @@ fn build_same<'r, 't>(
     };
 
     // Parse out link location
-    let (link, ltype) =
-        match LinkLocation::parse_with_interwiki(cow!(url), parser.settings()) {
-            Some(result) => result,
-            None => return Err(parser.make_err(ParseErrorKind::RuleFailed)),
-        };
+    let parsed_link = LinkLocation::parse_with_interwiki(cow!(url), parser.settings());
+    let Some((link, ltype)) = parsed_link else {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    };
 
     // Build and return element
     let element = Element::Link {
@@ -148,16 +143,12 @@ fn build_separate<'r, 't>(
     debug!("Building link with separate URL and label (url '{url}')");
 
     // Gather label for link
-    let label = collect_text(
-        parser,
-        rule,
-        &[ParseCondition::current(Token::RightLink)],
-        &[
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::current(Token::LineBreak),
-        ],
-        None,
-    )?;
+    let label_close = [ParseCondition::current(Token::RightLink)];
+    let label_invalid = [
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::current(Token::LineBreak),
+    ];
+    let label = collect_text(parser, rule, &label_close, &label_invalid, None)?;
 
     trace!("Retrieved label for link, now building element (label '{label}')");
 
@@ -173,11 +164,10 @@ fn build_separate<'r, 't>(
     };
 
     // Parse out link location
-    let (link, ltype) =
-        match LinkLocation::parse_with_interwiki(cow!(url), parser.settings()) {
-            Some(result) => result,
-            None => return Err(parser.make_err(ParseErrorKind::RuleFailed)),
-        };
+    let parsed_link = LinkLocation::parse_with_interwiki(cow!(url), parser.settings());
+    let Some((link, ltype)) = parsed_link else {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    };
 
     // Build link element
     let element = Element::Link {

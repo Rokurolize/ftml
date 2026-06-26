@@ -10,6 +10,7 @@ on:
       - 'test/**'
       - '.github/workflows/build.yaml'
       - '.github/codecov.yml'
+      - '.config/nextest.toml'
   push:
     branches:
       - main
@@ -18,6 +19,9 @@ jobs:
   library_build_and_test:
     name: Library
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     env:
       RUSTFLAGS: -A unused -D warnings
     steps:
@@ -33,6 +37,9 @@ jobs:
             target
           key: ${{ runner.os }}-default-${{ hashFiles('**/Cargo.toml') }}
 
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
       - name: Build (All Features)
         run: cargo build --all-features
 
@@ -40,7 +47,23 @@ jobs:
         run: cargo build --no-default-features
 
       - name: Test
-        run: cargo test --all-features -- --nocapture --test-threads 1
+        run: cargo nextest run --all-features --profile ci
+
+      - name: Upload Test Results
+        if: ${{ !cancelled() }}
+        # codecov/codecov-action v5.5.5
+        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac
+        with:
+          use_oidc: true
+          slug: Rokurolize/ftml
+          files: target/nextest/ci/junit.xml
+          flags: ftml
+          report-type: test_results
+          disable_search: true
+          fail_ci_if_error: true
+
+      - name: Test (doctests)
+        run: cargo test --doc --all-features -- --nocapture --test-threads 1
 
       - name: Test (exhaustive)
         run: cd deepwell && cargo test --all-features -- --nocapture --ignored

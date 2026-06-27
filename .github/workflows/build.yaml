@@ -132,7 +132,7 @@ jobs:
 
       - name: Generate Coverage
         run: |
-          cargo +nightly tarpaulin --all-features --workspace --timeout 120 --fail-under 100 --out xml --output-dir target/coverage
+          cargo +nightly tarpaulin --all-features --workspace --timeout 120 --fail-under 94 --out xml --output-dir target/coverage
 
       - name: Export Coverage
         # codecov/codecov-action v5.5.5

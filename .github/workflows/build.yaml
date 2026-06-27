@@ -39,6 +39,8 @@ jobs:
 
       - name: Install cargo-nextest
         uses: taiki-e/install-action@96c7780c1d8a2b8723e12031def873a434d39d8d
+        with:
+          tool: nextest
 
       - name: Build (All Features)
         run: cargo build --all-features

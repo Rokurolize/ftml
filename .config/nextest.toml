@@ -2,4 +2,4 @@
 test-threads = 1
 
 [profile.ci.junit]
-path = "target/nextest/ci/junit.xml"
+path = "junit.xml"

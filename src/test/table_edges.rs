@@ -165,4 +165,8 @@ fn simple_table_consumes_rich_cell_contents() {
     assert_eq!(table.rows.len(), 1);
     assert_eq!(table.rows[0].cells.len(), 1);
     assert_eq!(table.rows[0].cells[0].elements.len(), 1);
+    assert!(
+        !matches!(table.rows[0].cells[0].elements[0], Element::Text(_)),
+        "rich table cell content should not flatten into plain text",
+    );
 }

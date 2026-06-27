@@ -279,7 +279,7 @@ mod tests {
     use crate::layout::Layout;
     use crate::parsing::ParseError;
     use crate::settings::{WikitextMode, WikitextSettings};
-    use std::panic::{AssertUnwindSafe, catch_unwind};
+    use std::panic::catch_unwind;
 
     fn with_parse<R>(
         source: &str,
@@ -305,33 +305,26 @@ mod tests {
 
     #[test]
     fn table_parse_block_rejects_disallowed_flags() {
-        let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize("[[table]]\n[[/table]]");
-        let mut parser = Parser::new(&tokenization, &page_info, &settings);
-
-        let star = catch_unwind(AssertUnwindSafe(|| {
-            parse_block(
+        let parse_with_flags = |flag_star, flag_score| {
+            let page_info = PageInfo::dummy();
+            let settings =
+                WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+            let tokenization = crate::tokenize("[[table]]\n[[/table]]");
+            let mut parser = Parser::new(&tokenization, &page_info, &settings);
+            let _ = parse_block(
                 &mut parser,
                 "table",
-                true,
-                false,
+                flag_star,
+                flag_score,
                 false,
                 (&BLOCK_TABLE, "table block"),
-            )
-        }));
+            );
+        };
+
+        let star = catch_unwind(|| parse_with_flags(true, false));
         assert!(star.is_err());
 
-        let score = catch_unwind(AssertUnwindSafe(|| {
-            parse_block(
-                &mut parser,
-                "table",
-                false,
-                true,
-                false,
-                (&BLOCK_TABLE, "table block"),
-            )
-        }));
+        let score = catch_unwind(|| parse_with_flags(false, true));
         assert!(score.is_err());
     }
 

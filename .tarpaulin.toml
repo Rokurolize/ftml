@@ -1,13 +1,12 @@
 [all]
-
 all-features = true
 workspace = true
 exclude-files = [
+    # Non-native and nondeterministic targets are not part of Linux CI coverage.
     "src/wasm/*",
     "src/render/html/random.rs",
 ]
 
 [report]
-
 out = ["Html", "Xml"]
 output-dir = "target/coverage"

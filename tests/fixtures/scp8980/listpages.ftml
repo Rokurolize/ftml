@@ -1,0 +1,3 @@
+[[module ListPages parent="." category="fragment" order="created_at" limit="1" offset="@URL|0"]]
+%%content%%
+[[/module]]

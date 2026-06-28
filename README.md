@@ -97,6 +97,8 @@ Add `-- --nocapture` to the end if you want to see test output. You can addition
 
 One test function of note is the "AST test" suite, which reads test descriptions in `/test` and ensures that parsing/rendering produces the structures in those files. For more information, see [`TreeTests.md`](docs/TreeTests.md).
 
+Fixture-driven parity work is tracked separately from coverage-only work. See [`FixtureTests.md`](docs/FixtureTests.md) for article-driven syntax regressions and [`ParityTests.md`](docs/ParityTests.md) for the current `wikidot.html` parity fixture index.
+
 ### Philosophy
 
 See [`Philosophy.md`](docs/Philosophy.md).

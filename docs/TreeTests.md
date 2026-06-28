@@ -40,6 +40,14 @@ Within each unit test directory, we have a series of files with standard names:
 
 This way, if a particular test only cares about, say, the Wikidot-compatible HTML output, you can check only that, or if it only wants to ensure the syntax tree is as expected then you can do that.
 
+### Wikidot Parity Fixtures
+
+`wikidot.html` is the parity assertion for Layout::Wikidot. If a test case contains `wikidot.html`, it is claiming that FTML should preserve the captured Wikidot-compatible rendering behavior for that input.
+
+`output.html` is different: it records Layout::Wikijump native rendering. A case can have both files when it needs to protect both surfaces.
+
+New parity claims should include a `wikidot.html` fixture addition or update unless the evidence belongs in a focused integration test under `tests/*_wikidot_syntax.rs`. Link parity issues and PRs to the concrete fixture page or test that proves the behavior.
+
 ### Execution
 
 You can run the AST test suite and see the output by using `cargo`:

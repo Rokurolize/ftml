@@ -111,8 +111,10 @@ impl Handle {
             LinkLabel::Text(text) | LinkLabel::Slug(text) => text,
             LinkLabel::Url => match link {
                 LinkLocation::Url(url) => url.as_ref(),
-                LinkLocation::Page(_) => {
-                    panic!("Requested a URL link label for a page");
+                LinkLocation::Page(page_ref) => {
+                    warn!("Link label requested raw URL text for page link");
+                    page_title = page_ref.to_string();
+                    &page_title
                 }
             },
             LinkLabel::Page => match link {
@@ -125,8 +127,9 @@ impl Handle {
 
                     &page_title
                 }
-                LinkLocation::Url(_) => {
-                    panic!("Requested a page title link label for a URL");
+                LinkLocation::Url(url) => {
+                    warn!("Link label requested page title for URL link");
+                    url.as_ref()
                 }
             },
         };
@@ -170,10 +173,12 @@ impl Handle {
             "collapsible-hide" => "- hide block",
             "table-of-contents" => "Table of Contents",
             "footnote" => "Footnote",
+            "footnote-cite-not-found" => "Footnote item not found",
             "footnote-block-title" => "Footnotes",
             "bibliography-reference" => "Reference",
             "bibliography-block-title" => "Bibliography",
             "bibliography-cite-not-found" => "Bibliography item not found",
+            "bibliography-block-not-found" => "Bibliography block not found",
             "image-context-bad" => "No images in this context",
             "audio-context-bad" => "No audio in this context",
             "video-context-bad" => "No videos in this context",
@@ -363,10 +368,15 @@ fn handle_fallbacks_cover_rendering_helpers() {
         ("collapsible-hide", "- hide block"),
         ("table-of-contents", "Table of Contents"),
         ("footnote", "Footnote"),
+        ("footnote-cite-not-found", "Footnote item not found"),
         ("footnote-block-title", "Footnotes"),
         ("bibliography-reference", "Reference"),
         ("bibliography-block-title", "Bibliography"),
         ("bibliography-cite-not-found", "Bibliography item not found"),
+        (
+            "bibliography-block-not-found",
+            "Bibliography block not found",
+        ),
         ("image-context-bad", "No images in this context"),
         ("audio-context-bad", "No audio in this context"),
         ("video-context-bad", "No videos in this context"),
@@ -397,28 +407,25 @@ fn handle_fallbacks_cover_rendering_helpers() {
 }
 
 #[test]
-#[should_panic(expected = "Requested a URL link label for a page")]
-fn handle_rejects_url_label_for_page_links() {
+fn handle_falls_back_for_mismatched_link_labels() {
     let handle = Handle;
-    let page_ref = crate::data::PageRef::parse("target-page").unwrap();
+    let mut label = String::new();
 
+    let page_ref = crate::data::PageRef::parse("target-page").unwrap();
     handle.get_link_label(
         "sandbox",
         &LinkLocation::Page(page_ref),
         &LinkLabel::Url,
-        |_| {},
+        |text| label.push_str(text),
     );
-}
+    assert_eq!(label, "target-page");
 
-#[test]
-#[should_panic(expected = "Requested a page title link label for a URL")]
-fn handle_rejects_page_label_for_url_links() {
-    let handle = Handle;
-
+    label.clear();
     handle.get_link_label(
         "sandbox",
         &LinkLocation::Url(cow!("https://example.com")),
         &LinkLabel::Page,
-        |_| {},
+        |text| label.push_str(text),
     );
+    assert_eq!(label, "https://example.com");
 }

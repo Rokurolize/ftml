@@ -100,17 +100,8 @@ impl FloatAlignment {
             (Alignment::Left, true) => "floatleft",
             (Alignment::Right, true) => "floatright",
             (Alignment::Center, true) => "floatcenter",
-            (Alignment::Justify, _) => {
-                // When this case is reached, it means that some element
-                // permits justify alignment even though there should not
-                // be any argument settings which enable this.
-                //
-                // For instance, see FloatAlignment::try_from(&str).
-                //
-                // There is no CSS class in Wikidot for this alignment, so
-                // with both of these factors combined, we should panic.
-                panic!("Attempted to return HTML class for Wikidot justify alignment");
-            }
+            (Alignment::Justify, false) => "aligncenter",
+            (Alignment::Justify, true) => "floatcenter",
         }
     }
 
@@ -277,6 +268,12 @@ fn float_alignment_helpers_cover_classes() {
         align: Alignment::Justify,
         float: true,
     };
+    let justify = FloatAlignment {
+        align: Alignment::Justify,
+        float: false,
+    };
+    assert_eq!(justify.wd_html_class(), "aligncenter");
+    assert_eq!(justify_float.wd_html_class(), "floatcenter");
     assert_eq!(justify_float.wj_html_class(), "wj-float-justify");
     assert_eq!(
         FloatAlignment::try_from("F<"),
@@ -287,15 +284,4 @@ fn float_alignment_helpers_cover_classes() {
     );
     assert_eq!(FloatAlignment::try_from("f="), Err(()));
     assert_eq!(FloatAlignment::try_from("=="), Err(()));
-}
-
-#[test]
-#[should_panic(expected = "Attempted to return HTML class for Wikidot justify alignment")]
-fn float_alignment_rejects_wikidot_justify_class() {
-    let alignment = FloatAlignment {
-        align: Alignment::Justify,
-        float: false,
-    };
-
-    let _class = alignment.wd_html_class();
 }

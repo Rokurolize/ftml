@@ -61,15 +61,6 @@ static CONCAT_LINES: LazyLock<Replacer> = LazyLock::new(|| Replacer::RegexReplac
     regex: Regex::new(r"\\\n").unwrap(),
     replacement: "",
 });
-static TABS: LazyLock<Replacer> = LazyLock::new(|| Replacer::RegexReplace {
-    regex: Regex::new("\t").unwrap(),
-    replacement: "    ",
-});
-static NULL_SPACE: LazyLock<Replacer> = LazyLock::new(|| Replacer::RegexReplace {
-    regex: Regex::new("\0").unwrap(),
-    replacement: " ",
-});
-
 /// Performs all whitespace substitutions in-place in the given text.
 pub fn substitute(text: &mut String) {
     let mut buffer = String::new();
@@ -94,11 +85,16 @@ pub fn substitute(text: &mut String) {
     // Join concatenated lines (ending with '\')
     replace!(CONCAT_LINES);
 
-    // Tabs to spaces
-    replace!(TABS);
+    // Tabs and null characters are common one-character substitutions.
+    // Replace each class in one linear pass instead of repeatedly shifting
+    // the remaining string for every match.
+    if text.contains('\t') {
+        *text = text.replace('\t', "    ");
+    }
 
-    // Null characters to spaces
-    replace!(NULL_SPACE);
+    if text.contains('\0') {
+        *text = text.replace('\0', " ");
+    }
 
     // Remove leading and trailing newlines
     replace!(LEADING_NEWLINES);
@@ -159,8 +155,6 @@ fn regexes() {
     let _ = &*TRAILING_NEWLINES;
     let _ = &*DOS_MAC_NEWLINES;
     let _ = &*CONCAT_LINES;
-    let _ = &*TABS;
-    let _ = &*NULL_SPACE;
 }
 
 #[test]

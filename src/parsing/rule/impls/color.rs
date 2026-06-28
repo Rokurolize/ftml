@@ -60,7 +60,7 @@ fn try_consume_fn<'r, 't>(
 
     // Return result
     let element = Element::Color {
-        color: hexify_color(color),
+        color: normalize_color(color),
         elements,
     };
 
@@ -72,10 +72,53 @@ fn try_consume_fn<'r, 't>(
 /// Normally we pass the color as-is, such as `blue` or `rgb(10, 12, 14)`,
 /// but if a hex specification is passed, and it doesn't already begin with
 /// `#`, then one should be prepended.
-fn hexify_color(color: &str) -> Cow<'_, str> {
+fn normalize_color(color: &str) -> Cow<'_, str> {
+    if !is_safe_color(color) {
+        return Cow::Borrowed("inherit");
+    }
+
     if HEX_COLOR.is_match(color) {
         Cow::Owned(format!("#{color}"))
     } else {
         Cow::Borrowed(color)
+    }
+}
+
+fn is_safe_color(color: &str) -> bool {
+    color.chars().all(|ch| {
+        !ch.is_control()
+            && !matches!(ch, ';' | '{' | '}' | '<' | '>' | '"' | '\'' | '\\' | '&')
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn color_normalization_rejects_css_declaration_breakout() {
+        assert_eq!(normalize_color("abc"), "#abc");
+        assert_eq!(normalize_color("").as_ref(), "");
+        assert_eq!(normalize_color("red").as_ref(), "red");
+        assert_eq!(
+            normalize_color("rgb(10, 12, 14)").as_ref(),
+            "rgb(10, 12, 14)"
+        );
+        assert_eq!(
+            normalize_color("red;background:url(//x)").as_ref(),
+            "inherit"
+        );
+        assert_eq!(
+            normalize_color("red\nbackground:url(//x)").as_ref(),
+            "inherit"
+        );
+        assert_eq!(
+            normalize_color("red&#59background:url(//x)").as_ref(),
+            "inherit"
+        );
+        assert_eq!(
+            normalize_color("red&#x3bbackground:url(//x)").as_ref(),
+            "inherit"
+        );
     }
 }

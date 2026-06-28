@@ -128,6 +128,10 @@ impl<'t> BibliographyList<'t> {
         &self.0[index]
     }
 
+    pub fn get_bibliography_opt(&self, index: usize) -> Option<&Bibliography<'t>> {
+        self.0.get(index)
+    }
+
     pub fn to_owned(&self) -> BibliographyList<'static> {
         BibliographyList(self.0.iter().map(|b| b.to_owned()).collect())
     }

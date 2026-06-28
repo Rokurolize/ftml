@@ -25,6 +25,7 @@ use crate::id_prefix::isolate_ids;
 use crate::parsing::parse_boolean;
 use crate::settings::WikitextSettings;
 use crate::url::normalize_href;
+use serde::{Deserialize, Deserializer};
 use std::borrow::Cow;
 use std::collections::{BTreeMap, HashMap};
 use std::fmt::{self, Debug};
@@ -35,7 +36,7 @@ pub use self::safe::{
     is_safe_attribute,
 };
 
-#[derive(Serialize, Deserialize, Default, Clone, PartialEq, Eq)]
+#[derive(Serialize, Default, Clone, PartialEq, Eq)]
 pub struct AttributeMap<'t> {
     #[serde(flatten)]
     inner: BTreeMap<Cow<'t, str>, Cow<'t, str>>,
@@ -63,7 +64,7 @@ impl<'t> AttributeMap<'t> {
         AttributeMap { inner }
     }
 
-    pub fn insert(&mut self, attribute: &'t str, value: Cow<'t, str>) -> bool {
+    pub fn insert(&mut self, attribute: &str, value: Cow<'t, str>) -> bool {
         if !is_safe_attribute(UniCase::ascii(attribute)) {
             return false;
         }
@@ -108,6 +109,22 @@ impl<'t> AttributeMap<'t> {
         }
 
         AttributeMap { inner }
+    }
+}
+
+impl<'de, 't> Deserialize<'de> for AttributeMap<'t> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let map = BTreeMap::<String, String>::deserialize(deserializer)?;
+        let mut attributes = AttributeMap::new();
+
+        for (key, value) in map {
+            attributes.insert(&key, Cow::Owned(value));
+        }
+
+        Ok(attributes)
     }
 }
 
@@ -157,9 +174,14 @@ impl Debug for AttributeMap<'_> {
 }
 
 impl<'t> From<BTreeMap<Cow<'t, str>, Cow<'t, str>>> for AttributeMap<'t> {
-    #[inline]
     fn from(map: BTreeMap<Cow<'t, str>, Cow<'t, str>>) -> AttributeMap<'t> {
-        AttributeMap { inner: map }
+        let mut attributes = AttributeMap::new();
+
+        for (key, value) in map {
+            attributes.insert(key.as_ref(), value);
+        }
+
+        attributes
     }
 }
 
@@ -273,5 +295,33 @@ mod tests {
         assert_eq!(inserted.get().get("checked").map(Cow::as_ref), Some(""));
         assert!(!inserted.get().contains_key("disabled"));
         assert!(!inserted.get().contains_key("srcset"));
+    }
+
+    #[test]
+    fn attribute_map_sanitizes_deserialized_and_raw_maps() {
+        let mut raw = BTreeMap::new();
+        raw.insert(cow!("onclick"), cow!("alert(1)"));
+        raw.insert(cow!("HREF"), cow!("javascript:alert(1)"));
+        raw.insert(cow!("data-safe"), cow!("ok"));
+        raw.insert(cow!("disabled"), cow!("false"));
+
+        let map = AttributeMap::from(raw);
+        assert!(!map.get().contains_key("onclick"));
+        assert!(!map.get().contains_key("disabled"));
+        assert_eq!(map.get().get("href").map(Cow::as_ref), Some("#invalid-url"));
+        assert_eq!(map.get().get("data-safe").map(Cow::as_ref), Some("ok"));
+
+        let map: AttributeMap<'static> = serde_json::from_str(
+            r##"{"onclick":"alert(1)","href":"javascript:alert(1)","usemap":"map","data-safe":"ok"}"##,
+        )
+        .expect("attribute map should deserialize");
+
+        assert!(!map.get().contains_key("onclick"));
+        assert_eq!(map.get().get("href").map(Cow::as_ref), Some("#invalid-url"));
+        assert_eq!(
+            map.get().get("usemap").map(Cow::as_ref),
+            Some("#invalid-url"),
+        );
+        assert_eq!(map.get().get("data-safe").map(Cow::as_ref), Some("ok"));
     }
 }

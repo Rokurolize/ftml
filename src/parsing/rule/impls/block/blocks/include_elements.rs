@@ -103,8 +103,12 @@ fn parse_fn<'r, 't>(
 
 fn include_page<'r, 't>(
     parser: &Parser<'r, 't>,
-    _page: &PageRef,
+    page: &PageRef,
 ) -> Result<UnstructuredParseResult<'r, 't>, ParseError> {
+    if page.page().is_empty() {
+        return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
+    }
+
     // TODO stubbed
 
     let result = Ok(ParseSuccess::new(

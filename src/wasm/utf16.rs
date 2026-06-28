@@ -88,7 +88,8 @@ impl Utf16IndexMap {
     pub fn get_index(&self, index: usize) -> Result<usize, JsValue> {
         self.check_index(index)?;
 
-        let new_index = self.get().get_index(index);
-        Ok(new_index)
+        self.get().get_index_opt(index).ok_or_else(|| {
+            JsValue::from_str("UTF-8 byte index is not a character boundary")
+        })
     }
 }

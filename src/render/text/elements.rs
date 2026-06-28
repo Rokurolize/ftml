@@ -28,7 +28,9 @@
 //! Any formatting present must be directly justifiable.
 
 use super::TextContext;
-use crate::tree::{CodeBlock, ContainerType, DefinitionListItem, Element, ListItem, Tab};
+use crate::tree::{
+    CodeBlock, ContainerType, DefinitionListItem, Element, ListItem, PartialElement, Tab,
+};
 
 pub fn render_elements(ctx: &mut TextContext, elements: &[Element]) {
     debug!("Rendering elements (length {})", elements.len());
@@ -266,7 +268,55 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
             //
             // So we take the safe option of doing nothing.
         }
-        Element::Partial(_) => panic!("Encountered partial element during parsing"),
+        Element::Partial(partial) => render_partial(ctx, partial),
+    }
+}
+
+fn render_partial(ctx: &mut TextContext, partial: &PartialElement) {
+    warn!(
+        "Encountered partial element during text rendering: {}",
+        partial.name()
+    );
+
+    match partial {
+        PartialElement::ListItem(ListItem::Elements { elements, .. }) => {
+            if elements.is_empty() {
+                return;
+            }
+
+            if !ctx.ends_with_newline() {
+                ctx.add_newline();
+            }
+            render_elements(ctx, elements);
+            ctx.add_newline();
+        }
+        PartialElement::ListItem(ListItem::SubList { element }) => {
+            render_element(ctx, element)
+        }
+        PartialElement::TableRow(row) => {
+            if !ctx.ends_with_newline() {
+                ctx.add_newline();
+            }
+            for cell in &row.cells {
+                render_elements(ctx, &cell.elements);
+            }
+            ctx.add_newline();
+        }
+        PartialElement::TableCell(cell) => render_elements(ctx, &cell.elements),
+        PartialElement::Tab(tab) => {
+            if !ctx.ends_with_newline() {
+                ctx.add_newline();
+            }
+            ctx.push_str(&tab.label);
+            ctx.add_newline();
+            render_elements(ctx, &tab.elements);
+            ctx.add_newline();
+        }
+        PartialElement::RubyText(ruby_text) => {
+            ctx.push('(');
+            render_elements(ctx, &ruby_text.elements);
+            ctx.push(')');
+        }
     }
 }
 
@@ -353,8 +403,7 @@ fn text_render_skips_non_textual_elements_and_expands_include_variables() {
 }
 
 #[test]
-#[should_panic(expected = "Encountered partial element during parsing")]
-fn text_render_rejects_partial_elements() {
+fn text_render_tolerates_partial_elements() {
     use super::TextRender;
     use crate::data::PageInfo;
     use crate::layout::Layout;
@@ -365,14 +414,18 @@ fn text_render_rejects_partial_elements() {
     let page_info = PageInfo::dummy();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
     let tree = SyntaxTree {
-        elements: vec![Element::Partial(PartialElement::ListItem(
-            ListItem::Elements {
+        elements: vec![
+            Element::Partial(PartialElement::ListItem(ListItem::Elements {
                 attributes: AttributeMap::new(),
                 elements: vec![Element::Text(cow!("partial"))],
-            },
-        ))],
+            })),
+            Element::Text(cow!("after")),
+        ],
         ..SyntaxTree::default()
     };
 
-    TextRender.render(&tree, &page_info, &settings);
+    assert_eq!(
+        TextRender.render(&tree, &page_info, &settings),
+        "partial\nafter",
+    );
 }

@@ -33,7 +33,7 @@ use crate::settings::WikitextSettings;
 use crate::tree::{
     Bibliography, BibliographyList, Element, LinkLocation, VariableScopes,
 };
-use crate::url::is_url;
+use crate::url::{is_url, normalize_href};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt::{self, Write};
@@ -202,8 +202,8 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     }
 
     #[inline]
-    pub fn get_bibliography(&self, index: usize) -> &'e Bibliography<'t> {
-        self.bibliographies.get_bibliography(index)
+    pub fn get_bibliography(&self, index: usize) -> Option<&'e Bibliography<'t>> {
+        self.bibliographies.get_bibliography_opt(index)
     }
 
     pub fn get_bibliography_ref(
@@ -251,9 +251,13 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
                 self.backlinks.internal_links.push(page.to_owned());
             }
             LinkLocation::Url(link) => {
-                let mut link: &str = link;
+                let normalized = normalize_href(link, None);
+                let mut link = normalized.as_ref();
 
-                if link == "javascript:;" {
+                if link == "javascript:;"
+                    || link == "#invalid-url"
+                    || link.starts_with('#')
+                {
                     return;
                 }
 
@@ -266,7 +270,7 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
                 if is_url(link) {
                     let link = Cow::Owned(str!(link));
                     self.backlinks.external_links.push(link);
-                } else {
+                } else if !link.is_empty() {
                     let page_ref = PageRef::page_only(cow!(link));
                     self.backlinks.internal_links.push(page_ref.to_owned());
                 }
@@ -397,6 +401,7 @@ mod tests {
         assert_eq!(ctx.next_footnote_index().get(), 2);
 
         ctx.add_link(&LinkLocation::Url(cow!("javascript:;")));
+        ctx.add_link(&LinkLocation::Url(cow!("javascript:alert(1)")));
         ctx.add_link(&LinkLocation::Url(cow!("/local-page")));
         ctx.add_link(&LinkLocation::Url(cow!("https://example.com/path")));
 
@@ -448,7 +453,8 @@ mod tests {
             Some(footnotes[0].as_slice()),
         );
         assert_eq!(ctx.get_footnote(NonZeroUsize::new(2).unwrap()), None);
-        assert_eq!(ctx.get_bibliography(0).slice().len(), 1);
+        assert_eq!(ctx.get_bibliography(0).unwrap().slice().len(), 1);
+        assert!(ctx.get_bibliography(1).is_none());
         assert_eq!(ctx.get_bibliography_ref("alpha").unwrap().0, 1);
 
         let mut variables = VariableMap::new();

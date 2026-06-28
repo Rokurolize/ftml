@@ -30,9 +30,18 @@ pub fn render_footnote(ctx: &mut HtmlContext) {
     let footnote_string = ctx.handle().get_message(ctx.language(), "footnote");
     let label = format!("{footnote_string} {index}.");
 
-    let contents = ctx
-        .get_footnote(index)
-        .expect("Footnote index out of bounds from gathered footnote list");
+    let Some(contents) = ctx.get_footnote(index) else {
+        warn!("Footnote index out of bounds from gathered footnote list: {index}");
+        let message = ctx
+            .handle()
+            .get_message(ctx.language(), "footnote-cite-not-found");
+
+        ctx.html()
+            .span()
+            .attr(attr!("class" => "wj-error-inline"))
+            .contents(message);
+        return;
+    };
 
     ctx.html()
         .span()

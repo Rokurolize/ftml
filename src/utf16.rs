@@ -59,6 +59,8 @@ impl<'t> Utf16IndexMap<'t> {
         // Add last index, needed for the final token span.
         if let Some(utf8_index) = last_utf8_index {
             map.insert(utf8_index, utf16_index);
+        } else {
+            map.insert(0, 0);
         }
 
         Utf16IndexMap {
@@ -68,13 +70,20 @@ impl<'t> Utf16IndexMap<'t> {
     }
 
     /// Converts a UTF-8 byte index into a UTF-16 one.
+    #[inline]
+    pub fn get_index_opt(&self, utf8_index: usize) -> Option<usize> {
+        self.map.get(&utf8_index).copied()
+    }
+
+    /// Converts a UTF-8 byte index into a UTF-16 one.
     ///
     /// # Panics
     /// Panics if the index is out of range for the string,
     /// or the index is not on a UTF-8 byte boundary.
     #[inline]
     pub fn get_index(&self, utf8_index: usize) -> usize {
-        self.map[&utf8_index]
+        self.get_index_opt(utf8_index)
+            .expect("UTF-8 index missing from UTF-16 index map")
     }
 }
 
@@ -129,6 +138,18 @@ mod test {
         test!("aℝc", [(0, 1), (1, 2), (2, 3)]);
         test!("a🦀c", [(0, 1), (1, 3), (3, 4)]);
         test!("x💣yßz", [(0, 1), (1, 3), (3, 4), (4, 5), (5, 6)]);
+    }
+
+    #[test]
+    fn utf16_index_lookup_can_reject_non_boundaries() {
+        let empty = Utf16IndexMap::new("");
+        assert_eq!(empty.get_index_opt(0), Some(0));
+
+        let map = Utf16IndexMap::new("é");
+
+        assert_eq!(map.get_index_opt(0), Some(0));
+        assert_eq!(map.get_index_opt(1), None);
+        assert_eq!(map.get_index_opt(2), Some(1));
     }
 
     fn check(text: &str) {

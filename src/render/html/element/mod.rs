@@ -77,7 +77,8 @@ use self::toc::render_table_of_contents;
 use self::user::render_user;
 use self::video::render_video;
 use super::HtmlContext;
-use crate::tree::{CodeBlock, Element};
+use super::attributes::AddedAttributes;
+use crate::tree::{CodeBlock, Element, ListItem, PartialElement};
 use ref_map::*;
 
 pub fn render_elements(ctx: &mut HtmlContext, elements: &[Element]) {
@@ -182,10 +183,20 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
             render_bibcite(ctx, label, *brackets)
         }
         Element::BibliographyBlock { index, title, hide } => {
-            if !hide {
-                let title = title.ref_map(|s| s.as_ref());
-                let bibliography = ctx.get_bibliography(*index);
-                render_bibliography(ctx, title, *index, bibliography);
+            if !*hide {
+                if let Some(bibliography) = ctx.get_bibliography(*index) {
+                    let title = title.ref_map(|s| s.as_ref());
+                    render_bibliography(ctx, title, *index, bibliography);
+                } else {
+                    warn!("Missing bibliography for bibliography block index {index}");
+                    let message = ctx
+                        .handle()
+                        .get_message(ctx.language(), "bibliography-block-not-found");
+                    ctx.html()
+                        .span()
+                        .attr(attr!("class" => "wj-error-inline"))
+                        .contents(message);
+                }
             }
         }
         Element::User { name, show_avatar } => render_user(ctx, name, *show_avatar),
@@ -231,13 +242,12 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         Element::HorizontalRule => {
             ctx.html().hr();
         }
-        Element::Partial(_) => panic!("Encountered partial element during rendering"),
+        Element::Partial(partial) => render_partial(ctx, partial),
     }
 }
 
 #[test]
-#[should_panic(expected = "Encountered partial element during rendering")]
-fn html_render_rejects_partial_elements() {
+fn html_render_tolerates_partial_elements() {
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::render::Render;
@@ -257,5 +267,38 @@ fn html_render_rejects_partial_elements() {
         ..SyntaxTree::default()
     };
 
-    HtmlRender.render(&tree, &page_info, &settings);
+    let output = HtmlRender.render(&tree, &page_info, &settings);
+    assert!(output.body.contains("partial"));
+}
+
+fn render_partial(ctx: &mut HtmlContext, partial: &PartialElement) {
+    warn!(
+        "Encountered partial element during rendering: {}",
+        partial.name()
+    );
+
+    match partial {
+        PartialElement::ListItem(ListItem::Elements { elements, .. }) => {
+            render_elements(ctx, elements)
+        }
+        PartialElement::ListItem(ListItem::SubList { element }) => {
+            render_element(ctx, element)
+        }
+        PartialElement::TableRow(row) => {
+            for cell in &row.cells {
+                render_elements(ctx, &cell.elements);
+            }
+        }
+        PartialElement::TableCell(cell) => render_elements(ctx, &cell.elements),
+        PartialElement::Tab(tab) => {
+            if !tab.label.is_empty() {
+                ctx.html().span().contents(&tab.label);
+                if !tab.elements.is_empty() {
+                    ctx.push_escaped(" ");
+                }
+            }
+            render_elements(ctx, &tab.elements);
+        }
+        PartialElement::RubyText(ruby_text) => render_elements(ctx, &ruby_text.elements),
+    }
 }

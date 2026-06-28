@@ -99,9 +99,9 @@ pub fn render_link(
 
     match layout {
         Layout::Wikidot => match link {
-            LinkLocation::Url(url) => {
+            LinkLocation::Url(_) => {
                 write_a!(attr!(
-                    "href" => url,
+                    "href" => &url,
                     "target" => target_value; if target.is_some(),
                 ));
             }
@@ -177,5 +177,27 @@ mod tests {
         assert!(output.body.contains("wj-link-interwiki"));
         assert!(output.body.contains(r#"data-link-type="interwiki""#));
         assert!(output.body.contains(">Example Wiki</a>"));
+    }
+
+    #[test]
+    fn wikidot_url_links_use_normalized_href() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tree = SyntaxTree {
+            elements: vec![Element::Link {
+                ltype: LinkType::Direct,
+                link: LinkLocation::Url(cow!("javascript:alert(1)")),
+                label: LinkLabel::Text(cow!("click")),
+                target: None,
+            }],
+            ..SyntaxTree::default()
+        };
+
+        let output = HtmlRender.render(&tree, &page_info, &settings);
+
+        assert!(output.body.contains(r##"href="#invalid-url""##));
+        assert!(!output.body.contains("javascript:alert"));
+        assert!(output.backlinks.external_links.is_empty());
+        assert!(output.backlinks.internal_links.is_empty());
     }
 }

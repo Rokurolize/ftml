@@ -48,7 +48,7 @@ fn heading_from_token(token: &ExtractedToken<'_>) -> Heading {
         .expect("Received invalid heading length token slice")
 }
 
-fn try_consume_fn<'r, 't>(
+fn consume_header_once<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create header container");
@@ -60,7 +60,7 @@ fn try_consume_fn<'r, 't>(
     // Step over whitespace
     step_expected(parser, Token::Whitespace)?;
 
-    let (elements, mut all_errors, _) = collect_container(
+    let (elements, all_errors, _) = collect_container(
         parser,
         RULE_HEADER,
         ContainerType::Header(heading),
@@ -87,19 +87,32 @@ fn try_consume_fn<'r, 't>(
         parser.push_table_of_contents_entry(heading.level, elements);
     }
 
-    // Recursively collect headings until we hit an error.
-    //
-    // We do this because the container consumes the newline,
-    // which we need to trigger the next header when using regular rules.
+    // Build final Elements object
+    ok!(false; elements, all_errors)
+}
+
+fn try_consume_fn<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> ParseResult<'r, 't, Elements<'t>> {
+    let success = consume_header_once(parser)?;
+    let (elements, mut all_errors, _) = success.into();
     let mut all_elements: Vec<_> = elements.into_iter().collect();
 
-    if let Ok(success) = (try_consume_fn)(parser) {
-        let (elements, mut errors, _) = success.into();
+    loop {
+        let parser_state = parser.get_mutable_state();
+        let mut sub_parser = parser.clone_with_rule(RULE_HEADER);
 
+        let Ok(success) = consume_header_once(&mut sub_parser) else {
+            parser.reset_mutable_state(parser_state);
+            break;
+        };
+
+        parser.update(&sub_parser);
+
+        let (elements, mut errors, _) = success.into();
         all_elements.extend(elements);
         all_errors.append(&mut errors);
     }
 
-    // Build final Elements object
     ok!(false; all_elements, all_errors)
 }

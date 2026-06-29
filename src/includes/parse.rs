@@ -139,3 +139,14 @@ impl From<PageRefParseError> for IncludeParseError {
         std::convert::identity(IncludeParseError)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn include_parse_error_converts_from_page_ref_parse_error() {
+        let error = IncludeParseError::from(PageRefParseError);
+        assert_eq!(error, IncludeParseError);
+    }
+}

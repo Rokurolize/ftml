@@ -136,6 +136,10 @@ fn parse_list_block<'r, 't>(
         }
     }
 
+    if items.is_empty() {
+        return Err(parser.make_err(ParseErrorKind::ListEmpty));
+    }
+
     let element = Element::List {
         ltype: list_type,
         items,
@@ -331,6 +335,30 @@ Alpha
     #[test]
     fn block_list_rejects_empty_body() {
         with_parse("[[ul]][[/ul]]", |_tree, errors| {
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::ListEmpty)
+            );
+        });
+
+        with_parse("[[ul]]\n[[/ul]]", |_tree, errors| {
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::ListEmpty)
+            );
+        });
+
+        with_parse("[[ul]]   [[/ul]]", |_tree, errors| {
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::ListEmpty)
+            );
+        });
+
+        with_parse("[[ul]]\n \n[[/ul]]", |_tree, errors| {
             assert!(
                 errors
                     .iter()

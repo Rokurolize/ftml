@@ -68,9 +68,8 @@ fn parse_fn<'r, 't>(
     let has_footnote_block = included.has_footnote_block;
     let mut bibliographies = included.bibliographies;
 
-    set_included_footnote_block(parser, has_footnote_block);
-
     let result = result?;
+    set_included_footnote_block(parser, has_footnote_block);
     let elements = result.item;
     let errors = result.errors;
     let paragraph_safe = result.paragraph_safe;

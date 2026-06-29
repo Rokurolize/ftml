@@ -35,7 +35,7 @@ fn parse_conditions<'r, 't>(
     parser: &Parser<'r, 't>,
     spec: Option<&'t str>,
 ) -> Result<Vec<ElementCondition<'t>>, ParseError> {
-    let Some(spec) = spec else {
+    let Some(spec) = spec.map(str::trim).filter(|spec| !spec.is_empty()) else {
         return Err(parser.make_err(ParseErrorKind::BlockMissingArguments));
     };
 
@@ -109,13 +109,20 @@ mod tests {
     fn ifcategory_requires_conditions_and_checks_default_category() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize("[[ifcategory]]body[[/ifcategory]]");
-        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
-        assert!(
-            errors
-                .iter()
-                .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments)
-        );
+        for input in [
+            "[[ifcategory]]body[[/ifcategory]]",
+            "[[ifcategory   ]]body[[/ifcategory]]",
+        ] {
+            let tokenization = crate::tokenize(input);
+            let (_tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments),
+                "{input} should require non-empty conditions: {errors:?}",
+            );
+        }
 
         let default_info = PageInfo {
             category: None,

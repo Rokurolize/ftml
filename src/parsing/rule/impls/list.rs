@@ -91,7 +91,9 @@ fn parse_next_list_item<'r, 't>(
 where
     'r: 't,
 {
-    let Some(depth) = parse_list_depth(parser)? else {
+    let mut sub_parser = parser.clone();
+
+    let Some(depth) = parse_list_depth(&mut sub_parser)? else {
         return Ok(ListItemStep::End);
     };
 
@@ -100,27 +102,29 @@ where
         return Err(parser.make_err(ParseErrorKind::ListDepthExceeded));
     }
 
-    let Some(list_type) = get_list_type(parser.current().token) else {
+    let Some(list_type) = get_list_type(sub_parser.current().token) else {
         trace!("Ending list: no item token");
         return Ok(ListItemStep::End);
     };
-    parser.step()?;
+    sub_parser.step()?;
 
     trace!("Parsing list item '{}'", list_type.name());
 
-    if parser.current().token != Token::Whitespace {
+    if sub_parser.current().token != Token::Whitespace {
         warn!("Ending list: missing item whitespace");
         return Ok(ListItemStep::End);
     }
-    parser.step()?;
+    sub_parser.step()?;
 
-    let item_result = collect_list_item_elements(parser)?;
+    let item_result = collect_list_item_elements(&mut sub_parser)?;
     let elements = item_result.chain(errors, paragraph_safe);
     if elements.is_empty() {
+        parser.update(&sub_parser);
         trace!("Skipping empty list line");
         return Ok(ListItemStep::Skip);
     }
 
+    parser.update(&sub_parser);
     Ok(ListItemStep::Item((depth, list_type, elements)))
 }
 
@@ -285,6 +289,8 @@ mod tests {
             .try_consume(&mut parser)
             .expect_err("missing post-bullet whitespace should not produce a list");
         assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+        assert_eq!(parser.current().token, Token::BulletItem);
+        assert_eq!(parser.current().slice, "*");
 
         let tokenization = crate::tokenize("* \n* item");
         let mut parser = Parser::new(&tokenization, &page_info, &settings);
@@ -308,5 +314,25 @@ mod tests {
             ListItem::Elements { elements, .. } => assert_eq!(elements, &[text!("item")]),
             other => panic!("expected a list item, got {other:?}"),
         }
+
+        let tokenization = crate::tokenize("* good\n*bad");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("bullet token should follow input start");
+        parser.set_rule(RULE_LIST);
+
+        let success = RULE_LIST
+            .try_consume(&mut parser)
+            .expect("valid first item should produce a list");
+        let Elements::Multiple(elements) = success.item else {
+            panic!("expected one list, got {:?}", success.item);
+        };
+        let [Element::List { items, .. }] = elements.as_slice() else {
+            panic!("expected one list, got {elements:?}");
+        };
+        assert_eq!(items.len(), 1);
+        assert_eq!(parser.current().token, Token::BulletItem);
+        assert_eq!(parser.current().slice, "*");
     }
 }

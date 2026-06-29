@@ -104,9 +104,7 @@ where
             // or continuing with another element
             _ => {
                 let close_condition_met = match close_condition_fn.as_mut() {
-                    Some(close_condition_fn) => {
-                        close_condition_fn(parser).unwrap_or(false)
-                    }
+                    Some(close_condition_fn) => close_condition_fn(parser)?,
                     None => false,
                 };
 

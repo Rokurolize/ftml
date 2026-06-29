@@ -85,7 +85,15 @@ fn parse_shortcut_head<'r, 't>(
 
     let parts = value.split('|').collect::<Vec<_>>();
     match parts.as_slice() {
-        [base, ruby] => Ok((base.trim(), ruby.trim())),
+        [base, ruby] => {
+            let base = base.trim();
+            let ruby = ruby.trim();
+            if base.is_empty() || ruby.is_empty() {
+                Err(parser.make_err(ParseErrorKind::BlockMalformedArguments))
+            } else {
+                Ok((base, ruby))
+            }
+        }
         _ => Err(parser.make_err(ParseErrorKind::BlockMalformedArguments)),
     }
 }
@@ -263,7 +271,13 @@ mod tests {
             other => panic!("expected paragraph containing ruby shortcut, got {other:?}"),
         }
 
-        for input in ["[[rb]]", "[[rb base]]", "[[rb a|b|c]]"] {
+        for input in [
+            "[[rb]]",
+            "[[rb base]]",
+            "[[rb a|b|c]]",
+            "[[rb |reading]]",
+            "[[rb base| ]]",
+        ] {
             let tokenization = crate::tokenize(input);
             let (_tree, errors) =
                 crate::parse(&tokenization, &page_info, &settings).into();

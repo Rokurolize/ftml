@@ -41,6 +41,10 @@ fn token_ends_argument_key(token: Token) -> bool {
     )
 }
 
+fn token_is_argument_spacing(token: Token) -> bool {
+    [Token::Whitespace, Token::LineBreak, Token::ParagraphBreak].contains(&token)
+}
+
 impl<'r, 't> Parser<'r, 't>
 where
     'r: 't,
@@ -261,7 +265,9 @@ where
         if in_head {
             // Only process if the block isn't done yet
             loop {
-                self.get_optional_spaces_any()?;
+                while token_is_argument_spacing(self.current().token) {
+                    self.step()?;
+                }
 
                 // Try to get the argument key
                 // Allows any token that matches the regular expression
@@ -309,6 +315,9 @@ where
                 // Gather argument key string slice
                 let end = self.current();
                 let key = self.full_text().slice_partial(start, end);
+                if key.is_empty() {
+                    return Err(self.make_err(ParseErrorKind::BlockMalformedArguments));
+                }
 
                 // Equal sign
                 self.get_optional_space()?;
@@ -443,15 +452,30 @@ mod tests {
     fn block_head_rejects_invalid_argument_key_token() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize("[[span @=\"value\"]]body[[/span]]");
+        for input in [
+            "[[div @=\"value\"]]body[[/div]]",
+            "[[div =\"value\"]]body[[/div]]",
+        ] {
+            let tokenization = crate::tokenize(input);
+            let (_, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments),
+                "{input} should report BlockMalformedArguments: {errors:?}",
+            );
+        }
+    }
+
+    #[test]
+    fn block_head_allows_line_break_before_argument() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[div\nclass=\"value\"]]\nbody\n[[/div]]");
         let (_, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
-        assert!(
-            errors
-                .iter()
-                .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments),
-            "invalid argument key should report BlockMalformedArguments: {errors:?}",
-        );
+        assert!(errors.is_empty(), "{errors:?}");
     }
 
     #[test]

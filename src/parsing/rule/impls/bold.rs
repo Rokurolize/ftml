@@ -31,16 +31,12 @@ fn try_consume_fn<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create bold (strong) container");
     assert_step(parser, Token::Bold)?;
-    collect_container(
-        parser,
-        RULE_BOLD,
-        ContainerType::Bold,
-        &[ParseCondition::current(Token::Bold)],
-        &[
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::token_pair(Token::Bold, Token::Whitespace),
-            ParseCondition::token_pair(Token::Whitespace, Token::Bold),
-        ],
-        None,
-    )
+    let close = [ParseCondition::current(Token::Bold)];
+    let invalid = [
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::token_pair(Token::Bold, Token::Whitespace),
+        ParseCondition::token_pair(Token::Whitespace, Token::Bold),
+    ];
+    let ctype = ContainerType::Bold;
+    collect_container(parser, RULE_BOLD, ctype, &close, &invalid, None)
 }

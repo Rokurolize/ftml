@@ -60,5 +60,27 @@ fn parse_fn<'r, 't>(
         attributes: arguments.to_attribute_map(parser.settings()),
     };
 
-    ok!(element)
+    success_elements(element)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn image_block_rejects_missing_source() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[image a/b/c/d.png]]");
+        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments)
+        );
+    }
 }

@@ -31,19 +31,15 @@ fn try_consume_fn<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create inline math equation");
     assert_step(parser, Token::LeftMath)?;
-    let source = collect_text(
-        parser,
-        RULE_MATH,
-        &[ParseCondition::current(Token::RightMath)],
-        &[
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::current(Token::LineBreak),
-        ],
-        None,
-    )?
-    .trim();
+    let close = [ParseCondition::current(Token::RightMath)];
+    let invalid = [
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::current(Token::LineBreak),
+    ];
+    let source = collect_text(parser, RULE_MATH, &close, &invalid, None)?.trim();
 
-    ok!(Element::MathInline {
-        latex_source: cow!(source),
-    })
+    let element = Element::MathInline {
+        latex_source: std::borrow::Cow::Borrowed(source),
+    };
+    success_elements(element)
 }

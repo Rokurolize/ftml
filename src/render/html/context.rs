@@ -254,25 +254,24 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
                 let normalized = normalize_href(link, None);
                 let mut link = normalized.as_ref();
 
-                if link == "javascript:;"
+                let ignore_link = link == "javascript:;"
                     || link == "#invalid-url"
-                    || link.starts_with('#')
-                {
-                    return;
-                }
+                    || link.starts_with('#');
 
-                // Also support [ links pointing to local pages.
-                // e.g. [/scp-001 SCP-001] in addition to [[[SCP-001]]].
-                if link.starts_with('/') {
-                    link = &link[1..];
-                }
+                if !ignore_link {
+                    // Also support [ links pointing to local pages.
+                    // e.g. [/scp-001 SCP-001] in addition to [[[SCP-001]]].
+                    if link.starts_with('/') {
+                        link = &link[1..];
+                    }
 
-                if is_url(link) {
-                    let link = Cow::Owned(str!(link));
-                    self.backlinks.external_links.push(link);
-                } else if !link.is_empty() {
-                    let page_ref = PageRef::page_only(cow!(link));
-                    self.backlinks.internal_links.push(page_ref.to_owned());
+                    if is_url(link) {
+                        let link = Cow::Owned(str!(link));
+                        self.backlinks.external_links.push(link);
+                    } else if !link.is_empty() {
+                        let page_ref = PageRef::page_only(cow!(link));
+                        self.backlinks.internal_links.push(page_ref.to_owned());
+                    }
                 }
             }
         }

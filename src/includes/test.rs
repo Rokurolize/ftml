@@ -386,6 +386,7 @@ fn includes() {
     test!("[[include]]", vec![]);
     test!("[[include ]]", vec![]);
     test!("[[ include]]", vec![]);
+    test!("[[include ::page]]", vec![]);
 
     test!(
         "[[include component:multi-line | contents= \nSome content here \nMore stuff",

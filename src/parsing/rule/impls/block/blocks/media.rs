@@ -114,10 +114,8 @@ where
     ) -> Element<'t>,
 {
     let (flag_star, flag_score, in_head) = flags;
-    debug!(
-        "Parsing media block (rule {}, name {name}, in-head {in_head})",
-        block_rule.name
-    );
+    let block_name = block_rule.name;
+    debug!("Parsing media block (rule {block_name}, name {name}, in-head {in_head})");
     assert!(!flag_star, "Media blocks don't allow star flag");
     assert!(!flag_score, "Media blocks don't allow score flag");
     assert_block_name(block_rule, name);
@@ -137,11 +135,9 @@ where
     // TODO: html render settings to allow this?
     let _autoplay = arguments.get("autoplay");
 
-    ok!(build_element(
-        source,
-        alignment,
-        arguments.to_attribute_map(parser.settings()),
-    ))
+    let attributes = arguments.to_attribute_map(parser.settings());
+    let element = build_element(source, alignment, attributes);
+    success_elements(element)
 }
 
 fn parse_media_alignment<'r, 't>(
@@ -159,10 +155,8 @@ fn parse_media_alignment<'r, 't>(
         _ => return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments)),
     };
 
-    Ok(Some(FloatAlignment {
-        align,
-        float: false,
-    }))
+    let float = false;
+    Ok(Some(FloatAlignment { align, float }))
 }
 
 #[cfg(test)]
@@ -252,5 +246,47 @@ mod tests {
             Some("Demo")
         );
         assert!(!attributes.get().contains_key("align"));
+    }
+
+    #[test]
+    fn media_blocks_reject_malformed_arguments_and_allow_missing_alignment() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        let tokenization = crate::tokenize("[[audio song.mp3]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:?}");
+        let [Element::Container(paragraph)] = tree.elements.as_slice() else {
+            panic!("expected paragraph, got {:?}", tree.elements);
+        };
+        let [Element::Audio { alignment, .. }] = paragraph.elements() else {
+            panic!("expected audio element, got {:?}", paragraph.elements());
+        };
+        assert_eq!(*alignment, None);
+
+        let tokenization = crate::tokenize("[[audio]]");
+        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.kind() == ParseErrorKind::BlockMissingName),
+            "[[audio]] should report missing name: {errors:?}",
+        );
+
+        for input in [
+            "[[audio one/two/three/four.mp3]]",
+            r#"[[audio song.mp3 src="duplicate"]]"#,
+            r#"[[video clip.mp4 align="top"]]"#,
+        ] {
+            let tokenization = crate::tokenize(input);
+            let (_tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments),
+                "{input} should report malformed arguments: {errors:?}",
+            );
+        }
     }
 }

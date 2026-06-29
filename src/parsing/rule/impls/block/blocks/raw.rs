@@ -55,7 +55,7 @@ fn parse_fn<'r, 't>(
     }
 
     let element = Element::Raw(cow!(content));
-    ok!(element)
+    success_elements(element)
 }
 
 #[cfg(test)]

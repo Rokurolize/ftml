@@ -43,15 +43,11 @@ fn parse_fn<'r, 't>(
 
     let arguments = parser.get_head_map(&BLOCK_SPAN, in_head)?;
 
-    // "span" means we wrap interpret as-is
-    // "span_" means we strip out any newlines or paragraph breaks
-    let strip_line_breaks = flag_score;
-
     // Get body content, without paragraphs
-    let (mut elements, errors, paragraph_safe) =
-        parser.get_body_elements(&BLOCK_SPAN, false)?.into();
+    let body = parser.get_body_elements(&BLOCK_SPAN, false)?;
+    let (mut elements, errors, paragraph_safe) = body.into();
 
-    if strip_line_breaks {
+    if flag_score {
         strip_newlines(&mut elements);
     }
 
@@ -61,7 +57,7 @@ fn parse_fn<'r, 't>(
         arguments.to_attribute_map(parser.settings()),
     ));
 
-    ok!(paragraph_safe; element, errors)
+    success_elements_with_paragraph_safety(paragraph_safe, element, errors)
 }
 
 #[cfg(test)]

@@ -36,9 +36,7 @@ fn parse_fn<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!(
-        "Parsing radio button block (name '{name}', in-head {in_head}, star {flag_star})",
-    );
+    debug!("Parsing radio block {name}, head={in_head}, star={flag_star}");
     assert!(!flag_score, "Radio buttons don't allow score flag");
     assert_block_name(&BLOCK_RADIO, name);
 
@@ -46,10 +44,10 @@ fn parse_fn<'r, 't>(
     parser.get_optional_space()?;
 
     let element = Element::RadioButton {
-        name: cow!(name),
+        name: std::borrow::Cow::Borrowed(name),
         checked: flag_star,
         attributes: arguments.to_attribute_map(parser.settings()),
     };
 
-    ok!(element)
+    success_elements(element)
 }

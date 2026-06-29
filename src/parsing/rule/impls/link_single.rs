@@ -60,13 +60,8 @@ fn try_consume_link<'r, 't>(
     rule: Rule,
     target: Option<AnchorTarget>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!(
-        "Trying to create a single-bracket link (target {})",
-        match target {
-            Some(target) => target.name(),
-            None => "<none>",
-        },
-    );
+    let target_name = target.map(|target| target.name()).unwrap_or("<none>");
+    debug!("Trying to create a single-bracket link (target {target_name})");
 
     // Gather path for link
     let url_close = [ParseCondition::current(Token::Whitespace)];
@@ -106,7 +101,7 @@ fn try_consume_link<'r, 't>(
     };
 
     // Return result
-    ok!(element)
+    success_elements(element)
 }
 
 fn url_valid(url: &str) -> bool {

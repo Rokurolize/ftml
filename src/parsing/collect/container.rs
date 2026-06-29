@@ -42,24 +42,16 @@ pub fn collect_container<'r, 't>(
     parser: &mut Parser<'r, 't>,
     rule: Rule,
     container_type: ContainerType,
-    close_conditions: &[ParseCondition],
-    invalid_conditions: &[ParseCondition],
-    error_kind: Option<ParseErrorKind>,
+    closes: &[ParseCondition],
+    invalids: &[ParseCondition],
+    kind: Option<ParseErrorKind>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!(
-        "Trying to consume tokens to produce container {} for {}",
-        container_type.name(),
-        rule.name(),
-    );
+    let container_name = container_type.name();
+    let rule_name = rule.name();
+    debug!("Consuming container {container_name} for {rule_name}");
 
     // Iterate and consume all the tokens
-    let collection = collect_consume(
-        parser,
-        rule,
-        close_conditions,
-        invalid_conditions,
-        error_kind,
-    )?;
+    let collection = collect_consume(parser, rule, closes, invalids, kind)?;
     let (elements, errors, paragraph_safe) = collection.into();
 
     // Package into a container

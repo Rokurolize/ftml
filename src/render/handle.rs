@@ -38,6 +38,12 @@ impl Handle {
     pub fn get_page_title(&self, _site: &str, _page: &str) -> Option<String> {
         debug!("Fetching page title");
 
+        // For testing
+        #[cfg(test)]
+        if _page == "missing" {
+            return None;
+        }
+
         // TODO
         Some(format!("TODO: actual title ({_site} {_page})"))
     }
@@ -45,9 +51,7 @@ impl Handle {
     pub fn get_page_exists(&self, _site: &str, _page: &str) -> bool {
         debug!("Checking page existence");
 
-        // For testing
-        #[cfg(test)]
-        if _page == "missing" {
+        if cfg!(test) && _page == "missing" {
             return false;
         }
 
@@ -58,9 +62,7 @@ impl Handle {
     pub fn get_user_info<'a>(&self, name: &'a str) -> Option<UserInfo<'a>> {
         debug!("Fetching user info (name '{name}')");
 
-        // For testing
-        #[cfg(test)]
-        if name == "missing" {
+        if cfg!(test) && name == "missing" {
             return None;
         }
 
@@ -249,6 +251,7 @@ fn handle_fallbacks_cover_rendering_helpers() {
     let user = handle.get_user_info("ExampleUser").unwrap();
     assert_eq!(user.user_name, "ExampleUser");
     assert_eq!(user.user_profile_url, "/user:info/ExampleUser");
+    assert!(handle.get_user_info("missing").is_none());
 
     assert_eq!(
         handle
@@ -349,6 +352,16 @@ fn handle_fallbacks_cover_rendering_helpers() {
         |text| label.push_str(text),
     );
     assert_eq!(label, "TODO: actual title (sandbox target-page)");
+
+    label.clear();
+    let page_ref = crate::data::PageRef::parse("missing").unwrap();
+    handle.get_link_label(
+        "sandbox",
+        &LinkLocation::Page(page_ref),
+        &LinkLabel::Page,
+        |text| label.push_str(text),
+    );
+    assert_eq!(label, "missing");
 
     let karma_cases = [
         (KarmaLevel::Zero, "8976177"),

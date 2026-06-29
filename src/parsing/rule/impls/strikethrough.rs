@@ -55,16 +55,12 @@ fn try_consume_strikethrough<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create a strikethrough (token {})", token.name());
     assert_step(parser, token)?;
-    collect_container(
-        parser,
-        rule,
-        ContainerType::Strikethrough,
-        &[ParseCondition::current(token)],
-        &[
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::token_pair(token, Token::Whitespace),
-            ParseCondition::token_pair(Token::Whitespace, token),
-        ],
-        None,
-    )
+    let close = [ParseCondition::current(token)];
+    let invalid = [
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::token_pair(token, Token::Whitespace),
+        ParseCondition::token_pair(Token::Whitespace, token),
+    ];
+    let ctype = ContainerType::Strikethrough;
+    collect_container(parser, rule, ctype, &close, &invalid, None)
 }

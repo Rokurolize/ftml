@@ -5,6 +5,9 @@ exclude-files = [
     # Non-native and nondeterministic targets are not part of Linux CI coverage.
     "src/wasm/*",
     "src/render/html/random.rs",
+    # Tarpaulin can attribute macro definitions and crate-root comments as executable lines.
+    "src/macros.rs",
+    "src/lib.rs",
 ]
 
 [report]

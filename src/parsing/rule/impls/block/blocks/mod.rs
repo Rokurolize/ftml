@@ -31,13 +31,11 @@ mod prelude {
         actual_name: &str,
         name_type: &str,
     ) {
-        for name in expected_names {
-            if name.eq_ignore_ascii_case(actual_name) {
-                return;
-            }
-        }
-
-        panic!(
+        let matched = expected_names
+            .iter()
+            .any(|name| name.eq_ignore_ascii_case(actual_name));
+        assert!(
+            matched,
             "Actual {name_type} name doesn't match any expected: {expected_names:?} (was {actual_name})",
         );
     }
@@ -49,6 +47,23 @@ mod prelude {
     #[inline]
     pub fn assert_block_name(block_rule: &BlockRule, actual_name: &str) {
         assert_generic_name(block_rule.accepts_names, actual_name, "block")
+    }
+
+    pub fn require_block_argument<'r, 't>(
+        parser: &Parser<'r, 't>,
+        value: Option<&'t str>,
+    ) -> Result<&'t str, ParseError> {
+        match value {
+            Some(value) => Ok(value),
+            None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
+        }
+    }
+
+    pub fn require_trimmed_block_argument<'r, 't>(
+        parser: &Parser<'r, 't>,
+        value: Option<&'t str>,
+    ) -> Result<&'t str, ParseError> {
+        require_block_argument(parser, value).map(str::trim)
     }
 }
 

@@ -244,14 +244,8 @@ where
             }
 
             first = false;
-            let old_remaining = self.remaining();
             let elements = consume(self)?.chain(&mut all_errors, &mut paragraph_safe);
             all_elements.extend(elements);
-
-            // Step if the rule hasn't moved the pointer itself
-            if self.same_pointer(old_remaining) {
-                self.step()?;
-            }
         }
     }
 
@@ -279,44 +273,42 @@ where
                 // get_head_block() so we just have it inline. Also it's a bit
                 // strange since one of the outcomes is to break out of the loop.
 
-                let key = {
-                    let start = self.current();
-                    let mut args_finished = false;
+                let start = self.current();
+                let mut args_finished = false;
+                loop {
+                    let current = self.current();
+                    match current.token {
+                        // End parsing block head
+                        Token::RightBlock => {
+                            args_finished = true;
+                            break;
+                        }
 
-                    loop {
-                        let current = self.current();
-                        match current.token {
-                            // End parsing block head
-                            Token::RightBlock => {
-                                args_finished = true;
-                                break;
-                            }
+                        // End parsing argument key
+                        token if token_ends_argument_key(token) => break,
 
-                            // End parsing argument key
-                            token if token_ends_argument_key(token) => break,
+                        // Continue iterating to gather key
+                        _ if ARGUMENT_KEY.is_match(current.slice) => {
+                            self.step()?;
+                        }
 
-                            // Continue iterating to gather key
-                            _ if ARGUMENT_KEY.is_match(current.slice) => {
-                                self.step()?;
-                            }
-
-                            // Invalid token
-                            _ => {
-                                return Err(self
-                                    .make_err(ParseErrorKind::BlockMalformedArguments));
-                            }
+                        // Invalid token
+                        _ => {
+                            return Err(
+                                self.make_err(ParseErrorKind::BlockMalformedArguments)
+                            );
                         }
                     }
+                }
 
-                    // Stop iterating for more argument key-value pairs
-                    if args_finished {
-                        break;
-                    }
+                // Stop iterating for more argument key-value pairs
+                if args_finished {
+                    break std::convert::identity(());
+                }
 
-                    // Gather argument key string slice
-                    let end = self.current();
-                    self.full_text().slice_partial(start, end)
-                };
+                // Gather argument key string slice
+                let end = self.current();
+                let key = self.full_text().slice_partial(start, end);
 
                 // Equal sign
                 self.get_optional_space()?;

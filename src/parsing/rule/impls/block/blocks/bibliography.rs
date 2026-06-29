@@ -19,7 +19,7 @@
  */
 
 use super::prelude::*;
-use crate::tree::{Bibliography, DefinitionListItem};
+use crate::tree::Bibliography;
 
 pub const BLOCK_BIBLIOGRAPHY: BlockRule = BlockRule {
     name: "block-bibliography",
@@ -37,9 +37,7 @@ fn parse_fn<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!(
-        "Parsing bibliography block (name '{name}', in-head {in_head}, score {flag_score})"
-    );
+    debug!("Parsing bibliography block {name}, in-head {in_head}, score {flag_score}");
     assert!(!flag_star, "Bibliography doesn't allow star flag");
     assert!(!flag_score, "Bibliography doesn't allow score flag");
     assert_block_name(&BLOCK_BIBLIOGRAPHY, name);
@@ -55,8 +53,8 @@ fn parse_fn<'r, 't>(
     //
     // We also discard paragraph_safe, since it's not relevant, and this element
     // never is (uses <div>).
-    let (elements, errors, _) =
-        parser.get_body_elements(&BLOCK_BIBLIOGRAPHY, false)?.into();
+    let body = parser.get_body_elements(&BLOCK_BIBLIOGRAPHY, false)?;
+    let (elements, errors, _) = body.into();
 
     // Build up the bibliography
     //
@@ -68,13 +66,8 @@ fn parse_fn<'r, 't>(
         match element {
             // Append definition list entries
             Element::DefinitionList(items) => {
-                for DefinitionListItem {
-                    key_string,
-                    value_elements,
-                    ..
-                } in items
-                {
-                    bibliography.add(key_string, value_elements);
+                for item in items {
+                    bibliography.add(item.key_string, item.value_elements);
                 }
             }
 
@@ -83,13 +76,11 @@ fn parse_fn<'r, 't>(
 
             // Other elements
             _ => {
-                warn!(
-                    "Received non-definition list within bibliography block: {}",
-                    element.name(),
-                );
+                let element_name = element.name();
+                warn!("Non-definition element in bibliography block: {element_name}");
 
-                return Err(parser
-                    .make_err(ParseErrorKind::BibliographyContainsNonDefinitionList));
+                let kind = ParseErrorKind::BibliographyContainsNonDefinitionList;
+                return Err(parser.make_err(kind));
             }
         }
     }

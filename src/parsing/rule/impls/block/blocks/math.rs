@@ -42,7 +42,7 @@ fn parse_fn<'r, 't>(
     assert_block_name(&BLOCK_MATH, name);
 
     let name = parser.get_head_value(&BLOCK_MATH, in_head, |_, value| {
-        Ok(value.map(|s| cow!(s.trim())))
+        Ok(value.map(|s| std::borrow::Cow::Borrowed(s.trim())))
     })?;
 
     let latex_source = parser.get_body_text(&BLOCK_MATH)?.trim();
@@ -52,8 +52,8 @@ fn parse_fn<'r, 't>(
 
     let element = Element::Math {
         name,
-        latex_source: cow!(latex_source),
+        latex_source: std::borrow::Cow::Borrowed(latex_source),
     };
 
-    ok!(element)
+    success_elements(element)
 }

@@ -77,9 +77,6 @@ pub fn parse_include_block<'t>(
 fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError> {
     let page_raw = pairs.next().ok_or(IncludeParseError)?.as_str();
     let page_ref = PageRef::parse(page_raw)?;
-    if page_ref.page().is_empty() {
-        return Err(IncludeParseError);
-    }
 
     trace!("Got page for include {page_ref:?}");
     let mut arguments = HashMap::new();
@@ -139,6 +136,6 @@ pub struct IncludeParseError;
 impl From<PageRefParseError> for IncludeParseError {
     #[inline]
     fn from(_: PageRefParseError) -> Self {
-        IncludeParseError
+        std::convert::identity(IncludeParseError)
     }
 }

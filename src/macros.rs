@@ -20,18 +20,12 @@
 
 /// Alias for `Cow::Borrowed` that isn't quite as long.
 macro_rules! cow {
-    ($value:expr $(,)?) => {{
-        use std::borrow::Cow;
-        Cow::Borrowed($value)
-    }};
+    ($value:expr $(,)?) => {{ std::borrow::Cow::Borrowed($value) }};
 }
 
 /// Alias for `Element::Text` from a string slice.
 macro_rules! text {
-    ($value:expr $(,)?) => {{
-        use crate::tree::Element;
-        Element::Text(cow!($value))
-    }};
+    ($value:expr $(,)?) => {{ crate::tree::Element::Text(cow!($value)) }};
 }
 
 /// Like `std::write!()`, except it asserts the writing succeeded.

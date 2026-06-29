@@ -44,10 +44,6 @@ fn parse_fn<'r, 't>(
     let arguments = parser.get_head_map(&BLOCK_ANCHOR, in_head)?;
     let attributes = arguments.to_attribute_map(parser.settings());
 
-    // "a" means we wrap interpret as-is
-    // "a_" means we strip out any newlines or paragraph breaks
-    let strip_line_breaks = flag_score;
-
     // Get anchor target depending on special
     let target = if flag_star {
         Some(AnchorTarget::NewTab)
@@ -56,10 +52,10 @@ fn parse_fn<'r, 't>(
     };
 
     // Get body content, without paragraphs
-    let (mut elements, errors, paragraph_safe) =
-        parser.get_body_elements(&BLOCK_ANCHOR, false)?.into();
+    let body = parser.get_body_elements(&BLOCK_ANCHOR, false)?;
+    let (mut elements, errors, paragraph_safe) = body.into();
 
-    if strip_line_breaks {
+    if flag_score {
         strip_newlines(&mut elements);
     }
 
@@ -69,5 +65,5 @@ fn parse_fn<'r, 't>(
         target,
     };
 
-    ok!(paragraph_safe; element, errors)
+    success_elements_with_paragraph_safety(paragraph_safe, element, errors)
 }

@@ -59,8 +59,8 @@ fn parse_fn<'r, 't>(
 
     // Get body content, with paragraphs.
     // Discard paragraph_safe, since collapsibles never are.
-    let (elements, errors, _) =
-        parser.get_body_elements(&BLOCK_COLLAPSIBLE, true)?.into();
+    let body = parser.get_body_elements(&BLOCK_COLLAPSIBLE, true)?;
+    let (elements, errors, _) = body.into();
 
     // Build element and return
     let element = Element::Collapsible {

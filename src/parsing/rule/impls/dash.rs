@@ -32,5 +32,5 @@ fn try_consume_fn<'r, 't>(
     debug!("Consuming token to create an em dash");
 
     // — - EM DASH
-    ok!(text!("\u{2014}"))
+    success_elements(text!("\u{2014}"))
 }

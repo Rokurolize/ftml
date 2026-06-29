@@ -79,7 +79,7 @@ fn parse_tabview<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::TabViewEmpty));
     }
 
-    ok!(false; Element::TabView(tabs), errors)
+    success_elements_with_paragraph_safety(false, Element::TabView(tabs), errors)
 }
 
 fn parse_tab<'r, 't>(
@@ -94,19 +94,15 @@ fn parse_tab<'r, 't>(
     assert!(!flag_score, "Tab doesn't allow score flag");
     assert_block_name(&BLOCK_TAB, name);
 
-    let label =
-        parser.get_head_value(&BLOCK_TAB, in_head, |parser, value| match value {
-            Some(name) => Ok(name),
-            None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
-        })?;
+    let label = parser.get_head_value(&BLOCK_TAB, in_head, require_block_argument)?;
 
     let (elements, errors, _) = parser.get_body_elements(&BLOCK_TAB, true)?.into();
 
     // Build element and return
     let element = Element::Partial(PartialElement::Tab(Tab {
-        label: cow!(label),
+        label: std::borrow::Cow::Borrowed(label),
         elements,
     }));
 
-    ok!(false; element, errors)
+    success_elements_with_paragraph_safety(false, element, errors)
 }

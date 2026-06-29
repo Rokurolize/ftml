@@ -46,26 +46,18 @@ impl<'t> IncludeRef<'t> {
         IncludeRef::new(page_ref, VariableMap::new())
     }
 
-    #[inline]
     pub fn page_ref(&self) -> &PageRef {
-        &self.page_ref
+        std::convert::identity(&self.page_ref)
     }
 
-    #[inline]
     pub fn variables(&self) -> &VariableMap<'t> {
         &self.variables
     }
 }
 
 impl<'t> From<IncludeRef<'t>> for (PageRef, VariableMap<'t>) {
-    #[inline]
     fn from(include: IncludeRef<'t>) -> (PageRef, VariableMap<'t>) {
-        let IncludeRef {
-            page_ref,
-            variables,
-        } = include;
-
-        (page_ref, variables)
+        (include.page_ref, include.variables)
     }
 }
 
@@ -83,7 +75,7 @@ fn to_owned() {
     let include_ref_2: IncludeRef<'static> = include_ref_1.to_owned();
     assert_eq!(include_ref_1, include_ref_2);
     assert_eq!(include_ref_1.page_ref(), &page_ref_2);
-    assert!(include_ref_1.variables.is_empty());
+    assert!(include_ref_1.variables().is_empty());
 
     // Deconstruct IncludeRef
     let (page_ref, variables) = include_ref_2.into();

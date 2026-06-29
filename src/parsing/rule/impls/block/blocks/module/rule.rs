@@ -60,8 +60,8 @@ fn parse_fn<'r, 't>(
     //
     // If the module accepts a body, it should consume it,
     // then the tail. Otherwise it shouldn't move the token pointer.
-    let (elements, errors, paragraph_safe) =
-        (module_rule.parse_fn)(parser, subname, arguments)?.into();
+    let output = (module_rule.parse_fn)(parser, subname, arguments)?;
+    let (elements, errors, paragraph_safe) = output.into();
 
-    ok!(paragraph_safe; elements, errors)
+    success_elements_with_paragraph_safety(paragraph_safe, elements, errors)
 }

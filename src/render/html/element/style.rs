@@ -20,10 +20,31 @@
 
 use super::prelude::*;
 use lightningcss::stylesheet::{ParserOptions, PrinterOptions, StyleSheet};
+use std::fmt::Debug;
 
 pub fn render_style(ctx: &mut HtmlContext, input_css: &str) {
     let minify = ctx.settings().minify_css;
+    if let Some(output_css) =
+        build_style_css(input_css, minify, |stylesheet, print_options| {
+            stylesheet
+                .to_css(print_options)
+                .map(|output| output.code)
+                .map_err(|error| error.to_string())
+        })
+    {
+        ctx.html().style().inner(|ctx| {
+            // SAFETY: The resultant CSS cannot contain HTML-escaping elements,
+            //         as those are invalid and would not be retained during
+            //         the parcel_css parsing process.
+            ctx.push_raw_str(&output_css);
+        });
+    }
+}
 
+fn build_style_css<F>(input_css: &str, minify: bool, print: F) -> Option<String>
+where
+    F: FnOnce(&StyleSheet<'_, '_>, PrinterOptions) -> Result<String, String>,
+{
     let parser_options = ParserOptions {
         error_recovery: true,
         ..Default::default()
@@ -39,20 +60,44 @@ pub fn render_style(ctx: &mut HtmlContext, input_css: &str) {
         .expect("Produced error with recovery enabled");
 
     trace!("Rendering CSS into HTML (minify: {minify})");
-    let output_css = match stylesheet.to_css(print_options) {
-        Ok(output) => output.code,
+    match print(&stylesheet, print_options) {
+        Ok(output_css) => Some(output_css),
         Err(error) => {
-            error!("Problem outputting CSS from stylesheet: {error}");
-            trace!("Input CSS:\n{input_css}");
-            trace!("Parsed stylesheet:\n{stylesheet:#?}");
-            return;
+            log_css_output_error(input_css, &stylesheet, &error);
+            None
         }
-    };
+    }
+}
 
-    ctx.html().style().inner(|ctx| {
-        // SAFETY: The resultant CSS cannot contain HTML-escaping elements,
-        //         as those are invalid and would not be retained during
-        //         the parcel_css parsing process.
-        ctx.push_raw_str(&output_css);
-    });
+fn log_css_output_error(input_css: &str, stylesheet: &impl Debug, error: &str) {
+    error!("Problem outputting CSS from stylesheet: {error}");
+    trace!("Input CSS:\n{input_css}");
+    trace!("Parsed stylesheet:\n{stylesheet:#?}");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn style_css_helper_covers_printer_success_and_error_paths() {
+        let css = build_style_css(
+            "body { color: red; }",
+            false,
+            |stylesheet, print_options| {
+                stylesheet
+                    .to_css(print_options)
+                    .map(|output| output.code)
+                    .map_err(|error| error.to_string())
+            },
+        );
+        assert!(css.as_deref().is_some_and(|css| css.contains("color: red")));
+
+        let css = build_style_css(
+            "body { color: red; }",
+            false,
+            |_stylesheet, _print_options| Err("synthetic printer failure".to_owned()),
+        );
+        assert!(css.is_none());
+    }
 }

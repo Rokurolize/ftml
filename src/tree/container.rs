@@ -79,11 +79,8 @@ impl<'t> Container<'t> {
 }
 
 impl<'t> From<Container<'t>> for Vec<Element<'t>> {
-    #[inline]
     fn from(container: Container<'t>) -> Vec<Element<'t>> {
-        let Container { elements, .. } = container;
-
-        elements
+        container.elements
     }
 }
 

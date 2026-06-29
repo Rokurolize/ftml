@@ -31,16 +31,12 @@ fn try_consume_fn<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create italics (emphasis) container");
     assert_step(parser, Token::Italics)?;
-    collect_container(
-        parser,
-        RULE_ITALICS,
-        ContainerType::Italics,
-        &[ParseCondition::current(Token::Italics)],
-        &[
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::token_pair(Token::Italics, Token::Whitespace),
-            ParseCondition::token_pair(Token::Whitespace, Token::Italics),
-        ],
-        None,
-    )
+    let close = [ParseCondition::current(Token::Italics)];
+    let invalid = [
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::token_pair(Token::Italics, Token::Whitespace),
+        ParseCondition::token_pair(Token::Whitespace, Token::Italics),
+    ];
+    let ctype = ContainerType::Italics;
+    collect_container(parser, RULE_ITALICS, ctype, &close, &invalid, None)
 }

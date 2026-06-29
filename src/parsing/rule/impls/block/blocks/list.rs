@@ -87,9 +87,7 @@ fn parse_list_block<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     let rule_name = block_rule.name;
     let list_type_name = list_type.name();
-    debug!(
-        "List block: name={name}, rule={rule_name}, type={list_type_name}, in_head={in_head}, score={flag_score}"
-    );
+    debug!("{name}/{rule_name}/{list_type_name} head={in_head} score={flag_score}");
 
     let parser = &mut ParserWrap::new(parser, AcceptsPartial::ListItem);
 
@@ -104,43 +102,39 @@ fn parse_list_block<'r, 't>(
     let body = parser.get_body_elements(block_rule, false)?;
     let (mut elements, errors, _) = body.into();
 
-    let items = {
-        let mut items = Vec::new();
+    let mut items = Vec::new();
 
-        // "ul_" strips outer newlines and paragraph breaks.
-        if flag_score {
-            strip_newlines(&mut elements);
-        }
+    // "ul_" strips outer newlines and paragraph breaks.
+    if flag_score {
+        strip_newlines(&mut elements);
+    }
 
-        // Empty lists aren't allowed
-        if elements.is_empty() {
-            return Err(parser.make_err(ParseErrorKind::ListEmpty));
-        }
+    // Empty lists aren't allowed
+    if elements.is_empty() {
+        return Err(parser.make_err(ParseErrorKind::ListEmpty));
+    }
 
-        // Convert and extract list elements
-        for element in elements {
-            match element {
-                // Ensure all elements of a list are only items, i.e. [[li]].
-                Element::Partial(PartialElement::ListItem(list_item)) => {
-                    items.push(list_item);
-                }
-
-                // Or sub-lists.
-                element @ Element::List { .. } => {
-                    let element = Box::new(element);
-                    items.push(ListItem::SubList { element });
-                }
-
-                // Ignore "whitespace" elements
-                element if element.is_whitespace() => continue,
-
-                // Other kinds of elements result in an exception.
-                _ => return Err(parser.make_err(ParseErrorKind::ListContainsNonItem)),
+    // Convert and extract list elements
+    for element in elements {
+        match element {
+            // Ensure all elements of a list are only items, i.e. [[li]].
+            Element::Partial(PartialElement::ListItem(list_item)) => {
+                items.push(list_item);
             }
-        }
 
-        items
-    };
+            // Or sub-lists.
+            element @ Element::List { .. } => {
+                let element = Box::new(element);
+                items.push(ListItem::SubList { element });
+            }
+
+            // Ignore "whitespace" elements
+            element if element.is_whitespace() => continue,
+
+            // Other kinds of elements result in an exception.
+            _ => return Err(parser.make_err(ParseErrorKind::ListContainsNonItem)),
+        }
+    }
 
     let element = Element::List {
         ltype: list_type,
@@ -148,7 +142,7 @@ fn parse_list_block<'r, 't>(
         attributes,
     };
 
-    ok!(false; element, errors)
+    success_elements_with_paragraph_safety(false, element, errors)
 }
 
 // List item
@@ -182,7 +176,7 @@ fn parse_list_item<'r, 't>(
         attributes,
     }));
 
-    ok!(false; element, errors)
+    success_elements_with_paragraph_safety(false, element, errors)
 }
 
 #[cfg(test)]

@@ -49,19 +49,18 @@ impl<'t> AttributeMap<'t> {
     }
 
     pub fn from_arguments(arguments: &HashMap<UniCase<&'t str>, Cow<'t, str>>) -> Self {
-        let inner = arguments
-            .iter()
-            .filter(|&(key, _)| is_safe_attribute(*key))
-            .filter_map(|(key, value)| {
-                let value = normalize_attribute_value(*key, Cow::clone(value))?;
+        let mut attributes = AttributeMap::new();
 
-                // Add key/value pair to map
+        for (key, value) in arguments {
+            if is_safe_attribute(*key)
+                && let Some(value) = normalize_attribute_value(*key, Cow::clone(value))
+            {
                 let key = key.into_inner().to_ascii_lowercase();
-                Some((Cow::Owned(key), value))
-            })
-            .collect();
+                attributes.inner.insert(Cow::Owned(key), value);
+            }
+        }
 
-        AttributeMap { inner }
+        attributes
     }
 
     pub fn insert(&mut self, attribute: &str, value: Cow<'t, str>) -> bool {
@@ -86,7 +85,7 @@ impl<'t> AttributeMap<'t> {
 
     #[inline]
     pub fn get(&self) -> &BTreeMap<Cow<'t, str>, Cow<'t, str>> {
-        &self.inner
+        std::convert::identity(&self.inner)
     }
 
     pub fn isolate_id(&mut self, settings: &WikitextSettings) {

@@ -52,18 +52,13 @@ fn take_cell<'t>(
     elements: &mut Vec<Element<'t>>,
     cell_start: TableCellStart,
 ) -> TableCell<'t> {
-    let TableCellStart {
-        align,
-        header,
-        column_span,
-    } = cell_start;
     let elements = mem::take(elements);
     let attributes = AttributeMap::new();
     TableCell {
         elements,
-        header,
-        column_span,
-        align,
+        header: cell_start.header,
+        column_span: cell_start.column_span,
+        align: cell_start.align,
         attributes,
     }
 }
@@ -170,7 +165,7 @@ fn finish_cell_and_row<'r, 't>(
     Ok(boundary)
 }
 
-fn handle_cell_boundary<'r, 't>(
+fn cell_boundary<'r, 't>(
     parser: &mut Parser<'r, 't>,
     state: &mut CellState<'_, 't>,
     cell_start: TableCellStart,
@@ -221,17 +216,21 @@ fn try_consume_fn<'r, 't>(
                     // End the cell or row
                     (current, Some(next)) if is_table_column_token(current) => {
                         trace!("Ending cell, row, or table");
-                        let mut state =
-                            CellState::new(&mut rows, &mut cells, &mut elements);
-                        let boundary =
-                            handle_cell_boundary(parser, &mut state, cell_start, next)?;
-
-                        match boundary {
+                        let (r, c, e) = (&mut rows, &mut cells, &mut elements);
+                        let p = std::convert::identity(&mut *parser);
+                        let mut state = CellState::new(r, c, e);
+                        let boundary = cell_boundary(p, &mut state, cell_start, next)?;
+                        let (finish_row, finish_cell) = match boundary {
                             CellBoundary::FinishTable => {
                                 return finish_simple_table(rows, errors);
                             }
-                            CellBoundary::FinishRow => break 'row,
-                            CellBoundary::ContinueCell => break 'cell,
+                            CellBoundary::FinishRow => (true, false),
+                            CellBoundary::ContinueCell => (false, true),
+                        };
+                        match (finish_row, finish_cell) {
+                            (true, _) => break 'row std::convert::identity(()),
+                            (_, true) => break 'cell std::convert::identity(()),
+                            _ => unreachable!("cell boundary must finish row or cell"),
                         }
                     }
 
@@ -239,14 +238,12 @@ fn try_consume_fn<'r, 't>(
                     (Token::Whitespace, _) if elements.is_empty() => {
                         trace!("Ignoring leading whitespace");
                         parser.step()?;
-                        continue 'cell;
                     }
 
                     // Ignore trailing whitespace
                     (Token::Whitespace, Some(next)) if is_table_column_token(next) => {
                         trace!("Ignoring trailing whitespace");
                         parser.step()?;
-                        continue 'cell;
                     }
 
                     // Invalid tokens
@@ -331,4 +328,150 @@ fn parse_cell_start(parser: &mut Parser) -> Result<Option<TableCellStart>, Parse
         header,
         column_span,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    fn with_parser<R>(
+        input: &str,
+        page_info: &PageInfo<'_>,
+        settings: &WikitextSettings,
+        run: impl FnOnce(&mut Parser<'_, '_>) -> R,
+    ) -> R {
+        let tokenization = crate::tokenize(input);
+        let mut parser = Parser::new(&tokenization, page_info, settings);
+        parser
+            .step()
+            .expect("first token should follow input start");
+        parser.set_rule(RULE_TABLE);
+        run(&mut parser)
+    }
+
+    #[test]
+    fn table_cell_start_parses_alignment_headers_and_colspan() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        let start = with_parser("|||| body", &page_info, &settings, |parser| {
+            parse_cell_start(parser)
+                .expect("cell start should parse")
+                .expect("colspan should produce a cell start")
+        });
+        assert_eq!(start.align, None);
+        assert!(!start.header);
+        assert_eq!(start.column_span.get(), 2);
+
+        let start = with_parser("||~ body", &page_info, &settings, |parser| {
+            parse_cell_start(parser)
+                .expect("header cell start should parse")
+                .expect("header should produce a cell start")
+        });
+        assert!(start.header);
+        assert_eq!(start.align, None);
+        assert_eq!(start.column_span.get(), 1);
+
+        let start = with_parser("||= body", &page_info, &settings, |parser| {
+            parse_cell_start(parser)
+                .expect("center cell start should parse")
+                .expect("center marker should produce a cell start")
+        });
+        assert_eq!(start.align, Some(Alignment::Center));
+        assert!(!start.header);
+
+        let start = with_parser("||> body", &page_info, &settings, |parser| {
+            parse_cell_start(parser)
+                .expect("right cell start should parse")
+                .expect("right marker should produce a cell start")
+        });
+        assert_eq!(start.align, Some(Alignment::Right));
+        assert!(!start.header);
+
+        with_parser("plain", &page_info, &settings, |parser| {
+            assert!(
+                parse_cell_start(parser)
+                    .expect("invalid start is not a parser error")
+                    .is_none()
+            );
+        });
+    }
+
+    #[test]
+    fn table_cell_boundary_updates_rows_and_cells() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let cell_start = TableCellStart {
+            align: None,
+            header: false,
+            column_span: NonZeroU32::new(1).unwrap(),
+        };
+
+        with_parser("||", &page_info, &settings, |parser| {
+            let mut rows = Vec::new();
+            let mut cells = Vec::new();
+            let mut elements = Vec::new();
+            let mut state = CellState::new(&mut rows, &mut cells, &mut elements);
+            let boundary = cell_boundary(parser, &mut state, cell_start, Token::InputEnd)
+                .expect("input end should finish table");
+            assert!(matches!(boundary, CellBoundary::FinishTable));
+            assert_eq!(state.rows.len(), 1);
+            assert!(state.cells.is_empty());
+        });
+
+        with_parser("||\n||", &page_info, &settings, |parser| {
+            let mut rows = Vec::new();
+            let mut cells = Vec::new();
+            let mut elements = Vec::new();
+            let mut state = CellState::new(&mut rows, &mut cells, &mut elements);
+            let boundary =
+                cell_boundary(parser, &mut state, cell_start, Token::LineBreak)
+                    .expect("line break should finish row");
+            assert!(matches!(boundary, CellBoundary::FinishRow));
+            assert!(state.rows.is_empty());
+            assert_eq!(state.cells.len(), 1);
+        });
+
+        with_parser("|| next", &page_info, &settings, |parser| {
+            let mut rows = Vec::new();
+            let mut cells = Vec::new();
+            let mut elements = Vec::new();
+            let mut state = CellState::new(&mut rows, &mut cells, &mut elements);
+            let boundary =
+                cell_boundary(parser, &mut state, cell_start, Token::Whitespace)
+                    .expect("ordinary whitespace should continue cell");
+            assert!(matches!(boundary, CellBoundary::ContinueCell));
+            assert!(state.rows.is_empty());
+            assert!(state.cells.is_empty());
+        });
+    }
+
+    #[test]
+    fn simple_table_consume_loop_finishes_rows_and_cells() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        let tokenization = crate::tokenize("|| A || B ||\n|| C || D ||");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("first token should follow input start");
+        parser.set_rule(RULE_TABLE);
+
+        let parsed = try_consume_fn(&mut parser).expect("simple table should parse");
+        let (elements, errors, paragraph_safe) = parsed.into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert!(!paragraph_safe);
+        let Elements::Single(Element::Table(table)) = elements else {
+            panic!("expected one simple table, got {elements:?}");
+        };
+        assert_eq!(table.table_type, TableType::Simple);
+        assert_eq!(table.rows.len(), 2);
+        assert_eq!(table.rows[0].cells.len(), 2);
+        assert_eq!(table.rows[1].cells.len(), 2);
+    }
 }

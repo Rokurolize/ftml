@@ -49,9 +49,9 @@ fn parse_fn<'r, 't>(
     }
 
     let element = Element::Iframe {
-        url: cow!(url),
+        url: std::borrow::Cow::Borrowed(url),
         attributes: arguments.to_attribute_map(parser.settings()),
     };
 
-    ok!(element)
+    success_elements(element)
 }

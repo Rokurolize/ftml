@@ -31,16 +31,12 @@ fn try_consume_fn<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create underline container");
     assert_step(parser, Token::Underline)?;
-    collect_container(
-        parser,
-        RULE_UNDERLINE,
-        ContainerType::Underline,
-        &[ParseCondition::current(Token::Underline)],
-        &[
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::token_pair(Token::Underline, Token::Whitespace),
-            ParseCondition::token_pair(Token::Whitespace, Token::Underline),
-        ],
-        None,
-    )
+    let close = [ParseCondition::current(Token::Underline)];
+    let invalid = [
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::token_pair(Token::Underline, Token::Whitespace),
+        ParseCondition::token_pair(Token::Whitespace, Token::Underline),
+    ];
+    let ctype = ContainerType::Underline;
+    collect_container(parser, RULE_UNDERLINE, ctype, &close, &invalid, None)
 }

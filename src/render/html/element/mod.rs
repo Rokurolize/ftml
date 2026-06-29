@@ -195,7 +195,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
                     ctx.html()
                         .span()
                         .attr(attr!("class" => "wj-error-inline"))
-                        .contents(message);
+                        .inner(|ctx| ctx.push_escaped(message));
                 }
             }
         }

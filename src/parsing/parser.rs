@@ -35,6 +35,19 @@ use std::{mem, ptr};
 
 const MAX_RECURSION_DEPTH: usize = 100;
 
+fn token_starts_line(token: Token) -> bool {
+    token == Token::InputStart
+        || token == Token::LineBreak
+        || token == Token::ParagraphBreak
+}
+
+fn is_optional_space_token(token: Token) -> bool {
+    token == Token::Whitespace
+        || token == Token::LineBreak
+        || token == Token::ParagraphBreak
+        || token == Token::Equals
+}
+
 /// Parser for a set of tokens.
 #[derive(Debug, Clone)]
 pub struct Parser<'r, 't> {
@@ -315,7 +328,7 @@ impl<'r, 't> Parser<'r, 't> {
         let mut guard = self.bibliographies.borrow_mut();
         let index = guard.next_index();
         guard.push(bibliography);
-        index
+        std::convert::identity(index)
     }
 
     #[cold]
@@ -454,11 +467,7 @@ impl<'r, 't> Parser<'r, 't> {
         trace!("Stepping to the next token");
 
         // Set the start-of-line flag.
-        let starts_line = matches!(
-            self.current.token,
-            Token::InputStart | Token::LineBreak | Token::ParagraphBreak,
-        );
-        self.start_of_line = starts_line;
+        self.start_of_line = token_starts_line(self.current.token);
 
         // Step to the next token.
         match self.remaining.split_first() {
@@ -507,9 +516,9 @@ impl<'r, 't> Parser<'r, 't> {
 
     /// Retrieves the current and next tokens.
     pub fn next_two_tokens(&self) -> (Token, Option<Token>) {
-        let first = self.current.token;
-        let second = self.look_ahead(0).map(|next| next.token);
-        (first, second)
+        let current = self.current.token;
+        let next = self.look_ahead(0).map(|token| token.token);
+        std::convert::identity((current, next))
     }
 
     /// Retrieves the current, second, and third tokens.
@@ -562,16 +571,9 @@ impl<'r, 't> Parser<'r, 't> {
     pub fn get_optional_spaces_any(&mut self) -> Result<(), ParseError> {
         debug!("Looking for optional spaces (any)");
 
-        let tokens = &[
-            Token::Whitespace,
-            Token::LineBreak,
-            Token::ParagraphBreak,
-            Token::Equals,
-        ];
-
         loop {
             let current_token = self.current().token;
-            if !tokens.contains(&current_token) {
+            if !is_optional_space_token(current_token) {
                 return Ok(());
             }
 
@@ -718,6 +720,21 @@ fn parser_token_pair_conditions_cover_all_outcomes() {
     )));
     assert!(parser.evaluate_any(&[ParseCondition::current(Token::InputEnd)]));
     assert!(!parser.evaluate_any(&[]));
+
+    let tokenization = crate::tokenize("a b");
+    let parser = Parser::new(&tokenization, &page_info, &settings);
+    assert_eq!(
+        parser.next_two_tokens(),
+        (Token::InputStart, Some(Token::Identifier)),
+    );
+    assert_eq!(
+        parser.next_three_tokens(),
+        (
+            Token::InputStart,
+            Some(Token::Identifier),
+            Some(Token::Whitespace),
+        ),
+    );
 }
 
 #[test]

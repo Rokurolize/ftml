@@ -52,11 +52,10 @@ fn try_consume_fn<'r, 't>(
     trace!("Retrieved color descriptor, now building container ('{color}')");
 
     // Build color container
-    let content_close = [ParseCondition::current(Token::Color)];
-    let content_invalid = [ParseCondition::current(Token::ParagraphBreak)];
-    let (elements, errors, paragraph_safe) =
-        collect_consume(parser, RULE_COLOR, &content_close, &content_invalid, None)?
-            .into();
+    let close = [ParseCondition::current(Token::Color)];
+    let invalid = [ParseCondition::current(Token::ParagraphBreak)];
+    let body = collect_consume(parser, RULE_COLOR, &close, &invalid, None)?;
+    let (elements, errors, paragraph_safe) = body.into();
 
     // Return result
     let element = Element::Color {

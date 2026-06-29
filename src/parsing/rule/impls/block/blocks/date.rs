@@ -139,14 +139,14 @@ fn parse_date(value: &str) -> Result<DateItem, DateParseError> {
         return Ok(datetime_tz.into());
     }
 
-    if let Ok(datetime) = PrimitiveDateTime::parse(value, &Iso8601::PARSING) {
-        trace!("Was ISO 8601 datetime string (no timezone), result '{datetime}'");
-        return Ok(datetime.into());
-    }
-
     if let Ok(datetime_tz) = OffsetDateTime::parse(value, &Iso8601::PARSING) {
         trace!("Was ISO 8601 datetime string, result '{datetime_tz}'");
         return Ok(datetime_tz.into());
+    }
+
+    if let Ok(datetime) = PrimitiveDateTime::parse(value, &Iso8601::PARSING) {
+        trace!("Was ISO 8601 datetime string (no timezone), result '{datetime}'");
+        return Ok(datetime.into());
     }
 
     if let Ok(datetime_tz) = OffsetDateTime::parse(value, &Rfc2822) {
@@ -301,7 +301,6 @@ fn date() {
         "2007-05-12T09:34:51.026490-04:00",
         datetime!(2007-05-12 09:34:51.026490-04:00),
     );
-
     test_err!("");
     test_err!("*");
     test_err!("foobar");
@@ -378,6 +377,11 @@ fn split_ago_hover_format_leaves_normal_format_unchanged() {
 
 #[test]
 fn parse_date_supports_non_rfc3339_datetime_formats() {
+    assert_eq!(
+        parse_date("20070512T093451+0400").expect("ISO 8601 datetime with basic offset"),
+        DateItem::from(datetime!(2007-05-12 09:34:51+04:00)),
+    );
+
     assert_eq!(
         parse_date("Tue, 1 Jul 2003 10:52:37 +0200").expect("RFC 2822 datetime"),
         DateItem::from(datetime!(2003-07-01 10:52:37+02:00)),

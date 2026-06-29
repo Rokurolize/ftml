@@ -29,6 +29,26 @@ pub const BLOCK_BIBCITE: BlockRule = BlockRule {
     parse_fn,
 };
 
+fn require_label<'r, 't>(
+    parser: &Parser<'r, 't>,
+    value: Option<&'t str>,
+) -> Result<&'t str, ParseError> {
+    match value {
+        Some(value) => Ok(value.trim()),
+        None => {
+            warn!("No label provided in [[bibcite]], failing rule");
+            Err(parser.make_err(ParseErrorKind::BlockMissingArguments))
+        }
+    }
+}
+
+fn bibliography_cite(label: &str, brackets: bool) -> Element<'_> {
+    Element::BibliographyCite {
+        label: cow!(label),
+        brackets,
+    }
+}
+
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &'t str,
@@ -36,29 +56,17 @@ fn parse_fn<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!(
-        "Parsing bibcite block (name '{name}', in-head {in_head}, score {flag_score})",
-    );
+    debug!("Parsing bibcite block (name {name}, in-head {in_head}, score {flag_score})");
     assert!(!flag_star, "Bibcite doesn't allow star flag");
     assert_block_name(&BLOCK_BIBCITE, name);
 
-    let label =
-        parser.get_head_value(&BLOCK_BIBCITE, in_head, |parser, value| match value {
-            Some(value) => Ok(value.trim()),
-            None => {
-                warn!("No label provided in [[bibcite]], failing rule");
-                Err(parser.make_err(ParseErrorKind::BlockMissingArguments))
-            }
-        })?;
+    let label = parser.get_head_value(&BLOCK_BIBCITE, in_head, require_label)?;
 
     // "bibcite" means we wrap it in brackets
     // "bibcite_" means it's bare, like ((bibcite))
     let brackets = !flag_score;
 
-    ok!(Element::BibliographyCite {
-        label: cow!(label),
-        brackets,
-    })
+    ok!(bibliography_cite(label, brackets))
 }
 
 #[cfg(test)]

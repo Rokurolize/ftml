@@ -51,27 +51,17 @@ where
         &mut self,
         rule: Rule,
     ) -> Result<&'t str, ParseError> {
-        check_step(
-            self,
-            Token::DoubleQuote,
-            ParseErrorKind::BlockMalformedArguments,
-        )?;
+        let malformed = ParseErrorKind::BlockMalformedArguments;
+        check_step(self, Token::DoubleQuote, malformed)?;
 
-        collect_text(
-            self,
-            rule,
-            // NOTE: We have tokens for '\"' and '\\', we know that
-            //       just processing tokens until '"' will get a
-            //       valid string.
-            &[ParseCondition::current(Token::DoubleQuote)],
-            // Failure cases
-            &[
-                ParseCondition::current(Token::LineBreak),
-                ParseCondition::current(Token::ParagraphBreak),
-                ParseCondition::current(Token::InputEnd),
-            ],
-            Some(ParseErrorKind::BlockMalformedArguments),
-        )
+        // We have tokens for '\"' and '\\', so consuming until '"' produces a valid string.
+        let close = [ParseCondition::current(Token::DoubleQuote)];
+        let invalid = [
+            ParseCondition::current(Token::LineBreak),
+            ParseCondition::current(Token::ParagraphBreak),
+            ParseCondition::current(Token::InputEnd),
+        ];
+        collect_text(self, rule, &close, &invalid, Some(malformed))
     }
 }
 

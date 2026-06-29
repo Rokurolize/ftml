@@ -39,7 +39,7 @@ pub fn render_footnote(ctx: &mut HtmlContext) {
         ctx.html()
             .span()
             .attr(attr!("class" => "wj-error-inline"))
-            .contents(message);
+            .inner(|ctx| ctx.push_escaped(message));
         return;
     };
 
@@ -140,7 +140,7 @@ pub fn render_footnote_block(ctx: &mut HtmlContext, title: Option<&str>) {
                                     ctx.html()
                                         .span()
                                         .attr(attr!("class" => "wj-footnote-sep"))
-                                        .contents(".");
+                                        .inner(|ctx| ctx.push_raw('.'));
                                 });
 
                             // Footnote contents

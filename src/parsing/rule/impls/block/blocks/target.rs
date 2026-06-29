@@ -43,11 +43,8 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "Target doesn't allow score flag");
     assert_block_name(&BLOCK_TARGET, name);
 
-    let name =
-        parser.get_head_value(&BLOCK_TARGET, in_head, |parser, value| match value {
-            Some(name) => Ok(name.trim()),
-            None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
-        })?;
+    let block = &BLOCK_TARGET;
+    let name = parser.get_head_value(block, in_head, require_trimmed_block_argument)?;
 
     // Handle invalid anchor names
     if name.is_empty() || name.contains(' ') {
@@ -58,10 +55,10 @@ fn parse_fn<'r, 't>(
     let name = if parser.settings().isolate_user_ids {
         Cow::Owned(isolate_ids(name))
     } else {
-        cow!(name)
+        Cow::Borrowed(name)
     };
 
-    ok!(Element::AnchorName(name))
+    success_elements(Element::AnchorName(name))
 }
 
 #[cfg(test)]

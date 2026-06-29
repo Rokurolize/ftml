@@ -48,7 +48,7 @@ fn parse_fn<'r, 't>(
     debug!("Parsing later block (easter egg, in-head {in_head})");
     assert_block_name(&BLOCK_LATER, name);
     parser.get_head_none(&BLOCK_LATER, in_head)?;
-    ok!(text!("later."))
+    success_elements(text!("later."))
 }
 
 #[cfg(test)]

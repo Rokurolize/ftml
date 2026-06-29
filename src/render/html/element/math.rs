@@ -80,22 +80,20 @@ fn render_latex(
                     .attr(attr!("class" => "wj-equation-number"))
                     .inner(|ctx| {
                         // Open parenthesis
+                        let class = "wj-equation-paren wj-equation-paren-open";
                         ctx.html()
                             .span()
-                            .attr(attr!(
-                                "class" => "wj-equation-paren wj-equation-paren-open",
-                            ))
-                            .contents("(");
+                            .attr(attr!("class" => class))
+                            .inner(|ctx| ctx.push_raw('('));
 
                         str_write!(ctx, "{index}");
 
                         // Close parenthesis
+                        let class = "wj-equation-paren wj-equation-paren-close";
                         ctx.html()
                             .span()
-                            .attr(attr!(
-                                "class" => "wj-equation-paren wj-equation-paren-close",
-                            ))
-                            .contents(")");
+                            .attr(attr!("class" => class))
+                            .inner(|ctx| ctx.push_raw(')'));
                     });
             }
 

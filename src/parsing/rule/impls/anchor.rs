@@ -44,23 +44,19 @@ fn try_consume_fn<'r, 't>(
     parser.get_token(Token::Whitespace, ParseErrorKind::RuleFailed)?;
 
     // Gather name for anchor
-    let name = collect_text(
-        parser,
-        RULE_ANCHOR,
-        &[ParseCondition::current(Token::RightBlock)],
-        &[
-            ParseCondition::current(Token::Whitespace),
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::current(Token::LineBreak),
-        ],
-        None,
-    )?;
+    let close = [ParseCondition::current(Token::RightBlock)];
+    let invalid = [
+        ParseCondition::current(Token::Whitespace),
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::current(Token::LineBreak),
+    ];
+    let name = collect_text(parser, RULE_ANCHOR, &close, &invalid, None)?;
 
     // Isolate ID if requested
     let name = if parser.settings().isolate_user_ids {
         Cow::Owned(isolate_ids(name))
     } else {
-        cow!(name)
+        std::convert::identity(cow!(name))
     };
 
     // Build and return link element

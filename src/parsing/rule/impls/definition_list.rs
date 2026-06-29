@@ -65,35 +65,42 @@ fn parse_definition_list<'r, 't>(
     items.push(item);
 
     // Collect remainder, halting if there's a failure
-    if !at_end {
-        loop {
-            let sub_parser = &mut parser.clone();
-
-            match parse_item(sub_parser) {
-                Ok(success) => {
-                    trace!("Retrieved definition list item");
-
-                    let (item, at_end) = success.chain(&mut errors, &mut _paragraph_safe);
-
-                    items.push(item);
-                    parser.update(sub_parser);
-
-                    if at_end {
-                        break;
-                    }
-                }
-                Err(error) => {
-                    warn!(
-                        "Failed to get the next definition list item, ending iteration: {error:?}"
-                    );
-                    break;
-                }
-            }
+    let mut at_end = at_end;
+    while !at_end {
+        let next = parse_next_item(parser, &mut errors, &mut _paragraph_safe);
+        if let Some((item, item_at_end)) = next {
+            items.push(item);
+            at_end = item_at_end;
+        } else {
+            at_end = true;
         }
     }
 
     // Build and return element
     ok!(Element::DefinitionList(items))
+}
+
+fn parse_next_item<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    errors: &mut Vec<ParseError>,
+    paragraph_safe: &mut bool,
+) -> Option<(DefinitionListItem<'t>, bool)>
+where
+    'r: 't,
+{
+    let sub_parser = &mut parser.clone();
+    match parse_item(sub_parser) {
+        Ok(success) => {
+            trace!("Retrieved definition list item");
+            let item = success.chain(errors, paragraph_safe);
+            parser.update(sub_parser);
+            Some(item)
+        }
+        Err(error) => {
+            warn!("Definition list ended: {error:?}");
+            None
+        }
+    }
 }
 
 fn parse_item<'r, 't>(
@@ -124,12 +131,8 @@ fn parse_item<'r, 't>(
     let (key_string, key_elements) = key;
     let (value_elements, last) = value;
 
-    // Some ending tokens designate a definite end
-    let should_break = match last.token {
-        Token::ParagraphBreak | Token::InputEnd => true,
-        Token::LineBreak => false,
-        _ => panic!("Invalid close token: {}", last.token.name()),
-    };
+    // collect_value only stops on line, paragraph, or input boundaries.
+    let should_break = matches!(last.token, Token::ParagraphBreak | Token::InputEnd);
 
     // Build and return
     let key_string = std::borrow::Cow::Borrowed(key_string);

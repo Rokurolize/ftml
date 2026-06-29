@@ -36,5 +36,5 @@ fn parse_fn<'r, 't>(
 
     let css = parser.get_body_text(&BLOCK_MODULE)?;
     let element = Element::Style(cow!(css));
-    ok!(false; element)
+    success_value(element.into(), Vec::new(), false)
 }

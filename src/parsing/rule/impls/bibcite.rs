@@ -26,6 +26,13 @@ pub const RULE_BIBCITE: Rule = Rule {
     try_consume_fn,
 };
 
+fn bibliography_cite(label: &str) -> Element<'_> {
+    Element::BibliographyCite {
+        label: cow!(label),
+        brackets: false,
+    }
+}
+
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
@@ -49,22 +56,15 @@ fn try_consume_fn<'r, 't>(
     }
     parser.step()?;
 
-    let label = collect_text(
-        parser,
-        RULE_BIBCITE,
-        &[ParseCondition::current(Token::RightParentheses)],
-        &[
-            ParseCondition::current(Token::Whitespace),
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::current(Token::LineBreak),
-        ],
-        None,
-    )?;
+    let close = [ParseCondition::current(Token::RightParentheses)];
+    let invalid = [
+        ParseCondition::current(Token::Whitespace),
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::current(Token::LineBreak),
+    ];
+    let label = collect_text(parser, RULE_BIBCITE, &close, &invalid, None)?;
 
-    ok!(Element::BibliographyCite {
-        label: cow!(label),
-        brackets: false,
-    })
+    ok!(bibliography_cite(label))
 }
 
 #[cfg(test)]

@@ -1,10 +1,14 @@
-use ftml::data::{PageInfo, ScoreValue};
+use ftml::data::{PageInfo, PageRef, ScoreValue};
+use ftml::includes::IncludeRef;
 use ftml::layout::Layout;
 use ftml::render::Render;
 use ftml::render::html::HtmlRender;
 use ftml::render::text::TextRender;
 use ftml::settings::{WikitextMode, WikitextSettings};
-use ftml::tree::{Element, SyntaxTree};
+use ftml::tree::{
+    Alignment, AttributeMap, Bibliography, BibliographyList, Element, FileSource,
+    ListItem, ListType, PartialElement, RubyText, SyntaxTree, Tab, Table,
+};
 use std::borrow::Cow;
 
 fn page_info() -> PageInfo<'static> {
@@ -31,6 +35,22 @@ fn parse_and_render_text(input: &str) -> String {
 
     assert!(errors.is_empty(), "{errors:?}");
     TextRender.render(&tree, &page_info, &settings)
+}
+
+fn first_table<'a, 't>(elements: &'a [Element<'t>]) -> Option<&'a Table<'t>> {
+    for element in elements {
+        match element {
+            Element::Table(table) => return Some(table),
+            Element::Container(container) => {
+                if let Some(table) = first_table(container.elements()) {
+                    return Some(table);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    None
 }
 
 #[test]
@@ -163,4 +183,149 @@ fn public_api_text_render_entrypoints_trim_outer_newlines() {
         ..SyntaxTree::default()
     };
     assert_eq!(TextRender.render(&tree, &page_info, &settings), "body");
+}
+
+#[test]
+fn public_api_parses_simple_table_boundary_cases() {
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+    let mut text = String::from("|| A || B ||\n|| C || D ||");
+    ftml::preprocess(&mut text);
+    let tokens = ftml::tokenize(&text);
+    assert!(!tokens.tokens().is_empty());
+
+    let result = ftml::parse(&tokens, &page_info, &settings);
+    assert!(result.value().wikitext_len <= text.len());
+    let (tree, errors) = result.into();
+
+    assert!(errors.is_empty(), "{errors:?}");
+    let table = first_table(&tree.elements).expect("simple table should parse");
+    assert_eq!(table.rows.len(), 2);
+    assert_eq!(table.rows[0].cells.len(), 2);
+    assert_eq!(table.rows[1].cells.len(), 2);
+    assert_eq!(TextRender.render(&tree, &page_info, &settings), "AB\nCD");
+}
+
+#[test]
+fn public_api_html_render_covers_fallback_branches_from_ast() {
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::ForumPost, Layout::Wikijump);
+
+    let mut bibliography = Bibliography::new();
+    bibliography.add(
+        Cow::Borrowed("alpha"),
+        vec![Element::Text(Cow::Borrowed("Reference body"))],
+    );
+    let mut bibliographies = BibliographyList::new();
+    bibliographies.push(bibliography);
+
+    let mut list_attributes = AttributeMap::new();
+    assert!(list_attributes.insert("class", Cow::Borrowed("nested-list")));
+
+    let tree = SyntaxTree {
+        elements: vec![
+            Element::TableOfContents {
+                attributes: AttributeMap::new(),
+                align: Some(Alignment::Right),
+            },
+            Element::Math {
+                name: Some(Cow::Borrowed("eq-main")),
+                latex_source: Cow::Borrowed("x^2"),
+            },
+            Element::Footnote,
+            Element::Footnote,
+            Element::FootnoteBlock {
+                title: None,
+                hide: false,
+            },
+            Element::BibliographyCite {
+                label: Cow::Borrowed("missing"),
+                brackets: false,
+            },
+            Element::BibliographyBlock {
+                index: 0,
+                title: None,
+                hide: false,
+            },
+            Element::BibliographyBlock {
+                index: 7,
+                title: None,
+                hide: false,
+            },
+            Element::Color {
+                color: Cow::Borrowed("rebeccapurple"),
+                elements: vec![Element::Text(Cow::Borrowed("colored"))],
+            },
+            Element::Image {
+                source: FileSource::File1 {
+                    file: Cow::Borrowed("local.png"),
+                },
+                link: None,
+                alignment: None,
+                attributes: AttributeMap::new(),
+            },
+            Element::Audio {
+                source: FileSource::File1 {
+                    file: Cow::Borrowed("local.mp3"),
+                },
+                alignment: None,
+                attributes: AttributeMap::new(),
+            },
+            Element::Video {
+                source: FileSource::File1 {
+                    file: Cow::Borrowed("local.mp4"),
+                },
+                alignment: None,
+                attributes: AttributeMap::new(),
+            },
+            Element::List {
+                ltype: ListType::Bullet,
+                attributes: list_attributes,
+                items: vec![ListItem::SubList {
+                    element: Box::new(Element::List {
+                        ltype: ListType::Numbered,
+                        attributes: AttributeMap::new(),
+                        items: vec![ListItem::Elements {
+                            attributes: AttributeMap::new(),
+                            elements: vec![Element::Text(Cow::Borrowed("nested"))],
+                        }],
+                    }),
+                }],
+            },
+            Element::Partial(PartialElement::Tab(Tab {
+                label: Cow::Borrowed("Detached"),
+                elements: vec![Element::Text(Cow::Borrowed("partial body"))],
+            })),
+            Element::Partial(PartialElement::RubyText(RubyText {
+                attributes: AttributeMap::new(),
+                elements: vec![Element::Text(Cow::Borrowed("ruby fallback"))],
+            })),
+        ],
+        table_of_contents: vec![Element::Text(Cow::Borrowed("TOC entry"))],
+        footnotes: vec![vec![Element::Text(Cow::Borrowed("Footnote body"))]],
+        bibliographies,
+        wikitext_len: 256,
+        ..SyntaxTree::default()
+    };
+
+    let output = HtmlRender.render(&tree, &page_info, &settings);
+    assert!(output.body.contains("Table of Contents"));
+    assert!(output.body.contains("TOC entry"));
+    assert!(output.body.contains("wj-equation-number"));
+    assert!(output.body.contains("Footnote item not found"));
+    assert!(output.body.contains("Footnote body"));
+    assert!(output.body.contains("Bibliography item not found"));
+    assert!(output.body.contains("Reference body"));
+    assert!(output.body.contains("Bibliography block not found"));
+    assert!(output.body.contains("colored"));
+    assert!(output.body.contains("No images in this context"));
+    assert!(output.body.contains("No audio in this context"));
+    assert!(output.body.contains("No videos in this context"));
+    assert!(output.body.contains("nested"));
+    assert!(output.body.contains("Detached"));
+    assert!(output.body.contains("partial body"));
+    assert!(output.body.contains("ruby fallback"));
+
+    let include = IncludeRef::page_only(PageRef::parse("component:theme").unwrap());
+    assert_eq!(include.page_ref().page(), "component:theme");
 }

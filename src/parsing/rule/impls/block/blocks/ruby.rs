@@ -52,6 +52,44 @@ pub const BLOCK_RB: BlockRule = BlockRule {
 
 // Main container block
 
+fn take_ruby_text<'t>(
+    ruby_text: &mut RubyText<'t>,
+) -> (AttributeMap<'t>, Vec<Element<'t>>) {
+    let taken = mem::take(ruby_text);
+    (taken.attributes, taken.elements)
+}
+
+fn ruby_text_container<'t>(
+    elements: Vec<Element<'t>>,
+    attributes: AttributeMap<'t>,
+) -> Element<'t> {
+    let container = Container::new(ContainerType::RubyText, elements, attributes);
+    Element::Container(container)
+}
+
+fn ruby_container<'t>(
+    elements: Vec<Element<'t>>,
+    attributes: AttributeMap<'t>,
+) -> Element<'t> {
+    let container = Container::new(ContainerType::Ruby, elements, attributes);
+    Element::Container(container)
+}
+
+fn parse_shortcut_head<'r, 't>(
+    parser: &Parser<'r, 't>,
+    value: Option<&'t str>,
+) -> Result<(&'t str, &'t str), ParseError> {
+    let Some(value) = value else {
+        return Err(parser.make_err(ParseErrorKind::BlockMissingArguments));
+    };
+
+    let parts = value.split('|').collect::<Vec<_>>();
+    match parts.as_slice() {
+        [base, ruby] => Ok((base.trim(), ruby.trim())),
+        _ => Err(parser.make_err(ParseErrorKind::BlockMalformedArguments)),
+    }
+}
+
 fn parse_block<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &'t str,
@@ -67,32 +105,15 @@ fn parse_block<'r, 't>(
     let parser = &mut ParserWrap::new(parser, AcceptsPartial::Ruby);
     let arguments = parser.get_head_map(&BLOCK_RUBY, in_head)?;
 
-    let (mut elements, errors, paragraph_safe) =
-        parser.get_body_elements(&BLOCK_RUBY, false)?.into();
+    let body = parser.get_body_elements(&BLOCK_RUBY, false)?;
+    let (mut elements, errors, paragraph_safe) = body.into();
 
     // Convert ruby partials to elements
     for element in &mut elements {
-        let (attributes, elements) = match element {
-            // Swap out so we can extract fields
-            Element::Partial(PartialElement::RubyText(ruby_text)) => {
-                let RubyText {
-                    attributes,
-                    elements,
-                } = mem::take(ruby_text);
-
-                (attributes, elements)
-            }
-
-            // Leave other elements as-is
-            _ => continue,
-        };
-
-        // Replace element with container, for final AST
-        *element = Element::Container(Container::new(
-            ContainerType::RubyText,
-            elements,
-            attributes,
-        ));
+        if let Element::Partial(PartialElement::RubyText(ruby_text)) = element {
+            let (attributes, elements) = take_ruby_text(ruby_text);
+            *element = ruby_text_container(elements, attributes);
+        }
     }
 
     #[cfg(debug_assertions)]
@@ -102,11 +123,8 @@ fn parse_block<'r, 't>(
     strip_whitespace(&mut elements);
 
     // Build final ruby element
-    let element = Element::Container(Container::new(
-        ContainerType::Ruby,
-        elements,
-        arguments.to_attribute_map(parser.settings()),
-    ));
+    let attributes = arguments.to_attribute_map(parser.settings());
+    let element = ruby_container(elements, attributes);
 
     ok!(paragraph_safe; element, errors)
 }
@@ -135,16 +153,18 @@ fn parse_text<'r, 't>(
 
     let arguments = parser.get_head_map(&BLOCK_RT, in_head)?;
 
-    let (mut elements, errors, paragraph_safe) =
-        parser.get_body_elements(&BLOCK_RT, false)?.into();
+    let body = parser.get_body_elements(&BLOCK_RT, false)?;
+    let (mut elements, errors, paragraph_safe) = body.into();
 
     // Remove leading and trailing whitespace
     strip_whitespace(&mut elements);
 
-    let element = Element::Partial(PartialElement::RubyText(RubyText {
+    let attributes = arguments.to_attribute_map(parser.settings());
+    let ruby_text = RubyText {
         elements,
-        attributes: arguments.to_attribute_map(parser.settings()),
-    }));
+        attributes,
+    };
+    let element = Element::Partial(PartialElement::RubyText(ruby_text));
 
     ok!(paragraph_safe; element, errors)
 }
@@ -163,20 +183,9 @@ fn parse_shortcut<'r, 't>(
     assert!(!flag_score, "Ruby shortcut doesn't allow score flag");
     assert_block_name(&BLOCK_RB, name);
 
-    let (base_text, ruby_text) =
-        parser.get_head_value(&BLOCK_RB, in_head, |parser, value| match value {
-            None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
-            Some(value) => {
-                let parts = value.split('|').collect::<Vec<_>>();
-                match parts.as_slice() {
-                    // Exactly one pipe, split in the middle
-                    [base, ruby] => Ok((base.trim(), ruby.trim())),
-
-                    // Too many or too few pipes, invalid
-                    _ => Err(parser.make_err(ParseErrorKind::BlockMalformedArguments)),
-                }
-            }
-        })?;
+    let rule = &BLOCK_RB;
+    let head = parser.get_head_value(rule, in_head, parse_shortcut_head)?;
+    let (base_text, ruby_text) = head;
 
     let ruby_text = Element::Container(Container::new(
         ContainerType::RubyText,
@@ -190,7 +199,7 @@ fn parse_shortcut<'r, 't>(
         AttributeMap::new(),
     ));
 
-    ok!(ruby)
+    success_elements(ruby)
 }
 
 #[cfg(test)]

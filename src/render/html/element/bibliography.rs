@@ -95,7 +95,7 @@ pub fn render_bibcite(ctx: &mut HtmlContext, label: &str, brackets: bool) {
             ctx.html()
                 .span()
                 .attr(attr!("class" => "wj-error-inline"))
-                .contents(message);
+                .inner(|ctx| ctx.push_escaped(message));
         }
     }
 }
@@ -172,7 +172,7 @@ pub fn render_bibliography(
                                 ctx.html()
                                     .span()
                                     .attr(attr!("class" => "wj-bibliography-sep"))
-                                    .contents(".");
+                                    .inner(|ctx| ctx.push_raw('.'));
                             });
 
                         render_elements(ctx, elements);

@@ -47,13 +47,10 @@ fn try_consume_fn<'r, 't>(
     }
 
     // Now the current token should be underscore, then newline.
-    if !matches!(
-        parser.next_two_tokens(),
-        (
-            Token::Underscore,
-            Some(Token::LineBreak | Token::ParagraphBreak),
-        ),
-    ) {
+    let (current, next) = parser.next_two_tokens();
+    let has_line_break = current == Token::Underscore
+        && matches!(next, Some(Token::LineBreak | Token::ParagraphBreak));
+    if !has_line_break {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 

@@ -47,6 +47,35 @@ fn token_names_match_variant_names() {
 }
 
 #[test]
+fn lexer_error_tokens_return_input_as_other_token() {
+    let tokens = lexer_error_tokens("bad input", "synthetic lexer error");
+
+    assert_eq!(
+        tokens,
+        vec![ExtractedToken {
+            token: Token::Other,
+            slice: "bad input",
+            span: 0..9,
+        }],
+    );
+}
+
+#[test]
+fn token_extraction_falls_back_on_lexer_error() {
+    let result: Result<Pairs<'_, Rule>, &str> = Err("synthetic lexer error");
+    let tokens = Token::extract_tokens_from_pairs("bad input", result);
+
+    assert_eq!(
+        tokens,
+        vec![ExtractedToken {
+            token: Token::Other,
+            slice: "bad input",
+            span: 0..9,
+        }],
+    );
+}
+
+#[test]
 #[should_panic(expected = "Received invalid pest rule")]
 fn get_from_rule_rejects_document_rule() {
     Token::get_from_rule(Rule::document);

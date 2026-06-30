@@ -207,7 +207,13 @@ jobs:
               return Number.isNaN(timestamp) ? null : timestamp;
             }
 
-            function collectCodexReviewMarkers(reviews, comments, headSha, headArrival) {
+            function collectCodexReviewMarkers(
+              reviews,
+              comments,
+              headSha,
+              headArrival,
+              commentTimelineIndexes,
+            ) {
               const markers = reviews
                 .filter((review) => codexLogins.has(review.user?.login))
                 .filter((review) => review.state !== "DISMISSED")
@@ -236,6 +242,11 @@ jobs:
                 const createdAt = parseTimestamp(comment.created_at);
                 const updatedAt = parseTimestamp(comment.updated_at);
                 const headAt = parseTimestamp(headArrival?.time);
+                const commentTimelineIndex = commentTimelineIndexes.get(comment.id);
+                const createdAfterHeadInTimeline =
+                  headArrival?.timelineIndex !== undefined &&
+                  commentTimelineIndex !== undefined &&
+                  commentTimelineIndex > headArrival.timelineIndex;
                 const referencesHead =
                   (comment.body || "").includes(headSha) ||
                   (comment.body || "").includes(headSha.slice(0, 10));
@@ -251,6 +262,8 @@ jobs:
                   ? createdAt
                   : editedAfterHead
                     ? updatedAt
+                    : createdAfterHeadInTimeline
+                      ? createdAt
                     : referencesHead
                       ? updatedAt || createdAt
                       : null;
@@ -266,7 +279,9 @@ jobs:
                       codexLogins.has(reaction.user?.login) &&
                       reactionAt !== null &&
                       reactionAt >= requestAt &&
-                      (referencesHead || (headAt !== null && reactionAt >= headAt))
+                      (referencesHead ||
+                        createdAfterHeadInTimeline ||
+                        (headAt !== null && reactionAt >= headAt))
                     );
                   })
                   .sort((left, right) => new Date(left.created_at) - new Date(right.created_at))
@@ -286,6 +301,7 @@ jobs:
 
             function resolveHeadArrivalTime(timeline, statuses, headSha) {
               const candidateTimes = [];
+              let timelineIndex;
               for (let index = 0; index < timeline.length; index += 1) {
                 const event = timeline[index];
                 if (
@@ -294,8 +310,10 @@ jobs:
                   matchesHead(headSha, event.commit_id)
                 ) {
                   candidateTimes.push(event.created_at);
+                  timelineIndex = index;
                 }
                 if (event.event === "committed" && matchesHead(headSha, event.sha)) {
+                  timelineIndex = index;
                   if (event.created_at) {
                     candidateTimes.push(event.created_at);
                     continue;
@@ -310,6 +328,7 @@ jobs:
                 return {
                   source: "timeline",
                   time: new Date(Math.max(...parsedTimes.map((value) => value.getTime()))),
+                  timelineIndex,
                 };
               }
               const statusTimes = statuses
@@ -320,9 +339,27 @@ jobs:
                 return {
                   source: "status",
                   time: new Date(Math.min(...statusTimes.map((value) => value.getTime()))),
+                  timelineIndex,
+                };
+              }
+              if (timelineIndex !== undefined) {
+                return {
+                  source: "timeline-order",
+                  timelineIndex,
                 };
               }
               return null;
+            }
+
+            function collectCommentTimelineIndexes(timeline) {
+              const indexes = new Map();
+              for (let index = 0; index < timeline.length; index += 1) {
+                const event = timeline[index];
+                if (event.event === "commented" && event.id !== undefined) {
+                  indexes.set(event.id, index);
+                }
+              }
+              return indexes;
             }
 
             async function fetchPullState(pullNumber) {
@@ -372,6 +409,7 @@ jobs:
                 reviews,
                 comments,
                 statuses,
+                commentTimelineIndexes: collectCommentTimelineIndexes(timeline),
                 headArrival: resolveHeadArrivalTime(timeline, statuses, headSha),
               };
             }
@@ -650,12 +688,20 @@ jobs:
               };
             }
 
-            function evaluateCodex(reviews, comments, headSha, shortHead, headArrival) {
+            function evaluateCodex(
+              reviews,
+              comments,
+              headSha,
+              shortHead,
+              headArrival,
+              commentTimelineIndexes,
+            ) {
               const codexMarkers = collectCodexReviewMarkers(
                 reviews,
                 comments,
                 headSha,
                 headArrival,
+                commentTimelineIndexes,
               );
               const headCodexMarkers = codexMarkers.filter((marker) =>
                 matchesHead(headSha, marker.reviewedSha),
@@ -720,7 +766,7 @@ jobs:
               let deadline = Date.now() + maxWaitMs;
               let lastMessage = "";
               while (true) {
-                const { pull, reviews, comments, statuses, headArrival } =
+                const { pull, reviews, comments, statuses, headArrival, commentTimelineIndexes } =
                   await fetchPullState(eventPull.number);
                 const headSha = pull.head.sha;
                 const shortHead = headSha.slice(0, 10);
@@ -747,6 +793,7 @@ jobs:
                   headSha,
                   shortHead,
                   headArrival,
+                  commentTimelineIndexes,
                 );
                 const unresolvedBlockingCodexThreads =
                   await collectUnresolvedBlockingCodexThreads(pull.number);

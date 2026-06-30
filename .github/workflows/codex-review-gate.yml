@@ -20,8 +20,6 @@ on:
         type: number
 
 permissions:
-  # Required to read commit metadata used when resolving head arrival time.
-  contents: read
   # Required to read PR metadata and review records.
   pull-requests: read
   # Required to read PR issue comments used as review markers.
@@ -185,26 +183,36 @@ jobs:
               return markers;
             }
 
-            function resolveHeadArrivalTime(timeline, headSha, pull, commit) {
-              const candidateTimes = timeline
-                .map((event) => {
-                  if (
-                    event.event === "head_ref_force_pushed" &&
-                    event.created_at &&
-                    matchesHead(headSha, event.commit_id)
-                  ) {
-                    return event.created_at;
+            function resolveHeadArrivalTime(timeline, headSha) {
+              const candidateTimes = [];
+              for (let index = 0; index < timeline.length; index += 1) {
+                const event = timeline[index];
+                if (
+                  event.event === "head_ref_force_pushed" &&
+                  event.created_at &&
+                  matchesHead(headSha, event.commit_id)
+                ) {
+                  candidateTimes.push(event.created_at);
+                }
+                if (event.event === "committed" && matchesHead(headSha, event.sha)) {
+                  if (event.created_at || event.verification?.verified_at) {
+                    candidateTimes.push(event.created_at || event.verification.verified_at);
+                    continue;
                   }
-                  if (event.event === "committed" && matchesHead(headSha, event.sha)) {
-                    return event.created_at || event.verification?.verified_at || null;
+                  const nextTimestampedEvent = timeline
+                    .slice(index + 1)
+                    .find((candidate) => candidate.created_at);
+                  if (nextTimestampedEvent) {
+                    candidateTimes.push(nextTimestampedEvent.created_at);
                   }
-                  return null;
-                })
+                }
+              }
+              const parsedTimes = candidateTimes
                 .filter(Boolean)
                 .map((value) => new Date(value))
                 .filter((value) => !Number.isNaN(value.getTime()));
-              if (candidateTimes.length > 0) {
-                return new Date(Math.max(...candidateTimes.map((value) => value.getTime())));
+              if (parsedTimes.length > 0) {
+                return new Date(Math.max(...parsedTimes.map((value) => value.getTime())));
               }
               return null;
             }
@@ -216,7 +224,7 @@ jobs:
                 pull_number: pullNumber,
               });
               const headSha = pull.head.sha;
-              const [reviews, comments, statuses, commit, timeline] = await Promise.all([
+              const [reviews, comments, statuses, timeline] = await Promise.all([
                 github.paginate(github.rest.pulls.listReviews, {
                   owner,
                   repo,
@@ -234,11 +242,6 @@ jobs:
                   repo,
                   ref: headSha,
                   per_page: 100,
-                }),
-                github.rest.repos.getCommit({
-                  owner,
-                  repo,
-                  ref: headSha,
                 }),
                 github.paginate(github.rest.issues.listEventsForTimeline, {
                   owner,
@@ -269,7 +272,7 @@ jobs:
                 reviews,
                 comments,
                 statuses,
-                headArrivedAt: resolveHeadArrivalTime(timeline, headSha, pull, commit.data),
+                headArrivedAt: resolveHeadArrivalTime(timeline, headSha),
               };
             }
 

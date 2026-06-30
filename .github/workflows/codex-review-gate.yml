@@ -22,6 +22,8 @@ on:
         type: number
 
 permissions:
+  # Required to read commit metadata used when resolving head arrival time.
+  contents: read
   # Required to read PR metadata and review records.
   pull-requests: read
   # Required to read PR issue comments used as review markers.
@@ -54,7 +56,8 @@ jobs:
             const rateLimitPattern =
               /(review limit reached|prepaid credits|credits exhausted|usage credits|usage-based reviews|rate limit|next review available)/i;
             const reviewedCommitPattern = /Reviewed commit:\*\*\s*`([0-9a-f]{7,40})`/i;
-            const maxWaitMs = context.eventName === "schedule" ? 2 * 60 * 1000 : 15 * 60 * 1000;
+            const waitForReviews = context.eventName !== "schedule";
+            const maxWaitMs = 15 * 60 * 1000;
             const pollMs = 30 * 1000;
             const gateContext = "automated-review-gate";
             const { owner, repo } = context.repo;
@@ -137,9 +140,9 @@ jobs:
               return [];
             }
 
-            async function resolvePullRequest() {
+            async function resolvePullRequests() {
               if (context.payload.pull_request) {
-                return context.payload.pull_request;
+                return [context.payload.pull_request];
               }
 
               if (context.payload.issue?.pull_request) {
@@ -148,7 +151,7 @@ jobs:
                   repo,
                   pull_number: context.payload.issue.number,
                 });
-                return pull;
+                return [pull];
               }
 
               if (context.eventName === "workflow_dispatch" && context.payload.inputs?.pull_number) {
@@ -157,7 +160,7 @@ jobs:
                   repo,
                   pull_number: Number(context.payload.inputs.pull_number),
                 });
-                return pull;
+                return [pull];
               }
 
               if (context.eventName === "status") {
@@ -170,10 +173,10 @@ jobs:
                     headers: { accept: "application/vnd.github+json" },
                   },
                 );
-                return (
+                const pull =
                   pulls.find((pull) => pull.state === "open" && pull.head.sha === context.payload.sha) ||
-                  null
-                );
+                  null;
+                return pull ? [pull] : [];
               }
 
               if (context.eventName === "schedule") {
@@ -185,10 +188,10 @@ jobs:
                   direction: "desc",
                   per_page: 100,
                 });
-                return pulls.find((pull) => !pull.draft) || pulls[0] || null;
+                return pulls;
               }
 
-              return null;
+              return [];
             }
 
             function matchesHead(headSha, candidateSha) {
@@ -196,6 +199,11 @@ jobs:
                 candidateSha &&
                   (headSha.startsWith(candidateSha) || candidateSha.startsWith(headSha)),
               );
+            }
+
+            function parseTimestamp(value) {
+              const timestamp = new Date(value || 0).getTime();
+              return Number.isNaN(timestamp) ? null : timestamp;
             }
 
             function collectCodexReviewMarkers(reviews, comments, headSha, headArrivedAt) {
@@ -212,20 +220,11 @@ jobs:
                 .concat(
                   comments
                     .filter((comment) => codexLogins.has(comment.user?.login))
-                    .map((comment) => {
-                      const body = comment.body || "";
-                      const createdAt = new Date(comment.created_at);
-                      const cleanHeadComment =
-                        headArrivedAt &&
-                        createdAt >= headArrivedAt &&
-                        /Codex Review/i.test(body) &&
-                        /(didn['’]t find any major issues|no major issues|no issues found)/i.test(body);
-                      return {
-                        source: "issue comment",
-                        submittedAt: comment.created_at,
-                        reviewedSha: body.match(reviewedCommitPattern)?.[1] || (cleanHeadComment ? headSha : null),
-                      };
-                    }),
+                    .map((comment) => ({
+                      source: "issue comment",
+                      submittedAt: comment.created_at,
+                      reviewedSha: (comment.body || "").match(reviewedCommitPattern)?.[1] || null,
+                    })),
                 )
                 .filter((marker) => marker.reviewedSha);
 
@@ -233,15 +232,23 @@ jobs:
                 if (!/@codex\s+review\b/i.test(comment.body || "")) {
                   continue;
                 }
+                const requestAt = parseTimestamp(comment.updated_at || comment.created_at);
+                const headAt = parseTimestamp(headArrivedAt);
+                if (headAt === null || requestAt === null || requestAt < headAt) {
+                  continue;
+                }
                 const reactions = comment._reactions || [];
                 const cleanCodexReaction = reactions
-                  .filter(
-                    (reaction) =>
+                  .filter((reaction) => {
+                    const reactionAt = parseTimestamp(reaction.created_at);
+                    return (
                       reaction.content === "+1" &&
                       codexLogins.has(reaction.user?.login) &&
-                      headArrivedAt &&
-                      new Date(reaction.created_at) >= headArrivedAt,
-                  )
+                      reactionAt !== null &&
+                      reactionAt >= headAt &&
+                      reactionAt >= requestAt
+                    );
+                  })
                   .sort((left, right) => new Date(left.created_at) - new Date(right.created_at))
                   .at(-1);
                 if (cleanCodexReaction) {
@@ -257,7 +264,7 @@ jobs:
               return markers;
             }
 
-            function resolveHeadArrivalTime(timeline, statuses, headSha) {
+            function resolveHeadArrivalTime(timeline, statuses, headSha, headCommit) {
               const candidateTimes = [];
               for (let index = 0; index < timeline.length; index += 1) {
                 const event = timeline[index];
@@ -288,7 +295,14 @@ jobs:
               if (parsedTimes.length > 0) {
                 return new Date(Math.max(...parsedTimes.map((value) => value.getTime())));
               }
+              const commitTime = parseTimestamp(
+                headCommit?.commit?.committer?.date || headCommit?.commit?.author?.date,
+              );
+              if (commitTime !== null) {
+                return new Date(commitTime);
+              }
               const statusTimes = statuses
+                .filter((status) => status.context !== gateContext)
                 .map((status) => new Date(status.created_at))
                 .filter((value) => !Number.isNaN(value.getTime()));
               if (statusTimes.length > 0) {
@@ -304,7 +318,7 @@ jobs:
                 pull_number: pullNumber,
               });
               const headSha = pull.head.sha;
-              const [reviews, comments, statuses, timeline] = await Promise.all([
+              const [reviews, comments, statuses, timeline, headCommit] = await Promise.all([
                 github.paginate(github.rest.pulls.listReviews, {
                   owner,
                   repo,
@@ -329,6 +343,11 @@ jobs:
                   issue_number: pullNumber,
                   per_page: 100,
                 }),
+                github.rest.repos.getCommit({
+                  owner,
+                  repo,
+                  ref: headSha,
+                }).then((response) => response.data),
               ]);
 
               await Promise.all(
@@ -344,7 +363,7 @@ jobs:
                 reviews,
                 comments,
                 statuses,
-                headArrivedAt: resolveHeadArrivalTime(timeline, statuses, headSha),
+                headArrivedAt: resolveHeadArrivalTime(timeline, statuses, headSha, headCommit),
               };
             }
 
@@ -466,7 +485,17 @@ jobs:
               const latestActionableEvidence = headEvidence
                 .filter((evidence) => evidence.actionableCount !== null)
                 .at(-1);
-              if ((latestActionableEvidence?.actionableCount || 0) > 0) {
+              const pendingStatusAt =
+                coderabbitStatus?.state === "pending"
+                  ? parseTimestamp(coderabbitStatus.created_at)
+                  : null;
+              const latestActionableAt = latestActionableEvidence
+                ? parseTimestamp(latestActionableEvidence.submittedAt)
+                : null;
+              const newerPendingReview =
+                pendingStatusAt !== null &&
+                (latestActionableAt === null || latestActionableAt < pendingStatusAt);
+              if ((latestActionableEvidence?.actionableCount || 0) > 0 && !newerPendingReview) {
                 return {
                   ready: false,
                   terminal: true,
@@ -599,19 +628,14 @@ jobs:
               };
             }
 
-            try {
-              const eventPull = await resolvePullRequest();
-              if (!eventPull) {
-                core.info("No open pull request is associated with this event.");
-                return;
-              }
+            async function evaluatePullRequest(eventPull) {
               gateSha = eventPull.head.sha;
               await setGateStatus("pending", "Waiting for automated reviews");
 
               if (eventPull.draft) {
                 await setGateStatus("success", "Draft PR; merge is already blocked by GitHub");
                 core.info("Draft pull request; GitHub already blocks draft merges.");
-                return;
+                return { ok: true };
               }
 
               const deadline = Date.now() + maxWaitMs;
@@ -628,7 +652,7 @@ jobs:
                       10,
                     )}; current head is ${shortHead}.`,
                   );
-                  return;
+                  return { ok: true };
                 }
                 if (gateSha !== headSha) {
                   gateSha = headSha;
@@ -646,24 +670,21 @@ jobs:
 
                 if (coderabbit.terminal) {
                   await setGateStatus("failure", coderabbit.message);
-                  core.setFailed(coderabbit.message);
-                  return;
+                  return { ok: false, message: coderabbit.message };
                 }
 
                 if (codex.terminal) {
                   await setGateStatus("failure", codex.message);
-                  core.setFailed(codex.message);
-                  return;
+                  return { ok: false, message: codex.message };
                 }
 
                 if (unresolvedCodexThreads.length > 0) {
                   const unresolvedMessage = `Unresolved Codex review thread(s): ${unresolvedCodexThreads
                     .slice(0, 5)
                     .join(", ")}${unresolvedCodexThreads.length > 5 ? ", ..." : ""}`;
-                  if (Date.now() >= deadline) {
+                  if (!waitForReviews || Date.now() >= deadline) {
                     await setGateStatus("failure", unresolvedMessage);
-                    core.setFailed(unresolvedMessage);
-                    return;
+                    return { ok: false, message: unresolvedMessage };
                   }
                   await setGateStatus("pending", unresolvedMessage);
                   if (unresolvedMessage !== lastMessage) {
@@ -678,7 +699,7 @@ jobs:
                   await setGateStatus("success", "Automated reviews completed");
                   core.info(codex.message);
                   core.info(coderabbit.message);
-                  return;
+                  return { ok: true };
                 }
 
                 const message = [
@@ -687,11 +708,15 @@ jobs:
                 ]
                   .filter(Boolean)
                   .join(" ");
+                if (!waitForReviews) {
+                  await setGateStatus("pending", message);
+                  core.info(message);
+                  return { ok: true, pending: true };
+                }
                 if (Date.now() >= deadline) {
                   const timeoutMessage = `Timed out waiting for automated reviews. ${message}`;
                   await setGateStatus("failure", timeoutMessage);
-                  core.setFailed(timeoutMessage);
-                  return;
+                  return { ok: false, message: timeoutMessage };
                 }
 
                 if (message !== lastMessage) {
@@ -699,6 +724,27 @@ jobs:
                   lastMessage = message;
                 }
                 await sleep(pollMs);
+              }
+            }
+
+            try {
+              const eventPulls = await resolvePullRequests();
+              if (eventPulls.length === 0) {
+                core.info("No open pull request is associated with this event.");
+                return;
+              }
+
+              const results = [];
+              for (const eventPull of eventPulls) {
+                results.push(await evaluatePullRequest(eventPull));
+              }
+              const failures = results.filter((result) => !result.ok);
+              if (failures.length > 0) {
+                core.setFailed(
+                  failures
+                    .map((result) => result.message || "Automated review gate failed.")
+                    .join("\n"),
+                );
               }
             } catch (error) {
               try {

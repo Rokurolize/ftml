@@ -443,6 +443,8 @@ jobs:
                 const threads = result.repository.pullRequest.reviewThreads;
                 for (const thread of threads.nodes) {
                   if (thread.isResolved) continue;
+                  // Branch protection requires conversation resolution; this gate tracks current-diff Codex threads.
+                  if (thread.isOutdated) continue;
                   if (await reviewThreadHasCodexComment(thread)) {
                     unresolvedCodexThreads.push(`${thread.path}:${thread.line || "file"}`);
                   }

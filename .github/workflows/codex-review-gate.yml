@@ -9,6 +9,8 @@ on:
     types: [submitted, edited, dismissed]
   pull_request_review_comment:
     types: [created, edited, deleted]
+  pull_request_review_thread:
+    types: [resolved, unresolved]
   issue_comment:
     types: [created, edited, deleted]
   status:
@@ -37,9 +39,7 @@ jobs:
     if: >-
       (github.event_name != 'status' || github.event.context == 'CodeRabbit') &&
       (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name && github.event.pull_request.user.login != 'dependabot[bot]')) &&
-      (github.event_name != 'pull_request_target' || (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name || github.event.pull_request.user.login == 'dependabot[bot]')) &&
-      (github.event_name != 'pull_request_review' || (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name && github.event.pull_request.user.login != 'dependabot[bot]')) &&
-      (github.event_name != 'pull_request_review_comment' || (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name && github.event.pull_request.user.login != 'dependabot[bot]'))
+      (github.event_name != 'pull_request_target' || (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name || github.event.pull_request.user.login == 'dependabot[bot]'))
     runs-on: ubuntu-latest
     steps:
       - name: Verify latest automated reviews
@@ -148,11 +148,20 @@ jobs:
                 .concat(
                   comments
                     .filter((comment) => codexLogins.has(comment.user?.login))
-                    .map((comment) => ({
-                      source: "issue comment",
-                      submittedAt: comment.created_at,
-                      reviewedSha: (comment.body || "").match(reviewedCommitPattern)?.[1] || null,
-                    })),
+                    .map((comment) => {
+                      const body = comment.body || "";
+                      const createdAt = new Date(comment.created_at);
+                      const cleanHeadComment =
+                        headArrivedAt &&
+                        createdAt >= headArrivedAt &&
+                        /Codex Review/i.test(body) &&
+                        /(didn['’]t find any major issues|no major issues|no issues found)/i.test(body);
+                      return {
+                        source: "issue comment",
+                        submittedAt: comment.created_at,
+                        reviewedSha: body.match(reviewedCommitPattern)?.[1] || (cleanHeadComment ? headSha : null),
+                      };
+                    }),
                 )
                 .filter((marker) => marker.reviewedSha);
 

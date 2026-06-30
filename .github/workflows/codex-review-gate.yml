@@ -140,6 +140,7 @@ jobs:
                 .filter((review) => review.state !== "DISMISSED")
                 .map((review) => ({
                   source: "review",
+                  state: review.state,
                   submittedAt: review.submitted_at,
                   reviewedSha:
                     review.commit_id || (review.body || "").match(reviewedCommitPattern)?.[1] || null,
@@ -183,7 +184,7 @@ jobs:
               return markers;
             }
 
-            function resolveHeadArrivalTime(timeline, headSha) {
+            function resolveHeadArrivalTime(timeline, statuses, headSha) {
               const candidateTimes = [];
               for (let index = 0; index < timeline.length; index += 1) {
                 const event = timeline[index];
@@ -213,6 +214,12 @@ jobs:
                 .filter((value) => !Number.isNaN(value.getTime()));
               if (parsedTimes.length > 0) {
                 return new Date(Math.max(...parsedTimes.map((value) => value.getTime())));
+              }
+              const statusTimes = statuses
+                .map((status) => new Date(status.created_at))
+                .filter((value) => !Number.isNaN(value.getTime()));
+              if (statusTimes.length > 0) {
+                return new Date(Math.min(...statusTimes.map((value) => value.getTime())));
               }
               return null;
             }
@@ -272,7 +279,7 @@ jobs:
                 reviews,
                 comments,
                 statuses,
-                headArrivedAt: resolveHeadArrivalTime(timeline, headSha),
+                headArrivedAt: resolveHeadArrivalTime(timeline, statuses, headSha),
               };
             }
 
@@ -507,13 +514,22 @@ jobs:
                   : "none";
                 return {
                   ready: false,
+                  terminal: false,
                   message: `Waiting for chatgpt-codex-connector[bot] to review latest head ${shortHead}; latest Codex review: ${latestText}.`,
                 };
               }
 
               const latestHeadReview = headCodexMarkers.at(-1);
+              if (latestHeadReview.source === "review" && latestHeadReview.state === "CHANGES_REQUESTED") {
+                return {
+                  ready: false,
+                  terminal: true,
+                  message: `Codex requested changes for latest head ${shortHead}; push fixes and wait for a clean review.`,
+                };
+              }
               return {
                 ready: true,
+                terminal: false,
                 message: `Latest head ${shortHead} was reviewed by Codex via ${latestHeadReview.source} at ${latestHeadReview.submittedAt}.`,
               };
             }
@@ -569,13 +585,28 @@ jobs:
                   return;
                 }
 
+                if (codex.terminal) {
+                  await setGateStatus("failure", codex.message);
+                  core.setFailed(codex.message);
+                  return;
+                }
+
                 if (unresolvedCodexThreads.length > 0) {
                   const unresolvedMessage = `Unresolved Codex review thread(s): ${unresolvedCodexThreads
                     .slice(0, 5)
                     .join(", ")}${unresolvedCodexThreads.length > 5 ? ", ..." : ""}`;
-                  await setGateStatus("failure", unresolvedMessage);
-                  core.setFailed(unresolvedMessage);
-                  return;
+                  if (Date.now() >= deadline) {
+                    await setGateStatus("failure", unresolvedMessage);
+                    core.setFailed(unresolvedMessage);
+                    return;
+                  }
+                  await setGateStatus("pending", unresolvedMessage);
+                  if (unresolvedMessage !== lastMessage) {
+                    core.info(unresolvedMessage);
+                    lastMessage = unresolvedMessage;
+                  }
+                  await sleep(pollMs);
+                  continue;
                 }
 
                 if (coderabbit.ready && codex.ready) {

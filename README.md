@@ -34,6 +34,7 @@
 
 This repository is Rokurolize's fork of [scpwiki/ftml](https://github.com/scpwiki/ftml).
 It is used for fork-local development, validation, and review support; upstream project links below describe the ftml project maintained for Wikijump.
+Fork-local versioning and sync policy are documented in [`ForkVersioning.md`](docs/ForkVersioning.md).
 
 ### Foundation Text Markup Language
 

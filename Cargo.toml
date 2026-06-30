@@ -1,14 +1,14 @@
 [package]
 name = "ftml"
 description = "Foundation Text Markup Language - a library to render Wikidot text as HTML"
-repository = "https://github.com/scpwiki/ftml"
+repository = "https://github.com/Rokurolize/ftml"
 readme = "README.md"
 license = "AGPL-3.0-or-later"
 keywords = ["wikidot", "wikijump", "ftml", "parsing", "html"]
 categories = ["parser-implementations"]
 exclude = [".gitignore", ".editorconfig"]
 
-version = "1.42.0"
+version = "1.42.0+roku.20260630.1"
 authors = ["Emmie Smith <emmie.maeda@gmail.com>"]
 edition = "2024"
 rust-version = "1.88.0"

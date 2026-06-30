@@ -54,7 +54,8 @@ jobs:
             const rateLimitPattern =
               /(review limit reached|prepaid credits|credits exhausted|usage credits|usage-based reviews|rate limit|next review available)/i;
             const reviewedCommitPattern = /Reviewed commit:\*\*\s*`([0-9a-f]{7,40})`/i;
-            const maxWaitMs = context.eventName === "schedule" ? 2 * 60 * 1000 : 15 * 60 * 1000;
+            const waitForReviews = context.eventName !== "schedule";
+            const maxWaitMs = 15 * 60 * 1000;
             const pollMs = 30 * 1000;
             const gateContext = "automated-review-gate";
             const { owner, repo } = context.repo;
@@ -137,9 +138,9 @@ jobs:
               return [];
             }
 
-            async function resolvePullRequest() {
+            async function resolvePullRequests() {
               if (context.payload.pull_request) {
-                return context.payload.pull_request;
+                return [context.payload.pull_request];
               }
 
               if (context.payload.issue?.pull_request) {
@@ -148,7 +149,7 @@ jobs:
                   repo,
                   pull_number: context.payload.issue.number,
                 });
-                return pull;
+                return [pull];
               }
 
               if (context.eventName === "workflow_dispatch" && context.payload.inputs?.pull_number) {
@@ -157,7 +158,7 @@ jobs:
                   repo,
                   pull_number: Number(context.payload.inputs.pull_number),
                 });
-                return pull;
+                return [pull];
               }
 
               if (context.eventName === "status") {
@@ -170,10 +171,10 @@ jobs:
                     headers: { accept: "application/vnd.github+json" },
                   },
                 );
-                return (
+                const pull =
                   pulls.find((pull) => pull.state === "open" && pull.head.sha === context.payload.sha) ||
-                  null
-                );
+                  null;
+                return pull ? [pull] : [];
               }
 
               if (context.eventName === "schedule") {
@@ -185,10 +186,10 @@ jobs:
                   direction: "desc",
                   per_page: 100,
                 });
-                return pulls.find((pull) => !pull.draft) || pulls[0] || null;
+                return pulls.filter((pull) => !pull.draft);
               }
 
-              return null;
+              return [];
             }
 
             function matchesHead(headSha, candidateSha) {
@@ -198,7 +199,15 @@ jobs:
               );
             }
 
-            function collectCodexReviewMarkers(reviews, comments, headSha, headArrivedAt) {
+            function parseTimestamp(value) {
+              if (!value) {
+                return null;
+              }
+              const timestamp = new Date(value).getTime();
+              return Number.isNaN(timestamp) ? null : timestamp;
+            }
+
+            function collectCodexReviewMarkers(reviews, comments, headSha, headArrival) {
               const markers = reviews
                 .filter((review) => codexLogins.has(review.user?.login))
                 .filter((review) => review.state !== "DISMISSED")
@@ -212,20 +221,11 @@ jobs:
                 .concat(
                   comments
                     .filter((comment) => codexLogins.has(comment.user?.login))
-                    .map((comment) => {
-                      const body = comment.body || "";
-                      const createdAt = new Date(comment.created_at);
-                      const cleanHeadComment =
-                        headArrivedAt &&
-                        createdAt >= headArrivedAt &&
-                        /Codex Review/i.test(body) &&
-                        /(didn['’]t find any major issues|no major issues|no issues found)/i.test(body);
-                      return {
-                        source: "issue comment",
-                        submittedAt: comment.created_at,
-                        reviewedSha: body.match(reviewedCommitPattern)?.[1] || (cleanHeadComment ? headSha : null),
-                      };
-                    }),
+                    .map((comment) => ({
+                      source: "issue comment",
+                      submittedAt: comment.created_at,
+                      reviewedSha: (comment.body || "").match(reviewedCommitPattern)?.[1] || null,
+                    })),
                 )
                 .filter((marker) => marker.reviewedSha);
 
@@ -233,15 +233,34 @@ jobs:
                 if (!/@codex\s+review\b/i.test(comment.body || "")) {
                   continue;
                 }
+                const createdAt = parseTimestamp(comment.created_at);
+                const updatedAt = parseTimestamp(comment.updated_at);
+                const headAt = parseTimestamp(headArrival?.time);
+                const createdAfterHead =
+                  createdAt !== null && headAt !== null && createdAt >= headAt;
+                const editedAfterHead =
+                  updatedAt !== null &&
+                  createdAt !== null &&
+                  updatedAt > createdAt &&
+                  headAt !== null &&
+                  updatedAt >= headAt;
+                const requestAt = createdAfterHead ? createdAt : editedAfterHead ? updatedAt : null;
+                if (requestAt === null) {
+                  continue;
+                }
                 const reactions = comment._reactions || [];
                 const cleanCodexReaction = reactions
-                  .filter(
-                    (reaction) =>
+                  .filter((reaction) => {
+                    const reactionAt = parseTimestamp(reaction.created_at);
+                    return (
                       reaction.content === "+1" &&
                       codexLogins.has(reaction.user?.login) &&
-                      headArrivedAt &&
-                      new Date(reaction.created_at) >= headArrivedAt,
-                  )
+                      reactionAt !== null &&
+                      headAt !== null &&
+                      reactionAt >= headAt &&
+                      reactionAt >= requestAt
+                    );
+                  })
                   .sort((left, right) => new Date(left.created_at) - new Date(right.created_at))
                   .at(-1);
                 if (cleanCodexReaction) {
@@ -269,8 +288,8 @@ jobs:
                   candidateTimes.push(event.created_at);
                 }
                 if (event.event === "committed" && matchesHead(headSha, event.sha)) {
-                  if (event.created_at || event.verification?.verified_at) {
-                    candidateTimes.push(event.created_at || event.verification.verified_at);
+                  if (event.created_at) {
+                    candidateTimes.push(event.created_at);
                     continue;
                   }
                   const nextTimestampedEvent = timeline
@@ -286,13 +305,20 @@ jobs:
                 .map((value) => new Date(value))
                 .filter((value) => !Number.isNaN(value.getTime()));
               if (parsedTimes.length > 0) {
-                return new Date(Math.max(...parsedTimes.map((value) => value.getTime())));
+                return {
+                  source: "timeline",
+                  time: new Date(Math.max(...parsedTimes.map((value) => value.getTime()))),
+                };
               }
               const statusTimes = statuses
+                .filter((status) => status.context !== gateContext)
                 .map((status) => new Date(status.created_at))
                 .filter((value) => !Number.isNaN(value.getTime()));
               if (statusTimes.length > 0) {
-                return new Date(Math.min(...statusTimes.map((value) => value.getTime())));
+                return {
+                  source: "status",
+                  time: new Date(Math.min(...statusTimes.map((value) => value.getTime()))),
+                };
               }
               return null;
             }
@@ -344,12 +370,16 @@ jobs:
                 reviews,
                 comments,
                 statuses,
-                headArrivedAt: resolveHeadArrivalTime(timeline, statuses, headSha),
+                headArrival: resolveHeadArrivalTime(timeline, statuses, headSha),
               };
             }
 
+            function isCodexThreadComment(comment) {
+              return codexLogins.has(comment.author?.login);
+            }
+
             async function reviewThreadHasCodexComment(thread) {
-              if (thread.comments.nodes.some((comment) => codexLogins.has(comment.author?.login))) {
+              if (thread.comments.nodes.some((comment) => isCodexThreadComment(comment))) {
                 return true;
               }
 
@@ -373,7 +403,7 @@ jobs:
                   { threadId: thread.id, cursor: commentCursor },
                 );
                 const comments = result.node.comments;
-                if (comments.nodes.some((comment) => codexLogins.has(comment.author?.login))) {
+                if (comments.nodes.some((comment) => isCodexThreadComment(comment))) {
                   return true;
                 }
                 commentCursor = comments.pageInfo.hasNextPage ? comments.pageInfo.endCursor : null;
@@ -394,6 +424,7 @@ jobs:
                           nodes {
                             id
                             isResolved
+                            isOutdated
                             path
                             line
                             comments(first: 100) {
@@ -412,6 +443,8 @@ jobs:
                 const threads = result.repository.pullRequest.reviewThreads;
                 for (const thread of threads.nodes) {
                   if (thread.isResolved) continue;
+                  // Branch protection requires conversation resolution; this gate tracks current-diff Codex threads.
+                  if (thread.isOutdated) continue;
                   if (await reviewThreadHasCodexComment(thread)) {
                     unresolvedCodexThreads.push(`${thread.path}:${thread.line || "file"}`);
                   }
@@ -466,33 +499,64 @@ jobs:
               const latestActionableEvidence = headEvidence
                 .filter((evidence) => evidence.actionableCount !== null)
                 .at(-1);
-              if ((latestActionableEvidence?.actionableCount || 0) > 0) {
+              const description = coderabbitStatus?.description || "";
+              const statusCreatedAt = coderabbitStatus
+                ? parseTimestamp(coderabbitStatus.created_at)
+                : null;
+              const relatedRateLimitComments = comments
+                .filter((comment) => coderabbitLogins.has(comment.user?.login))
+                .filter((comment) => {
+                  const body = comment.body || "";
+                  const commentAt = parseTimestamp(comment.updated_at || comment.created_at);
+                  const referencesHead = body.includes(headSha) || body.includes(shortHead);
+                  if (statusCreatedAt === null) {
+                    return referencesHead;
+                  }
+                  const nearStatus =
+                    commentAt !== null && commentAt >= statusCreatedAt - 60 * 1000;
+                  if (referencesHead) {
+                    return nearStatus;
+                  }
+                  return coderabbitStatus?.state !== "pending" && nearStatus;
+                });
+              const rateLimited =
+                rateLimitPattern.test(description) ||
+                relatedRateLimitComments.some((comment) => rateLimitPattern.test(comment.body || ""));
+              const latestActionableAt = latestActionableEvidence
+                ? parseTimestamp(latestActionableEvidence.submittedAt)
+                : null;
+              const hasActionableFindings = (latestActionableEvidence?.actionableCount || 0) > 0;
+              const statusNewerThanActionable =
+                statusCreatedAt !== null &&
+                (latestActionableAt === null || latestActionableAt < statusCreatedAt);
+              const actionableNearStatus =
+                statusCreatedAt !== null &&
+                latestActionableAt !== null &&
+                Math.abs(statusCreatedAt - latestActionableAt) <= 2 * 60 * 1000;
+              const newerPendingReview =
+                hasActionableFindings &&
+                coderabbitStatus?.state === "pending" &&
+                statusNewerThanActionable &&
+                !rateLimited;
+              const newerSuccessfulReviewNeedsSummary =
+                hasActionableFindings &&
+                coderabbitStatus?.state === "success" &&
+                statusNewerThanActionable &&
+                !actionableNearStatus;
+              if (newerSuccessfulReviewNeedsSummary) {
+                return {
+                  ready: false,
+                  terminal: false,
+                  message: `Waiting for CodeRabbit review summary for latest head ${shortHead}.`,
+                };
+              }
+              if (hasActionableFindings && !newerPendingReview) {
                 return {
                   ready: false,
                   terminal: true,
                   message: `CodeRabbit posted ${latestActionableEvidence.actionableCount} actionable comment(s) for latest head ${shortHead}; push fixes and wait for a clean review.`,
                 };
               }
-
-              const description = coderabbitStatus?.description || "";
-              const statusCreatedAt = coderabbitStatus
-                ? new Date(coderabbitStatus.created_at).getTime()
-                : null;
-              const relatedRateLimitComments = comments
-                .filter((comment) => coderabbitLogins.has(comment.user?.login))
-                .filter((comment) => {
-                  const body = comment.body || "";
-                  if (body.includes(headSha) || body.includes(shortHead)) {
-                    return true;
-                  }
-                  if (statusCreatedAt === null) {
-                    return false;
-                  }
-                  return new Date(comment.created_at).getTime() >= statusCreatedAt - 60 * 1000;
-                });
-              const rateLimited =
-                rateLimitPattern.test(description) ||
-                relatedRateLimitComments.some((comment) => rateLimitPattern.test(comment.body || ""));
 
               if (!coderabbitStatus) {
                 if (latestActionableEvidence?.actionableCount === 0) {
@@ -502,7 +566,7 @@ jobs:
                     message: `CodeRabbit clean review evidence found for latest head ${shortHead}.`,
                   };
                 }
-                if (rateLimited) {
+                if (rateLimited && !hasActionableFindings) {
                   return {
                     ready: true,
                     terminal: false,
@@ -517,7 +581,7 @@ jobs:
               }
 
               if (coderabbitStatus.state === "pending") {
-                if (rateLimited) {
+                if (rateLimited && !hasActionableFindings) {
                   return {
                     ready: true,
                     terminal: false,
@@ -532,7 +596,7 @@ jobs:
               }
 
               if (coderabbitStatus.state !== "success") {
-                if (rateLimited) {
+                if (rateLimited && !hasActionableFindings) {
                   return {
                     ready: true,
                     terminal: false,
@@ -562,12 +626,12 @@ jobs:
               };
             }
 
-            function evaluateCodex(reviews, comments, headSha, shortHead, headArrivedAt) {
+            function evaluateCodex(reviews, comments, headSha, shortHead, headArrival) {
               const codexMarkers = collectCodexReviewMarkers(
                 reviews,
                 comments,
                 headSha,
-                headArrivedAt,
+                headArrival,
               );
               const headCodexMarkers = codexMarkers.filter((marker) =>
                 matchesHead(headSha, marker.reviewedSha),
@@ -599,25 +663,40 @@ jobs:
               };
             }
 
-            try {
-              const eventPull = await resolvePullRequest();
-              if (!eventPull) {
-                core.info("No open pull request is associated with this event.");
-                return;
+            async function setGateStatusForEvaluation(state, description, statuses) {
+              const normalizedDescription = description.slice(0, 140);
+              if (!waitForReviews && statuses) {
+                const latestGateStatus = statuses
+                  .filter((status) => status.context === gateContext)
+                  .sort((left, right) => new Date(right.created_at) - new Date(left.created_at))[0];
+                if (
+                  latestGateStatus?.state === state &&
+                  latestGateStatus?.description === normalizedDescription
+                ) {
+                  return true;
+                }
               }
+              return setGateStatus(state, normalizedDescription);
+            }
+
+            async function evaluatePullRequest(eventPull) {
               gateSha = eventPull.head.sha;
-              await setGateStatus("pending", "Waiting for automated reviews");
+              if (waitForReviews) {
+                await setGateStatus("pending", "Waiting for automated reviews");
+              }
 
               if (eventPull.draft) {
-                await setGateStatus("success", "Draft PR; merge is already blocked by GitHub");
+                if (waitForReviews) {
+                  await setGateStatus("success", "Draft PR; merge is already blocked by GitHub");
+                }
                 core.info("Draft pull request; GitHub already blocks draft merges.");
-                return;
+                return { ok: true };
               }
 
-              const deadline = Date.now() + maxWaitMs;
+              let deadline = Date.now() + maxWaitMs;
               let lastMessage = "";
               while (true) {
-                const { pull, reviews, comments, statuses, headArrivedAt } =
+                const { pull, reviews, comments, statuses, headArrival } =
                   await fetchPullState(eventPull.number);
                 const headSha = pull.head.sha;
                 const shortHead = headSha.slice(0, 10);
@@ -628,11 +707,14 @@ jobs:
                       10,
                     )}; current head is ${shortHead}.`,
                   );
-                  return;
+                  return { ok: true };
                 }
                 if (gateSha !== headSha) {
                   gateSha = headSha;
-                  await setGateStatus("pending", "Waiting for automated reviews");
+                  deadline = Date.now() + maxWaitMs;
+                  if (waitForReviews) {
+                    await setGateStatus("pending", "Waiting for automated reviews");
+                  }
                 }
                 const coderabbit = evaluateCodeRabbit(reviews, comments, statuses, headSha, shortHead);
                 const codex = evaluateCodex(
@@ -640,32 +722,29 @@ jobs:
                   comments,
                   headSha,
                   shortHead,
-                  headArrivedAt,
+                  headArrival,
                 );
                 const unresolvedCodexThreads = await collectUnresolvedCodexThreads(pull.number);
 
                 if (coderabbit.terminal) {
-                  await setGateStatus("failure", coderabbit.message);
-                  core.setFailed(coderabbit.message);
-                  return;
+                  await setGateStatusForEvaluation("failure", coderabbit.message, statuses);
+                  return { ok: false, message: coderabbit.message };
                 }
 
                 if (codex.terminal) {
-                  await setGateStatus("failure", codex.message);
-                  core.setFailed(codex.message);
-                  return;
+                  await setGateStatusForEvaluation("failure", codex.message, statuses);
+                  return { ok: false, message: codex.message };
                 }
 
                 if (unresolvedCodexThreads.length > 0) {
                   const unresolvedMessage = `Unresolved Codex review thread(s): ${unresolvedCodexThreads
                     .slice(0, 5)
                     .join(", ")}${unresolvedCodexThreads.length > 5 ? ", ..." : ""}`;
-                  if (Date.now() >= deadline) {
-                    await setGateStatus("failure", unresolvedMessage);
-                    core.setFailed(unresolvedMessage);
-                    return;
+                  if (!waitForReviews || Date.now() >= deadline) {
+                    await setGateStatusForEvaluation("failure", unresolvedMessage, statuses);
+                    return { ok: false, message: unresolvedMessage };
                   }
-                  await setGateStatus("pending", unresolvedMessage);
+                  await setGateStatusForEvaluation("pending", unresolvedMessage, statuses);
                   if (unresolvedMessage !== lastMessage) {
                     core.info(unresolvedMessage);
                     lastMessage = unresolvedMessage;
@@ -675,10 +754,10 @@ jobs:
                 }
 
                 if (coderabbit.ready && codex.ready) {
-                  await setGateStatus("success", "Automated reviews completed");
+                  await setGateStatusForEvaluation("success", "Automated reviews completed", statuses);
                   core.info(codex.message);
                   core.info(coderabbit.message);
-                  return;
+                  return { ok: true };
                 }
 
                 const message = [
@@ -687,11 +766,26 @@ jobs:
                 ]
                   .filter(Boolean)
                   .join(" ");
+                if (!waitForReviews) {
+                  const latestGateStatus = statuses
+                    .filter((status) => status.context === gateContext)
+                    .sort((left, right) => new Date(right.created_at) - new Date(left.created_at))[0];
+                  if (["error", "failure"].includes(latestGateStatus?.state)) {
+                    core.info(
+                      `Leaving existing terminal ${gateContext} status in place: ${
+                        latestGateStatus.description || message
+                      }`,
+                    );
+                    return { ok: true, pending: true };
+                  }
+                  await setGateStatusForEvaluation("pending", message, statuses);
+                  core.info(message);
+                  return { ok: true, pending: true };
+                }
                 if (Date.now() >= deadline) {
                   const timeoutMessage = `Timed out waiting for automated reviews. ${message}`;
-                  await setGateStatus("failure", timeoutMessage);
-                  core.setFailed(timeoutMessage);
-                  return;
+                  await setGateStatusForEvaluation("failure", timeoutMessage, statuses);
+                  return { ok: false, message: timeoutMessage };
                 }
 
                 if (message !== lastMessage) {
@@ -699,6 +793,27 @@ jobs:
                   lastMessage = message;
                 }
                 await sleep(pollMs);
+              }
+            }
+
+            try {
+              const eventPulls = await resolvePullRequests();
+              if (eventPulls.length === 0) {
+                core.info("No open pull request is associated with this event.");
+                return;
+              }
+
+              const results = [];
+              for (const eventPull of eventPulls) {
+                results.push(await evaluatePullRequest(eventPull));
+              }
+              const failures = results.filter((result) => !result.ok);
+              if (failures.length > 0) {
+                core.setFailed(
+                  failures
+                    .map((result) => result.message || "Automated review gate failed.")
+                    .join("\n"),
+                );
               }
             } catch (error) {
               try {

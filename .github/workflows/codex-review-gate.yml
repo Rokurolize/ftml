@@ -54,6 +54,7 @@ jobs:
             const rateLimitPattern =
               /(review limit reached|prepaid credits|credits exhausted|usage credits|usage-based reviews|rate limit|next review available)/i;
             const reviewedCommitPattern = /Reviewed commit:\*\*\s*`([0-9a-f]{7,40})`/i;
+            const codexReviewSummaryPattern = /\breview(?:ed|ing)?\b/i;
             const waitForReviews = context.eventName !== "schedule";
             const maxWaitMs = 15 * 60 * 1000;
             const pollMs = 30 * 1000;
@@ -207,6 +208,20 @@ jobs:
               return Number.isNaN(timestamp) ? null : timestamp;
             }
 
+            function extractCodexReviewedSha(body, headSha) {
+              const explicitReviewedCommit = (body || "").match(reviewedCommitPattern)?.[1] || null;
+              if (explicitReviewedCommit) {
+                return explicitReviewedCommit;
+              }
+              if (
+                codexReviewSummaryPattern.test(body || "") &&
+                ((body || "").includes(headSha) || (body || "").includes(headSha.slice(0, 10)))
+              ) {
+                return headSha;
+              }
+              return null;
+            }
+
             function collectCodexReviewMarkers(
               reviews,
               comments,
@@ -230,7 +245,7 @@ jobs:
                     .map((comment) => ({
                       source: "issue comment",
                       submittedAt: comment.created_at,
-                      reviewedSha: (comment.body || "").match(reviewedCommitPattern)?.[1] || null,
+                      reviewedSha: extractCodexReviewedSha(comment.body || "", headSha),
                     })),
                 )
                 .filter((marker) => marker.reviewedSha);

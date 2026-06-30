@@ -39,7 +39,9 @@ jobs:
     if: >-
       (github.event_name != 'status' || github.event.context == 'CodeRabbit') &&
       (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name && github.event.pull_request.user.login != 'dependabot[bot]')) &&
-      (github.event_name != 'pull_request_target' || (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name || github.event.pull_request.user.login == 'dependabot[bot]'))
+      (github.event_name != 'pull_request_target' || (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name || github.event.pull_request.user.login == 'dependabot[bot]')) &&
+      (github.event_name != 'pull_request_review' || (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name && github.event.pull_request.user.login != 'dependabot[bot]')) &&
+      (github.event_name != 'pull_request_review_comment' || (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name && github.event.pull_request.user.login != 'dependabot[bot]'))
     runs-on: ubuntu-latest
     steps:
       - name: Verify latest automated reviews
@@ -165,6 +167,7 @@ jobs:
                     (reaction) =>
                       reaction.content === "+1" &&
                       codexLogins.has(reaction.user?.login) &&
+                      headArrivedAt &&
                       new Date(reaction.created_at) >= headArrivedAt,
                   )
                   .sort((left, right) => new Date(left.created_at) - new Date(right.created_at))
@@ -193,13 +196,7 @@ jobs:
                     return event.created_at;
                   }
                   if (event.event === "committed" && matchesHead(headSha, event.sha)) {
-                    return (
-                      event.created_at ||
-                      event.verification?.verified_at ||
-                      event.committer?.date ||
-                      event.author?.date ||
-                      null
-                    );
+                    return event.created_at || event.verification?.verified_at || null;
                   }
                   return null;
                 })
@@ -209,20 +206,7 @@ jobs:
               if (candidateTimes.length > 0) {
                 return new Date(Math.max(...candidateTimes.map((value) => value.getTime())));
               }
-
-              const fallbackTimes = [
-                pull.created_at,
-                commit.commit?.committer?.date,
-                commit.commit?.author?.date,
-              ]
-                .filter(Boolean)
-                .map((value) => new Date(value))
-                .filter((value) => !Number.isNaN(value.getTime()));
-              if (fallbackTimes.length > 0) {
-                return new Date(Math.max(...fallbackTimes.map((value) => value.getTime())));
-              }
-
-              return new Date(0);
+              return null;
             }
 
             async function fetchPullState(pullNumber) {
@@ -287,6 +271,79 @@ jobs:
                 statuses,
                 headArrivedAt: resolveHeadArrivalTime(timeline, headSha, pull, commit.data),
               };
+            }
+
+            async function reviewThreadHasCodexComment(thread) {
+              if (thread.comments.nodes.some((comment) => codexLogins.has(comment.author?.login))) {
+                return true;
+              }
+
+              let commentCursor = thread.comments.pageInfo.hasNextPage
+                ? thread.comments.pageInfo.endCursor
+                : null;
+              while (commentCursor) {
+                const result = await github.graphql(
+                  `query($threadId: ID!, $cursor: String) {
+                    node(id: $threadId) {
+                      ... on PullRequestReviewThread {
+                        comments(first: 100, after: $cursor) {
+                          pageInfo { hasNextPage endCursor }
+                          nodes {
+                            author { login }
+                          }
+                        }
+                      }
+                    }
+                  }`,
+                  { threadId: thread.id, cursor: commentCursor },
+                );
+                const comments = result.node.comments;
+                if (comments.nodes.some((comment) => codexLogins.has(comment.author?.login))) {
+                  return true;
+                }
+                commentCursor = comments.pageInfo.hasNextPage ? comments.pageInfo.endCursor : null;
+              }
+              return false;
+            }
+
+            async function collectUnresolvedCodexThreads(pullNumber) {
+              const unresolvedCodexThreads = [];
+              let cursor = null;
+              do {
+                const result = await github.graphql(
+                  `query($owner: String!, $repo: String!, $number: Int!, $cursor: String) {
+                    repository(owner: $owner, name: $repo) {
+                      pullRequest(number: $number) {
+                        reviewThreads(first: 100, after: $cursor) {
+                          pageInfo { hasNextPage endCursor }
+                          nodes {
+                            id
+                            isResolved
+                            path
+                            line
+                            comments(first: 100) {
+                              pageInfo { hasNextPage endCursor }
+                              nodes {
+                                author { login }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }`,
+                  { owner, repo, number: pullNumber, cursor },
+                );
+                const threads = result.repository.pullRequest.reviewThreads;
+                for (const thread of threads.nodes) {
+                  if (thread.isResolved) continue;
+                  if (await reviewThreadHasCodexComment(thread)) {
+                    unresolvedCodexThreads.push(`${thread.path}:${thread.line || "file"}`);
+                  }
+                }
+                cursor = threads.pageInfo.hasNextPage ? threads.pageInfo.endCursor : null;
+              } while (cursor);
+              return unresolvedCodexThreads;
             }
 
             function parseActionableCount(body) {
@@ -385,6 +442,13 @@ jobs:
               }
 
               if (coderabbitStatus.state === "pending") {
+                if (rateLimited) {
+                  return {
+                    ready: true,
+                    terminal: false,
+                    message: `Ignoring CodeRabbit availability limit: ${description || "rate-limited"}.`,
+                  };
+                }
                 return {
                   ready: false,
                   terminal: false,
@@ -417,9 +481,9 @@ jobs:
               }
 
               return {
-                ready: true,
+                ready: false,
                 terminal: false,
-                message: `CodeRabbit status succeeded for latest head ${shortHead}.`,
+                message: `Waiting for CodeRabbit review summary for latest head ${shortHead}.`,
               };
             }
 
@@ -494,10 +558,20 @@ jobs:
                   shortHead,
                   headArrivedAt,
                 );
+                const unresolvedCodexThreads = await collectUnresolvedCodexThreads(pull.number);
 
                 if (coderabbit.terminal) {
                   await setGateStatus("failure", coderabbit.message);
                   core.setFailed(coderabbit.message);
+                  return;
+                }
+
+                if (unresolvedCodexThreads.length > 0) {
+                  const unresolvedMessage = `Unresolved Codex review thread(s): ${unresolvedCodexThreads
+                    .slice(0, 5)
+                    .join(", ")}${unresolvedCodexThreads.length > 5 ? ", ..." : ""}`;
+                  await setGateStatus("failure", unresolvedMessage);
+                  core.setFailed(unresolvedMessage);
                   return;
                 }
 

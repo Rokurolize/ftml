@@ -508,13 +508,16 @@ jobs:
                 .filter((comment) => {
                   const body = comment.body || "";
                   const commentAt = parseTimestamp(comment.updated_at || comment.created_at);
-                  if (!body.includes(headSha) && !body.includes(shortHead)) {
-                    return false;
-                  }
+                  const referencesHead = body.includes(headSha) || body.includes(shortHead);
                   if (statusCreatedAt === null) {
-                    return true;
+                    return referencesHead;
                   }
-                  return commentAt !== null && commentAt >= statusCreatedAt - 60 * 1000;
+                  const nearStatus =
+                    commentAt !== null && commentAt >= statusCreatedAt - 60 * 1000;
+                  if (referencesHead) {
+                    return nearStatus;
+                  }
+                  return coderabbitStatus?.state !== "pending" && nearStatus;
                 });
               const rateLimited =
                 rateLimitPattern.test(description) ||

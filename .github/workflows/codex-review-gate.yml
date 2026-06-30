@@ -514,7 +514,7 @@ jobs:
                 .filter((comment) => coderabbitLogins.has(comment.user?.login))
                 .filter((comment) => {
                   const body = comment.body || "";
-                  const commentAt = parseTimestamp(comment.created_at);
+                  const commentAt = parseTimestamp(comment.updated_at || comment.created_at);
                   if (statusCreatedAt === null) {
                     return body.includes(headSha) || body.includes(shortHead);
                   }
@@ -768,6 +768,17 @@ jobs:
                   .filter(Boolean)
                   .join(" ");
                 if (!waitForReviews) {
+                  const latestGateStatus = statuses
+                    .filter((status) => status.context === gateContext)
+                    .sort((left, right) => new Date(right.created_at) - new Date(left.created_at))[0];
+                  if (["error", "failure"].includes(latestGateStatus?.state)) {
+                    core.info(
+                      `Leaving existing terminal ${gateContext} status in place: ${
+                        latestGateStatus.description || message
+                      }`,
+                    );
+                    return { ok: true, pending: true };
+                  }
                   await setGateStatusForEvaluation("pending", message, statuses);
                   core.info(message);
                   return { ok: true, pending: true };

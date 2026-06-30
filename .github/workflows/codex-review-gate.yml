@@ -93,6 +93,24 @@ jobs:
               return false;
             }
 
+            async function graphqlWithRetry(query, variables) {
+              for (let attempt = 1; attempt <= 3; attempt += 1) {
+                try {
+                  return await github.graphql(query, variables);
+                } catch (error) {
+                  const retryable =
+                    [500, 502, 503, 504].includes(error.status) ||
+                    /something went wrong/i.test(error.message || "");
+                  if (!retryable || attempt === 3) {
+                    throw error;
+                  }
+                  core.warning(`Retrying GraphQL request after GitHub API error: ${error.message}`);
+                  await sleep(1000 * attempt);
+                }
+              }
+              throw new Error("GraphQL request retry loop exhausted.");
+            }
+
             async function resolvePullRequest() {
               if (context.payload.pull_request) {
                 return context.payload.pull_request;
@@ -321,7 +339,7 @@ jobs:
                 ? thread.comments.pageInfo.endCursor
                 : null;
               while (commentCursor) {
-                const result = await github.graphql(
+                const result = await graphqlWithRetry(
                   `query($threadId: ID!, $cursor: String) {
                     node(id: $threadId) {
                       ... on PullRequestReviewThread {
@@ -349,7 +367,7 @@ jobs:
               const unresolvedCodexThreads = [];
               let cursor = null;
               do {
-                const result = await github.graphql(
+                const result = await graphqlWithRetry(
                   `query($owner: String!, $repo: String!, $number: Int!, $cursor: String) {
                     repository(owner: $owner, name: $repo) {
                       pullRequest(number: $number) {

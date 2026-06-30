@@ -9,11 +9,11 @@ on:
     types: [submitted, edited, dismissed]
   pull_request_review_comment:
     types: [created, edited, deleted]
-  pull_request_review_thread:
-    types: [resolved, unresolved]
   issue_comment:
     types: [created, edited, deleted]
   status:
+  schedule:
+    - cron: "*/15 * * * *"
   workflow_dispatch:
     inputs:
       pull_number:
@@ -54,7 +54,7 @@ jobs:
             const rateLimitPattern =
               /(review limit reached|prepaid credits|credits exhausted|usage credits|usage-based reviews|rate limit|next review available)/i;
             const reviewedCommitPattern = /Reviewed commit:\*\*\s*`([0-9a-f]{7,40})`/i;
-            const maxWaitMs = 15 * 60 * 1000;
+            const maxWaitMs = context.eventName === "schedule" ? 2 * 60 * 1000 : 15 * 60 * 1000;
             const pollMs = 30 * 1000;
             const gateContext = "automated-review-gate";
             const { owner, repo } = context.repo;
@@ -122,6 +122,18 @@ jobs:
                   pulls.find((pull) => pull.state === "open" && pull.head.sha === context.payload.sha) ||
                   null
                 );
+              }
+
+              if (context.eventName === "schedule") {
+                const pulls = await github.paginate(github.rest.pulls.list, {
+                  owner,
+                  repo,
+                  state: "open",
+                  sort: "updated",
+                  direction: "desc",
+                  per_page: 100,
+                });
+                return pulls.find((pull) => !pull.draft) || pulls[0] || null;
               }
 
               return null;

@@ -111,6 +111,32 @@ jobs:
               throw new Error("GraphQL request retry loop exhausted.");
             }
 
+            async function listIssueCommentReactions(commentId) {
+              for (let attempt = 1; attempt <= 3; attempt += 1) {
+                try {
+                  return await github.paginate(
+                    github.rest.reactions.listForIssueComment,
+                    {
+                      owner,
+                      repo,
+                      comment_id: commentId,
+                      per_page: 100,
+                    },
+                  );
+                } catch (error) {
+                  const retryable =
+                    [500, 502, 503, 504].includes(error.status) ||
+                    /unexpected end of json|something went wrong/i.test(error.message || "");
+                  if (!retryable || attempt === 3) {
+                    throw error;
+                  }
+                  core.warning(`Retrying reaction read after GitHub API error: ${error.message}`);
+                  await sleep(1000 * attempt);
+                }
+              }
+              return [];
+            }
+
             async function resolvePullRequest() {
               if (context.payload.pull_request) {
                 return context.payload.pull_request;
@@ -309,15 +335,7 @@ jobs:
                 comments
                   .filter((comment) => /@codex\s+review\b/i.test(comment.body || ""))
                   .map(async (comment) => {
-                    comment._reactions = await github.paginate(
-                      github.rest.reactions.listForIssueComment,
-                      {
-                        owner,
-                        repo,
-                        comment_id: comment.id,
-                        per_page: 100,
-                      },
-                    );
+                    comment._reactions = await listIssueCommentReactions(comment.id);
                   }),
               );
 

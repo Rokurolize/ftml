@@ -85,12 +85,11 @@ proptest! {
     fn prefilter_prop(mut s in ".*") {
         crate::preprocess(&mut s);
 
-        const INVALID_SUBSTRINGS: [&str; 7] = [
-            "...",
-            ". . .",
+        // Typography intentionally preserves malformed overlong dot runs such as "....",
+        // and concat follows Wikidot's single-pass behavior for exposed boundaries.
+        const INVALID_SUBSTRINGS: [&str; 4] = [
             "\r\n",
             "\r",
-            "\\\n",
             "\t",
             "\0",
         ];

@@ -82,7 +82,7 @@ pub fn substitute(text: &mut String) {
     // Strip lines with only whitespace
     replace!(WHITESPACE_ONLY_LINE);
 
-    // Join concatenated lines (ending with '\')
+    // Join concatenated lines (ending with '\').
     replace!(CONCAT_LINES);
 
     // Tabs and null characters are common one-character substitutions.

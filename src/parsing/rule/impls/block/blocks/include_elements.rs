@@ -59,7 +59,6 @@ fn parse_fn<'r, 't>(
         Err(_) => return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments)),
     };
 
-    // Get page to be included
     let included = include_page(parser, &page_ref)?;
     let result = included.result;
     let mut html_blocks = included.html_blocks;
@@ -69,26 +68,18 @@ fn parse_fn<'r, 't>(
     let has_footnote_block = included.has_footnote_block;
     let mut bibliographies = included.bibliographies;
 
-    if has_footnote_block {
-        parser.set_footnote_block();
-    }
+    let result = result?;
+    set_included_footnote_block(parser, has_footnote_block);
+    let elements = result.item;
+    let errors = result.errors;
+    let paragraph_safe = result.paragraph_safe;
 
-    // Extract elements and errors
-    let ParseSuccess {
-        item: elements,
-        errors,
-        paragraph_safe,
-        ..
-    } = result?;
-
-    // Update parser state, build, and return
-    parser.append_shared_items(
-        &mut html_blocks,
-        &mut code_blocks,
-        &mut table_of_contents_depths,
-        &mut footnotes,
-        &mut bibliographies,
-    );
+    let html = &mut html_blocks;
+    let code = &mut code_blocks;
+    let toc = &mut table_of_contents_depths;
+    let notes = &mut footnotes;
+    let bibs = &mut bibliographies;
+    parser.append_shared_items(html, code, toc, notes, bibs);
 
     let variables = variables.to_hash_map();
     let element = Element::Include {
@@ -101,6 +92,12 @@ fn parse_fn<'r, 't>(
     ok!(element, errors)
 }
 
+fn set_included_footnote_block(parser: &mut Parser<'_, '_>, has_footnote_block: bool) {
+    if has_footnote_block {
+        parser.set_footnote_block();
+    }
+}
+
 fn include_page<'r, 't>(
     parser: &Parser<'r, 't>,
     page: &PageRef,
@@ -111,18 +108,52 @@ fn include_page<'r, 't>(
 
     // TODO stubbed
 
-    let result = Ok(ParseSuccess::new(
-        vec![text!("<INCLUDED PAGE (ELEMENTS)>")],
-        Vec::new(),
-        false,
-    ));
+    let elements = vec![text!("<INCLUDED PAGE (ELEMENTS)>")];
+    let result = Ok(ParseSuccess::new(elements, Vec::new(), false));
+    let has_footnote_block = false;
     Ok(UnstructuredParseResult {
         result,
         html_blocks: Vec::new(),
         code_blocks: Vec::new(),
         table_of_contents_depths: Vec::new(),
         footnotes: Vec::new(),
-        has_footnote_block: false,
+        has_footnote_block: std::convert::identity(has_footnote_block),
         bibliographies: Default::default(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    use super::*;
+
+    #[test]
+    fn include_elements_propagates_included_footnote_block_state() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[include-elements page]]");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+
+        set_included_footnote_block(&mut parser, true);
+        assert!(parser.has_footnote_block());
+    }
+
+    #[test]
+    fn include_page_rejects_empty_page_references() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[include-elements page]]");
+        let parser = Parser::new(&tokenization, &page_info, &settings);
+        let empty = PageRef {
+            site: None,
+            page: String::new(),
+            extra: None,
+        };
+
+        let error = include_page(&parser, &empty).expect_err("empty page should reject");
+        assert_eq!(error.kind(), ParseErrorKind::BlockMalformedArguments);
+    }
 }

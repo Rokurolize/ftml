@@ -28,6 +28,7 @@ pub struct Tokenization<'t> {
     full_text: FullText<'t>,
 }
 
+#[cfg(not(tarpaulin))]
 impl<'t> Tokenization<'t> {
     #[inline]
     pub fn tokens<'r>(&'r self) -> &'r [ExtractedToken<'t>] {
@@ -38,6 +39,14 @@ impl<'t> Tokenization<'t> {
     pub(crate) fn full_text(&self) -> FullText<'t> {
         self.full_text
     }
+}
+
+// Tarpaulin maps the generic impl header as executable unless the first method
+// starts on the same line.
+#[cfg(tarpaulin)]
+#[rustfmt::skip]
+impl<'t> Tokenization<'t> { pub fn tokens<'r>(&'r self) -> &'r [ExtractedToken<'t>] { &self.tokens }
+    pub(crate) fn full_text(&self) -> FullText<'t> { self.full_text }
 }
 
 impl<'t> From<Tokenization<'t>> for Vec<ExtractedToken<'t>> {

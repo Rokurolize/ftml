@@ -57,12 +57,12 @@ fn try_consume_fn<'r, 't>(
         let next_2 = parser.look_ahead_err(1)?;
 
         // Determine which case they fall under
-        match (next_1.token, next_2.token) {
+        let special_case = match (next_1.token, next_2.token) {
             // "@@@@@@" -> Element::Raw("@@")
             (Token::Raw, Token::Raw) => {
                 trace!("Found meta-raw (\"@@@@@@\"), returning");
                 parser.step_n(3)?;
-                return ok!(raw!("@@"));
+                Some(raw!("@@"))
             }
 
             // "@@@@@" -> Element::Raw("@")
@@ -72,11 +72,11 @@ fn try_consume_fn<'r, 't>(
                 if next_2.slice == "@" {
                     trace!("Found single-raw (\"@@@@@\"), returning");
                     parser.step_n(3)?;
-                    return ok!(raw!("@"));
+                    Some(raw!("@"))
                 } else {
                     trace!("Found empty raw (\"@@@@\"), followed by other text");
                     parser.step_n(2)?;
-                    return ok!(raw!(""));
+                    Some(raw!(""))
                 }
             }
 
@@ -85,7 +85,7 @@ fn try_consume_fn<'r, 't>(
             (Token::Raw, _) => {
                 trace!("Found empty raw (\"@@@@\"), returning");
                 parser.step_n(2)?;
-                return ok!(raw!(""));
+                Some(raw!(""))
             }
 
             // "@@ \n @@" -> Abort
@@ -98,11 +98,15 @@ fn try_consume_fn<'r, 't>(
             (_, Token::Raw) => {
                 trace!("Found single-element raw, returning");
                 parser.step_n(3)?;
-                return ok!(raw!(next_1.slice));
+                Some(raw!(next_1.slice))
             }
 
             // Other, proceed with rule logic
-            (_, _) => (),
+            _ => None,
+        };
+
+        if let Some(element) = special_case {
+            return success_elements(element);
         }
     }
 
@@ -113,58 +117,100 @@ fn try_consume_fn<'r, 't>(
     // Collect the first and last token to build a slice of its contents.
     // The last will be updated with each step in the iterator.
 
-    let (start, mut end) = {
-        let current = parser.step()?;
-
-        (current, current)
-    };
+    let current = parser.step()?;
+    let (start, mut end) = (current, current);
 
     loop {
-        let ExtractedToken {
-            token,
-            slice: _slice,
-            span: _span,
-        } = parser.current();
+        let token = parser.current().token;
 
         trace!("Received token '{}' inside raw", token.name());
 
-        // Check token
-        match token {
-            // Possibly hit end of raw. If not, continue.
-            Token::RightRaw | Token::Raw => {
-                // If block is inside match rule for clarity
-                if *token == ending_token {
-                    trace!("Reached end of raw, returning");
+        if matches!(token, Token::RightRaw | Token::Raw) {
+            if token == ending_token {
+                trace!("Reached end of raw, returning");
 
-                    let slice = parser.full_text().slice_partial(start, end);
-                    parser.step()?;
+                let slice = parser.full_text().slice_partial(start, end);
+                parser.step()?;
 
-                    let element = Element::Raw(cow!(slice));
-                    return ok!(element);
-                }
-
-                trace!("Wasn't end of raw, continuing");
+                let element = Element::Raw(cow!(slice));
+                return success_elements(element);
             }
 
-            // Hit a newline, abort
-            Token::LineBreak | Token::ParagraphBreak => {
-                trace!("Reached newline, aborting");
-                return Err(parser.make_err(ParseErrorKind::RuleFailed));
-            }
-
-            // Hit the end of the input, abort
-            Token::InputEnd => {
-                trace!("Reached end of input, aborting");
-                return Err(parser.make_err(ParseErrorKind::EndOfInput));
-            }
-
-            // No special handling, append to slices like normal
-            _ => (),
+            trace!("Wasn't end of raw, continuing");
+        } else if matches!(token, Token::LineBreak | Token::ParagraphBreak) {
+            trace!("Reached newline, aborting");
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        } else if token == Token::InputEnd {
+            trace!("Reached end of input, aborting");
+            return Err(parser.make_err(ParseErrorKind::EndOfInput));
         }
 
         trace!("Appending present token to raw");
 
         // Update last token and step.
         end = parser.step()?;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::parsing::Parser;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    fn with_raw_elements<R>(
+        input: &str,
+        assert_result: impl FnOnce(Result<Elements<'_>, ParseError>) -> R,
+    ) -> R {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(input);
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        let result = parser
+            .step()
+            .and_then(|_| try_consume_fn(&mut parser))
+            .map(|success| success.item);
+
+        assert_result(result)
+    }
+
+    #[test]
+    fn raw_rule_handles_short_raw_special_cases() {
+        with_raw_elements("@@@@@@", |result| {
+            assert_eq!(result.unwrap(), Elements::Single(raw!("@@")));
+        });
+        with_raw_elements("@@@@@", |result| {
+            assert_eq!(result.unwrap(), Elements::Single(raw!("@")));
+        });
+        with_raw_elements("@@@@", |result| {
+            assert_eq!(result.unwrap(), Elements::Single(raw!("")));
+        });
+        with_raw_elements("@@token@@", |result| {
+            assert_eq!(result.unwrap(), Elements::Single(raw!("token")));
+        });
+        with_raw_elements("@@\n@@", |result| {
+            assert!(matches!(
+                result.unwrap_err().kind(),
+                ParseErrorKind::RuleFailed
+            ));
+        });
+    }
+
+    #[test]
+    fn raw_rule_collects_long_raw_and_left_raw_forms() {
+        with_raw_elements("@@a >@ b@@", |result| {
+            assert_eq!(result.unwrap(), Elements::Single(raw!("a >@ b")));
+        });
+        with_raw_elements("@<a @@ b>@", |result| {
+            assert_eq!(result.unwrap(), Elements::Single(raw!("a @@ b")));
+        });
+    }
+
+    #[test]
+    #[should_panic(expected = "Current token is not a starting raw")]
+    fn raw_rule_panics_if_called_on_non_raw_token() {
+        with_raw_elements("plain text", |_| {});
     }
 }

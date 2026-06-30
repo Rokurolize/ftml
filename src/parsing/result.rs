@@ -26,6 +26,40 @@ use std::marker::PhantomData;
 pub type ParseResult<'r, 't, T> = Result<ParseSuccess<'r, 't, T>, ParseError>;
 pub type ParseSuccessTuple<T> = (T, Vec<ParseError>, bool);
 
+pub fn success_value<'r, 't, T>(
+    item: T,
+    errors: Vec<ParseError>,
+    paragraph_safe: bool,
+) -> ParseResult<'r, 't, T>
+where
+    T: 't,
+    'r: 't,
+{
+    Ok(ParseSuccess::new(item, errors, paragraph_safe))
+}
+
+pub fn success_elements<'r, 't>(
+    item: impl Into<Elements<'t>>,
+) -> ParseResult<'r, 't, Elements<'t>>
+where
+    'r: 't,
+{
+    let item = item.into();
+    let paragraph_safe = item.paragraph_safe();
+    success_value(item, Vec::new(), paragraph_safe)
+}
+
+pub fn success_elements_with_paragraph_safety<'r, 't>(
+    paragraph_safe: bool,
+    item: impl Into<Elements<'t>>,
+    errors: Vec<ParseError>,
+) -> ParseResult<'r, 't, Elements<'t>>
+where
+    'r: 't,
+{
+    success_value(item.into(), errors, paragraph_safe)
+}
+
 #[must_use]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ParseSuccess<'r, 't, T>

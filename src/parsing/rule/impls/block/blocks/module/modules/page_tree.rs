@@ -38,9 +38,10 @@ fn parse_fn<'r, 't>(
     let depth = arguments.get_value(parser, "depth")?;
     let show_root = arguments.get_bool(parser, "showRoot")?.unwrap_or(false);
 
-    ok!(false; Module::PageTree {
+    let module = Module::PageTree {
         root,
         show_root,
-        depth
-    })
+        depth,
+    };
+    success_value(module.into(), Vec::new(), false)
 }

@@ -41,17 +41,10 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "Equation reference doesn't allow score flag");
     assert_block_name(&BLOCK_EQUATION_REF, name);
 
-    let name =
-        parser.get_head_value(
-            &BLOCK_EQUATION_REF,
-            in_head,
-            |parser, value| match value {
-                Some(name) => Ok(name.trim()),
-                None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
-            },
-        )?;
+    let block = &BLOCK_EQUATION_REF;
+    let name = parser.get_head_value(block, in_head, require_trimmed_block_argument)?;
 
-    ok!(Element::EquationReference(cow!(name)))
+    success_elements(Element::EquationReference(std::borrow::Cow::Borrowed(name)))
 }
 
 #[cfg(test)]

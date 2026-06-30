@@ -51,10 +51,10 @@ impl<'a> LinkLocation<'a> {
             }
 
             // Try to interpret as interwiki
-            Some(link) => settings
-                .interwiki
-                .build(link)
-                .map(|url| (LinkLocation::Url(Cow::Owned(url)), LinkType::Interwiki)),
+            Some(link) => {
+                let url = settings.interwiki.build(link)?;
+                Some((LinkLocation::Url(Cow::Owned(url)), LinkType::Interwiki))
+            }
         }
     }
 
@@ -269,13 +269,18 @@ impl<'a> TryFrom<&'a str> for LinkType {
     type Error = &'a str;
 
     fn try_from(value: &'a str) -> Result<LinkType, &'a str> {
-        match value {
-            "direct" => Ok(LinkType::Direct),
-            "page" => Ok(LinkType::Page),
-            "interwiki" => Ok(LinkType::Interwiki),
-            "anchor" => Ok(LinkType::Anchor),
-            "table-of-contents" => Ok(LinkType::TableOfContents),
-            _ => Err(value),
+        if value == "direct" {
+            Ok(LinkType::Direct)
+        } else if value == "page" {
+            Ok(LinkType::Page)
+        } else if value == "interwiki" {
+            Ok(LinkType::Interwiki)
+        } else if value == "anchor" {
+            Ok(LinkType::Anchor)
+        } else if value == "table-of-contents" {
+            Ok(LinkType::TableOfContents)
+        } else {
+            Err(value)
         }
     }
 }

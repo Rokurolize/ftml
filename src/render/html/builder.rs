@@ -84,9 +84,10 @@ where
 
     /// Creates an inline `<svg>` using the `ui.svg` spritesheet.
     pub fn sprite(self, id: &'t str) {
-        let viewbox = match id {
-            "wj-karma" => "0 0 64 114",
-            _ => "0 0 24 24",
+        let viewbox = if id == "wj-karma" {
+            "0 0 64 114"
+        } else {
+            "0 0 24 24"
         };
 
         let class = format!("wj-sprite sprite-{id}");
@@ -164,6 +165,10 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
         }
     }
 
+    fn chain(&mut self) -> &mut Self {
+        std::convert::identity(self)
+    }
+
     fn attr_key(&mut self, key: &str, has_value: bool) {
         debug_assert!(is_alphanumeric(key));
         debug_assert!(self.in_tag);
@@ -206,7 +211,7 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
             self.attr_value(value_parts);
         }
 
-        self
+        self.chain()
     }
 
     pub fn attr(&mut self, attributes: AddedAttributes) -> &mut Self {
@@ -259,7 +264,7 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
             }
         }
 
-        self
+        self.chain()
     }
 
     fn content_start(&mut self) {
@@ -276,7 +281,7 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
     pub fn contents<R: ItemRender>(&mut self, item: R) -> &mut Self {
         self.content_start();
         item.render(self.ctx);
-        self
+        self.chain()
     }
 
     pub fn inner<F>(&mut self, mut f: F) -> &mut Self
@@ -285,7 +290,7 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
     {
         self.content_start();
         f(self.ctx);
-        self
+        self.chain()
     }
 }
 

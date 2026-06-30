@@ -44,7 +44,6 @@ pub struct Rule {
 }
 
 impl Rule {
-    #[inline]
     pub fn name(self) -> &'static str {
         self.name
     }
@@ -57,13 +56,10 @@ impl Rule {
         debug!("Trying to consume for parse rule {}", self.name);
 
         // Check that the line position matches what the rule wants.
-        match self.position {
-            LineRequirement::Any => (),
-            LineRequirement::StartOfLine => {
-                if !parser.start_of_line() {
-                    return Err(parser.make_err(ParseErrorKind::NotStartOfLine));
-                }
-            }
+        if let LineRequirement::StartOfLine = self.position
+            && !parser.start_of_line()
+        {
+            return Err(parser.make_err(ParseErrorKind::NotStartOfLine));
         }
 
         // Fork parser and try running the rule.
@@ -119,3 +115,48 @@ pub enum LineRequirement {
 pub type TryConsumeFn = for<'p, 'r, 't> fn(
     parser: &'p mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>>;
+
+#[cfg(test)]
+mod tests {
+    use super::impls::{RULE_HEADER, RULE_TEXT};
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::parsing::{ParseErrorKind, Parser};
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::Elements;
+
+    #[test]
+    fn rule_metadata_and_line_requirements_are_exercised() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        assert_eq!(RULE_TEXT.name(), "text");
+        let debug = format!("{RULE_TEXT:?}");
+        assert!(debug.contains("Rule"));
+        assert!(debug.contains("text"));
+
+        let text_tokens = crate::tokenize("alpha");
+        let mut text_parser = Parser::new(&text_tokens, &page_info, &settings);
+        text_parser
+            .step()
+            .expect("identifier should follow input start");
+        let text = RULE_TEXT
+            .try_consume(&mut text_parser)
+            .expect("text rule should accept any line position");
+        assert_eq!(text.item, Elements::Single(text!("alpha")));
+
+        let header_tokens = crate::tokenize("alpha + heading");
+        let mut header_parser = Parser::new(&header_tokens, &page_info, &settings);
+        header_parser
+            .step()
+            .expect("identifier should follow input start");
+        header_parser
+            .step()
+            .expect("space should follow identifier");
+        header_parser.step().expect("heading should follow space");
+        let error = RULE_HEADER
+            .try_consume(&mut header_parser)
+            .expect_err("header rule should require start of line");
+        assert_eq!(error.kind(), ParseErrorKind::NotStartOfLine);
+    }
+}

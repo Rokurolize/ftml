@@ -41,5 +41,5 @@ fn try_consume_fn<'r, 't>(
         target: None,
     };
 
-    ok!(element)
+    success_elements(element)
 }

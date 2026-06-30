@@ -29,20 +29,14 @@ use super::prelude::*;
 pub fn collect_text<'p, 'r, 't>(
     parser: &'p mut Parser<'r, 't>,
     rule: Rule,
-    close_conditions: &[ParseCondition],
-    invalid_conditions: &[ParseCondition],
-    error_kind: Option<ParseErrorKind>,
+    closes: &[ParseCondition],
+    invalids: &[ParseCondition],
+    kind: Option<ParseErrorKind>,
 ) -> Result<&'t str, ParseError>
 where
     'r: 't,
 {
-    let result = collect_text_keep(
-        parser,
-        rule,
-        close_conditions,
-        invalid_conditions,
-        error_kind,
-    )?;
+    let result = collect_text_keep(parser, rule, closes, invalids, kind)?;
     let (slice, _) = result;
     Ok(slice)
 }
@@ -56,9 +50,9 @@ where
 pub fn collect_text_keep<'p, 'r, 't>(
     parser: &'p mut Parser<'r, 't>,
     rule: Rule,
-    close_conditions: &[ParseCondition],
-    invalid_conditions: &[ParseCondition],
-    error_kind: Option<ParseErrorKind>,
+    closes: &[ParseCondition],
+    invalids: &[ParseCondition],
+    kind: Option<ParseErrorKind>,
 ) -> Result<(&'t str, &'r ExtractedToken<'t>), ParseError>
 where
     'r: 't,
@@ -71,19 +65,12 @@ where
     // Iterate and collect the tokens to merge.
     //
     // We know text is always paragraph safe, so we ignore that value.
-    let collection = collect(
-        parser,
-        rule,
-        close_conditions,
-        invalid_conditions,
-        error_kind,
-        |parser| {
-            trace!("Ingesting token in string span");
+    let collection = collect(parser, rule, closes, invalids, kind, |parser| {
+        trace!("Ingesting token in string span");
 
-            end = Some(parser.current());
-            ok!(true; ())
-        },
-    )?;
+        end = Some(parser.current());
+        success_value((), Vec::new(), true)
+    })?;
     let (last, errors, _) = collection.into();
 
     assert!(errors.is_empty(), "Text collection errors");

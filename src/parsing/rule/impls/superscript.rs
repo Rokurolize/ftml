@@ -31,16 +31,12 @@ fn try_consume_fn<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create superscript container");
     assert_step(parser, Token::Superscript)?;
-    collect_container(
-        parser,
-        RULE_SUPERSCRIPT,
-        ContainerType::Superscript,
-        &[ParseCondition::current(Token::Superscript)],
-        &[
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::token_pair(Token::Superscript, Token::Whitespace),
-            ParseCondition::token_pair(Token::Whitespace, Token::Superscript),
-        ],
-        None,
-    )
+    let close = [ParseCondition::current(Token::Superscript)];
+    let invalid = [
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::token_pair(Token::Superscript, Token::Whitespace),
+        ParseCondition::token_pair(Token::Whitespace, Token::Superscript),
+    ];
+    let ctype = ContainerType::Superscript;
+    collect_container(parser, RULE_SUPERSCRIPT, ctype, &close, &invalid, None)
 }

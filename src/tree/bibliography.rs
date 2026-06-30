@@ -43,12 +43,11 @@ impl<'t> Bibliography<'t> {
         //
         // This maintains the invariant that the first reference with a given label,
         // across any bibliography, is the one which is used.
-        if self.get(&label).is_some() {
+        if self.get(&label).is_none() {
+            self.0.push((label, elements));
+        } else {
             warn!("Duplicate reference in bibliography: {label}");
-            return;
         }
-
-        self.0.push((label, elements));
     }
 
     pub fn get(&self, label: &str) -> Option<(usize, &[Element<'t>])> {

@@ -29,6 +29,26 @@ pub const BLOCK_BIBCITE: BlockRule = BlockRule {
     parse_fn,
 };
 
+fn require_label<'r, 't>(
+    parser: &Parser<'r, 't>,
+    value: Option<&'t str>,
+) -> Result<&'t str, ParseError> {
+    match value.map(str::trim).filter(|value| !value.is_empty()) {
+        Some(value) => Ok(value),
+        None => {
+            warn!("No label provided in [[bibcite]], failing rule");
+            Err(parser.make_err(ParseErrorKind::BlockMissingArguments))
+        }
+    }
+}
+
+fn bibliography_cite(label: &str, brackets: bool) -> Element<'_> {
+    Element::BibliographyCite {
+        label: cow!(label),
+        brackets,
+    }
+}
+
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &'t str,
@@ -36,29 +56,17 @@ fn parse_fn<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!(
-        "Parsing bibcite block (name '{name}', in-head {in_head}, score {flag_score})",
-    );
+    debug!("Parsing bibcite block (name {name}, in-head {in_head}, score {flag_score})");
     assert!(!flag_star, "Bibcite doesn't allow star flag");
     assert_block_name(&BLOCK_BIBCITE, name);
 
-    let label =
-        parser.get_head_value(&BLOCK_BIBCITE, in_head, |parser, value| match value {
-            Some(value) => Ok(value.trim()),
-            None => {
-                warn!("No label provided in [[bibcite]], failing rule");
-                Err(parser.make_err(ParseErrorKind::BlockMissingArguments))
-            }
-        })?;
+    let label = parser.get_head_value(&BLOCK_BIBCITE, in_head, require_label)?;
 
     // "bibcite" means we wrap it in brackets
     // "bibcite_" means it's bare, like ((bibcite))
     let brackets = !flag_score;
 
-    ok!(Element::BibliographyCite {
-        label: cow!(label),
-        brackets,
-    })
+    ok!(bibliography_cite(label, brackets))
 }
 
 #[cfg(test)]
@@ -72,14 +80,18 @@ mod tests {
     fn block_bibcite_requires_label() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize("[[bibcite]]");
-        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        for input in ["[[bibcite]]", "[[bibcite   ]]"] {
+            let tokenization = crate::tokenize(input);
+            let (_tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
 
-        assert!(
-            errors
-                .iter()
-                .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments)
-        );
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments),
+                "{input} should require a non-empty label: {errors:?}",
+            );
+        }
     }
 
     #[test]

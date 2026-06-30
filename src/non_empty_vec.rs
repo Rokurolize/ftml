@@ -84,9 +84,8 @@ impl<T> NonEmptyVec<T> {
         self.others.last_mut().unwrap_or(&mut self.first)
     }
 
-    #[inline]
     pub fn others_mut(&mut self) -> &mut Vec<T> {
-        &mut self.others
+        std::convert::identity(&mut self.others)
     }
 
     // Mutation methods

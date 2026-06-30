@@ -4,6 +4,7 @@ comment:
 
 ignore:
   # Test harness utilities are not part of the library coverage target.
+  - "src/test/*"
   - "src/test/**/*"
 
 flags:

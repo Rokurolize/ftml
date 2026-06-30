@@ -29,17 +29,11 @@ use super::prelude::*;
 pub fn collect_consume<'r, 't>(
     parser: &mut Parser<'r, 't>,
     rule: Rule,
-    close_conditions: &[ParseCondition],
-    invalid_conditions: &[ParseCondition],
-    error_kind: Option<ParseErrorKind>,
+    closes: &[ParseCondition],
+    invalids: &[ParseCondition],
+    kind: Option<ParseErrorKind>,
 ) -> ParseResult<'r, 't, Vec<Element<'t>>> {
-    let success = collect_consume_keep(
-        parser,
-        rule,
-        close_conditions,
-        invalid_conditions,
-        error_kind,
-    )?;
+    let success = collect_consume_keep(parser, rule, closes, invalids, kind)?;
     Ok(success.map(|(elements, _)| elements))
 }
 
@@ -52,20 +46,15 @@ pub fn collect_consume<'r, 't>(
 pub fn collect_consume_keep<'r, 't>(
     parser: &mut Parser<'r, 't>,
     rule: Rule,
-    close_conditions: &[ParseCondition],
-    invalid_conditions: &[ParseCondition],
-    error_kind: Option<ParseErrorKind>,
+    closes: &[ParseCondition],
+    invalids: &[ParseCondition],
+    kind: Option<ParseErrorKind>,
 ) -> ParseResult<'r, 't, (Vec<Element<'t>>, &'r ExtractedToken<'t>)> {
     let mut all_elements = Vec::new();
 
-    let collection = collect(
-        parser,
-        rule,
-        close_conditions,
-        invalid_conditions,
-        error_kind,
-        |parser| consume(parser)?.map_ok(|elements| all_elements.extend(elements)),
-    )?;
+    let collection = collect(parser, rule, closes, invalids, kind, |parser| {
+        consume(parser)?.map_ok(|elements| all_elements.extend(elements))
+    })?;
     let (last, errors, paragraph_safe) = collection.into();
 
     let item = (all_elements, last);

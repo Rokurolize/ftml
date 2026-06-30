@@ -73,10 +73,8 @@ where
         return Ok((output, pages));
     }
 
-    info!(
-        "Inserting text for all include blocks in text ({} bytes)",
-        input.len(),
-    );
+    let input_len = input.len();
+    info!("Inserting text for all include blocks in text ({input_len} bytes)");
 
     let mut ranges = Vec::new();
     let mut includes = Vec::new();
@@ -85,11 +83,8 @@ where
     for mtch in INCLUDE_REGEX.find_iter(input) {
         let start = mtch.start();
 
-        trace!(
-            "Found include regex match (start {}, slice '{}')",
-            start,
-            mtch.as_str(),
-        );
+        let slice = mtch.as_str();
+        trace!("Found include regex match (start {start}, slice '{slice}')");
 
         match parse_include_block(input, start) {
             Ok((include, end)) => {
@@ -126,10 +121,9 @@ where
     for ((range, include), fetched) in joined_iter {
         let (page_ref, variables) = include.into();
 
-        debug!(
-            "Replacing range for included page ({}..{})",
-            range.start, range.end,
-        );
+        let range_start = range.start;
+        let range_end = range.end;
+        debug!("Replacing range for included page ({range_start}..{range_end})");
 
         // Ensure the returned page reference matches
         if page_ref != fetched.page_ref {

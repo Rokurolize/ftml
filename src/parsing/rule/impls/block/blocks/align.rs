@@ -63,13 +63,9 @@ pub fn parse_alignment_block<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!(
-        "Parsing alignment block (name '{}', block-rule '{}', alignment '{}', in-head {})",
-        name,
-        block_rule.name,
-        alignment.name(),
-        in_head,
-    );
+    let block_name = block_rule.name;
+    let alignment_name = alignment.name();
+    debug!("Parsing align block {name}/{block_name}/{alignment_name}, in-head {in_head}");
     assert!(!flag_star, "Alignment block doesn't allow star flag");
     assert!(!flag_score, "Alignment block doesn't allow score flag");
     assert_block_name(block_rule, name);
@@ -87,4 +83,31 @@ pub fn parse_alignment_block<'r, 't>(
     ));
 
     ok!(element, errors)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn alignment_block_wraps_body_in_align_container() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[=]]centered[[/=]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let [Element::Container(container)] = tree.elements.as_slice() else {
+            panic!("expected alignment container, got {:?}", tree.elements);
+        };
+        assert_eq!(container.ctype(), ContainerType::Align(Alignment::Center));
+        let [Element::Container(paragraph)] = container.elements() else {
+            panic!("expected paragraph body, got {:?}", container.elements());
+        };
+        assert_eq!(paragraph.ctype(), ContainerType::Paragraph);
+        assert_eq!(paragraph.elements(), &[text!("centered")]);
+    }
 }

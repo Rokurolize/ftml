@@ -55,12 +55,7 @@ pub fn check_step<'r, 't>(
 ) -> Result<&'r ExtractedToken<'t>, ParseError> {
     let current = parser.current();
     if current.token != token {
-        error!(
-            "check_step() failed, expected {}, but got {} (error: {})",
-            token.name(),
-            current.token.name(),
-            kind.name(),
-        );
+        error!("check_step failed: {}", kind.name());
         return Err(parser.make_err(kind));
     }
     parser.step()?;

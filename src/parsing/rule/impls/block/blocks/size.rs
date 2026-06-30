@@ -31,6 +31,16 @@ pub const BLOCK_SIZE: BlockRule = BlockRule {
     parse_fn,
 };
 
+fn parse_size_argument<'r, 't>(
+    parser: &Parser<'r, 't>,
+    value: Option<&str>,
+) -> Result<String, ParseError> {
+    match value {
+        Some(size) => Ok(format!("font-size: {size};")),
+        None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
+    }
+}
+
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &'t str,
@@ -43,26 +53,19 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "Size doesn't allow score flag");
     assert_block_name(&BLOCK_SIZE, name);
 
-    let size =
-        parser.get_head_value(&BLOCK_SIZE, in_head, |parser, value| match value {
-            Some(size) => Ok(format!("font-size: {size};")),
-            None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
-        })?;
+    let size = parser.get_head_value(&BLOCK_SIZE, in_head, parse_size_argument)?;
 
     // Get body content, without paragraphs
-    let (elements, errors, paragraph_safe) =
-        parser.get_body_elements(&BLOCK_SIZE, false)?.into();
+    let body = parser.get_body_elements(&BLOCK_SIZE, false)?;
+    let (elements, errors, paragraph_safe) = body.into();
 
-    let attributes = {
-        let mut map = AttributeMap::new();
-        map.insert("style", Cow::Owned(size));
-        map
-    };
+    let mut attributes = AttributeMap::new();
+    attributes.insert("style", Cow::Owned(size));
 
-    let element =
-        Element::Container(Container::new(ContainerType::Size, elements, attributes));
+    let container = Container::new(ContainerType::Size, elements, attributes);
+    let element = Element::Container(container);
 
-    ok!(paragraph_safe; element, errors)
+    success_elements_with_paragraph_safety(paragraph_safe, element, errors)
 }
 
 #[cfg(test)]
@@ -84,5 +87,31 @@ mod tests {
                 .iter()
                 .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments)
         );
+    }
+
+    #[test]
+    fn size_block_wraps_body_with_style_attribute() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[size 80%]]small[[/size]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let [Element::Container(paragraph)] = tree.elements.as_slice() else {
+            panic!("expected paragraph, got {:?}", tree.elements);
+        };
+        let [Element::Container(size)] = paragraph.elements() else {
+            panic!("expected size container, got {:?}", paragraph.elements());
+        };
+
+        assert_eq!(size.ctype(), ContainerType::Size);
+        assert_eq!(
+            size.attributes()
+                .get()
+                .get("style")
+                .map(|value| value.as_ref()),
+            Some("font-size: 80%;"),
+        );
+        assert_eq!(size.elements(), &[text!("small")]);
     }
 }

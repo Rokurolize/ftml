@@ -50,16 +50,11 @@ fn try_consume_fn<'r, 't>(
     step_expected(parser, Token::Whitespace)?;
 
     // Collect contents
-    collect_container(
-        parser,
-        RULE_CENTER,
-        ContainerType::Align(Alignment::Center),
-        &[
-            ParseCondition::current(Token::LineBreak),
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::current(Token::InputEnd),
-        ],
-        &[],
-        None,
-    )
+    let close = [
+        ParseCondition::current(Token::LineBreak),
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::current(Token::InputEnd),
+    ];
+    let ctype = ContainerType::Align(Alignment::Center);
+    collect_container(parser, RULE_CENTER, ctype, &close, &[], None)
 }

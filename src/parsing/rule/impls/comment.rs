@@ -34,11 +34,7 @@ fn try_consume_fn<'r, 't>(
     assert_step(parser, Token::LeftComment)?;
 
     loop {
-        let ExtractedToken {
-            token,
-            span: _span,
-            slice: _slice,
-        } = parser.current();
+        let token = parser.current().token;
 
         trace!("Received token '{}' inside comment", token.name());
 

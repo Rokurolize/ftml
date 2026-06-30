@@ -24,7 +24,17 @@ use crate::render::Handle;
 use crate::settings::WikitextSettings;
 use crate::tree::{Bibliography, BibliographyList, Element, VariableScopes};
 use std::fmt::{self, Write};
+use std::mem;
 use std::num::NonZeroUsize;
+
+fn advance_nonzero_index(index: &mut NonZeroUsize) -> NonZeroUsize {
+    let next = NonZeroUsize::new(index.get() + 1).unwrap();
+    mem::replace(index, next)
+}
+
+fn advance_list_index(index: &mut usize) -> usize {
+    mem::replace(index, *index + 1)
+}
 
 #[derive(Debug)]
 pub struct TextContext<'i, 'h, 'e, 't>
@@ -101,9 +111,8 @@ where
     }
 
     // Getters
-    #[inline]
     pub fn buffer(&mut self) -> &mut String {
-        &mut self.output
+        std::convert::identity(&mut self.output)
     }
 
     #[inline]
@@ -159,15 +168,11 @@ where
     }
 
     pub fn next_equation_index(&mut self) -> NonZeroUsize {
-        let index = self.equation_index;
-        self.equation_index = NonZeroUsize::new(index.get() + 1).unwrap();
-        index
+        advance_nonzero_index(&mut self.equation_index)
     }
 
     pub fn next_footnote_index(&mut self) -> NonZeroUsize {
-        let index = self.footnote_index;
-        self.footnote_index = NonZeroUsize::new(index.get() + 1).unwrap();
-        index
+        advance_nonzero_index(&mut self.footnote_index)
     }
 
     // Prefixes
@@ -198,9 +203,7 @@ where
     }
 
     pub fn next_list_index(&mut self) -> usize {
-        let index = *self.list_depths.last();
-        *self.list_depths.last_mut() += 1;
-        index
+        advance_list_index(self.list_depths.last_mut())
     }
 
     // Invisible mode

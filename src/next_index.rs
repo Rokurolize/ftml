@@ -42,14 +42,12 @@ pub struct TableOfContentsIndex;
 pub struct Incrementer(Option<usize>);
 
 impl Incrementer {
-    #[inline]
     pub fn disabled() -> Self {
         Incrementer(None)
     }
 }
 
 impl Default for Incrementer {
-    #[inline]
     fn default() -> Self {
         Incrementer(Some(0))
     }
@@ -65,5 +63,20 @@ impl NextIndex<TableOfContentsIndex> for Incrementer {
                 Some(index)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn incrementer_defaults_and_disabled_paths() {
+        let mut enabled = Incrementer::default();
+        assert_eq!(enabled.next(), Some(0));
+        assert_eq!(enabled.next(), Some(1));
+
+        let mut disabled = Incrementer::disabled();
+        assert_eq!(disabled.next(), None);
     }
 }

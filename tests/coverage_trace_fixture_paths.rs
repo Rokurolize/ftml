@@ -79,20 +79,29 @@ fn coverage_trace_logger_exercises_all_tree_fixtures_through_public_api() {
     );
 
     let page_info = page_info();
-    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+    let settings = [
+        WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump),
+        WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot),
+    ];
 
     for path in files {
-        let mut input = std::fs::read_to_string(&path).expect("read fixture input");
-        ftml::preprocess(&mut input);
-        let tokens = ftml::tokenize(&input);
-        let result = ftml::parse(&tokens, &page_info, &settings);
-        let (tree, _errors) = result.into();
+        let fixture_input = std::fs::read_to_string(&path).expect("read fixture input");
 
-        let text = TextRender.render(&tree, &page_info, &settings);
-        let html = HtmlRender.render(&tree, &page_info, &settings);
+        for settings in &settings {
+            let mut input = fixture_input.clone();
+            ftml::preprocess(&mut input);
+            let tokens = ftml::tokenize(&input);
+            let result = ftml::parse(&tokens, &page_info, settings);
+            let (tree, _errors) = result.into();
 
-        assert!(tree.wikitext_len <= input.len());
-        assert!(text.len() <= input.len().saturating_mul(20).saturating_add(4096));
-        assert!(html.body.len() <= input.len().saturating_mul(80).saturating_add(16384));
+            let text = TextRender.render(&tree, &page_info, settings);
+            let html = HtmlRender.render(&tree, &page_info, settings);
+
+            assert!(tree.wikitext_len <= input.len());
+            assert!(text.len() <= input.len().saturating_mul(20).saturating_add(4096));
+            assert!(
+                html.body.len() <= input.len().saturating_mul(80).saturating_add(16384)
+            );
+        }
     }
 }

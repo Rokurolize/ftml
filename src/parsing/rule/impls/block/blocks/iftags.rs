@@ -31,6 +31,16 @@ pub const BLOCK_IFTAGS: BlockRule = BlockRule {
     parse_fn,
 };
 
+fn parse_conditions<'r, 't>(
+    parser: &Parser<'r, 't>,
+    spec: Option<&'t str>,
+) -> Result<Vec<ElementCondition<'t>>, ParseError> {
+    match spec {
+        Some(spec) => Ok(ElementCondition::parse(spec)),
+        None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
+    }
+}
+
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &'t str,
@@ -44,21 +54,15 @@ fn parse_fn<'r, 't>(
     assert_block_name(&BLOCK_IFTAGS, name);
 
     // Parse out tag conditions
-    let conditions =
-        parser.get_head_value(&BLOCK_IFTAGS, in_head, |parser, spec| match spec {
-            Some(spec) => Ok(ElementCondition::parse(spec)),
-            None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
-        })?;
+    let conditions = parser.get_head_value(&BLOCK_IFTAGS, in_head, parse_conditions)?;
 
     // Get body content, never with paragraphs
-    let (elements, errors, paragraph_safe) =
-        parser.get_body_elements(&BLOCK_IFTAGS, false)?.into();
+    let body = parser.get_body_elements(&BLOCK_IFTAGS, false)?;
+    let (elements, errors, paragraph_safe) = body.into();
 
-    trace!(
-        "IfTags conditions parsed (conditions length {}, elements length {})",
-        conditions.len(),
-        elements.len(),
-    );
+    let condition_count = conditions.len();
+    let element_count = elements.len();
+    trace!("IfTags parsed {condition_count} conditions and {element_count} elements");
 
     // Return elements based on condition
     let elements = if check_iftags(parser.page_info(), &conditions) {
@@ -77,4 +81,35 @@ fn parse_fn<'r, 't>(
 pub fn check_iftags(info: &PageInfo, conditions: &[ElementCondition]) -> bool {
     trace!("Checking iftags");
     ElementCondition::check(conditions, &info.tags)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use std::borrow::Cow;
+
+    #[test]
+    fn iftags_requires_conditions_and_checks_page_tags() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[iftags]]body[[/iftags]]");
+        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments)
+        );
+
+        let info = PageInfo {
+            tags: vec![Cow::Borrowed("alpha"), Cow::Borrowed("gamma")],
+            ..PageInfo::dummy()
+        };
+        let included = ElementCondition::parse("+alpha -beta");
+        let excluded = ElementCondition::parse("+alpha -gamma");
+
+        assert!(check_iftags(&info, &included));
+        assert!(!check_iftags(&info, &excluded));
+    }
 }

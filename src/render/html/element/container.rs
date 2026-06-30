@@ -59,13 +59,10 @@ pub fn render_container_internal(ctx: &mut HtmlContext, container: &Container) {
             "style" => style;;
             container.attributes(),
         )),
-        HtmlTag::TagAndId { id, .. } => tag.attr(attr!(
-            "id" => match random_id {
-                Some(ref id) => id,
-                None => &id,
-            };;
-            container.attributes(),
-        )),
+        HtmlTag::TagAndId { id, .. } => {
+            let id = random_id.as_deref().unwrap_or(&id);
+            tag.attr(attr!("id" => id;; container.attributes()))
+        }
     };
 
     // Add container internals
@@ -77,10 +74,8 @@ pub fn render_color(ctx: &mut HtmlContext, color: &str, elements: &[Element]) {
 
     ctx.html()
         .span()
-        .attr(attr!(
-            "style" => "color: " color ";",
-        ))
-        .contents(elements);
+        .attr(attr!("style" => "color: " color ";"))
+        .inner(|ctx| render_elements(ctx, elements));
 }
 
 fn choose_id(ctx: &mut HtmlContext, tag_spec: &HtmlTag) -> Option<String> {

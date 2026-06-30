@@ -162,6 +162,10 @@ impl PageRef {
             None => PageRef::page_only(s),
         };
 
+        if result.page().is_empty() {
+            return Err(PageRefParseError);
+        }
+
         Ok(result)
     }
 }
@@ -264,6 +268,7 @@ fn page_ref() {
     test!("");
     test!(":page");
     test!("::page");
+    test!(":scp-wiki:");
     test!("page", PageRef::page_only("page"));
     test!("component:page", PageRef::page_only("component:page"));
     test!(

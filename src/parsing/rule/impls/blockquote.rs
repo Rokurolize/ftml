@@ -43,41 +43,32 @@ fn try_consume_fn<'r, 't>(
     // Produce a depth list with elements
     loop {
         let current = parser.current();
-        let depth = match current.token {
-            // 1 or more ">"s in one token. Return ASCII length.
-            Token::Quote => current.slice.len(),
+        if current.token != Token::Quote {
+            warn!("Didn't find blockquote token, ending list iteration");
+            break std::convert::identity(());
+        }
 
-            // Invalid token, bail
-            _ => {
-                warn!("Didn't find blockquote token, ending list iteration");
-                break;
-            }
-        };
+        // 1 or more ">"s in one token. Return ASCII length.
+        let depth = current.slice.len();
         parser.step()?;
         parser.get_optional_space()?; // allow whitespace after ">"
 
         // Check that the depth isn't obscenely deep, to avoid DOS attacks via stack overflow.
         if depth > MAX_BLOCKQUOTE_DEPTH {
-            debug!(
-                "Native blockquote has a depth ({depth}) greater than the maximum ({MAX_BLOCKQUOTE_DEPTH})! Failing"
-            );
+            debug!("Blockquote depth {depth} exceeds maximum {MAX_BLOCKQUOTE_DEPTH}");
             return Err(parser.make_err(ParseErrorKind::BlockquoteDepthExceeded));
         }
 
         // Parse elements until we hit the end of the line
         let mut paragraph_safe = true;
-        let mut elements = collect_consume(
-            parser,
-            RULE_BLOCKQUOTE,
-            &[
-                ParseCondition::current(Token::LineBreak),
-                ParseCondition::current(Token::ParagraphBreak),
-                ParseCondition::current(Token::InputEnd),
-            ],
-            &[],
-            None,
-        )?
-        .chain(&mut errors, &mut paragraph_safe);
+        let close_conditions = [
+            ParseCondition::current(Token::LineBreak),
+            ParseCondition::current(Token::ParagraphBreak),
+            ParseCondition::current(Token::InputEnd),
+        ];
+        let close = &close_conditions;
+        let result = collect_consume(parser, RULE_BLOCKQUOTE, close, &[], None)?;
+        let mut elements = result.chain(&mut errors, &mut paragraph_safe);
 
         // Add a line break for the end of the line
         elements.push(Element::LineBreak);
@@ -139,9 +130,37 @@ mod tests {
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::settings::{WikitextMode, WikitextSettings};
+    use std::sync::Once;
+
+    #[derive(Debug)]
+    struct TestLogger;
+
+    impl log::Log for TestLogger {
+        fn enabled(&self, _metadata: &log::Metadata<'_>) -> bool {
+            true
+        }
+
+        fn log(&self, record: &log::Record<'_>) {
+            let _ = record.args().to_string();
+        }
+
+        fn flush(&self) {}
+    }
+
+    static TEST_LOGGER: TestLogger = TestLogger;
+    static INIT_LOGGER: Once = Once::new();
+
+    fn enable_test_logging() {
+        INIT_LOGGER.call_once(|| {
+            let _ = log::set_logger(&TEST_LOGGER);
+            log::set_max_level(log::LevelFilter::Trace);
+        });
+    }
 
     #[test]
     fn native_blockquote_rejects_excessive_depth() {
+        enable_test_logging();
+
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         let input = format!("{} too deep", ">".repeat(MAX_BLOCKQUOTE_DEPTH + 1));
@@ -156,5 +175,24 @@ mod tests {
             .try_consume(&mut parser)
             .expect_err("excessive blockquote depth should fail");
         assert_eq!(error.kind(), ParseErrorKind::BlockquoteDepthExceeded);
+    }
+
+    #[test]
+    fn native_blockquote_rejects_non_quote_start() {
+        enable_test_logging();
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("plain");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("identifier token should follow input start");
+        parser.set_rule(RULE_BLOCKQUOTE);
+
+        let error = RULE_BLOCKQUOTE
+            .try_consume(&mut parser)
+            .expect_err("non-quote input should not produce a blockquote");
+        assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
     }
 }

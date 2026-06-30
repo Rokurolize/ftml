@@ -47,7 +47,7 @@ fn parse_fn<'r, 't>(
     let attributes = arguments.to_attribute_map(parser.settings());
     let align = FloatAlignment::parse(name).map(|float| float.align);
     let element = Element::TableOfContents { align, attributes };
-    ok!(false; element)
+    success_elements_with_paragraph_safety(false, element, Vec::new())
 }
 
 #[cfg(test)]

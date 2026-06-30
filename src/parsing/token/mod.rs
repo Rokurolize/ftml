@@ -34,7 +34,8 @@ mod lexer {
 use self::lexer::*;
 use crate::utf16::Utf16IndexMap;
 use pest::Parser;
-use pest::iterators::Pair;
+use pest::iterators::{Pair, Pairs};
+use std::fmt::Display;
 use std::ops::Range;
 use strum_macros::IntoStaticStr;
 
@@ -177,33 +178,30 @@ impl Token {
     pub(crate) fn extract_all(text: &str) -> Vec<ExtractedToken<'_>> {
         debug!("Running lexer on input");
 
-        match TokenLexer::parse(Rule::document, text) {
+        Self::extract_tokens_from_pairs(text, TokenLexer::parse(Rule::document, text))
+    }
+
+    /// Converts lexer pairs into extracted tokens, or fallback tokens on lexer error.
+    fn extract_tokens_from_pairs<'a>(
+        text: &'a str,
+        result: Result<Pairs<'a, Rule>, impl Display>,
+    ) -> Vec<ExtractedToken<'a>> {
+        match result {
             Ok(pairs) => {
                 debug!("Lexer produced pairs for processing");
 
                 // Map pairs to tokens, and add a Token::InputStart at the beginning
                 // Pest already adds a Token::InputEnd at the end
-                let start = ExtractedToken {
-                    token: Token::InputStart,
-                    slice: "",
-                    span: 0..0,
-                };
+                let token = Token::InputStart;
+                let slice = "";
+                let span = 0..0;
+                let start = ExtractedToken { token, slice, span };
 
                 let mut tokens = vec![start];
                 tokens.extend(pairs.map(Token::convert_pair));
                 tokens
             }
-            Err(error) => {
-                // Return all of the input as one big raw text
-                // and log this as an error, since it shouldn't be happening
-
-                error!("Error while lexing input in pest: {error}");
-                vec![ExtractedToken {
-                    token: Token::Other,
-                    slice: text,
-                    span: 0..text.len(),
-                }]
-            }
+            Err(error) => lexer_error_tokens(text, error),
         }
     }
 
@@ -313,4 +311,14 @@ impl Token {
     pub fn name(self) -> &'static str {
         self.into()
     }
+}
+
+fn lexer_error_tokens<'a>(text: &'a str, error: impl Display) -> Vec<ExtractedToken<'a>> {
+    error!("Error while lexing input in pest: {error}");
+    let token = ExtractedToken {
+        token: Token::Other,
+        slice: text,
+        span: 0..text.len(),
+    };
+    vec![token]
 }

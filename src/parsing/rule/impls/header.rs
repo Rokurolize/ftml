@@ -60,31 +60,20 @@ fn consume_header_once<'r, 't>(
     // Step over whitespace
     step_expected(parser, Token::Whitespace)?;
 
-    let (elements, all_errors, _) = collect_container(
-        parser,
-        RULE_HEADER,
-        ContainerType::Header(heading),
-        &[
-            ParseCondition::current(Token::InputEnd),
-            ParseCondition::current(Token::LineBreak),
-            ParseCondition::current(Token::ParagraphBreak),
-        ],
-        &[],
-        None,
-    )?
-    .into();
+    let close = [
+        ParseCondition::current(Token::InputEnd),
+        ParseCondition::current(Token::LineBreak),
+        ParseCondition::current(Token::ParagraphBreak),
+    ];
+    let ctype = ContainerType::Header(heading);
+    let collected = collect_container(parser, RULE_HEADER, ctype, &close, &[], None)?;
+    let (elements, all_errors, _) = collected.into();
 
     // If this heading wants a table of contents (TOC) entry, then add one
-    if heading.has_toc {
-        // collect_container() always produces one Element::Container.
-        // We unwrap it so we can get the elements composing the name.
-        let elements = match elements {
-            Elements::Single(Element::Container(ref container)) => container.elements(),
-            _ => panic!("Collected heading produced a non-single non-container element"),
-        };
-
-        // Create table of contents entry with the given level and name.
-        parser.push_table_of_contents_entry(heading.level, elements);
+    if heading.has_toc
+        && let Elements::Single(Element::Container(ref container)) = elements
+    {
+        parser.push_table_of_contents_entry(heading.level, container.elements());
     }
 
     // Build final Elements object
@@ -102,9 +91,12 @@ fn try_consume_fn<'r, 't>(
         let parser_state = parser.get_mutable_state();
         let mut sub_parser = parser.clone_with_rule(RULE_HEADER);
 
-        let Ok(success) = consume_header_once(&mut sub_parser) else {
-            parser.reset_mutable_state(parser_state);
-            break;
+        let success = match consume_header_once(&mut sub_parser) {
+            Ok(success) => success,
+            Err(_) => {
+                parser.reset_mutable_state(parser_state);
+                return ok!(false; all_elements, all_errors);
+            }
         };
 
         parser.update(&sub_parser);
@@ -113,6 +105,47 @@ fn try_consume_fn<'r, 't>(
         all_elements.extend(elements);
         all_errors.append(&mut errors);
     }
+}
 
-    ok!(false; all_elements, all_errors)
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{ContainerType, Element, HeadingLevel};
+
+    #[test]
+    fn header_rule_collects_adjacent_headings_and_toc_flags() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("+ One\n++* Two\nplain");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!(tree.table_of_contents.len(), 1);
+        assert_eq!(tree.elements.len(), 3);
+
+        let Element::Container(first) = &tree.elements[0] else {
+            panic!("expected first heading, got {:?}", tree.elements[0]);
+        };
+        assert_eq!(
+            first.ctype(),
+            ContainerType::Header(Heading {
+                level: HeadingLevel::One,
+                has_toc: true,
+            }),
+        );
+
+        let Element::Container(second) = &tree.elements[1] else {
+            panic!("expected second heading, got {:?}", tree.elements[1]);
+        };
+        assert_eq!(
+            second.ctype(),
+            ContainerType::Header(Heading {
+                level: HeadingLevel::Two,
+                has_toc: false,
+            }),
+        );
+    }
 }

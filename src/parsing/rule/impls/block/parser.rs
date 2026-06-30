@@ -41,6 +41,10 @@ fn token_ends_argument_key(token: Token) -> bool {
     )
 }
 
+fn token_is_argument_spacing(token: Token) -> bool {
+    [Token::Whitespace, Token::LineBreak, Token::ParagraphBreak].contains(&token)
+}
+
 impl<'r, 't> Parser<'r, 't>
 where
     'r: 't,
@@ -244,14 +248,8 @@ where
             }
 
             first = false;
-            let old_remaining = self.remaining();
             let elements = consume(self)?.chain(&mut all_errors, &mut paragraph_safe);
             all_elements.extend(elements);
-
-            // Step if the rule hasn't moved the pointer itself
-            if self.same_pointer(old_remaining) {
-                self.step()?;
-            }
         }
     }
 
@@ -267,7 +265,9 @@ where
         if in_head {
             // Only process if the block isn't done yet
             loop {
-                self.get_optional_spaces_any()?;
+                while token_is_argument_spacing(self.current().token) {
+                    self.step()?;
+                }
 
                 // Try to get the argument key
                 // Allows any token that matches the regular expression
@@ -279,44 +279,45 @@ where
                 // get_head_block() so we just have it inline. Also it's a bit
                 // strange since one of the outcomes is to break out of the loop.
 
-                let key = {
-                    let start = self.current();
-                    let mut args_finished = false;
+                let start = self.current();
+                let mut args_finished = false;
+                loop {
+                    let current = self.current();
+                    match current.token {
+                        // End parsing block head
+                        Token::RightBlock => {
+                            args_finished = true;
+                            break;
+                        }
 
-                    loop {
-                        let current = self.current();
-                        match current.token {
-                            // End parsing block head
-                            Token::RightBlock => {
-                                args_finished = true;
-                                break;
-                            }
+                        // End parsing argument key
+                        token if token_ends_argument_key(token) => break,
 
-                            // End parsing argument key
-                            token if token_ends_argument_key(token) => break,
+                        // Continue iterating to gather key
+                        _ if ARGUMENT_KEY.is_match(current.slice) => {
+                            self.step()?;
+                        }
 
-                            // Continue iterating to gather key
-                            _ if ARGUMENT_KEY.is_match(current.slice) => {
-                                self.step()?;
-                            }
-
-                            // Invalid token
-                            _ => {
-                                return Err(self
-                                    .make_err(ParseErrorKind::BlockMalformedArguments));
-                            }
+                        // Invalid token
+                        _ => {
+                            return Err(
+                                self.make_err(ParseErrorKind::BlockMalformedArguments)
+                            );
                         }
                     }
+                }
 
-                    // Stop iterating for more argument key-value pairs
-                    if args_finished {
-                        break;
-                    }
+                // Stop iterating for more argument key-value pairs
+                if args_finished {
+                    break std::convert::identity(());
+                }
 
-                    // Gather argument key string slice
-                    let end = self.current();
-                    self.full_text().slice_partial(start, end)
-                };
+                // Gather argument key string slice
+                let end = self.current();
+                let key = self.full_text().slice_partial(start, end);
+                if key.is_empty() {
+                    return Err(self.make_err(ParseErrorKind::BlockMalformedArguments));
+                }
 
                 // Equal sign
                 self.get_optional_space()?;
@@ -451,15 +452,30 @@ mod tests {
     fn block_head_rejects_invalid_argument_key_token() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize("[[span @=\"value\"]]body[[/span]]");
+        for input in [
+            "[[div @=\"value\"]]body[[/div]]",
+            "[[div =\"value\"]]body[[/div]]",
+        ] {
+            let tokenization = crate::tokenize(input);
+            let (_, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments),
+                "{input} should report BlockMalformedArguments: {errors:?}",
+            );
+        }
+    }
+
+    #[test]
+    fn block_head_allows_line_break_before_argument() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[div\nclass=\"value\"]]\nbody\n[[/div]]");
         let (_, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
-        assert!(
-            errors
-                .iter()
-                .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments),
-            "invalid argument key should report BlockMalformedArguments: {errors:?}",
-        );
+        assert!(errors.is_empty(), "{errors:?}");
     }
 
     #[test]

@@ -31,6 +31,25 @@ pub const BLOCK_IFCATEGORY: BlockRule = BlockRule {
     parse_fn,
 };
 
+fn parse_conditions<'r, 't>(
+    parser: &Parser<'r, 't>,
+    spec: Option<&'t str>,
+) -> Result<Vec<ElementCondition<'t>>, ParseError> {
+    let Some(spec) = spec.map(str::trim).filter(|spec| !spec.is_empty()) else {
+        return Err(parser.make_err(ParseErrorKind::BlockMissingArguments));
+    };
+
+    let mut conditions = ElementCondition::parse(spec);
+    conditions.iter_mut().for_each(|condition| {
+        // Because a page can be in at most one category, required conditions
+        // collapse to present checks here.
+        if condition.ctype == ElementConditionType::Required {
+            condition.ctype = ElementConditionType::Present;
+        }
+    });
+    Ok(conditions)
+}
+
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &'t str,
@@ -44,37 +63,16 @@ fn parse_fn<'r, 't>(
     assert_block_name(&BLOCK_IFCATEGORY, name);
 
     // Parse out tag conditions
-    let conditions =
-        parser.get_head_value(&BLOCK_IFCATEGORY, in_head, |parser, spec| match spec {
-            None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
-            Some(spec) => {
-                let mut conditions = ElementCondition::parse(spec);
-
-                conditions.iter_mut().for_each(|condition| {
-                    // Because a page can be in at most one category,
-                    // the required condition type is not useful here
-                    // beyond a single instance.
-                    //
-                    // Thus, we convert all required -> present,
-                    // effectively making "+" and no prefix the same thing.
-                    if condition.ctype == ElementConditionType::Required {
-                        condition.ctype = ElementConditionType::Present;
-                    }
-                });
-
-                Ok(conditions)
-            }
-        })?;
+    let rule = &BLOCK_IFCATEGORY;
+    let conditions = parser.get_head_value(rule, in_head, parse_conditions)?;
 
     // Get body content, never with paragraphs
-    let (elements, errors, paragraph_safe) =
-        parser.get_body_elements(&BLOCK_IFCATEGORY, false)?.into();
+    let body = parser.get_body_elements(&BLOCK_IFCATEGORY, false)?;
+    let (elements, errors, paragraph_safe) = body.into();
 
-    trace!(
-        "IfCategory conditions parsed (conditions length {}, elements length {})",
-        conditions.len(),
-        elements.len(),
-    );
+    let condition_count = conditions.len();
+    let element_count = elements.len();
+    trace!("IfCategory parsed {condition_count} conditions and {element_count} elements");
 
     // Return elements based on condition
     let elements = if check_ifcategory(parser.page_info(), &conditions) {
@@ -98,4 +96,54 @@ pub fn check_ifcategory(info: &PageInfo, conditions: &[ElementCondition]) -> boo
 
     trace!("Checking ifcategory (category '{category}')");
     ElementCondition::check(conditions, &[cow!(category)])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use std::borrow::Cow;
+
+    #[test]
+    fn ifcategory_requires_conditions_and_checks_default_category() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        for input in [
+            "[[ifcategory]]body[[/ifcategory]]",
+            "[[ifcategory   ]]body[[/ifcategory]]",
+        ] {
+            let tokenization = crate::tokenize(input);
+            let (_tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments),
+                "{input} should require non-empty conditions: {errors:?}",
+            );
+        }
+
+        let default_info = PageInfo {
+            category: None,
+            ..PageInfo::dummy()
+        };
+        assert!(check_ifcategory(
+            &default_info,
+            &ElementCondition::parse("+_default"),
+        ));
+        assert!(!check_ifcategory(
+            &default_info,
+            &ElementCondition::parse("other"),
+        ));
+
+        let named_info = PageInfo {
+            category: Some(Cow::Borrowed("component")),
+            ..PageInfo::dummy()
+        };
+        assert!(check_ifcategory(
+            &named_info,
+            &ElementCondition::parse("+component -other"),
+        ));
+    }
 }

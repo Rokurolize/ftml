@@ -36,11 +36,9 @@ use std::mem;
 /// It will use the fallback if all rules, fail, so the only failure case is if
 /// the end of the input is reached.
 pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!(
-        "Running consume attempt (token {}, slice {:?})",
-        parser.current().token.name(),
-        parser.current().slice,
-    );
+    let token_name = parser.current().token.name();
+    let token_slice = parser.current().slice;
+    debug!("Running consume attempt (token {token_name}, slice {token_slice:?})");
 
     // Incrementing recursion depth
     // Will fail if we're too many layers in
@@ -98,11 +96,8 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
     }
 
     // Add fallback error to errors list
-    all_errors.push(ParseError::new(
-        ParseErrorKind::NoRulesMatch,
-        RULE_FALLBACK,
-        current,
-    ));
+    let error = ParseError::new(ParseErrorKind::NoRulesMatch, RULE_FALLBACK, current);
+    all_errors.push(error);
 
     // Decrement recursion depth
     parser.depth_decrement();

@@ -40,9 +40,8 @@ impl<T> ParseOutcome<T> {
     }
 
     // Getters
-    #[inline]
     pub fn value(&self) -> &T {
-        &self.value
+        std::convert::identity(&self.value)
     }
 
     #[inline]

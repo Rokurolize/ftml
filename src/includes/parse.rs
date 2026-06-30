@@ -76,10 +76,7 @@ pub fn parse_include_block<'t>(
 /// Creates an [`IncludeRef`] out of pest [`Pairs`].
 fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError> {
     let page_raw = pairs.next().ok_or(IncludeParseError)?.as_str();
-    let page_ref = PageRef::parse(page_raw)?;
-    if page_ref.page().is_empty() {
-        return Err(IncludeParseError);
-    }
+    let page_ref = validate_include_page_ref(PageRef::parse(page_raw)?)?;
 
     trace!("Got page for include {page_ref:?}");
     let mut arguments = HashMap::new();
@@ -133,12 +130,65 @@ fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError
     Ok(IncludeRef::new(page_ref, arguments))
 }
 
+fn validate_include_page_ref(page_ref: PageRef) -> Result<PageRef, IncludeParseError> {
+    if page_ref.page().is_empty() {
+        return Err(IncludeParseError);
+    }
+
+    Ok(page_ref)
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct IncludeParseError;
 
 impl From<PageRefParseError> for IncludeParseError {
     #[inline]
     fn from(_: PageRefParseError) -> Self {
-        IncludeParseError
+        std::convert::identity(IncludeParseError)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn include_parse_error_converts_from_page_ref_parse_error() {
+        let error = IncludeParseError::from(PageRefParseError);
+        assert_eq!(error, IncludeParseError);
+    }
+
+    #[test]
+    fn validate_include_page_ref_rejects_empty_page() {
+        let empty = PageRef {
+            site: Some(str!("scp-wiki")),
+            page: String::new(),
+            extra: None,
+        };
+
+        assert_eq!(
+            validate_include_page_ref(empty),
+            Err(IncludeParseError),
+            "empty include page references should reject",
+        );
+    }
+
+    #[test]
+    fn validate_include_page_ref_accepts_non_empty_page() {
+        let page_ref = PageRef::page_only("component:ok");
+
+        assert_eq!(
+            validate_include_page_ref(page_ref.clone()),
+            Ok(page_ref),
+            "non-empty include page references should pass through",
+        );
+    }
+
+    #[test]
+    fn parse_include_block_rejects_empty_page_reference() {
+        let error = parse_include_block("[[include :scp-wiki:/]]", 0)
+            .expect_err("empty include page should reject");
+
+        assert_eq!(error, IncludeParseError);
     }
 }

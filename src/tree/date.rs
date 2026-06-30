@@ -89,15 +89,8 @@ impl DateItem {
     }
 
     pub fn format_or_default(self, format: Option<&str>, language: &str) -> String {
-        match self.format(format, language) {
-            Ok(datetime) => datetime,
-            Err(first_error) => self.format(None, language).unwrap_or_else(|fallback_error| {
-                error!(
-                    "Error formatting date into string: initial error: {first_error}; fallback error: {fallback_error}"
-                );
-                str!("<ERROR>")
-            }),
-        }
+        let formatted = self.format(format, language);
+        format_or_default_result(formatted, || self.format(None, language))
     }
 
     fn format_strftime(self, format: &str, language: &str) -> io::Result<String> {
@@ -152,6 +145,31 @@ impl DateItem {
         append_localized_datetime_full_year(&mut rendered, &datetime, &locale)?;
 
         Ok(rendered)
+    }
+}
+
+fn date_format_error_fallback(
+    first_error: &io::Error,
+    fallback_error: &io::Error,
+) -> String {
+    error!(
+        "Error formatting date into string: initial error: {first_error}; fallback error: {fallback_error}"
+    );
+    str!("<ERROR>")
+}
+
+fn format_or_default_result<F>(formatted: io::Result<String>, fallback: F) -> String
+where
+    F: FnOnce() -> io::Result<String>,
+{
+    match formatted {
+        Ok(datetime) => datetime,
+        Err(first_error) => match fallback() {
+            Ok(datetime) => datetime,
+            Err(fallback_error) => {
+                date_format_error_fallback(&first_error, &fallback_error)
+            }
+        },
     }
 }
 
@@ -410,8 +428,10 @@ fn append_normalized_display(
     rendered: &mut String,
     value: impl fmt::Display,
 ) -> io::Result<()> {
-    str_write!(&mut NormalizingWriter(rendered), "{value}");
-    Ok(())
+    use fmt::Write;
+
+    write!(&mut NormalizingWriter(rendered), "{value}")
+        .map_err(|_| io::Error::other("normalizing localized date display failed"))
 }
 
 struct NormalizingWriter<'a>(&'a mut String);
@@ -595,6 +615,17 @@ fn date_format_falls_back_to_default() {
     assert_eq!(
         date.format_or_default(Some("%Q"), "en"),
         date.format(None, "en").unwrap(),
+    );
+}
+
+#[test]
+fn date_format_error_fallback_returns_error_marker() {
+    let first_error = io::Error::new(io::ErrorKind::InvalidInput, "initial");
+    let fallback_error = io::Error::other("fallback");
+
+    assert_eq!(
+        format_or_default_result(Err(first_error), || Err(fallback_error)),
+        "<ERROR>",
     );
 }
 

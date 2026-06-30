@@ -83,14 +83,8 @@ where
     ParsedBlock<'t>: 't,
 {
     debug!("Parsing {description} block (name '{name}', in-head {in_head})");
-    assert!(
-        !flag_star,
-        "Block for {description} doesn't allow star flag"
-    );
-    assert!(
-        !flag_score,
-        "Block for {description} doesn't allow score flag"
-    );
+    assert!(!flag_star, "{description} block doesn't allow star flag");
+    assert!(!flag_score, "{description} block doesn't allow score flag");
     assert_block_name(block_rule, name);
 
     // Get attributes
@@ -102,11 +96,12 @@ where
     let (elements, errors, _) = body.into();
 
     // Return result
-    Ok(ParsedBlock {
+    let parsed = ParsedBlock {
         elements,
         attributes,
         errors,
-    })
+    };
+    Ok(parsed)
 }
 
 fn extract_table_rows<'r, 't>(
@@ -177,11 +172,13 @@ fn parse_table<'r, 't>(
     let errors = parsed.errors;
 
     // Build and return table element
-    let element = Element::Table(Table {
+    let table_type = TableType::Advanced;
+    let table = Table {
         rows,
         attributes,
-        table_type: TableType::Advanced,
-    });
+        table_type,
+    };
+    let element = Element::Table(table);
     ok!(false; element, errors)
 }
 

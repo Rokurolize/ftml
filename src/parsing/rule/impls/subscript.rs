@@ -31,16 +31,12 @@ fn try_consume_fn<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create subscript container");
     assert_step(parser, Token::Subscript)?;
-    collect_container(
-        parser,
-        RULE_SUBSCRIPT,
-        ContainerType::Subscript,
-        &[ParseCondition::current(Token::Subscript)],
-        &[
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::token_pair(Token::Subscript, Token::Whitespace),
-            ParseCondition::token_pair(Token::Whitespace, Token::Subscript),
-        ],
-        None,
-    )
+    let close = [ParseCondition::current(Token::Subscript)];
+    let invalid = [
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::token_pair(Token::Subscript, Token::Whitespace),
+        ParseCondition::token_pair(Token::Whitespace, Token::Subscript),
+    ];
+    let ctype = ContainerType::Subscript;
+    collect_container(parser, RULE_SUBSCRIPT, ctype, &close, &invalid, None)
 }

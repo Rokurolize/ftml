@@ -31,16 +31,12 @@ fn try_consume_fn<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create monospace container");
     assert_step(parser, Token::LeftMonospace)?;
-    collect_container(
-        parser,
-        RULE_MONOSPACE,
-        ContainerType::Monospace,
-        &[ParseCondition::current(Token::RightMonospace)],
-        &[
-            ParseCondition::current(Token::ParagraphBreak),
-            ParseCondition::token_pair(Token::LeftMonospace, Token::Whitespace),
-            ParseCondition::token_pair(Token::Whitespace, Token::RightMonospace),
-        ],
-        None,
-    )
+    let close = [ParseCondition::current(Token::RightMonospace)];
+    let invalid = [
+        ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::token_pair(Token::LeftMonospace, Token::Whitespace),
+        ParseCondition::token_pair(Token::Whitespace, Token::RightMonospace),
+    ];
+    let ctype = ContainerType::Monospace;
+    collect_container(parser, RULE_MONOSPACE, ctype, &close, &invalid, None)
 }

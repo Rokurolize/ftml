@@ -112,7 +112,7 @@ fn build_same<'r, 't>(
     // If None, then the label is the original URL.
     let label = match strip_category(url) {
         Some(stripped) => cow!(stripped),
-        None => cow!(url),
+        None => std::borrow::Cow::Borrowed(url),
     };
 
     // Parse out link location
@@ -129,7 +129,7 @@ fn build_same<'r, 't>(
         target,
     };
 
-    ok!(element)
+    success_elements(element)
 }
 
 /// Helper to build link with separate URL and label.
@@ -178,7 +178,7 @@ fn build_separate<'r, 't>(
     };
 
     // Return result
-    ok!(element)
+    success_elements(element)
 }
 
 /// Strip off the category for use in URL triple-bracket links.

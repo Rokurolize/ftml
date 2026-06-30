@@ -37,8 +37,9 @@ fn parse_fn<'r, 't>(
     let button_text = arguments.get("button");
     let attributes = arguments.to_attribute_map(parser.settings());
 
-    ok!(false; Module::Join {
+    let module = Module::Join {
         button_text,
         attributes,
-    })
+    };
+    success_value(module.into(), Vec::new(), false)
 }

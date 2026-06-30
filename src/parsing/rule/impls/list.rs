@@ -32,6 +32,12 @@ const fn get_list_type(token: Token) -> Option<ListType> {
     }
 }
 
+enum ListItemStep<'t> {
+    End,
+    Skip,
+    Item((usize, ListType, Vec<Element<'t>>)),
+}
+
 pub const RULE_LIST: Rule = Rule {
     name: "list",
     position: LineRequirement::StartOfLine,
@@ -52,74 +58,15 @@ fn try_consume_fn<'r, 't>(
     // but we need this binding for chain().
     let mut paragraph_safe = false;
 
-    // Produce a depth list with elements
-    loop {
-        let current = parser.current();
-        let depth = match current.token {
-            // Count the number of spaces for its depth
-            Token::Whitespace => {
-                let spaces = parser.current().slice;
-                parser.step()?;
-
-                // Since these are only ASCII spaces a byte count is fine
-                spaces.len()
+    let mut ended = false;
+    while !ended {
+        match parse_next_list_item(parser, &mut errors, &mut paragraph_safe)? {
+            ListItemStep::End => ended = true,
+            ListItemStep::Skip => {
+                std::convert::identity(());
             }
-
-            // No depth, just the bullet
-            Token::BulletItem | Token::NumberedItem => 0,
-
-            // Invalid token, bail
-            _ => {
-                warn!(
-                    "Didn't find correct bullet token or couldn't determine list depth, ending list iteration"
-                );
-                break;
-            }
-        };
-
-        // Check that the depth isn't obscenely deep, to avoid DOS attacks via stack overflow.
-        if depth > MAX_LIST_DEPTH {
-            warn!(
-                "List item has a depth {depth} greater than the maximum ({MAX_LIST_DEPTH})! Failing"
-            );
-            return Err(parser.make_err(ParseErrorKind::ListDepthExceeded));
+            ListItemStep::Item(item) => depths.push(item),
         }
-
-        // Check that we're processing a bullet, and get the type
-        let current = parser.current();
-        let list_type = match get_list_type(current.token) {
-            Some(ltype) => ltype,
-            None => {
-                trace!(
-                    "Didn't find bullet token, couldn't determine list type, ending list iteration"
-                );
-                break;
-            }
-        };
-        parser.step()?;
-
-        trace!("Parsing list item '{}'", list_type.name());
-
-        // For now, always expect whitespace after the bullet
-        let current = parser.current();
-        if current.token != Token::Whitespace {
-            warn!("Didn't find whitespace after bullet token, ending list iteration");
-            break;
-        }
-        parser.step()?;
-
-        // Parse elements until we hit the end of the line
-        let item_result = collect_list_item_elements(parser)?;
-        let elements = item_result.chain(&mut errors, &mut paragraph_safe);
-
-        // Empty list lines are ignored
-        if elements.is_empty() {
-            trace!("Skipping empty list line");
-            continue;
-        }
-
-        // Append list line
-        depths.push((depth, list_type, elements));
     }
 
     // This list has no rows, so the rule fails
@@ -134,6 +81,70 @@ fn try_consume_fn<'r, 't>(
         .collect();
 
     ok!(paragraph_safe; elements, errors)
+}
+
+fn parse_next_list_item<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    errors: &mut Vec<ParseError>,
+    paragraph_safe: &mut bool,
+) -> Result<ListItemStep<'t>, ParseError>
+where
+    'r: 't,
+{
+    let mut sub_parser = parser.clone();
+
+    let Some(depth) = parse_list_depth(&mut sub_parser)? else {
+        return Ok(ListItemStep::End);
+    };
+
+    if depth > MAX_LIST_DEPTH {
+        warn!("List item depth {depth} exceeds maximum {MAX_LIST_DEPTH}");
+        return Err(parser.make_err(ParseErrorKind::ListDepthExceeded));
+    }
+
+    let Some(list_type) = get_list_type(sub_parser.current().token) else {
+        trace!("Ending list: no item token");
+        return Ok(ListItemStep::End);
+    };
+    sub_parser.step()?;
+
+    trace!("Parsing list item '{}'", list_type.name());
+
+    if sub_parser.current().token != Token::Whitespace {
+        warn!("Ending list: missing item whitespace");
+        return Ok(ListItemStep::End);
+    }
+    sub_parser.step()?;
+
+    let item_result = collect_list_item_elements(&mut sub_parser)?;
+    let elements = item_result.chain(errors, paragraph_safe);
+    if elements.is_empty() {
+        parser.update(&sub_parser);
+        trace!("Skipping empty list line");
+        return Ok(ListItemStep::Skip);
+    }
+
+    parser.update(&sub_parser);
+    Ok(ListItemStep::Item((depth, list_type, elements)))
+}
+
+fn parse_list_depth<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<Option<usize>, ParseError> {
+    let current = parser.current();
+    let depth = match current.token {
+        Token::Whitespace => {
+            let depth = current.slice.len();
+            parser.step()?;
+            depth
+        }
+        Token::BulletItem | Token::NumberedItem => 0,
+        _ => {
+            warn!("Ending list: no depth token");
+            return Ok(None);
+        }
+    };
+    Ok(Some(depth))
 }
 
 fn collect_list_item_elements<'r, 't>(
@@ -170,5 +181,158 @@ fn build_list_element(
         ltype: top_ltype,
         items,
         attributes,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use std::sync::Once;
+
+    #[derive(Debug)]
+    struct TestLogger;
+
+    impl log::Log for TestLogger {
+        fn enabled(&self, _metadata: &log::Metadata<'_>) -> bool {
+            true
+        }
+
+        fn log(&self, record: &log::Record<'_>) {
+            let _ = record.args().to_string();
+        }
+
+        fn flush(&self) {}
+    }
+
+    static TEST_LOGGER: TestLogger = TestLogger;
+    static INIT_LOGGER: Once = Once::new();
+
+    fn enable_test_logging() {
+        INIT_LOGGER.call_once(|| {
+            let _ = log::set_logger(&TEST_LOGGER);
+            log::set_max_level(log::LevelFilter::Trace);
+        });
+    }
+
+    fn settings() -> (PageInfo<'static>, WikitextSettings) {
+        (
+            PageInfo::dummy(),
+            WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot),
+        )
+    }
+
+    #[test]
+    fn native_list_rejects_excessive_depth() {
+        enable_test_logging();
+
+        let (page_info, settings) = settings();
+        let input = format!("{}* too deep", " ".repeat(MAX_LIST_DEPTH + 1));
+        let tokenization = crate::tokenize(&input);
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("leading whitespace should follow input start");
+        parser.set_rule(RULE_LIST);
+
+        let error = RULE_LIST
+            .try_consume(&mut parser)
+            .expect_err("excessive list depth should fail");
+        assert_eq!(error.kind(), ParseErrorKind::ListDepthExceeded);
+    }
+
+    #[test]
+    fn native_list_rejects_inputs_without_items() {
+        enable_test_logging();
+
+        let (page_info, settings) = settings();
+        let tokenization = crate::tokenize("plain");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("identifier token should follow input start");
+        parser.set_rule(RULE_LIST);
+
+        let error = RULE_LIST
+            .try_consume(&mut parser)
+            .expect_err("plain text should not produce a list");
+        assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+
+        let tokenization = crate::tokenize("  plain");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("whitespace token should follow input start");
+        parser.set_rule(RULE_LIST);
+
+        let error = RULE_LIST
+            .try_consume(&mut parser)
+            .expect_err("indented text without a bullet should not produce a list");
+        assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+    }
+
+    #[test]
+    fn native_list_stops_on_malformed_and_skips_empty_items() {
+        enable_test_logging();
+
+        let (page_info, settings) = settings();
+        let tokenization = crate::tokenize("*missing-space");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("bullet token should follow input start");
+        parser.set_rule(RULE_LIST);
+
+        let error = RULE_LIST
+            .try_consume(&mut parser)
+            .expect_err("missing post-bullet whitespace should not produce a list");
+        assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+        assert_eq!(parser.current().token, Token::BulletItem);
+        assert_eq!(parser.current().slice, "*");
+
+        let tokenization = crate::tokenize("* \n* item");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("bullet token should follow input start");
+        parser.set_rule(RULE_LIST);
+
+        let success = RULE_LIST
+            .try_consume(&mut parser)
+            .expect("list should skip the empty item and keep the non-empty item");
+        let Elements::Multiple(elements) = success.item else {
+            panic!("expected one list, got {:?}", success.item);
+        };
+        let [Element::List { ltype, items, .. }] = elements.as_slice() else {
+            panic!("expected one list, got {elements:?}");
+        };
+        assert_eq!(*ltype, ListType::Bullet);
+        assert_eq!(items.len(), 1);
+        match &items[0] {
+            ListItem::Elements { elements, .. } => assert_eq!(elements, &[text!("item")]),
+            other => panic!("expected a list item, got {other:?}"),
+        }
+
+        let tokenization = crate::tokenize("* good\n*bad");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("bullet token should follow input start");
+        parser.set_rule(RULE_LIST);
+
+        let success = RULE_LIST
+            .try_consume(&mut parser)
+            .expect("valid first item should produce a list");
+        let Elements::Multiple(elements) = success.item else {
+            panic!("expected one list, got {:?}", success.item);
+        };
+        let [Element::List { items, .. }] = elements.as_slice() else {
+            panic!("expected one list, got {elements:?}");
+        };
+        assert_eq!(items.len(), 1);
+        assert_eq!(parser.current().token, Token::BulletItem);
+        assert_eq!(parser.current().slice, "*");
     }
 }

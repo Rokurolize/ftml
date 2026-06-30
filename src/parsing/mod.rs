@@ -42,6 +42,7 @@ mod token;
 mod prelude {
     pub use crate::parsing::{
         ExtractedToken, ParseError, ParseErrorKind, ParseResult, ParseSuccess, Token,
+        success_elements, success_elements_with_paragraph_safety, success_value,
     };
     pub use crate::settings::WikitextSettings;
     pub use crate::text::FullText;
@@ -68,7 +69,10 @@ use std::borrow::Cow;
 pub use self::boolean::{NonBooleanValue, parse_boolean};
 pub use self::error::{ParseError, ParseErrorKind};
 pub use self::outcome::ParseOutcome;
-pub use self::result::{ParseResult, ParseSuccess};
+pub use self::result::{
+    ParseResult, ParseSuccess, success_elements, success_elements_with_paragraph_safety,
+    success_value,
+};
 pub use self::token::{ExtractedToken, Token};
 
 /// Parse through the given tokens and produce an AST.
@@ -83,30 +87,25 @@ where
     'r: 't,
 {
     // Run parsing, get raw results
-    let UnstructuredParseResult {
-        result,
-        html_blocks,
-        code_blocks,
-        table_of_contents_depths,
-        footnotes,
-        has_footnote_block,
-        bibliographies,
-    } = parse_internal(page_info, settings, tokenization);
+    let parsed = parse_internal(page_info, settings, tokenization);
+    let result = parsed.result;
+    let html_blocks = parsed.html_blocks;
+    let code_blocks = parsed.code_blocks;
+    let table_of_contents_depths = parsed.table_of_contents_depths;
+    let footnotes = parsed.footnotes;
+    let has_footnote_block = parsed.has_footnote_block;
+    let bibliographies = parsed.bibliographies;
 
     // Mutable state
     let mut toc_indexer = settings.id_indexer();
 
     debug!("Finished paragraph gathering, matching on consumption");
     match result {
-        Ok(ParseSuccess {
-            item: elements,
-            errors,
-            ..
-        }) => {
-            debug!(
-                "Finished parsing, producing final syntax tree ({} errors)",
-                errors.len(),
-            );
+        Ok(success) => {
+            let elements = success.item;
+            let errors = success.errors;
+            let error_count = errors.len();
+            debug!("Finished parsing into syntax tree ({error_count} errors)");
 
             // process_depths() wants a "list type", so we map in a () for each.
             let table_of_contents_depths = table_of_contents_depths

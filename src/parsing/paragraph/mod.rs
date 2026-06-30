@@ -65,8 +65,9 @@ where
     // Create paragraph stack
     let mut stack = ParagraphStack::new();
 
-    loop {
-        let (elements, mut errors, paragraph_safe) = match parser.current().token {
+    let mut finished = false;
+    while !finished {
+        let consumed = match parser.current().token {
             Token::InputEnd => {
                 if close_condition_fn.is_some() {
                     // There was a close condition, but it was not satisfied
@@ -81,7 +82,8 @@ where
                     // If there's no close condition, then this is not an error
 
                     warn!("Hit the end of input, terminating token iteration");
-                    break;
+                    finished = true;
+                    None
                 }
             }
 
@@ -95,32 +97,40 @@ where
                 // We must manually bump up this pointer because
                 // we 'continue' here, skipping the usual pointer update.
                 parser.step()?;
-                continue;
+                None
             }
 
             // Determine if we're ending the paragraph here,
             // or continuing with another element
             _ => {
-                if let Some(ref mut close_condition_fn) = close_condition_fn &&
-                    close_condition_fn(parser).unwrap_or(false) {
-                        debug!("Hit closing condition for paragraphs, terminating token iteration");
-                        break;
+                let close_condition_met = match close_condition_fn.as_mut() {
+                    Some(close_condition_fn) => close_condition_fn(parser)?,
+                    None => false,
+                };
+
+                if close_condition_met {
+                    debug!("Paragraph close condition hit");
+                    finished = true;
+                    None
+                } else {
+                    // Otherwise, produce consumption from this token pointer
+                    trace!("Trying to consume tokens to produce element");
+                    Some(consume(parser)?)
                 }
-
-                // Otherwise, produce consumption from this token pointer
-                trace!("Trying to consume tokens to produce element");
-                consume(parser)
             }
-        }?
-        .into();
+        };
 
-        trace!("Tokens consumed to produce element");
+        if let Some(consumed) = consumed {
+            let (elements, mut errors, paragraph_safe) = consumed.into();
 
-        // Add new elements to the list
-        push_elements(&mut stack, elements, paragraph_safe);
+            trace!("Tokens consumed to produce element");
 
-        // Process errors
-        stack.push_errors(&mut errors);
+            // Add new elements to the list
+            push_elements(&mut stack, elements, paragraph_safe);
+
+            // Process errors
+            stack.push_errors(&mut errors);
+        }
     }
 
     stack.into_result()
@@ -135,10 +145,8 @@ fn push_elements<'t>(
 
     for element in elements {
         // Don't add a line break if the paragraph is otherwise empty
-        if stack.current_empty() && element == Element::LineBreak {
-            continue;
+        if !(stack.current_empty() && element == Element::LineBreak) {
+            stack.push_element(element, paragraph_safe);
         }
-
-        stack.push_element(element, paragraph_safe);
     }
 }

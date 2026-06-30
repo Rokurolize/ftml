@@ -82,8 +82,11 @@ pub fn substitute(text: &mut String) {
     // Strip lines with only whitespace
     replace!(WHITESPACE_ONLY_LINE);
 
-    // Join concatenated lines (ending with '\')
-    replace!(CONCAT_LINES);
+    // Join concatenated lines (ending with '\'). Removing one continuation can
+    // expose another at the same boundary, so repeat to a fixed point.
+    while text.contains("\\\n") {
+        replace!(CONCAT_LINES);
+    }
 
     // Tabs and null characters are common one-character substitutions.
     // Replace each class in one linear pass instead of repeatedly shifting

@@ -66,23 +66,31 @@ jobs:
               if (!gateSha) {
                 return false;
               }
-              try {
-                await github.rest.repos.createCommitStatus({
-                  owner,
-                  repo,
-                  sha: gateSha,
-                  state,
-                  context: gateContext,
-                  description: description.slice(0, 140),
-                  target_url: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
-                });
-                return true;
-              } catch (error) {
-                if (error.status === 403) {
-                  throw new Error(`Unable to write ${gateContext} status for ${gateSha}: ${error.message}`);
+              for (let attempt = 1; attempt <= 3; attempt += 1) {
+                try {
+                  await github.rest.repos.createCommitStatus({
+                    owner,
+                    repo,
+                    sha: gateSha,
+                    state,
+                    context: gateContext,
+                    description: description.slice(0, 140),
+                    target_url: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
+                  });
+                  return true;
+                } catch (error) {
+                  if (error.status === 403) {
+                    throw new Error(`Unable to write ${gateContext} status for ${gateSha}: ${error.message}`);
+                  }
+                  const retryable = [500, 502, 503, 504].includes(error.status);
+                  if (!retryable || attempt === 3) {
+                    throw error;
+                  }
+                  core.warning(`Retrying ${gateContext} status write after GitHub API error: ${error.message}`);
+                  await sleep(1000 * attempt);
                 }
-                throw error;
               }
+              return false;
             }
 
             async function resolvePullRequest() {

@@ -52,6 +52,7 @@ fn try_consume_fn<'r, 't>(
         let depth = current.slice.len();
         parser.step()?;
         parser.get_optional_space()?; // allow whitespace after ">"
+        parser.mark_virtual_start_of_line();
 
         // Check that the depth isn't obscenely deep, to avoid DOS attacks via stack overflow.
         if depth > MAX_BLOCKQUOTE_DEPTH {
@@ -129,6 +130,7 @@ mod tests {
     use super::*;
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender, text::TextRender};
     use crate::settings::{WikitextMode, WikitextSettings};
     use std::sync::Once;
 
@@ -194,5 +196,39 @@ mod tests {
             .try_consume(&mut parser)
             .expect_err("non-quote input should not produce a blockquote");
         assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+    }
+
+    #[test]
+    fn native_blockquote_content_respects_virtual_line_start_for_headings() {
+        enable_test_logging();
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let input = concat!(
+            "> + {{WARNING}}\n",
+            ">\n",
+            "> {{Body}}\n",
+            ">\n",
+            "> ++ {{LEVEL 5 AUTHORIZATION REQUIRED}}\n",
+        );
+        let tokenization = crate::tokenize(input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert!(html.contains("<blockquote>"));
+        assert!(html.contains("<h1"));
+        assert!(html.contains("WARNING"));
+        assert!(html.contains("<h2"));
+        assert!(html.contains("LEVEL 5 AUTHORIZATION REQUIRED"));
+        assert!(!html.contains("+ <tt>WARNING</tt>"));
+        assert!(!html.contains("++ <tt>LEVEL 5 AUTHORIZATION REQUIRED</tt>"));
+
+        let text = TextRender.render(&tree, &page_info, &settings);
+        assert!(text.contains("WARNING"));
+        assert!(text.contains("LEVEL 5 AUTHORIZATION REQUIRED"));
+        assert!(!text.contains("+ WARNING"));
+        assert!(!text.contains("++ LEVEL 5 AUTHORIZATION REQUIRED"));
     }
 }

@@ -178,6 +178,11 @@ impl<'r, 't> Parser<'r, 't> {
 
     // Setters
     #[inline]
+    pub(crate) fn mark_virtual_start_of_line(&mut self) {
+        self.start_of_line = true;
+    }
+
+    #[inline]
     pub fn set_rule(&mut self, rule: Rule) {
         self.rule = rule;
     }

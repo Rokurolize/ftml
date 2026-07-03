@@ -192,6 +192,21 @@ fn isolate_user_ids() {
         ))],
     );
 
+    test!(
+        r#"[[div id="credit-view"]]X[[/div]]"#,
+        vec![Element::Container(Container::new(
+            ContainerType::Div,
+            vec![Element::Container(Container::new(
+                ContainerType::Paragraph,
+                vec![text!("X")],
+                AttributeMap::new(),
+            ))],
+            AttributeMap::from(btreemap! {
+                cow!("id") => cow!("u-credit-view"),
+            }),
+        ))],
+    );
+
     // Lists [[ul]] / [[ol]]
     test!(
         r#"[[ul id="apple"]] [[li id="u-banana"]]X[[/li]] [[/ul]]"#,

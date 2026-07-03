@@ -74,7 +74,7 @@ mod tests {
         assert_eq!(*align, Some(Alignment::Right));
         assert_eq!(
             attributes.get().get("id").map(|value| value.as_ref()),
-            Some("contents")
+            Some("u-contents")
         );
     }
 }

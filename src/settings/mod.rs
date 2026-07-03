@@ -123,7 +123,7 @@ impl WikitextSettings {
                 layout,
                 enable_page_syntax: true,
                 use_true_ids: false,
-                isolate_user_ids: false,
+                isolate_user_ids: layout == Layout::Wikidot,
                 minify_css: DEFAULT_MINIFY_CSS,
                 allow_local_paths: true,
                 interwiki,
@@ -243,6 +243,17 @@ mod test {
         assert!(wikidot.use_true_ids);
         assert!(wikidot.isolate_user_ids);
         assert!(wikijump.use_true_ids);
+        assert!(!wikijump.isolate_user_ids);
+    }
+
+    #[test]
+    fn wikidot_draft_settings_isolate_user_ids() {
+        let wikidot = WikitextSettings::from_mode(WikitextMode::Draft, Layout::Wikidot);
+        let wikijump = WikitextSettings::from_mode(WikitextMode::Draft, Layout::Wikijump);
+
+        assert!(!wikidot.use_true_ids);
+        assert!(wikidot.isolate_user_ids);
+        assert!(!wikijump.use_true_ids);
         assert!(!wikijump.isolate_user_ids);
     }
 }

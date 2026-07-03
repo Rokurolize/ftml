@@ -24,6 +24,7 @@
 //! on the current page, or is a fake link.
 
 use super::prelude::*;
+use crate::id_prefix::isolate_ids;
 use crate::parsing::ParseSuccess;
 use crate::tree::{LinkLabel, LinkLocation, LinkType};
 use std::borrow::Cow;
@@ -57,6 +58,9 @@ fn try_consume_fn<'r, 't>(
         // Make URL "#name", where 'name' is normalized.
         let mut url = str!(url);
         normalize(&mut url);
+        if parser.settings().isolate_user_ids {
+            url = isolate_ids(&url);
+        }
         url.insert(0, '#');
 
         Cow::Owned(url)

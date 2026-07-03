@@ -22,7 +22,8 @@ use crate::data::{PageInfo, ScoreValue};
 use crate::layout::Layout;
 use crate::settings::{EMPTY_INTERWIKI, WikitextMode, WikitextSettings};
 use crate::tree::{
-    AttributeMap, Container, ContainerType, Element, FileSource, ListItem, ListType,
+    AttributeMap, Container, ContainerType, Element, FileSource, LinkLabel, LinkLocation,
+    LinkType, ListItem, ListType,
 };
 use std::borrow::Cow;
 
@@ -106,6 +107,34 @@ fn isolate_user_ids() {
         vec![Element::Container(Container::new(
             ContainerType::Paragraph,
             vec![Element::AnchorName(cow!("u-apple")), text!(" "), text!("X"),],
+            AttributeMap::new(),
+        ))],
+    );
+
+    // Anchor links [#]
+    test!(
+        r#"[#apple Jump]"#,
+        vec![Element::Container(Container::new(
+            ContainerType::Paragraph,
+            vec![Element::Link {
+                ltype: LinkType::Anchor,
+                link: LinkLocation::Url(cow!("#u-apple")),
+                label: LinkLabel::Text(cow!("Jump")),
+                target: None,
+            }],
+            AttributeMap::new(),
+        ))],
+    );
+    test!(
+        r#"[#u-apple Jump]"#,
+        vec![Element::Container(Container::new(
+            ContainerType::Paragraph,
+            vec![Element::Link {
+                ltype: LinkType::Anchor,
+                link: LinkLocation::Url(cow!("#u-apple")),
+                label: LinkLabel::Text(cow!("Jump")),
+                target: None,
+            }],
             AttributeMap::new(),
         ))],
     );

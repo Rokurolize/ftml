@@ -76,7 +76,7 @@ where
     let input_len = input.len();
     info!("Inserting text for all include blocks in text ({input_len} bytes)");
 
-    let mut ranges = Vec::new();
+    let mut ranges: Vec<std::ops::Range<usize>> = Vec::new();
     let mut includes = Vec::new();
 
     // Get include references
@@ -85,6 +85,20 @@ where
 
         let slice = mtch.as_str();
         trace!("Found include regex match (start {start}, slice '{slice}')");
+
+        // An include block whose argument value spans multiple lines can
+        // swallow a following include's opening (values only terminate at
+        // "]]" before a newline). Such a match is part of the previous
+        // block's argument text, not a block of its own; substituting both
+        // would corrupt the backwards range replacement below.
+        if let Some(previous) = ranges.last() {
+            if start < previous.end {
+                warn!(
+                    "Skipping include match inside the previous include block (start {start})"
+                );
+                continue;
+            }
+        }
 
         match parse_include_block(input, start) {
             Ok((include, end)) => {

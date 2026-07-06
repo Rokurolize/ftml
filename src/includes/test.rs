@@ -502,3 +502,31 @@ fn include_rejects_includer_page_ref_mismatch() {
 
     assert_eq!(result.unwrap_err(), "invalid include response");
 }
+
+#[test]
+fn include_swallowed_by_multiline_argument_does_not_overlap() {
+    // A multiline argument value only terminates at "]]" before a newline,
+    // so the first block swallows the second include's opening. The second
+    // regex match must be skipped as part of the first block's argument,
+    // not substituted as an overlapping range (previously panicked with
+    // "range end index out of range"; see wikijump#257).
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let text = "[[include component:info\n\
+                |comments=some text\n\
+                ----\n\
+                [[include :scp-wiki:more-by:someone]]\n\
+                trailing text after the block\n";
+
+    let (output, pages) = include(text, &settings, DebugIncluder, || unreachable!())
+        .expect("include failed");
+
+    assert_eq!(pages, vec![PageRef::page_only("component:info")]);
+    assert!(
+        output.contains("trailing text after the block"),
+        "text after the block must survive substitution: {output}"
+    );
+    assert!(
+        !output.contains("[[include component:info"),
+        "outer include block must be substituted: {output}"
+    );
+}

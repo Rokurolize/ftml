@@ -91,13 +91,13 @@ where
         // "]]" before a newline). Such a match is part of the previous
         // block's argument text, not a block of its own; substituting both
         // would corrupt the backwards range replacement below.
-        if let Some(previous) = ranges.last() {
-            if start < previous.end {
-                warn!(
-                    "Skipping include match inside the previous include block (start {start})"
-                );
-                continue;
-            }
+        if let Some(previous) = ranges.last()
+            && start < previous.end
+        {
+            warn!(
+                "Skipping include match inside the previous include block (start {start})"
+            );
+            continue;
         }
 
         match parse_include_block(input, start) {

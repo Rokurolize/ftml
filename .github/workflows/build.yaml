@@ -68,8 +68,8 @@ jobs:
           fail_ci_if_error: true
 
       - name: Test (exhaustive)
-        run: cd deepwell && cargo test --all-features -- --nocapture --ignored
-        if: github.ref == 'refs/head/main'
+        run: cargo test --all-features -- --nocapture --ignored
+        if: github.ref == 'refs/heads/main'
 
   wasm:
     name: WebASM

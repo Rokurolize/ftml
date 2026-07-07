@@ -274,7 +274,7 @@ def compare_block_data(block_conf, block_rules):
 
 
 def compare_module_data(module_conf, module_rules):
-    success = True
+    success = Container(True)
 
     # Check for new or removed modules
     module_conf_names = frozenset(module_conf.keys())
@@ -290,7 +290,7 @@ def compare_module_data(module_conf, module_rules):
             print(f"- {name}")
 
         print()
-        success = False
+        success.set(False)
 
     if deleted:
         print("!! Deleted modules !!")
@@ -299,7 +299,7 @@ def compare_module_data(module_conf, module_rules):
             print(f"- {name}")
 
         print()
-        success = False
+        success.set(False)
 
     # Check contents of each module
     print("Checking modules:")
@@ -318,12 +318,12 @@ def compare_module_data(module_conf, module_rules):
                 print(f"  Key {key}:")
                 print(f"    Code:   {format_check_value(rule[key])}")
                 print(f"    Config: {format_check_value(conf[key])}")
-                success = False
+                success.set(False)
 
         check("aliases")
 
     print()
-    return success
+    return success.get()
 
 
 # Check documentation files

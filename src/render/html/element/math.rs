@@ -24,6 +24,7 @@ use std::num::NonZeroUsize;
 
 cfg_if! {
     if #[cfg(feature = "mathml")] {
+        use crate::render::html::escape::escape;
         use latex2mathml::{latex_to_mathml, DisplayStyle};
     } else {
         /// Mocked version of the enum from `latex2mathml`.
@@ -114,7 +115,12 @@ fn render_latex(
                         Ok(mathml) => {
                             debug!("Processed LaTeX -> MathML");
 
-                            // Inject MathML elements
+                            // `latex2mathml` returns markup, but some text nodes are
+                            // formatted without escaping. Keep the generated MathML
+                            // structure while escaping text and rejecting unknown tags.
+                            let mathml = sanitize_mathml(&mathml);
+
+                            // Inject sanitized MathML elements
                             ctx.html()
                                 .element("wj-math-ml")
                                 .attr(attr!("class" => "wj-math-ml"))
@@ -133,6 +139,225 @@ fn render_latex(
                 }
             }
         });
+}
+
+#[cfg(feature = "mathml")]
+fn sanitize_mathml(mathml: &str) -> String {
+    let mut output = String::with_capacity(mathml.len());
+    let mut stack = Vec::new();
+    let mut offset = 0;
+
+    while let Some(relative_start) = mathml[offset..].find('<') {
+        let tag_start = offset + relative_start;
+        escape(&mut output, &mathml[offset..tag_start]);
+
+        let Some(relative_end) = mathml[tag_start..].find('>') else {
+            escape(&mut output, &mathml[tag_start..]);
+            return output;
+        };
+
+        let tag_end = tag_start + relative_end;
+        let raw_tag = &mathml[tag_start + 1..tag_end];
+
+        match parse_mathml_tag(raw_tag) {
+            Some(MathmlTag::Open {
+                name,
+                attributes,
+                self_closing,
+            }) => {
+                output.push('<');
+                output.push_str(name);
+                output.push_str(&attributes);
+
+                if self_closing {
+                    output.push_str("/>");
+                    offset = tag_end + 1;
+                    continue;
+                }
+
+                output.push('>');
+
+                if mathml_text_tag(name) {
+                    let close_tag = format!("</{name}>");
+                    let content_start = tag_end + 1;
+
+                    if let Some(relative_close) = mathml[content_start..].find(&close_tag)
+                    {
+                        let close_start = content_start + relative_close;
+                        escape(&mut output, &mathml[content_start..close_start]);
+                        output.push_str(&close_tag);
+                        offset = close_start + close_tag.len();
+                    } else {
+                        escape(&mut output, &mathml[content_start..]);
+                        return output;
+                    }
+                } else {
+                    stack.push(name);
+                    offset = tag_end + 1;
+                }
+            }
+            Some(MathmlTag::Close { name }) if stack.last().copied() == Some(name) => {
+                stack.pop();
+                output.push_str("</");
+                output.push_str(name);
+                output.push('>');
+                offset = tag_end + 1;
+            }
+            _ => {
+                escape(&mut output, &mathml[tag_start..=tag_end]);
+                offset = tag_end + 1;
+            }
+        }
+    }
+
+    escape(&mut output, &mathml[offset..]);
+    output
+}
+
+#[cfg(feature = "mathml")]
+enum MathmlTag {
+    Open {
+        name: &'static str,
+        attributes: String,
+        self_closing: bool,
+    },
+    Close {
+        name: &'static str,
+    },
+}
+
+#[cfg(feature = "mathml")]
+fn parse_mathml_tag(raw_tag: &str) -> Option<MathmlTag> {
+    let mut tag = raw_tag.trim();
+    if tag.is_empty() || tag.starts_with(['!', '?']) {
+        return None;
+    }
+
+    if let Some(name) = tag.strip_prefix('/') {
+        let name = name.trim();
+        if name.contains(char::is_whitespace) || name.ends_with('/') {
+            return None;
+        }
+
+        return Some(MathmlTag::Close {
+            name: known_mathml_tag(name)?,
+        });
+    }
+
+    let self_closing = tag.ends_with('/');
+    if self_closing {
+        tag = tag[..tag.len() - 1].trim_end();
+    }
+
+    let name_end = tag.find(|ch: char| ch.is_whitespace()).unwrap_or(tag.len());
+    let name = known_mathml_tag(&tag[..name_end])?;
+    let mut rest = &tag[name_end..];
+    let mut attributes = String::new();
+
+    while !rest.trim_start().is_empty() {
+        rest = rest.trim_start();
+
+        let key_end = rest
+            .find(|ch: char| ch == '=' || ch.is_whitespace())
+            .unwrap_or(rest.len());
+        if key_end == 0 {
+            return None;
+        }
+
+        let key = &rest[..key_end];
+        if !known_mathml_attribute(key) {
+            return None;
+        }
+
+        rest = rest[key_end..].trim_start();
+        if !rest.starts_with('=') {
+            return None;
+        }
+
+        rest = rest[1..].trim_start();
+        let (value, remaining) = parse_mathml_attribute_value(rest)?;
+        attributes.push(' ');
+        attributes.push_str(key);
+        attributes.push_str("=\"");
+        escape(&mut attributes, value);
+        attributes.push('"');
+        rest = remaining;
+    }
+
+    Some(MathmlTag::Open {
+        name,
+        attributes,
+        self_closing,
+    })
+}
+
+#[cfg(feature = "mathml")]
+fn parse_mathml_attribute_value(value: &str) -> Option<(&str, &str)> {
+    if let Some(quote) = value.chars().next().filter(|ch| *ch == '"' || *ch == '\'') {
+        let value_start = quote.len_utf8();
+        let close = value[value_start..].find(quote)?;
+        let value_end = value_start + close;
+        Some((
+            &value[value_start..value_end],
+            &value[value_end + quote.len_utf8()..],
+        ))
+    } else {
+        let value_end = value.find(char::is_whitespace).unwrap_or(value.len());
+        if value_end == 0 {
+            None
+        } else {
+            Some((&value[..value_end], &value[value_end..]))
+        }
+    }
+}
+
+#[cfg(feature = "mathml")]
+fn known_mathml_tag(tag: &str) -> Option<&'static str> {
+    match tag {
+        "math" => Some("math"),
+        "mi" => Some("mi"),
+        "mn" => Some("mn"),
+        "mo" => Some("mo"),
+        "mfrac" => Some("mfrac"),
+        "mroot" => Some("mroot"),
+        "mrow" => Some("mrow"),
+        "msqrt" => Some("msqrt"),
+        "mspace" => Some("mspace"),
+        "mstyle" => Some("mstyle"),
+        "msub" => Some("msub"),
+        "msubsup" => Some("msubsup"),
+        "msup" => Some("msup"),
+        "mtable" => Some("mtable"),
+        "mtd" => Some("mtd"),
+        "mtext" => Some("mtext"),
+        "mtr" => Some("mtr"),
+        "munder" => Some("munder"),
+        "munderover" => Some("munderover"),
+        "mover" => Some("mover"),
+        _ => None,
+    }
+}
+
+#[cfg(feature = "mathml")]
+fn known_mathml_attribute(attribute: &str) -> bool {
+    matches!(
+        attribute,
+        "accent"
+            | "columnalign"
+            | "display"
+            | "displaystyle"
+            | "form"
+            | "linethickness"
+            | "mathvariant"
+            | "stretchy"
+            | "width"
+            | "xmlns"
+    )
+}
+
+#[cfg(feature = "mathml")]
+fn mathml_text_tag(tag: &str) -> bool {
+    matches!(tag, "mi" | "mn" | "mo" | "mtext")
 }
 
 pub fn render_equation_reference(ctx: &mut HtmlContext, name: &str) {
@@ -159,4 +384,40 @@ pub fn render_equation_reference(ctx: &mut HtmlContext, name: &str) {
             ));
             // TODO tooltip contents
         });
+}
+
+#[cfg(all(test, feature = "mathml"))]
+mod tests {
+    use super::sanitize_mathml;
+
+    #[test]
+    fn mathml_sanitizer_preserves_generated_markup_and_escapes_text() {
+        let sanitized = sanitize_mathml(
+            r#"<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msup><mi>x</mi><mn>2</mn></msup><mo><</mo><mtext><script>x</script> & y</mtext></math>"#,
+        );
+
+        assert!(sanitized.contains(
+            r#"<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline">"#
+        ));
+        assert!(sanitized.contains("<msup><mi>x</mi><mn>2</mn></msup>"));
+        assert!(sanitized.contains("<mo>&lt;</mo>"));
+        assert!(
+            sanitized.contains("<mtext>&lt;script&gt;x&lt;/script&gt; &amp; y</mtext>")
+        );
+        assert!(!sanitized.contains("<script>"));
+    }
+
+    #[test]
+    fn mathml_sanitizer_rejects_unknown_tags_and_attributes() {
+        let sanitized = sanitize_mathml(
+            r#"<math display="inline" onclick="alert(1)"><mtext>safe</mtext><script>alert(1)</script></math>"#,
+        );
+
+        assert!(!sanitized.contains(r#"<math display="inline" onclick"#));
+        assert!(!sanitized.contains("<script>"));
+        assert!(sanitized.contains(
+            "&lt;math display=&quot;inline&quot; onclick=&quot;alert(1)&quot;&gt;"
+        ));
+        assert!(sanitized.contains("&lt;script&gt;alert(1)&lt;/script&gt;"));
+    }
 }

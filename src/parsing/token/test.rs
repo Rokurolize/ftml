@@ -308,4 +308,25 @@ fn tokens() {
             },
         ],
     );
+
+    test!(
+        "abc@example.com foo%bar@example.com",
+        vec![
+            ExtractedToken {
+                token: Token::Email,
+                slice: "abc@example.com",
+                span: 0..15,
+            },
+            ExtractedToken {
+                token: Token::Whitespace,
+                slice: " ",
+                span: 15..16,
+            },
+            ExtractedToken {
+                token: Token::Email,
+                slice: "foo%bar@example.com",
+                span: 16..35,
+            },
+        ],
+    );
 }

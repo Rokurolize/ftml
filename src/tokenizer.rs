@@ -73,6 +73,8 @@ pub fn tokenize(text: &str) -> Tokenization<'_> {
 mod test {
     use super::*;
     use proptest::prelude::*;
+    use std::sync::mpsc;
+    use std::time::Duration;
 
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(4096))]
@@ -82,5 +84,23 @@ mod test {
         fn tokenizer_prop(s in ".*") {
             let _ = tokenize(&s);
         }
+    }
+
+    #[test]
+    fn tokenizer_handles_long_punctuation_runs_without_email_scan_blowup() {
+        let input = "%".repeat(32_768);
+        let expected_tokens = input.len() + 2;
+        let (sender, receiver) = mpsc::channel();
+
+        std::thread::spawn(move || {
+            let tokenization = tokenize(&input);
+            let _ = sender.send(tokenization.tokens().len());
+        });
+
+        let token_count = receiver
+            .recv_timeout(Duration::from_secs(5))
+            .expect("tokenizing a punctuation-only run should stay bounded");
+
+        assert_eq!(token_count, expected_tokens);
     }
 }

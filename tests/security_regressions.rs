@@ -78,6 +78,17 @@ fn render_iframe_with_attributes(attributes: AttributeMap) -> String {
     render_html(&tree, Layout::Wikijump)
 }
 
+fn render_math_inline_source(latex_source: &'static str) -> String {
+    let tree = SyntaxTree {
+        elements: vec![Element::MathInline {
+            latex_source: Cow::Borrowed(latex_source),
+        }],
+        ..SyntaxTree::default()
+    };
+
+    render_html(&tree, Layout::Wikijump)
+}
+
 fn table_cell(text: &'static str) -> TableCell<'static> {
     TableCell {
         header: false,
@@ -154,6 +165,47 @@ fn unsafe_triple_url_scheme_is_not_rendered_into_href() {
         assert!(output.backlinks.internal_links.is_empty());
         assert!(output.backlinks.external_links.is_empty());
     }
+}
+
+#[test]
+fn mathml_text_payloads_are_escaped_without_disabling_mathml() {
+    let output = render_math_inline_source(r"\text{<script>alert(1)</script> & <>}");
+    let lower_output = output.to_ascii_lowercase();
+
+    assert!(!lower_output.contains("<script"));
+    assert!(output.contains("&lt;script&gt;alert(1)&lt;/script&gt;"));
+    assert!(output.contains("&amp;"));
+    assert!(output.contains("&lt;&gt;"));
+    assert!(output.contains("<wj-math-ml"));
+    assert!(output.contains("<math "));
+    assert!(output.contains("<mtext>"));
+}
+
+#[test]
+fn mathml_operators_and_parse_error_text_are_escaped() {
+    let output = render_math_inline_source(r"x < y & z");
+    let lower_output = output.to_ascii_lowercase();
+
+    assert!(!lower_output.contains("<script"));
+    assert!(output.contains("<math "));
+    assert!(output.contains("<mo>&lt;</mo>"));
+    assert!(output.contains("&amp;"));
+
+    let output = render_math_inline_source(r"2^{\pi - 1");
+
+    assert!(!output.contains("<script"));
+    assert!(output.contains("wj-error-inline") || output.contains("[PARSE ERROR:"));
+}
+
+#[test]
+fn benign_mathml_rendering_still_outputs_math_elements() {
+    let output = render_math_inline_source("x^2");
+
+    assert!(output.contains("<wj-math-ml"));
+    assert!(output.contains(
+        r#"<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline">"#
+    ));
+    assert!(output.contains("<msup><mi>x</mi><mn>2</mn></msup>"));
 }
 
 #[test]

@@ -42,3 +42,4 @@ jobs:
 
           # Scripts
           python scripts/check_conf.py
+          python -m unittest discover -s scripts -p '*_test.py'

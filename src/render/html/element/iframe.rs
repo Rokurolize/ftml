@@ -20,12 +20,14 @@
 
 use super::prelude::*;
 use crate::tree::AttributeMap;
+use crate::url::normalize_href;
 
 pub fn render_iframe(ctx: &mut HtmlContext, url: &str, attributes: &AttributeMap) {
     debug!("Rendering iframe block (url '{url}')");
+    let src = normalize_href(url, None);
 
     ctx.html().iframe().attr(attr!(
-        "src" => url,
+        "src" => &src,
         "crossorigin";;
         attributes
     ));
@@ -36,8 +38,10 @@ pub fn render_html(ctx: &mut HtmlContext, contents: &str, attributes: &Attribute
 
     // Submit HTML to be hosted on wjfiles, then get back its URL for the iframe.
     let iframe_url = ctx.handle().post_html(ctx.info(), contents);
+    let src = normalize_href(&iframe_url, None);
+
     ctx.html().iframe().attr(attr!(
-        "src" => &iframe_url,
+        "src" => &src,
         "crossorigin";;
         attributes
     ));

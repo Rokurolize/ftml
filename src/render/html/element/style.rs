@@ -72,8 +72,10 @@ where
     };
 
     debug!("Parsing input CSS ({} bytes)", input_css.len());
-    let stylesheet = StyleSheet::parse(input_css, parser_options)
-        .expect("Produced error with recovery enabled");
+    let stylesheet = handle_style_parse_result(
+        input_css,
+        StyleSheet::parse(input_css, parser_options),
+    )?;
 
     trace!("Rendering CSS into HTML (minify: {minify})");
     match print(&stylesheet, print_options) {
@@ -85,10 +87,28 @@ where
     }
 }
 
+fn handle_style_parse_result<T, E>(input_css: &str, result: Result<T, E>) -> Option<T>
+where
+    E: Debug,
+{
+    match result {
+        Ok(stylesheet) => Some(stylesheet),
+        Err(error) => {
+            log_css_parse_error(input_css, &error);
+            None
+        }
+    }
+}
+
 fn log_css_output_error(input_css: &str, stylesheet: &impl Debug, error: &str) {
     error!("Problem outputting CSS from stylesheet: {error}");
     trace!("Input CSS:\n{input_css}");
     trace!("Parsed stylesheet:\n{stylesheet:#?}");
+}
+
+fn log_css_parse_error(input_css: &str, error: &impl Debug) {
+    error!("Problem parsing CSS stylesheet: {error:?}");
+    trace!("Input CSS:\n{input_css}");
 }
 
 #[cfg(test)]
@@ -115,6 +135,11 @@ mod tests {
             |_stylesheet, _print_options| Err("synthetic printer failure".to_owned()),
         );
         assert!(css.is_none());
+
+        assert_eq!(
+            handle_style_parse_result("bad css", Err::<(), _>("synthetic parse failure")),
+            None,
+        );
 
         assert_eq!(
             escape_style_end_tags(r#"a { content: "</StYlE><script>" }"#),

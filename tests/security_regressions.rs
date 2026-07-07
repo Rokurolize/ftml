@@ -66,10 +66,13 @@ fn render_text(tree: &SyntaxTree, layout: Layout) -> String {
     TextRender.render(tree, &page_info, &settings)
 }
 
-fn render_iframe_with_attributes(attributes: AttributeMap) -> String {
+fn render_iframe_with_url_and_attributes(
+    url: &'static str,
+    attributes: AttributeMap,
+) -> String {
     let tree = SyntaxTree {
         elements: vec![Element::Iframe {
-            url: Cow::Borrowed("https://example.com/embed"),
+            url: Cow::Borrowed(url),
             attributes,
         }],
         ..SyntaxTree::default()
@@ -87,6 +90,10 @@ fn render_math_inline_source(latex_source: &'static str) -> String {
     };
 
     render_html(&tree, Layout::Wikijump)
+}
+
+fn render_iframe_with_attributes(attributes: AttributeMap) -> String {
+    render_iframe_with_url_and_attributes("https://example.com/embed", attributes)
 }
 
 fn table_cell(text: &'static str) -> TableCell<'static> {
@@ -206,6 +213,20 @@ fn benign_mathml_rendering_still_outputs_math_elements() {
         r#"<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline">"#
     ));
     assert!(output.contains("<msup><mi>x</mi><mn>2</mn></msup>"));
+}
+
+#[test]
+fn unsafe_iframe_src_scheme_is_not_rendered() {
+    for url in [
+        "javascript:alert(1)",
+        " JaVaScRiPt:alert(1)",
+        "\tjavascript:alert(1)",
+    ] {
+        let output = render_iframe_with_url_and_attributes(url, AttributeMap::new());
+
+        assert!(!output.to_ascii_lowercase().contains("javascript:"));
+        assert!(output.contains(r##"src="#invalid-url""##));
+    }
 }
 
 #[test]

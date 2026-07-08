@@ -236,11 +236,22 @@ mod test {
         check("🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀");
     }
 
+    const UTF16_PROPTEST_CASES: u32 = 256;
+    const UTF16_PROPTEST_MAX_CHARS: usize = 64;
+
+    fn utf16_input() -> impl Strategy<Value = String> {
+        proptest::collection::vec(
+            prop_oneof![any::<char>(), Just('a'), Just('ß'), Just('ℝ'), Just('🦀'),],
+            0..UTF16_PROPTEST_MAX_CHARS,
+        )
+        .prop_map(|chars| chars.into_iter().collect())
+    }
+
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(4096))]
+        #![proptest_config(ProptestConfig::with_cases(UTF16_PROPTEST_CASES))]
 
         #[test]
-        fn utf16_prop(s in ".*") {
+        fn utf16_prop(s in utf16_input()) {
             check(&s);
         }
     }

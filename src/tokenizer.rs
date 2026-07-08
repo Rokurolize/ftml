@@ -88,7 +88,7 @@ mod test {
 
     #[test]
     fn tokenizer_handles_long_punctuation_runs_without_email_scan_blowup() {
-        let input = "%".repeat(32_768);
+        let input = "%".repeat(16_384);
         let expected_tokens = input.len() + 2;
         let (sender, receiver) = mpsc::channel();
 

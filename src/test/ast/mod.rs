@@ -171,6 +171,13 @@ pub struct TestUniverse {
     pub tests: BTreeMap<String, Test>,
 }
 
+static TEST_UNIVERSE: LazyLock<TestUniverse> =
+    LazyLock::new(|| TestUniverse::load(&TEST_DIRECTORY));
+
+fn test_universe() -> &'static TestUniverse {
+    &TEST_UNIVERSE
+}
+
 // Environment flags
 
 fn env_update_tests() -> bool {
@@ -212,7 +219,7 @@ fn ast() {
     }
 
     // Load all tests
-    let tests = TestUniverse::load(&TEST_DIRECTORY);
+    let tests = test_universe();
 
     // Warn if any tests are being skipped
     #[allow(clippy::const_is_empty)]
@@ -255,7 +262,7 @@ fn ast() {
 
 #[test]
 fn ast_elements_exercise_surface_helpers() {
-    let tests = TestUniverse::load(&TEST_DIRECTORY);
+    let tests = test_universe();
     let mut element_count = 0;
 
     for test in tests.tests.values() {

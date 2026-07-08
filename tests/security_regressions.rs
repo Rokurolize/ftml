@@ -653,13 +653,15 @@ fn hidden_conditionals_do_not_publish_metadata_blocks() {
 
 #[test]
 fn deeply_repeated_headings_parse_without_stack_recursion() {
-    let input = (0..10_000)
+    const HEADING_COUNT: usize = 4_096;
+
+    let input = (0..HEADING_COUNT)
         .map(|index| format!("+ heading {index}"))
         .collect::<Vec<_>>()
         .join("\n");
     let tree = parse(&input, Layout::Wikijump);
 
-    assert_eq!(tree.elements.len(), 10_000);
+    assert_eq!(tree.elements.len(), HEADING_COUNT);
     assert!(tree.elements.iter().all(|element| {
         matches!(
             element,

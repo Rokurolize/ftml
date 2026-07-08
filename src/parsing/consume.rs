@@ -151,12 +151,6 @@ fn try_consume_leaf_token<'r, 't>(
 /// It will use the fallback if all rules, fail, so the only failure case is if
 /// the end of the input is reached.
 pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!(
-        "Running consume attempt (token {}, slice {:?})",
-        parser.current().token.name(),
-        parser.current().slice,
-    );
-
     // Incrementing recursion depth
     // Will fail if we're too many layers in
     parser.depth_increment()?;
@@ -176,19 +170,14 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
         return ok!(elements);
     }
 
-    trace!("Looking for valid rules");
     let mut all_errors = Vec::new();
     let current = parser.current();
 
     for &rule in get_rules_for_token(current) {
-        trace!("Trying rule consumption for tokens (rule {})", rule.name());
-
         let old_remaining = parser.remaining();
         let footnote_count = parser.footnote_count();
         match rule.try_consume(parser) {
             Ok(output) => {
-                debug!("Rule {} matched, returning generated result", rule.name());
-
                 // If the pointer hasn't moved, we step one token.
                 if parser.same_pointer(old_remaining) {
                     parser.step()?;

@@ -52,11 +52,6 @@ impl<'t> ParagraphStack<'t> {
 
     #[inline]
     pub fn push_element(&mut self, element: Element<'t>, paragraph_safe: bool) {
-        debug!(
-            "Pushing {} (paragraph safe: {paragraph_safe}",
-            element.name(),
-        );
-
         if paragraph_safe {
             // Add it to the current (or new) paragraph. Nothing special.
             self.current.push(element);

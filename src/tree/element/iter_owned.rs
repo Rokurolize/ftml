@@ -77,7 +77,15 @@ impl<'t> Iterator for OwnedElementsIterator<'t> {
             self.multiple.next()
         }
     }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let len = usize::from(self.single.is_some()) + self.multiple.len();
+        (len, Some(len))
+    }
 }
+
+impl ExactSizeIterator for OwnedElementsIterator<'_> {}
 
 #[test]
 fn iter() {
@@ -113,4 +121,21 @@ fn iter() {
         Elements::Multiple(vec![text!("a"), text!("b"), text!("c")]),
         vec![text!("a"), text!("b"), text!("c")],
     );
+}
+
+#[test]
+fn owned_iterator_reports_exact_remaining_len() {
+    let mut elements = Elements::Single(text!("a")).into_iter();
+    assert_eq!(elements.size_hint(), (1, Some(1)));
+    assert_eq!(elements.len(), 1);
+    assert_eq!(elements.next(), Some(text!("a")));
+    assert_eq!(elements.size_hint(), (0, Some(0)));
+    assert_eq!(elements.len(), 0);
+
+    let mut elements = Elements::Multiple(vec![text!("a"), text!("b")]).into_iter();
+    assert_eq!(elements.size_hint(), (2, Some(2)));
+    assert_eq!(elements.len(), 2);
+    assert_eq!(elements.next(), Some(text!("a")));
+    assert_eq!(elements.size_hint(), (1, Some(1)));
+    assert_eq!(elements.len(), 1);
 }

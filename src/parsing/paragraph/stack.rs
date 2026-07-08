@@ -63,6 +63,22 @@ impl<'t> ParagraphStack<'t> {
         }
     }
 
+    pub fn push_paragraph_safe_elements(&mut self, mut elements: Vec<Element<'t>>) {
+        if self.current.is_empty() {
+            if let Some(index) = elements
+                .iter()
+                .position(|element| *element != Element::LineBreak)
+            {
+                if index != 0 {
+                    elements.drain(..index);
+                }
+                self.current = elements;
+            }
+        } else {
+            self.current.append(&mut elements);
+        }
+    }
+
     #[inline]
     pub fn push_errors(&mut self, errors: &mut Vec<ParseError>) {
         self.errors.append(errors);
@@ -178,6 +194,48 @@ mod tests {
         assert_eq!(
             stack.into_elements(),
             vec![paragraph(vec![text!("alpha")]), Element::HorizontalRule],
+        );
+    }
+
+    #[test]
+    fn paragraph_safe_elements_adopt_vectors_and_skip_empty_leading_breaks() {
+        let mut stack = ParagraphStack::new();
+
+        stack.push_paragraph_safe_elements(vec![
+            Element::LineBreak,
+            text!("alpha"),
+            Element::LineBreak,
+        ]);
+
+        assert_eq!(
+            stack.into_elements(),
+            vec![paragraph(vec![text!("alpha"), Element::LineBreak])],
+        );
+    }
+
+    #[test]
+    fn paragraph_safe_elements_ignore_all_leading_breaks() {
+        let mut stack = ParagraphStack::new();
+
+        stack.push_paragraph_safe_elements(vec![Element::LineBreak, Element::LineBreak]);
+
+        assert_eq!(stack.into_elements(), Vec::<Element>::new());
+    }
+
+    #[test]
+    fn paragraph_safe_elements_append_to_existing_paragraph() {
+        let mut stack = ParagraphStack::new();
+
+        stack.push_element(text!("alpha"), true);
+        stack.push_paragraph_safe_elements(vec![Element::LineBreak, text!("beta")]);
+
+        assert_eq!(
+            stack.into_elements(),
+            vec![paragraph(vec![
+                text!("alpha"),
+                Element::LineBreak,
+                text!("beta"),
+            ])],
         );
     }
 }

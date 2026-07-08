@@ -18,24 +18,30 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-pub fn escape_char(c: char) -> Option<&'static str> {
-    match c {
-        '>' => Some("&gt;"),
-        '<' => Some("&lt;"),
-        '&' => Some("&amp;"),
-        '\'' => Some("&#39;"),
-        '\"' => Some("&quot;"),
-        '\0' => Some(" "), // convert NULL chars to spaces
-        _ => None,
-    }
-}
-
 pub fn escape(buffer: &mut String, s: &str) {
-    for ch in s.chars() {
-        match escape_char(ch) {
-            Some(s) => buffer.push_str(s),
-            None => buffer.push(ch),
+    let mut start = 0;
+
+    for (index, byte) in s.bytes().enumerate() {
+        let escaped = match byte {
+            b'>' => "&gt;",
+            b'<' => "&lt;",
+            b'&' => "&amp;",
+            b'\'' => "&#39;",
+            b'"' => "&quot;",
+            b'\0' => " ",
+            _ => continue,
+        };
+
+        if start < index {
+            buffer.push_str(&s[start..index]);
         }
+
+        buffer.push_str(escaped);
+        start = index + 1;
+    }
+
+    if start < s.len() {
+        buffer.push_str(&s[start..]);
     }
 }
 
@@ -62,4 +68,5 @@ fn test() {
         "S &amp; C Plastic&#39;s location",
     );
     test!("null\0byte", "null byte");
+    test!("日本語 < α & β", "日本語 &lt; α &amp; β");
 }

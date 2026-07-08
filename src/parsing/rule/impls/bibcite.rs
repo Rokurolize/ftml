@@ -96,6 +96,23 @@ mod tests {
     }
 
     #[test]
+    fn inline_bibcite_rejects_wrong_opening_token() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("))");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("right parentheses should follow input start");
+        parser.set_rule(RULE_BIBCITE);
+
+        let error = RULE_BIBCITE
+            .try_consume(&mut parser)
+            .expect_err("wrong opening token should fail");
+        assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+    }
+
+    #[test]
     fn inline_bibcite_rejects_wrong_identifier() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);

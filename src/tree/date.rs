@@ -651,6 +651,27 @@ fn date_format_rejects_trailing_percent_and_padding_modifier() {
 }
 
 #[test]
+fn date_format_limits_reject_expensive_inputs_before_rendering() {
+    let date = DateItem::from(time::macros::datetime!(2010-01-01 08:10:00 +00:00));
+    let too_long = "x".repeat(MAX_DATE_FORMAT_BYTES + 1);
+    let too_many_directives = "%c".repeat(MAX_DATE_FORMAT_DIRECTIVES + 1);
+
+    assert!(!date_format_within_limits(&too_long));
+    assert!(!date_format_within_limits(&too_many_directives));
+    assert!(date_format_within_limits("%"));
+    assert!(date_format_within_limits("%_d %-m %0H"));
+
+    for format in [too_long.as_str(), too_many_directives.as_str()] {
+        let error = date.format(Some(format), "en").unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
+        assert_eq!(
+            error.to_string(),
+            "strftime format string exceeds supported limits",
+        );
+    }
+}
+
+#[test]
 fn date_format_falls_back_to_default() {
     let date = DateItem::from(time::macros::datetime!(2010-01-01 08:10:00 +00:00));
 

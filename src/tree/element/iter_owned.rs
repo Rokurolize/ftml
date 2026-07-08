@@ -25,31 +25,45 @@ impl<'t> IntoIterator for Elements<'t> {
     type IntoIter = OwnedElementsIterator<'t>;
 
     fn into_iter(self) -> Self::IntoIter {
-        // Collect items into a Vec for iteration.
-        //
-        // We reverse it so that each .pop() yields
-        // the next item during iteration.
-        //
-        // See commit 13058b8e7f89b0 for why we are not using
-        // an enum with variants for each case.
-        let elements = match self {
-            Elements::None => vec![],
-            Elements::Single(element) => vec![element],
-            Elements::Multiple(mut elements) => {
-                // So we can just pop for each step
-                elements.reverse();
-                elements
-            }
-        };
-
-        OwnedElementsIterator { elements }
+        match self {
+            Elements::None => OwnedElementsIterator::empty(),
+            Elements::Single(element) => OwnedElementsIterator::single(element),
+            Elements::Multiple(elements) => OwnedElementsIterator::multiple(elements),
+        }
     }
 }
 
 /// Owned iterator implementation for `Elements`.
 #[derive(Debug)]
 pub struct OwnedElementsIterator<'t> {
-    elements: Vec<Element<'t>>,
+    single: Option<Element<'t>>,
+    multiple: std::vec::IntoIter<Element<'t>>,
+}
+
+impl<'t> OwnedElementsIterator<'t> {
+    #[inline]
+    fn empty() -> Self {
+        OwnedElementsIterator {
+            single: None,
+            multiple: Vec::new().into_iter(),
+        }
+    }
+
+    #[inline]
+    fn single(element: Element<'t>) -> Self {
+        OwnedElementsIterator {
+            single: Some(element),
+            multiple: Vec::new().into_iter(),
+        }
+    }
+
+    #[inline]
+    fn multiple(elements: Vec<Element<'t>>) -> Self {
+        OwnedElementsIterator {
+            single: None,
+            multiple: elements.into_iter(),
+        }
+    }
 }
 
 impl<'t> Iterator for OwnedElementsIterator<'t> {
@@ -57,7 +71,11 @@ impl<'t> Iterator for OwnedElementsIterator<'t> {
 
     #[inline]
     fn next(&mut self) -> Option<Element<'t>> {
-        self.elements.pop()
+        if let Some(element) = self.single.take() {
+            Some(element)
+        } else {
+            self.multiple.next()
+        }
     }
 }
 

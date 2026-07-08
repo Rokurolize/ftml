@@ -141,12 +141,26 @@ fn push_elements<'t>(
     elements: Elements<'t>,
     paragraph_safe: bool,
 ) {
-    stack.reserve_elements(elements.len());
+    match elements {
+        Elements::None => {}
+        Elements::Single(element) => push_element(stack, element, paragraph_safe),
+        Elements::Multiple(elements) => {
+            stack.reserve_elements(elements.len());
 
-    for element in elements {
-        // Don't add a line break if the paragraph is otherwise empty
-        if !(stack.current_empty() && element == Element::LineBreak) {
-            stack.push_element(element, paragraph_safe);
+            for element in elements {
+                push_element(stack, element, paragraph_safe);
+            }
         }
+    }
+}
+
+fn push_element<'t>(
+    stack: &mut ParagraphStack<'t>,
+    element: Element<'t>,
+    paragraph_safe: bool,
+) {
+    // Don't add a line break if the paragraph is otherwise empty
+    if !(stack.current_empty() && element == Element::LineBreak) {
+        stack.push_element(element, paragraph_safe);
     }
 }

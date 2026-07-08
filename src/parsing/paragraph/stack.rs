@@ -52,8 +52,10 @@ impl<'t> ParagraphStack<'t> {
 
     #[inline]
     pub fn push_element(&mut self, element: Element<'t>, paragraph_safe: bool) {
-        let element_name = element.name();
-        debug!("Pushing {element_name} (paragraph safe: {paragraph_safe}");
+        debug!(
+            "Pushing {} (paragraph safe: {paragraph_safe}",
+            element.name(),
+        );
 
         if paragraph_safe {
             // Add it to the current (or new) paragraph. Nothing special.
@@ -90,8 +92,10 @@ impl<'t> ParagraphStack<'t> {
 
     /// Creates a paragraph element out of this instance's current elements.
     pub fn build_paragraph(&mut self) -> Option<Element<'t>> {
-        let current_len = self.current.len();
-        trace!("Building paragraph from current stack state (length {current_len})");
+        trace!(
+            "Building paragraph from current stack state (length {})",
+            self.current.len(),
+        );
 
         // Don't create empty paragraphs
         if self.current.is_empty() {

@@ -71,9 +71,11 @@ fn parse_fn<'r, 't>(
     let body = parser.get_body_elements(&BLOCK_IFCATEGORY, false)?;
     let (elements, errors, paragraph_safe) = body.into();
 
-    let condition_count = conditions.len();
-    let element_count = elements.len();
-    trace!("IfCategory parsed {condition_count} conditions and {element_count} elements");
+    trace!(
+        "IfCategory parsed {} conditions and {} elements",
+        conditions.len(),
+        elements.len(),
+    );
 
     // Return elements based on condition
     let elements = if check_ifcategory(parser.page_info(), &conditions) {

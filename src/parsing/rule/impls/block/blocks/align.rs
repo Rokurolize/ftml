@@ -64,8 +64,10 @@ pub fn parse_alignment_block<'r, 't>(
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     let block_name = block_rule.name;
-    let alignment_name = alignment.name();
-    debug!("Parsing align block {name}/{block_name}/{alignment_name}, in-head {in_head}");
+    debug!(
+        "Parsing align block {name}/{block_name}/{}, in-head {in_head}",
+        alignment.name(),
+    );
     assert!(!flag_star, "Alignment block doesn't allow star flag");
     assert!(!flag_score, "Alignment block doesn't allow score flag");
     assert_block_name(block_rule, name);

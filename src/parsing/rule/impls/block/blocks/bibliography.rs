@@ -76,8 +76,10 @@ fn parse_fn<'r, 't>(
 
             // Other elements
             _ => {
-                let element_name = element.name();
-                warn!("Non-definition element in bibliography block: {element_name}");
+                warn!(
+                    "Non-definition element in bibliography block: {}",
+                    element.name(),
+                );
 
                 let kind = ParseErrorKind::BibliographyContainsNonDefinitionList;
                 return Err(parser.make_err(kind));

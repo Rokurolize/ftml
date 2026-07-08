@@ -371,34 +371,39 @@ impl<'r, 't> Parser<'r, 't> {
 
     // State evaluation
     pub fn evaluate(&self, condition: ParseCondition) -> bool {
-        let token_name = self.current.token.name();
-        let current_slice = self.current.slice;
-        let span_start = self.current.span.start;
-        let span_end = self.current.span.end;
-        debug!("Eval condition {token_name} '{current_slice}' {span_start}..{span_end}");
+        debug!(
+            "Eval condition {} '{}' {}..{}",
+            self.current.token.name(),
+            self.current.slice,
+            self.current.span.start,
+            self.current.span.end,
+        );
 
         match condition {
             ParseCondition::CurrentToken(token) => self.current.token == token,
             ParseCondition::TokenPair(current, next) => {
                 if self.current().token != current {
-                    let expected = current.name();
-                    let actual = self.current().token.name();
-                    trace!("Token pair current mismatch ({expected}!={actual})");
+                    trace!(
+                        "Token pair current mismatch ({}!={})",
+                        current.name(),
+                        self.current().token.name(),
+                    );
                     return false;
                 }
 
                 match self.look_ahead(0) {
                     Some(actual) => {
                         if actual.token != next {
-                            let expected = next.name();
-                            let actual = actual.token.name();
-                            trace!("Token pair next mismatch ({expected}!={actual})");
+                            trace!(
+                                "Token pair next mismatch ({}!={})",
+                                next.name(),
+                                actual.token.name(),
+                            );
                             return false;
                         }
                     }
                     None => {
-                        let expected = next.name();
-                        trace!("Token pair next missing ({expected})");
+                        trace!("Token pair next missing ({})", next.name());
                         return false;
                     }
                 }
@@ -410,8 +415,7 @@ impl<'r, 't> Parser<'r, 't> {
 
     #[inline]
     pub fn evaluate_any(&self, conditions: &[ParseCondition]) -> bool {
-        let condition_count = conditions.len();
-        debug!("Evaluating parser conditions (count {condition_count})");
+        debug!("Evaluating parser conditions (count {})", conditions.len());
 
         conditions.iter().any(|&condition| self.evaluate(condition))
     }

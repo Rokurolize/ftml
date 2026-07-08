@@ -61,9 +61,11 @@ fn parse_fn<'r, 't>(
     let body = parser.get_body_elements(&BLOCK_IFTAGS, false)?;
     let (elements, errors, paragraph_safe) = body.into();
 
-    let condition_count = conditions.len();
-    let element_count = elements.len();
-    trace!("IfTags parsed {condition_count} conditions and {element_count} elements");
+    trace!(
+        "IfTags parsed {} conditions and {} elements",
+        conditions.len(),
+        elements.len(),
+    );
 
     // Return elements based on condition
     let elements = if check_iftags(parser.page_info(), &conditions) {

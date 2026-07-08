@@ -21,6 +21,9 @@
 #[cfg(test)]
 mod test;
 
+mod scanner;
+
+#[cfg(test)]
 mod lexer {
     // Since pest generates some code that clippy doesn't like
     #![allow(clippy::upper_case_acronyms, clippy::empty_docs)]
@@ -31,10 +34,14 @@ mod lexer {
     pub struct TokenLexer;
 }
 
+#[cfg(test)]
 use self::lexer::*;
 use crate::utf16::Utf16IndexMap;
+#[cfg(test)]
 use pest::Parser;
+#[cfg(test)]
 use pest::iterators::{Pair, Pairs};
+#[cfg(test)]
 use std::fmt::Display;
 use std::ops::Range;
 use strum_macros::IntoStaticStr;
@@ -178,10 +185,16 @@ impl Token {
     pub(crate) fn extract_all(text: &str) -> Vec<ExtractedToken<'_>> {
         debug!("Running lexer on input");
 
+        scanner::extract_all(text)
+    }
+
+    #[cfg(test)]
+    fn extract_all_pest(text: &str) -> Vec<ExtractedToken<'_>> {
         Self::extract_tokens_from_pairs(text, TokenLexer::parse(Rule::document, text))
     }
 
     /// Converts lexer pairs into extracted tokens, or fallback tokens on lexer error.
+    #[cfg(test)]
     fn extract_tokens_from_pairs<'a>(
         text: &'a str,
         result: Result<Pairs<'a, Rule>, impl Display>,
@@ -206,6 +219,7 @@ impl Token {
     }
 
     /// Converts a single [`Pair`] from pest into its corresponding [`ExtractedToken`].
+    #[cfg(test)]
     fn convert_pair(pair: Pair<Rule>) -> ExtractedToken {
         // Extract values from the Pair
         let rule = pair.as_rule();
@@ -222,6 +236,7 @@ impl Token {
     }
 
     /// Maps each pest [`Rule`] to its corresponding [`Token`].
+    #[cfg(test)]
     fn get_from_rule(rule: Rule) -> Token {
         match rule {
             // Symbols
@@ -313,6 +328,7 @@ impl Token {
     }
 }
 
+#[cfg(test)]
 fn lexer_error_tokens<'a>(text: &'a str, error: impl Display) -> Vec<ExtractedToken<'a>> {
     error!("Error while lexing input in pest: {error}");
     let token = ExtractedToken {

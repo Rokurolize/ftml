@@ -20,6 +20,9 @@
 
 use super::*;
 use crate::utf16::Utf16IndexMap;
+use proptest::prelude::*;
+use std::fs;
+use std::path::Path;
 
 #[test]
 fn extracted_token_to_utf16_indices_converts_span() {
@@ -44,6 +47,84 @@ fn token_names_match_variant_names() {
     assert_eq!(Token::LeftBracketStar.name(), "LeftBracketStar");
     assert_eq!(Token::ParagraphBreak.name(), "ParagraphBreak");
     assert_eq!(Token::InputEnd.name(), "InputEnd");
+}
+
+fn assert_fast_tokens_match_pest(input: &str) {
+    let fast = Token::extract_all(input);
+    let pest = Token::extract_all_pest(input);
+    assert_eq!(
+        fast, pest,
+        "fast tokenizer differed from pest for {input:?}"
+    );
+}
+
+#[test]
+fn fast_tokenizer_matches_pest_on_adversarial_inputs() {
+    for input in [
+        "",
+        "\n",
+        "\r",
+        "\r\n",
+        "\n\n",
+        "\r\n\r\n",
+        "[[[[quadLinkTest]]]]",
+        "[[[*user]]] [[[* user]]]",
+        "[[include component:start]] {$title} [[/include]]",
+        "abc@example.com foo%bar@example.com",
+        "http://example.com/a|b https://example.com/[x]",
+        "ftp://example.com/path \"quoted\"",
+        "+* heading\n+** not-starred\n+++++++ seven",
+        "* item\n**bold**\n# item\n##color##",
+        "~~~<\n~~~>\n~~~~\n~~\n~",
+        "--- -- --] ---]",
+        "@@ @< >@ [!-- comment --]",
+        "\\\" \\\\ \\x",
+        "雪 & 火",
+    ] {
+        assert_fast_tokens_match_pest(input);
+    }
+}
+
+#[test]
+fn fast_tokenizer_matches_pest_on_fixture_inputs() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("test");
+    let mut inputs = Vec::new();
+    collect_fixture_inputs(&root, &mut inputs);
+    inputs.sort();
+
+    for path in inputs {
+        let input = fs::read_to_string(&path).expect("fixture input should be readable");
+        let fast = Token::extract_all(&input);
+        let pest = Token::extract_all_pest(&input);
+        assert_eq!(
+            fast,
+            pest,
+            "fast tokenizer differed from pest for fixture {}",
+            path.display(),
+        );
+    }
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(512))]
+
+    #[test]
+    fn fast_tokenizer_matches_pest_for_short_random_inputs(input in ".{0,128}") {
+        assert_fast_tokens_match_pest(&input);
+    }
+}
+
+fn collect_fixture_inputs(path: &Path, inputs: &mut Vec<std::path::PathBuf>) {
+    for entry in fs::read_dir(path).expect("fixture directory should be readable") {
+        let entry = entry.expect("fixture directory entry should be readable");
+        let path = entry.path();
+
+        if path.is_dir() {
+            collect_fixture_inputs(&path, inputs);
+        } else if path.file_name().is_some_and(|name| name == "input.ftml") {
+            inputs.push(path);
+        }
+    }
 }
 
 #[test]

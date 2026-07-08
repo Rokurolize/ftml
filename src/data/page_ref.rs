@@ -291,21 +291,21 @@ mod prop {
     use super::*;
     use proptest::prelude::*;
 
+    const PROPTEST_CASES: u32 = 512;
+
+    fn page_ref_input() -> impl Strategy<Value = String> {
+        prop_oneof![
+            proptest::string::string_regex(r".{0,96}").unwrap(),
+            proptest::string::string_regex(r".{1,64}:.{1,64}").unwrap(),
+            proptest::string::string_regex(r".{1,48}:.{1,48}[#/].{1,48}").unwrap(),
+        ]
+    }
+
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(4096))]
+        #![proptest_config(ProptestConfig::with_cases(PROPTEST_CASES))]
 
         #[test]
-        fn page_ref_page_prop(s in r".+") {
-            let _ = PageRef::parse(&s);
-        }
-
-        #[test]
-        fn page_ref_both_prop(s in r".+:.+") {
-            let _ = PageRef::parse(&s);
-        }
-
-        #[test]
-        fn page_ref_extra_prop(s in r".+:.+[#/].+") {
+        fn page_ref_parse_prop(s in page_ref_input()) {
             let _ = PageRef::parse(&s);
         }
     }

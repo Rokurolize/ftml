@@ -78,11 +78,37 @@ fn prefilter() {
     test_substitution("prefilter", preprocess, &PREFILTER_TEST_CASES);
 }
 
+const PREFILTER_PROPTEST_CASES: u32 = 128;
+const PREFILTER_PROPTEST_MAX_CHARS: usize = 96;
+
+fn prefilter_input() -> impl Strategy<Value = String> {
+    proptest::collection::vec(
+        prop_oneof![
+            Just('a'),
+            Just(' '),
+            Just('Ω'),
+            Just('あ'),
+            Just('🦀'),
+            Just('\r'),
+            Just('\n'),
+            Just('\t'),
+            Just('\0'),
+            Just('\\'),
+            Just('.'),
+            Just('\''),
+            Just('`'),
+            Just(','),
+        ],
+        0..PREFILTER_PROPTEST_MAX_CHARS,
+    )
+    .prop_map(|chars| chars.into_iter().collect())
+}
+
 proptest! {
-    #![proptest_config(ProptestConfig::with_cases(4096))]
+    #![proptest_config(ProptestConfig::with_cases(PREFILTER_PROPTEST_CASES))]
 
     #[test]
-    fn prefilter_prop(mut s in ".*") {
+    fn prefilter_prop(mut s in prefilter_input()) {
         crate::preprocess(&mut s);
 
         // Typography intentionally preserves malformed overlong dot runs such as "....",

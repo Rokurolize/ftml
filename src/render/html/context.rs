@@ -45,6 +45,7 @@ where
 {
     body: String,
     meta: Vec<HtmlMeta>,
+    styles: Vec<String>,
     backlinks: Backlinks<'static>,
     info: &'i PageInfo<'i>,
     handle: &'h Handle,
@@ -100,6 +101,7 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
         HtmlContext {
             body: String::with_capacity(capacity),
             meta: Self::initial_metadata(info, settings.layout),
+            styles: Vec::new(),
             backlinks: Backlinks::new(),
             info,
             handle,
@@ -345,6 +347,11 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     pub fn html(&mut self) -> HtmlBuilder<'_, 'i, 'h, 'e, 't> {
         HtmlBuilder::new(self)
     }
+
+    #[inline]
+    pub fn add_style(&mut self, css: String) {
+        self.styles.push(css);
+    }
 }
 
 impl<'i, 'h, 'e, 't> From<HtmlContext<'i, 'h, 'e, 't>> for HtmlOutput {
@@ -353,6 +360,7 @@ impl<'i, 'h, 'e, 't> From<HtmlContext<'i, 'h, 'e, 't>> for HtmlOutput {
         HtmlOutput {
             body: ctx.body,
             meta: ctx.meta,
+            styles: ctx.styles,
             backlinks: ctx.backlinks,
         }
     }
@@ -407,6 +415,7 @@ mod tests {
         assert_eq!(output.backlinks.included_pages, vec![page_ref]);
         assert!(output.backlinks.internal_links.is_empty());
         assert!(output.backlinks.external_links.is_empty());
+        assert!(output.styles.is_empty());
     }
 
     #[test]
@@ -451,6 +460,7 @@ mod tests {
             ],
         );
         assert!(output.backlinks.included_pages.is_empty());
+        assert!(output.styles.is_empty());
     }
 
     #[test]
@@ -522,8 +532,10 @@ mod tests {
         ctx.push_raw('!');
         ctx.push_raw_str(" ");
         ctx.push_escaped("<tag>");
+        ctx.add_style(".collected{color:red}".to_owned());
 
         let output = HtmlOutput::from(ctx);
         assert_eq!(output.body, "raw! &lt;tag&gt;");
+        assert_eq!(output.styles, vec![".collected{color:red}".to_owned()]);
     }
 }

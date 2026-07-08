@@ -57,6 +57,11 @@ impl HtmlOutput {
     }
 
     #[wasm_bindgen]
+    pub fn styles(&self) -> Result<JsValue, JsValue> {
+        rust_to_js!(self.inner.styles)
+    }
+
+    #[wasm_bindgen]
     pub fn backlinks(&self) -> Result<JsValue, JsValue> {
         rust_to_js!(self.inner.backlinks)
     }

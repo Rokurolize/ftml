@@ -22,7 +22,7 @@ use crate::data::PageInfo;
 use crate::layout::Layout;
 use crate::parsing::ParseErrorKind;
 use crate::settings::{WikitextMode, WikitextSettings};
-use crate::tree::{ContainerType, Element, TableType};
+use crate::tree::{Alignment, ContainerType, Element, TableType};
 
 #[derive(Debug)]
 struct TestLogger;
@@ -52,6 +52,19 @@ fn assert_single_text(elements: &[Element<'_>], expected: &str) {
         [Element::Text(actual)] => assert_eq!(actual, expected),
         _ => panic!("expected one text element, got {elements:?}"),
     }
+}
+
+fn assert_text_content(elements: &[Element<'_>], expected: &str) {
+    let mut actual = String::new();
+
+    for element in elements {
+        match element {
+            Element::Text(text) => actual.push_str(text),
+            _ => panic!("expected text-only elements, got {elements:?}"),
+        }
+    }
+
+    assert_eq!(actual, expected);
 }
 
 #[test]
@@ -169,4 +182,71 @@ fn simple_table_consumes_rich_cell_contents() {
         !matches!(table.rows[0].cells[0].elements[0], Element::Text(_)),
         "rich table cell content should not flatten into plain text",
     );
+}
+
+#[test]
+fn simple_table_left_marker_stays_literal_cell_text() {
+    enable_test_logging();
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize("||< left ||");
+    let result = crate::parse(&tokenization, &page_info, &settings);
+    let (tree, errors) = result.into();
+
+    assert!(errors.is_empty(), "unexpected parse errors: {errors:?}");
+    let [Element::Table(table)] = tree.elements.as_slice() else {
+        panic!("expected one table, got {:?}", tree.elements);
+    };
+
+    assert_eq!(table.table_type, TableType::Simple);
+    assert_eq!(table.rows.len(), 1);
+    assert_eq!(table.rows[0].cells.len(), 1);
+
+    let cell = &table.rows[0].cells[0];
+    assert!(!cell.header);
+    assert_eq!(cell.align, None);
+    assert_eq!(cell.column_span.get(), 1);
+    assert_text_content(&cell.elements, "< left");
+}
+
+#[test]
+fn simple_table_combined_header_alignment_markers_keep_extra_marker_literal() {
+    enable_test_logging();
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize(
+        "||~> header right ||\n||~= header center ||\n||>~ right header ||\n||=~ center header ||",
+    );
+    let result = crate::parse(&tokenization, &page_info, &settings);
+    let (tree, errors) = result.into();
+
+    assert!(errors.is_empty(), "unexpected parse errors: {errors:?}");
+    let [Element::Table(table)] = tree.elements.as_slice() else {
+        panic!("expected one table, got {:?}", tree.elements);
+    };
+
+    assert_eq!(table.table_type, TableType::Simple);
+    assert_eq!(table.rows.len(), 4);
+
+    let cell = &table.rows[0].cells[0];
+    assert!(cell.header);
+    assert_eq!(cell.align, None);
+    assert_text_content(&cell.elements, "> header right");
+
+    let cell = &table.rows[1].cells[0];
+    assert!(cell.header);
+    assert_eq!(cell.align, None);
+    assert_text_content(&cell.elements, "= header center");
+
+    let cell = &table.rows[2].cells[0];
+    assert!(!cell.header);
+    assert_eq!(cell.align, Some(Alignment::Right));
+    assert_text_content(&cell.elements, "~ right header");
+
+    let cell = &table.rows[3].cells[0];
+    assert!(!cell.header);
+    assert_eq!(cell.align, Some(Alignment::Center));
+    assert_text_content(&cell.elements, "~ center header");
 }

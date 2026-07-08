@@ -25,5 +25,7 @@ use crate::data::Backlinks;
 pub struct HtmlOutput {
     pub body: String,
     pub meta: Vec<HtmlMeta>,
+    #[serde(default)]
+    pub styles: Vec<String>,
     pub backlinks: Backlinks<'static>,
 }

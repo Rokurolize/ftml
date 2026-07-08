@@ -1,0 +1,3 @@
+Anchor block: [[a href="https://example.com"]]**label**[[/a]]
+Single bracket: [https://example.com/ **label**]
+Triple bracket: [[[some-page | **label**]]]

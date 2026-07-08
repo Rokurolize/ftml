@@ -65,9 +65,11 @@ fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
                 ))
         }
 
-        Token::BulletItem | Token::NumberedItem | Token::Equals | Token::Colon => {
-            !parser.start_of_line()
-        }
+        Token::BulletItem
+        | Token::NumberedItem
+        | Token::Equals
+        | Token::Colon
+        | Token::TripleDash => !parser.start_of_line(),
 
         _ => false,
     }

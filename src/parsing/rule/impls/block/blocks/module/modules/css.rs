@@ -38,3 +38,37 @@ fn parse_fn<'r, 't>(
     let element = Element::Style(cow!(css));
     success_value(element.into(), Vec::new(), false)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn css_module_body_stays_raw_and_disable_argument_is_ignored() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let tokenization = crate::tokenize(
+            "[[module CSS show=\"head\" disable=\"true\"]]\n.raw { --literal: \"[[*bold]] [[span]]\"; }\n[[/module]]",
+        );
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!(
+            tree.elements,
+            vec![Element::Style(cow!(
+                ".raw { --literal: \"[[*bold]] [[span]]\"; }"
+            ))],
+        );
+
+        let output = HtmlRender.render(&tree, &page_info, &settings);
+        assert_eq!(
+            output.body,
+            "<style>.raw{--literal:\"[[*bold]] [[span]]\"}</style>",
+        );
+    }
+}

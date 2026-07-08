@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::entity::decode_semicolon_entities;
 use super::prelude::*;
 
 macro_rules! raw {
@@ -132,7 +133,12 @@ fn try_consume_fn<'r, 't>(
                 let slice = parser.full_text().slice_partial(start, end);
                 parser.step()?;
 
-                let element = Element::Raw(cow!(slice));
+                let raw = match ending_token {
+                    Token::RightRaw => decode_semicolon_entities(slice),
+                    Token::Raw => cow!(slice),
+                    _ => unreachable!(),
+                };
+                let element = Element::Raw(raw);
                 return success_elements(element);
             }
 
@@ -205,6 +211,36 @@ mod tests {
         });
         with_raw_elements("@<a @@ b>@", |result| {
             assert_eq!(result.unwrap(), Elements::Single(raw!("a @@ b")));
+        });
+    }
+
+    #[test]
+    fn left_raw_decodes_wikidot_universal_escaping_entities() {
+        with_raw_elements("@<&copy; &#252; &#8212; &#x2014;>@", |result| {
+            assert_eq!(
+                result.unwrap(),
+                Elements::Single(raw!("\u{a9} \u{fc} \u{2014} \u{2014}")),
+            );
+        });
+    }
+
+    #[test]
+    fn left_raw_preserves_unknown_and_incomplete_entities() {
+        with_raw_elements("@<&copy &not-an-entity; &copy>@", |result| {
+            assert_eq!(
+                result.unwrap(),
+                Elements::Single(raw!("&copy &not-an-entity; &copy")),
+            );
+        });
+    }
+
+    #[test]
+    fn double_at_raw_does_not_decode_entities() {
+        with_raw_elements("@@&copy; &#252; &#8212;@@", |result| {
+            assert_eq!(
+                result.unwrap(),
+                Elements::Single(raw!("&copy; &#252; &#8212;")),
+            );
         });
     }
 

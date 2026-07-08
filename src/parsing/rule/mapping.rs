@@ -20,8 +20,12 @@
 
 use super::{Rule, impls::*};
 use crate::parsing::token::{ExtractedToken, Token};
-use enum_map::EnumMap;
-use std::sync::LazyLock;
+
+const LINE_BREAK_RULES: &[Rule] = &[
+    RULE_BLOCK_SKIP_NEWLINE,
+    RULE_DEFINITION_LIST_SKIP_NEWLINE,
+    RULE_LINE_BREAK,
+];
 
 /// Mapping of all tokens to the rules they possibly correspond with.
 ///
@@ -31,90 +35,181 @@ use std::sync::LazyLock;
 /// An empty list means that this is a special token that shouldn't be used
 /// in this manner. It will of course fall back to interpreting this token
 /// as text, but will also produce an error for the user.
-pub static RULE_MAP: LazyLock<EnumMap<Token, Vec<Rule>>> = LazyLock::new(|| {
-    enum_map! {
-        // Symbols
-        Token::LeftBracket => vec![RULE_LINK_SINGLE, RULE_TEXT],
-        Token::LeftBracketAnchor => vec![RULE_LINK_ANCHOR],
-        Token::LeftBracketStar => vec![RULE_LINK_SINGLE_NEW_TAB],
-        Token::RightBracket => vec![RULE_TEXT],
-        Token::LeftBlock => vec![RULE_BLOCK],
-        Token::LeftBlockEnd => vec![],
-        Token::LeftBlockAnchor => vec![RULE_ANCHOR],
-        Token::LeftBlockStar => vec![RULE_BLOCK_STAR],
-        Token::RightBlock => vec![],
-        Token::LeftParentheses => vec![RULE_BIBCITE, RULE_TEXT],
-        Token::RightParentheses => vec![RULE_TEXT],
-        Token::LeftMath => vec![RULE_MATH],
-        Token::RightMath => vec![],
-        Token::DoubleDash => vec![RULE_STRIKETHROUGH_DASH, RULE_DASH],
-        Token::TripleDash => vec![RULE_HORIZONTAL_RULE],
-        Token::DoubleTilde => vec![RULE_STRIKETHROUGH_TILDE],
-        Token::LeftDoubleAngle => vec![RULE_DOUBLE_ANGLE],
-        Token::ClearFloatBoth => vec![RULE_CLEAR_FLOAT],
-        Token::ClearFloatLeft => vec![RULE_CLEAR_FLOAT],
-        Token::ClearFloatRight => vec![RULE_CLEAR_FLOAT],
-        Token::Pipe => vec![RULE_TEXT],
-        Token::Equals => vec![RULE_CENTER, RULE_TEXT],
-        Token::Colon => vec![RULE_DEFINITION_LIST, RULE_TEXT],
-        Token::Underscore => vec![RULE_UNDERSCORE_LINE_BREAK, RULE_TEXT],
-        Token::Quote => vec![RULE_BLOCKQUOTE, RULE_DOUBLE_ANGLE, RULE_TEXT],
-        Token::Heading => vec![RULE_HEADER, RULE_TEXT],
-        Token::Whitespace => vec![RULE_UNDERSCORE_LINE_BREAK, RULE_LIST, RULE_TEXT],
-
-        // Formatting
-        Token::Bold => vec![RULE_BOLD],
-        Token::Italics => vec![RULE_ITALICS],
-        Token::Underline => vec![RULE_UNDERLINE],
-        Token::Superscript => vec![RULE_SUPERSCRIPT],
-        Token::Subscript => vec![RULE_SUBSCRIPT],
-        Token::LeftMonospace => vec![RULE_MONOSPACE],
-        Token::RightMonospace => vec![],
-        Token::Color => vec![RULE_COLOR],
-        Token::Raw => vec![RULE_RAW],
-        Token::LeftRaw => vec![RULE_RAW],
-        Token::RightRaw => vec![],
-
-        // Lists
-        Token::BulletItem => vec![RULE_LIST, RULE_TEXT],
-        Token::NumberedItem => vec![RULE_LIST, RULE_TEXT],
-
-        // Links
-        Token::LeftLink => vec![RULE_LINK_TRIPLE],
-        Token::LeftLinkStar => vec![RULE_LINK_TRIPLE_NEW_TAB],
-        Token::RightLink => vec![],
-
-        // Tables
-        Token::TableColumn => vec![RULE_TABLE],
-        Token::TableColumnRight => vec![RULE_TABLE],
-        Token::TableColumnCenter => vec![RULE_TABLE],
-        Token::TableColumnTitle => vec![RULE_TABLE],
-
-        // Text components
-        Token::Identifier => vec![RULE_TEXT],
-        Token::Email => vec![RULE_EMAIL],
-        Token::Url => vec![RULE_URL],
-        Token::Variable => vec![RULE_VARIABLE, RULE_TEXT],
-        Token::DoubleQuote => vec![RULE_TEXT],
-        Token::EscapedDoubleQuote => vec![RULE_TEXT],
-        Token::EscapedBackslash => vec![RULE_TEXT],
-
-        // Input boundaries
-        Token::LineBreak => vec![RULE_BLOCK_SKIP_NEWLINE, RULE_DEFINITION_LIST_SKIP_NEWLINE, RULE_LINE_BREAK],
-        Token::ParagraphBreak => vec![RULE_LINE_BREAK_PARAGRAPH],
-        Token::InputStart => vec![RULE_NULL],
-        Token::InputEnd => vec![RULE_NULL],
-
-        // Miscellaneous
-        Token::LeftComment => vec![RULE_COMMENT],
-        Token::RightComment => vec![],
-
-        // Fallback
-        Token::Other => vec![RULE_TEXT],
-    }
-});
-
 #[inline]
 pub fn get_rules_for_token(current: &ExtractedToken) -> &'static [Rule] {
-    &RULE_MAP[current.token]
+    match current.token {
+        // Symbols
+        Token::LeftBracket => &[RULE_LINK_SINGLE, RULE_TEXT],
+        Token::LeftBracketAnchor => &[RULE_LINK_ANCHOR],
+        Token::LeftBracketStar => &[RULE_LINK_SINGLE_NEW_TAB],
+        Token::RightBracket => &[RULE_TEXT],
+        Token::LeftBlock => &[RULE_BLOCK],
+        Token::LeftBlockEnd => &[],
+        Token::LeftBlockAnchor => &[RULE_ANCHOR],
+        Token::LeftBlockStar => &[RULE_BLOCK_STAR],
+        Token::RightBlock => &[],
+        Token::LeftParentheses => &[RULE_BIBCITE, RULE_TEXT],
+        Token::RightParentheses => &[RULE_TEXT],
+        Token::LeftMath => &[RULE_MATH],
+        Token::RightMath => &[],
+        Token::DoubleDash => &[RULE_STRIKETHROUGH_DASH, RULE_DASH],
+        Token::TripleDash => &[RULE_HORIZONTAL_RULE],
+        Token::DoubleTilde => &[RULE_STRIKETHROUGH_TILDE],
+        Token::LeftDoubleAngle => &[RULE_DOUBLE_ANGLE],
+        Token::ClearFloatBoth => &[RULE_CLEAR_FLOAT],
+        Token::ClearFloatLeft => &[RULE_CLEAR_FLOAT],
+        Token::ClearFloatRight => &[RULE_CLEAR_FLOAT],
+        Token::Pipe => &[RULE_TEXT],
+        Token::Equals => &[RULE_CENTER, RULE_TEXT],
+        Token::Colon => &[RULE_DEFINITION_LIST, RULE_TEXT],
+        Token::Underscore => &[RULE_UNDERSCORE_LINE_BREAK, RULE_TEXT],
+        Token::Quote => &[RULE_BLOCKQUOTE, RULE_DOUBLE_ANGLE, RULE_TEXT],
+        Token::Heading => &[RULE_HEADER, RULE_TEXT],
+        Token::Whitespace => &[RULE_UNDERSCORE_LINE_BREAK, RULE_LIST, RULE_TEXT],
+
+        // Formatting
+        Token::Bold => &[RULE_BOLD],
+        Token::Italics => &[RULE_ITALICS],
+        Token::Underline => &[RULE_UNDERLINE],
+        Token::Superscript => &[RULE_SUPERSCRIPT],
+        Token::Subscript => &[RULE_SUBSCRIPT],
+        Token::LeftMonospace => &[RULE_MONOSPACE],
+        Token::RightMonospace => &[],
+        Token::Color => &[RULE_COLOR],
+        Token::Raw => &[RULE_RAW],
+        Token::LeftRaw => &[RULE_RAW],
+        Token::RightRaw => &[],
+
+        // Lists
+        Token::BulletItem => &[RULE_LIST, RULE_TEXT],
+        Token::NumberedItem => &[RULE_LIST, RULE_TEXT],
+
+        // Links
+        Token::LeftLink => &[RULE_LINK_TRIPLE],
+        Token::LeftLinkStar => &[RULE_LINK_TRIPLE_NEW_TAB],
+        Token::RightLink => &[],
+
+        // Tables
+        Token::TableColumn => &[RULE_TABLE],
+        Token::TableColumnRight => &[RULE_TABLE],
+        Token::TableColumnCenter => &[RULE_TABLE],
+        Token::TableColumnTitle => &[RULE_TABLE],
+
+        // Text components
+        Token::Identifier => &[RULE_TEXT],
+        Token::Email => &[RULE_EMAIL],
+        Token::Url => &[RULE_URL],
+        Token::Variable => &[RULE_VARIABLE, RULE_TEXT],
+        Token::DoubleQuote => &[RULE_TEXT],
+        Token::EscapedDoubleQuote => &[RULE_TEXT],
+        Token::EscapedBackslash => &[RULE_TEXT],
+
+        // Input boundaries
+        Token::LineBreak => LINE_BREAK_RULES,
+        Token::ParagraphBreak => &[RULE_LINE_BREAK_PARAGRAPH],
+        Token::InputStart => &[RULE_NULL],
+        Token::InputEnd => &[RULE_NULL],
+
+        // Miscellaneous
+        Token::LeftComment => &[RULE_COMMENT],
+        Token::RightComment => &[],
+
+        // Fallback
+        Token::Other => &[RULE_TEXT],
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn rule_names_for_token(token: Token) -> Vec<&'static str> {
+        let extracted = ExtractedToken {
+            token,
+            slice: "",
+            span: 0..0,
+        };
+
+        get_rules_for_token(&extracted)
+            .iter()
+            .map(|rule| rule.name())
+            .collect()
+    }
+
+    #[test]
+    fn rule_mapping_preserves_token_rule_order() {
+        let cases = [
+            (Token::LeftBracket, vec!["link-single", "text"]),
+            (Token::LeftBracketAnchor, vec!["link-anchor"]),
+            (Token::LeftBracketStar, vec!["link-single-new-tab"]),
+            (Token::RightBracket, vec!["text"]),
+            (Token::LeftBlock, vec!["block"]),
+            (Token::LeftBlockEnd, vec![]),
+            (Token::LeftBlockAnchor, vec!["anchor"]),
+            (Token::LeftBlockStar, vec!["block-star"]),
+            (Token::LeftMath, vec!["math"]),
+            (Token::LeftParentheses, vec!["bibcite", "text"]),
+            (Token::RightBlock, vec![]),
+            (Token::RightMath, vec![]),
+            (Token::RightParentheses, vec!["text"]),
+            (Token::DoubleDash, vec!["strikethrough-dash", "dash"]),
+            (Token::TripleDash, vec!["horizontal-rule"]),
+            (Token::DoubleTilde, vec!["strikethrough-tilde"]),
+            (Token::LeftDoubleAngle, vec!["double-angle"]),
+            (Token::ClearFloatBoth, vec!["clear-float"]),
+            (Token::ClearFloatLeft, vec!["clear-float"]),
+            (Token::ClearFloatRight, vec!["clear-float"]),
+            (Token::Pipe, vec!["text"]),
+            (Token::Equals, vec!["center", "text"]),
+            (Token::Colon, vec!["definition-list", "text"]),
+            (Token::Underscore, vec!["underscore-line-break", "text"]),
+            (Token::Quote, vec!["blockquote", "double-angle", "text"]),
+            (Token::Heading, vec!["header", "text"]),
+            (
+                Token::LineBreak,
+                vec!["block-skip", "definition-list-skip-newline", "line-break"],
+            ),
+            (Token::ParagraphBreak, vec!["line-break-paragraph"]),
+            (
+                Token::Whitespace,
+                vec!["underscore-line-break", "list", "text"],
+            ),
+            (Token::Bold, vec!["bold"]),
+            (Token::Italics, vec!["italics"]),
+            (Token::Underline, vec!["underline"]),
+            (Token::Superscript, vec!["superscript"]),
+            (Token::Subscript, vec!["subscript"]),
+            (Token::LeftMonospace, vec!["monospace"]),
+            (Token::RightMonospace, vec![]),
+            (Token::Color, vec!["color"]),
+            (Token::Raw, vec!["raw"]),
+            (Token::LeftRaw, vec!["raw"]),
+            (Token::RightRaw, vec![]),
+            (Token::BulletItem, vec!["list", "text"]),
+            (Token::NumberedItem, vec!["list", "text"]),
+            (Token::LeftLink, vec!["link-triple"]),
+            (Token::LeftLinkStar, vec!["link-triple-new-tab"]),
+            (Token::RightLink, vec![]),
+            (Token::TableColumn, vec!["table"]),
+            (Token::TableColumnRight, vec!["table"]),
+            (Token::TableColumnCenter, vec!["table"]),
+            (Token::TableColumnTitle, vec!["table"]),
+            (Token::Identifier, vec!["text"]),
+            (Token::Email, vec!["email"]),
+            (Token::Url, vec!["url"]),
+            (Token::Variable, vec!["variable", "text"]),
+            (Token::DoubleQuote, vec!["text"]),
+            (Token::EscapedDoubleQuote, vec!["text"]),
+            (Token::EscapedBackslash, vec!["text"]),
+            (Token::LeftComment, vec!["comment"]),
+            (Token::RightComment, vec![]),
+            (Token::InputStart, vec!["null"]),
+            (Token::InputEnd, vec!["null"]),
+            (Token::Other, vec!["text"]),
+        ];
+
+        for (token, expected) in cases {
+            assert_eq!(rule_names_for_token(token), expected, "{token:?}");
+        }
+    }
 }

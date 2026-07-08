@@ -27,9 +27,9 @@ mod runner;
 use crate::parsing::ParseError;
 use crate::tree::{Element, ListItem, PartialElement, RubyText, SyntaxTree};
 use std::collections::BTreeMap;
+use std::env;
 use std::path::PathBuf;
 use std::sync::LazyLock;
-use std::{env, process};
 
 // Debug settings
 
@@ -122,8 +122,14 @@ impl TestStats {
         (self.failed + self.skipped).try_into().ok().unwrap_or(-1)
     }
 
-    pub fn exit(self) -> ! {
-        process::exit(self.exit_code());
+    pub fn assert_success(self) {
+        assert_eq!(
+            self.exit_code(),
+            0,
+            "AST fixture run had {} failed and {} skipped tests",
+            self.failed,
+            self.skipped,
+        );
     }
 }
 
@@ -215,7 +221,7 @@ fn ast() {
         println!("This is either:");
         println!("* The constant UPDATE_TESTS");
         println!("* The environment variable FTML_UPDATE_TESTS");
-        process::exit(-1);
+        panic!("FTML_UPDATE_TESTS/UPDATE_TESTS update mode must not pass CI");
     }
 
     // Load all tests
@@ -257,7 +263,7 @@ fn ast() {
     // Test execution
     let stats = tests.run(SKIP_TESTS, ONLY_TESTS);
     stats.print();
-    stats.exit();
+    stats.assert_success();
 }
 
 #[test]

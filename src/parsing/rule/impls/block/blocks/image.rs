@@ -83,4 +83,27 @@ mod tests {
                 .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments)
         );
     }
+
+    #[test]
+    fn image_block_preserves_canonical_wikidot_local_files_path() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(
+            "[[image /local--files/source-page/assets/charts/image.png]]",
+        );
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let [Element::Container(paragraph)] = tree.elements.as_slice() else {
+            panic!("expected paragraph, got {:?}", tree.elements);
+        };
+        let [Element::Image { source, .. }] = paragraph.elements() else {
+            panic!("expected image element, got {:?}", paragraph.elements());
+        };
+
+        assert_eq!(
+            source,
+            &FileSource::Url(cow!("/local--files/source-page/assets/charts/image.png")),
+        );
+    }
 }

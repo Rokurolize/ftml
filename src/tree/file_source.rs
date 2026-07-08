@@ -48,7 +48,7 @@ pub enum FileSource<'a> {
 
 impl<'t> FileSource<'t> {
     pub fn parse(source: &'t str) -> Option<FileSource<'t>> {
-        if is_url(source) {
+        if is_url(source) || source.starts_with("/local--files/") {
             return Some(FileSource::Url(cow!(source)));
         }
 
@@ -99,5 +99,54 @@ impl<'t> FileSource<'t> {
                 file: string_to_owned(file),
             },
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_supported_file_source_variants() {
+        assert_eq!(
+            FileSource::parse("https://example.com/image.png"),
+            Some(FileSource::Url(cow!("https://example.com/image.png"))),
+        );
+        assert_eq!(
+            FileSource::parse("/image.png"),
+            Some(FileSource::File1 {
+                file: cow!("image.png"),
+            }),
+        );
+        assert_eq!(
+            FileSource::parse("/page/image.png"),
+            Some(FileSource::File2 {
+                page: cow!("page"),
+                file: cow!("image.png"),
+            }),
+        );
+        assert_eq!(
+            FileSource::parse("/site/page/image.png"),
+            Some(FileSource::File3 {
+                site: cow!("site"),
+                page: cow!("page"),
+                file: cow!("image.png"),
+            }),
+        );
+    }
+
+    #[test]
+    fn parses_canonical_wikidot_local_files_path_as_literal_url() {
+        assert_eq!(
+            FileSource::parse("/local--files/page/assets/charts/image.png"),
+            Some(FileSource::Url(cow!(
+                "/local--files/page/assets/charts/image.png"
+            ))),
+        );
+    }
+
+    #[test]
+    fn rejects_unknown_deeper_path_shapes() {
+        assert_eq!(FileSource::parse("site/page/assets/image.png"), None);
     }
 }

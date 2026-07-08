@@ -87,6 +87,7 @@ pub use self::fallback::RULE_FALLBACK;
 pub use self::header::RULE_HEADER;
 pub use self::horizontal_rule::RULE_HORIZONTAL_RULE;
 pub use self::italics::RULE_ITALICS;
+pub(crate) use self::line_break::starts_own_line_rule;
 pub use self::line_break::{RULE_LINE_BREAK, RULE_LINE_BREAK_PARAGRAPH};
 pub use self::link_anchor::RULE_LINK_ANCHOR;
 pub use self::link_single::{RULE_LINK_SINGLE, RULE_LINK_SINGLE_NEW_TAB};

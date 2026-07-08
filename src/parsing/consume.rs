@@ -28,7 +28,10 @@
 
 use super::Parser;
 use super::prelude::*;
-use super::rule::{get_rules_for_token, impls::RULE_FALLBACK};
+use super::rule::{
+    get_rules_for_token,
+    impls::{RULE_FALLBACK, starts_own_line_rule},
+};
 use std::mem;
 
 fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
@@ -81,6 +84,41 @@ fn try_consume_text_token<'r, 't>(
     Ok(Some(text!(slice).into()))
 }
 
+fn try_consume_line_break<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<Option<Elements<'t>>, ParseError> {
+    if parser.current().token != Token::LineBreak {
+        return Ok(None);
+    }
+
+    match parser.next_three_tokens() {
+        (Token::LineBreak, Some(Token::LeftBlock | Token::LeftBlockStar), _)
+        | (Token::LineBreak, Some(Token::Colon), Some(Token::Whitespace)) => {
+            return Ok(None);
+        }
+        _ => {}
+    }
+
+    let next_offset = if matches!(
+        parser.look_ahead(0).map(|token| token.token),
+        Some(Token::Whitespace)
+    ) {
+        1
+    } else {
+        0
+    };
+    let skip = parser
+        .look_ahead(next_offset)
+        .is_some_and(|token| starts_own_line_rule(token.token));
+
+    parser.step()?;
+    if skip {
+        Ok(Some(Elements::None))
+    } else {
+        Ok(Some(Element::LineBreak.into()))
+    }
+}
+
 /// Main function that consumes tokens to produce a single element, then returns.
 ///
 /// It will use the fallback if all rules, fail, so the only failure case is if
@@ -95,6 +133,11 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
     // Incrementing recursion depth
     // Will fail if we're too many layers in
     parser.depth_increment()?;
+
+    if let Some(elements) = try_consume_line_break(parser)? {
+        parser.depth_decrement();
+        return ok!(elements);
+    }
 
     if let Some(elements) = try_consume_text_token(parser)? {
         parser.depth_decrement();
@@ -217,5 +260,42 @@ mod tests {
         let (tokens, page_info, settings) = parser_for(": term\n: value");
         let parser = parser_at(&tokens, &page_info, &settings, 1);
         assert!(!can_consume_as_text_token(&parser));
+    }
+
+    #[test]
+    fn direct_line_break_fast_path_preserves_skips_and_block_fallbacks() {
+        let (tokens, page_info, settings) = parser_for("alpha\nbeta");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 2);
+        let elements = try_consume_line_break(&mut parser)
+            .expect("line break fast path should not fail")
+            .expect("plain line break should use fast path");
+        assert_eq!(elements, Element::LineBreak.into());
+        assert_eq!(parser.current().token, Token::Identifier);
+
+        let (tokens, page_info, settings) = parser_for("alpha\n+ heading");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 2);
+        let elements = try_consume_line_break(&mut parser)
+            .expect("line break before heading should not fail")
+            .expect("line break before heading should use fast path");
+        assert_eq!(elements, Elements::None);
+        assert_eq!(parser.current().token, Token::Heading);
+
+        let (tokens, page_info, settings) = parser_for("alpha\n[[code]]");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 2);
+        assert!(
+            try_consume_line_break(&mut parser)
+                .expect("line break block fallback check should not fail")
+                .is_none(),
+        );
+        assert_eq!(parser.current().token, Token::LineBreak);
+
+        let (tokens, page_info, settings) = parser_for("alpha\n: term");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 2);
+        assert!(
+            try_consume_line_break(&mut parser)
+                .expect("definition-list fallback check should not fail")
+                .is_none(),
+        );
+        assert_eq!(parser.current().token, Token::LineBreak);
     }
 }

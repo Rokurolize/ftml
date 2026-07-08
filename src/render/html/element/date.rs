@@ -19,7 +19,7 @@
  */
 
 use super::prelude::*;
-use crate::tree::DateItem;
+use crate::tree::{DateItem, date_format_within_limits};
 
 pub fn render_date(
     ctx: &mut HtmlContext,
@@ -27,6 +27,7 @@ pub fn render_date(
     date_format: Option<&str>,
     hover: bool,
 ) {
+    let date_format = date_format.filter(|format| date_format_within_limits(format));
     let formatted_datetime = date.format_or_default(date_format, ctx.language());
 
     match ctx.layout() {

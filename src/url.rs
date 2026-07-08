@@ -58,6 +58,32 @@ pub fn is_url(url: &str) -> bool {
     false
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub(crate) enum HrefKind {
+    NoOp,
+    Invalid,
+    Anchor,
+    External,
+    AbsolutePath,
+    Relative,
+}
+
+pub(crate) fn classify_href(url: &str) -> HrefKind {
+    if url == "javascript:;" {
+        HrefKind::NoOp
+    } else if url.starts_with('#') {
+        HrefKind::Anchor
+    } else if url.starts_with("//") || is_url(url) {
+        HrefKind::External
+    } else if url.starts_with('/') {
+        HrefKind::AbsolutePath
+    } else if dangerous_scheme(url) {
+        HrefKind::Invalid
+    } else {
+        HrefKind::Relative
+    }
+}
+
 /// Returns true if the scheme for this URL is `javascript:` or `data:`.
 /// This function works case-insensitively (for ASCII).
 ///
@@ -119,11 +145,12 @@ pub fn normalize_link<'a>(
 /// The `extra` argument corresponds to `PageRef.extra`.
 /// It shouldn't be `Some(_)` for other kinds of links.
 pub fn normalize_href<'a>(url: &'a str, extra: Option<&'a str>) -> Cow<'a, str> {
-    if url == "javascript:;" {
-        trace!("Leaving no-op link as-is");
-        Cow::Borrowed(url)
-    } else if is_url(url) || url.starts_with('/') || url.starts_with('#') {
-        match extra {
+    match classify_href(url) {
+        HrefKind::NoOp => {
+            trace!("Leaving no-op link as-is");
+            Cow::Borrowed(url)
+        }
+        HrefKind::Anchor | HrefKind::External | HrefKind::AbsolutePath => match extra {
             Some(extra) => {
                 trace!("Leaving safe URL with extra as-is: {url}{extra}");
                 Cow::Owned(format!("{url}{extra}"))
@@ -132,16 +159,16 @@ pub fn normalize_href<'a>(url: &'a str, extra: Option<&'a str>) -> Cow<'a, str> 
                 trace!("Leaving safe URL as-is: {url}");
                 Cow::Borrowed(url)
             }
+        },
+        HrefKind::Invalid => {
+            warn!("Attempt to pass in dangerous URL: {url}");
+            Cow::Borrowed("#invalid-url")
         }
-    } else if dangerous_scheme(url) {
-        warn!("Attempt to pass in dangerous URL: {url}");
-        Cow::Borrowed("#invalid-url")
-    } else {
-        // In this branch, the URL is not absolute (e.g. https://example.com)
-        // and so must be a relative link with no leading / (e.g. just "some-page").
-        let extra = extra.unwrap_or("");
-        trace!("Adding leading slash to URL: {url}{extra}");
-        Cow::Owned(format!("/{url}{extra}"))
+        HrefKind::Relative => {
+            let extra = extra.unwrap_or("");
+            trace!("Adding leading slash to URL: {url}{extra}");
+            Cow::Owned(format!("/{url}{extra}"))
+        }
     }
 }
 

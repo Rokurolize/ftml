@@ -19,6 +19,8 @@
  */
 
 use super::prelude::*;
+use crate::url::normalize_href;
+use std::borrow::Cow;
 
 pub fn render_user(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
     debug!("Rendering user block (name '{name}', show-avatar {show_avatar})");
@@ -34,6 +36,8 @@ fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
 
     match handle.get_user_info(name) {
         Some(user_info) => {
+            let user_profile_url = normalize_href(&user_info.user_profile_url, None);
+            let user_avatar_src = normalize_user_avatar_src(&user_info.user_avatar_data);
             let printuser_class = if show_avatar {
                 "printuser avatarhover"
             } else {
@@ -54,7 +58,7 @@ fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
                         ctx.html()
                             .a()
                             .attr(attr!(
-                                "href" => &user_info.user_profile_url,
+                                "href" => &user_profile_url,
                                 "onclick" => &wikidot_onclick,
                             ))
                             .inner(|ctx| {
@@ -62,7 +66,7 @@ fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
                                     .img()
                                     .attr(attr!(
                                         "class" => "small",
-                                        "src" => &user_info.user_avatar_data,
+                                        "src" => &user_avatar_src,
                                         "alt" => name,
                                         "style" => handle.get_karma_style(user_info.user_karma),
                                     ));
@@ -73,7 +77,7 @@ fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
                     ctx.html()
                         .a()
                         .attr(attr!(
-                            "href" => &user_info.user_profile_url,
+                            "href" => &user_profile_url,
                             "onclick" => &wikidot_onclick,
                         ))
                         .contents(name);
@@ -109,6 +113,8 @@ fn render_user_wikijump(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
         .attr(attr!("class" => "wj-user-info"))
         .inner(|ctx| match ctx.handle().get_user_info(name) {
             Some(info) => {
+                let user_profile_url = normalize_href(&info.user_profile_url, None);
+                let user_avatar_src = normalize_user_avatar_src(&info.user_avatar_data);
                 trace!(
                     "Got user information (user id {}, name {})",
                     info.user_id,
@@ -119,7 +125,7 @@ fn render_user_wikijump(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
                     .a()
                     .attr(attr!(
                         "class" => "wj-user-info-link",
-                        "href" => &info.user_profile_url,
+                        "href" => &user_profile_url,
                     ))
                     .inner(|ctx| {
                         if show_avatar {
@@ -135,7 +141,7 @@ fn render_user_wikijump(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
 
                             ctx.html().img().attr(attr!(
                                 "class" => "wj-user-info-avatar",
-                                "src" => &info.user_avatar_data,
+                                "src" => &user_avatar_src,
                             ));
                         }
 
@@ -177,4 +183,72 @@ fn render_user_wikijump(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
                     });
             }
         });
+}
+
+fn normalize_user_avatar_src(src: &str) -> Cow<'_, str> {
+    if is_safe_image_data_uri(src) {
+        Cow::Borrowed(src)
+    } else {
+        normalize_href(src, None)
+    }
+}
+
+fn is_safe_image_data_uri(src: &str) -> bool {
+    const SAFE_DATA_PREFIXES: &[&str] = &[
+        "data:image/png;base64,",
+        "data:image/jpeg;base64,",
+        "data:image/jpg;base64,",
+        "data:image/gif;base64,",
+        "data:image/webp;base64,",
+        "data:image/bmp;base64,",
+        "data:image/x-icon;base64,",
+        "data:image/vnd.microsoft.icon;base64,",
+    ];
+
+    let Some(prefix) = SAFE_DATA_PREFIXES.iter().find(|prefix| {
+        src.get(..prefix.len())
+            .is_some_and(|head| head.eq_ignore_ascii_case(prefix))
+    }) else {
+        return false;
+    };
+
+    let data = &src[prefix.len()..];
+    !data.is_empty()
+        && data.bytes().all(|byte| {
+            byte.is_ascii_alphanumeric()
+                || matches!(byte, b'+' | b'/' | b'=' | b'\r' | b'\n')
+        })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{is_safe_image_data_uri, normalize_user_avatar_src};
+    use crate::url::normalize_href;
+
+    #[test]
+    fn user_supplied_profile_and_avatar_urls_are_normalized() {
+        assert_eq!(
+            normalize_href("javascript:alert(1)", None).as_ref(),
+            "#invalid-url",
+        );
+        assert_eq!(
+            normalize_user_avatar_src("data:text/html,<script>alert(1)</script>")
+                .as_ref(),
+            "#invalid-url",
+        );
+        assert_eq!(
+            normalize_user_avatar_src("data:image/svg+xml,<svg onload=alert(1)>")
+                .as_ref(),
+            "#invalid-url",
+        );
+        assert_eq!(
+            normalize_user_avatar_src("data:image/png;base64,aGVsbG8=").as_ref(),
+            "data:image/png;base64,aGVsbG8=",
+        );
+
+        assert!(is_safe_image_data_uri(
+            "data:image/webp;base64,AAAA\r\nBBBB=="
+        ));
+        assert!(!is_safe_image_data_uri("data:image/png;base64,<>"));
+    }
 }

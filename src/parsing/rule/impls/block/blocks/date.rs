@@ -19,7 +19,7 @@
  */
 
 use super::prelude::*;
-use crate::tree::DateItem;
+use crate::tree::{DateItem, date_format_within_limits};
 use regex::Regex;
 use std::borrow::Cow;
 use std::sync::LazyLock;
@@ -58,6 +58,7 @@ fn parse_fn<'r, 't>(
 
     let (value, mut arguments) = parser.get_head_name_map(&BLOCK_DATE, in_head)?;
     let (format, ago_hover) = split_ago_hover_format(arguments.get("format"));
+    let format = filter_supported_format(format);
     let arg_timezone = arguments.get("tz");
     let hover = arguments.get_bool(parser, "hover")?.unwrap_or(false) || ago_hover;
 
@@ -83,6 +84,18 @@ fn parse_fn<'r, 't>(
         format,
         hover
     })
+}
+
+fn filter_supported_format<'t>(format: Option<Cow<'t, str>>) -> Option<Cow<'t, str>> {
+    match format {
+        Some(format) if date_format_within_limits(&format) => Some(format),
+        Some(format) => {
+            let len = format.len();
+            warn!("Ignoring over-limit date format ({len} bytes)");
+            None
+        }
+        None => None,
+    }
 }
 
 fn conflicting_timezone_error(

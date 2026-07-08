@@ -36,9 +36,25 @@ fn parse_size_argument<'r, 't>(
     value: Option<&str>,
 ) -> Result<String, ParseError> {
     match value {
-        Some(size) => Ok(format!("font-size: {size};")),
+        Some(size) => Ok(format!("font-size: {};", safe_size_value(size))),
         None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
     }
+}
+
+fn safe_size_value(size: &str) -> &str {
+    let size = size.trim();
+    if !size.is_empty() && is_safe_size_value(size) {
+        size
+    } else {
+        "inherit"
+    }
+}
+
+fn is_safe_size_value(size: &str) -> bool {
+    size.chars().all(|ch| {
+        !ch.is_control()
+            && !matches!(ch, ';' | '{' | '}' | '<' | '>' | '"' | '\'' | '\\' | '&')
+    })
 }
 
 fn parse_fn<'r, 't>(

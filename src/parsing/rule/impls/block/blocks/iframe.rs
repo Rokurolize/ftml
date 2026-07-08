@@ -44,7 +44,7 @@ fn parse_fn<'r, 't>(
 
     let (url, arguments) = parser.get_head_name_map(&BLOCK_IFRAME, in_head)?;
     if !is_url(url) {
-        warn!("Iframe block references non-URL: {url}");
+        warn!("Iframe block references non-URL ({} bytes)", url.len());
         return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
     }
 

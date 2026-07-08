@@ -57,6 +57,7 @@ fn parse_fn<'r, 't>(
     let conditions = parser.get_head_value(&BLOCK_IFTAGS, in_head, parse_conditions)?;
 
     // Get body content, never with paragraphs
+    let parser_state = parser.get_mutable_state();
     let body = parser.get_body_elements(&BLOCK_IFTAGS, false)?;
     let (elements, errors, paragraph_safe) = body.into();
 
@@ -71,6 +72,7 @@ fn parse_fn<'r, 't>(
         Elements::Multiple(elements)
     } else {
         trace!("Conditions failed, excluding elements");
+        parser.reset_mutable_state(parser_state);
 
         Elements::None
     };

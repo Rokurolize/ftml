@@ -24,6 +24,12 @@ use crate::tree::Bibliography;
 pub fn render_bibcite(ctx: &mut HtmlContext, label: &str, brackets: bool) {
     debug!("Rendering bibliography citation (label {label}, brackets {brackets})");
 
+    if !ctx.enter_bibliography_ref(label) {
+        warn!("Recursive bibliography citation detected for label {label}");
+        render_missing_bibcite(ctx);
+        return;
+    }
+
     match ctx.get_bibliography_ref(label) {
         // Valid bibliography reference, render it
         Some((index, contents)) => {
@@ -87,17 +93,22 @@ pub fn render_bibcite(ctx: &mut HtmlContext, label: &str, brackets: bool) {
                 });
         }
         None => {
-            // We need to produce an error for invalid bibliography references
-            let message = ctx
-                .handle()
-                .get_message(ctx.language(), "bibliography-cite-not-found");
-
-            ctx.html()
-                .span()
-                .attr(attr!("class" => "wj-error-inline"))
-                .inner(|ctx| ctx.push_escaped(message));
+            render_missing_bibcite(ctx);
         }
     }
+
+    ctx.exit_bibliography_ref(label);
+}
+
+fn render_missing_bibcite(ctx: &mut HtmlContext) {
+    let message = ctx
+        .handle()
+        .get_message(ctx.language(), "bibliography-cite-not-found");
+
+    ctx.html()
+        .span()
+        .attr(attr!("class" => "wj-error-inline"))
+        .inner(|ctx| ctx.push_escaped(message));
 }
 
 pub fn render_bibliography(

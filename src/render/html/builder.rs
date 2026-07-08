@@ -31,12 +31,6 @@ macro_rules! tag_method {
     };
 }
 
-/// These are HTML tags which do not need a closing pair.
-const SOLO_HTML_TAGS: [&str; 14] = [
-    "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param",
-    "source", "track", "wbr",
-];
-
 // Main struct
 
 #[derive(Debug)]
@@ -215,52 +209,53 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
     }
 
     pub fn attr(&mut self, attributes: AddedAttributes) -> &mut Self {
-        fn filter_entries<'a>(
-            attributes: &AddedAttributes<'a>,
-        ) -> impl Iterator<Item = (&'a str, &'a [&'a str])> {
-            attributes.entries.iter().filter_map(
-                |(item, accept)| {
-                    if *accept { Some(*item) } else { None }
-                },
-            )
+        let Some(attribute_map) = attributes.map else {
+            for (key, value_parts) in filter_attribute_entries(&attributes) {
+                self.attr_single(key, value_parts);
+            }
+
+            return self.chain();
+        };
+        let attribute_map = attribute_map.get();
+
+        if attributes.entries.is_empty() {
+            for (key, value) in attribute_map {
+                self.attr_single(key, &[value]);
+            }
+
+            return self.chain();
         }
 
         let mut merged = HashSet::new();
         let mut merged_value = Vec::new();
 
         // Merge any attributes in common.
-        if let Some(attribute_map) = attributes.map {
-            let attribute_map = attribute_map.get();
+        for (key, value_parts) in filter_attribute_entries(&attributes) {
+            if let Some(map_value) = attribute_map.get(&cow!(key)) {
+                // Merge keys by prepending value_parts before
+                // the attribute map value.
 
-            for (key, value_parts) in filter_entries(&attributes) {
-                if let Some(map_value) = attribute_map.get(&cow!(key)) {
-                    // Merge keys by prepending value_parts before
-                    // the attribute map value.
+                merged_value.clear();
+                merged_value.extend(value_parts);
+                merged_value.push(" ");
+                merged_value.push(map_value);
 
-                    merged_value.clear();
-                    merged_value.extend(value_parts);
-                    merged_value.push(" ");
-                    merged_value.push(map_value);
-
-                    self.attr_single(key, &merged_value);
-                    merged.insert(key);
-                }
+                self.attr_single(key, &merged_value);
+                merged.insert(key);
             }
         }
 
         // Add attributes from renderer.
-        for (key, value_parts) in filter_entries(&attributes) {
+        for (key, value_parts) in filter_attribute_entries(&attributes) {
             if !merged.contains(key) {
                 self.attr_single(key, value_parts);
             }
         }
 
         // Add attributes from user-provided map.
-        if let Some(attribute_map) = attributes.map {
-            for (key, value) in attribute_map.get() {
-                if !merged.contains(key.as_ref()) {
-                    self.attr_single(key, &[value]);
-                }
+        for (key, value) in attribute_map {
+            if !merged.contains(key.as_ref()) {
+                self.attr_single(key, &[value]);
             }
         }
 
@@ -316,9 +311,23 @@ fn is_alphanumeric(value: &str) -> bool {
         .all(|c| c.is_ascii_alphabetic() || c.is_ascii_digit() || c == '-')
 }
 
+fn filter_attribute_entries<'a>(
+    attributes: &AddedAttributes<'a>,
+) -> impl Iterator<Item = (&'a str, &'a [&'a str])> {
+    let entries = attributes.entries.iter();
+    entries.filter_map(|(item, accept)| if *accept { Some(*item) } else { None })
+}
+
 #[inline]
 fn should_close_tag(tag: &str) -> bool {
-    !SOLO_HTML_TAGS.contains(&tag)
+    !is_solo_html_tag(tag)
+}
+
+fn is_solo_html_tag(tag: &str) -> bool {
+    matches!(
+        tag,
+        "area" | "base" | "br" | "col" | "embed" | "hr" | "img" | "input"
+    ) || matches!(tag, "link" | "meta" | "param" | "source" | "track" | "wbr")
 }
 
 #[cfg(test)]
@@ -382,6 +391,41 @@ mod tests {
         assert_eq!(
             output.body,
             r#"<div class="base from-map" data-extra="1&amp;2">body</div>"#,
+        );
+    }
+
+    #[test]
+    fn html_builder_appends_user_attributes_without_renderer_attrs() {
+        let info = PageInfo::dummy();
+        let mut ctx = context(&info);
+        let mut attributes = AttributeMap::new();
+        assert!(attributes.insert("data-extra", cow!("1&2")));
+
+        ctx.html().div().attr(attr!(;; attributes)).contents("body");
+
+        let output = HtmlOutput::from(ctx);
+        assert_eq!(output.body, r#"<div data-extra="1&amp;2">body</div>"#);
+    }
+
+    #[test]
+    fn html_builder_keeps_solo_tags_unclosed() {
+        let info = PageInfo::dummy();
+        let mut ctx = context(&info);
+
+        for tag in [
+            "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta",
+            "param", "source", "track", "wbr",
+        ] {
+            ctx.html().tag(tag);
+        }
+
+        let output = HtmlOutput::from(ctx);
+        assert_eq!(
+            output.body,
+            concat!(
+                "<area><base><br><col><embed><hr><img><input><link><meta><param>",
+                "<source><track><wbr>",
+            ),
         );
     }
 

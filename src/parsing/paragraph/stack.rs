@@ -45,9 +45,9 @@ impl<'t> ParagraphStack<'t> {
         self.current.is_empty()
     }
 
-    #[inline]
-    pub fn reserve_elements(&mut self, additional: usize) {
-        self.current.reserve(additional);
+    #[cfg(test)]
+    pub fn current_capacity(&self) -> usize {
+        self.current.capacity()
     }
 
     #[inline]

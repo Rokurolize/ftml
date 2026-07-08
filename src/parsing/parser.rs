@@ -370,53 +370,25 @@ impl<'r, 't> Parser<'r, 't> {
     }
 
     // State evaluation
+    #[inline]
     pub fn evaluate(&self, condition: ParseCondition) -> bool {
-        debug!(
-            "Eval condition {} '{}' {}..{}",
-            self.current.token.name(),
-            self.current.slice,
-            self.current.span.start,
-            self.current.span.end,
-        );
-
         match condition {
             ParseCondition::CurrentToken(token) => self.current.token == token,
             ParseCondition::TokenPair(current, next) => {
-                if self.current().token != current {
-                    trace!(
-                        "Token pair current mismatch ({}!={})",
-                        current.name(),
-                        self.current().token.name(),
-                    );
+                if self.current.token != current {
                     return false;
                 }
 
                 match self.look_ahead(0) {
-                    Some(actual) => {
-                        if actual.token != next {
-                            trace!(
-                                "Token pair next mismatch ({}!={})",
-                                next.name(),
-                                actual.token.name(),
-                            );
-                            return false;
-                        }
-                    }
-                    None => {
-                        trace!("Token pair next missing ({})", next.name());
-                        return false;
-                    }
+                    Some(actual) => actual.token == next,
+                    None => false,
                 }
-
-                true
             }
         }
     }
 
     #[inline]
     pub fn evaluate_any(&self, conditions: &[ParseCondition]) -> bool {
-        debug!("Evaluating parser conditions (count {})", conditions.len());
-
         conditions.iter().any(|&condition| self.evaluate(condition))
     }
 

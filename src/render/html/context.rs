@@ -34,7 +34,6 @@ use crate::tree::{
     Bibliography, BibliographyList, Element, LinkLocation, VariableScopes,
 };
 use crate::url::{HrefKind, classify_href, normalize_href};
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt::{self, Write};
 use std::num::NonZeroUsize;
@@ -216,11 +215,10 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     }
 
     pub fn enter_bibliography_ref(&mut self, label: &str) -> bool {
-        if self
-            .bibliography_render_stack
-            .iter()
-            .any(|item| item == label)
-        {
+        let render_stack = &self.bibliography_render_stack;
+        let already_rendering = render_stack.iter().any(|item| item == label);
+
+        if already_rendering {
             false
         } else {
             self.bibliography_render_stack.push(str!(label));
@@ -271,23 +269,27 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
                 self.backlinks.internal_links.push(page.to_owned());
             }
             LinkLocation::Url(link) => {
-                let normalized = normalize_href(link, None);
-                let mut link = normalized.as_ref();
+                let href_kind = classify_href(link);
 
-                match classify_href(link) {
-                    HrefKind::NoOp | HrefKind::Invalid | HrefKind::Anchor => {}
+                match href_kind {
+                    HrefKind::NoOp | HrefKind::Invalid | HrefKind::Anchor => {
+                        trace!("Ignoring href that does not record a backlink");
+                    }
                     HrefKind::External => {
-                        let link = Cow::Owned(str!(link));
-                        self.backlinks.external_links.push(link);
+                        let normalized = normalize_href(link, None).into_owned();
+                        let external_links = &mut self.backlinks.external_links;
+                        external_links.push(normalized.into());
                     }
                     HrefKind::AbsolutePath => {
-                        link = &link[1..];
+                        let normalized = normalize_href(link, None);
+                        let link = &normalized[1..];
                         if !link.is_empty() {
                             let page_ref = PageRef::page_only(cow!(link));
                             self.backlinks.internal_links.push(page_ref.to_owned());
                         }
                     }
                     HrefKind::Relative => {
+                        let link = link.as_ref();
                         if !link.is_empty() {
                             let page_ref = PageRef::page_only(cow!(link));
                             self.backlinks.internal_links.push(page_ref.to_owned());
@@ -422,8 +424,13 @@ mod tests {
 
         ctx.add_link(&LinkLocation::Url(cow!("javascript:;")));
         ctx.add_link(&LinkLocation::Url(cow!("javascript:alert(1)")));
+        ctx.add_link(&LinkLocation::Url(cow!("#local-anchor")));
+        ctx.add_link(&LinkLocation::Url(cow!("/")));
         ctx.add_link(&LinkLocation::Url(cow!("/local-page")));
+        ctx.add_link(&LinkLocation::Url(cow!("")));
+        ctx.add_link(&LinkLocation::Url(cow!("plain-page")));
         ctx.add_link(&LinkLocation::Url(cow!("https://example.com/path")));
+        ctx.add_link(&LinkLocation::Url(cow!("//example.com/protocol-relative")));
 
         let direct_page = PageRef::page_only("direct-page");
         ctx.add_link(&LinkLocation::Page(direct_page.clone()));
@@ -431,13 +438,36 @@ mod tests {
         let output = HtmlOutput::from(ctx);
         assert_eq!(
             output.backlinks.internal_links,
-            vec![PageRef::page_only("local-page"), direct_page],
+            vec![
+                PageRef::page_only("local-page"),
+                PageRef::page_only("plain-page"),
+                direct_page,
+            ],
         );
         assert_eq!(
             output.backlinks.external_links,
-            vec![cow!("https://example.com/path")],
+            vec![
+                cow!("https://example.com/path"),
+                cow!("//example.com/protocol-relative"),
+            ],
         );
         assert!(output.backlinks.included_pages.is_empty());
+    }
+
+    #[test]
+    fn html_context_bibliography_render_stack_detects_cycles() {
+        let info = PageInfo::dummy();
+        let mut ctx = context(&info);
+
+        assert!(ctx.enter_bibliography_ref("alpha"));
+        assert!(!ctx.enter_bibliography_ref("alpha"));
+        assert!(ctx.enter_bibliography_ref("beta"));
+
+        ctx.exit_bibliography_ref("beta");
+        assert!(!ctx.enter_bibliography_ref("alpha"));
+        ctx.exit_bibliography_ref("alpha");
+        assert!(ctx.enter_bibliography_ref("alpha"));
+        ctx.exit_bibliography_ref("alpha");
     }
 
     #[test]

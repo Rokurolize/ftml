@@ -258,9 +258,8 @@ impl<'r, 't> Parser<'r, 't> {
         self.code_blocks.borrow_mut().truncate(code_block_index);
         let mut table_of_contents = self.table_of_contents.borrow_mut();
         table_of_contents.truncate(table_of_contents_index);
-        self.bibliographies
-            .borrow_mut()
-            .truncate(bibliography_index);
+        let mut bibliographies = self.bibliographies.borrow_mut();
+        bibliographies.truncate(bibliography_index);
         self.has_footnote_block = has_footnote_block;
     }
 
@@ -771,6 +770,10 @@ fn parser_mutable_state_helpers_reset_and_remove_collections() {
         name: Some(cow!("sample")),
     });
     parser.push_table_of_contents_entry(HeadingLevel::One, &[text!("Heading")]);
+    parser.set_footnote_block();
+    let mut bibliography = Bibliography::new();
+    bibliography.add(cow!("alpha"), vec![text!("reference")]);
+    assert_eq!(parser.push_bibliography(bibliography), 0);
 
     parser.reset_mutable_state(state);
 
@@ -778,6 +781,8 @@ fn parser_mutable_state_helpers_reset_and_remove_collections() {
     assert!(parser.remove_html_blocks().is_empty());
     assert!(parser.remove_code_blocks().is_empty());
     assert!(parser.remove_table_of_contents().is_empty());
+    assert!(parser.remove_bibliographies().is_empty());
+    assert!(!parser.has_footnote_block);
 
     parser.push_footnote(vec![text!("after")]);
     assert_eq!(parser.footnote_count(), 1);

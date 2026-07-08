@@ -136,6 +136,9 @@ fn push_elements<'t>(
     match elements {
         Elements::None => {}
         Elements::Single(element) => push_element(stack, element, paragraph_safe),
+        Elements::Multiple(elements) if paragraph_safe => {
+            stack.push_paragraph_safe_elements(elements);
+        }
         Elements::Multiple(elements) => {
             stack.reserve_elements(elements.len());
 

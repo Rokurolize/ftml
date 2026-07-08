@@ -44,6 +44,7 @@ mod dash;
 mod definition_list;
 mod double_angle;
 mod email;
+mod entity;
 mod fallback;
 mod header;
 mod horizontal_rule;

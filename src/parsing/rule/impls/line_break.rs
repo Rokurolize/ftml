@@ -48,7 +48,7 @@ const START_OF_LINE_RULE_TOKENS: &[Token] = &[
     Token::TableColumnTitle,
 ];
 
-fn starts_own_line_rule(token: Token) -> bool {
+pub(crate) fn starts_own_line_rule(token: Token) -> bool {
     START_OF_LINE_RULE_TOKENS.contains(&token)
 }
 

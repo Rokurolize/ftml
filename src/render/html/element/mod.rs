@@ -84,8 +84,23 @@ use ref_map::*;
 pub fn render_elements(ctx: &mut HtmlContext, elements: &[Element]) {
     debug!("Rendering elements (length {})", elements.len());
 
-    for element in elements {
-        render_element(ctx, element);
+    let mut index = 0;
+    while let Some(element) = elements.get(index) {
+        match element {
+            Element::Text(text) => {
+                ctx.push_escaped(text);
+                index += 1;
+
+                while let Some(Element::Text(text)) = elements.get(index) {
+                    ctx.push_escaped(text);
+                    index += 1;
+                }
+            }
+            element => {
+                render_element(ctx, element);
+                index += 1;
+            }
+        }
     }
 }
 

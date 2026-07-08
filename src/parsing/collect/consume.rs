@@ -53,10 +53,52 @@ pub fn collect_consume_keep<'r, 't>(
     let mut all_elements = Vec::new();
 
     let collection = collect(parser, rule, closes, invalids, kind, |parser| {
-        consume(parser)?.map_ok(|elements| all_elements.extend(elements))
+        consume(parser)?.map_ok(|elements| append_elements(&mut all_elements, elements))
     })?;
     let (last, errors, paragraph_safe) = collection.into();
 
     let item = (all_elements, last);
     Ok(ParseSuccess::new(item, errors, paragraph_safe))
+}
+
+fn append_elements<'t>(all_elements: &mut Vec<Element<'t>>, elements: Elements<'t>) {
+    match elements {
+        Elements::None => all_elements.reserve(0),
+        Elements::Single(element) => all_elements.push(element),
+        Elements::Multiple(mut elements) => {
+            if all_elements.is_empty() {
+                *all_elements = elements;
+            } else {
+                all_elements.append(&mut elements);
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn append_elements_adopts_first_multiple_vector() {
+        let mut all_elements = Vec::new();
+        append_elements(&mut all_elements, Elements::None);
+        assert!(all_elements.is_empty());
+
+        append_elements(
+            &mut all_elements,
+            Elements::Multiple(vec![text!("a"), text!("b")]),
+        );
+
+        let capacity = all_elements.capacity();
+
+        append_elements(&mut all_elements, Elements::Single(text!("c")));
+        append_elements(&mut all_elements, Elements::Multiple(vec![text!("d")]));
+
+        assert_eq!(
+            all_elements,
+            vec![text!("a"), text!("b"), text!("c"), text!("d")],
+        );
+        assert!(all_elements.capacity() >= capacity);
+    }
 }

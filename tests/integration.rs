@@ -1,6 +1,9 @@
 #[path = "coverage_parser_edges.rs"]
 mod coverage_parser_edges;
 
+#[path = "canonical_wikidot_source.rs"]
+mod canonical_wikidot_source;
+
 #[path = "coverage_public_api.rs"]
 mod coverage_public_api;
 

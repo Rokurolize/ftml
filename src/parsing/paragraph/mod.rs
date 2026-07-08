@@ -57,8 +57,6 @@ where
     'r: 't,
     F: FnMut(&mut Parser<'r, 't>) -> Result<bool, ParseError>,
 {
-    debug!("Gathering paragraphs until ending");
-
     // Update parser rule
     parser.set_rule(rule);
 
@@ -89,8 +87,6 @@ where
 
             // If we've hit a paragraph break, then finish the current paragraph
             Token::ParagraphBreak => {
-                debug!("Hit a paragraph break, creating a new paragraph container");
-
                 // Paragraph break -- end the paragraph and start a new one!
                 stack.end_paragraph();
 
@@ -109,12 +105,10 @@ where
                 };
 
                 if close_condition_met {
-                    debug!("Paragraph close condition hit");
                     finished = true;
                     None
                 } else {
                     // Otherwise, produce consumption from this token pointer
-                    trace!("Trying to consume tokens to produce element");
                     Some(consume(parser)?)
                 }
             }
@@ -122,8 +116,6 @@ where
 
         if let Some(consumed) = consumed {
             let (elements, mut errors, paragraph_safe) = consumed.into();
-
-            trace!("Tokens consumed to produce element");
 
             // Add new elements to the list
             push_elements(&mut stack, elements, paragraph_safe);

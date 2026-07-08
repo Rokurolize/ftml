@@ -196,7 +196,6 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
                 return Ok(output);
             }
             Err(error) => {
-                warn!("Rule failed, returning error: '{}'", error.kind().name());
                 // Rollback footnotes added during failed rule attempt
                 parser.truncate_footnotes(footnote_count);
                 all_errors.push(error);
@@ -204,7 +203,6 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
         }
     }
 
-    warn!("All rules exhausted, using generic text fallback");
     let element = text!(current.slice);
     parser.step()?;
 

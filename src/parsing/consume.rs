@@ -86,9 +86,11 @@ fn try_consume_text_token<'r, 't>(
 /// It will use the fallback if all rules, fail, so the only failure case is if
 /// the end of the input is reached.
 pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
-    let token_name = parser.current().token.name();
-    let token_slice = parser.current().slice;
-    debug!("Running consume attempt (token {token_name}, slice {token_slice:?})");
+    debug!(
+        "Running consume attempt (token {}, slice {:?})",
+        parser.current().token.name(),
+        parser.current().slice,
+    );
 
     // Incrementing recursion depth
     // Will fail if we're too many layers in

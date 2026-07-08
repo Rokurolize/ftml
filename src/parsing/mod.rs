@@ -104,8 +104,10 @@ where
         Ok(success) => {
             let elements = success.item;
             let errors = success.errors;
-            let error_count = errors.len();
-            debug!("Finished parsing into syntax tree ({error_count} errors)");
+            debug!(
+                "Finished parsing into syntax tree ({} errors)",
+                errors.len()
+            );
 
             // process_depths() wants a "list type", so we map in a () for each.
             let table_of_contents_depths = table_of_contents_depths

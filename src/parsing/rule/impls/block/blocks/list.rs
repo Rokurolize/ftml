@@ -86,8 +86,10 @@ fn parse_list_block<'r, 't>(
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     let rule_name = block_rule.name;
-    let list_type_name = list_type.name();
-    debug!("{name}/{rule_name}/{list_type_name} head={in_head} score={flag_score}");
+    debug!(
+        "{name}/{rule_name}/{} head={in_head} score={flag_score}",
+        list_type.name(),
+    );
 
     let parser = &mut ParserWrap::new(parser, AcceptsPartial::ListItem);
 

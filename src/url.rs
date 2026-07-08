@@ -25,7 +25,8 @@ use std::sync::LazyLock;
 #[cfg(feature = "html")]
 use crate::tree::LinkLocation;
 
-pub const URL_SCHEMES: [&str; 19] = [
+#[cfg(test)]
+const URL_SCHEMES: [&str; 19] = [
     "blob:",
     "chrome-extension://",
     "chrome://",
@@ -48,14 +49,31 @@ pub const URL_SCHEMES: [&str; 19] = [
 ];
 
 pub fn is_url(url: &str) -> bool {
-    // If it's a URL
-    for scheme in &URL_SCHEMES {
-        if url.starts_with(scheme) {
-            return true;
+    match url.as_bytes().first().copied() {
+        Some(b'b') => url.starts_with("blob:"),
+        Some(b'c') => {
+            url.starts_with("chrome-extension://")
+                || url.starts_with("chrome://")
+                || url.starts_with("content://")
         }
+        Some(b'd') => url.starts_with("dns:"),
+        Some(b'f') => {
+            url.starts_with("feed:")
+                || url.starts_with("file://")
+                || url.starts_with("ftp://")
+        }
+        Some(b'g') => url.starts_with("git://") || url.starts_with("gopher://"),
+        Some(b'h') => url.starts_with("http://") || url.starts_with("https://"),
+        Some(b'i') => {
+            url.starts_with("irc6://")
+                || url.starts_with("irc://")
+                || url.starts_with("ircs://")
+        }
+        Some(b'm') => url.starts_with("mailto:"),
+        Some(b'r') => url.starts_with("resource://") || url.starts_with("rtmp://"),
+        Some(b's') => url.starts_with("sftp://"),
+        _ => false,
     }
-
-    false
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -174,6 +192,18 @@ pub fn normalize_href<'a>(url: &'a str, extra: Option<&'a str>) -> Cow<'a, str> 
 
 pub trait BuildSiteUrl {
     fn build_url(&self, site: &str, path: &str, extra: Option<&str>) -> String;
+}
+
+#[test]
+fn detect_supported_url_schemes() {
+    for scheme in URL_SCHEMES {
+        let input = format!("{scheme}example");
+        assert!(is_url(&input), "{scheme}");
+    }
+
+    for input in ["", "page", "Http://example.com", "javascript:alert(1)"] {
+        assert!(!is_url(input), "{input}");
+    }
 }
 
 #[test]

@@ -12,6 +12,7 @@ version = "1.42.0+roku.20260630.1"
 authors = ["Emmie Smith <emmie.maeda@gmail.com>"]
 edition = "2024"
 rust-version = "1.88.0"
+autotests = false
 
 [lib]
 name = "ftml"
@@ -55,7 +56,7 @@ wikidot-normalize = "0.12"
 writeable = "0.6"
 
 [build-dependencies]
-built = { version = "0.8", features = ["chrono", "git2"] }
+built = { version = "0.8", features = ["chrono"] }
 
 [dev-dependencies]
 clap = "4"
@@ -86,3 +87,7 @@ unexpected_cfgs = { level = "warn", check-cfg = ["cfg(tarpaulin)"] }
 
 [profile.release]
 lto = true
+
+[[test]]
+name = "integration"
+path = "tests/integration.rs"

@@ -57,17 +57,12 @@ pub fn collect_text_keep<'p, 'r, 't>(
 where
     'r: 't,
 {
-    // Log collect_text() call
-    debug!("Trying to consume tokens to merge into a single string");
-
     let (start, mut end) = (parser.current(), None);
 
     // Iterate and collect the tokens to merge.
     //
     // We know text is always paragraph safe, so we ignore that value.
     let collection = collect(parser, rule, closes, invalids, kind, |parser| {
-        trace!("Ingesting token in string span");
-
         end = Some(parser.current());
         success_value((), Vec::new(), true)
     })?;

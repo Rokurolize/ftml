@@ -61,7 +61,7 @@ use super::prelude::*;
 /// is returned.
 pub fn collect<'p, 'r, 't, F>(
     parser: &'p mut Parser<'r, 't>,
-    rule: Rule,
+    _rule: Rule,
     close_conditions: &[ParseCondition],
     invalid_conditions: &[ParseCondition],
     error_kind: Option<ParseErrorKind>,
@@ -70,8 +70,6 @@ pub fn collect<'p, 'r, 't, F>(
 where
     F: FnMut(&mut Parser<'r, 't>) -> ParseResult<'r, 't, ()>,
 {
-    debug!("Trying to collect tokens for rule {}", rule.name());
-
     let mut errors = Vec::new();
     let mut paragraph_safe = true;
 
@@ -84,8 +82,6 @@ where
 
         // See if the container has ended
         if parser.evaluate_any(close_conditions) {
-            trace!("Found ending condition");
-
             let last = parser.current();
             if parser.current().token != Token::InputEnd {
                 parser.step()?;
@@ -96,14 +92,11 @@ where
 
         // See if the container should be aborted
         if parser.evaluate_any(invalid_conditions) {
-            trace!("Found invalid token {}", parser.current().token.name());
-
             return Err(parser.make_err(error_kind.unwrap_or(ParseErrorKind::RuleFailed)));
         }
 
         // See if we've hit the end
         if parser.current().token == Token::InputEnd {
-            trace!("Found end of input, aborting");
             return Err(parser.make_err(ParseErrorKind::EndOfInput));
         }
 

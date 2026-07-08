@@ -53,8 +53,6 @@ impl Rule {
         self,
         parser: &mut Parser<'r, 't>,
     ) -> ParseResult<'r, 't, Elements<'t>> {
-        debug!("Trying to consume for parse rule {}", self.name);
-
         // Check that the line position matches what the rule wants.
         if let LineRequirement::StartOfLine = self.position
             && !parser.start_of_line()

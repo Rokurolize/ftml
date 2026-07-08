@@ -65,7 +65,6 @@ impl<'t> ParagraphStack<'t> {
 
     #[inline]
     pub fn push_errors(&mut self, errors: &mut Vec<ParseError>) {
-        debug!("Pushing errors to stack (length {})", errors.len());
         self.errors.append(errors);
     }
 
@@ -78,8 +77,6 @@ impl<'t> ParagraphStack<'t> {
     /// This should only be between lines in the blockquote.
     #[inline]
     pub fn pop_line_break(&mut self) {
-        trace!("Popping last element if Element::LineBreak");
-
         if let Some(Element::LineBreak) = self.current.last() {
             self.current.pop();
         }
@@ -87,14 +84,8 @@ impl<'t> ParagraphStack<'t> {
 
     /// Creates a paragraph element out of this instance's current elements.
     pub fn build_paragraph(&mut self) -> Option<Element<'t>> {
-        trace!(
-            "Building paragraph from current stack state (length {})",
-            self.current.len(),
-        );
-
         // Don't create empty paragraphs
         if self.current.is_empty() {
-            trace!("No paragraph created, no pending elements in stack");
             return None;
         }
 
@@ -108,8 +99,6 @@ impl<'t> ParagraphStack<'t> {
 
     /// Set the finished field in this struct to the paragraph element.
     pub fn end_paragraph(&mut self) {
-        trace!("Ending the current paragraph to push as a completed element");
-
         if let Some(paragraph) = self.build_paragraph() {
             self.finished.push(paragraph);
         }
@@ -120,8 +109,6 @@ impl<'t> ParagraphStack<'t> {
     /// This returns all collected elements, errors, and returns the final
     /// paragraph safety value.
     pub fn into_result<'r>(mut self) -> ParseResult<'r, 't, Vec<Element<'t>>> {
-        debug!("Converting paragraph parse stack into ParseResult");
-
         // Finish current paragraph, if any
         self.end_paragraph();
 
@@ -147,8 +134,6 @@ impl<'t> ParagraphStack<'t> {
     /// and either have an alternate means of determining paragraph safety, or
     /// statically know what that value would be.
     pub fn into_elements(mut self) -> Vec<Element<'t>> {
-        debug!("Converting paragraph parse stack into a Vec<Element>");
-
         // Finish current paragraph, if any
         self.end_paragraph();
 

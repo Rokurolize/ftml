@@ -46,12 +46,6 @@ pub fn collect_container<'r, 't>(
     invalids: &[ParseCondition],
     kind: Option<ParseErrorKind>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!(
-        "Consuming container {} for {}",
-        container_type.name(),
-        rule.name(),
-    );
-
     // Iterate and consume all the tokens
     let collection = collect_consume(parser, rule, closes, invalids, kind)?;
     let (elements, errors, paragraph_safe) = collection.into();

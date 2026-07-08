@@ -397,7 +397,6 @@ impl<'r, 't> Parser<'r, 't> {
     where
         F: FnOnce(&mut Parser<'r, 't>) -> Result<bool, ParseError>,
     {
-        debug!("Evaluating closure for parser condition");
         f(&mut self.clone()).unwrap_or(false)
     }
 
@@ -405,8 +404,6 @@ impl<'r, 't> Parser<'r, 't> {
     where
         F: FnOnce(&mut Parser<'r, 't>) -> Result<bool, ParseError>,
     {
-        debug!("Evaluating closure for parser condition, saving progress on success");
-
         let mut parser = self.clone();
         if f(&mut parser).unwrap_or(false) {
             let last = self.current;
@@ -452,8 +449,6 @@ impl<'r, 't> Parser<'r, 't> {
     /// Returns the new current token.
     #[inline]
     pub fn step(&mut self) -> Result<&'r ExtractedToken<'t>, ParseError> {
-        trace!("Stepping to the next token");
-
         // Set the start-of-line flag.
         self.start_of_line = token_starts_line(self.current.token);
 
@@ -464,18 +459,13 @@ impl<'r, 't> Parser<'r, 't> {
                 self.remaining = remaining;
                 Ok(current)
             }
-            None => {
-                warn!("Exhausted all tokens, yielding end of input error");
-                Err(self.make_err(ParseErrorKind::EndOfInput))
-            }
+            None => Err(self.make_err(ParseErrorKind::EndOfInput)),
         }
     }
 
     /// Move the token pointer forward `count` steps.
     #[inline]
     pub fn step_n(&mut self, count: usize) -> Result<(), ParseError> {
-        trace!("Stepping {count} times");
-
         for _ in 0..count {
             self.step()?;
         }
@@ -488,7 +478,6 @@ impl<'r, 't> Parser<'r, 't> {
     /// For instance, submitting `0` will yield the first item of `parser.remaining()`.
     #[inline]
     pub fn look_ahead(&self, offset: usize) -> Option<&'r ExtractedToken<'t>> {
-        trace!("Looking ahead to a token (offset {offset})");
         self.remaining.get(offset)
     }
 
@@ -523,8 +512,6 @@ impl<'r, 't> Parser<'r, 't> {
         token: Token,
         kind: ParseErrorKind,
     ) -> Result<&'t str, ParseError> {
-        trace!("Looking for token {} (error {})", token.name(), kind.name());
-
         let current = self.current();
         if current.token == token {
             let text = current.slice;
@@ -536,8 +523,6 @@ impl<'r, 't> Parser<'r, 't> {
     }
 
     pub fn get_optional_token(&mut self, token: Token) -> Result<(), ParseError> {
-        trace!("Looking for optional token {}", token.name());
-
         if self.current().token == token {
             self.step()?;
         }
@@ -546,19 +531,15 @@ impl<'r, 't> Parser<'r, 't> {
     }
 
     pub fn get_optional_line_break(&mut self) -> Result<(), ParseError> {
-        debug!("Looking for optional line break");
         self.get_optional_token(Token::LineBreak)
     }
 
     #[inline]
     pub fn get_optional_space(&mut self) -> Result<(), ParseError> {
-        debug!("Looking for optional space");
         self.get_optional_token(Token::Whitespace)
     }
 
     pub fn get_optional_spaces_any(&mut self) -> Result<(), ParseError> {
-        debug!("Looking for optional spaces (any)");
-
         loop {
             let current_token = self.current().token;
             if !is_optional_space_token(current_token) {

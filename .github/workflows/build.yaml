@@ -15,6 +15,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   library_build_and_test:
     name: Library

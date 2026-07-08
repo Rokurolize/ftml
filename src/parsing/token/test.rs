@@ -80,6 +80,15 @@ fn fast_tokenizer_matches_pest_on_adversarial_inputs() {
         "@@ @< >@ [!-- comment --]",
         "\\\" \\\\ \\x",
         "雪 & 火",
+        "abc@example.com",
+        "foo%bar@example.com",
+        "abc.def@example.com",
+        "abc@example.com]",
+        "abc@",
+        "abc@example",
+        "abc@.com",
+        "abc@example.",
+        "abc.def no-at",
     ] {
         assert_fast_tokens_match_pest(input);
     }

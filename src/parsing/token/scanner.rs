@@ -40,11 +40,7 @@ fn next_token(text: &str, bytes: &[u8], start: usize) -> (Token, usize) {
             return (Token::Url, end);
         }
 
-        if let Some(end) = scan_email(bytes, start) {
-            return (Token::Email, end);
-        }
-
-        return (Token::Identifier, scan_identifier(bytes, start));
+        return scan_identifier_or_email(bytes, start);
     }
 
     if let Some(end) = scan_variable(bytes, start) {
@@ -201,17 +197,23 @@ fn scan_url(bytes: &[u8], start: usize) -> Option<usize> {
     (end > body_start).then_some(end)
 }
 
-fn scan_email(bytes: &[u8], start: usize) -> Option<usize> {
-    if !bytes[start].is_ascii_alphanumeric() {
-        return None;
+fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
+    debug_assert!(bytes[start].is_ascii_alphanumeric());
+
+    let identifier_end = scan_identifier(bytes, start);
+    match bytes.get(identifier_end) {
+        Some(b' ' | b'\t' | b'\n' | b'\r') | None => {
+            return (Token::Identifier, identifier_end);
+        }
+        _ => {}
     }
 
-    let mut at = start;
+    let mut at = identifier_end;
     while at < bytes.len() && !matches!(bytes[at], b' ' | b'\t' | b'@' | b'\n' | b'\r') {
         at += 1;
     }
     if at == start || bytes.get(at) != Some(&b'@') {
-        return None;
+        return (Token::Identifier, identifier_end);
     }
 
     let mut dot = at + 1;
@@ -220,7 +222,7 @@ fn scan_email(bytes: &[u8], start: usize) -> Option<usize> {
         dot += 1;
     }
     if dot == at + 1 || bytes.get(dot) != Some(&b'.') {
-        return None;
+        return (Token::Identifier, identifier_end);
     }
 
     let mut end = dot + 1;
@@ -228,7 +230,11 @@ fn scan_email(bytes: &[u8], start: usize) -> Option<usize> {
         end += 1;
     }
 
-    (end > dot + 1).then_some(end)
+    if end > dot + 1 {
+        (Token::Email, end)
+    } else {
+        (Token::Identifier, identifier_end)
+    }
 }
 
 fn scan_identifier(bytes: &[u8], start: usize) -> usize {

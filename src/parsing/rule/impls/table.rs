@@ -72,6 +72,20 @@ fn push_cell<'t>(
     cells.push(cell);
 }
 
+fn append_cell_elements<'t>(all_elements: &mut Vec<Element<'t>>, elements: Elements<'t>) {
+    match elements {
+        Elements::None => {}
+        Elements::Single(element) => all_elements.push(element),
+        Elements::Multiple(mut elements) => {
+            if all_elements.is_empty() {
+                *all_elements = elements;
+            } else {
+                all_elements.append(&mut elements);
+            }
+        }
+    }
+}
+
 fn simple_table<'t>(rows: Vec<TableRow<'t>>) -> Element<'t> {
     let attributes = AttributeMap::new();
     let table_type = TableType::Simple;
@@ -248,7 +262,7 @@ fn try_consume_fn<'r, 't>(
                         let consumed = consume(parser)?;
                         let new_items = consumed.chain(&mut errors, &mut paragraph_break);
 
-                        elements.extend(new_items);
+                        append_cell_elements(&mut elements, new_items);
                     }
                 }
             }
@@ -462,5 +476,20 @@ mod tests {
         assert_eq!(table.rows.len(), 2);
         assert_eq!(table.rows[0].cells.len(), 2);
         assert_eq!(table.rows[1].cells.len(), 2);
+    }
+
+    #[test]
+    fn table_cell_elements_adopt_first_multiple_result() {
+        let mut all_elements = Vec::new();
+        append_cell_elements(
+            &mut all_elements,
+            Elements::Multiple(vec![text!("a"), text!("b")]),
+        );
+        let capacity = all_elements.capacity();
+
+        append_cell_elements(&mut all_elements, Elements::Single(text!("c")));
+
+        assert_eq!(all_elements, vec![text!("a"), text!("b"), text!("c")]);
+        assert!(all_elements.capacity() >= capacity);
     }
 }

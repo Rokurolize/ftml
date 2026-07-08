@@ -161,8 +161,8 @@ fn rendered_div_and_span_keep_safe_attributes_and_filter_unsafe_attributes() {
     for forbidden in [
         "onclick",
         "onmouseover",
-        r#"data-=""#,
-        r#"aria-=""#,
+        r#"data-="bad""#,
+        r#"aria-="bad""#,
         "alert(1)",
     ] {
         assert!(!html.contains(forbidden), "found {forbidden} in {html}");

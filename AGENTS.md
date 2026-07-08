@@ -3,6 +3,7 @@
 ## Read this first
 
 - `README.md`: crate purpose and supported syntax scope.
+- `docs/WikijumpBoundary.md`: pointer to the frozen FTML/Wikijump responsibility boundary contract and the FTML-side obligations it implies.
 - `Cargo.toml` and workspace manifests: crate/test structure.
 - Existing parser/render tests and fixtures: preferred source of behavior examples.
 - Any repo-local docs or examples for block, inline, module, and HTML rendering behavior.

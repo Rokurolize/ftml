@@ -47,9 +47,6 @@ pub const RULE_LIST: Rule = Rule {
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    // We don't know the list type(s) yet, so just log that we're starting
-    debug!("Parsing a list");
-
     // Context variables
     let mut depths = Vec::new();
     let mut errors = Vec::new();
@@ -103,20 +100,15 @@ where
     };
 
     if depth > MAX_LIST_DEPTH {
-        warn!("List item depth {depth} exceeds maximum {MAX_LIST_DEPTH}");
         return Err(parser.make_err(ParseErrorKind::ListDepthExceeded));
     }
 
     let Some(list_type) = get_list_type(sub_parser.current().token) else {
-        trace!("Ending list: no item token");
         return Ok(ListItemStep::End);
     };
     sub_parser.step()?;
 
-    trace!("Parsing list item '{}'", list_type.name());
-
     if sub_parser.current().token != Token::Whitespace {
-        warn!("Ending list: missing item whitespace");
         return Ok(ListItemStep::End);
     }
     sub_parser.step()?;
@@ -125,7 +117,6 @@ where
     let elements = item_result.chain(errors, paragraph_safe);
     if elements.is_empty() {
         parser.update(&sub_parser);
-        trace!("Skipping empty list line");
         return Ok(ListItemStep::Skip);
     }
 
@@ -145,7 +136,6 @@ fn parse_list_depth<'r, 't>(
         }
         Token::BulletItem | Token::NumberedItem => 0,
         _ => {
-            warn!("Ending list: no depth token");
             return Ok(None);
         }
     };

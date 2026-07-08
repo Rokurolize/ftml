@@ -190,19 +190,15 @@ fn cell_boundary<'r, 't>(
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!("Trying to parse simple table");
     let mut rows = Vec::new();
     let mut errors = Vec::new();
     let mut paragraph_break = false;
 
     loop {
-        debug!("Parsing next table row");
-
         let mut cells = Vec::new();
 
         // Loop for each cell in the row
         'row: loop {
-            debug!("Parsing next table cell");
             let mut elements = Vec::new();
             let cell_start = match parse_cell_start(parser)? {
                 Some(cell_start) => cell_start,
@@ -211,11 +207,9 @@ fn try_consume_fn<'r, 't>(
 
             // Loop for each element in the cell
             'cell: loop {
-                trace!("Parsing next element (length {})", elements.len());
                 match parser.next_two_tokens() {
                     // End the cell or row
                     (current, Some(next)) if is_table_column_token(current) => {
-                        trace!("Ending cell, row, or table");
                         let (r, c, e) = (&mut rows, &mut cells, &mut elements);
                         let p = std::convert::identity(&mut *parser);
                         let mut state = CellState::new(r, c, e);
@@ -236,26 +230,21 @@ fn try_consume_fn<'r, 't>(
 
                     // Ignore leading whitespace
                     (Token::Whitespace, _) if elements.is_empty() => {
-                        trace!("Ignoring leading whitespace");
                         parser.step()?;
                     }
 
                     // Ignore trailing whitespace
                     (Token::Whitespace, Some(next)) if is_table_column_token(next) => {
-                        trace!("Ignoring trailing whitespace");
                         parser.step()?;
                     }
 
                     // Invalid tokens
                     (Token::LineBreak | Token::ParagraphBreak | Token::InputEnd, _) => {
-                        trace!("Invalid termination tokens in table, ending");
                         return finish_table_or_fail(parser, rows, errors);
                     }
 
                     // Consume tokens like normal
                     _ => {
-                        trace!("Consuming cell contents as elements");
-
                         let consumed = consume(parser)?;
                         let new_items = consumed.chain(&mut errors, &mut paragraph_break);
 

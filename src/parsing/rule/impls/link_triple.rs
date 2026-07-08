@@ -44,7 +44,6 @@ pub const RULE_LINK_TRIPLE_NEW_TAB: Rule = Rule {
 };
 
 fn link<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!("Trying to create a triple-bracket link (regular)");
     assert_step(parser, Token::LeftLink)?;
     try_consume_link(parser, RULE_LINK_TRIPLE, None)
 }
@@ -52,7 +51,6 @@ fn link<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>
 fn link_new_tab<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!("Trying to create a triple-bracket link (new tab)");
     assert_step(parser, Token::LeftLinkStar)?;
     try_consume_link(parser, RULE_LINK_TRIPLE_NEW_TAB, Some(AnchorTarget::NewTab))
 }
@@ -63,8 +61,6 @@ fn try_consume_link<'r, 't>(
     rule: Rule,
     target: Option<AnchorTarget>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    trace!("Trying to create a triple-bracket link");
-
     // Gather path for link
     let url_close = [
         ParseCondition::current(Token::Pipe),
@@ -75,8 +71,6 @@ fn try_consume_link<'r, 't>(
         ParseCondition::current(Token::LineBreak),
     ];
     let (url, last) = collect_text_keep(parser, rule, &url_close, &url_invalid, None)?;
-
-    trace!("Retrieved url for link, now build element (url: '{url}')");
 
     // Trim text
     let url = url.trim();
@@ -106,8 +100,6 @@ fn build_same<'r, 't>(
     url: &'t str,
     target: Option<AnchorTarget>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!("Building link with same URL and label (url '{url}')");
-
     // Remove category, if present.
     // If None, then the label is the original URL.
     let label = match strip_category(url) {
@@ -140,8 +132,6 @@ fn build_separate<'r, 't>(
     url: &'t str,
     target: Option<AnchorTarget>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!("Building link with separate URL and label (url '{url}')");
-
     // Gather label for link
     let label_close = [ParseCondition::current(Token::RightLink)];
     let label_invalid = [
@@ -149,8 +139,6 @@ fn build_separate<'r, 't>(
         ParseCondition::current(Token::LineBreak),
     ];
     let label = collect_text(parser, rule, &label_close, &label_invalid, None)?;
-
-    trace!("Retrieved label for link, now building element (label '{label}')");
 
     // Trim label
     let label = label.trim();

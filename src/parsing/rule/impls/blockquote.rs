@@ -34,8 +34,6 @@ pub const RULE_BLOCKQUOTE: Rule = Rule {
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!("Parsing nested native blockquotes");
-
     // Context variables
     let mut depths = Vec::new();
     let mut errors = Vec::new();
@@ -44,7 +42,6 @@ fn try_consume_fn<'r, 't>(
     loop {
         let current = parser.current();
         if current.token != Token::Quote {
-            warn!("Didn't find blockquote token, ending list iteration");
             break std::convert::identity(());
         }
 
@@ -56,7 +53,6 @@ fn try_consume_fn<'r, 't>(
 
         // Check that the depth isn't obscenely deep, to avoid DOS attacks via stack overflow.
         if depth > MAX_BLOCKQUOTE_DEPTH {
-            debug!("Blockquote depth {depth} exceeds maximum {MAX_BLOCKQUOTE_DEPTH}");
             return Err(parser.make_err(ParseErrorKind::BlockquoteDepthExceeded));
         }
 

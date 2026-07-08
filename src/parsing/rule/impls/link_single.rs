@@ -41,7 +41,6 @@ pub const RULE_LINK_SINGLE_NEW_TAB: Rule = Rule {
 };
 
 fn link<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
-    trace!("Trying to create a single-bracket link (regular)");
     assert_step(parser, Token::LeftBracket)?;
     try_consume_link(parser, RULE_LINK_SINGLE, None)
 }
@@ -49,7 +48,6 @@ fn link<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>
 fn link_new_tab<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    trace!("Trying to create a single-bracket link (new tab)");
     assert_step(parser, Token::LeftBracketStar)?;
     try_consume_link(parser, RULE_LINK_SINGLE_NEW_TAB, Some(AnchorTarget::NewTab))
 }
@@ -60,9 +58,6 @@ fn try_consume_link<'r, 't>(
     rule: Rule,
     target: Option<AnchorTarget>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    let target_name = target.map(|target| target.name()).unwrap_or("<none>");
-    debug!("Trying to create a single-bracket link (target {target_name})");
-
     // Gather path for link
     let url_close = [ParseCondition::current(Token::Whitespace)];
     let url_invalid = [
@@ -77,8 +72,6 @@ fn try_consume_link<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::InvalidUrl));
     }
 
-    trace!("Retrieved URL '{url}' for link, now fetching label");
-
     // Gather label for link
     let label_close = [ParseCondition::current(Token::RightBracket)];
     let label_invalid = [
@@ -86,8 +79,6 @@ fn try_consume_link<'r, 't>(
         ParseCondition::current(Token::LineBreak),
     ];
     let label = collect_text(parser, rule, &label_close, &label_invalid, None)?;
-
-    trace!("Retrieved label for link, now build element (label '{label}')");
 
     // Trim label
     let label = label.trim();

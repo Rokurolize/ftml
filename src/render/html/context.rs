@@ -91,11 +91,10 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     ) -> Self {
         // Heuristic for improving rendering performance by avoiding reallocating.
         //
-        // Looking at test data, the outputted HTML byte length usually stays
-        // below ~12% of the wikitext input byte length, with the greatest differences
-        // being small inputs.
-        let input = wikitext_len as f32;
-        let capacity = (input * 1.12) as usize;
+        // Rendered HTML is commonly larger than source wikitext because each
+        // syntax element expands into tags and escaped text. Keep the estimate
+        // conservative enough to avoid repeated growth on mixed markup pages.
+        let capacity = wikitext_len.saturating_mul(4).max(4096);
 
         // Build and return
         HtmlContext {

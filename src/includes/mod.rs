@@ -79,33 +79,31 @@ where
     let mut ranges: Vec<std::ops::Range<usize>> = Vec::new();
     let mut includes = Vec::new();
 
+    let mut search_start = 0;
+
     // Get include references
-    for mtch in INCLUDE_REGEX.find_iter(input) {
+    while let Some(mtch) = INCLUDE_REGEX.find_at(input, search_start) {
         let start = mtch.start();
 
         let slice = mtch.as_str();
         trace!("Found include regex match (start {start}, slice '{slice}')");
 
-        // An include block whose argument value spans multiple lines can
-        // swallow a following include's opening (values only terminate at
-        // "]]" before a newline). Such a match is part of the previous
-        // block's argument text, not a block of its own; substituting both
-        // would corrupt the backwards range replacement below.
-        if let Some(previous) = ranges.last()
-            && start < previous.end
-        {
-            warn!(
-                "Skipping include match inside the previous include block (start {start})"
-            );
+        let Some(candidate_end) = find_include_end(input, mtch.end(), input.len()) else {
+            warn!("Unable to find include terminator, skipping remaining input");
+            search_start = input.len();
             continue;
-        }
+        };
 
         match parse_include_block(input, start) {
             Ok((include, end)) => {
                 ranges.push(start..end);
                 includes.push(include);
+                search_start = end;
             }
-            Err(_) => warn!("Unable to parse include regex match"),
+            Err(_) => {
+                search_start = candidate_end;
+                warn!("Unable to parse include regex match, resuming at {search_start}");
+            }
         }
     }
 
@@ -168,6 +166,19 @@ where
 
     // Return
     Ok((output, pages))
+}
+
+fn find_include_end(input: &str, start: usize, end_bound: usize) -> Option<usize> {
+    input[start..end_bound]
+        .match_indices("]]")
+        .find_map(|(index, _)| {
+            let end = start + index + 2;
+            if end == input.len() || input[end..].starts_with('\n') {
+                Some(end)
+            } else {
+                None
+            }
+        })
 }
 
 /// Replaces all specified variables in the content to be included.

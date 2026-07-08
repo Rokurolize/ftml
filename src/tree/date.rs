@@ -42,6 +42,9 @@ use time::format_description::parse_strftime_borrowed;
 use time::{Date, OffsetDateTime, PrimitiveDateTime, UtcOffset};
 use writeable::TryWriteable;
 
+const MAX_DATE_FORMAT_BYTES: usize = 512;
+const MAX_DATE_FORMAT_DIRECTIVES: usize = 64;
+
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case", untagged)]
 pub enum DateItem {
@@ -94,6 +97,10 @@ impl DateItem {
     }
 
     fn format_strftime(self, format: &str, language: &str) -> io::Result<String> {
+        if !date_format_within_limits(format) {
+            return Err(date_format_limit_error());
+        }
+
         let datetime = self.to_datetime_tz();
         let locale = locale_from_language(language);
         let mut rendered = String::new();
@@ -146,6 +153,34 @@ impl DateItem {
 
         Ok(rendered)
     }
+}
+
+pub(crate) fn date_format_within_limits(format: &str) -> bool {
+    if format.len() > MAX_DATE_FORMAT_BYTES {
+        return false;
+    }
+
+    let mut directive_count = 0;
+    let mut chars = format.chars();
+    while let Some(ch) = chars.next() {
+        if ch != '%' {
+            continue;
+        }
+
+        directive_count += 1;
+        if directive_count > MAX_DATE_FORMAT_DIRECTIVES {
+            return false;
+        }
+
+        let Some(directive) = chars.next() else {
+            return true;
+        };
+        if matches!(directive, '_' | '-' | '0') {
+            let _ = chars.next();
+        }
+    }
+
+    true
 }
 
 fn date_format_error_fallback(
@@ -499,6 +534,13 @@ fn invalid_strftime_error(format: &str, message: &str) -> io::Error {
     io::Error::new(
         io::ErrorKind::InvalidInput,
         format!("invalid strftime format string '{format}': {message}"),
+    )
+}
+
+fn date_format_limit_error() -> io::Error {
+    io::Error::new(
+        io::ErrorKind::InvalidInput,
+        "strftime format string exceeds supported limits",
     )
 }
 

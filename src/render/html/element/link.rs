@@ -22,7 +22,7 @@ use super::prelude::*;
 use crate::tree::{
     AnchorTarget, AttributeMap, Element, LinkLabel, LinkLocation, LinkType,
 };
-use crate::url::normalize_link;
+use crate::url::{HrefKind, classify_href, normalize_link};
 
 pub fn render_anchor(
     ctx: &mut HtmlContext,
@@ -120,10 +120,13 @@ pub fn render_link(
         },
         Layout::Wikijump => {
             let css_class = match link {
-                LinkLocation::Url(url) if url == "javascript:;" => "wj-link-anchor",
-                LinkLocation::Url(url) if url.starts_with('#') => "wj-link-anchor",
-                LinkLocation::Url(url) if url.starts_with('/') => "wj-link-internal",
-                LinkLocation::Url(_) => "wj-link-external",
+                LinkLocation::Url(url) => match classify_href(url) {
+                    HrefKind::NoOp | HrefKind::Invalid | HrefKind::Anchor => {
+                        "wj-link-anchor"
+                    }
+                    HrefKind::External => "wj-link-external",
+                    HrefKind::AbsolutePath | HrefKind::Relative => "wj-link-internal",
+                },
                 LinkLocation::Page(page) => {
                     if ctx.page_exists(page) {
                         "wj-link-internal"

@@ -51,6 +51,7 @@ pub use self::clear_float::*;
 pub use self::code::CodeBlock;
 pub use self::container::*;
 pub use self::date::DateItem;
+pub(crate) use self::date::date_format_within_limits;
 pub use self::definition_list::*;
 pub use self::element::*;
 pub use self::embed::*;

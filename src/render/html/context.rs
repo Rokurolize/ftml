@@ -33,7 +33,7 @@ use crate::settings::WikitextSettings;
 use crate::tree::{
     Bibliography, BibliographyList, Element, LinkLocation, VariableScopes,
 };
-use crate::url::{is_url, normalize_href};
+use crate::url::{HrefKind, classify_href, normalize_href};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt::{self, Write};
@@ -76,6 +76,7 @@ where
     table_of_contents_index: Incrementer,
     equation_index: NonZeroUsize,
     footnote_index: NonZeroUsize,
+    bibliography_render_stack: Vec<String>,
 }
 
 impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
@@ -115,6 +116,7 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
             table_of_contents_index: settings.id_indexer(),
             equation_index: NonZeroUsize::new(1).unwrap(),
             footnote_index: NonZeroUsize::new(1).unwrap(),
+            bibliography_render_stack: Vec::new(),
         }
     }
 
@@ -213,6 +215,24 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
         self.bibliographies.get_reference(label)
     }
 
+    pub fn enter_bibliography_ref(&mut self, label: &str) -> bool {
+        if self
+            .bibliography_render_stack
+            .iter()
+            .any(|item| item == label)
+        {
+            false
+        } else {
+            self.bibliography_render_stack.push(str!(label));
+            true
+        }
+    }
+
+    pub fn exit_bibliography_ref(&mut self, label: &str) {
+        let popped = self.bibliography_render_stack.pop();
+        debug_assert_eq!(popped.as_deref(), Some(label));
+    }
+
     pub fn next_code_snippet_index(&mut self) -> NonZeroUsize {
         let next = NonZeroUsize::new(self.code_snippet_index.get() + 1).unwrap();
         std::mem::replace(&mut self.code_snippet_index, next)
@@ -254,23 +274,24 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
                 let normalized = normalize_href(link, None);
                 let mut link = normalized.as_ref();
 
-                let ignore_link = link == "javascript:;"
-                    || link == "#invalid-url"
-                    || link.starts_with('#');
-
-                if !ignore_link {
-                    // Also support [ links pointing to local pages.
-                    // e.g. [/scp-001 SCP-001] in addition to [[[SCP-001]]].
-                    if link.starts_with('/') {
-                        link = &link[1..];
-                    }
-
-                    if is_url(link) {
+                match classify_href(link) {
+                    HrefKind::NoOp | HrefKind::Invalid | HrefKind::Anchor => {}
+                    HrefKind::External => {
                         let link = Cow::Owned(str!(link));
                         self.backlinks.external_links.push(link);
-                    } else if !link.is_empty() {
-                        let page_ref = PageRef::page_only(cow!(link));
-                        self.backlinks.internal_links.push(page_ref.to_owned());
+                    }
+                    HrefKind::AbsolutePath => {
+                        link = &link[1..];
+                        if !link.is_empty() {
+                            let page_ref = PageRef::page_only(cow!(link));
+                            self.backlinks.internal_links.push(page_ref.to_owned());
+                        }
+                    }
+                    HrefKind::Relative => {
+                        if !link.is_empty() {
+                            let page_ref = PageRef::page_only(cow!(link));
+                            self.backlinks.internal_links.push(page_ref.to_owned());
+                        }
                     }
                 }
             }

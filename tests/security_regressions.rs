@@ -1,4 +1,5 @@
 use ftml::data::{PageInfo, PageRef, ScoreValue};
+use ftml::includes::DebugIncluder;
 use ftml::layout::Layout;
 use ftml::parsing::ParseErrorKind;
 use ftml::render::Render;
@@ -14,6 +15,7 @@ use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::convert::Infallible;
 use std::num::NonZeroU32;
+use std::time::{Duration, Instant};
 
 fn page_info() -> PageInfo<'static> {
     PageInfo {
@@ -123,12 +125,65 @@ fn color_markup_cannot_add_css_declarations() {
 }
 
 #[test]
+fn size_block_cannot_add_css_declarations() {
+    for payload in [
+        "80%;background-image:url(https://attacker.invalid/pixel)",
+        "80%\";background-image:url(https://attacker.invalid/pixel)",
+        "80%';background-image:url(https://attacker.invalid/pixel)",
+        "80%&#59;background-image:url(https://attacker.invalid/pixel)",
+    ] {
+        let tree = parse(
+            &format!("[[size {payload}]]text[[/size]]"),
+            Layout::Wikijump,
+        );
+        let output = render_html(&tree, Layout::Wikijump);
+
+        assert!(output.contains(r#"style="font-size: inherit;""#));
+        assert!(!output.contains("background-image"));
+    }
+
+    let tree = parse("[[size 2vh]]text[[/size]]", Layout::Wikijump);
+    let output = render_html(&tree, Layout::Wikijump);
+
+    assert!(output.contains(r#"style="font-size: 2vh;""#));
+}
+
+#[test]
 fn empty_label_triple_url_link_does_not_panic() {
     let tree = parse("[[[https://example.com|]]]", Layout::Wikidot);
     let output = render_html(&tree, Layout::Wikidot);
 
     assert!(output.contains(r#"href="https://example.com""#));
     assert!(output.contains(">https://example.com</a>"));
+}
+
+#[test]
+fn protocol_relative_links_are_classified_as_external() {
+    let tree = parse("[//attacker.invalid/path click]", Layout::Wikijump);
+    let output = render_html_output(&tree, Layout::Wikijump);
+
+    assert!(output.body.contains(r#"href="//attacker.invalid/path""#));
+    assert!(output.body.contains("wj-link-external"));
+    assert!(output.backlinks.internal_links.is_empty());
+    assert_eq!(
+        output
+            .backlinks
+            .external_links
+            .iter()
+            .map(Cow::as_ref)
+            .collect::<Vec<_>>(),
+        vec!["//attacker.invalid/path"],
+    );
+
+    let tree = parse("[/local-page local]", Layout::Wikijump);
+    let output = render_html_output(&tree, Layout::Wikijump);
+
+    assert!(output.body.contains("wj-link-internal"));
+    assert!(output.backlinks.external_links.is_empty());
+    assert_eq!(
+        output.backlinks.internal_links,
+        vec![PageRef::page_only("local-page")],
+    );
 }
 
 #[test]
@@ -346,6 +401,31 @@ fn malformed_ast_bibliography_block_renders_error() {
 }
 
 #[test]
+fn recursive_bibcite_tooltips_render_error_instead_of_recursing() {
+    for input in [
+        "[[bibliography]]\n: a : ((bibcite a))\n[[/bibliography]]\n((bibcite a))",
+        "[[bibliography]]\n: a : ((bibcite b))\n: b : ((bibcite a))\n[[/bibliography]]\n((bibcite a))",
+    ] {
+        let tree = parse(input, Layout::Wikijump);
+        let output = render_html(&tree, Layout::Wikijump);
+
+        assert!(output.contains("wj-error-inline"));
+        assert!(output.contains("Bibliography item not found"));
+        assert!(output.len() < 20_000);
+    }
+}
+
+#[test]
+fn non_bibcite_parentheses_render_as_text() {
+    let tree = parse("before ((notbibcite label)) after", Layout::Wikijump);
+    let output = render_html(&tree, Layout::Wikijump);
+
+    assert!(output.contains("before"));
+    assert!(output.contains("notbibcite"));
+    assert!(output.contains("after"));
+}
+
+#[test]
 fn malformed_partial_elements_render_fallback_html() {
     let tree = SyntaxTree {
         elements: vec![
@@ -497,6 +577,78 @@ fn empty_page_includes_are_rejected() {
             .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments),
         "{errors:?}",
     );
+}
+
+#[test]
+fn malformed_include_prefixes_are_skipped_once() {
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+    let input = "[[include :scp-wiki:]]\n[[include component:ok]]";
+    let (output, pages) =
+        ftml::include(input, &settings, DebugIncluder, || -> Infallible {
+            unreachable!("debug includer should match include requests")
+        })
+        .expect("include preprocessing should not fail");
+
+    assert!(output.contains("[[include :scp-wiki:]]"));
+    assert!(output.contains("<INCLUDED-PAGE component:ok {}>"));
+    assert_eq!(pages, vec![PageRef::page_only("component:ok")]);
+
+    let repeated = "[[include page\n".repeat(6_400);
+    let started = Instant::now();
+    let (output, pages) = ftml::include(
+        &repeated,
+        &settings,
+        ftml::includes::NullIncluder,
+        || -> Infallible { unreachable!("null includer should not fail") },
+    )
+    .expect("malformed includes should be ignored");
+
+    assert_eq!(output, repeated);
+    assert!(pages.is_empty());
+    assert!(started.elapsed() < Duration::from_secs(3));
+}
+
+#[test]
+fn empty_list_lines_do_not_fallback_quadratically() {
+    let input = "* \n".repeat(1_000);
+    let (tree, errors) = parse_with_errors(&input, Layout::Wikijump);
+
+    assert!(errors.is_empty(), "{errors:?}");
+    assert!(tree.elements.is_empty(), "{:?}", tree.elements);
+}
+
+#[test]
+fn over_limit_date_formats_fall_back_without_format_class() {
+    let format = "%c".repeat(65);
+    let input = format!(r#"[[date 2010-01-01 format="{format}"]]"#);
+    let tree = parse(&input, Layout::Wikijump);
+    let output = render_html_output(&tree, Layout::Wikijump);
+
+    assert!(!output.body.contains("format_"));
+    assert!(!output.body.contains("%25c"));
+    assert!(output.body.contains("wj-date"));
+}
+
+#[test]
+fn hidden_conditionals_do_not_publish_metadata_blocks() {
+    for input in [
+        "[[iftags +missing]]\n[[code]]\nsecret\n[[/code]]\n[[html]]\n<b>secret</b>\n[[/html]]\n[[/iftags]]",
+        "[[ifcategory missing]]\n[[code]]\nsecret\n[[/code]]\n[[html]]\n<b>secret</b>\n[[/html]]\n[[/ifcategory]]",
+    ] {
+        let tree = parse(input, Layout::Wikijump);
+
+        assert!(tree.elements.is_empty(), "{:?}", tree.elements);
+        assert!(tree.code_blocks.is_empty(), "{:?}", tree.code_blocks);
+        assert!(tree.html_blocks.is_empty(), "{:?}", tree.html_blocks);
+    }
+
+    let tree = parse(
+        "[[ifcategory _default]]\n[[code]]\nvisible\n[[/code]]\n[[/ifcategory]]",
+        Layout::Wikijump,
+    );
+
+    assert_eq!(tree.code_blocks.len(), 1);
+    assert_eq!(tree.code_blocks[0].contents, "visible");
 }
 
 #[test]

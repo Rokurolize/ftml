@@ -113,9 +113,6 @@ jobs:
       id-token: write
     env:
       RUSTFLAGS: -A unused -D warnings
-    container:
-      image: xd009642/tarpaulin:develop-nightly
-      options: --security-opt seccomp=unconfined
 
     steps:
       - name: Checkout
@@ -130,9 +127,14 @@ jobs:
             target
           key: ${{ runner.os }}-coverage-${{ hashFiles('**/Cargo.toml') }}
 
+      - name: Install cargo-tarpaulin
+        uses: taiki-e/install-action@96c7780c1d8a2b8723e12031def873a434d39d8d
+        with:
+          tool: cargo-tarpaulin
+
       - name: Generate Coverage
         run: |
-          cargo +nightly tarpaulin --all-features --workspace --timeout 120 --fail-under 94 --out xml --output-dir target/coverage
+          cargo tarpaulin --all-features --workspace --timeout 120 --fail-under 94 --out xml --output-dir target/coverage
 
       - name: Export Coverage
         # codecov/codecov-action v5.5.5

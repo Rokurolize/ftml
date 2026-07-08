@@ -59,11 +59,12 @@ fn try_consume_fn<'r, 't>(
     let mut paragraph_safe = false;
 
     let mut ended = false;
+    let mut skipped_empty_rows = false;
     while !ended {
         match parse_next_list_item(parser, &mut errors, &mut paragraph_safe)? {
             ListItemStep::End => ended = true,
             ListItemStep::Skip => {
-                std::convert::identity(());
+                skipped_empty_rows = true;
             }
             ListItemStep::Item(item) => depths.push(item),
         }
@@ -71,7 +72,11 @@ fn try_consume_fn<'r, 't>(
 
     // This list has no rows, so the rule fails
     if depths.is_empty() {
-        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        return if skipped_empty_rows {
+            ok!(true; Elements::None, errors)
+        } else {
+            Err(parser.make_err(ParseErrorKind::RuleFailed))
+        };
     }
 
     let depth_lists = process_depths(ListType::Generic, depths);

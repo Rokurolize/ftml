@@ -49,7 +49,7 @@ where
 /// Compare with `collect_consume_keep()`.
 pub fn collect_text_keep<'p, 'r, 't>(
     parser: &'p mut Parser<'r, 't>,
-    rule: Rule,
+    _rule: Rule,
     closes: &[ParseCondition],
     invalids: &[ParseCondition],
     kind: Option<ParseErrorKind>,
@@ -59,26 +59,35 @@ where
 {
     let (start, mut end) = (parser.current(), None);
 
-    // Iterate and collect the tokens to merge.
-    //
-    // We know text is always paragraph safe, so we ignore that value.
-    let collection = collect(parser, rule, closes, invalids, kind, |parser| {
+    loop {
+        if parser.evaluate_any(closes) {
+            let last = parser.current();
+            let slice = match (start, end) {
+                // We have a token span, use to get string slice
+                (start, Some(end)) => parser.full_text().slice(start, end),
+
+                // Empty list of tokens, resultant slice must be empty
+                (_, None) => "",
+            };
+
+            if parser.current().token != Token::InputEnd {
+                parser.step()?;
+            }
+
+            return Ok((slice, last));
+        }
+
+        if parser.evaluate_any(invalids) {
+            return Err(parser.make_err(kind.unwrap_or(ParseErrorKind::RuleFailed)));
+        }
+
+        if parser.current().token == Token::InputEnd {
+            return Err(parser.make_err(ParseErrorKind::EndOfInput));
+        }
+
         end = Some(parser.current());
-        success_value((), Vec::new(), true)
-    })?;
-    let (last, errors, _) = collection.into();
-
-    assert!(errors.is_empty(), "Text collection errors");
-
-    let slice = match (start, end) {
-        // We have a token span, use to get string slice
-        (start, Some(end)) => parser.full_text().slice(start, end),
-
-        // Empty list of tokens, resultant slice must be empty
-        (_, None) => "",
-    };
-
-    Ok((slice, last))
+        parser.step()?;
+    }
 }
 
 #[cfg(test)]
@@ -128,5 +137,54 @@ mod tests {
         assert_eq!(slice, "");
         assert_eq!(last.token, Token::RightBlock);
         assert_eq!(parser.current().slice, "tail");
+
+        let tokenization = crate::tokenize("alpha");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("identifier should follow input start");
+
+        let (slice, last) = collect_text_keep(
+            &mut parser,
+            RULE_TEXT,
+            &[ParseCondition::current(Token::InputEnd)],
+            &[],
+            None,
+        )
+        .expect("input end may terminate text collection");
+
+        assert_eq!(slice, "alpha");
+        assert_eq!(last.token, Token::InputEnd);
+        assert_eq!(parser.current().token, Token::InputEnd);
+    }
+
+    #[test]
+    fn collect_text_keep_reports_invalid_tokens_and_end_of_input() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        let tokenization = crate::tokenize("alpha\n\n");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("identifier should follow input start");
+        let error = collect_text_keep(
+            &mut parser,
+            RULE_TEXT,
+            &[ParseCondition::current(Token::RightBlock)],
+            &[ParseCondition::current(Token::ParagraphBreak)],
+            None,
+        )
+        .expect_err("paragraph break should abort text collection");
+        assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+
+        let tokenization = crate::tokenize("alpha");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("identifier should follow input start");
+        let error = collect_text_keep(
+            &mut parser,
+            RULE_TEXT,
+            &[ParseCondition::current(Token::RightBlock)],
+            &[],
+            None,
+        )
+        .expect_err("missing close token should reach end of input");
+        assert_eq!(error.kind(), ParseErrorKind::EndOfInput);
     }
 }

@@ -95,3 +95,38 @@ fn render_contents(ctx: &mut HtmlContext, tree: &SyntaxTree) {
         );
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn html_render_collects_css_module_styles_in_source_order() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let tree = SyntaxTree {
+            elements: vec![
+                Element::Style(cow!(".first { color: red; }")),
+                Element::Text(cow!("body")),
+                Element::Style(cow!(".second { color: blue; }")),
+            ],
+            ..SyntaxTree::default()
+        };
+
+        let output = HtmlRender.render(&tree, &page_info, &settings);
+
+        assert_eq!(
+            output.styles,
+            vec![
+                ".first{color:red}".to_owned(),
+                ".second{color:#00f}".to_owned(),
+            ],
+        );
+        assert_eq!(
+            output.body,
+            "<style>.first{color:red}</style>body<style>.second{color:#00f}</style>",
+        );
+    }
+}

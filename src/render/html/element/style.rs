@@ -32,6 +32,7 @@ pub fn render_style(ctx: &mut HtmlContext, input_css: &str) {
                 .map_err(|error| error.to_string())
         })
     {
+        ctx.add_style(output_css.clone());
         let output_css = escape_style_end_tags(&output_css);
         ctx.html().style().inner(|ctx| {
             ctx.push_raw_str(&output_css);

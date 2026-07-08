@@ -32,6 +32,7 @@ use super::rule::{
     get_rules_for_token,
     impls::{RULE_FALLBACK, starts_own_line_rule},
 };
+use crate::tree::{LinkLabel, LinkLocation, LinkType};
 use std::mem;
 
 fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
@@ -119,6 +120,32 @@ fn try_consume_line_break<'r, 't>(
     }
 }
 
+fn try_consume_leaf_token<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<Option<Elements<'t>>, ParseError> {
+    let element = match parser.current().token {
+        Token::Email => Element::Email(cow!(parser.current().slice)),
+
+        Token::Url => Element::Link {
+            ltype: LinkType::Direct,
+            link: LinkLocation::Url(cow!(parser.current().slice)),
+            label: LinkLabel::Url,
+            target: None,
+        },
+
+        Token::Variable => {
+            let slice = parser.current().slice;
+            let variable = &slice[2..slice.len() - 1];
+            Element::Variable(cow!(variable))
+        }
+
+        _ => return Ok(None),
+    };
+
+    parser.step()?;
+    Ok(Some(element.into()))
+}
+
 /// Main function that consumes tokens to produce a single element, then returns.
 ///
 /// It will use the fallback if all rules, fail, so the only failure case is if
@@ -140,6 +167,11 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
     }
 
     if let Some(elements) = try_consume_text_token(parser)? {
+        parser.depth_decrement();
+        return ok!(elements);
+    }
+
+    if let Some(elements) = try_consume_leaf_token(parser)? {
         parser.depth_decrement();
         return ok!(elements);
     }
@@ -211,6 +243,7 @@ mod tests {
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{LinkLabel, LinkLocation, LinkType};
 
     fn parser_for<'t>(
         input: &'t str,
@@ -297,5 +330,41 @@ mod tests {
                 .is_none(),
         );
         assert_eq!(parser.current().token, Token::LineBreak);
+    }
+
+    #[test]
+    fn direct_leaf_fast_path_preserves_leaf_elements() {
+        let (tokens, page_info, settings) = parser_for("https://example.com");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 1);
+        let elements = try_consume_leaf_token(&mut parser)
+            .expect("url fast path should not fail")
+            .expect("url should use leaf fast path");
+        assert_eq!(
+            elements,
+            Element::Link {
+                ltype: LinkType::Direct,
+                link: LinkLocation::Url(cow!("https://example.com")),
+                label: LinkLabel::Url,
+                target: None,
+            }
+            .into(),
+        );
+        assert_eq!(parser.current().token, Token::InputEnd);
+
+        let (tokens, page_info, settings) = parser_for("abc@example.com");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 1);
+        let elements = try_consume_leaf_token(&mut parser)
+            .expect("email fast path should not fail")
+            .expect("email should use leaf fast path");
+        assert_eq!(elements, Element::Email(cow!("abc@example.com")).into());
+        assert_eq!(parser.current().token, Token::InputEnd);
+
+        let (tokens, page_info, settings) = parser_for("{$title}");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 1);
+        let elements = try_consume_leaf_token(&mut parser)
+            .expect("variable fast path should not fail")
+            .expect("variable should use leaf fast path");
+        assert_eq!(elements, Element::Variable(cow!("title")).into());
+        assert_eq!(parser.current().token, Token::InputEnd);
     }
 }

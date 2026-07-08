@@ -140,8 +140,6 @@ fn push_elements<'t>(
             stack.push_paragraph_safe_elements(elements);
         }
         Elements::Multiple(elements) => {
-            stack.reserve_elements(elements.len());
-
             for element in elements {
                 push_element(stack, element, paragraph_safe);
             }
@@ -157,5 +155,22 @@ fn push_element<'t>(
     // Don't add a line break if the paragraph is otherwise empty
     if !(stack.current_empty() && element == Element::LineBreak) {
         stack.push_element(element, paragraph_safe);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn non_paragraph_safe_multiple_elements_do_not_reserve_current_paragraph() {
+        let mut stack = ParagraphStack::new();
+        push_elements(
+            &mut stack,
+            Elements::Multiple(vec![Element::HorizontalRule, Element::HorizontalRule]),
+            false,
+        );
+
+        assert_eq!(stack.current_capacity(), 0);
     }
 }

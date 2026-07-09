@@ -1,0 +1,21 @@
++ Lead Section
+
+Opening content before the first TOC.
+
+[[toc]]
+
++ Middle Section
+
+Content between the first and second TOC.
+
+[[toc]]
+
+++ Nested Section
+
+Content between the second and third TOC.
+
+[[toc class="third-toc"]]
+
++ Final Section
+
+Content after all TOC blocks.

@@ -124,4 +124,44 @@ mod tests {
                 .contains(r#"<div id="wj-toc-list">Section &amp; details</div>"#)
         );
     }
+
+    #[test]
+    fn repeated_table_of_contents_blocks_render_identical_inner_lists() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let toc_entries = [text!("Repeated & entry")];
+        let footnotes: [Vec<Element<'static>>; 0] = [];
+        let bibliographies = BibliographyList::new();
+        let mut ctx = HtmlContext::new(
+            &page_info,
+            &Handle,
+            &settings,
+            &toc_entries,
+            &footnotes,
+            &bibliographies,
+            0,
+        );
+        let attributes = AttributeMap::new();
+
+        render_table_of_contents(&mut ctx, None, &attributes);
+        render_table_of_contents(&mut ctx, None, &attributes);
+        render_table_of_contents(&mut ctx, None, &attributes);
+
+        let output = HtmlOutput::from(ctx);
+        let toc_lists = output
+            .body
+            .match_indices(r#"<div id="wj-toc-list">"#)
+            .map(|(start, marker)| {
+                let list_start = start + marker.len();
+                let list_end = output.body[list_start..]
+                    .find("</div>")
+                    .map(|offset| list_start + offset)
+                    .expect("TOC list div should close");
+                &output.body[list_start..list_end]
+            })
+            .collect::<Vec<_>>();
+
+        assert_eq!(toc_lists.len(), 3);
+        assert!(toc_lists.iter().all(|toc_list| *toc_list == toc_lists[0]));
+    }
 }

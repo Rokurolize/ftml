@@ -16,9 +16,15 @@ fn main() {
     built::write_built_file().expect("Failed to compile build information!");
 
     let out_dir = PathBuf::from(env::var_os("OUT_DIR").expect("OUT_DIR must be set"));
+    let built_file_path = out_dir.join("built.rs");
+
+    if declares_git_commit_hash(&built_file_path) {
+        return;
+    }
+
     let mut built_file = OpenOptions::new()
         .append(true)
-        .open(out_dir.join("built.rs"))
+        .open(built_file_path)
         .expect("built.rs should exist after built writes it");
 
     let git_commit_hash = match git_commit_hash() {
@@ -31,6 +37,14 @@ fn main() {
         "\npub static GIT_COMMIT_HASH: Option<&str> = {git_commit_hash};",
     )
     .expect("GIT_COMMIT_HASH should be appended to built.rs");
+}
+
+fn declares_git_commit_hash(built_file_path: &Path) -> bool {
+    let Ok(contents) = fs::read_to_string(built_file_path) else {
+        return false;
+    };
+
+    contents.contains("pub static GIT_COMMIT_HASH:")
 }
 
 fn git_commit_hash() -> Option<String> {

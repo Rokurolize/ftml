@@ -21,3 +21,6 @@ mod scp9506_wikidot_syntax;
 
 #[path = "security_regressions.rs"]
 mod security_regressions;
+
+#[path = "strikethrough_inline_regression.rs"]
+mod strikethrough_inline_regression;

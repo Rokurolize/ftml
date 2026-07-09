@@ -18,22 +18,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use icu_calendar::{Date as IcuDate, Gregorian, Iso};
-use icu_datetime::DateTimeFormatter;
-use icu_datetime::DateTimeFormatterPreferences;
-use icu_datetime::fieldsets::enums::TimeFieldSet;
-use icu_datetime::fieldsets::{E, M, T, YMD, YMDT};
+use icu_calendar::{Date as IcuDate, Iso};
 use icu_datetime::input::{DateTime as IcuDateTime, Time as IcuTime};
-use icu_datetime::options::{TimePrecision, YearStyle};
-use icu_datetime::pattern::{
-    DateTimePattern, DayPeriodNameLength, FixedCalendarDateTimeNames,
-};
-use icu_datetime::preferences::HourCycle;
+use icu_datetime::pattern::DateTimePattern;
 use icu_decimal::input::Decimal;
-use icu_experimental::relativetime::options::Numeric;
-use icu_experimental::relativetime::{
-    RelativeTimeFormatter, RelativeTimeFormatterOptions, RelativeTimeFormatterPreferences,
-};
+use icu_experimental::relativetime::RelativeTimeFormatterOptions;
 use icu_locale::Locale;
 use std::fmt;
 use std::io;
@@ -44,6 +33,8 @@ use writeable::TryWriteable;
 
 const MAX_DATE_FORMAT_BYTES: usize = 512;
 const MAX_DATE_FORMAT_DIRECTIVES: usize = 64;
+
+mod cache;
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case", untagged)]
@@ -102,7 +93,7 @@ impl DateItem {
         }
 
         let datetime = self.to_datetime_tz();
-        let locale = locale_from_language(language);
+        let locale = cache::locale_from_language(language);
         let mut rendered = String::new();
         let mut literal_start = 0;
         let mut chars = format.char_indices();
@@ -146,7 +137,7 @@ impl DateItem {
 
     fn format_default(self, language: &str) -> io::Result<String> {
         let datetime = self.to_datetime_tz();
-        let locale = locale_from_language(language);
+        let locale = cache::locale_from_language(language);
         let mut rendered = String::new();
 
         append_localized_datetime_full_year(&mut rendered, &datetime, &locale)?;
@@ -252,15 +243,16 @@ fn append_localized_weekday(
     locale: &Locale,
     abbreviated: bool,
 ) -> io::Result<()> {
-    let formatter = if abbreviated {
-        DateTimeFormatter::try_new(locale.clone().into(), E::short())
+    let length = if abbreviated {
+        cache::FormatLength::Short
     } else {
-        DateTimeFormatter::try_new(locale.clone().into(), E::long())
-    }
-    .map_err(localization_error)?;
+        cache::FormatLength::Long
+    };
     let date = to_icu_date(*datetime)?;
 
-    append_normalized_display(rendered, formatter.format(&date))
+    cache::with_weekday_formatter(locale, length, |formatter| {
+        append_normalized_display(rendered, formatter.format(&date))
+    })
 }
 
 /// %b/%B - localized month name.
@@ -271,15 +263,16 @@ fn append_localized_month(
     locale: &Locale,
     abbreviated: bool,
 ) -> io::Result<()> {
-    let formatter = if abbreviated {
-        DateTimeFormatter::try_new(locale.clone().into(), M::medium())
+    let length = if abbreviated {
+        cache::FormatLength::Medium
     } else {
-        DateTimeFormatter::try_new(locale.clone().into(), M::long())
-    }
-    .map_err(localization_error)?;
+        cache::FormatLength::Long
+    };
     let date = to_icu_date(*datetime)?;
 
-    append_normalized_display(rendered, formatter.format(&date))
+    cache::with_month_formatter(locale, length, |formatter| {
+        append_normalized_display(rendered, formatter.format(&date))
+    })
 }
 
 /// %x - localized short date.
@@ -289,11 +282,11 @@ fn append_localized_date(
     datetime: &OffsetDateTime,
     locale: &Locale,
 ) -> io::Result<()> {
-    let formatter = DateTimeFormatter::try_new(locale.clone().into(), YMD::short())
-        .map_err(localization_error)?;
     let date = to_icu_date(*datetime)?;
 
-    append_normalized_display(rendered, formatter.format(&date))
+    cache::with_date_formatter(locale, |formatter| {
+        append_normalized_display(rendered, formatter.format(&date))
+    })
 }
 
 /// %c - localized date+time with full year.
@@ -303,16 +296,11 @@ fn append_localized_datetime_full_year(
     datetime: &OffsetDateTime,
     locale: &Locale,
 ) -> io::Result<()> {
-    let formatter = DateTimeFormatter::try_new(
-        locale.clone().into(),
-        YMDT::short()
-            .with_year_style(YearStyle::Full)
-            .with_time_precision(TimePrecision::Second),
-    )
-    .map_err(localization_error)?;
     let datetime = to_icu_datetime(*datetime)?;
 
-    append_normalized_display(rendered, formatter.format(&datetime))
+    cache::with_datetime_formatter(locale, |formatter| {
+        append_normalized_display(rendered, formatter.format(&datetime))
+    })
 }
 
 /// %X - localized time (follows locale hour cycle).
@@ -322,11 +310,11 @@ fn append_localized_time(
     datetime: &OffsetDateTime,
     locale: &Locale,
 ) -> io::Result<()> {
-    let formatter = DateTimeFormatter::try_new(locale.clone().into(), T::medium())
-        .map_err(localization_error)?;
     let time = to_icu_time(*datetime)?;
 
-    append_normalized_display(rendered, formatter.format(&time))
+    cache::with_time_formatter(locale, cache::TimeHourCycle::LocaleDefault, |formatter| {
+        append_normalized_display(rendered, formatter.format(&time))
+    })
 }
 
 /// %p/%P - localized day period via ICU pattern "a".
@@ -341,25 +329,20 @@ fn append_localized_day_period(
         LazyLock::new(|| "a".parse().expect("valid day-period pattern"));
 
     let time = to_icu_time(*datetime)?;
-    let mut names: FixedCalendarDateTimeNames<Gregorian, TimeFieldSet> =
-        FixedCalendarDateTimeNames::try_new(locale.clone().into())
-            .map_err(localization_error)?;
-    names
-        .include_day_period_names(DayPeriodNameLength::Abbreviated)
-        .map_err(localization_error)?;
+    cache::with_day_period_names(locale, |names| {
+        let formatter = names
+            .with_pattern_unchecked(&DAY_PERIOD_PATTERN)
+            .format(&time);
+        let raw = formatter
+            .try_write_to_string()
+            .map_err(|(error, _)| localization_error(error))?;
 
-    let formatter = names
-        .with_pattern_unchecked(&DAY_PERIOD_PATTERN)
-        .format(&time);
-    let raw = formatter
-        .try_write_to_string()
-        .map_err(|(error, _)| localization_error(error))?;
-
-    if uppercase {
-        append_normalized_display(rendered, raw.as_ref())
-    } else {
-        append_normalized_display(rendered, raw.as_ref().to_lowercase())
-    }
+        if uppercase {
+            append_normalized_display(rendered, raw.as_ref())
+        } else {
+            append_normalized_display(rendered, raw.as_ref().to_lowercase())
+        }
+    })
 }
 
 /// %r - localized 12-hour time (forced H12 cycle).
@@ -369,14 +352,11 @@ fn append_localized_time_h12(
     datetime: &OffsetDateTime,
     locale: &Locale,
 ) -> io::Result<()> {
-    let mut prefs: DateTimeFormatterPreferences = locale.clone().into();
-    prefs.hour_cycle = Some(HourCycle::H12);
-
-    let formatter =
-        DateTimeFormatter::try_new(prefs, T::medium()).map_err(localization_error)?;
     let time = to_icu_time(*datetime)?;
 
-    append_normalized_display(rendered, formatter.format(&time))
+    cache::with_time_formatter(locale, cache::TimeHourCycle::H12, |formatter| {
+        append_normalized_display(rendered, formatter.format(&time))
+    })
 }
 
 /// %O - localized relative time from now.
@@ -387,36 +367,26 @@ fn append_relative_time(
     locale: &Locale,
 ) -> io::Result<()> {
     let (value, unit) = relative_time_value(datetime);
-    let prefs: RelativeTimeFormatterPreferences = locale.clone().into();
-    let formatter = match unit {
-        RelativeTimeUnit::Second => RelativeTimeFormatter::try_new_long_second(
-            prefs,
-            relative_time_fmt_options(Numeric::Always),
-        ),
-        RelativeTimeUnit::Minute => RelativeTimeFormatter::try_new_long_minute(
-            prefs,
-            relative_time_fmt_options(Numeric::Always),
-        ),
-        RelativeTimeUnit::Hour => RelativeTimeFormatter::try_new_long_hour(
-            prefs,
-            relative_time_fmt_options(Numeric::Always),
-        ),
-        RelativeTimeUnit::Day => RelativeTimeFormatter::try_new_long_day(
-            prefs,
-            relative_time_fmt_options(Numeric::Auto),
-        ),
-    }
-    .map_err(localization_error)?;
+    let numeric = match unit {
+        RelativeTimeUnit::Second | RelativeTimeUnit::Minute | RelativeTimeUnit::Hour => {
+            cache::RelativeTimeNumeric::Always
+        }
+        RelativeTimeUnit::Day => cache::RelativeTimeNumeric::Auto,
+    };
 
-    append_normalized_display(rendered, formatter.format(Decimal::from(value)))
+    cache::with_relative_time_formatter(locale, unit, numeric, |formatter| {
+        append_normalized_display(rendered, formatter.format(Decimal::from(value)))
+    })
 }
 
 /// Helper to create a `RelativeTimeFormatterOptions`.
 /// Because the struct is non-exhaustive, we cannot use the struct syntax to
 /// create new instances here.
-fn relative_time_fmt_options(numeric: Numeric) -> RelativeTimeFormatterOptions {
+fn relative_time_fmt_options(
+    numeric: cache::RelativeTimeNumeric,
+) -> RelativeTimeFormatterOptions {
     let mut options = RelativeTimeFormatterOptions::default();
-    options.numeric = numeric;
+    options.numeric = numeric.as_icu_numeric();
     options
 }
 
@@ -435,7 +405,7 @@ fn relative_time_value(datetime: OffsetDateTime) -> (i64, RelativeTimeUnit) {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, Hash, PartialEq)]
 enum RelativeTimeUnit {
     Second,
     Minute,
@@ -519,15 +489,6 @@ fn to_icu_time(datetime: OffsetDateTime) -> io::Result<IcuTime> {
 
     IcuTime::try_new(time.hour(), time.minute(), time.second(), time.nanosecond())
         .map_err(localization_error)
-}
-
-fn locale_from_language(language: &str) -> Locale {
-    Locale::try_from_str(language).unwrap_or_else(|error| {
-        debug!(
-            "Invalid date render locale '{language}', falling back to English: {error}"
-        );
-        Locale::try_from_str("en").expect("English locale should always parse")
-    })
 }
 
 fn invalid_strftime_error(format: &str, message: &str) -> io::Error {
@@ -697,6 +658,23 @@ fn date_format_defaults_to_localized_short_datetime() {
     let date = DateItem::from(time::macros::datetime!(2010-01-01 08:10:00 +00:00));
 
     assert_eq!(date.format(None, "en-US").unwrap(), "1/1/2010, 8:10:00 AM");
+}
+
+#[test]
+fn date_format_cold_and_warm_localized_outputs_match() {
+    let date = DateItem::from(time::macros::datetime!(2009-12-25 08:18:05 +02:00));
+    let format =
+        "[a %a] [A %A] [b %b] [B %B] [c %c] [O %O] [p %p] [P %P] [r %r] [x %x] [X %X]";
+
+    for language in ["en-US", "es-ES", "fr", "ja", "zh-CN"] {
+        let cold_default = date.format(None, language).unwrap();
+        let warm_default = date.format(None, language).unwrap();
+        assert_eq!(warm_default, cold_default);
+
+        let cold_custom = date.format(Some(format), language).unwrap();
+        let warm_custom = date.format(Some(format), language).unwrap();
+        assert_eq!(warm_custom, cold_custom);
+    }
 }
 
 #[test]

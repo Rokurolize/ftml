@@ -124,3 +124,39 @@ Article body survives."#,
     assert!(html.contains("Article body survives."), "{html}");
     assert!(!html.contains("[[ifcategory"), "{html}");
 }
+
+#[test]
+fn wikidot_licensebox_collapsible_expanded_source_renders() {
+    let (text, html) = render_text_and_html(
+        r#"[[div class="licensebox"]]
+[[collapsible show="‡ Licensing / Citation" hide="‡ Hide Licensing / Citation"]]
+Cite this page as:
+[[div class="list-pages-box"]]
+[[div class="list-pages-item"]]
+> "SCP-2117" by Administrator.
+[[/div]]
+[[/div]]
+For information on licensing, see the guide.
+=====
+> **Filename:** 2117.png
+> **Author:** Cyantreuse
+> **License:** CC BY-SA 3.0
+> **Source Link:** [[[http://scp-wiki.wikidot.com/scp-2117/|SCP Wiki]]]
+> **Derivative of:**
+> ------
+> **Author:** Dr Reach
+> **License:** CC BY-SA 3.0
+> **Source Link:** [[[http://scp-wiki.wikidot.com/scp-2117/|SCP Wiki]]]
+=====
+[[/collapsible]]
+[[/div]]"#,
+    );
+
+    assert!(text.contains("Filename:"), "{text}");
+    assert!(
+        html.contains(r#"<details class="wj-collapsible""#),
+        "{html}"
+    );
+    assert!(!html.contains("[[collapsible"), "{html}");
+    assert!(!html.contains("[[/collapsible]]"), "{html}");
+}

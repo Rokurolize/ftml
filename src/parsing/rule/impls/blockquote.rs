@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::RULE_HORIZONTAL_RULE;
 use super::prelude::*;
 use crate::parsing::paragraph::ParagraphStack;
 use crate::parsing::{DepthItem, DepthList, process_depths};
@@ -57,15 +58,31 @@ fn try_consume_fn<'r, 't>(
         }
 
         // Parse elements until we hit the end of the line
-        let mut paragraph_safe = true;
         let close_conditions = [
             ParseCondition::current(Token::LineBreak),
             ParseCondition::current(Token::ParagraphBreak),
             ParseCondition::current(Token::InputEnd),
         ];
         let close = &close_conditions;
-        let result = collect_consume(parser, RULE_BLOCKQUOTE, close, &[], None)?;
-        let mut elements = result.chain(&mut errors, &mut paragraph_safe);
+        let mut paragraph_safe = true;
+        let mut elements = if parser.current().token == Token::TripleDash
+            && parser
+                .look_ahead(0)
+                .is_some_and(|token| token.token == Token::LineBreak)
+        {
+            // The horizontal-rule parser consumes its trailing line break. If it runs
+            // through the general blockquote line collector, that collector then treats
+            // the next quoted line as part of the current line and can consume an outer
+            // block closer. Finish this quoted line as soon as the rule succeeds.
+            RULE_HORIZONTAL_RULE
+                .try_consume(parser)?
+                .chain(&mut errors, &mut paragraph_safe)
+                .into_iter()
+                .collect()
+        } else {
+            collect_consume(parser, RULE_BLOCKQUOTE, close, &[], None)?
+                .chain(&mut errors, &mut paragraph_safe)
+        };
 
         // Add a line break for the end of the line
         elements.push(Element::LineBreak);
@@ -226,5 +243,37 @@ mod tests {
         assert!(text.contains("LEVEL 5 AUTHORIZATION REQUIRED"));
         assert!(!text.contains("+ WARNING"));
         assert!(!text.contains("++ LEVEL 5 AUTHORIZATION REQUIRED"));
+    }
+
+    #[test]
+    fn native_blockquote_horizontal_rule_does_not_consume_outer_block_close() {
+        enable_test_logging();
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let input = concat!(
+            "[[collapsible]]\n",
+            "> Derivative of:\n",
+            "> ------\n",
+            "> Author\n",
+            "[[/collapsible]]\n",
+            "After\n",
+        );
+        let tokenization = crate::tokenize(input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert!(
+            html.contains(r#"<details class="wj-collapsible""#),
+            "{html}"
+        );
+        assert!(html.contains("<blockquote>"), "{html}");
+        assert!(html.contains("<hr>"), "{html}");
+        assert!(html.contains("Author"), "{html}");
+        assert!(html.contains("After"), "{html}");
+        assert!(!html.contains("[[collapsible"), "{html}");
+        assert!(!html.contains("[[/collapsible]]"), "{html}");
     }
 }

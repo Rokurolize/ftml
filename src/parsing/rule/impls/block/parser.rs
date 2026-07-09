@@ -248,6 +248,24 @@ where
         }
     }
 
+    pub fn has_body_end_block(&self, block_rule: &BlockRule) -> bool {
+        let mut parser = self.clone();
+        let mut first = true;
+
+        loop {
+            if parser.verify_end_block(first, block_rule).is_some() {
+                return true;
+            }
+
+            if parser.current().token == Token::InputEnd {
+                return false;
+            }
+
+            parser.step().expect("missing input end");
+            first = false;
+        }
+    }
+
     // Block head / argument parsing
     pub fn get_head_map(
         &mut self,

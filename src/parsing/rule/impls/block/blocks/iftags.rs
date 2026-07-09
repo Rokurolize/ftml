@@ -55,6 +55,9 @@ fn parse_fn<'r, 't>(
 
     // Parse out tag conditions
     let conditions = parser.get_head_value(&BLOCK_IFTAGS, in_head, parse_conditions)?;
+    if parser.settings().layout.legacy() && !parser.has_body_end_block(&BLOCK_IFTAGS) {
+        return ok!(Elements::None);
+    }
 
     // Get body content, never with paragraphs
     let parser_state = parser.get_mutable_state();

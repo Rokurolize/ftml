@@ -76,3 +76,51 @@ Calibold"#,
         "{html}"
     );
 }
+
+#[test]
+fn wikidot_unclosed_false_iftags_marker_does_not_drop_following_content() {
+    let (text, html) = render_text_and_html(
+        r#"[[iftags +theme]]
+Article body survives."#,
+    );
+
+    assert_eq!(text, "Article body survives.");
+    assert!(html.contains("Article body survives."), "{html}");
+    assert!(!html.contains("[[iftags"), "{html}");
+}
+
+#[test]
+fn wikidot_unclosed_true_iftags_marker_does_not_wrap_following_content() {
+    let (text, html) = render_text_and_html(
+        r#"[[iftags +test]]
+Article body survives."#,
+    );
+
+    assert_eq!(text, "Article body survives.");
+    assert!(html.contains("Article body survives."), "{html}");
+    assert!(!html.contains("[[iftags"), "{html}");
+}
+
+#[test]
+fn wikidot_unclosed_false_ifcategory_marker_does_not_drop_following_content() {
+    let (text, html) = render_text_and_html(
+        r#"[[ifcategory +other]]
+Article body survives."#,
+    );
+
+    assert_eq!(text, "Article body survives.");
+    assert!(html.contains("Article body survives."), "{html}");
+    assert!(!html.contains("[[ifcategory"), "{html}");
+}
+
+#[test]
+fn wikidot_unclosed_true_ifcategory_marker_does_not_wrap_following_content() {
+    let (text, html) = render_text_and_html(
+        r#"[[ifcategory +test]]
+Article body survives."#,
+    );
+
+    assert_eq!(text, "Article body survives.");
+    assert!(html.contains("Article body survives."), "{html}");
+    assert!(!html.contains("[[ifcategory"), "{html}");
+}

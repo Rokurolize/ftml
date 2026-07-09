@@ -236,6 +236,12 @@ where
                 return ok!(paragraph_safe; all_elements, all_errors);
             }
 
+            let wikidot_input_end = self.current().token == Token::InputEnd
+                && self.settings().layout.legacy();
+            if wikidot_input_end {
+                return ok!(paragraph_safe; all_elements, all_errors);
+            }
+
             first = false;
             let elements = consume(self)?.chain(&mut all_errors, &mut paragraph_safe);
             all_elements.extend(elements);

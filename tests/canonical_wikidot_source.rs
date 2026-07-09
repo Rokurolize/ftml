@@ -59,3 +59,20 @@ fn wikidot_section_marker_rule_preserves_existing_equal_and_literal_contexts() {
     assert!(html.contains("<h2"), "{html}");
     assert!(html.contains("===="), "{html}");
 }
+
+#[test]
+fn wikidot_canonical_unclosed_block_markers_do_not_render_as_text() {
+    let (text, html) = render_text_and_html(
+        r#"[[iftags +test]]
+[[div_ class="authorlink-wrapper"]]
+Calibold"#,
+    );
+
+    assert_eq!(text, "Calibold");
+    assert!(!html.contains("[[iftags"), "{html}");
+    assert!(!html.contains("[[div_"), "{html}");
+    assert!(
+        html.contains(r#"<div class="authorlink-wrapper">Calibold</div>"#),
+        "{html}"
+    );
+}

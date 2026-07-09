@@ -232,4 +232,20 @@ mod tests {
 
         clear_style_css_cache();
     }
+
+    #[test]
+    fn style_css_cache_clears_when_full() {
+        clear_style_css_cache();
+
+        for index in 0..MAX_CACHED_STYLE_ENTRIES {
+            let input = format!(".rule-{index} {{ color: blue; }}");
+            assert!(cached_style_css(&input, true).is_some());
+        }
+        assert_eq!(style_css_cache_len(), MAX_CACHED_STYLE_ENTRIES);
+
+        assert!(cached_style_css("body { color: green; }", true).is_some());
+        assert_eq!(style_css_cache_len(), 1);
+
+        clear_style_css_cache();
+    }
 }

@@ -60,6 +60,7 @@ built = { version = "0.8", features = ["chrono"] }
 
 [dev-dependencies]
 clap = "4"
+criterion = { version = "0.7", features = ["html_reports"] }
 proptest = "1"
 termcolor = "1"
 
@@ -91,3 +92,7 @@ lto = true
 [[test]]
 name = "integration"
 path = "tests/integration.rs"
+
+[[bench]]
+name = "performance"
+harness = false

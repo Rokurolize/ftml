@@ -88,11 +88,12 @@ pub fn substitute(text: &mut String) {
 }
 
 #[cfg(test)]
-const TEST_CASES: [(&str, &str); 21] = [
+const TEST_CASES: [(&str, &str); 23] = [
     (
         "John laughed. ``You'll never defeat me!''\n``That's where you're wrong...''",
         "John laughed. “You'll never defeat me!”\n“That's where you're wrong…”",
     ),
+    ("``outer ``inner'' outer''", "“outer ‘`inner” outer’'"),
     (
         ",,あんたは馬鹿です！''\n``Ehh?''\n,,本当！''\n[[footnoteblock]]",
         "„あんたは馬鹿です！”\n“Ehh?”\n„本当！”\n[[footnoteblock]]",
@@ -133,6 +134,8 @@ const TEST_CASES: [(&str, &str); 21] = [
     ("... ... ...", "… … …"),
     // Groups of three, mixed spaced and continuous
     ("... . . . ...", "… … …"),
+    // Context characters can overlap between replacement matches.
+    ("x... ...y. . . z", "x… …y… z"),
 ];
 
 #[test]

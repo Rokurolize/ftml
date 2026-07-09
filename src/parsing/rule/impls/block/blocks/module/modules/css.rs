@@ -71,4 +71,31 @@ mod tests {
             "<style>.raw{--literal:\"[[*bold]] [[span]]\"}</style>",
         );
     }
+
+    #[test]
+    fn repeated_css_module_body_renders_like_independent_modules() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let module = "[[module CSS]]\n.same { color: red; }\n[[/module]]";
+        let repeated_source = format!("{module}\n{module}");
+
+        let tokenization = crate::tokenize(&repeated_source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:?}");
+        let repeated = HtmlRender.render(&tree, &page_info, &settings);
+
+        let tokenization = crate::tokenize(module);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:?}");
+        let independent = HtmlRender.render(&tree, &page_info, &settings);
+
+        assert_eq!(
+            repeated.body,
+            format!("{}{}", independent.body, independent.body)
+        );
+        assert_eq!(
+            repeated.styles,
+            vec![independent.styles[0].clone(), independent.styles[0].clone()],
+        );
+    }
 }

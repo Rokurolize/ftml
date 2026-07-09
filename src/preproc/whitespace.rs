@@ -105,24 +105,32 @@ pub fn substitute(text: &mut String) {
 fn replace_leading_spaces(text: &mut String) {
     trace!("Replacing leading non-standard spaces with regular spaces");
 
-    let mut offset = 0;
+    let mut captures = LEADING_NONSTANDARD_WHITESPACE.captures_iter(text);
+    let Some(first_capture) = captures.next() else {
+        return;
+    };
 
-    while let Some(capture) = LEADING_NONSTANDARD_WHITESPACE.captures_at(text, offset) {
+    let mut buffer = String::with_capacity(text.len());
+    let mut last_copied = 0;
+
+    for capture in std::iter::once(first_capture).chain(captures) {
         let mtch = capture
             .get(0)
             .expect("Regular expression lacks a full match");
 
         let count = mtch.as_str().chars().count();
-        let spaces = " ".repeat(count);
 
-        offset = mtch.start() + count;
-
-        text.replace_range(mtch.range(), &spaces);
+        buffer.push_str(&text[last_copied..mtch.start()]);
+        buffer.extend(std::iter::repeat_n(' ', count));
+        last_copied = mtch.end();
     }
+
+    buffer.push_str(&text[last_copied..]);
+    *text = buffer;
 }
 
 #[cfg(test)]
-const TEST_CASES: [(&str, &str); 7] = [
+const TEST_CASES: [(&str, &str); 9] = [
     (
         "\tapple\n\tbanana\tcherry\n",
         "    apple\n    banana    cherry",
@@ -145,6 +153,11 @@ const TEST_CASES: [(&str, &str); 7] = [
     ),
     ("<\n        \n      \n  \n      \n>", "<\n\n>"),
     ("\u{00a0}\u{00a0}\u{2007} apple", "    apple"),
+    ("x\\\\\n\ny", "x\\\ny"),
+    (
+        "\u{00a0}apple\n\u{2007}\u{00a0}banana\ncherry\u{00a0}",
+        " apple\n  banana\ncherry\u{00a0}",
+    ),
 ];
 
 #[test]

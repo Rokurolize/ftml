@@ -76,19 +76,35 @@ impl Replacer {
                 );
 
                 let mut offset = 0;
+                let Some(mut capture) = regex.captures_at(text, offset) else {
+                    return;
+                };
 
-                while let Some(capture) = regex.captures_at(text, offset) {
-                    let range = {
-                        let mtch = capture
-                            .name("repl")
-                            .unwrap_or_else(|| capture.get(0).unwrap()); // alternative is full match
+                buffer.clear();
+                buffer.reserve(text.len());
+                let mut last_copied = 0;
 
-                        offset = mtch.start() + replacement.len();
-                        mtch.range()
+                loop {
+                    let mtch = capture
+                        .name("repl")
+                        .unwrap_or_else(|| capture.get(0).unwrap()); // alternative is full match
+
+                    debug_assert!(mtch.start() < mtch.end());
+
+                    buffer.push_str(&text[last_copied..mtch.start()]);
+                    buffer.push_str(replacement);
+
+                    last_copied = mtch.end();
+                    offset = mtch.end();
+
+                    let Some(next_capture) = regex.captures_at(text, offset) else {
+                        break;
                     };
-
-                    text.replace_range(range, replacement);
+                    capture = next_capture;
                 }
+
+                buffer.push_str(&text[last_copied..]);
+                std::mem::swap(text, buffer);
             }
             RegexSurround {
                 ref regex,
@@ -103,28 +119,41 @@ impl Replacer {
                 );
 
                 let mut offset = 0;
+                let Some(mut capture) = regex.captures_at(text, offset) else {
+                    return;
+                };
 
-                while let Some(capture) = regex.captures_at(text, offset) {
+                buffer.clear();
+                buffer.reserve(text.len());
+                let mut last_copied = 0;
+
+                loop {
                     let mtch = capture
                         .get(1)
                         .expect("Regular expression lacks a content group");
 
-                    let range = {
-                        let full_mtch = capture
-                            .get(0)
-                            .expect("Regular expression lacks a full match");
+                    let full_mtch = capture
+                        .get(0)
+                        .expect("Regular expression lacks a full match");
 
-                        offset = full_mtch.start() + mtch.len() + begin.len() + end.len();
-                        full_mtch.range()
-                    };
+                    debug_assert!(full_mtch.start() < full_mtch.end());
 
-                    buffer.clear();
+                    buffer.push_str(&text[last_copied..full_mtch.start()]);
                     buffer.push_str(begin);
                     buffer.push_str(mtch.as_str());
                     buffer.push_str(end);
 
-                    text.replace_range(range, buffer);
+                    last_copied = full_mtch.end();
+                    offset = full_mtch.end();
+
+                    let Some(next_capture) = regex.captures_at(text, offset) else {
+                        break;
+                    };
+                    capture = next_capture;
                 }
+
+                buffer.push_str(&text[last_copied..]);
+                std::mem::swap(text, buffer);
             }
         }
     }

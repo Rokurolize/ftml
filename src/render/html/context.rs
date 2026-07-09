@@ -37,6 +37,7 @@ use crate::url::{HrefKind, classify_href, normalize_href};
 use std::collections::HashMap;
 use std::fmt::{self, Write};
 use std::num::NonZeroUsize;
+use std::ops::Range;
 
 #[derive(Debug)]
 pub struct HtmlContext<'i, 'h, 'e, 't>
@@ -68,6 +69,7 @@ where
     // Cached data
     //
     pages_exists: HashMap<PageRef, bool>,
+    table_of_contents_html_range: Option<Range<usize>>,
 
     //
     // Other fields to track
@@ -112,6 +114,7 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
             footnotes,
             bibliographies,
             pages_exists: HashMap::new(),
+            table_of_contents_html_range: None,
             code_snippet_index: NonZeroUsize::new(1).unwrap(),
             table_of_contents_index: settings.id_indexer(),
             equation_index: NonZeroUsize::new(1).unwrap(),
@@ -343,6 +346,21 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
         escape(self.buffer(), s);
     }
 
+    pub fn push_cached_table_of_contents<F>(&mut self, render: F)
+    where
+        F: FnOnce(&mut Self),
+    {
+        if let Some(range) = self.table_of_contents_html_range.clone() {
+            let table_of_contents_html = self.body[range].to_owned();
+            self.push_raw_str(&table_of_contents_html);
+        } else {
+            let start = self.body.len();
+            render(self);
+            let end = self.body.len();
+            self.table_of_contents_html_range = Some(start..end);
+        }
+    }
+
     #[inline]
     pub fn html(&mut self) -> HtmlBuilder<'_, 'i, 'h, 'e, 't> {
         HtmlBuilder::new(self)
@@ -537,5 +555,23 @@ mod tests {
         let output = HtmlOutput::from(ctx);
         assert_eq!(output.body, "raw! &lt;tag&gt;");
         assert_eq!(output.styles, vec![".collected{color:red}".to_owned()]);
+    }
+
+    #[test]
+    fn html_context_replays_cached_table_of_contents_inner_html() {
+        let info = PageInfo::dummy();
+        let mut ctx = context(&info);
+
+        ctx.push_raw_str("before");
+        ctx.push_cached_table_of_contents(|ctx| ctx.push_raw_str("<ul><li>A</li></ul>"));
+        ctx.push_raw_str("middle");
+        ctx.push_cached_table_of_contents(|ctx| ctx.push_raw_str("different"));
+        ctx.push_raw_str("after");
+
+        let output = HtmlOutput::from(ctx);
+        assert_eq!(
+            output.body,
+            "before<ul><li>A</li></ul>middle<ul><li>A</li></ul>after"
+        );
     }
 }

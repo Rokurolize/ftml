@@ -60,9 +60,13 @@ fn parse_fn<'r, 't>(
     }
 
     let include_body = check_iftags(parser.page_info(), &conditions);
+    if !include_body {
+        trace!("Conditions failed, skipping hidden body");
+        let _ = parser.get_body_text(&BLOCK_IFTAGS)?;
+        return ok!(true; Elements::None, Vec::new());
+    }
 
     // Get body content, never with paragraphs
-    let parser_state = parser.get_mutable_state();
     let body = parser.get_body_elements(&BLOCK_IFTAGS, false)?;
     let (elements, errors, paragraph_safe) = body.into();
 
@@ -72,17 +76,8 @@ fn parse_fn<'r, 't>(
         elements.len(),
     );
 
-    // Return elements based on condition
-    if include_body {
-        trace!("Conditions passed, including elements");
-
-        ok!(paragraph_safe; Elements::Multiple(elements), errors)
-    } else {
-        trace!("Conditions failed, excluding elements");
-        parser.reset_mutable_state(parser_state);
-
-        ok!(true; Elements::None, Vec::new())
-    }
+    trace!("Conditions passed, including elements");
+    ok!(paragraph_safe; Elements::Multiple(elements), errors)
 }
 
 pub fn check_iftags(info: &PageInfo, conditions: &[ElementCondition]) -> bool {

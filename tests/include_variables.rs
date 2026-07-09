@@ -189,6 +189,43 @@ branch body
 }
 
 #[test]
+fn comment_branch_include_after_false_iftags_does_not_truncate_following_body() {
+    let source = r#"before
+[[include component:card
+|inc-selected= --]]]
+after
+"#;
+
+    let expanded = expand(
+        source,
+        [(
+            "component:card",
+            r#"[[iftags +theme]]
+component documentation
+> {{@@[[include component:card |inc-selected= --@@]]]}}
+[[/iftags]]
+
+[!-- {$inc-selected}
+selected branch
+[!----]
+
+[!-- {$inc-other}
+hidden branch
+[!----]
+"#,
+        )],
+    );
+
+    let rendered = render_text(&expanded);
+
+    assert!(rendered.contains("before"), "{rendered}");
+    assert!(!rendered.contains("component documentation"), "{rendered}");
+    assert!(rendered.contains("selected branch"), "{rendered}");
+    assert!(!rendered.contains("hidden branch"), "{rendered}");
+    assert!(rendered.contains("after"), "{rendered}");
+}
+
+#[test]
 fn rendered_div_and_span_keep_safe_attributes_and_filter_unsafe_attributes() {
     let html = render_html(
         r#"[[div class="card" id="panel" style="color: red" data-value="42" aria-label="Panel" onclick="alert(1)" data-="bad"]]

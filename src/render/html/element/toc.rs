@@ -68,13 +68,15 @@ pub fn render_table_of_contents(
                 .attr(attr!("class" => "title"))
                 .inner(|ctx| ctx.push_escaped(table_of_contents_title));
 
-            // TOC List
-            let table_of_contents = ctx.table_of_contents();
-
             ctx.html()
                 .div()
                 .attr(attr!("id" => "wj-toc-list"; if use_true_ids))
-                .inner(|ctx| render_elements(ctx, table_of_contents));
+                .inner(|ctx| {
+                    ctx.push_cached_table_of_contents(|ctx| {
+                        let table_of_contents = ctx.table_of_contents();
+                        render_elements(ctx, table_of_contents);
+                    });
+                });
         });
 }
 

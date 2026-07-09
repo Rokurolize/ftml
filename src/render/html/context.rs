@@ -353,13 +353,12 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
         if let Some(range) = self.table_of_contents_html_range.clone() {
             let table_of_contents_html = self.body[range].to_owned();
             self.push_raw_str(&table_of_contents_html);
-            return;
+        } else {
+            let start = self.body.len();
+            render(self);
+            let end = self.body.len();
+            self.table_of_contents_html_range = Some(start..end);
         }
-
-        let start = self.body.len();
-        render(self);
-        let end = self.body.len();
-        self.table_of_contents_html_range = Some(start..end);
     }
 
     #[inline]

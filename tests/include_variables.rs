@@ -94,6 +94,19 @@ fn render_html(source: &str) -> String {
     HtmlRender.render(&tree, &page_info, &settings).body
 }
 
+fn render_text(source: &str) -> String {
+    let mut text = source.to_owned();
+    ftml::preprocess(&mut text);
+    let tokens = ftml::tokenize(&text);
+    let page_info = page_info();
+    let settings = page_settings();
+    let result = ftml::parse(&tokens, &page_info, &settings);
+    let (tree, errors) = result.into();
+
+    assert!(errors.is_empty(), "{errors:?}");
+    ftml::render::text::TextRender.render(&tree, &page_info, &settings)
+}
+
 #[test]
 fn legacy_include_variables_expand_inside_quoted_div_attributes() {
     let expanded = expand(
@@ -133,6 +146,46 @@ fn include_argument_first_concrete_value_wins_over_fallback() {
     );
 
     assert_eq!(expanded, "selected");
+}
+
+#[test]
+fn comment_branch_include_variables_do_not_truncate_following_body() {
+    let source = r#"before
+[[include component:branch selected=--]]]
+middle
+[[include component:branch selected=--]]]
+after
+"#;
+
+    let (expanded, included_pages) = ftml::include(
+        source,
+        &page_settings(),
+        StaticIncluder::new([(
+            "component:branch",
+            r#"[!-- {$selected}
+branch body
+[!----]
+"#,
+        )]),
+        || "invalid include result".to_owned(),
+    )
+    .expect("include expansion should succeed");
+
+    assert_eq!(
+        included_pages,
+        vec![
+            PageRef::page_only("component:branch"),
+            PageRef::page_only("component:branch"),
+        ],
+    );
+    assert_eq!(expanded.matches("branch body").count(), 2, "{expanded}");
+
+    let rendered = render_text(&expanded);
+
+    assert!(rendered.contains("before"), "{rendered}");
+    assert_eq!(rendered.matches("branch body").count(), 2, "{rendered}");
+    assert!(rendered.contains("middle"), "{rendered}");
+    assert!(rendered.contains("after"), "{rendered}");
 }
 
 #[test]

@@ -169,16 +169,22 @@ where
 }
 
 fn find_include_end(input: &str, start: usize, end_bound: usize) -> Option<usize> {
-    input[start..end_bound]
-        .match_indices("]]")
-        .find_map(|(index, _)| {
-            let end = start + index + 2;
-            if end == input.len() || input[end..].starts_with('\n') {
-                Some(end)
-            } else {
-                None
-            }
-        })
+    let bytes = input.as_bytes();
+    let mut index = start;
+
+    while index + 2 <= end_bound {
+        let end = index + 2;
+        if bytes[index] == b']'
+            && bytes[index + 1] == b']'
+            && (end == input.len() || bytes.get(end) == Some(&b'\n'))
+        {
+            return Some(end);
+        }
+
+        index += 1;
+    }
+
+    None
 }
 
 /// Replaces all specified variables in the content to be included.

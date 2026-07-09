@@ -20,18 +20,27 @@
 
 use super::prelude::*;
 use lightningcss::stylesheet::{ParserOptions, PrinterOptions, StyleSheet};
+use std::cell::RefCell;
+use std::collections::HashMap;
 use std::fmt::Debug;
+
+const MAX_CACHED_STYLE_ENTRIES: usize = 32;
+const MAX_CACHED_STYLE_BYTES: usize = 64 * 1024;
+
+#[derive(Debug, Hash, PartialEq, Eq)]
+struct StyleCacheKey {
+    input_css: String,
+    minify: bool,
+}
+
+thread_local! {
+    static STYLE_CSS_CACHE: RefCell<HashMap<StyleCacheKey, String>> =
+        RefCell::new(HashMap::new());
+}
 
 pub fn render_style(ctx: &mut HtmlContext, input_css: &str) {
     let minify = ctx.settings().minify_css;
-    if let Some(output_css) =
-        build_style_css(input_css, minify, |stylesheet, print_options| {
-            stylesheet
-                .to_css(print_options)
-                .map(|output| output.code)
-                .map_err(|error| error.to_string())
-        })
-    {
+    if let Some(output_css) = cached_style_css(input_css, minify) {
         ctx.add_style(output_css.clone());
         let output_css = escape_style_end_tags(&output_css);
         ctx.html().style().inner(|ctx| {
@@ -56,6 +65,42 @@ fn escape_style_end_tags(css: &str) -> String {
 
     out.push_str(&css[last..]);
     out
+}
+
+fn cached_style_css(input_css: &str, minify: bool) -> Option<String> {
+    if input_css.len() > MAX_CACHED_STYLE_BYTES {
+        return render_uncached_style_css(input_css, minify);
+    }
+
+    let key = StyleCacheKey {
+        input_css: input_css.to_owned(),
+        minify,
+    };
+
+    if let Some(output_css) =
+        STYLE_CSS_CACHE.with(|cache| cache.borrow().get(&key).cloned())
+    {
+        return Some(output_css);
+    }
+
+    let output_css = render_uncached_style_css(input_css, minify)?;
+    STYLE_CSS_CACHE.with(|cache| {
+        let mut cache = cache.borrow_mut();
+        if cache.len() >= MAX_CACHED_STYLE_ENTRIES {
+            cache.clear();
+        }
+        cache.insert(key, output_css.clone());
+    });
+    Some(output_css)
+}
+
+fn render_uncached_style_css(input_css: &str, minify: bool) -> Option<String> {
+    build_style_css(input_css, minify, |stylesheet, print_options| {
+        stylesheet
+            .to_css(print_options)
+            .map(|output| output.code)
+            .map_err(|error| error.to_string())
+    })
 }
 
 fn build_style_css<F>(input_css: &str, minify: bool, print: F) -> Option<String>
@@ -113,6 +158,16 @@ fn log_css_parse_error(input_css: &str, error: &impl Debug) {
 }
 
 #[cfg(test)]
+fn clear_style_css_cache() {
+    STYLE_CSS_CACHE.with(|cache| cache.borrow_mut().clear());
+}
+
+#[cfg(test)]
+fn style_css_cache_len() -> usize {
+    STYLE_CSS_CACHE.with(|cache| cache.borrow().len())
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -146,5 +201,35 @@ mod tests {
             escape_style_end_tags(r#"a { content: "</StYlE><script>" }"#),
             r#"a { content: "<\/style><script>" }"#,
         );
+    }
+
+    #[test]
+    fn style_css_cache_reuses_small_successes_and_skips_large_inputs() {
+        clear_style_css_cache();
+
+        let input = "body { color: red; }";
+        assert_eq!(
+            cached_style_css(input, true).as_deref(),
+            Some("body{color:red}")
+        );
+        assert_eq!(style_css_cache_len(), 1);
+        assert_eq!(
+            cached_style_css(input, true).as_deref(),
+            Some("body{color:red}")
+        );
+        assert_eq!(style_css_cache_len(), 1);
+        assert!(
+            cached_style_css(input, false)
+                .as_deref()
+                .is_some_and(|css| css.contains("color: red"))
+        );
+        assert_eq!(style_css_cache_len(), 2);
+
+        let large_input =
+            format!("/* {} */ body {{ color: red; }}", "x".repeat(64 * 1024));
+        assert!(cached_style_css(&large_input, true).is_some());
+        assert_eq!(style_css_cache_len(), 2);
+
+        clear_style_css_cache();
     }
 }

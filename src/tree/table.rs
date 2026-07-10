@@ -25,7 +25,7 @@ use std::num::NonZeroU32;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub struct Table<'t> {
-    #[serde(rename = "type")]
+    #[serde(rename = "type", default)]
     pub table_type: TableType,
     pub attributes: AttributeMap<'t>,
     pub rows: Vec<TableRow<'t>>,
@@ -41,9 +41,10 @@ impl Table<'_> {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Default, Debug, Copy, Clone, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub enum TableType {
+    #[default]
     Simple,
     Advanced,
 }
@@ -138,4 +139,35 @@ fn table_to_owned_covers_nested_items() {
         TableItem::Cell(cell.clone()).to_owned(),
         TableItem::Cell(cell)
     );
+}
+
+#[test]
+fn table_deserializes_legacy_json_without_type_as_simple() {
+    let table: Table<'static> = serde_json::from_str(
+        r#"{
+            "attributes": {},
+            "rows": [
+                {
+                    "attributes": {},
+                    "cells": [
+                        {
+                            "header": false,
+                            "column-span": 1,
+                            "align": null,
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "cell"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }"#,
+    )
+    .expect("legacy table JSON without type should deserialize");
+
+    assert_eq!(table.table_type, TableType::Simple);
 }

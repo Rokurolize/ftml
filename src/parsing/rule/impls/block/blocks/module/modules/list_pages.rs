@@ -19,7 +19,6 @@
  */
 
 use super::prelude::*;
-use std::borrow::Cow;
 
 pub const MODULE_LIST_PAGES: ModuleRule = ModuleRule {
     name: "module-list-pages",
@@ -36,7 +35,6 @@ fn parse_fn<'r, 't>(
     assert_module_name(&MODULE_LIST_PAGES, name);
 
     let body = parser.get_body_text(&BLOCK_MODULE)?;
-    let body = Cow::Borrowed(body);
     ok!(false; Module::ListPages {
         arguments: arguments.into_raw_vec(),
         body,

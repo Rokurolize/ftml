@@ -147,9 +147,20 @@ pub fn normalize_link<'a>(
             let (site, page, extra) = page_ref.fields();
             match site {
                 Some(site) => Cow::Owned(helper.build_url(site, page, extra)),
-                None => normalize_href(page, extra),
+                None => normalize_page_href(page, extra),
             }
         }
+    }
+}
+
+#[cfg(feature = "html")]
+fn normalize_page_href<'a>(page: &'a str, extra: Option<&'a str>) -> Cow<'a, str> {
+    let extra = extra.unwrap_or("");
+
+    if page.starts_with('/') {
+        Cow::Owned(format!("{page}{extra}"))
+    } else {
+        Cow::Owned(format!("/{page}{extra}"))
     }
 }
 
@@ -241,6 +252,47 @@ fn detect_dangerous_schemes() {
     test!("/category:page#target", false);
     test!("/category:page/edit", false);
     test!("/category:page/edit#target", false);
+}
+
+#[cfg(feature = "html")]
+#[test]
+fn normalize_link_preserves_local_pages_with_dangerous_scheme_names() {
+    struct TestSiteUrl;
+
+    impl BuildSiteUrl for TestSiteUrl {
+        fn build_url(&self, site: &str, path: &str, extra: Option<&str>) -> String {
+            format!(":{site}:{path}{}", extra.unwrap_or(""))
+        }
+    }
+
+    macro_rules! test {
+        ($input:expr => $expected:expr $(,)?) => {{
+            let location = LinkLocation::Page(crate::data::PageRef::page_only($input));
+            let actual = normalize_link(&location, &TestSiteUrl);
+            assert_eq!(
+                actual.as_ref(),
+                $expected,
+                "For local page {:?}, normalize_link() doesn't match expected",
+                $input,
+            );
+        }};
+    }
+
+    test!("data:example" => "/data:example");
+    test!("javascript:example" => "/javascript:example");
+    test!("data:example#target" => "/data:example#target");
+    test!("javascript:example/edit" => "/javascript:example/edit");
+
+    let location = LinkLocation::Page(crate::data::PageRef {
+        site: None,
+        page: "/data:example".into(),
+        extra: Some("#target".into()),
+    });
+    assert_eq!(
+        normalize_link(&location, &TestSiteUrl).as_ref(),
+        "/data:example#target",
+        "An already root-relative local page must not gain a second leading slash",
+    );
 }
 
 #[test]

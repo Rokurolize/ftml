@@ -75,18 +75,11 @@ impl FromStr for Layout {
 #[derive(Debug)]
 pub struct LayoutParseError;
 
-/// Backwards-compatible alias for the original public layout parse error type.
+/// Backwards-compatible re-export of the original public layout parse error.
 ///
-/// `LayoutParseError` is the canonical name, but downstream users may still
-/// refer to `LayoutError` in type annotations.
-pub type LayoutError = LayoutParseError;
-
-/// Backwards-compatible value constructor for `LayoutError`.
-///
-/// This preserves old code that constructs the unit-like error value directly
-/// (for example, `Err(LayoutError)`).
-#[allow(non_upper_case_globals)]
-pub const LayoutError: LayoutParseError = LayoutParseError;
+/// Re-exporting the unit struct preserves both its type name and its value
+/// constructor, including downstream pattern matches using `LayoutError`.
+pub use self::LayoutParseError as LayoutError;
 
 #[test]
 fn test_parse() {
@@ -128,7 +121,7 @@ fn test_layout_error_compatibility_alias() {
     result.expect_err("Unexpected valid layout string");
 
     let result: Result<Layout, LayoutError> = Err(LayoutError);
-    assert!(result.is_err());
+    assert!(matches!(result, Err(LayoutError)));
 }
 
 #[test]

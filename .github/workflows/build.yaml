@@ -170,7 +170,8 @@ jobs:
 
       # Unused dependencies
       - name: Machete
-        uses: bnjbvr/cargo-machete@main
+        # bnjbvr/cargo-machete v0.9.2
+        uses: bnjbvr/cargo-machete@ac30a525c0a8d163a92d727b3ff079ee3f6ecb08
 
       # Formatting
       - name: Rustfmt

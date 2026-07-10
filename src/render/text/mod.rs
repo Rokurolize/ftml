@@ -95,7 +95,7 @@ impl Render for TextRender {
         let site = page_info.site.as_ref();
         let page = page_info.page.as_ref();
         let category = page_category(page_info);
-        info!("Rendering text (site {site}, page {page}, category {category})");
+        debug!("Rendering text (site {site}, page {page}, category {category})");
 
         let partial = RenderPartial::tree(tree, page_info, settings);
         self.render_partial_direct(partial)

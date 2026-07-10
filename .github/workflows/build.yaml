@@ -24,7 +24,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
     env:
       RUSTFLAGS: -A unused -D warnings
     steps:
@@ -57,22 +56,71 @@ jobs:
       - name: Test (doctests)
         run: cargo test --doc --all-features -- --nocapture --test-threads 1
 
-      - name: Upload Test Results
-        if: ${{ !cancelled() }}
+      # PR uploads are tokenless and use an explicitly unprotected Codecov branch.
+      - name: Upload Test Results (Pull Requests)
+        if: ${{ github.event_name == 'pull_request' && !cancelled() }}
         # codecov/codecov-action v5.5.5
         uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac
         with:
-          use_oidc: true
           slug: Rokurolize/ftml
           files: target/nextest/ci/junit.xml
           flags: ftml
           report_type: test_results
           disable_search: true
           fail_ci_if_error: true
+          override_branch: "pr${{ github.event.pull_request.number }}:head"
+          override_commit: ${{ github.event.pull_request.head.sha }}
+          override_pr: ${{ github.event.pull_request.number }}
+
+      - name: Store Test Results
+        if: ${{ github.event_name == 'push' && !cancelled() }}
+        # actions/upload-artifact v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nextest-junit
+          path: target/nextest/ci/junit.xml
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Test (exhaustive)
         run: cargo test --all-features -- --nocapture --ignored
         if: github.ref == 'refs/heads/main'
+
+  upload_test_results:
+    name: Upload Test Results
+    needs: library_build_and_test
+    if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout Trusted Revision
+        # actions/checkout v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Download Test Results
+        # actions/download-artifact v4.3.0
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: nextest-junit
+          path: ${{ runner.temp }}/codecov/test-results
+
+      - name: Upload Test Results
+        # codecov/codecov-action v5.5.5
+        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac
+        with:
+          use_oidc: true
+          slug: Rokurolize/ftml
+          files: ${{ runner.temp }}/codecov/test-results/junit.xml
+          flags: ftml
+          report_type: test_results
+          disable_search: true
+          fail_ci_if_error: true
 
   wasm:
     name: WebASM
@@ -113,7 +161,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
     env:
       RUSTFLAGS: -A unused -D warnings
 
@@ -139,13 +186,62 @@ jobs:
         run: |
           cargo tarpaulin --all-features --workspace --timeout 120 --fail-under 94 --out xml --output-dir target/coverage
 
-      - name: Export Coverage
+      # PR uploads are tokenless and use an explicitly unprotected Codecov branch.
+      - name: Export Coverage (Pull Requests)
+        if: ${{ github.event_name == 'pull_request' }}
+        # codecov/codecov-action v5.5.5
+        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac
+        with:
+          slug: Rokurolize/ftml
+          files: target/coverage/cobertura.xml
+          flags: ftml
+          disable_search: true
+          fail_ci_if_error: true
+          override_branch: "pr${{ github.event.pull_request.number }}:head"
+          override_commit: ${{ github.event.pull_request.head.sha }}
+          override_pr: ${{ github.event.pull_request.number }}
+
+      - name: Store Coverage
+        if: ${{ github.event_name == 'push' }}
+        # actions/upload-artifact v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: coverage-cobertura
+          path: target/coverage/cobertura.xml
+          if-no-files-found: error
+          retention-days: 1
+
+  upload_coverage:
+    name: Upload Coverage
+    needs: coverage
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout Trusted Revision
+        # actions/checkout v4.3.1
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Download Coverage
+        # actions/download-artifact v4.3.0
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: coverage-cobertura
+          path: ${{ runner.temp }}/codecov/coverage
+
+      - name: Upload Coverage
         # codecov/codecov-action v5.5.5
         uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac
         with:
           use_oidc: true
           slug: Rokurolize/ftml
-          files: target/coverage/cobertura.xml
+          files: ${{ runner.temp }}/codecov/coverage/cobertura.xml
           flags: ftml
           disable_search: true
           fail_ci_if_error: true

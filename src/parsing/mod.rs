@@ -29,6 +29,7 @@ mod consume;
 mod depth;
 mod element_condition;
 mod error;
+mod hidden_body;
 mod outcome;
 mod paragraph;
 mod parser;

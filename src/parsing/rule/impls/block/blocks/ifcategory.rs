@@ -65,7 +65,9 @@ fn parse_fn<'r, 't>(
     // Parse out tag conditions
     let rule = &BLOCK_IFCATEGORY;
     let conditions = parser.get_head_value(rule, in_head, parse_conditions)?;
-    if parser.settings().layout.legacy() && !parser.has_body_end_block(&BLOCK_IFCATEGORY)
+    if parser.settings().layout.legacy()
+        && !parser.discarding_hidden_body()
+        && !parser.has_body_end_block(&BLOCK_IFCATEGORY)
     {
         return ok!(Elements::None);
     }

@@ -79,7 +79,17 @@ impl Rule {
             //
             // While normally discarding the subparser is sufficient,
             // some annoying mutable fields are
-            Err(_) => parser.reset_mutable_state(parser_state),
+            Err(_) => {
+                // A discard parse uses ancestor body boundaries to stop a
+                // malformed parsed child before it consumes its parent's end
+                // marker. Preserve that boundary position while rolling back
+                // every metadata side effect from the failed rule.
+                if parser.discarding_hidden_body() && sub_parser.at_hidden_body_boundary()
+                {
+                    parser.update(&sub_parser);
+                }
+                parser.reset_mutable_state(parser_state);
+            }
         }
 
         result

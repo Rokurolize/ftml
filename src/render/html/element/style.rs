@@ -20,27 +20,14 @@
 
 use super::prelude::*;
 use lightningcss::stylesheet::{ParserOptions, PrinterOptions, StyleSheet};
-use std::cell::RefCell;
-use std::collections::HashMap;
 use std::fmt::Debug;
 
 const MAX_CACHED_STYLE_ENTRIES: usize = 32;
 const MAX_CACHED_STYLE_BYTES: usize = 64 * 1024;
 
-#[derive(Debug, Hash, PartialEq, Eq)]
-struct StyleCacheKey {
-    input_css: String,
-    minify: bool,
-}
-
-thread_local! {
-    static STYLE_CSS_CACHE: RefCell<HashMap<StyleCacheKey, String>> =
-        RefCell::new(HashMap::new());
-}
-
 pub fn render_style(ctx: &mut HtmlContext, input_css: &str) {
     let minify = ctx.settings().minify_css;
-    if let Some(output_css) = cached_style_css(input_css, minify) {
+    if let Some(output_css) = cached_style_css(ctx, input_css, minify) {
         ctx.add_style(output_css.clone());
         let output_css = escape_style_end_tags(&output_css);
         ctx.html().style().inner(|ctx| {
@@ -67,30 +54,24 @@ fn escape_style_end_tags(css: &str) -> String {
     out
 }
 
-fn cached_style_css(input_css: &str, minify: bool) -> Option<String> {
+fn cached_style_css(
+    ctx: &mut HtmlContext,
+    input_css: &str,
+    minify: bool,
+) -> Option<String> {
     if input_css.len() > MAX_CACHED_STYLE_BYTES {
         return render_uncached_style_css(input_css, minify);
     }
 
-    let key = StyleCacheKey {
-        input_css: input_css.to_owned(),
-        minify,
-    };
-
-    if let Some(output_css) =
-        STYLE_CSS_CACHE.with(|cache| cache.borrow().get(&key).cloned())
-    {
+    if let Some(output_css) = ctx.get_cached_style_css(input_css, minify) {
         return Some(output_css);
     }
 
     let output_css = render_uncached_style_css(input_css, minify)?;
-    STYLE_CSS_CACHE.with(|cache| {
-        let mut cache = cache.borrow_mut();
-        if cache.len() >= MAX_CACHED_STYLE_ENTRIES {
-            cache.clear();
-        }
-        cache.insert(key, output_css.clone());
-    });
+    if ctx.cached_style_css_len() >= MAX_CACHED_STYLE_ENTRIES {
+        ctx.clear_cached_style_css();
+    }
+    ctx.insert_cached_style_css(input_css.to_owned(), minify, output_css.clone());
     Some(output_css)
 }
 
@@ -158,18 +139,22 @@ fn log_css_parse_error(input_css: &str, error: &impl Debug) {
 }
 
 #[cfg(test)]
-fn clear_style_css_cache() {
-    STYLE_CSS_CACHE.with(|cache| cache.borrow_mut().clear());
-}
-
-#[cfg(test)]
-fn style_css_cache_len() -> usize {
-    STYLE_CSS_CACHE.with(|cache| cache.borrow().len())
-}
-
-#[cfg(test)]
 mod tests {
     use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Handle;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::BibliographyList;
+
+    fn html_context<'a>(
+        info: &'a PageInfo<'a>,
+        handle: &'a Handle,
+        settings: &'a WikitextSettings,
+        bibliographies: &'a BibliographyList<'a>,
+    ) -> HtmlContext<'a, 'a, 'a, 'a> {
+        HtmlContext::new(info, handle, settings, &[], &[], bibliographies, 0)
+    }
 
     #[test]
     fn style_css_helper_covers_printer_success_and_error_paths() {
@@ -204,48 +189,62 @@ mod tests {
     }
 
     #[test]
-    fn style_css_cache_reuses_small_successes_and_skips_large_inputs() {
-        clear_style_css_cache();
+    fn style_css_cache_reuses_within_one_render_context() {
+        let info = PageInfo::dummy();
+        let handle = Handle;
+        let mut settings =
+            WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        settings.minify_css = true;
+        let bibliographies = BibliographyList::new();
+        let mut ctx = html_context(&info, &handle, &settings, &bibliographies);
 
         let input = "body { color: red; }";
         assert_eq!(
-            cached_style_css(input, true).as_deref(),
+            cached_style_css(&mut ctx, input, true).as_deref(),
             Some("body{color:red}")
         );
-        assert_eq!(style_css_cache_len(), 1);
+        assert_eq!(ctx.cached_style_css_len(), 1);
         assert_eq!(
-            cached_style_css(input, true).as_deref(),
+            cached_style_css(&mut ctx, input, true).as_deref(),
             Some("body{color:red}")
         );
-        assert_eq!(style_css_cache_len(), 1);
+        assert_eq!(ctx.cached_style_css_len(), 1);
         assert!(
-            cached_style_css(input, false)
+            cached_style_css(&mut ctx, input, false)
                 .as_deref()
                 .is_some_and(|css| css.contains("color: red"))
         );
-        assert_eq!(style_css_cache_len(), 2);
+        assert_eq!(ctx.cached_style_css_len(), 2);
+
+        let mut other_ctx = html_context(&info, &handle, &settings, &bibliographies);
+        assert_eq!(other_ctx.cached_style_css_len(), 0);
+        assert_eq!(
+            cached_style_css(&mut other_ctx, input, true).as_deref(),
+            Some("body{color:red}")
+        );
+        assert_eq!(other_ctx.cached_style_css_len(), 1);
 
         let large_input =
             format!("/* {} */ body {{ color: red; }}", "x".repeat(64 * 1024));
-        assert!(cached_style_css(&large_input, true).is_some());
-        assert_eq!(style_css_cache_len(), 2);
-
-        clear_style_css_cache();
+        assert!(cached_style_css(&mut ctx, &large_input, true).is_some());
+        assert_eq!(ctx.cached_style_css_len(), 2);
     }
 
     #[test]
     fn style_css_cache_clears_when_full() {
-        clear_style_css_cache();
+        let info = PageInfo::dummy();
+        let handle = Handle;
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let bibliographies = BibliographyList::new();
+        let mut ctx = html_context(&info, &handle, &settings, &bibliographies);
 
         for index in 0..MAX_CACHED_STYLE_ENTRIES {
             let input = format!(".rule-{index} {{ color: blue; }}");
-            assert!(cached_style_css(&input, true).is_some());
+            assert!(cached_style_css(&mut ctx, &input, true).is_some());
         }
-        assert_eq!(style_css_cache_len(), MAX_CACHED_STYLE_ENTRIES);
+        assert_eq!(ctx.cached_style_css_len(), MAX_CACHED_STYLE_ENTRIES);
 
-        assert!(cached_style_css("body { color: green; }", true).is_some());
-        assert_eq!(style_css_cache_len(), 1);
-
-        clear_style_css_cache();
+        assert!(cached_style_css(&mut ctx, "body { color: green; }", true).is_some());
+        assert_eq!(ctx.cached_style_css_len(), 1);
     }
 }

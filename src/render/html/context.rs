@@ -69,6 +69,7 @@ where
     // Cached data
     //
     pages_exists: HashMap<PageRef, bool>,
+    style_css: HashMap<(String, bool), String>,
     table_of_contents_html_range: Option<Range<usize>>,
 
     //
@@ -114,6 +115,7 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
             footnotes,
             bibliographies,
             pages_exists: HashMap::new(),
+            style_css: HashMap::new(),
             table_of_contents_html_range: None,
             code_snippet_index: NonZeroUsize::new(1).unwrap(),
             table_of_contents_index: settings.id_indexer(),
@@ -369,6 +371,27 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     #[inline]
     pub fn add_style(&mut self, css: String) {
         self.styles.push(css);
+    }
+
+    pub fn get_cached_style_css(&self, input_css: &str, minify: bool) -> Option<String> {
+        self.style_css.get(&(input_css.to_owned(), minify)).cloned()
+    }
+
+    pub fn cached_style_css_len(&self) -> usize {
+        self.style_css.len()
+    }
+
+    pub fn clear_cached_style_css(&mut self) {
+        self.style_css.clear();
+    }
+
+    pub fn insert_cached_style_css(
+        &mut self,
+        input_css: String,
+        minify: bool,
+        output_css: String,
+    ) {
+        self.style_css.insert((input_css, minify), output_css);
     }
 }
 

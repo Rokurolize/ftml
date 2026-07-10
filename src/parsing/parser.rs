@@ -97,6 +97,7 @@ pub struct Parser<'r, 't> {
     in_footnote: bool, // Whether we're currently inside [[footnote]] ... [[/footnote]].
     has_footnote_block: bool, // Whether a [[footnoteblock]] was created.
     start_of_line: bool,
+    in_native_blockquote_line: bool,
 }
 
 impl<'r, 't> Parser<'r, 't> {
@@ -132,6 +133,7 @@ impl<'r, 't> Parser<'r, 't> {
             in_footnote: false,
             has_footnote_block: false,
             start_of_line: true,
+            in_native_blockquote_line: false,
         }
     }
 
@@ -176,10 +178,20 @@ impl<'r, 't> Parser<'r, 't> {
         self.start_of_line
     }
 
+    #[inline]
+    pub fn in_native_blockquote_line(&self) -> bool {
+        self.in_native_blockquote_line
+    }
+
     // Setters
     #[inline]
     pub(crate) fn mark_virtual_start_of_line(&mut self) {
         self.start_of_line = true;
+    }
+
+    #[inline]
+    pub(crate) fn set_native_blockquote_line(&mut self, value: bool) {
+        self.in_native_blockquote_line = value;
     }
 
     #[inline]
@@ -432,6 +444,7 @@ impl<'r, 't> Parser<'r, 't> {
         self.in_footnote = parser.in_footnote;
         self.has_footnote_block = parser.has_footnote_block;
         self.start_of_line = parser.start_of_line;
+        self.in_native_blockquote_line = parser.in_native_blockquote_line;
 
         // Token pointers
         self.current = parser.current;

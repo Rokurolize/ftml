@@ -20,6 +20,7 @@
 
 use super::prelude::*;
 use crate::parsing::paragraph::ParagraphStack;
+use crate::parsing::parser::QuoteBodyLineStatus;
 use crate::parsing::{DepthItem, DepthList, process_depths};
 use crate::tree::{AttributeMap, Container, ContainerType};
 
@@ -39,20 +40,21 @@ fn try_consume_fn<'r, 't>(
     let mut errors = Vec::new();
 
     // Produce a depth list with elements
-    loop {
+    while parser.prepare_quote_body_line()? != QuoteBodyLineStatus::Boundary
+        && parser.current().token == Token::Quote
+    {
         let current = parser.current();
-        if current.token != Token::Quote {
-            break std::convert::identity(());
-        }
 
         // 1 or more ">"s in one token. Return ASCII length.
-        let depth = current.slice.len();
+        let physical_depth = current.slice.len();
+        let (depth, absolute_depth) = parser.native_blockquote_depths(physical_depth);
+        debug_assert!(depth > 0, "residual quote depth must be positive");
         parser.step()?;
         parser.get_optional_space()?; // allow whitespace after ">"
         parser.mark_virtual_start_of_line();
 
         // Check that the depth isn't obscenely deep, to avoid DOS attacks via stack overflow.
-        if depth > MAX_BLOCKQUOTE_DEPTH {
+        if absolute_depth > MAX_BLOCKQUOTE_DEPTH {
             return Err(parser.make_err(ParseErrorKind::BlockquoteDepthExceeded));
         }
 
@@ -64,10 +66,10 @@ fn try_consume_fn<'r, 't>(
         ];
         let close = &close_conditions;
         let mut paragraph_safe = true;
-        let original_context = parser.in_native_blockquote_line();
-        parser.set_native_blockquote_line(true);
+        let original_depth = parser.native_blockquote_depth();
+        parser.set_native_blockquote_depth(Some(absolute_depth));
         let result = collect_native_blockquote_line(parser, close);
-        parser.set_native_blockquote_line(original_context);
+        parser.set_native_blockquote_depth(original_depth);
         let mut elements = result?.chain(&mut errors, &mut paragraph_safe);
 
         // Add a line break for the end of the line

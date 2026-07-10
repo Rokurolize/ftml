@@ -27,6 +27,7 @@
 //! as raw text as a fallback, which is how Wikidot does it.
 
 use super::Parser;
+use super::parser::QuoteBodyLineStatus;
 use super::prelude::*;
 use super::rule::{
     get_rules_for_token,
@@ -153,6 +154,10 @@ fn try_consume_leaf_token<'r, 't>(
 /// It will use the fallback if all rules, fail, so the only failure case is if
 /// the end of the input is reached.
 pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
+    if parser.prepare_quote_body_line()? == QuoteBodyLineStatus::Boundary {
+        return Err(parser.make_err(ParseErrorKind::EndOfInput));
+    }
+
     // Incrementing recursion depth
     // Will fail if we're too many layers in
     parser.depth_increment()?;

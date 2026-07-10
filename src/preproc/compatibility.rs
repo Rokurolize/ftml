@@ -87,11 +87,22 @@ fn canonicalize_unquoted_collapsible_closers(
     let mut openers: Vec<QuotedCollapsible> = Vec::new();
 
     for (index, line) in lines.iter_mut().enumerate() {
+        let (body, ending) = split_line(line);
+        let (line_quote_depth, _) = quote_depth_and_body(body);
+
+        // Literal contents cannot contain compatibility markers, but their
+        // physical quote depth still terminates a quoted candidate when the
+        // parser has returned to a shallower context.
         if literal_lines[index] {
+            while openers
+                .last()
+                .is_some_and(|opener| opener.quote_depth > line_quote_depth)
+            {
+                openers.pop();
+            }
             continue;
         }
 
-        let (body, ending) = split_line(line);
         if body.trim().is_empty() {
             openers.clear();
             continue;
@@ -105,11 +116,6 @@ fn canonicalize_unquoted_collapsible_closers(
             continue;
         }
 
-        let line_quote_depth = body
-            .trim_start()
-            .chars()
-            .take_while(|&character| character == '>')
-            .count();
         while openers
             .last()
             .is_some_and(|opener| opener.quote_depth > line_quote_depth)
@@ -148,6 +154,7 @@ fn canonicalize_unquoted_collapsible_closers(
 #[derive(Debug)]
 struct CrossedClose {
     prefix: String,
+    quote_depth: usize,
     early_center_close: Option<usize>,
 }
 
@@ -159,6 +166,14 @@ fn canonicalize_crossed_center_collapsible_closers(
     let mut index = 0;
 
     while index < lines.len() {
+        if pending.as_ref().is_some_and(|candidate| {
+            let (body, _) = split_line(&lines[index]);
+            let (line_quote_depth, _) = quote_depth_and_body(body);
+            line_quote_depth < candidate.quote_depth
+        }) {
+            pending = None;
+        }
+
         if literal_lines[index] {
             index += 1;
             continue;
@@ -206,8 +221,10 @@ fn canonicalize_crossed_center_collapsible_closers(
             if marker_line(&lines[index + 1])
                 == Some((prefix.as_str(), Marker::CollapsibleOpen))
             {
+                let quote_depth = prefix.bytes().filter(|&byte| byte == b'>').count();
                 pending = Some(CrossedClose {
                     prefix,
+                    quote_depth,
                     early_center_close: None,
                 });
                 index += 2;
@@ -255,20 +272,30 @@ fn canonicalize_unmatched_quoted_tab_closers(
 }
 
 fn literal_line_mask(lines: &[String]) -> Vec<bool> {
-    let mut block_close: Option<&'static str> = None;
+    #[derive(Clone, Copy)]
+    struct LiteralBlock {
+        close: &'static str,
+        quote_depth: usize,
+    }
+
+    let mut block: Option<LiteralBlock> = None;
     let mut in_comment = false;
-    let mut in_raw_escape = false;
     let mut mask = Vec::with_capacity(lines.len());
 
     for line in lines {
         let (body, _) = split_line(line);
-        let logical = logical_line_body(body);
+        let (quote_depth, logical) = quote_depth_and_body(body);
         let lower = logical.to_ascii_lowercase();
 
-        if let Some(close) = block_close {
+        if let Some(literal) = block {
             mask.push(true);
-            if lower.contains(close) {
-                block_close = None;
+            // Root-level raw-text collectors see a closer at any quote depth.
+            // Native quoted collectors, however, only accept a closer at the
+            // exact absolute depth where the block opened.
+            let close_depth_matches =
+                literal.quote_depth == 0 || quote_depth == literal.quote_depth;
+            if close_depth_matches && lower.contains(literal.close) {
+                block = None;
             }
             continue;
         }
@@ -281,18 +308,10 @@ fn literal_line_mask(lines: &[String]) -> Vec<bool> {
             continue;
         }
 
-        if in_raw_escape {
-            mask.push(true);
-            if logical.matches("@@").count() % 2 == 1 {
-                in_raw_escape = false;
-            }
-            continue;
-        }
-
         if let Some(close) = literal_block_close(&lower) {
             mask.push(true);
             if !lower.contains(close) {
-                block_close = Some(close);
+                block = Some(LiteralBlock { close, quote_depth });
             }
             continue;
         }
@@ -308,7 +327,6 @@ fn literal_line_mask(lines: &[String]) -> Vec<bool> {
         let raw_markers = logical.matches("@@").count();
         if raw_markers > 0 {
             mask.push(true);
-            in_raw_escape = raw_markers % 2 == 1;
             continue;
         }
 
@@ -318,12 +336,14 @@ fn literal_line_mask(lines: &[String]) -> Vec<bool> {
     mask
 }
 
-fn logical_line_body(mut body: &str) -> &str {
+fn quote_depth_and_body(mut body: &str) -> (usize, &str) {
+    let mut quote_depth = 0;
     body = body.trim_start_matches([' ', '\t']);
     while let Some(rest) = body.strip_prefix('>') {
+        quote_depth += 1;
         body = rest.trim_start_matches([' ', '\t']);
     }
-    body
+    (quote_depth, body)
 }
 
 fn literal_block_close(lower: &str) -> Option<&'static str> {
@@ -492,7 +512,6 @@ mod tests {
             )
             .to_owned(),
             concat!("> [[raw]]\n", "> [[/tabview]]\n", "> [[/raw]]\n",).to_owned(),
-            concat!("@@\n", "[[/tab]]\n", "@@\n").to_owned(),
             concat!("[!--\n", "[[/tabview]]\n", "--]\n").to_owned(),
         ] {
             let original = source.clone();
@@ -501,6 +520,71 @@ mod tests {
 
             assert_eq!(source, original);
         }
+    }
+
+    #[test]
+    fn deeper_quote_closer_does_not_end_a_literal_block() {
+        let mut source = concat!(
+            "> [[code]]\n",
+            ">> [[/code]]\n",
+            "> [[/tab]]\n",
+            "> [[/code]]\n",
+        )
+        .to_owned();
+        let original = source.clone();
+
+        substitute(&mut source);
+
+        assert_eq!(source, original);
+    }
+
+    #[test]
+    fn inline_raw_escape_does_not_mask_later_physical_lines() {
+        let mut source = concat!("@@\n", "[[/tab]]\n", "@@\n").to_owned();
+
+        substitute(&mut source);
+
+        assert_eq!(source, "@@\n\n@@\n");
+    }
+
+    #[test]
+    fn literal_line_at_shallower_depth_terminates_quoted_candidates() {
+        for mut source in [
+            concat!(
+                "> [[collapsible show=\"open\"]]\n",
+                "[[code]]\n",
+                "literal body\n",
+                "[[/code]]\n",
+                "[[/collapsible]]\n",
+            )
+            .to_owned(),
+            concat!(
+                "> [[=]]\n",
+                "> [[collapsible show=\"open\"]]\n",
+                "[[code]]\n",
+                "literal body\n",
+                "[[/code]]\n",
+                "> [[/=]]\n",
+                "> [[/collapsible]]\n",
+            )
+            .to_owned(),
+        ] {
+            let original = source.clone();
+
+            substitute(&mut source);
+
+            assert_eq!(source, original);
+        }
+    }
+
+    #[test]
+    fn root_literal_block_accepts_a_quote_prefixed_closer() {
+        let lines = concat!("[[code]]\n", "> [[/code]]\n", "[[/tab]]\n",)
+            .split_inclusive('\n')
+            .map(str::to_owned)
+            .collect::<Vec<_>>();
+
+        assert_eq!(literal_line_mask(&lines), [true, true, false]);
     }
 
     #[test]

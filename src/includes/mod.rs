@@ -74,7 +74,7 @@ where
     }
 
     let input_len = input.len();
-    info!("Inserting text for all include blocks in text ({input_len} bytes)");
+    debug!("Inserting text for all include blocks in text ({input_len} bytes)");
 
     let mut ranges: Vec<std::ops::Range<usize>> = Vec::new();
     let mut includes = Vec::new();

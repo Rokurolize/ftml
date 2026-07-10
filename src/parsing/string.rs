@@ -81,6 +81,11 @@ where
 /// is returned. So for `\$`, it will emit a
 /// `\` followed by a `$`.
 pub fn parse_string(input: &str) -> Cow<'_, str> {
+    let input = input
+        .strip_prefix('"')
+        .and_then(|stripped| stripped.strip_suffix('"'))
+        .unwrap_or(input);
+
     // The only case where this is Cow::Borrowed(_)
     // is if there are no escapes. So instead of trying
     // to iterate through and borrow from the original,
@@ -198,6 +203,10 @@ fn test_parse_string() {
 
     test!("", "", Borrowed);
     test!("!", "!", Borrowed);
+    test!(r#""""#, "", Borrowed);
+    test!(r#""!""#, "!", Borrowed);
+    test!(r#""apple banana""#, "apple banana", Borrowed);
+    test!(r#""\n def""#, "\n def", Owned);
     test!(r#"\""#, "\"", Owned);
     test!(r#"\'"#, "\'", Owned);
     test!(r"apple banana", "apple banana", Borrowed);

@@ -755,6 +755,29 @@ fn false_iftags_unclosed_parsed_child_stops_at_outer_boundary() {
 }
 
 #[test]
+fn false_iftags_discard_restores_quoted_block_cursor() {
+    let input = concat!(
+        "> [[collapsible show=\"show\" hide=\"hide\"]]\n",
+        "> [[iftags +missing]]\n",
+        "> [[div]]\n",
+        "> hidden child\n",
+        "> [[/iftags]]\n",
+        "> visible inside\n",
+        "> [[/collapsible]]\n",
+        "outside\n",
+    );
+
+    for layout in [Layout::Wikijump, Layout::Wikidot] {
+        let tree = parse(input, layout);
+        let text = render_text(&tree, layout);
+
+        assert!(!text.contains("hidden child"), "{layout:?}: {text}");
+        assert!(text.contains("visible inside"), "{layout:?}: {text}");
+        assert!(text.contains("outside"), "{layout:?}: {text}");
+    }
+}
+
+#[test]
 fn false_iftags_closed_unknown_module_does_not_hide_following_content() {
     let input = concat!(
         "[[iftags +missing]]\n",

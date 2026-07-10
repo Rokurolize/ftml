@@ -66,109 +66,175 @@ pub fn substitute(text: &mut String) {
         .split_inclusive('\n')
         .map(str::to_owned)
         .collect::<Vec<_>>();
-    canonicalize_unquoted_collapsible_closers(&mut lines);
-    canonicalize_unmatched_quoted_tab_closers(&mut lines);
-    let mut index = 0;
-
-    while index + 1 < lines.len() {
-        let Some((prefix, Marker::CenterOpen)) = marker_line(&lines[index]) else {
-            index += 1;
-            continue;
-        };
-        let prefix = prefix.to_owned();
-        if marker_line(&lines[index + 1])
-            != Some((prefix.as_str(), Marker::CollapsibleOpen))
-        {
-            index += 1;
-            continue;
-        }
-
-        let mut early_center_close = None;
-        let mut collapsible_close = None;
-        for (scan, line) in lines.iter().enumerate().skip(index + 2) {
-            let Some((line_prefix, marker)) = marker_line(line) else {
-                continue;
-            };
-            if line_prefix != prefix {
-                continue;
-            }
-
-            match marker {
-                Marker::CenterOpen | Marker::CollapsibleOpen => break,
-                Marker::CenterClose if early_center_close.is_none() => {
-                    early_center_close = Some(scan);
-                }
-                Marker::CollapsibleClose if early_center_close.is_some() => {
-                    collapsible_close = Some(scan);
-                    break;
-                }
-                _ => {}
-            }
-        }
-
-        let (Some(early), Some(late)) = (early_center_close, collapsible_close) else {
-            index += 1;
-            continue;
-        };
-
-        let (_, early_ending) = split_line(&lines[early]);
-        lines[early] = format!("{prefix}{early_ending}");
-
-        let late_has_ending = lines[late].ends_with('\n');
-        if !late_has_ending {
-            lines[late].push('\n');
-        }
-        let inserted_ending = if late_has_ending { "\n" } else { "" };
-        lines.insert(late + 1, format!("{prefix}[[/=]]{inserted_ending}"));
-        index = late + 2;
-    }
+    let literal_lines = literal_line_mask(&lines);
+    canonicalize_unquoted_collapsible_closers(&mut lines, &literal_lines);
+    canonicalize_unmatched_quoted_tab_closers(&mut lines, &literal_lines);
+    canonicalize_crossed_center_collapsible_closers(&mut lines, &literal_lines);
 
     *text = lines.concat();
 }
 
-fn canonicalize_unquoted_collapsible_closers(lines: &mut [String]) {
-    for open in 0..lines.len() {
-        let Some((prefix, Marker::CollapsibleOpen)) = marker_line(&lines[open]) else {
-            continue;
-        };
-        let prefix = prefix.to_owned();
-        let quote_depth = prefix.chars().filter(|&ch| ch == '>').count();
-        if quote_depth == 0 {
+#[derive(Debug)]
+struct QuotedCollapsible {
+    prefix: String,
+    quote_depth: usize,
+}
+
+fn canonicalize_unquoted_collapsible_closers(
+    lines: &mut [String],
+    literal_lines: &[bool],
+) {
+    let mut openers: Vec<QuotedCollapsible> = Vec::new();
+
+    for (index, line) in lines.iter_mut().enumerate() {
+        if literal_lines[index] {
             continue;
         }
 
-        for line in lines.iter_mut().skip(open + 1) {
-            let ending = if line.ends_with('\n') { "\n" } else { "" };
-            let (body, _) = split_line(line);
-            if body.trim().is_empty() {
-                break;
-            }
+        let (body, ending) = split_line(line);
+        if body.trim().is_empty() {
+            openers.clear();
+            continue;
+        }
 
-            if marker_line(line) == Some(("", Marker::CollapsibleClose)) {
-                *line = format!("{prefix}[[/collapsible]]{ending}");
-                break;
+        let marker = marker_line(line);
+        if marker == Some(("", Marker::CollapsibleClose)) {
+            if let Some(opener) = openers.pop() {
+                *line = format!("{}[[/collapsible]]{ending}", opener.prefix);
             }
+            continue;
+        }
 
-            let trimmed = body.trim_start();
-            let line_quote_depth = trimmed.chars().take_while(|&ch| ch == '>').count();
-            if line_quote_depth < quote_depth {
-                break;
-            }
+        let line_quote_depth = body
+            .trim_start()
+            .chars()
+            .take_while(|&character| character == '>')
+            .count();
+        while openers
+            .last()
+            .is_some_and(|opener| opener.quote_depth > line_quote_depth)
+        {
+            openers.pop();
+        }
 
-            if marker_line(line)
-                .is_some_and(|(_, marker)| marker == Marker::CollapsibleClose)
-            {
-                break;
+        match marker {
+            Some((prefix, Marker::CollapsibleOpen)) => {
+                let quote_depth =
+                    prefix.chars().filter(|&character| character == '>').count();
+                if quote_depth > 0 {
+                    openers.push(QuotedCollapsible {
+                        prefix: prefix.to_owned(),
+                        quote_depth,
+                    });
+                }
             }
+            Some((prefix, Marker::CollapsibleClose)) => {
+                while let Some(opener) = openers.last() {
+                    if opener.quote_depth < line_quote_depth {
+                        break;
+                    }
+                    let matching_prefix = opener.prefix == prefix;
+                    openers.pop();
+                    if matching_prefix {
+                        break;
+                    }
+                }
+            }
+            _ => {}
         }
     }
 }
 
-fn canonicalize_unmatched_quoted_tab_closers(lines: &mut [String]) {
-    let has_tab_open = lines.iter().any(|line| line.contains("[[tab "));
-    let has_tabview_open = lines.iter().any(|line| line.contains("[[tabview]]"));
+#[derive(Debug)]
+struct CrossedClose {
+    prefix: String,
+    early_center_close: Option<usize>,
+}
 
-    for line in lines {
+fn canonicalize_crossed_center_collapsible_closers(
+    lines: &mut [String],
+    literal_lines: &[bool],
+) {
+    let mut pending: Option<CrossedClose> = None;
+    let mut index = 0;
+
+    while index < lines.len() {
+        if literal_lines[index] {
+            index += 1;
+            continue;
+        }
+
+        let marker = marker_line(&lines[index])
+            .map(|(prefix, marker)| (prefix.to_owned(), marker));
+        if let (Some(candidate), Some((prefix, marker))) = (&mut pending, &marker)
+            && prefix == &candidate.prefix
+        {
+            match marker {
+                Marker::CenterClose if candidate.early_center_close.is_none() => {
+                    candidate.early_center_close = Some(index);
+                    index += 1;
+                    continue;
+                }
+                Marker::CollapsibleClose if candidate.early_center_close.is_some() => {
+                    let early = candidate
+                        .early_center_close
+                        .expect("crossed close candidate has an early closer");
+                    let (_, early_ending) = split_line(&lines[early]);
+                    lines[early] = format!("{}{early_ending}", candidate.prefix);
+
+                    let (_, late_ending) = split_line(&lines[index]);
+                    lines[index] = format!(
+                        "{}[[/collapsible]]\n{}[[/=]]{late_ending}",
+                        candidate.prefix, candidate.prefix,
+                    );
+                    pending = None;
+                    index += 1;
+                    continue;
+                }
+                Marker::CenterOpen | Marker::CollapsibleOpen => pending = None,
+                _ => {}
+            }
+        }
+
+        if marker
+            .as_ref()
+            .is_some_and(|(_, marker)| *marker == Marker::CenterOpen)
+            && index + 1 < lines.len()
+            && !literal_lines[index + 1]
+        {
+            let (prefix, _) = marker.expect("center marker exists");
+            if marker_line(&lines[index + 1])
+                == Some((prefix.as_str(), Marker::CollapsibleOpen))
+            {
+                pending = Some(CrossedClose {
+                    prefix,
+                    early_center_close: None,
+                });
+                index += 2;
+                continue;
+            }
+        }
+
+        index += 1;
+    }
+}
+
+fn canonicalize_unmatched_quoted_tab_closers(
+    lines: &mut [String],
+    literal_lines: &[bool],
+) {
+    let has_tab_open = lines
+        .iter()
+        .zip(literal_lines)
+        .any(|(line, literal)| !literal && line.to_ascii_lowercase().contains("[[tab "));
+    let has_tabview_open = lines.iter().zip(literal_lines).any(|(line, literal)| {
+        !literal && line.to_ascii_lowercase().contains("[[tabview]]")
+    });
+
+    for (index, line) in lines.iter_mut().enumerate() {
+        if literal_lines[index] {
+            continue;
+        }
         let ending = if line.ends_with('\n') { "\n" } else { "" };
         let (body, _) = split_line(line);
         let Some(marker_start) = body.find("[[") else {
@@ -180,11 +246,101 @@ fn canonicalize_unmatched_quoted_tab_closers(lines: &mut [String]) {
         }
 
         let marker = &body[marker_start..];
-        let unmatched = (marker == "[[/tab]]" && !has_tab_open)
-            || (marker == "[[/tabview]]" && !has_tabview_open);
+        let unmatched = (marker.eq_ignore_ascii_case("[[/tab]]") && !has_tab_open)
+            || (marker.eq_ignore_ascii_case("[[/tabview]]") && !has_tabview_open);
         if unmatched {
             *line = format!("{prefix}{ending}");
         }
+    }
+}
+
+fn literal_line_mask(lines: &[String]) -> Vec<bool> {
+    let mut block_close: Option<&'static str> = None;
+    let mut in_comment = false;
+    let mut in_raw_escape = false;
+    let mut mask = Vec::with_capacity(lines.len());
+
+    for line in lines {
+        let (body, _) = split_line(line);
+        let logical = logical_line_body(body);
+        let lower = logical.to_ascii_lowercase();
+
+        if let Some(close) = block_close {
+            mask.push(true);
+            if lower.contains(close) {
+                block_close = None;
+            }
+            continue;
+        }
+
+        if in_comment {
+            mask.push(true);
+            if logical.contains("--]") {
+                in_comment = false;
+            }
+            continue;
+        }
+
+        if in_raw_escape {
+            mask.push(true);
+            if logical.matches("@@").count() % 2 == 1 {
+                in_raw_escape = false;
+            }
+            continue;
+        }
+
+        if let Some(close) = literal_block_close(&lower) {
+            mask.push(true);
+            if !lower.contains(close) {
+                block_close = Some(close);
+            }
+            continue;
+        }
+
+        if let Some(open) = logical.find("[!--") {
+            mask.push(true);
+            if !logical[open + 4..].contains("--]") {
+                in_comment = true;
+            }
+            continue;
+        }
+
+        let raw_markers = logical.matches("@@").count();
+        if raw_markers > 0 {
+            mask.push(true);
+            in_raw_escape = raw_markers % 2 == 1;
+            continue;
+        }
+
+        mask.push(false);
+    }
+
+    mask
+}
+
+fn logical_line_body(mut body: &str) -> &str {
+    body = body.trim_start_matches([' ', '\t']);
+    while let Some(rest) = body.strip_prefix('>') {
+        body = rest.trim_start_matches([' ', '\t']);
+    }
+    body
+}
+
+fn literal_block_close(lower: &str) -> Option<&'static str> {
+    let marker = lower.strip_prefix("[[")?.trim_start();
+    let head = marker.split_once("]]")?.0.trim_end();
+    let mut words = head.split_ascii_whitespace();
+
+    match words.next()? {
+        "code" => Some("[[/code]]"),
+        "raw" => Some("[[/raw]]"),
+        "html" => Some("[[/html]]"),
+        "math" => Some("[[/math]]"),
+        // Named service embeds are single blocks. Only the empty-head form
+        // introduces a literal body terminated by [[/embed]].
+        "embed" if words.next().is_none() => Some("[[/embed]]"),
+        "module" if words.next() == Some("css") => Some("[[/module]]"),
+        _ => None,
     }
 }
 
@@ -320,5 +476,79 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert!(html.contains("template body"), "{html}");
         assert!(html.contains("outside"), "{html}");
+    }
+
+    #[test]
+    fn compatibility_markers_inside_literal_regions_are_unchanged() {
+        for mut source in [
+            concat!(
+                "[[code]]\n",
+                "[[=]]\n",
+                "[[collapsible show=\"sample\"]]\n",
+                "[[/=]]\n",
+                "[[/collapsible]]\n",
+                "[[/tab]]\n",
+                "[[/code]]\n",
+            )
+            .to_owned(),
+            concat!("> [[raw]]\n", "> [[/tabview]]\n", "> [[/raw]]\n",).to_owned(),
+            concat!("@@\n", "[[/tab]]\n", "@@\n").to_owned(),
+            concat!("[!--\n", "[[/tabview]]\n", "--]\n").to_owned(),
+        ] {
+            let original = source.clone();
+
+            substitute(&mut source);
+
+            assert_eq!(source, original);
+        }
+    }
+
+    #[test]
+    fn literal_block_detection_requires_an_exact_block_name_and_shape() {
+        for lookalike in [
+            "[[codeexample]]",
+            "[[raw-data]]",
+            "[[html5]]",
+            "[[mathref theorem]]",
+            "[[equation theorem]]",
+            "[[equationref theorem]]",
+            "[[embed youtube video=abc]]",
+            "[[module css-reset]]",
+        ] {
+            assert_eq!(literal_block_close(lookalike), None, "{lookalike}");
+        }
+
+        for (opener, closer) in [
+            ("[[code]]", "[[/code]]"),
+            ("[[code type=rust]]", "[[/code]]"),
+            ("[[ raw ]]", "[[/raw]]"),
+            ("[[html class=frame]]", "[[/html]]"),
+            ("[[math quadratic]]", "[[/math]]"),
+            ("[[embed]]", "[[/embed]]"),
+            ("[[module css]]", "[[/module]]"),
+        ] {
+            assert_eq!(literal_block_close(opener), Some(closer), "{opener}");
+        }
+    }
+
+    #[test]
+    fn compatibility_scans_adversarial_marker_runs_in_bounded_time() {
+        const MARKERS: usize = 8_192;
+
+        let quoted_open = "> [[collapsible show=\"open\"]]\n";
+        let crossed_open = "> [[=]]\n> [[collapsible show=\"open\"]]\n";
+        for mut source in [quoted_open.repeat(MARKERS), crossed_open.repeat(MARKERS)] {
+            let original = source.clone();
+            let started = std::time::Instant::now();
+
+            substitute(&mut source);
+
+            assert!(
+                started.elapsed() < std::time::Duration::from_secs(5),
+                "compatibility scan took {:?}",
+                started.elapsed(),
+            );
+            assert_eq!(source, original);
+        }
     }
 }

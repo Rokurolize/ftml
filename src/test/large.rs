@@ -20,7 +20,7 @@
 
 use crate::data::PageInfo;
 use crate::layout::Layout;
-use crate::parsing::{ParseErrorKind, Token};
+use crate::parsing::{DEEP_MAX_RECURSION_DEPTH, ParseErrorKind, Token};
 use crate::settings::{WikitextMode, WikitextSettings};
 use crate::tree::{Element, SyntaxTree};
 use std::borrow::Cow;
@@ -32,56 +32,54 @@ use std::borrow::Cow;
 /// also goes past serde_json's recursion limit, lol.
 #[test]
 fn recursion_depth() {
-    const SUPPORTED_DEPTH: usize = 512;
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
 
-    // The test deliberately reaches the parser's high-water mark. A larger
-    // test-thread stack keeps the assertion about the explicit parser limit
-    // independent from Rust's smaller default test-thread stack.
-    std::thread::Builder::new()
-        .name("ftml-recursion-limit".to_owned())
-        .stack_size(16 * 1024 * 1024)
-        .spawn(|| {
-            let page_info = PageInfo::dummy();
-            let settings =
-                WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    // Exercise the production-thread stack. The explicit parser limit must
+    // produce a recoverable error before a caller stack can overflow.
+    let mut input = String::new();
 
-            // Build wikitext input
-            let mut input = String::new();
+    for _ in 0..=DEEP_MAX_RECURSION_DEPTH {
+        input.push_str("[[div]]\n");
+    }
 
-            for _ in 0..=SUPPORTED_DEPTH {
-                input.push_str("[[div]]\n");
-            }
+    for _ in 0..=DEEP_MAX_RECURSION_DEPTH {
+        input.push_str("[[/div]]\n");
+    }
 
-            for _ in 0..=SUPPORTED_DEPTH {
-                input.push_str("[[/div]]\n");
-            }
+    crate::preprocess(&mut input);
+    let tokens = crate::tokenize(&input);
+    let (tree, errors) = crate::parse(&tokens, &page_info, &settings).into();
 
-            // Run parser steps
-            crate::preprocess(&mut input);
-            let tokens = crate::tokenize(&input);
-            let (tree, errors) = crate::parse(&tokens, &page_info, &settings).into();
+    let error = errors.first().expect("No errors produced");
+    assert_eq!(error.token(), Token::LeftBlock);
+    assert_eq!(error.rule(), "block-div");
+    let error_start = DEEP_MAX_RECURSION_DEPTH * "[[div]]\n".len();
+    assert_eq!(error.span(), error_start..error_start + 2);
+    assert_eq!(error.kind(), ParseErrorKind::RecursionDepthExceeded);
 
-            // Check outputted errors
-            let error = errors.first().expect("No errors produced");
-            assert_eq!(error.token(), Token::LeftBlock);
-            assert_eq!(error.rule(), "block-div");
-            assert_eq!(error.span(), 4096..4098);
-            assert_eq!(error.kind(), ParseErrorKind::RecursionDepthExceeded);
+    let SyntaxTree { elements, .. } = tree;
+    assert_eq!(elements.len(), 1);
 
-            // Check syntax tree
-            //
-            // It outputs the entire input string as text
+    let element = elements.first().expect("No elements produced");
+    let input_cow = Cow::Borrowed(input.as_ref());
+    assert_eq!(element, &Element::Text(input_cow));
+}
 
-            let SyntaxTree { elements, .. } = tree;
-            assert_eq!(elements.len(), 1);
+#[test]
+fn corpus_depth_component_tree_parses_on_bounded_stack_worker() {
+    const CORPUS_BACKED_DEPTH: usize = 115;
 
-            let element = elements.first().expect("No elements produced");
-            let input_cow = Cow::Borrowed(input.as_ref());
-            assert_eq!(element, &Element::Text(input_cow));
-        })
-        .expect("recursion-limit test thread should start")
-        .join()
-        .expect("recursion-limit test thread should not panic");
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let mut input = "[[div]]\n".repeat(CORPUS_BACKED_DEPTH);
+    input.push_str(&"[[/div]]\n".repeat(CORPUS_BACKED_DEPTH));
+
+    crate::preprocess(&mut input);
+    let tokens = crate::tokenize(&input);
+    let (_, errors) = crate::parse(&tokens, &page_info, &settings).into();
+
+    assert!(errors.is_empty(), "{errors:#?}");
 }
 
 /// Test the parser's ability to process large bodies

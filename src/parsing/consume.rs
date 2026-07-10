@@ -74,7 +74,7 @@ fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
             matches!(
                 parser.look_ahead(0).map(|token| token.token),
                 Some(Token::Whitespace | Token::LeftBlockEnd)
-            ) || repeated_marker_run_ends_at_literal_boundary(parser, Token::Underline)
+            ) || repeated_underline_run_ends_at_literal_boundary(parser)
         }
 
         Token::Bold | Token::Italics | Token::Superscript | Token::Subscript => matches!(
@@ -106,19 +106,26 @@ fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
     }
 }
 
-fn repeated_marker_run_ends_at_literal_boundary(
-    parser: &Parser<'_, '_>,
-    marker: Token,
-) -> bool {
+fn repeated_underline_run_ends_at_literal_boundary(parser: &Parser<'_, '_>) -> bool {
+    let start = parser.current().span.start;
+    if let Some(literal) = parser.literal_underline_run(start) {
+        return literal;
+    }
+
     let mut repeated = false;
+    let mut starts = vec![start];
     for token in parser.remaining() {
-        if token.token == marker {
+        if token.token == Token::Underline {
             repeated = true;
+            starts.push(token.span.start);
             continue;
         }
-        return repeated
-            && matches!(token.token, Token::Whitespace | Token::LeftBlockEnd);
+        let literal =
+            repeated && matches!(token.token, Token::Whitespace | Token::LeftBlockEnd);
+        parser.cache_literal_underline_run(starts, literal);
+        return literal;
     }
+    parser.cache_literal_underline_run(starts, false);
     false
 }
 

@@ -45,3 +45,21 @@ fn padded_inline_openers_inside_list_items_stay_literal_in_bounded_time() {
         assert!(errors.is_empty(), "{marker:?}: {errors:#?}");
     }
 }
+
+#[test]
+fn repeated_underline_spacer_run_stays_linear_and_literal() {
+    const MARKER_COUNT: usize = 16_384;
+
+    let input = format!("{} ", "__".repeat(MARKER_COUNT));
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let started = Instant::now();
+
+    let tokenization = ftml::tokenize(&input);
+    let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+    assert!(started.elapsed() < Duration::from_secs(5));
+    assert!(errors.is_empty(), "{errors:#?}");
+    assert_eq!(html.matches("__").count(), MARKER_COUNT);
+}

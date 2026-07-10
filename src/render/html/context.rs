@@ -39,8 +39,8 @@ use std::fmt::{self, Write};
 use std::num::NonZeroUsize;
 use std::ops::Range;
 
-const MIN_HTML_BODY_CAPACITY: usize = 4096;
-const MAX_INITIAL_HTML_BODY_CAPACITY: usize = 1024 * 1024;
+const MIN_BODY_CAPACITY: usize = 4096;
+const MAX_BODY_CAPACITY: usize = 1024 * 1024;
 
 #[derive(Debug)]
 pub struct HtmlContext<'i, 'h, 'e, 't>
@@ -101,9 +101,8 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
         // syntax element expands into tags and escaped text. Keep the estimate
         // conservative and bounded because the source text is caller-controlled
         // and may contain large comments or other syntax that renders little HTML.
-        let capacity = wikitext_len
-            .saturating_add(wikitext_len / 8)
-            .clamp(MIN_HTML_BODY_CAPACITY, MAX_INITIAL_HTML_BODY_CAPACITY);
+        let estimated_capacity = wikitext_len.saturating_add(wikitext_len / 8);
+        let capacity = estimated_capacity.clamp(MIN_BODY_CAPACITY, MAX_BODY_CAPACITY);
 
         // Build and return
         HtmlContext {
@@ -583,10 +582,10 @@ mod tests {
             &elements,
             &footnotes,
             &bibliographies,
-            MAX_INITIAL_HTML_BODY_CAPACITY * 8,
+            MAX_BODY_CAPACITY * 8,
         );
 
-        assert_eq!(ctx.buffer().capacity(), MAX_INITIAL_HTML_BODY_CAPACITY);
+        assert_eq!(ctx.buffer().capacity(), MAX_BODY_CAPACITY);
     }
 
     #[test]

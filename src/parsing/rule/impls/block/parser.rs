@@ -437,13 +437,39 @@ where
     pub fn has_body_end_block(&self, block_rule: &BlockRule) -> bool {
         let mut parser = self.clone();
         let mut first = true;
+        let mut traversed_token_states = Vec::new();
 
         loop {
+            let token_start = parser.current().span.start;
+            let exact_key = (block_rule.name, token_start, first);
+            let equivalent_key = (block_rule.name, token_start, !first);
+            let cached = self.block_end_scan_outcome(exact_key).or_else(|| {
+                (parser.current().token != Token::LineBreak)
+                    .then(|| self.block_end_scan_outcome(equivalent_key))
+                    .flatten()
+            });
+            if let Some(outcome) = cached {
+                let states = &traversed_token_states;
+                self.cache_block_end_scan_outcomes(block_rule.name, states, outcome);
+                return outcome;
+            }
+            traversed_token_states.push((token_start, first));
+
             if parser.verify_end_block(first, block_rule, false).is_some() {
+                self.cache_block_end_scan_outcomes(
+                    block_rule.name,
+                    &traversed_token_states,
+                    true,
+                );
                 return true;
             }
 
             if parser.current().token == Token::InputEnd {
+                self.cache_block_end_scan_outcomes(
+                    block_rule.name,
+                    &traversed_token_states,
+                    false,
+                );
                 return false;
             }
 
@@ -730,9 +756,17 @@ where
         block_rule: &BlockRule,
         in_head: bool,
     ) -> Result<(), ParseError> {
+        self.get_head_none_with_body_start(block_rule, in_head)
+            .map(drop)
+    }
+
+    pub(crate) fn get_head_none_with_body_start(
+        &mut self,
+        block_rule: &BlockRule,
+        in_head: bool,
+    ) -> Result<BlockBodyStart, ParseError> {
         self.get_optional_space()?;
-        self.get_head_block(block_rule, in_head)?;
-        Ok(())
+        self.get_head_block_with_body_start(block_rule, in_head)
     }
 
     // Helper function to finish up the head block
@@ -851,6 +885,31 @@ mod tests {
                 parser.step().expect("next line or input end must exist");
             }
         }
+    }
+
+    #[test]
+    fn block_end_scan_propagates_cached_suffix_outcomes() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("prefix suffix");
+
+        let mut suffix = Parser::new(&tokenization, &page_info, &settings);
+        suffix.step_n(3).expect("suffix token should exist");
+        assert_eq!(suffix.current().slice, "suffix");
+        assert!(!suffix.has_body_end_block(&BLOCK_DIV));
+
+        let mut prefix = Parser::new(&tokenization, &page_info, &settings);
+        prefix.step().expect("prefix token should exist");
+        assert_eq!(prefix.current().slice, "prefix");
+        assert!(!prefix.has_body_end_block(&BLOCK_DIV));
+        assert_eq!(
+            prefix.block_end_scan_outcome((
+                BLOCK_DIV.name,
+                prefix.current().span.start,
+                true
+            )),
+            Some(false),
+        );
     }
 
     #[test]

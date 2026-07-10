@@ -68,6 +68,29 @@ fn render_text(tree: &SyntaxTree, layout: Layout) -> String {
     TextRender.render(tree, &page_info, &settings)
 }
 
+fn assert_false_iftags_guarded(hidden: &str, layout: Layout) {
+    let input = format!(
+        "[[iftags +missing]]\n{hidden}\n[[html]]\n<b>guarded</b>\n[[/html]]\n[[/iftags]]\nvisible",
+    );
+    let tree = parse(&input, layout);
+
+    assert_eq!(
+        render_text(&tree, layout),
+        "visible",
+        "{layout:?}: {hidden}"
+    );
+    assert!(tree.html_blocks.is_empty(), "{layout:?}: {hidden}");
+    assert!(tree.code_blocks.is_empty(), "{layout:?}: {hidden}");
+}
+
+fn assert_false_iftags_fails_closed(hidden: &str, layout: Layout) {
+    let tree = parse(&format!("[[iftags +missing]]\n{hidden}"), layout);
+
+    assert!(tree.elements.is_empty(), "{layout:?}: {hidden}");
+    assert!(tree.html_blocks.is_empty(), "{layout:?}: {hidden}");
+    assert!(tree.code_blocks.is_empty(), "{layout:?}: {hidden}");
+}
+
 fn render_iframe_with_url_and_attributes(
     url: &'static str,
     attributes: AttributeMap,
@@ -631,15 +654,24 @@ fn over_limit_date_formats_fall_back_without_format_class() {
 
 #[test]
 fn hidden_conditionals_do_not_publish_metadata_blocks() {
-    for input in [
-        "[[iftags +missing]]\n[[code]]\nsecret\n[[/code]]\n[[html]]\n<b>secret</b>\n[[/html]]\n[[/iftags]]",
-        "[[ifcategory missing]]\n[[code]]\nsecret\n[[/code]]\n[[html]]\n<b>secret</b>\n[[/html]]\n[[/ifcategory]]",
-    ] {
-        let tree = parse(input, Layout::Wikijump);
+    for layout in [Layout::Wikijump, Layout::Wikidot] {
+        for input in [
+            "[[iftags +missing]]\n+ Secret heading\n[[footnote]]secret[[/footnote]]\n[[bibliography]]\n: secret : reference\n[[/bibliography]]\n[[code]]\nsecret\n[[/code]]\n[[html]]\n<b>secret</b>\n[[/html]]\n[[/iftags]]",
+            "[[ifcategory missing]]\n+ Secret heading\n[[footnote]]secret[[/footnote]]\n[[bibliography]]\n: secret : reference\n[[/bibliography]]\n[[code]]\nsecret\n[[/code]]\n[[html]]\n<b>secret</b>\n[[/html]]\n[[/ifcategory]]",
+        ] {
+            let tree = parse(input, layout);
 
-        assert!(tree.elements.is_empty(), "{:?}", tree.elements);
-        assert!(tree.code_blocks.is_empty(), "{:?}", tree.code_blocks);
-        assert!(tree.html_blocks.is_empty(), "{:?}", tree.html_blocks);
+            assert!(
+                tree.elements.is_empty()
+                    && tree.table_of_contents.is_empty()
+                    && tree.code_blocks.is_empty()
+                    && tree.html_blocks.is_empty()
+                    && tree.footnotes.is_empty()
+                    && !tree.needs_footnote_block
+                    && tree.bibliographies.is_empty(),
+                "{layout:?}: {tree:?}",
+            );
+        }
     }
 
     let tree = parse(
@@ -652,15 +684,127 @@ fn hidden_conditionals_do_not_publish_metadata_blocks() {
 }
 
 #[test]
-fn false_iftags_raw_end_marker_does_not_publish_later_html() {
-    let tree = parse(
-        "[[iftags +missing]]\n[[code]]\n[[/iftags]]\n[[html]]\n<b id=\"leaked\">guarded</b>\n[[/html]]\n[[/code]]\n[[/iftags]]",
-        Layout::Wikijump,
+fn false_iftags_raw_body_end_markers_stay_hidden() {
+    let raw_bodies = [
+        "[[code]]\n[[/iftags]]\n[[html]]\n<b>raw-code</b>\n[[/html]]\n[[/code]]",
+        "[[html]]\n[[/iftags]]\n<b>raw-html</b>\n[[/html]]",
+        "[[raw]]\n[[/iftags]]\n[[html]]raw-raw[[/html]]\n[[/raw]]",
+        "[[math]]\n\\text{[[/iftags]] raw-math}\n[[/math]]",
+        "[[module CSS]]\n/* [[/iftags]] raw-module-css */\n[[/module]]",
+        "[[module ListPages]]\n[[/iftags]] raw-module-list-pages\n[[/module]]",
+        "@@[[/iftags]] raw-inline@@",
+        "[!-- [[/iftags]] raw-comment --]",
+        "[[math]]\n[[/math]]",
+        "[[module Rate]]",
+    ];
+
+    for layout in [Layout::Wikijump, Layout::Wikidot] {
+        for raw_body in raw_bodies {
+            assert_false_iftags_guarded(raw_body, layout);
+        }
+    }
+}
+
+#[test]
+fn false_iftags_nested_conditionals_do_not_close_the_outer_body() {
+    let nested = [
+        "[[iftags +missing]]\ninner false\n[[/iftags]]",
+        "[[iftags -missing]]\ninner true\n[[/iftags]]",
+        "[[ifcategory missing]]\ninner category\n[[/ifcategory]]",
+        "[[ifcategory missing]]\n[[code]]\n[[/ifcategory]]\n[[/iftags]]\nraw nested conditional\n[[/code]]\n[[/ifcategory]]",
+    ];
+
+    for layout in [Layout::Wikijump, Layout::Wikidot] {
+        for conditional in nested {
+            assert_false_iftags_guarded(conditional, layout);
+        }
+    }
+}
+
+#[test]
+fn false_iftags_malformed_hidden_structures_fail_closed() {
+    let malformed = [
+        "[[code]]\n[[/iftags]]\nunclosed code",
+        "[[html]]\n[[/iftags]]\n<b>unclosed html</b>",
+        "[[raw]]\n[[/iftags]]\nunclosed raw",
+        "[[math]]\n[[/iftags]]\nunclosed math",
+        "[[module CSS]]\n[[/iftags]]\n.unclosed { color: red; }",
+        "[[module ListPages]]\n[[/iftags]]\nunclosed module",
+        "[[code @=\"bad\"]]\n[[/iftags]]\n[[html]]\n<b>malformed head</b>\n[[/html]]",
+        "[[iftags +missing]]\ninner unclosed\n[[/iftags]]\n[[html]]\n<b>unclosed nested</b>\n[[/html]]",
+    ];
+
+    for layout in [Layout::Wikijump, Layout::Wikidot] {
+        for hidden in malformed {
+            assert_false_iftags_fails_closed(hidden, layout);
+        }
+    }
+}
+
+#[test]
+fn false_iftags_unclosed_parsed_child_stops_at_outer_boundary() {
+    let input = "[[iftags +missing]]\n[[div]]\nhidden child\n[[/iftags_]]\nvisible";
+
+    for layout in [Layout::Wikijump, Layout::Wikidot] {
+        let tree = parse(input, layout);
+        let output = render_html(&tree, layout);
+
+        assert!(output.contains("visible"), "{layout:?}: {output}");
+        assert!(!output.contains("hidden child"), "{layout:?}: {output}");
+    }
+}
+
+#[test]
+fn false_iftags_closed_unknown_module_does_not_hide_following_content() {
+    let input = concat!(
+        "[[iftags +missing]]\n",
+        "[[module Unknown]]\n",
+        "hidden unsupported module\n",
+        "[[/module]]\n",
+        "[[/iftags]]\n",
+        "visible",
     );
 
-    assert!(tree.elements.is_empty(), "{:?}", tree.elements);
-    assert!(tree.html_blocks.is_empty(), "{:?}", tree.html_blocks);
-    assert!(tree.code_blocks.is_empty(), "{:?}", tree.code_blocks);
+    for layout in [Layout::Wikijump, Layout::Wikidot] {
+        let tree = parse(input, layout);
+
+        assert_eq!(render_text(&tree, layout), "visible", "{layout:?}");
+    }
+}
+
+#[test]
+fn false_iftags_deep_nested_conditionals_parse_within_budget() {
+    const DEPTH: usize = 64;
+
+    let mut input = String::from("[[iftags +missing]]\n");
+    input.push_str(&"[[iftags +missing]]\n".repeat(DEPTH));
+    input.push_str("hidden\n");
+    input.push_str(&"[[/iftags]]\n".repeat(DEPTH));
+    input.push_str("[[/iftags]]\nvisible");
+
+    let started = Instant::now();
+    let tree = parse(&input, Layout::Wikidot);
+    let elapsed = started.elapsed();
+    let output = render_html(&tree, Layout::Wikidot);
+
+    assert!(output.contains("visible"), "{output}");
+    assert!(!output.contains("hidden"), "{output}");
+    assert!(elapsed < Duration::from_secs(3), "parse took {elapsed:?}");
+}
+
+#[test]
+fn false_iftags_unclosed_outer_body_keeps_layout_specific_semantics() {
+    let input = "[[iftags +missing]]\nfollowing body";
+
+    let wikidot = parse(input, Layout::Wikidot);
+    assert!(
+        render_text(&wikidot, Layout::Wikidot).contains("following body"),
+        "{:?}",
+        wikidot.elements
+    );
+
+    let wikijump = parse(input, Layout::Wikijump);
+    assert!(wikijump.elements.is_empty(), "{:?}", wikijump.elements);
 }
 
 #[test]

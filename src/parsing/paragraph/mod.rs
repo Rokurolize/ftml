@@ -109,7 +109,27 @@ where
                     None
                 } else {
                     // Otherwise, produce consumption from this token pointer
-                    Some(consume(parser)?)
+                    match consume(parser) {
+                        Ok(consumed) => Some(consumed),
+                        Err(error)
+                            if parser.discarding_hidden_body()
+                                && parser.at_hidden_body_boundary() =>
+                        {
+                            let close_condition_met = close_condition_fn
+                                .as_mut()
+                                .expect("body parser must have a close condition")(
+                                parser,
+                            )?;
+
+                            if close_condition_met {
+                                finished = true;
+                                None
+                            } else {
+                                return Err(error);
+                            }
+                        }
+                        Err(error) => return Err(error),
+                    }
                 }
             }
         };

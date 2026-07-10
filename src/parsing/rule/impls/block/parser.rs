@@ -27,7 +27,7 @@ use crate::parsing::{
     ExtractedToken, ParseError, ParseErrorKind, ParseResult, Parser, Token,
     gather_paragraphs,
 };
-use crate::tree::Element;
+use crate::tree::{Element, Elements};
 use regex::Regex;
 use std::sync::LazyLock;
 
@@ -198,11 +198,59 @@ where
         block_rule: &BlockRule,
         as_paragraphs: bool,
     ) -> ParseResult<'r, 't, Vec<Element<'t>>> {
-        if as_paragraphs {
+        let track_boundary = self.discarding_hidden_body();
+        if track_boundary {
+            self.push_hidden_body_boundary(
+                block_rule.accepts_names,
+                block_rule.accepts_newlines,
+            );
+        }
+
+        let result = if as_paragraphs {
             self.get_body_elements_paragraphs(block_rule)
         } else {
             self.get_body_elements_no_paragraphs(block_rule)
+        };
+
+        if track_boundary {
+            self.pop_hidden_body_boundary();
         }
+
+        result
+    }
+
+    /// Parse a hidden body with the normal grammar, discard its output and errors,
+    /// and retain only the final token position.
+    ///
+    /// Parser metadata is shared by cheap parser clones, so it is restored from a
+    /// transaction snapshot before the fork's token position is committed.
+    pub fn discard_body_elements(
+        &mut self,
+        block_rule: &BlockRule,
+    ) -> Result<(), ParseError> {
+        let mutable_state = self.get_mutable_state();
+        let mut fork = self.clone();
+        let was_discarding = fork.discarding_hidden_body();
+        fork.set_discarding_hidden_body(true);
+        fork.push_hidden_body_boundary(
+            block_rule.accepts_names,
+            block_rule.accepts_newlines,
+        );
+
+        let discard_result = fork.consume_body_elements_no_paragraphs(block_rule, |_| {});
+        fork.pop_hidden_body_boundary();
+
+        if discard_result.is_err() {
+            // A malformed or unclosed hidden construct is ambiguous.  Keep the
+            // conditional closed through EOF instead of falling back to visible
+            // text outside an attacker-controlled delimiter.
+            fork.skip_to_input_end()?;
+        }
+
+        fork.set_discarding_hidden_body(was_discarding);
+        self.update(&fork);
+        self.reset_mutable_state(mutable_state);
+        Ok(())
     }
 
     fn get_body_elements_paragraphs(
@@ -216,6 +264,13 @@ where
             let result = parser.verify_end_block(first, block_rule);
             first = false;
 
+            if result.is_none()
+                && parser.discarding_hidden_body()
+                && parser.at_hidden_body_ancestor_boundary()
+            {
+                return Err(parser.make_err(ParseErrorKind::BlockExpectedEnd));
+            }
+
             Ok(result.is_some())
         };
         gather_paragraphs(self, rule, Some(is_end))
@@ -228,23 +283,53 @@ where
         let mut all_elements = Vec::new();
         let mut all_errors = Vec::new();
         let mut paragraph_safe = true;
+
+        self.consume_body_elements_no_paragraphs(block_rule, |consumed| {
+            let elements = consumed.chain(&mut all_errors, &mut paragraph_safe);
+            all_elements.extend(elements);
+        })?;
+
+        ok!(paragraph_safe; all_elements, all_errors)
+    }
+
+    fn consume_body_elements_no_paragraphs<F>(
+        &mut self,
+        block_rule: &BlockRule,
+        mut process: F,
+    ) -> Result<(), ParseError>
+    where
+        F: FnMut(crate::parsing::ParseSuccess<'r, 't, Elements<'t>>),
+    {
         let mut first = true;
 
         loop {
             let result = self.verify_end_block(first, block_rule);
             if result.is_some() {
-                return ok!(paragraph_safe; all_elements, all_errors);
+                return Ok(());
+            }
+
+            if self.discarding_hidden_body() && self.at_hidden_body_ancestor_boundary() {
+                return Err(self.make_err(ParseErrorKind::BlockExpectedEnd));
             }
 
             let wikidot_input_end = self.current().token == Token::InputEnd
                 && self.settings().layout.legacy();
             if wikidot_input_end {
-                return ok!(paragraph_safe; all_elements, all_errors);
+                return Ok(());
             }
 
             first = false;
-            let elements = consume(self)?.chain(&mut all_errors, &mut paragraph_safe);
-            all_elements.extend(elements);
+            let consumed = match consume(self) {
+                Ok(consumed) => consumed,
+                Err(_error)
+                    if self.discarding_hidden_body()
+                        && self.at_hidden_body_boundary() =>
+                {
+                    continue;
+                }
+                Err(error) => return Err(error),
+            };
+            process(consumed);
         }
     }
 

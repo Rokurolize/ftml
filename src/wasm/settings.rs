@@ -23,6 +23,7 @@ use crate::layout::Layout as RustLayout;
 use crate::settings::{
     WikitextMode as RustWikitextMode, WikitextSettings as RustWikitextSettings,
 };
+use std::str::FromStr;
 use std::sync::Arc;
 
 #[wasm_bindgen]
@@ -54,14 +55,8 @@ impl WikitextSettings {
 
     #[wasm_bindgen]
     pub fn from_mode(mode: String, layout: String) -> Result<WikitextSettings, JsValue> {
-        let rust_mode = match mode.as_str() {
-            "page" => RustWikitextMode::Page,
-            "draft" => RustWikitextMode::Draft,
-            "forum-post" => RustWikitextMode::ForumPost,
-            "direct-message" => RustWikitextMode::DirectMessage,
-            "list" => RustWikitextMode::List,
-            _ => return Err(JsValue::from_str("Unknown mode")),
-        };
+        let rust_mode = RustWikitextMode::from_str(&mode)
+            .map_err(|()| JsValue::from_str("Unknown mode"))?;
 
         let rust_layout = match layout.as_str() {
             "wikidot" => RustLayout::Wikidot,

@@ -22,6 +22,7 @@ mod interwiki;
 
 use crate::layout::Layout;
 use crate::next_index::Incrementer;
+use std::str::FromStr;
 
 pub use self::interwiki::{DEFAULT_INTERWIKI, EMPTY_INTERWIKI, InterwikiSettings};
 
@@ -190,15 +191,62 @@ pub enum WikitextMode {
 }
 
 impl WikitextMode {
+    /// Returns the externally serialized spelling for this mode.
+    pub const fn external_name(self) -> &'static str {
+        match self {
+            WikitextMode::Page => "page",
+            WikitextMode::PageNav => "page-nav",
+            WikitextMode::Draft => "draft",
+            WikitextMode::ForumPost => "forum-post",
+            WikitextMode::DirectMessage => "direct-message",
+            WikitextMode::List => "list",
+        }
+    }
+
     /// Whether this mode describes navigational content or not.
     pub fn is_nav_content(self) -> bool {
         matches!(self, WikitextMode::PageNav)
     }
 }
 
+impl FromStr for WikitextMode {
+    type Err = ();
+
+    fn from_str(mode: &str) -> Result<Self, Self::Err> {
+        match mode {
+            "page" => Ok(WikitextMode::Page),
+            "page-nav" => Ok(WikitextMode::PageNav),
+            "draft" => Ok(WikitextMode::Draft),
+            "forum-post" => Ok(WikitextMode::ForumPost),
+            "direct-message" => Ok(WikitextMode::DirectMessage),
+            "list" => Ok(WikitextMode::List),
+            _ => Err(()),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn external_mode_names_round_trip_through_from_str() {
+        let cases = [
+            (WikitextMode::Page, "page"),
+            (WikitextMode::PageNav, "page-nav"),
+            (WikitextMode::Draft, "draft"),
+            (WikitextMode::ForumPost, "forum-post"),
+            (WikitextMode::DirectMessage, "direct-message"),
+            (WikitextMode::List, "list"),
+        ];
+
+        for (mode, name) in cases {
+            assert_eq!(mode.external_name(), name);
+            assert_eq!(name.parse::<WikitextMode>(), Ok(mode));
+        }
+
+        assert!("unknown".parse::<WikitextMode>().is_err());
+    }
 
     #[test]
     fn only_page_nav_is_nav_content() {

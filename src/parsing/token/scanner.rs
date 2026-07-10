@@ -73,7 +73,11 @@ fn scan_literal(bytes: &[u8], start: usize) -> Option<(Token, usize)> {
         b'>' if has(bytes, start, b">@") => (Token::RightRaw, start + 2),
         b'[' if has(bytes, start, b"[!--") => (Token::LeftComment, start + 4),
         b'-' if has(bytes, start, b"--]") => (Token::RightComment, start + 3),
-        b'[' if has(bytes, start, b"[[[[") => (Token::LeftBracket, start + 1),
+        b'[' if has(bytes, start, b"[[[[")
+            && previous_byte(bytes, start) != Some(b'[') =>
+        {
+            (Token::LeftBracket, start + 1)
+        }
         b']' if has(bytes, start, b"]]]]") => (Token::RightLink, start + 3),
         b'[' if has(bytes, start, b"[[[*") => (Token::LeftLinkStar, start + 4),
         b'[' if has(bytes, start, b"[[[") => (Token::LeftLink, start + 3),
@@ -86,9 +90,17 @@ fn scan_literal(bytes: &[u8], start: usize) -> Option<(Token, usize)> {
         b'[' if has(bytes, start, b"[*") => (Token::LeftBracketStar, start + 2),
         b'[' => (Token::LeftBracket, start + 1),
         b'(' if has(bytes, start, b"((") => (Token::LeftParentheses, start + 2),
-        b']' if has(bytes, start, b"]]]") => (Token::RightLink, start + 3),
+        b']' if has(bytes, start, b"]]]")
+            && !is_right_link_trailing_bracket(bytes, start) =>
+        {
+            (Token::RightLink, start + 3)
+        }
         b'$' if has(bytes, start, b"$]]") => (Token::RightMath, start + 3),
-        b']' if has(bytes, start, b"]]") => (Token::RightBlock, start + 2),
+        b']' if has(bytes, start, b"]]")
+            && !is_right_link_trailing_bracket(bytes, start) =>
+        {
+            (Token::RightBlock, start + 2)
+        }
         b']' => (Token::RightBracket, start + 1),
         b')' if has(bytes, start, b"))") => (Token::RightParentheses, start + 2),
         b'*' if has(bytes, start, b"**") => (Token::Bold, start + 2),
@@ -117,6 +129,16 @@ fn scan_literal(bytes: &[u8], start: usize) -> Option<(Token, usize)> {
     };
 
     Some(result)
+}
+
+fn previous_byte(bytes: &[u8], start: usize) -> Option<u8> {
+    start.checked_sub(1).map(|index| bytes[index])
+}
+
+fn is_right_link_trailing_bracket(bytes: &[u8], start: usize) -> bool {
+    start >= 3
+        && bytes[start - 3..start].iter().all(|&byte| byte == b']')
+        && previous_byte(bytes, start - 3) != Some(b']')
 }
 
 fn scan_repeated_symbol(bytes: &[u8], start: usize) -> Option<(Token, usize)> {

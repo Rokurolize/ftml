@@ -670,3 +670,20 @@ fn deeply_repeated_headings_parse_without_stack_recursion() {
         )
     }));
 }
+
+#[test]
+fn html_render_does_not_retain_comment_sized_body_capacity() {
+    let comment_body = "x".repeat(2 * 1024 * 1024);
+    let input = format!("[!--{comment_body}--]");
+    let tree = parse(&input, Layout::Wikijump);
+
+    let output = render_html_output(&tree, Layout::Wikijump);
+
+    assert!(output.body.is_empty());
+    assert!(
+        output.body.capacity() < input.len() / 16,
+        "body capacity {} should not scale with comment-heavy input length {}",
+        output.body.capacity(),
+        input.len(),
+    );
+}

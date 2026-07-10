@@ -249,15 +249,30 @@ where
     }
 
     pub fn has_body_end_block(&self, block_rule: &BlockRule) -> bool {
+        let start_key = (block_rule.name, self.current_token_cache_addr());
+        if let Some(has_end_block) = self.cached_body_end_block(start_key) {
+            return has_end_block;
+        }
+
         let mut parser = self.clone();
         let mut first = true;
+        let mut visited_keys = Vec::new();
 
         loop {
+            let key = (block_rule.name, parser.current_token_cache_addr());
+            if let Some(has_end_block) = parser.cached_body_end_block(key) {
+                self.cache_body_end_blocks(visited_keys, has_end_block);
+                return has_end_block;
+            }
+            visited_keys.push(key);
+
             if parser.verify_end_block(first, block_rule).is_some() {
+                self.cache_body_end_blocks(visited_keys, true);
                 return true;
             }
 
             if parser.current().token == Token::InputEnd {
+                self.cache_body_end_blocks(visited_keys, false);
                 return false;
             }
 

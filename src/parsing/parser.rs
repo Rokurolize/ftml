@@ -30,6 +30,7 @@ use crate::tree::{
 };
 use std::borrow::Cow;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 use std::{mem, ptr};
 
@@ -80,6 +81,14 @@ pub struct Parser<'r, 't> {
     // Code blocks with data to expose
     code_blocks: Rc<RefCell<Vec<CodeBlock<'t>>>>,
 
+    // Cached block-body end lookups.
+    //
+    // Legacy conditional blocks need to know whether a matching end marker
+    // exists without consuming the remaining document. Cache lookups by block
+    // rule and token pointer so repeated unclosed conditionals do not rescan
+    // the same suffix over and over.
+    body_end_block_cache: Rc<RefCell<HashMap<(&'static str, usize), bool>>>,
+
     // Footnotes
     //
     // Schema: Vec<List of elements in a footnote>
@@ -128,6 +137,7 @@ impl<'r, 't> Parser<'r, 't> {
             code_blocks: make_shared_vec(),
             footnotes: make_shared_vec(),
             bibliographies: Rc::new(RefCell::new(BibliographyList::new())),
+            body_end_block_cache: Rc::new(RefCell::new(HashMap::new())),
             accepts_partial: AcceptsPartial::None,
             in_footnote: false,
             has_footnote_block: false,
@@ -423,6 +433,30 @@ impl<'r, 't> Parser<'r, 't> {
     #[inline]
     pub fn remaining(&self) -> &'r [ExtractedToken<'t>] {
         self.remaining
+    }
+
+    #[inline]
+    pub(crate) fn current_token_cache_addr(&self) -> usize {
+        ptr::from_ref(self.current).addr()
+    }
+
+    #[inline]
+    pub(crate) fn cached_body_end_block(
+        &self,
+        key: (&'static str, usize),
+    ) -> Option<bool> {
+        self.body_end_block_cache.borrow().get(&key).copied()
+    }
+
+    pub(crate) fn cache_body_end_blocks(
+        &self,
+        keys: Vec<(&'static str, usize)>,
+        has_end_block: bool,
+    ) {
+        let mut cache = self.body_end_block_cache.borrow_mut();
+        for key in keys {
+            cache.entry(key).or_insert(has_end_block);
+        }
     }
 
     #[inline]

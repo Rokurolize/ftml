@@ -609,6 +609,23 @@ fn malformed_include_prefixes_are_skipped_once() {
 }
 
 #[test]
+fn legacy_unclosed_conditionals_do_not_rescan_remaining_input() {
+    for marker in ["[[iftags +missing]]", "[[ifcategory +missing]]"] {
+        let input = format!("{}\n", marker).repeat(1_000);
+        let started = Instant::now();
+        let (tree, errors) = parse_with_errors(&input, Layout::Wikidot);
+
+        assert!(errors.is_empty(), "{marker}: {errors:?}");
+        assert!(tree.elements.is_empty(), "{marker}: {:?}", tree.elements);
+        assert!(
+            started.elapsed() < Duration::from_secs(3),
+            "{marker} parse took {:?}",
+            started.elapsed(),
+        );
+    }
+}
+
+#[test]
 fn empty_list_lines_do_not_fallback_quadratically() {
     let input = "* \n".repeat(1_000);
     let (tree, errors) = parse_with_errors(&input, Layout::Wikijump);

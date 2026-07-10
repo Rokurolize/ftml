@@ -13,6 +13,9 @@ mod coverage_trace_fixture_paths;
 #[path = "include_variables.rs"]
 mod include_variables;
 
+#[path = "inline_delimiter_performance.rs"]
+mod inline_delimiter_performance;
+
 #[path = "scp8980_wikidot_syntax.rs"]
 mod scp8980_wikidot_syntax;
 

@@ -72,10 +72,15 @@ pub fn parse_alignment_block<'r, 't>(
     assert!(!flag_score, "Alignment block doesn't allow score flag");
     assert_block_name(block_rule, name);
 
-    parser.get_head_none(block_rule, in_head)?;
+    let body_start = parser.get_head_none_with_body_start(block_rule, in_head)?;
+    if !parser.has_body_end_block(block_rule) {
+        return Err(parser.make_end_of_input_err());
+    }
 
     // Get body content, with paragraphs
-    let (elements, errors, _) = parser.get_body_elements(block_rule, true)?.into();
+    let (elements, errors, _) = parser
+        .get_body_elements_with_context(block_rule, true, body_start)?
+        .into();
 
     // Build element
     let element = Element::Container(Container::new(
@@ -92,7 +97,9 @@ mod tests {
     use super::*;
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
+    use std::time::{Duration, Instant};
 
     #[test]
     fn alignment_block_wraps_body_in_align_container() {
@@ -111,5 +118,66 @@ mod tests {
         };
         assert_eq!(paragraph.ctype(), ContainerType::Paragraph);
         assert_eq!(paragraph.elements(), &[text!("centered")]);
+    }
+
+    #[test]
+    fn quoted_alignment_blocks_remain_native_and_bounded() {
+        const BLOCK_COUNT: usize = 64;
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut input = String::new();
+        for index in 0..BLOCK_COUNT {
+            input.push_str("> [[>]]\n> right-");
+            input.push_str(&index.to_string());
+            input.push_str("\n> [[/>]]\n> after-");
+            input.push_str(&index.to_string());
+            input.push('\n');
+        }
+        input.push_str("outside-sentinel\n");
+
+        let started = Instant::now();
+        let tokenization = crate::tokenize(&input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(started.elapsed() < Duration::from_secs(5));
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html.matches("text-align: right;").count(), BLOCK_COUNT);
+        for index in 0..BLOCK_COUNT {
+            assert!(html.contains(&format!("right-{index}")), "{html}");
+            assert!(html.contains(&format!("after-{index}")), "{html}");
+        }
+        assert!(html.contains("outside-sentinel"), "{html}");
+        assert!(!html.contains("[[>]]"), "{html}");
+        assert!(!html.contains("[[/>]]"), "{html}");
+    }
+
+    #[test]
+    fn unclosed_quoted_alignment_blocks_fail_closed_in_bounded_time() {
+        const BLOCK_COUNT: usize = 512;
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut input = String::new();
+        for index in 0..BLOCK_COUNT {
+            input.push_str("> [[>]] malformed-");
+            input.push_str(&index.to_string());
+            input.push('\n');
+        }
+        input.push_str("outside-sentinel\n");
+
+        let started = Instant::now();
+        let tokenization = crate::tokenize(&input);
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(started.elapsed() < Duration::from_secs(5));
+        for index in 0..BLOCK_COUNT {
+            assert!(html.contains(&format!("malformed-{index}")), "{html}");
+        }
+        assert!(html.contains("outside-sentinel"), "{html}");
+        assert_eq!(html.matches("[[&gt;]]").count(), BLOCK_COUNT, "{html}");
+        assert!(!html.contains("text-align: right;"), "{html}");
     }
 }

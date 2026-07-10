@@ -1,5 +1,5 @@
 /*
- * parsing/rule/impls/subscript.rs
+ * parsing/rule/impls/inline_delimiter.rs
  *
  * ftml - Library to parse Wikidot text
  * Copyright (C) 2019-2026 Wikijump Team
@@ -18,26 +18,21 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use super::inline_delimiter::assert_unpadded_open;
 use super::prelude::*;
 
-pub const RULE_SUBSCRIPT: Rule = Rule {
-    name: "subscript",
-    position: LineRequirement::Any,
-    try_consume_fn,
-};
-
-fn try_consume_fn<'r, 't>(
+/// Consume an inline formatting opener that may not be followed by whitespace.
+///
+/// The formatting collectors already reject whitespace before a closing
+/// delimiter. Rejecting padding on the opening side before collection also
+/// prevents a malformed marker from searching later list items for a partner.
+pub(super) fn assert_unpadded_open<'r, 't>(
     parser: &mut Parser<'r, 't>,
-) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!("Trying to create subscript container");
-    assert_unpadded_open(parser, Token::Subscript)?;
-    let close = [ParseCondition::current(Token::Subscript)];
-    let invalid = [
-        ParseCondition::current(Token::ParagraphBreak),
-        ParseCondition::token_pair(Token::Subscript, Token::Whitespace),
-        ParseCondition::token_pair(Token::Whitespace, Token::Subscript),
-    ];
-    let ctype = ContainerType::Subscript;
-    collect_container(parser, RULE_SUBSCRIPT, ctype, &close, &invalid, None)
+    token: Token,
+) -> Result<(), ParseError> {
+    assert_step(parser, token)?;
+    if parser.current().token == Token::Whitespace {
+        Err(parser.make_err(ParseErrorKind::RuleFailed))
+    } else {
+        Ok(())
+    }
 }

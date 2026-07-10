@@ -39,6 +39,9 @@ use std::fmt::{self, Write};
 use std::num::NonZeroUsize;
 use std::ops::Range;
 
+const MIN_BODY_CAPACITY: usize = 4096;
+const MAX_BODY_CAPACITY: usize = 1024 * 1024;
+
 #[derive(Debug)]
 pub struct HtmlContext<'i, 'h, 'e, 't>
 where
@@ -96,8 +99,10 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
         //
         // Rendered HTML is commonly larger than source wikitext because each
         // syntax element expands into tags and escaped text. Keep the estimate
-        // conservative enough to avoid repeated growth on mixed markup pages.
-        let capacity = wikitext_len.saturating_mul(4).max(4096);
+        // conservative and bounded because the source text is caller-controlled
+        // and may contain large comments or other syntax that renders little HTML.
+        let estimated_capacity = wikitext_len.saturating_add(wikitext_len / 8);
+        let capacity = estimated_capacity.clamp(MIN_BODY_CAPACITY, MAX_BODY_CAPACITY);
 
         // Build and return
         HtmlContext {
@@ -375,8 +380,13 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
 impl<'i, 'h, 'e, 't> From<HtmlContext<'i, 'h, 'e, 't>> for HtmlOutput {
     #[inline]
     fn from(ctx: HtmlContext<'i, 'h, 'e, 't>) -> HtmlOutput {
+        let mut body = ctx.body;
+        if body.len() < body.capacity() / 4 {
+            body.shrink_to_fit();
+        }
+
         HtmlOutput {
-            body: ctx.body,
+            body,
             meta: ctx.meta,
             styles: ctx.styles,
             backlinks: ctx.backlinks,
@@ -555,6 +565,39 @@ mod tests {
         let output = HtmlOutput::from(ctx);
         assert_eq!(output.body, "raw! &lt;tag&gt;");
         assert_eq!(output.styles, vec![".collected{color:red}".to_owned()]);
+    }
+
+    #[test]
+    fn html_context_bounds_initial_body_capacity_from_source_length() {
+        let info = PageInfo::dummy();
+        let handle = Handle;
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let elements = [];
+        let footnotes = [];
+        let bibliographies = BibliographyList::new();
+        let mut ctx = HtmlContext::new(
+            &info,
+            &handle,
+            &settings,
+            &elements,
+            &footnotes,
+            &bibliographies,
+            MAX_BODY_CAPACITY * 8,
+        );
+
+        assert_eq!(ctx.buffer().capacity(), MAX_BODY_CAPACITY);
+    }
+
+    #[test]
+    fn html_output_shrinks_sparse_render_body_capacity() {
+        let info = PageInfo::dummy();
+        let mut ctx = context(&info);
+        ctx.push_raw_str("tiny");
+        ctx.buffer().reserve(1024 * 1024);
+
+        let output = HtmlOutput::from(ctx);
+        assert_eq!(output.body, "tiny");
+        assert!(output.body.capacity() < 1024 * 1024);
     }
 
     #[test]

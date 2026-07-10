@@ -48,6 +48,7 @@ mod entity;
 mod fallback;
 mod header;
 mod horizontal_rule;
+mod inline_delimiter;
 mod italics;
 mod line_break;
 mod link_anchor;

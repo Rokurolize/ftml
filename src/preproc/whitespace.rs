@@ -57,10 +57,6 @@ static DOS_MAC_NEWLINES: LazyLock<Replacer> = LazyLock::new(|| Replacer::RegexRe
     regex: Regex::new(r"\r\n?").unwrap(),
     replacement: "\n",
 });
-static CONCAT_LINES: LazyLock<Replacer> = LazyLock::new(|| Replacer::RegexReplace {
-    regex: Regex::new(r"\\\n").unwrap(),
-    replacement: "",
-});
 /// Performs all whitespace substitutions in-place in the given text.
 pub fn substitute(text: &mut String) {
     let mut buffer = String::new();
@@ -82,12 +78,8 @@ pub fn substitute(text: &mut String) {
     // Strip lines with only whitespace
     replace!(WHITESPACE_ONLY_LINE);
 
-    // Join concatenated lines (ending with '\'). Deleting a continuation can expose
-    // another continuation that starts before the previous match, so repeat until
-    // no continuation remains.
-    while text.contains("\\\n") {
-        replace!(CONCAT_LINES);
-    }
+    // Join concatenated lines (ending with '\').
+    join_continued_lines(text, &mut buffer);
 
     // Tabs and null characters are common one-character substitutions.
     // Replace each class in one linear pass instead of repeatedly shifting
@@ -103,6 +95,32 @@ pub fn substitute(text: &mut String) {
     // Remove leading and trailing newlines
     replace!(LEADING_NEWLINES);
     replace!(TRAILING_NEWLINES);
+}
+
+/// Removes line-continuation pairs, including pairs exposed by earlier removals.
+///
+/// The output buffer acts as a stack: a newline cancels the immediately preceding
+/// backslash, whether that backslash was adjacent in the input or exposed by a
+/// previous cancellation. Each character is pushed at most once and popped at
+/// most once, so cascading continuations are handled in linear time.
+fn join_continued_lines(text: &mut String, buffer: &mut String) {
+    if !text.contains("\\\n") {
+        return;
+    }
+
+    buffer.clear();
+    buffer.reserve(text.len());
+
+    for character in text.chars() {
+        if character == '\n' && buffer.as_bytes().last() == Some(&b'\\') {
+            let removed = buffer.pop();
+            debug_assert_eq!(removed, Some('\\'));
+        } else {
+            buffer.push(character);
+        }
+    }
+
+    std::mem::swap(text, buffer);
 }
 
 /// In-place replaces the leading non-standard spaces (such as nbsp) on each line with standard spaces
@@ -172,7 +190,6 @@ fn regexes() {
     let _ = &*LEADING_NEWLINES;
     let _ = &*TRAILING_NEWLINES;
     let _ = &*DOS_MAC_NEWLINES;
-    let _ = &*CONCAT_LINES;
 }
 
 #[test]
@@ -180,4 +197,57 @@ fn test_substitute() {
     use super::test::test_substitution;
 
     test_substitution("miscellaneous", substitute, &TEST_CASES);
+}
+
+#[test]
+fn line_continuations_cascade_across_exposed_boundaries() {
+    for depth in [1, 2, 3, 8, 32] {
+        let mut text =
+            format!("prefix{}{}suffix", "\\".repeat(depth), "\n".repeat(depth),);
+        let mut buffer = String::new();
+
+        join_continued_lines(&mut text, &mut buffer);
+
+        assert_eq!(text, "prefixsuffix", "cascade depth {depth}");
+    }
+}
+
+#[test]
+fn linear_line_continuation_join_matches_repeated_replacement() {
+    const ALPHABET: [char; 3] = ['\\', '\n', 'x'];
+
+    for length in 0..=9 {
+        let combinations = ALPHABET.len().pow(length);
+        for mut encoded in 0..combinations {
+            let mut input = String::with_capacity(length as usize);
+            for _ in 0..length {
+                input.push(ALPHABET[encoded % ALPHABET.len()]);
+                encoded /= ALPHABET.len();
+            }
+
+            let mut expected = input.clone();
+            while expected.contains("\\\n") {
+                expected = expected.replace("\\\n", "");
+            }
+
+            let mut actual = input.clone();
+            let mut buffer = String::new();
+            join_continued_lines(&mut actual, &mut buffer);
+
+            assert_eq!(actual, expected, "input {input:?}");
+        }
+    }
+}
+
+#[test]
+fn line_continuation_cascade_scales_to_large_inputs() {
+    // A repeated full-rescan implementation performs quadratic work on this
+    // shape because each pass exposes exactly one new continuation boundary.
+    const DEPTH: usize = 32 * 1024;
+    let mut text = format!("prefix{}{}suffix", "\\".repeat(DEPTH), "\n".repeat(DEPTH),);
+    let mut buffer = String::new();
+
+    join_continued_lines(&mut text, &mut buffer);
+
+    assert_eq!(text, "prefixsuffix");
 }

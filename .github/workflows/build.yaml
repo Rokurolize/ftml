@@ -29,10 +29,10 @@ jobs:
       RUSTFLAGS: -A unused -D warnings
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Cargo Cache
-        uses: actions/cache@v4
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: |
             ~/.cargo/registry
@@ -43,7 +43,7 @@ jobs:
       - name: Install cargo-nextest
         uses: taiki-e/install-action@96c7780c1d8a2b8723e12031def873a434d39d8d
         with:
-          tool: nextest
+          tool: nextest@0.9.100
 
       - name: Build (All Features)
         run: cargo build --all-features
@@ -81,20 +81,16 @@ jobs:
       RUSTFLAGS: -A unused -D warnings --cfg getrandom_backend="wasm_js"
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Rust Toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+        run: rustup target add wasm32-unknown-unknown
 
       - name: WASM Toolchain
-        uses: jetli/wasm-pack-action@v0.3.0
-        with:
-          version: latest
+        run: cargo install wasm-pack --version 0.13.1 --locked
 
       - name: Cargo Cache
-        uses: actions/cache@v4
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: |
             ~/.cargo/registry
@@ -119,10 +115,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Cargo Cache
-        uses: actions/cache@v4
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: |
             ~/.cargo/registry
@@ -133,7 +129,7 @@ jobs:
       - name: Install cargo-tarpaulin
         uses: taiki-e/install-action@96c7780c1d8a2b8723e12031def873a434d39d8d
         with:
-          tool: cargo-tarpaulin
+          tool: cargo-tarpaulin@0.32.8
 
       - name: Generate Coverage
         run: |
@@ -157,10 +153,10 @@ jobs:
       RUSTFLAGS: -A unused -D warnings
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Cargo Cache
-        uses: actions/cache@v4
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: |
             ~/.cargo/registry
@@ -169,8 +165,11 @@ jobs:
           key: ${{ runner.os }}-lint-${{ hashFiles('**/Cargo.toml') }}
 
       # Unused dependencies
+      - name: Install cargo-machete
+        run: cargo install cargo-machete --version 0.8.0 --locked
+
       - name: Machete
-        uses: bnjbvr/cargo-machete@main
+        run: cargo machete
 
       # Formatting
       - name: Rustfmt

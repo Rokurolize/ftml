@@ -18,7 +18,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use super::RULE_HORIZONTAL_RULE;
 use super::prelude::*;
 use crate::parsing::paragraph::ParagraphStack;
 use crate::parsing::{DepthItem, DepthList, process_depths};
@@ -65,27 +64,11 @@ fn try_consume_fn<'r, 't>(
         ];
         let close = &close_conditions;
         let mut paragraph_safe = true;
-        let mut elements = if parser.current().token == Token::TripleDash
-            && parser
-                .look_ahead(0)
-                .is_some_and(|token| token.token == Token::LineBreak)
-        {
-            // The horizontal-rule parser consumes its trailing line break. If it runs
-            // through the general blockquote line collector, that collector then treats
-            // the next quoted line as part of the current line and can consume an outer
-            // block closer. Finish this quoted line as soon as the rule succeeds.
-            RULE_HORIZONTAL_RULE
-                .try_consume(parser)?
-                .chain(&mut errors, &mut paragraph_safe)
-                .into_iter()
-                .collect()
-        } else {
-            let original_context = parser.in_native_blockquote_line();
-            parser.set_native_blockquote_line(true);
-            let result = collect_consume(parser, RULE_BLOCKQUOTE, close, &[], None);
-            parser.set_native_blockquote_line(original_context);
-            result?.chain(&mut errors, &mut paragraph_safe)
-        };
+        let original_context = parser.in_native_blockquote_line();
+        parser.set_native_blockquote_line(true);
+        let result = collect_native_blockquote_line(parser, close);
+        parser.set_native_blockquote_line(original_context);
+        let mut elements = result?.chain(&mut errors, &mut paragraph_safe);
 
         // Add a line break for the end of the line
         elements.push(Element::LineBreak);
@@ -111,6 +94,47 @@ fn try_consume_fn<'r, 't>(
         .collect();
 
     ok!(false; elements, errors)
+}
+
+/// Collect exactly one physical native-quote line.
+///
+/// Several start-of-line rules consume their trailing line-break token. The
+/// generic collector would then continue into the next physical line and can
+/// swallow an enclosing block's closer, causing combinatorial block retries.
+fn collect_native_blockquote_line<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    close: &[ParseCondition],
+) -> ParseResult<'r, 't, Vec<Element<'t>>> {
+    let line_end_token = std::iter::once(parser.current())
+        .chain(parser.remaining().iter())
+        .find(|token| {
+            token.token == Token::LineBreak
+                || token.token == Token::ParagraphBreak
+                || token.token == Token::InputEnd
+        })
+        .expect("tokenization always ends with input-end");
+    let line_end = line_end_token.span.end;
+    let mut elements = Vec::new();
+    let mut errors = Vec::new();
+    let mut paragraph_safe = true;
+
+    loop {
+        if parser.evaluate_any(close) {
+            if parser.current().token != Token::InputEnd {
+                parser.step()?;
+            }
+            return ok!(paragraph_safe; elements, errors);
+        }
+
+        let consumed = consume(parser)?.chain(&mut errors, &mut paragraph_safe);
+        elements.extend(consumed);
+
+        // A child rule may already have consumed this line's break. Stop at
+        // the first token after it instead of parsing the enclosing next line.
+        if parser.current().span.start >= line_end {
+            return ok!(paragraph_safe; elements, errors);
+        }
+    }
 }
 
 fn build_blockquote_element(list: DepthList<(), (Vec<Element>, bool)>) -> Element {
@@ -278,5 +302,50 @@ mod tests {
         assert!(html.contains("After"), "{html}");
         assert!(!html.contains("[[collapsible"), "{html}");
         assert!(!html.contains("[[/collapsible]]"), "{html}");
+    }
+
+    #[test]
+    fn native_blockquote_line_rules_do_not_trigger_combinatorial_div_retries() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        // Reduced from EN:anomalous-entity-engagement-division-hub
+        // (source SHA-256 19ceb79035996a7c70df15cbcfc49ebe4833147aef4343b43ae77786f43e5f04),
+        // which repeats div-wrapped native quote lines throughout its tabview.
+        let cases = [
+            ("= Centered corpus quote", "text-align: center;"),
+            ("+ Quoted heading", "<h1"),
+            ("* Quoted list item", "<ul>"),
+            ("[[toc]]", "id=\"wj-toc\""),
+            ("----", "<hr>"),
+        ];
+
+        for (quoted_line, expected) in cases {
+            let mut input = String::new();
+            for _ in 0..25 {
+                input.push_str("[[div class=\"table1\"]]\n> ");
+                input.push_str(quoted_line);
+                input.push_str("\n[[/div]]\n");
+            }
+            input.push_str("Following sentinel\n");
+
+            let tokenization = crate::tokenize(&input);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+            assert!(errors.is_empty(), "{quoted_line}: {errors:#?}");
+            assert_eq!(
+                html.matches("class=\"table1\"").count(),
+                25,
+                "{quoted_line}: {html}",
+            );
+            assert_eq!(
+                html.matches("<blockquote>").count(),
+                25,
+                "{quoted_line}: {html}",
+            );
+            assert!(html.contains(expected), "{quoted_line}: {html}");
+            assert!(html.contains("Following sentinel"), "{quoted_line}: {html}");
+        }
     }
 }

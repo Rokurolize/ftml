@@ -82,8 +82,12 @@ pub fn substitute(text: &mut String) {
     // Strip lines with only whitespace
     replace!(WHITESPACE_ONLY_LINE);
 
-    // Join concatenated lines (ending with '\').
-    replace!(CONCAT_LINES);
+    // Join concatenated lines (ending with '\'). Deleting a continuation can expose
+    // another continuation that starts before the previous match, so repeat until
+    // no continuation remains.
+    while text.contains("\\\n") {
+        replace!(CONCAT_LINES);
+    }
 
     // Tabs and null characters are common one-character substitutions.
     // Replace each class in one linear pass instead of repeatedly shifting
@@ -130,7 +134,7 @@ fn replace_leading_spaces(text: &mut String) {
 }
 
 #[cfg(test)]
-const TEST_CASES: [(&str, &str); 9] = [
+const TEST_CASES: [(&str, &str); 10] = [
     (
         "\tapple\n\tbanana\tcherry\n",
         "    apple\n    banana    cherry",
@@ -153,7 +157,8 @@ const TEST_CASES: [(&str, &str); 9] = [
     ),
     ("<\n        \n      \n  \n      \n>", "<\n\n>"),
     ("\u{00a0}\u{00a0}\u{2007} apple", "    apple"),
-    ("x\\\\\n\ny", "x\\\ny"),
+    ("x\\\\\n\ny", "xy"),
+    ("\\\\\n\nX", "X"),
     (
         "\u{00a0}apple\n\u{2007}\u{00a0}banana\ncherry\u{00a0}",
         " apple\n  banana\ncherry\u{00a0}",

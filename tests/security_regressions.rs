@@ -755,6 +755,38 @@ fn false_iftags_unclosed_parsed_child_stops_at_outer_boundary() {
 }
 
 #[test]
+fn false_iftags_malformed_paragraph_child_respects_parent_boundaries() {
+    let cases = [
+        concat!(
+            "[[iftags +missing]]\n",
+            "[[div]]\n",
+            "[[collapsible]]\n",
+            "hidden child\n",
+            "[[/div]]\n",
+            "[[/iftags]]\n",
+            "visible",
+        ),
+        concat!(
+            "[[iftags +missing]]\n",
+            "[[div]]\n",
+            "[[collapsible]]\n",
+            "hidden child\n",
+            "[[/iftags_]]\n",
+            "visible",
+        ),
+    ];
+
+    for layout in [Layout::Wikijump, Layout::Wikidot] {
+        for input in cases {
+            let tree = parse(input, layout);
+            let output = render_text(&tree, layout);
+
+            assert_eq!(output, "visible", "{layout:?}: {tree:?}");
+        }
+    }
+}
+
+#[test]
 fn false_iftags_discard_restores_quoted_block_cursor() {
     let input = concat!(
         "> [[collapsible show=\"show\" hide=\"hide\"]]\n",

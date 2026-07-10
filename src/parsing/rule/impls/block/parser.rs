@@ -417,8 +417,7 @@ where
             block_rule.accepts_newlines,
         );
 
-        let discard_result =
-            fork.consume_body_elements_no_paragraphs(block_rule, false, |_| {});
+        let discard_result = fork.consume_body_no_paragraphs(block_rule, false, |_| {});
         fork.pop_hidden_body_boundary();
 
         if discard_result.is_err() {
@@ -467,19 +466,16 @@ where
         let mut all_errors = Vec::new();
         let mut paragraph_safe = true;
 
-        self.consume_body_elements_no_paragraphs(
-            block_rule,
-            restrict_quote_close,
-            |consumed| {
-                let elements = consumed.chain(&mut all_errors, &mut paragraph_safe);
-                all_elements.extend(elements);
-            },
-        )?;
+        let process = |consumed: crate::parsing::ParseSuccess<'r, 't, Elements<'t>>| {
+            let elements = consumed.chain(&mut all_errors, &mut paragraph_safe);
+            all_elements.extend(elements);
+        };
+        self.consume_body_no_paragraphs(block_rule, restrict_quote_close, process)?;
 
         ok!(paragraph_safe; all_elements, all_errors)
     }
 
-    fn consume_body_elements_no_paragraphs<F>(
+    fn consume_body_no_paragraphs<F>(
         &mut self,
         block_rule: &BlockRule,
         restrict_quote_close: bool,
@@ -511,17 +507,13 @@ where
             }
 
             first = false;
-            let consumed = match consume(self) {
-                Ok(consumed) => consumed,
+            match consume(self) {
+                Ok(consumed) => process(consumed),
                 Err(_error)
                     if self.discarding_hidden_body()
-                        && self.at_hidden_body_boundary() =>
-                {
-                    continue;
-                }
+                        && self.at_hidden_body_boundary() => {}
                 Err(error) => return Err(error),
-            };
-            process(consumed);
+            }
         }
     }
 

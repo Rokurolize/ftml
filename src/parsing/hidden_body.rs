@@ -43,10 +43,11 @@ impl<'r, 't> Parser<'r, 't> {
         accepts_names: &'static [&'static str],
         accepts_newlines: bool,
     ) {
-        self.hidden_body_boundaries.push(HiddenBodyBoundary {
+        let boundary = HiddenBodyBoundary {
             accepts_names,
             accepts_newlines,
-        });
+        };
+        self.hidden_body_boundaries.push(boundary);
     }
 
     pub(crate) fn pop_hidden_body_boundary(&mut self) {
@@ -87,8 +88,10 @@ impl<'r, 't> Parser<'r, 't> {
         }
 
         let mut probe = self.clone();
-        if after_line_break && probe.get_optional_line_break().is_err() {
-            return false;
+        if after_line_break {
+            probe
+                .get_optional_line_break()
+                .expect("a tokenized line break always has a following token");
         }
 
         let Ok(name) = probe.get_end_block() else {
@@ -97,11 +100,9 @@ impl<'r, 't> Parser<'r, 't> {
         let name = name.strip_suffix('_').unwrap_or(name);
 
         boundaries.iter().rev().any(|boundary| {
-            (!after_line_break || boundary.accepts_newlines)
-                && boundary
-                    .accepts_names
-                    .iter()
-                    .any(|accepted| name.eq_ignore_ascii_case(accepted))
+            let names = boundary.accepts_names;
+            let matches_name = names.iter().any(|item| name.eq_ignore_ascii_case(item));
+            (!after_line_break || boundary.accepts_newlines) && matches_name
         })
     }
 
@@ -111,5 +112,38 @@ impl<'r, 't> Parser<'r, 't> {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn hidden_body_boundaries_match_normalized_names_and_stack_scope() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("plain\n[[/IFTAGS_]]");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+
+        assert!(!parser.at_hidden_body_boundary());
+        assert!(!parser.at_hidden_body_ancestor_boundary());
+
+        parser.push_hidden_body_boundary(&["iftags"], true);
+        assert!(!parser.at_hidden_body_boundary());
+        assert!(!parser.at_hidden_body_ancestor_boundary());
+
+        while parser.current().token != Token::LineBreak {
+            parser.step().expect("test input has an end token");
+        }
+        assert!(parser.at_hidden_body_boundary());
+
+        parser.push_hidden_body_boundary(&["div"], true);
+        assert!(parser.at_hidden_body_ancestor_boundary());
+        parser.pop_hidden_body_boundary();
+        parser.pop_hidden_body_boundary();
     }
 }

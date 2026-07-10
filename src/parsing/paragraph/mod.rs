@@ -120,11 +120,10 @@ where
                             if parser.discarding_hidden_body()
                                 && parser.at_hidden_body_boundary() =>
                         {
-                            let close_condition_met = close_condition_fn
+                            let close_condition = close_condition_fn
                                 .as_mut()
-                                .expect("body parser must have a close condition")(
-                                parser,
-                            )?;
+                                .expect("body parser must have a close condition");
+                            let close_condition_met = close_condition(parser)?;
 
                             if close_condition_met {
                                 finished = true;

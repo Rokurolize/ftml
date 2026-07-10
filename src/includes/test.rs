@@ -607,3 +607,20 @@ fn quoted_include_preserves_nested_spaced_prefix_and_rejects_quote_escape() {
     assert!(pages.is_empty());
     assert_eq!(output, escaped);
 }
+
+#[test]
+fn quoted_include_scanner_accepts_crlf_after_the_terminator() {
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let input = "> [[include component:box |name=x]]\r\n";
+
+    let (output, pages) = include(
+        input,
+        &settings,
+        QuotedContentIncluder,
+        || "invalid include response",
+    )
+    .expect("quoted CRLF include should expand");
+
+    assert_eq!(pages, vec![PageRef::page_only("component:box")]);
+    assert_eq!(output, "> first x\n> second\r\n");
+}

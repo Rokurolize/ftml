@@ -288,16 +288,23 @@ fn literal_line_mask(lines: &[String]) -> Vec<bool> {
         let lower = logical.to_ascii_lowercase();
 
         if let Some(literal) = block {
-            mask.push(true);
-            // Root-level raw-text collectors see a closer at any quote depth.
-            // Native quoted collectors, however, only accept a closer at the
-            // exact absolute depth where the block opened.
-            let close_depth_matches =
-                literal.quote_depth == 0 || quote_depth == literal.quote_depth;
-            if close_depth_matches && lower.contains(literal.close) {
+            // A native quoted raw-text collector fails at the first shallower
+            // physical line. That boundary belongs to the surrounding page,
+            // so process it normally instead of masking it with the stale
+            // literal candidate.
+            if literal.quote_depth > 0 && quote_depth < literal.quote_depth {
                 block = None;
+            } else {
+                mask.push(true);
+                // Root-level collectors see a closer at any quote depth.
+                // Quoted collectors only accept one at their exact depth.
+                let close_depth_matches =
+                    literal.quote_depth == 0 || quote_depth == literal.quote_depth;
+                if close_depth_matches && lower.contains(literal.close) {
+                    block = None;
+                }
+                continue;
             }
-            continue;
         }
 
         if in_comment {
@@ -536,6 +543,16 @@ mod tests {
         substitute(&mut source);
 
         assert_eq!(source, original);
+    }
+
+    #[test]
+    fn shallower_quote_boundary_ends_a_literal_candidate() {
+        let mut source =
+            concat!("> [[code]]\n", "[[/tab]]\n", "> [[/code]]\n",).to_owned();
+
+        substitute(&mut source);
+
+        assert_eq!(source, concat!("> [[code]]\n", "\n", "> [[/code]]\n"));
     }
 
     #[test]

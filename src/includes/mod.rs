@@ -205,7 +205,10 @@ fn find_include_end(input: &str, start: usize, end_bound: usize) -> Option<usize
         let end = index + 2;
         if bytes[index] == b']'
             && bytes[index + 1] == b']'
-            && (end == input.len() || bytes.get(end) == Some(&b'\n'))
+            && (end == input.len()
+                || bytes.get(end..).is_some_and(|rest| {
+                    rest.starts_with(b"\n") || rest.starts_with(b"\r\n")
+                }))
         {
             return Some(end);
         }

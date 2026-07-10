@@ -62,7 +62,10 @@ pub(super) fn parse_quoted_include(
         let content_offset = if line_index == 0 {
             marker_start - line_start
         } else {
-            strip_quote_prefix(line, quote_depth)?
+            let Some(content_offset) = strip_quote_prefix(line, quote_depth) else {
+                break;
+            };
+            content_offset
         };
         let content = &line[content_offset..];
         let normalized_start = normalized.len();
@@ -73,20 +76,19 @@ pub(super) fn parse_quoted_include(
             original_start: original_line_start + content_offset,
         });
 
-        if line_has_include_terminator(content)
-            && let Ok((include, normalized_end)) = parse_include_block(&normalized, 0)
-        {
-            let end = original_offset(&segments, normalized_end)?;
-            return Some(ParsedQuotedInclude {
-                include: own_include(include),
-                end,
-            });
-        }
-
         original_line_start += line.len();
     }
 
-    None
+    // Pest does not require end-of-input after an include, so one parse over
+    // the normalized contiguous quote region finds the first complete block.
+    // Parsing only once avoids quadratic reparsing when many malformed lines
+    // end in a candidate `]]` terminator.
+    let (include, normalized_end) = parse_include_block(&normalized, 0).ok()?;
+    let end = original_offset(&segments, normalized_end)?;
+    Some(ParsedQuotedInclude {
+        include: own_include(include),
+        end,
+    })
 }
 
 /// Prefix every physical line produced by a quoted include expansion.
@@ -125,12 +127,6 @@ fn skip_horizontal_space(bytes: &[u8], mut offset: usize) -> usize {
         offset += 1;
     }
     offset
-}
-
-fn line_has_include_terminator(line: &str) -> bool {
-    let line = line.strip_suffix('\n').unwrap_or(line);
-    let line = line.strip_suffix('\r').unwrap_or(line);
-    line.ends_with("]]")
 }
 
 fn original_offset(segments: &[OffsetSegment], normalized: usize) -> Option<usize> {
@@ -190,6 +186,36 @@ mod tests {
         let marker_start = source.find("[[").unwrap();
 
         assert!(parse_quoted_include(source, 0, marker_start, 1).is_none());
+    }
+
+    #[test]
+    fn quoted_parser_stops_normalizing_after_the_quote_boundary() {
+        let source = "> [[include component:box]]\noutside\n";
+        let marker_start = source.find("[[").unwrap();
+
+        let parsed = parse_quoted_include(source, 0, marker_start, 1)
+            .expect("complete include before quote boundary should parse");
+
+        assert_eq!(&source[parsed.end..], "\noutside\n");
+    }
+
+    #[test]
+    fn quoted_parser_scans_many_candidate_terminators_in_bounded_time() {
+        const CANDIDATE_LINES: usize = 8_192;
+
+        let mut source = String::from("> [[include component:box\n> [!--\n");
+        for _ in 0..CANDIDATE_LINES {
+            source.push_str("> malformed candidate ]]\n");
+        }
+        let marker_start = source.find("[[").unwrap();
+        let started = std::time::Instant::now();
+
+        assert!(parse_quoted_include(&source, 0, marker_start, 1).is_none());
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(5),
+            "quoted include scan took {:?}",
+            started.elapsed(),
+        );
     }
 
     #[test]

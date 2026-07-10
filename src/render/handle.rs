@@ -79,6 +79,14 @@ impl Handle {
         settings: &WikitextSettings,
     ) -> Option<Cow<'a, str>> {
         let (site, page, file): (&str, &str, &str) = match source {
+            FileSource::Url(url)
+                if url.starts_with("/local--files/") && !settings.allow_local_paths =>
+            {
+                warn!(
+                    "Specified canonical local file source when local paths are disabled"
+                );
+                return None;
+            }
             FileSource::Url(url) => return Some(Cow::clone(url)),
             FileSource::File1 { .. }
             | FileSource::File2 { .. }
@@ -314,6 +322,25 @@ fn handle_fallbacks_cover_rendering_helpers() {
                 &settings,
             )
             .is_none(),
+    );
+    assert!(
+        handle
+            .get_file_link(
+                &FileSource::Url(cow!("/local--files/some-page/blocked.png")),
+                &info,
+                &settings,
+            )
+            .is_none(),
+    );
+    assert_eq!(
+        handle
+            .get_file_link(
+                &FileSource::Url(cow!("/other-absolute/path.png")),
+                &info,
+                &settings,
+            )
+            .as_deref(),
+        Some("/other-absolute/path.png"),
     );
 
     let mut label = String::new();

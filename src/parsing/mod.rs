@@ -152,7 +152,7 @@ where
     )
 }
 
-const DEEP_PARSE_STACK_BYTES: usize = 8 * 1024 * 1024;
+const DEEP_PARSE_STACK_BYTES: usize = 32 * 1024 * 1024;
 
 fn parse_on_current_stack<'r, 't>(
     tokenization: &'r Tokenization<'t>,

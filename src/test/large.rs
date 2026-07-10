@@ -82,6 +82,39 @@ fn corpus_depth_component_tree_parses_on_bounded_stack_worker() {
     assert!(errors.is_empty(), "{errors:#?}");
 }
 
+#[test]
+fn corpus_colmod_tree_parses_on_bounded_stack_worker() {
+    // fragment:scp-5764-1 expands a recursive navigation component into this
+    // balanced shape. Each row adds several parser frames, so its 231 rows are
+    // materially deeper than 231 plain div blocks.
+    const CORPUS_BACKED_ROWS: usize = 231;
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let mut input = String::new();
+    for _ in 0..CORPUS_BACKED_ROWS {
+        input.push_str(
+            "[[div_ class=\"colmod-block\"]]\n\
+             [[ul]][[li class=\"folded\"]][[ul]]_[[/ul]][[div class=\"colmod-link-top\"]]\n\
+             [[div_ class=\"foldable-list-container\"]]\n\
+             link[[/div]][[/div]][[div class=\"colmod-content\"]]\n",
+        );
+    }
+    for _ in 0..CORPUS_BACKED_ROWS {
+        input.push_str(
+            "[[/div]][[div]]\n\
+             [[div_ class=\"foldable-list-container\"]]\n\
+             link[[/div]][[/div]][[/li]][[/ul]][[/div]]\n",
+        );
+    }
+
+    crate::preprocess(&mut input);
+    let tokens = crate::tokenize(&input);
+    let (_, errors) = crate::parse(&tokens, &page_info, &settings).into();
+
+    assert!(errors.is_empty(), "{errors:#?}");
+}
+
 /// Test the parser's ability to process large bodies
 #[test]
 #[ignore = "slow test"]

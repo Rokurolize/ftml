@@ -66,9 +66,10 @@ mod tests {
         );
 
         let output = HtmlRender.render(&tree, &page_info, &settings);
+        assert_eq!(output.body, "");
         assert_eq!(
-            output.body,
-            "<style>.raw{--literal:\"[[*bold]] [[span]]\"}</style>",
+            output.styles,
+            vec![".raw{--literal:\"[[*bold]] [[span]]\"}".to_owned()],
         );
     }
 
@@ -89,10 +90,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:?}");
         let independent = HtmlRender.render(&tree, &page_info, &settings);
 
-        assert_eq!(
-            repeated.body,
-            format!("{}{}", independent.body, independent.body)
-        );
+        assert_eq!(repeated.body, independent.body);
         assert_eq!(
             repeated.styles,
             vec![independent.styles[0].clone(), independent.styles[0].clone()],

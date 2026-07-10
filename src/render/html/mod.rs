@@ -103,7 +103,7 @@ mod tests {
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
-    fn html_render_collects_css_module_styles_in_source_order() {
+    fn html_render_collects_style_elements_without_emitting_body_style_tags() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tree = SyntaxTree {
@@ -124,9 +124,6 @@ mod tests {
                 ".second{color:#00f}".to_owned(),
             ],
         );
-        assert_eq!(
-            output.body,
-            "<style>.first{color:red}</style>body<style>.second{color:#00f}</style>",
-        );
+        assert_eq!(output.body, "body");
     }
 }

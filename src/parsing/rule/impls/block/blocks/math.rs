@@ -58,3 +58,27 @@ fn parse_fn<'r, 't>(
 
     success_elements(element)
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn quoted_math_block_trims_owned_source() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(concat!(
+            "> [[collapsible]]\n",
+            "> [[math]]\n",
+            ">   x + y   \n",
+            "> [[/math]]\n",
+            "> [[/collapsible]]\n",
+        ));
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert!(format!("{tree:?}").contains("x + y"));
+    }
+}

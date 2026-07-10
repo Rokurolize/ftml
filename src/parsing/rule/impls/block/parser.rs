@@ -53,6 +53,20 @@ fn token_is_argument_spacing(token: Token) -> bool {
     [Token::Whitespace, Token::LineBreak, Token::ParagraphBreak].contains(&token)
 }
 
+fn token_is_body_boundary(token: Token) -> bool {
+    matches!(
+        token,
+        Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+    )
+}
+
+fn block_rule_accepts_name(block_rule: &BlockRule, name: &str) -> bool {
+    block_rule
+        .accepts_names
+        .iter()
+        .any(|accepted| name.eq_ignore_ascii_case(accepted))
+}
+
 impl<'r, 't> Parser<'r, 't>
 where
     'r: 't,
@@ -143,10 +157,7 @@ where
                 if name.eq_ignore_ascii_case(end_block_name) {
                     if restrict_quote_close {
                         parser.get_optional_space()?;
-                        if !matches!(
-                            parser.current().token,
-                            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd,
-                        ) {
+                        if !token_is_body_boundary(parser.current().token) {
                             return Ok(false);
                         }
                     }
@@ -248,26 +259,17 @@ where
         Some((content_start?, absolute_depth, parser))
     }
 
+    #[rustfmt::skip]
     fn get_native_blockquote_body_text(
         &mut self,
         block_rule: &BlockRule,
         required_depth: usize,
     ) -> Result<Cow<'t, str>, ParseError> {
-        let has_close = if self.current().token == Token::LineBreak {
-            let mut scan = self.clone();
-            scan.step()?;
-            scan.has_native_blockquote_body_end_with_mode(
-                block_rule,
-                required_depth,
-                true,
-            )
-        } else {
-            self.has_native_blockquote_body_end_with_mode(
-                block_rule,
-                required_depth,
-                true,
-            )
-        };
+        let mut close_scan = self.clone();
+        if close_scan.current().token == Token::LineBreak {
+            close_scan.step()?;
+        }
+        let has_close = close_scan.has_native_blockquote_body_end_with_mode(block_rule, required_depth, true);
         if !has_close {
             return Err(self.make_err(ParseErrorKind::RuleFailed));
         }
@@ -289,28 +291,17 @@ where
                 return Err(self.make_err(ParseErrorKind::EndOfInput));
             }
 
-            let Some((content_start, absolute_depth, mut scan)) =
-                self.scan_absolute_quote_prefix(required_depth)
-            else {
-                return Err(self.make_err(ParseErrorKind::EndOfInput));
-            };
+            let (content_start, absolute_depth, mut scan) = self.scan_absolute_quote_prefix(required_depth).ok_or_else(|| self.make_err(ParseErrorKind::EndOfInput))?;
             scan.set_quote_body_cursor(outer_prepared.quote_body_cursor());
 
-            while !matches!(
-                scan.current().token,
-                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd,
-            ) {
+            while !token_is_body_boundary(scan.current().token) {
                 let marker_start = scan.current().span.start;
                 let mut end = scan.clone();
                 if absolute_depth == required_depth
                     && let Ok(name) = end.get_end_block()
                 {
                     let name = name.strip_suffix('_').unwrap_or(name);
-                    if block_rule
-                        .accepts_names
-                        .iter()
-                        .any(|accepted| name.eq_ignore_ascii_case(accepted))
-                    {
+                    if block_rule_accepts_name(block_rule, name) {
                         if marker_start == content_start {
                             body.truncate(body.len() - trailing_line_break_len);
                         } else {
@@ -502,6 +493,19 @@ where
         self.has_native_blockquote_body_end_with_mode(block_rule, required_depth, false)
     }
 
+    #[rustfmt::skip]
+    fn cache_native_quote_scan(
+        &self,
+        block_rule: &BlockRule,
+        required_depth: usize,
+        allow_inline_close: bool,
+        line_starts: &[usize],
+        outcome: QuoteScanOutcome,
+    ) {
+        self.cache_quote_scan_outcomes(block_rule.name, required_depth, allow_inline_close, line_starts, outcome);
+    }
+
+    #[rustfmt::skip]
     fn has_native_blockquote_body_end_with_mode(
         &self,
         block_rule: &BlockRule,
@@ -513,20 +517,9 @@ where
 
         loop {
             let line_start = parser.current().span.start;
-            let key = (
-                block_rule.name,
-                required_depth,
-                allow_inline_close,
-                line_start,
-            );
+            let key = (block_rule.name, required_depth, allow_inline_close, line_start);
             if let Some(outcome) = self.quote_scan_outcome(key) {
-                self.cache_quote_scan_outcomes(
-                    block_rule.name,
-                    required_depth,
-                    allow_inline_close,
-                    &traversed_line_starts,
-                    outcome,
-                );
+                self.cache_native_quote_scan(block_rule, required_depth, allow_inline_close, &traversed_line_starts, outcome);
                 return outcome == QuoteScanOutcome::HasCandidateClose;
             }
             traversed_line_starts.push(line_start);
@@ -534,29 +527,19 @@ where
             #[cfg(test)]
             self.increment_quote_scan_token_visits();
 
-            let Some((_, absolute_depth, parser_after_prefix)) =
-                parser.scan_absolute_quote_prefix(required_depth)
-            else {
-                self.cache_quote_scan_outcomes(
-                    block_rule.name,
-                    required_depth,
-                    allow_inline_close,
-                    &traversed_line_starts,
-                    QuoteScanOutcome::Missing,
-                );
+            let Some((_, absolute_depth, parser_after_prefix)) = parser.scan_absolute_quote_prefix(required_depth) else {
+                self.cache_native_quote_scan(block_rule, required_depth, allow_inline_close, &traversed_line_starts, QuoteScanOutcome::Missing);
                 return false;
             };
             parser.update(&parser_after_prefix);
 
-            loop {
+            let mut first_candidate = true;
+            while first_candidate
+                || (allow_inline_close && !token_is_body_boundary(parser.current().token))
+            {
+                first_candidate = false;
                 let mut end = parser.clone();
-                let matching_close = end.get_end_block().is_ok_and(|name| {
-                    let name = name.strip_suffix('_').unwrap_or(name);
-                    block_rule
-                        .accepts_names
-                        .iter()
-                        .any(|accepted| name.eq_ignore_ascii_case(accepted))
-                });
+                let matching_close = end.get_end_block().is_ok_and(|name| block_rule_accepts_name(block_rule, name.strip_suffix('_').unwrap_or(name)));
                 let valid_close = if matching_close
                     && absolute_depth == required_depth
                     && allow_inline_close
@@ -564,81 +547,36 @@ where
                     true
                 } else if matching_close && absolute_depth == required_depth {
                     let _ = end.get_optional_space();
-                    matches!(
-                        end.current().token,
-                        Token::LineBreak | Token::ParagraphBreak | Token::InputEnd,
-                    )
+                    token_is_body_boundary(end.current().token)
                 } else {
                     false
                 };
                 if valid_close {
-                    self.cache_quote_scan_outcomes(
-                        block_rule.name,
-                        required_depth,
-                        allow_inline_close,
-                        &traversed_line_starts,
-                        QuoteScanOutcome::HasCandidateClose,
-                    );
+                    self.cache_native_quote_scan(block_rule, required_depth, allow_inline_close, &traversed_line_starts, QuoteScanOutcome::HasCandidateClose);
                     return true;
                 }
 
-                if !allow_inline_close
-                    || matches!(
-                        parser.current().token,
-                        Token::LineBreak | Token::ParagraphBreak | Token::InputEnd,
-                    )
-                {
-                    break;
-                }
-
-                #[cfg(test)]
-                self.increment_quote_scan_token_visits();
-                if parser.step().is_err() {
-                    break;
+                if allow_inline_close && !token_is_body_boundary(parser.current().token) {
+                    #[cfg(test)]
+                    self.increment_quote_scan_token_visits();
+                    parser.step().expect("tokenization always ends with input-end");
                 }
             }
 
-            while !matches!(
-                parser.current().token,
-                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd,
-            ) {
+            while !token_is_body_boundary(parser.current().token) {
                 #[cfg(test)]
                 self.increment_quote_scan_token_visits();
-                if parser.step().is_err() {
-                    self.cache_quote_scan_outcomes(
-                        block_rule.name,
-                        required_depth,
-                        allow_inline_close,
-                        &traversed_line_starts,
-                        QuoteScanOutcome::Missing,
-                    );
-                    return false;
-                }
+                parser.step().expect("tokenization always ends with input-end");
             }
 
             if parser.current().token != Token::LineBreak {
-                self.cache_quote_scan_outcomes(
-                    block_rule.name,
-                    required_depth,
-                    allow_inline_close,
-                    &traversed_line_starts,
-                    QuoteScanOutcome::Missing,
-                );
+                self.cache_native_quote_scan(block_rule, required_depth, allow_inline_close, &traversed_line_starts, QuoteScanOutcome::Missing);
                 return false;
             }
 
             #[cfg(test)]
             self.increment_quote_scan_token_visits();
-            if parser.step().is_err() {
-                self.cache_quote_scan_outcomes(
-                    block_rule.name,
-                    required_depth,
-                    allow_inline_close,
-                    &traversed_line_starts,
-                    QuoteScanOutcome::Missing,
-                );
-                return false;
-            }
+            parser.step().expect("line break must precede input-end");
         }
     }
 
@@ -913,6 +851,88 @@ mod tests {
                 parser.step().expect("next line or input end must exist");
             }
         }
+    }
+
+    #[test]
+    fn native_quote_prefix_and_close_scan_cover_modes_boundaries_and_depths() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for input in [">> body", "> > body"] {
+            let tokenization = crate::tokenize(input);
+            let mut parser = Parser::new(&tokenization, &page_info, &settings);
+            parser.step().unwrap();
+            let (content_start, depth, after_prefix) =
+                parser.scan_absolute_quote_prefix(2).unwrap();
+            assert_eq!(depth, 2);
+            assert_eq!(&input[content_start..], "body");
+            assert_eq!(after_prefix.current().slice, "body");
+        }
+
+        let tokenization = crate::tokenize("> body");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().unwrap();
+        assert!(parser.scan_absolute_quote_prefix(2).is_none());
+
+        for (input, inline, expected) in [
+            ("> before [[/collapsible]] trailing\n", true, true),
+            ("> before [[/collapsible]] trailing\n", false, false),
+            ("> [[/collapsible]]\n", false, true),
+            ("> body", false, false),
+            ("> body\n\n", false, false),
+            (">> [[/collapsible]]\n> [[/collapsible]]\n", false, true),
+            ("plain", false, false),
+        ] {
+            let tokenization = crate::tokenize(input);
+            let mut parser = Parser::new(&tokenization, &page_info, &settings);
+            parser.step().unwrap();
+            assert_eq!(
+                parser.has_native_blockquote_body_end_with_mode(
+                    &BLOCK_COLLAPSIBLE,
+                    1,
+                    inline,
+                ),
+                expected,
+                "{input:?}, inline={inline}",
+            );
+            assert_eq!(
+                parser.has_native_blockquote_body_end_with_mode(
+                    &BLOCK_COLLAPSIBLE,
+                    1,
+                    inline,
+                ),
+                expected,
+                "cached {input:?}, inline={inline}",
+            );
+        }
+    }
+
+    #[test]
+    fn restricted_quote_close_rejects_trailing_content_and_no_paragraph_boundary() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("> [[/collapsible]] trailing");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().unwrap();
+        parser.install_quote_body_cursor(1);
+        assert_eq!(
+            parser.prepare_quote_body_line().unwrap(),
+            QuoteBodyLineStatus::Prepared
+        );
+        assert!(
+            parser
+                .verify_end_block(true, &BLOCK_COLLAPSIBLE, true)
+                .is_none()
+        );
+
+        let tokenization = crate::tokenize("plain");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().unwrap();
+        parser.install_quote_body_cursor(1);
+        let error = parser
+            .get_body_elements_no_paragraphs(&BLOCK_DIV, true)
+            .expect_err("unquoted content must end an adapted body");
+        assert_eq!(error.kind(), ParseErrorKind::EndOfInput);
     }
 
     #[test]

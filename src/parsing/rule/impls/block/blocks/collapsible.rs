@@ -42,8 +42,8 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "Collapsible doesn't allow score flag");
     assert_block_name(&BLOCK_COLLAPSIBLE, name);
 
-    let (mut arguments, body_start) =
-        parser.get_head_map_with_body_start(&BLOCK_COLLAPSIBLE, in_head)?;
+    let head = parser.get_head_map_with_body_start(&BLOCK_COLLAPSIBLE, in_head)?;
+    let (mut arguments, body_start) = head;
 
     // Get display arguments
     let show_text = arguments.get("show");

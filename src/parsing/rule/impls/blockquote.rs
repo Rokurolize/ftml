@@ -40,15 +40,10 @@ fn try_consume_fn<'r, 't>(
     let mut errors = Vec::new();
 
     // Produce a depth list with elements
-    loop {
-        if parser.prepare_quote_body_line()? == QuoteBodyLineStatus::Boundary {
-            break std::convert::identity(());
-        }
-
+    while parser.prepare_quote_body_line()? != QuoteBodyLineStatus::Boundary
+        && parser.current().token == Token::Quote
+    {
         let current = parser.current();
-        if current.token != Token::Quote {
-            break std::convert::identity(());
-        }
 
         // 1 or more ">"s in one token. Return ASCII length.
         let physical_depth = current.slice.len();

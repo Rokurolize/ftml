@@ -266,88 +266,63 @@ impl<'r, 't> Parser<'r, 't> {
                 remaining_depth -= physical_depth;
                 prepared.step()?;
                 prepared.get_optional_space()?;
-                continue;
-            }
-
-            prepared.mark_virtual_start_of_line();
-            if physical_depth == remaining_depth {
-                prepared.step()?;
-                prepared.get_optional_space()?;
                 prepared.mark_virtual_start_of_line();
-                prepared.quote_body_cursor = Some(QuoteBodyCursor {
-                    required_depth: cursor.required_depth,
-                    line_state: QuoteBodyLineState::PreparedContent {
-                        content_start: prepared.current().span.start,
-                    },
-                });
             } else {
-                prepared.quote_body_cursor = Some(QuoteBodyCursor {
-                    required_depth: cursor.required_depth,
-                    line_state: QuoteBodyLineState::PreparedResidual {
-                        token_start: prepared.current().span.start,
-                        stripped_depth: remaining_depth,
-                    },
-                });
+                prepared.mark_virtual_start_of_line();
+                if physical_depth == remaining_depth {
+                    prepared.step()?;
+                    prepared.get_optional_space()?;
+                    prepared.mark_virtual_start_of_line();
+                    prepared.quote_body_cursor = Some(QuoteBodyCursor {
+                        required_depth: cursor.required_depth,
+                        line_state: QuoteBodyLineState::PreparedContent {
+                            content_start: prepared.current().span.start,
+                        },
+                    });
+                } else {
+                    prepared.quote_body_cursor = Some(QuoteBodyCursor {
+                        required_depth: cursor.required_depth,
+                        line_state: QuoteBodyLineState::PreparedResidual {
+                            token_start: prepared.current().span.start,
+                            stripped_depth: remaining_depth,
+                        },
+                    });
+                }
+                self.update(&prepared);
+                return Ok(QuoteBodyLineStatus::Prepared);
             }
-            self.update(&prepared);
-            break;
         }
-
-        Ok(QuoteBodyLineStatus::Prepared)
     }
 
+    #[rustfmt::skip]
     pub(crate) fn native_blockquote_depths(
         &self,
         physical_depth: usize,
     ) -> (usize, usize) {
-        match self.quote_body_cursor {
-            Some(QuoteBodyCursor {
-                required_depth,
-                line_state:
-                    QuoteBodyLineState::PreparedResidual {
-                        token_start,
-                        stripped_depth,
-                    },
-            }) if token_start == self.current().span.start => (
-                physical_depth - stripped_depth,
-                required_depth + physical_depth - stripped_depth,
-            ),
-            Some(QuoteBodyCursor {
-                required_depth,
-                line_state: QuoteBodyLineState::PreparedContent { .. },
-            }) => (physical_depth, required_depth + physical_depth),
-            _ => (
-                physical_depth,
-                self.native_blockquote_depth.unwrap_or(0) + physical_depth,
-            ),
+        if let Some(cursor) = self.quote_body_cursor {
+            if let QuoteBodyLineState::PreparedResidual { token_start, stripped_depth } = cursor.line_state && token_start == self.current().span.start {
+                return (physical_depth - stripped_depth, cursor.required_depth + physical_depth - stripped_depth);
+            }
+            if matches!(cursor.line_state, QuoteBodyLineState::PreparedContent { .. }) {
+                return (physical_depth, cursor.required_depth + physical_depth);
+            }
         }
+        (physical_depth, self.native_blockquote_depth.unwrap_or(0) + physical_depth)
     }
 
+    #[rustfmt::skip]
     pub(crate) fn install_quote_body_cursor(&mut self, required_depth: usize) {
-        self.quote_body_cursor = Some(QuoteBodyCursor {
-            required_depth,
-            line_state: QuoteBodyLineState::NeedPrefix,
-        });
+        self.quote_body_cursor = Some(QuoteBodyCursor { required_depth, line_state: QuoteBodyLineState::NeedPrefix });
     }
 
+    #[rustfmt::skip]
     pub(crate) fn quote_body_close_allowed_here(&self) -> bool {
-        matches!(
-            self.quote_body_cursor,
-            Some(QuoteBodyCursor {
-                line_state: QuoteBodyLineState::PreparedContent { content_start },
-                ..
-            }) if content_start == self.current().span.start
-        )
+        matches!(self.quote_body_cursor, Some(QuoteBodyCursor { line_state: QuoteBodyLineState::PreparedContent { content_start }, .. }) if content_start == self.current().span.start)
     }
 
+    #[rustfmt::skip]
     pub(crate) fn quote_body_needs_prefix(&self) -> bool {
-        matches!(
-            self.quote_body_cursor,
-            Some(QuoteBodyCursor {
-                line_state: QuoteBodyLineState::NeedPrefix,
-                ..
-            })
-        )
+        matches!(self.quote_body_cursor, Some(QuoteBodyCursor { line_state: QuoteBodyLineState::NeedPrefix, .. }))
     }
 
     pub(crate) fn quote_body_cursor(&self) -> Option<QuoteBodyCursor> {
@@ -365,6 +340,7 @@ impl<'r, 't> Parser<'r, 't> {
         self.quote_scan_cache.borrow().get(&key).copied()
     }
 
+    #[rustfmt::skip]
     pub(crate) fn cache_quote_scan_outcomes(
         &self,
         rule: &'static str,
@@ -375,10 +351,7 @@ impl<'r, 't> Parser<'r, 't> {
     ) {
         let mut cache = self.quote_scan_cache.borrow_mut();
         for &line_start in line_starts {
-            cache.insert(
-                (rule, required_depth, allow_inline_close, line_start),
-                outcome,
-            );
+            cache.insert((rule, required_depth, allow_inline_close, line_start), outcome);
         }
     }
 
@@ -884,6 +857,117 @@ fn parser_newline_flag() {
     test!(
         "\nA\n\nB\n\n\nC D",
         [true, true, false, true, false, true, false, false],
+    );
+}
+
+#[test]
+fn quote_body_cursor_helpers_cover_split_residual_boundary_and_cache_states() {
+    use crate::layout::Layout;
+    use crate::settings::WikitextMode;
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+    let tokens = crate::tokenize("> > body");
+    let mut parser = Parser::new(&tokens, &page_info, &settings);
+    parser.step().unwrap();
+    parser.install_quote_body_cursor(2);
+    assert!(parser.quote_body_needs_prefix());
+    assert_eq!(
+        parser.prepare_quote_body_line().unwrap(),
+        QuoteBodyLineStatus::Prepared
+    );
+    assert_eq!(parser.current().slice, "body");
+    assert!(parser.quote_body_close_allowed_here());
+    assert_eq!(parser.native_blockquote_depths(1), (1, 3));
+    assert_eq!(
+        parser.prepare_quote_body_line().unwrap(),
+        QuoteBodyLineStatus::Prepared
+    );
+
+    let saved_cursor = parser.quote_body_cursor();
+    parser.set_quote_body_cursor(None);
+    assert_eq!(
+        parser.prepare_quote_body_line().unwrap(),
+        QuoteBodyLineStatus::Inactive
+    );
+    parser.set_quote_body_cursor(saved_cursor);
+
+    let tokens = crate::tokenize(">> body");
+    let mut residual = Parser::new(&tokens, &page_info, &settings);
+    residual.step().unwrap();
+    residual.install_quote_body_cursor(1);
+    assert_eq!(
+        residual.prepare_quote_body_line().unwrap(),
+        QuoteBodyLineStatus::Prepared
+    );
+    assert_eq!(residual.native_blockquote_depths(2), (1, 2));
+    assert!(!residual.quote_body_close_allowed_here());
+
+    let tokens = crate::tokenize("plain");
+    let mut boundary = Parser::new(&tokens, &page_info, &settings);
+    boundary.step().unwrap();
+    boundary.install_quote_body_cursor(1);
+    assert_eq!(
+        boundary.prepare_quote_body_line().unwrap(),
+        QuoteBodyLineStatus::Boundary
+    );
+
+    let tokens = crate::tokenize("plain");
+    let mut consume_boundary = Parser::new(&tokens, &page_info, &settings);
+    consume_boundary.step().unwrap();
+    consume_boundary.install_quote_body_cursor(1);
+    assert_eq!(
+        crate::parsing::consume::consume(&mut consume_boundary)
+            .unwrap_err()
+            .kind(),
+        ParseErrorKind::EndOfInput
+    );
+
+    let tokens = crate::tokenize("plain");
+    let mut collect_boundary = Parser::new(&tokens, &page_info, &settings);
+    collect_boundary.step().unwrap();
+    collect_boundary.install_quote_body_cursor(1);
+    assert_eq!(
+        crate::parsing::collect::collect_consume(
+            &mut collect_boundary,
+            RULE_PAGE,
+            &[],
+            &[],
+            None,
+        )
+        .unwrap_err()
+        .kind(),
+        ParseErrorKind::EndOfInput
+    );
+
+    let tokens = crate::tokenize("\n\n");
+    let mut paragraph_boundary = Parser::new(&tokens, &page_info, &settings);
+    paragraph_boundary.step().unwrap();
+    paragraph_boundary.install_quote_body_cursor(1);
+    assert_eq!(
+        paragraph_boundary.prepare_quote_body_line().unwrap(),
+        QuoteBodyLineStatus::Boundary
+    );
+
+    let tokens = crate::tokenize("> body");
+    let mut nested = Parser::new(&tokens, &page_info, &settings);
+    nested.step().unwrap();
+    nested.set_native_blockquote_depth(Some(2));
+    assert!(nested.in_native_blockquote_line());
+    assert_eq!(nested.native_blockquote_depths(1), (1, 3));
+
+    let key = ("test-rule", 2, true, 17);
+    nested.cache_quote_scan_outcomes(
+        "test-rule",
+        2,
+        true,
+        &[17],
+        QuoteScanOutcome::HasCandidateClose,
+    );
+    assert_eq!(
+        nested.quote_scan_outcome(key),
+        Some(QuoteScanOutcome::HasCandidateClose)
     );
 }
 

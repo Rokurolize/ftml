@@ -94,4 +94,24 @@ mod tests {
         };
         assert_eq!(text.as_ref(), "**not bold**");
     }
+
+    #[test]
+    fn quoted_raw_block_trims_owned_outer_newlines() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(concat!(
+            "> [[collapsible]]\n",
+            "> [[raw]]\n",
+            "> \n",
+            "> raw body\n",
+            "> \n",
+            "> [[/raw]]\n",
+            "> [[/collapsible]]\n",
+        ));
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let rendered = format!("{tree:?}");
+        assert!(rendered.contains("raw body"), "{rendered}");
+    }
 }

@@ -40,8 +40,8 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Div doesn't allow star flag");
     assert_block_name(&BLOCK_DIV, name);
 
-    let (arguments, body_start) =
-        parser.get_head_map_with_body_start(&BLOCK_DIV, in_head)?;
+    let head = parser.get_head_map_with_body_start(&BLOCK_DIV, in_head)?;
+    let (arguments, body_start) = head;
 
     // "div" means we wrap in paragraphs, like normal
     // "div_" means we don't wrap it

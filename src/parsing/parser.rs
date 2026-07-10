@@ -70,6 +70,7 @@ pub(crate) enum QuoteScanOutcome {
 }
 
 type QuoteScanKey = (&'static str, usize, bool, usize);
+type BlockEndScanKey = (&'static str, usize, bool);
 
 fn token_starts_line(token: Token) -> bool {
     token == Token::InputStart
@@ -131,6 +132,10 @@ pub struct Parser<'r, 't> {
     // This cache contains only facts from raw immutable token scans, so it is
     // safe and useful to share them across speculative parser clones.
     quote_scan_cache: Rc<RefCell<BTreeMap<QuoteScanKey, QuoteScanOutcome>>>,
+    // Matching block-end scans have the same clone-safe property. The key
+    // retains first-iteration semantics because multiline blocks may consume
+    // an initial line break differently from later scan positions.
+    block_end_scan_cache: Rc<RefCell<BTreeMap<BlockEndScanKey, bool>>>,
     #[cfg(test)]
     quote_scan_token_visits: Rc<Cell<usize>>,
 
@@ -173,6 +178,7 @@ impl<'r, 't> Parser<'r, 't> {
             footnotes: make_shared_vec(),
             bibliographies: Rc::new(RefCell::new(BibliographyList::new())),
             quote_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
+            block_end_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
             #[cfg(test)]
             quote_scan_token_visits: Rc::new(Cell::new(0)),
             accepts_partial: AcceptsPartial::None,
@@ -352,6 +358,22 @@ impl<'r, 't> Parser<'r, 't> {
         let mut cache = self.quote_scan_cache.borrow_mut();
         for &line_start in line_starts {
             cache.insert((rule, required_depth, allow_inline_close, line_start), outcome);
+        }
+    }
+
+    pub(crate) fn block_end_scan_outcome(&self, key: BlockEndScanKey) -> Option<bool> {
+        self.block_end_scan_cache.borrow().get(&key).copied()
+    }
+
+    pub(crate) fn cache_block_end_scan_outcomes(
+        &self,
+        rule: &'static str,
+        token_states: &[(usize, bool)],
+        outcome: bool,
+    ) {
+        let mut cache = self.block_end_scan_cache.borrow_mut();
+        for &(token_start, first_iteration) in token_states {
+            cache.insert((rule, token_start, first_iteration), outcome);
         }
     }
 
@@ -758,6 +780,12 @@ impl<'r, 't> Parser<'r, 't> {
     #[inline]
     pub fn make_err(&self, kind: ParseErrorKind) -> ParseError {
         ParseError::new(kind, self.rule, self.current)
+    }
+
+    pub(crate) fn make_end_of_input_err(&self) -> ParseError {
+        let input_end = self.remaining.last().unwrap_or(self.current);
+        debug_assert_eq!(input_end.token, Token::InputEnd);
+        ParseError::new(ParseErrorKind::EndOfInput, self.rule, input_end)
     }
 }
 

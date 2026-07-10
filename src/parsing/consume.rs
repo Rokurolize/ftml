@@ -205,6 +205,20 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
             Err(error) => {
                 // Rollback footnotes added during failed rule attempt
                 parser.truncate_footnotes(footnote_count);
+
+                if parser.discarding_hidden_body() {
+                    if parser.at_hidden_body_boundary() {
+                        parser.depth_decrement();
+                        return Err(error);
+                    }
+
+                    if hidden_failure_must_close_to_eof(error.kind()) {
+                        parser.skip_to_input_end()?;
+                        parser.depth_decrement();
+                        return Err(error);
+                    }
+                }
+
                 all_errors.push(error);
             }
         }
@@ -229,6 +243,21 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
     parser.depth_decrement();
 
     ok!(element, all_errors)
+}
+
+fn hidden_failure_must_close_to_eof(kind: ParseErrorKind) -> bool {
+    matches!(
+        kind,
+        ParseErrorKind::RecursionDepthExceeded
+            | ParseErrorKind::EndOfInput
+            | ParseErrorKind::BlockDisallowsStar
+            | ParseErrorKind::BlockDisallowsScore
+            | ParseErrorKind::BlockMissingName
+            | ParseErrorKind::BlockMissingCloseBrackets
+            | ParseErrorKind::BlockMalformedArguments
+            | ParseErrorKind::BlockMissingArguments
+            | ParseErrorKind::ModuleMissingName
+    )
 }
 
 #[cfg(test)]

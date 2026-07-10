@@ -20,6 +20,7 @@
 
 use super::RULE_PAGE;
 use super::condition::ParseCondition;
+use super::hidden_body::HiddenBodyBoundary;
 use super::prelude::*;
 use super::rule::Rule;
 use crate::data::PageInfo;
@@ -101,6 +102,16 @@ pub struct Parser<'r, 't> {
     rule: Rule,
     depth: usize,
 
+    // Hidden-body discard state
+    //
+    // A false conditional still needs the regular grammar to find its real
+    // closing block.  These parser-local boundaries keep a malformed parsed
+    // child block from consuming an ancestor's closing marker while that
+    // hidden body is parsed into a discard sink.  Raw-body parsers do not
+    // consult this stack, so literal closing-marker text remains raw.
+    pub(super) discarding_hidden_body: bool,
+    pub(super) hidden_body_boundaries: Vec<HiddenBodyBoundary>,
+
     // Table of Contents
     //
     // Schema: Vec<(depth, _, name)>
@@ -172,6 +183,8 @@ impl<'r, 't> Parser<'r, 't> {
             full_text,
             rule: RULE_PAGE,
             depth: 0,
+            discarding_hidden_body: false,
+            hidden_body_boundaries: Vec::new(),
             table_of_contents: make_shared_vec(),
             html_blocks: make_shared_vec(),
             code_blocks: make_shared_vec(),

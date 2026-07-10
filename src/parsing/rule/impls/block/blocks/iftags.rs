@@ -55,14 +55,17 @@ fn parse_fn<'r, 't>(
 
     // Parse out tag conditions
     let conditions = parser.get_head_value(&BLOCK_IFTAGS, in_head, parse_conditions)?;
-    if parser.settings().layout.legacy() && !parser.has_body_end_block(&BLOCK_IFTAGS) {
+    if parser.settings().layout.legacy()
+        && !parser.discarding_hidden_body()
+        && !parser.has_body_end_block(&BLOCK_IFTAGS)
+    {
         return ok!(Elements::None);
     }
 
     let include_body = check_iftags(parser.page_info(), &conditions);
     if !include_body {
         trace!("Conditions failed, skipping hidden body");
-        let _ = parser.get_body_text(&BLOCK_IFTAGS)?;
+        parser.discard_body_elements(&BLOCK_IFTAGS)?;
         return ok!(true; Elements::None, Vec::new());
     }
 

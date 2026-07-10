@@ -33,15 +33,13 @@ impl<'t> Includer<'t> for NullIncluder {
         &mut self,
         includes: &[IncludeRef<'t>],
     ) -> Result<Vec<FetchedPage<'t>>, Infallible> {
-        let pages = includes
+        Ok(includes
             .iter()
             .map(|include| FetchedPage {
                 page_ref: include.page_ref().clone(),
                 content: None,
             })
-            .collect();
-
-        Ok(pages)
+            .collect())
     }
 
     #[inline]

@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use crate::render::text::TextRender;
 
 pub fn render_footnote(ctx: &mut HtmlContext) {
     debug!("Rendering footnote reference");
@@ -42,6 +43,15 @@ pub fn render_footnote(ctx: &mut HtmlContext) {
             .inner(|ctx| ctx.push_escaped(message));
         return;
     };
+
+    // A footnote reference is phrasing content and is commonly rendered inside a
+    // paragraph. Preserve rich inline markup when possible, but flatten block
+    // footnotes to escaped text for the hover preview. The full footnote block
+    // still renders the original structure below the article.
+    let tooltip_text = (!contents.iter().all(|element| {
+        !matches!(element, Element::Partial(_)) && element.paragraph_safe()
+    }))
+    .then(|| TextRender.render_partial(contents, ctx.info(), ctx.settings(), 0));
 
     ctx.html()
         .span()
@@ -79,9 +89,21 @@ pub fn render_footnote(ctx: &mut HtmlContext) {
                     ctx.html()
                         .span()
                         .attr(attr!("class" => "wj-footnote-ref-contents"))
-                        .contents(contents);
+                        .inner(|ctx| match tooltip_text.as_deref() {
+                            Some(text) => render_tooltip_text(ctx, text),
+                            None => render_elements(ctx, contents),
+                        });
                 });
         });
+}
+
+fn render_tooltip_text(ctx: &mut HtmlContext, text: &str) {
+    for (index, line) in text.split('\n').enumerate() {
+        if index > 0 {
+            ctx.html().br();
+        }
+        ctx.push_escaped(line);
+    }
 }
 
 pub fn render_footnote_block(ctx: &mut HtmlContext, title: Option<&str>) {

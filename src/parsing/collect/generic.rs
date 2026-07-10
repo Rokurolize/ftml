@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use crate::parsing::parser::QuoteBodyLineStatus;
 
 /// Generic function to parse upcoming tokens until conditions are met.
 ///
@@ -74,6 +75,10 @@ where
     let mut paragraph_safe = true;
 
     loop {
+        if parser.prepare_quote_body_line()? == QuoteBodyLineStatus::Boundary {
+            return Err(parser.make_err(ParseErrorKind::EndOfInput));
+        }
+
         // Check current token state to decide how to proceed.
         //
         // * End the collection, return elements

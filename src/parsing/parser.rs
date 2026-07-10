@@ -29,11 +29,47 @@ use crate::tree::{
     AcceptsPartial, Bibliography, BibliographyList, CodeBlock, HeadingLevel,
 };
 use std::borrow::Cow;
+#[cfg(test)]
+use std::cell::Cell;
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::rc::Rc;
 use std::{mem, ptr};
 
 const MAX_RECURSION_DEPTH: usize = 100;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum QuoteBodyLineStatus {
+    Inactive,
+    Prepared,
+    Boundary,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum QuoteBodyLineState {
+    NeedPrefix,
+    PreparedContent {
+        content_start: usize,
+    },
+    PreparedResidual {
+        token_start: usize,
+        stripped_depth: usize,
+    },
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct QuoteBodyCursor {
+    required_depth: usize,
+    line_state: QuoteBodyLineState,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) enum QuoteScanOutcome {
+    HasCandidateClose,
+    Missing,
+}
+
+type QuoteScanKey = (&'static str, usize, bool, usize);
 
 fn token_starts_line(token: Token) -> bool {
     token == Token::InputStart
@@ -92,12 +128,19 @@ pub struct Parser<'r, 't> {
     // overriding later ones.
     bibliographies: Rc<RefCell<BibliographyList<'t>>>,
 
+    // This cache contains only facts from raw immutable token scans, so it is
+    // safe and useful to share them across speculative parser clones.
+    quote_scan_cache: Rc<RefCell<BTreeMap<QuoteScanKey, QuoteScanOutcome>>>,
+    #[cfg(test)]
+    quote_scan_token_visits: Rc<Cell<usize>>,
+
     // Flags
     accepts_partial: AcceptsPartial,
     in_footnote: bool, // Whether we're currently inside [[footnote]] ... [[/footnote]].
     has_footnote_block: bool, // Whether a [[footnoteblock]] was created.
     start_of_line: bool,
-    in_native_blockquote_line: bool,
+    native_blockquote_depth: Option<usize>,
+    quote_body_cursor: Option<QuoteBodyCursor>,
 }
 
 impl<'r, 't> Parser<'r, 't> {
@@ -129,11 +172,15 @@ impl<'r, 't> Parser<'r, 't> {
             code_blocks: make_shared_vec(),
             footnotes: make_shared_vec(),
             bibliographies: Rc::new(RefCell::new(BibliographyList::new())),
+            quote_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
+            #[cfg(test)]
+            quote_scan_token_visits: Rc::new(Cell::new(0)),
             accepts_partial: AcceptsPartial::None,
             in_footnote: false,
             has_footnote_block: false,
             start_of_line: true,
-            in_native_blockquote_line: false,
+            native_blockquote_depth: None,
+            quote_body_cursor: None,
         }
     }
 
@@ -180,7 +227,170 @@ impl<'r, 't> Parser<'r, 't> {
 
     #[inline]
     pub fn in_native_blockquote_line(&self) -> bool {
-        self.in_native_blockquote_line
+        self.native_blockquote_depth.is_some()
+    }
+
+    #[inline]
+    pub fn native_blockquote_depth(&self) -> Option<usize> {
+        self.native_blockquote_depth
+    }
+
+    pub(crate) fn prepare_quote_body_line(
+        &mut self,
+    ) -> Result<QuoteBodyLineStatus, ParseError> {
+        let Some(cursor) = self.quote_body_cursor else {
+            return Ok(QuoteBodyLineStatus::Inactive);
+        };
+
+        // A paragraph break represents an unquoted blank-line boundary for
+        // an adapted quote body even if a nested rule returned with this
+        // line's prefix already prepared.
+        if self.current().token == Token::ParagraphBreak {
+            return Ok(QuoteBodyLineStatus::Boundary);
+        }
+
+        if !matches!(cursor.line_state, QuoteBodyLineState::NeedPrefix) {
+            return Ok(QuoteBodyLineStatus::Prepared);
+        }
+
+        let mut prepared = self.clone();
+        let mut remaining_depth = cursor.required_depth;
+
+        loop {
+            if prepared.current().token != Token::Quote {
+                return Ok(QuoteBodyLineStatus::Boundary);
+            }
+
+            let physical_depth = prepared.current().slice.len();
+            if physical_depth < remaining_depth {
+                remaining_depth -= physical_depth;
+                prepared.step()?;
+                prepared.get_optional_space()?;
+                continue;
+            }
+
+            prepared.mark_virtual_start_of_line();
+            if physical_depth == remaining_depth {
+                prepared.step()?;
+                prepared.get_optional_space()?;
+                prepared.mark_virtual_start_of_line();
+                prepared.quote_body_cursor = Some(QuoteBodyCursor {
+                    required_depth: cursor.required_depth,
+                    line_state: QuoteBodyLineState::PreparedContent {
+                        content_start: prepared.current().span.start,
+                    },
+                });
+            } else {
+                prepared.quote_body_cursor = Some(QuoteBodyCursor {
+                    required_depth: cursor.required_depth,
+                    line_state: QuoteBodyLineState::PreparedResidual {
+                        token_start: prepared.current().span.start,
+                        stripped_depth: remaining_depth,
+                    },
+                });
+            }
+            self.update(&prepared);
+            break;
+        }
+
+        Ok(QuoteBodyLineStatus::Prepared)
+    }
+
+    pub(crate) fn native_blockquote_depths(
+        &self,
+        physical_depth: usize,
+    ) -> (usize, usize) {
+        match self.quote_body_cursor {
+            Some(QuoteBodyCursor {
+                required_depth,
+                line_state:
+                    QuoteBodyLineState::PreparedResidual {
+                        token_start,
+                        stripped_depth,
+                    },
+            }) if token_start == self.current().span.start => (
+                physical_depth - stripped_depth,
+                required_depth + physical_depth - stripped_depth,
+            ),
+            Some(QuoteBodyCursor {
+                required_depth,
+                line_state: QuoteBodyLineState::PreparedContent { .. },
+            }) => (physical_depth, required_depth + physical_depth),
+            _ => (
+                physical_depth,
+                self.native_blockquote_depth.unwrap_or(0) + physical_depth,
+            ),
+        }
+    }
+
+    pub(crate) fn install_quote_body_cursor(&mut self, required_depth: usize) {
+        self.quote_body_cursor = Some(QuoteBodyCursor {
+            required_depth,
+            line_state: QuoteBodyLineState::NeedPrefix,
+        });
+    }
+
+    pub(crate) fn quote_body_close_allowed_here(&self) -> bool {
+        matches!(
+            self.quote_body_cursor,
+            Some(QuoteBodyCursor {
+                line_state: QuoteBodyLineState::PreparedContent { content_start },
+                ..
+            }) if content_start == self.current().span.start
+        )
+    }
+
+    pub(crate) fn quote_body_needs_prefix(&self) -> bool {
+        matches!(
+            self.quote_body_cursor,
+            Some(QuoteBodyCursor {
+                line_state: QuoteBodyLineState::NeedPrefix,
+                ..
+            })
+        )
+    }
+
+    pub(crate) fn quote_body_cursor(&self) -> Option<QuoteBodyCursor> {
+        self.quote_body_cursor
+    }
+
+    pub(crate) fn set_quote_body_cursor(&mut self, cursor: Option<QuoteBodyCursor>) {
+        self.quote_body_cursor = cursor;
+    }
+
+    pub(crate) fn quote_scan_outcome(
+        &self,
+        key: QuoteScanKey,
+    ) -> Option<QuoteScanOutcome> {
+        self.quote_scan_cache.borrow().get(&key).copied()
+    }
+
+    pub(crate) fn cache_quote_scan_outcomes(
+        &self,
+        rule: &'static str,
+        required_depth: usize,
+        allow_inline_close: bool,
+        line_starts: &[usize],
+        outcome: QuoteScanOutcome,
+    ) {
+        let mut cache = self.quote_scan_cache.borrow_mut();
+        for &line_start in line_starts {
+            cache.insert(
+                (rule, required_depth, allow_inline_close, line_start),
+                outcome,
+            );
+        }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn quote_scan_token_visits(&self) -> usize {
+        self.quote_scan_token_visits.get()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn increment_quote_scan_token_visits(&self) {
+        self.quote_scan_token_visits
+            .set(self.quote_scan_token_visits.get() + 1);
     }
 
     // Setters
@@ -190,8 +400,8 @@ impl<'r, 't> Parser<'r, 't> {
     }
 
     #[inline]
-    pub(crate) fn set_native_blockquote_line(&mut self, value: bool) {
-        self.in_native_blockquote_line = value;
+    pub(crate) fn set_native_blockquote_depth(&mut self, value: Option<usize>) {
+        self.native_blockquote_depth = value;
     }
 
     #[inline]
@@ -444,7 +654,8 @@ impl<'r, 't> Parser<'r, 't> {
         self.in_footnote = parser.in_footnote;
         self.has_footnote_block = parser.has_footnote_block;
         self.start_of_line = parser.start_of_line;
-        self.in_native_blockquote_line = parser.in_native_blockquote_line;
+        self.native_blockquote_depth = parser.native_blockquote_depth;
+        self.quote_body_cursor = parser.quote_body_cursor;
 
         // Token pointers
         self.current = parser.current;
@@ -464,6 +675,12 @@ impl<'r, 't> Parser<'r, 't> {
     pub fn step(&mut self) -> Result<&'r ExtractedToken<'t>, ParseError> {
         // Set the start-of-line flag.
         self.start_of_line = token_starts_line(self.current.token);
+
+        if matches!(self.current.token, Token::LineBreak | Token::ParagraphBreak)
+            && let Some(cursor) = self.quote_body_cursor.as_mut()
+        {
+            cursor.line_state = QuoteBodyLineState::NeedPrefix;
+        }
 
         // Step to the next token.
         match self.remaining.split_first() {

@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use std::borrow::Cow;
 
 pub const BLOCK_MATH: BlockRule = BlockRule {
     name: "block-math",
@@ -45,15 +46,15 @@ fn parse_fn<'r, 't>(
         Ok(value.map(|s| std::borrow::Cow::Borrowed(s.trim())))
     })?;
 
-    let latex_source = parser.get_body_text(&BLOCK_MATH)?.trim();
+    let latex_source = match parser.get_body_text(&BLOCK_MATH)? {
+        Cow::Borrowed(source) => Cow::Borrowed(source.trim()),
+        Cow::Owned(source) => Cow::Owned(source.trim().to_owned()),
+    };
     if latex_source.is_empty() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    let element = Element::Math {
-        name,
-        latex_source: std::borrow::Cow::Borrowed(latex_source),
-    };
+    let element = Element::Math { name, latex_source };
 
     success_elements(element)
 }

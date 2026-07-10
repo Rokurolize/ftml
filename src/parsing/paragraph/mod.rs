@@ -24,6 +24,7 @@ pub use self::stack::ParagraphStack;
 
 use super::consume::consume;
 use super::parser::Parser;
+use super::parser::QuoteBodyLineStatus;
 use super::prelude::*;
 use super::rule::Rule;
 use super::token::Token;
@@ -65,6 +66,10 @@ where
 
     let mut finished = false;
     while !finished {
+        if parser.prepare_quote_body_line()? == QuoteBodyLineStatus::Boundary {
+            return Err(parser.make_err(ParseErrorKind::EndOfInput));
+        }
+
         let consumed = match parser.current().token {
             Token::InputEnd => {
                 if close_condition_fn.is_some() {

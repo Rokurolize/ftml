@@ -20,7 +20,7 @@ fn page_info() -> PageInfo<'static> {
 }
 
 #[test]
-fn padded_inline_openers_inside_list_items_fail_closed_in_bounded_time() {
+fn padded_inline_openers_inside_list_items_stay_literal_in_bounded_time() {
     const ROW_COUNT: usize = 128;
 
     for marker in ["**", "//", "__", "^^", ",,"] {
@@ -42,6 +42,6 @@ fn padded_inline_openers_inside_list_items_fail_closed_in_bounded_time() {
         };
         assert_eq!(items.len(), ROW_COUNT, "{marker:?}");
         assert_eq!(html.matches(marker).count(), ROW_COUNT, "{marker:?}");
-        assert_eq!(errors.len(), ROW_COUNT * 2, "{marker:?}: {errors:#?}");
+        assert!(errors.is_empty(), "{marker:?}: {errors:#?}");
     }
 }

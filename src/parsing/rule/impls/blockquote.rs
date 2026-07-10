@@ -64,7 +64,7 @@ fn try_consume_fn<'r, 't>(
             ParseCondition::current(Token::InputEnd),
         ];
         let close = &close_conditions;
-        let result = collect_consume(parser, RULE_BLOCKQUOTE, close, &[], None)?;
+        let result = collect_blockquote_line(parser, close)?;
         let mut elements = result.chain(&mut errors, &mut paragraph_safe);
 
         // Add a line break for the end of the line
@@ -91,6 +91,53 @@ fn try_consume_fn<'r, 't>(
         .collect();
 
     ok!(false; elements, errors)
+}
+
+fn collect_blockquote_line<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    close_conditions: &[ParseCondition],
+) -> ParseResult<'r, 't, Vec<Element<'t>>> {
+    let mut elements = Vec::new();
+    let mut errors = Vec::new();
+    let mut paragraph_safe = true;
+
+    loop {
+        if parser.evaluate_any(close_conditions) {
+            if parser.current().token != Token::InputEnd {
+                parser.step()?;
+            }
+
+            return ok!(paragraph_safe; elements, errors);
+        }
+
+        if parser.current().token == Token::InputEnd {
+            return Err(parser.make_err(ParseErrorKind::EndOfInput));
+        }
+
+        consume(parser)?
+            .map_ok(|consumed| append_consumed_elements(&mut elements, consumed))?
+            .chain(&mut errors, &mut paragraph_safe);
+
+        // Start-of-line rules parsed inside a native blockquote line may
+        // consume that physical line's terminator as part of their own
+        // collection. Stop immediately so the outer blockquote loop can decide
+        // whether the next physical line is quoted instead of absorbing it into
+        // the current line.
+        if parser.start_of_line() {
+            return ok!(paragraph_safe; elements, errors);
+        }
+    }
+}
+
+fn append_consumed_elements<'t>(
+    all_elements: &mut Vec<Element<'t>>,
+    elements: Elements<'t>,
+) {
+    match elements {
+        Elements::None => {}
+        Elements::Single(element) => all_elements.push(element),
+        Elements::Multiple(mut elements) => all_elements.append(&mut elements),
+    }
 }
 
 fn build_blockquote_element(list: DepthList<(), (Vec<Element>, bool)>) -> Element {
@@ -226,5 +273,64 @@ mod tests {
         assert!(text.contains("LEVEL 5 AUTHORIZATION REQUIRED"));
         assert!(!text.contains("+ WARNING"));
         assert!(!text.contains("++ LEVEL 5 AUTHORIZATION REQUIRED"));
+    }
+
+    #[test]
+    fn native_blockquote_heading_does_not_absorb_unquoted_next_line() {
+        enable_test_logging();
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("> + H\nplain\n");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!(tree.elements.len(), 2);
+
+        let Element::Container(blockquote) = &tree.elements[0] else {
+            panic!("expected blockquote, got {:?}", tree.elements[0]);
+        };
+        assert_eq!(blockquote.ctype(), ContainerType::Blockquote);
+        assert!(matches!(
+            blockquote.elements(),
+            [
+                Element::Container(header),
+                Element::LineBreak
+            ] if matches!(header.ctype(), ContainerType::Header(_))
+        ));
+
+        let Element::Container(paragraph) = &tree.elements[1] else {
+            panic!("expected paragraph, got {:?}", tree.elements[1]);
+        };
+        assert_eq!(paragraph.ctype(), ContainerType::Paragraph);
+        assert_eq!(paragraph.elements(), &[text!("plain"), Element::LineBreak]);
+    }
+
+    #[test]
+    fn native_blockquote_heading_keeps_following_quoted_line_as_sibling() {
+        enable_test_logging();
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("> + H\n> body\n");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!(tree.elements.len(), 1);
+
+        let Element::Container(blockquote) = &tree.elements[0] else {
+            panic!("expected blockquote, got {:?}", tree.elements[0]);
+        };
+        assert_eq!(blockquote.ctype(), ContainerType::Blockquote);
+        assert!(matches!(
+            blockquote.elements(),
+            [
+                Element::Container(header),
+                Element::LineBreak,
+                Element::Container(paragraph)
+            ] if matches!(header.ctype(), ContainerType::Header(_))
+                && paragraph.ctype() == ContainerType::Paragraph
+                && paragraph.elements() == [text!("body")]
+        ));
     }
 }

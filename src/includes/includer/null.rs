@@ -31,9 +31,17 @@ impl<'t> Includer<'t> for NullIncluder {
     #[inline]
     fn include_pages(
         &mut self,
-        _includes: &[IncludeRef<'t>],
+        includes: &[IncludeRef<'t>],
     ) -> Result<Vec<FetchedPage<'t>>, Infallible> {
-        Ok(Vec::new())
+        let pages = includes
+            .iter()
+            .map(|include| FetchedPage {
+                page_ref: include.page_ref().clone(),
+                content: None,
+            })
+            .collect();
+
+        Ok(pages)
     }
 
     #[inline]
@@ -58,17 +66,47 @@ fn null_includer_returns_no_pages_for_empty_include_list() {
 }
 
 #[test]
-fn null_includer_ignores_non_empty_include_lists() {
+fn null_includer_returns_missing_pages_for_non_empty_include_lists() {
     let mut includer = NullIncluder;
-    let includes = vec![IncludeRef::page_only(PageRef::page_only(
-        "component:example",
-    ))];
+    let page_ref = PageRef::page_only("component:example");
+    let includes = vec![IncludeRef::page_only(page_ref.clone())];
 
     let pages = includer
         .include_pages(&includes)
         .expect("null includer should not fail");
 
-    assert!(pages.is_empty());
+    assert_eq!(
+        pages,
+        vec![FetchedPage {
+            page_ref,
+            content: None,
+        }],
+    );
+}
+
+#[test]
+fn null_includer_removes_include_blocks() {
+    let input = "Before
+[[include component:example]]
+after";
+    let settings = crate::settings::WikitextSettings::from_mode(
+        crate::settings::WikitextMode::Page,
+        crate::layout::Layout::Wikidot,
+    );
+
+    let (output, pages) =
+        crate::includes::include(input, &settings, NullIncluder, || {
+            unreachable!("null includer should return one page for each include")
+        })
+        .unwrap_or_else(|error| match error {});
+
+    assert_eq!(
+        output,
+        "Before
+
+after"
+    );
+    assert_eq!(pages, vec![PageRef::page_only("component:example")]);
 }
 
 #[test]

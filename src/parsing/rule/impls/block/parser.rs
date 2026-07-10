@@ -266,6 +266,34 @@ where
         }
     }
 
+    /// Whether the matching block end occurs before the current line ends.
+    pub fn has_body_end_block_on_line(&self, block_rule: &BlockRule) -> bool {
+        let mut parser = self.clone();
+
+        loop {
+            match parser.current().token {
+                Token::InputEnd | Token::LineBreak | Token::ParagraphBreak => {
+                    return false;
+                }
+                Token::LeftBlockEnd => {
+                    let mut end = parser.clone();
+                    if let Ok(name) = end.get_end_block() {
+                        let name = name.strip_suffix('_').unwrap_or(name);
+                        if block_rule
+                            .accepts_names
+                            .iter()
+                            .any(|accepted| name.eq_ignore_ascii_case(accepted))
+                        {
+                            return true;
+                        }
+                    }
+                }
+                _ => {}
+            }
+            parser.step().expect("missing input end");
+        }
+    }
+
     // Block head / argument parsing
     pub fn get_head_map(
         &mut self,

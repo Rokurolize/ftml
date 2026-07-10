@@ -80,8 +80,11 @@ fn try_consume_fn<'r, 't>(
                 .into_iter()
                 .collect()
         } else {
-            collect_consume(parser, RULE_BLOCKQUOTE, close, &[], None)?
-                .chain(&mut errors, &mut paragraph_safe)
+            let original_context = parser.in_native_blockquote_line();
+            parser.set_native_blockquote_line(true);
+            let result = collect_consume(parser, RULE_BLOCKQUOTE, close, &[], None);
+            parser.set_native_blockquote_line(original_context);
+            result?.chain(&mut errors, &mut paragraph_safe)
         };
 
         // Add a line break for the end of the line

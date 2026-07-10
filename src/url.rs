@@ -282,6 +282,17 @@ fn normalize_link_preserves_local_pages_with_dangerous_scheme_names() {
     test!("javascript:example" => "/javascript:example");
     test!("data:example#target" => "/data:example#target");
     test!("javascript:example/edit" => "/javascript:example/edit");
+
+    let location = LinkLocation::Page(crate::data::PageRef {
+        site: None,
+        page: "/data:example".into(),
+        extra: Some("#target".into()),
+    });
+    assert_eq!(
+        normalize_link(&location, &TestSiteUrl).as_ref(),
+        "/data:example#target",
+        "An already root-relative local page must not gain a second leading slash",
+    );
 }
 
 #[test]

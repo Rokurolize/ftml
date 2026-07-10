@@ -31,19 +31,22 @@ mod test;
 mod include_ref;
 mod includer;
 mod parse;
+mod quoted;
 
 pub use self::include_ref::IncludeRef;
 pub use self::includer::{DebugIncluder, FetchedPage, Includer, NullIncluder};
 
 use self::parse::parse_include_block;
+use self::quoted::{parse_quoted_include, quote_expansion};
 use crate::data::PageRef;
 use crate::settings::WikitextSettings;
 use crate::tree::VariableMap;
 use regex::{Regex, RegexBuilder};
+use std::borrow::Cow;
 use std::sync::LazyLock;
 
 static INCLUDE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    RegexBuilder::new(r"^\[\[\s*include\s+")
+    RegexBuilder::new(r"^(?:[ \t]*>[ \t]*)*\[\[\s*include\s+")
         .case_insensitive(true)
         .multi_line(true)
         .dot_matches_new_line(true)
@@ -78,6 +81,7 @@ where
 
     let mut ranges: Vec<std::ops::Range<usize>> = Vec::new();
     let mut includes = Vec::new();
+    let mut quote_prefixes = Vec::new();
 
     let mut search_start = 0;
 
@@ -87,6 +91,11 @@ where
 
         let slice = mtch.as_str();
         trace!("Found include regex match (start {start}, slice '{slice}')");
+        let marker_offset = slice
+            .find("[[")
+            .expect("include scanner match must contain a block opener");
+        let marker_start = start + marker_offset;
+        let quote_prefix = &input[start..marker_start];
 
         let Some(candidate_end) = find_include_end(input, mtch.end(), input.len()) else {
             warn!("Unable to find include terminator, skipping remaining input");
@@ -94,13 +103,24 @@ where
             continue;
         };
 
-        match parse_include_block(input, start) {
-            Ok((include, end)) => {
+        let parsed = if quote_prefix.is_empty() {
+            parse_include_block(input, start)
+                .ok()
+                .map(|(include, end)| (include, end, None))
+        } else {
+            let quote_depth = quote_prefix.bytes().filter(|&byte| byte == b'>').count();
+            parse_quoted_include(input, start, marker_start, quote_depth)
+                .map(|parsed| (parsed.include, parsed.end, Some(quote_prefix)))
+        };
+
+        match parsed {
+            Some((include, end, quote_prefix)) => {
                 ranges.push(start..end);
                 includes.push(include);
+                quote_prefixes.push(quote_prefix);
                 search_start = end;
             }
-            Err(_) => {
+            None => {
                 search_start = candidate_end;
                 warn!("Unable to parse include regex match, resuming at {search_start}");
             }
@@ -121,8 +141,13 @@ where
 
     let ranges_iter = ranges.into_iter();
     let includes_iter = includes.into_iter();
+    let quote_prefixes_iter = quote_prefixes.into_iter();
     let fetched_iter = fetched_pages.into_iter();
-    let joined_iter = ranges_iter.zip(includes_iter).zip(fetched_iter).rev();
+    let joined_iter = ranges_iter
+        .zip(includes_iter)
+        .zip(quote_prefixes_iter)
+        .zip(fetched_iter)
+        .rev();
 
     // Borrowing from the original text and doing in-place insertions
     // will not work here. We are trying to both return the page names
@@ -130,7 +155,7 @@ where
     let mut output = String::from(input);
     let mut pages = Vec::new();
 
-    for ((range, include), fetched) in joined_iter {
+    for (((range, include), quote_prefix), fetched) in joined_iter {
         let (page_ref, variables) = include.into();
 
         let range_start = range.start;
@@ -152,6 +177,10 @@ where
 
             // Include not found, return premade template
             None => includer.no_such_include(&page_ref)?,
+        };
+        let replace_with = match quote_prefix {
+            Some(prefix) => Cow::Owned(quote_expansion(&replace_with, prefix)),
+            None => replace_with,
         };
 
         // Append page to final list
@@ -176,7 +205,10 @@ fn find_include_end(input: &str, start: usize, end_bound: usize) -> Option<usize
         let end = index + 2;
         if bytes[index] == b']'
             && bytes[index + 1] == b']'
-            && (end == input.len() || bytes.get(end) == Some(&b'\n'))
+            && (end == input.len()
+                || bytes.get(end..).is_some_and(|rest| {
+                    rest.starts_with(b"\n") || rest.starts_with(b"\r\n")
+                }))
         {
             return Some(end);
         }

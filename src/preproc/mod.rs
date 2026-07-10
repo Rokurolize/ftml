@@ -24,6 +24,8 @@
 pub mod typography;
 pub mod whitespace;
 
+mod compatibility;
+
 #[cfg(test)]
 mod test;
 
@@ -173,6 +175,7 @@ impl Replacer {
 pub fn preprocess(text: &mut String) {
     debug!("Beginning preprocessing of text ({} bytes)", text.len());
     whitespace::substitute(text);
+    compatibility::substitute(text);
     typography::substitute(text);
     debug!("Finished preprocessing of text ({} bytes)", text.len());
 }

@@ -20,7 +20,7 @@
 
 use super::prelude::*;
 use crate::parsing::{ParserWrap, strip_newlines};
-use crate::tree::{AcceptsPartial, ListItem, ListType, PartialElement};
+use crate::tree::{AcceptsPartial, AttributeMap, ListItem, ListType, PartialElement};
 
 // Definitions
 
@@ -105,6 +105,7 @@ fn parse_list_block<'r, 't>(
     let (mut elements, errors, _) = body.into();
 
     let mut items = Vec::new();
+    let mut literal_elements = Vec::new();
 
     // "ul_" strips outer newlines and paragraph breaks.
     if flag_score {
@@ -121,22 +122,27 @@ fn parse_list_block<'r, 't>(
         match element {
             // Ensure all elements of a list are only items, i.e. [[li]].
             Element::Partial(PartialElement::ListItem(list_item)) => {
+                push_literal_list_item(&mut items, &mut literal_elements);
                 items.push(list_item);
             }
 
             // Or sub-lists.
             element @ Element::List { .. } => {
+                push_literal_list_item(&mut items, &mut literal_elements);
                 let element = Box::new(element);
                 items.push(ListItem::SubList { element });
             }
 
             // Ignore "whitespace" elements
-            element if element.is_whitespace() => continue,
+            element if element.is_whitespace() && literal_elements.is_empty() => continue,
 
-            // Other kinds of elements result in an exception.
-            _ => return Err(parser.make_err(ParseErrorKind::ListContainsNonItem)),
+            // Wikidot wraps bare list body content in an unstyled synthetic
+            // list item. This is used by real components for shapes such as
+            // `[[ul]]_[[/ul]]`.
+            element => literal_elements.push(element),
         }
     }
+    push_literal_list_item(&mut items, &mut literal_elements);
 
     if items.is_empty() {
         return Err(parser.make_err(ParseErrorKind::ListEmpty));
@@ -149,6 +155,25 @@ fn parse_list_block<'r, 't>(
     };
 
     success_elements_with_paragraph_safety(false, element, errors)
+}
+
+fn push_literal_list_item<'t>(
+    items: &mut Vec<ListItem<'t>>,
+    elements: &mut Vec<Element<'t>>,
+) {
+    while elements.last().is_some_and(Element::is_whitespace) {
+        elements.pop();
+    }
+    if elements.is_empty() {
+        return;
+    }
+
+    let mut attributes = AttributeMap::new();
+    assert!(attributes.insert("style", cow!("list-style: none")));
+    items.push(ListItem::Elements {
+        elements: std::mem::take(elements),
+        attributes,
+    });
 }
 
 // List item
@@ -370,12 +395,25 @@ Alpha
     }
 
     #[test]
-    fn block_list_rejects_non_item_body() {
-        with_parse("[[ul]]plain text[[/ul]]", |_tree, errors| {
-            assert!(
-                errors
-                    .iter()
-                    .any(|error| error.kind() == ParseErrorKind::ListContainsNonItem)
+    fn block_list_wraps_bare_body_like_wikidot() {
+        with_parse("[[ul]]_[[/ul]]", |tree, errors| {
+            assert!(errors.is_empty(), "{errors:#?}");
+            let [Element::List { items, .. }] = tree.as_slice() else {
+                panic!("expected one list, got {tree:?}");
+            };
+            let [
+                ListItem::Elements {
+                    elements,
+                    attributes,
+                },
+            ] = items.as_slice()
+            else {
+                panic!("expected one synthetic item, got {items:?}");
+            };
+            assert_eq!(element_text(elements), "_");
+            assert_eq!(
+                attributes.get().get("style").map(|value| value.as_ref()),
+                Some("list-style: none"),
             );
         });
     }

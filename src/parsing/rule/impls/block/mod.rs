@@ -30,6 +30,7 @@ use crate::parsing::rule::{LineRequirement, Rule};
 use crate::tree::Elements;
 use std::fmt::{self, Debug};
 
+mod argument_value;
 mod arguments;
 mod mapping;
 mod parser;

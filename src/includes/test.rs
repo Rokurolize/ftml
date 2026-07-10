@@ -530,3 +530,97 @@ fn include_swallowed_by_multiline_argument_does_not_overlap() {
         "outer include block must be substituted: {output}"
     );
 }
+
+#[derive(Debug)]
+struct QuotedContentIncluder;
+
+impl<'t> Includer<'t> for QuotedContentIncluder {
+    type Error = &'static str;
+
+    fn include_pages(
+        &mut self,
+        includes: &[IncludeRef<'t>],
+    ) -> Result<Vec<FetchedPage<'t>>, Self::Error> {
+        Ok(includes
+            .iter()
+            .map(|include| FetchedPage {
+                page_ref: include.page_ref().clone(),
+                content: Some(Cow::Borrowed("first {$name}\nsecond")),
+            })
+            .collect())
+    }
+
+    fn no_such_include(
+        &mut self,
+        _page_ref: &PageRef,
+    ) -> Result<Cow<'t, str>, Self::Error> {
+        Err("quoted include fixture should exist")
+    }
+}
+
+#[test]
+fn quoted_multiline_include_expands_variables_and_preserves_quote_prefix() {
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let input = concat!(
+        "before\n",
+        ">[[include :scp-wiki:component:author-label-source start=—\n",
+        ">|name=toadking07]]\n",
+        "after\n",
+    );
+
+    let (output, pages) = include(
+        input,
+        &settings,
+        QuotedContentIncluder,
+        || "invalid include response",
+    )
+    .expect("quoted include should expand");
+
+    assert_eq!(
+        pages,
+        vec![PageRef::page_and_site(
+            "scp-wiki",
+            "component:author-label-source",
+        )],
+    );
+    assert_eq!(output, "before\n>first toadking07\n>second\nafter\n");
+}
+
+#[test]
+fn quoted_include_preserves_nested_spaced_prefix_and_rejects_quote_escape() {
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let nested = "  > > [[include component:box |name=x]]\n";
+    let (output, pages) = include(
+        nested,
+        &settings,
+        QuotedContentIncluder,
+        || "invalid include response",
+    )
+    .expect("nested quoted include should expand");
+
+    assert_eq!(pages, vec![PageRef::page_only("component:box")]);
+    assert_eq!(output, "  > > first x\n  > > second\n");
+
+    let escaped = "> [[include component:box\n|name=unquoted]]\n";
+    let (output, pages) = include(escaped, &settings, DebugIncluder, || unreachable!())
+        .expect("malformed quoted include should remain literal");
+    assert!(pages.is_empty());
+    assert_eq!(output, escaped);
+}
+
+#[test]
+fn quoted_include_scanner_accepts_crlf_after_the_terminator() {
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let input = "> [[include component:box |name=x]]\r\n";
+
+    let (output, pages) = include(
+        input,
+        &settings,
+        QuotedContentIncluder,
+        || "invalid include response",
+    )
+    .expect("quoted CRLF include should expand");
+
+    assert_eq!(pages, vec![PageRef::page_only("component:box")]);
+    assert_eq!(output, "> first x\n> second\r\n");
+}

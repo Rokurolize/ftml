@@ -12,12 +12,6 @@
         "kind": "no-rules-match"
     },
     {
-        "token": "right-raw",
-        "rule": "fallback",
-        "span": [15, 17],
-        "kind": "no-rules-match"
-    },
-    {
         "token": "raw",
         "rule": "raw",
         "span": [31, 33],

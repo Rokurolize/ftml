@@ -652,6 +652,18 @@ fn hidden_conditionals_do_not_publish_metadata_blocks() {
 }
 
 #[test]
+fn false_iftags_raw_end_marker_does_not_publish_later_html() {
+    let tree = parse(
+        "[[iftags +missing]]\n[[code]]\n[[/iftags]]\n[[html]]\n<b id=\"leaked\">guarded</b>\n[[/html]]\n[[/code]]\n[[/iftags]]",
+        Layout::Wikijump,
+    );
+
+    assert!(tree.elements.is_empty(), "{:?}", tree.elements);
+    assert!(tree.html_blocks.is_empty(), "{:?}", tree.html_blocks);
+    assert!(tree.code_blocks.is_empty(), "{:?}", tree.code_blocks);
+}
+
+#[test]
 fn deeply_repeated_headings_parse_without_stack_recursion() {
     const HEADING_COUNT: usize = 4_096;
 

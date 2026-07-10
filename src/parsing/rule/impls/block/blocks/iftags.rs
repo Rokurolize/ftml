@@ -62,7 +62,7 @@ fn parse_fn<'r, 't>(
     let include_body = check_iftags(parser.page_info(), &conditions);
     if !include_body {
         trace!("Conditions failed, skipping hidden body");
-        let _ = parser.get_body_text(&BLOCK_IFTAGS)?;
+        skip_hidden_iftags_body(parser)?;
         return ok!(true; Elements::None, Vec::new());
     }
 
@@ -78,6 +78,47 @@ fn parse_fn<'r, 't>(
 
     trace!("Conditions passed, including elements");
     ok!(paragraph_safe; Elements::Multiple(elements), errors)
+}
+
+fn skip_hidden_iftags_body<'r, 't>(parser: &mut Parser<'r, 't>) -> Result<(), ParseError>
+where
+    'r: 't,
+{
+    loop {
+        if parser.current().token == Token::InputEnd {
+            return Ok(());
+        }
+
+        let mut lookahead = parser.clone();
+        if let Ok(name) = lookahead.get_end_block()
+            && name.eq_ignore_ascii_case("iftags")
+        {
+            parser.update(&lookahead);
+            return Ok(());
+        }
+
+        let mut lookahead = parser.clone();
+        if let Ok((name, in_head)) = lookahead.get_block_name(false) {
+            let raw_block = if name.eq_ignore_ascii_case("code") {
+                Some(&super::BLOCK_CODE)
+            } else if name.eq_ignore_ascii_case("html") {
+                Some(&super::BLOCK_HTML)
+            } else {
+                None
+            };
+
+            if let Some(raw_block) = raw_block {
+                let _ = lookahead.get_head_map(raw_block, in_head)?;
+                if lookahead.has_body_end_block(raw_block) {
+                    parser.update(&lookahead);
+                    let _ = parser.get_body_text(raw_block)?;
+                    continue;
+                }
+            }
+        }
+
+        parser.step()?;
+    }
 }
 
 pub fn check_iftags(info: &PageInfo, conditions: &[ElementCondition]) -> bool {

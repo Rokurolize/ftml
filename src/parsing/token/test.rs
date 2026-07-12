@@ -76,6 +76,8 @@ fn fast_tokenizer_matches_pest_on_adversarial_inputs() {
         "[[include component:start]] {$title} [[/include]]",
         "abc@example.com foo%bar@example.com",
         "http://example.com/a|b https://example.com/[x]",
+        "@<https://example.com/raw>@ https://example.com/a>b https://example.com/a>@b",
+        "url(@<https://example.com/raw>@)",
         "ftp://example.com/path \"quoted\"",
         "+* heading\n+** not-starred\n+++++++ seven",
         "* item\n**bold**\n# item\n##color##",
@@ -420,6 +422,93 @@ fn tokens() {
                 token: Token::Email,
                 slice: "foo%bar@example.com",
                 span: 16..35,
+            },
+        ],
+    );
+
+    test!(
+        "@<https://example.com/raw>@",
+        vec![
+            ExtractedToken {
+                token: Token::LeftRaw,
+                slice: "@<",
+                span: 0..2,
+            },
+            ExtractedToken {
+                token: Token::Url,
+                slice: "https://example.com/raw",
+                span: 2..25,
+            },
+            ExtractedToken {
+                token: Token::RightRaw,
+                slice: ">@",
+                span: 25..27,
+            },
+        ],
+    );
+
+    test!(
+        "https://example.com/a>b",
+        vec![ExtractedToken {
+            token: Token::Url,
+            slice: "https://example.com/a>b",
+            span: 0..23,
+        }],
+    );
+
+    test!(
+        "https://example.com/a>@b",
+        vec![
+            ExtractedToken {
+                token: Token::Url,
+                slice: "https://example.com/a",
+                span: 0..21,
+            },
+            ExtractedToken {
+                token: Token::RightRaw,
+                slice: ">@",
+                span: 21..23,
+            },
+            ExtractedToken {
+                token: Token::Identifier,
+                slice: "b",
+                span: 23..24,
+            },
+        ],
+    );
+
+    test!(
+        "url(@<https://example.com/raw>@)",
+        vec![
+            ExtractedToken {
+                token: Token::Identifier,
+                slice: "url",
+                span: 0..3,
+            },
+            ExtractedToken {
+                token: Token::Other,
+                slice: "(",
+                span: 3..4,
+            },
+            ExtractedToken {
+                token: Token::LeftRaw,
+                slice: "@<",
+                span: 4..6,
+            },
+            ExtractedToken {
+                token: Token::Url,
+                slice: "https://example.com/raw",
+                span: 6..29,
+            },
+            ExtractedToken {
+                token: Token::RightRaw,
+                slice: ">@",
+                span: 29..31,
+            },
+            ExtractedToken {
+                token: Token::Other,
+                slice: ")",
+                span: 31..32,
             },
         ],
     );

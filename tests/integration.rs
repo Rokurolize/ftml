@@ -22,6 +22,9 @@ mod inline_delimiter_performance;
 #[path = "parser_functions_wikidot_syntax.rs"]
 mod parser_functions_wikidot_syntax;
 
+#[path = "raw_url_delimiter.rs"]
+mod raw_url_delimiter;
+
 #[path = "scp8980_wikidot_syntax.rs"]
 mod scp8980_wikidot_syntax;
 
@@ -36,3 +39,6 @@ mod strikethrough_inline_regression;
 
 #[path = "wikidot_span_scope.rs"]
 mod wikidot_span_scope;
+
+#[path = "yossistyle_wikidot_syntax.rs"]
+mod yossistyle_wikidot_syntax;

@@ -34,6 +34,7 @@ If a fixture page does not currently expose an FTML syntax gap, list it in the i
 |---|---|---:|---|
 | `scp-9506` | `tests/scp9506_wikidot_syntax.rs` | 2 | Rokurolize/wikijump#52, Rokurolize/wikijump#59, Rokurolize/wikijump#60 |
 | `scp-8980` | `tests/scp8980_wikidot_syntax.rs` | 1 | Rokurolize/wikijump#7, Rokurolize/wikijump#17, Rokurolize/wikijump#18, Rokurolize/wikijump#19, Rokurolize/wikijump#20 |
+| `theme:yossistyle` | `tests/yossistyle_wikidot_syntax.rs` | 1 | [Canonical Wikidot page](https://scp-wiki.wikidot.com/theme:yossistyle), read-only GET verified 2026-07-13 |
 | `scp-3352` | Not added until a concrete FTML syntax gap is identified | 0 | Rokurolize/wikijump#4, Rokurolize/wikijump#15 |
 | `scp-anthology-2024` | Not added until a concrete FTML syntax gap is identified | 0 | Rokurolize/wikijump#8, Rokurolize/wikijump#23 |
 

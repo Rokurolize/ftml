@@ -46,7 +46,10 @@ use std::borrow::Cow;
 use std::sync::LazyLock;
 
 static INCLUDE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    RegexBuilder::new(r"^(?:[ \t]*>[ \t]*)*\[\[\s*include\s+")
+    // Wikidot only expands an include immediately following native quote
+    // markers. A horizontal space after `>` makes the marker quoted example
+    // text instead (corpus provenance: scp-wiki/svg-animation).
+    RegexBuilder::new(r"^(?:[ \t]*>)*\[\[\s*include\s+")
         .case_insensitive(true)
         .multi_line(true)
         .dot_matches_new_line(true)

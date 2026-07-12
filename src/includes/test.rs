@@ -587,19 +587,14 @@ fn quoted_multiline_include_expands_variables_and_preserves_quote_prefix() {
 }
 
 #[test]
-fn quoted_include_preserves_nested_spaced_prefix_and_rejects_quote_escape() {
+fn spaced_quoted_include_markers_remain_literal_like_wikidot() {
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let nested = "  > > [[include component:box |name=x]]\n";
-    let (output, pages) = include(
-        nested,
-        &settings,
-        QuotedContentIncluder,
-        || "invalid include response",
-    )
-    .expect("nested quoted include should expand");
+    let (output, pages) = include(nested, &settings, DebugIncluder, || unreachable!())
+        .expect("spaced quoted include should remain literal");
 
-    assert_eq!(pages, vec![PageRef::page_only("component:box")]);
-    assert_eq!(output, "  > > first x\n  > > second\n");
+    assert!(pages.is_empty());
+    assert_eq!(output, nested);
 
     let escaped = "> [[include component:box\n|name=unquoted]]\n";
     let (output, pages) = include(escaped, &settings, DebugIncluder, || unreachable!())
@@ -609,20 +604,32 @@ fn quoted_include_preserves_nested_spaced_prefix_and_rejects_quote_escape() {
 }
 
 #[test]
-fn quoted_include_scanner_accepts_crlf_after_the_terminator() {
+fn spaced_quoted_include_with_crlf_remains_literal() {
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let input = "> [[include component:box |name=x]]\r\n";
 
-    let (output, pages) = include(
-        input,
-        &settings,
-        QuotedContentIncluder,
-        || "invalid include response",
-    )
-    .expect("quoted CRLF include should expand");
+    let (output, pages) = include(input, &settings, DebugIncluder, || unreachable!())
+        .expect("spaced quoted CRLF include should remain literal");
 
-    assert_eq!(pages, vec![PageRef::page_only("component:box")]);
-    assert_eq!(output, "> first x\n> second\r\n");
+    assert!(pages.is_empty());
+    assert_eq!(output, input);
+}
+
+#[test]
+fn svg_animation_spaced_self_include_examples_remain_literal() {
+    // Corpus provenance: scp-wiki/svg-animation. Wikidot renders these as
+    // visible example text instead of recursively including the current page.
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let input = concat!(
+        "> [[include :scp-wiki:svg-animation |oneiroi=true|width=100%]]\n",
+        "> [[include :scp-wiki:svg-animation |gocLogo=true|width=100%]]\n",
+    );
+
+    let (output, pages) = include(input, &settings, DebugIncluder, || unreachable!())
+        .expect("spaced self-include examples should remain literal");
+
+    assert!(pages.is_empty());
+    assert_eq!(output, input);
 }
 
 #[test]
@@ -632,7 +639,7 @@ fn quoted_include_scanner_handles_many_one_line_includes_in_bounded_time() {
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let mut input = String::new();
     for _ in 0..INCLUDE_LINES {
-        input.push_str("> [[include component:box]]\n");
+        input.push_str(">[[include component:box]]\n");
     }
 
     let started = std::time::Instant::now();

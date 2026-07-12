@@ -531,35 +531,8 @@ fn include_swallowed_by_multiline_argument_does_not_overlap() {
     );
 }
 
-#[derive(Debug)]
-struct QuotedContentIncluder;
-
-impl<'t> Includer<'t> for QuotedContentIncluder {
-    type Error = &'static str;
-
-    fn include_pages(
-        &mut self,
-        includes: &[IncludeRef<'t>],
-    ) -> Result<Vec<FetchedPage<'t>>, Self::Error> {
-        Ok(includes
-            .iter()
-            .map(|include| FetchedPage {
-                page_ref: include.page_ref().clone(),
-                content: Some(Cow::Borrowed("first {$name}\nsecond")),
-            })
-            .collect())
-    }
-
-    fn no_such_include(
-        &mut self,
-        _page_ref: &PageRef,
-    ) -> Result<Cow<'t, str>, Self::Error> {
-        Err("quoted include fixture should exist")
-    }
-}
-
 #[test]
-fn quoted_multiline_include_expands_variables_and_preserves_quote_prefix() {
+fn tight_quoted_multiline_include_is_consumed_without_resolving_its_target() {
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let input = concat!(
         "before\n",
@@ -568,22 +541,11 @@ fn quoted_multiline_include_expands_variables_and_preserves_quote_prefix() {
         "after\n",
     );
 
-    let (output, pages) = include(
-        input,
-        &settings,
-        QuotedContentIncluder,
-        || "invalid include response",
-    )
-    .expect("quoted include should expand");
+    let (output, pages) = include(input, &settings, DebugIncluder, || unreachable!())
+        .expect("tight quoted include should be consumed");
 
-    assert_eq!(
-        pages,
-        vec![PageRef::page_and_site(
-            "scp-wiki",
-            "component:author-label-source",
-        )],
-    );
-    assert_eq!(output, "before\n>first toadking07\n>second\nafter\n");
+    assert!(pages.is_empty());
+    assert_eq!(output, "before\n\nafter\n");
 }
 
 #[test]
@@ -643,15 +605,11 @@ fn quoted_include_scanner_handles_many_one_line_includes_in_bounded_time() {
     }
 
     let started = std::time::Instant::now();
-    let (_output, pages) = include(
-        &input,
-        &settings,
-        QuotedContentIncluder,
-        || "invalid include response",
-    )
-    .expect("quoted one-line includes should expand");
+    let (output, pages) = include(&input, &settings, DebugIncluder, || unreachable!())
+        .expect("tight quoted includes should be consumed");
 
-    assert_eq!(pages.len(), INCLUDE_LINES);
+    assert!(pages.is_empty());
+    assert_eq!(output, "\n".repeat(INCLUDE_LINES));
     assert!(
         started.elapsed() < std::time::Duration::from_secs(5),
         "quoted one-line include scan took {:?}",

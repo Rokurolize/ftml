@@ -37,12 +37,11 @@ pub use self::include_ref::IncludeRef;
 pub use self::includer::{DebugIncluder, FetchedPage, Includer, NullIncluder};
 
 use self::parse::parse_include_block;
-use self::quoted::{parse_quoted_include, quote_expansion};
+use self::quoted::parse_quoted_include;
 use crate::data::PageRef;
 use crate::settings::WikitextSettings;
 use crate::tree::VariableMap;
 use regex::{Regex, RegexBuilder};
-use std::borrow::Cow;
 use std::sync::LazyLock;
 
 static INCLUDE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
@@ -83,8 +82,8 @@ where
     debug!("Inserting text for all include blocks in text ({input_len} bytes)");
 
     let mut ranges: Vec<std::ops::Range<usize>> = Vec::new();
+    let mut consumed_quoted_ranges: Vec<std::ops::Range<usize>> = Vec::new();
     let mut includes = Vec::new();
-    let mut quote_prefixes = Vec::new();
 
     let mut search_start = 0;
 
@@ -107,20 +106,31 @@ where
         };
 
         let parsed = if quote_prefix.is_empty() {
-            parse_include_block(input, start)
-                .ok()
-                .map(|(include, end)| (include, end, None))
+            parse_include_block(input, start).ok()
         } else {
             let quote_depth = quote_prefix.bytes().filter(|&byte| byte == b'>').count();
-            parse_quoted_include(input, start, marker_start, quote_depth, candidate_end)
-                .map(|parsed| (parsed.include, parsed.end, Some(quote_prefix)))
+            let parsed = parse_quoted_include(
+                input,
+                start,
+                marker_start,
+                quote_depth,
+                candidate_end,
+            );
+            if let Some(parsed) = parsed {
+                // Wikidot consumes a tight quote-prefixed include without
+                // resolving or rendering its target. Spaced quote examples
+                // never reach this branch because the scanner excludes them.
+                consumed_quoted_ranges.push(start..parsed.end);
+                search_start = parsed.end;
+                continue;
+            }
+            None
         };
 
         match parsed {
-            Some((include, end, quote_prefix)) => {
+            Some((include, end)) => {
                 ranges.push(start..end);
                 includes.push(include);
-                quote_prefixes.push(quote_prefix);
                 search_start = end;
             }
             None => {
@@ -142,15 +152,16 @@ where
     //
     // We must iterate backwards for all the indices to be valid
 
-    let ranges_iter = ranges.into_iter();
-    let includes_iter = includes.into_iter();
-    let quote_prefixes_iter = quote_prefixes.into_iter();
-    let fetched_iter = fetched_pages.into_iter();
-    let joined_iter = ranges_iter
-        .zip(includes_iter)
-        .zip(quote_prefixes_iter)
-        .zip(fetched_iter)
-        .rev();
+    let mut replacements: Vec<_> = ranges
+        .into_iter()
+        .zip(includes.into_iter().zip(fetched_pages).map(Some))
+        .collect();
+    replacements.extend(
+        consumed_quoted_ranges
+            .into_iter()
+            .map(|range| (range, None)),
+    );
+    replacements.sort_unstable_by_key(|(range, _)| range.start);
 
     // Borrowing from the original text and doing in-place insertions
     // will not work here. We are trying to both return the page names
@@ -158,7 +169,11 @@ where
     let mut output = String::from(input);
     let mut pages = Vec::new();
 
-    for (((range, include), quote_prefix), fetched) in joined_iter {
+    for (range, replacement) in replacements.into_iter().rev() {
+        let Some((include, fetched)) = replacement else {
+            output.replace_range(range, "");
+            continue;
+        };
         let (page_ref, variables) = include.into();
 
         let range_start = range.start;
@@ -181,11 +196,6 @@ where
             // Include not found, return premade template
             None => includer.no_such_include(&page_ref)?,
         };
-        let replace_with = match quote_prefix {
-            Some(prefix) => Cow::Owned(quote_expansion(&replace_with, prefix)),
-            None => replace_with,
-        };
-
         // Append page to final list
         pages.push(page_ref);
 

@@ -70,8 +70,52 @@ pub fn substitute(text: &mut String) {
     canonicalize_unquoted_collapsible_closers(&mut lines, &literal_lines);
     canonicalize_unmatched_quoted_tab_closers(&mut lines, &literal_lines);
     canonicalize_crossed_center_collapsible_closers(&mut lines, &literal_lines);
+    canonicalize_crossed_bold_size_closers(&mut lines, &literal_lines);
 
     *text = lines.concat();
+}
+
+/// Move a prematurely crossed bold closer behind its size closer.
+///
+/// Wikidot renders `**[[size 110%]]text**[[/size]]` as properly nested
+/// `<strong><span>text</span></strong>`. Canonicalizing this corpus-backed
+/// shape also prevents repeated crossed delimiters from causing exponential
+/// parser backtracking.
+fn canonicalize_crossed_bold_size_closers(lines: &mut [String], literal_lines: &[bool]) {
+    const OPEN: &str = "**[[size ";
+    const CROSSED_CLOSE: &str = "**[[/size]]";
+
+    for (line, literal) in lines.iter_mut().zip(literal_lines) {
+        if *literal {
+            continue;
+        }
+
+        let mut search_from = 0;
+        while let Some(open_start) = line[search_from..].find(OPEN) {
+            let open_start = search_from + open_start;
+            let Some(open_end) = line[open_start + OPEN.len()..].find("]]") else {
+                break;
+            };
+            let body_start = open_start + OPEN.len() + open_end + 2;
+            let Some(close_start) = line[body_start..].find(CROSSED_CLOSE) else {
+                break;
+            };
+            let close_start = body_start + close_start;
+
+            // A second bold delimiter makes the intended pairing ambiguous.
+            // Leave such lines to the normal parser.
+            if line[body_start..close_start].contains("**") {
+                search_from = body_start;
+                continue;
+            }
+
+            line.replace_range(
+                close_start..close_start + CROSSED_CLOSE.len(),
+                "[[/size]]**",
+            );
+            search_from = close_start + "[[/size]]**".len();
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -428,6 +472,46 @@ mod tests {
             "[[collapsible show=\"open\" hide=\"close\"]]\n",
             "body\n",
             "[[/collapsible]]\n",
+        )
+        .to_owned();
+        let original = source.clone();
+
+        substitute(&mut source);
+
+        assert_eq!(source, original);
+    }
+
+    #[test]
+    fn crossed_bold_and_size_closers_are_canonicalized() {
+        // Corpus provenance: scp-wiki/scp-007-int.
+        let mut source = concat!(
+            "**[[size 120%]]SITE PT1[[/size]]**\n",
+            "**[[size 110%]]OVERWATCH COUNCIL**[[/size]]\n",
+            "**[[size 110%]]CABINET OFFICE**[[/size]]\n",
+        )
+        .repeat(6);
+
+        substitute(&mut source);
+
+        assert!(!source.contains("COUNCIL**[[/size]]"), "{source}");
+        assert!(source.contains("COUNCIL[[/size]]**"), "{source}");
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains("<strong><span style=\"font-size: 110%;\">OVERWATCH COUNCIL</span></strong>"), "{html}");
+    }
+
+    #[test]
+    fn crossed_bold_and_size_markers_inside_literals_are_unchanged() {
+        let mut source = concat!(
+            "[[code]]\n",
+            "**[[size 110%]]literal**[[/size]]\n",
+            "[[/code]]\n",
         )
         .to_owned();
         let original = source.clone();

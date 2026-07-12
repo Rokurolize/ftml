@@ -51,7 +51,11 @@ fn try_consume_fn<'r, 't>(
         debug_assert!(depth > 0, "residual quote depth must be positive");
         parser.step()?;
         parser.get_optional_space()?; // allow whitespace after ">"
-        parser.mark_virtual_start_of_line();
+        if parser.current().token != Token::Quote {
+            // Wikidot only counts contiguous quote markers toward native depth.
+            // A marker after horizontal space is literal quoted content.
+            parser.mark_virtual_start_of_line();
+        }
 
         // Check that the depth isn't obscenely deep, to avoid DOS attacks via stack overflow.
         if absolute_depth > MAX_BLOCKQUOTE_DEPTH {
@@ -272,6 +276,31 @@ mod tests {
         assert!(text.contains("LEVEL 5 AUTHORIZATION REQUIRED"));
         assert!(!text.contains("+ WARNING"));
         assert!(!text.contains("++ LEVEL 5 AUTHORIZATION REQUIRED"));
+    }
+
+    #[test]
+    fn native_blockquote_depth_counts_only_contiguous_markers() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let input = concat!(
+            ">> ALPHA_CONTIGUOUS_DEPTH_TWO\n",
+            "> > ALPHA_SPACED_LITERAL\n",
+            "> >ALPHA_TIGHT_SPACED_LITERAL\n",
+            "> ALPHA_BEFORE\n",
+            "> >ALPHA_ACTIVE_LITERAL\n",
+            "> ALPHA_AFTER\n",
+        );
+        let tokenization = crate::tokenize(input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html.matches("<blockquote>").count(), 2, "{html}");
+        assert!(html.contains("ALPHA_CONTIGUOUS_DEPTH_TWO"), "{html}");
+        assert!(html.contains("&gt; ALPHA_SPACED_LITERAL"), "{html}");
+        assert!(html.contains("&gt;ALPHA_TIGHT_SPACED_LITERAL"), "{html}");
+        assert!(html.contains("&gt;ALPHA_ACTIVE_LITERAL"), "{html}");
+        assert!(html.contains("ALPHA_AFTER"), "{html}");
     }
 
     #[test]

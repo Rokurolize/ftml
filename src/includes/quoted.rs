@@ -50,10 +50,38 @@ pub(super) fn parse_quoted_include(
     line_start: usize,
     marker_start: usize,
     quote_depth: usize,
+    candidate_end: usize,
 ) -> Option<ParsedQuotedInclude> {
     debug_assert!(marker_start > line_start);
     debug_assert!(quote_depth > 0);
 
+    let parsed =
+        normalize_and_parse(input, line_start, marker_start, quote_depth, candidate_end)
+            .or_else(|| {
+                // If the first candidate terminator did not complete a syntactically
+                // valid include, parse the whole contiguous quote region once. This
+                // preserves support for quoted multiline includes containing early
+                // malformed `]]` candidates without making valid one-line includes
+                // copy the entire quoted suffix on every scanner match.
+                normalize_and_parse(
+                    input,
+                    line_start,
+                    marker_start,
+                    quote_depth,
+                    input.len(),
+                )
+            })?;
+
+    Some(parsed)
+}
+
+fn normalize_and_parse(
+    input: &str,
+    line_start: usize,
+    marker_start: usize,
+    quote_depth: usize,
+    end_bound: usize,
+) -> Option<ParsedQuotedInclude> {
     let mut normalized = String::new();
     let mut segments = Vec::new();
     let mut original_line_start = line_start;
@@ -77,12 +105,11 @@ pub(super) fn parse_quoted_include(
         });
 
         original_line_start += line.len();
+        if original_line_start >= end_bound {
+            break;
+        }
     }
 
-    // Pest does not require end-of-input after an include, so one parse over
-    // the normalized contiguous quote region finds the first complete block.
-    // Parsing only once avoids quadratic reparsing when many malformed lines
-    // end in a candidate `]]` terminator.
     let (include, normalized_end) = parse_include_block(&normalized, 0).ok()?;
     let end = original_offset(&segments, normalized_end)?;
     Some(ParsedQuotedInclude {
@@ -90,7 +117,6 @@ pub(super) fn parse_quoted_include(
         end,
     })
 }
-
 /// Prefix every physical line produced by a quoted include expansion.
 pub(super) fn quote_expansion(content: &str, quote_prefix: &str) -> String {
     let line_count = content.bytes().filter(|&byte| byte == b'\n').count()
@@ -163,8 +189,14 @@ mod tests {
         let line_start = source.find("> [[include").unwrap();
         let marker_start = source[line_start..].find("[[").unwrap() + line_start;
 
-        let parsed = parse_quoted_include(source, line_start, marker_start, 1)
-            .expect("quoted include should parse");
+        let parsed = parse_quoted_include(
+            source,
+            line_start,
+            marker_start,
+            1,
+            source.find("]]").unwrap() + 2,
+        )
+        .expect("quoted include should parse");
 
         assert_eq!(
             parsed.include.page_ref(),
@@ -185,7 +217,16 @@ mod tests {
         let source = "> [[include component:box\n|name=unquoted]]\n";
         let marker_start = source.find("[[").unwrap();
 
-        assert!(parse_quoted_include(source, 0, marker_start, 1).is_none());
+        assert!(
+            parse_quoted_include(
+                source,
+                0,
+                marker_start,
+                1,
+                source.find("]]").unwrap() + 2
+            )
+            .is_none()
+        );
     }
 
     #[test]
@@ -193,8 +234,14 @@ mod tests {
         let source = "> [[include component:box]]\noutside\n";
         let marker_start = source.find("[[").unwrap();
 
-        let parsed = parse_quoted_include(source, 0, marker_start, 1)
-            .expect("complete include before quote boundary should parse");
+        let parsed = parse_quoted_include(
+            source,
+            0,
+            marker_start,
+            1,
+            source.find("]]").unwrap() + 2,
+        )
+        .expect("complete include before quote boundary should parse");
 
         assert_eq!(&source[parsed.end..], "\noutside\n");
     }
@@ -210,7 +257,16 @@ mod tests {
         let marker_start = source.find("[[").unwrap();
         let started = std::time::Instant::now();
 
-        assert!(parse_quoted_include(&source, 0, marker_start, 1).is_none());
+        assert!(
+            parse_quoted_include(
+                &source,
+                0,
+                marker_start,
+                1,
+                source.find("]]").unwrap() + 2
+            )
+            .is_none()
+        );
         assert!(
             started.elapsed() < std::time::Duration::from_secs(5),
             "quoted include scan took {:?}",

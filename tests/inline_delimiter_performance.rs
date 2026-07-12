@@ -63,3 +63,35 @@ fn repeated_underline_spacer_run_stays_linear_and_literal() {
     assert!(errors.is_empty(), "{errors:#?}");
     assert_eq!(html.matches("__").count(), MARKER_COUNT);
 }
+
+#[test]
+fn quoted_multiline_inline_delimiter_pairs_stay_bounded() {
+    const PAIR_COUNT: usize = 64;
+
+    // Reduced from EN:indigo-eyes (source SHA-256
+    // cfa1824195734d22ce15ee525deba2a48f5bbcc5824ee86646c24cee72011e97),
+    // where repeated journal paragraphs open italics on one quoted line and
+    // close them on the next. Twelve pairs exceeded the replay's five-second
+    // parse budget before the quote cursor was carried into inline collectors.
+    for (marker, tag) in [
+        ("**", "strong"),
+        ("//", "em"),
+        ("__", "u"),
+        ("^^", "sup"),
+        (",,", "sub"),
+    ] {
+        let input = format!("> {marker}\n> quoted text{marker}\n").repeat(PAIR_COUNT);
+        let page_info = page_info();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let started = Instant::now();
+
+        let tokenization = ftml::tokenize(&input);
+        let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(started.elapsed() < Duration::from_secs(5), "{marker}");
+        assert!(errors.is_empty(), "{marker}: {errors:#?}");
+        assert_eq!(html.matches(&format!("<{tag}>")).count(), PAIR_COUNT);
+        assert_eq!(html.matches("quoted text").count(), PAIR_COUNT);
+    }
+}

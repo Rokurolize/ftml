@@ -76,7 +76,7 @@ pub fn substitute(text: &mut String) {
     *text = lines.concat();
 }
 
-/// Remove lines whose first native quote marker is not followed by horizontal space.
+/// Remove lines whose contiguous native quote run is not followed by horizontal space.
 ///
 /// Wikidot consumes these lines rather than treating their remainder as quoted
 /// content or literal text. Root-level literal regions remain byte-preserving.
@@ -94,12 +94,13 @@ fn remove_tight_quote_lines(lines: &mut [String], literal_lines: &[bool]) {
 
         let (body, ending) = split_line(line);
         let trimmed = body.trim_start_matches([' ', '\t']);
-        let Some(after_marker) = trimmed.strip_prefix('>') else {
+        if !trimmed.starts_with('>') {
             active_quote_depth = 0;
             continue;
-        };
-        if after_marker.is_empty() || after_marker.starts_with([' ', '\t', '\r']) {
-            active_quote_depth = valid_quote_depth(body);
+        }
+        let valid_depth = valid_quote_depth(body);
+        if valid_depth > 0 {
+            active_quote_depth = valid_depth;
             continue;
         }
 
@@ -113,19 +114,14 @@ fn remove_tight_quote_lines(lines: &mut [String], literal_lines: &[bool]) {
 }
 
 fn valid_quote_depth(body: &str) -> usize {
-    let mut depth = 0;
-    let mut rest = body.trim_start_matches([' ', '\t']);
-    while let Some(after_marker) = rest.strip_prefix('>') {
-        if after_marker.is_empty() || after_marker.starts_with('\r') {
-            return depth + 1;
-        }
-        if !after_marker.starts_with([' ', '\t']) {
-            break;
-        }
-        depth += 1;
-        rest = after_marker.trim_start_matches([' ', '\t']);
+    let body = body.trim_start_matches([' ', '\t']);
+    let depth = body.bytes().take_while(|byte| *byte == b'>').count();
+    let rest = &body[depth..];
+    if depth > 0 && (rest.is_empty() || rest.starts_with([' ', '\t', '\r'])) {
+        depth
+    } else {
+        0
     }
-    depth
 }
 
 /// Move a prematurely crossed bold closer behind its size closer.
@@ -457,9 +453,11 @@ fn quote_depth_and_body(mut body: &str) -> (usize, &str) {
 
 fn is_tight_first_quote(body: &str) -> bool {
     let body = body.trim_start_matches([' ', '\t']);
-    let Some(rest) = body.strip_prefix('>') else {
+    let depth = body.bytes().take_while(|byte| *byte == b'>').count();
+    if depth == 0 {
         return false;
-    };
+    }
+    let rest = &body[depth..];
     !rest.is_empty() && !rest.starts_with([' ', '\t', '\r'])
 }
 
@@ -597,7 +595,27 @@ mod tests {
         substitute(&mut source);
 
         assert_eq!(source, "> >ALPHA_NESTED_LITERAL\n");
+        assert_eq!(valid_quote_depth(&source), 1);
         assert_eq!(quote_depth_and_body(&source), (2, "ALPHA_NESTED_LITERAL\n"));
+    }
+
+    #[test]
+    fn contiguous_quote_run_uses_final_spacing_for_tightness() {
+        let mut source = concat!(
+            ">>ALPHA_DOUBLE_TIGHT\n",
+            ">> ALPHA_DOUBLE_SPACED\n",
+            "> >ALPHA_INNER_LITERAL\n",
+        )
+        .to_owned();
+
+        substitute(&mut source);
+
+        assert_eq!(
+            source,
+            concat!("\n", ">> ALPHA_DOUBLE_SPACED\n", "> >ALPHA_INNER_LITERAL\n",),
+        );
+        assert_eq!(valid_quote_depth(">> ALPHA_DOUBLE_SPACED"), 2);
+        assert_eq!(valid_quote_depth("> >ALPHA_INNER_LITERAL"), 1);
     }
 
     #[test]

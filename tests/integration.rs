@@ -30,3 +30,6 @@ mod security_regressions;
 
 #[path = "strikethrough_inline_regression.rs"]
 mod strikethrough_inline_regression;
+
+#[path = "wikidot_span_scope.rs"]
+mod wikidot_span_scope;

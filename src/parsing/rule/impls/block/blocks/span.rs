@@ -20,6 +20,7 @@
 
 use super::prelude::*;
 use crate::parsing::strip_newlines;
+use crate::tree::PartialElement;
 
 pub const BLOCK_SPAN: BlockRule = BlockRule {
     name: "block-span",
@@ -42,6 +43,16 @@ fn parse_fn<'r, 't>(
     assert_block_name(&BLOCK_SPAN, name);
 
     let arguments = parser.get_head_map(&BLOCK_SPAN, in_head)?;
+    let has_close = parser.has_body_end_block(&BLOCK_SPAN);
+
+    if parser.settings().layout.legacy() && !flag_score {
+        if !has_close {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+        return ok!(Element::Partial(PartialElement::InlineSpanOpen(
+            arguments.to_attribute_map(parser.settings()),
+        )));
+    }
 
     // Get body content, without paragraphs
     let body = parser.get_body_elements(&BLOCK_SPAN, false)?;

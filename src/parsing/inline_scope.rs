@@ -1,9 +1,20 @@
 use crate::tree::{
     AttributeMap, Container, ContainerType, Element, ListItem, PartialElement,
 };
-use std::borrow::Cow;
 use std::collections::BTreeSet;
 use std::mem;
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ScopeKind {
+    Size,
+    Span,
+}
+
+struct ActiveScope<'t> {
+    kind: ScopeKind,
+    ctype: ContainerType,
+    attributes: AttributeMap<'t>,
+}
 
 pub(crate) fn lower_wikidot_inline_size_scopes<'t>(elements: &mut Vec<Element<'t>>) {
     let mut ordinal = 0;
@@ -19,19 +30,37 @@ pub(crate) fn lower_wikidot_inline_size_scopes<'t>(elements: &mut Vec<Element<'t
 fn collect_valid_pairs(
     elements: &[Element<'_>],
     ordinal: &mut usize,
-    stack: &mut Vec<usize>,
+    stack: &mut Vec<(ScopeKind, usize)>,
     valid: &mut BTreeSet<usize>,
 ) {
     for element in elements {
         match element {
             Element::Partial(PartialElement::InlineSizeOpen(_)) => {
-                stack.push(*ordinal);
+                stack.push((ScopeKind::Size, *ordinal));
                 *ordinal += 1;
             }
             Element::Partial(PartialElement::InlineSizeClose) => {
                 let close = *ordinal;
                 *ordinal += 1;
-                if let Some(open) = stack.pop() {
+                if let Some(position) =
+                    stack.iter().rposition(|(kind, _)| *kind == ScopeKind::Size)
+                {
+                    let (_, open) = stack.remove(position);
+                    valid.insert(open);
+                    valid.insert(close);
+                }
+            }
+            Element::Partial(PartialElement::InlineSpanOpen(_)) => {
+                stack.push((ScopeKind::Span, *ordinal));
+                *ordinal += 1;
+            }
+            Element::Partial(PartialElement::InlineSpanClose(_)) => {
+                let close = *ordinal;
+                *ordinal += 1;
+                if let Some(position) =
+                    stack.iter().rposition(|(kind, _)| *kind == ScopeKind::Span)
+                {
+                    let (_, open) = stack.remove(position);
                     valid.insert(open);
                     valid.insert(close);
                 }
@@ -50,7 +79,7 @@ fn lower_sequence<'t>(
     elements: &mut Vec<Element<'t>>,
     valid: &BTreeSet<usize>,
     ordinal: &mut usize,
-    active: &mut Vec<Cow<'t, str>>,
+    active: &mut Vec<ActiveScope<'t>>,
 ) {
     let mut output = Vec::with_capacity(elements.len());
     let mut run = Vec::new();
@@ -61,7 +90,13 @@ fn lower_sequence<'t>(
             let current = *ordinal;
             *ordinal += 1;
             if valid.contains(&current) {
-                active.push(style);
+                let mut attributes = AttributeMap::new();
+                attributes.insert("style", style);
+                active.push(ActiveScope {
+                    kind: ScopeKind::Size,
+                    ctype: ContainerType::Size,
+                    attributes,
+                });
             }
             continue;
         }
@@ -70,7 +105,31 @@ fn lower_sequence<'t>(
             let current = *ordinal;
             *ordinal += 1;
             if valid.contains(&current) {
-                active.pop();
+                remove_active(active, ScopeKind::Size);
+            }
+            continue;
+        }
+        if let Element::Partial(PartialElement::InlineSpanOpen(attributes)) = element {
+            flush_run(&mut output, &mut run, active);
+            let current = *ordinal;
+            *ordinal += 1;
+            if valid.contains(&current) {
+                active.push(ActiveScope {
+                    kind: ScopeKind::Span,
+                    ctype: ContainerType::Span,
+                    attributes,
+                });
+            }
+            continue;
+        }
+        if let Element::Partial(PartialElement::InlineSpanClose(source)) = element {
+            flush_run(&mut output, &mut run, active);
+            let current = *ordinal;
+            *ordinal += 1;
+            if valid.contains(&current) {
+                remove_active(active, ScopeKind::Span);
+            } else {
+                output.push(Element::Text(source));
             }
             continue;
         }
@@ -93,19 +152,17 @@ fn lower_sequence<'t>(
 fn flush_run<'t>(
     output: &mut Vec<Element<'t>>,
     run: &mut Vec<Element<'t>>,
-    active: &[Cow<'t, str>],
+    active: &[ActiveScope<'t>],
 ) {
     if run.is_empty() {
         return;
     }
     let mut wrapped = mem::take(run);
-    for style in active.iter().rev() {
-        let mut attributes = AttributeMap::new();
-        attributes.insert("style", style.clone());
+    for scope in active.iter().rev() {
         wrapped = vec![Element::Container(Container::new(
-            ContainerType::Size,
+            scope.ctype,
             wrapped,
-            attributes,
+            scope.attributes.clone(),
         ))];
     }
     output.extend(wrapped);
@@ -123,7 +180,7 @@ fn lower_children<'t>(
     element: &mut Element<'t>,
     valid: &BTreeSet<usize>,
     ordinal: &mut usize,
-    active: &mut Vec<Cow<'t, str>>,
+    active: &mut Vec<ActiveScope<'t>>,
 ) -> bool {
     let mut lowered = false;
     let mut visit = |children: &mut Vec<Element<'t>>| {
@@ -132,6 +189,12 @@ fn lower_children<'t>(
     };
     visit_children_mut(element, &mut visit);
     lowered
+}
+
+fn remove_active(active: &mut Vec<ActiveScope<'_>>, kind: ScopeKind) {
+    if let Some(position) = active.iter().rposition(|scope| scope.kind == kind) {
+        active.remove(position);
+    }
 }
 
 fn visit_children<'t>(element: &Element<'t>, visit: &mut dyn FnMut(&[Element<'t>])) {

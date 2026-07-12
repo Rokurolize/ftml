@@ -61,6 +61,19 @@ pub const BLOCK_TABLE_CELL_HEADER: BlockRule = BlockRule {
     parse_fn: parse_cell_header,
 };
 
+// Wikidot closes header cells with `[[/cell]]`, while FTML has historically
+// also accepted the symmetric `[[/hcell]]` spelling. Keep the registered
+// opener rule restricted to `hcell` so `[[cell]]` still dispatches to the
+// regular-cell parser, and use this body-only rule for the two valid closers.
+const BLOCK_TABLE_CELL_HEADER_BODY: BlockRule = BlockRule {
+    name: "block-table-cell-header-body",
+    accepts_names: &["hcell", "cell"],
+    accepts_star: false,
+    accepts_score: false,
+    accepts_newlines: true,
+    parse_fn: parse_cell_header,
+};
+
 // Helper functions and macros
 
 #[derive(Debug)]
@@ -88,11 +101,12 @@ where
     assert_block_name(block_rule, name);
 
     // Get attributes
-    let arguments = parser.get_head_map(block_rule, in_head)?;
+    let (arguments, body_start) =
+        parser.get_head_map_with_body_start(block_rule, in_head)?;
     let attributes = arguments.to_attribute_map(parser.settings());
 
     // Get body elements
-    let body = parser.get_body_elements(block_rule, false)?;
+    let body = parser.get_body_elements_with_context(block_rule, false, body_start)?;
     let (elements, errors, _) = body.into();
 
     // Return result
@@ -233,7 +247,7 @@ fn parse_cell_header<'r, 't>(
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     let parser = &mut ParserWrap::new(parser, AcceptsPartial::TableCell);
-    let block = (&BLOCK_TABLE_CELL_HEADER, "table cell (header)");
+    let block = (&BLOCK_TABLE_CELL_HEADER_BODY, "table cell (header)");
 
     // Get block contents.
     let parsed = parse_block(parser, name, flag_star, flag_score, in_head, block)?;
@@ -394,6 +408,28 @@ mod tests {
                     Some("body")
                 );
                 assert_eq!(element_text(&body_cell.elements), "Content");
+            },
+        );
+    }
+
+    #[test]
+    fn advanced_header_cell_accepts_wikidot_cell_closer() {
+        with_parse(
+            "[[table]][[row]][[hcell]]Heading[[/cell]][[/row]][[/table]]",
+            |tree, errors| {
+                assert!(errors.is_empty(), "{errors:?}");
+                let [Element::Table(table)] = tree.as_slice() else {
+                    panic!("expected one advanced table, got {tree:?}");
+                };
+                let [row] = table.rows.as_slice() else {
+                    panic!("expected one row, got {:?}", table.rows);
+                };
+                let [cell] = row.cells.as_slice() else {
+                    panic!("expected one cell, got {:?}", row.cells);
+                };
+
+                assert!(cell.header);
+                assert_eq!(element_text(&cell.elements), "Heading");
             },
         );
     }

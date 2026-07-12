@@ -1,6 +1,9 @@
 #[path = "coverage_parser_edges.rs"]
 mod coverage_parser_edges;
 
+#[path = "advanced_table_performance.rs"]
+mod advanced_table_performance;
+
 #[path = "canonical_wikidot_source.rs"]
 mod canonical_wikidot_source;
 

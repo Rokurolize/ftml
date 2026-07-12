@@ -60,6 +60,11 @@ impl<'t> Container<'t> {
     }
 
     #[inline]
+    pub(crate) fn elements_mut(&mut self) -> &mut Vec<Element<'t>> {
+        &mut self.elements
+    }
+
+    #[inline]
     pub fn attributes(&self) -> &AttributeMap<'t> {
         &self.attributes
     }

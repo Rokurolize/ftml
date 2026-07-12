@@ -144,6 +144,9 @@ impl<'t> ParseSuccess<'_, 't, Elements<'t>> {
         for element in &self.item {
             // This check only applies if the element is a partial.
             if let Element::Partial(partial) = element {
+                if partial.is_inline_format_control() {
+                    continue;
+                }
                 // Check if the current rule is looking for a partial.
                 if !parser.accepts_partial().matches(partial) {
                     // Found a partial when not looking for one. Raise the appropriate error.

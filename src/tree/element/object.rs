@@ -430,6 +430,7 @@ impl Element<'_> {
             Element::LineBreak | Element::LineBreaks { .. } => true,
             Element::ClearFloat(_) => false,
             Element::HorizontalRule => false,
+            Element::Partial(partial) if partial.is_inline_format_control() => true,
             Element::Partial(_) => {
                 panic!("Should not check for paragraph safety of partials")
             }

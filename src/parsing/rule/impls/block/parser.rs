@@ -131,16 +131,19 @@ where
         restrict_quote_close: bool,
     ) -> Option<&'r ExtractedToken<'t>> {
         self.save_evaluate_fn(|parser| {
-            if restrict_quote_close && !parser.quote_body_close_allowed_here() {
-                return Ok(false);
-            }
-
             // Check that the end block is on a new line, if required
             if block_rule.accepts_newlines {
                 // Only check after the first, to permit empty blocks
                 if !first_iteration {
                     parser.get_optional_line_break()?;
                 }
+            }
+
+            if restrict_quote_close
+                && (parser.prepare_quote_body_line()? == QuoteBodyLineStatus::Boundary
+                    || !parser.quote_body_close_allowed_here())
+            {
+                return Ok(false);
             }
 
             // Check if it's an end block
@@ -373,6 +376,35 @@ where
         as_paragraphs: bool,
         body_start: BlockBodyStart,
     ) -> ParseResult<'r, 't, Vec<Element<'t>>> {
+        self.get_body_elements_with_context_policy(
+            block_rule,
+            as_paragraphs,
+            body_start,
+            false,
+        )
+    }
+
+    pub(crate) fn get_body_elements_with_literal_quote_context(
+        &mut self,
+        block_rule: &BlockRule,
+        as_paragraphs: bool,
+        body_start: BlockBodyStart,
+    ) -> ParseResult<'r, 't, Vec<Element<'t>>> {
+        self.get_body_elements_with_context_policy(
+            block_rule,
+            as_paragraphs,
+            body_start,
+            true,
+        )
+    }
+
+    fn get_body_elements_with_context_policy(
+        &mut self,
+        block_rule: &BlockRule,
+        as_paragraphs: bool,
+        body_start: BlockBodyStart,
+        literal_residual_quotes: bool,
+    ) -> ParseResult<'r, 't, Vec<Element<'t>>> {
         let Some(required_depth) = self.native_blockquote_depth() else {
             return self.get_body_elements(block_rule, as_paragraphs);
         };
@@ -384,7 +416,11 @@ where
         }
 
         let previous_cursor = self.quote_body_cursor();
-        self.install_quote_body_cursor(required_depth);
+        if literal_residual_quotes {
+            self.install_quote_body_cursor_with_literal_residuals(required_depth);
+        } else {
+            self.install_quote_body_cursor(required_depth);
+        }
         let result = self.get_body_elements_internal(block_rule, as_paragraphs, true);
         self.set_quote_body_cursor(previous_cursor);
 
@@ -431,6 +467,45 @@ where
         self.update(&fork);
         self.reset_mutable_state(mutable_state);
         Ok(())
+    }
+
+    pub(crate) fn discard_body_elements_with_literal_quote_context(
+        &mut self,
+        block_rule: &BlockRule,
+        body_start: BlockBodyStart,
+    ) -> Result<(), ParseError> {
+        self.discard_body_elements_with_context_policy(block_rule, body_start, true)
+    }
+
+    fn discard_body_elements_with_context_policy(
+        &mut self,
+        block_rule: &BlockRule,
+        body_start: BlockBodyStart,
+        literal_residual_quotes: bool,
+    ) -> Result<(), ParseError> {
+        let Some(required_depth) = self.native_blockquote_depth() else {
+            return self.discard_body_elements(block_rule);
+        };
+        if body_start != BlockBodyStart::NextPhysicalLine {
+            return self.discard_body_elements(block_rule);
+        }
+        if !self.has_native_blockquote_body_end(block_rule, required_depth) {
+            return Err(self.make_err(ParseErrorKind::RuleFailed));
+        }
+
+        let previous_cursor = self.quote_body_cursor();
+        if literal_residual_quotes {
+            self.install_quote_body_cursor_with_literal_residuals(required_depth);
+        } else {
+            self.install_quote_body_cursor(required_depth);
+        }
+        let result = self.discard_body_elements(block_rule);
+        self.set_quote_body_cursor(previous_cursor);
+
+        if result.is_ok() && self.current().token == Token::LineBreak {
+            self.step()?;
+        }
+        result
     }
 
     fn get_body_elements_paragraphs(
@@ -807,6 +882,19 @@ where
     where
         F: FnOnce(&Self, Option<&'t str>) -> Result<T, ParseError>,
     {
+        self.get_head_value_with_body_start(block_rule, in_head, convert)
+            .map(|(value, _)| value)
+    }
+
+    pub(crate) fn get_head_value_with_body_start<F, T>(
+        &mut self,
+        block_rule: &BlockRule,
+        in_head: bool,
+        convert: F,
+    ) -> Result<(T, BlockBodyStart), ParseError>
+    where
+        F: FnOnce(&Self, Option<&'t str>) -> Result<T, ParseError>,
+    {
         let argument = if in_head {
             // Gather slice of tokens in value
             let end_conditions = [ParseCondition::current(Token::RightBlock)];
@@ -830,8 +918,8 @@ where
         let value = convert(self, argument)?;
 
         // Set to false because the collection will always end the block
-        self.get_head_block(block_rule, false)?;
-        Ok(value)
+        let body_start = self.get_head_block_with_body_start(block_rule, false)?;
+        Ok((value, body_start))
     }
 
     pub fn get_head_none(
@@ -853,15 +941,6 @@ where
     }
 
     // Helper function to finish up the head block
-    fn get_head_block(
-        &mut self,
-        block_rule: &BlockRule,
-        in_head: bool,
-    ) -> Result<(), ParseError> {
-        self.get_head_block_with_body_start(block_rule, in_head)
-            .map(drop)
-    }
-
     fn get_head_block_with_body_start(
         &mut self,
         block_rule: &BlockRule,

@@ -62,6 +62,12 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "IfCategory doesn't allow score flag");
     assert_block_name(&BLOCK_IFCATEGORY, name);
 
+    // Wikidot emits ifcategory syntax literally. Retain the executable block
+    // in the Wikijump layout, where it remains a supported extension.
+    if parser.settings().layout.legacy() {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     // Parse out tag conditions
     let rule = &BLOCK_IFCATEGORY;
     let conditions = parser.get_head_value(rule, in_head, parse_conditions)?;
@@ -118,7 +124,7 @@ mod tests {
     #[test]
     fn ifcategory_requires_conditions_and_checks_default_category() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         for input in [
             "[[ifcategory]]body[[/ifcategory]]",
             "[[ifcategory   ]]body[[/ifcategory]]",

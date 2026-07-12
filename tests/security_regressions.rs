@@ -655,24 +655,38 @@ fn over_limit_date_formats_fall_back_without_format_class() {
 #[test]
 fn hidden_conditionals_do_not_publish_metadata_blocks() {
     for layout in [Layout::Wikijump, Layout::Wikidot] {
-        for input in [
+        let tree = parse(
             "[[iftags +missing]]\n+ Secret heading\n[[footnote]]secret[[/footnote]]\n[[bibliography]]\n: secret : reference\n[[/bibliography]]\n[[code]]\nsecret\n[[/code]]\n[[html]]\n<b>secret</b>\n[[/html]]\n[[/iftags]]",
-            "[[ifcategory missing]]\n+ Secret heading\n[[footnote]]secret[[/footnote]]\n[[bibliography]]\n: secret : reference\n[[/bibliography]]\n[[code]]\nsecret\n[[/code]]\n[[html]]\n<b>secret</b>\n[[/html]]\n[[/ifcategory]]",
-        ] {
-            let tree = parse(input, layout);
+            layout,
+        );
 
-            assert!(
-                tree.elements.is_empty()
-                    && tree.table_of_contents.is_empty()
-                    && tree.code_blocks.is_empty()
-                    && tree.html_blocks.is_empty()
-                    && tree.footnotes.is_empty()
-                    && !tree.needs_footnote_block
-                    && tree.bibliographies.is_empty(),
-                "{layout:?}: {tree:?}",
-            );
-        }
+        assert!(
+            tree.elements.is_empty()
+                && tree.table_of_contents.is_empty()
+                && tree.code_blocks.is_empty()
+                && tree.html_blocks.is_empty()
+                && tree.footnotes.is_empty()
+                && !tree.needs_footnote_block
+                && tree.bibliographies.is_empty(),
+            "{layout:?}: {tree:?}",
+        );
     }
+
+    let ifcategory = "[[ifcategory missing]]\n+ Secret heading\n[[footnote]]secret[[/footnote]]\n[[bibliography]]\n: secret : reference\n[[/bibliography]]\n[[code]]\nsecret\n[[/code]]\n[[html]]\n<b>secret</b>\n[[/html]]\n[[/ifcategory]]";
+    let wikijump = parse(ifcategory, Layout::Wikijump);
+    assert!(wikijump.elements.is_empty(), "{wikijump:?}");
+    assert!(wikijump.code_blocks.is_empty(), "{wikijump:?}");
+    assert!(wikijump.html_blocks.is_empty(), "{wikijump:?}");
+
+    // Wikidot has no active ifcategory gate: the marker is literal and its
+    // ordinary body syntax remains active.
+    let (wikidot, literal_errors) = parse_with_errors(ifcategory, Layout::Wikidot);
+    assert!(!literal_errors.is_empty());
+    assert!(!wikidot.elements.is_empty(), "{wikidot:?}");
+    assert_eq!(wikidot.code_blocks.len(), 1, "{wikidot:?}");
+    assert_eq!(wikidot.html_blocks.len(), 1, "{wikidot:?}");
+    assert_eq!(wikidot.footnotes.len(), 1, "{wikidot:?}");
+    assert!(!wikidot.bibliographies.is_empty(), "{wikidot:?}");
 
     let tree = parse(
         "[[ifcategory _default]]\n[[code]]\nvisible\n[[/code]]\n[[/ifcategory]]",
@@ -851,9 +865,11 @@ fn false_iftags_deep_nested_conditionals_parse_within_budget() {
 fn false_iftags_unclosed_outer_body_keeps_layout_specific_semantics() {
     let input = "[[iftags +missing]]\nfollowing body";
 
-    let wikidot = parse(input, Layout::Wikidot);
+    let (wikidot, literal_errors) = parse_with_errors(input, Layout::Wikidot);
+    assert!(!literal_errors.is_empty());
     assert!(
-        render_text(&wikidot, Layout::Wikidot).contains("following body"),
+        render_text(&wikidot, Layout::Wikidot).contains("[[iftags +missing]]")
+            && render_text(&wikidot, Layout::Wikidot).contains("following body"),
         "{:?}",
         wikidot.elements
     );

@@ -71,8 +71,61 @@ pub fn substitute(text: &mut String) {
     canonicalize_unmatched_quoted_tab_closers(&mut lines, &literal_lines);
     canonicalize_crossed_center_collapsible_closers(&mut lines, &literal_lines);
     canonicalize_crossed_bold_size_closers(&mut lines, &literal_lines);
+    remove_tight_quote_lines(&mut lines, &literal_lines);
 
     *text = lines.concat();
+}
+
+/// Remove lines whose first native quote marker is not followed by horizontal space.
+///
+/// Wikidot consumes these lines rather than treating their remainder as quoted
+/// content or literal text. Root-level literal regions remain byte-preserving.
+fn remove_tight_quote_lines(lines: &mut [String], literal_lines: &[bool]) {
+    let mut active_quote_depth = 0;
+    for (line, literal) in lines.iter_mut().zip(literal_lines) {
+        if *literal {
+            let (body, _) = split_line(line);
+            let depth = valid_quote_depth(body);
+            if depth > 0 {
+                active_quote_depth = depth;
+            }
+            continue;
+        }
+
+        let (body, ending) = split_line(line);
+        let trimmed = body.trim_start_matches([' ', '\t']);
+        let Some(after_marker) = trimmed.strip_prefix('>') else {
+            active_quote_depth = 0;
+            continue;
+        };
+        if after_marker.is_empty() || after_marker.starts_with([' ', '\t', '\r']) {
+            active_quote_depth = valid_quote_depth(body);
+            continue;
+        }
+
+        let indentation = &body[..body.len() - trimmed.len()];
+        if active_quote_depth == 0 {
+            *line = ending.to_owned();
+        } else {
+            *line = format!("{indentation}{}{ending}", "> ".repeat(active_quote_depth));
+        }
+    }
+}
+
+fn valid_quote_depth(body: &str) -> usize {
+    let mut depth = 0;
+    let mut rest = body.trim_start_matches([' ', '\t']);
+    while let Some(after_marker) = rest.strip_prefix('>') {
+        if after_marker.is_empty() || after_marker.starts_with('\r') {
+            return depth + 1;
+        }
+        if !after_marker.starts_with([' ', '\t']) {
+            break;
+        }
+        depth += 1;
+        rest = after_marker.trim_start_matches([' ', '\t']);
+    }
+    depth
 }
 
 /// Move a prematurely crossed bold closer behind its size closer.
@@ -359,6 +412,11 @@ fn literal_line_mask(lines: &[String]) -> Vec<bool> {
             continue;
         }
 
+        if is_tight_first_quote(body) {
+            mask.push(false);
+            continue;
+        }
+
         if let Some(close) = literal_block_close(&lower) {
             mask.push(true);
             if !lower.contains(close) {
@@ -397,6 +455,14 @@ fn quote_depth_and_body(mut body: &str) -> (usize, &str) {
     (quote_depth, body)
 }
 
+fn is_tight_first_quote(body: &str) -> bool {
+    let body = body.trim_start_matches([' ', '\t']);
+    let Some(rest) = body.strip_prefix('>') else {
+        return false;
+    };
+    !rest.is_empty() && !rest.starts_with([' ', '\t', '\r'])
+}
+
 fn literal_block_close(lower: &str) -> Option<&'static str> {
     let marker = lower.strip_prefix("[[")?.trim_start();
     let head = marker.split_once("]]")?.0.trim_end();
@@ -422,6 +488,117 @@ mod tests {
     use crate::layout::Layout;
     use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn tight_quote_lines_are_consumed_but_spaced_quotes_render() {
+        let mut source = concat!(
+            ">ALPHA_PLAIN_TIGHT\n",
+            ">**ALPHA_BOLD_TIGHT**\n",
+            ">[[[https://example.com | ALPHA_LINK_TIGHT]]]\n",
+            ">[[div]]\n",
+            ">ALPHA_DIV_TIGHT\n",
+            ">[[/div]]\n",
+            "> ALPHA_PLAIN_SPACED\n",
+            "> **ALPHA_BOLD_SPACED**\n",
+            "> [[[https://example.com | ALPHA_LINK_SPACED]]]\n",
+            "> [[div]]\n",
+            "> ALPHA_DIV_SPACED\n",
+            "> [[/div]]\n",
+        )
+        .to_owned();
+
+        substitute(&mut source);
+
+        assert_eq!(
+            source,
+            concat!(
+                "\n\n\n\n\n\n",
+                "> ALPHA_PLAIN_SPACED\n",
+                "> **ALPHA_BOLD_SPACED**\n",
+                "> [[[https://example.com | ALPHA_LINK_SPACED]]]\n",
+                "> [[div]]\n",
+                "> ALPHA_DIV_SPACED\n",
+                "> [[/div]]\n",
+            ),
+        );
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(!html.contains("_TIGHT"), "{html}");
+        assert!(html.contains("ALPHA_PLAIN_SPACED"), "{html}");
+        assert!(html.contains("ALPHA_BOLD_SPACED"), "{html}");
+        assert!(html.contains("ALPHA_LINK_SPACED"), "{html}");
+        assert!(html.contains("ALPHA_DIV_SPACED"), "{html}");
+    }
+
+    #[test]
+    fn tight_quote_text_inside_root_literal_blocks_is_preserved() {
+        let mut source = concat!(
+            "[[code]]\n",
+            ">ALPHA_CODE_LITERAL\n",
+            "[[/code]]\n",
+            "[[raw]]\n",
+            ">ALPHA_RAW_LITERAL\n",
+            "[[/raw]]\n",
+        )
+        .to_owned();
+        let original = source.clone();
+
+        substitute(&mut source);
+
+        assert_eq!(source, original);
+    }
+
+    #[test]
+    fn standalone_tight_quote_canonicalizes_to_a_pruned_empty_quote() {
+        let mut source = ">ALPHA_TIGHT\n".to_owned();
+
+        substitute(&mut source);
+        assert_eq!(source, "\n");
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(!html.contains("ALPHA_TIGHT"), "{html}");
+        assert!(html.trim().is_empty(), "{html}");
+    }
+
+    #[test]
+    fn discarded_tight_quote_retains_a_paragraph_boundary() {
+        let mut source = "BEFORE_MARKER\n>DROP_MARKER\nAFTER_MARKER".to_owned();
+
+        substitute(&mut source);
+        assert_eq!(source, "BEFORE_MARKER\n\nAFTER_MARKER");
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html.matches("<p>").count(), 2, "{html}");
+        assert!(!html.contains("DROP_MARKER"), "{html}");
+    }
+
+    #[test]
+    fn nested_spaced_quote_keeps_a_tight_marker_as_literal_content() {
+        let mut source = "> >ALPHA_NESTED_LITERAL\n".to_owned();
+
+        substitute(&mut source);
+
+        assert_eq!(source, "> >ALPHA_NESTED_LITERAL\n");
+        assert_eq!(quote_depth_and_body(&source), (2, "ALPHA_NESTED_LITERAL\n"));
+    }
 
     #[test]
     fn quoted_crossed_center_and_collapsible_closers_are_canonicalized() {
@@ -545,7 +722,7 @@ mod tests {
 
         assert!(errors.is_empty(), "{errors:#?}");
         assert!(html.contains("wj-collapsible"), "{html}");
-        assert!(html.contains("user example"), "{html}");
+        assert!(!html.contains("user example"), "{html}");
         assert!(html.contains("outside"), "{html}");
     }
 

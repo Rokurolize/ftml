@@ -43,6 +43,10 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "Code doesn't allow score flag");
     assert_block_name(&BLOCK_CODE, name);
 
+    if parser.native_blockquote_depth().is_some() {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     let mut arguments = parser.get_head_map(&BLOCK_CODE, in_head)?;
 
     let mut language = arguments.get("type");
@@ -105,113 +109,35 @@ mod tests {
     }
 
     #[test]
-    fn quoted_code_block_preserves_source_line_endings() {
+    fn quoted_code_markers_remain_literal_like_wikidot() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-
-        for line_break in ["\r\n", "\r"] {
-            let input = format!(
-                "> [[collapsible]]{line_break}\
-                 > [[code]]{line_break}\
-                 > alpha{line_break}\
-                 > beta{line_break}\
-                 > [[/code]]{line_break}\
-                 > [[/collapsible]]"
-            );
-            let tokenization = crate::tokenize(&input);
-            let (tree, errors) =
-                crate::parse(&tokenization, &page_info, &settings).into();
-
-            assert!(errors.is_empty(), "line break {line_break:?}: {errors:?}");
-            let [code_block] = tree.code_blocks.as_slice() else {
-                panic!(
-                    "expected one tracked code block, got {:?}",
-                    tree.code_blocks
-                );
-            };
-            assert_eq!(code_block.contents, format!("alpha{line_break}beta"));
-        }
-    }
-
-    #[test]
-    fn quoted_code_block_accepts_inline_closer() {
-        let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize(concat!(
-            "> [[collapsible]]\n",
-            "> [[code]]\n",
-            "> alpha[[/code]]\n",
-            "> [[/collapsible]]\n",
-        ));
-        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
-
-        assert!(errors.is_empty(), "{errors:?}");
-        let [code_block] = tree.code_blocks.as_slice() else {
-            panic!(
-                "expected one tracked code block, got {:?}",
-                tree.code_blocks
-            );
-        };
-        assert_eq!(code_block.contents, "alpha");
-    }
-
-    #[test]
-    fn nested_quoted_code_uses_absolute_contiguous_and_spaced_depth() {
-        let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-
         for input in [
+            ">> [[code]]\n>> ALPHA_CODE_DEPTH_TWO\n>> [[/code]]",
+            "> > [[code]]\n> > ALPHA_CODE_SPACED_LITERAL\n> > [[/code]]",
+            ">> [[code]]\n>> ALPHA_CODE_SHALLOW_CLOSE\n> [[/code]]\n> ALPHA_AFTER_SHALLOW",
+            "> [[code]]\n> ALPHA_CODE_DEEP_CLOSE\n>> [[/code]]\n> ALPHA_AFTER_DEEP",
             concat!(
                 "> [[collapsible]]\n",
-                ">> [[code]]\n",
-                ">> alpha\n",
-                ">> [[/code]]\n",
-                "> [[/collapsible]]\n",
-            ),
-            concat!(
-                "> [[collapsible]]\n",
-                "> > [[code]]\n",
-                "> > alpha\n",
-                "> > [[/code]]\n",
+                "> [[code]]\n",
+                "> ALPHA_COLLAPSIBLE_CODE_LITERAL\n",
+                "> [[/code]]\n",
                 "> [[/collapsible]]\n",
             ),
         ] {
             let tokenization = crate::tokenize(input);
-            let (tree, errors) =
+            let (tree, _errors) =
                 crate::parse(&tokenization, &page_info, &settings).into();
 
-            assert!(errors.is_empty(), "{errors:?}");
-            let [code_block] = tree.code_blocks.as_slice() else {
-                panic!(
-                    "expected one tracked code block, got {:?}",
-                    tree.code_blocks
-                );
-            };
-            assert_eq!(code_block.contents, "alpha");
-        }
-    }
-
-    #[test]
-    fn deeper_quote_line_does_not_close_outer_code_block() {
-        let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize(concat!(
-            "> [[collapsible]]\n",
-            "> [[code]]\n",
-            ">> [[/code]]\n",
-            "> kept\n",
-            "> [[/code]]\n",
-            "> [[/collapsible]]\n",
-        ));
-        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
-
-        assert!(errors.is_empty(), "{errors:?}");
-        let [code_block] = tree.code_blocks.as_slice() else {
-            panic!(
-                "expected one tracked code block, got {:?}",
+            assert!(
+                tree.code_blocks.is_empty(),
+                "{input:?}: {:?}",
                 tree.code_blocks
             );
-        };
-        assert_eq!(code_block.contents, "> [[/code]]\nkept");
+            let debug = format!("{tree:?}");
+            assert!(debug.contains("Text(\"[[\")"), "{input:?}: {debug}");
+            assert!(debug.contains("Text(\"code\")"), "{input:?}: {debug}");
+            assert!(debug.contains("Text(\"]]\")"), "{input:?}: {debug}");
+        }
     }
 }

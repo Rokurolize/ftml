@@ -167,7 +167,9 @@ mod tests {
             "{html}"
         );
         assert!(
-            html.contains("<div class=\"links\"><p><span style=\"font-size: larger;\"><a"),
+            html.contains(
+                "<div class=\"links\"><p><span style=\"font-size: larger;\"><a"
+            ),
             "{html}"
         );
         assert!(

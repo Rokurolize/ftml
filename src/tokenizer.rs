@@ -103,4 +103,28 @@ mod test {
 
         assert_eq!(token_count, expected_tokens);
     }
+
+    #[test]
+    fn email_scan_does_not_swallow_a_wikidot_block_closer() {
+        // Corpus provenance: scp-wiki/scp-9945.
+        let input = "[[span]]name[[/span]]19@scip.net";
+        let tokenization = tokenize(input);
+
+        assert!(
+            tokenization
+                .tokens()
+                .iter()
+                .any(|token| token.token == Token::Email && token.slice == "19@scip.net"),
+            "{:#?}",
+            tokenization.tokens(),
+        );
+        assert!(
+            tokenization
+                .tokens()
+                .iter()
+                .all(|token| token.slice != "span]]19@scip.net"),
+            "{:#?}",
+            tokenization.tokens(),
+        );
+    }
 }

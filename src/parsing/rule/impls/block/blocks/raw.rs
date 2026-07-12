@@ -106,6 +106,8 @@ mod tests {
         for input in [
             ">> [[raw]]\n>> ALPHA_RAW_DEPTH_TWO\n>> [[/raw]]",
             "> > [[raw]]\n> > ALPHA_RAW_SPACED_LITERAL\n> > [[/raw]]",
+            ">> [[raw]]\n>> OMEGA_RAW_SHALLOW_CLOSE\n> [[/raw]]\n> OMEGA_AFTER_SHALLOW",
+            "> [[raw]]\n> OMEGA_RAW_DEEP_CLOSE\n>> [[/raw]]\n> OMEGA_AFTER_DEEP",
             concat!(
                 "> [[collapsible]]\n",
                 "> [[raw]]\n",

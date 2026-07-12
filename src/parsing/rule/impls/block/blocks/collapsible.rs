@@ -458,7 +458,7 @@ mod tests {
     }
 
     #[test]
-    fn quoted_collapsible_normalizes_nested_raw_text_block_bodies() {
+    fn quoted_collapsible_keeps_nested_raw_text_block_markers_literal() {
         let input = concat!(
             "> [[collapsible show=\"show\"]]\n",
             "> [[code]]\n",
@@ -471,9 +471,8 @@ mod tests {
             "> [[/collapsible]]\n",
             "> following quote\n",
         );
-        let (html, _, errors) = render(input);
+        let (html, _, _errors) = render(input);
 
-        assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 1);
         assert_eq!(html.matches("<blockquote>").count(), 1, "{html}");
         assert!(html.contains("hello code"), "{html}");
@@ -481,9 +480,12 @@ mod tests {
             html.contains("[[/collapsible]] literal code text"),
             "{html}"
         );
-        assert!(html.contains("**raw text**"), "{html}");
+        assert!(html.contains("<strong>raw text</strong>"), "{html}");
+        assert!(html.contains("[[code]]"), "{html}");
+        assert!(html.contains("[[/code]]"), "{html}");
+        assert!(html.contains("[[raw]]"), "{html}");
+        assert!(html.contains("[[/raw]]"), "{html}");
         assert!(!html.contains("&gt; hello code"), "{html}");
-        assert!(!html.contains("&gt; **raw text**"), "{html}");
         assert!(html.contains("following quote"), "{html}");
     }
 

@@ -362,6 +362,11 @@ impl<'r, 't> Parser<'r, 't> {
     }
 
     #[rustfmt::skip]
+    pub(crate) fn install_quote_body_cursor_at_current_line(&mut self, required_depth: usize) {
+        self.quote_body_cursor = Some(QuoteBodyCursor { required_depth, line_state: QuoteBodyLineState::PreparedContent { content_start: self.current().span.start } });
+    }
+
+    #[rustfmt::skip]
     pub(crate) fn quote_body_close_allowed_here(&self) -> bool {
         matches!(self.quote_body_cursor, Some(QuoteBodyCursor { line_state: QuoteBodyLineState::PreparedContent { content_start }, .. }) if content_start == self.current().span.start)
     }

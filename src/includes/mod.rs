@@ -109,7 +109,7 @@ where
                 .map(|(include, end)| (include, end, None))
         } else {
             let quote_depth = quote_prefix.bytes().filter(|&byte| byte == b'>').count();
-            parse_quoted_include(input, start, marker_start, quote_depth)
+            parse_quoted_include(input, start, marker_start, quote_depth, candidate_end)
                 .map(|parsed| (parsed.include, parsed.end, Some(quote_prefix)))
         };
 

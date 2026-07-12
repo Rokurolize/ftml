@@ -624,3 +624,30 @@ fn quoted_include_scanner_accepts_crlf_after_the_terminator() {
     assert_eq!(pages, vec![PageRef::page_only("component:box")]);
     assert_eq!(output, "> first x\n> second\r\n");
 }
+
+#[test]
+fn quoted_include_scanner_handles_many_one_line_includes_in_bounded_time() {
+    const INCLUDE_LINES: usize = 4_096;
+
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let mut input = String::new();
+    for _ in 0..INCLUDE_LINES {
+        input.push_str("> [[include component:box]]\n");
+    }
+
+    let started = std::time::Instant::now();
+    let (_output, pages) = include(
+        &input,
+        &settings,
+        QuotedContentIncluder,
+        || "invalid include response",
+    )
+    .expect("quoted one-line includes should expand");
+
+    assert_eq!(pages.len(), INCLUDE_LINES);
+    assert!(
+        started.elapsed() < std::time::Duration::from_secs(5),
+        "quoted one-line include scan took {:?}",
+        started.elapsed(),
+    );
+}

@@ -22,13 +22,13 @@ use super::prelude::*;
 
 /// Psuedo block rule for legacy Wikidot include ("messy include").
 ///
-/// Because includes are performed first, before preprocessing,
-/// tokenizing, or any other steps, no `[[include]]` blocks
+/// Because executable includes are performed first, before preprocessing,
+/// tokenizing, or any other steps, no targeted `[[include page]]` blocks
 /// should actually be present in the wikitext.
 ///
-/// If they are, this indicates that an error occurred parsing
-/// them. As such, we return a particular error instead of
-/// interpreting the block.
+/// Wikidot renders the exact targetless marker `[[include]]` literally. Other
+/// residual include shapes indicate an expansion error and retain the strict
+/// invalid-include contract.
 pub const BLOCK_INCLUDE_WIKIDOT: BlockRule = BlockRule {
     name: "block-include",
     accepts_names: &["include"],
@@ -43,15 +43,28 @@ fn parse_fn<'r, 't>(
     name: &'t str,
     flag_star: bool,
     flag_score: bool,
-    _in_head: bool,
+    in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    debug!("Found invalid include block");
     parser.check_page_syntax()?;
     assert!(!flag_star, "Include (Wikidot) doesn't allow star flag");
     assert!(!flag_score, "Include (Wikidot) doesn't allow score flag");
     assert_block_name(&BLOCK_INCLUDE_WIKIDOT, name);
 
-    // Includes are handled specially, so we should never actually be
-    // parsing a block here. So, we return an error.
+    if !in_head {
+        let marker_end = parser.current().span.start;
+        let marker_len = name.len() + "[[]]".len();
+        if let Some(marker_start) = marker_end.checked_sub(marker_len) {
+            let marker = &parser.full_text().inner()[marker_start..marker_end];
+            if marker.starts_with("[[")
+                && marker.ends_with("]]")
+                && marker[2..marker.len() - 2].eq_ignore_ascii_case("include")
+            {
+                debug!("Preserving exact targetless include marker as literal text");
+                return success_elements(text!(marker));
+            }
+        }
+    }
+
+    debug!("Found invalid include block");
     Err(parser.make_err(ParseErrorKind::InvalidInclude))
 }

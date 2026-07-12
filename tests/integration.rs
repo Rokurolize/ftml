@@ -33,3 +33,6 @@ mod strikethrough_inline_regression;
 
 #[path = "wikidot_span_scope.rs"]
 mod wikidot_span_scope;
+
+#[path = "yossistyle_wikidot_syntax.rs"]
+mod yossistyle_wikidot_syntax;

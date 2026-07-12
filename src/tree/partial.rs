@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use super::{ListItem, RubyText, Tab, TableCell, TableRow};
+use super::{AttributeMap, ListItem, RubyText, Tab, TableCell, TableRow};
 use crate::parsing::ParseErrorKind;
 use std::borrow::Cow;
 
@@ -34,6 +34,12 @@ pub enum PartialElement<'t> {
 
     /// A parse-only Wikidot inline size scope closer.
     InlineSizeClose,
+
+    /// A parse-only Wikidot inline span scope opener.
+    InlineSpanOpen(AttributeMap<'t>),
+
+    /// A parse-only Wikidot inline span scope closer.
+    InlineSpanClose(Cow<'t, str>),
 
     /// An item or sub-list within some list.
     ListItem(ListItem<'t>),
@@ -58,6 +64,8 @@ impl PartialElement<'_> {
         match self {
             PartialElement::InlineSizeOpen(_) => "InlineSizeOpen",
             PartialElement::InlineSizeClose => "InlineSizeClose",
+            PartialElement::InlineSpanOpen(_) => "InlineSpanOpen",
+            PartialElement::InlineSpanClose(_) => "InlineSpanClose",
             PartialElement::ListItem(_) => "ListItem",
             PartialElement::TableRow(_) => "TableRow",
             PartialElement::TableCell(_) => "TableCell",
@@ -69,9 +77,10 @@ impl PartialElement<'_> {
     #[inline]
     pub fn parse_error_kind(&self) -> ParseErrorKind {
         match self {
-            PartialElement::InlineSizeOpen(_) | PartialElement::InlineSizeClose => {
-                ParseErrorKind::NoRulesMatch
-            }
+            PartialElement::InlineSizeOpen(_)
+            | PartialElement::InlineSizeClose
+            | PartialElement::InlineSpanOpen(_)
+            | PartialElement::InlineSpanClose(_) => ParseErrorKind::NoRulesMatch,
             PartialElement::ListItem(_) => ParseErrorKind::ListItemOutsideList,
             PartialElement::TableRow(_) => ParseErrorKind::TableRowOutsideTable,
             PartialElement::TableCell(_) => ParseErrorKind::TableCellOutsideTable,
@@ -86,6 +95,12 @@ impl PartialElement<'_> {
                 PartialElement::InlineSizeOpen(Cow::Owned(value.to_string()))
             }
             PartialElement::InlineSizeClose => PartialElement::InlineSizeClose,
+            PartialElement::InlineSpanOpen(attributes) => {
+                PartialElement::InlineSpanOpen(attributes.to_owned())
+            }
+            PartialElement::InlineSpanClose(source) => {
+                PartialElement::InlineSpanClose(Cow::Owned(source.to_string()))
+            }
             PartialElement::ListItem(list_item) => {
                 PartialElement::ListItem(list_item.to_owned())
             }
@@ -104,7 +119,10 @@ impl PartialElement<'_> {
     pub(crate) fn is_inline_format_control(&self) -> bool {
         matches!(
             self,
-            PartialElement::InlineSizeOpen(_) | PartialElement::InlineSizeClose
+            PartialElement::InlineSizeOpen(_)
+                | PartialElement::InlineSizeClose
+                | PartialElement::InlineSpanOpen(_)
+                | PartialElement::InlineSpanClose(_)
         )
     }
 }
@@ -201,6 +219,8 @@ mod tests {
         for partial in [
             PartialElement::InlineSizeOpen(cow!("font-size: larger;")),
             PartialElement::InlineSizeClose,
+            PartialElement::InlineSpanOpen(AttributeMap::new()),
+            PartialElement::InlineSpanClose(cow!("[[/span]]")),
         ] {
             assert!(partial.is_inline_format_control());
             assert_eq!(partial.to_owned(), partial);

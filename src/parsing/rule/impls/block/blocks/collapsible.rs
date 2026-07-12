@@ -308,7 +308,7 @@ mod tests {
     }
 
     #[test]
-    fn nested_inline_block_cannot_hide_unquoted_boundary() {
+    fn nested_span_does_not_hide_an_earlier_collapsible_close() {
         let input = concat!(
             "> [[collapsible show=\"show\"]]\n",
             "> [[span]]\n",
@@ -321,12 +321,14 @@ mod tests {
         );
         let (html, _, _) = render(input);
 
+        // Live Wikidot closes the collapsible at the first closer even though
+        // the span remains active until the following quoted line.
         assert_eq!(
             html.matches("class=\"wj-collapsible\"").count(),
-            0,
+            1,
             "{html}"
         );
-        assert!(html.contains("[[collapsible"), "{html}");
+        assert!(!html.contains("[[collapsible show"), "{html}");
         assert!(html.contains("escaped page content"), "{html}");
         assert!(html.contains("following page"), "{html}");
     }

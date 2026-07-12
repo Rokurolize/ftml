@@ -279,7 +279,10 @@ fn render_partial(ctx: &mut TextContext, partial: &PartialElement) {
     );
 
     match partial {
-        PartialElement::InlineSizeOpen(_) | PartialElement::InlineSizeClose => {}
+        PartialElement::InlineSizeOpen(_)
+        | PartialElement::InlineSizeClose
+        | PartialElement::InlineSpanOpen(_)
+        | PartialElement::InlineSpanClose(_) => {}
         PartialElement::ListItem(ListItem::Elements { elements, .. }) => {
             if elements.is_empty() {
                 return;

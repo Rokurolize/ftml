@@ -36,7 +36,7 @@ use super::rule::{
 use crate::tree::{LinkLabel, LinkLocation, LinkType, PartialElement};
 use std::mem;
 
-fn try_consume_inline_size_close<'r, 't>(
+fn try_consume_inline_format_close<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> Result<Option<Elements<'t>>, ParseError>
 where
@@ -51,18 +51,19 @@ where
     let Ok(name) = close.get_end_block() else {
         return Ok(None);
     };
-    if !name
-        .strip_suffix('_')
-        .unwrap_or(name)
-        .eq_ignore_ascii_case("size")
-    {
+    let normalized = name.strip_suffix('_').unwrap_or(name);
+    let partial = if normalized.eq_ignore_ascii_case("size") {
+        PartialElement::InlineSizeClose
+    } else if normalized.eq_ignore_ascii_case("span") {
+        let start = parser.current().span.start;
+        let end = close.current().span.start;
+        PartialElement::InlineSpanClose(cow!(&parser.full_text().inner()[start..end]))
+    } else {
         return Ok(None);
-    }
+    };
 
     parser.update(&close);
-    Ok(Some(
-        Element::Partial(PartialElement::InlineSizeClose).into(),
-    ))
+    Ok(Some(Element::Partial(partial).into()))
 }
 
 fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
@@ -244,7 +245,7 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
     // Will fail if we're too many layers in
     parser.depth_increment()?;
 
-    if let Some(elements) = try_consume_inline_size_close(parser)? {
+    if let Some(elements) = try_consume_inline_format_close(parser)? {
         parser.depth_decrement();
         return ok!(elements);
     }

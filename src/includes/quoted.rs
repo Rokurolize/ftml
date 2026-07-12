@@ -20,14 +20,10 @@
 
 //! Normalization for legacy includes written inside native blockquotes.
 
-use super::IncludeRef;
 use super::parse::parse_include_block;
-use crate::tree::VariableMap;
-use std::borrow::Cow;
 
 #[derive(Debug)]
 pub(super) struct ParsedQuotedInclude {
-    pub include: IncludeRef<'static>,
     pub end: usize,
 }
 
@@ -110,29 +106,10 @@ fn normalize_and_parse(
         }
     }
 
-    let (include, normalized_end) = parse_include_block(&normalized, 0).ok()?;
+    let (_, normalized_end) = parse_include_block(&normalized, 0).ok()?;
     let end = original_offset(&segments, normalized_end)?;
-    Some(ParsedQuotedInclude {
-        include: own_include(include),
-        end,
-    })
+    Some(ParsedQuotedInclude { end })
 }
-/// Prefix every physical line produced by a quoted include expansion.
-pub(super) fn quote_expansion(content: &str, quote_prefix: &str) -> String {
-    let line_count = content.bytes().filter(|&byte| byte == b'\n').count()
-        + usize::from(!content.is_empty() && !content.ends_with('\n'));
-    let mut output = String::with_capacity(
-        content.len() + quote_prefix.len().saturating_mul(line_count),
-    );
-
-    for line in content.split_inclusive('\n') {
-        output.push_str(quote_prefix);
-        output.push_str(line);
-    }
-
-    output
-}
-
 fn strip_quote_prefix(line: &str, quote_depth: usize) -> Option<usize> {
     let bytes = line.as_bytes();
     let mut offset = skip_horizontal_space(bytes, 0);
@@ -162,18 +139,6 @@ fn original_offset(segments: &[OffsetSegment], normalized: usize) -> Option<usiz
     })
 }
 
-fn own_include(include: IncludeRef<'_>) -> IncludeRef<'static> {
-    let (page_ref, variables) = include.into();
-    let variables: VariableMap<'static> = variables
-        .into_iter()
-        .map(|(key, value)| {
-            (Cow::Owned(key.into_owned()), Cow::Owned(value.into_owned()))
-        })
-        .collect();
-
-    IncludeRef::new(page_ref, variables)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -198,17 +163,6 @@ mod tests {
         )
         .expect("quoted include should parse");
 
-        assert_eq!(
-            parsed.include.page_ref(),
-            &crate::data::PageRef::page_and_site(
-                "scp-wiki",
-                "component:author-label-source",
-            ),
-        );
-        assert_eq!(
-            parsed.include.variables().get("name").map(Cow::as_ref),
-            Some("toadking07"),
-        );
         assert_eq!(&source[parsed.end..], "\nafter\n");
     }
 
@@ -272,15 +226,5 @@ mod tests {
             "quoted include scan took {:?}",
             started.elapsed(),
         );
-    }
-
-    #[test]
-    fn quote_expansion_preserves_empty_crlf_and_unterminated_lines() {
-        assert_eq!(quote_expansion("", "> "), "");
-        assert_eq!(
-            quote_expansion("first\r\nsecond", "> "),
-            "> first\r\n> second"
-        );
-        assert_eq!(quote_expansion("first\n", ">>"), ">>first\n");
     }
 }

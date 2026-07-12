@@ -72,8 +72,56 @@ pub fn substitute(text: &mut String) {
     canonicalize_crossed_center_collapsible_closers(&mut lines, &literal_lines);
     canonicalize_crossed_bold_size_closers(&mut lines, &literal_lines);
     remove_tight_quote_lines(&mut lines, &literal_lines);
+    canonicalize_root_collapsible_inline_quoted_closers(&mut lines, &literal_lines);
 
     *text = lines.concat();
+}
+
+/// Move a root collapsible's closer out of a quoted content line.
+///
+/// Wikidot pages commonly put an unquoted collapsible opener before a quoted
+/// report and append the closer to the final quoted line. Wikidot closes the
+/// root collapsible after that line; leaving the marker inside the native
+/// blockquote makes the tree parser treat each following collapsible as a
+/// child and repeatedly reparse the remaining page.
+fn canonicalize_root_collapsible_inline_quoted_closers(
+    lines: &mut Vec<String>,
+    literal_lines: &[bool],
+) {
+    const CLOSE: &str = "[[/collapsible]]";
+
+    let mut opener_depths = Vec::new();
+    let mut output = Vec::with_capacity(lines.len());
+
+    for (line, literal) in std::mem::take(lines).into_iter().zip(literal_lines) {
+        let (body, ending) = split_line(&line);
+        let (quote_depth, quoted_body) = quote_depth_and_body(body);
+
+        if !*literal {
+            if marker_line(&line)
+                .is_some_and(|(_, marker)| marker == Marker::CollapsibleOpen)
+            {
+                opener_depths.push(quote_depth);
+            } else if marker_line(&line)
+                .is_some_and(|(_, marker)| marker == Marker::CollapsibleClose)
+            {
+                opener_depths.pop();
+            } else if quote_depth > 0
+                && opener_depths.last() == Some(&0)
+                && quoted_body.ends_with(CLOSE)
+            {
+                let close_start = body.len() - CLOSE.len();
+                output.push(format!("{}{ending}", &body[..close_start]));
+                output.push(format!("{CLOSE}{ending}"));
+                opener_depths.pop();
+                continue;
+            }
+        }
+
+        output.push(line);
+    }
+
+    *lines = output;
 }
 
 /// Remove lines whose contiguous native quote run is not followed by horizontal space.
@@ -742,6 +790,49 @@ mod tests {
         assert!(html.contains("wj-collapsible"), "{html}");
         assert!(!html.contains("user example"), "{html}");
         assert!(html.contains("outside"), "{html}");
+    }
+
+    #[test]
+    fn root_collapsibles_close_after_inline_quoted_report_lines() {
+        // Reduced from scp-wiki/scp-4239, which repeats this shape thirteen
+        // times inside one tab and previously reparsed the remaining tab body
+        // for every opener.
+        let section = concat!(
+            "[[collapsible show=\"report\"]]\n",
+            "> quoted report\n",
+            "> End log.[[/collapsible]]\n",
+        );
+        let mut source = section.repeat(128);
+        let started = std::time::Instant::now();
+
+        substitute(&mut source);
+
+        assert!(started.elapsed() < std::time::Duration::from_millis(100));
+        assert_eq!(source.matches("> End log.\n[[/collapsible]]").count(), 128);
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 128);
+        assert_eq!(html.matches("End log.").count(), 128);
+    }
+
+    #[test]
+    fn quoted_collapsible_inline_closer_keeps_its_quote_depth() {
+        let mut source = concat!(
+            "> [[collapsible show=\"report\"]]\n",
+            "> body[[/collapsible]]\n",
+        )
+        .to_owned();
+        let original = source.clone();
+
+        substitute(&mut source);
+
+        assert_eq!(source, original);
     }
 
     #[test]

@@ -33,8 +33,37 @@ use super::rule::{
     get_rules_for_token,
     impls::{RULE_FALLBACK, starts_own_line_rule},
 };
-use crate::tree::{LinkLabel, LinkLocation, LinkType};
+use crate::tree::{LinkLabel, LinkLocation, LinkType, PartialElement};
 use std::mem;
+
+fn try_consume_inline_size_close<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<Option<Elements<'t>>, ParseError>
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlockEnd
+    {
+        return Ok(None);
+    }
+
+    let mut close = parser.clone();
+    let Ok(name) = close.get_end_block() else {
+        return Ok(None);
+    };
+    if !name
+        .strip_suffix('_')
+        .unwrap_or(name)
+        .eq_ignore_ascii_case("size")
+    {
+        return Ok(None);
+    }
+
+    parser.update(&close);
+    Ok(Some(
+        Element::Partial(PartialElement::InlineSizeClose).into(),
+    ))
+}
 
 fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
     // Only bypass generic rule dispatch where the current token cannot start
@@ -214,6 +243,11 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
     // Incrementing recursion depth
     // Will fail if we're too many layers in
     parser.depth_increment()?;
+
+    if let Some(elements) = try_consume_inline_size_close(parser)? {
+        parser.depth_decrement();
+        return ok!(elements);
+    }
 
     if let Some(elements) = try_consume_line_break(parser)? {
         parser.depth_decrement();

@@ -20,6 +20,7 @@
 
 use super::{ListItem, RubyText, Tab, TableCell, TableRow};
 use crate::parsing::ParseErrorKind;
+use std::borrow::Cow;
 
 /// Part of an element, as returned by a rule.
 ///
@@ -28,6 +29,12 @@ use crate::parsing::ParseErrorKind;
 /// context, they are errors are parsing will fail.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum PartialElement<'t> {
+    /// A parse-only Wikidot inline size scope opener.
+    InlineSizeOpen(Cow<'t, str>),
+
+    /// A parse-only Wikidot inline size scope closer.
+    InlineSizeClose,
+
     /// An item or sub-list within some list.
     ListItem(ListItem<'t>),
 
@@ -49,6 +56,8 @@ pub enum PartialElement<'t> {
 impl PartialElement<'_> {
     pub fn name(&self) -> &'static str {
         match self {
+            PartialElement::InlineSizeOpen(_) => "InlineSizeOpen",
+            PartialElement::InlineSizeClose => "InlineSizeClose",
             PartialElement::ListItem(_) => "ListItem",
             PartialElement::TableRow(_) => "TableRow",
             PartialElement::TableCell(_) => "TableCell",
@@ -60,6 +69,9 @@ impl PartialElement<'_> {
     #[inline]
     pub fn parse_error_kind(&self) -> ParseErrorKind {
         match self {
+            PartialElement::InlineSizeOpen(_) | PartialElement::InlineSizeClose => {
+                ParseErrorKind::NoRulesMatch
+            }
             PartialElement::ListItem(_) => ParseErrorKind::ListItemOutsideList,
             PartialElement::TableRow(_) => ParseErrorKind::TableRowOutsideTable,
             PartialElement::TableCell(_) => ParseErrorKind::TableCellOutsideTable,
@@ -70,6 +82,10 @@ impl PartialElement<'_> {
 
     pub fn to_owned(&self) -> PartialElement<'static> {
         match self {
+            PartialElement::InlineSizeOpen(value) => {
+                PartialElement::InlineSizeOpen(Cow::Owned(value.to_string()))
+            }
+            PartialElement::InlineSizeClose => PartialElement::InlineSizeClose,
             PartialElement::ListItem(list_item) => {
                 PartialElement::ListItem(list_item.to_owned())
             }
@@ -82,6 +98,14 @@ impl PartialElement<'_> {
             PartialElement::Tab(tab) => PartialElement::Tab(tab.to_owned()),
             PartialElement::RubyText(text) => PartialElement::RubyText(text.to_owned()),
         }
+    }
+
+    #[inline]
+    pub(crate) fn is_inline_format_control(&self) -> bool {
+        matches!(
+            self,
+            PartialElement::InlineSizeOpen(_) | PartialElement::InlineSizeClose
+        )
     }
 }
 
@@ -172,6 +196,13 @@ mod tests {
         for (partial, name, parse_error_kind) in partials() {
             assert_eq!(partial.name(), name);
             assert_eq!(partial.parse_error_kind(), parse_error_kind);
+            assert_eq!(partial.to_owned(), partial);
+        }
+        for partial in [
+            PartialElement::InlineSizeOpen(cow!("font-size: larger;")),
+            PartialElement::InlineSizeClose,
+        ] {
+            assert!(partial.is_inline_format_control());
             assert_eq!(partial.to_owned(), partial);
         }
     }

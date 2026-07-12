@@ -45,10 +45,11 @@ static WHITESPACE_ONLY_LINE: LazyLock<Replacer> =
             .unwrap(),
         replacement: "",
     });
-static LEADING_NEWLINES: LazyLock<Replacer> = LazyLock::new(|| Replacer::RegexReplace {
-    regex: Regex::new(r"^\n+").unwrap(),
-    replacement: "",
-});
+static LEADING_DOCUMENT_WHITESPACE: LazyLock<Replacer> =
+    LazyLock::new(|| Replacer::RegexReplace {
+        regex: Regex::new(r"^[ \t\n]+").unwrap(),
+        replacement: "",
+    });
 static TRAILING_NEWLINES: LazyLock<Replacer> = LazyLock::new(|| Replacer::RegexReplace {
     regex: Regex::new(r"\n+$").unwrap(),
     replacement: "",
@@ -69,6 +70,12 @@ pub fn substitute(text: &mut String) {
 
     // Replace DOS and Mac newlines
     replace!(DOS_MAC_NEWLINES);
+
+    // Saved Wikidot trims ASCII whitespace at the beginning of the document,
+    // while preserving the same indentation on later physical lines. This is
+    // observably different from preview rendering for structural prefixes such
+    // as native blockquotes, so the saved-page behavior is authoritative.
+    replace!(LEADING_DOCUMENT_WHITESPACE);
 
     // Replace leading non-standard spaces with regular spaces
     // Leave other non-standard spaces as-is (such as nbsp in
@@ -92,8 +99,7 @@ pub fn substitute(text: &mut String) {
         *text = text.replace('\0', " ");
     }
 
-    // Remove leading and trailing newlines
-    replace!(LEADING_NEWLINES);
+    // Remove trailing newlines
     replace!(TRAILING_NEWLINES);
 }
 
@@ -153,10 +159,7 @@ fn replace_leading_spaces(text: &mut String) {
 
 #[cfg(test)]
 const TEST_CASES: [(&str, &str); 10] = [
-    (
-        "\tapple\n\tbanana\tcherry\n",
-        "    apple\n    banana    cherry",
-    ),
+    ("\tapple\n\tbanana\tcherry\n", "apple\n    banana    cherry"),
     (
         "newlines:\r\n* apple\r* banana\r\ncherry\n\r* durian",
         "newlines:\n* apple\n* banana\ncherry\n\n* durian",
@@ -187,7 +190,7 @@ const TEST_CASES: [(&str, &str); 10] = [
 fn regexes() {
     let _ = &*LEADING_NONSTANDARD_WHITESPACE;
     let _ = &*WHITESPACE_ONLY_LINE;
-    let _ = &*LEADING_NEWLINES;
+    let _ = &*LEADING_DOCUMENT_WHITESPACE;
     let _ = &*TRAILING_NEWLINES;
     let _ = &*DOS_MAC_NEWLINES;
 }
@@ -197,6 +200,24 @@ fn test_substitute() {
     use super::test::test_substitution;
 
     test_substitution("miscellaneous", substitute, &TEST_CASES);
+}
+
+#[test]
+fn strips_only_document_leading_ascii_whitespace() {
+    let mut text = "\n\t  > first\n  > second".to_owned();
+
+    substitute(&mut text);
+
+    assert_eq!(text, "> first\n  > second");
+}
+
+#[test]
+fn preserves_indentation_after_non_whitespace_content() {
+    let mut text = "[!-- comment --]\n  > literal".to_owned();
+
+    substitute(&mut text);
+
+    assert_eq!(text, "[!-- comment --]\n  > literal");
 }
 
 #[test]

@@ -51,6 +51,25 @@ fn render_text_and_html_with_layout_and_errors(
 }
 
 #[test]
+fn wikidot_saved_pages_strip_only_document_leading_ascii_whitespace() {
+    // Live sandbox provenance:
+    // ftml-oracle-20260712T214547Z/run-quote-indentation and
+    // ftml-oracle-20260712T215005Z/run-quote-document-leading-whitespace.
+    let (text, html) =
+        render_text_and_html("\n\t  > OMEGA_FIRST\n  > OMEGA_SECOND\nOMEGA_AFTER");
+
+    assert!(text.contains("OMEGA_FIRST"), "{text}");
+    assert!(text.contains("> OMEGA_SECOND"), "{text}");
+    assert!(text.contains("OMEGA_AFTER"), "{text}");
+    assert_eq!(html.matches("<blockquote>").count(), 1, "{html}");
+    assert!(html.contains("&gt; OMEGA_SECOND"), "{html}");
+
+    let (text, html) = render_text_and_html("[!-- comment --]\n  > OMEGA_AFTER_COMMENT");
+    assert!(text.contains("> OMEGA_AFTER_COMMENT"), "{text}");
+    assert!(!html.contains("<blockquote>"), "{html}");
+}
+
+#[test]
 fn wikidot_closed_quote_prefixed_iftags_evaluate_before_native_quotes() {
     // Live sandbox provenance: run-quoted-conditionals, 2026-07-13.
     for (input, body, included) in [

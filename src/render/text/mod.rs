@@ -69,17 +69,20 @@ impl TextRender {
         );
         render_elements(&mut ctx, partial.elements);
 
-        // Remove leading and trailing newlines
-        while ctx.buffer().starts_with('\n') {
-            ctx.buffer().remove(0);
-        }
-
-        while ctx.buffer().ends_with('\n') {
-            ctx.buffer().pop();
-        }
+        trim_outer_newlines(ctx.buffer());
 
         ctx.into()
     }
+}
+
+fn trim_outer_newlines(buffer: &mut String) {
+    let leading_newlines = buffer.bytes().take_while(|byte| *byte == b'\n').count();
+    if leading_newlines > 0 {
+        buffer.drain(..leading_newlines);
+    }
+
+    let trimmed_len = buffer.trim_end_matches('\n').len();
+    buffer.truncate(trimmed_len);
 }
 
 impl Render for TextRender {
@@ -141,12 +144,13 @@ impl<'a> RenderPartial<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::TextRender;
+    use super::{TextRender, trim_outer_newlines};
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::render::Render;
     use crate::settings::{WikitextMode, WikitextSettings};
-    use crate::tree::{Element, SyntaxTree};
+    use crate::tree::{CodeBlock, Element, SyntaxTree};
+    use std::borrow::Cow;
 
     #[test]
     fn text_render_entrypoints_trim_outer_newlines() {
@@ -169,5 +173,38 @@ mod tests {
         let mut categorized = PageInfo::dummy();
         categorized.category = Some(cow!("system"));
         assert_eq!(TextRender.render(&tree, &categorized, &settings), "body");
+    }
+
+    #[test]
+    fn text_render_trims_many_leading_newlines_in_one_drain() {
+        let mut text = "\n".repeat(10_000);
+        text.push_str("body\n");
+
+        trim_outer_newlines(&mut text);
+
+        assert_eq!(text, "body");
+    }
+
+    #[test]
+    fn text_render_partial_trims_empty_code_block_newlines() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let elements = vec![
+            Element::Code(CodeBlock {
+                contents: Cow::Borrowed(""),
+                language: None,
+                name: None,
+            }),
+            Element::Code(CodeBlock {
+                contents: Cow::Borrowed("body"),
+                language: None,
+                name: None,
+            }),
+        ];
+
+        assert_eq!(
+            TextRender.render_partial(&elements, &page_info, &settings, 0),
+            "body",
+        );
     }
 }

@@ -25,6 +25,12 @@ pub mod typography;
 pub mod whitespace;
 
 mod compatibility;
+mod parser_functions;
+
+pub use self::parser_functions::{
+    WikidotParserFunctionOptions, WikidotZeroOperatorPolicy,
+    resolve_wikidot_parser_functions, resolve_wikidot_parser_functions_with_options,
+};
 
 #[cfg(test)]
 mod test;
@@ -168,6 +174,7 @@ impl Replacer {
 /// * Trimming whitespace lines
 /// * Concatenating lines that end with backslashes
 /// * Convert tabs to four spaces
+/// * Resolve context-free Wikidot parser functions
 /// * Wikidot typography transformations
 ///
 /// This call always succeeds. The return value designates where issues occurred
@@ -175,6 +182,7 @@ impl Replacer {
 pub fn preprocess(text: &mut String) {
     debug!("Beginning preprocessing of text ({} bytes)", text.len());
     whitespace::substitute(text);
+    parser_functions::substitute(text);
     compatibility::substitute(text);
     typography::substitute(text);
     debug!("Finished preprocessing of text ({} bytes)", text.len());

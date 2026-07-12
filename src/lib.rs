@@ -130,7 +130,10 @@ pub mod tree;
 
 pub use self::includes::include;
 pub use self::parsing::parse;
-pub use self::preproc::preprocess;
+pub use self::preproc::{
+    WikidotParserFunctionOptions, WikidotZeroOperatorPolicy, preprocess,
+    resolve_wikidot_parser_functions, resolve_wikidot_parser_functions_with_options,
+};
 pub use self::tokenizer::{Tokenization, tokenize};
 pub use self::utf16::Utf16IndexMap;
 
@@ -140,7 +143,6 @@ pub mod prelude {
     pub use super::includes::{Includer, include};
     pub use super::layout::Layout;
     pub use super::parsing::{ParseError, ParseResult, parse};
-    pub use super::preprocess;
     pub use super::render::Render;
     pub use super::settings::{
         DEFAULT_INTERWIKI, EMPTY_INTERWIKI, InterwikiSettings, WikitextMode,
@@ -148,4 +150,8 @@ pub mod prelude {
     };
     pub use super::tokenizer::{Tokenization, tokenize};
     pub use super::tree::{Element, SyntaxTree};
+    pub use super::{
+        WikidotParserFunctionOptions, WikidotZeroOperatorPolicy, preprocess,
+        resolve_wikidot_parser_functions, resolve_wikidot_parser_functions_with_options,
+    };
 }

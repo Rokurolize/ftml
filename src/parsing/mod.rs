@@ -29,6 +29,7 @@ mod consume;
 mod depth;
 mod element_condition;
 mod error;
+mod hidden_body;
 mod outcome;
 mod paragraph;
 mod parser;
@@ -52,7 +53,7 @@ mod prelude {
 use self::depth::{DepthItem, DepthList, process_depths};
 use self::element_condition::{ElementCondition, ElementConditionType};
 use self::paragraph::{NO_CLOSE_CONDITION, gather_paragraphs};
-use self::parser::Parser;
+use self::parser::{DEFAULT_MAX_RECURSION_DEPTH, Parser};
 use self::parser_wrap::ParserWrap;
 use self::rule::impls::RULE_PAGE;
 use self::strip::{strip_newlines, strip_whitespace};
@@ -69,6 +70,7 @@ use std::borrow::Cow;
 pub use self::boolean::{NonBooleanValue, parse_boolean};
 pub use self::error::{ParseError, ParseErrorKind};
 pub use self::outcome::ParseOutcome;
+pub(crate) use self::parser::DEEP_MAX_RECURSION_DEPTH;
 pub use self::result::{
     ParseResult, ParseSuccess, success_elements, success_elements_with_paragraph_safety,
     success_value,
@@ -78,6 +80,7 @@ pub use self::token::{ExtractedToken, Token};
 /// Parse through the given tokens and produce an AST.
 ///
 /// This takes a list of [`ExtractedToken`] items produced by [tokenize](crate::tokenizer::tokenize()).
+#[cfg(not(target_arch = "wasm32"))]
 pub fn parse<'r, 't>(
     tokenization: &'r Tokenization<'t>,
     page_info: &'r PageInfo<'t>,
@@ -86,8 +89,87 @@ pub fn parse<'r, 't>(
 where
     'r: 't,
 {
+    let ordinary = parse_on_current_stack(
+        tokenization,
+        page_info,
+        settings,
+        DEFAULT_MAX_RECURSION_DEPTH,
+    );
+    if !ordinary
+        .errors()
+        .iter()
+        .any(|error| error.kind() == ParseErrorKind::RecursionDepthExceeded)
+    {
+        return ordinary;
+    }
+
+    // `consume()` intentionally uses direct recursion for parser state. Deep
+    // but valid component trees therefore get one bounded retry on a known
+    // stack budget. Retrying only after the parser's own structured depth
+    // error avoids a second, fallible syntax scanner and keeps ordinary pages
+    // on the caller's thread. The higher explicit limit still bounds the retry.
+    std::thread::scope(|scope| {
+        let handle = match std::thread::Builder::new()
+            .name("ftml-deep-parse".to_owned())
+            .stack_size(DEEP_PARSE_STACK_BYTES)
+            .spawn_scoped(scope, || {
+                parse_on_current_stack(
+                    tokenization,
+                    page_info,
+                    settings,
+                    DEEP_MAX_RECURSION_DEPTH,
+                )
+            }) {
+            Ok(handle) => handle,
+            Err(error) => {
+                warn!("Unable to start bounded deep-parser retry: {error}");
+                return ordinary;
+            }
+        };
+
+        match handle.join() {
+            Ok(outcome) => outcome,
+            Err(payload) => std::panic::resume_unwind(payload),
+        }
+    })
+}
+
+/// WebAssembly hosts do not have a portable configurable thread-stack API.
+#[cfg(target_arch = "wasm32")]
+pub fn parse<'r, 't>(
+    tokenization: &'r Tokenization<'t>,
+    page_info: &'r PageInfo<'t>,
+    settings: &'r WikitextSettings,
+) -> ParseOutcome<SyntaxTree<'t>>
+where
+    'r: 't,
+{
+    parse_on_current_stack(
+        tokenization,
+        page_info,
+        settings,
+        DEFAULT_MAX_RECURSION_DEPTH,
+    )
+}
+
+const DEEP_PARSE_STACK_BYTES: usize = 32 * 1024 * 1024;
+
+fn parse_on_current_stack<'r, 't>(
+    tokenization: &'r Tokenization<'t>,
+    page_info: &'r PageInfo<'t>,
+    settings: &'r WikitextSettings,
+    max_recursion_depth: usize,
+) -> ParseOutcome<SyntaxTree<'t>>
+where
+    'r: 't,
+{
     // Run parsing, get raw results
-    let parsed = parse_internal(page_info, settings, tokenization);
+    let parsed = parse_internal_with_recursion_limit(
+        page_info,
+        settings,
+        tokenization,
+        max_recursion_depth,
+    );
     let result = parsed.result;
     let html_blocks = parsed.html_blocks;
     let code_blocks = parsed.code_blocks;
@@ -172,10 +254,36 @@ pub fn parse_internal<'r, 't>(
 where
     'r: 't,
 {
-    let mut parser = Parser::new(tokenization, page_info, settings);
+    parse_internal_with_recursion_limit(
+        page_info,
+        settings,
+        tokenization,
+        DEFAULT_MAX_RECURSION_DEPTH,
+    )
+}
+
+fn parse_internal_with_recursion_limit<'r, 't>(
+    page_info: &'r PageInfo<'t>,
+    settings: &'r WikitextSettings,
+    tokenization: &'r Tokenization<'t>,
+    max_recursion_depth: usize,
+) -> UnstructuredParseResult<'r, 't>
+where
+    'r: 't,
+{
+    let mut parser = if max_recursion_depth == DEFAULT_MAX_RECURSION_DEPTH {
+        Parser::new(tokenization, page_info, settings)
+    } else {
+        Parser::new_with_recursion_limit(
+            tokenization,
+            page_info,
+            settings,
+            max_recursion_depth,
+        )
+    };
 
     // At the top level, we gather elements into paragraphs
-    info!("Running parser on {} tokens", tokenization.tokens().len());
+    debug!("Running parser on {} tokens", tokenization.tokens().len());
     let result = gather_paragraphs(&mut parser, RULE_PAGE, NO_CLOSE_CONDITION);
 
     // Build and return

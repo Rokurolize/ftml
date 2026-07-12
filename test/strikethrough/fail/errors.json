@@ -1,17 +1,5 @@
 [
     {
-        "token": "clear-float-both",
-        "rule": "page",
-        "span": [112, 116],
-        "kind": "not-start-of-line"
-    },
-    {
-        "token": "clear-float-both",
-        "rule": "fallback",
-        "span": [112, 116],
-        "kind": "no-rules-match"
-    },
-    {
         "token": "input-end",
         "rule": "block-strikethrough",
         "span": [138, 138],

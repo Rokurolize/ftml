@@ -31,11 +31,13 @@ mod test;
 mod include_ref;
 mod includer;
 mod parse;
+mod quoted;
 
 pub use self::include_ref::IncludeRef;
 pub use self::includer::{DebugIncluder, FetchedPage, Includer, NullIncluder};
 
 use self::parse::parse_include_block;
+use self::quoted::parse_quoted_include;
 use crate::data::PageRef;
 use crate::settings::WikitextSettings;
 use crate::tree::VariableMap;
@@ -43,7 +45,10 @@ use regex::{Regex, RegexBuilder};
 use std::sync::LazyLock;
 
 static INCLUDE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    RegexBuilder::new(r"^\[\[\s*include\s+")
+    // Wikidot only expands an include immediately following native quote
+    // markers. A horizontal space after `>` makes the marker quoted example
+    // text instead (corpus provenance: scp-wiki/svg-animation).
+    RegexBuilder::new(r"^(?:[ \t]*>)*\[\[\s*include\s+")
         .case_insensitive(true)
         .multi_line(true)
         .dot_matches_new_line(true)
@@ -74,9 +79,10 @@ where
     }
 
     let input_len = input.len();
-    info!("Inserting text for all include blocks in text ({input_len} bytes)");
+    debug!("Inserting text for all include blocks in text ({input_len} bytes)");
 
     let mut ranges: Vec<std::ops::Range<usize>> = Vec::new();
+    let mut consumed_quoted_ranges: Vec<std::ops::Range<usize>> = Vec::new();
     let mut includes = Vec::new();
 
     let mut search_start = 0;
@@ -87,6 +93,11 @@ where
 
         let slice = mtch.as_str();
         trace!("Found include regex match (start {start}, slice '{slice}')");
+        let marker_offset = slice
+            .find("[[")
+            .expect("include scanner match must contain a block opener");
+        let marker_start = start + marker_offset;
+        let quote_prefix = &input[start..marker_start];
 
         let Some(candidate_end) = find_include_end(input, mtch.end(), input.len()) else {
             warn!("Unable to find include terminator, skipping remaining input");
@@ -94,13 +105,35 @@ where
             continue;
         };
 
-        match parse_include_block(input, start) {
-            Ok((include, end)) => {
+        let parsed = if quote_prefix.is_empty() {
+            parse_include_block(input, start).ok()
+        } else {
+            let quote_depth = quote_prefix.bytes().filter(|&byte| byte == b'>').count();
+            let parsed = parse_quoted_include(
+                input,
+                start,
+                marker_start,
+                quote_depth,
+                candidate_end,
+            );
+            if let Some(parsed) = parsed {
+                // Wikidot consumes a tight quote-prefixed include without
+                // resolving or rendering its target. Spaced quote examples
+                // never reach this branch because the scanner excludes them.
+                consumed_quoted_ranges.push(start..parsed.end);
+                search_start = parsed.end;
+                continue;
+            }
+            None
+        };
+
+        match parsed {
+            Some((include, end)) => {
                 ranges.push(start..end);
                 includes.push(include);
                 search_start = end;
             }
-            Err(_) => {
+            None => {
                 search_start = candidate_end;
                 warn!("Unable to parse include regex match, resuming at {search_start}");
             }
@@ -119,10 +152,16 @@ where
     //
     // We must iterate backwards for all the indices to be valid
 
-    let ranges_iter = ranges.into_iter();
-    let includes_iter = includes.into_iter();
-    let fetched_iter = fetched_pages.into_iter();
-    let joined_iter = ranges_iter.zip(includes_iter).zip(fetched_iter).rev();
+    let mut replacements: Vec<_> = ranges
+        .into_iter()
+        .zip(includes.into_iter().zip(fetched_pages).map(Some))
+        .collect();
+    replacements.extend(
+        consumed_quoted_ranges
+            .into_iter()
+            .map(|range| (range, None)),
+    );
+    replacements.sort_unstable_by_key(|(range, _)| range.start);
 
     // Borrowing from the original text and doing in-place insertions
     // will not work here. We are trying to both return the page names
@@ -130,7 +169,11 @@ where
     let mut output = String::from(input);
     let mut pages = Vec::new();
 
-    for ((range, include), fetched) in joined_iter {
+    for (range, replacement) in replacements.into_iter().rev() {
+        let Some((include, fetched)) = replacement else {
+            output.replace_range(range, "");
+            continue;
+        };
         let (page_ref, variables) = include.into();
 
         let range_start = range.start;
@@ -153,7 +196,6 @@ where
             // Include not found, return premade template
             None => includer.no_such_include(&page_ref)?,
         };
-
         // Append page to final list
         pages.push(page_ref);
 
@@ -176,7 +218,10 @@ fn find_include_end(input: &str, start: usize, end_bound: usize) -> Option<usize
         let end = index + 2;
         if bytes[index] == b']'
             && bytes[index + 1] == b']'
-            && (end == input.len() || bytes.get(end) == Some(&b'\n'))
+            && (end == input.len()
+                || bytes.get(end..).is_some_and(|rest| {
+                    rest.starts_with(b"\n") || rest.starts_with(b"\r\n")
+                }))
         {
             return Some(end);
         }

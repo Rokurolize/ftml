@@ -41,30 +41,8 @@ thread_local! {
 pub fn render_style(ctx: &mut HtmlContext, input_css: &str) {
     let minify = ctx.settings().minify_css;
     if let Some(output_css) = cached_style_css(input_css, minify) {
-        ctx.add_style(output_css.clone());
-        let output_css = escape_style_end_tags(&output_css);
-        ctx.html().style().inner(|ctx| {
-            ctx.push_raw_str(&output_css);
-        });
+        ctx.add_style(output_css);
     }
-}
-
-fn escape_style_end_tags(css: &str) -> String {
-    let lower = css.to_ascii_lowercase();
-    let mut out = String::with_capacity(css.len());
-    let mut last = 0;
-    let mut search = 0;
-
-    while let Some(offset) = lower[search..].find("</style") {
-        let start = search + offset;
-        out.push_str(&css[last..start]);
-        out.push_str(r#"<\/style"#);
-        last = start + "</style".len();
-        search = last;
-    }
-
-    out.push_str(&css[last..]);
-    out
 }
 
 fn cached_style_css(input_css: &str, minify: bool) -> Option<String> {
@@ -195,11 +173,6 @@ mod tests {
         assert_eq!(
             handle_style_parse_result("bad css", Err::<(), _>("synthetic parse failure")),
             None,
-        );
-
-        assert_eq!(
-            escape_style_end_tags(r#"a { content: "</StYlE><script>" }"#),
-            r#"a { content: "<\/style><script>" }"#,
         );
     }
 

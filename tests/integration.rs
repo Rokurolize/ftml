@@ -1,6 +1,9 @@
 #[path = "coverage_parser_edges.rs"]
 mod coverage_parser_edges;
 
+#[path = "advanced_table_performance.rs"]
+mod advanced_table_performance;
+
 #[path = "canonical_wikidot_source.rs"]
 mod canonical_wikidot_source;
 
@@ -12,6 +15,9 @@ mod coverage_trace_fixture_paths;
 
 #[path = "include_variables.rs"]
 mod include_variables;
+
+#[path = "inline_delimiter_performance.rs"]
+mod inline_delimiter_performance;
 
 #[path = "scp8980_wikidot_syntax.rs"]
 mod scp8980_wikidot_syntax;

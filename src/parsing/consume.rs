@@ -27,6 +27,7 @@
 //! as raw text as a fallback, which is how Wikidot does it.
 
 use super::Parser;
+use super::parser::QuoteBodyLineStatus;
 use super::prelude::*;
 use super::rule::{
     get_rules_for_token,
@@ -65,6 +66,36 @@ fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
                 ))
         }
 
+        // Wikidot leaves padded formatting openers as literal text. A
+        // delimiter followed by whitespace cannot begin any of these inline
+        // containers, so do not send it through a rule that is guaranteed to
+        // fail and add a warning.
+        Token::Underline => {
+            matches!(
+                parser.look_ahead(0).map(|token| token.token),
+                Some(Token::Whitespace | Token::LeftBlockEnd)
+            ) || repeated_underline_run_ends_at_literal_boundary(parser)
+        }
+
+        Token::Bold | Token::Italics | Token::Superscript | Token::Subscript => matches!(
+            parser.look_ahead(0).map(|token| token.token),
+            Some(Token::Whitespace)
+        ),
+
+        // These markers are structural only at the start of a line. Real
+        // Wikidot pages also use repeated tildes as ordinary punctuation.
+        Token::ClearFloatBoth | Token::ClearFloatLeft | Token::ClearFloatRight => {
+            !parser.start_of_line()
+        }
+
+        // A closing raw marker is intercepted by the raw collector when it
+        // has a matching opener. Outside a raw span Wikidot preserves it.
+        Token::RightRaw => true,
+
+        // A standalone closing bracket pair is literal Wikidot text. Valid
+        // block collectors intercept their own closer before `consume()`.
+        Token::RightBlock => parser.start_of_line(),
+
         Token::BulletItem
         | Token::NumberedItem
         | Token::Equals
@@ -73,6 +104,29 @@ fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
 
         _ => false,
     }
+}
+
+fn repeated_underline_run_ends_at_literal_boundary(parser: &Parser<'_, '_>) -> bool {
+    let start = parser.current().span.start;
+    if let Some(literal) = parser.literal_underline_run(start) {
+        return literal;
+    }
+
+    let mut repeated = false;
+    let mut starts = vec![start];
+    for token in parser.remaining() {
+        if token.token == Token::Underline {
+            repeated = true;
+            starts.push(token.span.start);
+            continue;
+        }
+        let literal =
+            repeated && matches!(token.token, Token::Whitespace | Token::LeftBlockEnd);
+        parser.cache_literal_underline_run(starts, literal);
+        return literal;
+    }
+    parser.cache_literal_underline_run(starts, false);
+    false
 }
 
 fn try_consume_text_token<'r, 't>(
@@ -153,6 +207,10 @@ fn try_consume_leaf_token<'r, 't>(
 /// It will use the fallback if all rules, fail, so the only failure case is if
 /// the end of the input is reached.
 pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
+    if parser.prepare_quote_body_line()? == QuoteBodyLineStatus::Boundary {
+        return Err(parser.make_err(ParseErrorKind::EndOfInput));
+    }
+
     // Incrementing recursion depth
     // Will fail if we're too many layers in
     parser.depth_increment()?;
@@ -200,6 +258,20 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
             Err(error) => {
                 // Rollback footnotes added during failed rule attempt
                 parser.truncate_footnotes(footnote_count);
+
+                if parser.discarding_hidden_body() {
+                    if parser.at_hidden_body_boundary() {
+                        parser.depth_decrement();
+                        return Err(error);
+                    }
+
+                    if hidden_failure_must_close_to_eof(error.kind()) {
+                        parser.skip_to_input_end()?;
+                        parser.depth_decrement();
+                        return Err(error);
+                    }
+                }
+
                 all_errors.push(error);
             }
         }
@@ -224,6 +296,21 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
     parser.depth_decrement();
 
     ok!(element, all_errors)
+}
+
+fn hidden_failure_must_close_to_eof(kind: ParseErrorKind) -> bool {
+    matches!(
+        kind,
+        ParseErrorKind::RecursionDepthExceeded
+            | ParseErrorKind::EndOfInput
+            | ParseErrorKind::BlockDisallowsStar
+            | ParseErrorKind::BlockDisallowsScore
+            | ParseErrorKind::BlockMissingName
+            | ParseErrorKind::BlockMissingCloseBrackets
+            | ParseErrorKind::BlockMalformedArguments
+            | ParseErrorKind::BlockMissingArguments
+            | ParseErrorKind::ModuleMissingName
+    )
 }
 
 #[cfg(test)]
@@ -282,6 +369,49 @@ mod tests {
         let (tokens, page_info, settings) = parser_for(": term\n: value");
         let parser = parser_at(&tokens, &page_info, &settings, 1);
         assert!(!can_consume_as_text_token(&parser));
+
+        let (tokens, page_info, settings) =
+            parser_for("# // This is literal punctuation");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 3);
+        let elements = try_consume_text_token(&mut parser)
+            .expect("padded italics marker should not fail")
+            .expect("padded italics marker should use the text fast path");
+        assert_eq!(elements, text!("//").into());
+
+        let (tokens, page_info, settings) = parser_for("text~~~!!!");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 2);
+        let elements = try_consume_text_token(&mut parser)
+            .expect("mid-line clear-float marker should not fail")
+            .expect("mid-line clear-float marker should use the text fast path");
+        assert_eq!(elements, text!("~~~").into());
+
+        let (tokens, page_info, settings) = parser_for("______ ______");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 1);
+        let elements = try_consume_text_token(&mut parser)
+            .expect("repeated underline spacer should not fail")
+            .expect("repeated underline spacer should use the text fast path");
+        assert_eq!(elements, text!("__").into());
+
+        let (tokens, page_info, settings) = parser_for("______[[/span]]");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 1);
+        let elements = try_consume_text_token(&mut parser)
+            .expect("repeated underline before a block closer should not fail")
+            .expect("repeated underline before a block closer should stay literal");
+        assert_eq!(elements, text!("__").into());
+
+        let (tokens, page_info, settings) = parser_for("x>@");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 2);
+        let elements = try_consume_text_token(&mut parser)
+            .expect("unmatched raw closer should not fail")
+            .expect("unmatched raw closer should use the text fast path");
+        assert_eq!(elements, text!(">@").into());
+
+        let (tokens, page_info, settings) = parser_for("alpha\n]]");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 3);
+        let elements = try_consume_text_token(&mut parser)
+            .expect("standalone closing brackets should not fail")
+            .expect("standalone closing brackets should use the text fast path");
+        assert_eq!(elements, text!("]]").into());
     }
 
     #[test]

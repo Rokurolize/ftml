@@ -75,6 +75,12 @@ impl FromStr for Layout {
 #[derive(Debug)]
 pub struct LayoutParseError;
 
+/// Backwards-compatible re-export of the original public layout parse error.
+///
+/// Re-exporting the unit struct preserves both its type name and its value
+/// constructor, including downstream pattern matches using `LayoutError`.
+pub use self::LayoutParseError as LayoutError;
+
 #[test]
 fn test_parse() {
     macro_rules! test_ok {
@@ -107,6 +113,15 @@ fn test_parse() {
     test_err!("invalid");
     test_err!("XXX");
     test_err!("foobar");
+}
+
+#[test]
+fn test_layout_error_compatibility_alias() {
+    let result: Result<Layout, LayoutError> = "invalid".parse();
+    result.expect_err("Unexpected valid layout string");
+
+    let result: Result<Layout, LayoutError> = Err(LayoutError);
+    assert!(matches!(result, Err(LayoutError)));
 }
 
 #[test]

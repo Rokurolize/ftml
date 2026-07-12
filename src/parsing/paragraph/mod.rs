@@ -24,6 +24,7 @@ pub use self::stack::ParagraphStack;
 
 use super::consume::consume;
 use super::parser::Parser;
+use super::parser::QuoteBodyLineStatus;
 use super::prelude::*;
 use super::rule::Rule;
 use super::token::Token;
@@ -65,6 +66,10 @@ where
 
     let mut finished = false;
     while !finished {
+        if parser.prepare_quote_body_line()? == QuoteBodyLineStatus::Boundary {
+            return Err(parser.make_err(ParseErrorKind::EndOfInput));
+        }
+
         let consumed = match parser.current().token {
             Token::InputEnd => {
                 if close_condition_fn.is_some() {
@@ -109,7 +114,23 @@ where
                     None
                 } else {
                     // Otherwise, produce consumption from this token pointer
-                    Some(consume(parser)?)
+                    match consume(parser) {
+                        Ok(consumed) => Some(consumed),
+                        Err(error)
+                            if parser.discarding_hidden_body()
+                                && parser.at_hidden_body_boundary() =>
+                        {
+                            let close_condition = close_condition_fn
+                                .as_mut()
+                                .expect("body parser must have a close condition");
+                            let close_condition_met = close_condition(parser)?;
+
+                            finished =
+                                finish_hidden_boundary(close_condition_met, error)?;
+                            None
+                        }
+                        Err(error) => return Err(error),
+                    }
                 }
             }
         };
@@ -126,6 +147,17 @@ where
     }
 
     stack.into_result()
+}
+
+fn finish_hidden_boundary(
+    close_condition_met: bool,
+    error: ParseError,
+) -> Result<bool, ParseError> {
+    if close_condition_met {
+        Ok(true)
+    } else {
+        Err(error)
+    }
 }
 
 fn push_elements<'t>(
@@ -161,6 +193,9 @@ fn push_element<'t>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
     fn non_paragraph_safe_multiple_elements_do_not_reserve_current_paragraph() {
@@ -172,5 +207,23 @@ mod tests {
         );
 
         assert_eq!(stack.current_capacity(), 0);
+    }
+
+    #[test]
+    fn hidden_boundary_propagates_a_mismatched_child_close_error() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("plain");
+        let parser = Parser::new(&tokenization, &page_info, &settings);
+        let finished = finish_hidden_boundary(
+            true,
+            parser.make_err(ParseErrorKind::BlockExpectedEnd),
+        )
+        .unwrap();
+        let error = parser.make_err(ParseErrorKind::BlockExpectedEnd);
+        let propagated = finish_hidden_boundary(false, error).unwrap_err();
+
+        assert!(finished);
+        assert_eq!(propagated.kind(), ParseErrorKind::BlockExpectedEnd);
     }
 }

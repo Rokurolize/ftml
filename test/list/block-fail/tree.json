@@ -175,87 +175,43 @@
             }
         },
         {
-            "element": "container",
+            "element": "list",
             "data": {
-                "type": "paragraph",
+                "type": "bullet",
                 "attributes": {},
-                "elements": [
+                "items": [
                     {
-                        "element": "text",
-                        "data": "[["
-                    },
-                    {
-                        "element": "text",
-                        "data": "ul"
-                    },
-                    {
-                        "element": "text",
-                        "data": "]]"
-                    },
-                    {
-                        "element": "line-break"
-                    },
-                    {
-                        "element": "text",
-                        "data": "Foo"
-                    },
-                    {
-                        "element": "line-break"
-                    },
-                    {
-                        "element": "text",
-                        "data": "[[/"
-                    },
-                    {
-                        "element": "text",
-                        "data": "ul"
-                    },
-                    {
-                        "element": "text",
-                        "data": "]]"
+                        "item-type": "elements",
+                        "attributes": {
+                            "style": "list-style: none"
+                        },
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "Foo"
+                            }
+                        ]
                     }
                 ]
             }
         },
         {
-            "element": "container",
+            "element": "list",
             "data": {
-                "type": "paragraph",
+                "type": "numbered",
                 "attributes": {},
-                "elements": [
+                "items": [
                     {
-                        "element": "text",
-                        "data": "[["
-                    },
-                    {
-                        "element": "text",
-                        "data": "ol"
-                    },
-                    {
-                        "element": "text",
-                        "data": "]]"
-                    },
-                    {
-                        "element": "line-break"
-                    },
-                    {
-                        "element": "text",
-                        "data": "Bar"
-                    },
-                    {
-                        "element": "line-break"
-                    },
-                    {
-                        "element": "text",
-                        "data": "[[/"
-                    },
-                    {
-                        "element": "text",
-                        "data": "ol"
-                    },
-                    {
-                        "element": "text",
-                        "data": "]]"
+                        "item-type": "elements",
+                        "attributes": {
+                            "style": "list-style: none"
+                        },
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "Bar"
+                            }
+                        ]
                     }
                 ]
             }

@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::inline_delimiter::assert_unpadded_open;
 use super::prelude::*;
 
 pub const RULE_UNDERLINE: Rule = Rule {
@@ -30,7 +31,7 @@ fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create underline container");
-    assert_step(parser, Token::Underline)?;
+    assert_unpadded_open(parser, Token::Underline)?;
     let close = [ParseCondition::current(Token::Underline)];
     let invalid = [
         ParseCondition::current(Token::ParagraphBreak),

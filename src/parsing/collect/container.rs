@@ -46,8 +46,26 @@ pub fn collect_container<'r, 't>(
     invalids: &[ParseCondition],
     kind: Option<ParseErrorKind>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    // An inline container can begin on one native blockquote line and end on
+    // another. Keep the physical quote prefix out of the nested parse instead
+    // of dispatching it as a fresh blockquote on every speculative delimiter
+    // branch. Without this cursor, repeated `> //` / `> text//` pairs cause
+    // combinatorial retries.
+    let installed_quote_cursor = if parser.quote_body_cursor().is_none()
+        && let Some(required_depth) = parser.native_blockquote_depth()
+    {
+        parser.install_quote_body_cursor_at_current_line(required_depth);
+        true
+    } else {
+        false
+    };
+
     // Iterate and consume all the tokens
-    let collection = collect_consume(parser, rule, closes, invalids, kind)?;
+    let collection = collect_consume(parser, rule, closes, invalids, kind);
+    if installed_quote_cursor {
+        parser.set_quote_body_cursor(None);
+    }
+    let collection = collection?;
     let (elements, errors, paragraph_safe) = collection.into();
 
     // Package into a container

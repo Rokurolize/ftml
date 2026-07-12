@@ -191,4 +191,32 @@ mod tests {
 
         assert_eq!(error, IncludeParseError);
     }
+
+    #[test]
+    fn parse_include_block_ignores_commented_arguments() {
+        let source = concat!(
+            "[[include :scp-wiki:component:mapping-source\n",
+            "facility=-- |\n",
+            "x=66 |\n",
+            "[!--textclass=subtitlemap|\n",
+            "text=G-GOC|--]\n",
+            "]]\n",
+        );
+
+        let (include, end) = parse_include_block(source, 0)
+            .expect("comments may disable arguments inside an include");
+
+        assert_eq!(end, source.len() - 1);
+        assert_eq!(
+            include.page_ref(),
+            &PageRef::page_and_site("scp-wiki", "component:mapping-source")
+        );
+        assert_eq!(
+            include.variables().get("facility").map(Cow::as_ref),
+            Some("-- ")
+        );
+        assert_eq!(include.variables().get("x").map(Cow::as_ref), Some("66 "));
+        assert!(!include.variables().contains_key("textclass"));
+        assert!(!include.variables().contains_key("text"));
+    }
 }

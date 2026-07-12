@@ -20,7 +20,7 @@
 
 use crate::data::PageInfo;
 use crate::layout::Layout;
-use crate::parsing::{ParseErrorKind, Token};
+use crate::parsing::{DEEP_MAX_RECURSION_DEPTH, ParseErrorKind, Token};
 use crate::settings::{WikitextMode, WikitextSettings};
 use crate::tree::{Element, SyntaxTree};
 use std::borrow::Cow;
@@ -35,32 +35,28 @@ fn recursion_depth() {
     let page_info = PageInfo::dummy();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
 
-    // Build wikitext input
+    // Exercise the production-thread stack. The explicit parser limit must
+    // produce a recoverable error before a caller stack can overflow.
     let mut input = String::new();
 
-    for _ in 0..101 {
+    for _ in 0..=DEEP_MAX_RECURSION_DEPTH {
         input.push_str("[[div]]\n");
     }
 
-    for _ in 0..101 {
+    for _ in 0..=DEEP_MAX_RECURSION_DEPTH {
         input.push_str("[[/div]]\n");
     }
 
-    // Run parser steps
     crate::preprocess(&mut input);
     let tokens = crate::tokenize(&input);
     let (tree, errors) = crate::parse(&tokens, &page_info, &settings).into();
 
-    // Check outputted errors
     let error = errors.first().expect("No errors produced");
     assert_eq!(error.token(), Token::LeftBlock);
     assert_eq!(error.rule(), "block-div");
-    assert_eq!(error.span(), 800..802);
+    let error_start = DEEP_MAX_RECURSION_DEPTH * "[[div]]\n".len();
+    assert_eq!(error.span(), error_start..error_start + 2);
     assert_eq!(error.kind(), ParseErrorKind::RecursionDepthExceeded);
-
-    // Check syntax tree
-    //
-    // It outputs the entire input string as text
 
     let SyntaxTree { elements, .. } = tree;
     assert_eq!(elements.len(), 1);
@@ -68,6 +64,55 @@ fn recursion_depth() {
     let element = elements.first().expect("No elements produced");
     let input_cow = Cow::Borrowed(input.as_ref());
     assert_eq!(element, &Element::Text(input_cow));
+}
+
+#[test]
+fn corpus_depth_component_tree_parses_on_bounded_stack_worker() {
+    const CORPUS_BACKED_DEPTH: usize = 115;
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let mut input = "[[div]]\n".repeat(CORPUS_BACKED_DEPTH);
+    input.push_str(&"[[/div]]\n".repeat(CORPUS_BACKED_DEPTH));
+
+    crate::preprocess(&mut input);
+    let tokens = crate::tokenize(&input);
+    let (_, errors) = crate::parse(&tokens, &page_info, &settings).into();
+
+    assert!(errors.is_empty(), "{errors:#?}");
+}
+
+#[test]
+fn corpus_colmod_tree_parses_on_bounded_stack_worker() {
+    // fragment:scp-5764-1 expands a recursive navigation component into this
+    // balanced shape. Each row adds several parser frames, so its 231 rows are
+    // materially deeper than 231 plain div blocks.
+    const CORPUS_BACKED_ROWS: usize = 231;
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let mut input = String::new();
+    for _ in 0..CORPUS_BACKED_ROWS {
+        input.push_str(
+            "[[div_ class=\"colmod-block\"]]\n\
+             [[ul]][[li class=\"folded\"]][[ul]]_[[/ul]][[div class=\"colmod-link-top\"]]\n\
+             [[div_ class=\"foldable-list-container\"]]\n\
+             link[[/div]][[/div]][[div class=\"colmod-content\"]]\n",
+        );
+    }
+    for _ in 0..CORPUS_BACKED_ROWS {
+        input.push_str(
+            "[[/div]][[div]]\n\
+             [[div_ class=\"foldable-list-container\"]]\n\
+             link[[/div]][[/div]][[/li]][[/ul]][[/div]]\n",
+        );
+    }
+
+    crate::preprocess(&mut input);
+    let tokens = crate::tokenize(&input);
+    let (_, errors) = crate::parse(&tokens, &page_info, &settings).into();
+
+    assert!(errors.is_empty(), "{errors:#?}");
 }
 
 /// Test the parser's ability to process large bodies

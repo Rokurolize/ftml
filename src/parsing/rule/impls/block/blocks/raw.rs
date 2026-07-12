@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 use super::prelude::*;
+use std::borrow::Cow;
 
 // NOTE: "accepts_newlines" needs to be false here to avoid end trimming from get_body_text
 pub const BLOCK_RAW: BlockRule = BlockRule {
@@ -45,16 +46,26 @@ fn parse_fn<'r, 't>(
     let mut content = parser.get_body_text(&BLOCK_RAW)?;
 
     // Empty block
-    if content.eq("\n") {
-        content = "";
+    if content == "\n" {
+        content = Cow::Borrowed("");
     }
     // Trim the first and last \n if it's a multi-line block.
     // We already checked for the single newline case above.
     else if content.starts_with('\n') && content.ends_with('\n') {
-        content = content.trim_start_matches('\n').trim_end_matches('\n');
+        content = match content {
+            Cow::Borrowed(content) => {
+                Cow::Borrowed(content.trim_start_matches('\n').trim_end_matches('\n'))
+            }
+            Cow::Owned(content) => Cow::Owned(
+                content
+                    .trim_start_matches('\n')
+                    .trim_end_matches('\n')
+                    .to_owned(),
+            ),
+        };
     }
 
-    let element = Element::Raw(cow!(content));
+    let element = Element::Raw(content);
     success_elements(element)
 }
 
@@ -82,5 +93,25 @@ mod tests {
             panic!("expected one raw element, got {:?}", paragraph.elements());
         };
         assert_eq!(text.as_ref(), "**not bold**");
+    }
+
+    #[test]
+    fn quoted_raw_block_trims_owned_outer_newlines() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(concat!(
+            "> [[collapsible]]\n",
+            "> [[raw]]\n",
+            "> \n",
+            "> raw body\n",
+            "> \n",
+            "> [[/raw]]\n",
+            "> [[/collapsible]]\n",
+        ));
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let rendered = format!("{tree:?}");
+        assert!(rendered.contains("raw body"), "{rendered}");
     }
 }

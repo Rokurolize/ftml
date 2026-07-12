@@ -58,7 +58,7 @@ impl<'t> From<Tokenization<'t>> for Vec<ExtractedToken<'t>> {
 
 /// Take an input string and produce a list of tokens for consumption by the parser.
 pub fn tokenize(text: &str) -> Tokenization<'_> {
-    info!(
+    debug!(
         "Running lexer on text ({} bytes) to produce tokens",
         text.len(),
     );
@@ -102,5 +102,29 @@ mod test {
             .expect("tokenizing a punctuation-only run should stay bounded");
 
         assert_eq!(token_count, expected_tokens);
+    }
+
+    #[test]
+    fn email_scan_does_not_swallow_a_wikidot_block_closer() {
+        // Corpus provenance: scp-wiki/scp-9945.
+        let input = "[[span]]name[[/span]]19@scip.net";
+        let tokenization = tokenize(input);
+
+        assert!(
+            tokenization
+                .tokens()
+                .iter()
+                .any(|token| token.token == Token::Email && token.slice == "19@scip.net"),
+            "{:#?}",
+            tokenization.tokens(),
+        );
+        assert!(
+            tokenization
+                .tokens()
+                .iter()
+                .all(|token| token.slice != "span]]19@scip.net"),
+            "{:#?}",
+            tokenization.tokens(),
+        );
     }
 }

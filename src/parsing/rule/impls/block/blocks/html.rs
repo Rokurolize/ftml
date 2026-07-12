@@ -19,7 +19,6 @@
  */
 
 use super::prelude::*;
-use std::borrow::Cow;
 
 pub const BLOCK_HTML: BlockRule = BlockRule {
     name: "block-html",
@@ -45,10 +44,10 @@ fn parse_fn<'r, 't>(
     let arguments = parser.get_head_map(&BLOCK_HTML, in_head)?;
     let html = parser.get_body_text(&BLOCK_HTML)?;
     let element = Element::Html {
-        contents: Cow::Borrowed(html),
+        contents: html.clone(),
         attributes: arguments.to_attribute_map(parser.settings()),
     };
-    parser.push_html_block(Cow::Borrowed(html));
+    parser.push_html_block(html);
     ok!(element)
 }
 

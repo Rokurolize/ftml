@@ -35,7 +35,7 @@ fn parse_fn<'r, 't>(
     assert_module_name(&MODULE_CSS, name);
 
     let css = parser.get_body_text(&BLOCK_MODULE)?;
-    let element = Element::Style(cow!(css));
+    let element = Element::Style(css);
     success_value(element.into(), Vec::new(), false)
 }
 
@@ -66,9 +66,10 @@ mod tests {
         );
 
         let output = HtmlRender.render(&tree, &page_info, &settings);
+        assert_eq!(output.body, "");
         assert_eq!(
-            output.body,
-            "<style>.raw{--literal:\"[[*bold]] [[span]]\"}</style>",
+            output.styles,
+            vec![".raw{--literal:\"[[*bold]] [[span]]\"}".to_owned()],
         );
     }
 
@@ -89,10 +90,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:?}");
         let independent = HtmlRender.render(&tree, &page_info, &settings);
 
-        assert_eq!(
-            repeated.body,
-            format!("{}{}", independent.body, independent.body)
-        );
+        assert_eq!(repeated.body, independent.body);
         assert_eq!(
             repeated.styles,
             vec![independent.styles[0].clone(), independent.styles[0].clone()],

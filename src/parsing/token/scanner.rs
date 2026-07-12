@@ -231,7 +231,9 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
     }
 
     let mut at = identifier_end;
-    while at < bytes.len() && !matches!(bytes[at], b' ' | b'\t' | b'@' | b'\n' | b'\r') {
+    while at < bytes.len()
+        && !matches!(bytes[at], b' ' | b'\t' | b'@' | b'[' | b']' | b'\n' | b'\r')
+    {
         at += 1;
     }
     if at == start || bytes.get(at) != Some(&b'@') {
@@ -239,7 +241,11 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
     }
 
     let mut dot = at + 1;
-    while dot < bytes.len() && !matches!(bytes[dot], b' ' | b'\t' | b'.' | b'\n' | b'\r')
+    while dot < bytes.len()
+        && !matches!(
+            bytes[dot],
+            b' ' | b'\t' | b'.' | b'[' | b']' | b'\n' | b'\r'
+        )
     {
         dot += 1;
     }
@@ -248,7 +254,9 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
     }
 
     let mut end = dot + 1;
-    while end < bytes.len() && !matches!(bytes[end], b' ' | b'\t' | b'\n' | b'\r') {
+    while end < bytes.len()
+        && !matches!(bytes[end], b' ' | b'\t' | b'[' | b']' | b'\n' | b'\r')
+    {
         end += 1;
     }
 

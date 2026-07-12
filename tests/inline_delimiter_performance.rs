@@ -95,3 +95,34 @@ fn quoted_multiline_inline_delimiter_pairs_stay_bounded() {
         assert_eq!(html.matches("quoted text").count(), PAIR_COUNT);
     }
 }
+
+#[test]
+fn email_after_block_closer_does_not_hide_the_closer() {
+    const ROW_COUNT: usize = 128;
+
+    // Reduced from EN:scp-9945. The email scanner used to accept `]` in the
+    // local part, turning `[[/span]]19@scip.net` into one email token. The
+    // missing closer then made every enclosing block search to end of input.
+    let row = concat!(
+        "[[div class=\"contact\"]]\n",
+        "[[span style=\"color: red;\"]]name[[/span]]19@scip.net\n",
+        "[[/div]]\n",
+    );
+    let input = row.repeat(ROW_COUNT);
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let started = Instant::now();
+
+    let tokenization = ftml::tokenize(&input);
+    let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+    assert!(started.elapsed() < Duration::from_secs(5));
+    assert!(errors.is_empty(), "{errors:#?}");
+    assert_eq!(
+        html.matches("<span style=\"color: red;\">name</span>")
+            .count(),
+        ROW_COUNT
+    );
+    assert_eq!(html.matches("mailto:19@scip.net").count(), ROW_COUNT);
+}

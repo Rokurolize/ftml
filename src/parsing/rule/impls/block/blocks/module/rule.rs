@@ -43,6 +43,10 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "Module doesn't allow score flag");
     assert_block_name(&BLOCK_MODULE, name);
 
+    if parser.native_blockquote_depth().is_some() {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     // Get module name and arguments
     let (subname, arguments) = parser.get_head_name_map(&BLOCK_MODULE, in_head)?;
 
@@ -64,4 +68,39 @@ fn parse_fn<'r, 't>(
     let (elements, errors, paragraph_safe) = output.into();
 
     success_elements_with_paragraph_safety(paragraph_safe, elements, errors)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn quoted_module_markers_remain_literal_like_wikidot() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        // Quoted CSS module examples occur on theme:minimalist-bhl,
+        // theme:jakstyle, and manna-charitable-foundation-hub.
+        for input in [
+            "> [[module CSS]]\n> .OMEGA_CSS_DEPTH_ONE { color: red; }\n> [[/module]]",
+            ">> [[module CSS]]\n>> .OMEGA_CSS_DEPTH_TWO { color: red; }\n>> [[/module]]",
+            "> > [[module CSS]]\n> > .OMEGA_CSS_SPACED_INNER { color: red; }\n> > [[/module]]",
+            ">> [[module CSS]]\n>> .OMEGA_CSS_SHALLOW_CLOSE { color: red; }\n> [[/module]]\n> OMEGA_AFTER_SHALLOW",
+            "> [[module CSS]]\n> .OMEGA_CSS_DEEP_CLOSE { color: red; }\n>> [[/module]]\n> OMEGA_AFTER_DEEP",
+            "> [[module CSS]]\n> .OMEGA_CSS_UNCLOSED { color: red; }\n> OMEGA_QUOTED_AFTER_UNCLOSED\nOMEGA_OUTSIDE_AFTER_UNCLOSED",
+            "> [[module Rate show=\"OMEGA_RATE_DEPTH_ONE\"]]",
+            ">> [[module Rate show=\"OMEGA_RATE_DEPTH_TWO\"]]",
+            "> [[module CountPages category=\"OMEGA_COUNT_DEPTH_ONE\"]]",
+        ] {
+            let tokenization = crate::tokenize(input);
+            let (tree, _errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+
+            let debug = format!("{tree:?}");
+            assert!(!debug.contains("Style("), "{input:?}: {debug}");
+            assert!(!debug.contains("Module("), "{input:?}: {debug}");
+            assert!(debug.contains("Text(\"module\")"), "{input:?}: {debug}");
+        }
+    }
 }

@@ -37,6 +37,7 @@ fn parse_conditions<'r, 't>(
 ) -> Result<Vec<ElementCondition<'t>>, ParseError> {
     match spec {
         Some(spec) => Ok(ElementCondition::parse(spec)),
+        None if parser.settings().layout.legacy() => Ok(Vec::new()),
         None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
     }
 }
@@ -54,23 +55,40 @@ fn parse_fn<'r, 't>(
     assert_block_name(&BLOCK_IFTAGS, name);
 
     // Parse out tag conditions
-    let conditions = parser.get_head_value(&BLOCK_IFTAGS, in_head, parse_conditions)?;
+    let (conditions, body_start) = parser.get_head_value_with_body_start(
+        &BLOCK_IFTAGS,
+        in_head,
+        parse_conditions,
+    )?;
     if parser.settings().layout.legacy()
         && !parser.discarding_hidden_body()
         && !parser.has_body_end_block(&BLOCK_IFTAGS)
     {
-        return ok!(Elements::None);
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    let include_body = check_iftags(parser.page_info(), &conditions);
+    // A closed no-argument gate is false on Wikidot. Keeping this explicit
+    // avoids changing ElementCondition's general empty-set semantics.
+    let include_body = if conditions.is_empty() && parser.settings().layout.legacy() {
+        false
+    } else {
+        check_iftags(parser.page_info(), &conditions)
+    };
     if !include_body {
         trace!("Conditions failed, skipping hidden body");
-        parser.discard_body_elements(&BLOCK_IFTAGS)?;
+        parser.discard_body_elements_with_literal_quote_context(
+            &BLOCK_IFTAGS,
+            body_start,
+        )?;
         return ok!(true; Elements::None, Vec::new());
     }
 
     // Get body content, never with paragraphs
-    let body = parser.get_body_elements(&BLOCK_IFTAGS, false)?;
+    let body = parser.get_body_elements_with_literal_quote_context(
+        &BLOCK_IFTAGS,
+        false,
+        body_start,
+    )?;
     let (elements, errors, paragraph_safe) = body.into();
 
     trace!(
@@ -96,16 +114,33 @@ mod tests {
     use std::borrow::Cow;
 
     #[test]
-    fn iftags_requires_conditions_and_checks_page_tags() {
+    fn iftags_no_arguments_is_false_and_conditions_check_page_tags() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[iftags]]body[[/iftags]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:?}");
+        assert!(!format!("{tree:?}").contains("body"));
+
+        let tokenization = crate::tokenize("[[iftags   ]]body[[/iftags]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:?}");
+        assert!(!format!("{tree:?}").contains("body"), "{tree:?}");
+
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tokenization = crate::tokenize("[[iftags]]body[[/iftags]]");
         let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
         assert!(
             errors
                 .iter()
-                .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments)
+                .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments),
+            "{errors:?}",
         );
+
+        let tokenization = crate::tokenize("[[iftags   ]]body[[/iftags]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:?}");
+        assert!(format!("{tree:?}").contains("body"), "{tree:?}");
 
         let info = PageInfo {
             tags: vec![Cow::Borrowed("alpha"), Cow::Borrowed("gamma")],

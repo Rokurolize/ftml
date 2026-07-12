@@ -68,6 +68,7 @@ pub(crate) enum QuoteBodyLineState {
 pub(crate) struct QuoteBodyCursor {
     required_depth: usize,
     line_state: QuoteBodyLineState,
+    literal_residual_quotes: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -318,12 +319,17 @@ impl<'r, 't> Parser<'r, 't> {
                 if physical_depth == remaining_depth {
                     prepared.step()?;
                     prepared.get_optional_space()?;
-                    prepared.mark_virtual_start_of_line();
+                    if !cursor.literal_residual_quotes
+                        || prepared.current().token != Token::Quote
+                    {
+                        prepared.mark_virtual_start_of_line();
+                    }
                     prepared.quote_body_cursor = Some(QuoteBodyCursor {
                         required_depth: cursor.required_depth,
                         line_state: QuoteBodyLineState::PreparedContent {
                             content_start: prepared.current().span.start,
                         },
+                        literal_residual_quotes: cursor.literal_residual_quotes,
                     });
                 } else {
                     prepared.quote_body_cursor = Some(QuoteBodyCursor {
@@ -332,6 +338,7 @@ impl<'r, 't> Parser<'r, 't> {
                             token_start: prepared.current().span.start,
                             stripped_depth: remaining_depth,
                         },
+                        literal_residual_quotes: cursor.literal_residual_quotes,
                     });
                 }
                 self.update(&prepared);
@@ -358,12 +365,17 @@ impl<'r, 't> Parser<'r, 't> {
 
     #[rustfmt::skip]
     pub(crate) fn install_quote_body_cursor(&mut self, required_depth: usize) {
-        self.quote_body_cursor = Some(QuoteBodyCursor { required_depth, line_state: QuoteBodyLineState::NeedPrefix });
+        self.quote_body_cursor = Some(QuoteBodyCursor { required_depth, line_state: QuoteBodyLineState::NeedPrefix, literal_residual_quotes: false });
+    }
+
+    #[rustfmt::skip]
+    pub(crate) fn install_quote_body_cursor_with_literal_residuals(&mut self, required_depth: usize) {
+        self.quote_body_cursor = Some(QuoteBodyCursor { required_depth, line_state: QuoteBodyLineState::NeedPrefix, literal_residual_quotes: true });
     }
 
     #[rustfmt::skip]
     pub(crate) fn install_quote_body_cursor_at_current_line(&mut self, required_depth: usize) {
-        self.quote_body_cursor = Some(QuoteBodyCursor { required_depth, line_state: QuoteBodyLineState::PreparedContent { content_start: self.current().span.start } });
+        self.quote_body_cursor = Some(QuoteBodyCursor { required_depth, line_state: QuoteBodyLineState::PreparedContent { content_start: self.current().span.start }, literal_residual_quotes: false });
     }
 
     #[rustfmt::skip]
@@ -374,6 +386,11 @@ impl<'r, 't> Parser<'r, 't> {
     #[rustfmt::skip]
     pub(crate) fn quote_body_needs_prefix(&self) -> bool {
         matches!(self.quote_body_cursor, Some(QuoteBodyCursor { line_state: QuoteBodyLineState::NeedPrefix, .. }))
+    }
+
+    pub(crate) fn quote_body_has_literal_residuals(&self) -> bool {
+        self.quote_body_cursor
+            .is_some_and(|cursor| cursor.literal_residual_quotes)
     }
 
     pub(crate) fn quote_body_cursor(&self) -> Option<QuoteBodyCursor> {

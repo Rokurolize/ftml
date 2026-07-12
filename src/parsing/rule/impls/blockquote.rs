@@ -38,6 +38,7 @@ fn try_consume_fn<'r, 't>(
     // Context variables
     let mut depths = Vec::new();
     let mut errors = Vec::new();
+    let mut consumed_invisible_row = false;
 
     // Produce a depth list with elements
     while parser.prepare_quote_body_line()? != QuoteBodyLineStatus::Boundary
@@ -71,10 +72,34 @@ fn try_consume_fn<'r, 't>(
         let close = &close_conditions;
         let mut paragraph_safe = true;
         let original_depth = parser.native_blockquote_depth();
+        let physical_line_end = std::iter::once(parser.current())
+            .chain(parser.remaining().iter())
+            .find(|token| {
+                matches!(
+                    token.token,
+                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                )
+            })
+            .expect("tokenization always ends with input-end")
+            .span
+            .end;
         parser.set_native_blockquote_depth(Some(absolute_depth));
         let result = collect_native_blockquote_line(parser, close);
         parser.set_native_blockquote_depth(original_depth);
+        let errors_before = errors.len();
         let mut elements = result?.chain(&mut errors, &mut paragraph_safe);
+
+        // An invisible multiline child can consume the quote row containing
+        // its opener and finish beyond that physical line. Do not turn such a
+        // row into a visible blank line solely because blockquotes normally
+        // append a break to every row.
+        if elements.is_empty()
+            && errors.len() == errors_before
+            && parser.current().span.start > physical_line_end
+        {
+            consumed_invisible_row = true;
+            continue;
+        }
 
         // Add a line break for the end of the line
         elements.push(Element::LineBreak);
@@ -90,6 +115,9 @@ fn try_consume_fn<'r, 't>(
 
     // This blockquote has no rows, so the rule fails
     if depths.is_empty() {
+        if consumed_invisible_row {
+            return ok!(false; Elements::None, errors);
+        }
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 

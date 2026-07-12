@@ -28,6 +28,12 @@ enum Marker {
     CollapsibleClose,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum IfTagsMarker {
+    Open,
+    Close,
+}
+
 fn split_line(line: &str) -> (&str, &str) {
     line.strip_suffix('\n')
         .map_or((line, ""), |body| (body, "\n"))
@@ -67,6 +73,17 @@ pub fn substitute(text: &mut String) {
         .map(str::to_owned)
         .collect::<Vec<_>>();
     let literal_lines = literal_line_mask(&lines);
+    canonicalize_quote_prefixed_iftags(&mut lines, &literal_lines);
+
+    // The conditional pass can split a spaced-inner marker into a residual
+    // quoted line and a canonical conditional marker line. Rebuild both the
+    // physical line list and literal-region mask before subsequent passes.
+    lines = lines
+        .concat()
+        .split_inclusive('\n')
+        .map(str::to_owned)
+        .collect();
+    let literal_lines = literal_line_mask(&lines);
     canonicalize_unquoted_collapsible_closers(&mut lines, &literal_lines);
     canonicalize_unmatched_quoted_tab_closers(&mut lines, &literal_lines);
     canonicalize_crossed_center_collapsible_closers(&mut lines, &literal_lines);
@@ -75,6 +92,170 @@ pub fn substitute(text: &mut String) {
     canonicalize_root_collapsible_inline_quoted_closers(&mut lines, &literal_lines);
 
     *text = lines.concat();
+}
+
+/// Canonicalize closed quote-prefixed `iftags` gates before native quote parsing.
+///
+/// Exact native prefixes stay in place for the quote-aware block collector.
+/// Mismatched closers are moved to the opener's depth. Spaced-inner markers
+/// keep their literal residual on a separate quote line. Tight markers are
+/// hoisted because they otherwise disappear in the tight-line compatibility
+/// pass. Unmatched openers remain byte-for-byte unchanged.
+fn canonicalize_quote_prefixed_iftags(lines: &mut [String], literal_lines: &[bool]) {
+    let mut openers = Vec::new();
+    let mut pairs = Vec::new();
+
+    for (index, (line, literal)) in lines.iter().zip(literal_lines).enumerate() {
+        if *literal {
+            continue;
+        }
+
+        let Some((prefix, marker)) = iftags_marker_line(line) else {
+            continue;
+        };
+
+        match marker {
+            IfTagsMarker::Open => openers.push((index, prefix.contains('>'))),
+            IfTagsMarker::Close => {
+                if let Some((open_index, quoted)) = openers.pop()
+                    && quoted
+                {
+                    pairs.push((open_index, index));
+                }
+            }
+        }
+    }
+
+    for (open_index, close_index) in pairs {
+        let open_prefix = iftags_marker_line(&lines[open_index])
+            .expect("paired iftags opener remains a marker line")
+            .0;
+        let shape = quote_prefix_shape(open_prefix);
+
+        if shape.tight {
+            hoist_tight_iftags_marker(&mut lines[open_index]);
+            hoist_tight_iftags_marker(&mut lines[close_index]);
+        } else if shape.spaced_inner {
+            preserve_spaced_inner_marker(&mut lines[open_index], &shape.native_prefix);
+            preserve_spaced_inner_marker(&mut lines[close_index], &shape.native_prefix);
+        } else {
+            let close_prefix = iftags_marker_line(&lines[close_index])
+                .expect("paired iftags closer remains a marker line")
+                .0;
+            if close_prefix != shape.native_prefix {
+                normalize_iftags_marker_prefix(
+                    &mut lines[close_index],
+                    &shape.native_prefix,
+                );
+            }
+        }
+    }
+}
+
+#[derive(Debug)]
+struct QuotePrefixShape {
+    native_prefix: String,
+    spaced_inner: bool,
+    tight: bool,
+}
+
+fn quote_prefix_shape(prefix: &str) -> QuotePrefixShape {
+    let indentation_len = prefix
+        .bytes()
+        .take_while(|byte| matches!(byte, b' ' | b'\t'))
+        .count();
+    let quote_run = prefix[indentation_len..]
+        .bytes()
+        .take_while(|byte| *byte == b'>')
+        .count();
+    let after_quote_run = &prefix[indentation_len + quote_run..];
+    let tight = !after_quote_run.starts_with([' ', '\t']);
+    let spaced_inner = !tight
+        && after_quote_run
+            .trim_start_matches([' ', '\t'])
+            .contains('>');
+    let native_prefix_end = if tight {
+        indentation_len
+    } else {
+        indentation_len
+            + quote_run
+            + after_quote_run
+                .bytes()
+                .take_while(|byte| matches!(byte, b' ' | b'\t'))
+                .count()
+    };
+
+    QuotePrefixShape {
+        native_prefix: prefix[..native_prefix_end].to_owned(),
+        spaced_inner,
+        tight,
+    }
+}
+
+fn iftags_marker_line(line: &str) -> Option<(&str, IfTagsMarker)> {
+    let (body, _) = split_line(line);
+    let marker_start = body.find("[[")?;
+    let prefix = &body[..marker_start];
+    if !prefix.chars().all(|ch| matches!(ch, '>' | ' ' | '\t')) {
+        return None;
+    }
+
+    let marker = body[marker_start..].trim_end_matches([' ', '\t', '\r']);
+    let inner = marker.strip_prefix("[[")?.strip_suffix("]]")?.trim();
+    let (kind, head) = match inner.strip_prefix('/') {
+        Some(head) => (IfTagsMarker::Close, head.trim()),
+        None => (IfTagsMarker::Open, inner),
+    };
+    let name = head.split_ascii_whitespace().next()?;
+    let name = if kind == IfTagsMarker::Close {
+        name.strip_suffix('_').unwrap_or(name)
+    } else {
+        name
+    };
+    if !name.eq_ignore_ascii_case("iftags") {
+        return None;
+    }
+    if kind == IfTagsMarker::Close && head.split_ascii_whitespace().nth(1).is_some() {
+        return None;
+    }
+
+    Some((prefix, kind))
+}
+
+fn marker_and_ending(line: &str) -> (&str, &str) {
+    let (body, ending) = split_line(line);
+    let marker_start = body
+        .find("[[")
+        .expect("matched iftags line contains a block marker");
+    (&body[marker_start..], ending)
+}
+
+fn hoist_tight_iftags_marker(line: &mut String) {
+    let (body, _) = split_line(line);
+    let indentation_len = body
+        .bytes()
+        .take_while(|byte| matches!(byte, b' ' | b'\t'))
+        .count();
+    let indentation = body[..indentation_len].to_owned();
+    let (marker, ending) = marker_and_ending(line);
+    *line = format!("{indentation}{marker}{ending}");
+}
+
+fn preserve_spaced_inner_marker(line: &mut String, native_prefix: &str) {
+    let (body, _) = split_line(line);
+    let marker_start = body
+        .find("[[")
+        .expect("matched iftags line contains a block marker");
+    let residual = body[..marker_start].trim_end().to_owned();
+    let native_prefix = native_prefix.to_owned();
+    let (marker, ending) = marker_and_ending(line);
+    *line = format!("{residual}\n{native_prefix}{marker}{ending}");
+}
+
+fn normalize_iftags_marker_prefix(line: &mut String, native_prefix: &str) {
+    let native_prefix = native_prefix.to_owned();
+    let (marker, ending) = marker_and_ending(line);
+    *line = format!("{native_prefix}{marker}{ending}");
 }
 
 /// Move a root collapsible's closer out of a quoted content line.
@@ -667,6 +848,52 @@ mod tests {
     }
 
     #[test]
+    fn closed_quoted_iftags_are_canonicalized_before_quote_parsing() {
+        // Live sandbox provenance: run-quoted-conditionals, 2026-07-13.
+        for (mut source, expected) in [
+            (
+                "> [[iftags -missing]]\n> INCLUDED\n> [[/iftags]]\nAFTER".to_owned(),
+                "> [[iftags -missing]]\n> INCLUDED\n> [[/iftags]]\nAFTER",
+            ),
+            (
+                ">[[iftags +missing]]\nHIDDEN\n>[[/iftags]]\nAFTER".to_owned(),
+                "[[iftags +missing]]\nHIDDEN\n[[/iftags]]\nAFTER",
+            ),
+            (
+                ">> [[iftags +missing]]\n>> HIDDEN\n> [[/iftags]]\nAFTER".to_owned(),
+                ">> [[iftags +missing]]\n>> HIDDEN\n>> [[/iftags]]\nAFTER",
+            ),
+            (
+                "> > [[iftags +missing]]\n> > HIDDEN\n> > [[/iftags]]\nAFTER".to_owned(),
+                "> >\n> [[iftags +missing]]\n> > HIDDEN\n> >\n> [[/iftags]]\nAFTER",
+            ),
+        ] {
+            substitute(&mut source);
+            assert_eq!(source, expected);
+        }
+    }
+
+    #[test]
+    fn unclosed_quoted_iftags_and_literal_region_markers_are_not_hoisted() {
+        let mut quoted = "> [[iftags +missing]]\n> BODY\nAFTER".to_owned();
+        let quoted_original = quoted.clone();
+        substitute(&mut quoted);
+        assert_eq!(quoted, quoted_original);
+
+        let mut literal = concat!(
+            "[[code]]\n",
+            "> [[iftags +missing]]\n",
+            "> BODY\n",
+            "> [[/iftags]]\n",
+            "[[/code]]\n",
+        )
+        .to_owned();
+        let literal_original = literal.clone();
+        substitute(&mut literal);
+        assert_eq!(literal, literal_original);
+    }
+
+    #[test]
     fn quoted_crossed_center_and_collapsible_closers_are_canonicalized() {
         // Corpus provenance: scp-wiki/gears-ground-slowly.
         let mut source = concat!(
@@ -1008,7 +1235,13 @@ mod tests {
 
         let quoted_open = "> [[collapsible show=\"open\"]]\n";
         let crossed_open = "> [[=]]\n> [[collapsible show=\"open\"]]\n";
-        for mut source in [quoted_open.repeat(MARKERS), crossed_open.repeat(MARKERS)] {
+        let quoted_iftags =
+            concat!("> [[iftags +missing]]\n", "> hidden\n", "> [[/iftags]]\n",);
+        for mut source in [
+            quoted_open.repeat(MARKERS),
+            crossed_open.repeat(MARKERS),
+            quoted_iftags.repeat(MARKERS),
+        ] {
             let original = source.clone();
             let started = std::time::Instant::now();
 

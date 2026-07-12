@@ -178,6 +178,22 @@ fn try_consume_line_break<'r, 't>(
         return Ok(None);
     }
 
+    // A conditional quote cursor can interpret a marker remaining after its
+    // required physical prefix as literal content. The raw lookahead fast path
+    // sees only the outer Quote token, so defer that one shape to the generic
+    // line-break rule after preparing the prefix.
+    if parser.quote_body_has_literal_residuals() {
+        let mut next = parser.clone();
+        next.step()?;
+        next.get_optional_space()?;
+        if next.prepare_quote_body_line()? == QuoteBodyLineStatus::Prepared
+            && next.current().token == Token::Quote
+            && !next.start_of_line()
+        {
+            return Ok(None);
+        }
+    }
+
     match parser.next_three_tokens() {
         (Token::LineBreak, Some(Token::LeftBlock | Token::LeftBlockStar), _)
         | (Token::LineBreak, Some(Token::Colon), Some(Token::Whitespace)) => {
@@ -466,6 +482,16 @@ mod tests {
             .expect("line break before heading should use fast path");
         assert_eq!(elements, Elements::None);
         assert_eq!(parser.current().token, Token::Heading);
+
+        let (tokens, page_info, settings) = parser_for("alpha\n> > quoted");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 2);
+        parser.install_quote_body_cursor_with_literal_residuals(1);
+        assert!(
+            try_consume_line_break(&mut parser)
+                .expect("quote-aware line break deferral should not fail")
+                .is_none(),
+        );
+        assert_eq!(parser.current().token, Token::LineBreak);
 
         let (tokens, page_info, settings) = parser_for("alpha\n[[code]]");
         let mut parser = parser_at(&tokens, &page_info, &settings, 2);

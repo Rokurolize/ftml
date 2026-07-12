@@ -19,6 +19,9 @@ mod include_variables;
 #[path = "inline_delimiter_performance.rs"]
 mod inline_delimiter_performance;
 
+#[path = "raw_url_delimiter.rs"]
+mod raw_url_delimiter;
+
 #[path = "scp8980_wikidot_syntax.rs"]
 mod scp8980_wikidot_syntax;
 

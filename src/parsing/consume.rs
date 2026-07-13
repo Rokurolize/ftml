@@ -195,22 +195,9 @@ fn try_consume_line_break<'r, 't>(
     }
 
     let next = parser.next_three_tokens();
-    let starts_definition = matches!(
-        next,
-        (
-            Token::LineBreak,
-            Some(Token::Colon),
-            Some(Token::Whitespace)
-        )
-    );
-    let starts_block = matches!(
-        next,
-        (
-            Token::LineBreak,
-            Some(Token::LeftBlock | Token::LeftBlockStar),
-            _
-        )
-    );
+    let starts_definition =
+        next.1 == Some(Token::Colon) && next.2 == Some(Token::Whitespace);
+    let starts_block = matches!(next.1, Some(Token::LeftBlock | Token::LeftBlockStar));
     if starts_definition
         || (starts_block && !upcoming_block_ends_with_single_bracket(parser))
     {

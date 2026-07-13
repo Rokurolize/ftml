@@ -2,25 +2,115 @@ name: 'Rust Build'
 
 on:
   pull_request:
-    paths:
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'conf/*.toml'
-      - 'src/**'
-      - 'test/**'
-      - '.github/workflows/build.yaml'
-      - '.github/codecov.yml'
-      - '.config/nextest.toml'
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+      - converted_to_draft
+      - labeled
+      - unlabeled
   push:
     branches:
       - main
+
+concurrency:
+  # Control-label events share the active PR lane. Other label events are isolated so they cannot cancel or replace candidate results.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}-${{ github.event_name == 'pull_request' && (github.event.action != 'labeled' && github.event.action != 'unlabeled' || github.event.label.name == 'landing' || github.event.label.name == 'full-ci') && 'active' || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' && (github.event.action != 'labeled' && github.event.action != 'unlabeled' || github.event.label.name == 'landing' || github.event.label.name == 'full-ci') }}
 
 permissions:
   contents: read
 
 jobs:
-  library_build_and_test:
-    name: Library
+  classify:
+    name: Classifier
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.changes.outputs.rust }}
+      configuration: ${{ steps.changes.outputs.configuration }}
+      run_ci: ${{ steps.changes.outputs.run_ci }}
+      candidate: ${{ steps.changes.outputs.candidate }}
+      full_coverage: ${{ steps.changes.outputs.full_coverage }}
+      cache_epoch: ${{ steps.changes.outputs.cache_epoch }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Classify Changes
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          LABEL_EVENT: ${{ github.event_name == 'pull_request' && (github.event.action == 'labeled' || github.event.action == 'unlabeled') }}
+          CONTROL_LABEL: ${{ github.event.label.name == 'landing' || github.event.label.name == 'full-ci' }}
+          CANDIDATE: ${{ github.event_name == 'push' || github.event.pull_request.draft == false || contains(github.event.pull_request.labels.*.name, 'landing') }}
+          FULL_COVERAGE: ${{ github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'full-ci') }}
+        run: |
+          set -euo pipefail
+
+          rust=false
+          configuration=false
+          run_ci=true
+          candidate=false
+          full_coverage=false
+          # Actions caches are immutable, so rotate target caches weekly rather than for every commit.
+          cache_epoch=$(date -u +'%G-W%V')
+
+          if [[ "${LABEL_EVENT}" == "true" && "${CONTROL_LABEL}" != "true" ]]; then
+            run_ci=false
+          elif [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            rust=true
+            configuration=true
+            candidate=true
+            full_coverage=true
+          else
+            candidate="${CANDIDATE}"
+            full_coverage="${FULL_COVERAGE}"
+            git diff --no-renames --name-only -z "${BASE_SHA}...${HEAD_SHA}" > "${RUNNER_TEMP}/changed-paths"
+
+            while IFS= read -r -d '' path; do
+              case "${path}" in
+                .github/workflows/build.yaml|.github/workflows/config.yaml)
+                  rust=true
+                  configuration=true
+                  ;;
+                build.rs|rust-toolchain.toml|.rustfmt.toml|.tarpaulin.toml|.github/codecov.yml|.config/nextest.toml|benches/*|examples/*|proptest-regressions/*|test/*|tests/*)
+                  rust=true
+                  ;;
+                Cargo.toml|Cargo.lock|conf/*.toml|src/*)
+                  rust=true
+                  configuration=true
+                  ;;
+                docs/*.md|scripts/*|.gitattributes)
+                  configuration=true
+                  ;;
+                *.md|.coderabbit.yaml|.editorconfig|.gitignore|.mailmap|CODEOWNERS|.github/dependabot.yaml|misc/header.txt)
+                  ;;
+                *)
+                  rust=true
+                  configuration=true
+                  ;;
+              esac
+            done < "${RUNNER_TEMP}/changed-paths"
+          fi
+
+          {
+            echo "rust=${rust}"
+            echo "configuration=${configuration}"
+            echo "run_ci=${run_ci}"
+            echo "candidate=${candidate}"
+            echo "full_coverage=${full_coverage}"
+            echo "cache_epoch=${cache_epoch}"
+          } >> "${GITHUB_OUTPUT}"
+
+  rust_unit:
+    name: Rust Unit
+    needs: classify
+    if: ${{ needs.classify.outputs.run_ci == 'true' && needs.classify.outputs.rust == 'true' && needs.classify.outputs.candidate != 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -29,15 +119,66 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
-      - name: Cargo Cache
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      - name: Restore Cargo Home
+        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
-          key: ${{ runner.os }}-default-${{ hashFiles('**/Cargo.toml') }}
+          key: ftml-${{ runner.os }}-cargo-home-v1-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: |
+            ftml-${{ runner.os }}-cargo-home-v1-
+
+      - name: Restore Library Target
+        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: target
+          key: ftml-${{ runner.os }}-library-target-v2-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '.config/nextest.toml') }}-${{ needs.classify.outputs.cache_epoch }}
+          restore-keys: |
+            ftml-${{ runner.os }}-library-target-v2-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '.config/nextest.toml') }}-
+            ftml-${{ runner.os }}-library-target-v2-
+
+      - name: Test Library Unit Targets
+        run: cargo test --lib --all-features
+
+  library_build_and_test:
+    name: Library
+    needs: classify
+    if: ${{ needs.classify.outputs.run_ci == 'true' && needs.classify.outputs.rust == 'true' && needs.classify.outputs.candidate == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      RUSTFLAGS: -A unused -D warnings
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Restore Cargo Home
+        id: cargo-home-cache
+        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ftml-${{ runner.os }}-cargo-home-v1-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: |
+            ftml-${{ runner.os }}-cargo-home-v1-
+
+      - name: Restore Library Target
+        id: library-target-cache
+        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: target
+          key: ftml-${{ runner.os }}-library-target-v2-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '.config/nextest.toml') }}-${{ needs.classify.outputs.cache_epoch }}
+          restore-keys: |
+            ftml-${{ runner.os }}-library-target-v2-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', '.config/nextest.toml') }}-
+            ftml-${{ runner.os }}-library-target-v2-
 
       - name: Install cargo-nextest
         uses: taiki-e/install-action@96c7780c1d8a2b8723e12031def873a434d39d8d
@@ -86,6 +227,22 @@ jobs:
         run: cargo test --all-features -- --nocapture --ignored
         if: github.ref == 'refs/heads/main'
 
+      - name: Save Cargo Home
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.cargo-home-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ steps.cargo-home-cache.outputs.cache-primary-key }}
+
+      - name: Save Library Target
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.library-target-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: target
+          key: ${{ steps.library-target-cache.outputs.cache-primary-key }}
+
   upload_test_results:
     name: Upload Test Results
     needs: library_build_and_test
@@ -124,27 +281,44 @@ jobs:
 
   wasm:
     name: WebASM
+    needs: classify
+    if: ${{ needs.classify.outputs.run_ci == 'true' && needs.classify.outputs.rust == 'true' && needs.classify.outputs.candidate == 'true' }}
     runs-on: ubuntu-latest
     env:
       RUSTFLAGS: -A unused -D warnings --cfg getrandom_backend="wasm_js"
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Rust Toolchain
         run: rustup target add wasm32-unknown-unknown
 
-      - name: WASM Toolchain
-        run: cargo install wasm-pack --version 0.13.1 --locked
+      - name: Install wasm-pack
+        uses: taiki-e/install-action@96c7780c1d8a2b8723e12031def873a434d39d8d
+        with:
+          tool: wasm-pack@0.13.1
 
-      - name: Cargo Cache
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      - name: Restore Cargo Home
+        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
-          key: ${{ runner.os }}-webasm-${{ hashFiles('**/Cargo.toml') }}
+          key: ftml-${{ runner.os }}-cargo-home-v1-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: |
+            ftml-${{ runner.os }}-cargo-home-v1-
+
+      - name: Restore WebASM Target
+        id: wasm-target-cache
+        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: target
+          key: ftml-${{ runner.os }}-wasm-pack-0.13.1-target-v2-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml') }}-${{ needs.classify.outputs.cache_epoch }}
+          restore-keys: |
+            ftml-${{ runner.os }}-wasm-pack-0.13.1-target-v2-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml') }}-
+            ftml-${{ runner.os }}-wasm-pack-0.13.1-target-v2-
 
       - name: Build (Default)
         run: wasm-pack build --dev
@@ -152,8 +326,18 @@ jobs:
       - name: Build (No Features)
         run: wasm-pack build --dev -- --no-default-features
 
+      - name: Save WebASM Target
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.wasm-target-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: target
+          key: ${{ steps.wasm-target-cache.outputs.cache-primary-key }}
+
   coverage:
     name: Coverage
+    needs: classify
+    # PR coverage is opt-in. The active PR gate requires it whenever full-ci requests it.
+    if: ${{ needs.classify.outputs.run_ci == 'true' && needs.classify.outputs.full_coverage == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -163,15 +347,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
-      - name: Cargo Cache
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      - name: Restore Cargo Home
+        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
-          key: ${{ runner.os }}-coverage-${{ hashFiles('**/Cargo.toml') }}
+          key: ftml-${{ runner.os }}-cargo-home-v1-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: |
+            ftml-${{ runner.os }}-cargo-home-v1-
 
       - name: Install cargo-tarpaulin
         uses: taiki-e/install-action@96c7780c1d8a2b8723e12031def873a434d39d8d
@@ -179,6 +366,7 @@ jobs:
           tool: cargo-tarpaulin@0.32.8
 
       - name: Generate Coverage
+        # Tarpaulin cleans target before instrumentation, so target is intentionally not cached here.
         run: |
           cargo tarpaulin --all-features --workspace --timeout 120 --fail-under 94 --out xml --output-dir target/coverage
 
@@ -244,25 +432,42 @@ jobs:
 
   clippy_lint:
     name: Lint
+    needs: classify
+    if: ${{ needs.classify.outputs.run_ci == 'true' && needs.classify.outputs.rust == 'true' }}
     runs-on: ubuntu-latest
     env:
       RUSTFLAGS: -A unused -D warnings
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
-      - name: Cargo Cache
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      - name: Restore Cargo Home
+        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
-          key: ${{ runner.os }}-lint-${{ hashFiles('**/Cargo.toml') }}
+          key: ftml-${{ runner.os }}-cargo-home-v1-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: |
+            ftml-${{ runner.os }}-cargo-home-v1-
+
+      - name: Restore Lint Target
+        id: lint-target-cache
+        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: target
+          key: ftml-${{ runner.os }}-lint-target-v2-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml') }}-${{ needs.classify.outputs.cache_epoch }}
+          restore-keys: |
+            ftml-${{ runner.os }}-lint-target-v2-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml') }}-
+            ftml-${{ runner.os }}-lint-target-v2-
 
       # Unused dependencies
       - name: Install cargo-machete
-        run: cargo install cargo-machete --version 0.8.0 --locked
+        uses: taiki-e/install-action@96c7780c1d8a2b8723e12031def873a434d39d8d
+        with:
+          tool: cargo-machete@0.8.0
 
       - name: Machete
         run: cargo machete
@@ -274,3 +479,226 @@ jobs:
       # Linter
       - name: Clippy
         run: cargo clippy --tests --no-deps
+
+      - name: Save Lint Target
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.lint-target-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: target
+          key: ${{ steps.lint-target-cache.outputs.cache-primary-key }}
+
+  configuration_check:
+    name: Configurations
+    needs: classify
+    if: ${{ needs.classify.outputs.run_ci == 'true' && needs.classify.outputs.configuration == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Python 3.13
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: 3.13
+
+      - name: Restore Pip Cache
+        id: pip-cache
+        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: ~/.cache/pip
+          key: ftml-${{ runner.os }}-python-3.13-v1-${{ hashFiles('scripts/*-requirements.txt') }}
+          restore-keys: |
+            ftml-${{ runner.os }}-python-3.13-v1-
+
+      - name: Run Check
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scripts/check_conf-requirements.txt
+          python scripts/check_conf.py
+          python -m unittest discover -s scripts -p '*_test.py'
+
+      - name: Save Pip Cache
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.pip-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: ~/.cache/pip
+          key: ${{ steps.pip-cache.outputs.cache-primary-key }}
+
+  # Only ready candidate runs publish the required context. Draft and ignored label events use distinct names.
+  pr_gate:
+    name: ${{ github.event_name != 'pull_request' && 'CI / PR gate (inactive)' || needs.classify.outputs.run_ci != 'true' && 'CI / PR gate (inactive)' || github.event.pull_request.draft == false && needs.classify.outputs.candidate == 'true' && 'CI / gate' || 'CI / draft gate' }}
+    if: ${{ always() && github.event_name == 'pull_request' && needs.classify.outputs.run_ci == 'true' }}
+    needs:
+      - classify
+      - rust_unit
+      - library_build_and_test
+      - wasm
+      - coverage
+      - clippy_lint
+      - configuration_check
+    runs-on: ubuntu-latest
+    env:
+      CLASSIFIER_RESULT: ${{ needs.classify.result }}
+      RUN_CI: ${{ needs.classify.outputs.run_ci }}
+      RUST_REQUIRED: ${{ needs.classify.outputs.rust }}
+      CANDIDATE_REQUIRED: ${{ needs.classify.outputs.candidate }}
+      FULL_COVERAGE: ${{ needs.classify.outputs.full_coverage }}
+      RUST_UNIT_RESULT: ${{ needs.rust_unit.result }}
+      LIBRARY_RESULT: ${{ needs.library_build_and_test.result }}
+      WASM_RESULT: ${{ needs.wasm.result }}
+      COVERAGE_RESULT: ${{ needs.coverage.result }}
+      LINT_RESULT: ${{ needs.clippy_lint.result }}
+      CONFIGURATION_REQUIRED: ${{ needs.classify.outputs.configuration }}
+      CONFIGURATION_RESULT: ${{ needs.configuration_check.result }}
+    steps:
+      - name: Verify Required Jobs
+        run: |
+          set -euo pipefail
+
+          require_success() {
+            local name="$1"
+            local result="$2"
+
+            if [[ "${result}" != "success" ]]; then
+              echo "${name} finished with ${result}; expected success" >&2
+              exit 1
+            fi
+          }
+
+          require_skipped() {
+            local name="$1"
+            local result="$2"
+
+            if [[ "${result}" != "skipped" ]]; then
+              echo "${name} finished with ${result}; expected skipped" >&2
+              exit 1
+            fi
+          }
+
+          require_boolean() {
+            local name="$1"
+            local value="$2"
+
+            if [[ "${value}" != "true" && "${value}" != "false" ]]; then
+              echo "${name} is ${value:-unset}; expected true or false" >&2
+              exit 1
+            fi
+          }
+
+          require_success "Classifier" "${CLASSIFIER_RESULT}"
+          require_boolean "CI event classification" "${RUN_CI}"
+          require_boolean "Rust classification" "${RUST_REQUIRED}"
+          require_boolean "Configuration classification" "${CONFIGURATION_REQUIRED}"
+          require_boolean "Candidate classification" "${CANDIDATE_REQUIRED}"
+          require_boolean "Full coverage classification" "${FULL_COVERAGE}"
+
+          if [[ "${RUN_CI}" != "true" ]]; then
+            echo "CI event classification is ${RUN_CI}; expected true" >&2
+            exit 1
+          fi
+
+          if [[ "${RUST_REQUIRED}" == "true" ]]; then
+            require_success "Lint" "${LINT_RESULT}"
+            if [[ "${CANDIDATE_REQUIRED}" == "true" ]]; then
+              require_skipped "Rust Unit" "${RUST_UNIT_RESULT}"
+              require_success "Library" "${LIBRARY_RESULT}"
+              require_success "WebASM" "${WASM_RESULT}"
+            else
+              require_success "Rust Unit" "${RUST_UNIT_RESULT}"
+              require_skipped "Library" "${LIBRARY_RESULT}"
+              require_skipped "WebASM" "${WASM_RESULT}"
+            fi
+          else
+            require_skipped "Rust Unit" "${RUST_UNIT_RESULT}"
+            require_skipped "Library" "${LIBRARY_RESULT}"
+            require_skipped "WebASM" "${WASM_RESULT}"
+            require_skipped "Lint" "${LINT_RESULT}"
+          fi
+
+          if [[ "${CONFIGURATION_REQUIRED}" == "true" ]]; then
+            require_success "Configurations" "${CONFIGURATION_RESULT}"
+          else
+            require_skipped "Configurations" "${CONFIGURATION_RESULT}"
+          fi
+
+          if [[ "${FULL_COVERAGE}" == "true" ]]; then
+            require_success "Coverage" "${COVERAGE_RESULT}"
+          else
+            require_skipped "Coverage" "${COVERAGE_RESULT}"
+          fi
+
+  main_gate:
+    name: ${{ github.event_name == 'push' && 'CI / gate' || 'CI / main gate (inactive)' }}
+    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs:
+      - classify
+      - rust_unit
+      - library_build_and_test
+      - upload_test_results
+      - wasm
+      - coverage
+      - upload_coverage
+      - clippy_lint
+      - configuration_check
+    runs-on: ubuntu-latest
+    env:
+      CLASSIFIER_RESULT: ${{ needs.classify.result }}
+      RUN_CI: ${{ needs.classify.outputs.run_ci }}
+      RUST_REQUIRED: ${{ needs.classify.outputs.rust }}
+      CONFIGURATION_REQUIRED: ${{ needs.classify.outputs.configuration }}
+      CANDIDATE_REQUIRED: ${{ needs.classify.outputs.candidate }}
+      FULL_COVERAGE: ${{ needs.classify.outputs.full_coverage }}
+      RUST_UNIT_RESULT: ${{ needs.rust_unit.result }}
+      LIBRARY_RESULT: ${{ needs.library_build_and_test.result }}
+      TEST_RESULTS_RESULT: ${{ needs.upload_test_results.result }}
+      WASM_RESULT: ${{ needs.wasm.result }}
+      COVERAGE_RESULT: ${{ needs.coverage.result }}
+      COVERAGE_UPLOAD_RESULT: ${{ needs.upload_coverage.result }}
+      LINT_RESULT: ${{ needs.clippy_lint.result }}
+      CONFIGURATION_RESULT: ${{ needs.configuration_check.result }}
+    steps:
+      - name: Verify Main Jobs
+        run: |
+          set -euo pipefail
+
+          require_success() {
+            local name="$1"
+            local result="$2"
+
+            if [[ "${result}" != "success" ]]; then
+              echo "${name} finished with ${result}; expected success" >&2
+              exit 1
+            fi
+          }
+
+          require_true() {
+            local name="$1"
+            local value="$2"
+
+            if [[ "${value}" != "true" ]]; then
+              echo "${name} is ${value:-unset}; expected true" >&2
+              exit 1
+            fi
+          }
+
+          require_success "Classifier" "${CLASSIFIER_RESULT}"
+          require_true "CI event classification" "${RUN_CI}"
+          require_true "Rust classification" "${RUST_REQUIRED}"
+          require_true "Configuration classification" "${CONFIGURATION_REQUIRED}"
+          require_true "Candidate classification" "${CANDIDATE_REQUIRED}"
+          require_true "Full coverage classification" "${FULL_COVERAGE}"
+
+          if [[ "${RUST_UNIT_RESULT}" != "skipped" ]]; then
+            echo "Rust Unit finished with ${RUST_UNIT_RESULT}; expected skipped" >&2
+            exit 1
+          fi
+
+          require_success "Library" "${LIBRARY_RESULT}"
+          require_success "Test Results OIDC Export" "${TEST_RESULTS_RESULT}"
+          require_success "WebASM" "${WASM_RESULT}"
+          require_success "Coverage" "${COVERAGE_RESULT}"
+          require_success "Coverage OIDC Export" "${COVERAGE_UPLOAD_RESULT}"
+          require_success "Lint" "${LINT_RESULT}"
+          require_success "Configurations" "${CONFIGURATION_RESULT}"

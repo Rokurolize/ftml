@@ -36,22 +36,25 @@ def script_tool_versions(path):
     )
 
 
+def workflow_tool_installs(path):
+    aliases = {"nextest": "cargo-nextest"}
+    installs = re.findall(
+        r"^\s*uses: taiki-e/install-action@([^\s#]+)\s*$\n"
+        r"^\s*with:\s*$\n"
+        r"^\s*tool: (nextest|cargo-tarpaulin|cargo-machete|wasm-pack)@([0-9.]+)\s*$",
+        read(path),
+        flags=re.MULTILINE,
+    )
+    return [(aliases.get(tool, tool), version, revision) for revision, tool, version in installs]
+
+
 class CodexCloudScriptTests(unittest.TestCase):
     def test_tool_versions_match_github_actions(self):
-        workflow = read(WORKFLOW)
-        expected = {
-            "cargo-nextest": re.search(r"nextest@([0-9.]+)", workflow).group(1),
-            "cargo-tarpaulin": re.search(
-                r"cargo-tarpaulin@([0-9.]+)", workflow
-            ).group(1),
-            "cargo-machete": re.search(
-                r"cargo install cargo-machete --version ([0-9.]+)", workflow
-            ).group(1),
-            "wasm-pack": re.search(
-                r"cargo install wasm-pack --version ([0-9.]+)", workflow
-            ).group(1),
-        }
+        installs = workflow_tool_installs(WORKFLOW)
+        expected = {tool: version for tool, version, _ in installs}
 
+        self.assertEqual(len(installs), 4)
+        self.assertTrue(all(re.fullmatch(r"[0-9a-f]{40}", revision) for _, _, revision in installs))
         self.assertEqual(script_tool_versions(SETUP), expected)
         self.assertEqual(script_tool_versions(MAINTENANCE), expected)
 

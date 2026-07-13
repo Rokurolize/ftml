@@ -75,6 +75,7 @@ fn fast_tokenizer_matches_pest_on_adversarial_inputs() {
         "[[[*user]]] [[[* user]]]",
         "[[include component:start]] {$title} [[/include]]",
         "abc@example.com foo%bar@example.com",
+        "{{abc@example.com}}",
         "http://example.com/a|b https://example.com/[x]",
         "@<https://example.com/raw>@ https://example.com/a>b https://example.com/a>@b",
         "url(@<https://example.com/raw>@)",
@@ -422,6 +423,27 @@ fn tokens() {
                 token: Token::Email,
                 slice: "foo%bar@example.com",
                 span: 16..35,
+            },
+        ],
+    );
+
+    test!(
+        "{{abc@example.com}}",
+        vec![
+            ExtractedToken {
+                token: Token::LeftMonospace,
+                slice: "{{",
+                span: 0..2,
+            },
+            ExtractedToken {
+                token: Token::Email,
+                slice: "abc@example.com",
+                span: 2..17,
+            },
+            ExtractedToken {
+                token: Token::RightMonospace,
+                slice: "}}",
+                span: 17..19,
             },
         ],
     );

@@ -34,8 +34,8 @@ const fn get_list_type(token: Token) -> Option<ListType> {
 
 enum ListItemStep<'t> {
     End,
-    Skip,
-    Item((usize, ListType, Vec<Element<'t>>)),
+    Skip { ends_run: bool },
+    Item((usize, ListType, Vec<Element<'t>>), bool),
 }
 
 pub const RULE_LIST: Rule = Rule {
@@ -60,10 +60,14 @@ fn try_consume_fn<'r, 't>(
     while !ended {
         match parse_next_list_item(parser, &mut errors, &mut paragraph_safe)? {
             ListItemStep::End => ended = true,
-            ListItemStep::Skip => {
+            ListItemStep::Skip { ends_run } => {
                 skipped_empty_rows = true;
+                ended = ends_run;
             }
-            ListItemStep::Item(item) => depths.push(item),
+            ListItemStep::Item(item, ends_run) => {
+                depths.push(item);
+                ended = ends_run;
+            }
         }
     }
 
@@ -114,14 +118,14 @@ where
     sub_parser.step()?;
 
     let item_result = collect_list_item_elements(&mut sub_parser)?;
-    let elements = item_result.chain(errors, paragraph_safe);
+    let (elements, ends_run) = item_result.chain(errors, paragraph_safe);
     if elements.is_empty() {
         parser.update(&sub_parser);
-        return Ok(ListItemStep::Skip);
+        return Ok(ListItemStep::Skip { ends_run });
     }
 
     parser.update(&sub_parser);
-    Ok(ListItemStep::Item((depth, list_type, elements)))
+    Ok(ListItemStep::Item((depth, list_type, elements), ends_run))
 }
 
 fn parse_list_depth<'r, 't>(
@@ -144,14 +148,18 @@ fn parse_list_depth<'r, 't>(
 
 fn collect_list_item_elements<'r, 't>(
     parser: &mut Parser<'r, 't>,
-) -> ParseResult<'r, 't, Vec<Element<'t>>> {
+) -> ParseResult<'r, 't, (Vec<Element<'t>>, bool)> {
     let close_conditions = [
         ParseCondition::current(Token::LineBreak),
         ParseCondition::current(Token::ParagraphBreak),
         ParseCondition::current(Token::InputEnd),
     ];
 
-    collect_consume(parser, RULE_LIST, &close_conditions, &[], None)
+    let result = collect_consume_keep(parser, RULE_LIST, &close_conditions, &[], None)?;
+    Ok(result.map(|(elements, last)| {
+        let ends_run = matches!(last.token, Token::ParagraphBreak | Token::InputEnd);
+        (elements, ends_run)
+    }))
 }
 
 fn build_list_element(
@@ -329,5 +337,48 @@ mod tests {
         assert_eq!(items.len(), 1);
         assert_eq!(parser.current().token, Token::BulletItem);
         assert_eq!(parser.current().slice, "*");
+    }
+
+    #[test]
+    fn native_list_paragraph_break_starts_a_sibling_run() {
+        enable_test_logging();
+
+        let (page_info, settings) = settings();
+        let tokenization = crate::tokenize("* first\n\n* second");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("bullet token should follow input start");
+        parser.set_rule(RULE_LIST);
+
+        let success = RULE_LIST
+            .try_consume(&mut parser)
+            .expect("first list run should parse");
+        let Elements::Multiple(elements) = success.item else {
+            panic!("expected one list, got {:?}", success.item);
+        };
+        let [Element::List { items, .. }] = elements.as_slice() else {
+            panic!("expected one list, got {elements:?}");
+        };
+        assert_eq!(items.len(), 1);
+        assert_eq!(parser.current().token, Token::BulletItem);
+        assert_eq!(parser.current().slice, "*");
+
+        let tokenization = crate::tokenize("* first\n* second");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("bullet token should follow input start");
+        parser.set_rule(RULE_LIST);
+        let success = RULE_LIST
+            .try_consume(&mut parser)
+            .expect("contiguous list run should parse");
+        let Elements::Multiple(elements) = success.item else {
+            panic!("expected one list, got {:?}", success.item);
+        };
+        let [Element::List { items, .. }] = elements.as_slice() else {
+            panic!("expected one list, got {elements:?}");
+        };
+        assert_eq!(items.len(), 2);
     }
 }

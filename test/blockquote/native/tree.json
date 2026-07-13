@@ -28,10 +28,25 @@
                                 {
                                     "element": "text",
                                     "data": "Banana"
-                                },
-                                {
-                                    "element": "line-break"
-                                },
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "blockquote",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "paragraph",
+                            "attributes": {},
+                            "elements": [
                                 {
                                     "element": "text",
                                     "data": "Cherry"
@@ -139,7 +154,25 @@
                                             }
                                         ]
                                     }
-                                },
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "blockquote",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "blockquote",
+                            "attributes": {},
+                            "elements": [
                                 {
                                     "element": "container",
                                     "data": {

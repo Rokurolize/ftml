@@ -194,12 +194,14 @@ fn try_consume_line_break<'r, 't>(
         }
     }
 
-    match parser.next_three_tokens() {
-        (Token::LineBreak, Some(Token::LeftBlock | Token::LeftBlockStar), _)
-        | (Token::LineBreak, Some(Token::Colon), Some(Token::Whitespace)) => {
-            return Ok(None);
-        }
-        _ => {}
+    let next = parser.next_three_tokens();
+    let starts_definition =
+        next.1 == Some(Token::Colon) && next.2 == Some(Token::Whitespace);
+    let starts_block = matches!(next.1, Some(Token::LeftBlock | Token::LeftBlockStar));
+    if starts_definition
+        || (starts_block && !upcoming_block_ends_with_single_bracket(parser))
+    {
+        return Ok(None);
     }
 
     let next_offset = if matches!(
@@ -220,6 +222,25 @@ fn try_consume_line_break<'r, 't>(
     } else {
         Ok(Some(Element::LineBreak.into()))
     }
+}
+
+fn upcoming_block_ends_with_single_bracket(parser: &Parser<'_, '_>) -> bool {
+    let mut last = None;
+    for token in parser.remaining() {
+        if matches!(
+            token.token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        ) {
+            break;
+        }
+        if token.token == Token::RightBlock {
+            return false;
+        }
+        if token.token != Token::Whitespace {
+            last = Some(token.token);
+        }
+    }
+    last == Some(Token::RightBracket)
 }
 
 fn try_consume_leaf_token<'r, 't>(
@@ -498,6 +519,23 @@ mod tests {
         assert!(
             try_consume_line_break(&mut parser)
                 .expect("line break block fallback check should not fail")
+                .is_none(),
+        );
+        assert_eq!(parser.current().token, Token::LineBreak);
+
+        let (tokens, page_info, settings) = parser_for("alpha\n[[iftags +alphaX]\nomega");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 2);
+        let elements = try_consume_line_break(&mut parser)
+            .expect("line break before malformed block should not fail")
+            .expect("single-bracket block fallback must keep its line break");
+        assert_eq!(elements, Element::LineBreak.into());
+        assert_eq!(parser.current().token, Token::LeftBlock);
+
+        let (tokens, page_info, settings) = parser_for("alpha\n[[code]]]");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 2);
+        assert!(
+            try_consume_line_break(&mut parser)
+                .expect("valid block followed by literal bracket should not fail")
                 .is_none(),
         );
         assert_eq!(parser.current().token, Token::LineBreak);

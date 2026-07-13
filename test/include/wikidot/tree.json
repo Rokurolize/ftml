@@ -17,10 +17,16 @@
                     {
                         "element": "text",
                         "data": "PAGE"
-                    },
-                    {
-                        "element": "line-break"
-                    },
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
                     {
                         "element": "text",
                         "data": "INCLUDED"
@@ -32,10 +38,16 @@
                     {
                         "element": "text",
                         "data": "PAGE"
-                    },
-                    {
-                        "element": "line-break"
-                    },
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
                     {
                         "element": "text",
                         "data": "OFF"

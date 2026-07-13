@@ -310,6 +310,42 @@ mod tests {
     }
 
     #[test]
+    fn native_blockquote_prunes_empty_rows_at_every_depth() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut input = "> \n>\n>> \n".to_owned();
+        crate::preprocess(&mut input);
+        let tokenization = crate::tokenize(&input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.trim().is_empty(), "{html}");
+    }
+
+    #[test]
+    fn native_blockquote_prunes_rows_consumed_by_an_invisible_child() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut input = concat!(
+            "> [[iftags +missing]]\n",
+            "> OMEGA_HIDDEN\n",
+            "> [[/iftags]]\n",
+            "OMEGA_AFTER",
+        )
+        .to_owned();
+        crate::preprocess(&mut input);
+        let tokenization = crate::tokenize(&input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(!html.contains("<blockquote>"), "{html}");
+        assert!(!html.contains("OMEGA_HIDDEN"), "{html}");
+        assert!(html.contains("OMEGA_AFTER"), "{html}");
+    }
+
+    #[test]
     fn native_blockquote_content_respects_virtual_line_start_for_headings() {
         enable_test_logging();
 

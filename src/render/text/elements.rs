@@ -179,7 +179,9 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
 
                         // Render elements for this list item
                         render_elements(ctx, elements);
-                        ctx.add_newline();
+                        if !ctx.ends_with_newline() {
+                            ctx.add_newline();
+                        }
                     }
                 }
             }

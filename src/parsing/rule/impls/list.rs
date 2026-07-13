@@ -34,7 +34,6 @@ const fn get_list_type(token: Token) -> Option<ListType> {
 
 enum ListItemStep<'t> {
     End,
-    Skip { ends_run: bool },
     Item((usize, ListType, Vec<Element<'t>>), bool),
 }
 
@@ -69,14 +68,9 @@ fn try_consume_fn<'r, 't>(
     let mut paragraph_safe = false;
 
     let mut ended = false;
-    let mut skipped_empty_rows = false;
     while !ended {
         match parse_next_list_item(parser, &mut errors, &mut paragraph_safe)? {
             ListItemStep::End => ended = true,
-            ListItemStep::Skip { ends_run } => {
-                skipped_empty_rows = true;
-                ended = ends_run;
-            }
             ListItemStep::Item(item, ends_run) => {
                 depths.push(item);
                 ended = ends_run;
@@ -86,18 +80,14 @@ fn try_consume_fn<'r, 't>(
 
     // This list has no rows, so the rule fails
     if depths.is_empty() {
-        return if skipped_empty_rows {
-            ok!(true; Elements::None, errors)
-        } else {
-            Err(parser.make_err(ParseErrorKind::RuleFailed))
-        };
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
     let depths = retain_active_nested_list_types(depths);
     let depth_lists = process_depths(ListType::Generic, depths);
     let elements: Vec<Element> = depth_lists
         .into_iter()
-        .map(|(ltype, depth_list)| build_list_element(ltype, depth_list))
+        .filter_map(|(ltype, depth_list)| build_list_element(ltype, depth_list))
         .collect();
 
     ok!(paragraph_safe; elements, errors)
@@ -161,11 +151,6 @@ where
 
     let item_result = collect_list_item_elements(&mut sub_parser)?;
     let (elements, ends_run) = item_result.chain(errors, paragraph_safe);
-    if elements.is_empty() {
-        parser.update(&sub_parser);
-        return Ok(ListItemStep::Skip { ends_run });
-    }
-
     parser.update(&sub_parser);
     Ok(ListItemStep::Item((depth, list_type, elements), ends_run))
 }
@@ -207,7 +192,7 @@ fn collect_list_item_elements<'r, 't>(
 fn build_list_element(
     top_ltype: ListType,
     list: DepthList<ListType, Vec<Element>>,
-) -> Element {
+) -> Option<Element> {
     let mut items = Vec::new();
     for item in list {
         match item {
@@ -216,7 +201,9 @@ fn build_list_element(
                 attributes: AttributeMap::new(),
             }),
             DepthItem::List(ltype, list) => {
-                let sublist = build_list_element(ltype, list);
+                let Some(sublist) = build_list_element(ltype, list) else {
+                    continue;
+                };
                 match items.last_mut() {
                     Some(ListItem::Elements { elements, .. }) => elements.push(sublist),
                     _ => items.push(ListItem::SubList {
@@ -226,14 +213,26 @@ fn build_list_element(
             }
         }
     }
+
+    // Wikidot discards an empty list marker unless the following, deeper list
+    // makes it an authored parent. Defer pruning until all sub-lists have been
+    // attached so an empty parent remains distinguishable from a skipped depth.
+    items.retain(|item| match item {
+        ListItem::Elements { elements, .. } => !elements.is_empty(),
+        ListItem::SubList { .. } => true,
+    });
+    if items.is_empty() {
+        return None;
+    }
+
     let attributes = AttributeMap::new();
 
     // Return the Element::List object
-    Element::List {
+    Some(Element::List {
         ltype: top_ltype,
         items,
         attributes,
-    }
+    })
 }
 
 #[cfg(test)]
@@ -381,7 +380,8 @@ mod tests {
             ),
         ];
 
-        let Element::List { items, .. } = build_list_element(ListType::Bullet, list)
+        let Some(Element::List { items, .. }) =
+            build_list_element(ListType::Bullet, list)
         else {
             panic!("expected a list element");
         };
@@ -458,6 +458,66 @@ mod tests {
         assert_eq!(items.len(), 1);
         assert_eq!(parser.current().token, Token::BulletItem);
         assert_eq!(parser.current().slice, "*");
+    }
+
+    #[test]
+    fn native_list_retains_an_empty_item_that_owns_a_sublist() {
+        enable_test_logging();
+
+        let (page_info, settings) = settings();
+        let tokenization = crate::tokenize("* \n * child\n  * grandchild\n* after");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("bullet token should follow input start");
+        parser.set_rule(RULE_LIST);
+
+        let success = RULE_LIST
+            .try_consume(&mut parser)
+            .expect("empty parent with descendants should parse as one list run");
+        let Elements::Multiple(elements) = success.item else {
+            panic!("expected one list, got {:?}", success.item);
+        };
+        let [Element::List { items, .. }] = elements.as_slice() else {
+            panic!("expected one list, got {elements:?}");
+        };
+        let [
+            ListItem::Elements {
+                elements: parent_elements,
+                ..
+            },
+            ListItem::Elements {
+                elements: after_elements,
+                ..
+            },
+        ] = items.as_slice()
+        else {
+            panic!("expected an empty parent and a root sibling, got {items:?}");
+        };
+        let [
+            Element::List {
+                items: child_items, ..
+            },
+        ] = parent_elements.as_slice()
+        else {
+            panic!(
+                "expected the empty parent to own a nested list, got {parent_elements:?}"
+            );
+        };
+        let [
+            ListItem::Elements {
+                elements: child_elements,
+                ..
+            },
+        ] = child_items.as_slice()
+        else {
+            panic!("expected one child item, got {child_items:?}");
+        };
+        assert!(matches!(
+            child_elements.as_slice(),
+            [Element::Text { .. }, Element::List { .. }]
+        ));
+        assert_eq!(after_elements, &[text!("after")]);
     }
 
     #[test]

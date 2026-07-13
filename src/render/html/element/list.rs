@@ -48,7 +48,13 @@ pub fn render_list(
                         .inner(|ctx| render_elements(ctx, elements));
                 }
                 ListItem::SubList { element } => {
-                    ctx.html().li().inner(|ctx| {
+                    let attributes = match ctx.layout() {
+                        Layout::Wikidot => {
+                            attr!("style" => "list-style: none; display: inline")
+                        }
+                        Layout::Wikijump => attr!(),
+                    };
+                    ctx.html().li().attr(attributes).inner(|ctx| {
                         render_element(ctx, element);
                     });
                 }

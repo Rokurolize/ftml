@@ -1,0 +1,434 @@
+{
+    "elements": [
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "root"
+                            },
+                            {
+                                "element": "list",
+                                "data": {
+                                    "type": "bullet",
+                                    "attributes": {},
+                                    "items": [
+                                        {
+                                            "item-type": "sub-list",
+                                            "element": "list",
+                                            "data": {
+                                                "type": "bullet",
+                                                "attributes": {},
+                                                "items": [
+                                                    {
+                                                        "item-type": "elements",
+                                                        "attributes": {},
+                                                        "elements": [
+                                                            {
+                                                                "element": "text",
+                                                                "data": "skipped"
+                                                            },
+                                                            {
+                                                                "element": "text",
+                                                                "data": " "
+                                                            },
+                                                            {
+                                                                "element": "text",
+                                                                "data": "one"
+                                                            },
+                                                            {
+                                                                "element": "text",
+                                                                "data": " "
+                                                            },
+                                                            {
+                                                                "element": "text",
+                                                                "data": "level"
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "after"
+                            },
+                            {
+                                "element": "text",
+                                "data": " "
+                            },
+                            {
+                                "element": "text",
+                                "data": "skip"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "root"
+                            },
+                            {
+                                "element": "list",
+                                "data": {
+                                    "type": "numbered",
+                                    "attributes": {},
+                                    "items": [
+                                        {
+                                            "item-type": "sub-list",
+                                            "element": "list",
+                                            "data": {
+                                                "type": "numbered",
+                                                "attributes": {},
+                                                "items": [
+                                                    {
+                                                        "item-type": "sub-list",
+                                                        "element": "list",
+                                                        "data": {
+                                                            "type": "numbered",
+                                                            "attributes": {},
+                                                            "items": [
+                                                                {
+                                                                    "item-type": "sub-list",
+                                                                    "element": "list",
+                                                                    "data": {
+                                                                        "type": "numbered",
+                                                                        "attributes": {},
+                                                                        "items": [
+                                                                            {
+                                                                                "item-type": "elements",
+                                                                                "attributes": {},
+                                                                                "elements": [
+                                                                                    {
+                                                                                        "element": "text",
+                                                                                        "data": "skipped"
+                                                                                    },
+                                                                                    {
+                                                                                        "element": "text",
+                                                                                        "data": " "
+                                                                                    },
+                                                                                    {
+                                                                                        "element": "text",
+                                                                                        "data": "three"
+                                                                                    },
+                                                                                    {
+                                                                                        "element": "text",
+                                                                                        "data": " "
+                                                                                    },
+                                                                                    {
+                                                                                        "element": "text",
+                                                                                        "data": "levels"
+                                                                                    }
+                                                                                ]
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "after"
+                            },
+                            {
+                                "element": "text",
+                                "data": " "
+                            },
+                            {
+                                "element": "text",
+                                "data": "deep"
+                            },
+                            {
+                                "element": "text",
+                                "data": " "
+                            },
+                            {
+                                "element": "text",
+                                "data": "skip"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "list",
+                                "data": {
+                                    "type": "bullet",
+                                    "attributes": {},
+                                    "items": [
+                                        {
+                                            "item-type": "elements",
+                                            "attributes": {},
+                                            "elements": [
+                                                {
+                                                    "element": "text",
+                                                    "data": "child"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": " "
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "of"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": " "
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "authored"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": " "
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "empty"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": " "
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "root"
+                                                },
+                                                {
+                                                    "element": "list",
+                                                    "data": {
+                                                        "type": "bullet",
+                                                        "attributes": {},
+                                                        "items": [
+                                                            {
+                                                                "item-type": "elements",
+                                                                "attributes": {},
+                                                                "elements": [
+                                                                    {
+                                                                        "element": "text",
+                                                                        "data": "grandchild"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "after"
+                            },
+                            {
+                                "element": "text",
+                                "data": " "
+                            },
+                            {
+                                "element": "text",
+                                "data": "empty"
+                            },
+                            {
+                                "element": "text",
+                                "data": " "
+                            },
+                            {
+                                "element": "text",
+                                "data": "root"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "root"
+                            },
+                            {
+                                "element": "list",
+                                "data": {
+                                    "type": "bullet",
+                                    "attributes": {},
+                                    "items": [
+                                        {
+                                            "item-type": "elements",
+                                            "attributes": {},
+                                            "elements": [
+                                                {
+                                                    "element": "list",
+                                                    "data": {
+                                                        "type": "bullet",
+                                                        "attributes": {},
+                                                        "items": [
+                                                            {
+                                                                "item-type": "elements",
+                                                                "attributes": {},
+                                                                "elements": [
+                                                                    {
+                                                                        "element": "text",
+                                                                        "data": "grandchild"
+                                                                    },
+                                                                    {
+                                                                        "element": "text",
+                                                                        "data": " "
+                                                                    },
+                                                                    {
+                                                                        "element": "text",
+                                                                        "data": "of"
+                                                                    },
+                                                                    {
+                                                                        "element": "text",
+                                                                        "data": " "
+                                                                    },
+                                                                    {
+                                                                        "element": "text",
+                                                                        "data": "authored"
+                                                                    },
+                                                                    {
+                                                                        "element": "text",
+                                                                        "data": " "
+                                                                    },
+                                                                    {
+                                                                        "element": "text",
+                                                                        "data": "empty"
+                                                                    },
+                                                                    {
+                                                                        "element": "text",
+                                                                        "data": " "
+                                                                    },
+                                                                    {
+                                                                        "element": "text",
+                                                                        "data": "nested"
+                                                                    },
+                                                                    {
+                                                                        "element": "text",
+                                                                        "data": " "
+                                                                    },
+                                                                    {
+                                                                        "element": "text",
+                                                                        "data": "parent"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "after"
+                            },
+                            {
+                                "element": "text",
+                                "data": " "
+                            },
+                            {
+                                "element": "text",
+                                "data": "empty"
+                            },
+                            {
+                                "element": "text",
+                                "data": " "
+                            },
+                            {
+                                "element": "text",
+                                "data": "nested"
+                            },
+                            {
+                                "element": "text",
+                                "data": " "
+                            },
+                            {
+                                "element": "text",
+                                "data": "parent"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

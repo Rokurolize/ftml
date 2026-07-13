@@ -82,7 +82,7 @@ fn try_consume_fn<'r, 't>(
         let close = &close_conditions;
         let mut paragraph_safe = true;
         let original_depth = parser.native_blockquote_depth();
-        let physical_line_end = std::iter::once(parser.current())
+        let (physical_line_end, ends_quote_run) = std::iter::once(parser.current())
             .chain(parser.remaining().iter())
             .find(|token| {
                 matches!(
@@ -90,9 +90,8 @@ fn try_consume_fn<'r, 't>(
                     Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
                 )
             })
-            .expect("tokenization always ends with input-end")
-            .span
-            .end;
+            .map(|token| (token.span.end, token.token == Token::ParagraphBreak))
+            .expect("tokenization always ends with input-end");
         parser.set_native_blockquote_depth(Some(absolute_depth));
         let result = collect_native_blockquote_line(parser, close);
         parser.set_native_blockquote_depth(original_depth);
@@ -109,6 +108,9 @@ fn try_consume_fn<'r, 't>(
         let empty_spaced_row = row_is_empty && spaced_after_marker;
         if consumed_past_line || (row_is_empty && !spaced_after_marker) {
             consumed_pruned_row = true;
+            if ends_quote_run {
+                break;
+            }
             continue;
         }
 
@@ -131,7 +133,13 @@ fn try_consume_fn<'r, 't>(
                 paragraph_safe,
                 empty_spaced: empty_spaced_row,
             },
-        ))
+        ));
+
+        // An unquoted blank line terminates the current native quote run.
+        // A following quote at the same depth starts a sibling blockquote.
+        if ends_quote_run {
+            break;
+        }
     }
 
     // This blockquote has no rows, so the rule fails

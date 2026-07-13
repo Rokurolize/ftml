@@ -174,6 +174,20 @@ fn wikidot_empty_native_quote_lines_do_not_create_empty_blockquotes() {
 }
 
 #[test]
+fn wikidot_unquoted_blank_line_starts_a_sibling_native_quote_run() {
+    // Live sandbox provenance:
+    // ftml-oracle-20260713T143737Z/run-include-expansion-boundary-separators/
+    // direct-unquoted-blank-quote-control.
+    let (text, html) = render_text_and_html("> OMEGA_QUOTE_A\n\n> OMEGA_QUOTE_B");
+
+    assert!(text.contains("OMEGA_QUOTE_A"), "{text}");
+    assert!(text.contains("OMEGA_QUOTE_B"), "{text}");
+    assert_eq!(html.matches("<blockquote>").count(), 2, "{html}");
+    assert_eq!(html.matches("</blockquote>").count(), 2, "{html}");
+    assert!(!html.contains("OMEGA_QUOTE_A<br>OMEGA_QUOTE_B"), "{html}");
+}
+
+#[test]
 fn wikidot_empty_native_quote_lines_preserve_surrounding_run_semantics() {
     // Live sandbox provenance:
     // ftml-oracle-20260713T112423Z/run-iftags-quoted-partial/empty-quote-run-controls.

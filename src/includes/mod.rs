@@ -199,8 +199,44 @@ where
         // Append page to final list
         pages.push(page_ref);
 
-        // Perform the substitution
-        output.replace_range(range, &replace_with);
+        // Removing an empty include already leaves the caller's line ending
+        // on each side. Extra padding would create additional blank rows.
+        if replace_with.is_empty() {
+            output.replace_range(range, "");
+            continue;
+        }
+
+        // Wikidot treats an expanded include as its own block run. Add one
+        // line ending on each side that has caller source, turning the
+        // caller's ordinary line ending into a blank-line boundary. Do not
+        // pad a document edge, so an include-only source remains unchanged.
+        let before = (range.start > 0).then(|| {
+            if input[..range.start].ends_with("\r\n") {
+                "\r\n"
+            } else {
+                "\n"
+            }
+        });
+        let after = (range.end < input.len()).then(|| {
+            if input[range.end..].starts_with("\r\n") {
+                "\r\n"
+            } else {
+                "\n"
+            }
+        });
+        let mut separated = String::with_capacity(
+            replace_with.len() + before.map_or(0, str::len) + after.map_or(0, str::len),
+        );
+        if let Some(line_ending) = before {
+            separated.push_str(line_ending);
+        }
+        separated.push_str(&replace_with);
+        if let Some(line_ending) = after {
+            separated.push_str(line_ending);
+        }
+
+        // Perform the substitution.
+        output.replace_range(range, &separated);
     }
 
     // Since we iterate in reverse order, the pages are reversed.

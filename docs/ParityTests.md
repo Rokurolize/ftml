@@ -18,6 +18,8 @@ Update this list whenever a new `wikidot.html` fixture is added or removed. Keep
 | image | `test/image/basic` | Image syntax, alignment, local-file paths, attributes, and linked images render in Wikidot layout. |
 | link | `test/link/single` | Single-bracket links render expected Wikidot href and label output. |
 | link | `test/link/triple` | Triple-bracket links render expected Wikidot page and URL output. |
+| list | `test/list/native-skipped-depth-empty-parent` | Native lists distinguish styled synthetic skipped-depth items from authored empty parents. |
+| list | `test/list/native-wikidot-structure` | Native list nesting, mixed markers, run boundaries, and literal orphan rows match Wikidot. |
 | misc | `test/misc/clear-float` | Clear-float syntax renders the Wikidot clear element. |
 | misc | `test/misc/email` | Email syntax renders Wikidot-compatible mail links. |
 | radio | `test/radio/basic` | Radio inputs render expected Wikidot form markup. |
@@ -33,4 +35,3 @@ Run this command to verify the current parity fixture set:
 ```sh
 find test -name "wikidot.html" -exec dirname {} \; | sort
 ```
-

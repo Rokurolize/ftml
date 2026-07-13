@@ -337,7 +337,9 @@ fn remove_tight_quote_lines(lines: &mut [String], literal_lines: &[bool]) {
         if active_quote_depth == 0 {
             *line = ending.to_owned();
         } else {
-            *line = format!("{indentation}{}{ending}", "> ".repeat(active_quote_depth));
+            // Keep the active depth without introducing horizontal space:
+            // an empty `>` row is invisible, while `> ` splits paragraphs.
+            *line = format!("{indentation}{}{ending}", ">".repeat(active_quote_depth));
         }
     }
 }

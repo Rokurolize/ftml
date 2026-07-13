@@ -156,6 +156,70 @@ fn wikidot_false_quoted_iftags_between_visible_rows_adds_no_blank_row() {
 }
 
 #[test]
+fn wikidot_empty_native_quote_lines_do_not_create_empty_blockquotes() {
+    // Live sandbox provenance:
+    // ftml-oracle-20260713T112423Z/run-iftags-quoted-partial/empty-quote-controls.
+    for empty_quote in [">", "> ", ">> "] {
+        let input = format!("OMEGA_BEGIN\n{empty_quote}\nOMEGA_AFTER");
+        let (text, html) = render_text_and_html(&input);
+
+        assert!(text.contains("OMEGA_BEGIN"), "{empty_quote:?}: {text}");
+        assert!(text.contains("OMEGA_AFTER"), "{empty_quote:?}: {text}");
+        assert_eq!(
+            html.matches("<blockquote>").count(),
+            0,
+            "{empty_quote:?}: {html}"
+        );
+    }
+}
+
+#[test]
+fn wikidot_empty_native_quote_lines_preserve_surrounding_run_semantics() {
+    // Live sandbox provenance:
+    // ftml-oracle-20260713T112423Z/run-iftags-quoted-partial/empty-quote-run-controls.
+    for (input, depth, separated_paragraphs) in [
+        ("> OMEGA_A\n> \n> OMEGA_B", 1, true),
+        ("> OMEGA_A\n>\n> OMEGA_B", 1, false),
+        (">> OMEGA_A\n>>\n>> OMEGA_B", 2, false),
+        ("> OMEGA_A\n>>\n> OMEGA_B", 1, false),
+    ] {
+        let (text, html) = render_text_and_html(input);
+
+        assert!(text.contains("OMEGA_A"), "{input:?}: {text}");
+        assert!(text.contains("OMEGA_B"), "{input:?}: {text}");
+        assert_eq!(
+            html.matches("<blockquote>").count(),
+            depth,
+            "{input:?}: {html}"
+        );
+        assert_eq!(
+            html.matches("<p>").count(),
+            if separated_paragraphs { 2 } else { 1 },
+            "{input:?}: {html}"
+        );
+        assert_eq!(
+            html.contains("OMEGA_A<br>OMEGA_B"),
+            !separated_paragraphs,
+            "{input:?}: {html}"
+        );
+    }
+}
+
+#[test]
+fn wikidot_discarded_tight_quote_row_does_not_split_the_active_paragraph() {
+    // Live sandbox provenance: discarded-tight-middle in
+    // ftml-oracle-20260713T112423Z/run-iftags-quoted-partial/empty-quote-run-controls.
+    let (text, html) = render_text_and_html("> OMEGA_A\n>OMEGA_DROP\n> OMEGA_B");
+
+    assert!(text.contains("OMEGA_A"), "{text}");
+    assert!(text.contains("OMEGA_B"), "{text}");
+    assert!(!text.contains("OMEGA_DROP"), "{text}");
+    assert_eq!(html.matches("<blockquote>").count(), 1, "{html}");
+    assert_eq!(html.matches("<p>").count(), 1, "{html}");
+    assert!(html.contains("OMEGA_A<br>OMEGA_B"), "{html}");
+}
+
+#[test]
 fn wikidot_spaced_inner_iftags_preserves_the_residual_quote_marker() {
     // Live sandbox provenance: iftags-spaced-inner-false.
     let (text, html) = render_text_and_html(

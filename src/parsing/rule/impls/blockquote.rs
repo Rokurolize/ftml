@@ -26,6 +26,13 @@ use crate::tree::{AttributeMap, Container, ContainerType};
 
 const MAX_BLOCKQUOTE_DEPTH: usize = 30;
 
+#[derive(Debug)]
+struct NativeQuoteRow<'t> {
+    elements: Vec<Element<'t>>,
+    paragraph_safe: bool,
+    empty_spaced: bool,
+}
+
 pub const RULE_BLOCKQUOTE: Rule = Rule {
     name: "blockquote",
     position: LineRequirement::StartOfLine,
@@ -38,7 +45,7 @@ fn try_consume_fn<'r, 't>(
     // Context variables
     let mut depths = Vec::new();
     let mut errors = Vec::new();
-    let mut consumed_invisible_row = false;
+    let mut consumed_pruned_row = false;
 
     // Produce a depth list with elements
     while parser.prepare_quote_body_line()? != QuoteBodyLineStatus::Boundary
@@ -51,6 +58,9 @@ fn try_consume_fn<'r, 't>(
         let (depth, absolute_depth) = parser.native_blockquote_depths(physical_depth);
         debug_assert!(depth > 0, "residual quote depth must be positive");
         parser.step()?;
+        // Wikidot distinguishes an empty `> ` row, which separates quoted
+        // paragraphs, from an empty `>` row, which has no rendering effect.
+        let spaced_after_marker = parser.current().token == Token::Whitespace;
         parser.get_optional_space()?; // allow whitespace after ">"
         if parser.current().token != Token::Quote {
             // Wikidot only counts contiguous quote markers toward native depth.
@@ -97,12 +107,21 @@ fn try_consume_fn<'r, 't>(
             && errors.len() == errors_before
             && parser.current().span.start > physical_line_end
         {
-            consumed_invisible_row = true;
+            consumed_pruned_row = true;
+            continue;
+        }
+
+        let empty_spaced_row =
+            elements.is_empty() && errors.len() == errors_before && spaced_after_marker;
+        if elements.is_empty() && errors.len() == errors_before && !spaced_after_marker {
+            consumed_pruned_row = true;
             continue;
         }
 
         // Add a line break for the end of the line
-        elements.push(Element::LineBreak);
+        if !empty_spaced_row {
+            elements.push(Element::LineBreak);
+        }
 
         // Append blockquote line
         //
@@ -110,12 +129,20 @@ fn try_consume_fn<'r, 't>(
         // So, we subtract one.
         //
         // This will not overflow because Token::Quote requires at least one ">".
-        depths.push((depth - 1, (), (elements, paragraph_safe)))
+        depths.push((
+            depth - 1,
+            (),
+            NativeQuoteRow {
+                elements,
+                paragraph_safe,
+                empty_spaced: empty_spaced_row,
+            },
+        ))
     }
 
     // This blockquote has no rows, so the rule fails
     if depths.is_empty() {
-        if consumed_invisible_row {
+        if consumed_pruned_row {
             return ok!(false; Elements::None, errors);
         }
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -124,7 +151,7 @@ fn try_consume_fn<'r, 't>(
     let depth_lists = process_depths((), depths);
     let elements: Vec<Element> = depth_lists
         .into_iter()
-        .map(|(_, depth_list)| build_blockquote_element(depth_list))
+        .filter_map(|(_, depth_list)| build_blockquote_element(depth_list))
         .collect();
 
     ok!(false; elements, errors)
@@ -171,32 +198,42 @@ fn collect_native_blockquote_line<'r, 't>(
     }
 }
 
-fn build_blockquote_element(list: DepthList<(), (Vec<Element>, bool)>) -> Element {
+fn build_blockquote_element(list: DepthList<(), NativeQuoteRow>) -> Option<Element> {
     let mut stack = ParagraphStack::new();
 
     // Convert depth list into a list of elements
     for item in list {
         match item {
-            DepthItem::Item((elements, paragraph_safe)) => {
-                for element in elements {
-                    stack.push_element(element, paragraph_safe);
+            DepthItem::Item(row) => {
+                if row.empty_spaced {
+                    stack.pop_line_break();
+                    stack.end_paragraph();
+                    continue;
+                }
+                for element in row.elements {
+                    stack.push_element(element, row.paragraph_safe);
                 }
             }
             DepthItem::List(_, list) => {
-                let blockquote = build_blockquote_element(list);
-                stack.pop_line_break();
-                stack.push_element(blockquote, false);
+                if let Some(blockquote) = build_blockquote_element(list) {
+                    stack.pop_line_break();
+                    stack.push_element(blockquote, false);
+                }
             }
         }
     }
 
     stack.pop_line_break();
+    let elements = stack.into_elements();
+    if elements.is_empty() {
+        return None;
+    }
 
-    Element::Container(Container::new(
+    Some(Element::Container(Container::new(
         ContainerType::Blockquote,
-        stack.into_elements(),
+        elements,
         AttributeMap::new(),
-    ))
+    )))
 }
 
 #[cfg(test)]

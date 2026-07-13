@@ -101,6 +101,7 @@ mod tests {
     use super::*;
     use crate::layout::Layout;
     use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::Element;
 
     #[test]
     fn html_render_collects_style_elements_without_emitting_body_style_tags() {
@@ -125,5 +126,47 @@ mod tests {
             ],
         );
         assert_eq!(output.body, "body");
+    }
+
+    #[test]
+    fn page_language_localizes_default_footnote_heading() {
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let tree = SyntaxTree {
+            elements: vec![Element::Footnote],
+            footnotes: vec![vec![Element::Text(cow!("note body"))]],
+            needs_footnote_block: true,
+            ..SyntaxTree::default()
+        };
+
+        for language in ["ja", "ja-JP"] {
+            let mut page_info = PageInfo::dummy();
+            page_info.language = cow!(language);
+            let output = HtmlRender.render(&tree, &page_info, &settings);
+
+            assert!(output.body.contains("<div class=\"wj-title\">脚注</div>"));
+            assert!(output.body.contains("aria-label=\"脚注 1.\""));
+            assert!(!output.body.contains(">Footnotes<"));
+        }
+    }
+
+    #[test]
+    fn english_footnote_output_is_unchanged() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let tree = SyntaxTree {
+            elements: vec![Element::Footnote],
+            footnotes: vec![vec![Element::Text(cow!("note body"))]],
+            needs_footnote_block: true,
+            ..SyntaxTree::default()
+        };
+
+        let output = HtmlRender.render(&tree, &page_info, &settings);
+
+        assert!(
+            output
+                .body
+                .contains("<div class=\"wj-title\">Footnotes</div>")
+        );
+        assert!(output.body.contains("aria-label=\"Footnote 1.\""));
     }
 }

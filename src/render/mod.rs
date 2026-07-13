@@ -35,6 +35,7 @@ pub mod text;
 pub mod html;
 
 mod handle;
+mod messages;
 
 use self::handle::Handle;
 use crate::data::PageInfo;

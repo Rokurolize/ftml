@@ -451,7 +451,16 @@
                                 "data": "apple"
                             }
                         ]
-                    },
+                    }
+                ]
+            }
+        },
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {},
+                "items": [
                     {
                         "item-type": "elements",
                         "attributes": {},
@@ -461,7 +470,16 @@
                                 "data": "banana"
                             }
                         ]
-                    },
+                    }
+                ]
+            }
+        },
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {},
+                "items": [
                     {
                         "item-type": "elements",
                         "attributes": {},
@@ -946,7 +964,16 @@
                                 "data": "apple"
                             }
                         ]
-                    },
+                    }
+                ]
+            }
+        },
+        {
+            "element": "list",
+            "data": {
+                "type": "numbered",
+                "attributes": {},
+                "items": [
                     {
                         "item-type": "elements",
                         "attributes": {},
@@ -956,7 +983,16 @@
                                 "data": "banana"
                             }
                         ]
-                    },
+                    }
+                ]
+            }
+        },
+        {
+            "element": "list",
+            "data": {
+                "type": "numbered",
+                "attributes": {},
+                "items": [
                     {
                         "item-type": "elements",
                         "attributes": {},

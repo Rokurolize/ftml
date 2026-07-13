@@ -5,6 +5,7 @@ use ftml::render::html::HtmlRender;
 use ftml::render::text::TextRender;
 use ftml::settings::{WikitextMode, WikitextSettings};
 use std::borrow::Cow;
+use std::time::{Duration, Instant};
 
 fn page_info() -> PageInfo<'static> {
     PageInfo {
@@ -185,6 +186,30 @@ fn wikidot_unquoted_blank_line_starts_a_sibling_native_quote_run() {
     assert_eq!(html.matches("<blockquote>").count(), 2, "{html}");
     assert_eq!(html.matches("</blockquote>").count(), 2, "{html}");
     assert!(!html.contains("OMEGA_QUOTE_A<br>OMEGA_QUOTE_B"), "{html}");
+}
+
+#[test]
+fn wikidot_unquoted_blank_line_starts_a_sibling_native_list_run() {
+    // Live sandbox provenance:
+    // ftml-oracle-20260713T154248Z/run-include-structural-boundaries.
+    let (text, html) = render_text_and_html("* OMEGA_LIST_A\n\n* OMEGA_LIST_B");
+
+    assert!(text.contains("OMEGA_LIST_A"), "{text}");
+    assert!(text.contains("OMEGA_LIST_B"), "{text}");
+    assert_eq!(html.matches("<ul>").count(), 2, "{html}");
+    assert_eq!(html.matches("</ul>").count(), 2, "{html}");
+}
+
+#[test]
+fn repeated_sibling_native_list_runs_stay_bounded() {
+    let source = (0..2_048)
+        .map(|index| format!("* OMEGA_LIST_{index}\n\n"))
+        .collect::<String>();
+    let started = Instant::now();
+    let (_, html) = render_text_and_html(&source);
+
+    assert_eq!(html.matches("<ul>").count(), 2_048);
+    assert!(started.elapsed() < Duration::from_secs(2));
 }
 
 #[test]

@@ -103,17 +103,11 @@ fn try_consume_fn<'r, 't>(
         // its opener and finish beyond that physical line. Do not turn such a
         // row into a visible blank line solely because blockquotes normally
         // append a break to every row.
-        if elements.is_empty()
-            && errors.len() == errors_before
-            && parser.current().span.start > physical_line_end
-        {
-            consumed_pruned_row = true;
-            continue;
-        }
-
-        let empty_spaced_row =
-            elements.is_empty() && errors.len() == errors_before && spaced_after_marker;
-        if elements.is_empty() && errors.len() == errors_before && !spaced_after_marker {
+        let row_is_empty = elements.is_empty() && errors.len() == errors_before;
+        let consumed_past_line =
+            row_is_empty && parser.current().span.start > physical_line_end;
+        let empty_spaced_row = row_is_empty && spaced_after_marker;
+        if consumed_past_line || (row_is_empty && !spaced_after_marker) {
             consumed_pruned_row = true;
             continue;
         }
@@ -328,9 +322,13 @@ mod tests {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         let mut input = concat!(
+            "> [[collapsible show=\"show\" hide=\"hide\"]]\n",
             "> [[iftags +missing]]\n",
+            "> [[div]]\n",
             "> OMEGA_HIDDEN\n",
             "> [[/iftags]]\n",
+            "> OMEGA_VISIBLE_INSIDE\n",
+            "> [[/collapsible]]\n",
             "OMEGA_AFTER",
         )
         .to_owned();
@@ -340,8 +338,8 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert!(!html.contains("<blockquote>"), "{html}");
         assert!(!html.contains("OMEGA_HIDDEN"), "{html}");
+        assert!(html.contains("OMEGA_VISIBLE_INSIDE"), "{html}");
         assert!(html.contains("OMEGA_AFTER"), "{html}");
     }
 

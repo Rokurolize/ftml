@@ -1442,6 +1442,103 @@ mod tests {
     }
 
     #[test]
+    fn crossed_block_repairs_reject_incomplete_nested_and_literal_shapes() {
+        let unchanged = [
+            concat!(
+                "[[collapsible show=\"outer\"]]\n",
+                "[[div class=\"wrapper\"]]\n",
+                "[[code]]\n",
+                "[[/collapsible]]\n",
+                "[[/code]]\n",
+                "[[/div]]\n",
+            ),
+            concat!(
+                "> [[collapsible show=\"quoted\"]]\n",
+                "> [[div class=\"wrapper\"]]\n",
+                "unquoted boundary\n",
+                "> [[/collapsible]]\n",
+                "> [[/div]]\n",
+            ),
+            concat!(
+                "[[collapsible show=\"outer\"]]\n",
+                "[[div class=\"wrapper\"]]\n",
+                "[[collapsible show=\"inner\"]]\n",
+                "inner body\n",
+                "[[/collapsible]]\n",
+                "[[/div]]\n",
+                "[[/collapsible]]\n",
+            ),
+            concat!(
+                "[[collapsible show=\"outer\"]]\n",
+                "[[div class=\"wrapper\"]]\n",
+                "body\n",
+                "[[/collapsible]]\n",
+                "gap\n",
+                "[[/div]]\n",
+            ),
+            concat!(
+                "[[div class=\"outer\"]]\n",
+                "[[=]]\n",
+                "[[=]]\n",
+                "nested center\n",
+                "[[/=]]\n",
+                "[[/=]]\n",
+                "[[/div]]\n",
+            ),
+            concat!(
+                "[[div class=\"outer\"]]\n",
+                "[[=]]\n",
+                "[[div class=\"inner\"]]\n",
+                "nested div\n",
+                "[[/div]]\n",
+                "[[/div]]\n",
+                "not a center close\n",
+                "[[/=]]\n",
+            ),
+            concat!(
+                "[[div class=\"outer\"]]\n",
+                "[[=]]\n",
+                "[[=]]\n",
+                "[[/div]]\n",
+                "[[/=]]\n",
+                "[[/=]]\n",
+            ),
+            concat!(
+                "[[=]]\n",
+                "[[div class=\"outer\"]]\n",
+                "[[div class=\"inner\"]]\n",
+                "[[/=]]\n",
+                "[[/div]]\n",
+                "[[/div]]\n",
+            ),
+            concat!(
+                "[[=]]\n",
+                "[[collapsible show=\"update\"]]\n",
+                "[[/=]]\n",
+                "body\n",
+                "[[=]]\n",
+                "gap\n",
+                "[[/collapsible]]\n",
+                "[[/=]]\n",
+            ),
+            concat!(
+                "[[=]]\n",
+                "[[div class=\"wrapper\"]]\n",
+                "[[collapsible show=\"details\"]]\n",
+                "[[/=]]\n",
+                "body\n",
+                "[[/collapsible]]\n",
+            ),
+        ];
+
+        for original in unchanged {
+            let mut source = original.to_owned();
+            substitute(&mut source);
+            assert_eq!(source, original);
+        }
+    }
+
+    #[test]
     fn anchored_crossed_center_collapsibles_are_canonicalized_once() {
         let mut source = concat!(
             "[[=]]\n",

@@ -61,6 +61,86 @@ fn marker_line(line: &str) -> Option<(&str, Marker)> {
     Some((prefix, kind))
 }
 
+fn standalone_div_marker_line(line: &str) -> Option<(&str, bool)> {
+    let (body, _) = split_line(line);
+    let marker_start = body.find("[[")?;
+    let prefix = &body[..marker_start];
+    if !prefix.chars().all(|ch| matches!(ch, '>' | ' ' | '\t')) {
+        return None;
+    }
+    let marker = body[marker_start..].to_ascii_lowercase();
+    if marker == "[[div]]"
+        || marker.starts_with("[[div ") && marker.find("]]") == Some(marker.len() - 2)
+    {
+        Some((prefix, true))
+    } else if marker == "[[/div]]" {
+        Some((prefix, false))
+    } else {
+        None
+    }
+}
+
+fn standalone_div_marker(line: &str, prefix: &str) -> Option<bool> {
+    let (line_prefix, open) = standalone_div_marker_line(line)?;
+    (line_prefix == prefix).then_some(open)
+}
+
+fn centered_collapsible_opener(
+    lines: &[String],
+    literal_lines: &[bool],
+    center_index: usize,
+    prefix: &str,
+) -> Option<(usize, usize)> {
+    const MAX_PRELUDE_LINES: usize = 32;
+
+    let mut index = center_index + 1;
+    let mut wrapper_divs = 0;
+    let required_quote_depth = prefix.bytes().filter(|&byte| byte == b'>').count();
+    while index < lines.len()
+        && index - center_index <= MAX_PRELUDE_LINES
+        && !literal_lines[index]
+    {
+        let (body, _) = split_line(&lines[index]);
+        let (line_quote_depth, _) = quote_depth_and_body(body);
+        if line_quote_depth < required_quote_depth {
+            return None;
+        }
+        if marker_line(&lines[index]) == Some((prefix, Marker::CollapsibleOpen)) {
+            return Some((index, wrapper_divs));
+        }
+        if marker_line(&lines[index]).is_some() {
+            return None;
+        }
+        match standalone_div_marker(&lines[index], prefix) {
+            Some(true) => wrapper_divs += 1,
+            Some(false) => return None,
+            None => {}
+        }
+        index += 1;
+    }
+    None
+}
+
+fn crossed_center_close_insertion_line(
+    lines: &[String],
+    literal_lines: &[bool],
+    collapsible_close: usize,
+    prefix: &str,
+    wrapper_divs: usize,
+) -> Option<usize> {
+    let mut insertion_line = collapsible_close;
+    for _ in 0..wrapper_divs {
+        insertion_line += 1;
+        if insertion_line >= lines.len()
+            || literal_lines[insertion_line]
+            || standalone_div_marker(&lines[insertion_line], prefix) != Some(false)
+        {
+            return None;
+        }
+    }
+    Some(insertion_line)
+}
+
 /// Move a prematurely crossed center closer behind its collapsible closer.
 ///
 /// Wikidot treats the corpus-backed shape
@@ -86,6 +166,9 @@ pub fn substitute(text: &mut String) {
     let literal_lines = literal_line_mask(&lines);
     canonicalize_unquoted_collapsible_closers(&mut lines, &literal_lines);
     canonicalize_unmatched_quoted_tab_closers(&mut lines, &literal_lines);
+    canonicalize_crossed_collapsible_div_closers(&mut lines, &literal_lines);
+    canonicalize_crossed_div_center_closers(&mut lines, &literal_lines);
+    canonicalize_crossed_center_div_closers(&mut lines, &literal_lines);
     canonicalize_crossed_center_collapsible_closers(&mut lines, &literal_lines);
     canonicalize_crossed_bold_size_closers(&mut lines, &literal_lines);
     remove_tight_quote_lines(&mut lines, &literal_lines);
@@ -479,7 +562,245 @@ fn canonicalize_unquoted_collapsible_closers(
 struct CrossedClose {
     prefix: String,
     quote_depth: usize,
+    wrapper_divs: usize,
     early_center_close: Option<usize>,
+    reopened_center: Option<usize>,
+}
+
+/// Repair a collapsible whose wrapper div is closed one line too late.
+///
+/// Wikidot accepts `collapsible -> div -> /collapsible -> /div` as if the
+/// final two markers were in stack order. Repeated instances otherwise make
+/// the tree parser reconsider the remaining siblings as nested collapsibles.
+fn canonicalize_crossed_collapsible_div_closers(
+    lines: &mut [String],
+    literal_lines: &[bool],
+) {
+    const MAX_BODY_LINES: usize = 512;
+
+    let mut index = 0;
+    while index + 1 < lines.len() {
+        if literal_lines[index] {
+            index += 1;
+            continue;
+        }
+        let Some((prefix, Marker::CollapsibleOpen)) = marker_line(&lines[index]) else {
+            index += 1;
+            continue;
+        };
+        let prefix = prefix.to_owned();
+        if literal_lines[index + 1]
+            || standalone_div_marker(&lines[index + 1], &prefix) != Some(true)
+        {
+            index += 1;
+            continue;
+        }
+
+        let required_quote_depth = prefix.bytes().filter(|&byte| byte == b'>').count();
+        let search_end = (index + MAX_BODY_LINES + 1).min(lines.len());
+        let mut collapsible_depth = 1;
+        let mut div_depth = 1;
+        let mut close = index + 2;
+        let mut rewritten = false;
+        while close < search_end {
+            if literal_lines[close] {
+                break;
+            }
+            let (body, _) = split_line(&lines[close]);
+            let (line_quote_depth, _) = quote_depth_and_body(body);
+            if line_quote_depth < required_quote_depth {
+                break;
+            }
+
+            match marker_line(&lines[close]) {
+                Some((line_prefix, Marker::CollapsibleOpen)) if line_prefix == prefix => {
+                    collapsible_depth += 1;
+                }
+                Some((line_prefix, Marker::CollapsibleClose))
+                    if line_prefix == prefix =>
+                {
+                    if collapsible_depth > 1 {
+                        collapsible_depth -= 1;
+                    } else if div_depth == 1 {
+                        let div_close = close + 1;
+                        if div_close < lines.len()
+                            && !literal_lines[div_close]
+                            && standalone_div_marker(&lines[div_close], &prefix)
+                                == Some(false)
+                        {
+                            let collapsible_ending =
+                                split_line(&lines[close]).1.to_owned();
+                            let div_ending = split_line(&lines[div_close]).1.to_owned();
+                            lines[close] =
+                                format!("{prefix}[[/div]]{collapsible_ending}");
+                            lines[div_close] =
+                                format!("{prefix}[[/collapsible]]{div_ending}");
+                            index = div_close + 1;
+                            rewritten = true;
+                        }
+                        break;
+                    }
+                }
+                _ => match standalone_div_marker(&lines[close], &prefix) {
+                    Some(true) => div_depth += 1,
+                    Some(false) if div_depth > 1 => div_depth -= 1,
+                    Some(false) => break,
+                    None => {}
+                },
+            }
+            close += 1;
+        }
+        if !rewritten {
+            index += 1;
+        }
+    }
+}
+
+/// Repair a centered div header whose final two closers are crossed.
+///
+/// The corpus-backed `div -> center -> /div -> /center` form is equivalent to
+/// closing the center before its containing div on Wikidot.
+fn canonicalize_crossed_div_center_closers(lines: &mut [String], literal_lines: &[bool]) {
+    const MAX_BODY_LINES: usize = 512;
+
+    let mut index = 0;
+    while index + 1 < lines.len() {
+        if literal_lines[index] {
+            index += 1;
+            continue;
+        }
+        let Some((prefix, true)) = standalone_div_marker_line(&lines[index]) else {
+            index += 1;
+            continue;
+        };
+        if literal_lines[index + 1]
+            || marker_line(&lines[index + 1]) != Some((prefix, Marker::CenterOpen))
+        {
+            index += 1;
+            continue;
+        }
+        let prefix = prefix.to_owned();
+        let required_quote_depth = prefix.bytes().filter(|&byte| byte == b'>').count();
+        let search_end = (index + MAX_BODY_LINES + 1).min(lines.len());
+        let mut div_depth = 1;
+        let mut center_depth = 1;
+        let mut close = index + 2;
+        let mut rewritten = false;
+        while close < search_end {
+            if literal_lines[close] {
+                break;
+            }
+            let (body, _) = split_line(&lines[close]);
+            let (line_quote_depth, _) = quote_depth_and_body(body);
+            if line_quote_depth < required_quote_depth {
+                break;
+            }
+
+            match marker_line(&lines[close]) {
+                Some((line_prefix, Marker::CenterOpen)) if line_prefix == prefix => {
+                    center_depth += 1;
+                }
+                Some((line_prefix, Marker::CenterClose)) if line_prefix == prefix => {
+                    if center_depth > 1 {
+                        center_depth -= 1;
+                    } else {
+                        break;
+                    }
+                }
+                _ => match standalone_div_marker(&lines[close], &prefix) {
+                    Some(true) => div_depth += 1,
+                    Some(false) if div_depth > 1 => div_depth -= 1,
+                    Some(false) if center_depth == 1 => {
+                        let center_close = close + 1;
+                        if center_close < lines.len()
+                            && !literal_lines[center_close]
+                            && marker_line(&lines[center_close])
+                                == Some((prefix.as_str(), Marker::CenterClose))
+                        {
+                            let div_ending = split_line(&lines[close]).1.to_owned();
+                            let center_ending =
+                                split_line(&lines[center_close]).1.to_owned();
+                            lines[close] = format!("{prefix}[[/=]]{div_ending}");
+                            lines[center_close] =
+                                format!("{prefix}[[/div]]{center_ending}");
+                            index = center_close + 1;
+                            rewritten = true;
+                        }
+                        break;
+                    }
+                    Some(false) => break,
+                    None => {}
+                },
+            }
+            close += 1;
+        }
+        if !rewritten {
+            index += 1;
+        }
+    }
+}
+
+/// Repair a div nested in a center whose final two closers are crossed.
+fn canonicalize_crossed_center_div_closers(lines: &mut [String], literal_lines: &[bool]) {
+    const MAX_BODY_LINES: usize = 128;
+
+    let mut index = 0;
+    while index + 1 < lines.len() {
+        if literal_lines[index] {
+            index += 1;
+            continue;
+        }
+        let Some((prefix, Marker::CenterOpen)) = marker_line(&lines[index]) else {
+            index += 1;
+            continue;
+        };
+        let prefix = prefix.to_owned();
+        if literal_lines[index + 1]
+            || standalone_div_marker(&lines[index + 1], &prefix) != Some(true)
+        {
+            index += 1;
+            continue;
+        }
+
+        let required_quote_depth = prefix.bytes().filter(|&byte| byte == b'>').count();
+        let search_end = (index + MAX_BODY_LINES + 1).min(lines.len());
+        let mut center_close = index + 2;
+        let mut rewritten = false;
+        while center_close < search_end {
+            if literal_lines[center_close] {
+                break;
+            }
+            let (body, _) = split_line(&lines[center_close]);
+            let (line_quote_depth, _) = quote_depth_and_body(body);
+            if line_quote_depth < required_quote_depth {
+                break;
+            }
+            if standalone_div_marker(&lines[center_close], &prefix).is_some() {
+                break;
+            }
+            if marker_line(&lines[center_close])
+                == Some((prefix.as_str(), Marker::CenterClose))
+            {
+                let div_close = center_close + 1;
+                if div_close < lines.len()
+                    && !literal_lines[div_close]
+                    && standalone_div_marker(&lines[div_close], &prefix) == Some(false)
+                {
+                    let (_, early_ending) = split_line(&lines[center_close]);
+                    lines[center_close] = format!("{prefix}{early_ending}");
+                    let (div_body, div_ending) = split_line(&lines[div_close]);
+                    lines[div_close] = format!("{div_body}\n{prefix}[[/=]]{div_ending}");
+                    index = div_close + 1;
+                    rewritten = true;
+                }
+                break;
+            }
+            center_close += 1;
+        }
+        if !rewritten {
+            index += 1;
+        }
+    }
 }
 
 fn canonicalize_crossed_center_collapsible_closers(
@@ -514,20 +835,66 @@ fn canonicalize_crossed_center_collapsible_closers(
                     index += 1;
                     continue;
                 }
+                Marker::CenterOpen
+                    if candidate.early_center_close.is_some()
+                        && candidate.reopened_center.is_none() =>
+                {
+                    candidate.reopened_center = Some(index);
+                    index += 1;
+                    continue;
+                }
                 Marker::CollapsibleClose if candidate.early_center_close.is_some() => {
+                    if let Some(reopened) = candidate.reopened_center {
+                        let final_center_close = index + 1;
+                        if candidate.wrapper_divs == 0
+                            && reopened + 1 == index
+                            && final_center_close < lines.len()
+                            && !literal_lines[final_center_close]
+                            && marker_line(&lines[final_center_close])
+                                == Some((candidate.prefix.as_str(), Marker::CenterClose))
+                        {
+                            let early = candidate
+                                .early_center_close
+                                .expect("crossed close candidate has an early closer");
+                            let early_ending = split_line(&lines[early]).1.to_owned();
+                            let reopened_ending =
+                                split_line(&lines[reopened]).1.to_owned();
+                            lines[early] = format!("{}{early_ending}", candidate.prefix);
+                            lines[reopened] =
+                                format!("{}{reopened_ending}", candidate.prefix);
+                            pending = None;
+                            index += 1;
+                            continue;
+                        }
+                        pending = None;
+                        index += 1;
+                        continue;
+                    }
+                    let Some(insertion_line) = crossed_center_close_insertion_line(
+                        lines,
+                        literal_lines,
+                        index,
+                        &candidate.prefix,
+                        candidate.wrapper_divs,
+                    ) else {
+                        pending = None;
+                        index += 1;
+                        continue;
+                    };
                     let early = candidate
                         .early_center_close
                         .expect("crossed close candidate has an early closer");
                     let (_, early_ending) = split_line(&lines[early]);
                     lines[early] = format!("{}{early_ending}", candidate.prefix);
 
-                    let (_, late_ending) = split_line(&lines[index]);
-                    lines[index] = format!(
-                        "{}[[/collapsible]]\n{}[[/=]]{late_ending}",
-                        candidate.prefix, candidate.prefix,
+                    let (insertion_body, insertion_ending) =
+                        split_line(&lines[insertion_line]);
+                    lines[insertion_line] = format!(
+                        "{insertion_body}\n{}[[/=]]{insertion_ending}",
+                        candidate.prefix,
                     );
                     pending = None;
-                    index += 1;
+                    index = insertion_line + 1;
                     continue;
                 }
                 Marker::CenterOpen | Marker::CollapsibleOpen => pending = None,
@@ -538,20 +905,20 @@ fn canonicalize_crossed_center_collapsible_closers(
         if marker
             .as_ref()
             .is_some_and(|(_, marker)| *marker == Marker::CenterOpen)
-            && index + 1 < lines.len()
-            && !literal_lines[index + 1]
         {
             let (prefix, _) = marker.expect("center marker exists");
-            if marker_line(&lines[index + 1])
-                == Some((prefix.as_str(), Marker::CollapsibleOpen))
+            if let Some((opener_index, wrapper_divs)) =
+                centered_collapsible_opener(lines, literal_lines, index, prefix.as_str())
             {
                 let quote_depth = prefix.bytes().filter(|&byte| byte == b'>').count();
                 pending = Some(CrossedClose {
                     prefix,
                     quote_depth,
+                    wrapper_divs,
                     early_center_close: None,
+                    reopened_center: None,
                 });
-                index += 2;
+                index = opener_index + 1;
                 continue;
             }
         }
@@ -717,6 +1084,7 @@ mod tests {
     use crate::layout::Layout;
     use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
+    use std::time::{Duration, Instant};
 
     #[test]
     fn tight_quote_lines_are_consumed_but_spaced_quotes_render() {
@@ -933,6 +1301,361 @@ mod tests {
         assert!(html.contains("text-align: center"), "{html}");
         assert!(html.contains("wj-collapsible"), "{html}");
         assert!(html.contains("outside"), "{html}");
+    }
+
+    #[test]
+    fn crossed_center_and_div_closers_are_canonicalized() {
+        // Corpus provenance: scp-wiki/fragment:cryptozoology-division-hub-1.
+        let mut source = concat!(
+            "[[=]]\n",
+            "[[div class=\"blockquote\"]]\n",
+            "card body\n",
+            "[[/=]]\n",
+            "[[/div]]\n",
+            "outside\n",
+        )
+        .to_owned();
+
+        substitute(&mut source);
+        assert_eq!(
+            source,
+            concat!(
+                "[[=]]\n",
+                "[[div class=\"blockquote\"]]\n",
+                "card body\n",
+                "\n",
+                "[[/div]]\n",
+                "[[/=]]\n",
+                "outside\n",
+            ),
+        );
+    }
+
+    #[test]
+    fn crossed_center_and_div_run_is_bounded() {
+        let mut source = (0..64)
+            .map(|index| {
+                format!(
+                    "[[=]]\n[[div class=\"blockquote\"]]\ncard body {index}\n[[/=]]\n[[/div]]\n"
+                )
+            })
+            .collect::<String>();
+        let started = Instant::now();
+
+        substitute(&mut source);
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(started.elapsed() < Duration::from_millis(500));
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html.matches("class=\"blockquote\"").count(), 64);
+        assert_eq!(html.matches("text-align: center").count(), 64);
+    }
+
+    #[test]
+    fn crossed_collapsible_and_div_closers_are_canonicalized() {
+        // Corpus provenance: scp-wiki/kaktuskast-hub.
+        let mut source = concat!(
+            "[[collapsible show=\"episode\" hide=\"close\"]]\n",
+            "[[div class=\"content-panel\"]]\n",
+            "[[div class=\"nested\"]]\n",
+            "nested body\n",
+            "[[/div]]\n",
+            "[[div class=\"inline\"]]inline body[[/div]]\n",
+            "[[/collapsible]]\n",
+            "[[/div]]\n",
+            "outside\n",
+        )
+        .to_owned();
+
+        substitute(&mut source);
+        assert_eq!(
+            source,
+            concat!(
+                "[[collapsible show=\"episode\" hide=\"close\"]]\n",
+                "[[div class=\"content-panel\"]]\n",
+                "[[div class=\"nested\"]]\n",
+                "nested body\n",
+                "[[/div]]\n",
+                "[[div class=\"inline\"]]inline body[[/div]]\n",
+                "[[/div]]\n",
+                "[[/collapsible]]\n",
+                "outside\n",
+            ),
+        );
+    }
+
+    #[test]
+    fn crossed_div_and_center_closers_are_canonicalized() {
+        // Corpus provenance: scp-wiki/scp-4700.
+        let mut source = concat!(
+            "[[div class=\"record-header\"]]\n",
+            "[[=]]\n",
+            "record title\n",
+            "[[/div]]\n",
+            "[[/=]]\n",
+            "outside\n",
+        )
+        .to_owned();
+
+        substitute(&mut source);
+        assert_eq!(
+            source,
+            concat!(
+                "[[div class=\"record-header\"]]\n",
+                "[[=]]\n",
+                "record title\n",
+                "[[/=]]\n",
+                "[[/div]]\n",
+                "outside\n",
+            ),
+        );
+    }
+
+    #[test]
+    fn crossed_collapsible_div_and_div_center_runs_are_bounded() {
+        let mut source = (0..32)
+            .map(|index| {
+                format!(
+                    "[[collapsible show=\"episode {index}\" hide=\"close\"]]\n[[div class=\"episode\"]]\nepisode body {index}\n[[/collapsible]]\n[[/div]]\n[[div class=\"record-header\"]]\n[[=]]\nrecord title {index}\n[[/div]]\n[[/=]]\n"
+                )
+            })
+            .collect::<String>();
+        let started = Instant::now();
+
+        substitute(&mut source);
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(started.elapsed() < Duration::from_millis(500));
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 32);
+        assert_eq!(html.matches("class=\"episode\"").count(), 32);
+        assert_eq!(html.matches("class=\"record-header\"").count(), 32);
+        assert_eq!(html.matches("text-align: center").count(), 32);
+    }
+
+    #[test]
+    fn crossed_block_repairs_reject_incomplete_nested_and_literal_shapes() {
+        let unchanged = [
+            concat!(
+                "[[collapsible show=\"outer\"]]\n",
+                "[[div class=\"wrapper\"]]\n",
+                "[[code]]\n",
+                "[[/collapsible]]\n",
+                "[[/code]]\n",
+                "[[/div]]\n",
+            ),
+            concat!(
+                "> [[collapsible show=\"quoted\"]]\n",
+                "> [[div class=\"wrapper\"]]\n",
+                "unquoted boundary\n",
+                "> [[/collapsible]]\n",
+                "> [[/div]]\n",
+            ),
+            concat!(
+                "[[collapsible show=\"outer\"]]\n",
+                "[[div class=\"wrapper\"]]\n",
+                "[[collapsible show=\"inner\"]]\n",
+                "inner body\n",
+                "[[/collapsible]]\n",
+                "[[/div]]\n",
+                "[[/collapsible]]\n",
+            ),
+            concat!(
+                "[[collapsible show=\"outer\"]]\n",
+                "[[div class=\"wrapper\"]]\n",
+                "body\n",
+                "[[/collapsible]]\n",
+                "gap\n",
+                "[[/div]]\n",
+            ),
+            concat!(
+                "[[div class=\"outer\"]]\n",
+                "[[=]]\n",
+                "[[=]]\n",
+                "nested center\n",
+                "[[/=]]\n",
+                "[[/=]]\n",
+                "[[/div]]\n",
+            ),
+            concat!(
+                "[[div class=\"outer\"]]\n",
+                "[[=]]\n",
+                "[[div class=\"inner\"]]\n",
+                "nested div\n",
+                "[[/div]]\n",
+                "[[/div]]\n",
+                "not a center close\n",
+                "[[/=]]\n",
+            ),
+            concat!(
+                "[[div class=\"outer\"]]\n",
+                "[[=]]\n",
+                "[[=]]\n",
+                "[[/div]]\n",
+                "[[/=]]\n",
+                "[[/=]]\n",
+            ),
+            concat!(
+                "[[=]]\n",
+                "[[div class=\"outer\"]]\n",
+                "[[div class=\"inner\"]]\n",
+                "[[/=]]\n",
+                "[[/div]]\n",
+                "[[/div]]\n",
+            ),
+            concat!(
+                "[[=]]\n",
+                "[[collapsible show=\"update\"]]\n",
+                "[[/=]]\n",
+                "body\n",
+                "[[=]]\n",
+                "gap\n",
+                "[[/collapsible]]\n",
+                "[[/=]]\n",
+            ),
+            concat!(
+                "[[=]]\n",
+                "[[div class=\"wrapper\"]]\n",
+                "[[collapsible show=\"details\"]]\n",
+                "[[/=]]\n",
+                "body\n",
+                "[[/collapsible]]\n",
+            ),
+        ];
+
+        for original in unchanged {
+            let mut source = original.to_owned();
+            substitute(&mut source);
+            assert_eq!(source, original);
+        }
+    }
+
+    #[test]
+    fn anchored_crossed_center_collapsibles_are_canonicalized_once() {
+        let mut source = concat!(
+            "[[=]]\n",
+            "[[# 1900]]\n",
+            "[[collapsible show=\"+ 1900s\" hide=\"- 1900s\"]]\n",
+            "[[/=]]\n",
+            "timeline entry\n",
+            "[[/collapsible]]\n",
+            "outside\n",
+        )
+        .to_owned();
+
+        substitute(&mut source);
+        assert_eq!(
+            source,
+            concat!(
+                "[[=]]\n",
+                "[[# 1900]]\n",
+                "[[collapsible show=\"+ 1900s\" hide=\"- 1900s\"]]\n",
+                "\n",
+                "timeline entry\n",
+                "[[/collapsible]]\n",
+                "[[/=]]\n",
+                "outside\n",
+            ),
+        );
+    }
+
+    #[test]
+    fn reopened_center_around_crossed_collapsible_is_canonicalized() {
+        // Corpus provenance: scp-wiki/the-man-who-stood-alone-hub.
+        let mut source = concat!(
+            "[[=]]\n",
+            "[[collapsible show=\"show update\" hide=\"hide update\"]]\n",
+            "[[/=]]\n",
+            "[[<]]\n",
+            "update body\n",
+            "[[/<]]\n",
+            "[[=]]\n",
+            "[[/collapsible]]\n",
+            "[[/=]]\n",
+            "outside\n",
+        )
+        .to_owned();
+
+        substitute(&mut source);
+        assert_eq!(
+            source,
+            concat!(
+                "[[=]]\n",
+                "[[collapsible show=\"show update\" hide=\"hide update\"]]\n",
+                "\n",
+                "[[<]]\n",
+                "update body\n",
+                "[[/<]]\n",
+                "\n",
+                "[[/collapsible]]\n",
+                "[[/=]]\n",
+                "outside\n",
+            ),
+        );
+    }
+
+    #[test]
+    fn wrapped_crossed_center_collapsibles_close_after_the_wrapper() {
+        let mut source = concat!(
+            "[[=]]\n",
+            "[[div class=\"card\"]]\n",
+            "card title\n",
+            "[[collapsible show=\"details\"]]\n",
+            "[[/=]]\n",
+            "[[div style=\"text-align: left\"]]body[[/div]]\n",
+            "[[/collapsible]]\n",
+            "[[/div]]\n",
+            "outside\n",
+        )
+        .to_owned();
+
+        substitute(&mut source);
+        assert_eq!(
+            source,
+            concat!(
+                "[[=]]\n",
+                "[[div class=\"card\"]]\n",
+                "card title\n",
+                "[[collapsible show=\"details\"]]\n",
+                "\n",
+                "[[div style=\"text-align: left\"]]body[[/div]]\n",
+                "[[/collapsible]]\n",
+                "[[/div]]\n",
+                "[[/=]]\n",
+                "outside\n",
+            ),
+        );
+    }
+
+    #[test]
+    fn anchored_crossed_center_collapsible_run_is_bounded() {
+        let mut source = (0..32)
+            .map(|index| {
+                format!(
+                    "[[=]]\n[[div class=\"card\"]]\n[[# year-{index}]]\ncard title {index}\n[[collapsible show=\"show\" hide=\"hide\"]]\n[[/=]]\n* year {index}\n * timeline entry\n[[/collapsible]]\n[[/div]]\n----\n"
+                )
+            })
+            .collect::<String>();
+        let started = Instant::now();
+
+        substitute(&mut source);
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(started.elapsed() < Duration::from_millis(500));
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 32);
     }
 
     #[test]

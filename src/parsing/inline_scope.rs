@@ -230,6 +230,26 @@ fn visit_children<'t>(element: &Element<'t>, visit: &mut dyn FnMut(&[Element<'t>
                 visit(&item.value_elements);
             }
         }
+        Element::Partial(partial) => match partial {
+            PartialElement::ListItem(ListItem::Elements { elements, .. }) => {
+                visit(elements)
+            }
+            PartialElement::ListItem(ListItem::SubList { element }) => {
+                visit_children(element, visit)
+            }
+            PartialElement::TableRow(row) => {
+                for cell in &row.cells {
+                    visit(&cell.elements);
+                }
+            }
+            PartialElement::TableCell(cell) => visit(&cell.elements),
+            PartialElement::Tab(tab) => visit(&tab.elements),
+            PartialElement::RubyText(ruby_text) => visit(&ruby_text.elements),
+            PartialElement::InlineSizeOpen(_)
+            | PartialElement::InlineSizeClose
+            | PartialElement::InlineSpanOpen(_)
+            | PartialElement::InlineSpanClose(_) => {}
+        },
         _ => {}
     }
 }
@@ -270,6 +290,81 @@ fn visit_children_mut<'t>(
                 visit(&mut item.value_elements);
             }
         }
+        Element::Partial(partial) => match partial {
+            PartialElement::ListItem(ListItem::Elements { elements, .. }) => {
+                visit(elements)
+            }
+            PartialElement::ListItem(ListItem::SubList { element }) => {
+                visit_children_mut(element, visit)
+            }
+            PartialElement::TableRow(row) => {
+                for cell in &mut row.cells {
+                    visit(&mut cell.elements);
+                }
+            }
+            PartialElement::TableCell(cell) => visit(&mut cell.elements),
+            PartialElement::Tab(tab) => visit(&mut tab.elements),
+            PartialElement::RubyText(ruby_text) => visit(&mut ruby_text.elements),
+            PartialElement::InlineSizeOpen(_)
+            | PartialElement::InlineSizeClose
+            | PartialElement::InlineSpanOpen(_)
+            | PartialElement::InlineSpanClose(_) => {}
+        },
         _ => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn lowering_traverses_partial_list_items_without_paragraph_safety_checks() {
+        let mut elements = vec![Element::Partial(PartialElement::ListItem(
+            ListItem::Elements {
+                attributes: AttributeMap::new(),
+                elements: vec![
+                    Element::Partial(PartialElement::InlineSizeOpen(cow!("170%"))),
+                    text!("partial body"),
+                    Element::Partial(PartialElement::InlineSizeClose),
+                ],
+            },
+        ))];
+
+        lower_wikidot_inline_size_scopes(&mut elements);
+
+        let Element::Partial(PartialElement::ListItem(ListItem::Elements {
+            elements: nested,
+            ..
+        })) = &elements[0]
+        else {
+            panic!("partial list item was not preserved: {elements:#?}");
+        };
+        let Element::Container(container) = &nested[0] else {
+            panic!("inline size scope was not lowered: {nested:#?}");
+        };
+        assert_eq!(container.ctype(), ContainerType::Size);
+        assert_eq!(container.elements(), &[text!("partial body")]);
+    }
+
+    #[test]
+    fn legacy_parse_reports_malformed_list_cell_without_panicking() {
+        // Frozen EN adoption-poster-hx contains this malformed list/cell boundary.
+        let source = "[[size 170%]]heading[[/size]]\n* [[/cell]]\n";
+        let tokens = crate::tokenize(source);
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        let (tree, errors) = crate::parse(&tokens, &page_info, &settings).into();
+
+        assert!(!tree.elements.is_empty());
+        assert!(!errors.is_empty());
+        assert!(
+            format!("{errors:#?}").contains("NoRulesMatch"),
+            "{errors:#?}",
+        );
     }
 }

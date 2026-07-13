@@ -34,13 +34,8 @@ const fn get_list_type(token: Token) -> Option<ListType> {
 
 enum ListItemStep<'t> {
     End,
-    Skip {
-        ends_run: bool,
-    },
-    Item {
-        item: (usize, ListType, Vec<Element<'t>>),
-        ends_run: bool,
-    },
+    Skip { ends_run: bool },
+    Item((usize, ListType, Vec<Element<'t>>), bool),
 }
 
 pub const RULE_LIST: Rule = Rule {
@@ -69,7 +64,7 @@ fn try_consume_fn<'r, 't>(
                 skipped_empty_rows = true;
                 ended = ends_run;
             }
-            ListItemStep::Item { item, ends_run } => {
+            ListItemStep::Item(item, ends_run) => {
                 depths.push(item);
                 ended = ends_run;
             }
@@ -130,10 +125,7 @@ where
     }
 
     parser.update(&sub_parser);
-    Ok(ListItemStep::Item {
-        item: (depth, list_type, elements),
-        ends_run,
-    })
+    Ok(ListItemStep::Item((depth, list_type, elements), ends_run))
 }
 
 fn parse_list_depth<'r, 't>(

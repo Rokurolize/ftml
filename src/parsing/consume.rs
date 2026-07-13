@@ -194,16 +194,27 @@ fn try_consume_line_break<'r, 't>(
         }
     }
 
-    match parser.next_three_tokens() {
-        (Token::LineBreak, Some(Token::LeftBlock | Token::LeftBlockStar), _)
-            if !upcoming_block_ends_with_single_bracket(parser) =>
-        {
-            return Ok(None);
-        }
-        (Token::LineBreak, Some(Token::Colon), Some(Token::Whitespace)) => {
-            return Ok(None);
-        }
-        _ => {}
+    let next = parser.next_three_tokens();
+    let starts_definition = matches!(
+        next,
+        (
+            Token::LineBreak,
+            Some(Token::Colon),
+            Some(Token::Whitespace)
+        )
+    );
+    let starts_block = matches!(
+        next,
+        (
+            Token::LineBreak,
+            Some(Token::LeftBlock | Token::LeftBlockStar),
+            _
+        )
+    );
+    if starts_definition
+        || (starts_block && !upcoming_block_ends_with_single_bracket(parser))
+    {
+        return Ok(None);
     }
 
     let next_offset = if matches!(

@@ -202,6 +202,16 @@ fn include_expansion_adds_only_the_needed_document_edge_separators() {
 }
 
 #[test]
+fn empty_include_target_keeps_only_the_callers_existing_line_endings() {
+    let expanded = expand(
+        "CALLER_BEFORE\n[[include component:card]]\nCALLER_AFTER",
+        [("component:card", "")],
+    );
+
+    assert_eq!(expanded, "CALLER_BEFORE\n\nCALLER_AFTER");
+}
+
+#[test]
 fn adjacent_include_expansions_remain_separate_blocks() {
     let (expanded, included_pages) = expand_pages(
         "CALLER_BEFORE\n[[include component:card]]\n[[include component:other]]\nCALLER_AFTER",

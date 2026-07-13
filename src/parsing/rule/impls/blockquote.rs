@@ -46,9 +46,11 @@ fn try_consume_fn<'r, 't>(
     let mut depths = Vec::new();
     let mut errors = Vec::new();
     let mut consumed_pruned_row = false;
+    let mut quote_run_active = true;
 
     // Produce a depth list with elements
-    while parser.prepare_quote_body_line()? != QuoteBodyLineStatus::Boundary
+    while quote_run_active
+        && parser.prepare_quote_body_line()? != QuoteBodyLineStatus::Boundary
         && parser.current().token == Token::Quote
     {
         let current = parser.current();
@@ -98,6 +100,10 @@ fn try_consume_fn<'r, 't>(
         let errors_before = errors.len();
         let mut elements = result?.chain(&mut errors, &mut paragraph_safe);
 
+        // An unquoted blank line terminates the current native quote run.
+        // A following quote at the same depth starts a sibling blockquote.
+        quote_run_active = !ends_quote_run;
+
         // An invisible multiline child can consume the quote row containing
         // its opener and finish beyond that physical line. Do not turn such a
         // row into a visible blank line solely because blockquotes normally
@@ -108,9 +114,6 @@ fn try_consume_fn<'r, 't>(
         let empty_spaced_row = row_is_empty && spaced_after_marker;
         if consumed_past_line || (row_is_empty && !spaced_after_marker) {
             consumed_pruned_row = true;
-            if ends_quote_run {
-                break;
-            }
             continue;
         }
 
@@ -134,12 +137,6 @@ fn try_consume_fn<'r, 't>(
                 empty_spaced: empty_spaced_row,
             },
         ));
-
-        // An unquoted blank line terminates the current native quote run.
-        // A following quote at the same depth starts a sibling blockquote.
-        if ends_quote_run {
-            break;
-        }
     }
 
     // This blockquote has no rows, so the rule fails

@@ -86,6 +86,7 @@ mod tests {
     use crate::parsing::token::ExtractedToken;
     use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
+    use std::time::{Duration, Instant};
 
     fn render(input: &str) -> (String, Vec<ParseError>) {
         let page_info = PageInfo::dummy();
@@ -198,6 +199,28 @@ mod tests {
         let (trailing_html, _trailing_errors) = render("{{text\t}}");
         assert!(!trailing_html.contains("wj-monospace"), "{trailing_html}");
         assert!(trailing_html.contains("{{text\t}}"), "{trailing_html}");
+    }
+
+    #[test]
+    fn repeated_quoted_monospace_emails_stay_bounded() {
+        // Reduced from EN vivid-visions, whose message transcript repeats this shape.
+        // Wikidot renders each address inside tt > span.wiki-email, so the email
+        // token must stop before the monospace closer rather than consume it.
+        let mut input = String::new();
+        for _ in 0..32 {
+            input.push_str("> FROM: <{{person@scp.foundation}}>\n> \n");
+        }
+
+        let started = Instant::now();
+        let (html, errors) = render(&input);
+        let elapsed = started.elapsed();
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html.matches("wj-monospace").count(), 32, "{html}");
+        assert!(
+            elapsed < Duration::from_millis(500),
+            "repeated monospace email parse took {elapsed:?}",
+        );
     }
 
     #[test]

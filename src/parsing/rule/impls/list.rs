@@ -47,6 +47,19 @@ pub const RULE_LIST: Rule = Rule {
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    // Wikidot only starts a native-list run at the root depth. An indented
+    // marker after another block is literal text until a root marker starts
+    // a new run.
+    let mut start_parser = parser.clone();
+    if let Some(start_depth) = parse_list_depth(&mut start_parser)? {
+        if start_depth > MAX_LIST_DEPTH {
+            return Err(parser.make_err(ParseErrorKind::ListDepthExceeded));
+        }
+        if start_depth > 0 {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+    }
+
     // Context variables
     let mut depths = Vec::new();
     let mut errors = Vec::new();
@@ -80,6 +93,7 @@ fn try_consume_fn<'r, 't>(
         };
     }
 
+    let depths = retain_active_nested_list_types(depths);
     let depth_lists = process_depths(ListType::Generic, depths);
     let elements: Vec<Element> = depth_lists
         .into_iter()
@@ -87,6 +101,34 @@ fn try_consume_fn<'r, 't>(
         .collect();
 
     ok!(paragraph_safe; elements, errors)
+}
+
+fn retain_active_nested_list_types<T>(
+    items: impl IntoIterator<Item = (usize, ListType, T)>,
+) -> Vec<(usize, ListType, T)> {
+    let mut active_types = Vec::new();
+    let mut normalized = Vec::new();
+
+    for (depth, ltype, item) in items {
+        let effective_type = if depth == 0 {
+            active_types.truncate(1);
+            if active_types.is_empty() {
+                active_types.push(ltype);
+            } else {
+                active_types[0] = ltype;
+            }
+            ltype
+        } else if depth >= active_types.len() {
+            active_types.resize(depth + 1, ltype);
+            ltype
+        } else {
+            active_types.truncate(depth + 1);
+            active_types[depth]
+        };
+        normalized.push((depth, effective_type, item));
+    }
+
+    normalized
 }
 
 fn parse_next_list_item<'r, 't>(
@@ -166,17 +208,24 @@ fn build_list_element(
     top_ltype: ListType,
     list: DepthList<ListType, Vec<Element>>,
 ) -> Element {
-    let build_item = |item| match item {
-        DepthItem::Item(elements) => ListItem::Elements {
-            elements,
-            attributes: AttributeMap::new(),
-        },
-        DepthItem::List(ltype, list) => ListItem::SubList {
-            element: Box::new(build_list_element(ltype, list)),
-        },
-    };
-
-    let items = list.into_iter().map(build_item).collect();
+    let mut items = Vec::new();
+    for item in list {
+        match item {
+            DepthItem::Item(elements) => items.push(ListItem::Elements {
+                elements,
+                attributes: AttributeMap::new(),
+            }),
+            DepthItem::List(ltype, list) => {
+                let sublist = build_list_element(ltype, list);
+                match items.last_mut() {
+                    Some(ListItem::Elements { elements, .. }) => elements.push(sublist),
+                    _ => items.push(ListItem::SubList {
+                        element: Box::new(sublist),
+                    }),
+                }
+            }
+        }
+    }
     let attributes = AttributeMap::new();
 
     // Return the Element::List object
@@ -274,6 +323,78 @@ mod tests {
             .try_consume(&mut parser)
             .expect_err("indented text without a bullet should not produce a list");
         assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+    }
+
+    #[test]
+    fn native_list_rejects_an_indented_first_item_without_consuming_it() {
+        enable_test_logging();
+
+        let (page_info, settings) = settings();
+        let tokenization = crate::tokenize(" * orphan\n* root");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser
+            .step()
+            .expect("leading whitespace should follow input start");
+        parser.set_rule(RULE_LIST);
+
+        let error = RULE_LIST
+            .try_consume(&mut parser)
+            .expect_err("an indented first item must remain literal");
+        assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+        assert_eq!(parser.current().token, Token::Whitespace);
+        assert_eq!(parser.current().slice, " ");
+    }
+
+    #[test]
+    fn native_list_type_is_stable_during_each_nested_depth_activation() {
+        let normalized = retain_active_nested_list_types([
+            (0, ListType::Bullet, 'a'),
+            (1, ListType::Numbered, 'b'),
+            (2, ListType::Bullet, 'c'),
+            (1, ListType::Bullet, 'd'),
+            (0, ListType::Bullet, 'e'),
+            (1, ListType::Bullet, 'f'),
+            (0, ListType::Numbered, 'g'),
+        ]);
+
+        assert_eq!(
+            normalized,
+            vec![
+                (0, ListType::Bullet, 'a'),
+                (1, ListType::Numbered, 'b'),
+                (2, ListType::Bullet, 'c'),
+                (1, ListType::Numbered, 'd'),
+                (0, ListType::Bullet, 'e'),
+                (1, ListType::Bullet, 'f'),
+                (0, ListType::Numbered, 'g'),
+            ],
+        );
+    }
+
+    #[test]
+    fn native_list_attaches_a_sublist_to_its_parent_item() {
+        let list = vec![
+            DepthItem::Item(vec![text!("parent")]),
+            DepthItem::List(
+                ListType::Numbered,
+                vec![DepthItem::Item(vec![text!("child")])],
+            ),
+        ];
+
+        let Element::List { items, .. } = build_list_element(ListType::Bullet, list)
+        else {
+            panic!("expected a list element");
+        };
+        let [ListItem::Elements { elements, .. }] = items.as_slice() else {
+            panic!("expected one parent item, got {items:?}");
+        };
+        let [Element::Text { .. }, Element::List { ltype, items, .. }] =
+            elements.as_slice()
+        else {
+            panic!("expected parent text followed by a nested list, got {elements:?}");
+        };
+        assert_eq!(*ltype, ListType::Numbered);
+        assert_eq!(items.len(), 1);
     }
 
     #[test]

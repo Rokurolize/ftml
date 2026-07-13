@@ -1,0 +1,16 @@
+* root
+ # number child
+  * grandchild
+ * bullet-marked sibling
+
+* first root
+ # first numbered child
+* second root
+ * second bullet child
+
+* flat bullet
+# flat number
+* flat bullet again
+
+ * orphan after boundary
+* new root

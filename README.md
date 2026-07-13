@@ -21,11 +21,6 @@
          alt="Rust build status on main">
   </a>
 
-  <a href="https://github.com/Rokurolize/ftml/actions/workflows/config.yaml?query=branch%3Amain">
-    <img src="https://github.com/Rokurolize/ftml/actions/workflows/config.yaml/badge.svg?branch=main"
-         alt="Configuration check status on main">
-  </a>
-
   <a href="https://docs.rs/ftml">
     <img src="https://docs.rs/ftml/badge.svg"
          alt="docs.rs documentation for ftml">

@@ -55,12 +55,13 @@ def job_section(workflow, job):
     return match.group(1)
 
 
-def classify_event(event_name, action, draft, labels=(), changed_label=None):
+def classify_event(event_name, action, draft, labels=(), changed_label=None, base_changed=False):
     label_event = event_name == "pull_request" and action in {"labeled", "unlabeled"}
-    control_label = changed_label in {"landing", "full-ci"}
-    run_ci = not label_event or control_label
-    candidate = event_name == "push" or run_ci and (not draft or "landing" in labels)
-    full_coverage = event_name == "push" or run_ci and "full-ci" in labels
+    edit_event = event_name == "pull_request" and action == "edited"
+    full_ci_label_event = action == "labeled" and changed_label == "full-ci"
+    run_ci = not label_event and (not edit_event or base_changed)
+    candidate = event_name == "push" or run_ci and not draft
+    full_coverage = event_name == "push" or not draft and "full-ci" in labels and (run_ci or full_ci_label_event)
 
     if event_name != "pull_request" or not run_ci:
         gate_name = "CI / PR gate (inactive)"
@@ -84,14 +85,13 @@ class CiWorkflowPolicyTests(unittest.TestCase):
 
         self.assertIn("\n  pull_request:\n", header)
         self.assertNotIn("paths:", header)
-        for activity in ("ready_for_review", "converted_to_draft", "labeled", "unlabeled"):
+        for activity in ("edited", "ready_for_review", "converted_to_draft", "labeled", "unlabeled"):
             self.assertIn(f"      - {activity}\n", header)
         self.assertIn("github.event.pull_request.number || github.run_id", header)
-        self.assertIn("github.event.label.name == 'landing'", header)
-        self.assertIn("github.event.label.name == 'full-ci'", header)
         self.assertIn("&& 'active' || github.run_id", header)
         self.assertIn("github.event.action != 'labeled'", header)
         self.assertIn("github.event.action != 'unlabeled'", header)
+        self.assertIn("github.event.changes.base.ref.from != ''", header)
         self.assertIn("'CI / PR gate (inactive)'", gate)
         self.assertIn("'CI / draft gate'", gate)
         self.assertIn("github.event.pull_request.draft == false && needs.classify.outputs.candidate == 'true' && 'CI / gate'", gate)
@@ -106,25 +106,38 @@ class CiWorkflowPolicyTests(unittest.TestCase):
         for required_job in ("coverage", "upload_coverage", "upload_test_results"):
             self.assertIn(f"      - {required_job}\n", main_gate)
 
-    def test_event_policy_ignores_unrelated_label_changes(self):
+    def test_event_policy_isolates_label_and_non_base_edit_changes(self):
         self.assertEqual(classify_event("pull_request", "synchronize", True), (True, False, False, "CI / draft gate"))
         self.assertEqual(classify_event("pull_request", "ready_for_review", False), (True, True, False, "CI / gate"))
-        self.assertEqual(classify_event("pull_request", "labeled", True, labels=("landing",), changed_label="landing"), (True, True, False, "CI / draft gate"))
-        self.assertEqual(classify_event("pull_request", "labeled", False, labels=("landing",), changed_label="landing"), (True, True, False, "CI / gate"))
-        self.assertEqual(classify_event("pull_request", "labeled", True, labels=("full-ci",), changed_label="full-ci"), (True, False, True, "CI / draft gate"))
+        self.assertEqual(classify_event("pull_request", "labeled", True, labels=("landing",), changed_label="landing"), (False, False, False, "CI / PR gate (inactive)"))
+        self.assertEqual(classify_event("pull_request", "labeled", False, labels=("landing",), changed_label="landing"), (False, False, False, "CI / PR gate (inactive)"))
+        self.assertEqual(classify_event("pull_request", "labeled", True, labels=("full-ci",), changed_label="full-ci"), (False, False, False, "CI / PR gate (inactive)"))
+        self.assertEqual(classify_event("pull_request", "labeled", False, labels=("full-ci",), changed_label="full-ci"), (False, False, True, "CI / PR gate (inactive)"))
+        self.assertEqual(classify_event("pull_request", "labeled", False, labels=("landing", "full-ci"), changed_label="landing"), (False, False, False, "CI / PR gate (inactive)"))
         self.assertEqual(classify_event("pull_request", "labeled", False, labels=("landing", "full-ci", "documentation"), changed_label="documentation"), (False, False, False, "CI / PR gate (inactive)"))
         self.assertEqual(classify_event("pull_request", "unlabeled", False, labels=("landing",), changed_label="documentation"), (False, False, False, "CI / PR gate (inactive)"))
+        self.assertEqual(classify_event("pull_request", "synchronize", False, labels=("full-ci",)), (True, True, True, "CI / gate"))
+        self.assertEqual(classify_event("pull_request", "edited", False), (False, False, False, "CI / PR gate (inactive)"))
+        self.assertEqual(classify_event("pull_request", "edited", False, base_changed=True), (True, True, False, "CI / gate"))
         self.assertEqual(classify_event("push", "push", False), (True, True, True, "CI / PR gate (inactive)"))
 
         classifier = job_section(self.workflow, "classify")
         self.assertIn("LABEL_EVENT:", classifier)
-        self.assertIn("CONTROL_LABEL:", classifier)
-        self.assertIn('if [[ "${LABEL_EVENT}" == "true" && "${CONTROL_LABEL}" != "true" ]]', classifier)
+        self.assertIn("FULL_CI_LABEL_EVENT:", classifier)
+        self.assertNotIn("CONTROL_LABEL:", classifier)
+        self.assertNotIn("'landing'", classifier)
+        self.assertIn("github.event.changes.base.ref.from != ''", classifier)
+        self.assertIn("github.event.label.name == 'full-ci'", classifier)
+        self.assertIn("github.event.pull_request.draft == false", classifier)
+        self.assertIn('if [[ "${LABEL_EVENT}" == "true" ]]', classifier)
         self.assertIn("run_ci=false", classifier)
         self.assertIn('echo "run_ci=${run_ci}"', classifier)
 
-        for job in ("rust_unit", "library_build_and_test", "wasm", "coverage", "clippy_lint", "configuration_check"):
+        for job in ("rust_unit", "library_build_and_test", "wasm", "clippy_lint", "configuration_check"):
             self.assertIn("needs.classify.outputs.run_ci == 'true'", job_section(self.workflow, job))
+        self.assertNotIn("needs.classify.outputs.run_ci", job_section(self.workflow, "coverage"))
+        self.assertIn("needs.classify.outputs.run_ci == 'true'", job_section(self.workflow, "pr_gate"))
+        self.assertIn("full-ci label run is coverage-only", self.workflow)
 
     def test_classifier_owns_all_build_and_configuration_inputs(self):
         classifier = self.workflow.split("\n  classify:\n", maxsplit=1)[1].split("\n  library_build_and_test:\n", maxsplit=1)[0]
@@ -154,8 +167,8 @@ class CiWorkflowPolicyTests(unittest.TestCase):
         main_gate = job_section(self.workflow, "main_gate")
 
         self.assertIn("github.event.pull_request.draft == false", classifier)
-        self.assertIn("contains(github.event.pull_request.labels.*.name, 'landing')", classifier)
         self.assertIn("contains(github.event.pull_request.labels.*.name, 'full-ci')", classifier)
+        self.assertNotIn("'landing'", classifier)
         for output in ("run_ci", "candidate", "full_coverage", "cache_epoch"):
             self.assertIn(f"      {output}: ${{{{ steps.changes.outputs.{output} }}}}\n", classifier)
         self.assertIn("needs.classify.outputs.candidate != 'true'", rust_unit)

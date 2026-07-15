@@ -31,6 +31,7 @@ use std::sync::LazyLock;
 
 const MAX_RESOLUTION_PASSES: usize = 32;
 const MAX_DOCUMENT_CANDIDATES: usize = 8_192;
+const MAX_CONDITIONAL_SCAN_MULTIPLIER: usize = 32;
 
 static CONDITIONAL_OPEN_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?is)\[\[#(?P<kind>ifexpr|if)\s+").unwrap());
@@ -74,17 +75,20 @@ pub fn resolve_wikidot_parser_functions(source: &str) -> String {
 
 /// Resolve parser functions with an explicit context-free evaluation policy.
 ///
-/// At most 8,192 parser-function candidates and 32 nested passes are examined
-/// per document. Content beyond either bound remains literal.
+/// At most 8,192 parser-function candidates, 32 nested passes, and a
+/// document-proportional amount of malformed-conditional scan work are
+/// examined per document. Content beyond those bounds remains literal.
 pub fn resolve_wikidot_parser_functions_with_options(
     source: &str,
     options: WikidotParserFunctionOptions,
 ) -> String {
     let mut resolved = source.to_owned();
     let mut budget = CandidateBudget::default();
+    let mut scan_budget = ConditionalScanBudget::new(source.len());
 
     for _ in 0..MAX_RESOLUTION_PASSES {
-        let conditional = resolve_conditional_pass(&resolved, options, &mut budget);
+        let conditional =
+            resolve_conditional_pass(&resolved, options, &mut budget, &mut scan_budget);
         if conditional != resolved {
             resolved = conditional;
             if budget.exhausted() {
@@ -121,11 +125,32 @@ struct CandidateBudget {
     remaining: usize,
 }
 
+#[derive(Debug)]
+struct ConditionalScanBudget {
+    remaining: usize,
+}
+
 impl Default for CandidateBudget {
     fn default() -> Self {
         Self {
             remaining: MAX_DOCUMENT_CANDIDATES,
         }
+    }
+}
+
+impl ConditionalScanBudget {
+    fn new(source_len: usize) -> Self {
+        Self {
+            remaining: source_len.saturating_mul(MAX_CONDITIONAL_SCAN_MULTIPLIER),
+        }
+    }
+
+    fn take(&mut self) -> bool {
+        if self.remaining == 0 {
+            return false;
+        }
+        self.remaining -= 1;
+        true
     }
 }
 
@@ -144,6 +169,13 @@ impl CandidateBudget {
 }
 
 #[derive(Debug)]
+enum ConditionalSearch {
+    Found(ConditionalParts),
+    NotFound,
+    Exhausted,
+}
+
+#[derive(Debug)]
 struct ConditionalParts {
     end: usize,
     condition: Range<usize>,
@@ -155,6 +187,7 @@ fn resolve_conditional_pass(
     source: &str,
     options: WikidotParserFunctionOptions,
     budget: &mut CandidateBudget,
+    scan_budget: &mut ConditionalScanBudget,
 ) -> String {
     let literal_regions = LiteralRegionIndex::new(source);
     let mut replacements = Vec::new();
@@ -172,9 +205,13 @@ fn resolve_conditional_pass(
             .name("kind")
             .expect("conditional kind capture exists")
             .as_str();
-        let Some(parts) = find_conditional_parts(source, condition_start) else {
-            search_start = condition_start;
-            continue;
+        let parts = match find_conditional_parts(source, condition_start, scan_budget) {
+            ConditionalSearch::Found(parts) => parts,
+            ConditionalSearch::NotFound => {
+                search_start = condition_start;
+                continue;
+            }
+            ConditionalSearch::Exhausted => break,
         };
 
         if literal_regions.contains(function_start) {
@@ -221,13 +258,17 @@ fn simple_condition(condition: &str) -> bool {
 fn find_conditional_parts(
     source: &str,
     condition_start: usize,
-) -> Option<ConditionalParts> {
+    scan_budget: &mut ConditionalScanBudget,
+) -> ConditionalSearch {
     let bytes = source.as_bytes();
     let mut cursor = condition_start;
     let mut depth = 1usize;
     let mut separators = [None, None];
 
     while cursor + 1 < bytes.len() {
+        if !scan_budget.take() {
+            return ConditionalSearch::Exhausted;
+        }
         if bytes[cursor..].starts_with(b"[[") {
             depth += 1;
             cursor += 2;
@@ -235,9 +276,11 @@ fn find_conditional_parts(
         }
         if bytes[cursor..].starts_with(b"]]") {
             if depth == 1 {
-                let first = separators[0]?;
+                let Some(first) = separators[0] else {
+                    return ConditionalSearch::NotFound;
+                };
                 let true_end = separators[1].unwrap_or(cursor);
-                return Some(ConditionalParts {
+                return ConditionalSearch::Found(ConditionalParts {
                     end: cursor + 2,
                     condition: condition_start..first,
                     when_true: first + 1..true_end,
@@ -261,7 +304,7 @@ fn find_conditional_parts(
         }
         cursor += 1;
     }
-    None
+    ConditionalSearch::NotFound
 }
 
 fn resolve_expression_pass(
@@ -478,6 +521,17 @@ mod tests {
         assert_eq!(resolved.matches("[[#expr 1]]").count(), 1);
         assert_eq!(resolved.matches('1').count(), MAX_DOCUMENT_CANDIDATES + 1);
         assert!(resolved.ends_with("[[#expr 1]]"));
+    }
+
+    #[test]
+    fn malformed_conditional_scan_work_is_document_bounded() {
+        let malformed = "[[#if ".repeat(MAX_DOCUMENT_CANDIDATES);
+        let valid = "[[#if 1 | selected | hidden]]";
+        let source = format!("{malformed}{valid}");
+
+        let resolved = resolve_wikidot_parser_functions(&source);
+
+        assert_eq!(resolved, source);
     }
 
     #[test]

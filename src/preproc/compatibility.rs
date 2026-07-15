@@ -393,6 +393,14 @@ fn canonicalize_root_collapsible_inline_quoted_closers(
 /// Wikidot consumes these lines rather than treating their remainder as quoted
 /// content or literal text. Root-level literal regions remain byte-preserving.
 fn remove_tight_quote_lines(lines: &mut [String], literal_lines: &[bool]) {
+    // Match the parser's native blockquote ceiling.  Deeper valid quote lines
+    // are preserved byte-for-byte so the parser can report the existing
+    // too-deep blockquote error, but compatibility blank lines only need to
+    // retain a parseable quote scope.  Capping the synthesized marker run keeps
+    // a single attacker-controlled deep quote line from being multiplied across
+    // many following tight malformed lines during preprocessing.
+    const MAX_SYNTHESIZED_QUOTE_DEPTH: usize = 30;
+
     let mut active_quote_depth = 0;
     for (line, literal) in lines.iter_mut().zip(literal_lines) {
         if *literal {
@@ -422,7 +430,8 @@ fn remove_tight_quote_lines(lines: &mut [String], literal_lines: &[bool]) {
         } else {
             // Keep the active depth without introducing horizontal space:
             // an empty `>` row is invisible, while `> ` splits paragraphs.
-            *line = format!("{indentation}{}{ending}", ">".repeat(active_quote_depth));
+            let synthesized_depth = active_quote_depth.min(MAX_SYNTHESIZED_QUOTE_DEPTH);
+            *line = format!("{indentation}{}{ending}", ">".repeat(synthesized_depth));
         }
     }
 }
@@ -1215,6 +1224,37 @@ mod tests {
         );
         assert_eq!(valid_quote_depth(">> ALPHA_DOUBLE_SPACED"), 2);
         assert_eq!(valid_quote_depth("> >ALPHA_INNER_LITERAL"), 1);
+    }
+
+    #[test]
+    fn tight_quote_blank_scope_is_capped_to_prevent_amplification() {
+        let mut source = format!("{} spaced\n>DROP\n", ">".repeat(31));
+
+        substitute(&mut source);
+
+        assert_eq!(
+            source,
+            format!("{} spaced\n{}\n", ">".repeat(31), ">".repeat(30)),
+        );
+    }
+
+    #[test]
+    fn repeated_tight_quote_lines_do_not_multiply_deep_active_depth() {
+        let depth = 1024;
+        let tight_lines = 128;
+        let mut source = format!("{} spaced\n", ">".repeat(depth));
+        source.push_str(&">DROP\n".repeat(tight_lines));
+        let input_len = source.len();
+
+        substitute(&mut source);
+
+        let capped_empty_quote_line = format!("{}\n", ">".repeat(30));
+        assert!(source.starts_with(&format!("{} spaced\n", ">".repeat(depth))));
+        assert_eq!(
+            source.matches(&capped_empty_quote_line).count(),
+            tight_lines
+        );
+        assert!(source.len() <= input_len + tight_lines * 30);
     }
 
     #[test]

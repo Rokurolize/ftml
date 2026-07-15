@@ -196,7 +196,83 @@ PY
     return 1
   fi
 
+  validate_cargo_dependency_sources "$repo/Cargo.toml"
+
   cargo_command=(rustup run "$rust_channel" env "CARGO_HOME=$cargo_home" cargo)
+}
+
+validate_cargo_dependency_sources() {
+  local manifest=$1
+
+  "$python_executable" -I - "$manifest" <<'PY'
+import pathlib
+import sys
+import tomllib
+
+PROHIBITED_DEPENDENCY_SOURCE_KEYS = {"git", "path", "registry"}
+
+
+def dependency_sections(manifest):
+    for section in ("dependencies", "dev-dependencies", "build-dependencies"):
+        yield section, manifest.get(section, {})
+
+    workspace = manifest.get("workspace", {})
+    if isinstance(workspace, dict):
+        yield "workspace.dependencies", workspace.get("dependencies", {})
+
+    for target_name, target in manifest.get("target", {}).items():
+        if isinstance(target, dict):
+            for section in ("dependencies", "dev-dependencies", "build-dependencies"):
+                yield f"target.{target_name}.{section}", target.get(section, {})
+
+
+def validate_dependency_table(section_name, dependencies):
+    if not isinstance(dependencies, dict):
+        return
+
+    for dependency_name, specification in dependencies.items():
+        if not isinstance(specification, dict):
+            continue
+
+        prohibited = sorted(PROHIBITED_DEPENDENCY_SOURCE_KEYS.intersection(specification))
+        if prohibited:
+            joined = ", ".join(prohibited)
+            raise ValueError(
+                f"{section_name}.{dependency_name} uses prohibited source key(s): {joined}"
+            )
+
+
+def main():
+    manifest_path = pathlib.Path(sys.argv[1])
+    with manifest_path.open("rb") as file:
+        manifest = tomllib.load(file)
+
+    package = manifest.get("package", {})
+    if isinstance(package, dict) and "workspace" in package:
+        raise ValueError("Cargo.toml must not inherit from another workspace during maintenance")
+
+    workspace = manifest.get("workspace", {})
+    if isinstance(workspace, dict):
+        for membership_key in ("members", "default-members"):
+            if workspace.get(membership_key):
+                raise ValueError(
+                    f"Cargo.toml must not define workspace.{membership_key} during maintenance"
+                )
+
+    for top_level in ("patch", "replace"):
+        if top_level in manifest:
+            raise ValueError(f"Cargo.toml must not define [{top_level}] entries during maintenance")
+
+    for section_name, dependencies in dependency_sections(manifest):
+        validate_dependency_table(section_name, dependencies)
+
+
+try:
+    main()
+except (OSError, tomllib.TOMLDecodeError, ValueError) as error:
+    print(f"Cargo dependency sources are not allowed during maintenance: {error}", file=sys.stderr)
+    sys.exit(1)
+PY
 }
 
 configure_rust() {

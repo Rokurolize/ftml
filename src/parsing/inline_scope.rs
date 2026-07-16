@@ -4,10 +4,18 @@ use crate::tree::{
 use std::collections::BTreeSet;
 use std::mem;
 
+const MAX_ACTIVE_INLINE_SCOPES: usize =
+    crate::parsing::parser::DEFAULT_MAX_RECURSION_DEPTH;
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum ScopeKind {
     Size,
     Span,
+}
+
+struct PendingScope {
+    ordinal: usize,
+    accepted: bool,
 }
 
 struct ActiveScope<'t> {
@@ -107,14 +115,17 @@ impl<'t> ActiveScopes<'t> {
 
 pub(crate) fn lower_wikidot_inline_size_scopes<'t>(elements: &mut Vec<Element<'t>>) {
     let mut ordinal = 0;
+    // Separate stacks keep crossed size/span closure matching constant-time.
     let mut open_sizes = Vec::new();
     let mut open_spans = Vec::new();
+    let mut active_count = 0;
     let mut valid = BTreeSet::new();
     collect_valid_pairs(
         elements,
         &mut ordinal,
         &mut open_sizes,
         &mut open_spans,
+        &mut active_count,
         &mut valid,
     );
 
@@ -126,43 +137,76 @@ pub(crate) fn lower_wikidot_inline_size_scopes<'t>(elements: &mut Vec<Element<'t
 fn collect_valid_pairs(
     elements: &[Element<'_>],
     ordinal: &mut usize,
-    open_sizes: &mut Vec<usize>,
-    open_spans: &mut Vec<usize>,
+    open_sizes: &mut Vec<PendingScope>,
+    open_spans: &mut Vec<PendingScope>,
+    active_count: &mut usize,
     valid: &mut BTreeSet<usize>,
 ) {
     for element in elements {
         match element {
             Element::Partial(PartialElement::InlineSizeOpen(_)) => {
-                open_sizes.push(*ordinal);
-                *ordinal += 1;
+                push_pending_scope(open_sizes, ordinal, active_count);
             }
             Element::Partial(PartialElement::InlineSizeClose) => {
                 let close = *ordinal;
                 *ordinal += 1;
                 if let Some(open) = open_sizes.pop() {
-                    valid.insert(open);
-                    valid.insert(close);
+                    accept_pending_pair(open, close, active_count, valid);
                 }
             }
             Element::Partial(PartialElement::InlineSpanOpen(_)) => {
-                open_spans.push(*ordinal);
-                *ordinal += 1;
+                push_pending_scope(open_spans, ordinal, active_count);
             }
             Element::Partial(PartialElement::InlineSpanClose(_)) => {
                 let close = *ordinal;
                 *ordinal += 1;
                 if let Some(open) = open_spans.pop() {
-                    valid.insert(open);
-                    valid.insert(close);
+                    accept_pending_pair(open, close, active_count, valid);
                 }
             }
             _ => {
                 let mut visit = |children: &[Element<'_>]| {
-                    collect_valid_pairs(children, ordinal, open_sizes, open_spans, valid)
+                    collect_valid_pairs(
+                        children,
+                        ordinal,
+                        open_sizes,
+                        open_spans,
+                        active_count,
+                        valid,
+                    )
                 };
                 visit_children(element, &mut visit);
             }
         }
+    }
+}
+
+fn push_pending_scope(
+    stack: &mut Vec<PendingScope>,
+    ordinal: &mut usize,
+    active_count: &mut usize,
+) {
+    let accepted = *active_count < MAX_ACTIVE_INLINE_SCOPES;
+    if accepted {
+        *active_count += 1;
+    }
+    stack.push(PendingScope {
+        ordinal: *ordinal,
+        accepted,
+    });
+    *ordinal += 1;
+}
+
+fn accept_pending_pair(
+    open: PendingScope,
+    close: usize,
+    active_count: &mut usize,
+    valid: &mut BTreeSet<usize>,
+) {
+    if open.accepted {
+        *active_count -= 1;
+        valid.insert(open.ordinal);
+        valid.insert(close);
     }
 }
 
@@ -443,5 +487,105 @@ mod tests {
             format!("{errors:#?}").contains("NoRulesMatch"),
             "{errors:#?}",
         );
+    }
+
+    #[test]
+    fn lowering_caps_active_inline_scope_depth() {
+        let mut elements = Vec::new();
+        for _ in 0..(MAX_ACTIVE_INLINE_SCOPES + 1) {
+            elements.push(Element::Partial(PartialElement::InlineSizeOpen(cow!(
+                "font-size: larger;"
+            ))));
+        }
+        elements.push(text!("bounded"));
+        for _ in 0..(MAX_ACTIVE_INLINE_SCOPES + 1) {
+            elements.push(Element::Partial(PartialElement::InlineSizeClose));
+        }
+
+        lower_wikidot_inline_size_scopes(&mut elements);
+
+        assert_eq!(
+            max_inline_scope_container_depth(&elements),
+            MAX_ACTIVE_INLINE_SCOPES
+        );
+    }
+
+    #[test]
+    fn lowering_caps_mixed_inline_scope_depth() {
+        let kinds = (0..(MAX_ACTIVE_INLINE_SCOPES + 2))
+            .map(|index| {
+                if index % 2 == 0 {
+                    ScopeKind::Size
+                } else {
+                    ScopeKind::Span
+                }
+            })
+            .collect::<Vec<_>>();
+        let mut elements = Vec::new();
+        for kind in &kinds {
+            match kind {
+                ScopeKind::Size => elements.push(Element::Partial(
+                    PartialElement::InlineSizeOpen(cow!("font-size: larger;")),
+                )),
+                ScopeKind::Span => elements.push(Element::Partial(
+                    PartialElement::InlineSpanOpen(AttributeMap::new()),
+                )),
+            }
+        }
+        elements.push(text!("mixed bounded"));
+        for kind in kinds.iter().rev() {
+            match kind {
+                ScopeKind::Size => {
+                    elements.push(Element::Partial(PartialElement::InlineSizeClose));
+                }
+                ScopeKind::Span => elements.push(Element::Partial(
+                    PartialElement::InlineSpanClose(cow!("[[/span]]")),
+                )),
+            }
+        }
+
+        lower_wikidot_inline_size_scopes(&mut elements);
+
+        assert_eq!(
+            max_inline_scope_container_depth(&elements),
+            MAX_ACTIVE_INLINE_SCOPES
+        );
+    }
+
+    #[test]
+    fn unmatched_over_limit_inline_scopes_fail_closed() {
+        let mut elements = Vec::new();
+        for _ in 0..(MAX_ACTIVE_INLINE_SCOPES + 1) {
+            elements.push(Element::Partial(PartialElement::InlineSizeOpen(cow!(
+                "font-size: larger;"
+            ))));
+        }
+        elements.push(text!("unmatched"));
+
+        lower_wikidot_inline_size_scopes(&mut elements);
+
+        assert_eq!(elements, vec![text!("unmatched")]);
+        assert_eq!(max_inline_scope_container_depth(&elements), 0);
+    }
+
+    fn max_inline_scope_container_depth(elements: &[Element<'_>]) -> usize {
+        elements
+            .iter()
+            .map(|element| match element {
+                Element::Container(container)
+                    if matches!(
+                        container.ctype(),
+                        ContainerType::Size | ContainerType::Span
+                    ) =>
+                {
+                    1 + max_inline_scope_container_depth(container.elements())
+                }
+                Element::Container(container) => {
+                    max_inline_scope_container_depth(container.elements())
+                }
+                _ => 0,
+            })
+            .max()
+            .unwrap_or(0)
     }
 }

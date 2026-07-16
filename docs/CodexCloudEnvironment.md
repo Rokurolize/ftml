@@ -70,9 +70,9 @@ The setup does not run the Rust test suite, configuration checker, fixture updat
 
 The maintenance script runs after Codex checks out the task branch, but it immediately changes to `/` and refers to repository files by absolute path. Python uses isolated mode, rustup runs without the dedicated `CARGO_HOME`, every Cargo operation receives that directory only after `rustup run` selects the validated numeric release, and `cargo fetch` cannot discover task local `.cargo/config` files from the manifest path.
 
-Maintenance ensures the reviewed Rust toolchain and four Cargo tool binaries are installed and report the expected versions. It compares the task branch's Python requirements with the trusted setup copy and stops if they differ; it never passes a task controlled requirements file to pip.
+Maintenance ensures the reviewed Rust toolchain and four Cargo tool binaries are installed and report the expected versions. It compares the task branch's Python requirements with the trusted setup copy and stops if they differ; it never passes a task controlled requirements file to pip. It also rejects Cargo manifests that introduce dependency `git`, `path`, or alternate `registry` sources, workspace membership or inheritance, plus `[patch]` or `[replace]` entries, before any repository dependency fetch can run.
 
-Maintenance does not run `cargo build`, `cargo test`, `wasm-pack build`, repository Python programs, fixture generation, or package build scripts. `cargo fetch` runs with Git CLI fetching disabled and without global Git configuration, from a working directory outside the checkout.
+Maintenance does not run `cargo build`, `cargo test`, `wasm-pack build`, repository Python programs, fixture generation, or package build scripts. `cargo fetch` runs with Git CLI fetching disabled and without global Git configuration, from a working directory outside the checkout, after dependency sources are constrained to the default registry.
 
 ## Agent phase validation
 

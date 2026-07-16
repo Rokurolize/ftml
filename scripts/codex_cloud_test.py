@@ -189,7 +189,10 @@ class CodexCloudScriptTests(unittest.TestCase):
             tool_root_bin.mkdir(parents=True)
             (repo / "scripts").mkdir()
             (repo / ".cargo").mkdir()
-            (repo / "Cargo.toml").write_text('[package]\nname = "ftml"\nversion = "1.0.0"\nedition = "2024"\nrust-version = "1.95.0"\n', encoding="utf-8")
+            (repo / "Cargo.toml").write_text(
+                '[package]\nname = "ftml"\nversion = "1.0.0"\nedition = "2024"\nrust-version = "1.95.0"\n',
+                encoding="utf-8",
+            )
             (repo / "rust-toolchain.toml").write_text('[toolchain]\nchannel = "1.95.0"\n', encoding="utf-8")
             (repo / "scripts" / "check_conf-requirements.txt").write_text("inflection>=0.5.0\n", encoding="utf-8")
             (repo / ".cargo" / "config.toml").write_text('[registry]\nglobal-credential-providers = ["cargo:token-from-stdout task-helper"]\n', encoding="utf-8")
@@ -319,6 +322,74 @@ fi
             self.assertIn("Python requirements changed", changed.stderr)
 
             requirements.write_text("inflection>=0.5.0\n", encoding="utf-8")
+            (repo / "Cargo.toml").write_text(
+                '[package]\nname = "ftml"\nversion = "1.0.0"\nedition = "2024"\nrust-version = "1.95.0"\n'
+                '[dependencies]\nserde = { git = "https://attacker.example/serde" }\n',
+                encoding="utf-8",
+            )
+            untrusted_dependency = subprocess.run(
+                [str(MAINTENANCE)], cwd=repo, env=environment, text=True, capture_output=True
+            )
+            self.assertNotEqual(untrusted_dependency.returncode, 0)
+            self.assertIn("Cargo dependency sources are not allowed", untrusted_dependency.stderr)
+            self.assertIn("dependencies.serde", untrusted_dependency.stderr)
+
+            (repo / "Cargo.toml").write_text(
+                '[package]\nname = "ftml"\nversion = "1.0.0"\nedition = "2024"\nrust-version = "1.95.0"\n'
+                '[dependencies]\nserde = { workspace = true }\n'
+                '[workspace.dependencies]\nserde = { git = "https://attacker.example/serde" }\n',
+                encoding="utf-8",
+            )
+            untrusted_workspace_dependency = subprocess.run(
+                [str(MAINTENANCE)], cwd=repo, env=environment, text=True, capture_output=True
+            )
+            self.assertNotEqual(untrusted_workspace_dependency.returncode, 0)
+            self.assertIn("workspace.dependencies.serde", untrusted_workspace_dependency.stderr)
+
+            workspace_member = repo / "member"
+            workspace_member.mkdir()
+            (workspace_member / "Cargo.toml").write_text(
+                '[package]\nname = "member"\nversion = "1.0.0"\nedition = "2024"\n'
+                '[dependencies]\nserde = { git = "https://attacker.example/serde" }\n',
+                encoding="utf-8",
+            )
+            (repo / "Cargo.toml").write_text(
+                '[package]\nname = "ftml"\nversion = "1.0.0"\nedition = "2024"\nrust-version = "1.95.0"\n'
+                '[workspace]\nmembers = ["member"]\n',
+                encoding="utf-8",
+            )
+            untrusted_workspace_member = subprocess.run(
+                [str(MAINTENANCE)], cwd=repo, env=environment, text=True, capture_output=True
+            )
+            self.assertNotEqual(untrusted_workspace_member.returncode, 0)
+            self.assertIn("workspace.members", untrusted_workspace_member.stderr)
+
+            (repo / "Cargo.toml").write_text(
+                '[package]\nname = "ftml"\nversion = "1.0.0"\nedition = "2024"\nrust-version = "1.95.0"\n'
+                '[workspace]\ndefault-members = ["member"]\n',
+                encoding="utf-8",
+            )
+            untrusted_default_member = subprocess.run(
+                [str(MAINTENANCE)], cwd=repo, env=environment, text=True, capture_output=True
+            )
+            self.assertNotEqual(untrusted_default_member.returncode, 0)
+            self.assertIn("workspace.default-members", untrusted_default_member.stderr)
+
+            (repo / "Cargo.toml").write_text(
+                '[package]\nname = "ftml"\nversion = "1.0.0"\nedition = "2024"\nrust-version = "1.95.0"\n'
+                'workspace = "member"\n',
+                encoding="utf-8",
+            )
+            untrusted_workspace_inheritance = subprocess.run(
+                [str(MAINTENANCE)], cwd=repo, env=environment, text=True, capture_output=True
+            )
+            self.assertNotEqual(untrusted_workspace_inheritance.returncode, 0)
+            self.assertIn("inherit from another workspace", untrusted_workspace_inheritance.stderr)
+
+            (repo / "Cargo.toml").write_text(
+                '[package]\nname = "ftml"\nversion = "1.0.0"\nedition = "2024"\nrust-version = "1.95.0"\n',
+                encoding="utf-8",
+            )
             (repo / "rust-toolchain").write_text("nightly\n", encoding="utf-8")
             overridden = subprocess.run([str(MAINTENANCE)], cwd=repo, env=environment, text=True, capture_output=True)
             self.assertNotEqual(overridden.returncode, 0)

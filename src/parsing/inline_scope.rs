@@ -11,63 +11,154 @@ enum ScopeKind {
 }
 
 struct ActiveScope<'t> {
-    kind: ScopeKind,
     ctype: ContainerType,
     attributes: AttributeMap<'t>,
+    previous_same_kind: Option<usize>,
+    previous_active: Option<usize>,
+    next_active: Option<usize>,
+}
+
+#[derive(Default)]
+struct ActiveScopes<'t> {
+    scopes: Vec<ActiveScope<'t>>,
+    top_size: Option<usize>,
+    top_span: Option<usize>,
+    active_tail: Option<usize>,
+}
+
+struct ActiveScopeRevIter<'a, 't> {
+    scopes: &'a [ActiveScope<'t>],
+    next: Option<usize>,
+}
+
+impl<'a, 't> Iterator for ActiveScopeRevIter<'a, 't> {
+    type Item = &'a ActiveScope<'t>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let position = self.next?;
+        let scope = &self.scopes[position];
+        self.next = scope.previous_active;
+        Some(scope)
+    }
+}
+
+impl<'t> ActiveScopes<'t> {
+    fn push(
+        &mut self,
+        kind: ScopeKind,
+        ctype: ContainerType,
+        attributes: AttributeMap<'t>,
+    ) {
+        let position = self.scopes.len();
+        let previous_same_kind = self.top_mut(kind).replace(position);
+        let previous_active = self.active_tail.replace(position);
+        self.scopes.push(ActiveScope {
+            ctype,
+            attributes,
+            previous_same_kind,
+            previous_active,
+            next_active: None,
+        });
+        if let Some(previous_active) = previous_active {
+            self.scopes[previous_active].next_active = Some(position);
+        }
+    }
+
+    fn remove(&mut self, kind: ScopeKind) {
+        if let Some(position) = *self.top(kind) {
+            let scope = &self.scopes[position];
+            let previous_same_kind = scope.previous_same_kind;
+            let previous_active = scope.previous_active;
+            let next_active = scope.next_active;
+
+            if let Some(previous_active) = previous_active {
+                self.scopes[previous_active].next_active = next_active;
+            }
+            if let Some(next_active) = next_active {
+                self.scopes[next_active].previous_active = previous_active;
+            } else {
+                self.active_tail = previous_active;
+            }
+            *self.top_mut(kind) = previous_same_kind;
+        }
+    }
+
+    fn iter_active_rev(&self) -> ActiveScopeRevIter<'_, 't> {
+        ActiveScopeRevIter {
+            scopes: &self.scopes,
+            next: self.active_tail,
+        }
+    }
+
+    fn top(&self, kind: ScopeKind) -> &Option<usize> {
+        match kind {
+            ScopeKind::Size => &self.top_size,
+            ScopeKind::Span => &self.top_span,
+        }
+    }
+
+    fn top_mut(&mut self, kind: ScopeKind) -> &mut Option<usize> {
+        match kind {
+            ScopeKind::Size => &mut self.top_size,
+            ScopeKind::Span => &mut self.top_span,
+        }
+    }
 }
 
 pub(crate) fn lower_wikidot_inline_size_scopes<'t>(elements: &mut Vec<Element<'t>>) {
     let mut ordinal = 0;
-    let mut stack = Vec::new();
+    let mut open_sizes = Vec::new();
+    let mut open_spans = Vec::new();
     let mut valid = BTreeSet::new();
-    collect_valid_pairs(elements, &mut ordinal, &mut stack, &mut valid);
+    collect_valid_pairs(
+        elements,
+        &mut ordinal,
+        &mut open_sizes,
+        &mut open_spans,
+        &mut valid,
+    );
 
     ordinal = 0;
-    let mut active = Vec::new();
+    let mut active = ActiveScopes::default();
     lower_sequence(elements, &valid, &mut ordinal, &mut active);
 }
 
 fn collect_valid_pairs(
     elements: &[Element<'_>],
     ordinal: &mut usize,
-    stack: &mut Vec<(ScopeKind, usize)>,
+    open_sizes: &mut Vec<usize>,
+    open_spans: &mut Vec<usize>,
     valid: &mut BTreeSet<usize>,
 ) {
     for element in elements {
         match element {
             Element::Partial(PartialElement::InlineSizeOpen(_)) => {
-                stack.push((ScopeKind::Size, *ordinal));
+                open_sizes.push(*ordinal);
                 *ordinal += 1;
             }
             Element::Partial(PartialElement::InlineSizeClose) => {
                 let close = *ordinal;
                 *ordinal += 1;
-                if let Some(position) =
-                    stack.iter().rposition(|(kind, _)| *kind == ScopeKind::Size)
-                {
-                    let (_, open) = stack.remove(position);
+                if let Some(open) = open_sizes.pop() {
                     valid.insert(open);
                     valid.insert(close);
                 }
             }
             Element::Partial(PartialElement::InlineSpanOpen(_)) => {
-                stack.push((ScopeKind::Span, *ordinal));
+                open_spans.push(*ordinal);
                 *ordinal += 1;
             }
             Element::Partial(PartialElement::InlineSpanClose(_)) => {
                 let close = *ordinal;
                 *ordinal += 1;
-                if let Some(position) =
-                    stack.iter().rposition(|(kind, _)| *kind == ScopeKind::Span)
-                {
-                    let (_, open) = stack.remove(position);
+                if let Some(open) = open_spans.pop() {
                     valid.insert(open);
                     valid.insert(close);
                 }
             }
             _ => {
                 let mut visit = |children: &[Element<'_>]| {
-                    collect_valid_pairs(children, ordinal, stack, valid)
+                    collect_valid_pairs(children, ordinal, open_sizes, open_spans, valid)
                 };
                 visit_children(element, &mut visit);
             }
@@ -79,7 +170,7 @@ fn lower_sequence<'t>(
     elements: &mut Vec<Element<'t>>,
     valid: &BTreeSet<usize>,
     ordinal: &mut usize,
-    active: &mut Vec<ActiveScope<'t>>,
+    active: &mut ActiveScopes<'t>,
 ) {
     let mut output = Vec::with_capacity(elements.len());
     let mut run = Vec::new();
@@ -92,11 +183,7 @@ fn lower_sequence<'t>(
             if valid.contains(&current) {
                 let mut attributes = AttributeMap::new();
                 attributes.insert("style", style);
-                active.push(ActiveScope {
-                    kind: ScopeKind::Size,
-                    ctype: ContainerType::Size,
-                    attributes,
-                });
+                active.push(ScopeKind::Size, ContainerType::Size, attributes);
             }
             continue;
         }
@@ -105,7 +192,7 @@ fn lower_sequence<'t>(
             let current = *ordinal;
             *ordinal += 1;
             if valid.contains(&current) {
-                remove_active(active, ScopeKind::Size);
+                active.remove(ScopeKind::Size);
             }
             continue;
         }
@@ -114,11 +201,7 @@ fn lower_sequence<'t>(
             let current = *ordinal;
             *ordinal += 1;
             if valid.contains(&current) {
-                active.push(ActiveScope {
-                    kind: ScopeKind::Span,
-                    ctype: ContainerType::Span,
-                    attributes,
-                });
+                active.push(ScopeKind::Span, ContainerType::Span, attributes);
             }
             continue;
         }
@@ -127,7 +210,7 @@ fn lower_sequence<'t>(
             let current = *ordinal;
             *ordinal += 1;
             if valid.contains(&current) {
-                remove_active(active, ScopeKind::Span);
+                active.remove(ScopeKind::Span);
             } else {
                 output.push(Element::Text(source));
             }
@@ -152,13 +235,13 @@ fn lower_sequence<'t>(
 fn flush_run<'t>(
     output: &mut Vec<Element<'t>>,
     run: &mut Vec<Element<'t>>,
-    active: &[ActiveScope<'t>],
+    active: &ActiveScopes<'t>,
 ) {
     if run.is_empty() {
         return;
     }
     let mut wrapped = mem::take(run);
-    for scope in active.iter().rev() {
+    for scope in active.iter_active_rev() {
         wrapped = vec![Element::Container(Container::new(
             scope.ctype,
             wrapped,
@@ -180,7 +263,7 @@ fn lower_children<'t>(
     element: &mut Element<'t>,
     valid: &BTreeSet<usize>,
     ordinal: &mut usize,
-    active: &mut Vec<ActiveScope<'t>>,
+    active: &mut ActiveScopes<'t>,
 ) -> bool {
     let mut lowered = false;
     let mut visit = |children: &mut Vec<Element<'t>>| {
@@ -189,12 +272,6 @@ fn lower_children<'t>(
     };
     visit_children_mut(element, &mut visit);
     lowered
-}
-
-fn remove_active(active: &mut Vec<ActiveScope<'_>>, kind: ScopeKind) {
-    if let Some(position) = active.iter().rposition(|scope| scope.kind == kind) {
-        active.remove(position);
-    }
 }
 
 fn visit_children<'t>(element: &Element<'t>, visit: &mut dyn FnMut(&[Element<'t>])) {

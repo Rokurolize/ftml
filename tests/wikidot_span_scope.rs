@@ -103,3 +103,31 @@ fn repeated_span_heading_sections_stay_within_interaction_budget() {
         started.elapsed()
     );
 }
+
+#[test]
+fn adversarial_interleaved_size_and_span_scopes_stay_within_budget() {
+    let repeats = 8_000;
+    let mut source = String::new();
+    for _ in 0..repeats {
+        source.push_str("[[size 100%]]");
+    }
+    for _ in 0..repeats {
+        source.push_str("[[span class=\"x\"]]");
+    }
+    for _ in 0..repeats {
+        source.push_str("[[/size]]");
+    }
+    for _ in 0..repeats {
+        source.push_str("[[/span]]");
+    }
+
+    let started = Instant::now();
+    let (_html, errors) = render(&source);
+    assert!(errors.is_empty(), "{errors:#?}");
+    let budget = if cfg!(tarpaulin) {
+        Duration::from_secs(5)
+    } else {
+        Duration::from_secs(1)
+    };
+    assert!(started.elapsed() < budget, "{:?}", started.elapsed());
+}

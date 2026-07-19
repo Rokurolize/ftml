@@ -33,6 +33,8 @@ Keep public APIs intentional. If a change affects consumers such as Wikijump, re
 
 Size PRs by reviewability and risk, not by a line quota; do not split a coherent change merely to shrink the diff.
 
+Give every worktree an owning task and remove it once its branch merges or its task closes; long-lived worktrees need a recorded owner.
+
 Avoid large modules: target Rust modules under roughly 500 LoC excluding tests; past roughly 800 LoC, put new functionality in a new module and move the related tests and module docs with it.
 
 ## Validation expectations

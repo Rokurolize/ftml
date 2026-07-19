@@ -31,12 +31,9 @@ When changing parser or renderer behavior, add regression tests that describe th
 
 Keep public APIs intentional. If a change affects consumers such as Wikijump, record the compatibility implication in the PR body or final report.
 
-Avoid large modules:
+Size PRs by reviewability and risk, not by a line quota; do not split a coherent change merely to shrink the diff.
 
-- Prefer adding new modules instead of growing existing ones.
-- Target Rust modules under 500 LoC, excluding tests.
-- If a file exceeds roughly 800 LoC, add new functionality in a new module instead of extending the existing file unless there is a strong documented reason not to.
-- When extracting code from a large module, move the related tests and module/type docs toward the new implementation so the invariants stay close to the code that owns them.
+Avoid large modules: target Rust modules under roughly 500 LoC excluding tests; past roughly 800 LoC, put new functionality in a new module and move the related tests and module docs with it.
 
 ## Validation expectations
 

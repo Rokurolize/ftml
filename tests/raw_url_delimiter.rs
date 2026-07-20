@@ -41,10 +41,10 @@ fn yossistyle_raw_import_nests_inside_monospace_and_bold_without_errors() {
     assert_eq!(
         html,
         concat!(
-            "<p><strong><code class=\"wj-monospace\">@import url(",
+            "<p><strong><tt>@import url(",
             "<span style=\"white-space: pre-wrap;\">",
             "https://scpwiki.com/theme:yossistyle/code/1",
-            "</span>);</code></strong></p>",
+            "</span>);</tt></strong></p>",
         ),
     );
 }
@@ -62,17 +62,17 @@ fn url_terminated_raw_spans_work_at_each_inline_nesting_depth() {
         (
             "{{@<https://example.com/raw>@}}",
             concat!(
-                "<p><code class=\"wj-monospace\">",
+                "<p><tt>",
                 "<span style=\"white-space: pre-wrap;\">",
-                "https://example.com/raw</span></code></p>",
+                "https://example.com/raw</span></tt></p>",
             ),
         ),
         (
             "**{{@<https://example.com/raw>@}}**",
             concat!(
-                "<p><strong><code class=\"wj-monospace\">",
+                "<p><strong><tt>",
                 "<span style=\"white-space: pre-wrap;\">",
-                "https://example.com/raw</span></code></strong></p>",
+                "https://example.com/raw</span></tt></strong></p>",
             ),
         ),
     ];
@@ -93,7 +93,7 @@ fn malformed_and_crossed_inline_delimiters_remain_fail_closed() {
     let crossed = "{{@<https://example.com/raw}}>@";
     let (crossed_html, crossed_errors) = render_wikidot(crossed);
     assert!(!crossed_errors.is_empty());
-    assert!(!crossed_html.contains("wj-monospace"), "{crossed_html}");
+    assert!(!crossed_html.contains("<tt>"), "{crossed_html}");
     assert!(
         crossed_html.contains("https://example.com/raw}}"),
         "{crossed_html}",

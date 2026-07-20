@@ -137,7 +137,10 @@ impl ContainerType {
             ContainerType::Superscript => HtmlTag::new("sup"),
             ContainerType::Subscript => HtmlTag::new("sub"),
             ContainerType::Strikethrough => HtmlTag::new("s"),
-            ContainerType::Monospace => HtmlTag::with_class("code", "wj-monospace"),
+            ContainerType::Monospace => match layout {
+                Layout::Wikidot => HtmlTag::new("tt"),
+                Layout::Wikijump => HtmlTag::with_class("code", "wj-monospace"),
+            },
             ContainerType::Span => HtmlTag::new("span"),
             ContainerType::Div => HtmlTag::new("div"),
             ContainerType::Mark => HtmlTag::new("mark"),
@@ -261,6 +264,12 @@ fn container_type_html_tags_and_paragraph_safety() {
     assert_eq!(
         ContainerType::Align(Alignment::Right).html_tag(Layout::Wikidot, &mut indexer),
         HtmlTag::with_style("div", "text-align: right;"),
+    );
+
+    let mut indexer = Incrementer::default();
+    assert_eq!(
+        ContainerType::Monospace.html_tag(Layout::Wikidot, &mut indexer),
+        HtmlTag::new("tt"),
     );
 
     let mut indexer = Incrementer::default();

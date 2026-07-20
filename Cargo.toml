@@ -35,7 +35,7 @@ icu_datetime = { version = "2.2", features = ["compiled_data"] }
 icu_experimental = { version = "0.5", features = ["compiled_data"] }
 icu_locale = "2.2"
 latex2mathml = { version = "0.2", optional = true }
-lightningcss = { version = "1.0.0-alpha.71", optional = true }
+lightningcss = { version = "=1.0.0-alpha.72", optional = true }
 log = "0.4"
 maplit = "1"
 pest = "2"

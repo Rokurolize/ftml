@@ -1339,7 +1339,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert!(html.contains("originally written here"), "{html}");
         assert!(html.contains("text-align: center"), "{html}");
-        assert!(html.contains("wj-collapsible"), "{html}");
+        assert!(html.contains("collapsible-block"), "{html}");
         assert!(html.contains("outside"), "{html}");
     }
 
@@ -1475,7 +1475,7 @@ mod tests {
 
         assert!(started.elapsed() < Duration::from_millis(500));
         assert!(errors.is_empty(), "{errors:#?}");
-        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 32);
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 32);
         assert_eq!(html.matches("class=\"episode\"").count(), 32);
         assert_eq!(html.matches("class=\"record-header\"").count(), 32);
         assert_eq!(html.matches("text-align: center").count(), 32);
@@ -1695,7 +1695,7 @@ mod tests {
 
         assert!(started.elapsed() < Duration::from_millis(500));
         assert!(errors.is_empty(), "{errors:#?}");
-        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 32);
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 32);
     }
 
     #[test]
@@ -1779,7 +1779,7 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert!(html.contains("wj-collapsible"), "{html}");
+        assert!(html.contains("collapsible-block"), "{html}");
         assert!(!html.contains("user example"), "{html}");
         assert!(html.contains("outside"), "{html}");
     }
@@ -1809,7 +1809,7 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 128);
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 128);
         assert_eq!(html.matches("End log.").count(), 128);
     }
 

@@ -151,16 +151,13 @@ mod tests {
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
         assert!(errors.is_empty(), "{errors:#?}");
-        let [Element::Container(paragraph)] = tree.elements.as_slice() else {
-            panic!("expected paragraph, got {:?}", tree.elements);
-        };
         let [
             Element::Image {
                 link, attributes, ..
             },
-        ] = paragraph.elements()
+        ] = tree.elements.as_slice()
         else {
-            panic!("expected image, got {:?}", paragraph.elements());
+            panic!("expected direct image, got {:?}", tree.elements);
         };
 
         assert_eq!(link, &Some(LinkLocation::Url(cow!("#"))));

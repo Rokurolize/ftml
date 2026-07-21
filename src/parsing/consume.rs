@@ -33,8 +33,38 @@ use super::rule::{
     get_rules_for_token,
     impls::{RULE_FALLBACK, starts_own_line_rule},
 };
-use crate::tree::{LinkLabel, LinkLocation, LinkType};
+use crate::tree::{LinkLabel, LinkLocation, LinkType, PartialElement};
 use std::mem;
+
+fn try_consume_inline_format_close<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<Option<Elements<'t>>, ParseError>
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlockEnd
+    {
+        return Ok(None);
+    }
+
+    let mut close = parser.clone();
+    let Ok(name) = close.get_end_block() else {
+        return Ok(None);
+    };
+    let normalized = name.strip_suffix('_').unwrap_or(name);
+    let partial = if normalized.eq_ignore_ascii_case("size") {
+        PartialElement::InlineSizeClose
+    } else if normalized.eq_ignore_ascii_case("span") {
+        let start = parser.current().span.start;
+        let end = close.current().span.start;
+        PartialElement::InlineSpanClose(cow!(&parser.full_text().inner()[start..end]))
+    } else {
+        return Ok(None);
+    };
+
+    parser.update(&close);
+    Ok(Some(Element::Partial(partial).into()))
+}
 
 fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
     // Only bypass generic rule dispatch where the current token cannot start
@@ -148,12 +178,30 @@ fn try_consume_line_break<'r, 't>(
         return Ok(None);
     }
 
-    match parser.next_three_tokens() {
-        (Token::LineBreak, Some(Token::LeftBlock | Token::LeftBlockStar), _)
-        | (Token::LineBreak, Some(Token::Colon), Some(Token::Whitespace)) => {
+    // A conditional quote cursor can interpret a marker remaining after its
+    // required physical prefix as literal content. The raw lookahead fast path
+    // sees only the outer Quote token, so defer that one shape to the generic
+    // line-break rule after preparing the prefix.
+    if parser.quote_body_has_literal_residuals() {
+        let mut next = parser.clone();
+        next.step()?;
+        next.get_optional_space()?;
+        if next.prepare_quote_body_line()? == QuoteBodyLineStatus::Prepared
+            && next.current().token == Token::Quote
+            && !next.start_of_line()
+        {
             return Ok(None);
         }
-        _ => {}
+    }
+
+    let next = parser.next_three_tokens();
+    let starts_definition =
+        next.1 == Some(Token::Colon) && next.2 == Some(Token::Whitespace);
+    let starts_block = matches!(next.1, Some(Token::LeftBlock | Token::LeftBlockStar));
+    if starts_definition
+        || (starts_block && !upcoming_block_ends_with_single_bracket(parser))
+    {
+        return Ok(None);
     }
 
     let next_offset = if matches!(
@@ -174,6 +222,25 @@ fn try_consume_line_break<'r, 't>(
     } else {
         Ok(Some(Element::LineBreak.into()))
     }
+}
+
+fn upcoming_block_ends_with_single_bracket(parser: &Parser<'_, '_>) -> bool {
+    let mut last = None;
+    for token in parser.remaining() {
+        if matches!(
+            token.token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        ) {
+            break;
+        }
+        if token.token == Token::RightBlock {
+            return false;
+        }
+        if token.token != Token::Whitespace {
+            last = Some(token.token);
+        }
+    }
+    last == Some(Token::RightBracket)
 }
 
 fn try_consume_leaf_token<'r, 't>(
@@ -214,6 +281,11 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
     // Incrementing recursion depth
     // Will fail if we're too many layers in
     parser.depth_increment()?;
+
+    if let Some(elements) = try_consume_inline_format_close(parser)? {
+        parser.depth_decrement();
+        return ok!(elements);
+    }
 
     if let Some(elements) = try_consume_line_break(parser)? {
         parser.depth_decrement();
@@ -432,11 +504,38 @@ mod tests {
         assert_eq!(elements, Elements::None);
         assert_eq!(parser.current().token, Token::Heading);
 
+        let (tokens, page_info, settings) = parser_for("alpha\n> > quoted");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 2);
+        parser.install_quote_body_cursor_with_literal_residuals(1);
+        assert!(
+            try_consume_line_break(&mut parser)
+                .expect("quote-aware line break deferral should not fail")
+                .is_none(),
+        );
+        assert_eq!(parser.current().token, Token::LineBreak);
+
         let (tokens, page_info, settings) = parser_for("alpha\n[[code]]");
         let mut parser = parser_at(&tokens, &page_info, &settings, 2);
         assert!(
             try_consume_line_break(&mut parser)
                 .expect("line break block fallback check should not fail")
+                .is_none(),
+        );
+        assert_eq!(parser.current().token, Token::LineBreak);
+
+        let (tokens, page_info, settings) = parser_for("alpha\n[[iftags +alphaX]\nomega");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 2);
+        let elements = try_consume_line_break(&mut parser)
+            .expect("line break before malformed block should not fail")
+            .expect("single-bracket block fallback must keep its line break");
+        assert_eq!(elements, Element::LineBreak.into());
+        assert_eq!(parser.current().token, Token::LeftBlock);
+
+        let (tokens, page_info, settings) = parser_for("alpha\n[[code]]]");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 2);
+        assert!(
+            try_consume_line_break(&mut parser)
+                .expect("valid block followed by literal bracket should not fail")
                 .is_none(),
         );
         assert_eq!(parser.current().token, Token::LineBreak);

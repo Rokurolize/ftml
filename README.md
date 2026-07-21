@@ -21,11 +21,6 @@
          alt="Rust build status on main">
   </a>
 
-  <a href="https://github.com/Rokurolize/ftml/actions/workflows/config.yaml?query=branch%3Amain">
-    <img src="https://github.com/Rokurolize/ftml/actions/workflows/config.yaml/badge.svg?branch=main"
-         alt="Configuration check status on main">
-  </a>
-
   <a href="https://docs.rs/ftml">
     <img src="https://docs.rs/ftml/badge.svg"
          alt="docs.rs documentation for ftml">
@@ -35,6 +30,7 @@
 This repository is Rokurolize's fork of [scpwiki/ftml](https://github.com/scpwiki/ftml).
 It is used for fork-local development, validation, and review support; upstream project links below describe the ftml project maintained for Wikijump.
 Fork-local versioning and sync policy are documented in [`ForkVersioning.md`](docs/ForkVersioning.md).
+The Codex Cloud setup, maintenance, and acceptance procedure is documented in [`CodexCloudEnvironment.md`](docs/CodexCloudEnvironment.md).
 
 ### Foundation Text Markup Language
 
@@ -54,7 +50,7 @@ Available under the terms of the GNU Affero General Public License. See [LICENSE
 
 ### Compilation
 
-This library targets the latest stable Rust.
+This fork pins Rust 1.95.0 through `rust-toolchain.toml` and the manifest's minimum supported Rust version.
 
 ```sh
 $ cargo build --release

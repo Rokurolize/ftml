@@ -209,9 +209,13 @@ fn scan_url(bytes: &[u8], start: usize) -> Option<usize> {
         return None;
     };
 
+    // Tokenization is context-free, so a reserved raw closer must remain a
+    // separate token even after a URL scan has started. This intentionally
+    // splits an ordinary `https://example.com/a>@b` at the `>@` marker.
     let mut end = body_start;
     while end < bytes.len()
         && !matches!(bytes[end], b'\n' | b'\r' | b' ' | b'"' | b'|' | b'[' | b']')
+        && !has(bytes, end, b">@")
     {
         end += 1;
     }
@@ -230,9 +234,14 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
         _ => {}
     }
 
+    // Angle brackets terminate an unquoted email address and also delimit raw
+    // spans. Letting an email candidate cross either one can hide raw markers.
     let mut at = identifier_end;
     while at < bytes.len()
-        && !matches!(bytes[at], b' ' | b'\t' | b'@' | b'[' | b']' | b'\n' | b'\r')
+        && !matches!(
+            bytes[at],
+            b' ' | b'\t' | b'@' | b'[' | b']' | b'{' | b'}' | b'<' | b'>' | b'\n' | b'\r'
+        )
     {
         at += 1;
     }
@@ -244,7 +253,7 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
     while dot < bytes.len()
         && !matches!(
             bytes[dot],
-            b' ' | b'\t' | b'.' | b'[' | b']' | b'\n' | b'\r'
+            b' ' | b'\t' | b'.' | b'[' | b']' | b'{' | b'}' | b'<' | b'>' | b'\n' | b'\r'
         )
     {
         dot += 1;
@@ -255,7 +264,10 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
 
     let mut end = dot + 1;
     while end < bytes.len()
-        && !matches!(bytes[end], b' ' | b'\t' | b'[' | b']' | b'\n' | b'\r')
+        && !matches!(
+            bytes[end],
+            b' ' | b'\t' | b'[' | b']' | b'{' | b'}' | b'<' | b'>' | b'\n' | b'\r'
+        )
     {
         end += 1;
     }

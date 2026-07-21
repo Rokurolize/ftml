@@ -19,6 +19,7 @@
  */
 
 use crate::data::{KarmaLevel, PageInfo, UserInfo};
+use crate::render::messages;
 use crate::settings::WikitextSettings;
 use crate::tree::{FileSource, LinkLabel, LinkLocation, Module};
 use crate::url::BuildSiteUrl;
@@ -166,31 +167,10 @@ impl Handle {
     pub fn get_message(&self, language: &str, message: &str) -> &'static str {
         debug!("Fetching message (language {language}, key {message})");
 
-        let _ = language;
-
-        // TODO
-        match message {
-            "button-copy-clipboard" => "Copy to Clipboard",
-            "collapsible-open" => "+ open block",
-            "collapsible-hide" => "- hide block",
-            "table-of-contents" => "Table of Contents",
-            "footnote" => "Footnote",
-            "footnote-cite-not-found" => "Footnote item not found",
-            "footnote-block-title" => "Footnotes",
-            "bibliography-reference" => "Reference",
-            "bibliography-block-title" => "Bibliography",
-            "bibliography-cite-not-found" => "Bibliography item not found",
-            "bibliography-block-not-found" => "Bibliography block not found",
-            "image-context-bad" => "No images in this context",
-            "audio-context-bad" => "No audio in this context",
-            "video-context-bad" => "No videos in this context",
-            "user-missing-pre" => "",
-            "user-missing-post" => " does not match any existing user name",
-            _ => {
-                error!("Unknown message requested (key {message})");
-                "?"
-            }
-        }
+        messages::get(language, message).unwrap_or_else(|| {
+            error!("Unknown message requested (key {message})");
+            "?"
+        })
     }
 
     pub fn post_html(&self, info: &PageInfo, html: &str) -> String {
@@ -441,4 +421,38 @@ fn handle_falls_back_for_mismatched_link_labels() {
         |text| label.push_str(text),
     );
     assert_eq!(label, "https://example.com");
+}
+
+#[test]
+fn handle_localizes_all_render_messages_to_japanese() {
+    let handle = Handle;
+    let message_cases = [
+        ("button-copy-clipboard", "クリップボードにコピー"),
+        ("collapsible-open", "+ ブロックを開く"),
+        ("collapsible-hide", "- ブロックを隠す"),
+        ("table-of-contents", "目次"),
+        ("footnote", "脚注"),
+        ("footnote-cite-not-found", "脚注項目が見つかりません"),
+        ("footnote-block-title", "脚注"),
+        ("bibliography-reference", "参照"),
+        ("bibliography-block-title", "参考文献"),
+        (
+            "bibliography-cite-not-found",
+            "参考文献項目が見つかりません",
+        ),
+        (
+            "bibliography-block-not-found",
+            "参考文献ブロックが見つかりません",
+        ),
+        ("image-context-bad", "このコンテキストには画像がありません"),
+        ("audio-context-bad", "このコンテキストには音声がありません"),
+        ("video-context-bad", "このコンテキストには動画がありません"),
+        ("user-missing-pre", ""),
+        ("user-missing-post", " に一致するユーザー名は存在しません"),
+    ];
+
+    for (key, expected) in message_cases {
+        assert_eq!(handle.get_message("ja-JP", key), expected);
+    }
+    assert_eq!(handle.get_message("ja-JP", "unknown-key"), "?");
 }

@@ -125,16 +125,16 @@ email = @{
     // Avoid attempting the scan-to-@ email rule at every punctuation byte.
     // Once an alphanumeric run is seen, `identifier` consumes it if no email follows.
     &(ASCII_ALPHANUMERIC) ~
-    (!(" " | "\t" | "@" | "[" | "]" | NEWLINE) ~ ANY)+ ~
+    (!(" " | "\t" | "@" | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE) ~ ANY)+ ~
     "@" ~
-    (!(" " | "\t" | "." | "[" | "]" | NEWLINE) ~ ANY)+ ~
+    (!(" " | "\t" | "." | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE) ~ ANY)+ ~
     "." ~
-    (!(" " | "\t" | "[" | "]" | NEWLINE) ~ ANY)+
+    (!(" " | "\t" | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE) ~ ANY)+
 }
 
 url = @{
     (("http" ~ "s"?) | "ftp") ~ "://" ~
-    (!(NEWLINE | " " | "\"" | "|" | "[" | "]") ~ ANY)+
+    (!(NEWLINE | " " | "\"" | "|" | "[" | "]" | ">@") ~ ANY)+
 }
 
 // }}}

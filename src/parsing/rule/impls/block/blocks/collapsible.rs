@@ -177,7 +177,7 @@ mod tests {
 
         assert!(elapsed < Duration::from_secs(5), "elapsed {elapsed:?}");
         assert!(errors.is_empty(), "{errors:#?}");
-        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 24);
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 24);
         assert_eq!(html.matches("<blockquote>").count(), 24);
         assert!(html.contains("show-0"), "{html}");
         assert!(html.contains("hide-23"), "{html}");
@@ -204,7 +204,7 @@ mod tests {
         let elapsed = started.elapsed();
 
         assert!(elapsed < Duration::from_secs(5), "elapsed {elapsed:?}");
-        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 0);
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 0);
         assert!(html.contains("[[collapsible"), "{html}");
         assert!(html.contains("readable-0"), "{html}");
         assert!(html.contains("readable-1023"), "{html}");
@@ -220,7 +220,7 @@ mod tests {
         let (html, _, errors) = render(input);
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 1);
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
         assert!(html.contains("inline body"), "{html}");
         assert!(html.contains("following content"), "{html}");
     }
@@ -235,7 +235,7 @@ mod tests {
         let (html, _, errors) = render(input);
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 1);
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
         assert_eq!(html.matches("<blockquote>").count(), 1, "{html}");
         assert!(html.contains("following quote"), "{html}");
         assert!(!html.contains("[[/collapsible]]"), "{html}");
@@ -252,7 +252,7 @@ mod tests {
         );
         let (html, text, _errors) = render(input);
 
-        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 1);
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
         assert_eq!(html.matches("<blockquote>").count(), 1, "{html}");
         assert!(html.contains("[[/collapsible]] stray"), "{html}");
         assert!(html.contains("body after false close"), "{html}");
@@ -271,7 +271,7 @@ mod tests {
         );
         let (html, _, _) = render(input);
 
-        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 0);
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 0);
         assert!(html.contains("[[collapsible"), "{html}");
         assert!(html.contains("[[/collapsible]] still quoted"), "{html}");
         let quoted = html.find("still quoted").expect("quoted text missing");
@@ -301,14 +301,14 @@ mod tests {
             ),
         ] {
             let (html, _, _) = render(input);
-            assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 0);
+            assert_eq!(html.matches("class=\"collapsible-block\"").count(), 0);
             assert!(html.contains("[[collapsible"), "{html}");
             assert!(html.contains("following page"), "{html}");
         }
     }
 
     #[test]
-    fn nested_inline_block_cannot_hide_unquoted_boundary() {
+    fn nested_span_does_not_hide_an_earlier_collapsible_close() {
         let input = concat!(
             "> [[collapsible show=\"show\"]]\n",
             "> [[span]]\n",
@@ -321,12 +321,14 @@ mod tests {
         );
         let (html, _, _) = render(input);
 
+        // Live Wikidot closes the collapsible at the first closer even though
+        // the span remains active until the following quoted line.
         assert_eq!(
-            html.matches("class=\"wj-collapsible\"").count(),
-            0,
+            html.matches("class=\"collapsible-block\"").count(),
+            1,
             "{html}"
         );
-        assert!(html.contains("[[collapsible"), "{html}");
+        assert!(!html.contains("[[collapsible show"), "{html}");
         assert!(html.contains("escaped page content"), "{html}");
         assert!(html.contains("following page"), "{html}");
     }
@@ -344,7 +346,7 @@ mod tests {
 
         assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(
-            html.matches("class=\"wj-collapsible\"").count(),
+            html.matches("class=\"collapsible-block\"").count(),
             1,
             "{html}"
         );
@@ -383,7 +385,7 @@ mod tests {
         let (html, _, errors) = render(input);
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 1);
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
         assert_eq!(html.matches("<blockquote>").count(), 3, "{html}");
         assert!(html.contains("nested one"), "{html}");
         assert!(html.contains("nested two"), "{html}");
@@ -406,7 +408,7 @@ mod tests {
         let (html, _, errors) = render(input);
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 2);
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 2);
         assert_eq!(html.matches("<blockquote>").count(), 2, "{html}");
         assert!(html.contains("inner body"), "{html}");
         assert!(html.contains("outer body"), "{html}");
@@ -429,7 +431,7 @@ mod tests {
 
         assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(
-            html.matches("class=\"wj-collapsible\"").count(),
+            html.matches("class=\"collapsible-block\"").count(),
             2,
             "{html}"
         );
@@ -450,13 +452,13 @@ mod tests {
         let (html, _, errors) = render(input);
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 1);
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
         assert!(html.contains("<span>inline span</span>"), "{html}");
         assert!(!html.contains("[[span]]"), "{html}");
     }
 
     #[test]
-    fn quoted_collapsible_normalizes_nested_raw_text_block_bodies() {
+    fn quoted_collapsible_keeps_nested_raw_text_block_markers_literal() {
         let input = concat!(
             "> [[collapsible show=\"show\"]]\n",
             "> [[code]]\n",
@@ -469,19 +471,21 @@ mod tests {
             "> [[/collapsible]]\n",
             "> following quote\n",
         );
-        let (html, _, errors) = render(input);
+        let (html, _, _errors) = render(input);
 
-        assert!(errors.is_empty(), "{errors:#?}");
-        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 1);
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
         assert_eq!(html.matches("<blockquote>").count(), 1, "{html}");
         assert!(html.contains("hello code"), "{html}");
         assert!(
             html.contains("[[/collapsible]] literal code text"),
             "{html}"
         );
-        assert!(html.contains("**raw text**"), "{html}");
+        assert!(html.contains("<strong>raw text</strong>"), "{html}");
+        assert!(html.contains("[[code]]"), "{html}");
+        assert!(html.contains("[[/code]]"), "{html}");
+        assert!(html.contains("[[raw]]"), "{html}");
+        assert!(html.contains("[[/raw]]"), "{html}");
         assert!(!html.contains("&gt; hello code"), "{html}");
-        assert!(!html.contains("&gt; **raw text**"), "{html}");
         assert!(html.contains("following quote"), "{html}");
     }
 
@@ -498,7 +502,7 @@ mod tests {
         let elapsed = started.elapsed();
 
         assert!(elapsed < Duration::from_secs(5), "elapsed {elapsed:?}");
-        assert_eq!(html.matches("class=\"wj-collapsible\"").count(), 1);
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
         assert!(html.contains("[[code]]"), "{html}");
         assert!(html.contains("readable-code-0"), "{html}");
         assert!(html.contains("readable-code-511"), "{html}");

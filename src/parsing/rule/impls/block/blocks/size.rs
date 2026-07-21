@@ -20,6 +20,7 @@
 
 use super::prelude::*;
 use crate::tree::AttributeMap;
+use crate::tree::PartialElement;
 use std::borrow::Cow;
 
 pub const BLOCK_SIZE: BlockRule = BlockRule {
@@ -71,6 +72,12 @@ fn parse_fn<'r, 't>(
 
     let size = parser.get_head_value(&BLOCK_SIZE, in_head, parse_size_argument)?;
 
+    if parser.settings().layout.legacy() {
+        return ok!(Element::Partial(PartialElement::InlineSizeOpen(
+            Cow::Owned(size)
+        )));
+    }
+
     // Get body content, without paragraphs
     let body = parser.get_body_elements(&BLOCK_SIZE, false)?;
     let (elements, errors, paragraph_safe) = body.into();
@@ -89,6 +96,7 @@ mod tests {
     use super::*;
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
@@ -129,5 +137,61 @@ mod tests {
             Some("font-size: 80%;"),
         );
         assert_eq!(size.elements(), &[text!("small")]);
+    }
+
+    #[test]
+    fn wikidot_size_scope_crosses_structural_blocks_without_wrapping_them() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let input = concat!(
+            "[[size larger]]\n",
+            "[[div class=\"outer\"]]\n",
+            "header\n",
+            "[[div class=\"links\"]]\n",
+            "[https://example.com/a A][https://example.com/b B]\n",
+            "[[/div]]\n",
+            "[[div class=\"content\"]]\n",
+            "[[/size]]\n",
+            "body\n",
+            "[[/div]]\n",
+            "[[/div]]\n",
+        );
+        let tokenization = crate::tokenize(input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains("<div class=\"outer\">"), "{html}");
+        assert!(
+            html.contains("<span style=\"font-size: larger;\">header</span>"),
+            "{html}"
+        );
+        assert!(
+            html.contains(
+                "<div class=\"links\"><p><span style=\"font-size: larger;\"><a"
+            ),
+            "{html}"
+        );
+        assert!(
+            html.contains("<div class=\"content\"><p><br>body</p>"),
+            "{html}"
+        );
+        assert!(!html.contains("font-size: larger;\">body"), "{html}");
+        assert!(
+            !html.contains("<span style=\"font-size: larger;\"><div"),
+            "{html}"
+        );
+    }
+
+    #[test]
+    fn unmatched_wikidot_size_scope_has_no_formatting_effect() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[size larger]]text");
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(html.contains("text"), "{html}");
+        assert!(!html.contains("font-size"), "{html}");
     }
 }

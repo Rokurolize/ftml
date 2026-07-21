@@ -26,6 +26,13 @@ use crate::tree::{AttributeMap, Container, ContainerType};
 
 const MAX_BLOCKQUOTE_DEPTH: usize = 30;
 
+#[derive(Debug)]
+struct NativeQuoteRow<'t> {
+    elements: Vec<Element<'t>>,
+    paragraph_safe: bool,
+    empty_spaced: bool,
+}
+
 pub const RULE_BLOCKQUOTE: Rule = Rule {
     name: "blockquote",
     position: LineRequirement::StartOfLine,
@@ -38,9 +45,12 @@ fn try_consume_fn<'r, 't>(
     // Context variables
     let mut depths = Vec::new();
     let mut errors = Vec::new();
+    let mut consumed_pruned_row = false;
+    let mut quote_run_active = true;
 
     // Produce a depth list with elements
-    while parser.prepare_quote_body_line()? != QuoteBodyLineStatus::Boundary
+    while quote_run_active
+        && parser.prepare_quote_body_line()? != QuoteBodyLineStatus::Boundary
         && parser.current().token == Token::Quote
     {
         let current = parser.current();
@@ -50,8 +60,15 @@ fn try_consume_fn<'r, 't>(
         let (depth, absolute_depth) = parser.native_blockquote_depths(physical_depth);
         debug_assert!(depth > 0, "residual quote depth must be positive");
         parser.step()?;
+        // Wikidot distinguishes an empty `> ` row, which separates quoted
+        // paragraphs, from an empty `>` row, which has no rendering effect.
+        let spaced_after_marker = parser.current().token == Token::Whitespace;
         parser.get_optional_space()?; // allow whitespace after ">"
-        parser.mark_virtual_start_of_line();
+        if parser.current().token != Token::Quote {
+            // Wikidot only counts contiguous quote markers toward native depth.
+            // A marker after horizontal space is literal quoted content.
+            parser.mark_virtual_start_of_line();
+        }
 
         // Check that the depth isn't obscenely deep, to avoid DOS attacks via stack overflow.
         if absolute_depth > MAX_BLOCKQUOTE_DEPTH {
@@ -67,13 +84,43 @@ fn try_consume_fn<'r, 't>(
         let close = &close_conditions;
         let mut paragraph_safe = true;
         let original_depth = parser.native_blockquote_depth();
+        let (physical_line_end, ends_quote_run) = std::iter::once(parser.current())
+            .chain(parser.remaining().iter())
+            .find(|token| {
+                matches!(
+                    token.token,
+                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                )
+            })
+            .map(|token| (token.span.end, token.token == Token::ParagraphBreak))
+            .expect("tokenization always ends with input-end");
         parser.set_native_blockquote_depth(Some(absolute_depth));
         let result = collect_native_blockquote_line(parser, close);
         parser.set_native_blockquote_depth(original_depth);
+        let errors_before = errors.len();
         let mut elements = result?.chain(&mut errors, &mut paragraph_safe);
 
+        // An unquoted blank line terminates the current native quote run.
+        // A following quote at the same depth starts a sibling blockquote.
+        quote_run_active = !ends_quote_run;
+
+        // An invisible multiline child can consume the quote row containing
+        // its opener and finish beyond that physical line. Do not turn such a
+        // row into a visible blank line solely because blockquotes normally
+        // append a break to every row.
+        let row_is_empty = elements.is_empty() && errors.len() == errors_before;
+        let consumed_past_line =
+            row_is_empty && parser.current().span.start > physical_line_end;
+        let empty_spaced_row = row_is_empty && spaced_after_marker;
+        if consumed_past_line || (row_is_empty && !spaced_after_marker) {
+            consumed_pruned_row = true;
+            continue;
+        }
+
         // Add a line break for the end of the line
-        elements.push(Element::LineBreak);
+        if !empty_spaced_row {
+            elements.push(Element::LineBreak);
+        }
 
         // Append blockquote line
         //
@@ -81,18 +128,29 @@ fn try_consume_fn<'r, 't>(
         // So, we subtract one.
         //
         // This will not overflow because Token::Quote requires at least one ">".
-        depths.push((depth - 1, (), (elements, paragraph_safe)))
+        depths.push((
+            depth - 1,
+            (),
+            NativeQuoteRow {
+                elements,
+                paragraph_safe,
+                empty_spaced: empty_spaced_row,
+            },
+        ));
     }
 
     // This blockquote has no rows, so the rule fails
     if depths.is_empty() {
+        if consumed_pruned_row {
+            return ok!(false; Elements::None, errors);
+        }
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
     let depth_lists = process_depths((), depths);
     let elements: Vec<Element> = depth_lists
         .into_iter()
-        .map(|(_, depth_list)| build_blockquote_element(depth_list))
+        .filter_map(|(_, depth_list)| build_blockquote_element(depth_list))
         .collect();
 
     ok!(false; elements, errors)
@@ -139,32 +197,42 @@ fn collect_native_blockquote_line<'r, 't>(
     }
 }
 
-fn build_blockquote_element(list: DepthList<(), (Vec<Element>, bool)>) -> Element {
+fn build_blockquote_element(list: DepthList<(), NativeQuoteRow>) -> Option<Element> {
     let mut stack = ParagraphStack::new();
 
     // Convert depth list into a list of elements
     for item in list {
         match item {
-            DepthItem::Item((elements, paragraph_safe)) => {
-                for element in elements {
-                    stack.push_element(element, paragraph_safe);
+            DepthItem::Item(row) => {
+                if row.empty_spaced {
+                    stack.pop_line_break();
+                    stack.end_paragraph();
+                    continue;
+                }
+                for element in row.elements {
+                    stack.push_element(element, row.paragraph_safe);
                 }
             }
             DepthItem::List(_, list) => {
-                let blockquote = build_blockquote_element(list);
-                stack.pop_line_break();
-                stack.push_element(blockquote, false);
+                if let Some(blockquote) = build_blockquote_element(list) {
+                    stack.pop_line_break();
+                    stack.push_element(blockquote, false);
+                }
             }
         }
     }
 
     stack.pop_line_break();
+    let elements = stack.into_elements();
+    if elements.is_empty() {
+        return None;
+    }
 
-    Element::Container(Container::new(
+    Some(Element::Container(Container::new(
         ContainerType::Blockquote,
-        stack.into_elements(),
+        elements,
         AttributeMap::new(),
-    ))
+    )))
 }
 
 #[cfg(test)]
@@ -241,6 +309,46 @@ mod tests {
     }
 
     #[test]
+    fn native_blockquote_prunes_empty_rows_at_every_depth() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut input = "> \n>\n>> \n".to_owned();
+        crate::preprocess(&mut input);
+        let tokenization = crate::tokenize(&input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.trim().is_empty(), "{html}");
+    }
+
+    #[test]
+    fn native_blockquote_prunes_rows_consumed_by_an_invisible_child() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut input = concat!(
+            "> [[collapsible show=\"show\" hide=\"hide\"]]\n",
+            "> [[iftags +missing]]\n",
+            "> [[div]]\n",
+            "> OMEGA_HIDDEN\n",
+            "> [[/iftags]]\n",
+            "> OMEGA_VISIBLE_INSIDE\n",
+            "> [[/collapsible]]\n",
+            "OMEGA_AFTER",
+        )
+        .to_owned();
+        crate::preprocess(&mut input);
+        let tokenization = crate::tokenize(&input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(!html.contains("OMEGA_HIDDEN"), "{html}");
+        assert!(html.contains("OMEGA_VISIBLE_INSIDE"), "{html}");
+        assert!(html.contains("OMEGA_AFTER"), "{html}");
+    }
+
+    #[test]
     fn native_blockquote_content_respects_virtual_line_start_for_headings() {
         enable_test_logging();
 
@@ -275,6 +383,31 @@ mod tests {
     }
 
     #[test]
+    fn native_blockquote_depth_counts_only_contiguous_markers() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let input = concat!(
+            ">> ALPHA_CONTIGUOUS_DEPTH_TWO\n",
+            "> > ALPHA_SPACED_LITERAL\n",
+            "> >ALPHA_TIGHT_SPACED_LITERAL\n",
+            "> ALPHA_BEFORE\n",
+            "> >ALPHA_ACTIVE_LITERAL\n",
+            "> ALPHA_AFTER\n",
+        );
+        let tokenization = crate::tokenize(input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html.matches("<blockquote>").count(), 2, "{html}");
+        assert!(html.contains("ALPHA_CONTIGUOUS_DEPTH_TWO"), "{html}");
+        assert!(html.contains("&gt; ALPHA_SPACED_LITERAL"), "{html}");
+        assert!(html.contains("&gt;ALPHA_TIGHT_SPACED_LITERAL"), "{html}");
+        assert!(html.contains("&gt;ALPHA_ACTIVE_LITERAL"), "{html}");
+        assert!(html.contains("ALPHA_AFTER"), "{html}");
+    }
+
+    #[test]
     fn native_blockquote_horizontal_rule_does_not_consume_outer_block_close() {
         enable_test_logging();
 
@@ -294,10 +427,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:?}");
 
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
-        assert!(
-            html.contains(r#"<details class="wj-collapsible""#),
-            "{html}"
-        );
+        assert!(html.contains(r#"<div class="collapsible-block""#), "{html}");
         assert!(html.contains("<blockquote>"), "{html}");
         assert!(html.contains("<hr>"), "{html}");
         assert!(html.contains("Author"), "{html}");

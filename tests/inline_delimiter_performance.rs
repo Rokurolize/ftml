@@ -126,3 +126,35 @@ fn email_after_block_closer_does_not_hide_the_closer() {
     );
     assert_eq!(html.matches("mailto:19@scip.net").count(), ROW_COUNT);
 }
+
+#[test]
+fn repeated_wikidot_size_scopes_crossing_structural_blocks_stay_bounded() {
+    const ROW_COUNT: usize = 128;
+
+    // Reduced from EN:scp-9021 after include expansion.
+    let row = concat!(
+        "[[size larger]]\n",
+        "[[div_ class=\"colmod-block\"]]\n",
+        "[[ul]][[li]][[ul]]header[[/ul]][[/li]][[/ul]]\n",
+        "[[div class=\"foldable-list-container\"]]link[[/div]]\n",
+        "[[/div]][[div class=\"colmod-content\"]]\n",
+        "[[/size]]\n",
+        "body\n",
+        "[[/div]]\n",
+    );
+    let input = row.repeat(ROW_COUNT);
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let started = Instant::now();
+
+    let tokenization = ftml::tokenize(&input);
+    let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+    assert!(started.elapsed() < Duration::from_secs(5));
+    assert!(errors.is_empty(), "{errors:#?}");
+    assert_eq!(html.matches("font-size: larger;").count(), ROW_COUNT * 2);
+    assert_eq!(html.matches("colmod-content").count(), ROW_COUNT);
+    assert_eq!(html.matches("body").count(), ROW_COUNT);
+    assert!(!html.contains("font-size: larger;\">body"));
+}

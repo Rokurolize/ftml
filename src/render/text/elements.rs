@@ -179,7 +179,9 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
 
                         // Render elements for this list item
                         render_elements(ctx, elements);
-                        ctx.add_newline();
+                        if !ctx.ends_with_newline() {
+                            ctx.add_newline();
+                        }
                     }
                 }
             }
@@ -279,6 +281,10 @@ fn render_partial(ctx: &mut TextContext, partial: &PartialElement) {
     );
 
     match partial {
+        PartialElement::InlineSizeOpen(_)
+        | PartialElement::InlineSizeClose
+        | PartialElement::InlineSpanOpen(_)
+        | PartialElement::InlineSpanClose(_) => {}
         PartialElement::ListItem(ListItem::Elements { elements, .. }) => {
             if elements.is_empty() {
                 return;

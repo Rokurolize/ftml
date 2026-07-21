@@ -30,6 +30,7 @@ mod depth;
 mod element_condition;
 mod error;
 mod hidden_body;
+mod inline_scope;
 mod outcome;
 mod paragraph;
 mod parser;
@@ -184,8 +185,11 @@ where
     debug!("Finished paragraph gathering, matching on consumption");
     match result {
         Ok(success) => {
-            let elements = success.item;
+            let mut elements = success.item;
             let errors = success.errors;
+            if settings.layout.legacy() {
+                inline_scope::lower_wikidot_inline_size_scopes(&mut elements);
+            }
             debug!(
                 "Finished parsing into syntax tree ({} errors)",
                 errors.len()

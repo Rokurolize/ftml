@@ -1,0 +1,17 @@
+* root
+  * skipped one level
+* after skip
+
+* root
+    # skipped three levels
+* after deep skip
+
+* 
+ * child of authored empty root
+  * grandchild
+* after empty root
+
+* root
+ * 
+  * grandchild of authored empty nested parent
+* after empty nested parent

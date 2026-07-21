@@ -71,14 +71,20 @@ fn expand(
     source: &str,
     pages: impl IntoIterator<Item = (&'static str, &'static str)>,
 ) -> String {
-    let (expanded, included_pages) =
-        ftml::include(source, &page_settings(), StaticIncluder::new(pages), || {
-            "invalid include result".to_owned()
-        })
-        .expect("include expansion should succeed");
+    let (expanded, included_pages) = expand_pages(source, pages);
 
     assert_eq!(included_pages, vec![PageRef::page_only("component:card")]);
     expanded
+}
+
+fn expand_pages(
+    source: &str,
+    pages: impl IntoIterator<Item = (&'static str, &'static str)>,
+) -> (String, Vec<PageRef>) {
+    ftml::include(source, &page_settings(), StaticIncluder::new(pages), || {
+        "invalid include result".to_owned()
+    })
+    .expect("include expansion should succeed")
 }
 
 fn render_html(source: &str) -> String {
@@ -146,6 +152,111 @@ fn include_argument_first_concrete_value_wins_over_fallback() {
     );
 
     assert_eq!(expanded, "selected");
+}
+
+#[test]
+fn include_expansion_separates_caller_and_target_paragraphs_like_wikidot() {
+    let expanded = expand(
+        "CALLER_BEFORE\n[[include component:card]]\nCALLER_AFTER",
+        [("component:card", "TARGET_FIRST\nTARGET_SECOND")],
+    );
+
+    assert_eq!(
+        expanded,
+        "CALLER_BEFORE\n\nTARGET_FIRST\nTARGET_SECOND\n\nCALLER_AFTER",
+    );
+
+    let html = render_html(&expanded);
+    assert!(html.contains("<p>CALLER_BEFORE</p>"), "{html}");
+    assert!(
+        html.contains("<p>TARGET_FIRST<br>TARGET_SECOND</p>"),
+        "{html}",
+    );
+    assert!(html.contains("<p>CALLER_AFTER</p>"), "{html}");
+}
+
+#[test]
+fn include_expansion_adds_only_the_needed_document_edge_separators() {
+    for (source, expected) in [
+        (
+            "[[include component:card]]\nCALLER_AFTER",
+            "TARGET\n\nCALLER_AFTER",
+        ),
+        (
+            "CALLER_BEFORE\n[[include component:card]]",
+            "CALLER_BEFORE\n\nTARGET",
+        ),
+        (
+            "[[include component:card]]\r\nCALLER_AFTER",
+            "TARGET\r\n\r\nCALLER_AFTER",
+        ),
+        (
+            "CALLER_BEFORE\r\n[[include component:card]]",
+            "CALLER_BEFORE\r\n\r\nTARGET",
+        ),
+        ("[[include component:card]]", "TARGET"),
+    ] {
+        let expanded = expand(source, [("component:card", "TARGET")]);
+        assert_eq!(expanded, expected, "{source:?}");
+    }
+}
+
+#[test]
+fn empty_include_target_keeps_only_the_callers_existing_line_endings() {
+    let expanded = expand(
+        "CALLER_BEFORE\n[[include component:card]]\nCALLER_AFTER",
+        [("component:card", "")],
+    );
+
+    assert_eq!(expanded, "CALLER_BEFORE\n\nCALLER_AFTER");
+}
+
+#[test]
+fn adjacent_include_expansions_remain_separate_blocks() {
+    let (expanded, included_pages) = expand_pages(
+        "CALLER_BEFORE\n[[include component:card]]\n[[include component:other]]\nCALLER_AFTER",
+        [
+            ("component:card", "TARGET_ONE"),
+            ("component:other", "TARGET_TWO_FIRST\nTARGET_TWO_SECOND"),
+        ],
+    );
+
+    assert_eq!(
+        included_pages,
+        vec![
+            PageRef::page_only("component:card"),
+            PageRef::page_only("component:other"),
+        ],
+    );
+    let html = render_html(&expanded);
+    for paragraph in [
+        "<p>CALLER_BEFORE</p>",
+        "<p>TARGET_ONE</p>",
+        "<p>TARGET_TWO_FIRST<br>TARGET_TWO_SECOND</p>",
+        "<p>CALLER_AFTER</p>",
+    ] {
+        assert!(html.contains(paragraph), "missing {paragraph}: {html}");
+    }
+}
+
+#[test]
+fn included_and_caller_quote_runs_remain_siblings() {
+    let expanded = expand(
+        "CALLER_BEFORE\n[[include component:card]]\n> CALLER_QUOTE\nCALLER_AFTER",
+        [("component:card", "> TARGET_QUOTE")],
+    );
+    let html = render_html(&expanded);
+
+    assert_eq!(html.matches("<blockquote>").count(), 2, "{html}");
+    assert_eq!(html.matches("</blockquote>").count(), 2, "{html}");
+    assert!(
+        html.contains("<blockquote><p>TARGET_QUOTE</p></blockquote>"),
+        "{html}",
+    );
+    assert!(
+        html.contains("<blockquote><p>CALLER_QUOTE</p></blockquote>"),
+        "{html}",
+    );
 }
 
 #[test]

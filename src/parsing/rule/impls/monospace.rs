@@ -86,6 +86,7 @@ mod tests {
     use crate::parsing::token::ExtractedToken;
     use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
+    use std::time::{Duration, Instant};
 
     fn render(input: &str) -> (String, Vec<ParseError>) {
         let page_info = PageInfo::dummy();
@@ -101,10 +102,7 @@ mod tests {
         for input in ["{{text}}", "{{ text}}", "{{text }}", "{{ text }}"] {
             let (html, errors) = render(input);
             assert!(errors.is_empty(), "{input:?}: {errors:?}");
-            assert!(
-                html.contains(r#"<code class="wj-monospace">text</code>"#),
-                "{input:?}: {html}",
-            );
+            assert!(html.contains("<tt>text</tt>"), "{input:?}: {html}",);
         }
     }
 
@@ -118,9 +116,9 @@ mod tests {
             html,
             concat!(
                 "<p><strong>Affected Sites:</strong> ",
-                "<code class=\"wj-monospace\">",
+                "<tt>",
                 "Output Error: List object exceeds 10,000 characters.",
-                "</code></p>",
+                "</tt></p>",
             ),
         );
     }
@@ -129,9 +127,7 @@ mod tests {
     fn monospace_trims_space_runs_but_preserves_internal_space_and_markup() {
         let (html, errors) = render("before {{   a  **b**  c   }} after");
         assert!(errors.is_empty(), "{errors:?}");
-        assert!(html.contains(
-            r#"before <code class="wj-monospace">a  <strong>b</strong>  c</code> after"#,
-        ));
+        assert!(html.contains("before <tt>a  <strong>b</strong>  c</tt> after",));
     }
 
     #[test]
@@ -139,7 +135,7 @@ mod tests {
         let (html, errors) = render("before{{   }}after");
         assert!(errors.is_empty(), "{errors:?}");
         assert!(html.contains("beforeafter"), "{html}");
-        assert!(!html.contains("wj-monospace"), "{html}");
+        assert!(!html.contains("<tt>"), "{html}");
     }
 
     #[test]
@@ -163,14 +159,14 @@ mod tests {
 
         let (html, errors) = render("{{x }}{{ y}}");
         assert!(errors.is_empty(), "{errors:?}");
-        assert_eq!(html.matches("wj-monospace").count(), 2, "{html}");
+        assert_eq!(html.matches("<tt>").count(), 2, "{html}");
     }
 
     #[test]
     fn monospace_padding_failure_rolls_back_without_losing_source() {
         for input in ["{{ x", "{{x ", "prefix {{ x", "{{ x }", "{{ x\n\n y }}"] {
             let (html, _errors) = render(input);
-            assert!(!html.contains("wj-monospace"), "{input:?}: {html}");
+            assert!(!html.contains("<tt>"), "{input:?}: {html}");
             assert!(html.contains("{{"), "{input:?}: {html}");
         }
     }
@@ -180,24 +176,40 @@ mod tests {
         let input = "{{outer {{ inner }} tail}}";
         let (html, _errors) = render(input);
         assert!(html.starts_with("<p>{{outer "), "{html}");
-        assert!(
-            html.contains(r#"<code class="wj-monospace">inner</code> tail}}</p>"#),
-            "{html}",
-        );
+        assert!(html.contains("<tt>inner</tt> tail}}</p>"), "{html}",);
     }
 
     #[test]
     fn monospace_does_not_trim_unverified_tabs() {
         let (leading_html, leading_errors) = render("{{\ttext}}");
         assert!(leading_errors.is_empty(), "{leading_errors:?}");
-        assert!(
-            leading_html.contains("<code class=\"wj-monospace\">\ttext</code>"),
-            "{leading_html}",
-        );
+        assert!(leading_html.contains("<tt>\ttext</tt>"), "{leading_html}",);
 
         let (trailing_html, _trailing_errors) = render("{{text\t}}");
-        assert!(!trailing_html.contains("wj-monospace"), "{trailing_html}");
+        assert!(!trailing_html.contains("<tt>"), "{trailing_html}");
         assert!(trailing_html.contains("{{text\t}}"), "{trailing_html}");
+    }
+
+    #[test]
+    fn repeated_quoted_monospace_emails_stay_bounded() {
+        // Reduced from EN vivid-visions, whose message transcript repeats this shape.
+        // Wikidot renders each address inside tt > span.wiki-email, so the email
+        // token must stop before the monospace closer rather than consume it.
+        let mut input = String::new();
+        for _ in 0..32 {
+            input.push_str("> FROM: <{{person@scp.foundation}}>\n> \n");
+        }
+
+        let started = Instant::now();
+        let (html, errors) = render(&input);
+        let elapsed = started.elapsed();
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html.matches("<tt>").count(), 32, "{html}");
+        assert!(
+            elapsed < Duration::from_millis(500),
+            "repeated monospace email parse took {elapsed:?}",
+        );
     }
 
     #[test]

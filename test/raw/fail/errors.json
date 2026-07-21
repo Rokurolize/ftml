@@ -1,62 +1,92 @@
 [
     {
-        "token": "line-break",
+        "token": "paragraph-break",
         "rule": "raw",
-        "span": [14, 15],
+        "span": [
+            14,
+            17
+        ],
         "kind": "rule-failed"
     },
     {
         "token": "left-raw",
         "rule": "fallback",
-        "span": [12, 14],
+        "span": [
+            12,
+            14
+        ],
         "kind": "no-rules-match"
     },
     {
         "token": "raw",
         "rule": "raw",
-        "span": [31, 33],
+        "span": [
+            29,
+            31
+        ],
         "kind": "rule-failed"
     },
     {
         "token": "raw",
         "rule": "fallback",
-        "span": [31, 33],
+        "span": [
+            29,
+            31
+        ],
         "kind": "no-rules-match"
     },
     {
         "token": "raw",
         "rule": "raw",
-        "span": [34, 36],
+        "span": [
+            32,
+            34
+        ],
         "kind": "rule-failed"
     },
     {
         "token": "raw",
         "rule": "fallback",
-        "span": [34, 36],
+        "span": [
+            32,
+            34
+        ],
         "kind": "no-rules-match"
     },
     {
         "token": "paragraph-break",
         "rule": "raw",
-        "span": [44, 46],
+        "span": [
+            42,
+            44
+        ],
         "kind": "rule-failed"
     },
     {
         "token": "raw",
         "rule": "fallback",
-        "span": [38, 40],
+        "span": [
+            36,
+            38
+        ],
         "kind": "no-rules-match"
     },
     {
         "token": "raw",
         "rule": "raw",
-        "span": [49, 51],
+        "span": [
+            47,
+            49
+        ],
         "kind": "end-of-input"
     },
     {
         "token": "raw",
         "rule": "fallback",
-        "span": [49, 51],
+        "span": [
+            47,
+            49
+        ],
         "kind": "no-rules-match"
     }
 ]

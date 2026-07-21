@@ -60,11 +60,16 @@ fn line_break<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
     //
     // Grep for "LineRequirement::StartOfLine" and compare that with this list.
 
+    let quote_aware = parser.quote_body_has_literal_residuals();
     let upcoming_skip = parser.evaluate_fn(|parser| {
         parser.step()?;
         parser.get_optional_space()?;
+        if quote_aware {
+            parser.prepare_quote_body_line()?;
+        }
 
-        Ok(starts_own_line_rule(parser.current().token))
+        Ok(starts_own_line_rule(parser.current().token)
+            && (!quote_aware || parser.start_of_line()))
     });
 
     if upcoming_skip {

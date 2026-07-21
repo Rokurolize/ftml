@@ -43,6 +43,10 @@ fn parse_fn<'r, 't>(
 
     assert_block_name(&BLOCK_RAW, name);
 
+    if parser.native_blockquote_depth().is_some() {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     let mut content = parser.get_body_text(&BLOCK_RAW)?;
 
     // Empty block
@@ -96,22 +100,29 @@ mod tests {
     }
 
     #[test]
-    fn quoted_raw_block_trims_owned_outer_newlines() {
+    fn quoted_raw_markers_remain_literal_like_wikidot() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize(concat!(
-            "> [[collapsible]]\n",
-            "> [[raw]]\n",
-            "> \n",
-            "> raw body\n",
-            "> \n",
-            "> [[/raw]]\n",
-            "> [[/collapsible]]\n",
-        ));
-        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        for input in [
+            ">> [[raw]]\n>> ALPHA_RAW_DEPTH_TWO\n>> [[/raw]]",
+            "> > [[raw]]\n> > ALPHA_RAW_SPACED_LITERAL\n> > [[/raw]]",
+            ">> [[raw]]\n>> OMEGA_RAW_SHALLOW_CLOSE\n> [[/raw]]\n> OMEGA_AFTER_SHALLOW",
+            "> [[raw]]\n> OMEGA_RAW_DEEP_CLOSE\n>> [[/raw]]\n> OMEGA_AFTER_DEEP",
+            concat!(
+                "> [[collapsible]]\n",
+                "> [[raw]]\n",
+                "> raw body\n",
+                "> [[/raw]]\n",
+                "> [[/collapsible]]\n",
+            ),
+        ] {
+            let tokenization = crate::tokenize(input);
+            let (tree, _errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
 
-        assert!(errors.is_empty(), "{errors:?}");
-        let rendered = format!("{tree:?}");
-        assert!(rendered.contains("raw body"), "{rendered}");
+            let rendered = format!("{tree:?}");
+            assert!(!rendered.contains("Raw("), "{input:?}: {rendered}");
+            assert!(rendered.contains("Text(\"raw\")"), "{input:?}: {rendered}");
+        }
     }
 }

@@ -83,7 +83,7 @@ fn render_uncached_style_css(input_css: &str, minify: bool) -> Option<String> {
 
 fn build_style_css<F>(input_css: &str, minify: bool, print: F) -> Option<String>
 where
-    F: FnOnce(&StyleSheet<'_, '_>, PrinterOptions) -> Result<String, String>,
+    F: FnOnce(&StyleSheet<'_>, PrinterOptions) -> Result<String, String>,
 {
     let parser_options = ParserOptions {
         error_recovery: true,

@@ -151,16 +151,13 @@ mod tests {
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
         assert!(errors.is_empty(), "{errors:#?}");
-        let [Element::Container(paragraph)] = tree.elements.as_slice() else {
-            panic!("expected paragraph, got {:?}", tree.elements);
-        };
         let [
             Element::Image {
                 link, attributes, ..
             },
-        ] = paragraph.elements()
+        ] = tree.elements.as_slice()
         else {
-            panic!("expected image, got {:?}", paragraph.elements());
+            panic!("expected direct image, got {:?}", tree.elements);
         };
 
         assert_eq!(link, &Some(LinkLocation::Url(cow!("#"))));
@@ -196,7 +193,11 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert_eq!(html.matches("&quot;I am a doctor.&quot;").count(), 2);
+        assert_eq!(
+            html.matches("&quot;I&nbsp;am&nbsp;a&nbsp;doctor.&quot;")
+                .count(),
+            2,
+        );
         assert!(html.contains("body"), "{html}");
     }
 
@@ -215,7 +216,9 @@ mod tests {
 
         assert!(errors.is_empty(), "{errors:#?}");
         assert!(
-            html.contains("the gun named &quot;Martha&quot; - dinner"),
+            html.contains(
+                "the&nbsp;gun&nbsp;named&nbsp;&quot;Martha&quot;&nbsp;-&nbsp;dinner"
+            ),
             "{html}",
         );
     }
@@ -231,6 +234,6 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert!(html.contains("wj-collapsible"), "{html}");
+        assert!(html.contains("collapsible-block"), "{html}");
     }
 }

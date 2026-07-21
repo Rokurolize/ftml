@@ -427,10 +427,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:?}");
 
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
-        assert!(
-            html.contains(r#"<details class="wj-collapsible""#),
-            "{html}"
-        );
+        assert!(html.contains(r#"<div class="collapsible-block""#), "{html}");
         assert!(html.contains("<blockquote>"), "{html}");
         assert!(html.contains("<hr>"), "{html}");
         assert!(html.contains("Author"), "{html}");

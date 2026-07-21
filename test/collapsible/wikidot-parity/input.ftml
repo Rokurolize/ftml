@@ -1,0 +1,7 @@
+[[collapsible show="+ Show formatting" hide="- Hide"]]
+Body
+[[/collapsible]]
+
+[[collapsible folded="no" show="+ Already open" hide="- Close" hideLocation="both"]]
+Open body
+[[/collapsible]]

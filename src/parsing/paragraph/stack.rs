@@ -27,6 +27,10 @@ pub struct ParagraphStack<'t> {
     /// Elements being accumulated in the current paragraph.
     current: Vec<Element<'t>>,
 
+    /// Whether Wikidot renders the current physical paragraph without a
+    /// paragraph wrapper because it contains a naked image block.
+    current_unwrapped: bool,
+
     /// Previous elements created, to be outputted in the final [`SyntaxTree`].
     finished: Vec<Element<'t>>,
 
@@ -52,7 +56,18 @@ impl<'t> ParagraphStack<'t> {
 
     #[inline]
     pub fn push_element(&mut self, element: Element<'t>, paragraph_safe: bool) {
-        if paragraph_safe {
+        let image_starts_physical_line = matches!(element, Element::Image { .. })
+            && (self.current.is_empty()
+                || matches!(self.current.last(), Some(Element::LineBreak)));
+
+        if image_starts_physical_line {
+            // A naked [[image]] that begins a source line suppresses the
+            // wrapper for its contiguous physical paragraph on Wikidot.
+            // An image following text on the same line remains inline and
+            // paragraph-safe.
+            self.current.push(element);
+            self.current_unwrapped = true;
+        } else if paragraph_safe {
             // Add it to the current (or new) paragraph. Nothing special.
             self.current.push(element);
         } else {
@@ -115,7 +130,10 @@ impl<'t> ParagraphStack<'t> {
 
     /// Set the finished field in this struct to the paragraph element.
     pub fn end_paragraph(&mut self) {
-        if let Some(paragraph) = self.build_paragraph() {
+        if self.current_unwrapped {
+            self.finished.append(&mut self.current);
+            self.current_unwrapped = false;
+        } else if let Some(paragraph) = self.build_paragraph() {
             self.finished.push(paragraph);
         }
     }

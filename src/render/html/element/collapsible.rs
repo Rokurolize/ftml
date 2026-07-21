@@ -82,6 +82,114 @@ pub fn render_collapsible(ctx: &mut HtmlContext, collapsible: Collapsible) {
     let hide_text = hide_text
         .unwrap_or_else(|| ctx.handle().get_message(ctx.language(), "collapsible-hide"));
 
+    match ctx.layout() {
+        Layout::Wikidot => render_collapsible_wikidot(
+            ctx,
+            elements,
+            attributes,
+            start_open,
+            show_text,
+            hide_text,
+            show_top,
+            show_bottom,
+        ),
+        Layout::Wikijump => render_collapsible_wikijump(
+            ctx,
+            elements,
+            attributes,
+            start_open,
+            show_text,
+            hide_text,
+            show_top,
+            show_bottom,
+        ),
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn render_collapsible_wikidot(
+    ctx: &mut HtmlContext,
+    elements: &[Element],
+    attributes: &AttributeMap,
+    start_open: bool,
+    show_text: &str,
+    hide_text: &str,
+    show_top: bool,
+    show_bottom: bool,
+) {
+    ctx.html()
+        .div()
+        .attr(attr!(
+            "class" => "collapsible-block";;
+            attributes,
+        ))
+        .inner(|ctx| {
+            ctx.html()
+                .div()
+                .attr(attr!(
+                    "class" => "collapsible-block-folded",
+                    "style" => "display:none"; if start_open,
+                ))
+                .inner(|ctx| render_wikidot_collapsible_link(ctx, show_text));
+
+            ctx.html()
+                .div()
+                .attr(attr!(
+                    "class" => "collapsible-block-unfolded",
+                    "style" => "display:none"; if !start_open,
+                ))
+                .inner(|ctx| {
+                    if show_top {
+                        render_wikidot_hide_link(ctx, hide_text);
+                    }
+
+                    ctx.html()
+                        .div()
+                        .attr(attr!("class" => "collapsible-block-content"))
+                        .contents(elements);
+
+                    if show_bottom {
+                        render_wikidot_hide_link(ctx, hide_text);
+                    }
+                });
+        });
+}
+
+fn render_wikidot_hide_link(ctx: &mut HtmlContext, hide_text: &str) {
+    ctx.html()
+        .div()
+        .attr(attr!("class" => "collapsible-block-unfolded-link"))
+        .inner(|ctx| render_wikidot_collapsible_link(ctx, hide_text));
+}
+
+fn render_wikidot_collapsible_link(ctx: &mut HtmlContext, label: &str) {
+    ctx.html()
+        .a()
+        .attr(attr!(
+            "class" => "collapsible-block-link",
+            "href" => "javascript:;",
+        ))
+        .inner(|ctx| {
+            for (index, part) in label.split(' ').enumerate() {
+                if index > 0 {
+                    ctx.push_raw_str("&nbsp;");
+                }
+                ctx.push_escaped(part);
+            }
+        });
+}
+
+#[allow(clippy::too_many_arguments)]
+fn render_collapsible_wikijump(
+    ctx: &mut HtmlContext,
+    elements: &[Element],
+    attributes: &AttributeMap,
+    start_open: bool,
+    show_text: &str,
+    hide_text: &str,
+    show_top: bool,
+    show_bottom: bool,
+) {
     ctx.html()
         .details()
         .attr(attr!(

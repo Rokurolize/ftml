@@ -520,10 +520,7 @@ For information on licensing, see the guide.
     );
 
     assert!(text.contains("Filename:"), "{text}");
-    assert!(
-        html.contains(r#"<details class="wj-collapsible""#),
-        "{html}"
-    );
+    assert!(html.contains(r#"<div class="collapsible-block""#), "{html}");
     assert!(!html.contains("[[collapsible"), "{html}");
     assert!(!html.contains("[[/collapsible]]"), "{html}");
 }

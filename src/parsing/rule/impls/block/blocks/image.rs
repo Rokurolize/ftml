@@ -68,6 +68,7 @@ mod tests {
     use super::*;
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::render::Render;
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
@@ -94,16 +95,81 @@ mod tests {
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
         assert!(errors.is_empty(), "{errors:?}");
-        let [Element::Container(paragraph)] = tree.elements.as_slice() else {
-            panic!("expected paragraph, got {:?}", tree.elements);
-        };
-        let [Element::Image { source, .. }] = paragraph.elements() else {
-            panic!("expected image element, got {:?}", paragraph.elements());
+        let [Element::Image { source, .. }] = tree.elements.as_slice() else {
+            panic!("expected direct image element, got {:?}", tree.elements);
         };
 
         assert_eq!(
             source,
             &FileSource::Url(cow!("/local--files/source-page/assets/charts/image.png")),
+        );
+    }
+
+    #[test]
+    fn image_after_text_on_same_line_remains_inside_paragraph() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization =
+            crate::tokenize("BASIC [[image /local--files/source-page/filename.png]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &page_info, &settings)
+            .body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            "<p>BASIC <img src=\"/local--files/source-page/filename.png\" class=\"image\"></p>",
+        );
+    }
+
+    #[test]
+    fn image_breaks_a_contiguous_div_paragraph_like_wikidot() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let input = concat!(
+            "[[div class=\"name\"]]\n",
+            "NFSI\n",
+            "[[image /local--files/scp-9506/NFSI.png]]\n",
+            "[[span style=\"font-size:2rem\"]]National Fog Safety Initiative[[/span]]\n",
+            "[[/div]]\n",
+        );
+        let tokenization = crate::tokenize(input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &page_info, &settings)
+            .body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains("<div class=\"name\">NFSI<br>"), "{html}");
+        assert!(
+            html.contains("NFSI.png\" class=\"image\"><br><span"),
+            "{html}",
+        );
+        assert!(!html.contains("<div class=\"name\"><p>"), "{html}");
+    }
+
+    #[test]
+    fn blank_line_keeps_text_paragraph_separate_from_naked_image() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let input = concat!(
+            "[[div class=\"picture\"]]\n",
+            "[[span class=\"heading2\"]]BREAKING[[/span]]\n",
+            "\n",
+            "[[image /local--files/scp-9506/fog.jpg]]\n",
+            "[[/div]]\n",
+        );
+        let tokenization = crate::tokenize(input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &page_info, &settings)
+            .body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            "<div class=\"picture\"><p><span class=\"heading2\">BREAKING</span></p><img src=\"/local--files/scp-9506/fog.jpg\" class=\"image\"></div>",
         );
     }
 }

@@ -186,39 +186,31 @@ fn isolate_user_ids() {
     // Images [[image]]
     test!(
         r#"[[image example.png class="apple" id="banana"]]"#,
-        vec![Element::Container(Container::new(
-            ContainerType::Paragraph,
-            vec![Element::Image {
-                source: FileSource::File1 {
-                    file: cow!("example.png"),
-                },
-                link: None,
-                alignment: None,
-                attributes: AttributeMap::from(btreemap! {
-                    cow!("class") => cow!("apple"),
-                    cow!("id") => cow!("u-banana"),
-                }),
-            }],
-            AttributeMap::new(),
-        ))],
+        vec![Element::Image {
+            source: FileSource::File1 {
+                file: cow!("example.png"),
+            },
+            link: None,
+            alignment: None,
+            attributes: AttributeMap::from(btreemap! {
+                cow!("class") => cow!("apple"),
+                cow!("id") => cow!("u-banana"),
+            }),
+        }],
     );
     test!(
         r#"[[image example.png class="u-apple" id="u-banana"]]"#,
-        vec![Element::Container(Container::new(
-            ContainerType::Paragraph,
-            vec![Element::Image {
-                source: FileSource::File1 {
-                    file: cow!("example.png"),
-                },
-                link: None,
-                alignment: None,
-                attributes: AttributeMap::from(btreemap! {
-                    cow!("class") => cow!("u-apple"),
-                    cow!("id") => cow!("u-banana"),
-                }),
-            }],
-            AttributeMap::new(),
-        ))],
+        vec![Element::Image {
+            source: FileSource::File1 {
+                file: cow!("example.png"),
+            },
+            link: None,
+            alignment: None,
+            attributes: AttributeMap::from(btreemap! {
+                cow!("class") => cow!("u-apple"),
+                cow!("id") => cow!("u-banana"),
+            }),
+        }],
     );
 
     test!(

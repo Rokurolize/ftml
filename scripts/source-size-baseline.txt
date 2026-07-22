@@ -1,0 +1,4 @@
+# Maximum grandfathered size for pre-existing files above the severe limit.
+2023 src/preproc/compatibility.rs
+1266 src/parsing/parser.rs
+1174 src/parsing/rule/impls/block/parser.rs

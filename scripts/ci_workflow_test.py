@@ -63,8 +63,12 @@ def classify_event(event_name, action, draft, labels=(), changed_label=None, bas
     candidate = event_name == "push" or run_ci and not draft
     full_coverage = event_name == "push" or not draft and "full-ci" in labels and (run_ci or full_ci_label_event)
 
-    if event_name != "pull_request" or not run_ci:
+    if event_name != "pull_request":
         gate_name = "CI / PR gate (inactive)"
+    elif not run_ci and not draft:
+        gate_name = "CI / gate"
+    elif not run_ci:
+        gate_name = "CI / draft gate"
     elif not draft and candidate:
         gate_name = "CI / gate"
     else:
@@ -94,30 +98,38 @@ class CiWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("github.event.changes.base.ref.from != ''", header)
         self.assertIn("'CI / PR gate (inactive)'", gate)
         self.assertIn("'CI / draft gate'", gate)
-        self.assertIn("github.event.pull_request.draft == false && needs.classify.outputs.candidate == 'true' && 'CI / gate'", gate)
-        self.assertIn("needs.classify.outputs.run_ci == 'true'", gate)
-        self.assertIn("github.event_name == 'pull_request'", gate)
+        self.assertIn("github.event.pull_request.draft == false && (needs.classify.outputs.run_ci != 'true' || needs.classify.outputs.candidate == 'true') && 'CI / gate'", gate)
+        self.assertIn("if: ${{ always() }}", gate)
+        self.assertIn("if: ${{ github.event_name == 'pull_request' && needs.classify.outputs.run_ci == 'true' }}", gate)
+        self.assertIn("Preserve required PR gate on metadata-only event", gate)
+        self.assertIn("check_name='CI / gate'", gate)
+        self.assertIn('.app.slug == \"github-actions\" and .conclusion == \"success\"', gate)
+        self.assertIn("Record inactive PR gate", gate)
         for required_job in ("classify", "rust_unit", "library_build_and_test", "wasm", "coverage", "clippy_lint", "configuration_check"):
             self.assertIn(f"      - {required_job}\n", gate)
         for main_only_job in ("upload_coverage", "upload_test_results"):
             self.assertNotIn(f"      - {main_only_job}\n", gate)
 
         self.assertIn("'CI / gate' || 'CI / main gate (inactive)'", main_gate)
+        self.assertIn("if: ${{ always() }}", main_gate)
+        self.assertIn("if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}", main_gate)
+        self.assertIn("if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}", main_gate)
+        self.assertIn("Record inactive main gate", main_gate)
         for required_job in ("coverage", "upload_coverage", "upload_test_results"):
             self.assertIn(f"      - {required_job}\n", main_gate)
 
     def test_event_policy_isolates_label_and_non_base_edit_changes(self):
         self.assertEqual(classify_event("pull_request", "synchronize", True), (True, False, False, "CI / draft gate"))
         self.assertEqual(classify_event("pull_request", "ready_for_review", False), (True, True, False, "CI / gate"))
-        self.assertEqual(classify_event("pull_request", "labeled", True, labels=("landing",), changed_label="landing"), (False, False, False, "CI / PR gate (inactive)"))
-        self.assertEqual(classify_event("pull_request", "labeled", False, labels=("landing",), changed_label="landing"), (False, False, False, "CI / PR gate (inactive)"))
-        self.assertEqual(classify_event("pull_request", "labeled", True, labels=("full-ci",), changed_label="full-ci"), (False, False, False, "CI / PR gate (inactive)"))
-        self.assertEqual(classify_event("pull_request", "labeled", False, labels=("full-ci",), changed_label="full-ci"), (False, False, True, "CI / PR gate (inactive)"))
-        self.assertEqual(classify_event("pull_request", "labeled", False, labels=("landing", "full-ci"), changed_label="landing"), (False, False, False, "CI / PR gate (inactive)"))
-        self.assertEqual(classify_event("pull_request", "labeled", False, labels=("landing", "full-ci", "documentation"), changed_label="documentation"), (False, False, False, "CI / PR gate (inactive)"))
-        self.assertEqual(classify_event("pull_request", "unlabeled", False, labels=("landing",), changed_label="documentation"), (False, False, False, "CI / PR gate (inactive)"))
+        self.assertEqual(classify_event("pull_request", "labeled", True, labels=("landing",), changed_label="landing"), (False, False, False, "CI / draft gate"))
+        self.assertEqual(classify_event("pull_request", "labeled", False, labels=("landing",), changed_label="landing"), (False, False, False, "CI / gate"))
+        self.assertEqual(classify_event("pull_request", "labeled", True, labels=("full-ci",), changed_label="full-ci"), (False, False, False, "CI / draft gate"))
+        self.assertEqual(classify_event("pull_request", "labeled", False, labels=("full-ci",), changed_label="full-ci"), (False, False, True, "CI / gate"))
+        self.assertEqual(classify_event("pull_request", "labeled", False, labels=("landing", "full-ci"), changed_label="landing"), (False, False, False, "CI / gate"))
+        self.assertEqual(classify_event("pull_request", "labeled", False, labels=("landing", "full-ci", "documentation"), changed_label="documentation"), (False, False, False, "CI / gate"))
+        self.assertEqual(classify_event("pull_request", "unlabeled", False, labels=("landing",), changed_label="documentation"), (False, False, False, "CI / gate"))
         self.assertEqual(classify_event("pull_request", "synchronize", False, labels=("full-ci",)), (True, True, True, "CI / gate"))
-        self.assertEqual(classify_event("pull_request", "edited", False), (False, False, False, "CI / PR gate (inactive)"))
+        self.assertEqual(classify_event("pull_request", "edited", False), (False, False, False, "CI / gate"))
         self.assertEqual(classify_event("pull_request", "edited", False, base_changed=True), (True, True, False, "CI / gate"))
         self.assertEqual(classify_event("push", "push", False), (True, True, True, "CI / PR gate (inactive)"))
 

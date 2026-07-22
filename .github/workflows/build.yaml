@@ -21,6 +21,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' && github.event.action != 'labeled' && github.event.action != 'unlabeled' && (github.event.action != 'edited' || github.event.changes.base.ref.from != '') }}
 
 permissions:
+  checks: read
   contents: read
 
 jobs:
@@ -537,8 +538,9 @@ jobs:
 
   # Only normal head or base candidate runs publish the required context. The full-ci label run is coverage-only and must be awaited separately before landing.
   pr_gate:
-    name: ${{ github.event_name != 'pull_request' && 'CI / PR gate (inactive)' || needs.classify.outputs.run_ci != 'true' && 'CI / PR gate (inactive)' || github.event.pull_request.draft == false && needs.classify.outputs.candidate == 'true' && 'CI / gate' || 'CI / draft gate' }}
-    if: ${{ always() && github.event_name == 'pull_request' && needs.classify.outputs.run_ci == 'true' }}
+    name: ${{ github.event_name != 'pull_request' && 'CI / PR gate (inactive)' || github.event.pull_request.draft == false && (needs.classify.outputs.run_ci != 'true' || needs.classify.outputs.candidate == 'true') && 'CI / gate' || 'CI / draft gate' }}
+    # Run an explicit no-op when classification is skipped so GitHub evaluates the dynamic name instead of publishing the expression text as a check name.
+    if: ${{ always() }}
     needs:
       - classify
       - rust_unit
@@ -563,6 +565,7 @@ jobs:
       CONFIGURATION_RESULT: ${{ needs.configuration_check.result }}
     steps:
       - name: Verify Required Jobs
+        if: ${{ github.event_name == 'pull_request' && needs.classify.outputs.run_ci == 'true' }}
         run: |
           set -euo pipefail
 
@@ -638,9 +641,30 @@ jobs:
             require_skipped "Coverage" "${COVERAGE_RESULT}"
           fi
 
+      - name: Preserve required PR gate on metadata-only event
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && needs.classify.outputs.run_ci != 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          prior_gate_success=$(gh api --method GET "repos/${GITHUB_REPOSITORY}/commits/${HEAD_SHA}/check-runs" -f check_name='CI / gate' -f filter=all -f per_page=100 --jq 'any(.check_runs[]; .app.slug == "github-actions" and .conclusion == "success")')
+          if [[ "${prior_gate_success}" != "true" ]]; then
+            echo "No prior successful GitHub Actions CI / gate exists for ${HEAD_SHA}." >&2
+            exit 1
+          fi
+
+          echo "Preserving the prior successful CI / gate for metadata-only event on ${HEAD_SHA}."
+
+      - name: Record inactive PR gate
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == true && needs.classify.outputs.run_ci != 'true' }}
+        run: echo "This event does not publish the pull request gate."
+
   main_gate:
     name: ${{ github.event_name == 'push' && 'CI / gate' || 'CI / main gate (inactive)' }}
-    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    # Run an explicit no-op outside main pushes so the inactive check name is resolved before GitHub creates the check run.
+    if: ${{ always() }}
     needs:
       - classify
       - rust_unit
@@ -669,6 +693,7 @@ jobs:
       CONFIGURATION_RESULT: ${{ needs.configuration_check.result }}
     steps:
       - name: Verify Main Jobs
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: |
           set -euo pipefail
 
@@ -711,3 +736,7 @@ jobs:
           require_success "Coverage OIDC Export" "${COVERAGE_UPLOAD_RESULT}"
           require_success "Lint" "${LINT_RESULT}"
           require_success "Configurations" "${CONFIGURATION_RESULT}"
+
+      - name: Record inactive main gate
+        if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
+        run: echo "This event does not publish the main branch gate."

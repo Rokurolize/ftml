@@ -122,6 +122,11 @@ head = "map"
 body = "none"
 html-output = "html,div,wj-footnotes-list"
 
+[file]
+head = "value"
+body = "none"
+html-output = "html,a"
+
 [hidden]
 accepts-newlines = true
 head = "map"

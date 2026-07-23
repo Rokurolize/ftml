@@ -95,6 +95,7 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | [Div](#div)                                     | `div`                            | No    | Yes    | Yes       | Map           | Elements  |
 | [Embed](#embed)                                 | `embed`                          | No    | No     | Yes       | Value + Map   | None      |
 | [Equation Reference](#equation-ref)             | `equation`, `eref`, `eqref`      | No    | No     | No        | Value         | None      |
+| [File](#file)                                   | `file`                           | No    | No     | No        | Value         | None      |
 | [Footnote](#footnote)                           | `footnote`                       | No    | No     | No        | None          | Elements  |
 | [Footnote Block](#footnote-block)               | `footnoteblock`                  | No    | No     | Yes       | Map           | None      |
 | [Hidden](#hidden)                               | `hidden`                         | No    | No     | Yes       | Map           | Elements  |
@@ -547,6 +548,21 @@ Arguments:
 * Value &mdash; (String) The source of the image.
 * `link` &mdash; (String) The link that this image should point to.
 * All accepted attributes.
+
+### File
+
+Output: `Element::FileLink` / `<a>`
+
+Body: None
+
+Arguments:
+* Value &mdash; A current-page attachment filename, followed by ` | ` and the link label.
+
+Example:
+
+```
+[[file elements.tsv | Download Catalog]]
+```
 
 ### Audio
 

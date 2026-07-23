@@ -15,6 +15,7 @@ Update this list whenever a new `wikidot.html` fixture is added or removed. Keep
 | date | `test/date/matrix` | Date formatting matrix matches Wikidot layout expectations. |
 | date | `test/date/timezone` | Date rendering handles timezone inputs in Wikidot layout. |
 | definition-list | `test/definition-list/basic` | Definition list syntax emits Wikidot-compatible definition markup. |
+| file | `test/file/wikidot-attachment` | Evidenced current-page file syntax emits a direct Wikidot attachment anchor. |
 | image | `test/image/basic` | Image syntax, alignment, local-file paths, attributes, and linked images render in Wikidot layout. |
 | link | `test/link/single` | Single-bracket links render expected Wikidot href and label output. |
 | link | `test/link/triple` | Triple-bracket links render expected Wikidot page and URL output. |

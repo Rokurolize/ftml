@@ -154,6 +154,7 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
                 ctx.push_str(label);
             });
         }
+        Element::FileLink { label, .. } => ctx.push_str(label),
         Element::Image { .. } => {
             // Text cannot render images, so we don't add anything
         }

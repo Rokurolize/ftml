@@ -107,6 +107,12 @@ pub enum Element<'t> {
         target: Option<AnchorTarget>,
     },
 
+    /// A link to a file attached to the current wiki page.
+    FileLink {
+        file: Cow<'t, str>,
+        label: Cow<'t, str>,
+    },
+
     /// An element representing an image and its associated metadata.
     ///
     /// The "source" field is the link to the image itself.
@@ -349,6 +355,7 @@ impl Element<'_> {
             Element::Anchor { .. } => "Anchor",
             Element::AnchorName(_) => "AnchorName",
             Element::Link { .. } => "Link",
+            Element::FileLink { .. } => "FileLink",
             Element::Image { .. } => "Image",
             Element::Audio { .. } => "Audio",
             Element::Video { .. } => "Video",
@@ -401,9 +408,10 @@ impl Element<'_> {
             | Element::Email(_) => true,
             Element::Table(_) => false,
             Element::TabView(_) => false,
-            Element::Anchor { .. } | Element::AnchorName(_) | Element::Link { .. } => {
-                true
-            }
+            Element::Anchor { .. }
+            | Element::AnchorName(_)
+            | Element::Link { .. }
+            | Element::FileLink { .. } => true,
             Element::Image { .. } => true,
             Element::Audio { .. } => true,
             Element::Video { .. } => true,
@@ -474,6 +482,10 @@ impl Element<'_> {
                 link: link.to_owned(),
                 label: label.to_owned(),
                 target: *target,
+            },
+            Element::FileLink { file, label } => Element::FileLink {
+                file: string_to_owned(file),
+                label: string_to_owned(label),
             },
             Element::List {
                 ltype,

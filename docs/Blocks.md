@@ -115,6 +115,7 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | [Math (Inline)](#math-inline)                   | (See below)                      | No    | No     | No        | (See below)   | (See below) |
 | [Module](#module)                               | `module`                         | No    | No     | Yes       | (See below)   | (See below) |
 | [Monospace](#monospace)                         | `tt`, `mono`, `monospace`        | No    | No     | No        | Map           | Elements  |
+| [Note](#note)                                   | `note`                           | No    | No     | Yes       | None          | Elements  |
 | [Paragraph](#paragraph)                         | `p`, `paragraph`                 | No    | No     | Yes       | Map           | Elements  |
 | [Radio](#radio)                                 | `radio`, `radio-button`          | Yes   | No     | No        | Value + Map   | None      |
 | [Raw](#raw)                                     | `raw`                            | No    | No     | Yes       | None          | Raw       |
@@ -788,6 +789,22 @@ Example:
 
 ```
 [[tt]]This output looks like it came from a typewriter or computer terminal.[[/tt]]
+```
+
+### Note
+
+Outputs: `Element::Container(ContainerType::Div)` / `<div class="wiki-note">`
+
+Body: Elements
+
+Accepts newline separation.
+
+Example:
+
+```
+[[note]]
+Evidence-backed note.
+[[/note]]
 ```
 
 ### Paragraph

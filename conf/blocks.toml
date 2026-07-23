@@ -265,6 +265,12 @@ body = "elements"
 html-attributes = true
 html-output = "html,code,wj-monospace"
 
+[note]
+accepts-newlines = true
+head = "none"
+body = "elements"
+html-output = "html,div,wiki-note"
+
 [paragraph]
 aliases = ["p"]
 accepts-newlines = true

@@ -39,6 +39,7 @@ include = {
     SOI ~ // Because we slice from the start of an include block using regex
     "[[" ~ space? ~ ^"include" ~ space ~
     page_ref ~ space? ~
+    stray_open_brackets? ~
     (separator ~ space?)? ~
     (argument ~ space? ~ separator ~ space?)* ~
     (argument ~ space? ~ separator?)? ~
@@ -57,6 +58,16 @@ argument = {
 
 separator = _{
     "|" ~ (space? ~ "|")*
+}
+
+// Wikidot tolerates a run of stray open brackets between the page reference and
+// the arguments, discarding it and parsing the arguments normally. Four pages in
+// the imported corpus rely on this, all writing a bare "[[" on the line after
+// the page reference; live renders their arguments and shows no bracket. Only
+// open brackets are accepted, and only in this position, because that is the
+// shape the evidence covers.
+stray_open_brackets = _{
+    "["+ ~ space?
 }
 
 value = {

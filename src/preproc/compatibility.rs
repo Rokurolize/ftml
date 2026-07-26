@@ -1181,6 +1181,63 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_unclosed_div_repair_requires_the_exact_observed_shape() {
+        let mut short = "[[iftags +missing]]\n[[div]]\nvisible".to_owned();
+        substitute_wikidot(&mut short);
+        assert_eq!(short, "[[iftags +missing]]\n[[div]]\nvisible");
+
+        let mut literal = concat!(
+            "[[iftags +missing]]\n",
+            "[[div]]\n",
+            "[[code]]body[[/code]]\n",
+            "[[/iftags_]]\n",
+            "visible",
+        )
+        .to_owned();
+        substitute_wikidot(&mut literal);
+        assert!(!literal.ends_with("[[/div]]"));
+
+        let mut ordinary_close = concat!(
+            "[[iftags +missing]]\n",
+            "[[div]]\n",
+            "hidden child\n",
+            "[[/iftags]]\n",
+            "visible\n",
+        )
+        .to_owned();
+        substitute_wikidot(&mut ordinary_close);
+        assert!(!ordinary_close.ends_with("[[/div]]"));
+
+        let mut terminated = concat!(
+            "[[iftags +missing]]\n",
+            "[[div]]\n",
+            "hidden child\n",
+            "[[/iftags_]]\n",
+            "visible\n",
+        )
+        .to_owned();
+        substitute_wikidot(&mut terminated);
+        assert!(terminated.ends_with("visible\n[[/div]]"));
+    }
+
+    #[test]
+    fn incompatible_crossing_candidates_remain_unmodified() {
+        let quoted_lines = vec![
+            "> [[=]]\n".to_owned(),
+            "[[collapsible show=\"open\"]]\n".to_owned(),
+        ];
+        assert_eq!(
+            centered_collapsible_opener(&quoted_lines, &[false, false], 0, "> "),
+            None,
+        );
+        assert_eq!(iftags_marker_line("[[/iftags extra]]"), None);
+
+        let mut ambiguous_size = vec!["**[[size 110%]]a**b**[[/size]]".to_owned()];
+        canonicalize_crossed_bold_size_closers(&mut ambiguous_size, &[false]);
+        assert_eq!(ambiguous_size, ["**[[size 110%]]a**b**[[/size]]"]);
+    }
+
+    #[test]
     fn tight_quote_lines_are_consumed_but_spaced_quotes_render() {
         let mut source = concat!(
             ">ALPHA_PLAIN_TIGHT\n",

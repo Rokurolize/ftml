@@ -133,10 +133,20 @@ impl ContainerType {
         match self {
             ContainerType::Bold => HtmlTag::new("strong"),
             ContainerType::Italics => HtmlTag::new("em"),
-            ContainerType::Underline => HtmlTag::new("u"),
+            ContainerType::Underline => match layout {
+                Layout::Wikidot => {
+                    HtmlTag::with_style("span", "text-decoration: underline;")
+                }
+                Layout::Wikijump => HtmlTag::new("u"),
+            },
             ContainerType::Superscript => HtmlTag::new("sup"),
             ContainerType::Subscript => HtmlTag::new("sub"),
-            ContainerType::Strikethrough => HtmlTag::new("s"),
+            ContainerType::Strikethrough => match layout {
+                Layout::Wikidot => {
+                    HtmlTag::with_style("span", "text-decoration: line-through;")
+                }
+                Layout::Wikijump => HtmlTag::new("s"),
+            },
             ContainerType::Monospace => match layout {
                 Layout::Wikidot => HtmlTag::new("tt"),
                 Layout::Wikijump => HtmlTag::with_class("code", "wj-monospace"),
@@ -270,6 +280,12 @@ fn container_type_html_tags_and_paragraph_safety() {
     assert_eq!(
         ContainerType::Monospace.html_tag(Layout::Wikidot, &mut indexer),
         HtmlTag::new("tt"),
+    );
+
+    let mut indexer = Incrementer::default();
+    assert_eq!(
+        ContainerType::Strikethrough.html_tag(Layout::Wikidot, &mut indexer),
+        HtmlTag::with_style("span", "text-decoration: line-through;"),
     );
 
     let mut indexer = Incrementer::default();

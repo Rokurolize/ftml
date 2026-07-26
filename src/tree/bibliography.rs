@@ -30,6 +30,8 @@ use super::Element;
 use super::clone::{elements_to_owned, string_to_owned};
 use std::borrow::Cow;
 
+const RESIDUAL_LABEL: &str = "\0";
+
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 pub struct Bibliography<'t>(Vec<(Cow<'t, str>, Vec<Element<'t>>)>);
 
@@ -50,6 +52,20 @@ impl<'t> Bibliography<'t> {
         }
     }
 
+    pub(crate) fn add_residual(&mut self, element: Element<'t>) {
+        if let Some((label, elements)) = self.0.last_mut()
+            && Self::is_residual(label)
+        {
+            elements.push(element);
+        } else {
+            self.0.push((Cow::Borrowed(RESIDUAL_LABEL), vec![element]));
+        }
+    }
+
+    pub(crate) fn is_residual(label: &str) -> bool {
+        label == RESIDUAL_LABEL
+    }
+
     pub fn get(&self, label: &str) -> Option<(usize, &[Element<'t>])> {
         // References are maintained as a list, which means that searching
         // for a particular label is O(n), but this is fine as the number
@@ -58,10 +74,14 @@ impl<'t> Bibliography<'t> {
         //
         // This also gives us free indexing based on this order, and the
         // order based on it, so we don't need a two-index map here.
-        for (index, (ref_label, elements)) in self.0.iter().enumerate() {
+        let mut index = 0;
+        for (ref_label, elements) in &self.0 {
+            if Self::is_residual(ref_label) {
+                continue;
+            }
+            index += 1;
             if label == ref_label {
-                // Change from zero-indexing to one-indexing
-                return Some((index + 1, elements));
+                return Some((index, elements));
             }
         }
 
@@ -133,6 +153,11 @@ impl<'t> BibliographyList<'t> {
 
     pub fn get_bibliography_opt(&self, index: usize) -> Option<&Bibliography<'t>> {
         self.0.get(index)
+    }
+
+    #[inline]
+    pub fn slice(&self) -> &[Bibliography<'t>] {
+        &self.0
     }
 
     pub fn to_owned(&self) -> BibliographyList<'static> {

@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use std::num::NonZeroU32;
 
 pub const RULE_UNDERSCORE_LINE_BREAK: Rule = Rule {
     name: "underscore-line-break",
@@ -42,12 +43,20 @@ fn try_consume_fn<'r, 't>(
         (Token::Whitespace, Some(Token::Underscore)) => {
             parser.step()?;
         }
-        (Token::Underscore, Some(_)) if parser.start_of_line() => (),
+        (Token::Underscore, Some(_))
+            if parser.start_of_line() && !parser.settings().layout.legacy() => {}
         _ => return Err(parser.make_err(ParseErrorKind::RuleFailed)),
     }
 
     // Now the current token should be underscore, then newline.
     let (current, next) = parser.next_two_tokens();
+    let terminal = parser.settings().layout.legacy()
+        && current == Token::Underscore
+        && next == Some(Token::InputEnd);
+    if terminal {
+        parser.step()?;
+        return ok!(Element::LineBreaks(NonZeroU32::new(2).unwrap()));
+    }
     let has_line_break = current == Token::Underscore
         && matches!(next, Some(Token::LineBreak | Token::ParagraphBreak));
     if !has_line_break {

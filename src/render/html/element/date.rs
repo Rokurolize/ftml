@@ -50,18 +50,9 @@ fn render_date_wikidot(
     let timestamp = date.timestamp();
     let mut class = format!("odate time_{timestamp}");
     push_date_format_class(&mut class, date_format, hover);
-    let style = if hover {
-        "cursor: help; display: inline;"
-    } else {
-        "display: inline;"
-    };
-
     ctx.html()
         .span()
-        .attr(attr!(
-            "class" => &class,
-            "style" => style,
-        ))
+        .attr(attr!("class" => &class))
         .contents(formatted_datetime);
 }
 

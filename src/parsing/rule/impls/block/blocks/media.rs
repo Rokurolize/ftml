@@ -169,7 +169,7 @@ mod tests {
     #[test]
     fn media_blocks_parse_audio_and_video_sources_alignment_and_attributes() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
 
         let tokenization =
             crate::tokenize(r#"[[audio page/song.mp3 align="right" class="player"]]"#);
@@ -251,7 +251,7 @@ mod tests {
     #[test]
     fn media_blocks_reject_malformed_arguments_and_allow_missing_alignment() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
 
         let tokenization = crate::tokenize("[[audio song.mp3]]");
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();

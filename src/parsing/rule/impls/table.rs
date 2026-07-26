@@ -28,6 +28,7 @@ struct TableCellStart {
     align: Option<Alignment>,
     header: bool,
     column_span: NonZeroU32,
+    literal_prefix: Option<&'static str>,
 }
 
 pub const RULE_TABLE: Rule = Rule {
@@ -218,6 +219,9 @@ fn try_consume_fn<'r, 't>(
                 Some(cell_start) => cell_start,
                 None => return finish_table_or_fail(parser, rows, errors),
             };
+            if let Some(prefix) = cell_start.literal_prefix {
+                elements.push(text!(prefix));
+            }
 
             // Loop for each element in the cell
             'cell: loop {
@@ -252,8 +256,64 @@ fn try_consume_fn<'r, 't>(
                         parser.step()?;
                     }
 
+                    (Token::LineBreak | Token::ParagraphBreak, _)
+                        if elements.is_empty()
+                            && parser.settings().layout.legacy()
+                            && !cells.is_empty() =>
+                    {
+                        push_row(&mut rows, &mut cells);
+                        return finish_simple_table(rows, errors);
+                    }
+
+                    (Token::LineBreak, _) if elements.is_empty() => {
+                        push_cell(&mut cells, &mut elements, cell_start);
+                        parser.step()?;
+                        break 'row;
+                    }
+
+                    (Token::ParagraphBreak, _) if elements.is_empty() => {
+                        push_cell(&mut cells, &mut elements, cell_start);
+                        push_row(&mut rows, &mut cells);
+                        parser.step()?;
+                        return finish_simple_table(rows, errors);
+                    }
+
+                    (Token::InputEnd, _) if elements.is_empty() => {
+                        if parser.settings().layout.legacy() && !cells.is_empty() {
+                            push_row(&mut rows, &mut cells);
+                            return finish_simple_table(rows, errors);
+                        }
+                        push_cell(&mut cells, &mut elements, cell_start);
+                        push_row(&mut rows, &mut cells);
+                        return finish_simple_table(rows, errors);
+                    }
+
+                    // Wikidot recognizes a row that starts with a cell marker
+                    // but never closes it, then discards the incomplete cell
+                    // contents and renders one empty cell.
+                    (Token::LineBreak | Token::ParagraphBreak | Token::InputEnd, _)
+                        if parser.settings().layout.legacy()
+                            && rows.is_empty()
+                            && cells.is_empty() =>
+                    {
+                        elements.clear();
+                        let empty_cell_start = TableCellStart {
+                            align: None,
+                            header: false,
+                            column_span: NonZeroU32::new(1).unwrap(),
+                            literal_prefix: None,
+                        };
+                        push_cell(&mut cells, &mut elements, empty_cell_start);
+                        push_row(&mut rows, &mut cells);
+                        return finish_simple_table(rows, errors);
+                    }
+
                     // Invalid tokens
                     (Token::LineBreak | Token::ParagraphBreak | Token::InputEnd, _) => {
+                        if parser.settings().layout.legacy() && !cells.is_empty() {
+                            push_row(&mut rows, &mut cells);
+                            return finish_simple_table(rows, errors);
+                        }
                         return finish_table_or_fail(parser, rows, errors);
                     }
 
@@ -287,6 +347,7 @@ fn try_consume_fn<'r, 't>(
 /// of the table if it already has rows.
 fn parse_cell_start(parser: &mut Parser) -> Result<Option<TableCellStart>, ParseError> {
     let mut span = 0;
+    let mut literal_prefix = None;
 
     macro_rules! increase_span {
         () => {{
@@ -301,14 +362,28 @@ fn parse_cell_start(parser: &mut Parser) -> Result<Option<TableCellStart>, Parse
             // NOTE: There is no TableColumnLeft
             Token::TableColumnTitle => {
                 increase_span!();
+                if parser.settings().layout.legacy()
+                    && matches!(parser.current().slice, ">" | "=")
+                {
+                    literal_prefix = Some("~");
+                    break (None, false);
+                }
                 break (None, true);
             }
             Token::TableColumnCenter => {
                 increase_span!();
+                if parser.settings().layout.legacy() && parser.current().slice == "~" {
+                    literal_prefix = Some("=");
+                    break (None, false);
+                }
                 break (Some(Alignment::Center), false);
             }
             Token::TableColumnRight => {
                 increase_span!();
+                if parser.settings().layout.legacy() && parser.current().slice == "~" {
+                    literal_prefix = Some(">");
+                    break (None, false);
+                }
                 break (Some(Alignment::Right), false);
             }
 
@@ -316,6 +391,18 @@ fn parse_cell_start(parser: &mut Parser) -> Result<Option<TableCellStart>, Parse
             Token::TableColumn => increase_span!(),
 
             // Regular column, terminal
+            _ if span > 0
+                && parser.settings().layout.legacy()
+                && parser.current().slice == "<"
+                && {
+                    let mut lookahead = parser.clone();
+                    lookahead.step().is_ok()
+                        && lookahead.current().token == Token::Whitespace
+                } =>
+            {
+                parser.step()?;
+                break (Some(Alignment::Left), false);
+            }
             _ if span > 0 => break (None, false),
 
             // No span depth, just an invalid token
@@ -330,6 +417,7 @@ fn parse_cell_start(parser: &mut Parser) -> Result<Option<TableCellStart>, Parse
         align,
         header,
         column_span,
+        literal_prefix,
     }))
 }
 
@@ -338,6 +426,7 @@ mod tests {
     use super::*;
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
 
     fn with_parser<R>(
@@ -411,6 +500,7 @@ mod tests {
             align: None,
             header: false,
             column_span: NonZeroU32::new(1).unwrap(),
+            literal_prefix: None,
         };
 
         with_parser("||", &page_info, &settings, |parser| {
@@ -476,6 +566,132 @@ mod tests {
         assert_eq!(table.rows.len(), 2);
         assert_eq!(table.rows[0].cells.len(), 2);
         assert_eq!(table.rows[1].cells.len(), 2);
+    }
+
+    #[test]
+    fn wikidot_empty_simple_table_rows_render_empty_cells() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for (source, expected_rows) in [("||", 1), ("||\n||", 2)] {
+            let tokenization = crate::tokenize(source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+            assert!(errors.is_empty(), "{source:?}: {errors:#?}");
+            assert_eq!(html.matches("<tr>").count(), expected_rows, "{html}");
+            assert_eq!(html.matches("<td></td>").count(), expected_rows, "{html}");
+        }
+    }
+
+    #[test]
+    fn wikidot_unclosed_simple_table_rows_render_one_empty_cell() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for source in [
+            "|| next",
+            "||> body",
+            "|| Missing end",
+            "||= body",
+            "||~ body",
+            "|||| body",
+        ] {
+            let tokenization = crate::tokenize(source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+            assert!(errors.is_empty(), "{source:?}: {errors:#?}");
+            assert_eq!(
+                html,
+                "<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>",
+                "{source:?}",
+            );
+        }
+    }
+
+    #[test]
+    fn wikidot_simple_table_left_alignment_marker_sets_inline_style() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("||< left ||");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            "<table class=\"wiki-content-table\">\n<tr>\n<td style=\"text-align: left;\">left</td>\n</tr>\n</table>",
+        );
+    }
+
+    #[test]
+    fn wikidot_simple_table_less_than_word_remains_cell_text() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("||<div>||");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            "<table class=\"wiki-content-table\">\n<tr>\n<td>&lt;div&gt;</td>\n</tr>\n</table>",
+        );
+    }
+
+    #[test]
+    fn wikidot_combined_header_alignment_markers_remain_cell_text() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = concat!(
+            "||~> header right ||\n",
+            "||~= header center ||\n",
+            "||>~ right header ||\n",
+            "||=~ center header ||",
+        );
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            concat!(
+                "<table class=\"wiki-content-table\">\n",
+                "<tr>\n<td>~&gt; header right</td>\n</tr>\n",
+                "<tr>\n<td>~= header center</td>\n</tr>\n",
+                "<tr>\n<td>&gt;~ right header</td>\n</tr>\n",
+                "<tr>\n<td>=~ center header</td>\n</tr>\n",
+                "</table>",
+            ),
+        );
+    }
+
+    #[test]
+    fn wikidot_discards_incomplete_trailing_simple_cells() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        for (source, expected) in [
+            ("|| Another || missing end", "Another"),
+            ("|| durian ||||", "durian"),
+        ] {
+            let tokenization = crate::tokenize(source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+            assert!(errors.is_empty(), "{source:?}: {errors:#?}");
+            assert_eq!(
+                html,
+                format!(
+                    "<table class=\"wiki-content-table\">\n<tr>\n<td>{expected}</td>\n</tr>\n</table>"
+                ),
+                "{source:?}",
+            );
+        }
     }
 
     #[test]

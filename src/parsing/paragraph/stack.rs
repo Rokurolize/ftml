@@ -22,14 +22,53 @@ use crate::parsing::prelude::*;
 use crate::tree::{AttributeMap, Container, ContainerType};
 use std::mem;
 
+pub(crate) fn collapsible_has_direct_literal_nested_opener(
+    element: &Element<'_>,
+) -> bool {
+    let Element::Collapsible { elements, .. } = element else {
+        return false;
+    };
+    elements.iter().any(|element| {
+        let Element::Container(container) = element else {
+            return false;
+        };
+        if container.ctype() != ContainerType::Paragraph {
+            return false;
+        }
+        let literal: String = container
+            .elements()
+            .iter()
+            .filter_map(|element| match element {
+                Element::Text(text) | Element::Raw(text) => Some(text.as_ref()),
+                _ => None,
+            })
+            .collect();
+        literal.contains("[[collapsible")
+    })
+}
+
 #[derive(Debug, Default)]
 pub struct ParagraphStack<'t> {
+    wikidot: bool,
+
     /// Elements being accumulated in the current paragraph.
     current: Vec<Element<'t>>,
 
     /// Whether Wikidot renders the current physical paragraph without a
     /// paragraph wrapper because it contains a naked image block.
     current_unwrapped: bool,
+
+    /// Whether the current physical line contains an invisible C0 control.
+    ///
+    /// Wikidot drops these controls from output, but a control-only line is
+    /// still occupied and therefore preserves its following line break.
+    current_has_discarded_control: bool,
+
+    pending_unwrapped_separator: bool,
+    wikidot_literal_iftags_line: bool,
+    wikidot_literal_div_line: bool,
+    trim_unwrapped_trailing_line_break: bool,
+    suppress_next_line_break: bool,
 
     /// Previous elements created, to be outputted in the final [`SyntaxTree`].
     finished: Vec<Element<'t>>,
@@ -45,8 +84,32 @@ impl<'t> ParagraphStack<'t> {
     }
 
     #[inline]
+    pub fn new_wikidot() -> Self {
+        ParagraphStack {
+            wikidot: true,
+            ..ParagraphStack::default()
+        }
+    }
+
+    #[inline]
     pub fn current_empty(&self) -> bool {
-        self.current.is_empty()
+        self.current.is_empty() && !self.current_has_discarded_control
+    }
+
+    #[inline]
+    pub(crate) fn wikidot_line_break_follows_block(&self) -> bool {
+        self.wikidot
+            && self.current_empty()
+            && self.finished.last().is_some_and(|element| {
+                matches!(
+                    element,
+                    Element::Container(container)
+                        if matches!(
+                            container.ctype(),
+                            ContainerType::Div | ContainerType::Blockquote
+                        )
+                ) || matches!(element, Element::Code(_) | Element::Collapsible { .. })
+            })
     }
 
     #[cfg(test)]
@@ -55,26 +118,215 @@ impl<'t> ParagraphStack<'t> {
     }
 
     #[inline]
-    pub fn push_element(&mut self, element: Element<'t>, paragraph_safe: bool) {
-        let image_starts_physical_line = matches!(element, Element::Image { .. })
-            && (self.current.is_empty()
-                || matches!(self.current.last(), Some(Element::LineBreak)));
+    pub fn mark_current_unwrapped(&mut self) {
+        if !self.current.is_empty() {
+            self.current_unwrapped = true;
+        }
+    }
 
-        if image_starts_physical_line {
-            // A naked [[image]] that begins a source line suppresses the
-            // wrapper for its contiguous physical paragraph on Wikidot.
-            // An image following text on the same line remains inline and
-            // paragraph-safe.
+    #[inline]
+    pub fn mark_wikidot_terminal_backslash(&mut self) {
+        if self.wikidot && !self.current.is_empty() && !self.current_unwrapped {
+            let separator = if self.finished.is_empty() {
+                "\n\n"
+            } else {
+                "\n"
+            };
+            self.current.insert(0, text!(separator));
+            self.current_unwrapped = true;
+        }
+    }
+
+    /// End the preceding inline run without a paragraph wrapper while keeping
+    /// the source newline as insignificant HTML whitespace.
+    #[inline]
+    pub fn mark_wikidot_continued_block_boundary(&mut self) {
+        if self.wikidot && !self.current.is_empty() {
+            self.current.push(text!("\n"));
+            self.current_unwrapped = true;
+        }
+    }
+
+    #[inline]
+    pub(crate) fn mark_next_unwrapped(&mut self) {
+        self.current_unwrapped = true;
+    }
+
+    #[inline]
+    pub(crate) fn mark_wikidot_literal_div_line(&mut self) {
+        if self.wikidot && !self.wikidot_literal_iftags_line {
+            if !self.finished.is_empty() && !self.current.is_empty() {
+                self.current.insert(0, text!("\n"));
+            }
+            self.current_unwrapped = true;
+            self.wikidot_literal_div_line = true;
+        }
+    }
+
+    #[inline]
+    pub(crate) fn mark_wikidot_literal_iftags_line(&mut self) {
+        if self.wikidot {
+            self.wikidot_literal_iftags_line = true;
+        }
+    }
+
+    #[inline]
+    pub fn mark_wikidot_literal_list_item(&mut self) {
+        if self.wikidot {
+            self.mark_current_unwrapped();
+        }
+    }
+
+    #[inline]
+    pub fn mark_wikidot_tabview_boundary(&mut self) {
+        if !self.wikidot || self.current.is_empty() {
+            return;
+        }
+        self.trim_trailing_ascii_space();
+        if !matches!(self.current.last(), Some(Element::LineBreak)) {
+            self.current.push(Element::LineBreak);
+        }
+        self.current_unwrapped = true;
+    }
+
+    #[inline]
+    pub fn mark_discarded_control(&mut self) {
+        if self.wikidot {
+            self.current_has_discarded_control = true;
+        }
+    }
+
+    #[inline]
+    pub fn push_element(&mut self, element: Element<'t>, paragraph_safe: bool) {
+        if self.suppress_next_line_break {
+            self.suppress_next_line_break = false;
+            if element == Element::LineBreak {
+                return;
+            }
+        }
+        let aligned_image = matches!(
+            element,
+            Element::Image {
+                alignment: Some(_),
+                ..
+            }
+        );
+        let unaligned_image = matches!(
+            element,
+            Element::Image {
+                alignment: None,
+                ..
+            }
+        );
+        let wikidot_html_block = self.wikidot && matches!(element, Element::Html { .. });
+        let wikidot_section_marker = self.wikidot
+            && matches!(
+                &element,
+                Element::Container(container)
+                    if container.ctype() == ContainerType::Div
+                        && container
+                            .attributes()
+                            .get()
+                            .get("class")
+                            .is_some_and(|value| value.as_ref() == "content-separator")
+            );
+
+        if self.wikidot
+            && matches!(element, Element::DefinitionList(_))
+            && !self.current.is_empty()
+        {
+            self.trim_trailing_ascii_space();
+            self.current.push(Element::LineBreak);
+            self.current_unwrapped = true;
+        }
+
+        if self.wikidot
+            && matches!(
+                element,
+                Element::Container(ref container)
+                    if matches!(container.ctype(), ContainerType::Align(_))
+            )
+            && self.current.is_empty()
+            && matches!(
+                self.finished.last(),
+                Some(Element::Container(container))
+                    if matches!(container.ctype(), ContainerType::Align(_))
+            )
+        {
+            self.finished.push(Element::LineBreak);
+        }
+
+        if matches!(element, Element::TabView(_)) {
+            self.mark_wikidot_tabview_boundary();
+        }
+
+        if wikidot_html_block {
+            self.end_paragraph();
+            self.current.push(element);
+        } else if aligned_image {
+            self.end_paragraph();
+            self.finished.push(element);
+        } else if unaligned_image {
+            // Any unaligned image suppresses the paragraph wrapper for its
+            // contiguous physical paragraph on Wikidot.
+            if self.wikidot
+                && self.finished.is_empty()
+                && !self.current.is_empty()
+                && !matches!(self.current.first(), Some(Element::Text(text)) if text.starts_with("\n\n"))
+            {
+                self.current.insert(0, text!("\n\n"));
+            }
+            if self.pending_unwrapped_separator
+                && matches!(self.finished.last(), Some(Element::Text(text)) if text == " ")
+            {
+                self.finished.pop();
+            }
+            self.pending_unwrapped_separator = false;
             self.current.push(element);
             self.current_unwrapped = true;
         } else if paragraph_safe {
             // Add it to the current (or new) paragraph. Nothing special.
+            if self.wikidot
+                && matches!(element, Element::Text(ref text) if text == " ")
+                && (self.current.is_empty()
+                    || matches!(
+                        self.current.last(),
+                        Some(Element::Text(text)) if text == " "
+                    )
+                    || matches!(self.current.last(), Some(Element::LineBreak)))
+            {
+                return;
+            }
+            if element == Element::LineBreak {
+                self.trim_trailing_ascii_space();
+            }
             self.current.push(element);
         } else {
             // This has to be its own "finished" element, outside of any
             // paragraph wrapper. So finish up what we have, then add this element.
+            let invisible_block_line = self.wikidot && element == Element::LineBreak;
+            let nested_literal_collapsible =
+                self.wikidot && collapsible_has_direct_literal_nested_opener(&element);
+            if wikidot_section_marker
+                && self.current_unwrapped
+                && !self.current.is_empty()
+                && !matches!(self.current.last(), Some(Element::LineBreak))
+            {
+                self.current.push(text!("\n"));
+            }
+            if invisible_block_line {
+                self.pop_line_break();
+            }
             self.end_paragraph();
             self.finished.push(element);
+            if invisible_block_line {
+                self.current_unwrapped = true;
+                self.trim_unwrapped_trailing_line_break = true;
+            } else if nested_literal_collapsible {
+                self.current.push(Element::LineBreak);
+                self.current_unwrapped = true;
+                self.suppress_next_line_break = true;
+            }
         }
     }
 
@@ -110,11 +362,31 @@ impl<'t> ParagraphStack<'t> {
     pub fn pop_line_break(&mut self) {
         if let Some(Element::LineBreak) = self.current.last() {
             self.current.pop();
+        } else if self.wikidot
+            && self.current.is_empty()
+            && matches!(self.finished.last(), Some(Element::LineBreak))
+        {
+            self.finished.pop();
+        }
+    }
+
+    pub(crate) fn ensure_wikidot_trailing_line_break(&mut self) {
+        if !self.wikidot {
+            return;
+        }
+        if !self.current.is_empty() {
+            if !matches!(self.current.last(), Some(Element::LineBreak)) {
+                self.current.push(Element::LineBreak);
+            }
+            self.trim_unwrapped_trailing_line_break = false;
+        } else if matches!(self.finished.last(), Some(Element::Text(_))) {
+            self.finished.push(Element::LineBreak);
         }
     }
 
     /// Creates a paragraph element out of this instance's current elements.
     pub fn build_paragraph(&mut self) -> Option<Element<'t>> {
+        self.trim_trailing_ascii_space();
         // Don't create empty paragraphs
         if self.current.is_empty() {
             return None;
@@ -128,13 +400,44 @@ impl<'t> ParagraphStack<'t> {
         Some(element)
     }
 
+    fn trim_trailing_ascii_space(&mut self) {
+        if matches!(self.current.last(), Some(Element::Text(text)) if text == " ") {
+            self.current.pop();
+        }
+    }
+
     /// Set the finished field in this struct to the paragraph element.
     pub fn end_paragraph(&mut self) {
         if self.current_unwrapped {
+            if self.trim_unwrapped_trailing_line_break
+                && matches!(self.current.last(), Some(Element::LineBreak))
+            {
+                self.current.pop();
+            }
             self.finished.append(&mut self.current);
             self.current_unwrapped = false;
         } else if let Some(paragraph) = self.build_paragraph() {
             self.finished.push(paragraph);
+        }
+        self.current_has_discarded_control = false;
+        self.pending_unwrapped_separator = false;
+        self.wikidot_literal_iftags_line = false;
+        self.wikidot_literal_div_line = false;
+        self.trim_unwrapped_trailing_line_break = false;
+        self.suppress_next_line_break = false;
+    }
+
+    pub fn end_paragraph_at_break(&mut self) {
+        let unwrapped = self.current_unwrapped && !self.current.is_empty();
+        let literal_div_line = self.wikidot_literal_div_line;
+        self.end_paragraph();
+        if unwrapped {
+            self.finished.push(if literal_div_line {
+                text!("\n")
+            } else {
+                text!(" ")
+            });
+            self.pending_unwrapped_separator = true;
         }
     }
 
@@ -216,6 +519,28 @@ mod tests {
     }
 
     #[test]
+    fn an_empty_unsafe_construct_can_leave_the_current_paragraph_unwrapped() {
+        let mut stack = ParagraphStack::new();
+        stack.push_element(text!("alpha"), true);
+        stack.push_element(Element::LineBreak, true);
+        stack.mark_current_unwrapped();
+
+        assert_eq!(
+            stack.into_elements(),
+            vec![text!("alpha"), Element::LineBreak],
+        );
+    }
+
+    #[test]
+    fn an_empty_unsafe_construct_does_not_unwrap_future_content() {
+        let mut stack = ParagraphStack::new();
+        stack.mark_current_unwrapped();
+        stack.push_element(text!("alpha"), true);
+
+        assert_eq!(stack.into_elements(), vec![paragraph(vec![text!("alpha")])]);
+    }
+
+    #[test]
     fn paragraph_safe_elements_adopt_vectors_and_skip_empty_leading_breaks() {
         let mut stack = ParagraphStack::new();
 
@@ -254,6 +579,87 @@ mod tests {
                 Element::LineBreak,
                 text!("beta"),
             ])],
+        );
+    }
+
+    #[test]
+    fn empty_inline_construct_space_is_trimmed_before_break_or_paragraph_end() {
+        let mut before_break = ParagraphStack::new();
+        before_break.push_element(text!("alpha"), true);
+        before_break.push_element(text!(" "), true);
+        before_break.push_element(Element::LineBreak, true);
+        before_break.push_element(text!("beta"), true);
+        assert_eq!(
+            before_break.into_elements(),
+            vec![paragraph(vec![
+                text!("alpha"),
+                Element::LineBreak,
+                text!("beta"),
+            ])],
+        );
+
+        let mut at_end = ParagraphStack::new();
+        at_end.push_element(text!("alpha"), true);
+        at_end.push_element(text!(" "), true);
+        assert_eq!(
+            at_end.into_elements(),
+            vec![paragraph(vec![text!("alpha")])],
+        );
+    }
+
+    #[test]
+    fn discarded_control_trims_surrounding_spaces_but_preserves_a_line_break() {
+        let mut stack = ParagraphStack::new_wikidot();
+        stack.mark_discarded_control();
+        stack.push_element(text!(" "), true);
+        stack.push_element(Element::LineBreak, true);
+        stack.push_element(text!("omega"), true);
+
+        assert_eq!(
+            stack.into_elements(),
+            vec![paragraph(vec![Element::LineBreak, text!("omega")])],
+        );
+
+        let mut between_spaces = ParagraphStack::new_wikidot();
+        between_spaces.push_element(text!("alpha"), true);
+        between_spaces.push_element(text!(" "), true);
+        between_spaces.mark_discarded_control();
+        between_spaces.push_element(text!(" "), true);
+        between_spaces.push_element(text!("omega"), true);
+
+        assert_eq!(
+            between_spaces.into_elements(),
+            vec![paragraph(vec![text!("alpha"), text!(" "), text!("omega")])],
+        );
+    }
+
+    #[test]
+    fn paragraph_break_after_unwrapped_image_preserves_wikidot_separator() {
+        let mut stack = ParagraphStack::new();
+        stack.push_element(text!("alpha"), true);
+        stack.current_unwrapped = true;
+        stack.end_paragraph_at_break();
+        stack.push_element(text!("beta"), true);
+
+        assert_eq!(
+            stack.into_elements(),
+            vec![text!("alpha"), text!(" "), paragraph(vec![text!("beta")])],
+        );
+    }
+
+    #[test]
+    fn wikidot_definition_list_unwraps_adjacent_prose_with_a_break() {
+        let mut stack = ParagraphStack::new_wikidot();
+        stack.push_element(text!("alpha"), true);
+        stack.push_element(Element::DefinitionList(Vec::new()), false);
+
+        assert_eq!(
+            stack.into_elements(),
+            vec![
+                text!("alpha"),
+                Element::LineBreak,
+                Element::DefinitionList(Vec::new()),
+            ],
         );
     }
 }

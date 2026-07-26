@@ -19,7 +19,7 @@
  */
 
 use super::prelude::*;
-use crate::tree::{AttributeMap, ListItem, ListType};
+use crate::tree::{AttributeMap, ContainerType, ListItem, ListType};
 
 pub fn render_list(
     ctx: &mut HtmlContext,
@@ -36,16 +36,35 @@ pub fn render_list(
     let mut tag = ctx.html().tag(list_tag);
 
     tag.attr(attr!(;; attributes)).inner(|ctx| {
+        if ctx.layout().legacy() {
+            ctx.push_raw('\n');
+        }
         for list_item in list_items {
             match list_item {
                 ListItem::Elements {
                     elements,
                     attributes,
                 } => {
-                    ctx.html()
-                        .li()
-                        .attr(attr!(;; attributes))
-                        .inner(|ctx| render_elements(ctx, elements));
+                    ctx.html().li().attr(attr!(;; attributes)).inner(|ctx| {
+                        for element in elements {
+                            let nested_list = matches!(element, Element::List { .. });
+                            let paragraph = matches!(
+                                element,
+                                Element::Container(container)
+                                    if container.ctype() == ContainerType::Paragraph
+                            );
+                            if ctx.layout().legacy() && (nested_list || paragraph) {
+                                ctx.push_raw('\n');
+                            }
+                            render_element(ctx, element);
+                            if ctx.layout().legacy() && (nested_list || paragraph) {
+                                ctx.push_raw('\n');
+                            }
+                        }
+                    });
+                    if ctx.layout().legacy() {
+                        ctx.push_raw('\n');
+                    }
                 }
                 ListItem::SubList { element } => {
                     let attributes = match ctx.layout() {

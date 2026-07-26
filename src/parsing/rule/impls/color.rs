@@ -19,6 +19,8 @@
  */
 
 use super::prelude::*;
+use crate::parsing::ParseSuccess;
+use crate::tree::Container;
 use regex::Regex;
 use std::borrow::Cow;
 use std::sync::LazyLock;
@@ -48,8 +50,15 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::current(Token::LineBreak),
     ];
     let color = collect_text(parser, RULE_COLOR, &color_close, &color_invalid, None)?;
+    if parser.settings().layout.legacy() && (color.is_empty() || !is_safe_color(color)) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     trace!("Retrieved color descriptor, now building container ('{color}')");
+
+    if parser.settings().layout.legacy() && has_crossed_bold_close(parser) {
+        return collect_crossed_bold_color(parser, color);
+    }
 
     // Build color container
     let close = [ParseCondition::current(Token::Color)];
@@ -64,6 +73,80 @@ fn try_consume_fn<'r, 't>(
     };
 
     ok!(paragraph_safe; element, errors)
+}
+
+fn has_crossed_bold_close(parser: &Parser<'_, '_>) -> bool {
+    if parser.current().token != Token::Bold {
+        return false;
+    }
+
+    let tokens = parser.remaining();
+    let Some(color_close) = tokens.iter().position(|token| token.token == Token::Color)
+    else {
+        return false;
+    };
+    if tokens[..color_close]
+        .iter()
+        .any(|token| matches!(token.token, Token::Bold | Token::ParagraphBreak))
+    {
+        return false;
+    }
+
+    for token in &tokens[color_close + 1..] {
+        match token.token {
+            Token::Bold => return true,
+            Token::ParagraphBreak | Token::InputEnd => return false,
+            _ => {}
+        }
+    }
+    false
+}
+
+fn collect_crossed_bold_color<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    color: &'t str,
+) -> ParseResult<'r, 't, Elements<'t>> {
+    assert_step(parser, Token::Bold)?;
+
+    let invalid = [ParseCondition::current(Token::ParagraphBreak)];
+    let colored = collect_consume(
+        parser,
+        RULE_COLOR,
+        &[ParseCondition::current(Token::Color)],
+        &invalid,
+        None,
+    )?;
+    let trailing = collect_consume(
+        parser,
+        RULE_COLOR,
+        &[ParseCondition::current(Token::Bold)],
+        &invalid,
+        None,
+    )?;
+    let (colored, mut errors, colored_safe) = colored.into();
+    let (trailing, mut trailing_errors, trailing_safe) = trailing.into();
+    errors.append(&mut trailing_errors);
+
+    let colored = Element::Container(Container::new(
+        ContainerType::Bold,
+        colored,
+        AttributeMap::new(),
+    ));
+    let color = Element::Color {
+        color: normalize_color(color),
+        elements: vec![colored],
+    };
+    let trailing = Element::Container(Container::new(
+        ContainerType::Bold,
+        trailing,
+        AttributeMap::new(),
+    ));
+
+    Ok(ParseSuccess::new(
+        vec![color, trailing].into(),
+        errors,
+        colored_safe && trailing_safe,
+    ))
 }
 
 /// Prefix with `#`, if needed.
@@ -93,6 +176,18 @@ fn is_safe_color(color: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    fn render_wikidot(source: &str) -> (String, Vec<ParseError>) {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        (HtmlRender.render(&tree, &page_info, &settings).body, errors)
+    }
 
     #[test]
     fn color_normalization_rejects_css_declaration_breakout() {
@@ -118,6 +213,28 @@ mod tests {
         assert_eq!(
             normalize_color("red&#x3bbackground:url(//x)").as_ref(),
             "inherit"
+        );
+    }
+
+    #[test]
+    fn wikidot_crossed_bold_color_closes_and_reopens_bold() {
+        let (html, errors) = render_wikidot("##orange|**ORANGE##-PRIME:**");
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            "<p><span style=\"color: orange\"><strong>ORANGE</strong></span><strong>-PRIME:</strong></p>",
+        );
+    }
+
+    #[test]
+    fn ordinary_bold_inside_color_is_unchanged() {
+        let (html, errors) = render_wikidot("##orange|before **bold** after##");
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            "<p><span style=\"color: orange\">before <strong>bold</strong> after</span></p>",
         );
     }
 }

@@ -50,7 +50,7 @@
                 "module": "page-tree",
                 "data": {
                     "root": "scp-001",
-                    "show-root": true,
+                    "show-root": false,
                     "depth": null
                 }
             }
@@ -72,7 +72,7 @@
                 "module": "page-tree",
                 "data": {
                     "root": "scp-001",
-                    "show-root": true,
+                    "show-root": false,
                     "depth": 2
                 }
             }
@@ -83,7 +83,7 @@
                 "module": "page-tree",
                 "data": {
                     "root": "system:join",
-                    "show-root": true,
+                    "show-root": false,
                     "depth": 3
                 }
             }

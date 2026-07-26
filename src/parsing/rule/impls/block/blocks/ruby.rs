@@ -220,7 +220,7 @@ mod tests {
     #[test]
     fn ruby_block_converts_text_partials_to_containers() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tokenization = crate::tokenize(
             "[[ruby]]base[[rt class=\"annotation\"]]reading[[/rt]][[/ruby]]",
         );
@@ -255,7 +255,7 @@ mod tests {
     #[test]
     fn ruby_shortcut_parses_and_rejects_bad_arguments() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
 
         let tokenization = crate::tokenize("[[rb base | reading]]");
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();

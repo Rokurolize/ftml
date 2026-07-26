@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use crate::tree::AttributeMap;
 use crate::url::is_url;
 
 pub const BLOCK_IFRAME: BlockRule = BlockRule {
@@ -48,10 +49,61 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
     }
 
+    let attributes = if parser.settings().layout.legacy() && arguments.has_spaced_equals()
+    {
+        AttributeMap::default()
+    } else {
+        arguments.to_attribute_map(parser.settings())
+    };
     let element = Element::Iframe {
         url: std::borrow::Cow::Borrowed(url),
-        attributes: arguments.to_attribute_map(parser.settings()),
+        attributes,
     };
 
-    success_elements(element)
+    ok!(parser.settings().layout.legacy(); element)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn wikidot_iframe_discards_attributes_when_equals_is_spaced() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(
+            r#"[[iframe https://example.com/ id = "my-example" class="iframe" width = "90%"]]"#,
+        );
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &page_info, &settings)
+            .body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            concat!(
+                "<p><iframe src=\"https://example.com/\" align frameborder ",
+                "height scrolling width class style></iframe></p>",
+            ),
+        );
+    }
+
+    #[test]
+    fn wikidot_iframe_keeps_compact_attributes() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization =
+            crate::tokenize(r#"[[iframe https://example.com/ frameborder="0"]]"#);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &page_info, &settings)
+            .body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains("frameborder=\"0\""), "{html}");
+    }
 }

@@ -20,6 +20,7 @@
 
 use super::mapping::get_module_rule_with_name;
 use super::prelude::*;
+use crate::tree::{AnchorTarget, AttributeMap, LinkLabel, LinkLocation, LinkType};
 
 pub const BLOCK_MODULE: BlockRule = BlockRule {
     name: "block-module",
@@ -46,6 +47,9 @@ fn parse_fn<'r, 't>(
     if parser.native_blockquote_depth().is_some() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
+    if parser.settings().layout.legacy() && module_opener_has_leading_space(parser) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     // Get module name and arguments
     let (subname, arguments) = parser.get_head_name_map(&BLOCK_MODULE, in_head)?;
@@ -53,6 +57,9 @@ fn parse_fn<'r, 't>(
     // Get the module rule for this name
     let module_rule = match get_module_rule_with_name(subname) {
         Some(rule) => rule,
+        None if parser.settings().layout.legacy() && arguments.is_empty() => {
+            return ok!(false; wikidot_unknown_module_error(subname));
+        }
         None => return Err(parser.make_err(ParseErrorKind::NoSuchModule)),
     };
 
@@ -70,11 +77,50 @@ fn parse_fn<'r, 't>(
     success_elements_with_paragraph_safety(paragraph_safe, elements, errors)
 }
 
+fn wikidot_unknown_module_error<'t>(name: &'t str) -> Element<'t> {
+    let mut attributes = AttributeMap::new();
+    attributes.insert("class", cow!("error-block"));
+    let emphasized_name = Element::Container(Container::new(
+        ContainerType::Italics,
+        vec![text!(name)],
+        AttributeMap::new(),
+    ));
+    let documentation_link = Element::Link {
+        ltype: LinkType::Direct,
+        link: LinkLocation::Url(cow!("http://www.wikidot.com/doc:modules")),
+        label: LinkLabel::Text(cow!("check available modules")),
+        target: Some(AnchorTarget::NewTab),
+    };
+    Element::Container(Container::new(
+        ContainerType::Div,
+        vec![
+            text!("[[module "),
+            emphasized_name,
+            text!("]] No such module, please "),
+            documentation_link,
+            text!(" and fix this page."),
+        ],
+        attributes,
+    ))
+}
+
+fn module_opener_has_leading_space(parser: &Parser<'_, '_>) -> bool {
+    let head = &parser.full_text().inner()[..parser.current().span.start];
+    head.rfind("[[").is_some_and(|start| {
+        head[start + 2..]
+            .chars()
+            .next()
+            .is_some_and(char::is_whitespace)
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{Element, Module};
 
     #[test]
     fn quoted_module_markers_remain_literal_like_wikidot() {
@@ -102,5 +148,90 @@ mod tests {
             assert!(!debug.contains("Module("), "{input:?}: {debug}");
             assert!(debug.contains("Text(\"module\")"), "{input:?}: {debug}");
         }
+    }
+
+    #[test]
+    fn wikidot_leading_space_module_openers_remain_literal() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        for input in [
+            "[[ module BACKlinks ]]",
+            "[[ module Rate ]]",
+            "[[ module Categories ]]",
+            "[[ module Join ]]",
+            "[[ module PageTree ]]",
+            "[[ module CSS ]]",
+        ] {
+            let tokenization = crate::tokenize(input);
+            let (tree, _errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+
+            let debug = format!("{tree:?}");
+            assert!(!debug.contains("Module("), "{input:?}: {debug}");
+            assert!(debug.contains("Text(\"module\")"), "{input:?}: {debug}");
+        }
+    }
+
+    #[test]
+    fn wikijump_layout_keeps_leading_space_module_extension() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let tokenization = crate::tokenize("[[ module Rate ]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(format!("{tree:?}").contains("Module(Rate)"));
+    }
+
+    #[test]
+    fn wikidot_unknown_module_renders_the_live_error_block() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[module NoSuchModuleWithThisName]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            HtmlRender.render(&tree, &page_info, &settings).body,
+            concat!(
+                r#"<div class="error-block">[[module <em>NoSuchModuleWithThisName</em>]] No such module, please "#,
+                r#"<a href="http://www.wikidot.com/doc:modules" target="_blank">check available modules</a>"#,
+                " and fix this page.</div>",
+            ),
+        );
+    }
+
+    #[test]
+    fn wikijump_unknown_module_remains_literal() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let tokenization = crate::tokenize("[[module NoSuchModuleWithThisName]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(!errors.is_empty());
+        assert_eq!(
+            HtmlRender.render(&tree, &page_info, &settings).body,
+            "<p>[[module NoSuchModuleWithThisName]]</p>",
+        );
+    }
+
+    #[test]
+    fn wikidot_module_failure_fixture_recovers_without_changing_backlinks() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let input = concat!(
+            "[[module NoSuchModuleWithThisName]]\n\n",
+            "[[module backlinks invalid=\"argument\"]]\n\n",
+            "[[module CSS]]",
+        );
+        let tokenization = crate::tokenize(input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(tree.elements.len(), 2);
+        assert!(matches!(
+            &tree.elements[1],
+            Element::Module(Module::Backlinks { page: None }),
+        ));
     }
 }

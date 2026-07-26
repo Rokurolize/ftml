@@ -19,7 +19,7 @@
  */
 
 use super::super::prelude::*;
-use super::mapping::get_block_rule_with_name;
+use super::mapping::{get_block_rule_with_name, get_block_rule_with_name_for_layout};
 
 pub const RULE_BLOCK: Rule = Rule {
     name: "block",
@@ -53,6 +53,7 @@ fn block_star<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
 
 fn block_skip<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
     let current = parser.step()?;
+    let flag_star = current.token == Token::LeftBlockStar;
 
     // See if there's a block upcoming
     let result = parser.evaluate_fn(|parser| {
@@ -65,14 +66,19 @@ fn block_skip<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
         let (name, _) = parser.get_block_name(false)?;
 
         // Get the block rule: if it accepts newlines, then we consume here
-        match get_block_rule_with_name(name) {
+        let block = if parser.discarding_hidden_body() {
+            get_block_rule_with_name(name)
+        } else {
+            get_block_rule_with_name_for_layout(name, parser.settings().layout)
+        };
+        match block {
             Some(block_rule) => Ok(block_rule.accepts_newlines),
             None => Ok(false),
         }
     });
 
     if result {
-        ok!(Elements::None)
+        parse_block(parser, flag_star)
     } else {
         Err(parser.make_err(ParseErrorKind::RuleFailed))
     }
@@ -87,6 +93,8 @@ fn parse_block<'r, 't>(
 where
     'r: 't,
 {
+    let parent_rule = parser.rule();
+
     // Set general rule based on presence of star flag
     parser.set_rule(if flag_star {
         RULE_BLOCK_STAR
@@ -95,6 +103,9 @@ where
     });
 
     // Get block name
+    let spaced_name = parser
+        .look_ahead(0)
+        .is_some_and(|token| token.token == Token::Whitespace);
     parser.get_optional_space()?;
 
     let (name, in_head) = parser.get_block_name(flag_star)?;
@@ -105,10 +116,30 @@ where
     };
 
     // Get the block rule for this name
-    let block = match get_block_rule_with_name(name) {
+    let block = match if parser.discarding_hidden_body() {
+        get_block_rule_with_name(name)
+    } else {
+        get_block_rule_with_name_for_layout(name, parser.settings().layout)
+    } {
         Some(block) => block,
         None => return Err(parser.make_err(ParseErrorKind::NoSuchBlock)),
     };
+    if parser.settings().layout.legacy()
+        && !parser.discarding_hidden_body()
+        && block.name == "block-collapsible"
+        && (spaced_name
+            || parent_rule.name() == "block-collapsible"
+            || parser.in_wikidot_collapsible())
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    if parser.settings().layout.legacy()
+        && !parser.discarding_hidden_body()
+        && block.name == "block-user"
+        && spaced_name
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     // Set block rule for better errors
     parser.set_block(block);

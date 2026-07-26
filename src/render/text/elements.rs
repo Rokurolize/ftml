@@ -394,6 +394,7 @@ fn text_render_skips_non_textual_elements_and_expands_include_variables() {
             Element::BibliographyCite {
                 label: cow!("ref"),
                 brackets: true,
+                inline: false,
             },
             Element::BibliographyBlock {
                 index: 0,

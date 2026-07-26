@@ -43,6 +43,17 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "Code doesn't allow score flag");
     assert_block_name(&BLOCK_CODE, name);
 
+    if parser.settings().layout.legacy() && !parser.discarding_hidden_body() {
+        let head = &parser.full_text().inner()[..parser.current().span.start];
+        if head
+            .rfind("[[")
+            .and_then(|start| head[start + 2..].chars().next())
+            .is_some_and(char::is_whitespace)
+        {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+    }
+
     if parser.native_blockquote_depth().is_some() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
@@ -79,6 +90,7 @@ mod tests {
     use super::*;
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
@@ -106,6 +118,87 @@ mod tests {
             assert_eq!(code_block.language.as_deref(), Some("rust"));
             assert_eq!(code_block.name.as_deref(), Some("sample-heading"));
         }
+    }
+
+    #[test]
+    fn wikidot_code_uses_legacy_plain_and_highlighted_dom() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        for (source, expected) in [
+            (
+                "[[code]]apple[[/code]]",
+                r#"<div class="code"><pre><code>apple</code></pre></div>"#,
+            ),
+            ("[[code]][[/code]]", r#"<div class="code"></div>"#),
+            (
+                "[[code type=\"rust\"]]fn main() {}[[/code]]",
+                r#"<div class="code"><pre><code>fn main() {}</code></pre></div>"#,
+            ),
+            (
+                "[[code type=\"python\"]]import antigravity[[/code]]",
+                r#"<div class="code"><div class="hl-main"><pre><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">antigravity</span></pre></div></div>"#,
+            ),
+        ] {
+            let tokenization = crate::tokenize(source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+            assert!(errors.is_empty(), "{source}: {errors:#?}");
+            assert_eq!(html, expected, "{source}");
+        }
+    }
+
+    #[test]
+    fn wikidot_code_accepts_bare_and_unbalanced_type_values() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        for source in [
+            "[[code type=css]][[/code]]",
+            "[[code type=\"css]][[/code]]",
+            "[[code type=css\"]][[/code]]",
+        ] {
+            let tokenization = crate::tokenize(source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+            assert!(errors.is_empty(), "{source}: {errors:#?}");
+            assert_eq!(html, r#"<div class="code"></div>"#, "{source}");
+        }
+    }
+
+    #[test]
+    fn wikidot_code_followed_by_inline_raw_stays_unwrapped() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[code]]\n====\n[[/code]]\n@@====@@");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            concat!(
+                "<div class=\"code\"><pre><code>====</code></pre></div>",
+                "<br>\n<span style=\"white-space: pre-wrap;\">====</span>",
+            ),
+        );
+    }
+
+    #[test]
+    fn wikidot_spaced_code_opener_stays_literal_without_stealing_the_next_block() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = "[[ code ]]\nNESTED\n[[code]]\n[[/code]]";
+        let tokenization = crate::tokenize(source);
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert_eq!(
+            html,
+            "<p>[[ code ]]<br>\nNESTED</p><div class=\"code\"></div>",
+        );
     }
 
     #[test]

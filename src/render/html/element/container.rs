@@ -65,16 +65,46 @@ pub fn render_container_internal(ctx: &mut HtmlContext, container: &Container) {
         }
     };
 
-    // Add container internals
-    tag.contents(container.elements());
+    if layout.legacy() && matches!(container.ctype(), ContainerType::Header(_)) {
+        if has_wikidot_heading_label_span(container.elements()) {
+            tag.contents(container.elements());
+        } else {
+            tag.inner(|ctx| {
+                ctx.html().span().contents(container.elements());
+            });
+        }
+    } else {
+        tag.contents(container.elements());
+    }
+}
+
+fn has_wikidot_heading_label_span(elements: &[Element]) -> bool {
+    if let [Element::Container(container)] = elements
+        && matches!(container.ctype(), ContainerType::Span | ContainerType::Size)
+    {
+        if container.ctype() == ContainerType::Span
+            && container.attributes().get().is_empty()
+        {
+            true
+        } else {
+            has_wikidot_heading_label_span(container.elements())
+        }
+    } else {
+        false
+    }
 }
 
 pub fn render_color(ctx: &mut HtmlContext, color: &str, elements: &[Element]) {
     debug!("Rendering color container (color '{color}')");
 
+    let style = if ctx.layout().legacy() {
+        format!("color: {color}")
+    } else {
+        format!("color: {color};")
+    };
     ctx.html()
         .span()
-        .attr(attr!("style" => "color: " color ";"))
+        .attr(attr!("style" => &style))
         .inner(|ctx| render_elements(ctx, elements));
 }
 
@@ -144,18 +174,60 @@ fn container_rendering_covers_special_tag_variants() {
 
     let wikidot = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let wikidot_tree = SyntaxTree {
-        elements: vec![Element::Container(Container::new(
-            ContainerType::Align(Alignment::Right),
-            vec![Element::Text(cow!("right"))],
-            AttributeMap::new(),
-        ))],
+        elements: vec![
+            Element::Container(Container::new(
+                ContainerType::Align(Alignment::Right),
+                vec![Element::Text(cow!("right"))],
+                AttributeMap::new(),
+            )),
+            Element::Container(Container::new(
+                ContainerType::Header(Heading {
+                    level: HeadingLevel::Two,
+                    has_toc: true,
+                }),
+                vec![Element::Text(cow!("Heading"))],
+                AttributeMap::new(),
+            )),
+        ],
         ..SyntaxTree::default()
     };
     let wikidot_output = HtmlRender.render(&wikidot_tree, &page_info, &wikidot);
 
     assert_eq!(
         wikidot_output.body,
-        r#"<div style="text-align: right;">right</div>"#
+        r#"<div style="text-align: right;">right</div><h2 id="toc0"><span>Heading</span></h2>"#
+    );
+}
+
+#[test]
+fn wikidot_underline_uses_the_live_span_style_dom() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{AttributeMap, Container, ContainerType, SyntaxTree};
+
+    let page_info = PageInfo::dummy();
+    let tree = SyntaxTree {
+        elements: vec![Element::Container(Container::new(
+            ContainerType::Underline,
+            vec![Element::Text(cow!("underlined"))],
+            AttributeMap::new(),
+        ))],
+        ..SyntaxTree::default()
+    };
+
+    let wikidot = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let wikijump = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+
+    assert_eq!(
+        HtmlRender.render(&tree, &page_info, &wikidot).body,
+        r#"<span style="text-decoration: underline;">underlined</span>"#,
+    );
+    assert_eq!(
+        HtmlRender.render(&tree, &page_info, &wikijump).body,
+        "<u>underlined</u>",
     );
 }
 

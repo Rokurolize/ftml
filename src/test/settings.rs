@@ -74,7 +74,7 @@ fn settings() {
     }
 
     test!("++ H2", "toc0", [true, false, false, false, false]);
-    test!("[[toc]]", "wj-toc", [true, false, false, false, false]);
+    test!("[[toc]]", "id=\"toc\"", [true, true, false, false, true]);
     test!(
         "[[module Rate]]",
         "TODO: module Rate",
@@ -83,7 +83,7 @@ fn settings() {
     test!(
         "[[include-elements page]]",
         "INCLUDED PAGE",
-        [true, true, false, false, true],
+        [false, false, false, false, false],
     );
     test!(
         "[[image /local-file.png]]",

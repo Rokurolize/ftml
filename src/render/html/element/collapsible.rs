@@ -76,41 +76,48 @@ pub fn render_collapsible(ctx: &mut HtmlContext, collapsible: Collapsible) {
         show_bottom,
     );
 
-    let show_text = show_text
-        .unwrap_or_else(|| ctx.handle().get_message(ctx.language(), "collapsible-open"));
-
-    let hide_text = hide_text
-        .unwrap_or_else(|| ctx.handle().get_message(ctx.language(), "collapsible-hide"));
-
     match ctx.layout() {
-        Layout::Wikidot => render_collapsible_wikidot(
-            ctx,
-            elements,
-            attributes,
-            start_open,
-            show_text,
-            hide_text,
-            show_top,
-            show_bottom,
-        ),
-        Layout::Wikijump => render_collapsible_wikijump(
-            ctx,
-            elements,
-            attributes,
-            start_open,
-            show_text,
-            hide_text,
-            show_top,
-            show_bottom,
-        ),
+        Layout::Wikidot => {
+            let show_text = show_text
+                .filter(|text| !text.is_empty())
+                .unwrap_or("+ show block");
+            let hide_text = hide_text
+                .filter(|text| !text.is_empty())
+                .unwrap_or("– hide block");
+            render_collapsible_wikidot(
+                ctx,
+                elements,
+                start_open,
+                show_text,
+                hide_text,
+                show_top,
+                show_bottom,
+            );
+        }
+        Layout::Wikijump => {
+            let show_text = show_text.unwrap_or_else(|| {
+                ctx.handle().get_message(ctx.language(), "collapsible-open")
+            });
+            let hide_text = hide_text.unwrap_or_else(|| {
+                ctx.handle().get_message(ctx.language(), "collapsible-hide")
+            });
+            render_collapsible_wikijump(
+                ctx,
+                elements,
+                attributes,
+                start_open,
+                show_text,
+                hide_text,
+                show_top,
+                show_bottom,
+            );
+        }
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn render_collapsible_wikidot(
     ctx: &mut HtmlContext,
     elements: &[Element],
-    attributes: &AttributeMap,
     start_open: bool,
     show_text: &str,
     hide_text: &str,
@@ -119,10 +126,7 @@ fn render_collapsible_wikidot(
 ) {
     ctx.html()
         .div()
-        .attr(attr!(
-            "class" => "collapsible-block";;
-            attributes,
-        ))
+        .attr(attr!("class" => "collapsible-block"))
         .inner(|ctx| {
             ctx.html()
                 .div()

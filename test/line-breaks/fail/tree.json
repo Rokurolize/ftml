@@ -11,6 +11,9 @@
                         "data": "NONE"
                     },
                     {
+                        "element": "line-break"
+                    },
+                    {
                         "element": "text",
                         "data": "[["
                     },
@@ -42,6 +45,9 @@
                     {
                         "element": "text",
                         "data": "NEGATIVE"
+                    },
+                    {
+                        "element": "line-break"
                     },
                     {
                         "element": "text",
@@ -81,6 +87,9 @@
                         "data": "INVALID"
                     },
                     {
+                        "element": "line-break"
+                    },
+                    {
                         "element": "text",
                         "data": "[["
                     },
@@ -112,6 +121,9 @@
                     {
                         "element": "text",
                         "data": "OVERFLOW"
+                    },
+                    {
+                        "element": "line-break"
                     },
                     {
                         "element": "text",

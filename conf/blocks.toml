@@ -159,7 +159,7 @@ body = "none"
 html-output = "html,iframe"
 
 [image]
-aliases = ["=image", "<image", ">image", "f<image", "f>image"]
+aliases = ["=image", "<image", ">image", "f<image", "f=image", "f>image"]
 head = "value+map"
 body = "none"
 html-attributes = true

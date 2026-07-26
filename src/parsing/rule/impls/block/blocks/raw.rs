@@ -43,7 +43,9 @@ fn parse_fn<'r, 't>(
 
     assert_block_name(&BLOCK_RAW, name);
 
-    if parser.native_blockquote_depth().is_some() {
+    if parser.settings().layout.legacy() && !parser.discarding_hidden_body()
+        || parser.native_blockquote_depth().is_some()
+    {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
@@ -81,9 +83,9 @@ mod tests {
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
-    fn raw_block_preserves_unparsed_multiline_text_without_outer_newlines() {
+    fn raw_block_preserves_unparsed_multiline_text_without_outer_newlines_in_wikijump() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tokenization = crate::tokenize("[[raw]]\n**not bold**\n[[/raw]]");
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
@@ -97,6 +99,16 @@ mod tests {
             panic!("expected one raw element, got {:?}", paragraph.elements());
         };
         assert_eq!(text.as_ref(), "**not bold**");
+    }
+
+    #[test]
+    fn raw_block_markers_remain_literal_in_wikidot() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[raw]]\n**bold**\n[[/raw]]");
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(!format!("{tree:?}").contains("Raw("), "{tree:#?}");
     }
 
     #[test]

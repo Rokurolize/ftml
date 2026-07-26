@@ -45,6 +45,9 @@
                         "data": "NAKED"
                     },
                     {
+                        "element": "line-break"
+                    },
+                    {
                         "element": "text",
                         "data": "[["
                     },

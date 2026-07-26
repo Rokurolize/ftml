@@ -36,7 +36,7 @@ fn render_text_and_html_with_layout_and_errors(
     let page_info = page_info();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
     let mut text = input.to_owned();
-    ftml::preprocess(&mut text);
+    ftml::preprocess_for_layout(&mut text, layout);
     let tokens = ftml::tokenize(&text);
     let result = ftml::parse(&tokens, &page_info, &settings);
     let (tree, errors) = result.into();
@@ -52,7 +52,38 @@ fn render_text_and_html_with_layout_and_errors(
 }
 
 #[test]
-fn wikidot_saved_pages_strip_only_document_leading_ascii_whitespace() {
+fn wikidot_unsupported_inline_block_closer_recovers_as_single_bracket_link() {
+    for (tag, alias, html_tag) in
+        [("super", "superscript", "sup"), ("sub", "subscript", "sub")]
+    {
+        let input = format!(
+            "Aliases: [[{tag}]]{tag}[[/{tag}]] and [[{alias}]]{alias}[[/{alias}]]"
+        );
+        let (_, html) =
+            render_text_and_html_with_layout_and_errors(&input, Layout::Wikidot, true);
+
+        assert_eq!(
+            html,
+            format!(
+                "<p>Aliases: [[{tag}]]{tag}[<a href=\"/{tag}]]\">and [[{alias}</a>]{alias}[[/{alias}]]</p>"
+            ),
+        );
+
+        let (_, html) = render_text_and_html_with_layout(&input, Layout::Wikijump);
+        assert!(
+            html.contains(&format!("<{html_tag}>{tag}</{html_tag}>")),
+            "{html}"
+        );
+        assert!(
+            html.contains(&format!("<{html_tag}>{alias}</{html_tag}>")),
+            "{html}"
+        );
+        assert!(!html.contains(&format!("href=\"/{tag}]]\"")), "{html}");
+    }
+}
+
+#[test]
+fn wikidot_document_leading_indented_quote_remains_literal() {
     // Live sandbox provenance:
     // ftml-oracle-20260712T214547Z/run-quote-indentation and
     // ftml-oracle-20260712T215005Z/run-quote-document-leading-whitespace.
@@ -62,12 +93,35 @@ fn wikidot_saved_pages_strip_only_document_leading_ascii_whitespace() {
     assert!(text.contains("OMEGA_FIRST"), "{text}");
     assert!(text.contains("> OMEGA_SECOND"), "{text}");
     assert!(text.contains("OMEGA_AFTER"), "{text}");
-    assert_eq!(html.matches("<blockquote>").count(), 1, "{html}");
+    assert_eq!(html.matches("<blockquote>").count(), 0, "{html}");
+    assert!(html.contains("&gt; OMEGA_FIRST"), "{html}");
     assert!(html.contains("&gt; OMEGA_SECOND"), "{html}");
 
     let (text, html) = render_text_and_html("[!-- comment --]\n  > OMEGA_AFTER_COMMENT");
     assert!(text.contains("> OMEGA_AFTER_COMMENT"), "{text}");
     assert!(!html.contains("<blockquote>"), "{html}");
+}
+
+#[test]
+fn wikidot_saved_page_list_policy_beats_preview_for_document_leading_indentation() {
+    // Saved-page evidence in
+    // run-native-list-skipped-depth-empty-parent/verdict.json says Wikidot
+    // strips document-leading indentation before list activation. PagePreview
+    // leaves the same marker literal, but imported saved pages are the product
+    // compatibility target.
+    for input in [
+        " * saved-list-item",
+        "                     * saved-list-item",
+    ] {
+        let (text, html) = render_text_and_html(input);
+        assert_eq!(text, "saved-list-item");
+        assert_eq!(html, "<ul>\n<li>saved-list-item</li>\n</ul>");
+    }
+
+    let (text, html) = render_text_and_html(" * orphan\n* root");
+    assert_eq!(text, "orphan\nroot");
+    assert_eq!(html.matches("<ul>").count(), 1);
+    assert_eq!(html.matches("<li>").count(), 2);
 }
 
 #[test]
@@ -152,8 +206,8 @@ fn wikidot_false_quoted_iftags_between_visible_rows_adds_no_blank_row() {
     assert!(text.contains("OMEGA_BEFORE"), "{text}");
     assert!(text.contains("OMEGA_AFTER"), "{text}");
     assert!(!text.contains("OMEGA_HIDDEN"), "{text}");
-    assert!(html.contains("OMEGA_BEFORE<br>OMEGA_AFTER"), "{html}");
-    assert!(!html.contains("<br><br>"), "{html}");
+    assert!(html.contains("OMEGA_BEFORE<br>\nOMEGA_AFTER"), "{html}");
+    assert!(!html.contains("<br>\n<br>"), "{html}");
 }
 
 #[test]
@@ -170,6 +224,10 @@ fn wikidot_empty_native_quote_lines_do_not_create_empty_blockquotes() {
             html.matches("<blockquote>").count(),
             0,
             "{empty_quote:?}: {html}"
+        );
+        assert_eq!(
+            html, "<p>OMEGA_BEGIN</p><p>OMEGA_AFTER</p>",
+            "{empty_quote:?}"
         );
     }
 }
@@ -237,7 +295,7 @@ fn wikidot_empty_native_quote_lines_preserve_surrounding_run_semantics() {
             "{input:?}: {html}"
         );
         assert_eq!(
-            html.contains("OMEGA_A<br>OMEGA_B"),
+            html.contains("OMEGA_A<br>\nOMEGA_B"),
             !separated_paragraphs,
             "{input:?}: {html}"
         );
@@ -255,7 +313,7 @@ fn wikidot_discarded_tight_quote_row_does_not_split_the_active_paragraph() {
     assert!(!text.contains("OMEGA_DROP"), "{text}");
     assert_eq!(html.matches("<blockquote>").count(), 1, "{html}");
     assert_eq!(html.matches("<p>").count(), 1, "{html}");
-    assert!(html.contains("OMEGA_A<br>OMEGA_B"), "{html}");
+    assert!(html.contains("OMEGA_A<br>\nOMEGA_B"), "{html}");
 }
 
 #[test]
@@ -305,7 +363,7 @@ fn wikidot_true_spaced_inner_iftags_preserves_all_three_residual_quote_markers()
     assert_eq!(html.matches("<blockquote>").count(), 1, "{html}");
     assert_eq!(html.matches("&gt;").count(), 3, "{html}");
     assert!(
-        html.contains("&gt;<br>&gt; OMEGA_SPACED_TRUE<br>&gt;</p>"),
+        html.contains("&gt;<br>\n&gt; OMEGA_SPACED_TRUE<br>\n&gt;</p>"),
         "{html}"
     );
 }
@@ -425,10 +483,14 @@ Calibold"#,
     assert!(text.contains("[[iftags +test]]"), "{text}");
     assert!(text.contains("Calibold"), "{text}");
     assert!(html.contains("[[iftags +test]]"), "{html}");
-    assert!(!html.contains("[[div_"), "{html}");
+    assert!(html.contains("[[div_"), "{html}");
     assert!(
-        html.contains(r#"<div class="authorlink-wrapper">Calibold</div>"#),
+        !html.contains(r#"<div class="authorlink-wrapper">"#),
         "{html}"
+    );
+    assert_eq!(
+        html,
+        "<p>[[iftags +test]]<br>\n[[div_ class=&quot;authorlink-wrapper&quot;]]<br>\nCalibold</p>",
     );
 }
 

@@ -110,4 +110,5 @@ pub use self::text::RULE_TEXT;
 pub use self::underline::RULE_UNDERLINE;
 pub use self::underscore_line_break::RULE_UNDERSCORE_LINE_BREAK;
 pub use self::url::RULE_URL;
+pub(crate) use self::url::url_elements;
 pub use self::variable::RULE_VARIABLE;

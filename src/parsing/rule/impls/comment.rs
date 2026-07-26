@@ -34,6 +34,13 @@ fn try_consume_fn<'r, 't>(
     assert_step(parser, Token::LeftComment)?;
 
     loop {
+        if parser.settings().layout.legacy()
+            && parser.discarding_hidden_body()
+            && parser.at_hidden_body_boundary()
+        {
+            return Err(parser.make_err(ParseErrorKind::BlockExpectedEnd));
+        }
+
         let token = parser.current().token;
 
         trace!("Received token '{}' inside comment", token.name());
@@ -66,6 +73,7 @@ mod tests {
     use super::*;
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
@@ -83,5 +91,29 @@ mod tests {
             .try_consume(&mut parser)
             .expect_err("unterminated comment should fail");
         assert_eq!(error.kind(), ParseErrorKind::EndOfInput);
+    }
+
+    #[test]
+    fn wikidot_unterminated_comment_opener_falls_back_with_typographic_dash() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[!-- unfinished");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(!errors.is_empty());
+        assert_eq!(html, "<p>[!\u{2014} unfinished</p>");
+    }
+
+    #[test]
+    fn wikidot_unmatched_comment_closer_falls_back_with_typographic_dash() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("raw-comment --]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(!errors.is_empty());
+        assert_eq!(html, "<p>raw-comment \u{2014}]</p>");
     }
 }

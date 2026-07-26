@@ -32,6 +32,9 @@ document = _{ SOI ~ token* ~ EOI }
 // An individual token
 // Order determines priority (earlier = higher)
 token = _{
+    // Wikidot drops these controls after using them as syntax barriers.
+    discarded_control |
+
     // Raw should have the highest priority
     raw |
     left_raw |
@@ -49,6 +52,7 @@ token = _{
     double_quote |
     escaped_double_quote |
     escaped_backslash |
+    terminal_backslash |
 
     // Special case to handle those pesky "[[[[" and "]]]]"s
     // These are [[[ triple links surrounded by constant [ brackets.
@@ -121,20 +125,27 @@ token = _{
 
 identifier = @{ (ASCII_ALPHANUMERIC | ASCII_DIGIT)+ }
 
+discarded_control = @{
+    '\u{0000}'..'\u{0008}' |
+    '\u{000b}'..'\u{000c}' |
+    '\u{000e}'..'\u{001a}' |
+    '\u{001c}'..'\u{001f}'
+}
+
 email = @{
     // Avoid attempting the scan-to-@ email rule at every punctuation byte.
     // Once an alphanumeric run is seen, `identifier` consumes it if no email follows.
     &(ASCII_ALPHANUMERIC) ~
-    (!(" " | "\t" | "@" | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE) ~ ANY)+ ~
+    (!(" " | "\t" | "%" | "@" | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE | discarded_control) ~ ANY)+ ~
     "@" ~
-    (!(" " | "\t" | "." | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE) ~ ANY)+ ~
+    (!(" " | "\t" | "." | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE | discarded_control) ~ ANY)+ ~
     "." ~
-    (!(" " | "\t" | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE) ~ ANY)+
+    (!(" " | "\t" | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE | discarded_control) ~ ANY)+
 }
 
 url = @{
     (("http" ~ "s"?) | "ftp") ~ "://" ~
-    (!(NEWLINE | " " | "\"" | "|" | "[" | "]" | ">@") ~ ANY)+
+    (!(NEWLINE | " " | "\"" | "|" | "[" | "]" | ">@" | discarded_control) ~ ANY)+
 }
 
 // }}}
@@ -166,10 +177,10 @@ right_link = @{ "]]]" }
 left_parens = @{ "((" }
 right_parens = @{ "))" }
 
-clear_float = @{ "~"{3,} }
-clear_float_left = @{ "~"{3,} ~ "<" }
-clear_float_right = @{ "~"{3,} ~ ">" }
-triple_dash = @{ "-"{3,} }
+clear_float = @{ "~"{4,} }
+clear_float_left = @{ "~"{4,} ~ "<" }
+clear_float_right = @{ "~"{4,} ~ ">" }
+triple_dash = @{ "-"{4,} }
 double_dash = @{ "-"{2} }
 double_tilde = @{ "~"{2} }
 left_double_angle = @{ "<<" }
@@ -225,12 +236,13 @@ variable = @{ "{$" ~ identifier ~ "}" }
 double_quote = @{ "\"" }
 escaped_double_quote = @{ "\\" ~ double_quote }
 escaped_backslash = @{ "\\\\" }
+terminal_backslash = @{ "\\" ~ EOI }
 
 // }}}
 
 // Misc {{{
 
-line_break = @{ NEWLINE }
+line_break = @{ ("\\" ~ "\n") | NEWLINE }
 paragraph_break = @{ NEWLINE{2,} }
 space = @{ (" " | "\t")+ }
 

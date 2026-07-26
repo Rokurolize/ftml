@@ -29,6 +29,35 @@ use std::num::NonZeroUsize;
 #[derive(Debug)]
 pub struct Handle;
 
+/// Resolves whether an internal page reference names an existing page.
+///
+/// FTML performs this lookup synchronously while rendering. Callers backed by
+/// an asynchronous data store should resolve all references in the syntax tree
+/// in advance and provide a resolver over that snapshot.
+pub trait PageExistenceResolver: Send + Sync {
+    fn page_exists(&self, site: &str, page: &str) -> bool;
+}
+
+/// Resolves a parsed user name to its canonical account information.
+///
+/// Callers backed by an asynchronous data store should resolve all user names
+/// in the syntax tree in advance and provide a resolver over that snapshot.
+pub trait UserInfoResolver: Send + Sync {
+    fn user_info(&self, name: &str) -> Option<UserInfo<'static>>;
+}
+
+impl PageExistenceResolver for Handle {
+    fn page_exists(&self, site: &str, page: &str) -> bool {
+        self.get_page_exists(site, page)
+    }
+}
+
+impl UserInfoResolver for Handle {
+    fn user_info(&self, name: &str) -> Option<UserInfo<'static>> {
+        self.get_user_info(name)
+    }
+}
+
 impl Handle {
     pub fn render_module(&self, buffer: &mut String, module: &Module) {
         // Modules only render to HTML
@@ -60,7 +89,7 @@ impl Handle {
         true
     }
 
-    pub fn get_user_info<'a>(&self, name: &'a str) -> Option<UserInfo<'a>> {
+    pub fn get_user_info(&self, name: &str) -> Option<UserInfo<'static>> {
         debug!("Fetching user info (name '{name}')");
 
         if cfg!(test) && name == "missing" {
@@ -68,7 +97,7 @@ impl Handle {
         }
 
         let mut info = UserInfo::dummy();
-        info.user_name = cow!(name);
+        info.user_name = Cow::Owned(name.to_owned());
         info.user_profile_url = Cow::Owned(format!("/user:info/{name}"));
         Some(info)
     }
@@ -88,6 +117,27 @@ impl Handle {
             {
                 warn!("Specified path file source when local paths are disabled");
                 return None;
+            }
+            FileSource::File1 { file }
+                if settings.layout.legacy() && file.starts_with('/') =>
+            {
+                return Some(Cow::Owned(format!(
+                    "https://{}.wjfiles.com/local--files/{}",
+                    info.site,
+                    file.trim_start_matches('/'),
+                )));
+            }
+            FileSource::File1 { file } if settings.layout.legacy() => {
+                let page = match info.category.as_deref() {
+                    Some(category) if category != "_default" => {
+                        format!("{category}:{}", info.page)
+                    }
+                    _ => info.page.to_string(),
+                };
+                return Some(Cow::Owned(format!(
+                    "https://{}.wjfiles.com/local--files/{page}/{file}",
+                    info.site,
+                )));
             }
             FileSource::File1 { file } => (&info.site, &info.page, file),
             FileSource::File2 { page, file } => (&info.site, page, file),
@@ -281,6 +331,23 @@ fn handle_fallbacks_cover_rendering_helpers() {
             )
             .as_deref(),
         Some("https://other-site.wjfiles.com/local--files/third-page/third.png"),
+    );
+
+    let mut legacy_info = PageInfo::dummy();
+    legacy_info.category = Some(cow!("run-owned"));
+    let legacy_settings =
+        WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    assert_eq!(
+        handle
+            .get_file_link(
+                &FileSource::File1 {
+                    file: cow!("local.png"),
+                },
+                &legacy_info,
+                &legacy_settings,
+            )
+            .as_deref(),
+        Some("https://sandbox.wjfiles.com/local--files/run-owned:some-page/local.png"),
     );
 
     settings.allow_local_paths = false;

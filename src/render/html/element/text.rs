@@ -77,6 +77,11 @@ pub fn render_code(ctx: &mut HtmlContext, language: Option<&str>, contents: &str
     let index = ctx.next_code_snippet_index();
     ctx.handle().post_code(index, contents);
 
+    if ctx.layout().legacy() {
+        render_wikidot_code(ctx, language, contents);
+        return;
+    }
+
     let class = {
         let mut class = format!("wj-code wj-language-{}", language.unwrap_or("none"));
         class.make_ascii_lowercase();
@@ -126,4 +131,87 @@ pub fn render_code(ctx: &mut HtmlContext, language: Option<&str>, contents: &str
                 ctx.html().code().contents(contents);
             });
         });
+}
+
+fn render_wikidot_code(ctx: &mut HtmlContext, language: Option<&str>, contents: &str) {
+    ctx.html()
+        .div()
+        .attr(attr!("class" => "code"))
+        .inner(|ctx| {
+            if contents.is_empty() {
+                return;
+            }
+
+            match language {
+                Some("css" | "python" | "java") => {
+                    ctx.html()
+                        .div()
+                        .attr(attr!("class" => "hl-main"))
+                        .inner(|ctx| {
+                            ctx.html().pre().inner(|ctx| {
+                                render_wikidot_highlight(
+                                    ctx,
+                                    language.unwrap(),
+                                    contents,
+                                );
+                            });
+                        });
+                }
+                _ => {
+                    ctx.html().pre().inner(|ctx| {
+                        ctx.html().code().contents(contents);
+                    });
+                }
+            }
+        });
+}
+
+fn render_wikidot_highlight(ctx: &mut HtmlContext, language: &str, contents: &str) {
+    let mut rest = contents;
+    while !rest.is_empty() {
+        let (class, length) = wikidot_highlight_token(language, rest);
+        let (token, next) = rest.split_at(length);
+        ctx.html()
+            .span()
+            .attr(attr!("class" => class))
+            .contents(token);
+        rest = next;
+    }
+}
+
+fn wikidot_highlight_token(language: &str, input: &str) -> (&'static str, usize) {
+    let first = input.as_bytes()[0];
+    if first.is_ascii_whitespace() || first == b';' {
+        let length = input
+            .bytes()
+            .take_while(|byte| byte.is_ascii_whitespace() || *byte == b';')
+            .count();
+        return ("hl-code", length);
+    }
+    if matches!(first, b'{' | b'}') {
+        let length = input
+            .bytes()
+            .take_while(|byte| matches!(byte, b'{' | b'}'))
+            .count();
+        return ("hl-brackets", length);
+    }
+
+    let length = input
+        .bytes()
+        .take_while(|byte| {
+            !byte.is_ascii_whitespace() && !matches!(byte, b'{' | b'}' | b';')
+        })
+        .count();
+    let token = &input[..length];
+    let class = match language {
+        "css" if token.ends_with(':') => "hl-reserved",
+        "css" if token == "none" => "hl-string",
+        "python" if token == "import" => "hl-reserved",
+        "java" if matches!(token, "public" | "abstract" | "interface" | "class") => {
+            "hl-reserved"
+        }
+        "java" if matches!(token, "static" | "final") => "hl-types",
+        _ => "hl-identifier",
+    };
+    (class, length)
 }

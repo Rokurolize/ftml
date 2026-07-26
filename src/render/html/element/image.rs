@@ -49,11 +49,40 @@ pub fn render_image(
 
     match source_url {
         // Found URL
+        Some(url)
+            if ctx.layout() == Layout::Wikidot
+                && ctx.info().page.is_empty()
+                && link.is_none()
+                && alignment.is_none()
+                && attributes.get().is_empty()
+                && matches!(source, FileSource::File1 { file } if !file.starts_with('/')) =>
+        {
+            render_wikidot_preview_image(ctx, &url);
+        }
         Some(url) => render_image_element(ctx, &url, link, alignment, attributes),
 
         // Missing or error
         None => render_image_missing(ctx),
     }
+}
+
+fn render_wikidot_preview_image(ctx: &mut HtmlContext, image_url: &str) {
+    let resized_url = format!(
+        "{}/medium.jpg",
+        image_url.replacen("/local--files/", "/local--resized-images/", 1),
+    );
+    let alt = image_url.rsplit('/').next().unwrap_or("");
+
+    ctx.html()
+        .a()
+        .attr(attr!("href" => image_url))
+        .inner(|ctx| {
+            ctx.html().img().attr(attr!(
+                "src" => &resized_url,
+                "alt" => alt,
+                "class" => "image",
+            ));
+        });
 }
 
 fn render_image_element(
@@ -91,11 +120,30 @@ fn render_image_element_wikidot(
     alignment: Option<FloatAlignment>,
     attributes: &AttributeMap,
 ) {
+    let get = |name| attributes.get().get(name).map(|value| value.as_ref());
+    let default_alt = image_url
+        .split(['?', '#'])
+        .next()
+        .unwrap_or(image_url)
+        .rsplit('/')
+        .next()
+        .unwrap_or("");
+    let alt = get("alt").unwrap_or(default_alt);
+    let class = get("class").unwrap_or("image");
+    let width = get("width");
+    let height = get("height");
+    let title = get("title");
+    let style = get("style");
+
     let build_image = |ctx: &mut HtmlContext| {
         ctx.html().img().attr(attr!(
             "src" => image_url,
-            "class" => "image";;
-            attributes,
+            "width" => width.unwrap_or(""); if width.is_some(),
+            "height" => height.unwrap_or(""); if height.is_some(),
+            "title" => title.unwrap_or(""); if title.is_some(),
+            "style" => style.unwrap_or(""); if style.is_some(),
+            "class" => class,
+            "alt" => alt,
         ));
     };
 
@@ -113,9 +161,14 @@ fn render_image_element_wikidot(
     match alignment {
         None => build_link(ctx),
         Some(align) => {
+            let class = if align.float && align.align == crate::tree::Alignment::Center {
+                str!("image-container")
+            } else {
+                format!("image-container {}", align.wd_html_class())
+            };
             ctx.html()
                 .div()
-                .attr(attr!("class" => "image-container " align.wd_html_class()))
+                .attr(attr!("class" => &class))
                 .inner(build_link);
         }
     }

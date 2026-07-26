@@ -34,6 +34,9 @@ fn parse_fn<'r, 't>(
     debug!("Parsing categories module");
     assert_module_name(&MODULE_CSS, name);
 
+    if parser.settings().layout.legacy() && parser.current().token == Token::InputEnd {
+        return ok!(false; ModuleParseOutput::None);
+    }
     let css = parser.get_body_text(&BLOCK_MODULE)?;
     let element = Element::Style(css);
     success_value(element.into(), Vec::new(), false)
@@ -95,5 +98,32 @@ mod tests {
             repeated.styles,
             vec![independent.styles[0].clone(), independent.styles[0].clone()],
         );
+    }
+
+    #[test]
+    fn wikidot_unclosed_empty_css_module_is_not_displayed() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[module CSS]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let output = HtmlRender.render(&tree, &page_info, &settings);
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(tree.elements.is_empty());
+        assert!(output.body.is_empty());
+        assert!(output.styles.is_empty());
+    }
+
+    #[test]
+    fn wikijump_unclosed_empty_css_module_remains_literal() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let tokenization = crate::tokenize("[[module CSS]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let output = HtmlRender.render(&tree, &page_info, &settings);
+
+        assert!(!errors.is_empty());
+        assert_eq!(output.body, "<p>[[module CSS]]</p>");
+        assert!(output.styles.is_empty());
     }
 }

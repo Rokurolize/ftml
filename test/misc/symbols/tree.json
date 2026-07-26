@@ -91,8 +91,7 @@
                         "data": "/"
                     },
                     {
-                        "element": "text",
-                        "data": "\\"
+                        "element": "line-break"
                     }
                 ]
             }

@@ -20,7 +20,10 @@
 
 use super::prelude::*;
 use crate::parsing::{ParserWrap, strip_newlines};
-use crate::tree::{AcceptsPartial, AttributeMap, ListItem, ListType, PartialElement};
+use crate::tree::{
+    AcceptsPartial, AttributeMap, Container, ContainerType, ListItem, ListType,
+    PartialElement,
+};
 
 // Definitions
 
@@ -91,6 +94,8 @@ fn parse_list_block<'r, 't>(
         list_type.name(),
     );
 
+    let nested = parser.accepts_partial() == AcceptsPartial::ListItem;
+    let wikidot = parser.settings().layout.legacy();
     let parser = &mut ParserWrap::new(parser, AcceptsPartial::ListItem);
 
     assert!(!flag_star, "List block doesn't allow star flag");
@@ -99,6 +104,9 @@ fn parse_list_block<'r, 't>(
     // Get attributes
     let arguments = parser.get_head_map(block_rule, in_head)?;
     let attributes = arguments.to_attribute_map(parser.settings());
+    if parser.settings().layout.legacy() && !parser.has_body_end_block(block_rule) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     // Get body and convert into list form.
     let body = parser.get_body_elements(block_rule, false)?;
@@ -112,8 +120,15 @@ fn parse_list_block<'r, 't>(
         strip_newlines(&mut elements);
     }
 
-    // Empty lists aren't allowed
+    // Wikidot consumes an empty advanced list into a trailing line break.
     if elements.is_empty() {
+        if parser.settings().layout.legacy() {
+            return if nested {
+                ok!(false; Elements::None, errors)
+            } else {
+                ok!(false; Element::LineBreak, errors)
+            };
+        }
         return Err(parser.make_err(ParseErrorKind::ListEmpty));
     }
 
@@ -122,13 +137,22 @@ fn parse_list_block<'r, 't>(
         match element {
             // Ensure all elements of a list are only items, i.e. [[li]].
             Element::Partial(PartialElement::ListItem(list_item)) => {
-                push_literal_list_item(&mut items, &mut literal_elements);
-                items.push(list_item);
+                push_literal_list_item(&mut items, &mut literal_elements, wikidot);
+                if !matches!(&list_item, ListItem::Elements { elements, .. } if elements.is_empty())
+                {
+                    items.push(list_item);
+                }
             }
 
             // Or sub-lists.
             element @ Element::List { .. } => {
-                push_literal_list_item(&mut items, &mut literal_elements);
+                push_literal_list_item(&mut items, &mut literal_elements, wikidot);
+                if parser.settings().layout.legacy()
+                    && let Some(ListItem::Elements { elements, .. }) = items.last_mut()
+                {
+                    elements.push(element);
+                    continue;
+                }
                 let element = Box::new(element);
                 items.push(ListItem::SubList { element });
             }
@@ -142,9 +166,24 @@ fn parse_list_block<'r, 't>(
             element => literal_elements.push(element),
         }
     }
-    push_literal_list_item(&mut items, &mut literal_elements);
+    push_literal_list_item(&mut items, &mut literal_elements, wikidot);
+
+    if wikidot && flag_score {
+        for item in &mut items {
+            if let ListItem::Elements { elements, .. } = item {
+                strip_newlines(elements);
+            }
+        }
+    }
 
     if items.is_empty() {
+        if parser.settings().layout.legacy() {
+            return if nested {
+                ok!(false; Elements::None, errors)
+            } else {
+                ok!(false; Element::LineBreak, errors)
+            };
+        }
         return Err(parser.make_err(ParseErrorKind::ListEmpty));
     }
 
@@ -154,12 +193,17 @@ fn parse_list_block<'r, 't>(
         attributes,
     };
 
-    success_elements_with_paragraph_safety(false, element, errors)
+    if parser.settings().layout.legacy() && !nested && !flag_score {
+        ok!(false; vec![element, Element::LineBreak], errors)
+    } else {
+        success_elements_with_paragraph_safety(false, element, errors)
+    }
 }
 
 fn push_literal_list_item<'t>(
     items: &mut Vec<ListItem<'t>>,
     elements: &mut Vec<Element<'t>>,
+    append_to_last: bool,
 ) {
     while elements.last().is_some_and(Element::is_whitespace) {
         elements.pop();
@@ -168,12 +212,78 @@ fn push_literal_list_item<'t>(
         return;
     }
 
-    let mut attributes = AttributeMap::new();
-    assert!(attributes.insert("style", cow!("list-style: none")));
-    items.push(ListItem::Elements {
-        elements: std::mem::take(elements),
-        attributes,
-    });
+    if append_to_last
+        && let Some(ListItem::Elements {
+            elements: item_elements,
+            ..
+        }) = items.last_mut()
+    {
+        item_elements.append(elements);
+    } else {
+        if append_to_last {
+            wrap_wikidot_malformed_scored_items(elements);
+        }
+        let mut attributes = AttributeMap::new();
+        assert!(attributes.insert("style", cow!("list-style: none")));
+        items.push(ListItem::Elements {
+            elements: std::mem::take(elements),
+            attributes,
+        });
+    }
+}
+
+fn wrap_wikidot_malformed_scored_items(elements: &mut Vec<Element<'_>>) {
+    let mut lines = vec![Vec::new()];
+    for element in std::mem::take(elements) {
+        if element == Element::LineBreak {
+            lines.push(Vec::new());
+        } else {
+            lines.last_mut().unwrap().push(element);
+        }
+    }
+    let line_text = |line: &[Element]| {
+        line.iter()
+            .filter_map(|element| match element {
+                Element::Text(text) => Some(text.as_ref()),
+                _ => None,
+            })
+            .collect::<String>()
+    };
+    if line_text(&lines[0]) != "[[li_]]" {
+        *elements = join_lines(lines);
+        return;
+    }
+    let Some(paragraph_start) = lines
+        .iter()
+        .enumerate()
+        .skip(1)
+        .find_map(|(index, line)| (line_text(line) == "[[li_]]").then_some(index))
+    else {
+        *elements = join_lines(lines);
+        return;
+    };
+
+    let paragraph_lines = lines.split_off(paragraph_start);
+    *elements = join_lines(lines);
+    for line in paragraph_lines {
+        if line.is_empty() {
+            continue;
+        }
+        let paragraph =
+            Container::new(ContainerType::Paragraph, line, AttributeMap::new());
+        elements.push(Element::Container(paragraph));
+    }
+}
+
+fn join_lines<'t>(lines: Vec<Vec<Element<'t>>>) -> Vec<Element<'t>> {
+    let mut elements = Vec::new();
+    for (index, line) in lines.into_iter().enumerate() {
+        if index > 0 {
+            elements.push(Element::LineBreak);
+        }
+        elements.extend(line);
+    }
+    elements
 }
 
 // List item
@@ -186,20 +296,47 @@ fn parse_list_item<'r, 't>(
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("List item block: name={name}, in_head={in_head}, score={flag_score}");
+    let wikidot = parser.settings().layout.legacy();
     assert!(!flag_star, "List item block doesn't allow star flag");
     assert_block_name(&BLOCK_LI, name);
+    if flag_score && wikidot {
+        return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
+    }
 
     // Get attributes
     let arguments = parser.get_head_map(&BLOCK_LI, in_head)?;
     let attributes = arguments.to_attribute_map(parser.settings());
+    let body_start = parser.current().span.start;
+    if wikidot && !parser.has_body_end_block(&BLOCK_LI) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     // Get body elements
     let body = parser.get_body_elements(&BLOCK_LI, false)?;
+    let source_end = parser.current().span.start;
     let (mut elements, errors, _) = body.into();
 
     // "li_" strips outer newlines and paragraph breaks.
     if flag_score {
         strip_newlines(&mut elements);
+    }
+    if wikidot {
+        let source = &parser.full_text().inner()[body_start..source_end];
+        let body = source
+            .to_ascii_lowercase()
+            .rfind("[[/li")
+            .map(|index| &source[..index])
+            .unwrap_or(source);
+        if body.starts_with("\n\n") || body.ends_with("\n\n") {
+            strip_newlines(&mut elements);
+        } else if body.ends_with('\n')
+            && !matches!(elements.last(), Some(Element::LineBreak))
+        {
+            elements.push(Element::LineBreak);
+        }
+        while matches!(elements.last(), Some(Element::Text(text)) if text == " ") {
+            elements.pop();
+        }
     }
 
     let element = Element::Partial(PartialElement::ListItem(ListItem::Elements {
@@ -216,14 +353,23 @@ mod tests {
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::parsing::ParseError;
+    use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
 
     fn with_parse<R>(
         source: &str,
         check: impl for<'t> FnOnce(Vec<Element<'t>>, Vec<ParseError>) -> R,
     ) -> R {
+        with_parse_layout(source, Layout::Wikidot, check)
+    }
+
+    fn with_parse_layout<R>(
+        source: &str,
+        layout: Layout,
+        check: impl for<'t> FnOnce(Vec<Element<'t>>, Vec<ParseError>) -> R,
+    ) -> R {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
         let tokenization = crate::tokenize(source);
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
@@ -241,6 +387,23 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_top_level_list_item_remains_an_unwrapped_literal_block() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[li]]\nBaz\n[[/li]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.kind() == ParseErrorKind::ListItemOutsideList),
+            "{errors:?}",
+        );
+        assert_eq!(html, "[[li]]<br>\nBaz<br>\n[[/li]]");
+    }
+
+    #[test]
     fn unordered_block_list_preserves_attributes_and_items() {
         with_parse(
             r#"[[ul class="menu"]]
@@ -255,6 +418,7 @@ mod tests {
                         attributes,
                         items,
                     },
+                    Element::LineBreak,
                 ] = tree.as_slice()
                 else {
                     panic!("expected one unordered list, got {tree:?}");
@@ -299,25 +463,27 @@ mod tests {
 [[/ol]]"#,
             |tree, errors| {
                 assert!(errors.is_empty(), "{errors:?}");
-                let [Element::List { ltype, items, .. }] = tree.as_slice() else {
+                let [Element::List { ltype, items, .. }, Element::LineBreak] =
+                    tree.as_slice()
+                else {
                     panic!("expected one ordered list, got {tree:?}");
                 };
 
                 assert_eq!(*ltype, ListType::Numbered);
-                assert_eq!(items.len(), 2);
+                assert_eq!(items.len(), 1);
                 let ListItem::Elements { elements, .. } = &items[0] else {
                     panic!("expected parent item, got {:?}", items[0]);
                 };
                 assert_eq!(element_text(elements), "Parent");
 
-                let ListItem::SubList { element } = &items[1] else {
-                    panic!("expected nested sublist item, got {:?}", items[1]);
+                let Some(element @ Element::List { .. }) = elements.last() else {
+                    panic!("expected nested sublist in parent item, got {elements:?}");
                 };
                 let Element::List {
                     ltype,
                     attributes,
                     items,
-                } = element.as_ref()
+                } = element
                 else {
                     panic!("expected nested list element, got {element:?}");
                 };
@@ -333,10 +499,10 @@ mod tests {
     }
 
     #[test]
-    fn scored_block_and_item_strip_outer_line_breaks() {
+    fn scored_block_strips_outer_line_breaks() {
         with_parse(
             r#"[[ul_]]
-[[li_]]
+[[li]]
 Alpha
 [[/li]]
 [[/ul]]"#,
@@ -360,45 +526,26 @@ Alpha
     }
 
     #[test]
-    fn block_list_rejects_empty_body() {
-        with_parse("[[ul]][[/ul]]", |_tree, errors| {
-            assert!(
-                errors
-                    .iter()
-                    .any(|error| error.kind() == ParseErrorKind::ListEmpty)
-            );
-        });
-
-        with_parse("[[ul]]\n[[/ul]]", |_tree, errors| {
-            assert!(
-                errors
-                    .iter()
-                    .any(|error| error.kind() == ParseErrorKind::ListEmpty)
-            );
-        });
-
-        with_parse("[[ul]]   [[/ul]]", |_tree, errors| {
-            assert!(
-                errors
-                    .iter()
-                    .any(|error| error.kind() == ParseErrorKind::ListEmpty)
-            );
-        });
-
-        with_parse("[[ul]]\n \n[[/ul]]", |_tree, errors| {
-            assert!(
-                errors
-                    .iter()
-                    .any(|error| error.kind() == ParseErrorKind::ListEmpty)
-            );
-        });
+    fn empty_block_list_becomes_a_trailing_line_break_like_wikidot() {
+        for input in [
+            "[[ul]][[/ul]]",
+            "[[ul]]\n[[/ul]]",
+            "[[ul]]   [[/ul]]",
+            "[[ul]]\n \n[[/ul]]",
+        ] {
+            with_parse(input, |tree, errors| {
+                assert!(errors.is_empty(), "{input:?}: {errors:?}");
+                assert_eq!(tree, [Element::LineBreak], "{input:?}");
+            });
+        }
     }
 
     #[test]
     fn block_list_wraps_bare_body_like_wikidot() {
         with_parse("[[ul]]_[[/ul]]", |tree, errors| {
             assert!(errors.is_empty(), "{errors:#?}");
-            let [Element::List { items, .. }] = tree.as_slice() else {
+            let [Element::List { items, .. }, Element::LineBreak] = tree.as_slice()
+            else {
                 panic!("expected one list, got {tree:?}");
             };
             let [
@@ -415,6 +562,167 @@ Alpha
                 attributes.get().get("style").map(|value| value.as_ref()),
                 Some("list-style: none"),
             );
+        });
+    }
+
+    #[test]
+    fn wikidot_rejects_spaced_and_scored_list_closers() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        for input in [
+            "[[ul]]\n[[li]]spaced[[/li ]]\n[[/ul ]]",
+            "[[ul_]]\n[[li_]]\ntext\n[[/li_]]\n[[/ul_]]",
+        ] {
+            let tokenization = crate::tokenize(input);
+            let (tree, _errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+            assert!(!html.contains("<ul>"), "{input:?}: {html}");
+            assert!(html.contains("[[ul"), "{input:?}: {html}");
+        }
+    }
+
+    #[test]
+    fn malformed_scored_items_are_literal_only_in_wikidot_layout() {
+        let source = concat!(
+            "[[ul]]\n\n",
+            "[[li_]]\nALPHA\n[[/li]]\n\n",
+            "[[li_]]\n\nBETA\n\n[[/li]]\n",
+            "[[li]]GAMMA[[/li]]\n\n",
+            "[[li_]] DELTA [[/li]]\n\n",
+            "[[/ul]]",
+        );
+
+        with_parse_layout(source, Layout::Wikidot, |tree, errors| {
+            assert!(!errors.is_empty());
+            let [Element::List { items, .. }, Element::LineBreak] = tree.as_slice()
+            else {
+                panic!("expected Wikidot list and trailing break, got {tree:?}");
+            };
+            let [
+                ListItem::Elements {
+                    elements: malformed,
+                    attributes,
+                },
+                ListItem::Elements {
+                    elements: gamma, ..
+                },
+            ] = items.as_slice()
+            else {
+                panic!("expected two Wikidot items, got {items:?}");
+            };
+            assert_eq!(
+                attributes.get().get("style").map(|value| value.as_ref()),
+                Some("list-style: none"),
+            );
+            assert_eq!(
+                malformed
+                    .iter()
+                    .filter(|element| {
+                        matches!(
+                            element,
+                            Element::Container(container)
+                                if container.ctype() == ContainerType::Paragraph
+                        )
+                    })
+                    .count(),
+                3,
+            );
+            assert_eq!(element_text(gamma), "GAMMA[[li_]] DELTA [[/li]]");
+        });
+
+        with_parse_layout(source, Layout::Wikijump, |tree, errors| {
+            assert!(errors.is_empty(), "{errors:?}");
+            let [Element::List { items, .. }] = tree.as_slice() else {
+                panic!("expected one Wikijump list, got {tree:?}");
+            };
+            assert_eq!(items.len(), 4);
+            let text: Vec<_> = items
+                .iter()
+                .map(|item| match item {
+                    ListItem::Elements { elements, .. } => element_text(elements),
+                    ListItem::SubList { .. } => panic!("unexpected sublist"),
+                })
+                .collect();
+            assert_eq!(text, ["ALPHA", "BETA", "GAMMA", "DELTA "]);
+        });
+    }
+
+    #[test]
+    fn multiline_item_newline_policy_is_wikidot_only() {
+        let source = concat!(
+            "[[ol]]\n",
+            "[[li]]\nALPHA\n[[/li]]\n",
+            "[[li]]\n\nBETA\n\n[[/li]]\n",
+            "[[/ol]]",
+        );
+
+        with_parse_layout(source, Layout::Wikidot, |tree, errors| {
+            assert!(errors.is_empty(), "{errors:?}");
+            let [Element::List { items, .. }, Element::LineBreak] = tree.as_slice()
+            else {
+                panic!("expected Wikidot list and trailing break, got {tree:?}");
+            };
+            let [
+                ListItem::Elements {
+                    elements: alpha, ..
+                },
+                ListItem::Elements { elements: beta, .. },
+            ] = items.as_slice()
+            else {
+                panic!("expected two Wikidot items, got {items:?}");
+            };
+            assert_eq!(alpha, &[text!("ALPHA"), Element::LineBreak]);
+            assert_eq!(beta, &[text!("BETA")]);
+        });
+
+        with_parse_layout(source, Layout::Wikijump, |tree, errors| {
+            assert!(errors.is_empty(), "{errors:?}");
+            let [Element::List { items, .. }] = tree.as_slice() else {
+                panic!("expected one Wikijump list, got {tree:?}");
+            };
+            let [
+                ListItem::Elements {
+                    elements: alpha, ..
+                },
+                ListItem::Elements { elements: beta, .. },
+            ] = items.as_slice()
+            else {
+                panic!("expected two Wikijump items, got {items:?}");
+            };
+            assert_eq!(alpha, &[text!("ALPHA")]);
+            assert_eq!(
+                beta,
+                &[Element::LineBreak, text!("BETA"), Element::LineBreak],
+            );
+        });
+    }
+
+    #[test]
+    fn nested_list_attachment_is_wikidot_only() {
+        let source = "[[ol]][[li]]Parent[[/li]][[ul]][[li]]Child[[/li]][[/ul]][[/ol]]";
+
+        with_parse_layout(source, Layout::Wikidot, |tree, errors| {
+            assert!(errors.is_empty(), "{errors:?}");
+            let [Element::List { items, .. }, Element::LineBreak] = tree.as_slice()
+            else {
+                panic!("expected Wikidot list and trailing break, got {tree:?}");
+            };
+            let [ListItem::Elements { elements, .. }] = items.as_slice() else {
+                panic!("expected one Wikidot parent item, got {items:?}");
+            };
+            assert!(matches!(elements.last(), Some(Element::List { .. })));
+        });
+
+        with_parse_layout(source, Layout::Wikijump, |tree, errors| {
+            assert!(errors.is_empty(), "{errors:?}");
+            let [Element::List { items, .. }] = tree.as_slice() else {
+                panic!("expected one Wikijump list, got {tree:?}");
+            };
+            assert!(matches!(
+                items.as_slice(),
+                [ListItem::Elements { .. }, ListItem::SubList { .. }]
+            ));
         });
     }
 }

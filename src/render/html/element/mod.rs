@@ -193,15 +193,17 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         }
         Element::Footnote => render_footnote(ctx),
         Element::FootnoteBlock { title, hide } => {
-            if !(*hide || ctx.footnotes().is_empty()) {
+            if (ctx.layout().legacy() || !*hide) && !ctx.footnotes().is_empty() {
                 render_footnote_block(ctx, ref_cow!(title));
             }
         }
-        Element::BibliographyCite { label, brackets } => {
-            render_bibcite(ctx, label, *brackets)
-        }
+        Element::BibliographyCite {
+            label,
+            brackets,
+            inline,
+        } => render_bibcite(ctx, label, *brackets, *inline),
         Element::BibliographyBlock { index, title, hide } => {
-            if !*hide {
+            if ctx.layout().legacy() || !*hide {
                 if let Some(bibliography) = ctx.get_bibliography(*index) {
                     let title = title.ref_map(|s| s.as_ref());
                     render_bibliography(ctx, title, *index, bibliography);
@@ -247,13 +249,11 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
             ..
         } => render_include(ctx, location, variables, elements),
         Element::Style(css) => render_style(ctx, css),
-        Element::LineBreak => {
-            ctx.html().br();
-        }
+        Element::LineBreak => render_line_break(ctx),
         Element::LineBreaks(amount) => {
             let amount = amount.get();
             for _ in 0..amount {
-                ctx.html().br();
+                render_line_break(ctx);
             }
         }
         Element::ClearFloat(clear_float) => render_clear_float(ctx, *clear_float),
@@ -261,6 +261,13 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
             ctx.html().hr();
         }
         Element::Partial(partial) => render_partial(ctx, partial),
+    }
+}
+
+fn render_line_break(ctx: &mut HtmlContext) {
+    ctx.html().br();
+    if ctx.layout().legacy() {
+        ctx.push_raw('\n');
     }
 }
 
@@ -287,6 +294,24 @@ fn html_render_tolerates_partial_elements() {
 
     let output = HtmlRender.render(&tree, &page_info, &settings);
     assert!(output.body.contains("partial"));
+}
+
+#[test]
+fn wikidot_layout_preserves_the_text_node_after_a_line_break() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize("A\nB");
+    let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+    assert!(errors.is_empty(), "{errors:?}");
+
+    let output = HtmlRender.render(&tree, &page_info, &settings);
+    assert_eq!(output.body, "<p>A<br>\nB</p>");
 }
 
 fn render_partial(ctx: &mut HtmlContext, partial: &PartialElement) {

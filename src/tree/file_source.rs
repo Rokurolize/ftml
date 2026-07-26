@@ -78,6 +78,28 @@ impl<'t> FileSource<'t> {
         Some(source)
     }
 
+    pub fn parse_wikidot(source: &'t str) -> Option<FileSource<'t>> {
+        if is_url(source) || source.starts_with("/local--files/") {
+            return Some(FileSource::Url(cow!(source)));
+        }
+
+        if source.starts_with('/') && !source[1..].contains('/') {
+            return Some(FileSource::File1 { file: cow!(source) });
+        }
+
+        let source = source.strip_prefix('/').unwrap_or(source);
+        match source.rsplit_once('/') {
+            Some((page, file)) if !page.is_empty() && !file.is_empty() => {
+                Some(FileSource::File2 {
+                    page: cow!(page),
+                    file: cow!(file),
+                })
+            }
+            None if !source.is_empty() => Some(FileSource::File1 { file: cow!(source) }),
+            _ => None,
+        }
+    }
+
     #[inline]
     pub fn name(&self) -> &'static str {
         self.into()
@@ -148,5 +170,22 @@ mod tests {
     #[test]
     fn rejects_unknown_deeper_path_shapes() {
         assert_eq!(FileSource::parse("site/page/assets/image.png"), None);
+        assert_eq!(
+            FileSource::parse_wikidot("site/page/assets/image.png"),
+            Some(FileSource::File2 {
+                page: cow!("site/page/assets"),
+                file: cow!("image.png"),
+            }),
+        );
+        assert_eq!(
+            FileSource::parse_wikidot("/local--files/page/image.png"),
+            Some(FileSource::Url(cow!("/local--files/page/image.png"))),
+        );
+        assert_eq!(
+            FileSource::parse_wikidot("/image.png"),
+            Some(FileSource::File1 {
+                file: cow!("/image.png"),
+            }),
+        );
     }
 }

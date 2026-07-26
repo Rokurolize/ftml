@@ -57,7 +57,7 @@ mod tests {
     #[test]
     fn equation_reference_parses_name_and_requires_argument() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
 
         let tokenization = crate::tokenize("[[eqref theorem-one]]");
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();

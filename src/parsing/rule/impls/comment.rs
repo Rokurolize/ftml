@@ -104,4 +104,16 @@ mod tests {
         assert!(!errors.is_empty());
         assert_eq!(html, "<p>[!\u{2014} unfinished</p>");
     }
+
+    #[test]
+    fn wikidot_unmatched_comment_closer_falls_back_with_typographic_dash() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("raw-comment --]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(!errors.is_empty());
+        assert_eq!(html, "<p>raw-comment \u{2014}]</p>");
+    }
 }

@@ -352,6 +352,22 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_html_block_starts_a_new_paragraph() {
+        assert_eq!(
+            render_wikidot(
+                "before\n[[html]]\n<b>first</b>\n[[/html]]\nmiddle\n[[html]]\n<b>second</b>\n[[/html]]\nafter",
+            ),
+            concat!(
+                "<p>before</p>",
+                "<p><iframe src=\"https://example.com/\" allowtransparency=\"true\" frameborder=\"0\" class=\"html-block-iframe\"></iframe><br>\n",
+                "middle</p>",
+                "<p><iframe src=\"https://example.com/\" allowtransparency=\"true\" frameborder=\"0\" class=\"html-block-iframe\"></iframe><br>\n",
+                "after</p>",
+            ),
+        );
+    }
+
+    #[test]
     fn hidden_boundary_propagates_a_mismatched_child_close_error() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);

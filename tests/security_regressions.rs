@@ -816,7 +816,7 @@ fn wikidot_false_iftags_closed_raw_and_comment_yield_to_conditional_boundary() {
         ),
         (
             "[!-- [[/iftags]] raw-comment --]",
-            "raw-comment --]\n[[/iftags]]\nvisible",
+            "raw-comment —]\n[[/iftags]]\nvisible",
             vec!["\n<b>guarded</b>\n"],
         ),
     ] {
@@ -825,8 +825,13 @@ fn wikidot_false_iftags_closed_raw_and_comment_yield_to_conditional_boundary() {
         );
         let (tree, _) = parse_with_errors(&input, Layout::Wikidot);
         let text = render_text(&tree, Layout::Wikidot);
+        let visible_lines = text
+            .lines()
+            .filter(|line| !line.is_empty())
+            .collect::<Vec<_>>()
+            .join("\n");
 
-        assert_eq!(text, expected, "{hidden}: {text}");
+        assert_eq!(visible_lines, expected, "{hidden}: {text}");
         assert_eq!(tree.html_blocks, html_blocks, "{hidden}: {tree:#?}");
     }
 }

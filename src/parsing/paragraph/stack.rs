@@ -208,6 +208,7 @@ impl<'t> ParagraphStack<'t> {
                 ..
             }
         );
+        let wikidot_html_block = self.wikidot && matches!(element, Element::Html { .. });
 
         if self.wikidot
             && matches!(element, Element::DefinitionList(_))
@@ -238,7 +239,10 @@ impl<'t> ParagraphStack<'t> {
             self.mark_wikidot_tabview_boundary();
         }
 
-        if aligned_image {
+        if wikidot_html_block {
+            self.end_paragraph();
+            self.current.push(element);
+        } else if aligned_image {
             self.end_paragraph();
             self.finished.push(element);
         } else if unaligned_image {

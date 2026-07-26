@@ -21,6 +21,7 @@
 use super::prelude::*;
 use crate::parsing::rule::impls::block::parser::BlockBodyStart;
 use crate::tree::AcceptsPartial;
+use std::borrow::Cow;
 
 pub const BLOCK_DIV: BlockRule = BlockRule {
     name: "block-div",
@@ -224,6 +225,9 @@ fn parse_fn<'r, 't>(
             true
         });
     } else if parser.settings().layout.legacy() {
+        if matches!(elements.last(), Some(Element::LineBreak)) {
+            elements.pop();
+        }
         let mut cleaned = Vec::with_capacity(elements.len());
         for element in elements.drain(..) {
             let line_break_after_div =
@@ -258,11 +262,15 @@ fn parse_fn<'r, 't>(
     }
 
     // Build element and return
-    let element = Element::Container(Container::new(
-        ContainerType::Div,
-        elements,
-        arguments.to_attribute_map(parser.settings()),
-    ));
+    let mut attributes = arguments.to_attribute_map(parser.settings());
+    if parser.settings().layout.legacy()
+        && let Some(class) = attributes.remove("class")
+    {
+        let class = class.trim_end_matches([' ', '\t']).to_owned();
+        attributes.insert("class", Cow::Owned(class));
+    }
+    let element =
+        Element::Container(Container::new(ContainerType::Div, elements, attributes));
 
     ok!(element, errors)
 }
@@ -274,6 +282,50 @@ mod tests {
     use crate::parsing::ParseErrorKind;
     use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
+
+    fn render(input: &str, layout: Layout) -> String {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
+        let tokenization = crate::tokenize(input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:#?}");
+        HtmlRender.render(&tree, &page_info, &settings).body
+    }
+
+    #[test]
+    fn wikidot_div_trims_trailing_class_whitespace_only_in_legacy_layout() {
+        let input = "[[div class=\"box \"]]\nbody\n[[/div]]";
+
+        assert_eq!(
+            render(input, Layout::Wikidot),
+            "<div class=\"box\"><p>body</p></div>",
+        );
+        assert_eq!(
+            render(input, Layout::Wikijump),
+            "<div class=\"box \"><p>body</p></div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_div_drops_the_terminal_break_after_a_nested_list() {
+        let input = concat!(
+            "[[div id=\"fruit\" class=\"box\"]]\n",
+            "  [[ul]]\n",
+            "    [[li]] 1  [[/li]]\n",
+            "    [[li]] 2  [[/li]]\n",
+            "  [[/ul]]\n",
+            "[[/div]]",
+        );
+
+        assert_eq!(
+            render(input, Layout::Wikidot),
+            "<div class=\"box\" id=\"u-fruit\"><ul>\n<li>1</li>\n<li>2</li>\n</ul></div>",
+        );
+        assert_eq!(
+            render(input, Layout::Wikijump),
+            "<div class=\"box\" id=\"fruit\"><ul><li>1 </li><li>2 </li></ul></div>",
+        );
+    }
 
     #[test]
     fn quoted_multiline_div_with_quoted_close_remains_native_and_bounded() {

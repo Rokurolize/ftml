@@ -1,0 +1,126 @@
+INCLUDED PAGE
+
+
+INCLUDED PAGE
+
+
+OFF-SITE INCLUDED PAGE
+
+
+
+
+[[div id="fruit" class="box"]]
+  [[ul]]
+    [[li]] 1  [[/li]]
+    [[li]] 2  [[/li]]
+  [[/ul]]
+[[/div]]
+
+
+
+
+[[div id="fruit" class="box"]]
+  [[ul]]
+    [[li]] 1  [[/li]]
+    [[li]] 2 [[/li]]
+  [[/ul]]
+[[/div]]
+
+
+
+
+[[div id="fruit" class="box "]]
+  [[ul]]
+    [[li]] 1  [[/li]]
+    [[li]] 2  [[/li]]
+  [[/ul]]
+[[/div]]
+
+
+
+
+[[div id="fruit" class="box "]]
+  [[ul]]
+    [[li]] 1  [[/li]]
+    [[li]] 2 [[/li]]
+  [[/ul]]
+[[/div]]
+
+
+
+apple
+
+
+[[div id="fruit" class="box "]]
+  [[ul]]
+    [[li]] 1  [[/li]]
+    [[li]] 2  [[/li]]
+  [[/ul]]
+[[/div]]
+
+
+
+
+
+[[div id="fruit" class="box "]]
+  [[ul]]
+    [[li]] 1  [[/li]]
+    [[li]] 2 [[/li]]
+  [[/ul]]
+[[/div]]
+
+
+
+
+[[div id="fruit" class="box "]]
+  [[ul]]
+    [[li]] 1  [[/li]]
+    [[li]] 2  [[/li]]
+  [[/ul]]
+[[/div]]
+
+
+
+
+[[div id="fruit" class="box "]]
+  [[ul]]
+    [[li]] 1  [[/li]]
+    [[li]] 2 [[/li]]
+  [[/ul]]
+[[/div]]
+
+
+
+
+[[div id="fruit" class="box "]]
+  [[ul]]
+    [[li]] 1  [[/li]]
+    [[li]] 2 [[/li]]
+  [[/ul]]
+[[/div]]
+
+
+cherry
+
+
+
+
+[[div id="fruit" class="box"]]
+  [[ul]]
+    [[li]] 1  [[/li]]
+    [[li]] 2 [[/li]]
+  [[/ul]]
+[[/div]]
+
+
+
+banana
+
+
+
+[[div id="fruit" class="{$class}"]]
+  [[ul]]
+    [[li]] {$apple} [[/li]]
+    [[li]] {$banana} [[/li]]
+  [[/ul]]
+[[/div]]

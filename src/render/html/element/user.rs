@@ -48,6 +48,10 @@ fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
                 "WIKIDOT.page.listeners.userInfo({}); return false;",
                 user_info.user_id,
             );
+            let wikidot_karma_style = format!(
+                "background-image:url(http://www.wikidot.com/userkarma.php?u={})",
+                user_info.user_id,
+            );
 
             ctx.html()
                 .span()
@@ -62,14 +66,12 @@ fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
                                 "onclick" => &wikidot_onclick,
                             ))
                             .inner(|ctx| {
-                                ctx.html()
-                                    .img()
-                                    .attr(attr!(
-                                        "class" => "small",
-                                        "src" => &user_avatar_src,
-                                        "alt" => &user_info.user_name,
-                                        "style" => handle.get_karma_style(user_info.user_karma),
-                                    ));
+                                ctx.html().img().attr(attr!(
+                                    "class" => "small",
+                                    "src" => &user_avatar_src,
+                                    "alt" => &user_info.user_name,
+                                    "style" => &wikidot_karma_style,
+                                ));
                             });
                     }
 

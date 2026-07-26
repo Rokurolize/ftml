@@ -46,6 +46,9 @@ fn parse_fn<'r, 't>(
     if parser.native_blockquote_depth().is_some() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
+    if parser.settings().layout.legacy() && module_opener_has_leading_space(parser) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     // Get module name and arguments
     let (subname, arguments) = parser.get_head_name_map(&BLOCK_MODULE, in_head)?;
@@ -68,6 +71,16 @@ fn parse_fn<'r, 't>(
     let (elements, errors, paragraph_safe) = output.into();
 
     success_elements_with_paragraph_safety(paragraph_safe, elements, errors)
+}
+
+fn module_opener_has_leading_space(parser: &Parser<'_, '_>) -> bool {
+    let head = &parser.full_text().inner()[..parser.current().span.start];
+    head.rfind("[[").is_some_and(|start| {
+        head[start + 2..]
+            .chars()
+            .next()
+            .is_some_and(char::is_whitespace)
+    })
 }
 
 #[cfg(test)]
@@ -102,5 +115,38 @@ mod tests {
             assert!(!debug.contains("Module("), "{input:?}: {debug}");
             assert!(debug.contains("Text(\"module\")"), "{input:?}: {debug}");
         }
+    }
+
+    #[test]
+    fn wikidot_leading_space_module_openers_remain_literal() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        for input in [
+            "[[ module BACKlinks ]]",
+            "[[ module Rate ]]",
+            "[[ module Categories ]]",
+            "[[ module Join ]]",
+            "[[ module PageTree ]]",
+            "[[ module CSS ]]",
+        ] {
+            let tokenization = crate::tokenize(input);
+            let (tree, _errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+
+            let debug = format!("{tree:?}");
+            assert!(!debug.contains("Module("), "{input:?}: {debug}");
+            assert!(debug.contains("Text(\"module\")"), "{input:?}: {debug}");
+        }
+    }
+
+    #[test]
+    fn wikijump_layout_keeps_leading_space_module_extension() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let tokenization = crate::tokenize("[[ module Rate ]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(format!("{tree:?}").contains("Module(Rate)"));
     }
 }

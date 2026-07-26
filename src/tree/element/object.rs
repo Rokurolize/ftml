@@ -107,7 +107,7 @@ pub enum Element<'t> {
         target: Option<AnchorTarget>,
     },
 
-    /// A link to a file attached to the current wiki page.
+    /// A link to a file attached to the current or another wiki page.
     FileLink {
         file: Cow<'t, str>,
         label: Cow<'t, str>,

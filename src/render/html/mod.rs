@@ -55,6 +55,16 @@ impl HtmlRender {
         self.render_with_resolvers(tree, page_info, settings, page_existence, &Handle)
     }
 
+    pub fn render_with_user_info(
+        &self,
+        tree: &SyntaxTree,
+        page_info: &PageInfo,
+        settings: &WikitextSettings,
+        user_info: &dyn UserInfoResolver,
+    ) -> HtmlOutput {
+        self.render_with_resolvers(tree, page_info, settings, &Handle, user_info)
+    }
+
     pub fn render_with_resolvers(
         &self,
         tree: &SyntaxTree,

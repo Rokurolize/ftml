@@ -28,7 +28,7 @@ use crate::data::{Backlinks, PageInfo};
 use crate::info;
 use crate::layout::Layout;
 use crate::next_index::{Incrementer, NextIndex, TableOfContentsIndex};
-use crate::render::{Handle, PageExistenceResolver};
+use crate::render::{Handle, PageExistenceResolver, UserInfoResolver};
 use crate::settings::WikitextSettings;
 use crate::tree::{
     Bibliography, BibliographyList, Element, LinkLocation, VariableScopes,
@@ -53,6 +53,7 @@ where
     info: &'i PageInfo<'i>,
     handle: &'h Handle,
     page_existence: &'h dyn PageExistenceResolver,
+    user_info: &'h dyn UserInfoResolver,
     settings: &'e WikitextSettings,
     random: Random,
 
@@ -129,6 +130,27 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
         bibliographies: &'e BibliographyList<'t>,
         wikitext_len: usize,
     ) -> Self {
+        Self::with_resolvers(
+            info,
+            (page_existence, &Handle),
+            settings,
+            table_of_contents,
+            footnotes,
+            bibliographies,
+            wikitext_len,
+        )
+    }
+
+    pub fn with_resolvers(
+        info: &'i PageInfo<'i>,
+        resolvers: (&'h dyn PageExistenceResolver, &'h dyn UserInfoResolver),
+        settings: &'e WikitextSettings,
+        table_of_contents: &'e [Element<'t>],
+        footnotes: &'e [Vec<Element<'t>>],
+        bibliographies: &'e BibliographyList<'t>,
+        wikitext_len: usize,
+    ) -> Self {
+        let (page_existence, user_info) = resolvers;
         // Heuristic for improving rendering performance by avoiding reallocating.
         //
         // Rendered HTML is commonly larger than source wikitext because each
@@ -147,6 +169,7 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
             info,
             handle: &Handle,
             page_existence,
+            user_info,
             settings,
             random: Random::default(),
             variables: VariableScopes::new(),
@@ -215,6 +238,11 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     #[inline]
     pub fn handle(&self) -> &'h Handle {
         self.handle
+    }
+
+    #[inline]
+    pub fn user_info(&self, name: &str) -> Option<crate::data::UserInfo<'static>> {
+        self.user_info.user_info(name)
     }
 
     #[inline]

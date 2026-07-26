@@ -38,9 +38,23 @@ pub trait PageExistenceResolver: Send + Sync {
     fn page_exists(&self, site: &str, page: &str) -> bool;
 }
 
+/// Resolves a parsed user name to its canonical account information.
+///
+/// Callers backed by an asynchronous data store should resolve all user names
+/// in the syntax tree in advance and provide a resolver over that snapshot.
+pub trait UserInfoResolver: Send + Sync {
+    fn user_info(&self, name: &str) -> Option<UserInfo<'static>>;
+}
+
 impl PageExistenceResolver for Handle {
     fn page_exists(&self, site: &str, page: &str) -> bool {
         self.get_page_exists(site, page)
+    }
+}
+
+impl UserInfoResolver for Handle {
+    fn user_info(&self, name: &str) -> Option<UserInfo<'static>> {
+        self.get_user_info(name)
     }
 }
 
@@ -75,7 +89,7 @@ impl Handle {
         true
     }
 
-    pub fn get_user_info<'a>(&self, name: &'a str) -> Option<UserInfo<'a>> {
+    pub fn get_user_info(&self, name: &str) -> Option<UserInfo<'static>> {
         debug!("Fetching user info (name '{name}')");
 
         if cfg!(test) && name == "missing" {
@@ -83,7 +97,7 @@ impl Handle {
         }
 
         let mut info = UserInfo::dummy();
-        info.user_name = cow!(name);
+        info.user_name = Cow::Owned(name.to_owned());
         info.user_profile_url = Cow::Owned(format!("/user:info/{name}"));
         Some(info)
     }

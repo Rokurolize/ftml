@@ -38,7 +38,7 @@ mod handle;
 mod messages;
 
 use self::handle::Handle;
-pub use self::handle::PageExistenceResolver;
+pub use self::handle::{PageExistenceResolver, UserInfoResolver};
 use crate::data::PageInfo;
 use crate::settings::WikitextSettings;
 use crate::tree::SyntaxTree;

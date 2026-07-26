@@ -188,6 +188,27 @@ impl<'t> SyntaxTree<'t> {
 
         references
     }
+
+    /// Collects the distinct user names rendered by this tree.
+    ///
+    /// Their order is the order of first appearance in the tree.
+    pub fn user_references(&self) -> Vec<String> {
+        let mut references = Vec::new();
+        let mut seen = HashSet::new();
+
+        collect_user_references(&self.elements, &mut references, &mut seen);
+        collect_user_references(&self.table_of_contents, &mut references, &mut seen);
+        for footnote in &self.footnotes {
+            collect_user_references(footnote, &mut references, &mut seen);
+        }
+        for bibliography in self.bibliographies.slice() {
+            for (_, elements) in bibliography.slice() {
+                collect_user_references(elements, &mut references, &mut seen);
+            }
+        }
+
+        references
+    }
 }
 
 fn collect_page_references(
@@ -284,6 +305,98 @@ fn collect_page_references(
     }
 }
 
+fn collect_user_references(
+    elements: &[Element<'_>],
+    references: &mut Vec<String>,
+    seen: &mut HashSet<String>,
+) {
+    for element in elements {
+        if let Element::User { name, .. } = element {
+            let name = name.to_string();
+            if seen.insert(name.clone()) {
+                references.push(name);
+            }
+        }
+
+        match element {
+            Element::Container(container) => {
+                collect_user_references(container.elements(), references, seen);
+            }
+            Element::Table(table) => {
+                for row in &table.rows {
+                    for cell in &row.cells {
+                        collect_user_references(&cell.elements, references, seen);
+                    }
+                }
+            }
+            Element::TabView(tabs) => {
+                for tab in tabs {
+                    collect_user_references(&tab.elements, references, seen);
+                }
+            }
+            Element::Anchor { elements, .. }
+            | Element::Collapsible { elements, .. }
+            | Element::Color { elements, .. }
+            | Element::Include { elements, .. } => {
+                collect_user_references(elements, references, seen);
+            }
+            Element::List { items, .. } => {
+                for item in items {
+                    match item {
+                        ListItem::Elements { elements, .. } => {
+                            collect_user_references(elements, references, seen);
+                        }
+                        ListItem::SubList { element } => {
+                            collect_user_references(
+                                std::slice::from_ref(element),
+                                references,
+                                seen,
+                            );
+                        }
+                    }
+                }
+            }
+            Element::DefinitionList(items) => {
+                for item in items {
+                    collect_user_references(&item.key_elements, references, seen);
+                    collect_user_references(&item.value_elements, references, seen);
+                }
+            }
+            Element::Partial(partial) => match partial {
+                PartialElement::ListItem(ListItem::Elements { elements, .. }) => {
+                    collect_user_references(elements, references, seen);
+                }
+                PartialElement::ListItem(ListItem::SubList { element }) => {
+                    collect_user_references(
+                        std::slice::from_ref(element),
+                        references,
+                        seen,
+                    );
+                }
+                PartialElement::TableRow(row) => {
+                    for cell in &row.cells {
+                        collect_user_references(&cell.elements, references, seen);
+                    }
+                }
+                PartialElement::TableCell(cell) => {
+                    collect_user_references(&cell.elements, references, seen);
+                }
+                PartialElement::Tab(tab) => {
+                    collect_user_references(&tab.elements, references, seen);
+                }
+                PartialElement::RubyText(ruby_text) => {
+                    collect_user_references(&ruby_text.elements, references, seen);
+                }
+                PartialElement::InlineSizeOpen(_)
+                | PartialElement::InlineSizeClose
+                | PartialElement::InlineSpanOpen(_)
+                | PartialElement::InlineSpanClose(_) => {}
+            },
+            _ => {}
+        }
+    }
+}
+
 #[test]
 fn borrowed_to_owned() {
     use std::mem;
@@ -338,4 +451,29 @@ fn page_references_collect_nested_rendered_locations_once() {
     };
 
     assert_eq!(tree.page_references(), vec![nested, footnote, bibliography],);
+}
+
+#[test]
+fn user_references_collect_nested_names_once() {
+    fn user(name: &'static str) -> Element<'static> {
+        Element::User {
+            name: cow!(name),
+            show_avatar: false,
+        }
+    }
+
+    let tree = SyntaxTree {
+        elements: vec![
+            Element::Container(Container::new(
+                ContainerType::Div,
+                vec![user("SYSTEM")],
+                AttributeMap::new(),
+            )),
+            user("SYSTEM"),
+        ],
+        footnotes: vec![vec![user("account-name")]],
+        ..SyntaxTree::default()
+    };
+
+    assert_eq!(tree.user_references(), ["SYSTEM", "account-name"]);
 }

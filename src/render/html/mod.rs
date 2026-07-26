@@ -37,7 +37,7 @@ pub use self::output::HtmlOutput;
 use self::context::HtmlContext;
 use self::element::{render_element, render_elements};
 use crate::data::PageInfo;
-use crate::render::{Handle, PageExistenceResolver, Render};
+use crate::render::{Handle, PageExistenceResolver, Render, UserInfoResolver};
 use crate::settings::WikitextSettings;
 use crate::tree::{Element, SyntaxTree};
 
@@ -52,6 +52,17 @@ impl HtmlRender {
         settings: &WikitextSettings,
         page_existence: &dyn PageExistenceResolver,
     ) -> HtmlOutput {
+        self.render_with_resolvers(tree, page_info, settings, page_existence, &Handle)
+    }
+
+    pub fn render_with_resolvers(
+        &self,
+        tree: &SyntaxTree,
+        page_info: &PageInfo,
+        settings: &WikitextSettings,
+        page_existence: &dyn PageExistenceResolver,
+        user_info: &dyn UserInfoResolver,
+    ) -> HtmlOutput {
         debug!(
             "Rendering HTML (site {}, page {}, category {})",
             page_info.site.as_ref(),
@@ -62,9 +73,9 @@ impl HtmlRender {
             },
         );
 
-        let mut ctx = HtmlContext::with_page_existence(
+        let mut ctx = HtmlContext::with_resolvers(
             page_info,
-            page_existence,
+            (page_existence, user_info),
             settings,
             &tree.table_of_contents,
             &tree.footnotes,
@@ -108,9 +119,26 @@ fn render_contents(ctx: &mut HtmlContext, tree: &SyntaxTree) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::data::UserInfo;
     use crate::layout::Layout;
+    use crate::render::UserInfoResolver;
     use crate::settings::{WikitextMode, WikitextSettings};
     use crate::tree::Element;
+
+    struct CanonicalUser;
+
+    impl UserInfoResolver for CanonicalUser {
+        fn user_info(&self, name: &str) -> Option<UserInfo<'static>> {
+            (name == "SYSTEM").then(|| {
+                let mut info = UserInfo::dummy();
+                info.user_id = 42;
+                info.user_slug = cow!("system");
+                info.user_name = cow!("system");
+                info.user_profile_url = cow!("http://www.wikidot.com/user:info/system");
+                info
+            })
+        }
+    }
 
     #[test]
     fn html_render_collects_style_elements_without_emitting_body_style_tags() {
@@ -135,6 +163,32 @@ mod tests {
             ],
         );
         assert_eq!(output.body, "body");
+    }
+
+    #[test]
+    fn wikidot_user_render_uses_resolved_canonical_identity() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tree = SyntaxTree {
+            elements: vec![Element::User {
+                name: cow!("SYSTEM"),
+                show_avatar: false,
+            }],
+            ..SyntaxTree::default()
+        };
+
+        let output = HtmlRender.render_with_resolvers(
+            &tree,
+            &page_info,
+            &settings,
+            &Handle,
+            &CanonicalUser,
+        );
+
+        assert_eq!(
+            output.body,
+            r#"<span class="printuser"><a href="http://www.wikidot.com/user:info/system" onclick="WIKIDOT.page.listeners.userInfo(42); return false;">system</a></span>"#,
+        );
     }
 
     #[test]

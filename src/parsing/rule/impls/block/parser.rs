@@ -219,8 +219,14 @@ where
                 }
             }
 
-            // Remove underscore for score flag
+            let score_close = name.ends_with('_');
             let name = name.strip_suffix('_').unwrap_or(name);
+            if parser.settings().layout.legacy()
+                && score_close
+                && block_rule.name == "block-iftags"
+            {
+                return Ok(false);
+            }
 
             // Check if it's valid
             for end_block_name in block_rule.accepts_names {
@@ -280,6 +286,15 @@ where
                 }
             } else if wikidot_math && self.at_wikidot_nested_math_opener() {
                 nested_wikidot_math += 1;
+            }
+
+            if self.settings().layout.legacy()
+                && self.discarding_hidden_body()
+                && self.at_hidden_body_boundary()
+                && (!self.has_body_end_block(block_rule)
+                    || block_rule.name == "block-math")
+            {
+                return Err(self.make_err(ParseErrorKind::BlockExpectedEnd));
             }
 
             // Run the passed-in closure

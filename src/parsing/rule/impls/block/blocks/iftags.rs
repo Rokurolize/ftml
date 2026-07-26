@@ -64,10 +64,7 @@ fn parse_fn<'r, 't>(
         && !parser.discarding_hidden_body()
         && !parser.has_body_end_block(&BLOCK_IFTAGS)
     {
-        let remaining = &parser.full_text().inner()[parser.current().span.start..];
-        if !remaining.to_ascii_lowercase().contains("[[/iftags_]]") {
-            return Err(parser.make_err(ParseErrorKind::RuleFailed));
-        }
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
     // A closed no-argument gate is false on Wikidot. Keeping this explicit

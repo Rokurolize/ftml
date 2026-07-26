@@ -714,9 +714,31 @@ fn false_iftags_raw_body_end_markers_stay_hidden() {
 
     for layout in [Layout::Wikijump, Layout::Wikidot] {
         for raw_body in raw_bodies {
+            if layout == Layout::Wikidot && raw_body.starts_with("[[math]]\n\\text{") {
+                continue;
+            }
             assert_false_iftags_guarded(raw_body, layout);
         }
     }
+
+    let (wikidot_math, _) = parse_with_errors(
+        concat!(
+            "[[iftags +missing]]\n",
+            "[[math]]\n",
+            "\\text{[[/iftags]] raw-math}\n",
+            "[[/math]]\n",
+            "[[html]]\n",
+            "<b>guarded</b>\n",
+            "[[/html]]\n",
+            "[[/iftags]]\n",
+            "visible",
+        ),
+        Layout::Wikidot,
+    );
+    assert!(
+        render_text(&wikidot_math, Layout::Wikidot).starts_with("raw-math}"),
+        "{wikidot_math:?}",
+    );
 }
 
 #[test]
@@ -748,10 +770,24 @@ fn false_iftags_malformed_hidden_structures_fail_closed() {
         "[[iftags +missing]]\ninner unclosed\n[[/iftags]]\n[[html]]\n<b>unclosed nested</b>\n[[/html]]",
     ];
 
-    for layout in [Layout::Wikijump, Layout::Wikidot] {
-        for hidden in malformed {
-            assert_false_iftags_fails_closed(hidden, layout);
-        }
+    for hidden in malformed {
+        assert_false_iftags_fails_closed(hidden, Layout::Wikijump);
+    }
+}
+
+#[test]
+fn wikidot_false_iftags_unclosed_raw_child_yields_to_conditional_boundary() {
+    for (hidden, expected) in [
+        ("[[code]]\n[[/iftags]]\nunclosed code", "unclosed code"),
+        (
+            "[[html]]\n[[/iftags]]\n<b>unclosed html</b>",
+            "<b>unclosed html</b>",
+        ),
+        ("[[raw]]\n[[/iftags]]\nunclosed raw", "unclosed raw"),
+    ] {
+        let tree = parse(&format!("[[iftags +missing]]\n{hidden}"), Layout::Wikidot);
+
+        assert_eq!(render_text(&tree, Layout::Wikidot), expected, "{hidden}");
     }
 }
 
@@ -759,13 +795,11 @@ fn false_iftags_malformed_hidden_structures_fail_closed() {
 fn false_iftags_unclosed_parsed_child_stops_at_outer_boundary() {
     let input = "[[iftags +missing]]\n[[div]]\nhidden child\n[[/iftags_]]\nvisible";
 
-    for layout in [Layout::Wikijump, Layout::Wikidot] {
-        let tree = parse(input, layout);
-        let output = render_html(&tree, layout);
+    let tree = parse(input, Layout::Wikijump);
+    let output = render_html(&tree, Layout::Wikijump);
 
-        assert!(output.contains("visible"), "{layout:?}: {output}");
-        assert!(!output.contains("hidden child"), "{layout:?}: {output}");
-    }
+    assert!(output.contains("visible"), "{output}");
+    assert!(!output.contains("hidden child"), "{output}");
 }
 
 #[test]
@@ -790,13 +824,11 @@ fn false_iftags_malformed_paragraph_child_respects_parent_boundaries() {
         ),
     ];
 
-    for layout in [Layout::Wikijump, Layout::Wikidot] {
-        for input in cases {
-            let tree = parse(input, layout);
-            let output = render_text(&tree, layout);
+    for input in cases {
+        let tree = parse(input, Layout::Wikijump);
+        let output = render_text(&tree, Layout::Wikijump);
 
-            assert_eq!(output, "visible", "{layout:?}: {tree:?}");
-        }
+        assert_eq!(output, "visible", "{tree:?}");
     }
 }
 

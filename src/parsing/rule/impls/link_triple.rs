@@ -84,7 +84,7 @@ fn try_consume_link<'r, 't>(
 
     // Trim text
     let trimmed_url = url.trim();
-    let surrounded_by_space = trimmed_url.len() != url.len();
+    let leading_space = url.trim_start().len() != url.len();
     let url = trimmed_url;
 
     // If url is an empty string, parsing should fail, there's nothing here
@@ -93,7 +93,7 @@ fn try_consume_link<'r, 't>(
         && target.is_some()
         && last.token == Token::Pipe
     {
-        return build_separate(parser, rule, "/", false, target);
+        return build_separate(parser, rule, "", false, target);
     }
     if url.is_empty() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -102,10 +102,10 @@ fn try_consume_link<'r, 't>(
     // Determine what token we ended on, i.e. which [[[ variant it is.
     match last.token {
         // [[[name]]] type links
-        Token::RightLink => build_same(parser, url, surrounded_by_space, target),
+        Token::RightLink => build_same(parser, url, leading_space, target),
 
         // [[[url|label]]] type links
-        Token::Pipe => build_separate(parser, rule, url, surrounded_by_space, target),
+        Token::Pipe => build_separate(parser, rule, url, leading_space, target),
 
         // Token was already checked in collect_text(), impossible case
         _ => unreachable!(),
@@ -117,7 +117,7 @@ fn try_consume_link<'r, 't>(
 fn build_same<'r, 't>(
     parser: &mut Parser<'r, 't>,
     url: &'t str,
-    surrounded_by_space: bool,
+    leading_space: bool,
     target: Option<AnchorTarget>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     // Remove category, if present.
@@ -143,7 +143,7 @@ fn build_same<'r, 't>(
     };
 
     // Parse out link location
-    let parsed_link = parse_link_location(parser, url, surrounded_by_space);
+    let parsed_link = parse_link_location(parser, url, leading_space);
     let Some((link, ltype)) = parsed_link else {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     };
@@ -165,7 +165,7 @@ fn build_separate<'r, 't>(
     parser: &mut Parser<'r, 't>,
     rule: Rule,
     url: &'t str,
-    surrounded_by_space: bool,
+    leading_space: bool,
     target: Option<AnchorTarget>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     // Gather label for link
@@ -187,7 +187,7 @@ fn build_separate<'r, 't>(
     let label = label.trim();
 
     // Parse out link location
-    let parsed_link = parse_link_location(parser, url, surrounded_by_space);
+    let parsed_link = parse_link_location(parser, url, leading_space);
     let Some((link, ltype)) = parsed_link else {
         if legacy && (url.contains("###") || url.contains("/##/")) {
             return ok!(Element::Text(Cow::Owned(format!("[[[{url}|{label}]]]"))));
@@ -235,7 +235,7 @@ fn wikidot_target(
 fn parse_link_location<'r, 't>(
     parser: &Parser<'r, 't>,
     url: &'t str,
-    surrounded_by_space: bool,
+    leading_space: bool,
 ) -> Option<(LinkLocation<'t>, LinkType)> {
     if !parser.settings().layout.legacy() {
         return LinkLocation::parse_with_interwiki(cow!(url), parser.settings());
@@ -243,6 +243,10 @@ fn parse_link_location<'r, 't>(
 
     if url.contains("###") || url.contains("/##/") {
         return None;
+    }
+
+    if url.is_empty() {
+        return Some((LinkLocation::Page(PageRef::page_only("")), LinkType::Page));
     }
 
     if let Some(interwiki) = url.strip_prefix('!') {
@@ -280,7 +284,7 @@ fn parse_link_location<'r, 't>(
         ));
     }
 
-    if surrounded_by_space && is_url(url) {
+    if leading_space && is_url(url) {
         let page = url.replace("://", ":");
         let page = page.trim_end_matches('/');
         return Some((LinkLocation::Page(PageRef::page_only(page)), LinkType::Page));
@@ -456,6 +460,27 @@ mod wikidot_tests {
     }
 
     #[test]
+    fn wikidot_only_treats_leading_space_before_url_as_slug() {
+        let html = render(concat!(
+            "[[[https://example.com | Trailing]]] ",
+            "[[[ https://example.com|Leading]]] ",
+            "[[[ https://example.com | Both]]]",
+        ));
+        assert!(
+            html.contains(r#"href="https://example.com">Trailing</a>"#),
+            "{html}"
+        );
+        assert!(
+            html.contains(r#"href="/https:example-com">Leading</a>"#),
+            "{html}"
+        );
+        assert!(
+            html.contains(r#"href="/https:example-com">Both</a>"#),
+            "{html}"
+        );
+    }
+
+    #[test]
     fn wikidot_accepts_line_break_before_triple_link_label() {
         let html = render("[[[some-page |\nLabel]]]");
         assert!(html.contains(r#"href="/some-page">Label</a>"#), "{html}");
@@ -465,7 +490,10 @@ mod wikidot_tests {
     fn wikidot_star_with_empty_destination_links_to_root() {
         let html = render("[[[|some-page]]] [[[*|some-page]]]");
         assert!(html.contains("[[[|some-page]]]"), "{html}");
-        assert!(html.contains(r#"href="/">some-page</a>"#), "{html}");
+        assert!(
+            html.contains(r#"class="newpage" href="/">some-page</a>"#),
+            "{html}"
+        );
     }
 
     #[test]

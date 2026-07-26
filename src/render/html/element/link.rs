@@ -107,7 +107,7 @@ pub fn render_link(
                 ));
             }
             LinkLocation::Page(page) => {
-                if ctx.page_exists(page) {
+                if !page.page().is_empty() && ctx.page_exists(page) {
                     write_a!(attr!(
                         "href" => &url,
                         "target" => target_value; if target.is_some(),

@@ -19,6 +19,8 @@
  */
 
 use super::prelude::*;
+use crate::parsing::rule::impls::block::parser::BlockBodyStart;
+use std::borrow::Cow;
 
 pub const BLOCK_HTML: BlockRule = BlockRule {
     name: "block-html",
@@ -44,13 +46,39 @@ fn parse_fn<'r, 't>(
     if parser.settings().layout.legacy() && !parser.discarding_hidden_body() && in_head {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
-    let arguments = parser.get_head_map(&BLOCK_HTML, in_head)?;
+    let (arguments, body_start) =
+        parser.get_head_map_with_body_start(&BLOCK_HTML, in_head)?;
+    let body_content_start = parser.current().span.start;
     let html = parser.get_body_text(&BLOCK_HTML)?;
+    let stored_html = if parser.settings().layout.legacy() {
+        let leading_newline =
+            body_start == BlockBodyStart::NextPhysicalLine && !html.starts_with('\n');
+        let trailing_newline = matches!(html, Cow::Borrowed(_))
+            && parser.full_text().inner()[body_content_start + html.len()..]
+                .starts_with('\n');
+        if leading_newline || trailing_newline {
+            let mut stored = String::with_capacity(
+                html.len() + usize::from(leading_newline) + usize::from(trailing_newline),
+            );
+            if leading_newline {
+                stored.push('\n');
+            }
+            stored.push_str(&html);
+            if trailing_newline {
+                stored.push('\n');
+            }
+            Cow::Owned(stored)
+        } else {
+            html.clone()
+        }
+    } else {
+        html.clone()
+    };
     let element = Element::Html {
-        contents: html.clone(),
+        contents: html,
         attributes: arguments.to_attribute_map(parser.settings()),
     };
-    parser.push_html_block(html);
+    parser.push_html_block(stored_html);
     ok!(parser.settings().layout.legacy(); element)
 }
 
@@ -100,7 +128,7 @@ mod tests {
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
         assert!(errors.is_empty(), "{errors:?}");
-        assert_eq!(tree.html_blocks, ["<strong>isolated</strong>"]);
+        assert_eq!(tree.html_blocks, ["\n<strong>isolated</strong>\n"]);
 
         let html = crate::render::html::HtmlRender
             .render(&tree, &page_info, &settings)
@@ -109,6 +137,17 @@ mod tests {
             html,
             r#"<p><iframe src="https://example.com/" allowtransparency="true" frameborder="0" class="html-block-iframe"></iframe></p>"#,
         );
+    }
+
+    #[test]
+    fn wikidot_inline_html_block_does_not_gain_boundary_newlines() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[html]]<strong>inline</strong>[[/html]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!(tree.html_blocks, ["<strong>inline</strong>"]);
     }
 
     #[test]

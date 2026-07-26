@@ -684,7 +684,7 @@ fn hidden_conditionals_do_not_publish_metadata_blocks() {
     assert!(!literal_errors.is_empty());
     assert!(!wikidot.elements.is_empty(), "{wikidot:?}");
     assert_eq!(wikidot.code_blocks.len(), 1, "{wikidot:?}");
-    assert_eq!(wikidot.html_blocks, ["<b>secret</b>"], "{wikidot:?}");
+    assert_eq!(wikidot.html_blocks, ["\n<b>secret</b>\n"], "{wikidot:?}");
     assert_eq!(wikidot.footnotes.len(), 1, "{wikidot:?}");
     assert!(!wikidot.bibliographies.is_empty(), "{wikidot:?}");
     let wikidot_html = render_html(&wikidot, Layout::Wikidot);

@@ -90,6 +90,7 @@ fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError
         }
         debug_assert_eq!(pair.as_rule(), Rule::argument);
 
+        let argument_source = pair.as_str();
         let (key, value) = {
             let mut argument_pairs = pair.into_inner();
 
@@ -124,7 +125,12 @@ fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError
         var_reference.clear();
         str_write!(var_reference, "{{${key}}}");
 
-        if !arguments.contains_key(key) && value != var_reference {
+        let spaced_empty_value = value.is_empty()
+            && argument_source.split_once('=').is_some_and(|(_, after)| {
+                matches!(after.as_bytes().first(), Some(b' ' | b'\t'))
+            });
+
+        if !arguments.contains_key(key) && !spaced_empty_value && value != var_reference {
             let key = Cow::Borrowed(key);
             let value = Cow::Borrowed(value);
 

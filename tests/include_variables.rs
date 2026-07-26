@@ -155,6 +155,17 @@ fn include_argument_first_concrete_value_wins_over_fallback() {
 }
 
 #[test]
+fn scp_6823_empty_include_argument_leaves_target_variable_unresolved() {
+    let expanded = expand(
+        "[[include component:card\n|secondary-class= \n|other=value\n]]",
+        [("component:card", "{$secondary-class}")],
+    );
+
+    assert_eq!(expanded, "{$secondary-class}");
+    assert_eq!(render_text(&expanded), "{$secondary-class}");
+}
+
+#[test]
 fn include_expansion_separates_caller_and_target_paragraphs_like_wikidot() {
     let expanded = expand(
         "CALLER_BEFORE\n[[include component:card]]\nCALLER_AFTER",

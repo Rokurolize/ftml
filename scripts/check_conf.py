@@ -49,6 +49,7 @@ BLOCK_NAME_IGNORE_PREFIXES = [
     "=",
     ">",
     "f<",
+    "f=",
     "f>",
     "module654",
 ]

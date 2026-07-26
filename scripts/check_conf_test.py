@@ -20,6 +20,10 @@ class CompareModuleDataTests(unittest.TestCase):
 
 
 class RuleRegexTests(unittest.TestCase):
+    def test_wikidot_image_alignment_aliases_do_not_require_separate_docs(self):
+        for alias in ["f<image", "f=image", "f>image"]:
+            self.assertFalse(check_conf.check_block_alias_in_doc(alias))
+
     def test_block_aliases_accept_rustfmt_multiline_arrays(self):
         source = """pub const BLOCK_IMAGE: BlockRule = BlockRule {
     name: "block-image",

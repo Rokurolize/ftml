@@ -182,6 +182,11 @@ where
                 && errors
                     .iter()
                     .any(|error| error.kind() == ParseErrorKind::ListItemOutsideList);
+            let literal_iftags_line = parser.settings().layout.legacy()
+                && errors.iter().any(|error| {
+                    error.kind() == ParseErrorKind::RuleFailed
+                        && error.rule() == "block-iftags"
+                });
             let literal_div_line = parser.settings().layout.legacy()
                 && errors.iter().any(|error| {
                     error.kind() == ParseErrorKind::RuleFailed
@@ -203,6 +208,9 @@ where
             }
             if literal_list_item {
                 stack.mark_wikidot_literal_list_item();
+            }
+            if literal_iftags_line {
+                stack.mark_wikidot_literal_iftags_line();
             }
             if literal_div_line {
                 stack.mark_wikidot_literal_div_line();

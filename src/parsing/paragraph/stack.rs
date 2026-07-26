@@ -65,6 +65,7 @@ pub struct ParagraphStack<'t> {
     current_has_discarded_control: bool,
 
     pending_unwrapped_separator: bool,
+    wikidot_literal_iftags_line: bool,
     wikidot_literal_div_line: bool,
     trim_unwrapped_trailing_line_break: bool,
     suppress_next_line_break: bool,
@@ -143,12 +144,19 @@ impl<'t> ParagraphStack<'t> {
 
     #[inline]
     pub(crate) fn mark_wikidot_literal_div_line(&mut self) {
-        if self.wikidot {
+        if self.wikidot && !self.wikidot_literal_iftags_line {
             if !self.finished.is_empty() && !self.current.is_empty() {
                 self.current.insert(0, text!("\n"));
             }
             self.current_unwrapped = true;
             self.wikidot_literal_div_line = true;
+        }
+    }
+
+    #[inline]
+    pub(crate) fn mark_wikidot_literal_iftags_line(&mut self) {
+        if self.wikidot {
+            self.wikidot_literal_iftags_line = true;
         }
     }
 
@@ -381,6 +389,7 @@ impl<'t> ParagraphStack<'t> {
         }
         self.current_has_discarded_control = false;
         self.pending_unwrapped_separator = false;
+        self.wikidot_literal_iftags_line = false;
         self.wikidot_literal_div_line = false;
         self.trim_unwrapped_trailing_line_break = false;
         self.suppress_next_line_break = false;

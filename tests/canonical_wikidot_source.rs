@@ -488,6 +488,10 @@ Calibold"#,
         !html.contains(r#"<div class="authorlink-wrapper">"#),
         "{html}"
     );
+    assert_eq!(
+        html,
+        "<p>[[iftags +test]]<br>\n[[div_ class=&quot;authorlink-wrapper&quot;]]<br>\nCalibold</p>",
+    );
 }
 
 #[test]

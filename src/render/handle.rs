@@ -98,6 +98,18 @@ impl Handle {
                     file.trim_start_matches('/'),
                 )));
             }
+            FileSource::File1 { file } if settings.layout.legacy() => {
+                let page = match info.category.as_deref() {
+                    Some(category) if category != "_default" => {
+                        format!("{category}:{}", info.page)
+                    }
+                    _ => info.page.to_string(),
+                };
+                return Some(Cow::Owned(format!(
+                    "https://{}.wjfiles.com/local--files/{page}/{file}",
+                    info.site,
+                )));
+            }
             FileSource::File1 { file } => (&info.site, &info.page, file),
             FileSource::File2 { page, file } => (&info.site, page, file),
             FileSource::File3 { site, page, file } => (site, page, file),
@@ -290,6 +302,23 @@ fn handle_fallbacks_cover_rendering_helpers() {
             )
             .as_deref(),
         Some("https://other-site.wjfiles.com/local--files/third-page/third.png"),
+    );
+
+    let mut legacy_info = PageInfo::dummy();
+    legacy_info.category = Some(cow!("run-owned"));
+    let legacy_settings =
+        WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    assert_eq!(
+        handle
+            .get_file_link(
+                &FileSource::File1 {
+                    file: cow!("local.png"),
+                },
+                &legacy_info,
+                &legacy_settings,
+            )
+            .as_deref(),
+        Some("https://sandbox.wjfiles.com/local--files/run-owned:some-page/local.png"),
     );
 
     settings.allow_local_paths = false;

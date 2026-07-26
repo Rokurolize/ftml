@@ -133,6 +133,13 @@ where
     {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
+    if parser.settings().layout.legacy()
+        && !parser.discarding_hidden_body()
+        && block.name == "block-user"
+        && spaced_name
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     // Set block rule for better errors
     parser.set_block(block);

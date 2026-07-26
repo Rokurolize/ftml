@@ -41,6 +41,9 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "HTML doesn't allow score flag");
     assert_block_name(&BLOCK_HTML, name);
 
+    if parser.settings().layout.legacy() && !parser.discarding_hidden_body() && in_head {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     let arguments = parser.get_head_map(&BLOCK_HTML, in_head)?;
     let html = parser.get_body_text(&BLOCK_HTML)?;
     let element = Element::Html {
@@ -98,5 +101,16 @@ mod tests {
         assert!(errors.is_empty(), "{errors:?}");
         assert_eq!(tree.html_blocks, ["<strong>isolated</strong>"]);
         assert!(matches!(tree.elements.as_slice(), [Element::Html { .. }]));
+    }
+
+    #[test]
+    fn wikidot_html_block_with_arguments_remains_literal() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[html garbage]]x[[/html]]");
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(tree.html_blocks.is_empty(), "{tree:#?}");
+        assert!(!format!("{tree:?}").contains("Html {"), "{tree:#?}");
     }
 }

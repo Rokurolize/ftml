@@ -212,6 +212,7 @@ fn preprocess_internal(text: &mut String, wikidot_compatibility: bool) {
     parser_functions::substitute(text);
     compatibility::substitute(text);
     if wikidot_compatibility {
+        compatibility::substitute_wikidot(text);
         typography::substitute_wikidot(text);
         whitespace::filter_characters(text, true);
     } else {

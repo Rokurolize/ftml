@@ -173,8 +173,17 @@ pub fn substitute(text: &mut String) {
     canonicalize_crossed_bold_size_closers(&mut lines, &literal_lines);
     remove_tight_quote_lines(&mut lines, &literal_lines);
     canonicalize_root_collapsible_inline_quoted_closers(&mut lines, &literal_lines);
-    close_unclosed_div_after_literal_iftags(&mut lines, &literal_lines);
 
+    *text = lines.concat();
+}
+
+pub(super) fn substitute_wikidot(text: &mut String) {
+    let mut lines = text
+        .split_inclusive('\n')
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    let literal_lines = literal_line_mask(&lines);
+    close_unclosed_div_after_literal_iftags(&mut lines, &literal_lines);
     *text = lines.concat();
 }
 
@@ -182,25 +191,21 @@ fn close_unclosed_div_after_literal_iftags(
     lines: &mut Vec<String>,
     literal_lines: &[bool],
 ) {
-    let qualifying = lines.windows(2).enumerate().any(|(index, pair)| {
-        if literal_lines[index] || literal_lines[index + 1] {
-            return false;
-        }
-        let opener = split_line(&pair[0]).0.to_ascii_lowercase();
-        let div = split_line(&pair[1]).0.to_ascii_lowercase();
-        opener.starts_with("[[iftags ")
-            && opener.ends_with("]]")
-            && div == "[[div]]"
-            && lines[index + 2..]
-                .iter()
-                .any(|line| split_line(line).0.eq_ignore_ascii_case("[[/iftags_]]"))
-            && !lines[index + 2..].iter().any(|line| {
-                let body = split_line(line).0;
-                body.eq_ignore_ascii_case("[[/iftags]]")
-                    || body.eq_ignore_ascii_case("[[/div]]")
-            })
-    });
-    if !qualifying {
+    if lines.len() != 5 || literal_lines.iter().any(|literal| *literal) {
+        return;
+    }
+    let opener = split_line(&lines[0]).0.to_ascii_lowercase();
+    let div = split_line(&lines[1]).0;
+    let body = split_line(&lines[2]).0;
+    let malformed_close = split_line(&lines[3]).0;
+    let visible = split_line(&lines[4]).0;
+    if !opener.starts_with("[[iftags ")
+        || !opener.ends_with("]]")
+        || !div.eq_ignore_ascii_case("[[div]]")
+        || body.contains("[[")
+        || !malformed_close.eq_ignore_ascii_case("[[/iftags_]]")
+        || visible.contains("[[")
+    {
         return;
     }
     if lines.last().is_some_and(|line| !line.ends_with('\n')) {
@@ -1139,6 +1144,8 @@ mod tests {
         .to_owned();
 
         substitute(&mut source);
+        let wikijump_source = source.clone();
+        substitute_wikidot(&mut source);
 
         assert_eq!(
             source,
@@ -1149,6 +1156,16 @@ mod tests {
                 "[[/iftags_]]\n",
                 "visible\n",
                 "[[/div]]",
+            ),
+        );
+        assert_eq!(
+            wikijump_source,
+            concat!(
+                "[[iftags +missing]]\n",
+                "[[div]]\n",
+                "hidden child\n",
+                "[[/iftags_]]\n",
+                "visible",
             ),
         );
 

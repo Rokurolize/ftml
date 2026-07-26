@@ -808,12 +808,17 @@ fn wikidot_false_iftags_unclosed_raw_child_yields_to_conditional_boundary() {
 
 #[test]
 fn wikidot_false_iftags_closed_raw_and_comment_yield_to_conditional_boundary() {
-    for (hidden, expected) in [
+    for (hidden, expected, html_blocks) in [
         (
             "[[raw]]\n[[/iftags]]\n[[html]]raw-raw[[/html]]\n[[/raw]]",
-            "[[html]]raw-raw[[/html]]\n[[/raw]]",
+            "[[/raw]]\n[[/iftags]]\nvisible",
+            vec!["raw-raw", "\n<b>guarded</b>\n"],
         ),
-        ("[!-- [[/iftags]] raw-comment --]", "raw-comment --]"),
+        (
+            "[!-- [[/iftags]] raw-comment --]",
+            "raw-comment --]\n[[/iftags]]\nvisible",
+            vec!["\n<b>guarded</b>\n"],
+        ),
     ] {
         let input = format!(
             "[[iftags +missing]]\n{hidden}\n[[html]]\n<b>guarded</b>\n[[/html]]\n[[/iftags]]\nvisible",
@@ -821,8 +826,8 @@ fn wikidot_false_iftags_closed_raw_and_comment_yield_to_conditional_boundary() {
         let (tree, _) = parse_with_errors(&input, Layout::Wikidot);
         let text = render_text(&tree, Layout::Wikidot);
 
-        assert!(text.starts_with(expected), "{hidden}: {text}");
-        assert!(text.ends_with("[[/iftags]]\nvisible"), "{hidden}: {text}");
+        assert_eq!(text, expected, "{hidden}: {text}");
+        assert_eq!(tree.html_blocks, html_blocks, "{hidden}: {tree:#?}");
     }
 }
 
@@ -839,10 +844,8 @@ fn wikidot_false_iftags_single_nested_close_ends_the_outer_gate() {
     );
     let (tree, _) = parse_with_errors(input, Layout::Wikidot);
 
-    assert_eq!(
-        render_text(&tree, Layout::Wikidot),
-        "[[html]]\n<b>unclosed nested</b>\n[[/html]]",
-    );
+    assert_eq!(render_text(&tree, Layout::Wikidot), "");
+    assert_eq!(tree.html_blocks, ["\n<b>unclosed nested</b>\n"]);
 }
 
 #[test]

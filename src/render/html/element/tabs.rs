@@ -135,6 +135,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, tabs: &[Tab]) {
                             .div()
                             .attr(attr!(
                                 "id" => &tab_id,
+                                "style" => "display:block"; if index == 0,
                                 "style" => "display:none"; if index > 0,
                             ))
                             .contents(&tab.elements);
@@ -179,6 +180,10 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
         assert!(html.contains("class=\"yui-navset\""), "{html}");
         assert!(html.contains("<em>Apple</em></a></li>\n<li>"), "{html}");
+        assert!(
+            html.contains("id=\"wiki-tab-0-0\" style=\"display:block\""),
+            "{html}",
+        );
         assert!(
             html.contains("id=\"wiki-tab-0-1\" style=\"display:none\""),
             "{html}",

@@ -684,9 +684,20 @@ fn hidden_conditionals_do_not_publish_metadata_blocks() {
     assert!(!literal_errors.is_empty());
     assert!(!wikidot.elements.is_empty(), "{wikidot:?}");
     assert_eq!(wikidot.code_blocks.len(), 1, "{wikidot:?}");
-    assert!(wikidot.html_blocks.is_empty(), "{wikidot:?}");
+    assert_eq!(wikidot.html_blocks, ["<b>secret</b>"], "{wikidot:?}");
     assert_eq!(wikidot.footnotes.len(), 1, "{wikidot:?}");
     assert!(!wikidot.bibliographies.is_empty(), "{wikidot:?}");
+    let wikidot_html = render_html(&wikidot, Layout::Wikidot);
+    assert!(
+        wikidot_html.contains(
+            r#"<iframe src="https://example.com/" allowtransparency="true" frameborder="0" class="html-block-iframe"></iframe>"#,
+        ),
+        "{wikidot_html}",
+    );
+    assert!(
+        wikidot_html.contains("Secret heading<sup class=\"footnoteref\""),
+        "{wikidot_html}",
+    );
 
     let tree = parse(
         "[[ifcategory _default]]\n[[code]]\nvisible\n[[/code]]\n[[/ifcategory]]",

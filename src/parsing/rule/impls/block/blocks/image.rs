@@ -23,7 +23,9 @@ use crate::tree::{FileSource, FloatAlignment, LinkLocation};
 
 pub const BLOCK_IMAGE: BlockRule = BlockRule {
     name: "block-image",
-    accepts_names: &["image", "=image", "<image", ">image", "f<image", "f>image"],
+    accepts_names: &[
+        "image", "=image", "<image", ">image", "f<image", "f=image", "f>image",
+    ],
     accepts_star: false,
     accepts_score: false,
     accepts_newlines: false,
@@ -43,11 +45,21 @@ fn parse_fn<'r, 't>(
     assert_block_name(&BLOCK_IMAGE, name);
 
     let (source, mut arguments) = parser.get_head_name_map(&BLOCK_IMAGE, in_head)?;
-    let link = arguments.get("link").map(LinkLocation::parse);
+    let link = arguments.get_with_bare("link").and_then(|(value, bare)| {
+        if bare && value == "#" {
+            None
+        } else {
+            Some(LinkLocation::parse(value))
+        }
+    });
     let alignment = FloatAlignment::parse(name);
 
     // Parse the image source based on format
-    let source = match FileSource::parse(source) {
+    let source = match if parser.settings().layout.legacy() {
+        FileSource::parse_wikidot(source)
+    } else {
+        FileSource::parse(source)
+    } {
         Some(source) => source,
         None => return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments)),
     };
@@ -72,16 +84,40 @@ mod tests {
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
-    fn image_block_rejects_missing_source() {
+    fn wikidot_image_accepts_multi_segment_local_source() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         let tokenization = crate::tokenize("[[image a/b/c/d.png]]");
-        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
-        assert!(
-            errors
-                .iter()
-                .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments)
+        assert!(errors.is_empty(), "{errors:?}");
+        let [Element::Image { source, .. }] = tree.elements.as_slice() else {
+            panic!("expected direct image element, got {:?}", tree.elements);
+        };
+        assert_eq!(
+            source,
+            &FileSource::File2 {
+                page: cow!("a/b/c"),
+                file: cow!("d.png"),
+            },
+        );
+    }
+
+    #[test]
+    fn wikidot_root_file_source_has_one_path_separator() {
+        let mut page_info = PageInfo::dummy();
+        page_info.site = cow!("sandbox");
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[image /my-picture.png]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &page_info, &settings)
+            .body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            "<img src=\"https://sandbox.wjfiles.com/local--files/my-picture.png\" class=\"image\" alt=\"my-picture.png\">",
         );
     }
 
@@ -106,7 +142,7 @@ mod tests {
     }
 
     #[test]
-    fn image_after_text_on_same_line_remains_inside_paragraph() {
+    fn unaligned_image_suppresses_the_contiguous_paragraph_wrapper() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         let tokenization =
@@ -119,7 +155,25 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(
             html,
-            "<p>BASIC <img src=\"/local--files/source-page/filename.png\" class=\"image\"></p>",
+            "\n\nBASIC <img src=\"/local--files/source-page/filename.png\" class=\"image\" alt=\"filename.png\">",
+        );
+    }
+
+    #[test]
+    fn blank_line_after_unaligned_image_preserves_wikidot_separator() {
+        let mut page_info = PageInfo::dummy();
+        page_info.site = cow!("sandbox");
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("BASIC [[image filename.png]]\n\nLEFT");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &page_info, &settings)
+            .body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            "\n\nBASIC <img src=\"https://sandbox.wjfiles.com/local--files/some-page/filename.png\" class=\"image\" alt=\"filename.png\"> <p>LEFT</p>",
         );
     }
 
@@ -141,9 +195,9 @@ mod tests {
             .body;
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert!(html.contains("<div class=\"name\">NFSI<br>"), "{html}");
+        assert!(html.contains("<div class=\"name\">\n\nNFSI<br>"), "{html}");
         assert!(
-            html.contains("NFSI.png\" class=\"image\"><br><span"),
+            html.contains("NFSI.png\" class=\"image\" alt=\"NFSI.png\"><br>\n<span"),
             "{html}",
         );
         assert!(!html.contains("<div class=\"name\"><p>"), "{html}");
@@ -169,7 +223,30 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(
             html,
-            "<div class=\"picture\"><p><span class=\"heading2\">BREAKING</span></p><img src=\"/local--files/scp-9506/fog.jpg\" class=\"image\"></div>",
+            "<div class=\"picture\"><p><span class=\"heading2\">BREAKING</span></p><img src=\"/local--files/scp-9506/fog.jpg\" class=\"image\" alt=\"fog.jpg\"></div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_float_center_image_uses_plain_image_container() {
+        let mut page_info = PageInfo::dummy();
+        page_info.site = cow!("sandbox-for-codex");
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("FLOAT CENTER [[f=image landscape.jpg]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &page_info, &settings)
+            .body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            concat!(
+                "<p>FLOAT CENTER</p>",
+                "<div class=\"image-container\">",
+                "<img src=\"https://sandbox-for-codex.wjfiles.com/local--files/some-page/landscape.jpg\" class=\"image\" alt=\"landscape.jpg\">",
+                "</div>",
+            ),
         );
     }
 }

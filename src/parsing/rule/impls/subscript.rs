@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use super::inline_delimiter::assert_unpadded_open;
+use super::inline_delimiter::{append_wikidot_line_close_space, assert_unpadded_open};
 use super::prelude::*;
 
 pub const RULE_SUBSCRIPT: Rule = Rule {
@@ -39,5 +39,42 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::token_pair(Token::Whitespace, Token::Subscript),
     ];
     let ctype = ContainerType::Subscript;
-    collect_container(parser, RULE_SUBSCRIPT, ctype, &close, &invalid, None)
+    let collected =
+        collect_container(parser, RULE_SUBSCRIPT, ctype, &close, &invalid, None)?;
+    let (elements, errors, paragraph_safe) = collected.into();
+    if parser.settings().layout.legacy()
+        && matches!(
+            &elements,
+            Elements::Single(Element::Container(container)) if container.elements().is_empty()
+        )
+    {
+        return ok!(paragraph_safe; Elements::None, errors);
+    }
+    let elements =
+        append_wikidot_line_close_space(elements, parser.settings().layout.legacy());
+    ok!(paragraph_safe; elements, errors)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    fn render(source: &str) -> String {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:#?}");
+        HtmlRender.render(&tree, &page_info, &settings).body
+    }
+
+    #[test]
+    fn wikidot_line_started_subscript_and_superscript_closers_add_space() {
+        assert_eq!(render("a,,x\n,,.b"), "<p>a<sub>x<br>\n</sub> .b</p>");
+        assert_eq!(render("a^^x\n^^.b"), "<p>a<sup>x<br>\n</sup> .b</p>");
+        assert_eq!(render("a,,x,,.b"), "<p>a<sub>x</sub>.b</p>");
+    }
 }

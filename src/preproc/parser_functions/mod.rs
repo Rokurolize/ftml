@@ -540,8 +540,8 @@ mod tests {
             concat!(">[[#expr 7*6]]\n", "> [[#if 1 | ``selected'' | hidden]]\n",)
                 .to_owned();
 
-        crate::preprocess(&mut source);
+        crate::preprocess_for_layout(&mut source, crate::layout::Layout::Wikidot);
 
-        assert_eq!(source, "\n> “selected”");
+        assert_eq!(source, "> “selected”");
     }
 }

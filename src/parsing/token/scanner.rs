@@ -33,6 +33,9 @@ fn push<'t>(
 
 fn next_token(text: &str, bytes: &[u8], start: usize) -> (Token, usize) {
     let byte = bytes[start];
+    if is_discarded_control(byte) {
+        return (Token::DiscardedControl, start + 1);
+    }
     if byte.is_ascii_alphanumeric() {
         if matches!(byte, b'f' | b'h')
             && let Some(end) = scan_url(bytes, start)
@@ -64,6 +67,10 @@ fn next_token(text: &str, bytes: &[u8], start: usize) -> (Token, usize) {
     }
 
     (Token::Other, next_char_end(text, start))
+}
+
+fn is_discarded_control(byte: u8) -> bool {
+    matches!(byte, 0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
 }
 
 fn scan_literal(bytes: &[u8], start: usize) -> Option<(Token, usize)> {
@@ -123,6 +130,7 @@ fn scan_literal(bytes: &[u8], start: usize) -> Option<(Token, usize)> {
         b'\\' if has(bytes, start, br#"\""#) => (Token::EscapedDoubleQuote, start + 2),
         b'"' => (Token::DoubleQuote, start + 1),
         b'\\' if has(bytes, start, br#"\\"#) => (Token::EscapedBackslash, start + 2),
+        b'\\' if start + 1 == bytes.len() => (Token::LineBreak, start + 1),
         b'*' if bytes.get(start + 1) != Some(&b'*') => (Token::BulletItem, start + 1),
         b'#' if bytes.get(start + 1) != Some(&b'#') => (Token::NumberedItem, start + 1),
         _ => return None,
@@ -146,7 +154,7 @@ fn scan_repeated_symbol(bytes: &[u8], start: usize) -> Option<(Token, usize)> {
         b'~' => {
             let end = scan_same(bytes, start, b'~');
             let count = end - start;
-            if count >= 3 {
+            if count >= 4 {
                 if bytes.get(end) == Some(&b'<') {
                     Some((Token::ClearFloatLeft, end + 1))
                 } else if bytes.get(end) == Some(&b'>') {
@@ -154,8 +162,8 @@ fn scan_repeated_symbol(bytes: &[u8], start: usize) -> Option<(Token, usize)> {
                 } else {
                     Some((Token::ClearFloatBoth, end))
                 }
-            } else if count == 2 {
-                Some((Token::DoubleTilde, end))
+            } else if count >= 2 {
+                Some((Token::DoubleTilde, start + 2))
             } else {
                 None
             }
@@ -164,7 +172,8 @@ fn scan_repeated_symbol(bytes: &[u8], start: usize) -> Option<(Token, usize)> {
             let end = scan_same(bytes, start, b'-');
             match end - start {
                 2 => Some((Token::DoubleDash, end)),
-                count if count >= 3 => Some((Token::TripleDash, end)),
+                3 => Some((Token::DoubleDash, start + 2)),
+                count if count >= 4 => Some((Token::TripleDash, end)),
                 _ => None,
             }
         }
@@ -215,6 +224,7 @@ fn scan_url(bytes: &[u8], start: usize) -> Option<usize> {
     let mut end = body_start;
     while end < bytes.len()
         && !matches!(bytes[end], b'\n' | b'\r' | b' ' | b'"' | b'|' | b'[' | b']')
+        && !is_discarded_control(bytes[end])
         && !has(bytes, end, b">@")
     {
         end += 1;
@@ -242,6 +252,7 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
             bytes[at],
             b' ' | b'\t' | b'@' | b'[' | b']' | b'{' | b'}' | b'<' | b'>' | b'\n' | b'\r'
         )
+        && !is_discarded_control(bytes[at])
     {
         at += 1;
     }
@@ -255,6 +266,7 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
             bytes[dot],
             b' ' | b'\t' | b'.' | b'[' | b']' | b'{' | b'}' | b'<' | b'>' | b'\n' | b'\r'
         )
+        && !is_discarded_control(bytes[dot])
     {
         dot += 1;
     }
@@ -268,6 +280,7 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
             bytes[end],
             b' ' | b'\t' | b'[' | b']' | b'{' | b'}' | b'<' | b'>' | b'\n' | b'\r'
         )
+        && !is_discarded_control(bytes[end])
     {
         end += 1;
     }

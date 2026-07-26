@@ -103,6 +103,7 @@ pub fn get_rules_for_token(current: &ExtractedToken) -> &'static [Rule] {
         Token::DoubleQuote => &[RULE_TEXT],
         Token::EscapedDoubleQuote => &[RULE_TEXT],
         Token::EscapedBackslash => &[RULE_TEXT],
+        Token::DiscardedControl => &[RULE_TEXT],
 
         // Input boundaries
         Token::LineBreak => LINE_BREAK_RULES,
@@ -201,6 +202,7 @@ mod tests {
             (Token::DoubleQuote, vec!["text"]),
             (Token::EscapedDoubleQuote, vec!["text"]),
             (Token::EscapedBackslash, vec!["text"]),
+            (Token::DiscardedControl, vec!["text"]),
             (Token::LeftComment, vec!["comment"]),
             (Token::RightComment, vec![]),
             (Token::InputStart, vec!["null"]),

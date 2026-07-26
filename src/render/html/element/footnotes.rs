@@ -20,6 +20,7 @@
 
 use super::prelude::*;
 use crate::render::text::TextRender;
+use crate::tree::ContainerType;
 
 pub fn render_footnote(ctx: &mut HtmlContext) {
     debug!("Rendering footnote reference");
@@ -43,6 +44,27 @@ pub fn render_footnote(ctx: &mut HtmlContext) {
             .inner(|ctx| ctx.push_escaped(message));
         return;
     };
+
+    if ctx.layout() == Layout::Wikidot {
+        let reference_id = format!("footnoteref-{index}");
+        let footnote_id = format!("footnote-{index}");
+        let onclick = format!("WIKIDOT.page.utils.scrollToReference('{footnote_id}')");
+        ctx.html()
+            .sup()
+            .attr(attr!("class" => "footnoteref"))
+            .inner(|ctx| {
+                ctx.html()
+                    .a()
+                    .attr(attr!(
+                        "id" => &reference_id,
+                        "href" => "javascript:;",
+                        "class" => "footnoteref",
+                        "onclick" => &onclick,
+                    ))
+                    .contents(&id);
+            });
+        return;
+    }
 
     // A footnote reference is phrasing content and is commonly rendered inside a
     // paragraph. Preserve rich inline markup when possible, but flatten block
@@ -124,6 +146,45 @@ pub fn render_footnote_block(ctx: &mut HtmlContext, title: Option<&str>) {
         }
     };
 
+    if ctx.layout() == Layout::Wikidot {
+        ctx.html()
+            .div()
+            .attr(attr!("class" => "footnotes-footer"))
+            .inner(|ctx| {
+                ctx.html()
+                    .div()
+                    .attr(attr!("class" => "title"))
+                    .contents(title);
+                for (index, contents) in ctx.footnotes().iter().enumerate() {
+                    let index = index + 1;
+                    let id = index.to_string();
+                    let footnote_id = format!("footnote-{index}");
+                    let onclick = format!(
+                        "WIKIDOT.page.utils.scrollToReference('footnoteref-{index}')"
+                    );
+                    ctx.html()
+                        .div()
+                        .attr(attr!(
+                            "class" => "footnote-footer",
+                            "id" => &footnote_id,
+                        ))
+                        .inner(|ctx| {
+                            ctx.html()
+                                .a()
+                                .attr(attr!(
+                                    "href" => "javascript:;",
+                                    "onclick" => &onclick,
+                                ))
+                                .contents(&id);
+                            ctx.push_raw('.');
+                            ctx.push_raw(' ');
+                            render_wikidot_footnote_contents(ctx, contents);
+                        });
+                }
+            });
+        return;
+    }
+
     ctx.html()
         .div()
         .attr(attr!("class" => "wj-footnote-list"))
@@ -174,4 +235,16 @@ pub fn render_footnote_block(ctx: &mut HtmlContext, title: Option<&str>) {
                 }
             });
         });
+}
+
+fn render_wikidot_footnote_contents(ctx: &mut HtmlContext, contents: &[Element]) {
+    for element in contents {
+        if matches!(
+            element,
+            Element::Container(container) if container.ctype() == ContainerType::Paragraph
+        ) {
+            ctx.push_raw('\n');
+        }
+        render_element(ctx, element);
+    }
 }

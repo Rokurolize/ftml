@@ -30,6 +30,7 @@ fn bibliography_cite(label: &str) -> Element<'_> {
     Element::BibliographyCite {
         label: cow!(label),
         brackets: false,
+        inline: true,
     }
 }
 
@@ -67,6 +68,13 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::current(Token::LineBreak),
     ];
     let label = collect_text(parser, RULE_BIBCITE, &close, &invalid, None)?;
+    if parser.settings().layout.legacy()
+        && !label
+            .chars()
+            .all(|character| character.is_ascii_alphanumeric() || character == '_')
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     ok!(bibliography_cite(label))
 }
@@ -156,9 +164,16 @@ mod tests {
         assert!(errors.is_empty());
         match tree.elements.as_slice() {
             [Element::Container(container)] => match container.elements() {
-                [Element::BibliographyCite { label, brackets }] => {
+                [
+                    Element::BibliographyCite {
+                        label,
+                        brackets,
+                        inline,
+                    },
+                ] => {
                     assert_eq!(label, "alpha");
                     assert!(!brackets);
+                    assert!(inline);
                 }
                 other => panic!("expected bare bibliography cite, got {other:?}"),
             },

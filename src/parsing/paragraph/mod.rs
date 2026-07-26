@@ -21,6 +21,7 @@
 mod stack;
 
 pub use self::stack::ParagraphStack;
+pub(crate) use self::stack::collapsible_has_direct_literal_nested_opener;
 
 use super::consume::consume;
 use super::parser::Parser;
@@ -62,17 +63,54 @@ where
     parser.set_rule(rule);
 
     // Create paragraph stack
-    let mut stack = ParagraphStack::new();
+    let mut stack = if parser.settings().layout.legacy() {
+        ParagraphStack::new_wikidot()
+    } else {
+        ParagraphStack::new()
+    };
 
     let mut finished = false;
     while !finished {
-        if parser.prepare_quote_body_line()? == QuoteBodyLineStatus::Boundary {
+        let quote_line_status = parser.prepare_quote_body_line()?;
+        if quote_line_status == QuoteBodyLineStatus::Boundary {
+            if parser.quote_boundary_closes_body() {
+                stack.pop_line_break();
+                finished = true;
+                continue;
+            }
             return Err(parser.make_err(ParseErrorKind::EndOfInput));
         }
+        if parser.settings().layout.legacy()
+            && quote_line_status == QuoteBodyLineStatus::Prepared
+            && parser.quote_body_line_is_empty_spaced()
+        {
+            stack.pop_line_break();
+            stack.end_paragraph();
+            parser.step()?;
+            continue;
+        }
 
+        let terminal_backslash =
+            parser.current().token == Token::LineBreak && parser.current().slice == "\\";
+        let terminal_spaced_underscore = parser.settings().layout.legacy()
+            && parser.current().token == Token::Whitespace
+            && parser
+                .look_ahead(0)
+                .is_some_and(|token| token.token == Token::Underscore)
+            && parser
+                .look_ahead(1)
+                .is_some_and(|token| token.token == Token::InputEnd);
+        let comment = parser.current().token == Token::LeftComment;
+        let comment_started_line = comment && parser.start_of_line();
+        let empty_quote_control =
+            parser.current().token == Token::Quote && parser.start_of_line();
         let consumed = match parser.current().token {
             Token::InputEnd => {
                 if close_condition_fn.is_some() {
+                    if parser.settings().layout.legacy() && rule.name() == "block-div" {
+                        finished = true;
+                        continue;
+                    }
                     // There was a close condition, but it was not satisfied
                     // before the end of input.
                     //
@@ -93,7 +131,7 @@ where
             // If we've hit a paragraph break, then finish the current paragraph
             Token::ParagraphBreak => {
                 // Paragraph break -- end the paragraph and start a new one!
-                stack.end_paragraph();
+                stack.end_paragraph_at_break();
 
                 // We must manually bump up this pointer because
                 // we 'continue' here, skipping the usual pointer update.
@@ -113,6 +151,9 @@ where
                     finished = true;
                     None
                 } else {
+                    if parser.current().token == Token::DiscardedControl {
+                        stack.mark_discarded_control();
+                    }
                     // Otherwise, produce consumption from this token pointer
                     match consume(parser) {
                         Ok(consumed) => Some(consumed),
@@ -137,9 +178,54 @@ where
 
         if let Some(consumed) = consumed {
             let (elements, mut errors, paragraph_safe) = consumed.into();
+            let literal_list_item = stack.current_empty()
+                && errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::ListItemOutsideList);
+            let literal_div_line = parser.settings().layout.legacy()
+                && errors.iter().any(|error| {
+                    error.kind() == ParseErrorKind::RuleFailed
+                        && error.rule() == "block-div"
+                });
 
             // Add new elements to the list
-            push_elements(&mut stack, elements, paragraph_safe);
+            if empty_quote_control && !paragraph_safe && elements.is_empty() {
+                stack.end_paragraph();
+            } else {
+                push_elements(&mut stack, elements, paragraph_safe);
+            }
+            if comment_started_line
+                && parser.settings().layout.legacy()
+                && parser.current().token == Token::Whitespace
+            {
+                stack.push_paragraph_safe_elements(vec![text!(" ")]);
+                parser.step()?;
+            }
+            if literal_list_item {
+                stack.mark_wikidot_literal_list_item();
+            }
+            if literal_div_line {
+                stack.mark_wikidot_literal_div_line();
+            }
+            if terminal_backslash && parser.settings().layout.legacy() {
+                if parser.full_text().inner().ends_with("\u{fffd}\\") {
+                    stack.pop_line_break();
+                }
+                stack.mark_wikidot_terminal_backslash();
+            }
+            if terminal_spaced_underscore {
+                stack.mark_wikidot_terminal_backslash();
+            }
+            if comment_started_line
+                && parser.settings().layout.legacy()
+                && !stack.current_empty()
+                && matches!(
+                    parser.current().token,
+                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                )
+            {
+                stack.pop_line_break();
+            }
 
             // Process errors
             stack.push_errors(&mut errors);
@@ -166,12 +252,19 @@ fn push_elements<'t>(
     paragraph_safe: bool,
 ) {
     match elements {
-        Elements::None => {}
+        Elements::None if paragraph_safe => {}
+        Elements::None => stack.mark_current_unwrapped(),
         Elements::Single(element) => push_element(stack, element, paragraph_safe),
         Elements::Multiple(elements) if paragraph_safe => {
             stack.push_paragraph_safe_elements(elements);
         }
         Elements::Multiple(elements) => {
+            if elements
+                .iter()
+                .any(|element| matches!(element, Element::TabView(_)))
+            {
+                stack.mark_wikidot_tabview_boundary();
+            }
             for element in elements {
                 push_element(stack, element, paragraph_safe);
             }
@@ -185,7 +278,17 @@ fn push_element<'t>(
     paragraph_safe: bool,
 ) {
     // Don't add a line break if the paragraph is otherwise empty
-    if !(stack.current_empty() && element == Element::LineBreak) {
+    if !(paragraph_safe
+        && stack.current_empty()
+        && element == Element::LineBreak
+        && !stack.wikidot_line_break_follows_block())
+    {
+        if paragraph_safe
+            && element == Element::LineBreak
+            && stack.wikidot_line_break_follows_block()
+        {
+            stack.mark_next_unwrapped();
+        }
         stack.push_element(element, paragraph_safe);
     }
 }
@@ -195,7 +298,19 @@ mod tests {
     use super::*;
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
+
+    fn render_wikidot(source: &str) -> String {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut source = source.to_owned();
+        crate::preprocess_for_layout(&mut source, settings.layout);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:?}");
+        HtmlRender.render(&tree, &page_info, &settings).body
+    }
 
     #[test]
     fn non_paragraph_safe_multiple_elements_do_not_reserve_current_paragraph() {
@@ -207,6 +322,25 @@ mod tests {
         );
 
         assert_eq!(stack.current_capacity(), 0);
+    }
+
+    #[test]
+    fn empty_non_paragraph_safe_result_unwraps_pending_content() {
+        let mut stack = ParagraphStack::new();
+        stack.push_element(text!("alpha"), true);
+        stack.push_element(Element::LineBreak, true);
+
+        push_elements(&mut stack, Elements::None, false);
+
+        assert_eq!(
+            stack.into_elements(),
+            vec![text!("alpha"), Element::LineBreak],
+        );
+    }
+
+    #[test]
+    fn empty_quote_control_does_not_leave_a_line_break() {
+        assert_eq!(render_wikidot("a\n>b"), "<p>a</p>");
     }
 
     #[test]
@@ -225,5 +359,113 @@ mod tests {
 
         assert!(finished);
         assert_eq!(propagated.kind(), ParseErrorKind::BlockExpectedEnd);
+    }
+
+    #[test]
+    fn discarded_controls_are_invisible_without_losing_physical_line_occupancy() {
+        assert_eq!(render_wikidot("\0\t \t\t\nΩ"), "<p><br>\nΩ</p>",);
+        assert_eq!(
+            render_wikidot("\u{0007}\talpha \u{000b} beta"),
+            "<p>alpha beta</p>",
+        );
+    }
+
+    #[test]
+    fn discarded_control_remains_a_structural_syntax_barrier() {
+        assert_eq!(render_wikidot("\0> quote"), "<p>&gt; quote</p>",);
+    }
+
+    #[test]
+    fn discarded_control_does_not_preserve_leading_line_whitespace() {
+        assert_eq!(
+            render_wikidot("a\r\u{0001}\t\u{fffd}\0b"),
+            "<p>a<br>\nb</p>",
+        );
+    }
+
+    #[test]
+    fn wikidot_preserves_an_underscore_at_the_start_of_a_line() {
+        assert_eq!(render_wikidot("_\na"), "<p>_<br>\na</p>");
+        assert_eq!(render_wikidot(" _\na"), "<p><br>\na</p>");
+    }
+
+    #[test]
+    fn wikidot_terminal_spaced_underscore_emits_two_line_breaks() {
+        assert_eq!(render_wikidot("a\\ _"), "\n\na\\<br>\n<br>\n");
+    }
+
+    #[test]
+    fn wikidot_terminal_backslash_becomes_an_unwrapped_line_break() {
+        assert_eq!(render_wikidot("\\"), "");
+        assert_eq!(render_wikidot("alpha\\"), "\n\nalpha<br>\n");
+        assert_eq!(
+            render_wikidot("first\nsecond\\"),
+            "\n\nfirst<br>\nsecond<br>\n",
+        );
+        assert_eq!(
+            render_wikidot("paragraph\n\nlast\\"),
+            "<p>paragraph</p>\nlast<br>\n",
+        );
+        assert_eq!(render_wikidot("a\u{fffd}\\"), "\n\na1");
+    }
+
+    #[test]
+    fn wikidot_comment_only_line_does_not_leave_a_line_break() {
+        assert_eq!(
+            render_wikidot("alpha\n[!-- hidden --]\nomega"),
+            "<p>alpha<br>\nomega</p>",
+        );
+        assert_eq!(
+            render_wikidot("alpha\n[!-- hidden --]\n\nomega"),
+            "<p>alpha</p><p>omega</p>",
+        );
+        assert_eq!(
+            render_wikidot("alpha\n[!-- hidden --] visible\nomega"),
+            "<p>alpha<br>\n visible<br>\nomega</p>",
+        );
+        assert_eq!(
+            render_wikidot("before [!-- hidden --] after"),
+            "<p>before after</p>",
+        );
+        assert_eq!(
+            render_wikidot(
+                "[!-- --]OMEGA_TRUE[!-- --]\n[!-- OMEGA_FALSE[!-- --]\n[!-- 2 OMEGA_COMMENT --]\nOMEGA_AFTER",
+            ),
+            "<p>OMEGA_TRUE<br>\nOMEGA_AFTER</p>",
+        );
+        assert_eq!(
+            render_wikidot("before\n\n[!-- --]\nbranch body\n[!----]\n\n\nmiddle"),
+            "<p>before</p><p>branch body</p><p>middle</p>",
+        );
+    }
+
+    #[test]
+    fn wikidot_comment_after_advanced_list_preserves_the_list_break() {
+        assert_eq!(
+            render_wikidot(
+                "[[ol]][[li]]before[[/li]][[/ol]]\n\n[!-- hidden --]\n[[ul]][[li]]after[[/li]][[/ul]]",
+            ),
+            "<ol>\n<li>before</li>\n</ol><br>\n<ul>\n<li>after</li>\n</ul><br>\n",
+        );
+    }
+
+    #[test]
+    fn line_after_block_is_unwrapped_only_in_wikidot_layout() {
+        let page_info = PageInfo::dummy();
+        let input = "[[div]]\nblock\n[[/div]]\nafter";
+        let render = |layout| {
+            let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
+            let tokenization = crate::tokenize(input);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            assert!(errors.is_empty(), "{layout:?}: {errors:#?}");
+            HtmlRender.render(&tree, &page_info, &settings).body
+        };
+
+        let wikidot = render(Layout::Wikidot);
+        let wikijump = render(Layout::Wikijump);
+        assert!(wikidot.contains("</div><br>\nafter"), "{wikidot}");
+        assert!(!wikidot.contains("<p>after</p>"), "{wikidot}");
+        assert!(wikijump.contains("</div><p>after</p>"), "{wikijump}");
     }
 }

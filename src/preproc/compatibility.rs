@@ -1738,7 +1738,7 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert!(html.contains("<strong><span style=\"font-size: 110%;\">OVERWATCH COUNCIL</span></strong>"), "{html}");
+        assert!(html.contains("<strong><span style=\"font-size:110%;\">OVERWATCH COUNCIL</span></strong>"), "{html}");
     }
 
     #[test]

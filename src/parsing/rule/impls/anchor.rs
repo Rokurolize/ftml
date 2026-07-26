@@ -26,6 +26,7 @@
 
 use super::prelude::*;
 use crate::id_prefix::isolate_ids;
+use crate::tree::{LinkLabel, LinkLocation, LinkType};
 use std::borrow::Cow;
 
 pub const RULE_ANCHOR: Rule = Rule {
@@ -45,15 +46,41 @@ fn try_consume_fn<'r, 't>(
 
     // Gather name for anchor
     let close = [ParseCondition::current(Token::RightBlock)];
-    let invalid = [
-        ParseCondition::current(Token::Whitespace),
-        ParseCondition::current(Token::ParagraphBreak),
-        ParseCondition::current(Token::LineBreak),
-    ];
+    let invalid = if parser.settings().layout.legacy() {
+        vec![
+            ParseCondition::current(Token::ParagraphBreak),
+            ParseCondition::current(Token::LineBreak),
+        ]
+    } else {
+        vec![
+            ParseCondition::current(Token::Whitespace),
+            ParseCondition::current(Token::ParagraphBreak),
+            ParseCondition::current(Token::LineBreak),
+        ]
+    };
     let name = collect_text(parser, RULE_ANCHOR, &close, &invalid, None)?;
 
+    if parser.settings().layout.legacy()
+        && name.chars().any(|character| {
+            !(character.is_ascii_alphanumeric() || "-_".contains(character))
+        })
+    {
+        let label = name.trim();
+        return ok!(Elements::Multiple(vec![
+            text!("["),
+            Element::Link {
+                ltype: LinkType::Anchor,
+                link: LinkLocation::Url(Cow::Borrowed("javascript:;")),
+                label: LinkLabel::Text(cow!(label)),
+                target: None,
+            },
+            text!("]"),
+        ]));
+    }
+
     // Isolate ID if requested
-    let name = if parser.settings().isolate_user_ids {
+    let name = if parser.settings().isolate_user_ids && !parser.settings().layout.legacy()
+    {
         Cow::Owned(isolate_ids(name))
     } else {
         std::convert::identity(cow!(name))
@@ -61,4 +88,51 @@ fn try_consume_fn<'r, 't>(
 
     // Build and return link element
     ok!(Element::AnchorName(name))
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn wikidot_named_anchor_keeps_the_live_name() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[# apple]] X");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html, "<p><a name=\"apple\"></a> X</p>");
+    }
+
+    #[test]
+    fn wikidot_named_anchor_with_spaces_becomes_a_fake_link() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[# apple banana-cherry]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            "<p>[<a href=\"javascript:;\">apple banana-cherry</a>]</p>",
+        );
+    }
+
+    #[test]
+    fn wikidot_named_anchor_with_symbols_becomes_a_fake_link() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[# symbol$%_foo]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html, "<p>[<a href=\"javascript:;\">symbol$%_foo</a>]</p>",);
+    }
 }

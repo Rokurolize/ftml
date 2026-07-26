@@ -162,6 +162,7 @@ pub use self::lines::BLOCK_LINES;
 pub use self::list::{BLOCK_LI, BLOCK_OL, BLOCK_UL};
 pub use self::mark::BLOCK_MARK;
 pub use self::math::BLOCK_MATH;
+pub(crate) use self::math::wikidot_math_name;
 pub use self::media::{BLOCK_AUDIO, BLOCK_VIDEO};
 pub use self::module::BLOCK_MODULE;
 pub use self::monospace::BLOCK_MONOSPACE;

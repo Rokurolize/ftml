@@ -41,6 +41,10 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "HTML doesn't allow score flag");
     assert_block_name(&BLOCK_HTML, name);
 
+    if parser.settings().layout.legacy() && !parser.discarding_hidden_body() {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     let arguments = parser.get_head_map(&BLOCK_HTML, in_head)?;
     let html = parser.get_body_text(&BLOCK_HTML)?;
     let element = Element::Html {
@@ -59,9 +63,9 @@ mod tests {
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
-    fn html_block_tracks_body_and_element_contents() {
+    fn html_block_tracks_body_and_element_contents_in_wikijump() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tokenization = crate::tokenize("[[html]]\n<strong>raw</strong>\n[[/html]]");
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
@@ -85,5 +89,17 @@ mod tests {
         assert_eq!(contents, "<strong>raw</strong>");
         assert!(attributes.get().is_empty());
         assert_eq!(tracked_html, "<strong>raw</strong>");
+    }
+
+    #[test]
+    fn html_block_markers_remain_literal_in_wikidot() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization =
+            crate::tokenize("[[html]]\n<strong>escaped</strong>\n[[/html]]");
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(tree.html_blocks.is_empty(), "{tree:#?}");
+        assert!(!format!("{tree:?}").contains("Html {"), "{tree:#?}");
     }
 }

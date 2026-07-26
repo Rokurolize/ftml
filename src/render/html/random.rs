@@ -19,6 +19,7 @@
  */
 
 use cfg_if::cfg_if;
+use rand::RngExt;
 use rand::distr::{Alphanumeric, SampleString};
 use rand::rngs::SmallRng;
 
@@ -54,6 +55,20 @@ impl Random {
         self.generate_html_id_into(&mut buffer);
         buffer
     }
+
+    pub fn generate_wikidot_bibcite_id(&mut self, index: usize) -> String {
+        let suffix = self.rng.random_range(1000..100_000);
+        format!("bibcite-{index}-{suffix}a")
+    }
+
+    pub fn generate_wikidot_tabview_id(&mut self) -> String {
+        let mut id = String::from("wiki-tabview-");
+        for _ in 0..32 {
+            let digit = self.rng.random_range(0..16);
+            id.push(char::from_digit(digit, 16).expect("hex digit is in range"));
+        }
+        id
+    }
 }
 
 #[test]
@@ -76,5 +91,11 @@ fn html_id() {
     assert_eq!(
         html_id, "wj-id-e9pQyKaPmLnulpgn",
         "Generated HTML ID doesn't match expected",
+    );
+
+    let bibcite_id = rand.generate_wikidot_bibcite_id(2);
+    assert!(
+        bibcite_id.starts_with("bibcite-2-") && bibcite_id.ends_with('a'),
+        "{bibcite_id}",
     );
 }

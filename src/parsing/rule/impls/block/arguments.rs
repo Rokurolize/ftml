@@ -22,7 +22,7 @@ use crate::parsing::{ParseError, ParseErrorKind, Parser, parse_boolean};
 use crate::settings::WikitextSettings;
 use crate::tree::{AttributeMap, RawModuleArgument};
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use unicase::UniCase;
 
@@ -36,6 +36,8 @@ macro_rules! make_err {
 pub struct Arguments<'t> {
     inner: HashMap<UniCase<&'t str>, Cow<'t, str>>,
     raw: Vec<RawModuleArgument<'t>>,
+    bare: HashSet<UniCase<&'t str>>,
+    spaced_equals: bool,
 }
 
 impl<'t> Arguments<'t> {
@@ -47,6 +49,7 @@ impl<'t> Arguments<'t> {
     /// Inserts a key / value pair into the list of arguments.
     pub fn insert(&mut self, key: &'t str, value: Cow<'t, str>) {
         let key = UniCase::ascii(key);
+        self.bare.remove(&key);
         self.raw.push(RawModuleArgument {
             name: cow!(key.into_inner()),
             value: value.clone(),
@@ -54,11 +57,23 @@ impl<'t> Arguments<'t> {
         self.inner.insert(key, value);
     }
 
+    pub fn insert_bare(&mut self, key: &'t str, value: Cow<'t, str>) {
+        self.insert(key, value);
+        self.bare.insert(UniCase::ascii(key));
+    }
+
     /// Gets **and removes** a string value from the arguments from its key.
     #[must_use = "non-idempotent getter method"]
     pub fn get(&mut self, key: &'t str) -> Option<Cow<'t, str>> {
         let key = UniCase::ascii(key);
+        self.bare.remove(&key);
         self.inner.remove(&key)
+    }
+
+    pub fn get_with_bare(&mut self, key: &'t str) -> Option<(Cow<'t, str>, bool)> {
+        let key = UniCase::ascii(key);
+        let bare = self.bare.remove(&key);
+        self.inner.remove(&key).map(|value| (value, bare))
     }
 
     /// Gets **and removes** a boolean value from the arguments from its the key.
@@ -98,6 +113,14 @@ impl<'t> Arguments<'t> {
         self.inner.is_empty()
     }
 
+    pub fn mark_spaced_equals(&mut self) {
+        self.spaced_equals = true;
+    }
+
+    pub fn has_spaced_equals(&self) -> bool {
+        self.spaced_equals
+    }
+
     /// Removes the `UniCase` wrappers to produce a separate hash map of keys to values.
     ///
     /// This returns a new `HashMap` suitable for inclusion in final `Element`s.
@@ -127,6 +150,30 @@ impl<'t> Arguments<'t> {
     #[inline]
     pub fn to_attribute_map(&self, settings: &WikitextSettings) -> AttributeMap<'t> {
         let mut map = AttributeMap::from_arguments(&self.inner);
+        map.isolate_id(settings);
+        map
+    }
+
+    pub fn to_wikidot_anchor_attribute_map(
+        &self,
+        settings: &WikitextSettings,
+    ) -> AttributeMap<'t> {
+        let mut map = AttributeMap::from_wikidot_anchor_arguments(&self.inner);
+        map.isolate_id(settings);
+        map
+    }
+
+    pub fn to_attribute_map_without_bare(
+        &self,
+        settings: &WikitextSettings,
+    ) -> AttributeMap<'t> {
+        let arguments = self
+            .inner
+            .iter()
+            .filter(|(key, _)| !self.bare.contains(*key))
+            .map(|(key, value)| (*key, value.clone()))
+            .collect();
+        let mut map = AttributeMap::from_arguments(&arguments);
         map.isolate_id(settings);
         map
     }

@@ -31,51 +31,90 @@ fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create monospace container");
+    let opening_start = parser.current().span.start;
     assert_step(parser, Token::LeftMonospace)?;
 
-    if is_ascii_space_padding(parser.current()) {
+    let mut leading_padding = false;
+    if is_wikidot_edge_padding(parser.current()) {
         let is_padding_only = parser.next_two_tokens().1 == Some(Token::RightMonospace);
         assert_step(parser, Token::Whitespace)?;
 
         if is_padding_only {
             assert_step(parser, Token::RightMonospace)?;
-            return success_elements(Elements::None);
+            return success_elements(text!(" "));
         }
+        leading_padding = true;
     }
 
-    let close = [
-        ParseCondition::current(Token::RightMonospace),
-        ParseCondition::token_pair(Token::Whitespace, Token::RightMonospace),
-    ];
-    let invalid = [
-        ParseCondition::current(Token::ParagraphBreak),
-        // Preserve the established fail-closed behavior for padded nested markers.
-        ParseCondition::token_pair(Token::LeftMonospace, Token::Whitespace),
-    ];
+    let close = [ParseCondition::current(Token::RightMonospace)];
+    let invalid = [ParseCondition::current(Token::ParagraphBreak)];
     let collected = collect_consume_keep(parser, RULE_MONOSPACE, &close, &invalid, None)?;
-    let ((elements, terminator), errors, paragraph_safe) = collected.into();
+    let ((mut elements, terminator), errors, paragraph_safe) = collected.into();
 
-    // The configured close conditions guarantee either a fully consumed direct
-    // marker or a whitespace token whose following marker remains current.
-    if terminator.token == Token::Whitespace {
-        if !is_ascii_space_padding(terminator) {
-            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    let trailing_padding = if parser.current().token == Token::RightMonospace {
+        // A run of closing braces uses its final pair as the terminator. Every
+        // preceding pair remains monospace text.
+        elements.push(text!("}}"));
+        while parser.next_two_tokens()
+            == (Token::RightMonospace, Some(Token::RightMonospace))
+        {
+            elements.push(text!("}}"));
+            parser.step()?;
         }
         assert_step(parser, Token::RightMonospace)?;
-    }
+        false
+    } else {
+        let has_padding = parser
+            .full_text()
+            .inner()
+            .as_bytes()
+            .get(terminator.span.start.wrapping_sub(1))
+            .is_some_and(|byte| matches!(byte, b' ' | b'\t'));
+        if has_padding
+            && matches!(elements.last(), Some(Element::Text(value)) if value.as_ref() == " ")
+        {
+            elements.pop();
+        }
+        has_padding
+    };
 
     let element = Element::Container(Container::new(
         ContainerType::Monospace,
         elements,
         AttributeMap::new(),
     ));
-    ok!(paragraph_safe; element, errors)
+    let mut output = Vec::with_capacity(3);
+    let leading_separator = leading_padding
+        && parser
+            .full_text()
+            .inner()
+            .as_bytes()
+            .get(opening_start.wrapping_sub(1))
+            .is_some_and(|byte| !byte.is_ascii_whitespace());
+    if leading_separator {
+        output.push(text!(" "));
+    }
+    output.push(element);
+    let trailing_separator = trailing_padding
+        && !matches!(
+            parser.current().token,
+            Token::Whitespace
+                | Token::LineBreak
+                | Token::ParagraphBreak
+                | Token::InputEnd
+        )
+        && !(parser.current().token == Token::LeftMonospace
+            && parser.look_ahead(0).is_some_and(is_wikidot_edge_padding));
+    if trailing_separator {
+        output.push(text!(" "));
+    }
+    ok!(paragraph_safe; output, errors)
 }
 
-fn is_ascii_space_padding(token: &ExtractedToken<'_>) -> bool {
+fn is_wikidot_edge_padding(token: &ExtractedToken<'_>) -> bool {
     token.token == Token::Whitespace
         && !token.slice.is_empty()
-        && token.slice.bytes().all(|byte| byte == b' ')
+        && token.slice.bytes().all(|byte| matches!(byte, b' ' | b'\t'))
 }
 
 #[cfg(test)]
@@ -124,42 +163,45 @@ mod tests {
     }
 
     #[test]
-    fn monospace_trims_space_runs_but_preserves_internal_space_and_markup() {
+    fn monospace_collapses_space_runs_and_preserves_markup() {
         let (html, errors) = render("before {{   a  **b**  c   }} after");
         assert!(errors.is_empty(), "{errors:?}");
-        assert!(html.contains("before <tt>a  <strong>b</strong>  c</tt> after",));
+        assert_eq!(html, "<p>before <tt>a <strong>b</strong> c</tt> after</p>",);
     }
 
     #[test]
-    fn monospace_space_only_body_produces_no_inline_container() {
+    fn monospace_space_only_body_preserves_one_visible_space_without_a_container() {
         let (html, errors) = render("before{{   }}after");
         assert!(errors.is_empty(), "{errors:?}");
-        assert!(html.contains("beforeafter"), "{html}");
+        assert!(html.contains("before after"), "{html}");
         assert!(!html.contains("<tt>"), "{html}");
     }
 
     #[test]
-    fn monospace_close_consumes_exactly_its_own_terminator() {
-        for input in ["{{x}}}}tail", "{{x }}}}tail"] {
-            let page_info = PageInfo::dummy();
-            let settings =
-                WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-            let tokenization = crate::tokenize(input);
-            let mut parser = Parser::new(&tokenization, &page_info, &settings);
-            parser
-                .step()
-                .expect("opening marker should follow input start");
-            parser.set_rule(RULE_MONOSPACE);
-
-            let _parsed = try_consume_fn(&mut parser).expect("monospace should parse");
-
-            assert_eq!(parser.current().token, Token::RightMonospace, "{input:?}");
-            assert_eq!(parser.current().slice, "}}", "{input:?}");
+    fn monospace_uses_the_last_pair_in_a_closing_brace_run() {
+        for (input, expected) in [
+            ("{{x}}}}tail", "<p><tt>x}}</tt>tail</p>"),
+            ("{{x }}}}tail", "<p><tt>x }}</tt>tail</p>"),
+            ("{{x}}}}}}tail", "<p><tt>x}}}}</tt>tail</p>"),
+        ] {
+            let (html, errors) = render(input);
+            assert!(errors.is_empty(), "{input:?}: {errors:?}");
+            assert_eq!(html, expected, "{input:?}");
         }
+    }
 
-        let (html, errors) = render("{{x }}{{ y}}");
-        assert!(errors.is_empty(), "{errors:?}");
-        assert_eq!(html.matches("<tt>").count(), 2, "{html}");
+    #[test]
+    fn monospace_moves_edge_padding_outside_the_container() {
+        for (input, expected) in [
+            ("{{x }}{{ y}}", "<p><tt>x</tt> <tt>y</tt></p>"),
+            ("{{x }}after", "<p><tt>x</tt> after</p>"),
+            ("before{{ x}}", "<p>before <tt>x</tt></p>"),
+            ("{{x   }}{{   y}}", "<p><tt>x</tt> <tt>y</tt></p>"),
+        ] {
+            let (html, errors) = render(input);
+            assert!(errors.is_empty(), "{input:?}: {errors:?}");
+            assert_eq!(html, expected, "{input:?}");
+        }
     }
 
     #[test]
@@ -172,22 +214,21 @@ mod tests {
     }
 
     #[test]
-    fn monospace_keeps_padded_nested_marker_fail_closed() {
+    fn monospace_keeps_nested_opener_literal_and_closes_at_the_first_terminator() {
         let input = "{{outer {{ inner }} tail}}";
         let (html, _errors) = render(input);
-        assert!(html.starts_with("<p>{{outer "), "{html}");
-        assert!(html.contains("<tt>inner</tt> tail}}</p>"), "{html}",);
+        assert_eq!(html, "<p><tt>outer {{ inner</tt> tail}}</p>");
     }
 
     #[test]
-    fn monospace_does_not_trim_unverified_tabs() {
+    fn monospace_normalizes_and_trims_edge_tabs_like_wikidot() {
         let (leading_html, leading_errors) = render("{{\ttext}}");
         assert!(leading_errors.is_empty(), "{leading_errors:?}");
-        assert!(leading_html.contains("<tt>\ttext</tt>"), "{leading_html}",);
+        assert_eq!(leading_html, "<p><tt>text</tt></p>");
 
-        let (trailing_html, _trailing_errors) = render("{{text\t}}");
-        assert!(!trailing_html.contains("<tt>"), "{trailing_html}");
-        assert!(trailing_html.contains("{{text\t}}"), "{trailing_html}");
+        let (trailing_html, trailing_errors) = render("{{text\t}}");
+        assert!(trailing_errors.is_empty(), "{trailing_errors:?}");
+        assert_eq!(trailing_html, "<p><tt>text</tt></p>");
     }
 
     #[test]
@@ -213,7 +254,7 @@ mod tests {
     }
 
     #[test]
-    fn ascii_space_padding_predicate_is_narrow() {
+    fn edge_padding_accepts_spaces_and_tabs_only() {
         let spaces = ExtractedToken {
             token: Token::Whitespace,
             slice: "   ",
@@ -230,8 +271,8 @@ mod tests {
             span: 0..1,
         };
 
-        assert!(is_ascii_space_padding(&spaces));
-        assert!(!is_ascii_space_padding(&tab));
-        assert!(!is_ascii_space_padding(&other));
+        assert!(is_wikidot_edge_padding(&spaces));
+        assert!(is_wikidot_edge_padding(&tab));
+        assert!(!is_wikidot_edge_padding(&other));
     }
 }

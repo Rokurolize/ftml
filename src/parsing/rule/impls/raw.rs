@@ -59,40 +59,53 @@ fn try_consume_fn<'r, 't>(
 
         // Determine which case they fall under
         let special_case = match (next_1.token, next_2.token) {
-            // "@@@@@@" -> Element::Raw("@@")
+            // "@@@@@@" -> ordinary text "@@"
             (Token::Raw, Token::Raw) => {
                 trace!("Found meta-raw (\"@@@@@@\"), returning");
                 parser.step_n(3)?;
-                Some(raw!("@@"))
+                Some(text!("@@"))
             }
 
-            // "@@@@@" -> Element::Raw("@")
+            // "@@@@@" -> ordinary text "@"
             // This case is strange since the lexer returns Raw Raw Other (@@ @@ @)
             // So we capture this and return the intended output
             (Token::Raw, Token::Other) => {
                 if next_2.slice == "@" {
                     trace!("Found single-raw (\"@@@@@\"), returning");
                     parser.step_n(3)?;
-                    Some(raw!("@"))
+                    Some(text!("@"))
                 } else {
                     trace!("Found empty raw (\"@@@@\"), followed by other text");
                     parser.step_n(2)?;
-                    Some(raw!(""))
+                    return ok!(Elements::None);
                 }
             }
 
-            // "@@@@" -> Element::Raw("")
+            // "@@@@" -> no element
             // Only consumes two tokens.
             (Token::Raw, _) => {
                 trace!("Found empty raw (\"@@@@\"), returning");
                 parser.step_n(2)?;
-                Some(raw!(""))
+                return ok!(Elements::None);
             }
 
             // "@@ \n @@" -> Abort
             (Token::LineBreak, Token::Raw) | (Token::ParagraphBreak, Token::Raw) => {
+                if parser.settings().layout.legacy() {
+                    parser.step_n(3)?;
+                    return ok!(Elements::None);
+                }
                 trace!("Found interrupted raw, aborting");
                 return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
+
+            (Token::RightRaw, Token::Raw) if parser.settings().layout.legacy() => {
+                parser.step_n(3)?;
+                let raw = next_1
+                    .slice
+                    .strip_suffix('@')
+                    .expect("right-raw token ends with an at sign");
+                return ok!(Elements::Multiple(vec![raw!(raw), text!("@")]));
             }
 
             // "@@ [something] @@" -> Element::Raw(token)
@@ -120,6 +133,8 @@ fn try_consume_fn<'r, 't>(
 
     let current = parser.step()?;
     let (start, mut end) = (current, current);
+    let mut saw_left_raw = false;
+    let mut saw_nested_raw_pair = false;
 
     loop {
         let token = parser.current().token;
@@ -133,6 +148,30 @@ fn try_consume_fn<'r, 't>(
                 let slice = parser.full_text().slice_partial(start, end);
                 parser.step()?;
 
+                if parser.settings().layout.legacy()
+                    && ending_token == Token::Raw
+                    && saw_nested_raw_pair
+                {
+                    return ok!(Elements::None);
+                }
+
+                if parser.settings().layout.legacy()
+                    && ending_token == Token::Raw
+                    && slice.ends_with(">@")
+                {
+                    let raw = slice
+                        .strip_suffix('@')
+                        .expect("right-raw token ends with an at sign");
+                    return ok!(Elements::Multiple(vec![raw!(raw), text!("@")]));
+                }
+
+                if parser.settings().layout.legacy()
+                    && ending_token == Token::RightRaw
+                    && slice.is_empty()
+                {
+                    return ok!(Elements::None);
+                }
+
                 let raw = match ending_token {
                     Token::RightRaw => decode_semicolon_entities(slice),
                     Token::Raw => cow!(slice),
@@ -143,6 +182,11 @@ fn try_consume_fn<'r, 't>(
             }
 
             trace!("Wasn't end of raw, continuing");
+            if token == Token::RightRaw && saw_left_raw {
+                saw_nested_raw_pair = true;
+            }
+        } else if token == Token::LeftRaw && ending_token == Token::Raw {
+            saw_left_raw = true;
         } else if matches!(token, Token::LineBreak | Token::ParagraphBreak) {
             trace!("Reached newline, aborting");
             return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -185,22 +229,19 @@ mod tests {
     #[test]
     fn raw_rule_handles_short_raw_special_cases() {
         with_raw_elements("@@@@@@", |result| {
-            assert_eq!(result.unwrap(), Elements::Single(raw!("@@")));
+            assert_eq!(result.unwrap(), Elements::Single(text!("@@")));
         });
         with_raw_elements("@@@@@", |result| {
-            assert_eq!(result.unwrap(), Elements::Single(raw!("@")));
+            assert_eq!(result.unwrap(), Elements::Single(text!("@")));
         });
         with_raw_elements("@@@@", |result| {
-            assert_eq!(result.unwrap(), Elements::Single(raw!("")));
+            assert_eq!(result.unwrap(), Elements::None);
         });
         with_raw_elements("@@token@@", |result| {
             assert_eq!(result.unwrap(), Elements::Single(raw!("token")));
         });
         with_raw_elements("@@\n@@", |result| {
-            assert!(matches!(
-                result.unwrap_err().kind(),
-                ParseErrorKind::RuleFailed
-            ));
+            assert_eq!(result.unwrap(), Elements::None);
         });
     }
 
@@ -211,6 +252,39 @@ mod tests {
         });
         with_raw_elements("@<a @@ b>@", |result| {
             assert_eq!(result.unwrap(), Elements::Single(raw!("a @@ b")));
+        });
+    }
+
+    #[test]
+    fn wikidot_discards_double_at_raw_containing_a_complete_angle_raw() {
+        with_raw_elements("@@foo @< >@ bar@@", |result| {
+            assert_eq!(result.unwrap(), Elements::None);
+        });
+        with_raw_elements("@@a >@ b@@", |result| {
+            assert_eq!(result.unwrap(), Elements::Single(raw!("a >@ b")));
+        });
+    }
+
+    #[test]
+    fn wikidot_resolves_overlapping_raw_closers_without_stealing_the_last_at() {
+        with_raw_elements("@@>@@@", |result| {
+            assert_eq!(
+                result.unwrap(),
+                Elements::Multiple(vec![raw!(">"), text!("@")]),
+            );
+        });
+        with_raw_elements("@@alpha>@@@", |result| {
+            assert_eq!(
+                result.unwrap(),
+                Elements::Multiple(vec![raw!("alpha>"), text!("@")]),
+            );
+        });
+    }
+
+    #[test]
+    fn wikidot_discards_empty_angle_raw() {
+        with_raw_elements("@<>@", |result| {
+            assert_eq!(result.unwrap(), Elements::None);
         });
     }
 

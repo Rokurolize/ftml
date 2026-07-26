@@ -67,7 +67,7 @@ mod tests {
     #[test]
     fn insertion_block_alias_wraps_inline_body() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tokenization = crate::tokenize("[[insertion]]inserted text[[/insertion]]");
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 

@@ -1,3 +1,7 @@
 # .sh files need to have UNIX line endings
 # Even on Windows, otherwise this will break Docker builds
 *.sh eol=lf
+
+# Render fixtures are byte-exact and may intentionally end lines with visible output spaces.
+test/**/output.txt whitespace=-trailing-space
+test/**/wikidot.html whitespace=-blank-at-eof

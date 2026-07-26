@@ -241,6 +241,7 @@ fn public_api_html_render_covers_fallback_branches_from_ast() {
             Element::BibliographyCite {
                 label: Cow::Borrowed("missing"),
                 brackets: false,
+                inline: true,
             },
             Element::BibliographyBlock {
                 index: 0,

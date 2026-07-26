@@ -190,10 +190,6 @@
                                     {
                                         "element": "text",
                                         "data": "1"
-                                    },
-                                    {
-                                        "element": "text",
-                                        "data": " "
                                     }
                                 ]
                             }
@@ -216,10 +212,6 @@
                                     {
                                         "element": "text",
                                         "data": "2"
-                                    },
-                                    {
-                                        "element": "text",
-                                        "data": " "
                                     }
                                 ]
                             }

@@ -42,6 +42,7 @@ pub fn render_anchor(
         .a()
         .attr(attr!(
             "class" => "wj-anchor"; if layout == Layout::Wikijump,
+            "href" => ""; if layout == Layout::Wikidot && !attributes.get().contains_key("href"),
             "target" => target_value; if target.is_some();;
             attributes,
         ))

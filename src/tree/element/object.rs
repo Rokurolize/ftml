@@ -220,7 +220,11 @@ pub enum Element<'t> {
     ///
     /// The `brackets` field tells whether the resultant HTML should be surrounded
     /// in `[..]`, which is not very easily possible when using `[[bibcite ...]]`.
-    BibliographyCite { label: Cow<'t, str>, brackets: bool },
+    BibliographyCite {
+        label: Cow<'t, str>,
+        brackets: bool,
+        inline: bool,
+    },
 
     /// A bibliography block, containing all the cited items from throughout the page.
     ///
@@ -570,9 +574,14 @@ impl Element<'_> {
                 title: option_string_to_owned(title),
                 hide: *hide,
             },
-            Element::BibliographyCite { label, brackets } => Element::BibliographyCite {
+            Element::BibliographyCite {
+                label,
+                brackets,
+                inline,
+            } => Element::BibliographyCite {
                 label: string_to_owned(label),
                 brackets: *brackets,
+                inline: *inline,
             },
             Element::BibliographyBlock { index, title, hide } => {
                 Element::BibliographyBlock {

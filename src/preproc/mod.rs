@@ -35,6 +35,7 @@ pub use self::parser_functions::{
 #[cfg(test)]
 mod test;
 
+use crate::layout::Layout;
 use regex::Regex;
 
 /// Helper struct to easily perform string replacements.
@@ -179,12 +180,49 @@ impl Replacer {
 ///
 /// This call always succeeds. The return value designates where issues occurred
 /// to allow programmatic determination of where things were not as expected.
+#[track_caller]
 pub fn preprocess(text: &mut String) {
+    preprocess_internal(text, false);
+}
+
+#[track_caller]
+pub fn preprocess_for_layout(text: &mut String, layout: Layout) {
+    preprocess_internal(text, layout.legacy());
+}
+
+fn preprocess_internal(text: &mut String, wikidot_compatibility: bool) {
+    #[cfg(feature = "test-source-recorder")]
+    crate::source_recorder::record(
+        "preprocess-input",
+        text,
+        std::panic::Location::caller(),
+    );
+
     debug!("Beginning preprocessing of text ({} bytes)", text.len());
-    whitespace::substitute(text);
+    if wikidot_compatibility {
+        whitespace::preserve_wikidot_document_indentation_barrier(text);
+        whitespace::expose_wikidot_replacement_markers(text);
+        whitespace::preserve_wikidot_terminal_backslash_run(text);
+    }
+    if wikidot_compatibility {
+        whitespace::substitute_wikidot(text);
+    } else {
+        whitespace::substitute(text);
+    }
     parser_functions::substitute(text);
     compatibility::substitute(text);
-    typography::substitute(text);
+    if wikidot_compatibility {
+        typography::substitute_wikidot(text);
+        whitespace::filter_characters(text, true);
+    } else {
+        typography::substitute(text);
+    }
+    #[cfg(feature = "test-source-recorder")]
+    crate::source_recorder::record(
+        "preprocess-output",
+        text,
+        std::panic::Location::caller(),
+    );
     debug!("Finished preprocessing of text ({} bytes)", text.len());
 }
 
@@ -194,4 +232,20 @@ fn fn_type() {
 
     let _: SubstituteFn = whitespace::substitute;
     let _: SubstituteFn = typography::substitute;
+}
+
+#[test]
+fn replacement_marker_compatibility_is_wikidot_layout_only() {
+    let mut wikidot = "a\u{fffd}".to_owned();
+    let mut wikijump = wikidot.clone();
+
+    preprocess_for_layout(&mut wikidot, Layout::Wikidot);
+    preprocess_for_layout(&mut wikijump, Layout::Wikijump);
+
+    assert_eq!(wikidot, "a2");
+    assert_eq!(wikijump, "a\u{fffd}");
+
+    let mut wikidot_terminal = "a\u{fffd}\\".to_owned();
+    preprocess_for_layout(&mut wikidot_terminal, Layout::Wikidot);
+    assert_eq!(wikidot_terminal, "a1\u{fffd}\\");
 }

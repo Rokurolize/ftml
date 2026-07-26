@@ -47,9 +47,8 @@ fn parse_fn<'r, 't>(
     let title = arguments.get("title");
     let hide = arguments.get_bool(parser, "hide")?.unwrap_or(false);
 
-    // Get body content. The contents should only be a definition list, but
-    // we use the regular elements parser to make it easy on us. If we find
-    // anything else, we fail the rule.
+    // Get body content. Wikidot accepts non-definition content and renders it
+    // directly inside the bibliography container.
     //
     // We also discard paragraph_safe, since it's not relevant, and this element
     // never is (uses <div>).
@@ -61,6 +60,7 @@ fn parse_fn<'r, 't>(
     // Look through to find definition lists, ignoring "space" type elements,
     // and adding definition list values to the bibliography as we find them.
     let mut bibliography = Bibliography::new();
+    let mut in_residual = false;
 
     for element in elements {
         match element {
@@ -69,20 +69,16 @@ fn parse_fn<'r, 't>(
                 for item in items {
                     bibliography.add(item.key_string, item.value_elements);
                 }
+                in_residual = false;
             }
 
-            // Skip whitespace elements
-            _ if element.is_whitespace() => continue,
+            // Skip structural whitespace between definition lists.
+            _ if element.is_whitespace() && !in_residual => continue,
 
-            // Other elements
+            // Other elements are preserved without an item number.
             _ => {
-                warn!(
-                    "Non-definition element in bibliography block: {}",
-                    element.name(),
-                );
-
-                let kind = ParseErrorKind::BibliographyContainsNonDefinitionList;
-                return Err(parser.make_err(kind));
+                bibliography.add_residual(element);
+                in_residual = true;
             }
         }
     }
@@ -98,6 +94,7 @@ mod tests {
     use super::*;
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
@@ -131,16 +128,49 @@ mod tests {
     }
 
     #[test]
-    fn bibliography_block_rejects_non_definition_body() {
+    fn bibliography_block_preserves_non_definition_body() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         let tokenization =
             crate::tokenize("[[bibliography]]\nnot a definition\n[[/bibliography]]");
-        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
-        assert!(
-            errors.iter().any(|error| error.kind()
-                == ParseErrorKind::BibliographyContainsNonDefinitionList)
+        assert!(errors.is_empty(), "{errors:#?}");
+        let bibliography = tree.bibliographies.get_bibliography(0);
+        assert_eq!(bibliography.slice().len(), 1, "{:#?}", bibliography.slice(),);
+        assert!(Bibliography::is_residual(&bibliography.slice()[0].0));
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert_eq!(
+            html,
+            "<div class=\"bibitems\"><div class=\"title\">Bibliography</div>\nnot a definition</div>",
         );
+    }
+
+    #[test]
+    fn wikidot_bibliography_renders_legacy_dom_and_self_citations() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut source = concat!(
+            "[[bibliography title=\"Works\" hide=\"true\"]]\n",
+            ": alpha : ((bibcite alpha))\n",
+            "[[/bibliography]]\n",
+            "((bibcite alpha))",
+        )
+        .to_owned();
+        crate::preprocess(&mut source);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains(r#"<div class="bibitems">"#), "{html}");
+        assert!(html.contains(r#"<div class="title">Works</div>"#), "{html}");
+        assert!(
+            html.contains(r#"<div class="bibitem" id="bibitem-1">1. "#),
+            "{html}",
+        );
+        assert_eq!(html.matches(r#"class="bibcite""#).count(), 2, "{html}");
+        assert!(!html.contains("wj-bibliography"), "{html}");
+        assert!(!html.contains("error-inline"), "{html}");
     }
 }

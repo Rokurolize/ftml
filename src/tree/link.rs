@@ -52,8 +52,15 @@ impl<'a> LinkLocation<'a> {
 
             // Try to interpret as interwiki
             Some(link) => {
-                let url = settings.interwiki.build(link)?;
-                Some((LinkLocation::Url(Cow::Owned(url)), LinkType::Interwiki))
+                if let Some(url) = settings.interwiki.build(link) {
+                    Some((LinkLocation::Url(Cow::Owned(url)), LinkType::Interwiki))
+                } else if settings.layout.legacy() {
+                    let location = Self::parse(Cow::Owned(link.to_owned()));
+                    let ltype = location.link_type();
+                    Some((location, ltype))
+                } else {
+                    None
+                }
             }
         }
     }

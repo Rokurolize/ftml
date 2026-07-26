@@ -20,7 +20,6 @@
 
 use crate::data::PageInfo;
 use crate::layout::Layout;
-use crate::parsing::ParseErrorKind;
 use crate::settings::{WikitextMode, WikitextSettings};
 use crate::tree::{Alignment, ContainerType, Element, TableType};
 
@@ -115,22 +114,22 @@ fn simple_table_parser_edges_preserve_rows_and_headers() {
 }
 
 #[test]
-fn simple_table_missing_end_reports_rule_failure() {
+fn simple_table_missing_end_renders_an_empty_cell_like_wikidot() {
     enable_test_logging();
 
     let page_info = PageInfo::dummy();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let tokenization = crate::tokenize("|| Missing end");
     let result = crate::parse(&tokenization, &page_info, &settings);
-    let (_tree, errors) = result.into();
+    let (tree, errors) = result.into();
 
-    assert!(
-        errors
-            .iter()
-            .any(|error| error.rule() == "table"
-                && error.kind() == ParseErrorKind::RuleFailed),
-        "expected a table rule failure, got {errors:?}",
-    );
+    assert!(errors.is_empty(), "unexpected parse errors: {errors:?}");
+    let [Element::Table(table)] = tree.elements.as_slice() else {
+        panic!("expected one table, got {:?}", tree.elements);
+    };
+    assert_eq!(table.rows.len(), 1);
+    assert_eq!(table.rows[0].cells.len(), 1);
+    assert!(table.rows[0].cells[0].elements.is_empty());
 }
 
 #[test]
@@ -185,7 +184,7 @@ fn simple_table_consumes_rich_cell_contents() {
 }
 
 #[test]
-fn simple_table_left_marker_stays_literal_cell_text() {
+fn simple_table_left_marker_sets_cell_alignment() {
     enable_test_logging();
 
     let page_info = PageInfo::dummy();
@@ -205,13 +204,13 @@ fn simple_table_left_marker_stays_literal_cell_text() {
 
     let cell = &table.rows[0].cells[0];
     assert!(!cell.header);
-    assert_eq!(cell.align, None);
+    assert_eq!(cell.align, Some(Alignment::Left));
     assert_eq!(cell.column_span.get(), 1);
-    assert_text_content(&cell.elements, "< left");
+    assert_text_content(&cell.elements, "left");
 }
 
 #[test]
-fn simple_table_combined_header_alignment_markers_keep_extra_marker_literal() {
+fn simple_table_combined_header_alignment_markers_remain_literal() {
     enable_test_logging();
 
     let page_info = PageInfo::dummy();
@@ -231,22 +230,22 @@ fn simple_table_combined_header_alignment_markers_keep_extra_marker_literal() {
     assert_eq!(table.rows.len(), 4);
 
     let cell = &table.rows[0].cells[0];
-    assert!(cell.header);
+    assert!(!cell.header);
     assert_eq!(cell.align, None);
-    assert_text_content(&cell.elements, "> header right");
+    assert_text_content(&cell.elements, "~> header right");
 
     let cell = &table.rows[1].cells[0];
-    assert!(cell.header);
+    assert!(!cell.header);
     assert_eq!(cell.align, None);
-    assert_text_content(&cell.elements, "= header center");
+    assert_text_content(&cell.elements, "~= header center");
 
     let cell = &table.rows[2].cells[0];
     assert!(!cell.header);
-    assert_eq!(cell.align, Some(Alignment::Right));
-    assert_text_content(&cell.elements, "~ right header");
+    assert_eq!(cell.align, None);
+    assert_text_content(&cell.elements, ">~ right header");
 
     let cell = &table.rows[3].cells[0];
     assert!(!cell.header);
-    assert_eq!(cell.align, Some(Alignment::Center));
-    assert_text_content(&cell.elements, "~ center header");
+    assert_eq!(cell.align, None);
+    assert_text_content(&cell.elements, "=~ center header");
 }

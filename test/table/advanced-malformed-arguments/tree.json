@@ -71,6 +71,9 @@
                         "data": "]]"
                     },
                     {
+                        "element": "line-break"
+                    },
+                    {
                         "element": "text",
                         "data": "[["
                     },
@@ -150,6 +153,9 @@
                         "data": "]]"
                     },
                     {
+                        "element": "line-break"
+                    },
+                    {
                         "element": "text",
                         "data": "[["
                     },
@@ -160,6 +166,9 @@
                     {
                         "element": "text",
                         "data": "]]"
+                    },
+                    {
+                        "element": "line-break"
                     },
                     {
                         "element": "text",
@@ -257,6 +266,9 @@
                         "data": "]]"
                     },
                     {
+                        "element": "line-break"
+                    },
+                    {
                         "element": "text",
                         "data": "[["
                     },
@@ -267,6 +279,9 @@
                     {
                         "element": "text",
                         "data": "]]"
+                    },
+                    {
+                        "element": "line-break"
                     },
                     {
                         "element": "text",

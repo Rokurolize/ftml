@@ -169,4 +169,27 @@ mod tests {
         );
         assert!(output.body.contains("aria-label=\"Footnote 1.\""));
     }
+
+    #[test]
+    fn wikidot_footnotes_use_the_live_legacy_dom() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tree = SyntaxTree {
+            elements: vec![Element::Footnote],
+            footnotes: vec![vec![Element::Text(cow!("note body"))]],
+            needs_footnote_block: true,
+            ..SyntaxTree::default()
+        };
+
+        let output = HtmlRender.render(&tree, &page_info, &settings);
+
+        assert_eq!(
+            output.body,
+            concat!(
+                "<sup class=\"footnoteref\"><a id=\"footnoteref-1\" href=\"javascript:;\" class=\"footnoteref\" onclick=\"WIKIDOT.page.utils.scrollToReference(&#39;footnote-1&#39;)\">1</a></sup>",
+                "<div class=\"footnotes-footer\"><div class=\"title\">Footnotes</div>",
+                "<div class=\"footnote-footer\" id=\"footnote-1\"><a href=\"javascript:;\" onclick=\"WIKIDOT.page.utils.scrollToReference(&#39;footnoteref-1&#39;)\">1</a>. note body</div></div>",
+            ),
+        );
+    }
 }

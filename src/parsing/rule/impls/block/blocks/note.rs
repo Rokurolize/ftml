@@ -58,7 +58,7 @@ mod tests {
     fn note_block_renders_wikidot_note_dom_with_paragraph_body() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize("[[note]]Evidence-backed note.[[/note]]");
+        let tokenization = crate::tokenize("[[note]]\nEvidence-backed note.[[/note]]");
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 

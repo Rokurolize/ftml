@@ -89,6 +89,15 @@ impl Handle {
                 warn!("Specified path file source when local paths are disabled");
                 return None;
             }
+            FileSource::File1 { file }
+                if settings.layout.legacy() && file.starts_with('/') =>
+            {
+                return Some(Cow::Owned(format!(
+                    "https://{}.wjfiles.com/local--files/{}",
+                    info.site,
+                    file.trim_start_matches('/'),
+                )));
+            }
             FileSource::File1 { file } => (&info.site, &info.page, file),
             FileSource::File2 { page, file } => (&info.site, page, file),
             FileSource::File3 { site, page, file } => (site, page, file),

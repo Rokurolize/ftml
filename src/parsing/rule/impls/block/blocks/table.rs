@@ -19,9 +19,11 @@
  */
 
 use super::prelude::*;
+use crate::parsing::rule::impls::block::RULE_BLOCK;
 use crate::parsing::{ParserWrap, strip_whitespace};
 use crate::tree::{
-    AcceptsPartial, AttributeMap, PartialElement, Table, TableCell, TableRow, TableType,
+    AcceptsPartial, AttributeMap, Container, ContainerType, PartialElement, Table,
+    TableCell, TableRow, TableType,
 };
 use std::num::NonZeroU32;
 
@@ -81,6 +83,7 @@ struct ParsedBlock<'t> {
     elements: Vec<Element<'t>>,
     attributes: AttributeMap<'t>,
     errors: Vec<ParseError>,
+    has_arguments: bool,
 }
 
 fn parse_block<'r, 't>(
@@ -103,7 +106,12 @@ where
     // Get attributes
     let (arguments, body_start) =
         parser.get_head_map_with_body_start(block_rule, in_head)?;
-    let attributes = arguments.to_attribute_map(parser.settings());
+    let has_arguments = !arguments.is_empty();
+    let attributes = if parser.settings().layout.legacy() {
+        arguments.to_attribute_map_without_bare(parser.settings())
+    } else {
+        arguments.to_attribute_map(parser.settings())
+    };
 
     // Get body elements
     let body = parser.get_body_elements_with_context(block_rule, false, body_start)?;
@@ -114,6 +122,7 @@ where
         elements,
         attributes,
         errors,
+        has_arguments,
     };
     Ok(parsed)
 }
@@ -166,6 +175,56 @@ fn extract_table_cells<'r, 't>(
     Ok(cells)
 }
 
+fn recover_legacy_attributed_table<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Option<(Vec<TableRow<'t>>, Vec<ParseError>)>
+where
+    'r: 't,
+{
+    let mut scan = parser.clone();
+    let mut rows = Vec::new();
+    let mut errors = Vec::new();
+
+    loop {
+        if scan.current().token == Token::InputEnd {
+            return None;
+        }
+
+        if !rows.is_empty() && scan.current().token == Token::LeftBlockEnd {
+            let mut end = scan.clone();
+            if end
+                .get_end_block()
+                .is_ok_and(|name| name.eq_ignore_ascii_case("table"))
+            {
+                parser.update(&end);
+                return Some((rows, errors));
+            }
+        } else if scan.current().token == Token::LeftBlock {
+            let mut head = scan.clone();
+            let is_row = head
+                .get_block_name(false)
+                .is_ok_and(|(name, _)| name.eq_ignore_ascii_case("row"));
+
+            if is_row {
+                let mut candidate = scan.clone();
+                if let Ok(success) = RULE_BLOCK.try_consume(&mut candidate)
+                    && let Elements::Single(Element::Partial(PartialElement::TableRow(
+                        row,
+                    ))) = success.item
+                {
+                    rows.push(row);
+                    errors.extend(success.errors);
+                    scan.update(&candidate);
+                    continue;
+                }
+            }
+        }
+
+        scan.step()
+            .expect("tokenization always ends with input-end");
+    }
+}
+
 // Table block
 
 fn parse_table<'r, 't>(
@@ -181,9 +240,21 @@ fn parse_table<'r, 't>(
     // Get block contents.
     let parsed = parse_block(parser, name, flag_star, flag_score, in_head, block)?;
 
-    let rows = extract_table_rows(parser, parsed.elements)?;
+    let mut rows = extract_table_rows(parser, parsed.elements)?;
+    let mut errors = parsed.errors;
+    if rows.is_empty()
+        && parsed.has_arguments
+        && parser.settings().layout.legacy()
+        && let Some((recovered_rows, mut recovered_errors)) =
+            recover_legacy_attributed_table(parser)
+    {
+        rows = recovered_rows;
+        errors.append(&mut recovered_errors);
+    }
+    if rows.is_empty() && parser.settings().layout.legacy() {
+        return Err(parser.make_err(ParseErrorKind::TableContainsNonRow));
+    }
     let attributes = parsed.attributes;
-    let errors = parsed.errors;
 
     // Build and return table element
     let table_type = TableType::Advanced;
@@ -212,6 +283,9 @@ fn parse_row<'r, 't>(
     let parsed = parse_block(parser, name, flag_star, flag_score, in_head, block)?;
 
     let cells = extract_table_cells(parser, parsed.elements)?;
+    if cells.is_empty() && parser.settings().layout.legacy() {
+        return Err(parser.make_err(ParseErrorKind::TableRowContainsNonCell));
+    }
     let attributes = parsed.attributes;
     let errors = parsed.errors;
 
@@ -232,11 +306,22 @@ fn parse_cell_regular<'r, 't>(
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     let block = (&BLOCK_TABLE_CELL_REGULAR, "table cell (regular)");
+    let legacy = parser.settings().layout.legacy();
+    let source_start = parser.current().span.start;
 
     // Get block contents.
     let parsed = parse_block(parser, name, flag_star, flag_score, in_head, block)?;
+    let source_end = parser.current().span.start;
+    let wrap_paragraph =
+        legacy && parser.full_text().inner()[source_start..source_end].contains("\n\n");
 
-    parse_cell(parsed.elements, parsed.attributes, parsed.errors, false)
+    parse_cell(
+        parsed.elements,
+        parsed.attributes,
+        parsed.errors,
+        false,
+        wrap_paragraph,
+    )
 }
 
 fn parse_cell_header<'r, 't>(
@@ -248,11 +333,25 @@ fn parse_cell_header<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     let parser = &mut ParserWrap::new(parser, AcceptsPartial::TableCell);
     let block = (&BLOCK_TABLE_CELL_HEADER_BODY, "table cell (header)");
+    let legacy = parser.settings().layout.legacy();
+    let source_start = parser.current().span.start;
 
     // Get block contents.
     let parsed = parse_block(parser, name, flag_star, flag_score, in_head, block)?;
+    let source_end = parser.current().span.start;
+    let source =
+        parser.full_text().inner()[source_start..source_end].to_ascii_lowercase();
+    let wrap_paragraph = legacy && source.contains("\n\n");
+    let header =
+        source.rfind("[[/hcell").unwrap_or(0) > source.rfind("[[/cell").unwrap_or(0);
 
-    parse_cell(parsed.elements, parsed.attributes, parsed.errors, true)
+    parse_cell(
+        parsed.elements,
+        parsed.attributes,
+        parsed.errors,
+        header,
+        wrap_paragraph,
+    )
 }
 
 fn parse_cell<'r, 't>(
@@ -260,14 +359,25 @@ fn parse_cell<'r, 't>(
     mut attributes: AttributeMap<'t>,
     errors: Vec<ParseError>,
     header: bool,
+    wrap_paragraph: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     // Remove leading and trailing whitespace
     strip_whitespace(&mut elements);
+    if wrap_paragraph {
+        wrap_cell_paragraph(&mut elements);
+    }
 
     // Extract column-span if specified via attributes.
     // If not specified, then the default.
     let column_span = match attributes.remove("colspan") {
-        Some(value) => value.parse().unwrap_or(NonZeroU32::new(1).unwrap()),
+        Some(value) => match value.parse() {
+            Ok(value) => value,
+            Err(_) if value == "0" => NonZeroU32::new(1).unwrap(),
+            Err(_) => {
+                assert!(attributes.insert("colspan", value));
+                NonZeroU32::new(1).unwrap()
+            }
+        },
         None => NonZeroU32::new(1).unwrap(),
     };
 
@@ -283,12 +393,33 @@ fn parse_cell<'r, 't>(
     ok!(false; element, errors)
 }
 
+fn wrap_cell_paragraph(elements: &mut Vec<Element<'_>>) {
+    let table_index = elements
+        .iter()
+        .position(|element| matches!(element, Element::Table(_)))
+        .unwrap_or(elements.len());
+
+    let mut paragraph_elements: Vec<_> = elements.drain(..table_index).collect();
+    strip_whitespace(&mut paragraph_elements);
+    paragraph_elements.retain(|element| *element != Element::LineBreak);
+    if paragraph_elements.is_empty() {
+        return;
+    }
+    let paragraph = Container::new(
+        ContainerType::Paragraph,
+        paragraph_elements,
+        AttributeMap::new(),
+    );
+    elements.insert(0, Element::Container(paragraph));
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::parsing::ParseError;
+    use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
     use std::panic::catch_unwind;
 
@@ -312,6 +443,14 @@ mod tests {
                 _ => None,
             })
             .collect()
+    }
+
+    fn render(source: &str) -> String {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(source);
+        let (tree, _) = crate::parse(&tokenization, &page_info, &settings).into();
+        HtmlRender.render(&tree, &page_info, &settings).body
     }
 
     #[test]
@@ -428,7 +567,7 @@ mod tests {
                     panic!("expected one cell, got {:?}", row.cells);
                 };
 
-                assert!(cell.header);
+                assert!(!cell.header);
                 assert_eq!(element_text(&cell.elements), "Heading");
             },
         );
@@ -443,6 +582,17 @@ mod tests {
                     .any(|error| error.kind() == ParseErrorKind::TableContainsNonRow)
             );
         });
+    }
+
+    #[test]
+    fn malformed_table_closes_reenter_wikidot_single_link_lexing() {
+        assert_eq!(
+            render("[[table]] [[cell]] Also no row [[/cell]] [[/table]]"),
+            concat!(
+                "<p>[[table]] [[cell]] Also no row ",
+                "[<a href=\"/cell]]\">[[/table</a>]</p>",
+            ),
+        );
     }
 
     #[test]
@@ -461,6 +611,81 @@ mod tests {
     }
 
     #[test]
+    fn attributed_empty_table_recovers_at_later_valid_table() {
+        let source = concat!(
+            "[[table class=\"outer\"]]\n",
+            "[[/table]]\n\n",
+            "[[table]]\n",
+            "[[row bad=1]]\n",
+            "[[/row]]\n",
+            "[[/table]]\n\n",
+            "[[table class=\"inner\"]]",
+            "[[row]][[cell]]x[[/cell]][[/row]]",
+            "[[/table]]",
+        );
+
+        assert_eq!(
+            render(source),
+            "<table class=\"outer\">\n<tr>\n<td>x</td>\n</tr>\n</table>",
+        );
+    }
+
+    #[test]
+    fn bare_attributed_empty_table_recovers_without_rendering_bare_attribute() {
+        let source = concat!(
+            "[[table bad=1]]\n",
+            "[[/table]]\n\n",
+            "[[table]][[row]][[cell]]x[[/cell]][[/row]][[/table]]",
+        );
+
+        assert_eq!(render(source), "<table>\n<tr>\n<td>x</td>\n</tr>\n</table>",);
+    }
+
+    #[test]
+    fn attributed_empty_table_without_later_rows_remains_literal() {
+        assert_eq!(
+            render("[[table bad=1]]\n[[/table]]"),
+            "<p>[[table bad=1]]<br>\n[[/table]]</p>",
+        );
+    }
+
+    #[test]
+    fn unadorned_empty_table_does_not_consume_later_valid_table() {
+        let source = concat!(
+            "[[table]]\n",
+            "[[/table]]\n\n",
+            "[[table]][[row]][[cell]]x[[/cell]][[/row]][[/table]]",
+        );
+
+        assert_eq!(
+            render(source),
+            concat!(
+                "<p>[[table]]<br>\n[[/table]]</p>",
+                "<table>\n<tr>\n<td>x</td>\n</tr>\n</table>",
+            ),
+        );
+    }
+
+    #[test]
+    fn wikidot_nested_table_wraps_blank_line_text_in_paragraph() {
+        let source = concat!(
+            "[[table]][[row]][[cell]]\n\n",
+            "1\n\n",
+            "[[table]][[row]][[cell]]2[[/cell]][[/row]][[/table]]",
+            "[[/cell]][[/row]][[/table]]",
+        );
+
+        assert_eq!(
+            render(source),
+            concat!(
+                "<table>\n<tr>\n<td><p>1</p>",
+                "<table>\n<tr>\n<td>2</td>\n</tr>\n</table>",
+                "</td>\n</tr>\n</table>",
+            ),
+        );
+    }
+
+    #[test]
     fn parse_cell_strips_whitespace_and_defaults_colspan() {
         let mut attributes = AttributeMap::new();
         assert!(attributes.insert("class", cow!("plain")));
@@ -469,7 +694,7 @@ mod tests {
             Element::Text(cow!("Cell")),
             Element::Text(cow!(" ")),
         ];
-        let success = parse_cell(elements, attributes, Vec::new(), false).unwrap();
+        let success = parse_cell(elements, attributes, Vec::new(), false, false).unwrap();
         let Elements::Single(Element::Partial(PartialElement::TableCell(cell))) =
             success.item
         else {

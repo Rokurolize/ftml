@@ -73,15 +73,67 @@
             }
         },
         {
-            "element": "list",
+            "element": "container",
             "data": {
-                "type": "bullet",
+                "type": "paragraph",
                 "attributes": {},
-                "items": [
+                "elements": [
                     {
-                        "item-type": "elements",
-                        "attributes": {},
-                        "elements": []
+                        "element": "text",
+                        "data": "[["
+                    },
+                    {
+                        "element": "text",
+                        "data": "ul"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]"
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "text",
+                        "data": "[["
+                    },
+                    {
+                        "element": "text",
+                        "data": "li"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]"
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "text",
+                        "data": "[[/"
+                    },
+                    {
+                        "element": "text",
+                        "data": "li"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]"
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "text",
+                        "data": "[[/"
+                    },
+                    {
+                        "element": "text",
+                        "data": "ul"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]"
                     }
                 ]
             }
@@ -161,15 +213,70 @@
             }
         },
         {
-            "element": "list",
+            "element": "container",
             "data": {
-                "type": "bullet",
+                "type": "paragraph",
                 "attributes": {},
-                "items": [
+                "elements": [
                     {
-                        "item-type": "elements",
-                        "attributes": {},
-                        "elements": []
+                        "element": "text",
+                        "data": "[["
+                    },
+                    {
+                        "element": "text",
+                        "data": "ul"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "[["
+                    },
+                    {
+                        "element": "text",
+                        "data": "li"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "[[/"
+                    },
+                    {
+                        "element": "text",
+                        "data": "li"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "[[/"
+                    },
+                    {
+                        "element": "text",
+                        "data": "ul"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]"
                     }
                 ]
             }

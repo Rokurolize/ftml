@@ -37,9 +37,45 @@ fn parse_size_argument<'r, 't>(
     value: Option<&str>,
 ) -> Result<String, ParseError> {
     match value {
+        Some(size)
+            if parser.settings().layout.legacy()
+                && wikidot_size_value(size).is_none() =>
+        {
+            Err(parser.make_err(ParseErrorKind::BlockMalformedArguments))
+        }
+        Some(size) if parser.settings().layout.legacy() => {
+            Ok(format!("font-size:{};", wikidot_size_value(size).unwrap()))
+        }
         Some(size) => Ok(format!("font-size: {};", safe_size_value(size))),
         None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
     }
+}
+
+fn wikidot_size_value(size: &str) -> Option<&str> {
+    let size = size.trim();
+    if matches!(
+        size,
+        "xx-small"
+            | "x-small"
+            | "small"
+            | "medium"
+            | "large"
+            | "x-large"
+            | "xx-large"
+            | "smaller"
+            | "larger"
+    ) {
+        return Some(size);
+    }
+    for suffix in ["%", "px", "em"] {
+        if let Some(number) = size.strip_suffix(suffix)
+            && !number.is_empty()
+            && number.parse::<f64>().is_ok()
+        {
+            return Some(size);
+        }
+    }
+    None
 }
 
 fn safe_size_value(size: &str) -> &str {
@@ -73,6 +109,9 @@ fn parse_fn<'r, 't>(
     let size = parser.get_head_value(&BLOCK_SIZE, in_head, parse_size_argument)?;
 
     if parser.settings().layout.legacy() {
+        if !parser.has_body_end_block(&BLOCK_SIZE) {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
         return ok!(Element::Partial(PartialElement::InlineSizeOpen(
             Cow::Owned(size)
         )));
@@ -134,7 +173,7 @@ mod tests {
                 .get()
                 .get("style")
                 .map(|value| value.as_ref()),
-            Some("font-size: 80%;"),
+            Some("font-size:80%;"),
         );
         assert_eq!(size.elements(), &[text!("small")]);
     }
@@ -163,20 +202,18 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert!(html.contains("<div class=\"outer\">"), "{html}");
         assert!(
-            html.contains("<span style=\"font-size: larger;\">header</span>"),
+            html.contains("<span style=\"font-size:larger;\">header</span>"),
             "{html}"
         );
         assert!(
-            html.contains(
-                "<div class=\"links\"><p><span style=\"font-size: larger;\"><a"
-            ),
+            html.contains("<div class=\"links\"><p><span style=\"font-size:larger;\"><a"),
             "{html}"
         );
         assert!(
-            html.contains("<div class=\"content\"><p><br>body</p>"),
+            html.contains("<div class=\"content\"><p><br>\nbody</p>"),
             "{html}"
         );
-        assert!(!html.contains("font-size: larger;\">body"), "{html}");
+        assert!(!html.contains("font-size:larger;\">body"), "{html}");
         assert!(
             !html.contains("<span style=\"font-size: larger;\"><div"),
             "{html}"
@@ -184,14 +221,13 @@ mod tests {
     }
 
     #[test]
-    fn unmatched_wikidot_size_scope_has_no_formatting_effect() {
+    fn unmatched_wikidot_size_scope_remains_literal() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         let tokenization = crate::tokenize("[[size larger]]text");
         let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
-        assert!(html.contains("text"), "{html}");
-        assert!(!html.contains("font-size"), "{html}");
+        assert_eq!(html, "<p>[[size larger]]text</p>");
     }
 }

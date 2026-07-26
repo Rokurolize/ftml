@@ -156,7 +156,14 @@ impl Test {
         // Run and check wikidot render
         if let Some(expected_html) = &self.wikidot_output {
             let settings = settings!(Wikidot);
-            let actual_output = HtmlRender.render(&tree, &page_info, &settings);
+            let (mut wikidot_text, _pages) =
+                crate::include(&self.input, &settings, TestIncluder, || unreachable!())
+                    .unwrap_or_else(|x| match x {});
+            crate::preprocess_for_layout(&mut wikidot_text, settings.layout);
+            let wikidot_tokens = crate::tokenize(&wikidot_text);
+            let (wikidot_tree, _) =
+                crate::parse(&wikidot_tokens, &page_info, &settings).into();
+            let actual_output = HtmlRender.render(&wikidot_tree, &page_info, &settings);
             if &actual_output.body != expected_html {
                 result = TestResult::Fail;
                 eprintln!("Wikidot HTML did not match:");
@@ -260,7 +267,14 @@ impl Test {
         // Run and check wikidot render
         if let Some(expected_html) = &self.wikidot_output {
             let settings = settings!(Wikidot);
-            let html_output = HtmlRender.render(&tree, &page_info, &settings);
+            let (mut wikidot_text, _pages) =
+                crate::include(&self.input, &settings, TestIncluder, || unreachable!())
+                    .unwrap_or_else(|x| match x {});
+            crate::preprocess_for_layout(&mut wikidot_text, settings.layout);
+            let wikidot_tokens = crate::tokenize(&wikidot_text);
+            let (wikidot_tree, _) =
+                crate::parse(&wikidot_tokens, &page_info, &settings).into();
+            let html_output = HtmlRender.render(&wikidot_tree, &page_info, &settings);
             if &html_output.body != expected_html {
                 update!(write_text, html_output.body, "wikidot.html");
             }

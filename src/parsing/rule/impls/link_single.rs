@@ -113,3 +113,27 @@ fn url_valid(url: &str) -> bool {
 
     false
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn wikidot_layout_does_not_weaken_dangerous_single_link_sanitization() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization =
+            crate::tokenize("[javascript:alert(1) XSS] [data:text/html,alert(2) XSS]");
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(html.contains("[javascript:alert(1) XSS]"), "{html}");
+        assert!(html.contains("[data:text/html,alert(2) XSS]"), "{html}");
+        assert!(!html.contains("href=\"javascript:"), "{html}");
+        assert!(!html.contains("href=\"data:"), "{html}");
+    }
+}

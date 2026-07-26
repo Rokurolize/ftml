@@ -26,11 +26,30 @@ pub fn render_iframe(ctx: &mut HtmlContext, url: &str, attributes: &AttributeMap
     debug!("Rendering iframe block (url '{url}')");
     let src = normalize_href(url, None);
 
-    ctx.html().iframe().attr(attr!(
-        "src" => &src,
-        "crossorigin";;
-        attributes
-    ));
+    if ctx.layout().legacy() {
+        let get = |name| {
+            attributes
+                .get()
+                .get(name)
+                .map_or("", std::convert::AsRef::as_ref)
+        };
+        ctx.html().iframe().attr(attr!(
+            "src" => &src,
+            "align" => get("align"),
+            "frameborder" => get("frameborder"),
+            "height" => get("height"),
+            "scrolling" => get("scrolling"),
+            "width" => get("width"),
+            "class" => get("class"),
+            "style" => get("style"),
+        ));
+    } else {
+        ctx.html().iframe().attr(attr!(
+            "src" => &src,
+            "crossorigin";;
+            attributes
+        ));
+    }
 }
 
 pub fn render_html(ctx: &mut HtmlContext, contents: &str, attributes: &AttributeMap) {

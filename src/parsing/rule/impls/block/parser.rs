@@ -67,6 +67,18 @@ fn block_rule_accepts_name(block_rule: &BlockRule, name: &str) -> bool {
         .any(|accepted| name.eq_ignore_ascii_case(accepted))
 }
 
+fn wikidot_requires_next_physical_line(block_rule: &BlockRule) -> bool {
+    matches!(
+        block_rule.name,
+        "block-div"
+            | "block-note"
+            | "block-align-left"
+            | "block-align-right"
+            | "block-align-center"
+            | "block-align-justify"
+    )
+}
+
 impl<'r, 't> Parser<'r, 't>
 where
     'r: 't,
@@ -129,28 +141,83 @@ where
         first_iteration: bool,
         block_rule: &BlockRule,
         restrict_quote_close: bool,
+        allow_inline_quote_close: bool,
     ) -> Option<&'r ExtractedToken<'t>> {
         self.save_evaluate_fn(|parser| {
+            if restrict_quote_close
+                && allow_inline_quote_close
+                && parser.settings().layout.legacy()
+                && !parser.discarding_hidden_body()
+                && block_rule.name == "block-collapsible"
+                && parser.wikidot_collapsible_closed_at_deeper_quote()
+            {
+                parser.set_wikidot_collapsible_closed_at_deeper_quote(false);
+                return Ok(true);
+            }
+
             // Check that the end block is on a new line, if required
             if block_rule.accepts_newlines {
-                // Only check after the first, to permit empty blocks
-                if !first_iteration {
+                if !first_iteration
+                    && parser.settings().layout.legacy()
+                    && !parser.discarding_hidden_body()
+                    && block_rule.name == "block-math"
+                {
+                    parser
+                        .get_token(Token::LineBreak, ParseErrorKind::BlockExpectedEnd)?;
+                } else if !first_iteration {
+                    // Only check after the first, to permit empty blocks
                     parser.get_optional_line_break()?;
                 }
             }
 
             if restrict_quote_close
-                && (parser.prepare_quote_body_line()? == QuoteBodyLineStatus::Boundary
-                    || !parser.quote_body_close_allowed_here())
+                && parser.prepare_quote_body_line()? == QuoteBodyLineStatus::Boundary
             {
                 return Ok(false);
+            }
+            if restrict_quote_close && !parser.quote_body_close_allowed_here() {
+                let follows_only_literal_quotes =
+                    parser.quote_body_close_follows_only_literal_quotes();
+                if !follows_only_literal_quotes
+                    && (!allow_inline_quote_close
+                        || !matches!(
+                            parser.current().token,
+                            Token::Quote | Token::LeftBlockEnd
+                        ))
+                {
+                    return Ok(false);
+                }
+                while parser.current().token == Token::Quote {
+                    parser.step()?;
+                    parser.get_optional_space()?;
+                }
             }
 
             // Check if it's an end block
             //
             // This will ignore any errors produced,
             // since it's just more text
+            let end_start = parser.current().span.start;
             let name = parser.get_end_block()?;
+
+            if parser.settings().layout.legacy()
+                && !parser.discarding_hidden_body()
+                && name.ends_with('_')
+            {
+                return Ok(false);
+            }
+
+            if parser.settings().layout.legacy()
+                && !parser.discarding_hidden_body()
+                && block_rule.name.starts_with("block-list-")
+            {
+                let end = parser.current().span.start;
+                let source = &parser.full_text().inner()[end_start..end];
+                let expected = format!("[[/{name}]]");
+                if !source.eq_ignore_ascii_case(&expected) {
+                    return Ok(false);
+                }
+            }
 
             // Remove underscore for score flag
             let name = name.strip_suffix('_').unwrap_or(name);
@@ -160,7 +227,9 @@ where
                 if name.eq_ignore_ascii_case(end_block_name) {
                     if restrict_quote_close {
                         parser.get_optional_space()?;
-                        if !token_is_body_boundary(parser.current().token) {
+                        if !allow_inline_quote_close
+                            && !token_is_body_boundary(parser.current().token)
+                        {
                             return Ok(false);
                         }
                     }
@@ -191,14 +260,26 @@ where
         // Keep iterating until we find the end.
         // Preserve parse progress if we've hit the end block.
         let mut first = true;
+        let wikidot_math = self.settings().layout.legacy()
+            && !self.discarding_hidden_body()
+            && block_rule.name == "block-math";
+        let mut nested_wikidot_math = 0;
         let start = self.current();
 
         loop {
-            let at_end_block = self.verify_end_block(first, block_rule, false);
+            let before_end = self.clone();
+            let at_end_block = self.verify_end_block(first, block_rule, false, false);
 
             // If there's a match, return the last body token
             if let Some(end) = at_end_block {
-                return Ok((start, end));
+                if nested_wikidot_math > 0 {
+                    nested_wikidot_math -= 1;
+                    self.update(&before_end);
+                } else {
+                    return Ok((start, end));
+                }
+            } else if wikidot_math && self.at_wikidot_nested_math_opener() {
+                nested_wikidot_math += 1;
             }
 
             // Run the passed-in closure
@@ -208,6 +289,29 @@ where
             self.step()?;
             first = false;
         }
+    }
+
+    fn at_wikidot_nested_math_opener(&self) -> bool {
+        if !matches!(
+            self.current().token,
+            Token::LineBreak | Token::ParagraphBreak
+        ) {
+            return false;
+        }
+        let start = self.current().span.end;
+        let source = &self.full_text().inner()[start..];
+        let Some(end) = source.find("]]") else {
+            return false;
+        };
+        let mut parts = source[..end].trim_start_matches("[[").split_whitespace();
+        if !parts
+            .next()
+            .is_some_and(|name| name.eq_ignore_ascii_case("math"))
+        {
+            return false;
+        }
+        let name = parts.next();
+        parts.next().is_none() && name.is_none_or(super::blocks::wikidot_math_name)
     }
 
     /// Collect a block's body to its end, as string slice.
@@ -340,7 +444,7 @@ where
         block_rule: &BlockRule,
         as_paragraphs: bool,
     ) -> ParseResult<'r, 't, Vec<Element<'t>>> {
-        self.get_body_elements_internal(block_rule, as_paragraphs, false)
+        self.get_body_elements_internal(block_rule, as_paragraphs, false, false)
     }
 
     fn get_body_elements_internal(
@@ -348,6 +452,7 @@ where
         block_rule: &BlockRule,
         as_paragraphs: bool,
         restrict_quote_close: bool,
+        allow_inline_quote_close: bool,
     ) -> ParseResult<'r, 't, Vec<Element<'t>>> {
         let track_boundary = self.discarding_hidden_body();
         if track_boundary {
@@ -358,9 +463,17 @@ where
         }
 
         let result = if as_paragraphs {
-            self.get_body_elements_paragraphs(block_rule, restrict_quote_close)
+            self.get_body_elements_paragraphs(
+                block_rule,
+                restrict_quote_close,
+                allow_inline_quote_close,
+            )
         } else {
-            self.get_body_elements_no_paragraphs(block_rule, restrict_quote_close)
+            self.get_body_elements_no_paragraphs(
+                block_rule,
+                restrict_quote_close,
+                allow_inline_quote_close,
+            )
         };
 
         if track_boundary {
@@ -405,13 +518,31 @@ where
         body_start: BlockBodyStart,
         literal_residual_quotes: bool,
     ) -> ParseResult<'r, 't, Vec<Element<'t>>> {
+        if self.settings().layout.legacy()
+            && !self.discarding_hidden_body()
+            && body_start == BlockBodyStart::Inline
+            && wikidot_requires_next_physical_line(block_rule)
+        {
+            return Err(self.make_err(ParseErrorKind::RuleFailed));
+        }
+
         let Some(required_depth) = self.native_blockquote_depth() else {
             return self.get_body_elements(block_rule, as_paragraphs);
         };
         if body_start != BlockBodyStart::NextPhysicalLine {
             return self.get_body_elements(block_rule, as_paragraphs);
         }
-        if !self.has_native_blockquote_body_end(block_rule, required_depth) {
+        let allow_inline_quote_close = self.settings().layout.legacy()
+            && !self.discarding_hidden_body()
+            && block_rule.name == "block-collapsible";
+        let has_close = self.has_native_blockquote_body_end_with_mode(
+            block_rule,
+            required_depth,
+            allow_inline_quote_close,
+        );
+        let has_later_close =
+            allow_inline_quote_close && !has_close && self.has_body_end_block(block_rule);
+        if !has_close && !has_later_close {
             return Err(self.make_err(ParseErrorKind::RuleFailed));
         }
 
@@ -421,7 +552,24 @@ where
         } else {
             self.install_quote_body_cursor(required_depth);
         }
-        let result = self.get_body_elements_internal(block_rule, as_paragraphs, true);
+        let previous_boundary_policy = self.quote_boundary_closes_body();
+        self.set_quote_boundary_closes_body(has_later_close);
+        let result = self.get_body_elements_internal(
+            block_rule,
+            as_paragraphs,
+            true,
+            allow_inline_quote_close,
+        );
+        let ended_at_boundary = if has_later_close && result.is_ok() {
+            let mut boundary = self.clone();
+            boundary.prepare_quote_body_line()? == QuoteBodyLineStatus::Boundary
+        } else {
+            false
+        };
+        if ended_at_boundary {
+            self.set_pending_wikidot_collapsible_closer(true);
+        }
+        self.set_quote_boundary_closes_body(previous_boundary_policy);
         self.set_quote_body_cursor(previous_cursor);
 
         match result {
@@ -453,7 +601,8 @@ where
             block_rule.accepts_newlines,
         );
 
-        let discard_result = fork.consume_body_no_paragraphs(block_rule, false, |_| {});
+        let discard_result =
+            fork.consume_body_no_paragraphs(block_rule, false, false, |_| {});
         fork.pop_hidden_body_boundary();
 
         if discard_result.is_err() {
@@ -512,12 +661,18 @@ where
         &mut self,
         block_rule: &BlockRule,
         restrict_quote_close: bool,
+        allow_inline_quote_close: bool,
     ) -> ParseResult<'r, 't, Vec<Element<'t>>> {
         let mut first = true;
         let rule = self.rule();
 
         let is_end = move |parser: &mut Parser<'r, 't>| {
-            let result = parser.verify_end_block(first, block_rule, restrict_quote_close);
+            let result = parser.verify_end_block(
+                first,
+                block_rule,
+                restrict_quote_close,
+                allow_inline_quote_close,
+            );
             first = false;
 
             if result.is_none()
@@ -536,6 +691,7 @@ where
         &mut self,
         block_rule: &BlockRule,
         restrict_quote_close: bool,
+        allow_inline_quote_close: bool,
     ) -> ParseResult<'r, 't, Vec<Element<'t>>> {
         let mut all_elements = Vec::new();
         let mut all_errors = Vec::new();
@@ -545,7 +701,12 @@ where
             let elements = consumed.chain(&mut all_errors, &mut paragraph_safe);
             all_elements.extend(elements);
         };
-        self.consume_body_no_paragraphs(block_rule, restrict_quote_close, process)?;
+        self.consume_body_no_paragraphs(
+            block_rule,
+            restrict_quote_close,
+            allow_inline_quote_close,
+            process,
+        )?;
 
         ok!(paragraph_safe; all_elements, all_errors)
     }
@@ -554,6 +715,7 @@ where
         &mut self,
         block_rule: &BlockRule,
         restrict_quote_close: bool,
+        allow_inline_quote_close: bool,
         mut process: F,
     ) -> Result<(), ParseError>
     where
@@ -566,7 +728,12 @@ where
                 return Err(self.make_err(ParseErrorKind::EndOfInput));
             }
 
-            let result = self.verify_end_block(first, block_rule, restrict_quote_close);
+            let result = self.verify_end_block(
+                first,
+                block_rule,
+                restrict_quote_close,
+                allow_inline_quote_close,
+            );
             if result.is_some() {
                 return Ok(());
             }
@@ -576,7 +743,8 @@ where
             }
 
             let wikidot_input_end = self.current().token == Token::InputEnd
-                && self.settings().layout.legacy();
+                && self.settings().layout.legacy()
+                && !self.discarding_hidden_body();
             if wikidot_input_end {
                 return Ok(());
             }
@@ -613,7 +781,10 @@ where
             }
             traversed_token_states.push((token_start, first));
 
-            if parser.verify_end_block(first, block_rule, false).is_some() {
+            if parser
+                .verify_end_block(first, block_rule, false, false)
+                .is_some()
+            {
                 self.cache_block_end_scan_outcomes(
                     block_rule.name,
                     &traversed_token_states,
@@ -838,15 +1009,25 @@ where
                 }
 
                 // Equal sign
+                let space_before_equals = self.current().token == Token::Whitespace;
                 self.get_optional_space()?;
                 self.get_token(Token::Equals, ParseErrorKind::BlockMalformedArguments)?;
 
                 // Get the argument value
+                let space_after_equals = self.current().token == Token::Whitespace;
                 self.get_optional_space()?;
+                let bare = self.current().token != Token::DoubleQuote;
                 let value = self.get_block_argument_value(block_rule, key)?;
 
                 // Add to argument map
-                map.insert(key, value);
+                if bare {
+                    map.insert_bare(key, value);
+                } else {
+                    map.insert(key, value);
+                }
+                if space_before_equals || space_after_equals {
+                    map.mark_spaced_equals();
+                }
             }
         }
 
@@ -1142,7 +1323,7 @@ mod tests {
         );
         assert!(
             parser
-                .verify_end_block(true, &BLOCK_COLLAPSIBLE, true)
+                .verify_end_block(true, &BLOCK_COLLAPSIBLE, true, false)
                 .is_none()
         );
 
@@ -1151,7 +1332,7 @@ mod tests {
         parser.step().unwrap();
         parser.install_quote_body_cursor(1);
         let error = parser
-            .get_body_elements_no_paragraphs(&BLOCK_DIV, true)
+            .get_body_elements_no_paragraphs(&BLOCK_DIV, true, false)
             .expect_err("unquoted content must end an adapted body");
         assert_eq!(error.kind(), ParseErrorKind::EndOfInput);
     }

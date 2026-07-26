@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use crate::tree::Container;
 
 pub const RULE_SECTION_MARKER: Rule = Rule {
     name: "section-marker",
@@ -44,9 +45,42 @@ fn try_consume_fn<'r, 't>(
     match parser.current().token {
         Token::LineBreak => {
             parser.step()?;
-            ok!(Elements::None)
         }
-        Token::ParagraphBreak | Token::InputEnd => ok!(Elements::None),
-        _ => Err(parser.make_err(ParseErrorKind::RuleFailed)),
+        Token::ParagraphBreak | Token::InputEnd => {}
+        _ => return Err(parser.make_err(ParseErrorKind::RuleFailed)),
     }
+
+    if parser.settings().layout.legacy() {
+        let mut attributes = AttributeMap::new();
+        assert!(attributes.insert("class", cow!("content-separator")));
+        assert!(attributes.insert("style", cow!("display: none:")));
+        ok!(Element::Container(Container::new(
+            ContainerType::Div,
+            Vec::new(),
+            attributes,
+        )))
+    } else {
+        ok!(Elements::None)
+    }
+}
+
+#[test]
+fn wikidot_section_markers_render_hidden_separators_and_split_paragraphs() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize("before\n====\nmiddle\n=====\nafter");
+    let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+    assert!(errors.is_empty());
+
+    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+    assert_eq!(
+        html,
+        r#"<p>before</p><div class="content-separator" style="display: none:"></div><p>middle</p><div class="content-separator" style="display: none:"></div><p>after</p>"#,
+    );
 }

@@ -47,10 +47,24 @@ where
         key: &str,
     ) -> Result<Cow<'t, str>, ParseError> {
         if self.current().token == Token::DoubleQuote {
-            return self.get_wikidot_quoted_block_argument();
+            let allow_unclosed =
+                self.settings().layout.legacy() && block_rule.name == "block-code";
+            return self.get_wikidot_quoted_block_argument(allow_unclosed);
         }
 
-        if block_rule.name != "block-image" || !key.eq_ignore_ascii_case("link") {
+        let image_link =
+            block_rule.name == "block-image" && key.eq_ignore_ascii_case("link");
+        let advanced_table = self.settings().layout.legacy()
+            && matches!(
+                block_rule.name,
+                "block-table"
+                    | "block-table-row"
+                    | "block-table-cell-regular"
+                    | "block-table-cell-header-body"
+            );
+        let legacy_code =
+            self.settings().layout.legacy() && block_rule.name == "block-code";
+        if !image_link && !advanced_table && !legacy_code {
             return Err(self.make_err(ParseErrorKind::BlockMalformedArguments));
         }
 
@@ -71,7 +85,10 @@ where
         Ok(Cow::Borrowed(value))
     }
 
-    fn get_wikidot_quoted_block_argument(&mut self) -> Result<Cow<'t, str>, ParseError> {
+    fn get_wikidot_quoted_block_argument(
+        &mut self,
+        allow_unclosed: bool,
+    ) -> Result<Cow<'t, str>, ParseError> {
         let value_start = self.current();
         self.step()?;
 
@@ -90,6 +107,10 @@ where
                 Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
             ) {
                 return Err(self.make_err(ParseErrorKind::BlockMalformedArguments));
+            }
+            if allow_unclosed && self.current().token == Token::RightBlock {
+                let value = self.full_text().slice(value_start, self.current());
+                return Ok(Cow::Borrowed(value.strip_prefix('"').unwrap_or(value)));
             }
             self.step()?;
         }
@@ -137,7 +158,7 @@ mod tests {
     use crate::layout::Layout;
     use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
-    use crate::tree::{Element, LinkLocation};
+    use crate::tree::Element;
 
     #[test]
     fn image_accepts_corpus_bare_anchor_argument() {
@@ -160,7 +181,7 @@ mod tests {
             panic!("expected direct image, got {:?}", tree.elements);
         };
 
-        assert_eq!(link, &Some(LinkLocation::Url(cow!("#"))));
+        assert_eq!(link, &None);
         assert_eq!(
             attributes.get().get("style").map(|value| value.as_ref()),
             Some("width:70%;"),

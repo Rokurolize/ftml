@@ -57,7 +57,11 @@ impl<'t> From<Tokenization<'t>> for Vec<ExtractedToken<'t>> {
 }
 
 /// Take an input string and produce a list of tokens for consumption by the parser.
+#[track_caller]
 pub fn tokenize(text: &str) -> Tokenization<'_> {
+    #[cfg(feature = "test-source-recorder")]
+    crate::source_recorder::record("tokenize", text, std::panic::Location::caller());
+
     debug!(
         "Running lexer on text ({} bytes) to produce tokens",
         text.len(),
@@ -123,6 +127,29 @@ mod test {
                 .tokens()
                 .iter()
                 .all(|token| token.slice != "span]]19@scip.net"),
+            "{:#?}",
+            tokenization.tokens(),
+        );
+    }
+
+    #[test]
+    fn discarded_control_is_an_invisible_email_barrier() {
+        let input = "name@\u{0006}site.com";
+        let tokenization = tokenize(input);
+
+        assert!(
+            tokenization
+                .tokens()
+                .iter()
+                .any(|token| token.token == Token::DiscardedControl),
+            "{:#?}",
+            tokenization.tokens(),
+        );
+        assert!(
+            tokenization
+                .tokens()
+                .iter()
+                .all(|token| token.token != Token::Email),
             "{:#?}",
             tokenization.tokens(),
         );

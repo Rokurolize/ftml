@@ -1,1 +1,66 @@
-<p>EMPTY TABLE</p><table><tbody></tbody></table><p>EMPTY ROW</p><table><tbody><tr></tr></tbody></table><p>EMPTY CELL</p><table><tbody><tr><td></td></tr></tbody></table><p>BASIC / INLINE</p><table><tbody><tr><td>Apple</td></tr></tbody></table><p>HEADER</p><table><tbody><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></tbody></table><p>ATTRS</p><table id="fruit"><tbody><tr style="color: red;"><td data-sort="number">apple</td></tr></tbody></table><p>WIDTH</p><table><tbody><tr><td colspan="3">Three</td><td rowspan="2">Two</td></tr><tr><td>A</td><td>B</td><td>C</td></tr></tbody></table><p>NESTED</p><table><tbody><tr><td><table><tbody><tr><td>.</td></tr></tbody></table></td></tr></tbody></table><p>NESTED DEEP</p><table><tbody><tr><td>1<br><table><tbody><tr><td>2<br><table><tbody><tr><td>3<br><table><tbody><tr><td>4<br><table><tbody><tr><td>5</td></tr></tbody></table></td></tr></tbody></table></td></tr></tbody></table></td></tr></tbody></table></td></tr></tbody></table>
+<p>EMPTY TABLE<br>
+[[table]]<br>
+[[/table]]</p><p>EMPTY ROW<br>
+[[table]]<br>
+[[row]]<br>
+[[/row]]<br>
+[[/table]]</p><p>EMPTY CELL</p><table>
+<tr>
+<td></td>
+</tr>
+</table><p>BASIC / INLINE</p><table>
+<tr>
+<td>Apple</td>
+</tr>
+</table><p>HEADER</p><table>
+<tr>
+<th>A</th>
+<th>B</th>
+</tr>
+<tr>
+<td>1</td>
+<td>2</td>
+</tr>
+</table><p>ATTRS</p><table id="u-fruit">
+<tr style="color: red;">
+<td data-sort="number">apple</td>
+</tr>
+</table><p>WIDTH</p><table>
+<tr>
+<td colspan="3">Three</td>
+<td rowspan="2">Two</td>
+</tr>
+<tr>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+</tr>
+</table><p>NESTED</p><table>
+<tr>
+<td><table>
+<tr>
+<td>.</td>
+</tr>
+</table></td>
+</tr>
+</table><p>NESTED DEEP</p><table>
+<tr>
+<td><p>1</p><table>
+<tr>
+<td><p>2</p><table>
+<tr>
+<td><p>3</p><table>
+<tr>
+<td><p>4</p><table>
+<tr>
+<td><p>5</p></td>
+</tr>
+</table></td>
+</tr>
+</table></td>
+</tr>
+</table></td>
+</tr>
+</table></td>
+</tr>
+</table>

@@ -80,6 +80,7 @@ where
     code_snippet_index: NonZeroUsize,
     table_of_contents_index: Incrementer,
     equation_index: NonZeroUsize,
+    named_equations: HashMap<String, NonZeroUsize>,
     footnote_index: NonZeroUsize,
     bibliography_render_stack: Vec<String>,
 }
@@ -123,6 +124,7 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
             code_snippet_index: NonZeroUsize::new(1).unwrap(),
             table_of_contents_index: settings.id_indexer(),
             equation_index: NonZeroUsize::new(1).unwrap(),
+            named_equations: HashMap::new(),
             footnote_index: NonZeroUsize::new(1).unwrap(),
             bibliography_render_stack: Vec::new(),
         }
@@ -253,6 +255,14 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     pub fn next_equation_index(&mut self) -> NonZeroUsize {
         let next = NonZeroUsize::new(self.equation_index.get() + 1).unwrap();
         std::mem::replace(&mut self.equation_index, next)
+    }
+
+    pub fn register_named_equation(&mut self, name: &str, index: NonZeroUsize) {
+        self.named_equations.insert(name.to_owned(), index);
+    }
+
+    pub fn get_named_equation(&self, name: &str) -> Option<NonZeroUsize> {
+        self.named_equations.get(name).copied()
     }
 
     pub fn next_footnote_index(&mut self) -> NonZeroUsize {

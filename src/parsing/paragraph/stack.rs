@@ -209,6 +209,17 @@ impl<'t> ParagraphStack<'t> {
             }
         );
         let wikidot_html_block = self.wikidot && matches!(element, Element::Html { .. });
+        let wikidot_section_marker = self.wikidot
+            && matches!(
+                &element,
+                Element::Container(container)
+                    if container.ctype() == ContainerType::Div
+                        && container
+                            .attributes()
+                            .get()
+                            .get("class")
+                            .is_some_and(|value| value.as_ref() == "content-separator")
+            );
 
         if self.wikidot
             && matches!(element, Element::DefinitionList(_))
@@ -286,6 +297,13 @@ impl<'t> ParagraphStack<'t> {
             let invisible_block_line = self.wikidot && element == Element::LineBreak;
             let nested_literal_collapsible =
                 self.wikidot && collapsible_has_direct_literal_nested_opener(&element);
+            if wikidot_section_marker
+                && self.current_unwrapped
+                && !self.current.is_empty()
+                && !matches!(self.current.last(), Some(Element::LineBreak))
+            {
+                self.current.push(text!("\n"));
+            }
             if invisible_block_line {
                 self.pop_line_break();
             }

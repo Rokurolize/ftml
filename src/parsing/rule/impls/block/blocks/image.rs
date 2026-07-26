@@ -122,6 +122,30 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_unsaved_preview_links_relative_images_to_medium_resizes() {
+        let mut page_info = PageInfo::dummy();
+        page_info.site = cow!("sandbox-for-codex");
+        page_info.page = cow!("");
+        page_info.category = None;
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[image fog-green.svg]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &page_info, &settings)
+            .body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            concat!(
+                "<a href=\"https://sandbox-for-codex.wjfiles.com/local--files//fog-green.svg\">",
+                "<img src=\"https://sandbox-for-codex.wjfiles.com/local--resized-images//fog-green.svg/medium.jpg\" alt=\"fog-green.svg\" class=\"image\">",
+                "</a>",
+            ),
+        );
+    }
+
+    #[test]
     fn image_block_preserves_canonical_wikidot_local_files_path() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);

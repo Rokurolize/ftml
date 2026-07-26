@@ -49,11 +49,40 @@ pub fn render_image(
 
     match source_url {
         // Found URL
+        Some(url)
+            if ctx.layout() == Layout::Wikidot
+                && ctx.info().page.is_empty()
+                && link.is_none()
+                && alignment.is_none()
+                && attributes.get().is_empty()
+                && matches!(source, FileSource::File1 { file } if !file.starts_with('/')) =>
+        {
+            render_wikidot_preview_image(ctx, &url);
+        }
         Some(url) => render_image_element(ctx, &url, link, alignment, attributes),
 
         // Missing or error
         None => render_image_missing(ctx),
     }
+}
+
+fn render_wikidot_preview_image(ctx: &mut HtmlContext, image_url: &str) {
+    let resized_url = format!(
+        "{}/medium.jpg",
+        image_url.replacen("/local--files/", "/local--resized-images/", 1),
+    );
+    let alt = image_url.rsplit('/').next().unwrap_or("");
+
+    ctx.html()
+        .a()
+        .attr(attr!("href" => image_url))
+        .inner(|ctx| {
+            ctx.html().img().attr(attr!(
+                "src" => &resized_url,
+                "alt" => alt,
+                "class" => "image",
+            ));
+        });
 }
 
 fn render_image_element(

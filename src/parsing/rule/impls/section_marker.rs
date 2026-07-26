@@ -84,3 +84,27 @@ fn wikidot_section_markers_render_hidden_separators_and_split_paragraphs() {
         r#"<p>before</p><div class="content-separator" style="display: none:"></div><p>middle</p><div class="content-separator" style="display: none:"></div><p>after</p>"#,
     );
 }
+
+#[test]
+fn wikidot_section_marker_preserves_unwrapped_line_ending() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization =
+        crate::tokenize("[[div class=\"box\"]]\ninside\n[[/div]]\nafter\n=====\nend");
+    let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+    assert!(errors.is_empty());
+
+    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+    assert!(
+        html.contains(
+            "after\n<div class=\"content-separator\" style=\"display: none:\"></div>",
+        ),
+        "{html}",
+    );
+}

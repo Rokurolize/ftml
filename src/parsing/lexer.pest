@@ -136,7 +136,7 @@ email = @{
     // Avoid attempting the scan-to-@ email rule at every punctuation byte.
     // Once an alphanumeric run is seen, `identifier` consumes it if no email follows.
     &(ASCII_ALPHANUMERIC) ~
-    (!(" " | "\t" | "@" | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE | discarded_control) ~ ANY)+ ~
+    (!(" " | "\t" | "%" | "@" | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE | discarded_control) ~ ANY)+ ~
     "@" ~
     (!(" " | "\t" | "." | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE | discarded_control) ~ ANY)+ ~
     "." ~

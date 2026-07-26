@@ -250,7 +250,17 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
     while at < bytes.len()
         && !matches!(
             bytes[at],
-            b' ' | b'\t' | b'@' | b'[' | b']' | b'{' | b'}' | b'<' | b'>' | b'\n' | b'\r'
+            b' ' | b'\t'
+                | b'%'
+                | b'@'
+                | b'['
+                | b']'
+                | b'{'
+                | b'}'
+                | b'<'
+                | b'>'
+                | b'\n'
+                | b'\r'
         )
         && !is_discarded_control(bytes[at])
     {

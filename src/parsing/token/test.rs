@@ -425,9 +425,19 @@ fn tokens() {
                 span: 15..16,
             },
             ExtractedToken {
+                token: Token::Identifier,
+                slice: "foo",
+                span: 16..19,
+            },
+            ExtractedToken {
+                token: Token::Other,
+                slice: "%",
+                span: 19..20,
+            },
+            ExtractedToken {
                 token: Token::Email,
-                slice: "foo%bar@example.com",
-                span: 16..35,
+                slice: "bar@example.com",
+                span: 20..35,
             },
         ],
     );

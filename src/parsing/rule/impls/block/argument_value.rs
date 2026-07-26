@@ -192,7 +192,7 @@ mod tests {
     fn empty_bare_argument_remains_malformed() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize("[[div class= ]]body[[/div]]");
+        let tokenization = crate::tokenize("[[collapsible show= ]]body[[/collapsible]]");
         let (_, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
         assert!(errors.iter().any(|error| {

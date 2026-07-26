@@ -242,7 +242,7 @@ terminal_backslash = @{ "\\" ~ EOI }
 
 // Misc {{{
 
-line_break = @{ NEWLINE }
+line_break = @{ ("\\" ~ "\n") | NEWLINE }
 paragraph_break = @{ NEWLINE{2,} }
 space = @{ (" " | "\t")+ }
 

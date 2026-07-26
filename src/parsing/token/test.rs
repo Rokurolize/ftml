@@ -86,6 +86,7 @@ fn fast_tokenizer_matches_pest_on_adversarial_inputs() {
         "--- -- --] ---]",
         "@@ @< >@ [!-- comment --]",
         "\\\" \\\\ \\x",
+        "line\\\ncontinued",
         "\\",
         "terminal\\",
         "escaped\\\\",
@@ -104,6 +105,32 @@ fn fast_tokenizer_matches_pest_on_adversarial_inputs() {
     ] {
         assert_fast_tokens_match_pest(input);
     }
+}
+
+#[test]
+fn continued_line_is_one_line_break_token() {
+    let input = "\\\n";
+    assert_fast_tokens_match_pest(input);
+    assert_eq!(
+        Token::extract_all_pest(input),
+        vec![
+            ExtractedToken {
+                token: Token::InputStart,
+                slice: "",
+                span: 0..0,
+            },
+            ExtractedToken {
+                token: Token::LineBreak,
+                slice: input,
+                span: 0..2,
+            },
+            ExtractedToken {
+                token: Token::InputEnd,
+                slice: "",
+                span: 2..2,
+            },
+        ],
+    );
 }
 
 #[test]

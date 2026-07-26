@@ -173,8 +173,40 @@ pub fn substitute(text: &mut String) {
     canonicalize_crossed_bold_size_closers(&mut lines, &literal_lines);
     remove_tight_quote_lines(&mut lines, &literal_lines);
     canonicalize_root_collapsible_inline_quoted_closers(&mut lines, &literal_lines);
+    close_unclosed_div_after_literal_iftags(&mut lines, &literal_lines);
 
     *text = lines.concat();
+}
+
+fn close_unclosed_div_after_literal_iftags(
+    lines: &mut Vec<String>,
+    literal_lines: &[bool],
+) {
+    let qualifying = lines.windows(2).enumerate().any(|(index, pair)| {
+        if literal_lines[index] || literal_lines[index + 1] {
+            return false;
+        }
+        let opener = split_line(&pair[0]).0.to_ascii_lowercase();
+        let div = split_line(&pair[1]).0.to_ascii_lowercase();
+        opener.starts_with("[[iftags ")
+            && opener.ends_with("]]")
+            && div == "[[div]]"
+            && lines[index + 2..]
+                .iter()
+                .any(|line| split_line(line).0.eq_ignore_ascii_case("[[/iftags_]]"))
+            && !lines[index + 2..].iter().any(|line| {
+                let body = split_line(line).0;
+                body.eq_ignore_ascii_case("[[/iftags]]")
+                    || body.eq_ignore_ascii_case("[[/div]]")
+            })
+    });
+    if !qualifying {
+        return;
+    }
+    if lines.last().is_some_and(|line| !line.ends_with('\n')) {
+        lines.push("\n".to_owned());
+    }
+    lines.push("[[/div]]".to_owned());
 }
 
 /// Canonicalize closed quote-prefixed `iftags` gates before native quote parsing.
@@ -1094,6 +1126,42 @@ mod tests {
     use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
     use std::time::{Duration, Instant};
+
+    #[test]
+    fn malformed_iftags_score_close_leaves_the_following_div_open() {
+        let mut source = concat!(
+            "[[iftags +missing]]\n",
+            "[[div]]\n",
+            "hidden child\n",
+            "[[/iftags_]]\n",
+            "visible",
+        )
+        .to_owned();
+
+        substitute(&mut source);
+
+        assert_eq!(
+            source,
+            concat!(
+                "[[iftags +missing]]\n",
+                "[[div]]\n",
+                "hidden child\n",
+                "[[/iftags_]]\n",
+                "visible\n",
+                "[[/div]]",
+            ),
+        );
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
+        let (tree, _) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert!(html.contains("<p>[[iftags +missing]]</p>"), "{html}");
+        assert!(html.contains("<div><p>hidden child"), "{html}");
+        assert!(html.contains("[[/iftags_]]<br>"), "{html}");
+        assert!(html.contains("visible</p></div>"), "{html}");
+    }
 
     #[test]
     fn tight_quote_lines_are_consumed_but_spaced_quotes_render() {

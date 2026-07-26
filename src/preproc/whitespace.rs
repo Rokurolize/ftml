@@ -143,6 +143,9 @@ pub(super) fn preserve_wikidot_document_indentation_barrier(text: &mut String) {
         .bytes()
         .take_while(|byte| matches!(byte, b' ' | b'\t' | b'\n'))
         .count();
+    if wikidot_spaced_inner_include_example(text, leading_len) {
+        return;
+    }
     let structural = text.as_bytes().get(leading_len).copied();
     if text[..leading_len]
         .bytes()
@@ -248,6 +251,9 @@ fn preserve_document_leading_indentation_barrier(text: &mut String) {
     if leading_len == 0 {
         return;
     }
+    if wikidot_spaced_inner_include_example(text, leading_len) {
+        return;
+    }
     let leading = &text[..leading_len];
     let structural = text.as_bytes().get(leading_len).copied();
     if leading.bytes().any(|byte| matches!(byte, b' ' | b'\t'))
@@ -255,6 +261,15 @@ fn preserve_document_leading_indentation_barrier(text: &mut String) {
     {
         text.replace_range(..leading_len, "\0");
     }
+}
+
+fn wikidot_spaced_inner_include_example(text: &str, leading_len: usize) -> bool {
+    const PREFIX: &str = "> > [[include ";
+    let line = text[leading_len..]
+        .split_once('\n')
+        .map_or(&text[leading_len..], |(line, _)| line);
+    line.get(..PREFIX.len())
+        .is_some_and(|prefix| prefix.eq_ignore_ascii_case(PREFIX))
 }
 
 pub(super) fn filter_characters(text: &mut String, preserve_terminal_marker: bool) {
@@ -386,6 +401,37 @@ fn preserves_a_syntax_barrier_for_an_indented_leading_quote() {
     substitute_wikidot(&mut text);
 
     assert_eq!(text, "\0> first\n  > second");
+}
+
+#[test]
+fn trims_document_indentation_before_a_spaced_inner_include_example() {
+    let mut text = "  > > [[include component:box |name=x]]".to_owned();
+
+    preserve_wikidot_document_indentation_barrier(&mut text);
+    substitute_wikidot(&mut text);
+
+    assert_eq!(text, "> > [[include component:box |name=x]]");
+
+    let mut source = "  > > [[include component:box |name=x]]".to_owned();
+    let page_info = crate::data::PageInfo::dummy();
+    let settings = crate::settings::WikitextSettings::from_mode(
+        crate::settings::WikitextMode::Page,
+        crate::layout::Layout::Wikidot,
+    );
+    crate::preprocess_for_layout(&mut source, settings.layout);
+    let tokens = crate::tokenize(&source);
+    let (tree, _) = crate::parse(&tokens, &page_info, &settings).into();
+    let html = crate::render::Render::render(
+        &crate::render::html::HtmlRender,
+        &tree,
+        &page_info,
+        &settings,
+    )
+    .body;
+    assert_eq!(
+        html,
+        "<blockquote><p>&gt; [[include component:box |name=x]]</p></blockquote>",
+    );
 }
 
 #[test]

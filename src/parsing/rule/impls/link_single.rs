@@ -67,8 +67,9 @@ fn try_consume_link<'r, 't>(
     ];
     let url = collect_text(parser, rule, &url_close, &url_invalid, None)?;
 
-    // Return error if the resultant URL is not valid.
-    if !url_valid(url) {
+    let wikidot_javascript_fallback =
+        parser.settings().layout.legacy() && is_javascript_url(url);
+    if !url_valid(url) && !wikidot_javascript_fallback {
         return Err(parser.make_err(ParseErrorKind::InvalidUrl));
     }
 
@@ -83,16 +84,25 @@ fn try_consume_link<'r, 't>(
     // Trim label
     let label = label.trim();
 
-    // Build link element
-    let element = Element::Link {
-        ltype: LinkType::Direct,
-        link: LinkLocation::Url(cow!(url)),
-        label: LinkLabel::Text(cow!(label)),
-        target,
+    let element = if wikidot_javascript_fallback {
+        Element::Text(cow!(label))
+    } else {
+        Element::Link {
+            ltype: LinkType::Direct,
+            link: LinkLocation::Url(cow!(url)),
+            label: LinkLabel::Text(cow!(label)),
+            target,
+        }
     };
 
     // Return result
     success_elements(element)
+}
+
+fn is_javascript_url(url: &str) -> bool {
+    url.trim_start()
+        .get(.."javascript:".len())
+        .is_some_and(|scheme| scheme.eq_ignore_ascii_case("javascript:"))
 }
 
 fn url_valid(url: &str) -> bool {
@@ -131,7 +141,8 @@ mod tests {
         let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
-        assert!(html.contains("[javascript:alert(1) XSS]"), "{html}");
+        assert!(!html.contains("[javascript:alert(1) XSS]"), "{html}");
+        assert!(html.contains("XSS"), "{html}");
         assert!(html.contains("[data:text/html,alert(2) XSS]"), "{html}");
         assert!(!html.contains("href=\"javascript:"), "{html}");
         assert!(!html.contains("href=\"data:"), "{html}");

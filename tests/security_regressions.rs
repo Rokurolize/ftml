@@ -714,7 +714,11 @@ fn false_iftags_raw_body_end_markers_stay_hidden() {
 
     for layout in [Layout::Wikijump, Layout::Wikidot] {
         for raw_body in raw_bodies {
-            if layout == Layout::Wikidot && raw_body.starts_with("[[math]]\n\\text{") {
+            if layout == Layout::Wikidot
+                && (raw_body.starts_with("[[raw]]")
+                    || raw_body.starts_with("[[math]]\n\\text{")
+                    || raw_body.starts_with("[!-- "))
+            {
                 continue;
             }
             assert_false_iftags_guarded(raw_body, layout);
@@ -789,6 +793,45 @@ fn wikidot_false_iftags_unclosed_raw_child_yields_to_conditional_boundary() {
 
         assert_eq!(render_text(&tree, Layout::Wikidot), expected, "{hidden}");
     }
+}
+
+#[test]
+fn wikidot_false_iftags_closed_raw_and_comment_yield_to_conditional_boundary() {
+    for (hidden, expected) in [
+        (
+            "[[raw]]\n[[/iftags]]\n[[html]]raw-raw[[/html]]\n[[/raw]]",
+            "[[html]]raw-raw[[/html]]\n[[/raw]]",
+        ),
+        ("[!-- [[/iftags]] raw-comment --]", "raw-comment --]"),
+    ] {
+        let input = format!(
+            "[[iftags +missing]]\n{hidden}\n[[html]]\n<b>guarded</b>\n[[/html]]\n[[/iftags]]\nvisible",
+        );
+        let (tree, _) = parse_with_errors(&input, Layout::Wikidot);
+        let text = render_text(&tree, Layout::Wikidot);
+
+        assert!(text.starts_with(expected), "{hidden}: {text}");
+        assert!(text.ends_with("[[/iftags]]\nvisible"), "{hidden}: {text}");
+    }
+}
+
+#[test]
+fn wikidot_false_iftags_single_nested_close_ends_the_outer_gate() {
+    let input = concat!(
+        "[[iftags +missing]]\n",
+        "[[iftags +missing]]\n",
+        "inner unclosed\n",
+        "[[/iftags]]\n",
+        "[[html]]\n",
+        "<b>unclosed nested</b>\n",
+        "[[/html]]",
+    );
+    let (tree, _) = parse_with_errors(input, Layout::Wikidot);
+
+    assert_eq!(
+        render_text(&tree, Layout::Wikidot),
+        "[[html]]\n<b>unclosed nested</b>\n[[/html]]",
+    );
 }
 
 #[test]

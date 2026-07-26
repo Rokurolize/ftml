@@ -37,21 +37,20 @@ pub use self::output::HtmlOutput;
 use self::context::HtmlContext;
 use self::element::{render_element, render_elements};
 use crate::data::PageInfo;
-use crate::render::{Handle, Render};
+use crate::render::{Handle, PageExistenceResolver, Render};
 use crate::settings::WikitextSettings;
 use crate::tree::{Element, SyntaxTree};
 
 #[derive(Debug)]
 pub struct HtmlRender;
 
-impl Render for HtmlRender {
-    type Output = HtmlOutput;
-
-    fn render(
+impl HtmlRender {
+    pub fn render_with_page_existence(
         &self,
         tree: &SyntaxTree,
         page_info: &PageInfo,
         settings: &WikitextSettings,
+        page_existence: &dyn PageExistenceResolver,
     ) -> HtmlOutput {
         debug!(
             "Rendering HTML (site {}, page {}, category {})",
@@ -63,9 +62,9 @@ impl Render for HtmlRender {
             },
         );
 
-        let mut ctx = HtmlContext::new(
+        let mut ctx = HtmlContext::with_page_existence(
             page_info,
-            &Handle,
+            page_existence,
             settings,
             &tree.table_of_contents,
             &tree.footnotes,
@@ -73,11 +72,21 @@ impl Render for HtmlRender {
             tree.wikitext_len,
         );
 
-        // Crawl through elements and generate HTML
         render_contents(&mut ctx, tree);
-
-        // Build and return HtmlOutput
         ctx.into()
+    }
+}
+
+impl Render for HtmlRender {
+    type Output = HtmlOutput;
+
+    fn render(
+        &self,
+        tree: &SyntaxTree,
+        page_info: &PageInfo,
+        settings: &WikitextSettings,
+    ) -> HtmlOutput {
+        self.render_with_page_existence(tree, page_info, settings, &Handle)
     }
 }
 

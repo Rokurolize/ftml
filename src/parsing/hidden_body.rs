@@ -105,7 +105,7 @@ impl<'r, 't> Parser<'r, 't> {
             let matches_name = names.iter().any(|item| name.eq_ignore_ascii_case(item));
             let invalid_iftags_score_close = self.settings().layout.legacy()
                 && score_close
-                && names.iter().any(|item| *item == "iftags");
+                && names.contains(&"iftags");
             (!after_line_break || boundary.accepts_newlines)
                 && matches_name
                 && !invalid_iftags_score_close

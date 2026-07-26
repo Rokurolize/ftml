@@ -28,7 +28,7 @@ use crate::data::{Backlinks, PageInfo};
 use crate::info;
 use crate::layout::Layout;
 use crate::next_index::{Incrementer, NextIndex, TableOfContentsIndex};
-use crate::render::Handle;
+use crate::render::{Handle, PageExistenceResolver};
 use crate::settings::WikitextSettings;
 use crate::tree::{
     Bibliography, BibliographyList, Element, LinkLocation, VariableScopes,
@@ -42,7 +42,6 @@ use std::ops::Range;
 const MIN_BODY_CAPACITY: usize = 4096;
 const MAX_BODY_CAPACITY: usize = 1024 * 1024;
 
-#[derive(Debug)]
 pub struct HtmlContext<'i, 'h, 'e, 't>
 where
     'e: 't,
@@ -53,6 +52,7 @@ where
     backlinks: Backlinks<'static>,
     info: &'i PageInfo<'i>,
     handle: &'h Handle,
+    page_existence: &'h dyn PageExistenceResolver,
     settings: &'e WikitextSettings,
     random: Random,
 
@@ -85,11 +85,44 @@ where
     bibliography_render_stack: Vec<String>,
 }
 
+impl fmt::Debug for HtmlContext<'_, '_, '_, '_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("HtmlContext")
+            .field("body", &self.body)
+            .field("meta", &self.meta)
+            .field("styles", &self.styles)
+            .field("backlinks", &self.backlinks)
+            .field("info", &self.info)
+            .field("settings", &self.settings)
+            .finish_non_exhaustive()
+    }
+}
+
 impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     #[inline]
     pub fn new(
         info: &'i PageInfo<'i>,
         handle: &'h Handle,
+        settings: &'e WikitextSettings,
+        table_of_contents: &'e [Element<'t>],
+        footnotes: &'e [Vec<Element<'t>>],
+        bibliographies: &'e BibliographyList<'t>,
+        wikitext_len: usize,
+    ) -> Self {
+        Self::with_page_existence(
+            info,
+            handle,
+            settings,
+            table_of_contents,
+            footnotes,
+            bibliographies,
+            wikitext_len,
+        )
+    }
+
+    pub fn with_page_existence(
+        info: &'i PageInfo<'i>,
+        page_existence: &'h dyn PageExistenceResolver,
         settings: &'e WikitextSettings,
         table_of_contents: &'e [Element<'t>],
         footnotes: &'e [Vec<Element<'t>>],
@@ -112,7 +145,8 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
             styles: Vec::new(),
             backlinks: Backlinks::new(),
             info,
-            handle,
+            handle: &Handle,
+            page_existence,
             settings,
             random: Random::default(),
             variables: VariableScopes::new(),
@@ -326,7 +360,7 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
         match self.pages_exists.get(page_ref) {
             Some(exists) => *exists,
             None => {
-                let exists = self.handle.get_page_exists(site, page);
+                let exists = self.page_existence.page_exists(site, page);
                 self.pages_exists.insert(page_ref.to_owned(), exists);
                 exists
             }

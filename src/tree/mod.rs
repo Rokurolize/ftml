@@ -68,8 +68,10 @@ pub use self::tag::*;
 pub use self::variables::*;
 
 use self::clone::{elements_lists_to_owned, elements_to_owned, string_to_owned};
+use crate::data::PageRef;
 use crate::parsing::{ParseError, ParseOutcome};
 use std::borrow::Cow;
+use std::collections::HashSet;
 use std::ops::Not;
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq, Eq)]
@@ -164,6 +166,122 @@ impl<'t> SyntaxTree<'t> {
             wikitext_len: self.wikitext_len,
         }
     }
+
+    /// Collects the distinct internal page references rendered by this tree.
+    ///
+    /// The returned references retain their site and extra URL portions. Their
+    /// order is the order of first appearance in the tree.
+    pub fn page_references(&self) -> Vec<PageRef> {
+        let mut references = Vec::new();
+        let mut seen = HashSet::new();
+
+        collect_page_references(&self.elements, &mut references, &mut seen);
+        collect_page_references(&self.table_of_contents, &mut references, &mut seen);
+        for footnote in &self.footnotes {
+            collect_page_references(footnote, &mut references, &mut seen);
+        }
+        for bibliography in self.bibliographies.slice() {
+            for (_, elements) in bibliography.slice() {
+                collect_page_references(elements, &mut references, &mut seen);
+            }
+        }
+
+        references
+    }
+}
+
+fn collect_page_references(
+    elements: &[Element<'_>],
+    references: &mut Vec<PageRef>,
+    seen: &mut HashSet<PageRef>,
+) {
+    for element in elements {
+        if let Element::Link {
+            link: LinkLocation::Page(page),
+            ..
+        } = element
+            && seen.insert(page.clone())
+        {
+            references.push(page.clone());
+        }
+
+        match element {
+            Element::Container(container) => {
+                collect_page_references(container.elements(), references, seen);
+            }
+            Element::Table(table) => {
+                for row in &table.rows {
+                    for cell in &row.cells {
+                        collect_page_references(&cell.elements, references, seen);
+                    }
+                }
+            }
+            Element::TabView(tabs) => {
+                for tab in tabs {
+                    collect_page_references(&tab.elements, references, seen);
+                }
+            }
+            Element::Anchor { elements, .. }
+            | Element::Collapsible { elements, .. }
+            | Element::Color { elements, .. }
+            | Element::Include { elements, .. } => {
+                collect_page_references(elements, references, seen);
+            }
+            Element::List { items, .. } => {
+                for item in items {
+                    match item {
+                        ListItem::Elements { elements, .. } => {
+                            collect_page_references(elements, references, seen);
+                        }
+                        ListItem::SubList { element } => {
+                            collect_page_references(
+                                std::slice::from_ref(element),
+                                references,
+                                seen,
+                            );
+                        }
+                    }
+                }
+            }
+            Element::DefinitionList(items) => {
+                for item in items {
+                    collect_page_references(&item.key_elements, references, seen);
+                    collect_page_references(&item.value_elements, references, seen);
+                }
+            }
+            Element::Partial(partial) => match partial {
+                PartialElement::ListItem(ListItem::Elements { elements, .. }) => {
+                    collect_page_references(elements, references, seen);
+                }
+                PartialElement::ListItem(ListItem::SubList { element }) => {
+                    collect_page_references(
+                        std::slice::from_ref(element),
+                        references,
+                        seen,
+                    );
+                }
+                PartialElement::TableRow(row) => {
+                    for cell in &row.cells {
+                        collect_page_references(&cell.elements, references, seen);
+                    }
+                }
+                PartialElement::TableCell(cell) => {
+                    collect_page_references(&cell.elements, references, seen);
+                }
+                PartialElement::Tab(tab) => {
+                    collect_page_references(&tab.elements, references, seen);
+                }
+                PartialElement::RubyText(ruby_text) => {
+                    collect_page_references(&ruby_text.elements, references, seen);
+                }
+                PartialElement::InlineSizeOpen(_)
+                | PartialElement::InlineSizeClose
+                | PartialElement::InlineSpanOpen(_)
+                | PartialElement::InlineSpanClose(_) => {}
+            },
+            _ => {}
+        }
+    }
 }
 
 #[test]
@@ -178,4 +296,46 @@ fn borrowed_to_owned() {
     let tree_3: SyntaxTree<'static> = tree_2.clone();
 
     mem::drop(tree_3);
+}
+
+#[test]
+fn page_references_collect_nested_rendered_locations_once() {
+    fn page_link(page: PageRef) -> Element<'static> {
+        Element::Link {
+            ltype: LinkType::Page,
+            link: LinkLocation::Page(page),
+            label: LinkLabel::Slug(cow!("label")),
+            target: None,
+        }
+    }
+
+    let nested = PageRef::page_only("nested#section");
+    let footnote = PageRef::page_and_site("other-site", "footnote");
+    let bibliography = PageRef::page_only("bibliography");
+    let mut bibliography_list = BibliographyList::new();
+    let mut bibliography_items = Bibliography::new();
+    bibliography_items.add(cow!("source"), vec![page_link(bibliography.clone())]);
+    bibliography_list.push(bibliography_items);
+
+    let tree = SyntaxTree {
+        elements: vec![
+            Element::Container(Container::new(
+                ContainerType::Div,
+                vec![page_link(nested.clone())],
+                AttributeMap::new(),
+            )),
+            page_link(nested.clone()),
+            Element::Link {
+                ltype: LinkType::Direct,
+                link: LinkLocation::Url(cow!("https://example.com")),
+                label: LinkLabel::Text(cow!("external")),
+                target: None,
+            },
+        ],
+        footnotes: vec![vec![page_link(footnote.clone())]],
+        bibliographies: bibliography_list,
+        ..SyntaxTree::default()
+    };
+
+    assert_eq!(tree.page_references(), vec![nested, footnote, bibliography],);
 }

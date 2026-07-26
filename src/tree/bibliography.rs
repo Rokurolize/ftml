@@ -155,6 +155,11 @@ impl<'t> BibliographyList<'t> {
         self.0.get(index)
     }
 
+    #[inline]
+    pub fn slice(&self) -> &[Bibliography<'t>] {
+        &self.0
+    }
+
     pub fn to_owned(&self) -> BibliographyList<'static> {
         BibliographyList(self.0.iter().map(|b| b.to_owned()).collect())
     }

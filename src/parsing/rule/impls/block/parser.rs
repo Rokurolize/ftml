@@ -292,7 +292,7 @@ where
                 && self.discarding_hidden_body()
                 && self.at_hidden_body_boundary()
                 && (!self.has_body_end_block(block_rule)
-                    || block_rule.name == "block-math")
+                    || matches!(block_rule.name, "block-math" | "block-raw"))
             {
                 return Err(self.make_err(ParseErrorKind::BlockExpectedEnd));
             }
@@ -818,6 +818,29 @@ where
             }
 
             parser.step().expect("missing input end");
+            first = false;
+        }
+    }
+
+    pub(crate) fn has_two_body_end_blocks(&self, block_rule: &BlockRule) -> bool {
+        let mut parser = self.clone();
+        let mut first = true;
+        let mut matches = 0;
+
+        loop {
+            if parser
+                .verify_end_block(first, block_rule, false, false)
+                .is_some()
+            {
+                matches += 1;
+                if matches == 2 {
+                    return true;
+                }
+            } else if parser.current().token == Token::InputEnd {
+                return false;
+            } else {
+                parser.step().expect("missing input end");
+            }
             first = false;
         }
     }

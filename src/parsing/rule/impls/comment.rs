@@ -34,6 +34,13 @@ fn try_consume_fn<'r, 't>(
     assert_step(parser, Token::LeftComment)?;
 
     loop {
+        if parser.settings().layout.legacy()
+            && parser.discarding_hidden_body()
+            && parser.at_hidden_body_boundary()
+        {
+            return Err(parser.make_err(ParseErrorKind::BlockExpectedEnd));
+        }
+
         let token = parser.current().token;
 
         trace!("Received token '{}' inside comment", token.name());

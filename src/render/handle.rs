@@ -29,6 +29,21 @@ use std::num::NonZeroUsize;
 #[derive(Debug)]
 pub struct Handle;
 
+/// Resolves whether an internal page reference names an existing page.
+///
+/// FTML performs this lookup synchronously while rendering. Callers backed by
+/// an asynchronous data store should resolve all references in the syntax tree
+/// in advance and provide a resolver over that snapshot.
+pub trait PageExistenceResolver: Send + Sync {
+    fn page_exists(&self, site: &str, page: &str) -> bool;
+}
+
+impl PageExistenceResolver for Handle {
+    fn page_exists(&self, site: &str, page: &str) -> bool {
+        self.get_page_exists(site, page)
+    }
+}
+
 impl Handle {
     pub fn render_module(&self, buffer: &mut String, module: &Module) {
         // Modules only render to HTML

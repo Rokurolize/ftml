@@ -31,7 +31,7 @@ use super::parser::QuoteBodyLineStatus;
 use super::prelude::*;
 use super::rule::{
     get_rules_for_token,
-    impls::{RULE_FALLBACK, starts_own_line_rule},
+    impls::{RULE_FALLBACK, starts_own_line_rule, url_elements},
 };
 use crate::tree::{LinkLabel, LinkLocation, LinkType, PartialElement};
 use std::mem;
@@ -398,15 +398,14 @@ fn upcoming_block_ends_with_single_bracket(parser: &Parser<'_, '_>) -> bool {
 fn try_consume_leaf_token<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> Result<Option<Elements<'t>>, ParseError> {
+    if parser.current().token == Token::Url {
+        let elements = url_elements(parser);
+        parser.step()?;
+        return Ok(Some(elements));
+    }
+
     let element = match parser.current().token {
         Token::Email => Element::Email(cow!(parser.current().slice)),
-
-        Token::Url => Element::Link {
-            ltype: LinkType::Direct,
-            link: LinkLocation::Url(cow!(parser.current().slice)),
-            label: LinkLabel::Url,
-            target: None,
-        },
 
         Token::Variable => {
             let slice = parser.current().slice;
@@ -758,6 +757,30 @@ mod tests {
             .expect("variable should use leaf fast path");
         assert_eq!(elements, Element::Variable(cow!("title")).into());
         assert_eq!(parser.current().token, Token::InputEnd);
+    }
+
+    #[test]
+    fn wikidot_url_leaf_fast_path_splits_terminal_period() {
+        let (tokens, page_info, mut settings) =
+            parser_for("https://example.com/test. next");
+        settings.layout = Layout::Wikidot;
+        let mut parser = parser_at(&tokens, &page_info, &settings, 1);
+        let elements = try_consume_leaf_token(&mut parser)
+            .expect("URL fast path should not fail")
+            .expect("URL should use leaf fast path");
+        assert_eq!(
+            elements,
+            Elements::Multiple(vec![
+                Element::Link {
+                    ltype: LinkType::Direct,
+                    link: LinkLocation::Url(cow!("https://example.com/test")),
+                    label: LinkLabel::Url,
+                    target: None,
+                },
+                text!("."),
+            ]),
+        );
+        assert_eq!(parser.current().token, Token::Whitespace);
     }
 
     #[test]

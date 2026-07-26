@@ -67,6 +67,7 @@ impl<'t> AttributeMap<'t> {
         arguments: &HashMap<UniCase<&'t str>, Cow<'t, str>>,
     ) -> Self {
         let mut attributes = Self::from_arguments(arguments);
+        attributes.inner.remove("title");
         let href = arguments.get(&UniCase::ascii("href")).filter(|value| {
             matches!(
                 crate::url::classify_href(value),

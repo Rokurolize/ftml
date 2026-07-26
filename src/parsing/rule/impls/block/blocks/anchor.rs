@@ -95,12 +95,16 @@ mod tests {
     use crate::render::html::HtmlRender;
     use crate::settings::{WikitextMode, WikitextSettings};
 
-    fn render(source: &str) -> String {
+    fn render_with_layout(source: &str, layout: Layout) -> String {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
         let tokenization = crate::tokenize(source);
         let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
         HtmlRender.render(&tree, &page_info, &settings).body
+    }
+
+    fn render(source: &str) -> String {
+        render_with_layout(source, Layout::Wikidot)
     }
 
     #[test]
@@ -108,6 +112,19 @@ mod tests {
         assert_eq!(
             render(r#"[[a href="some-page"]]click[[/a]]"#),
             r#"<p><a href="some-page">click</a></p>"#,
+        );
+    }
+
+    #[test]
+    fn wikidot_anchor_discards_title_attribute() {
+        let source = r#"[[a href="https://example.com/" title="Label"]]Label[[/a]]"#;
+        assert_eq!(
+            render(source),
+            r#"<p><a href="https://example.com/">Label</a></p>"#,
+        );
+        assert_eq!(
+            render_with_layout(source, Layout::Wikijump),
+            r#"<p><a class="wj-anchor" href="https://example.com/" title="Label">Label</a></p>"#,
         );
     }
 

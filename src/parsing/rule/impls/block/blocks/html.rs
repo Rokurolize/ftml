@@ -51,7 +51,7 @@ fn parse_fn<'r, 't>(
         attributes: arguments.to_attribute_map(parser.settings()),
     };
     parser.push_html_block(html);
-    ok!(element)
+    ok!(parser.settings().layout.legacy(); element)
 }
 
 #[cfg(test)]
@@ -59,6 +59,7 @@ mod tests {
     use super::*;
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::render::Render;
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
@@ -100,7 +101,14 @@ mod tests {
 
         assert!(errors.is_empty(), "{errors:?}");
         assert_eq!(tree.html_blocks, ["<strong>isolated</strong>"]);
-        assert!(matches!(tree.elements.as_slice(), [Element::Html { .. }]));
+
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &page_info, &settings)
+            .body;
+        assert_eq!(
+            html,
+            r#"<p><iframe src="https://example.com/" allowtransparency="true" frameborder="0" class="html-block-iframe"></iframe></p>"#,
+        );
     }
 
     #[test]

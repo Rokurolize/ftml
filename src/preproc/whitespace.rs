@@ -58,6 +58,12 @@ static DOS_MAC_NEWLINES: LazyLock<Replacer> = LazyLock::new(|| Replacer::RegexRe
     regex: Regex::new(r"\r\n?").unwrap(),
     replacement: "\n",
 });
+static WIKIDOT_CONTINUED_DIV_OPENER: LazyLock<Regex> = LazyLock::new(|| {
+    RegexBuilder::new(r"^\[\[div_?(?:[ \t].*)?\]\]$")
+        .case_insensitive(true)
+        .build()
+        .unwrap()
+});
 
 pub(super) fn expose_wikidot_replacement_markers(text: &mut String) {
     if !text.contains('\u{fffd}') {
@@ -227,7 +233,7 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
     replace!(WHITESPACE_ONLY_LINE);
 
     // Join concatenated lines (ending with '\').
-    join_continued_lines(text, &mut buffer);
+    join_continued_lines(text, &mut buffer, wikidot_compatibility);
 
     // Replace tabs in one linear pass instead of repeatedly shifting the
     // remaining string for every match.
@@ -294,7 +300,11 @@ pub(super) fn filter_characters(text: &mut String, preserve_terminal_marker: boo
 /// backslash, whether that backslash was adjacent in the input or exposed by a
 /// previous cancellation. Each character is pushed at most once and popped at
 /// most once, so cascading continuations are handled in linear time.
-fn join_continued_lines(text: &mut String, buffer: &mut String) {
+fn join_continued_lines(
+    text: &mut String,
+    buffer: &mut String,
+    wikidot_compatibility: bool,
+) {
     if !text.contains("\\\n") {
         return;
     }
@@ -302,16 +312,28 @@ fn join_continued_lines(text: &mut String, buffer: &mut String) {
     buffer.clear();
     buffer.reserve(text.len());
 
-    for character in text.chars() {
+    for (index, character) in text.char_indices() {
         if character == '\n' && buffer.as_bytes().last() == Some(&b'\\') {
-            let removed = buffer.pop();
-            debug_assert_eq!(removed, Some('\\'));
+            if wikidot_compatibility && wikidot_continued_div_opener(&text[index + 1..]) {
+                buffer.push(character);
+            } else {
+                let removed = buffer.pop();
+                debug_assert_eq!(removed, Some('\\'));
+            }
         } else {
             buffer.push(character);
         }
     }
 
     std::mem::swap(text, buffer);
+}
+
+fn wikidot_continued_div_opener(text: &str) -> bool {
+    // Wikidot suppresses the visible break but still recognizes a standalone
+    // div opener on the next physical line.
+    let line = text.split_once('\n').map_or(text, |(line, _)| line);
+    let marker = line.trim_matches([' ', '\t']);
+    WIKIDOT_CONTINUED_DIV_OPENER.is_match(marker)
 }
 
 /// In-place replaces the leading non-standard spaces (such as nbsp) on each line with standard spaces
@@ -541,6 +563,43 @@ fn character_filter_preserves_a_control_as_a_line_continuation_barrier() {
 }
 
 #[test]
+fn wikidot_preserves_a_continued_standalone_div_boundary() {
+    for (opener, normalized) in [
+        ("[[div]]", "[[div]]"),
+        ("[[div class=\"box\"]]", "[[div class=\"box\"]]"),
+        ("[[div_ class=\"box\"]]", "[[div_ class=\"box\"]]"),
+        ("[[div\tclass=\"box\"]]", "[[div class=\"box\"]]"),
+        ("[[div_\tclass=\"box\"]]", "[[div_ class=\"box\"]]"),
+        ("[[div @=\"value\"]]", "[[div @=\"value\"]]"),
+        ("[[div_ class]]", "[[div_ class]]"),
+    ] {
+        let mut wikidot = format!("alpha\\\n{opener}\nbody\n[[/div]]");
+        substitute_wikidot(&mut wikidot);
+        assert_eq!(wikidot, format!("alpha\\\n{normalized}\nbody\n[[/div]]"),);
+
+        let mut wikijump = format!("alpha\\\n{opener}\nbody\n[[/div]]");
+        substitute(&mut wikijump);
+        assert_eq!(
+            wikijump,
+            format!("alpha{}\nbody\n[[/div]]", opener.replace('\t', "    ")),
+        );
+    }
+
+    let mut inline = "alpha\\\nbeta".to_owned();
+    substitute_wikidot(&mut inline);
+    assert_eq!(inline, "alphabeta");
+}
+
+#[test]
+fn malformed_div_like_lines_remain_ordinary_continuations() {
+    for opener in ["[[division]]", "[[div__]]", "[[divx]]"] {
+        let mut text = format!("alpha\\\n{opener}");
+        substitute_wikidot(&mut text);
+        assert_eq!(text, format!("alpha{opener}"));
+    }
+}
+
+#[test]
 fn control_barrier_prevents_late_leading_whitespace_trimming() {
     let mut text = "\u{0001}\tA".to_owned();
 
@@ -556,7 +615,7 @@ fn line_continuations_cascade_across_exposed_boundaries() {
             format!("prefix{}{}suffix", "\\".repeat(depth), "\n".repeat(depth),);
         let mut buffer = String::new();
 
-        join_continued_lines(&mut text, &mut buffer);
+        join_continued_lines(&mut text, &mut buffer, false);
 
         assert_eq!(text, "prefixsuffix", "cascade depth {depth}");
     }
@@ -582,7 +641,7 @@ fn linear_line_continuation_join_matches_repeated_replacement() {
 
             let mut actual = input.clone();
             let mut buffer = String::new();
-            join_continued_lines(&mut actual, &mut buffer);
+            join_continued_lines(&mut actual, &mut buffer, false);
 
             assert_eq!(actual, expected, "input {input:?}");
         }
@@ -597,7 +656,7 @@ fn line_continuation_cascade_scales_to_large_inputs() {
     let mut text = format!("prefix{}{}suffix", "\\".repeat(DEPTH), "\n".repeat(DEPTH),);
     let mut buffer = String::new();
 
-    join_continued_lines(&mut text, &mut buffer);
+    join_continued_lines(&mut text, &mut buffer, false);
 
     assert_eq!(text, "prefixsuffix");
 }

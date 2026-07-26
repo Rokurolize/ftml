@@ -92,6 +92,11 @@ where
 
         let terminal_backslash =
             parser.current().token == Token::LineBreak && parser.current().slice == "\\";
+        let continued_block_boundary = parser.current().token == Token::LineBreak
+            && parser.current().slice == "\\\n";
+        if continued_block_boundary && parser.settings().layout.legacy() {
+            stack.mark_wikidot_continued_block_boundary();
+        }
         let terminal_spaced_underscore = parser.settings().layout.legacy()
             && parser.current().token == Token::Whitespace
             && parser

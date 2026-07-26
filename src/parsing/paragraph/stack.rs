@@ -137,6 +137,16 @@ impl<'t> ParagraphStack<'t> {
         }
     }
 
+    /// End the preceding inline run without a paragraph wrapper while keeping
+    /// the source newline as insignificant HTML whitespace.
+    #[inline]
+    pub fn mark_wikidot_continued_block_boundary(&mut self) {
+        if self.wikidot && !self.current.is_empty() {
+            self.current.push(text!("\n"));
+            self.current_unwrapped = true;
+        }
+    }
+
     #[inline]
     pub(crate) fn mark_next_unwrapped(&mut self) {
         self.current_unwrapped = true;

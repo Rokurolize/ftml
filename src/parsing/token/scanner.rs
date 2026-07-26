@@ -50,6 +50,10 @@ fn next_token(text: &str, bytes: &[u8], start: usize) -> (Token, usize) {
         return (Token::Variable, end);
     }
 
+    if byte == b'\\' && bytes.get(start + 1) == Some(&b'\n') {
+        return (Token::LineBreak, start + 2);
+    }
+
     if let Some((token, end)) = scan_newline(bytes, start) {
         return (token, end);
     }
@@ -380,5 +384,21 @@ fn next_char_end(text: &str, start: usize) -> usize {
                 .next()
                 .expect("valid UTF-8")
                 .len_utf8()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn raw_continued_boundary_is_one_line_break_token() {
+        let tokens = extract_all("\\\n");
+
+        assert_eq!(tokens.len(), 3);
+        assert_eq!(tokens[0].token, Token::InputStart);
+        assert_eq!(tokens[1].token, Token::LineBreak);
+        assert_eq!(tokens[1].slice, "\\\n");
+        assert_eq!(tokens[2].token, Token::InputEnd);
     }
 }

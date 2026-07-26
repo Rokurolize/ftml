@@ -1159,6 +1159,25 @@ where
         self.get_head_block_with_body_start(block_rule, in_head)
     }
 
+    pub(crate) fn discard_head_with_body_start(
+        &mut self,
+        block_rule: &BlockRule,
+        in_head: bool,
+    ) -> Result<BlockBodyStart, ParseError> {
+        if in_head {
+            while !matches!(
+                self.current().token,
+                Token::RightBlock
+                    | Token::LineBreak
+                    | Token::ParagraphBreak
+                    | Token::InputEnd
+            ) {
+                self.step()?;
+            }
+        }
+        self.get_head_block_with_body_start(block_rule, in_head)
+    }
+
     // Helper function to finish up the head block
     fn get_head_block_with_body_start(
         &mut self,
@@ -1208,8 +1227,8 @@ mod tests {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         for input in [
-            "[[div @=\"value\"]]body[[/div]]",
-            "[[div =\"value\"]]body[[/div]]",
+            "[[collapsible @=\"value\"]]body[[/collapsible]]",
+            "[[collapsible =\"value\"]]body[[/collapsible]]",
         ] {
             let tokenization = crate::tokenize(input);
             let (_, errors) = crate::parse(&tokenization, &page_info, &settings).into();

@@ -92,7 +92,21 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Div doesn't allow star flag");
     assert_block_name(&BLOCK_DIV, name);
 
-    let head = parser.get_head_map_with_body_start(&BLOCK_DIV, in_head)?;
+    let head_start = parser.clone();
+    let head = match parser.get_head_map_with_body_start(&BLOCK_DIV, in_head) {
+        Ok(head) => head,
+        Err(error)
+            if parser.settings().layout.legacy()
+                && error.kind() == ParseErrorKind::BlockMalformedArguments =>
+        {
+            // Wikidot keeps the exact div/div_ block and discards its malformed
+            // head instead of making the whole block literal.
+            parser.update(&head_start);
+            let body_start = parser.discard_head_with_body_start(&BLOCK_DIV, in_head)?;
+            (Arguments::new(), body_start)
+        }
+        Err(error) => return Err(error),
+    };
     let (arguments, mut body_start) = head;
     let head_started_physical_line =
         wikidot_div_head_started_physical_line(parser, body_start);
@@ -304,6 +318,105 @@ mod tests {
             render(input, Layout::Wikijump),
             "<div class=\"box \"><p>body</p></div>",
         );
+    }
+
+    #[test]
+    fn wikidot_continuation_before_a_div_preserves_its_block_boundary() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut source = concat!(
+            "[[div id=\"outer\"]]\n",
+            "[[a href=\"x\"]]x[[/a]]\\\n",
+            "[[div_ class=\"image\"]]\n",
+            "x\n",
+            "[[/div]]\n",
+            "[[/div]]",
+        )
+        .to_owned();
+        crate::preprocess_for_layout(&mut source, settings.layout);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            "<div id=\"u-outer\"><a href=\"x\">x</a>\n<div class=\"image\">x</div></div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_continuation_before_a_div_like_name_remains_inline() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut source = concat!(
+            "[[a href=\"x\"]]x[[/a]]\\\n",
+            "[[division]]\n",
+            "x\n",
+            "[[/div]]",
+        )
+        .to_owned();
+        crate::preprocess_for_layout(&mut source, settings.layout);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(!errors.is_empty());
+        assert_eq!(
+            html,
+            "<p><a href=\"x\">x</a>[[division]]<br>\nx<br>\n[[/div]]</p>",
+        );
+    }
+
+    #[test]
+    fn wikidot_exact_div_names_discard_malformed_arguments() {
+        for (name, normal, continued) in [
+            (
+                "div",
+                "<p>before</p><div><p>x</p></div><br>\nafter",
+                "<a href=\"x\">x</a>\n<div><p>x</p></div>",
+            ),
+            (
+                "div_",
+                "<p>before</p><div>x</div><br>\nafter",
+                "<a href=\"x\">x</a>\n<div>x</div>",
+            ),
+        ] {
+            let normal_source =
+                format!("before\n[[{name} @=\"value\"]]\nx\n[[/div]]\nafter",);
+            assert_eq!(render_preprocessed_wikidot(&normal_source), normal);
+
+            let continued_source = format!(
+                "[[a href=\"x\"]]x[[/a]]\\\n[[{name} @=\"value\"]]\nx\n[[/div]]",
+            );
+            assert_eq!(render_preprocessed_wikidot(&continued_source), continued,);
+        }
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let mut source = "before\n[[div @=\"value\"]]\nx\n[[/div]]\nafter".to_owned();
+        crate::preprocess_for_layout(&mut source, settings.layout);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert!(
+            errors
+                .iter()
+                .any(|error| { error.kind() == ParseErrorKind::BlockMalformedArguments })
+        );
+        assert!(html.contains("[[div @=&quot;value&quot;]]"), "{html}");
+        assert!(!html.contains("<div>"), "{html}");
+    }
+
+    fn render_preprocessed_wikidot(source: &str) -> String {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut source = source.to_owned();
+        crate::preprocess_for_layout(&mut source, settings.layout);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:#?}");
+        HtmlRender.render(&tree, &page_info, &settings).body
     }
 
     #[test]

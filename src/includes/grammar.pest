@@ -40,9 +40,14 @@ include = {
     "[[" ~ space? ~ ^"include" ~ space ~
     page_ref ~ space? ~
     stray_open_brackets? ~
-    (separator ~ space?)? ~
-    (argument ~ space? ~ separator ~ space?)* ~
-    (argument ~ space? ~ separator?)? ~
+    (
+        spaced_empty_separator |
+        (
+            (separator ~ space?)? ~
+            (argument ~ space? ~ separator ~ space?)* ~
+            (argument ~ space? ~ separator?)?
+        )
+    ) ~
     space? ~ include_end
 }
 
@@ -54,6 +59,14 @@ argument = {
     identifier ~ space? ~
     "=" ~ space? ~
     value
+}
+
+spaced_empty_separator = {
+    "|" ~ horizontal_space ~ &include_end
+}
+
+horizontal_space = _{
+    (" " | "\t")+
 }
 
 separator = _{

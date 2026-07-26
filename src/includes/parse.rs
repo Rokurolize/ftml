@@ -81,8 +81,13 @@ fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError
     trace!("Got page for include {page_ref:?}");
     let mut arguments = HashMap::new();
     let mut var_reference = String::new();
+    let mut spaced_empty_separator = false;
 
     for pair in pairs {
+        if pair.as_rule() == Rule::spaced_empty_separator {
+            spaced_empty_separator = true;
+            continue;
+        }
         debug_assert_eq!(pair.as_rule(), Rule::argument);
 
         let (key, value) = {
@@ -127,7 +132,8 @@ fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError
         }
     }
 
-    Ok(IncludeRef::new(page_ref, arguments))
+    Ok(IncludeRef::new(page_ref, arguments)
+        .with_spaced_empty_separator(spaced_empty_separator))
 }
 
 fn validate_include_page_ref(page_ref: PageRef) -> Result<PageRef, IncludeParseError> {
@@ -218,5 +224,29 @@ mod tests {
         assert_eq!(include.variables().get("x").map(Cow::as_ref), Some("66 "));
         assert!(!include.variables().contains_key("textclass"));
         assert!(!include.variables().contains_key("text"));
+    }
+
+    #[test]
+    fn parse_include_block_records_only_the_live_spaced_empty_separator_shape() {
+        for source in ["[[include page | ]]", "[[include PAGE |\t]]"] {
+            let (include, end) =
+                parse_include_block(source, 0).expect("include should parse");
+            assert_eq!(end, source.len(), "{source:?}");
+            assert!(include.has_spaced_empty_separator(), "{source:?}");
+            assert!(include.variables().is_empty(), "{source:?}");
+        }
+
+        for source in [
+            "[[include page]]",
+            "[[include page |]]",
+            "[[include page ||]]",
+            "[[include page || ]]",
+            "[[include page | a=1]]",
+            "[[include page a=1 | ]]",
+        ] {
+            let (include, _) = parse_include_block(source, 0)
+                .unwrap_or_else(|_| panic!("include should parse: {source:?}"));
+            assert!(!include.has_spaced_empty_separator(), "{source:?}");
+        }
     }
 }

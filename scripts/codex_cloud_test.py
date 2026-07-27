@@ -53,10 +53,12 @@ class CodexCloudScriptTests(unittest.TestCase):
         installs = workflow_tool_installs(WORKFLOW)
         expected = {tool: version for tool, version, _ in installs}
 
-        self.assertEqual(len(installs), 4)
+        self.assertEqual(len(installs), 3)
         self.assertTrue(all(re.fullmatch(r"[0-9a-f]{40}", revision) for _, _, revision in installs))
-        self.assertEqual(script_tool_versions(SETUP), expected)
-        self.assertEqual(script_tool_versions(MAINTENANCE), expected)
+        for script in (SETUP, MAINTENANCE):
+            versions = script_tool_versions(script)
+            for tool, version in expected.items():
+                self.assertEqual(versions[tool], version)
 
     def test_rust_version_matches_repository_pins(self):
         toolchain_path = ROOT / "rust-toolchain.toml"

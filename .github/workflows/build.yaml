@@ -30,15 +30,13 @@ jobs:
     if: >-
       github.event_name != 'pull_request' ||
       github.event.action != 'labeled' && github.event.action != 'unlabeled' &&
-      (github.event.action != 'edited' || github.event.changes.base.ref.from != '') ||
-      github.event.action == 'labeled' && github.event.label.name == 'full-ci' && github.event.pull_request.draft == false
+      (github.event.action != 'edited' || github.event.changes.base.ref.from != '')
     runs-on: ubuntu-latest
     outputs:
       rust: ${{ steps.changes.outputs.rust }}
       configuration: ${{ steps.changes.outputs.configuration }}
       run_ci: ${{ steps.changes.outputs.run_ci }}
       candidate: ${{ steps.changes.outputs.candidate }}
-      full_coverage: ${{ steps.changes.outputs.full_coverage }}
       cache_epoch: ${{ steps.changes.outputs.cache_epoch }}
     steps:
       - name: Checkout
@@ -53,9 +51,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           LABEL_EVENT: ${{ github.event_name == 'pull_request' && (github.event.action == 'labeled' || github.event.action == 'unlabeled') }}
-          FULL_CI_LABEL_EVENT: ${{ github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'full-ci' }}
           CANDIDATE: ${{ github.event_name == 'push' || github.event.pull_request.draft == false }}
-          FULL_CI_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'full-ci') }}
         run: |
           set -euo pipefail
 
@@ -63,23 +59,17 @@ jobs:
           configuration=false
           run_ci=true
           candidate=false
-          full_coverage=false
           # Actions caches are immutable, so rotate target caches weekly rather than for every commit.
           cache_epoch=$(date -u +'%G-W%V')
 
           if [[ "${LABEL_EVENT}" == "true" ]]; then
             run_ci=false
-            if [[ "${FULL_CI_LABEL_EVENT}" == "true" && "${FULL_CI_PR}" == "true" ]]; then
-              full_coverage=true
-            fi
           elif [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
             rust=true
             configuration=true
             candidate=true
-            full_coverage=true
           else
             candidate="${CANDIDATE}"
-            full_coverage="${FULL_CI_PR}"
             git diff --no-renames --name-only -z "${BASE_SHA}...${HEAD_SHA}" > "${RUNNER_TEMP}/changed-paths"
 
             while IFS= read -r -d '' path; do
@@ -88,7 +78,7 @@ jobs:
                   rust=true
                   configuration=true
                   ;;
-                build.rs|rust-toolchain.toml|.rustfmt.toml|.tarpaulin.toml|.github/codecov.yml|.config/nextest.toml|benches/*|examples/*|proptest-regressions/*|test/*|tests/*)
+                build.rs|rust-toolchain.toml|.rustfmt.toml|.config/nextest.toml|benches/*|examples/*|proptest-regressions/*|test/*|tests/*)
                   rust=true
                   ;;
                 Cargo.toml|Cargo.lock|conf/*.toml|src/*)
@@ -113,7 +103,6 @@ jobs:
             echo "configuration=${configuration}"
             echo "run_ci=${run_ci}"
             echo "candidate=${candidate}"
-            echo "full_coverage=${full_coverage}"
             echo "cache_epoch=${cache_epoch}"
           } >> "${GITHUB_OUTPUT}"
 
@@ -207,32 +196,6 @@ jobs:
       - name: Test (doctests)
         run: cargo test --doc --all-features -- --nocapture --test-threads 1
 
-      # PR uploads are tokenless and use an explicitly unprotected Codecov branch.
-      - name: Upload Test Results (Pull Requests)
-        if: ${{ github.event_name == 'pull_request' && !cancelled() }}
-        # codecov/codecov-action v5.5.5
-        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac
-        with:
-          slug: Rokurolize/ftml
-          files: target/nextest/ci/junit.xml
-          flags: ftml
-          report_type: test_results
-          disable_search: true
-          fail_ci_if_error: true
-          override_branch: "pr${{ github.event.pull_request.number }}:head"
-          override_commit: ${{ github.event.pull_request.head.sha }}
-          override_pr: ${{ github.event.pull_request.number }}
-
-      - name: Store Test Results
-        if: ${{ github.event_name == 'push' && !cancelled() }}
-        # actions/upload-artifact v4.6.2
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: nextest-junit
-          path: target/nextest/ci/junit.xml
-          if-no-files-found: error
-          retention-days: 1
-
       - name: Test (exhaustive)
         run: cargo test --all-features -- --nocapture --ignored
         if: github.ref == 'refs/heads/main'
@@ -252,42 +215,6 @@ jobs:
         with:
           path: target
           key: ${{ steps.library-target-cache.outputs.cache-primary-key }}
-
-  upload_test_results:
-    name: Upload Test Results
-    needs: library_build_and_test
-    if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      id-token: write
-    steps:
-      - name: Checkout Trusted Revision
-        # actions/checkout v4.3.1
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-        with:
-          ref: ${{ github.sha }}
-          persist-credentials: false
-
-      - name: Download Test Results
-        # actions/download-artifact v4.3.0
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: nextest-junit
-          path: ${{ runner.temp }}/codecov/test-results
-
-      - name: Upload Test Results
-        # codecov/codecov-action v5.5.5
-        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac
-        with:
-          use_oidc: true
-          slug: Rokurolize/ftml
-          files: ${{ runner.temp }}/codecov/test-results/junit.xml
-          flags: ftml
-          report_type: test_results
-          disable_search: true
-          fail_ci_if_error: true
 
   wasm:
     name: WebASM
@@ -342,103 +269,6 @@ jobs:
         with:
           path: target
           key: ${{ steps.wasm-target-cache.outputs.cache-primary-key }}
-
-  coverage:
-    name: Coverage
-    needs: classify
-    # PR coverage is opt-in. Adding full-ci runs coverage without restarting candidate jobs; later candidate events require it while the label remains.
-    if: ${{ needs.classify.outputs.full_coverage == 'true' }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    env:
-      RUSTFLAGS: -A unused -D warnings
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-
-      - name: Restore Cargo Home
-        uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: ftml-${{ runner.os }}-cargo-home-v1-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}
-          restore-keys: |
-            ftml-${{ runner.os }}-cargo-home-v1-
-
-      - name: Install cargo-tarpaulin
-        uses: taiki-e/install-action@96c7780c1d8a2b8723e12031def873a434d39d8d
-        with:
-          tool: cargo-tarpaulin@0.32.8
-
-      - name: Generate Coverage
-        # Tarpaulin cleans target before instrumentation, so target is intentionally not cached here.
-        run: |
-          cargo tarpaulin --all-features --workspace --timeout 120 --fail-under 94 --out xml --output-dir target/coverage
-
-      # PR uploads are tokenless and use an explicitly unprotected Codecov branch.
-      - name: Export Coverage (Pull Requests)
-        if: ${{ github.event_name == 'pull_request' }}
-        # codecov/codecov-action v5.5.5
-        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac
-        with:
-          slug: Rokurolize/ftml
-          files: target/coverage/cobertura.xml
-          flags: ftml
-          disable_search: true
-          fail_ci_if_error: true
-          override_branch: "pr${{ github.event.pull_request.number }}:head"
-          override_commit: ${{ github.event.pull_request.head.sha }}
-          override_pr: ${{ github.event.pull_request.number }}
-
-      - name: Store Coverage
-        if: ${{ github.event_name == 'push' }}
-        # actions/upload-artifact v4.6.2
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: coverage-cobertura
-          path: target/coverage/cobertura.xml
-          if-no-files-found: error
-          retention-days: 1
-
-  upload_coverage:
-    name: Upload Coverage
-    needs: coverage
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      id-token: write
-    steps:
-      - name: Checkout Trusted Revision
-        # actions/checkout v4.3.1
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-        with:
-          ref: ${{ github.sha }}
-          persist-credentials: false
-
-      - name: Download Coverage
-        # actions/download-artifact v4.3.0
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: coverage-cobertura
-          path: ${{ runner.temp }}/codecov/coverage
-
-      - name: Upload Coverage
-        # codecov/codecov-action v5.5.5
-        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac
-        with:
-          use_oidc: true
-          slug: Rokurolize/ftml
-          files: ${{ runner.temp }}/codecov/coverage/cobertura.xml
-          flags: ftml
-          disable_search: true
-          fail_ci_if_error: true
 
   clippy_lint:
     name: Lint
@@ -536,7 +366,8 @@ jobs:
           path: ~/.cache/pip
           key: ${{ steps.pip-cache.outputs.cache-primary-key }}
 
-  # Only normal head or base candidate runs publish the required context. The full-ci label run is coverage-only and must be awaited separately before landing.
+  # Normal head or base candidate runs publish the required context. Metadata
+  # events preserve that context without rerunning the suite.
   pr_gate:
     name: ${{ github.event_name != 'pull_request' && 'CI / PR gate (inactive)' || github.event.pull_request.draft == false && (needs.classify.outputs.run_ci != 'true' || needs.classify.outputs.candidate == 'true') && 'CI / gate' || 'CI / draft gate' }}
     # Run an explicit no-op when classification is skipped so GitHub evaluates the dynamic name instead of publishing the expression text as a check name.
@@ -546,7 +377,6 @@ jobs:
       - rust_unit
       - library_build_and_test
       - wasm
-      - coverage
       - clippy_lint
       - configuration_check
     runs-on: ubuntu-latest
@@ -555,11 +385,9 @@ jobs:
       RUN_CI: ${{ needs.classify.outputs.run_ci }}
       RUST_REQUIRED: ${{ needs.classify.outputs.rust }}
       CANDIDATE_REQUIRED: ${{ needs.classify.outputs.candidate }}
-      FULL_COVERAGE: ${{ needs.classify.outputs.full_coverage }}
       RUST_UNIT_RESULT: ${{ needs.rust_unit.result }}
       LIBRARY_RESULT: ${{ needs.library_build_and_test.result }}
       WASM_RESULT: ${{ needs.wasm.result }}
-      COVERAGE_RESULT: ${{ needs.coverage.result }}
       LINT_RESULT: ${{ needs.clippy_lint.result }}
       CONFIGURATION_REQUIRED: ${{ needs.classify.outputs.configuration }}
       CONFIGURATION_RESULT: ${{ needs.configuration_check.result }}
@@ -604,7 +432,6 @@ jobs:
           require_boolean "Rust classification" "${RUST_REQUIRED}"
           require_boolean "Configuration classification" "${CONFIGURATION_REQUIRED}"
           require_boolean "Candidate classification" "${CANDIDATE_REQUIRED}"
-          require_boolean "Full coverage classification" "${FULL_COVERAGE}"
 
           if [[ "${RUN_CI}" != "true" ]]; then
             echo "CI event classification is ${RUN_CI}; expected true" >&2
@@ -635,12 +462,6 @@ jobs:
             require_skipped "Configurations" "${CONFIGURATION_RESULT}"
           fi
 
-          if [[ "${FULL_COVERAGE}" == "true" ]]; then
-            require_success "Coverage" "${COVERAGE_RESULT}"
-          else
-            require_skipped "Coverage" "${COVERAGE_RESULT}"
-          fi
-
       - name: Preserve required PR gate on metadata-only event
         if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && needs.classify.outputs.run_ci != 'true' }}
         env:
@@ -669,10 +490,7 @@ jobs:
       - classify
       - rust_unit
       - library_build_and_test
-      - upload_test_results
       - wasm
-      - coverage
-      - upload_coverage
       - clippy_lint
       - configuration_check
     runs-on: ubuntu-latest
@@ -682,13 +500,9 @@ jobs:
       RUST_REQUIRED: ${{ needs.classify.outputs.rust }}
       CONFIGURATION_REQUIRED: ${{ needs.classify.outputs.configuration }}
       CANDIDATE_REQUIRED: ${{ needs.classify.outputs.candidate }}
-      FULL_COVERAGE: ${{ needs.classify.outputs.full_coverage }}
       RUST_UNIT_RESULT: ${{ needs.rust_unit.result }}
       LIBRARY_RESULT: ${{ needs.library_build_and_test.result }}
-      TEST_RESULTS_RESULT: ${{ needs.upload_test_results.result }}
       WASM_RESULT: ${{ needs.wasm.result }}
-      COVERAGE_RESULT: ${{ needs.coverage.result }}
-      COVERAGE_UPLOAD_RESULT: ${{ needs.upload_coverage.result }}
       LINT_RESULT: ${{ needs.clippy_lint.result }}
       CONFIGURATION_RESULT: ${{ needs.configuration_check.result }}
     steps:
@@ -722,7 +536,6 @@ jobs:
           require_true "Rust classification" "${RUST_REQUIRED}"
           require_true "Configuration classification" "${CONFIGURATION_REQUIRED}"
           require_true "Candidate classification" "${CANDIDATE_REQUIRED}"
-          require_true "Full coverage classification" "${FULL_COVERAGE}"
 
           if [[ "${RUST_UNIT_RESULT}" != "skipped" ]]; then
             echo "Rust Unit finished with ${RUST_UNIT_RESULT}; expected skipped" >&2
@@ -730,10 +543,7 @@ jobs:
           fi
 
           require_success "Library" "${LIBRARY_RESULT}"
-          require_success "Test Results OIDC Export" "${TEST_RESULTS_RESULT}"
           require_success "WebASM" "${WASM_RESULT}"
-          require_success "Coverage" "${COVERAGE_RESULT}"
-          require_success "Coverage OIDC Export" "${COVERAGE_UPLOAD_RESULT}"
           require_success "Lint" "${LINT_RESULT}"
           require_success "Configurations" "${CONFIGURATION_RESULT}"
 

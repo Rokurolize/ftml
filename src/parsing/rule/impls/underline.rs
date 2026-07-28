@@ -79,4 +79,16 @@ mod tests {
             assert_eq!(html, expected, "{input:?}");
         }
     }
+
+    #[test]
+    fn wikidot_discards_long_underline_run_before_text() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut source = "__".repeat(4096);
+        source.push('x');
+        let tokenization = crate::tokenize(&source);
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert_eq!(html, "<p>x</p>");
+    }
 }

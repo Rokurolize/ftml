@@ -254,27 +254,18 @@ fn try_consume_text_token<'r, 't>(
         parser.step()?;
         return Ok(Some(Elements::None));
     }
-    if parser.settings().layout.legacy() && parser.current().token == Token::Underline {
-        let mut count = 1;
-        while parser
-            .look_ahead(count - 1)
+    // Wikidot discards adjacent underline delimiters as empty containers. Do
+    // that one pair at a time so a long run never needs a forward scan at
+    // every delimiter.
+    if parser.settings().layout.legacy()
+        && parser.current().token == Token::Underline
+        && parser
+            .look_ahead(0)
             .is_some_and(|token| token.token == Token::Underline)
-        {
-            count += 1;
-        }
-        let boundary = parser.look_ahead(count - 1).map(|token| token.token);
-        let paired = count / 2 * 2;
-        if paired > 0
-            && matches!(
-                boundary,
-                Some(Token::Whitespace | Token::LeftBlockEnd | Token::InputEnd)
-            )
-        {
-            for _ in 0..paired {
-                parser.step()?;
-            }
-            return Ok(Some(Elements::None));
-        }
+    {
+        parser.step()?;
+        parser.step()?;
+        return Ok(Some(Elements::None));
     }
     if !can_consume_as_text_token(parser) {
         return Ok(None);

@@ -161,10 +161,16 @@ pub struct Parser<'r, 't> {
     // retains first-iteration semantics because multiline blocks may consume
     // an initial line break differently from later scan positions.
     block_end_scan_cache: Rc<RefCell<BTreeMap<BlockEndScanKey, bool>>>,
+    // Two-close lookahead is used while recovering nested hidden iftags. It
+    // needs a separate cache because a successful one-close scan does not say
+    // whether a second close exists in the same suffix.
+    two_block_end_scan_cache: Rc<RefCell<BTreeMap<BlockEndScanKey, u8>>>,
     #[cfg(test)]
     quote_scan_token_visits: Rc<Cell<usize>>,
     #[cfg(test)]
     underline_fast_path_visits: Rc<Cell<usize>>,
+    #[cfg(test)]
+    block_end_scan_token_visits: Rc<Cell<usize>>,
 
     // Flags
     accepts_partial: AcceptsPartial,
@@ -225,10 +231,13 @@ impl<'r, 't> Parser<'r, 't> {
             bibliographies: Rc::new(RefCell::new(BibliographyList::new())),
             quote_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
             block_end_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
+            two_block_end_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
             #[cfg(test)]
             quote_scan_token_visits: Rc::new(Cell::new(0)),
             #[cfg(test)]
             underline_fast_path_visits: Rc::new(Cell::new(0)),
+            #[cfg(test)]
+            block_end_scan_token_visits: Rc::new(Cell::new(0)),
             accepts_partial: AcceptsPartial::None,
             in_footnote: false,
             has_footnote_block: false,
@@ -531,6 +540,36 @@ impl<'r, 't> Parser<'r, 't> {
         for &(token_start, first_iteration) in token_states {
             cache.insert((rule, token_start, first_iteration), outcome);
         }
+    }
+
+    pub(crate) fn two_block_end_scan_outcome(&self, key: BlockEndScanKey) -> Option<u8> {
+        self.two_block_end_scan_cache.borrow().get(&key).copied()
+    }
+
+    pub(crate) fn cache_two_block_end_scan_outcomes(
+        &self,
+        rule: &'static str,
+        token_states: &[(usize, bool, u8)],
+        total_matches: u8,
+    ) {
+        let mut cache = self.two_block_end_scan_cache.borrow_mut();
+        for &(token_start, first_iteration, preceding_matches) in token_states {
+            cache.insert(
+                (rule, token_start, first_iteration),
+                total_matches.saturating_sub(preceding_matches).min(2),
+            );
+        }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn block_end_scan_token_visits(&self) -> usize {
+        self.block_end_scan_token_visits.get()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn increment_block_end_scan_token_visits(&self) {
+        self.block_end_scan_token_visits
+            .set(self.block_end_scan_token_visits.get() + 1);
     }
 
     #[cfg(test)]

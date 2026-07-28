@@ -909,18 +909,50 @@ where
     pub(crate) fn has_two_body_end_blocks(&self, block_rule: &BlockRule) -> bool {
         let mut parser = self.clone();
         let mut first = true;
-        let mut matches = 0;
+        let mut matches = 0_u8;
+        let mut traversed_token_states = Vec::new();
 
         loop {
+            let token_start = parser.current().span.start;
+            let key = (block_rule.name, token_start, first);
+            // Unlike the single-close scan, this result only counts raw close
+            // markers in the suffix. Consuming an optional leading line break
+            // changes where a close is recognized, but not how many exist.
+            let cached = self.two_block_end_scan_outcome(key).or_else(|| {
+                self.two_block_end_scan_outcome((block_rule.name, token_start, !first))
+            });
+            if let Some(suffix_matches) = cached {
+                let total_matches = (matches + suffix_matches).min(2);
+                self.cache_two_block_end_scan_outcomes(
+                    block_rule.name,
+                    &traversed_token_states,
+                    total_matches,
+                );
+                return total_matches == 2;
+            }
+            traversed_token_states.push((token_start, first, matches));
+            #[cfg(test)]
+            self.increment_block_end_scan_token_visits();
+
             if parser
                 .verify_end_block(first, block_rule, false, false)
                 .is_some()
             {
                 matches += 1;
                 if matches == 2 {
+                    self.cache_two_block_end_scan_outcomes(
+                        block_rule.name,
+                        &traversed_token_states,
+                        matches,
+                    );
                     return true;
                 }
             } else if parser.current().token == Token::InputEnd {
+                self.cache_two_block_end_scan_outcomes(
+                    block_rule.name,
+                    &traversed_token_states,
+                    matches,
+                );
                 return false;
             } else {
                 parser.step().expect("missing input end");
@@ -1349,7 +1381,9 @@ mod tests {
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::parsing::ParseErrorKind;
-    use crate::parsing::rule::impls::block::blocks::{BLOCK_COLLAPSIBLE, BLOCK_DIV};
+    use crate::parsing::rule::impls::block::blocks::{
+        BLOCK_COLLAPSIBLE, BLOCK_DIV, BLOCK_IFTAGS,
+    };
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
@@ -1440,6 +1474,27 @@ mod tests {
             )),
             Some(false),
         );
+    }
+
+    #[test]
+    fn two_block_end_scan_reuses_cached_suffix_outcomes() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let input = format!("{}[[/iftags]]", "body ".repeat(256));
+        let tokenization = crate::tokenize(&input);
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("body should follow input start");
+
+        assert!(!parser.has_two_body_end_blocks(&BLOCK_IFTAGS));
+        let first_scan_visits = parser.block_end_scan_token_visits();
+        assert!(first_scan_visits > 0);
+        assert!(first_scan_visits <= tokenization.tokens().len());
+
+        while parser.current().token != Token::InputEnd {
+            assert!(!parser.has_two_body_end_blocks(&BLOCK_IFTAGS));
+            parser.step().expect("input end must remain available");
+        }
+        assert!(parser.block_end_scan_token_visits() <= tokenization.tokens().len() * 2);
     }
 
     #[test]

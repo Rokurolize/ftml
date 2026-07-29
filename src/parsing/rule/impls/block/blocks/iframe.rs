@@ -43,7 +43,7 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "iframe doesn't allow score flag");
     assert_block_name(&BLOCK_IFRAME, name);
 
-    let (url, arguments) = parser.get_head_name_map(&BLOCK_IFRAME, in_head)?;
+    let (url, arguments) = parser.get_head_name_map_wikidot(&BLOCK_IFRAME, in_head)?;
     if !is_url(url) {
         warn!("Iframe block references non-URL ({} bytes)", url.len());
         return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));

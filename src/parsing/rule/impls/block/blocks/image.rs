@@ -44,7 +44,8 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "Image doesn't allow score flag");
     assert_block_name(&BLOCK_IMAGE, name);
 
-    let (source, mut arguments) = parser.get_head_name_map(&BLOCK_IMAGE, in_head)?;
+    let (source, mut arguments) =
+        parser.get_head_name_map_wikidot(&BLOCK_IMAGE, in_head)?;
     let link = arguments.get_with_bare("link").and_then(|(value, bare)| {
         if bare && value == "#" {
             None

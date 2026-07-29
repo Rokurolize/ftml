@@ -63,23 +63,6 @@ impl<'t> AttributeMap<'t> {
         attributes
     }
 
-    pub(crate) fn from_wikidot_anchor_arguments(
-        arguments: &HashMap<UniCase<&'t str>, Cow<'t, str>>,
-    ) -> Self {
-        let mut attributes = Self::from_arguments(arguments);
-        attributes.inner.remove("title");
-        let href = arguments.get(&UniCase::ascii("href")).filter(|value| {
-            matches!(
-                crate::url::classify_href(value),
-                crate::url::HrefKind::Relative
-            ) && !value.contains(':')
-        });
-        if let Some(href) = href {
-            attributes.inner.insert(cow!("href"), Cow::clone(href));
-        }
-        attributes
-    }
-
     pub fn insert(&mut self, attribute: &str, value: Cow<'t, str>) -> bool {
         if !is_safe_attribute(UniCase::ascii(attribute)) {
             return false;
@@ -93,6 +76,10 @@ impl<'t> AttributeMap<'t> {
         let key = attribute.to_ascii_lowercase();
         self.inner.insert(Cow::Owned(key), value);
         true
+    }
+
+    pub(crate) fn insert_wikidot_relative_href(&mut self, value: Cow<'t, str>) {
+        self.inner.insert(cow!("href"), value);
     }
 
     #[inline]

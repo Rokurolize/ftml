@@ -236,10 +236,11 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
     join_continued_lines(text, &mut buffer, wikidot_compatibility);
 
     // Replace tabs in one linear pass instead of repeatedly shifting the
-    // remaining string for every match.
-    if text.contains('\t') {
-        *text = text.replace('\t', if wikidot_compatibility { " " } else { "    " });
-    }
+    // remaining string for every match. Wikidot normally collapses a tab to
+    // one parser-space, but preserves its four-column width inside a legacy
+    // `getAttrs` quoted value. That distinction remains observable in custom
+    // collapsible labels, where ordinary spaces become non-breaking spaces.
+    replace_tabs(text, &mut buffer, wikidot_compatibility);
 
     if !wikidot_compatibility && text.contains('\0') {
         *text = text.replace('\0', " ");
@@ -247,6 +248,83 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
 
     // Remove trailing newlines
     replace!(TRAILING_NEWLINES);
+}
+
+fn append_replaced_tabs(output: &mut String, input: &str, width: usize) {
+    for ch in input.chars() {
+        if ch == '\t' {
+            output.extend(std::iter::repeat_n(' ', width));
+        } else {
+            output.push(ch);
+        }
+    }
+}
+
+fn append_wikidot_block_head_tabs(output: &mut String, head: &str) {
+    let delimiters = head
+        .match_indices("=\"")
+        .map(|(index, _)| index)
+        .collect::<Vec<_>>();
+    let mut value_ranges = Vec::with_capacity(delimiters.len());
+
+    for (index, delimiter) in delimiters.iter().copied().enumerate() {
+        let value_start = delimiter + 2;
+        let segment_end = delimiters.get(index + 1).copied().unwrap_or(head.len());
+        let segment = &head[value_start..segment_end];
+        if let Some(value_end) = segment.rfind('"') {
+            value_ranges.push(value_start..value_start + value_end);
+        }
+    }
+
+    let mut range_index = 0;
+    for (index, ch) in head.char_indices() {
+        while value_ranges
+            .get(range_index)
+            .is_some_and(|range| range.end <= index)
+        {
+            range_index += 1;
+        }
+        let in_value = value_ranges
+            .get(range_index)
+            .is_some_and(|range| range.contains(&index));
+
+        if ch == '\t' {
+            output.extend(std::iter::repeat_n(' ', if in_value { 4 } else { 1 }));
+        } else {
+            output.push(ch);
+        }
+    }
+}
+
+fn replace_tabs(text: &mut String, buffer: &mut String, wikidot_compatibility: bool) {
+    if !text.contains('\t') {
+        return;
+    }
+
+    buffer.clear();
+    buffer.reserve(text.len());
+    if !wikidot_compatibility {
+        append_replaced_tabs(buffer, text, 4);
+        std::mem::swap(text, buffer);
+        return;
+    }
+
+    let mut cursor = 0;
+    while let Some(open_offset) = text[cursor..].find("[[") {
+        let open = cursor + open_offset;
+        append_replaced_tabs(buffer, &text[cursor..open], 1);
+
+        let end = text[open + 2..]
+            .find("]]")
+            .map_or(text.len(), |close_offset| open + 2 + close_offset + 2);
+        append_wikidot_block_head_tabs(buffer, &text[open..end]);
+        cursor = end;
+        if cursor == text.len() {
+            break;
+        }
+    }
+    append_replaced_tabs(buffer, &text[cursor..], 1);
+    std::mem::swap(text, buffer);
 }
 
 fn preserve_document_leading_indentation_barrier(text: &mut String) {
@@ -414,6 +492,27 @@ fn wikijump_substitution_keeps_native_tabs_and_null_handling() {
     let mut text = "a\tb\0c".to_owned();
     substitute(&mut text);
     assert_eq!(text, "a    b c");
+}
+
+#[test]
+fn wikidot_substitution_preserves_tab_width_inside_getattrs_values() {
+    let mut text = concat!(
+        "plain\ttext\n",
+        "[[collapsible show=\"OPEN\tSECOND\" ",
+        "bogus=bare id=\"alpha\tbeta\"]]",
+    )
+    .to_owned();
+
+    substitute_wikidot(&mut text);
+
+    assert_eq!(
+        text,
+        concat!(
+            "plain text\n",
+            "[[collapsible show=\"OPEN    SECOND\" ",
+            "bogus=bare id=\"alpha    beta\"]]",
+        ),
+    );
 }
 
 #[test]

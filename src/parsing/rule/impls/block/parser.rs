@@ -79,6 +79,58 @@ fn wikidot_requires_next_physical_line(block_rule: &BlockRule) -> bool {
     )
 }
 
+fn wikidot_trim_argument_fragment(value: &str) -> &str {
+    value.trim_matches([' ', '\t', '\n', '\r', '\0', '\u{000B}'])
+}
+
+fn wikidot_stripslashes(value: &str) -> Cow<'_, str> {
+    if !value.contains('\\') {
+        return Cow::Borrowed(value);
+    }
+
+    let mut output = String::with_capacity(value.len());
+    let mut chars = value.chars();
+    while let Some(ch) = chars.next() {
+        if ch != '\\' {
+            output.push(ch);
+            continue;
+        }
+
+        match chars.next() {
+            Some('0') => output.push('\0'),
+            Some(escaped) => output.push(escaped),
+            None => {}
+        }
+    }
+
+    Cow::Owned(output)
+}
+
+fn parse_wikidot_attributes(value: &str) -> Arguments<'_> {
+    // Wikidot's getAttrs grammar splits only on the exact ASCII delimiter
+    // `="`, then treats the last quote before the next delimiter as the
+    // current value terminator. This intentionally preserves its unusual
+    // malformed-fragment recovery and differs from FTML's strict grammar.
+    let value = wikidot_trim_argument_fragment(value);
+    let mut segments = value.split("=\"");
+    let mut key = wikidot_trim_argument_fragment(segments.next().unwrap_or_default());
+    let mut arguments = Arguments::new_case_sensitive();
+    if !value.is_empty() {
+        arguments.mark_source_present();
+    }
+
+    for segment in segments {
+        let (raw_value, next_key) = match segment.rfind('"') {
+            Some(position) => (&segment[..position], &segment[position + 1..]),
+            None => ("", segment.get(1..).unwrap_or_default()),
+        };
+        arguments.insert(key, wikidot_stripslashes(raw_value));
+        key = wikidot_trim_argument_fragment(next_key);
+    }
+
+    arguments
+}
+
 impl<'r, 't> Parser<'r, 't>
 where
     'r: 't,
@@ -1073,6 +1125,41 @@ where
         Ok((map, body_start))
     }
 
+    /// Parses a key-value block head using Wikidot's legacy `getAttrs`
+    /// grammar in `Layout::Wikidot`, while retaining FTML's strict grammar in
+    /// other layouts.
+    pub fn get_head_map_wikidot(
+        &mut self,
+        block_rule: &BlockRule,
+        in_head: bool,
+    ) -> Result<Arguments<'t>, ParseError> {
+        self.get_head_map_with_body_start_wikidot(block_rule, in_head)
+            .map(|(arguments, _)| arguments)
+    }
+
+    pub(crate) fn get_head_map_with_body_start_wikidot(
+        &mut self,
+        block_rule: &BlockRule,
+        in_head: bool,
+    ) -> Result<(Arguments<'t>, BlockBodyStart), ParseError> {
+        if !self.settings().layout.legacy() {
+            return self.get_head_map_with_body_start(block_rule, in_head);
+        }
+
+        let arguments = if in_head {
+            let start = self.current();
+            while !matches!(self.current().token, Token::RightBlock | Token::InputEnd) {
+                self.step()?;
+            }
+            let head_text = self.full_text().slice_partial(start, self.current());
+            parse_wikidot_attributes(head_text)
+        } else {
+            Arguments::new_case_sensitive()
+        };
+        let body_start = self.get_head_block_with_body_start(block_rule, in_head)?;
+        Ok((arguments, body_start))
+    }
+
     pub fn get_head_name_map(
         &mut self,
         block_rule: &BlockRule,
@@ -1088,6 +1175,27 @@ where
 
         // Get arguments and end of block
         let arguments = self.get_head_map(block_rule, in_head)?;
+
+        Ok((subname, arguments))
+    }
+
+    /// Parses a positional block-head value followed by Wikidot `getAttrs`
+    /// arguments in `Layout::Wikidot`.
+    pub fn get_head_name_map_wikidot(
+        &mut self,
+        block_rule: &BlockRule,
+        in_head: bool,
+    ) -> Result<(&'t str, Arguments<'t>), ParseError> {
+        if !self.settings().layout.legacy() {
+            return self.get_head_name_map(block_rule, in_head);
+        }
+        if !in_head {
+            return Err(self.make_err(ParseErrorKind::BlockMissingName));
+        }
+
+        let missing_name = ParseErrorKind::ModuleMissingName;
+        let (subname, in_head) = self.get_block_name_internal(missing_name)?;
+        let arguments = self.get_head_map_wikidot(block_rule, in_head)?;
 
         Ok((subname, arguments))
     }
@@ -1159,25 +1267,6 @@ where
         self.get_head_block_with_body_start(block_rule, in_head)
     }
 
-    pub(crate) fn discard_head_with_body_start(
-        &mut self,
-        block_rule: &BlockRule,
-        in_head: bool,
-    ) -> Result<BlockBodyStart, ParseError> {
-        if in_head {
-            while !matches!(
-                self.current().token,
-                Token::RightBlock
-                    | Token::LineBreak
-                    | Token::ParagraphBreak
-                    | Token::InputEnd
-            ) {
-                self.step()?;
-            }
-        }
-        self.get_head_block_with_body_start(block_rule, in_head)
-    }
-
     // Helper function to finish up the head block
     fn get_head_block_with_body_start(
         &mut self,
@@ -1223,9 +1312,9 @@ mod tests {
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
-    fn block_head_rejects_invalid_argument_key_token() {
+    fn wikijump_block_head_rejects_invalid_argument_key_token() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         for input in [
             "[[collapsible @=\"value\"]]body[[/collapsible]]",
             "[[collapsible =\"value\"]]body[[/collapsible]]",

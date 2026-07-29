@@ -174,11 +174,17 @@ fn render_wikidot_collapsible_link(ctx: &mut HtmlContext, label: &str) {
             "href" => "javascript:;",
         ))
         .inner(|ctx| {
-            for (index, part) in label.split(' ').enumerate() {
-                if index > 0 {
-                    ctx.push_raw_str("&nbsp;");
+            for ch in label.chars() {
+                match ch {
+                    ' ' | '\u{00A0}' => ctx.push_raw_str("&nbsp;"),
+                    '\t' => ctx.push_raw_str("&nbsp;&nbsp;&nbsp;&nbsp;"),
+                    '\n' | '\r' => ctx.push_raw_str(" "),
+                    '\0'..='\u{001F}' | '\u{007F}' => {}
+                    _ => {
+                        let mut buffer = [0; 4];
+                        ctx.push_escaped(ch.encode_utf8(&mut buffer));
+                    }
                 }
-                ctx.push_escaped(part);
             }
         });
 }

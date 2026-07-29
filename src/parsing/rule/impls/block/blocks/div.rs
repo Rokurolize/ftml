@@ -92,21 +92,7 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Div doesn't allow star flag");
     assert_block_name(&BLOCK_DIV, name);
 
-    let head_start = parser.clone();
-    let head = match parser.get_head_map_with_body_start(&BLOCK_DIV, in_head) {
-        Ok(head) => head,
-        Err(error)
-            if parser.settings().layout.legacy()
-                && error.kind() == ParseErrorKind::BlockMalformedArguments =>
-        {
-            // Wikidot keeps the exact div/div_ block and discards its malformed
-            // head instead of making the whole block literal.
-            parser.update(&head_start);
-            let body_start = parser.discard_head_with_body_start(&BLOCK_DIV, in_head)?;
-            (Arguments::new(), body_start)
-        }
-        Err(error) => return Err(error),
-    };
+    let head = parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;
     let (arguments, mut body_start) = head;
     let head_started_physical_line =
         wikidot_div_head_started_physical_line(parser, body_start);

@@ -105,8 +105,8 @@ where
 
     // Get attributes
     let (arguments, body_start) =
-        parser.get_head_map_with_body_start(block_rule, in_head)?;
-    let has_arguments = !arguments.is_empty();
+        parser.get_head_map_with_body_start_wikidot(block_rule, in_head)?;
+    let has_arguments = arguments.has_source();
     let attributes = if parser.settings().layout.legacy() {
         arguments.to_attribute_map_without_bare(parser.settings())
     } else {

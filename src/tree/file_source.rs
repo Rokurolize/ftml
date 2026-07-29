@@ -79,6 +79,19 @@ impl<'t> FileSource<'t> {
     }
 
     pub fn parse_wikidot(source: &'t str) -> Option<FileSource<'t>> {
+        let quoted_inner = source
+            .as_bytes()
+            .first()
+            .copied()
+            .filter(|quote| matches!(quote, b'\'' | b'"'))
+            .filter(|quote| source.as_bytes().last() == Some(quote))
+            .and_then(|_| source.get(1..source.len().saturating_sub(1)));
+        if quoted_inner.is_some_and(is_url) {
+            return Some(FileSource::Url(cow!(source)));
+        }
+        if quoted_inner.is_some() {
+            return Some(FileSource::File1 { file: cow!(source) });
+        }
         if is_url(source) || source.starts_with("/local--files/") {
             return Some(FileSource::Url(cow!(source)));
         }
@@ -187,5 +200,34 @@ mod tests {
                 file: cow!("/image.png"),
             }),
         );
+    }
+
+    #[test]
+    fn wikidot_preserves_quotes_around_absolute_image_urls() {
+        for source in [
+            r#""https://example.com/image.png""#,
+            "'https://example.com/image.png'",
+        ] {
+            assert_eq!(
+                FileSource::parse_wikidot(source),
+                Some(FileSource::Url(cow!(source))),
+                "{source}",
+            );
+        }
+
+        for source in [
+            r#""image.png""#,
+            "'image.png'",
+            r#""/local--files/page/image.png""#,
+            "'/local--files/page/image.png'",
+            r#""page/image.png""#,
+            "'page/image.png'",
+        ] {
+            assert_eq!(
+                FileSource::parse_wikidot(source),
+                Some(FileSource::File1 { file: cow!(source) }),
+                "{source}",
+            );
+        }
     }
 }

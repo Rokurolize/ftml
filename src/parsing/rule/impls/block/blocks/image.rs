@@ -147,6 +147,58 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_quoted_absolute_image_sources_keep_their_quotes() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        for (source, expected) in [
+            (
+                r#"[[image "https://example.com/a.png"]]"#,
+                r#"<img src="&quot;https://example.com/a.png&quot;" class="image" alt="a.png&quot;">"#,
+            ),
+            (
+                "[[image 'https://example.com/a.png']]",
+                r#"<img src="&#39;https://example.com/a.png&#39;" class="image" alt="a.png&#39;">"#,
+            ),
+        ] {
+            let tokenization = crate::tokenize(source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = crate::render::html::HtmlRender
+                .render(&tree, &page_info, &settings)
+                .body;
+
+            assert!(errors.is_empty(), "{source}: {errors:#?}");
+            assert_eq!(html, expected, "{source}");
+        }
+    }
+
+    #[test]
+    fn wikidot_quoted_local_paths_remain_single_local_filenames() {
+        let mut page_info = PageInfo::dummy();
+        page_info.site = cow!("sandbox-for-codex");
+        page_info.page = cow!("");
+        page_info.category = None;
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = r#"[[image "/local--files/source-page/image.png"]]"#;
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &page_info, &settings)
+            .body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            concat!(
+                "<a href=\"https://sandbox-for-codex.wjfiles.com/local--files//&quot;/local--files/source-page/image.png&quot;\">",
+                "<img src=\"https://sandbox-for-codex.wjfiles.com/local--resized-images//&quot;/local--files/source-page/image.png&quot;/medium.jpg\" ",
+                "alt=\"image.png&quot;\" class=\"image\">",
+                "</a>",
+            ),
+        );
+    }
+
+    #[test]
     fn image_block_preserves_canonical_wikidot_local_files_path() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);

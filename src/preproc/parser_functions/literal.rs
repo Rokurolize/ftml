@@ -29,7 +29,7 @@ impl LiteralRegionIndex {
     pub(in crate::preproc) fn new(source: &str) -> Self {
         let mut ranges = Vec::new();
         collect_wikidot_literal_blocks(source, &mut ranges);
-        collect_paired_ranges(source, "@@", "@@", &mut ranges);
+        collect_same_line_paired_ranges(source, "@@", "@@", &mut ranges);
         collect_html_literal_ranges(source, &mut ranges);
         ranges.sort_unstable_by_key(|range| (range.start, range.end));
 
@@ -138,26 +138,26 @@ fn literal_block(lower: &str) -> Option<(&'static str, usize)> {
     Some((close, opener_end))
 }
 
-fn collect_paired_ranges(
+fn collect_same_line_paired_ranges(
     source: &str,
     opening: &str,
     closing: &str,
     ranges: &mut Vec<Range<usize>>,
 ) {
-    let mut cursor = 0usize;
-    while let Some(relative_start) = source[cursor..].find(opening) {
-        let start = cursor + relative_start;
-        let body_start = start + opening.len();
-        let end = source[body_start..]
-            .find(closing)
-            .map_or(source.len(), |relative_end| {
-                body_start + relative_end + closing.len()
-            });
-        ranges.push(start..end);
-        if end == source.len() {
-            break;
+    let mut line_offset = 0usize;
+    for line in source.split_inclusive('\n') {
+        let mut cursor = 0usize;
+        while let Some(relative_start) = line[cursor..].find(opening) {
+            let start = cursor + relative_start;
+            let body_start = start + opening.len();
+            let Some(relative_end) = line[body_start..].find(closing) else {
+                break;
+            };
+            let end = body_start + relative_end + closing.len();
+            ranges.push(line_offset + start..line_offset + end);
+            cursor = end;
         }
-        cursor = end;
+        line_offset += line.len();
     }
 }
 
@@ -287,6 +287,20 @@ mod tests {
 
         assert!(index.contains(source.find("inside").unwrap()));
         assert!(!index.contains(source.find("outside").unwrap()));
+    }
+
+    #[test]
+    fn inline_escape_regions_require_a_same_line_closer() {
+        let source = concat!(
+            "closed @@inside@@ outside\n",
+            "unclosed @@not-inside...\n",
+            "later @@ still-outside...\n",
+        );
+        let index = LiteralRegionIndex::new(source);
+
+        assert!(index.contains(source.find("inside").unwrap()));
+        assert!(!index.contains(source.find("not-inside").unwrap()));
+        assert!(!index.contains(source.find("still-outside").unwrap()));
     }
 
     #[test]

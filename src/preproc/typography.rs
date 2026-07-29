@@ -378,3 +378,21 @@ fn wikidot_preprocessing_keeps_literal_dot_runs_outside_authored_prose() {
     assert!(text.contains("CODE:x....x"), "{text}");
     assert!(text.contains("ESCAPED:x....x"), "{text}");
 }
+
+#[test]
+fn wikidot_inline_escape_markers_do_not_pair_across_lines() {
+    let mut text = concat!(
+        "UNCLOSED:@@OPEN...\n",
+        "CROSS:@@OPEN\n",
+        "CLOSE:END...@@ AFTER...\n",
+        "CLOSED:@@KEEP...@@ CHANGE...",
+    )
+    .to_owned();
+
+    crate::preprocess_for_layout(&mut text, crate::layout::Layout::Wikidot);
+
+    assert!(text.contains("UNCLOSED:@@OPEN…"), "{text}");
+    assert!(text.contains("CROSS:@@OPEN"), "{text}");
+    assert!(text.contains("CLOSE:END…@@ AFTER…"), "{text}");
+    assert!(text.contains("CLOSED:@@KEEP...@@ CHANGE…"), "{text}");
+}

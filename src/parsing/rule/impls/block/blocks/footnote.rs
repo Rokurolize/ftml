@@ -132,7 +132,7 @@ fn parse_footnote_block<'r, 't>(
     }
 
     // Parse arguments
-    let mut arguments = parser.get_head_map(&BLOCK_FOOTNOTE_BLOCK, in_head)?;
+    let mut arguments = parser.get_head_map_wikidot(&BLOCK_FOOTNOTE_BLOCK, in_head)?;
 
     let title = arguments.get("title");
     let hide = arguments.get_bool(parser, "hide")?.unwrap_or(false);

@@ -42,7 +42,7 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Span doesn't allow star flag");
     assert_block_name(&BLOCK_SPAN, name);
 
-    let arguments = parser.get_head_map(&BLOCK_SPAN, in_head)?;
+    let arguments = parser.get_head_map_wikidot(&BLOCK_SPAN, in_head)?;
     let has_close = parser.has_body_end_block(&BLOCK_SPAN);
 
     if parser.settings().layout.legacy() {

@@ -189,15 +189,16 @@ mod tests {
     }
 
     #[test]
-    fn empty_bare_argument_remains_malformed() {
+    fn wikidot_empty_bare_argument_is_ignored_without_losing_the_block() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         let tokenization = crate::tokenize("[[collapsible show= ]]body[[/collapsible]]");
-        let (_, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
-        assert!(errors.iter().any(|error| {
-            error.kind() == crate::parsing::ParseErrorKind::BlockMalformedArguments
-        }));
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains("+&nbsp;show&nbsp;block"), "{html}");
+        assert!(html.contains("body"), "{html}");
     }
 
     #[test]

@@ -40,5 +40,8 @@ mod strikethrough_inline_regression;
 #[path = "wikidot_span_scope.rs"]
 mod wikidot_span_scope;
 
+#[path = "wikidot_block_argument_grammar.rs"]
+mod wikidot_block_argument_grammar;
+
 #[path = "yossistyle_wikidot_syntax.rs"]
 mod yossistyle_wikidot_syntax;

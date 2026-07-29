@@ -1,0 +1,44 @@
+{
+  "schema": "ftml.wikidot_block_argument_live_observation.v1",
+  "captured_at_utc": "2026-07-29T19:33:29.372837Z",
+  "site": "sandbox-for-codex",
+  "transport": "anonymous edit/PagePreviewModule",
+  "mutated_server_state": false,
+  "provenance": {
+    "wikidot_py_commit": "2434bf77744488cb2095327c9e0e4450add78df3",
+    "wikidot_py_version": "4.4.1",
+    "requirements_sha256": "45717e5351f7eb1c46431dd44bf15db9777dbbc4fa40026931bd2e6458b2fcc9"
+  },
+  "reference_batches": [
+    {
+      "cases": 32,
+      "sha256": "9cc07f051e4c151974a4aede836e05ca0ee225d8b2bedb5e5c7b9de30a57168a"
+    },
+    {
+      "cases": 29,
+      "sha256": "37e4fe25f2c3799c0d9cd613c9360d9d2ce9069173569603cb50c197d98be1ce"
+    },
+    {
+      "cases": 10,
+      "sha256": "cf9b61e7b6da21952416519c222ed955d4966335d7d5093e95571ed9ec074bb4"
+    },
+    {
+      "cases": 20,
+      "sha256": "af48e24a0cbb91122b83c234124c6b68f934524ac4921f3ed555f5bcf7e08bc0"
+    },
+    {
+      "cases": 6,
+      "sha256": "8de7bb9ea6f48bb342355db3dcd8d992a1f851090e408b5c67c790b092573be9"
+    }
+  ],
+  "total_cases": 97,
+  "observed_properties": [
+    "Wikidot block attribute names are case-sensitive.",
+    "Only exact double-quoted key-value forms are recognized as attributes.",
+    "Malformed fragments are skipped while later valid attributes are recovered.",
+    "Whitespace before and after the equals sign follows Wikidot getAttrs boundaries.",
+    "Quoted values may cross physical lines and normalize ASCII whitespace.",
+    "Backslash handling follows PHP stripslashes semantics.",
+    "The strict Wikijump layout grammar remains unchanged."
+  ]
+}

@@ -58,7 +58,7 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    let mut arguments = parser.get_head_map(&BLOCK_CODE, in_head)?;
+    let mut arguments = parser.get_head_map_wikidot(&BLOCK_CODE, in_head)?;
 
     let mut language = arguments.get("type");
     if let Some(ref mut language) = language {

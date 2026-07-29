@@ -53,6 +53,16 @@ fn try_consume_fn<'r, 't>(
                 return ok!(Elements::None);
             }
 
+            // Wikidot accepts any run of at least two hyphens immediately
+            // followed by `]` as a comment closer while it is scanning a
+            // comment. Keep this contextual: outside a comment, longer runs
+            // retain their ordinary dash and horizontal-rule tokenization.
+            _ if let Some(token_count) = wikidot_extended_closer_token_count(parser) => {
+                trace!("Reached extended Wikidot comment closer, returning");
+                parser.step_n(token_count)?;
+                return ok!(Elements::None);
+            }
+
             // Hit the end of the input, abort
             Token::InputEnd => {
                 trace!("Reached end of input, aborting");
@@ -66,6 +76,27 @@ fn try_consume_fn<'r, 't>(
             }
         }
     }
+}
+
+fn wikidot_extended_closer_token_count(parser: &Parser<'_, '_>) -> Option<usize> {
+    let mut hyphens = 0;
+
+    for (index, token) in std::iter::once(parser.current())
+        .chain(parser.remaining())
+        .enumerate()
+    {
+        if !token.slice.is_empty() && token.slice.bytes().all(|byte| byte == b'-') {
+            hyphens += token.slice.len();
+            continue;
+        }
+
+        return (hyphens >= 2
+            && token.token == Token::RightBracket
+            && token.slice == "]")
+            .then_some(index + 1);
+    }
+
+    None
 }
 
 #[cfg(test)]
@@ -115,5 +146,43 @@ mod tests {
 
         assert!(!errors.is_empty());
         assert_eq!(html, "<p>raw-comment \u{2014}]</p>");
+    }
+
+    #[test]
+    fn wikidot_unmatched_extended_comment_closers_remain_ordinary_dashes() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for (source, expected) in [
+            ("raw ---]", "<p>raw \u{2014}-]</p>"),
+            ("raw ----]", "<p>raw \u{2014}\u{2014}]</p>"),
+        ] {
+            let tokenization = crate::tokenize(source);
+            let (tree, _) = crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+            assert_eq!(html, expected, "{source:?}");
+        }
+    }
+
+    #[test]
+    fn wikidot_comment_closer_accepts_extra_leading_hyphens() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for source in [
+            "[!-- hidden ---]\nvisible",
+            "[!----\nhidden module-shaped text\n---]\nvisible",
+            "[!-- hidden ----]\nvisible",
+            "[!-- hidden -----]\nvisible",
+        ] {
+            let tokenization = crate::tokenize(source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+            assert!(errors.is_empty(), "{source:?}: {errors:?}");
+            assert_eq!(html, "<p>visible</p>", "{source:?}");
+        }
     }
 }

@@ -33,6 +33,7 @@
 //! the `--` in `[!--` and `--]` into em dashes.
 
 use super::Replacer;
+use super::parser_functions::LiteralRegionIndex;
 use regex::Regex;
 use std::sync::LazyLock;
 
@@ -119,7 +120,7 @@ static NUMBER_UNITS: LazyLock<Regex> = LazyLock::new(|| {
 // … - HORIZONTAL ELLIPSIS
 static HORIZONTAL_ELLIPSIS: LazyLock<Replacer> =
     LazyLock::new(|| Replacer::RegexReplace {
-        regex: Regex::new(r"(?:^|[^\.])(?<repl>(\.\.|\. \. )\.)(?:[^\.]|$)").unwrap(),
+        regex: Regex::new(r"(?<repl>\.\.\.|\. \. \.)").unwrap(),
         replacement: "\u{2026}",
     });
 
@@ -236,11 +237,34 @@ pub(super) fn substitute_wikidot(text: &mut String) {
     replace_unit_spaces(text);
 
     // Miscellaneous
-    replace!(HORIZONTAL_ELLIPSIS);
+    replace_wikidot_ellipsis_outside_literals(text, &mut buffer);
+}
+
+fn replace_wikidot_ellipsis_outside_literals(text: &mut String, buffer: &mut String) {
+    let literal_regions = LiteralRegionIndex::new(text);
+    if literal_regions.ranges().is_empty() {
+        HORIZONTAL_ELLIPSIS.replace(text, buffer);
+        return;
+    }
+
+    let source = std::mem::take(text);
+    let mut output = String::with_capacity(source.len());
+    let mut cursor = 0;
+    for range in literal_regions.ranges() {
+        let mut authored = source[cursor..range.start].to_owned();
+        HORIZONTAL_ELLIPSIS.replace(&mut authored, buffer);
+        output.push_str(&authored);
+        output.push_str(&source[range.clone()]);
+        cursor = range.end;
+    }
+    let mut authored = source[cursor..].to_owned();
+    HORIZONTAL_ELLIPSIS.replace(&mut authored, buffer);
+    output.push_str(&authored);
+    *text = output;
 }
 
 #[cfg(test)]
-const TEST_CASES: [(&str, &str); 32] = [
+const TEST_CASES: [(&str, &str); 39] = [
     (
         "John laughed. ``You'll never defeat me!''\n``That's where you're wrong...''",
         "John laughed. “You'll never defeat me!”\n“That's where you're wrong…”",
@@ -277,13 +301,21 @@ const TEST_CASES: [(&str, &str); 32] = [
     ("how could you ...", "how could you …"),
     ("how could you. . .", "how could you…"),
     ("how could you . . .", "how could you …"),
-    // Spaced with extra dot after 3rd
-    (". . .. ....", ". . .. ...."),
+    // Spaced with an extra dot after the third.
+    (". . .. ....", "…. …."),
     // Multiple spaced dots in a row
     ("... . . . . . .", "… … …"),
-    // Too many dots
-    (".... ..", ".... .."),
-    ("..........", ".........."),
+    // Live Wikidot greedily consumes every complete group of three periods
+    // from a longer run and leaves the one- or two-period remainder.
+    (".... ..", "…. .."),
+    (".....", "….."),
+    ("......", "……"),
+    (".......", "……."),
+    ("........", "…….."),
+    (".........", "………"),
+    ("..........", "………."),
+    ("...........", "……….."),
+    ("............", "…………"),
     // Groups of three dots
     ("... ... ...", "… … …"),
     // Groups of three, mixed spaced and continuous
@@ -325,4 +357,22 @@ fn wikijump_substitution_keeps_native_typography_scope() {
     let mut text = "`one\nline' << 1 234".to_owned();
     substitute(&mut text);
     assert_eq!(text, "`one\nline' << 1 234");
+}
+
+#[test]
+fn wikidot_preprocessing_keeps_literal_dot_runs_outside_authored_prose() {
+    let mut text = concat!(
+        "PROSE:x....x\n",
+        "[[code]]\n",
+        "CODE:x....x\n",
+        "[[/code]]\n",
+        "@@ESCAPED:x....x@@",
+    )
+    .to_owned();
+
+    crate::preprocess_for_layout(&mut text, crate::layout::Layout::Wikidot);
+
+    assert!(text.contains("PROSE:x….x"), "{text}");
+    assert!(text.contains("CODE:x....x"), "{text}");
+    assert!(text.contains("ESCAPED:x....x"), "{text}");
 }

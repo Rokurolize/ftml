@@ -24,7 +24,7 @@ mod expression;
 mod literal;
 
 use self::expression::{evaluate, format_value, truthy};
-use self::literal::LiteralRegionIndex;
+pub(in crate::preproc) use self::literal::LiteralRegionIndex;
 use regex::Regex;
 use std::ops::Range;
 use std::sync::LazyLock;

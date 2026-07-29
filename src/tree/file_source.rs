@@ -218,6 +218,7 @@ mod tests {
         for source in [
             r#""image.png""#,
             "'image.png'",
+            "'Ranch_Hand'_run.jpg",
             r#""/local--files/page/image.png""#,
             "'/local--files/page/image.png'",
             r#""page/image.png""#,

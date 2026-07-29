@@ -21,12 +21,12 @@
 use std::ops::Range;
 
 #[derive(Debug, Default)]
-pub(super) struct LiteralRegionIndex {
+pub(in crate::preproc) struct LiteralRegionIndex {
     ranges: Vec<Range<usize>>,
 }
 
 impl LiteralRegionIndex {
-    pub(super) fn new(source: &str) -> Self {
+    pub(in crate::preproc) fn new(source: &str) -> Self {
         let mut ranges = Vec::new();
         collect_wikidot_literal_blocks(source, &mut ranges);
         collect_paired_ranges(source, "@@", "@@", &mut ranges);
@@ -46,9 +46,13 @@ impl LiteralRegionIndex {
         Self { ranges: merged }
     }
 
-    pub(super) fn contains(&self, offset: usize) -> bool {
+    pub(in crate::preproc) fn contains(&self, offset: usize) -> bool {
         let insertion = self.ranges.partition_point(|range| range.start <= offset);
         insertion > 0 && offset < self.ranges[insertion - 1].end
+    }
+
+    pub(in crate::preproc) fn ranges(&self) -> &[Range<usize>] {
+        &self.ranges
     }
 }
 

@@ -225,11 +225,14 @@ fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
         // block collectors intercept their own closer before `consume()`.
         Token::RightBlock => parser.start_of_line(),
 
-        Token::BulletItem
-        | Token::NumberedItem
-        | Token::Equals
-        | Token::Colon
-        | Token::TripleDash => !parser.start_of_line(),
+        Token::BulletItem | Token::NumberedItem | Token::Equals | Token::Colon => {
+            !parser.start_of_line()
+        }
+
+        // Four-or-more hyphen runs can be horizontal rules only at an
+        // immediate line boundary, but Wikidot still gives their inline
+        // fallback structured dash/strikethrough semantics.
+        Token::TripleDash => false,
 
         _ => false,
     }

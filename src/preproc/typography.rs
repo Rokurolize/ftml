@@ -363,6 +363,7 @@ fn wikijump_substitution_keeps_native_typography_scope() {
 fn wikidot_preprocessing_keeps_literal_dot_runs_outside_authored_prose() {
     let mut text = concat!(
         "PROSE:x....x\n",
+        "SPACED:x. . .x\n",
         "[[code]]\n",
         "CODE:x....x\n",
         "[[/code]]\n",
@@ -373,6 +374,7 @@ fn wikidot_preprocessing_keeps_literal_dot_runs_outside_authored_prose() {
     crate::preprocess_for_layout(&mut text, crate::layout::Layout::Wikidot);
 
     assert!(text.contains("PROSE:x….x"), "{text}");
+    assert!(text.contains("SPACED:x…x"), "{text}");
     assert!(text.contains("CODE:x....x"), "{text}");
     assert!(text.contains("ESCAPED:x....x"), "{text}");
 }

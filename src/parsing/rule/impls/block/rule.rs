@@ -52,10 +52,6 @@ fn block_star<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
     parse_block(parser, true)
 }
 
-fn block_rule_enabled(parser: &Parser<'_, '_>, block_rule: &BlockRule) -> bool {
-    block_rule.name != BLOCK_HTML.name || parser.settings().enable_html_blocks
-}
-
 fn block_skip<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
     let current = parser.step()?;
     let flag_star = current.token == Token::LeftBlockStar;
@@ -89,6 +85,10 @@ fn block_skip<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
     } else {
         Err(parser.make_err(ParseErrorKind::RuleFailed))
     }
+}
+
+fn block_rule_enabled(parser: &Parser<'_, '_>, block_rule: &BlockRule) -> bool {
+    block_rule.name != BLOCK_HTML.name || parser.settings().enable_html_blocks
 }
 
 // Block parsing implementation

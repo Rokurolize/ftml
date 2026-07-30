@@ -97,10 +97,25 @@ pub(crate) fn tokenize_delayed_segments<'t>(
     }];
 
     let mut generated_slots = BTreeMap::new();
-    for segment in segments {
+    let mut segment_index = 0;
+    while let Some(segment) = segments.get(segment_index) {
         match segment {
             InputSegment::Text { source_range, .. } => {
-                let segment_text = &text[source_range.clone()];
+                let start = source_range.start;
+                let mut end = source_range.end;
+                while let Some(InputSegment::Text {
+                    source_range: next_range,
+                    ..
+                }) = segments.get(segment_index + 1)
+                {
+                    // Input validation guarantees contiguity. Text origins are
+                    // retained in DelayedInput; both origins are syntax-bearing,
+                    // so provenance boundaries must not become lexer boundaries.
+                    debug_assert_eq!(end, next_range.start);
+                    end = next_range.end;
+                    segment_index += 1;
+                }
+                let segment_text = &text[start..end];
                 tokens.extend(
                     Token::extract_all(segment_text)
                         .into_iter()
@@ -108,8 +123,8 @@ pub(crate) fn tokenize_delayed_segments<'t>(
                             !matches!(token.token, Token::InputStart | Token::InputEnd)
                         })
                         .map(|mut token| {
-                            token.span.start += source_range.start;
-                            token.span.end += source_range.start;
+                            token.span.start += start;
+                            token.span.end += start;
                             token
                         }),
                 );
@@ -127,6 +142,7 @@ pub(crate) fn tokenize_delayed_segments<'t>(
                 });
             }
         }
+        segment_index += 1;
     }
     tokens.push(ExtractedToken {
         token: Token::InputEnd,

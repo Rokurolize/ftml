@@ -484,6 +484,11 @@ impl<'t> DelayedSyntaxTree<'t> {
         for footnote in &mut tree.footnotes {
             resolve_elements(footnote, &bindings.values, &mut resolved_occurrences)?;
         }
+        for bibliography in tree.bibliographies.slice_mut() {
+            for (_, elements) in bibliography.slice_mut() {
+                resolve_elements(elements, &bindings.values, &mut resolved_occurrences)?;
+            }
+        }
         if resolved_occurrences != self.expected_occurrences
             || elements_contain_delayed(&tree.elements)
             || elements_contain_delayed(&tree.table_of_contents)
@@ -491,6 +496,12 @@ impl<'t> DelayedSyntaxTree<'t> {
                 .footnotes
                 .iter()
                 .any(|footnote| elements_contain_delayed(footnote))
+            || tree.bibliographies.slice().iter().any(|bibliography| {
+                bibliography
+                    .slice()
+                    .iter()
+                    .any(|(_, elements)| elements_contain_delayed(elements))
+            })
         {
             return Err(DelayedError::UnresolvedGeneratedOwner);
         }

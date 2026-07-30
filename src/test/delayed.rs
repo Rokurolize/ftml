@@ -40,9 +40,13 @@ fn page_bindings() -> SlotBindings<'static> {
 
 fn render(source: &str) -> String {
     let input = page_link_input(source);
+    render_input(&input)
+}
+
+fn render_input(input: &DelayedInput<'_>) -> String {
     let page_info = PageInfo::dummy();
     let settings = WikitextSettings::from_mode(WikitextMode::List, Layout::Wikidot);
-    let delayed = parse_delayed_list(&input, &page_info, &settings)
+    let delayed = parse_delayed_list(input, &page_info, &settings)
         .expect("supported delayed input");
     let bound = delayed.bind(&page_bindings()).expect("matching bindings");
     bound.render_html(&page_info, &settings).body().to_owned()
@@ -270,6 +274,61 @@ fn nested_line_start_owners_bind_without_retaining_delayed_leaves() {
                 .contains("<a href=\"/component:image-block\">Standard Image Block</a>",)
                 && !html.body().contains("%%title_linked%%"),
             "a renderable nested owner must be completely bound: {source}",
+        );
+    }
+}
+
+#[test]
+fn bibliography_definition_values_bind_before_rendering() {
+    let html = render(concat!(
+        "[[bibliography title=\"Works\"]]\n",
+        ": alpha : %%title_linked%%\n",
+        "[[/bibliography]]",
+    ));
+
+    assert!(
+        html.contains(concat!(
+            r#"<a href="/component:image-block">"#,
+            "Standard Image Block</a>",
+        )),
+        "bibliography values are out-of-band syntax-tree owners: {html}",
+    );
+    assert!(
+        !html.contains("%%title_linked%%"),
+        "a bound bibliography must not retain a delayed leaf: {html}",
+    );
+}
+
+#[test]
+fn adjacent_text_segments_do_not_create_synthetic_token_boundaries() {
+    let source = "**bold** %%title_linked%%";
+    let marker_start = source.find("%%title_linked%%").expect("fixture marker");
+    let marker_end = source.len();
+
+    for second_origin in [TextOrigin::Authored, TextOrigin::RuntimeScalar] {
+        let input = DelayedInput::new(
+            source,
+            vec![
+                InputSegment::text(0..1, TextOrigin::Authored),
+                InputSegment::text(1..marker_start, second_origin),
+                InputSegment::generated(GeneratedInput {
+                    source_range: marker_start..marker_end,
+                    id: SlotId::new(1),
+                    kind: GeneratedKind::PageLink,
+                    occurrence: 0,
+                }),
+            ],
+        )
+        .expect("adjacent text remains a valid provenance split");
+
+        assert_eq!(
+            render_input(&input),
+            concat!(
+                "<p><strong>bold</strong> ",
+                "<a href=\"/component:image-block\">Standard Image Block</a>",
+                "</p>",
+            ),
+            "text provenance must not alter syntax: {second_origin:?}",
         );
     }
 }

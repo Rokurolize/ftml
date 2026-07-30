@@ -406,6 +406,30 @@ where
         Ok(Cow::Borrowed(slice))
     }
 
+    pub(crate) fn get_body_text_after_skipping_end_blocks(
+        &mut self,
+        block_rule: &BlockRule,
+        mut end_blocks_to_skip: usize,
+    ) -> Result<Cow<'t, str>, ParseError> {
+        let start = self.current();
+        let mut first = true;
+
+        loop {
+            if let Some(end) = self.verify_end_block(first, block_rule, false, false) {
+                if end_blocks_to_skip == 0 {
+                    let slice = self.full_text().slice_partial(start, end);
+                    return Ok(Cow::Borrowed(slice));
+                }
+                end_blocks_to_skip -= 1;
+                first = false;
+                continue;
+            }
+
+            self.step()?;
+            first = false;
+        }
+    }
+
     pub(crate) fn body_has_generated(&self, block_rule: &BlockRule) -> bool {
         let mut probe = self.clone();
         let Ok((start, end)) = probe.get_body_generic(block_rule, |_| Ok(())) else {
@@ -903,6 +927,15 @@ where
             }
             first = false;
         }
+    }
+
+    pub(crate) fn consume_body_end_block(
+        &mut self,
+        first: bool,
+        block_rule: &BlockRule,
+    ) -> bool {
+        self.verify_end_block(first, block_rule, false, false)
+            .is_some()
     }
 
     /// Whether the matching block end occurs before the current line ends.

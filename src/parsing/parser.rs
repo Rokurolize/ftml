@@ -24,7 +24,7 @@ use super::hidden_body::HiddenBodyBoundary;
 use super::prelude::*;
 use super::rule::Rule;
 use crate::data::PageInfo;
-use crate::delayed::GeneratedInput;
+use crate::delayed::{GeneratedInput, elements_contain_delayed};
 use crate::render::text::TextRender;
 use crate::tokenizer::Tokenization;
 use crate::tree::{
@@ -650,10 +650,15 @@ impl<'r, 't> Parser<'r, 't> {
         // Headings are 1-indexed (e.g. H1), but depth lists are 0-indexed
         let level = usize::from(heading.value()) - 1;
 
-        // Render name as text, so it lacks formatting
-        let page_info = self.page_info;
-        let settings = self.settings;
-        let name = TextRender.render_partial(name_elements, page_info, settings, 0);
+        // Delayed List-mode headings cannot be rendered before their generated
+        // leaves bind. The delayed API records their exact TOC positions out
+        // of band and fills these private placeholders only after binding.
+        let name = if elements_contain_delayed(name_elements) {
+            String::new()
+        } else {
+            // Render name as text, so it lacks formatting.
+            TextRender.render_partial(name_elements, self.page_info, self.settings, 0)
+        };
 
         self.table_of_contents.borrow_mut().push((level, name));
     }

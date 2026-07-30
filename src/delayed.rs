@@ -4,9 +4,13 @@
 //! therefore cannot terminate or create authored syntax while FTML is parsing
 //! the List-mode stream.
 
+mod toc;
+
 use crate::data::{PageInfo, PageRef};
 use crate::parsing::{ParseError, parse};
+#[cfg(feature = "html")]
 use crate::render::Render;
+#[cfg(feature = "html")]
 use crate::render::html::{HtmlOutput, HtmlRender};
 use crate::settings::{WikitextMode, WikitextSettings};
 use crate::tokenizer::{Tokenization, tokenize_delayed_segments};
@@ -429,6 +433,7 @@ pub struct DelayedSyntaxTree<'t> {
     tree: SyntaxTree<'t>,
     schema: BTreeMap<SlotId, GeneratedKind>,
     expected_occurrences: usize,
+    delayed_toc_entries: Vec<usize>,
     errors: Vec<ParseError>,
 }
 
@@ -482,34 +487,44 @@ impl<'t> DelayedSyntaxTree<'t> {
         {
             return Err(DelayedError::UnresolvedGeneratedOwner);
         }
-        Ok(BoundDelayedSyntaxTree { tree })
+        Ok(BoundDelayedSyntaxTree {
+            tree,
+            delayed_toc_entries: self.delayed_toc_entries.clone(),
+        })
     }
 }
 
 /// Bound delayed syntax. Construction is possible only through schema sealing.
 #[derive(Debug, Clone)]
+#[cfg_attr(not(feature = "html"), allow(dead_code))]
 pub struct BoundDelayedSyntaxTree {
     tree: SyntaxTree<'static>,
+    delayed_toc_entries: Vec<usize>,
 }
 
+#[cfg(feature = "html")]
 impl BoundDelayedSyntaxTree {
     pub fn render_html(
         &self,
         page_info: &PageInfo,
         settings: &WikitextSettings,
     ) -> SealedFragment {
+        let mut tree = self.tree.clone();
+        toc::bind_labels(&mut tree, &self.delayed_toc_entries, page_info, settings);
         SealedFragment {
-            output: HtmlRender.render(&self.tree, page_info, settings),
+            output: HtmlRender.render(&tree, page_info, settings),
         }
     }
 }
 
 /// FTML-rendered output with no public constructor.
+#[cfg(feature = "html")]
 #[derive(Debug)]
 pub struct SealedFragment {
     output: HtmlOutput,
 }
 
+#[cfg(feature = "html")]
 impl SealedFragment {
     pub fn body(&self) -> &str {
         &self.output.body
@@ -554,10 +569,12 @@ pub fn parse_delayed_list<'t>(
             }
         }
     }
+    let delayed_toc_entries = toc::entry_indices(&tree);
     Ok(DelayedSyntaxTree {
         tree,
         schema,
         expected_occurrences,
+        delayed_toc_entries,
         errors,
     })
 }
@@ -686,7 +703,7 @@ fn resolve_elements(
     Ok(())
 }
 
-fn elements_contain_delayed(elements: &[Element<'_>]) -> bool {
+pub(crate) fn elements_contain_delayed(elements: &[Element<'_>]) -> bool {
     elements.iter().any(element_contains_delayed)
 }
 
@@ -829,8 +846,31 @@ fn resolve_delayed(
             )))])
         }
         DelayedNode::TagExternalLabel { id, url } => {
-            let legacy = legacy_source(*id, GeneratedKind::TagLinks, bindings)?;
-            let label = legacy.strip_suffix(']').unwrap_or(&legacy).to_owned();
+            let Some(GeneratedValue::TagLinks { tags, separator }) = bindings.get(id)
+            else {
+                return Err(DelayedError::BindingSchemaMismatch);
+            };
+            let Some((first, remaining)) = tags.split_first() else {
+                return Ok(vec![Element::Link {
+                    ltype: LinkType::Direct,
+                    link: LinkLocation::Url(Cow::Owned(url.to_string())),
+                    label: LinkLabel::Text(Cow::Borrowed("")),
+                    target: None,
+                }]);
+            };
+
+            let first = legacy_tag_source(first);
+            let label = first.strip_suffix(']').unwrap_or(&first).to_owned();
+            let trailing = if remaining.is_empty() {
+                "]".to_owned()
+            } else {
+                let remaining = remaining
+                    .iter()
+                    .map(legacy_tag_source)
+                    .collect::<Vec<_>>()
+                    .join(separator);
+                format!("{separator}{remaining}]")
+            };
             Ok(vec![
                 Element::Link {
                     ltype: LinkType::Direct,
@@ -838,7 +878,7 @@ fn resolve_delayed(
                     label: LinkLabel::Text(Cow::Owned(label)),
                     target: None,
                 },
-                Element::Text(Cow::Borrowed("]")),
+                Element::Text(Cow::Owned(trailing)),
             ])
         }
         DelayedNode::TagImage {
@@ -961,15 +1001,15 @@ fn legacy_source(
         )),
         GeneratedValue::TagLinks { tags, separator } => Ok(tags
             .iter()
-            .map(|tag| {
-                format!(
-                    "[/system:page-tags/tag/{tag} {tag}]",
-                    tag = tag.tag.replace(['[', ']'], ""),
-                )
-            })
+            .map(legacy_tag_source)
             .collect::<Vec<_>>()
             .join(separator)),
     }
+}
+
+fn legacy_tag_source(tag: &ResolvedTagRef<'_>) -> String {
+    let tag = tag.tag.replace(['[', ']'], "");
+    format!("[/system:page-tags/tag/{tag} {tag}]")
 }
 
 #[allow(dead_code)]

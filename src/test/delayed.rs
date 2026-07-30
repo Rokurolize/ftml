@@ -49,6 +49,10 @@ fn render(source: &str) -> String {
 }
 
 fn render_tag(source: &str) -> String {
+    render_tag_values(source, &["component"], " ")
+}
+
+fn render_tag_values(source: &str, tags: &[&str], separator: &str) -> String {
     let marker = "%%tags_linked%%";
     let start = source.find(marker).expect("fixture marker");
     let end = start + marker.len();
@@ -69,10 +73,14 @@ fn render_tag(source: &str) -> String {
     let bindings = SlotBindings::new(vec![(
         SlotId::new(2),
         GeneratedValue::TagLinks {
-            tags: Cow::Owned(vec![ResolvedTagRef {
-                tag: Cow::Borrowed("component"),
-            }]),
-            separator: Cow::Borrowed(" "),
+            tags: Cow::Owned(
+                tags.iter()
+                    .map(|tag| ResolvedTagRef {
+                        tag: Cow::Owned((*tag).to_owned()),
+                    })
+                    .collect(),
+            ),
+            separator: Cow::Owned(separator.to_owned()),
         },
     )])
     .expect("unique bindings");
@@ -262,6 +270,58 @@ fn nested_line_start_owners_bind_without_retaining_delayed_leaves() {
                 .contains("<a href=\"/component:image-block\">Standard Image Block</a>",)
                 && !html.body().contains("%%title_linked%%"),
             "a renderable nested owner must be completely bound: {source}",
+        );
+    }
+}
+
+#[test]
+fn delayed_heading_binds_before_building_its_table_of_contents_label() {
+    let html = render("[[toc]]\n+ %%title_linked%%");
+    assert!(
+        html.contains(concat!(
+            r#"<div style="margin-left: 1em;">"#,
+            r#"<a href="javascript:;">Standard Image Block</a></div>"#,
+        ),),
+        "the TOC label should use the bound heading text: {html}",
+    );
+    assert!(
+        html.contains(concat!(
+            r#"<h1><span><a href="/component:image-block">"#,
+            "Standard Image Block</a></span></h1>",
+        ),),
+        "the heading should retain the bound page link: {html}",
+    );
+}
+
+#[test]
+fn tag_external_label_recovery_matches_zero_one_and_many_textual_tags() {
+    let source = "BEGIN|[https://example.com %%tags_linked%%]|END";
+    for (tags, expected) in [
+        (
+            &[][..],
+            r#"<p>BEGIN|<a href="https://example.com"></a>|END</p>"#,
+        ),
+        (
+            &["component"][..],
+            concat!(
+                r#"<p>BEGIN|<a href="https://example.com">"#,
+                "[/system:page-tags/tag/component component</a>]|END</p>",
+            ),
+        ),
+        (
+            &["component", "featured"][..],
+            concat!(
+                r#"<p>BEGIN|<a href="https://example.com">"#,
+                "[/system:page-tags/tag/component component</a> ",
+                "[/system:page-tags/tag/featured featured]]|END</p>",
+            ),
+        ),
+    ] {
+        assert_eq!(
+            render_tag_values(source, tags, " "),
+            expected,
+            "tag cardinality: {}",
+            tags.len(),
         );
     }
 }

@@ -228,4 +228,26 @@ mod tests {
             assert_eq!(html, expected, "{source:?}");
         }
     }
+
+    #[test]
+    fn disabled_wikidot_html_block_keeps_the_preceding_line_break() {
+        let page_info = PageInfo::dummy();
+        let mut settings =
+            WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        settings.enable_html_blocks = false;
+        let tokenization = crate::tokenize("before\n[[html]]\n<b>X</b>\n[[/html]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(tree.html_blocks.is_empty(), "{tree:#?}");
+        assert!(
+            errors.iter().all(|error| error.rule() != BLOCK_HTML.name),
+            "{errors:#?}",
+        );
+        assert_eq!(
+            crate::render::html::HtmlRender
+                .render(&tree, &page_info, &settings)
+                .body,
+            "<p>before<br>\n[[html]]<br>\n&lt;b&gt;X&lt;/b&gt;<br>\n[[/html]]</p>",
+        );
+    }
 }

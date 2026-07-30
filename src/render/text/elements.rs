@@ -102,6 +102,9 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
         Element::Text(text) | Element::Raw(text) | Element::Email(text) => {
             ctx.push_str(text);
         }
+        Element::Delayed(_) => {
+            panic!("unbound delayed element reached the text renderer")
+        }
         Element::Variable(name) => {
             let value = match ctx.variables().get(name) {
                 Some(value) => str!(value),

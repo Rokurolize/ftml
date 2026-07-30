@@ -45,7 +45,7 @@ pub fn get_rules_for_token(current: &ExtractedToken) -> &'static [Rule] {
         Token::RightBracket => &[RULE_TEXT],
         Token::LeftBlock => &[RULE_BLOCK],
         Token::LeftBlockEnd => &[],
-        Token::LeftBlockAnchor => &[RULE_ANCHOR],
+        Token::LeftBlockAnchor => &[RULE_DELAYED_CONDITIONAL, RULE_ANCHOR],
         Token::LeftBlockStar => &[RULE_BLOCK_STAR],
         Token::RightBlock => &[],
         Token::LeftParentheses => &[RULE_BIBCITE, RULE_TEXT],
@@ -104,6 +104,7 @@ pub fn get_rules_for_token(current: &ExtractedToken) -> &'static [Rule] {
         Token::EscapedDoubleQuote => &[RULE_TEXT],
         Token::EscapedBackslash => &[RULE_TEXT],
         Token::DiscardedControl => &[RULE_TEXT],
+        Token::GeneratedPageLink | Token::GeneratedTagLinks => &[RULE_DELAYED],
 
         // Input boundaries
         Token::LineBreak => LINE_BREAK_RULES,
@@ -146,7 +147,10 @@ mod tests {
             (Token::RightBracket, vec!["text"]),
             (Token::LeftBlock, vec!["block"]),
             (Token::LeftBlockEnd, vec![]),
-            (Token::LeftBlockAnchor, vec!["anchor"]),
+            (
+                Token::LeftBlockAnchor,
+                vec!["delayed-conditional", "anchor"],
+            ),
             (Token::LeftBlockStar, vec!["block-star"]),
             (Token::LeftMath, vec!["math"]),
             (Token::LeftParentheses, vec!["bibcite", "text"]),
@@ -203,6 +207,8 @@ mod tests {
             (Token::EscapedDoubleQuote, vec!["text"]),
             (Token::EscapedBackslash, vec!["text"]),
             (Token::DiscardedControl, vec!["text"]),
+            (Token::GeneratedPageLink, vec!["delayed"]),
+            (Token::GeneratedTagLinks, vec!["delayed"]),
             (Token::LeftComment, vec!["comment"]),
             (Token::RightComment, vec![]),
             (Token::InputStart, vec!["null"]),

@@ -19,6 +19,7 @@
  */
 
 use crate::data::PageRef;
+use crate::delayed::DelayedElement;
 use crate::tree::clone::*;
 use crate::tree::{
     Alignment, AnchorTarget, AttributeMap, ClearFloat, CodeBlock, Container, DateItem,
@@ -68,6 +69,10 @@ pub enum Element<'t> {
     /// Whether this should become a clickable href link or just text
     /// is up to the render implementation.
     Email(Cow<'t, str>),
+
+    /// Out-of-band generated List-mode semantics.
+    #[serde(skip)]
+    Delayed(DelayedElement<'t>),
 
     /// An element representing an HTML table.
     Table(Table<'t>),
@@ -354,6 +359,7 @@ impl Element<'_> {
             Element::Raw(_) => "Raw",
             Element::Variable(_) => "Variable",
             Element::Email(_) => "Email",
+            Element::Delayed(_) => "Delayed",
             Element::Table(_) => "Table",
             Element::TabView(_) => "TabView",
             Element::Anchor { .. } => "Anchor",
@@ -410,6 +416,7 @@ impl Element<'_> {
             | Element::Raw(_)
             | Element::Variable(_)
             | Element::Email(_) => true,
+            Element::Delayed(_) => true,
             Element::Table(_) => false,
             Element::TabView(_) => false,
             Element::Anchor { .. }
@@ -462,6 +469,7 @@ impl Element<'_> {
             Element::Raw(text) => Element::Raw(string_to_owned(text)),
             Element::Variable(name) => Element::Variable(string_to_owned(name)),
             Element::Email(email) => Element::Email(string_to_owned(email)),
+            Element::Delayed(delayed) => Element::Delayed(delayed.to_owned()),
             Element::Table(table) => Element::Table(table.to_owned()),
             Element::TabView(tabs) => {
                 Element::TabView(tabs.iter().map(|tab| tab.to_owned()).collect())

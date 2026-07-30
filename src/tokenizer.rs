@@ -18,14 +18,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use crate::delayed::{GeneratedInput, GeneratedKind, InputSegment};
 use crate::parsing::{ExtractedToken, Token};
 use crate::text::FullText;
+use std::collections::BTreeMap;
 
 /// Struct that represents both a list of tokens and the text the tokens were generated from.
 #[derive(Debug, Clone)]
 pub struct Tokenization<'t> {
     tokens: Vec<ExtractedToken<'t>>,
     full_text: FullText<'t>,
+    generated: BTreeMap<usize, GeneratedInput>,
 }
 
 #[cfg(not(tarpaulin))]
@@ -39,6 +42,11 @@ impl<'t> Tokenization<'t> {
     pub(crate) fn full_text(&self) -> FullText<'t> {
         self.full_text
     }
+
+    #[inline]
+    pub(crate) fn generated(&self) -> &BTreeMap<usize, GeneratedInput> {
+        &self.generated
+    }
 }
 
 // Tarpaulin maps the generic impl header as executable unless the first method
@@ -47,6 +55,7 @@ impl<'t> Tokenization<'t> {
 #[rustfmt::skip]
 impl<'t> Tokenization<'t> { pub fn tokens<'r>(&'r self) -> &'r [ExtractedToken<'t>] { &self.tokens }
     pub(crate) fn full_text(&self) -> FullText<'t> { self.full_text }
+    pub(crate) fn generated(&self) -> &BTreeMap<usize, GeneratedInput> { &self.generated }
 }
 
 impl<'t> From<Tokenization<'t>> for Vec<ExtractedToken<'t>> {
@@ -70,7 +79,65 @@ pub fn tokenize(text: &str) -> Tokenization<'_> {
     let tokens = Token::extract_all(text);
     let full_text = FullText::new(text);
 
-    Tokenization { tokens, full_text }
+    Tokenization {
+        tokens,
+        full_text,
+        generated: BTreeMap::new(),
+    }
+}
+
+pub(crate) fn tokenize_delayed_segments<'t>(
+    text: &'t str,
+    segments: &[InputSegment],
+) -> Tokenization<'t> {
+    let mut tokens = vec![ExtractedToken {
+        token: Token::InputStart,
+        slice: &text[..0],
+        span: 0..0,
+    }];
+
+    let mut generated_slots = BTreeMap::new();
+    for segment in segments {
+        match segment {
+            InputSegment::Text { source_range, .. } => {
+                let segment_text = &text[source_range.clone()];
+                tokens.extend(
+                    Token::extract_all(segment_text)
+                        .into_iter()
+                        .filter(|token| {
+                            !matches!(token.token, Token::InputStart | Token::InputEnd)
+                        })
+                        .map(|mut token| {
+                            token.span.start += source_range.start;
+                            token.span.end += source_range.start;
+                            token
+                        }),
+                );
+            }
+            InputSegment::Generated(generated) => {
+                let start = generated.source_range.start;
+                generated_slots.insert(start, generated.clone());
+                tokens.push(ExtractedToken {
+                    token: match generated.kind {
+                        GeneratedKind::PageLink => Token::GeneratedPageLink,
+                        GeneratedKind::TagLinks => Token::GeneratedTagLinks,
+                    },
+                    slice: &text[start..start],
+                    span: start..start,
+                });
+            }
+        }
+    }
+    tokens.push(ExtractedToken {
+        token: Token::InputEnd,
+        slice: &text[text.len()..],
+        span: text.len()..text.len(),
+    });
+    Tokenization {
+        tokens,
+        full_text: FullText::new(text),
+        generated: generated_slots,
+    }
 }
 
 #[cfg(test)]

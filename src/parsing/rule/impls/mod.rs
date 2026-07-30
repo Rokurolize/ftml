@@ -42,6 +42,7 @@ mod color;
 mod comment;
 mod dash;
 mod definition_list;
+mod delayed;
 mod double_angle;
 mod email;
 mod entity;
@@ -84,6 +85,7 @@ pub use self::dash::{RULE_DASH, RULE_DASH_RUN};
 pub use self::definition_list::{
     RULE_DEFINITION_LIST, RULE_DEFINITION_LIST_SKIP_NEWLINE,
 };
+pub use self::delayed::{RULE_DELAYED, RULE_DELAYED_CONDITIONAL};
 pub use self::double_angle::RULE_DOUBLE_ANGLE;
 pub use self::email::RULE_EMAIL;
 pub use self::fallback::RULE_FALLBACK;

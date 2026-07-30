@@ -20,6 +20,7 @@
 
 use super::entity::decode_semicolon_entities;
 use super::prelude::*;
+use crate::delayed::DelayedElement;
 
 macro_rules! raw {
     ($value:expr) => {
@@ -58,65 +59,76 @@ fn try_consume_fn<'r, 't>(
         let next_2 = parser.look_ahead_err(1)?;
 
         // Determine which case they fall under
-        let special_case = match (next_1.token, next_2.token) {
-            // "@@@@@@" -> ordinary text "@@"
-            (Token::Raw, Token::Raw) => {
-                trace!("Found meta-raw (\"@@@@@@\"), returning");
-                parser.step_n(3)?;
-                Some(text!("@@"))
-            }
-
-            // "@@@@@" -> ordinary text "@"
-            // This case is strange since the lexer returns Raw Raw Other (@@ @@ @)
-            // So we capture this and return the intended output
-            (Token::Raw, Token::Other) => {
-                if next_2.slice == "@" {
-                    trace!("Found single-raw (\"@@@@@\"), returning");
+        let special_case = if next_2.token == Token::Raw
+            && let Some(generated) = parser.generated_for(next_1).cloned()
+        {
+            parser.step_n(3)?;
+            Some(Element::Delayed(DelayedElement::raw(
+                parser.full_text().inner(),
+                generated.source_range.clone(),
+                &[generated],
+            )))
+        } else {
+            match (next_1.token, next_2.token) {
+                // "@@@@@@" -> ordinary text "@@"
+                (Token::Raw, Token::Raw) => {
+                    trace!("Found meta-raw (\"@@@@@@\"), returning");
                     parser.step_n(3)?;
-                    Some(text!("@"))
-                } else {
-                    trace!("Found empty raw (\"@@@@\"), followed by other text");
+                    Some(text!("@@"))
+                }
+
+                // "@@@@@" -> ordinary text "@"
+                // This case is strange since the lexer returns Raw Raw Other (@@ @@ @)
+                // So we capture this and return the intended output
+                (Token::Raw, Token::Other) => {
+                    if next_2.slice == "@" {
+                        trace!("Found single-raw (\"@@@@@\"), returning");
+                        parser.step_n(3)?;
+                        Some(text!("@"))
+                    } else {
+                        trace!("Found empty raw (\"@@@@\"), followed by other text");
+                        parser.step_n(2)?;
+                        return ok!(Elements::None);
+                    }
+                }
+
+                // "@@@@" -> no element
+                // Only consumes two tokens.
+                (Token::Raw, _) => {
+                    trace!("Found empty raw (\"@@@@\"), returning");
                     parser.step_n(2)?;
                     return ok!(Elements::None);
                 }
-            }
 
-            // "@@@@" -> no element
-            // Only consumes two tokens.
-            (Token::Raw, _) => {
-                trace!("Found empty raw (\"@@@@\"), returning");
-                parser.step_n(2)?;
-                return ok!(Elements::None);
-            }
-
-            // "@@ \n @@" -> Abort
-            (Token::LineBreak, Token::Raw) | (Token::ParagraphBreak, Token::Raw) => {
-                if parser.settings().layout.legacy() {
-                    parser.step_n(3)?;
-                    return ok!(Elements::None);
+                // "@@ \n @@" -> Abort
+                (Token::LineBreak, Token::Raw) | (Token::ParagraphBreak, Token::Raw) => {
+                    if parser.settings().layout.legacy() {
+                        parser.step_n(3)?;
+                        return ok!(Elements::None);
+                    }
+                    trace!("Found interrupted raw, aborting");
+                    return Err(parser.make_err(ParseErrorKind::RuleFailed));
                 }
-                trace!("Found interrupted raw, aborting");
-                return Err(parser.make_err(ParseErrorKind::RuleFailed));
-            }
 
-            (Token::RightRaw, Token::Raw) if parser.settings().layout.legacy() => {
-                parser.step_n(3)?;
-                let raw = next_1
-                    .slice
-                    .strip_suffix('@')
-                    .expect("right-raw token ends with an at sign");
-                return ok!(Elements::Multiple(vec![raw!(raw), text!("@")]));
-            }
+                (Token::RightRaw, Token::Raw) if parser.settings().layout.legacy() => {
+                    parser.step_n(3)?;
+                    let raw = next_1
+                        .slice
+                        .strip_suffix('@')
+                        .expect("right-raw token ends with an at sign");
+                    return ok!(Elements::Multiple(vec![raw!(raw), text!("@")]));
+                }
 
-            // "@@ [something] @@" -> Element::Raw(token)
-            (_, Token::Raw) => {
-                trace!("Found single-element raw, returning");
-                parser.step_n(3)?;
-                Some(raw!(next_1.slice))
-            }
+                // "@@ [something] @@" -> Element::Raw(token)
+                (_, Token::Raw) => {
+                    trace!("Found single-element raw, returning");
+                    parser.step_n(3)?;
+                    Some(raw!(next_1.slice))
+                }
 
-            // Other, proceed with rule logic
-            _ => None,
+                // Other, proceed with rule logic
+                _ => None,
+            }
         };
 
         if let Some(element) = special_case {
@@ -135,6 +147,7 @@ fn try_consume_fn<'r, 't>(
     let (start, mut end) = (current, current);
     let mut saw_left_raw = false;
     let mut saw_nested_raw_pair = false;
+    let mut generated = Vec::new();
 
     loop {
         let token = parser.current().token;
@@ -145,6 +158,7 @@ fn try_consume_fn<'r, 't>(
             if token == ending_token {
                 trace!("Reached end of raw, returning");
 
+                let content_range = start.span.start..parser.current().span.start;
                 let slice = parser.full_text().slice_partial(start, end);
                 parser.step()?;
 
@@ -172,6 +186,14 @@ fn try_consume_fn<'r, 't>(
                     return ok!(Elements::None);
                 }
 
+                if !generated.is_empty() {
+                    return success_elements(Element::Delayed(DelayedElement::raw(
+                        parser.full_text().inner(),
+                        content_range,
+                        &generated,
+                    )));
+                }
+
                 let raw = match ending_token {
                     Token::RightRaw => decode_semicolon_entities(slice),
                     Token::Raw => cow!(slice),
@@ -193,6 +215,10 @@ fn try_consume_fn<'r, 't>(
         } else if token == Token::InputEnd {
             trace!("Reached end of input, aborting");
             return Err(parser.make_err(ParseErrorKind::EndOfInput));
+        }
+
+        if let Some(slot) = parser.current_generated() {
+            generated.push(slot.clone());
         }
 
         trace!("Appending present token to raw");

@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use crate::delayed::{DelayedElement, GeneratedImageAttribute, GeneratedKind};
 use crate::tree::{FileSource, FloatAlignment, LinkLocation};
 
 pub const BLOCK_IMAGE: BlockRule = BlockRule {
@@ -44,6 +45,28 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "Image doesn't allow score flag");
     assert_block_name(&BLOCK_IMAGE, name);
 
+    let generated = parser.generated_until_right_block();
+    if generated
+        .iter()
+        .any(|slot| slot.kind == GeneratedKind::PageLink)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    let generated_image = match generated.as_slice() {
+        [] => None,
+        [slot] => {
+            let key = delayed_image_attribute_key(parser.full_text().inner(), slot)
+                .ok_or_else(|| parser.make_err(ParseErrorKind::RuleFailed))?;
+            let attribute = match key {
+                "alt" => GeneratedImageAttribute::Alt,
+                "link" => GeneratedImageAttribute::Link,
+                _ => return Err(parser.make_err(ParseErrorKind::RuleFailed)),
+            };
+            Some((slot.clone(), attribute))
+        }
+        _ => return Err(parser.make_err(ParseErrorKind::RuleFailed)),
+    };
+
     let (source, mut arguments) =
         parser.get_head_name_map_wikidot(&BLOCK_IMAGE, in_head)?;
     let link = arguments.get_with_bare("link").and_then(|(value, bare)| {
@@ -65,6 +88,24 @@ fn parse_fn<'r, 't>(
         None => return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments)),
     };
 
+    if let Some((slot, attribute)) = generated_image {
+        match attribute {
+            GeneratedImageAttribute::Alt => {
+                let _ = arguments.get("alt");
+            }
+            GeneratedImageAttribute::Link => {
+                let _ = arguments.get("link");
+            }
+        }
+        return success_elements(Element::Delayed(DelayedElement::tag_image(
+            source,
+            alignment,
+            arguments.to_attribute_map(parser.settings()),
+            attribute,
+            slot.id,
+        )));
+    }
+
     // Build image
     let element = Element::Image {
         source,
@@ -74,6 +115,27 @@ fn parse_fn<'r, 't>(
     };
 
     success_elements(element)
+}
+
+fn delayed_image_attribute_key<'a>(
+    source: &'a str,
+    slot: &crate::delayed::GeneratedInput,
+) -> Option<&'a str> {
+    let prefix = &source[..slot.source_range.start];
+    let equals = prefix.rfind('=')?;
+    if !prefix[equals + 1..]
+        .chars()
+        .all(|character| matches!(character, '"' | '\''))
+    {
+        return None;
+    }
+    let key_start = prefix[..equals]
+        .rfind(|character: char| {
+            !(character.is_ascii_alphanumeric() || matches!(character, '_' | '-'))
+        })
+        .map_or(0, |position| position + 1);
+    let key = &prefix[key_start..equals];
+    (!key.is_empty()).then_some(key)
 }
 
 #[cfg(test)]

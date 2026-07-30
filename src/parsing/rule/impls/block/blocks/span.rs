@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use crate::delayed::DelayedElement;
 use crate::parsing::strip_newlines;
 use crate::tree::PartialElement;
 
@@ -42,6 +43,25 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Span doesn't allow star flag");
     assert_block_name(&BLOCK_SPAN, name);
 
+    let generated = parser.generated_until_right_block();
+    if generated
+        .iter()
+        .any(|slot| slot.kind == crate::delayed::GeneratedKind::TagLinks)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    let generated_attributes = generated
+        .iter()
+        .map(|slot| delayed_attribute_key(parser.full_text().inner(), slot))
+        .collect::<Option<Vec<_>>>()
+        .ok_or_else(|| parser.make_err(ParseErrorKind::RuleFailed))?;
+    if generated_attributes
+        .iter()
+        .any(|key| !matches!(*key, "class" | "title"))
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     let arguments = parser.get_head_map_wikidot(&BLOCK_SPAN, in_head)?;
     let has_close = parser.has_body_end_block(&BLOCK_SPAN);
 
@@ -50,10 +70,29 @@ fn parse_fn<'r, 't>(
             return Err(parser.make_err(ParseErrorKind::RuleFailed));
         }
         let mut attributes = arguments.to_attribute_map(parser.settings());
+        for key in generated_attributes {
+            match key {
+                "title" => {
+                    attributes.remove("title");
+                }
+                "class" => {
+                    attributes.insert("class", cow!(""));
+                }
+                _ => unreachable!(),
+            }
+        }
         if flag_score {
             attributes.insert("data-ftml-score-span", cow!(""));
         }
-        return ok!(Element::Partial(PartialElement::InlineSpanOpen(attributes)));
+        let span = Element::Partial(PartialElement::InlineSpanOpen(attributes));
+        return if generated.is_empty() {
+            ok!(span)
+        } else {
+            ok!(Elements::Multiple(vec![
+                span,
+                Element::Delayed(DelayedElement::omitted(&generated)),
+            ]))
+        };
     }
 
     // Get body content, without paragraphs
@@ -71,6 +110,27 @@ fn parse_fn<'r, 't>(
     ));
 
     success_elements_with_paragraph_safety(paragraph_safe, element, errors)
+}
+
+fn delayed_attribute_key<'a>(
+    source: &'a str,
+    slot: &crate::delayed::GeneratedInput,
+) -> Option<&'a str> {
+    let prefix = &source[..slot.source_range.start];
+    let equals = prefix.rfind('=')?;
+    if !prefix[equals + 1..]
+        .chars()
+        .all(|character| matches!(character, '"' | '\''))
+    {
+        return None;
+    }
+    let key_start = prefix[..equals]
+        .rfind(|character: char| {
+            !(character.is_ascii_alphanumeric() || matches!(character, '_' | '-'))
+        })
+        .map_or(0, |position| position + 1);
+    let key = &prefix[key_start..equals];
+    (!key.is_empty()).then_some(key)
 }
 
 #[cfg(test)]

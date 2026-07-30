@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use crate::delayed::DelayedElement;
 use crate::tree::CodeBlock;
 use wikidot_normalize::normalize;
 
@@ -68,6 +69,21 @@ fn parse_fn<'r, 't>(
     let mut name = arguments.get("name");
     if let Some(ref mut name) = name {
         normalize(name.to_mut());
+    }
+
+    if parser.body_has_generated(&BLOCK_CODE) {
+        let source = parser.full_text().inner();
+        let owner_start = source[..parser.current().span.start]
+            .rfind("[[")
+            .expect("parsed code head has an opener");
+        let _ = parser.get_body_text(&BLOCK_CODE)?;
+        let owner_end = parser.current().span.start;
+        let generated = parser.generated_in_range(owner_start..owner_end);
+        return success_elements(Element::Delayed(DelayedElement::shell(
+            source,
+            owner_start..owner_end,
+            &generated,
+        )));
     }
 
     let code = parser.get_body_text(&BLOCK_CODE)?;

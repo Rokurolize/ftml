@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use crate::delayed::DelayedElement;
 use crate::parsing::rule::impls::block::parser::BlockBodyStart;
 use crate::tree::AcceptsPartial;
 use std::borrow::Cow;
@@ -164,6 +165,20 @@ fn parse_fn<'r, 't>(
             ParseErrorKind::BlockExpectedEnd
         };
         return Err(parser.make_err(kind));
+    }
+    if parser.settings().layout.legacy() && parser.body_has_generated(&BLOCK_DIV) {
+        let source = parser.full_text().inner();
+        let owner_start = source[..parser.current().span.start]
+            .rfind("[[")
+            .expect("parsed div head has an opener");
+        let _ = parser.get_body_text(&BLOCK_DIV)?;
+        let owner_end = parser.current().span.start;
+        let generated = parser.generated_in_range(owner_start..owner_end);
+        return success_elements(Element::Delayed(DelayedElement::shell(
+            source,
+            owner_start..owner_end,
+            &generated,
+        )));
     }
 
     // "div" means we wrap in paragraphs, like normal

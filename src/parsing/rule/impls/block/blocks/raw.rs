@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 use super::prelude::*;
+use crate::delayed::DelayedElement;
 use std::borrow::Cow;
 
 // NOTE: "accepts_newlines" needs to be false here to avoid end trimming from get_body_text
@@ -43,10 +44,27 @@ fn parse_fn<'r, 't>(
 
     assert_block_name(&BLOCK_RAW, name);
 
-    if parser.settings().layout.legacy() && !parser.discarding_hidden_body()
-        || parser.native_blockquote_depth().is_some()
-    {
+    if parser.native_blockquote_depth().is_some() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
+    if parser.settings().layout.legacy() && !parser.discarding_hidden_body() {
+        let source = parser.full_text().inner();
+        let owner_start = source[..parser.current().span.start]
+            .rfind("[[")
+            .expect("parsed raw head has an opener");
+        let _arguments = parser.get_head_map_wikidot(&BLOCK_RAW, in_head)?;
+        if !parser.body_has_generated(&BLOCK_RAW) {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+        let _ = parser.get_body_text(&BLOCK_RAW)?;
+        let owner_end = parser.current().span.start;
+        let generated = parser.generated_in_range(owner_start..owner_end);
+        return success_elements(Element::Delayed(DelayedElement::shell(
+            source,
+            owner_start..owner_end,
+            &generated,
+        )));
     }
 
     let mut content = parser.get_body_text(&BLOCK_RAW)?;

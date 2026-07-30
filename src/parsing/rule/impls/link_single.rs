@@ -25,6 +25,7 @@
 //! Its syntax is `[https://example.com/ Label text]`.
 
 use super::prelude::*;
+use crate::delayed::{DelayedElement, GeneratedKind};
 use crate::tree::{AnchorTarget, LinkLabel, LinkLocation, LinkType};
 use crate::url::is_url;
 
@@ -71,6 +72,21 @@ fn try_consume_link<'r, 't>(
         parser.settings().layout.legacy() && is_javascript_url(url);
     if !url_valid(url) && !wikidot_javascript_fallback {
         return Err(parser.make_err(ParseErrorKind::InvalidUrl));
+    }
+
+    if target.is_none()
+        && let Some(generated) = parser.current_generated().cloned()
+        && generated.kind == GeneratedKind::TagLinks
+    {
+        parser.step()?;
+        if parser.current().token != Token::RightBracket {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+        parser.step()?;
+        return success_elements(Element::Delayed(DelayedElement::tag_external_label(
+            generated.id,
+            url,
+        )));
     }
 
     // Gather label for link

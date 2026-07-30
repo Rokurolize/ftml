@@ -163,6 +163,8 @@ pub enum Token {
     EscapedDoubleQuote,
     EscapedBackslash,
     DiscardedControl,
+    GeneratedPageLink,
+    GeneratedTagLinks,
 
     //
     // Miscellaneous

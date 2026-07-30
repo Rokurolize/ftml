@@ -76,6 +76,7 @@ pub use self::result::{
     ParseResult, ParseSuccess, success_elements, success_elements_with_paragraph_safety,
     success_value,
 };
+pub(crate) use self::rule::impls::decode_semicolon_entities;
 pub use self::token::{ExtractedToken, Token};
 
 /// Parse through the given tokens and produce an AST.

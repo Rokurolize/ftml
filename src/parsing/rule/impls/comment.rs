@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use crate::delayed::{DelayedElement, GeneratedInput};
 
 pub const RULE_COMMENT: Rule = Rule {
     name: "comment",
@@ -32,6 +33,7 @@ fn try_consume_fn<'r, 't>(
     debug!("Consuming tokens until end of comment");
 
     assert_step(parser, Token::LeftComment)?;
+    let mut generated = Vec::<GeneratedInput>::new();
 
     loop {
         if parser.settings().layout.legacy()
@@ -42,6 +44,9 @@ fn try_consume_fn<'r, 't>(
         }
 
         let token = parser.current().token;
+        if let Some(slot) = parser.current_generated().cloned() {
+            generated.push(slot);
+        }
 
         trace!("Received token '{}' inside comment", token.name());
 
@@ -50,7 +55,13 @@ fn try_consume_fn<'r, 't>(
             Token::RightComment => {
                 trace!("Reached end of comment, returning");
                 parser.step()?;
-                return ok!(Elements::None);
+                return if generated.is_empty() {
+                    ok!(Elements::None)
+                } else {
+                    success_elements(Element::Delayed(DelayedElement::omitted(
+                        &generated,
+                    )))
+                };
             }
 
             // Wikidot accepts any run of at least two hyphens immediately
@@ -60,7 +71,13 @@ fn try_consume_fn<'r, 't>(
             _ if let Some(token_count) = wikidot_extended_closer_token_count(parser) => {
                 trace!("Reached extended Wikidot comment closer, returning");
                 parser.step_n(token_count)?;
-                return ok!(Elements::None);
+                return if generated.is_empty() {
+                    ok!(Elements::None)
+                } else {
+                    success_elements(Element::Delayed(DelayedElement::omitted(
+                        &generated,
+                    )))
+                };
             }
 
             // Hit the end of the input, abort

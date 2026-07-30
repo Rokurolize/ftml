@@ -472,6 +472,11 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
     let current = parser.current();
 
     for &rule in get_rules_for_token(current) {
+        if rule.name() == "delayed-conditional"
+            && parser.generated_until_right_block().is_empty()
+        {
+            continue;
+        }
         let old_remaining = parser.remaining();
         let footnote_count = parser.footnote_count();
         match rule.try_consume(parser) {

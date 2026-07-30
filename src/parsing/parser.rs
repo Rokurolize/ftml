@@ -24,6 +24,7 @@ use super::hidden_body::HiddenBodyBoundary;
 use super::prelude::*;
 use super::rule::Rule;
 use crate::data::PageInfo;
+use crate::delayed::{GeneratedInput, elements_contain_delayed};
 use crate::render::text::TextRender;
 use crate::tokenizer::Tokenization;
 use crate::tree::{
@@ -34,6 +35,7 @@ use std::borrow::Cow;
 use std::cell::Cell;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::ops::Range;
 use std::rc::Rc;
 use std::{mem, ptr};
 
@@ -107,6 +109,7 @@ pub struct Parser<'r, 't> {
     current: &'r ExtractedToken<'t>,
     remaining: &'r [ExtractedToken<'t>],
     full_text: FullText<'t>,
+    generated: &'r BTreeMap<usize, GeneratedInput>,
 
     // Rule state
     rule: Rule,
@@ -207,6 +210,7 @@ impl<'r, 't> Parser<'r, 't> {
             current,
             remaining,
             full_text,
+            generated: tokenization.generated(),
             rule: RULE_PAGE,
             depth: 0,
             max_recursion_depth,
@@ -245,6 +249,56 @@ impl<'r, 't> Parser<'r, 't> {
     #[inline]
     pub fn full_text(&self) -> FullText<'t> {
         self.full_text
+    }
+
+    #[inline]
+    pub(crate) fn current_generated(&self) -> Option<&GeneratedInput> {
+        match self.current.token {
+            Token::GeneratedPageLink | Token::GeneratedTagLinks => {
+                self.generated.get(&self.current.span.start)
+            }
+            _ => None,
+        }
+    }
+
+    #[inline]
+    pub(crate) fn generated_for(
+        &self,
+        token: &ExtractedToken<'_>,
+    ) -> Option<&GeneratedInput> {
+        match token.token {
+            Token::GeneratedPageLink | Token::GeneratedTagLinks => {
+                self.generated.get(&token.span.start)
+            }
+            _ => None,
+        }
+    }
+
+    pub(crate) fn generated_until_right_block(&self) -> Vec<GeneratedInput> {
+        std::iter::once(self.current())
+            .chain(self.remaining())
+            .take_while(|token| {
+                !matches!(
+                    token.token,
+                    Token::RightBlock
+                        | Token::LineBreak
+                        | Token::ParagraphBreak
+                        | Token::InputEnd
+                )
+            })
+            .filter_map(|token| self.generated_for(token).cloned())
+            .collect()
+    }
+
+    pub(crate) fn has_generated_in_range(&self, range: Range<usize>) -> bool {
+        self.generated.range(range).next().is_some()
+    }
+
+    pub(crate) fn generated_in_range(&self, range: Range<usize>) -> Vec<GeneratedInput> {
+        self.generated
+            .range(range)
+            .map(|(_, input)| input.clone())
+            .collect()
     }
 
     #[inline]
@@ -596,10 +650,15 @@ impl<'r, 't> Parser<'r, 't> {
         // Headings are 1-indexed (e.g. H1), but depth lists are 0-indexed
         let level = usize::from(heading.value()) - 1;
 
-        // Render name as text, so it lacks formatting
-        let page_info = self.page_info;
-        let settings = self.settings;
-        let name = TextRender.render_partial(name_elements, page_info, settings, 0);
+        // Delayed List-mode headings cannot be rendered before their generated
+        // leaves bind. The delayed API records their exact TOC positions out
+        // of band and fills these private placeholders only after binding.
+        let name = if elements_contain_delayed(name_elements) {
+            String::new()
+        } else {
+            // Render name as text, so it lacks formatting.
+            TextRender.render_partial(name_elements, self.page_info, self.settings, 0)
+        };
 
         self.table_of_contents.borrow_mut().push((level, name));
     }

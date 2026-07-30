@@ -93,6 +93,11 @@ impl<'t> Bibliography<'t> {
         &self.0
     }
 
+    #[inline]
+    pub(crate) fn slice_mut(&mut self) -> &mut [(Cow<'t, str>, Vec<Element<'t>>)] {
+        &mut self.0
+    }
+
     pub fn to_owned(&self) -> Bibliography<'static> {
         Bibliography(
             self.0
@@ -158,6 +163,11 @@ impl<'t> BibliographyList<'t> {
     #[inline]
     pub fn slice(&self) -> &[Bibliography<'t>] {
         &self.0
+    }
+
+    #[inline]
+    pub(crate) fn slice_mut(&mut self) -> &mut [Bibliography<'t>] {
+        &mut self.0
     }
 
     pub fn to_owned(&self) -> BibliographyList<'static> {

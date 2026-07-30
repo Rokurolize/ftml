@@ -118,6 +118,7 @@ mod utf16;
 pub mod wasm;
 
 pub mod data;
+pub mod delayed;
 pub mod includes;
 pub mod info;
 pub mod layout;

@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 use super::prelude::*;
+use crate::delayed::DelayedElement;
 use std::borrow::Cow;
 
 // NOTE: "accepts_newlines" needs to be false here to avoid end trimming from get_body_text
@@ -43,10 +44,37 @@ fn parse_fn<'r, 't>(
 
     assert_block_name(&BLOCK_RAW, name);
 
-    if parser.settings().layout.legacy() && !parser.discarding_hidden_body()
-        || parser.native_blockquote_depth().is_some()
-    {
+    if parser.native_blockquote_depth().is_some() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
+    if parser.settings().layout.legacy() && !parser.discarding_hidden_body() {
+        let source = parser.full_text().inner();
+        let owner_start = (name.as_ptr() as usize)
+            .checked_sub(source.as_ptr() as usize + 2)
+            .expect("parsed raw name follows its opener");
+        let mut owner = parser.clone();
+        if in_head {
+            while !matches!(owner.current().token, Token::RightBlock | Token::InputEnd) {
+                owner.step()?;
+            }
+            owner.get_token(
+                Token::RightBlock,
+                ParseErrorKind::BlockMissingCloseBrackets,
+            )?;
+        }
+        let _ = owner.get_body_text(&BLOCK_RAW)?;
+        let owner_end = owner.current().span.start;
+        let generated = owner.generated_in_range(owner_start..owner_end);
+        if generated.is_empty() {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+        parser.update(&owner);
+        return success_elements(Element::Delayed(DelayedElement::shell(
+            source,
+            owner_start..owner_end,
+            &generated,
+        )));
     }
 
     let mut content = parser.get_body_text(&BLOCK_RAW)?;

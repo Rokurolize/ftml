@@ -122,6 +122,9 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         Element::Raw(text) => render_wikitext_raw(ctx, text),
         Element::Variable(name) => render_variable(ctx, name),
         Element::Email(email) => render_email(ctx, email),
+        Element::Delayed(_) => {
+            panic!("unbound delayed element reached the HTML renderer")
+        }
         Element::Table(table) => render_table(ctx, table),
         Element::TabView(tabs) => render_tabview(ctx, tabs),
         Element::Anchor {

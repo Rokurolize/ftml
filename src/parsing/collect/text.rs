@@ -60,6 +60,13 @@ where
     let (start, mut end) = (parser.current(), None);
 
     loop {
+        if matches!(
+            parser.current().token,
+            Token::GeneratedPageLink | Token::GeneratedTagLinks
+        ) {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+
         if parser.evaluate_any(closes) {
             let last = parser.current();
             let slice = match (start, end) {

@@ -210,14 +210,14 @@ impl<'t> ParagraphStack<'t> {
                 alignment: Some(_),
                 ..
             }
-        );
+        ) || matches!(&element, Element::Delayed(delayed) if matches!(delayed.image_alignment(), Some(Some(_))));
         let unaligned_image = matches!(
             element,
             Element::Image {
                 alignment: None,
                 ..
             }
-        );
+        ) || matches!(&element, Element::Delayed(delayed) if delayed.image_alignment() == Some(None));
         let wikidot_html_block = self.wikidot && matches!(element, Element::Html { .. });
         let wikidot_section_marker = self.wikidot
             && matches!(

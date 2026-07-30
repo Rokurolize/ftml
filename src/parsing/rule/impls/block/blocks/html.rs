@@ -43,6 +43,10 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "HTML doesn't allow score flag");
     assert_block_name(&BLOCK_HTML, name);
 
+    if !parser.settings().enable_html_blocks {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     if parser.settings().layout.legacy() && !parser.discarding_hidden_body() && in_head {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
@@ -159,5 +163,69 @@ mod tests {
 
         assert!(tree.html_blocks.is_empty(), "{tree:#?}");
         assert!(!format!("{tree:?}").contains("Html {"), "{tree:#?}");
+    }
+
+    #[test]
+    fn wikidot_html_blocks_can_be_kept_literal_by_the_caller() {
+        let page_info = PageInfo::dummy();
+        let mut settings =
+            WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        settings.enable_html_blocks = false;
+        let tokenization =
+            crate::tokenize("[[html]]\n<strong>isolated</strong>\n[[/html]]");
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(tree.html_blocks.is_empty(), "{tree:#?}");
+        assert_eq!(
+            crate::render::html::HtmlRender
+                .render(&tree, &page_info, &settings)
+                .body,
+            "<p>[[html]]<br>\n&lt;strong&gt;isolated&lt;/strong&gt;<br>\n[[/html]]</p>",
+        );
+    }
+
+    #[test]
+    fn disabled_wikidot_html_blocks_keep_preview_shapes_literal() {
+        let page_info = PageInfo::dummy();
+        let mut settings =
+            WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        settings.enable_html_blocks = false;
+
+        for (source, expected) in [
+            (
+                "[[html]]<b>X</b>[[/html]]",
+                "<p>[[html]]&lt;b&gt;X&lt;/b&gt;[[/html]]</p>",
+            ),
+            (
+                "BEFORE|[[html]]\n<b>X</b>\n[[/html]]|AFTER",
+                "<p>BEFORE|[[html]]<br>\n&lt;b&gt;X&lt;/b&gt;<br>\n[[/html]]|AFTER</p>",
+            ),
+            (
+                " [[html]]\n<b>X</b>\n[[/html]]",
+                "<p>[[html]]<br>\n&lt;b&gt;X&lt;/b&gt;<br>\n[[/html]]</p>",
+            ),
+            (
+                "> [[html]]\n> <b>X</b>\n> [[/html]]",
+                "<blockquote><p>[[html]]<br>\n&lt;b&gt;X&lt;/b&gt;<br>\n[[/html]]</p></blockquote>",
+            ),
+            (
+                "[[html class=\"probe\"]]\n<b>X</b>\n[[/html]]",
+                "<p>[[html class=&quot;probe&quot;]]<br>\n&lt;b&gt;X&lt;/b&gt;<br>\n[[/html]]</p>",
+            ),
+            (
+                "[[html]]\n<b>unclosed</b>",
+                "<p>[[html]]<br>\n&lt;b&gt;unclosed&lt;/b&gt;</p>",
+            ),
+        ] {
+            let tokenization = crate::tokenize(source);
+            let (tree, _errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = crate::render::html::HtmlRender
+                .render(&tree, &page_info, &settings)
+                .body;
+
+            assert!(tree.html_blocks.is_empty(), "{source:?}: {tree:#?}");
+            assert_eq!(html, expected, "{source:?}");
+        }
     }
 }

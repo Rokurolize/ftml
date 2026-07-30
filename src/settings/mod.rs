@@ -27,6 +27,7 @@ use std::str::FromStr;
 pub use self::interwiki::{DEFAULT_INTERWIKI, EMPTY_INTERWIKI, InterwikiSettings};
 
 const DEFAULT_MINIFY_CSS: bool = true;
+const DEFAULT_ENABLE_HTML_BLOCKS: bool = true;
 
 /// Settings to tweak behavior in the ftml parser and renderer.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -48,6 +49,13 @@ pub struct WikitextSettings {
     /// * Table of Contents
     /// * Button
     pub enable_page_syntax: bool,
+
+    /// Whether `[[html]]` blocks are interpreted as hosted HTML blocks.
+    ///
+    /// Callers disable this in lifecycle contexts, such as an unsaved Wikidot page
+    /// preview, where the same source is intentionally rendered as literal text.
+    #[serde(default = "default_enable_html_blocks")]
+    pub enable_html_blocks: bool,
 
     /// Whether IDs should have true values, or be excluded or randomly generated.
     ///
@@ -103,6 +111,7 @@ impl WikitextSettings {
                 mode,
                 layout,
                 enable_page_syntax: true,
+                enable_html_blocks: DEFAULT_ENABLE_HTML_BLOCKS,
                 use_true_ids: true,
                 isolate_user_ids: layout == Layout::Wikidot,
                 minify_css: DEFAULT_MINIFY_CSS,
@@ -113,6 +122,7 @@ impl WikitextSettings {
                 mode,
                 layout,
                 enable_page_syntax: true,
+                enable_html_blocks: DEFAULT_ENABLE_HTML_BLOCKS,
                 use_true_ids: false,
                 isolate_user_ids: false,
                 minify_css: DEFAULT_MINIFY_CSS,
@@ -123,6 +133,7 @@ impl WikitextSettings {
                 mode,
                 layout,
                 enable_page_syntax: true,
+                enable_html_blocks: DEFAULT_ENABLE_HTML_BLOCKS,
                 use_true_ids: false,
                 isolate_user_ids: layout == Layout::Wikidot,
                 minify_css: DEFAULT_MINIFY_CSS,
@@ -133,6 +144,7 @@ impl WikitextSettings {
                 mode,
                 layout,
                 enable_page_syntax: false,
+                enable_html_blocks: DEFAULT_ENABLE_HTML_BLOCKS,
                 use_true_ids: false,
                 isolate_user_ids: false,
                 minify_css: DEFAULT_MINIFY_CSS,
@@ -143,6 +155,7 @@ impl WikitextSettings {
                 mode,
                 layout,
                 enable_page_syntax: true,
+                enable_html_blocks: DEFAULT_ENABLE_HTML_BLOCKS,
                 use_true_ids: false,
                 isolate_user_ids: false,
                 minify_css: DEFAULT_MINIFY_CSS,
@@ -160,6 +173,10 @@ impl WikitextSettings {
             Incrementer::disabled()
         }
     }
+}
+
+const fn default_enable_html_blocks() -> bool {
+    DEFAULT_ENABLE_HTML_BLOCKS
 }
 
 /// What mode parsing and rendering is done in.

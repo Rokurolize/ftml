@@ -20,6 +20,7 @@
 
 use super::super::prelude::*;
 use super::mapping::{get_block_rule_with_name, get_block_rule_with_name_for_layout};
+use super::{BlockRule, blocks::BLOCK_HTML};
 
 pub const RULE_BLOCK: Rule = Rule {
     name: "block",
@@ -72,7 +73,9 @@ fn block_skip<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
             get_block_rule_with_name_for_layout(name, parser.settings().layout)
         };
         match block {
-            Some(block_rule) => Ok(block_rule.accepts_newlines),
+            Some(block_rule) => {
+                Ok(block_rule.accepts_newlines && block_rule_enabled(parser, block_rule))
+            }
             None => Ok(false),
         }
     });
@@ -82,6 +85,10 @@ fn block_skip<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
     } else {
         Err(parser.make_err(ParseErrorKind::RuleFailed))
     }
+}
+
+fn block_rule_enabled(parser: &Parser<'_, '_>, block_rule: &BlockRule) -> bool {
+    block_rule.name != BLOCK_HTML.name || parser.settings().enable_html_blocks
 }
 
 // Block parsing implementation
@@ -124,6 +131,9 @@ where
         Some(block) => block,
         None => return Err(parser.make_err(ParseErrorKind::NoSuchBlock)),
     };
+    if !block_rule_enabled(parser, block) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     if parser.settings().layout.legacy()
         && !parser.discarding_hidden_body()
         && block.name == "block-collapsible"

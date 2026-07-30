@@ -56,6 +56,7 @@ fn isolate_user_ids() {
         mode: WikitextMode::Page,
         layout: Layout::Wikijump,
         enable_page_syntax: true,
+        enable_html_blocks: true,
         use_true_ids: true,
         isolate_user_ids: true,
         minify_css: false,

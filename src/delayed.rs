@@ -352,7 +352,7 @@ impl<'t> DelayedElement<'t> {
         Self {
             node: DelayedNode::PageConditionalRecovery {
                 id,
-                false_branch: Cow::Borrowed(false_branch),
+                false_branch: decode_semicolon_entities(false_branch),
             },
         }
     }
@@ -859,7 +859,7 @@ fn resolve_delayed(
             };
             Ok(vec![Element::Text(Cow::Owned(format!(
                 "[[[{}] | {}]]",
-                page.page(),
+                legacy_page_target(page),
                 false_branch,
             )))])
         }
@@ -931,13 +931,15 @@ fn append_shell_source<'t>(atoms: &mut Vec<RecoveryAtom<'t>>, mut source: &'t st
             == Some(&b'\r');
         let text_end = newline.saturating_sub(usize::from(has_carriage_return));
         if text_end > 0 {
-            atoms.push(RecoveryAtom::Source(Cow::Borrowed(&source[..text_end])));
+            atoms.push(RecoveryAtom::Source(decode_semicolon_entities(
+                &source[..text_end],
+            )));
         }
         atoms.push(RecoveryAtom::LineBreak);
         source = &source[newline + 1..];
     }
     if !source.is_empty() {
-        atoms.push(RecoveryAtom::Source(Cow::Borrowed(source)));
+        atoms.push(RecoveryAtom::Source(decode_semicolon_entities(source)));
     }
 }
 
@@ -1010,7 +1012,7 @@ fn legacy_source(
     match value {
         GeneratedValue::PageLink { page, label } => Ok(format!(
             "[[[{} | {}]]]",
-            page.page(),
+            legacy_page_target(page),
             label.replace(['[', ']'], ""),
         )),
         GeneratedValue::TagLinks { tags, separator } => Ok(tags
@@ -1019,6 +1021,20 @@ fn legacy_source(
             .collect::<Vec<_>>()
             .join(separator)),
     }
+}
+
+fn legacy_page_target(page: &PageRef) -> String {
+    let mut target = String::new();
+    if let Some(site) = page.site() {
+        target.push(':');
+        target.push_str(site);
+        target.push(':');
+    }
+    target.push_str(page.page());
+    if let Some(extra) = page.extra() {
+        target.push_str(extra);
+    }
+    target
 }
 
 fn legacy_tag_source(tag: &ResolvedTagRef<'_>) -> String {

@@ -50,16 +50,26 @@ fn parse_fn<'r, 't>(
 
     if parser.settings().layout.legacy() && !parser.discarding_hidden_body() {
         let source = parser.full_text().inner();
-        let owner_start = source[..parser.current().span.start]
-            .rfind("[[")
-            .expect("parsed raw head has an opener");
-        let _arguments = parser.get_head_map_wikidot(&BLOCK_RAW, in_head)?;
-        if !parser.body_has_generated(&BLOCK_RAW) {
+        let owner_start = (name.as_ptr() as usize)
+            .checked_sub(source.as_ptr() as usize + 2)
+            .expect("parsed raw name follows its opener");
+        let mut owner = parser.clone();
+        if in_head {
+            while !matches!(owner.current().token, Token::RightBlock | Token::InputEnd) {
+                owner.step()?;
+            }
+            owner.get_token(
+                Token::RightBlock,
+                ParseErrorKind::BlockMissingCloseBrackets,
+            )?;
+        }
+        let _ = owner.get_body_text(&BLOCK_RAW)?;
+        let owner_end = owner.current().span.start;
+        let generated = owner.generated_in_range(owner_start..owner_end);
+        if generated.is_empty() {
             return Err(parser.make_err(ParseErrorKind::RuleFailed));
         }
-        let _ = parser.get_body_text(&BLOCK_RAW)?;
-        let owner_end = parser.current().span.start;
-        let generated = parser.generated_in_range(owner_start..owner_end);
+        parser.update(&owner);
         return success_elements(Element::Delayed(DelayedElement::shell(
             source,
             owner_start..owner_end,

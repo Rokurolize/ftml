@@ -28,11 +28,18 @@ fn page_link_input(source: &str) -> DelayedInput<'_> {
 }
 
 fn page_bindings() -> SlotBindings<'static> {
+    page_bindings_for(
+        PageRef::page_only("component:image-block"),
+        "Standard Image Block",
+    )
+}
+
+fn page_bindings_for(page: PageRef, label: &'static str) -> SlotBindings<'static> {
     SlotBindings::new(vec![(
         SlotId::new(1),
         GeneratedValue::PageLink {
-            page: PageRef::page_only("component:image-block"),
-            label: Cow::Borrowed("Standard Image Block"),
+            page,
+            label: Cow::Borrowed(label),
         },
     )])
     .expect("unique bindings")
@@ -44,11 +51,18 @@ fn render(source: &str) -> String {
 }
 
 fn render_input(input: &DelayedInput<'_>) -> String {
+    render_input_with_bindings(input, &page_bindings())
+}
+
+fn render_input_with_bindings(
+    input: &DelayedInput<'_>,
+    bindings: &SlotBindings<'_>,
+) -> String {
     let page_info = PageInfo::dummy();
     let settings = WikitextSettings::from_mode(WikitextMode::List, Layout::Wikidot);
     let delayed = parse_delayed_list(input, &page_info, &settings)
         .expect("supported delayed input");
-    let bound = delayed.bind(&page_bindings()).expect("matching bindings");
+    let bound = delayed.bind(bindings).expect("matching bindings");
     bound.render_html(&page_info, &settings).body().to_owned()
 }
 
@@ -432,6 +446,88 @@ fn delayed_code_shell_keeps_the_parsed_opener() {
             "<a href=\"/component:image-block\">Standard Image Block</a>",
             "<br>\n[[/code]]|END</p>",
         ),
+    );
+}
+
+#[test]
+fn delayed_raw_recovery_owns_uninterpreted_heads() {
+    let source = concat!(
+        "BEGIN|[[raw probe=\"%%title_linked%%\"]]\n",
+        "**AUTHORED**\n",
+        "[[/raw]]|END",
+    );
+    assert_eq!(
+        render(source),
+        concat!(
+            "<p>BEGIN|[[raw probe=&quot;",
+            "<a href=\"/component:image-block\">Standard Image Block</a>",
+            "&quot;]]<br>\n**AUTHORED**<br>\n[[/raw]]|END</p>",
+        ),
+    );
+
+    let source = concat!(
+        "BEGIN|[[raw malformed=\"unterminated]]\n",
+        "**AUTHORED** %%title_linked%%\n",
+        "[[/raw]]|END",
+    );
+    assert_eq!(
+        render(source),
+        concat!(
+            "<p>BEGIN|[[raw malformed=&quot;unterminated]]<br>\n",
+            "**AUTHORED** ",
+            "<a href=\"/component:image-block\">Standard Image Block</a>",
+            "<br>\n[[/raw]]|END</p>",
+        ),
+    );
+}
+
+#[test]
+fn recovery_projections_preserve_complete_page_references() {
+    let bindings = page_bindings_for(
+        PageRef::page_and_site("Other Wiki", "Target Page#toc2"),
+        "Remote Target",
+    );
+
+    for (source, expected) in [
+        (
+            "@@%%title_linked%%@@",
+            concat!(
+                r#"<p><span style="white-space: pre-wrap;">"#,
+                "[[[:other-wiki:target-page#toc2 | Remote Target]]]",
+                "</span></p>",
+            ),
+        ),
+        (
+            "[[#if true | %%title_linked%% | FALLBACK]]",
+            "<p>[[[:other-wiki:target-page#toc2] | FALLBACK]]</p>",
+        ),
+    ] {
+        let input = page_link_input(source);
+        assert_eq!(
+            render_input_with_bindings(&input, &bindings),
+            expected,
+            "source: {source}",
+        );
+    }
+}
+
+#[test]
+fn recovery_source_decodes_semicolon_entities_once() {
+    assert_eq!(
+        render(concat!(
+            "[[code]]\n",
+            "&amp; %%title_linked%%\n",
+            "[[/code]]",
+        )),
+        concat!(
+            "<p>[[code]]<br>\n&amp; ",
+            "<a href=\"/component:image-block\">Standard Image Block</a>",
+            "<br>\n[[/code]]</p>",
+        ),
+    );
+    assert_eq!(
+        render("[[#if true | %%title_linked%% | A &amp; B]]"),
+        "<p>[[[component:image-block] | A &amp; B]]</p>",
     );
 }
 

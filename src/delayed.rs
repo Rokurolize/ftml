@@ -7,7 +7,7 @@
 mod toc;
 
 use crate::data::{PageInfo, PageRef};
-use crate::parsing::{ParseError, parse};
+use crate::parsing::{ParseError, decode_semicolon_entities, parse};
 #[cfg(feature = "html")]
 use crate::render::Render;
 #[cfg(feature = "html")]
@@ -229,13 +229,18 @@ enum DelayedNode<'t> {
         id: SlotId,
         url: Cow<'t, str>,
     },
-    TagImage {
-        source: FileSource<'t>,
-        alignment: Option<FloatAlignment>,
-        attributes: AttributeMap<'t>,
-        attribute: GeneratedImageAttribute,
-        id: SlotId,
-    },
+    TagImage(Box<DelayedTagImage<'t>>),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+struct DelayedTagImage<'t> {
+    source: FileSource<'t>,
+    link: Option<LinkLocation<'t>>,
+    alignment: Option<FloatAlignment>,
+    attributes: AttributeMap<'t>,
+    attribute: GeneratedImageAttribute,
+    suffix: Cow<'t, str>,
+    id: SlotId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
@@ -278,7 +283,7 @@ impl<'t> DelayedElement<'t> {
             debug_assert!(slot.source_range.start >= cursor);
             debug_assert!(slot.source_range.end <= content_range.end);
             if cursor < slot.source_range.start {
-                atoms.push(RecoveryAtom::Source(Cow::Borrowed(
+                atoms.push(RecoveryAtom::Source(decode_semicolon_entities(
                     &source[cursor..slot.source_range.start],
                 )));
             }
@@ -289,7 +294,7 @@ impl<'t> DelayedElement<'t> {
             cursor = slot.source_range.end;
         }
         if cursor < content_range.end {
-            atoms.push(RecoveryAtom::Source(Cow::Borrowed(
+            atoms.push(RecoveryAtom::Source(decode_semicolon_entities(
                 &source[cursor..content_range.end],
             )));
         }
@@ -300,19 +305,23 @@ impl<'t> DelayedElement<'t> {
 
     pub(crate) fn tag_image(
         source: FileSource<'t>,
+        link: Option<LinkLocation<'t>>,
         alignment: Option<FloatAlignment>,
         attributes: AttributeMap<'t>,
         attribute: GeneratedImageAttribute,
+        suffix: &'t str,
         id: SlotId,
     ) -> Self {
         Self {
-            node: DelayedNode::TagImage {
+            node: DelayedNode::TagImage(Box::new(DelayedTagImage {
                 source,
+                link,
                 alignment,
                 attributes,
                 attribute,
+                suffix: Cow::Borrowed(suffix),
                 id,
-            },
+            })),
         }
     }
 
@@ -359,7 +368,7 @@ impl<'t> DelayedElement<'t> {
 
     pub(crate) fn image_alignment(&self) -> Option<Option<FloatAlignment>> {
         match &self.node {
-            DelayedNode::TagImage { alignment, .. } => Some(*alignment),
+            DelayedNode::TagImage(image) => Some(image.alignment),
             _ => None,
         }
     }
@@ -369,7 +378,7 @@ impl<'t> DelayedElement<'t> {
             DelayedNode::Active { .. }
             | DelayedNode::PageConditionalRecovery { .. }
             | DelayedNode::TagExternalLabel { .. }
-            | DelayedNode::TagImage { .. } => 1,
+            | DelayedNode::TagImage(_) => 1,
             DelayedNode::Omitted { slots } => slots.len(),
             DelayedNode::Raw { atoms } | DelayedNode::Shell { atoms } => atoms
                 .iter()
@@ -408,19 +417,17 @@ impl<'t> DelayedElement<'t> {
                 id: *id,
                 url: Cow::Owned(url.to_string()),
             },
-            DelayedNode::TagImage {
-                source,
-                alignment,
-                attributes,
-                attribute,
-                id,
-            } => DelayedNode::TagImage {
-                source: source.to_owned(),
-                alignment: *alignment,
-                attributes: attributes.to_owned(),
-                attribute: *attribute,
-                id: *id,
-            },
+            DelayedNode::TagImage(image) => {
+                DelayedNode::TagImage(Box::new(DelayedTagImage {
+                    source: image.source.to_owned(),
+                    link: image.link.as_ref().map(LinkLocation::to_owned),
+                    alignment: image.alignment,
+                    attributes: image.attributes.to_owned(),
+                    attribute: image.attribute,
+                    suffix: Cow::Owned(image.suffix.to_string()),
+                    id: image.id,
+                }))
+            }
         };
         DelayedElement { node }
     }
@@ -881,28 +888,24 @@ fn resolve_delayed(
                 Element::Text(Cow::Owned(trailing)),
             ])
         }
-        DelayedNode::TagImage {
-            source,
-            alignment,
-            attributes,
-            attribute,
-            id,
-        } => {
-            let generated = legacy_source(*id, GeneratedKind::TagLinks, bindings)?;
-            let mut attributes = attributes.to_owned();
-            let link = match attribute {
+        DelayedNode::TagImage(image) => {
+            let mut generated =
+                legacy_source(image.id, GeneratedKind::TagLinks, bindings)?;
+            generated.push_str(&image.suffix);
+            let mut attributes = image.attributes.to_owned();
+            let link = match image.attribute {
                 GeneratedImageAttribute::Alt => {
                     attributes.insert("alt", Cow::Owned(generated));
-                    None
+                    image.link.as_ref().map(LinkLocation::to_owned)
                 }
                 GeneratedImageAttribute::Link => Some(LinkLocation::Url(Cow::Owned(
                     format!("/{}", generated.replace(' ', "%20"),),
                 ))),
             };
             Ok(vec![Element::Image {
-                source: source.to_owned(),
+                source: image.source.to_owned(),
                 link,
-                alignment: *alignment,
+                alignment: image.alignment,
                 attributes,
             }])
         }

@@ -55,14 +55,14 @@ fn parse_fn<'r, 't>(
     let generated_image = match generated.as_slice() {
         [] => None,
         [slot] => {
-            let key = delayed_image_attribute_key(parser.full_text().inner(), slot)
+            let (key, suffix) = delayed_image_attribute(parser.full_text().inner(), slot)
                 .ok_or_else(|| parser.make_err(ParseErrorKind::RuleFailed))?;
             let attribute = match key {
                 "alt" => GeneratedImageAttribute::Alt,
                 "link" => GeneratedImageAttribute::Link,
                 _ => return Err(parser.make_err(ParseErrorKind::RuleFailed)),
             };
-            Some((slot.clone(), attribute))
+            Some((slot.clone(), attribute, suffix))
         }
         _ => return Err(parser.make_err(ParseErrorKind::RuleFailed)),
     };
@@ -88,7 +88,7 @@ fn parse_fn<'r, 't>(
         None => return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments)),
     };
 
-    if let Some((slot, attribute)) = generated_image {
+    if let Some((slot, attribute, suffix)) = generated_image {
         match attribute {
             GeneratedImageAttribute::Alt => {
                 let _ = arguments.get("alt");
@@ -99,9 +99,11 @@ fn parse_fn<'r, 't>(
         }
         return success_elements(Element::Delayed(DelayedElement::tag_image(
             source,
+            link,
             alignment,
             arguments.to_attribute_map(parser.settings()),
             attribute,
+            suffix,
             slot.id,
         )));
     }
@@ -117,10 +119,10 @@ fn parse_fn<'r, 't>(
     success_elements(element)
 }
 
-fn delayed_image_attribute_key<'a>(
+fn delayed_image_attribute<'a>(
     source: &'a str,
     slot: &crate::delayed::GeneratedInput,
-) -> Option<&'a str> {
+) -> Option<(&'a str, &'a str)> {
     let prefix = &source[..slot.source_range.start];
     let equals = prefix.rfind('=')?;
     if !prefix[equals + 1..]
@@ -135,7 +137,17 @@ fn delayed_image_attribute_key<'a>(
         })
         .map_or(0, |position| position + 1);
     let key = &prefix[key_start..equals];
-    (!key.is_empty()).then_some(key)
+    let quote = *source
+        .as_bytes()
+        .get(slot.source_range.start.checked_sub(1)?)?;
+    if !matches!(quote, b'"' | b'\'') {
+        return None;
+    }
+    let suffix_end = source[slot.source_range.end..]
+        .bytes()
+        .position(|byte| byte == quote)?;
+    let suffix = &source[slot.source_range.end..slot.source_range.end + suffix_end];
+    (!key.is_empty()).then_some((key, suffix))
 }
 
 #[cfg(test)]

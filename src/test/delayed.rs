@@ -327,6 +327,40 @@ fn tag_external_label_recovery_matches_zero_one_and_many_textual_tags() {
 }
 
 #[test]
+fn delayed_image_attributes_preserve_authored_link_and_suffix() {
+    let linked =
+        render_tag(r#"[[image x.png alt="%%tags_linked%%" link="https://example.com"]]"#);
+    assert!(
+        linked.contains(r#"<a href="https://example.com"><img "#),
+        "authored image link must survive delayed alt binding: {linked}",
+    );
+
+    let suffixed = render_tag(r#"[[image x.png alt="%%tags_linked%% suffix"]]"#);
+    assert!(
+        suffixed.contains(r#"alt="[/system:page-tags/tag/component component] suffix""#,),
+        "authored attribute suffix must survive delayed binding: {suffixed}",
+    );
+}
+
+#[test]
+fn delayed_raw_decodes_entities_and_div_shell_keeps_the_parsed_opener() {
+    assert_eq!(
+        render("@@&amp; %%title_linked%%@@"),
+        concat!(
+            r#"<p><span style="white-space: pre-wrap;">&amp; "#,
+            "[[[component:image-block | Standard Image Block]]]",
+            "</span></p>",
+        ),
+    );
+
+    let div = render(r#"[[div title="[[probe"]]%%title_linked%%[[/div]]"#);
+    assert!(
+        div.contains(r#"[[div title=&quot;[[probe&quot;]]"#),
+        "delayed div shell must start at its parsed opener: {div}",
+    );
+}
+
+#[test]
 fn parser_recovery_diagnostics_do_not_bypass_atomic_slot_binding() {
     let mut observed_recovered_parse = false;
     for source in [

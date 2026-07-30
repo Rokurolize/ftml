@@ -420,6 +420,22 @@ fn delayed_raw_decodes_entities_and_div_shell_keeps_the_parsed_opener() {
 }
 
 #[test]
+fn delayed_code_shell_keeps_the_parsed_opener() {
+    assert_eq!(
+        render(concat!(
+            "BEGIN|[[code type=\"[[probe\"]]\n",
+            "%%title_linked%%\n",
+            "[[/code]]|END",
+        )),
+        concat!(
+            "<p>BEGIN|[[code type=&quot;[[probe&quot;]]<br>\n",
+            "<a href=\"/component:image-block\">Standard Image Block</a>",
+            "<br>\n[[/code]]|END</p>",
+        ),
+    );
+}
+
+#[test]
 fn parser_recovery_diagnostics_do_not_bypass_atomic_slot_binding() {
     let mut observed_recovered_parse = false;
     for source in [

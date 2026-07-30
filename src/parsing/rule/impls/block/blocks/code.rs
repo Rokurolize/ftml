@@ -43,9 +43,13 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Code doesn't allow star flag");
     assert!(!flag_score, "Code doesn't allow score flag");
     assert_block_name(&BLOCK_CODE, name);
+    let source = parser.full_text().inner();
+    let owner_start = (name.as_ptr() as usize)
+        .checked_sub(source.as_ptr() as usize + 2)
+        .expect("parsed code name follows its opener");
 
     if parser.settings().layout.legacy() && !parser.discarding_hidden_body() {
-        let head = &parser.full_text().inner()[..parser.current().span.start];
+        let head = &source[..parser.current().span.start];
         if head
             .rfind("[[")
             .and_then(|start| head[start + 2..].chars().next())
@@ -72,10 +76,6 @@ fn parse_fn<'r, 't>(
     }
 
     if parser.body_has_generated(&BLOCK_CODE) {
-        let source = parser.full_text().inner();
-        let owner_start = source[..parser.current().span.start]
-            .rfind("[[")
-            .expect("parsed code head has an opener");
         let _ = parser.get_body_text(&BLOCK_CODE)?;
         let owner_end = parser.current().span.start;
         let generated = parser.generated_in_range(owner_start..owner_end);

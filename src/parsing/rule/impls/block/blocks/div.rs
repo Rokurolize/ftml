@@ -101,10 +101,12 @@ fn parse_fn<'r, 't>(
     let (arguments, mut body_start) = head;
     let head_started_physical_line =
         wikidot_div_head_started_physical_line(parser, body_start);
+    let follows_inline_structural_close =
+        wikidot_div_follows_inline_structural_close(parser, body_start);
     if parser.settings().layout.legacy()
         && parser.in_wikidot_div_body()
         && !head_started_physical_line
-        && !wikidot_div_follows_inline_structural_close(parser, body_start)
+        && !follows_inline_structural_close
     {
         let source = parser.full_text().inner();
         let head_end = parser.current().span.start;
@@ -170,7 +172,11 @@ fn parse_fn<'r, 't>(
         };
         return Err(parser.make_err(kind));
     }
-    if parser.settings().layout.legacy() && parser.body_has_generated(&BLOCK_DIV) {
+    if parser.settings().layout.legacy()
+        && !head_started_physical_line
+        && !follows_inline_structural_close
+        && parser.body_has_generated(&BLOCK_DIV)
+    {
         let _ = parser.get_body_text(&BLOCK_DIV)?;
         let owner_end = parser.current().span.start;
         let generated = parser.generated_in_range(owner_start..owner_end);

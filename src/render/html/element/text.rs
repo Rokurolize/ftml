@@ -182,11 +182,17 @@ fn render_wikidot_highlight(ctx: &mut HtmlContext, language: &str, contents: &st
 fn wikidot_highlight_token(language: &str, input: &str) -> (&'static str, usize) {
     let first = input.as_bytes()[0];
     if first.is_ascii_whitespace() || first == b';' {
-        let length = input
+        let mut length = input
             .bytes()
             .take_while(|byte| byte.is_ascii_whitespace() || *byte == b';')
             .count();
+        if language == "css" && input[length..].starts_with("--") {
+            length += 2;
+        }
         return ("hl-code", length);
+    }
+    if language == "css" && input.starts_with("--") {
+        return ("hl-code", 2);
     }
     if matches!(first, b'{' | b'}') {
         let length = input
@@ -194,6 +200,25 @@ fn wikidot_highlight_token(language: &str, input: &str) -> (&'static str, usize)
             .take_while(|byte| matches!(byte, b'{' | b'}'))
             .count();
         return ("hl-brackets", length);
+    }
+    if language == "css" && first == b':' {
+        let length = input
+            .bytes()
+            .take_while(|byte| {
+                !byte.is_ascii_whitespace() && !matches!(byte, b'{' | b'}' | b';')
+            })
+            .count();
+        return ("hl-special", length);
+    }
+    if language == "css" && first.is_ascii_digit() {
+        let length = input
+            .bytes()
+            .take_while(|byte| byte.is_ascii_digit() || *byte == b'.')
+            .count();
+        return ("hl-number", length);
+    }
+    if language == "css" && first == b'%' {
+        return ("hl-string", 1);
     }
 
     let length = input

@@ -179,7 +179,19 @@ pub fn normalize_href<'a>(url: &'a str, extra: Option<&'a str>) -> Cow<'a, str> 
             trace!("Leaving no-op link as-is");
             Cow::Borrowed(url)
         }
-        HrefKind::Anchor | HrefKind::External | HrefKind::AbsolutePath => match extra {
+        HrefKind::External => match extra {
+            Some(extra) => {
+                trace!("Encoding a safe external URL with extra: {url}{extra}");
+                Cow::Owned(
+                    percent_encode_non_ascii(&format!("{url}{extra}")).into_owned(),
+                )
+            }
+            None => {
+                trace!("Encoding a safe external URL: {url}");
+                percent_encode_non_ascii(url)
+            }
+        },
+        HrefKind::Anchor | HrefKind::AbsolutePath => match extra {
             Some(extra) => {
                 trace!("Leaving safe URL with extra as-is: {url}{extra}");
                 Cow::Owned(format!("{url}{extra}"))
@@ -199,6 +211,25 @@ pub fn normalize_href<'a>(url: &'a str, extra: Option<&'a str>) -> Cow<'a, str> 
             Cow::Owned(format!("/{url}{extra}"))
         }
     }
+}
+
+fn percent_encode_non_ascii(value: &str) -> Cow<'_, str> {
+    if value.is_ascii() {
+        return Cow::Borrowed(value);
+    }
+
+    const HEX: &[u8; 16] = b"0123456789ABCDEF";
+    let mut encoded = String::with_capacity(value.len());
+    for byte in value.bytes() {
+        if byte.is_ascii() {
+            encoded.push(char::from(byte));
+        } else {
+            encoded.push('%');
+            encoded.push(char::from(HEX[usize::from(byte >> 4)]));
+            encoded.push(char::from(HEX[usize::from(byte & 0x0f)]));
+        }
+    }
+    Cow::Owned(encoded)
 }
 
 pub trait BuildSiteUrl {
@@ -332,6 +363,14 @@ fn test_normalize_href() {
     test!("javascript:;");
     test!("http://example.net");
     test!("https://example.net");
+    test!(
+        "https://ja.wikipedia.org/wiki/グイン・サーガ"
+            => "https://ja.wikipedia.org/wiki/%E3%82%B0%E3%82%A4%E3%83%B3%E3%83%BB%E3%82%B5%E3%83%BC%E3%82%AC",
+    );
+    test!(
+        "https://example.net/already/%E3/日?q=x#y"
+            => "https://example.net/already/%E3/%E6%97%A5?q=x#y",
+    );
     test!("irc://irc.scpwiki.com");
     test!("sftp://ftp.example.com/upload");
 

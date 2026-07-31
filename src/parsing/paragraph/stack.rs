@@ -106,7 +106,9 @@ impl<'t> ParagraphStack<'t> {
                     Element::Container(container)
                         if matches!(
                             container.ctype(),
-                            ContainerType::Div | ContainerType::Blockquote
+                            ContainerType::Div
+                                | ContainerType::Blockquote
+                                | ContainerType::Align(_)
                         )
                 ) || matches!(element, Element::Code(_) | Element::Collapsible { .. })
             })

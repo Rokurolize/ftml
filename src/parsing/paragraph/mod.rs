@@ -90,6 +90,9 @@ where
             continue;
         }
 
+        if wikidot_empty_raw_pair_occupies_line(parser) {
+            stack.mark_wikidot_invisible_line_occupancy();
+        }
         let terminal_backslash =
             parser.current().token == Token::LineBreak && parser.current().slice == "\\";
         let continued_block_boundary = parser.current().token == Token::LineBreak
@@ -246,6 +249,30 @@ where
     }
 
     stack.into_result()
+}
+
+fn wikidot_empty_raw_pair_occupies_line(parser: &Parser<'_, '_>) -> bool {
+    parser.settings().layout.legacy()
+        && parser.start_of_line()
+        && parser.current().token == Token::Raw
+        && parser
+            .look_ahead(0)
+            .is_some_and(|token| token.token == Token::Raw)
+        && parser
+            .look_ahead(1)
+            .is_some_and(|token| token.token == Token::Whitespace && token.slice == " ")
+        && parser
+            .look_ahead(2)
+            .is_some_and(|token| token.token == Token::Raw)
+        && parser
+            .look_ahead(3)
+            .is_some_and(|token| token.token == Token::Raw)
+        && parser.look_ahead(4).is_some_and(|token| {
+            matches!(
+                token.token,
+                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+            )
+        })
 }
 
 fn finish_hidden_boundary(

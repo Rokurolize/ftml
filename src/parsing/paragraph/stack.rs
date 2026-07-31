@@ -200,6 +200,12 @@ impl<'t> ParagraphStack<'t> {
 
     #[inline]
     pub fn mark_discarded_control(&mut self) {
+        self.mark_wikidot_invisible_line_occupancy();
+    }
+
+    /// Preserve the physical-line occupancy of invisible legacy syntax.
+    #[inline]
+    pub(crate) fn mark_wikidot_invisible_line_occupancy(&mut self) {
         if self.wikidot {
             self.current_has_discarded_control = true;
         }

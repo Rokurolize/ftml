@@ -357,6 +357,25 @@ fn wikidot_raw_space_lines_keep_both_physical_breaks_at_block_boundaries() {
 }
 
 #[test]
+fn wikidot_consecutive_empty_raw_lines_before_a_heading_keep_a_paragraph() {
+    // Live anonymous PagePreviewModule provenance:
+    // listpages-synchronized-final-20260730/actionable-23-references-20260731.jsonl,
+    // case en:scp-8658:L7:B70.
+    let (_, html) =
+        render_text_and_html("@@@@ @@@@\n@@@@ @@@@\n\n++* ##crimson|OMEGA_HEADING##");
+
+    assert_eq!(
+        html,
+        concat!(
+            "<p><br>\n</p>",
+            "<h2><span><span style=\"color: crimson\">",
+            "OMEGA_HEADING",
+            "</span></span></h2>",
+        ),
+    );
+}
+
+#[test]
 fn wikidot_unwrapped_line_after_alignment_uses_a_newline_at_a_paragraph_break() {
     // Live anonymous PagePreviewModule provenance:
     // listpages-synchronized-final-20260730/unwrapped-paragraph-break-live-20260731.jsonl.

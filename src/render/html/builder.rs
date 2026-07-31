@@ -220,6 +220,9 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
 
         if attributes.entries.is_empty() {
             for (key, value) in attribute_map {
+                if omit_empty_user_class(key, value) {
+                    continue;
+                }
                 self.attr_single(key, &[value]);
             }
 
@@ -232,6 +235,11 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
         // Merge any attributes in common.
         for (key, value_parts) in filter_attribute_entries(&attributes) {
             if let Some(map_value) = attribute_map.get(&cow!(key)) {
+                if omit_empty_user_class(key, map_value) {
+                    self.attr_single(key, value_parts);
+                    merged.insert(key);
+                    continue;
+                }
                 // Merge keys by prepending value_parts before
                 // the attribute map value.
 
@@ -254,7 +262,7 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
 
         // Add attributes from user-provided map.
         for (key, value) in attribute_map {
-            if !merged.contains(key.as_ref()) {
+            if !merged.contains(key.as_ref()) && !omit_empty_user_class(key, value) {
                 self.attr_single(key, &[value]);
             }
         }
@@ -316,6 +324,10 @@ fn filter_attribute_entries<'a>(
 ) -> impl Iterator<Item = (&'a str, &'a [&'a str])> {
     let entries = attributes.entries.iter();
     entries.filter_map(|(item, accept)| if *accept { Some(*item) } else { None })
+}
+
+fn omit_empty_user_class(key: &str, value: &str) -> bool {
+    key == "class" && value.is_empty()
 }
 
 #[inline]
@@ -405,6 +417,26 @@ mod tests {
 
         let output = HtmlOutput::from(ctx);
         assert_eq!(output.body, r#"<div data-extra="1&amp;2">body</div>"#);
+    }
+
+    #[test]
+    fn html_builder_omits_an_empty_user_class_attribute() {
+        let info = PageInfo::dummy();
+        let mut ctx = context(&info);
+        let mut attributes = AttributeMap::new();
+        assert!(attributes.insert("class", cow!("")));
+
+        ctx.html().div().attr(attr!(;; attributes)).contents("body");
+        ctx.html()
+            .div()
+            .attr(attr!("class" => "base";; attributes))
+            .contents("merged");
+
+        let output = HtmlOutput::from(ctx);
+        assert_eq!(
+            output.body,
+            r#"<div>body</div><div class="base">merged</div>"#,
+        );
     }
 
     #[test]

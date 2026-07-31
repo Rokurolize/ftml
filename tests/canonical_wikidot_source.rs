@@ -303,6 +303,114 @@ fn wikidot_empty_native_quote_lines_preserve_surrounding_run_semantics() {
 }
 
 #[test]
+fn wikidot_multiple_spaces_after_an_empty_quote_marker_preserve_the_blank_row() {
+    // Live anonymous PagePreviewModule provenance:
+    // listpages-synchronized-final-20260730/quote-trailing-space-matrix-live-20260731.jsonl.
+    for empty_quote in [">  ", ">   "] {
+        let input = format!("> OMEGA_A\n{empty_quote}\n> OMEGA_B");
+        let (text, html) = render_text_and_html(&input);
+
+        assert!(text.contains("OMEGA_A"), "{empty_quote:?}: {text}");
+        assert!(text.contains("OMEGA_B"), "{empty_quote:?}: {text}");
+        assert_eq!(
+            html, "<blockquote><p>OMEGA_A<br>\n<br>\nOMEGA_B</p></blockquote>",
+            "{empty_quote:?}"
+        );
+    }
+}
+
+#[test]
+fn wikidot_raw_space_lines_keep_both_physical_breaks_at_block_boundaries() {
+    // Live anonymous PagePreviewModule provenance:
+    // listpages-synchronized-final-20260730/raw-space-block-boundary-live-20260731.jsonl.
+    let cases = [
+        (
+            "OMEGA_A\n@@ @@\nOMEGA_B",
+            concat!(
+                "<p>OMEGA_A<br>\n",
+                "<span style=\"white-space: pre-wrap;\"> </span><br>\n",
+                "OMEGA_B</p>",
+            ),
+        ),
+        (
+            "OMEGA_A\n@@ @@\n[[=]]\nOMEGA_CENTER\n[[/=]]",
+            concat!(
+                "<p>OMEGA_A<br>\n",
+                "<span style=\"white-space: pre-wrap;\"> </span><br>\n</p>",
+                "<div style=\"text-align: center;\"><p>OMEGA_CENTER</p></div>",
+            ),
+        ),
+        (
+            "[[=]]\nOMEGA_CENTER\n[[/=]]\n@@ @@\nOMEGA_B",
+            concat!(
+                "<div style=\"text-align: center;\"><p>OMEGA_CENTER</p></div>",
+                "<br>\n<span style=\"white-space: pre-wrap;\"> </span><br>\n",
+                "OMEGA_B",
+            ),
+        ),
+    ];
+
+    for (input, expected) in cases {
+        let (_, html) = render_text_and_html(input);
+        assert_eq!(html, expected, "{input:?}");
+    }
+}
+
+#[test]
+fn wikidot_unwrapped_line_after_alignment_uses_a_newline_at_a_paragraph_break() {
+    // Live anonymous PagePreviewModule provenance:
+    // listpages-synchronized-final-20260730/unwrapped-paragraph-break-live-20260731.jsonl.
+    let cases = [
+        (
+            concat!(
+                "[[=]]\nOMEGA_CENTER\n[[/=]]\n",
+                "@@ @@\nOMEGA_DESCRIPTION\n\nOMEGA_HISTORY",
+            ),
+            concat!(
+                "<div style=\"text-align: center;\"><p>OMEGA_CENTER</p></div>",
+                "<br>\n<span style=\"white-space: pre-wrap;\"> </span><br>\n",
+                "OMEGA_DESCRIPTION\n<p>OMEGA_HISTORY</p>",
+            ),
+        ),
+        (
+            concat!(
+                "[[=]]\nOMEGA_CENTER\n[[/=]]\n",
+                "OMEGA_DESCRIPTION\n\nOMEGA_HISTORY",
+            ),
+            concat!(
+                "<div style=\"text-align: center;\"><p>OMEGA_CENTER</p></div>",
+                "<br>\nOMEGA_DESCRIPTION\n<p>OMEGA_HISTORY</p>",
+            ),
+        ),
+    ];
+
+    for (input, expected) in cases {
+        let (_, html) = render_text_and_html(input);
+        assert_eq!(html, expected, "{input:?}");
+    }
+}
+
+#[test]
+fn wikidot_inline_line_before_a_simple_table_stays_unwrapped_with_a_break() {
+    // Live anonymous PagePreviewModule provenance:
+    // listpages-synchronized-final-20260730/simple-table-boundary-live-20260731.jsonl.
+    let (text, html) =
+        render_text_and_html("**OMEGA_LABEL:** OMEGA_TEXT\n||~ HEAD||\n||CELL||");
+
+    assert!(text.contains("OMEGA_LABEL: OMEGA_TEXT"), "{text}");
+    assert_eq!(
+        html,
+        concat!(
+            "<strong>OMEGA_LABEL:</strong> OMEGA_TEXT<br>\n",
+            "<table class=\"wiki-content-table\">\n",
+            "<tr>\n<th>HEAD</th>\n</tr>\n",
+            "<tr>\n<td>CELL</td>\n</tr>\n",
+            "</table>",
+        ),
+    );
+}
+
+#[test]
 fn wikidot_discarded_tight_quote_row_does_not_split_the_active_paragraph() {
     // Live sandbox provenance: discarded-tight-middle in
     // ftml-oracle-20260713T112423Z/run-iftags-quoted-partial/empty-quote-run-controls.

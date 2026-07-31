@@ -63,9 +63,8 @@ pub struct ParagraphStack<'t> {
     /// Wikidot drops these controls from output, but a control-only line is
     /// still occupied and therefore preserves its following line break.
     current_has_discarded_control: bool,
-    wikidot_invisible_raw_line_break_pending: bool,
-    wikidot_invisible_raw_reused_block_break: bool,
-    wikidot_invisible_raw_pair_occupied: bool,
+    wikidot_complete_raw_line_occupied: bool,
+    wikidot_complete_raw_run_after_block: bool,
 
     pending_unwrapped_separator: bool,
     unwrapped_after_block_line: bool,
@@ -97,9 +96,7 @@ impl<'t> ParagraphStack<'t> {
 
     #[inline]
     pub fn current_empty(&self) -> bool {
-        self.current.is_empty()
-            && !self.current_has_discarded_control
-            && !self.wikidot_invisible_raw_pair_occupied
+        self.current.is_empty() && !self.current_has_discarded_control
     }
 
     #[inline]
@@ -205,59 +202,34 @@ impl<'t> ParagraphStack<'t> {
 
     #[inline]
     pub fn mark_discarded_control(&mut self) {
+        self.mark_wikidot_invisible_line_occupancy();
+    }
+
+    /// Preserve the physical-line occupancy of invisible legacy syntax.
+    #[inline]
+    pub(crate) fn mark_wikidot_invisible_line_occupancy(&mut self) {
         if self.wikidot {
             self.current_has_discarded_control = true;
         }
     }
 
-    /// Preserve the physical-line occupancy of invisible legacy syntax.
     #[inline]
-    pub(crate) fn push_wikidot_invisible_raw_line_break(&mut self) {
-        if !self.wikidot || self.wikidot_invisible_raw_line_break_pending {
-            return;
-        }
-        if self.current_unwrapped
-            && self.unwrapped_after_block_line
-            && !self.wikidot_invisible_raw_reused_block_break
-            && matches!(self.current.last(), Some(Element::LineBreak))
-        {
-            self.wikidot_invisible_raw_reused_block_break = true;
-            self.wikidot_invisible_raw_line_break_pending = true;
-            return;
-        }
-        let follows_block = self.wikidot_line_break_follows_block();
-        self.current.push(Element::LineBreak);
-        if follows_block {
-            self.mark_next_unwrapped_after_block();
-        }
-        self.wikidot_invisible_raw_line_break_pending = true;
-    }
-
-    #[inline]
-    pub(crate) fn wikidot_invisible_raw_line_break_pending(&self) -> bool {
-        self.wikidot_invisible_raw_line_break_pending
-    }
-
-    #[inline]
-    pub(crate) fn clear_wikidot_invisible_raw_line_break_pending(&mut self) {
-        self.wikidot_invisible_raw_line_break_pending = false;
-    }
-
-    #[inline]
-    pub(crate) fn mark_wikidot_invisible_raw_pair_occupancy(&mut self) {
-        if self.wikidot {
-            self.wikidot_invisible_raw_pair_occupied = true;
+    pub(crate) fn mark_wikidot_complete_raw_line_occupancy(&mut self) {
+        self.mark_wikidot_invisible_line_occupancy();
+        self.wikidot_complete_raw_line_occupied = self.wikidot;
+        if self.current_unwrapped && self.unwrapped_after_block_line {
+            self.wikidot_complete_raw_run_after_block = true;
         }
     }
 
     #[inline]
-    pub(crate) fn wikidot_invisible_raw_pair_occupied(&self) -> bool {
-        self.wikidot_invisible_raw_pair_occupied
+    pub(crate) fn wikidot_complete_raw_line_occupied(&self) -> bool {
+        self.wikidot_complete_raw_line_occupied
     }
 
     #[inline]
-    pub(crate) fn clear_wikidot_invisible_raw_pair_occupancy(&mut self) {
-        self.wikidot_invisible_raw_pair_occupied = false;
+    pub(crate) fn clear_wikidot_complete_raw_line_occupancy(&mut self) {
+        self.wikidot_complete_raw_line_occupied = false;
     }
 
     #[inline]
@@ -509,9 +481,8 @@ impl<'t> ParagraphStack<'t> {
             self.finished.push(paragraph);
         }
         self.current_has_discarded_control = false;
-        self.wikidot_invisible_raw_line_break_pending = false;
-        self.wikidot_invisible_raw_reused_block_break = false;
-        self.wikidot_invisible_raw_pair_occupied = false;
+        self.wikidot_complete_raw_line_occupied = false;
+        self.wikidot_complete_raw_run_after_block = false;
         self.pending_unwrapped_separator = false;
         self.unwrapped_after_block_line = false;
         self.wikidot_literal_iftags_line = false;
@@ -524,9 +495,9 @@ impl<'t> ParagraphStack<'t> {
         let unwrapped = self.current_unwrapped && !self.current.is_empty();
         let literal_div_line = self.wikidot_literal_div_line;
         let unwrapped_after_block_line = self.unwrapped_after_block_line;
-        let invisible_raw_block_run = self.wikidot_invisible_raw_reused_block_break;
+        let complete_raw_run_after_block = self.wikidot_complete_raw_run_after_block;
         self.end_paragraph();
-        if unwrapped && !invisible_raw_block_run {
+        if unwrapped && !complete_raw_run_after_block {
             self.finished
                 .push(if literal_div_line || unwrapped_after_block_line {
                     text!("\n")

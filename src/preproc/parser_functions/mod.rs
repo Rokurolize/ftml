@@ -130,6 +130,11 @@ struct ConditionalScanBudget {
     remaining: usize,
 }
 
+#[derive(Debug)]
+struct WikidotDelimiterIndex {
+    unmatched_openers: Vec<usize>,
+}
+
 impl Default for CandidateBudget {
     fn default() -> Self {
         Self {
@@ -151,6 +156,30 @@ impl ConditionalScanBudget {
         }
         self.remaining -= 1;
         true
+    }
+}
+
+impl WikidotDelimiterIndex {
+    fn new(source: &str) -> Self {
+        let bytes = source.as_bytes();
+        let mut cursor = 0usize;
+        let mut unmatched_openers = Vec::new();
+        while cursor + 1 < bytes.len() {
+            if bytes[cursor..].starts_with(b"[[") {
+                unmatched_openers.push(cursor);
+                cursor += 2;
+            } else if bytes[cursor..].starts_with(b"]]") {
+                unmatched_openers.pop();
+                cursor += 2;
+            } else {
+                cursor += 1;
+            }
+        }
+        Self { unmatched_openers }
+    }
+
+    fn is_unmatched_opener(&self, offset: usize) -> bool {
+        self.unmatched_openers.binary_search(&offset).is_ok()
     }
 }
 
@@ -191,6 +220,7 @@ fn resolve_conditional_pass(
     scan_budget: &mut ConditionalScanBudget,
 ) -> String {
     let literal_regions = LiteralRegionIndex::new(source);
+    let delimiter_index = WikidotDelimiterIndex::new(source);
     let mut replacements = Vec::new();
     let mut search_start = 0usize;
 
@@ -206,16 +236,20 @@ fn resolve_conditional_pass(
             .name("kind")
             .expect("conditional kind capture exists")
             .as_str();
-        let (parts, crossing_link) =
-            match find_conditional_parts(source, condition_start, scan_budget) {
-                ConditionalSearch::Found(parts) => (parts, false),
-                ConditionalSearch::CrossingLink(parts) => (parts, true),
-                ConditionalSearch::NotFound => {
-                    search_start = condition_start;
-                    continue;
-                }
-                ConditionalSearch::Exhausted => break,
-            };
+        let (parts, crossing_link) = match find_conditional_parts_indexed(
+            source,
+            condition_start,
+            &delimiter_index,
+            scan_budget,
+        ) {
+            ConditionalSearch::Found(parts) => (parts, false),
+            ConditionalSearch::CrossingLink(parts) => (parts, true),
+            ConditionalSearch::NotFound => {
+                search_start = condition_start;
+                continue;
+            }
+            ConditionalSearch::Exhausted => break,
+        };
 
         if literal_regions.contains(function_start) {
             search_start = parts.end;
@@ -267,9 +301,10 @@ fn simple_condition(condition: &str) -> bool {
     !condition.is_empty() && condition != "0" && !condition.eq_ignore_ascii_case("false")
 }
 
-fn find_conditional_parts(
+fn find_conditional_parts_indexed(
     source: &str,
     condition_start: usize,
+    delimiter_index: &WikidotDelimiterIndex,
     scan_budget: &mut ConditionalScanBudget,
 ) -> ConditionalSearch {
     let bytes = source.as_bytes();
@@ -283,12 +318,27 @@ fn find_conditional_parts(
     let mut expected_adjacent_conditional = None;
     let mut adjacent_conditional_depth = None;
     let mut adjacent_conditional_has_separator = false;
+    let mut crossing_suffix_is_adjacent_conditionals = false;
 
     while cursor < bytes.len() {
         if !scan_budget.take() {
             return ConditionalSearch::Exhausted;
         }
         if bytes[cursor..].starts_with(b"[[") {
+            if depth == 1 && crossing_link_confirmed {
+                if crossing_suffix_is_adjacent_conditionals
+                    && delimiter_index.is_unmatched_opener(cursor)
+                    && is_wikidot_ifexpr_opener(&source[cursor..])
+                {
+                    return crossing_link_fallback.map_or(
+                        ConditionalSearch::NotFound,
+                        ConditionalSearch::CrossingLink,
+                    );
+                }
+                if !is_wikidot_conditional_opener(&source[cursor..]) {
+                    crossing_suffix_is_adjacent_conditionals = false;
+                }
+            }
             let next_depth = depth + 1;
             if expected_adjacent_conditional == Some(cursor) {
                 adjacent_conditional_depth = Some(next_depth);
@@ -355,6 +405,7 @@ fn find_conditional_parts(
                 adjacent_conditional_depth = None;
                 if adjacent_conditional_has_separator {
                     crossing_link_confirmed = true;
+                    crossing_suffix_is_adjacent_conditionals = true;
                 }
                 adjacent_conditional_has_separator = false;
             }
@@ -367,10 +418,16 @@ fn find_conditional_parts(
                 if depth == 1 && separators[0].is_some() && separators[1].is_none() {
                     true_branch_whitespace_only = false;
                 }
+                if depth == 1 && crossing_link_confirmed {
+                    crossing_suffix_is_adjacent_conditionals = false;
+                }
                 cursor += 2;
                 continue;
             }
             if depth == 1 {
+                if crossing_link_confirmed {
+                    crossing_suffix_is_adjacent_conditionals = false;
+                }
                 if separators[0].is_none() {
                     separators[0] = Some(cursor);
                 } else if separators[1].is_none() {
@@ -388,6 +445,9 @@ fn find_conditional_parts(
             && !bytes[cursor].is_ascii_whitespace()
         {
             true_branch_whitespace_only = false;
+            if crossing_link_confirmed {
+                crossing_suffix_is_adjacent_conditionals = false;
+            }
         }
         cursor += 1;
     }
@@ -417,15 +477,21 @@ fn is_wikidot_crossing_link_opener(source: &str) -> bool {
 }
 
 fn is_wikidot_conditional_opener(source: &str) -> bool {
-    ["[[#ifexpr", "[[#if"].iter().any(|prefix| {
-        source
-            .get(..prefix.len())
-            .is_some_and(|candidate| candidate.eq_ignore_ascii_case(prefix))
-            && source
-                .as_bytes()
-                .get(prefix.len())
-                .is_some_and(u8::is_ascii_whitespace)
-    })
+    is_wikidot_ifexpr_opener(source) || has_wikidot_opener(source, "[[#if")
+}
+
+fn is_wikidot_ifexpr_opener(source: &str) -> bool {
+    has_wikidot_opener(source, "[[#ifexpr")
+}
+
+fn has_wikidot_opener(source: &str, prefix: &str) -> bool {
+    source
+        .get(..prefix.len())
+        .is_some_and(|candidate| candidate.eq_ignore_ascii_case(prefix))
+        && source
+            .as_bytes()
+            .get(prefix.len())
+            .is_some_and(u8::is_ascii_whitespace)
 }
 
 fn resolve_expression_pass(
@@ -685,6 +751,41 @@ mod tests {
         let links = "[[a href=\"/x\" | x ]]x".repeat(2_000);
         let source = format!("[[#ifexpr 0 | {links}");
         assert_eq!(resolve_wikidot_parser_functions(&source), source);
+    }
+
+    #[test]
+    fn repeated_crossing_links_do_not_rescan_the_remaining_document() {
+        let unit = concat!(
+            "[[#ifexpr 0 | [[a href=\"/x\" | ]]",
+            "[[#ifexpr 0 | ] | ]]",
+            "[[#ifexpr 0 | ] | ]]",
+            "[[#ifexpr 0 | [[/a | ]]",
+            "[[#ifexpr 0 | ] | ]]",
+            "[[#ifexpr 0 | ] | ]]",
+        );
+        let source = unit.repeat(200);
+        let delimiter_index = WikidotDelimiterIndex::new(&source);
+        assert!(delimiter_index.is_unmatched_opener(0));
+        assert!(delimiter_index.is_unmatched_opener(unit.len()));
+        let mut scan_budget = ConditionalScanBudget { remaining: 256 };
+        let result = find_conditional_parts_indexed(
+            &source,
+            "[[#ifexpr ".len(),
+            &delimiter_index,
+            &mut scan_budget,
+        );
+
+        assert!(
+            matches!(result, ConditionalSearch::CrossingLink(_),),
+            "{result:?}"
+        );
+
+        let resolved = resolve_wikidot_parser_functions(&source);
+        assert!(
+            resolved.is_empty(),
+            "{} bytes of repeated crossing source remain after the bounded passes",
+            resolved.len(),
+        );
     }
 
     #[test]

@@ -90,11 +90,21 @@ where
             continue;
         }
 
-        if wikidot_empty_raw_pair_occupies_line(parser) {
-            stack.mark_wikidot_invisible_line_occupancy();
+        match wikidot_empty_raw_line_kind(parser) {
+            Some(WikidotEmptyRawLineKind::Complete) => {
+                stack.push_wikidot_invisible_raw_line_break();
+            }
+            Some(WikidotEmptyRawLineKind::Paired) => {
+                stack.mark_wikidot_invisible_raw_pair_occupancy();
+            }
+            None => {}
         }
         let terminal_backslash =
             parser.current().token == Token::LineBreak && parser.current().slice == "\\";
+        let invisible_raw_line_break = parser.current().token == Token::LineBreak
+            && stack.wikidot_invisible_raw_line_break_pending();
+        let invisible_raw_pair_line_break = parser.current().token == Token::LineBreak
+            && stack.wikidot_invisible_raw_pair_occupied();
         let continued_block_boundary = parser.current().token == Token::LineBreak
             && parser.current().slice == "\\\n";
         if continued_block_boundary && parser.settings().layout.legacy() {
@@ -138,6 +148,12 @@ where
 
             // If we've hit a paragraph break, then finish the current paragraph
             Token::ParagraphBreak => {
+                if stack.wikidot_invisible_raw_line_break_pending() {
+                    stack.clear_wikidot_invisible_raw_line_break_pending();
+                }
+                if stack.wikidot_invisible_raw_pair_occupied() {
+                    stack.clear_wikidot_invisible_raw_pair_occupancy();
+                }
                 // Paragraph break -- end the paragraph and start a new one!
                 stack.end_paragraph_at_break();
 
@@ -202,10 +218,23 @@ where
                 });
 
             // Add new elements to the list
-            if empty_quote_control && !paragraph_safe && elements.is_empty() {
+            if invisible_raw_line_break
+                && (elements.is_empty()
+                    || elements == Elements::Single(Element::LineBreak))
+            {
+                // The complete empty raw line already contributed this break.
+            } else if invisible_raw_pair_line_break && elements.is_empty() {
+                stack.push_element(Element::LineBreak, true);
+            } else if empty_quote_control && !paragraph_safe && elements.is_empty() {
                 stack.end_paragraph();
             } else {
                 push_elements(&mut stack, elements, paragraph_safe);
+            }
+            if invisible_raw_line_break {
+                stack.clear_wikidot_invisible_raw_line_break_pending();
+            }
+            if invisible_raw_pair_line_break {
+                stack.clear_wikidot_invisible_raw_pair_occupancy();
             }
             if comment_started_line
                 && parser.settings().layout.legacy()
@@ -251,28 +280,46 @@ where
     stack.into_result()
 }
 
-fn wikidot_empty_raw_pair_occupies_line(parser: &Parser<'_, '_>) -> bool {
-    parser.settings().layout.legacy()
+#[derive(Clone, Copy)]
+enum WikidotEmptyRawLineKind {
+    Complete,
+    Paired,
+}
+
+fn wikidot_empty_raw_line_kind(
+    parser: &Parser<'_, '_>,
+) -> Option<WikidotEmptyRawLineKind> {
+    let boundary = |token: Option<&ExtractedToken<'_>>| {
+        token.is_some_and(|token| {
+            matches!(
+                token.token,
+                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+            )
+        })
+    };
+    if !(parser.settings().layout.legacy()
         && parser.start_of_line()
         && parser.current().token == Token::Raw
         && parser
             .look_ahead(0)
-            .is_some_and(|token| token.token == Token::Raw)
-        && parser
-            .look_ahead(1)
-            .is_some_and(|token| token.token == Token::Whitespace && token.slice == " ")
+            .is_some_and(|token| token.token == Token::Raw))
+    {
+        return None;
+    }
+    if boundary(parser.look_ahead(1)) {
+        return Some(WikidotEmptyRawLineKind::Complete);
+    }
+    (parser
+        .look_ahead(1)
+        .is_some_and(|token| token.token == Token::Whitespace && token.slice == " ")
         && parser
             .look_ahead(2)
             .is_some_and(|token| token.token == Token::Raw)
         && parser
             .look_ahead(3)
             .is_some_and(|token| token.token == Token::Raw)
-        && parser.look_ahead(4).is_some_and(|token| {
-            matches!(
-                token.token,
-                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
-            )
-        })
+        && boundary(parser.look_ahead(4)))
+    .then_some(WikidotEmptyRawLineKind::Paired)
 }
 
 fn finish_hidden_boundary(

@@ -376,6 +376,35 @@ fn wikidot_consecutive_empty_raw_lines_before_a_heading_keep_a_paragraph() {
 }
 
 #[test]
+fn wikidot_complete_empty_raw_lines_preserve_their_physical_breaks() {
+    // Live anonymous PagePreviewModule provenance:
+    // listpages-synchronized-final-20260730/actionable-23-references-20260731.jsonl,
+    // cases cn:scp-cn-2100:L6:B166 and jp:neko-sagashi:L17:B190.
+    let cases = [
+        ("@@@@\n@@@@\nOMEGA_TEXT", "<p><br>\n<br>\nOMEGA_TEXT</p>"),
+        (
+            "@@@@\n[[=]]\nOMEGA_CENTER\n[[/=]]",
+            concat!(
+                "<p><br>\n</p>",
+                "<div style=\"text-align: center;\"><p>OMEGA_CENTER</p></div>",
+            ),
+        ),
+        (
+            "[[=]]\nOMEGA_CENTER\n[[/=]]\n@@@@\n@@@@\n\n-----",
+            concat!(
+                "<div style=\"text-align: center;\"><p>OMEGA_CENTER</p></div>",
+                "<br>\n<br>\n<hr>",
+            ),
+        ),
+    ];
+
+    for (input, expected) in cases {
+        let (_, html) = render_text_and_html(input);
+        assert_eq!(html, expected, "{input:?}");
+    }
+}
+
+#[test]
 fn wikidot_unwrapped_line_after_alignment_uses_a_newline_at_a_paragraph_break() {
     // Live anonymous PagePreviewModule provenance:
     // listpages-synchronized-final-20260730/unwrapped-paragraph-break-live-20260731.jsonl.

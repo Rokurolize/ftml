@@ -309,7 +309,12 @@ pub fn substitute(text: &mut String) {
     HORIZONTAL_ELLIPSIS.replace(text, &mut buffer);
 }
 
-pub(super) fn substitute_wikidot(text: &mut String) {
+/// Performs Wikidot-compatible typographic substitutions in-place.
+///
+/// This is available separately for typed delayed inputs whose authored
+/// segments have already passed the other layout-specific preprocessing
+/// phases.
+pub fn substitute_wikidot(text: &mut String) {
     let mut buffer = String::new();
     debug!("Performing typography substitutions");
 

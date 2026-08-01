@@ -171,7 +171,14 @@ fn parse_list_block<'r, 't>(
     if wikidot && flag_score {
         for item in &mut items {
             if let ListItem::Elements { elements, .. } = item {
+                let terminal_inline_raw_line_break = matches!(
+                    elements.as_slice(),
+                    [.., Element::Raw(_), Element::LineBreak]
+                );
                 strip_newlines(elements);
+                if terminal_inline_raw_line_break {
+                    elements.push(Element::LineBreak);
+                }
             }
         }
     }
@@ -522,6 +529,35 @@ Alpha
                 );
                 assert_eq!(element_text(elements), "Alpha");
             },
+        );
+    }
+
+    #[test]
+    fn wikidot_scored_item_preserves_a_terminal_inline_raw_line_break() {
+        let source = concat!(
+            "[[ul_]]\n",
+            "[[li]]\n",
+            "Alpha\n",
+            "@@ @@\n",
+            "[[/li]]\n",
+            "[[/ul]]",
+        );
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!(
+            html,
+            concat!(
+                "<ul>\n",
+                "<li>Alpha<br>\n",
+                r#"<span style="white-space: pre-wrap;"> </span><br>"#,
+                "\n</li>\n",
+                "</ul>",
+            ),
         );
     }
 

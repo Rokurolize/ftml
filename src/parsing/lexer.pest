@@ -138,14 +138,14 @@ email = @{
     &(ASCII_ALPHANUMERIC) ~
     (!(" " | "\t" | "%" | "@" | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE | discarded_control) ~ ANY)+ ~
     "@" ~
-    (!(" " | "\t" | "." | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE | discarded_control) ~ ANY)+ ~
+    (!(" " | "\t" | "." | "@" | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE | discarded_control) ~ ANY)+ ~
     "." ~
-    (!(" " | "\t" | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE | discarded_control) ~ ANY)+
+    (!(" " | "\t" | "@" | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE | discarded_control) ~ ANY)+
 }
 
 url = @{
     (("http" ~ "s"?) | "ftp") ~ "://" ~
-    (!(NEWLINE | " " | "\"" | "|" | "[" | "]" | ">@" | discarded_control) ~ ANY)+
+    (!(NEWLINE | " " | "\"" | "|" | "[" | "]" | ">@" | "@@" | discarded_control) ~ ANY)+
 }
 
 // }}}

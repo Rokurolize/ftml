@@ -142,6 +142,7 @@ fn try_consume_fn<'r, 't>(
         parser.step()?;
         // Wikidot distinguishes an empty `> ` row, which separates quoted
         // paragraphs, from an empty `>` row, which has no rendering effect.
+        let single_space_after_marker = parser.current().slice == " ";
         let spaced_after_marker = parser.current().token == Token::Whitespace;
         parser.get_optional_space()?; // allow whitespace after ">"
         if parser.current().token != Token::Quote {
@@ -215,7 +216,8 @@ fn try_consume_fn<'r, 't>(
         {
             quote_run_active = false;
         }
-        let empty_spaced_row = row_is_empty && spaced_after_marker;
+        let empty_spaced_row =
+            row_is_empty && spaced_after_marker && single_space_after_marker;
         if row_is_empty && (consumed_past_line || !spaced_after_marker) {
             consumed_pruned_row = true;
             continue;

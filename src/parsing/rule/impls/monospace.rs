@@ -95,6 +95,15 @@ fn try_consume_fn<'r, 't>(
         has_padding
     };
 
+    if parser.settings().layout.legacy()
+        && !leading_padding
+        && !trailing_padding
+        && (elements.is_empty()
+            || matches!(elements.as_slice(), [Element::Text(value)] if value.as_ref() == "0"))
+    {
+        return ok!(paragraph_safe; Elements::None, errors);
+    }
+
     let element = Element::Container(Container::new(
         ContainerType::Monospace,
         elements,
@@ -160,6 +169,38 @@ mod tests {
             assert!(errors.is_empty(), "{input:?}: {errors:?}");
             assert!(html.contains("<tt>text</tt>"), "{input:?}: {html}",);
         }
+    }
+
+    #[test]
+    fn wikidot_suppresses_the_exact_monospace_zero_value() {
+        for (input, expected) in [
+            ("{{0}}", ""),
+            ("A{{0}}B", "<p>AB</p>"),
+            ("A {{0}} {{****}} {{****}} B", "<p>A B</p>"),
+            ("{{****}}", ""),
+            ("{{00}}", "<p><tt>00</tt></p>"),
+            ("{{-0}}", "<p><tt>-0</tt></p>"),
+            ("{{0.0}}", "<p><tt>0.0</tt></p>"),
+        ] {
+            let (html, errors) = render(input);
+            assert!(errors.is_empty(), "{input:?}: {errors:?}");
+            assert_eq!(html, expected, "{input:?}");
+        }
+    }
+
+    #[test]
+    fn wikidot_collapses_suppressed_monospace_spaces_inside_color_and_size() {
+        let (html, errors) = render(concat!(
+            "##grey|**{{[+0](+0/-0)}}** **{{0}}**",
+            "[[size 0.9em]]A {{****}} {{****}} B[[/size]]##",
+        ));
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert!(
+            html.contains(r#"<span style="font-size:0.9em;">A B</span>"#)
+                && !html.contains("A   B"),
+            "{html}",
+        );
     }
 
     #[test]

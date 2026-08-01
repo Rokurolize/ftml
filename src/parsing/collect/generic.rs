@@ -75,6 +75,18 @@ where
     let mut paragraph_safe = true;
 
     loop {
+        // A paragraph-break token can terminate the current quoted physical
+        // line and simultaneously represent the unquoted blank line after
+        // it. Let a child container that explicitly accepts that token close
+        // before the quote-body adapter reports the outer run boundary.
+        if parser.current().token == Token::ParagraphBreak
+            && parser.evaluate_any(close_conditions)
+        {
+            let last = parser.current();
+            parser.step()?;
+            return ok!(paragraph_safe; last, errors);
+        }
+
         if parser.prepare_quote_body_line()? == QuoteBodyLineStatus::Boundary {
             return Err(parser.make_err(ParseErrorKind::EndOfInput));
         }

@@ -19,11 +19,11 @@
  */
 
 use super::prelude::*;
+use crate::parsing::paragraph::ParagraphStack;
 use crate::parsing::rule::impls::block::RULE_BLOCK;
 use crate::parsing::{ParserWrap, strip_whitespace};
 use crate::tree::{
-    AcceptsPartial, AttributeMap, Container, ContainerType, PartialElement, Table,
-    TableCell, TableRow, TableType,
+    AcceptsPartial, AttributeMap, PartialElement, Table, TableCell, TableRow, TableType,
 };
 use std::num::NonZeroU32;
 
@@ -405,12 +405,12 @@ fn wrap_cell_paragraph(elements: &mut Vec<Element<'_>>) {
     if paragraph_elements.is_empty() {
         return;
     }
-    let paragraph = Container::new(
-        ContainerType::Paragraph,
-        paragraph_elements,
-        AttributeMap::new(),
-    );
-    elements.insert(0, Element::Container(paragraph));
+    let mut paragraphs = ParagraphStack::new_wikidot();
+    for element in paragraph_elements {
+        let paragraph_safe = element.paragraph_safe();
+        paragraphs.push_element(element, paragraph_safe);
+    }
+    elements.splice(0..0, paragraphs.into_elements());
 }
 
 #[cfg(test)]

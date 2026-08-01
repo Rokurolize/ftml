@@ -54,7 +54,18 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::token_pair(Token::Whitespace, Token::Italics),
     ];
     let ctype = ContainerType::Italics;
-    collect_container(parser, RULE_ITALICS, ctype, &close, &invalid, None)
+    let collected =
+        collect_container(parser, RULE_ITALICS, ctype, &close, &invalid, None)?;
+    let (elements, errors, paragraph_safe) = collected.into();
+    if parser.settings().layout.legacy()
+        && matches!(
+            &elements,
+            Elements::Single(Element::Container(container)) if container.elements().is_empty()
+        )
+    {
+        return ok!(paragraph_safe; Elements::None, errors);
+    }
+    ok!(paragraph_safe; elements, errors)
 }
 
 fn has_ambiguous_crossed_bold_pair(parser: &Parser<'_, '_>) -> bool {

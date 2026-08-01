@@ -24,6 +24,36 @@ use crate::settings::{WikitextMode, WikitextSettings};
 use std::borrow::Cow;
 
 #[test]
+fn multiline_self_referencing_argument_uses_later_fallback() {
+    let source = concat!(
+        "[[include component:backend\n",
+        "ifprot={$ifprot}\n",
+        "|ifprot=0\n",
+        "|nohide=true\n",
+        "|nohide=0\n",
+        "]]",
+    );
+    let (include, end) =
+        super::parse::parse_include_block(source, 0).expect("valid multiline include");
+
+    assert_eq!(end, source.len());
+    assert_eq!(
+        include
+            .variables()
+            .get("ifprot")
+            .map(|value| value.trim_end()),
+        Some("0"),
+    );
+    assert_eq!(
+        include
+            .variables()
+            .get("nohide")
+            .map(|value| value.trim_end()),
+        Some("true"),
+    );
+}
+
+#[test]
 fn includes() {
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
 

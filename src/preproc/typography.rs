@@ -218,6 +218,50 @@ fn wikidot_getattrs_attribute_ranges(text: &str) -> Vec<Range<usize>> {
     ranges
 }
 
+fn wikidot_local_link_separator_ranges(text: &str) -> Vec<Range<usize>> {
+    let mut ranges = Vec::new();
+    let mut cursor = 0usize;
+    while let Some(relative_open) = text[cursor..].find('[') {
+        let open = cursor + relative_open;
+        let body_start = open + '['.len_utf8();
+        if text[body_start..].starts_with('[') {
+            cursor = body_start + '['.len_utf8();
+            continue;
+        }
+        let line_end = text[body_start..]
+            .find('\n')
+            .map_or(text.len(), |offset| body_start + offset);
+        let Some(relative_close) = text[body_start..line_end].find(']') else {
+            // There can be no further local-link opener before this line's
+            // end. Leave the incomplete bracket literal and finish safely.
+            break;
+        };
+        let close = body_start + relative_close;
+        let body = &text[body_start..close];
+        let Some(separator) = body.find(' ') else {
+            cursor = close + ']'.len_utf8();
+            continue;
+        };
+        let target = &body[..separator];
+        if target.starts_with('/')
+            && target.len() > 1
+            && !target.contains(char::is_whitespace)
+        {
+            let separator = body_start + separator;
+            ranges.push(separator..separator + ' '.len_utf8());
+        }
+        cursor = close + ']'.len_utf8();
+    }
+    ranges
+}
+
+fn wikidot_typography_protected_ranges(text: &str) -> Vec<Range<usize>> {
+    let mut ranges = wikidot_getattrs_attribute_ranges(text);
+    ranges.extend(wikidot_local_link_separator_ranges(text));
+    ranges.sort_by_key(|range| range.start);
+    ranges
+}
+
 fn digit_space_positions(text: &str) -> Vec<usize> {
     text.match_indices(' ')
         .filter_map(|(space_index, _)| {
@@ -309,7 +353,12 @@ pub fn substitute(text: &mut String) {
     HORIZONTAL_ELLIPSIS.replace(text, &mut buffer);
 }
 
-pub(super) fn substitute_wikidot(text: &mut String) {
+/// Performs Wikidot-compatible typographic substitutions in-place.
+///
+/// This is available separately for typed delayed inputs whose authored
+/// segments have already passed the other layout-specific preprocessing
+/// phases.
+pub fn substitute_wikidot(text: &mut String) {
     let mut buffer = String::new();
     debug!("Performing typography substitutions");
 
@@ -327,17 +376,17 @@ pub(super) fn substitute_wikidot(text: &mut String) {
     replace!(RIGHT_ANGLE_QUOTES);
 
     let digit_spaces = digit_space_positions(text);
-    let mut quoted_block_attributes = if digit_spaces.is_empty() {
+    let mut protected_ranges = if digit_spaces.is_empty() {
         Vec::new()
     } else {
-        wikidot_getattrs_attribute_ranges(text)
+        wikidot_typography_protected_ranges(text)
     };
-    if replace_number_spaces(text, &quoted_block_attributes, &digit_spaces) {
+    if replace_number_spaces(text, &protected_ranges, &digit_spaces) {
         // Recompute after replacing number spaces because U+00A0 occupies one
         // more UTF-8 byte than the ASCII space it replaces.
-        quoted_block_attributes = wikidot_getattrs_attribute_ranges(text);
+        protected_ranges = wikidot_typography_protected_ranges(text);
     }
-    replace_unit_spaces(text, &quoted_block_attributes);
+    replace_unit_spaces(text, &protected_ranges);
 
     // Miscellaneous
     replace_wikidot_ellipsis_outside_literals(text, &mut buffer);
@@ -456,6 +505,15 @@ fn test_substitute() {
 }
 
 #[test]
+fn wikidot_typography_leaves_an_unmatched_local_bracket_literal() {
+    let mut text = "1 [".to_owned();
+
+    substitute_wikidot(&mut text);
+
+    assert_eq!(text, "1 [");
+}
+
+#[test]
 fn wikijump_substitution_keeps_native_typography_scope() {
     let mut text = "`one\nline' << 1 234".to_owned();
     substitute(&mut text);
@@ -504,6 +562,22 @@ fn wikidot_unit_typography_skips_quoted_block_attributes() {
         "{text}",
     );
     assert!(text.contains("PROSE: 0\u{00a0}2px"), "{text}");
+}
+
+#[test]
+fn wikidot_unit_typography_keeps_local_link_label_separators() {
+    let mut text = concat!(
+        "[/scp-536-fr/offset/0 V]\n",
+        "[/other/12 M]\n",
+        "PROSE: 0 V",
+    )
+    .to_owned();
+
+    substitute_wikidot(&mut text);
+
+    assert!(text.contains("[/scp-536-fr/offset/0 V]"), "{text}");
+    assert!(text.contains("[/other/12 M]"), "{text}");
+    assert!(text.contains("PROSE: 0\u{00a0}V"), "{text}");
 }
 
 #[test]

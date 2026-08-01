@@ -203,6 +203,18 @@ pub(super) fn substitute_wikidot(text: &mut String) {
     substitute_for_layout(text, true);
 }
 
+/// Collapse physical lines containing only whitespace without applying the
+/// rest of the document-level whitespace preprocessor.
+///
+/// Delayed List-mode callers already hold source ranges for runtime values,
+/// so they cannot safely rerun all preprocessing after substitution. This
+/// source-preserving boundary is the one Wikidot operation they need before
+/// constructing those ranges.
+pub fn normalize_wikidot_whitespace_only_lines(text: &mut String) {
+    let mut buffer = String::new();
+    WHITESPACE_ONLY_LINE.replace(text, &mut buffer);
+}
+
 fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
     let mut buffer = String::new();
 

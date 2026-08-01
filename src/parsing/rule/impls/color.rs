@@ -56,8 +56,17 @@ fn try_consume_fn<'r, 't>(
 
     trace!("Retrieved color descriptor, now building container ('{color}')");
 
+    let leading_space = if parser.settings().layout.legacy()
+        && parser.current().token == Token::Whitespace
+    {
+        let whitespace = assert_step(parser, Token::Whitespace)?;
+        Some(text!(parser.full_text().slice(whitespace, whitespace)))
+    } else {
+        None
+    };
+
     if parser.settings().layout.legacy() && has_crossed_bold_close(parser) {
-        return collect_crossed_bold_color(parser, color);
+        return collect_crossed_bold_color(parser, color, leading_space);
     }
 
     // Build color container
@@ -72,7 +81,12 @@ fn try_consume_fn<'r, 't>(
         elements,
     };
 
-    ok!(paragraph_safe; element, errors)
+    match leading_space {
+        Some(leading_space) => {
+            ok!(paragraph_safe; Elements::Multiple(vec![leading_space, element]), errors)
+        }
+        None => ok!(paragraph_safe; element, errors),
+    }
 }
 
 fn has_crossed_bold_close(parser: &Parser<'_, '_>) -> bool {
@@ -105,6 +119,7 @@ fn has_crossed_bold_close(parser: &Parser<'_, '_>) -> bool {
 fn collect_crossed_bold_color<'r, 't>(
     parser: &mut Parser<'r, 't>,
     color: &'t str,
+    leading_space: Option<Element<'t>>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     assert_step(parser, Token::Bold)?;
 
@@ -136,14 +151,22 @@ fn collect_crossed_bold_color<'r, 't>(
         color: normalize_color(color),
         elements: vec![colored],
     };
-    let trailing = Element::Container(Container::new(
-        ContainerType::Bold,
-        trailing,
-        AttributeMap::new(),
-    ));
+    let mut elements = Vec::with_capacity(3);
+    if let Some(leading_space) = leading_space {
+        elements.push(leading_space);
+    }
+    elements.push(color);
+    if !trailing.is_empty() {
+        let trailing = Element::Container(Container::new(
+            ContainerType::Bold,
+            trailing,
+            AttributeMap::new(),
+        ));
+        elements.push(trailing);
+    }
 
     Ok(ParseSuccess::new(
-        vec![color, trailing].into(),
+        elements.into(),
         errors,
         colored_safe && trailing_safe,
     ))

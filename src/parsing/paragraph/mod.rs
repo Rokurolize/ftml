@@ -90,8 +90,19 @@ where
             continue;
         }
 
+        match wikidot_empty_raw_line_kind(parser) {
+            Some(WikidotEmptyRawLineKind::Complete) => {
+                stack.mark_wikidot_complete_raw_line_occupancy();
+            }
+            Some(WikidotEmptyRawLineKind::Paired) => {
+                stack.mark_wikidot_invisible_line_occupancy();
+            }
+            None => {}
+        }
         let terminal_backslash =
             parser.current().token == Token::LineBreak && parser.current().slice == "\\";
+        let complete_raw_line_break = parser.current().token == Token::LineBreak
+            && stack.wikidot_complete_raw_line_occupied();
         let continued_block_boundary = parser.current().token == Token::LineBreak
             && parser.current().slice == "\\\n";
         if continued_block_boundary && parser.settings().layout.legacy() {
@@ -135,6 +146,9 @@ where
 
             // If we've hit a paragraph break, then finish the current paragraph
             Token::ParagraphBreak => {
+                if stack.wikidot_complete_raw_line_occupied() {
+                    stack.clear_wikidot_complete_raw_line_occupancy();
+                }
                 // Paragraph break -- end the paragraph and start a new one!
                 stack.end_paragraph_at_break();
 
@@ -199,10 +213,16 @@ where
                 });
 
             // Add new elements to the list
+            if complete_raw_line_break && elements_begin_with_wikidot_center(&elements) {
+                stack.push_element(Element::LineBreak, true);
+            }
             if empty_quote_control && !paragraph_safe && elements.is_empty() {
                 stack.end_paragraph();
             } else {
                 push_elements(&mut stack, elements, paragraph_safe);
+            }
+            if complete_raw_line_break {
+                stack.clear_wikidot_complete_raw_line_occupancy();
             }
             if comment_started_line
                 && parser.settings().layout.legacy()
@@ -246,6 +266,62 @@ where
     }
 
     stack.into_result()
+}
+
+#[derive(Clone, Copy)]
+enum WikidotEmptyRawLineKind {
+    Complete,
+    Paired,
+}
+
+fn elements_begin_with_wikidot_center(elements: &Elements<'_>) -> bool {
+    let first = match elements {
+        Elements::Single(element) => Some(element),
+        Elements::Multiple(elements) => elements.first(),
+        Elements::None => None,
+    };
+    matches!(
+        first,
+        Some(Element::Container(container))
+            if container.ctype()
+                == crate::tree::ContainerType::Align(crate::tree::Alignment::Center)
+    )
+}
+
+fn wikidot_empty_raw_line_kind(
+    parser: &Parser<'_, '_>,
+) -> Option<WikidotEmptyRawLineKind> {
+    let boundary = |token: Option<&ExtractedToken<'_>>| {
+        token.is_some_and(|token| {
+            matches!(
+                token.token,
+                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+            )
+        })
+    };
+    if !(parser.settings().layout.legacy()
+        && parser.start_of_line()
+        && parser.current().token == Token::Raw
+        && parser
+            .look_ahead(0)
+            .is_some_and(|token| token.token == Token::Raw))
+    {
+        return None;
+    }
+    if boundary(parser.look_ahead(1)) {
+        return Some(WikidotEmptyRawLineKind::Complete);
+    }
+    (parser
+        .look_ahead(1)
+        .is_some_and(|token| token.token == Token::Whitespace && token.slice == " ")
+        && parser
+            .look_ahead(2)
+            .is_some_and(|token| token.token == Token::Raw)
+        && parser
+            .look_ahead(3)
+            .is_some_and(|token| token.token == Token::Raw)
+        && boundary(parser.look_ahead(4)))
+    .then_some(WikidotEmptyRawLineKind::Paired)
 }
 
 fn finish_hidden_boundary(
@@ -300,7 +376,7 @@ fn push_element<'t>(
             && element == Element::LineBreak
             && stack.wikidot_line_break_follows_block()
         {
-            stack.mark_next_unwrapped();
+            stack.mark_next_unwrapped_after_block();
         }
         stack.push_element(element, paragraph_safe);
     }

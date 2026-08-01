@@ -75,6 +75,51 @@ fn render_input_with_bindings(
     bound.render_html(&page_info, &settings).body().to_owned()
 }
 
+fn render_authored(source: &str) -> String {
+    let input = DelayedInput::new(
+        source,
+        vec![InputSegment::text(0..source.len(), TextOrigin::Authored)],
+    )
+    .expect("valid authored delayed fixture");
+    render_input_with_bindings(&input, &SlotBindings::empty())
+}
+
+#[test]
+fn delayed_html_blocks_remain_observable_after_binding() {
+    let source = "[[html]]<strong>delayed payload</strong>[[/html]]";
+    let input = DelayedInput::new(
+        source,
+        vec![InputSegment::text(0..source.len(), TextOrigin::Authored)],
+    )
+    .expect("valid authored delayed fixture");
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::List, Layout::Wikidot);
+    let delayed = parse_delayed_list(&input, &page_info, &settings)
+        .expect("supported delayed input");
+    let bound = delayed
+        .bind(&SlotBindings::empty())
+        .expect("empty delayed schema should bind");
+    let sealed = bound.render_html(&page_info, &settings);
+
+    assert!(sealed.body().contains(r#"src="https://example.com/""#));
+    assert_eq!(sealed.html_blocks(), ["<strong>delayed payload</strong>"],);
+}
+
+fn render_with_runtime_scalar(source: &str, scalar: &str) -> String {
+    let start = source.find(scalar).expect("runtime scalar fixture");
+    let end = start + scalar.len();
+    let input = DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..start, TextOrigin::Authored),
+            InputSegment::text(start..end, TextOrigin::RuntimeScalar),
+            InputSegment::text(end..source.len(), TextOrigin::Authored),
+        ],
+    )
+    .expect("valid runtime scalar fixture");
+    render_input_with_bindings(&input, &SlotBindings::empty())
+}
+
 fn render_tag(source: &str) -> String {
     render_tag_values(source, &["component"], " ")
 }
@@ -128,6 +173,159 @@ fn delayed_page_link_is_an_active_inline_leaf_without_textual_substitution() {
             "<a href=\"/component:image-block\">Standard Image Block</a>",
             "</strong>|END</p>",
         ),
+    );
+}
+
+#[test]
+fn delayed_list_collapses_spaces_around_suppressed_monospace_owners() {
+    assert_eq!(
+        render("%%title_linked%%|A {{0}} {{****}} {{****}} B"),
+        concat!(
+            "<p><a href=\"/component:image-block\">",
+            "Standard Image Block</a>|A B</p>",
+        ),
+    );
+}
+
+#[test]
+fn wikidot_delayed_list_runtime_scalar_does_not_activate_a_spaces_only_line() {
+    let mut source = "ROW RUNTIME\n     \n[[=]]\nCENTER\n[[/=]]".to_owned();
+    crate::preproc::whitespace::normalize_wikidot_whitespace_only_lines(&mut source);
+    assert_eq!(
+        render_with_runtime_scalar(&source, "RUNTIME"),
+        concat!(
+            "<p>ROW RUNTIME</p>",
+            "<div style=\"text-align: center;\"><p>CENTER</p></div>",
+        ),
+    );
+}
+
+#[test]
+fn wikidot_delayed_list_quote_alignment_marker_is_not_visible_text() {
+    let expected = concat!(
+        "<blockquote><p style=\"text-align: center;\">",
+        "<span style=\"color: brown\"><strong>DATE</strong></span>",
+        "</p></blockquote>",
+    );
+    assert_eq!(
+        render_with_runtime_scalar("> = ##brown|**DATE**##", "DATE"),
+        expected,
+    );
+    assert_eq!(render_authored("> = ##brown|**DATE**##"), expected);
+    let wrapped = render_authored(concat!(
+        "WIKIJUMPWIKIDOTCOMPATHTML00000000000000000000000000000000I0X\n\n",
+        "> = ##brown|**DATE**##\n\n",
+        "WIKIJUMPWIKIDOTCOMPATHTML00000000000000000000000000000000I1X",
+    ));
+    assert!(
+        wrapped.contains(expected),
+        "generated container boundaries must not alter quote alignment: {wrapped}",
+    );
+}
+
+#[test]
+fn wikidot_delayed_list_preserves_trailing_span_content_space() {
+    assert_eq!(
+        render_authored(
+            "En date: [[span style=\"background-color: gold;\"]] JAUNE [[/span]].",
+        ),
+        concat!(
+            "<p>En date: ",
+            "<span style=\"background-color: gold;\">JAUNE</span>",
+            " .</p>",
+        ),
+    );
+}
+
+#[test]
+fn wikidot_delayed_list_moves_size_boundary_spaces_outside_spans() {
+    assert_eq!(
+        render_authored(concat!(
+            "[[size 240%]]I[[/size]]",
+            "[[size 190%]]N [[/size]]H",
+            "[[size 130%]] P[[/size]]",
+        )),
+        concat!(
+            "<p>",
+            r#"<span style="font-size:240%;">I</span>"#,
+            r#"<span style="font-size:190%;">N</span> H "#,
+            r#"<span style="font-size:130%;">P</span>"#,
+            "</p>",
+        ),
+    );
+}
+
+#[test]
+fn delayed_list_keeps_content_around_complete_empty_raw_lines_and_nested_blocks() {
+    let html = render_authored(concat!(
+        "ALPHA\n",
+        "@@@@\n",
+        "@@@@\n",
+        "BRAVO\n",
+        "@@@@\n",
+        "@@@@\n",
+        "CHARLIE\n",
+        "[[=]]\n",
+        "[[div class=\"addendum\"]]\n",
+        "------\n",
+        "[[collapsible show=\"OPEN\" hide=\"CLOSE\"]]\n",
+        "[[<]]\n",
+        "DELTA\n",
+        "[[/<]]\n",
+        "[[/collapsible]]\n",
+        "------\n",
+        "[[/div]]\n",
+        "@@@@\n",
+        "@@@@\n",
+        "@@@@\n",
+        "@@@@\n",
+        "@@@@\n",
+        "@@@@\n",
+        "@@@@\n",
+        "@@@@\n",
+        "@@@@\n",
+        "\n",
+        "[[div class=\"finlog\"]]\n",
+        "ECHO\n",
+        "[[/div]]\n",
+        "[[/=]]",
+    ));
+
+    for text in ["ALPHA", "BRAVO", "CHARLIE", "DELTA", "ECHO"] {
+        assert!(html.contains(text), "{text} was lost from {html}");
+    }
+    assert!(
+        !html.contains("[[/div]]") && !html.contains("[[/=]]"),
+        "{html}"
+    );
+}
+
+#[test]
+fn delayed_runtime_scalar_keeps_content_across_repeated_empty_raw_lines() {
+    let html = render_with_runtime_scalar(
+        concat!(
+            "ALPHA 2026/08/02",
+            "[[footnote]]ALPHA NOTE[[/footnote]]\n",
+            "@@@@\n",
+            "@@@@\n",
+            "BRAVO\n",
+            "@@@@\n",
+            "@@@@\n",
+            "[[=]]\n",
+            "[[div class=\"addendum\"]]\n",
+            "CHARLIE\n",
+            "[[/div]]\n",
+            "[[/=]]",
+        ),
+        "2026/08/02",
+    );
+
+    for text in ["ALPHA", "2026/08/02", "ALPHA NOTE", "BRAVO", "CHARLIE"] {
+        assert!(html.contains(text), "{text} was lost from {html}");
+    }
+    assert!(
+        !html.contains("[[/div]]") && !html.contains("[[/=]]"),
+        "{html}",
     );
 }
 
@@ -459,6 +657,33 @@ fn tag_external_label_recovery_matches_zero_one_and_many_textual_tags() {
             tags.len(),
         );
     }
+}
+
+#[test]
+fn empty_generated_tag_links_trim_their_preceding_line_end_space() {
+    assert_eq!(
+        render_tag_values("Tags: %%tags_linked%%", &[], " "),
+        "<p>Tags:</p>",
+    );
+    assert_eq!(
+        render_tag_values("Tags: %%tags_linked%%", &["component"], " "),
+        concat!(
+            r#"<p>Tags: <a href="/system:page-tags/tag/component">"#,
+            "component</a></p>",
+        ),
+    );
+}
+
+#[test]
+fn empty_generated_tag_links_remove_their_empty_list_mode_paragraph() {
+    assert_eq!(
+        render_tag_values(
+            "[[div class=\"unbold\"]]\n%%tags_linked%%\n[[/div]]",
+            &[],
+            " ",
+        ),
+        "<div class=\"unbold\"></div>",
+    );
 }
 
 #[test]

@@ -392,6 +392,23 @@ impl<'t> DelayedElement<'t> {
         }
     }
 
+    fn active_tag_links_are_empty(
+        &self,
+        bindings: &BTreeMap<SlotId, GeneratedValue<'_>>,
+    ) -> bool {
+        let DelayedNode::Active {
+            id,
+            kind: GeneratedKind::TagLinks,
+        } = self.node
+        else {
+            return false;
+        };
+        matches!(
+            bindings.get(&id),
+            Some(GeneratedValue::TagLinks { tags, .. }) if tags.is_empty()
+        )
+    }
+
     pub(crate) fn to_owned(&self) -> DelayedElement<'static> {
         let node = match &self.node {
             DelayedNode::Active { id, kind } => DelayedNode::Active {
@@ -531,6 +548,7 @@ impl BoundDelayedSyntaxTree {
         toc::bind_labels(&mut tree, &self.delayed_toc_entries, page_info, settings);
         SealedFragment {
             output: HtmlRender.render(&tree, page_info, settings),
+            html_blocks: tree.html_blocks,
         }
     }
 }
@@ -540,12 +558,17 @@ impl BoundDelayedSyntaxTree {
 #[derive(Debug)]
 pub struct SealedFragment {
     output: HtmlOutput,
+    html_blocks: Vec<Cow<'static, str>>,
 }
 
 #[cfg(feature = "html")]
 impl SealedFragment {
     pub fn body(&self) -> &str {
         &self.output.body
+    }
+
+    pub fn html_blocks(&self) -> &[Cow<'static, str>] {
+        &self.html_blocks
     }
 }
 
@@ -603,19 +626,34 @@ fn resolve_elements(
     resolved_occurrences: &mut usize,
 ) -> Result<(), DelayedError> {
     let mut resolved = Vec::with_capacity(elements.len());
-    for mut element in elements.drain(..) {
+    let element_count = elements.len();
+    for (index, mut element) in elements.drain(..).enumerate() {
         match &mut element {
             Element::Delayed(delayed) => {
                 *resolved_occurrences += delayed.occurrence_count();
-                resolved.extend(resolve_delayed(delayed, bindings)?);
+                let trim_preceding_line_end_space = delayed
+                    .active_tag_links_are_empty(bindings)
+                    && index + 1 == element_count;
+                let replacement = resolve_delayed(delayed, bindings)?;
+                if trim_preceding_line_end_space && replacement.is_empty() {
+                    trim_trailing_ascii_space(&mut resolved);
+                }
+                resolved.extend(replacement);
                 continue;
             }
             Element::Container(container) => {
+                let contained_delayed = elements_contain_delayed(container.elements());
                 resolve_elements(
                     container.elements_mut(),
                     bindings,
                     resolved_occurrences,
                 )?;
+                if contained_delayed
+                    && container.ctype() == crate::tree::ContainerType::Paragraph
+                    && container.elements().is_empty()
+                {
+                    continue;
+                }
             }
             Element::Table(table) => {
                 for row in &mut table.rows {
@@ -719,6 +757,20 @@ fn resolve_elements(
     }
     *elements = resolved;
     Ok(())
+}
+
+fn trim_trailing_ascii_space(elements: &mut Vec<Element<'static>>) {
+    let Some(Element::Text(text)) = elements.last_mut() else {
+        return;
+    };
+    let trimmed_len = text.trim_end_matches([' ', '\t']).len();
+    if trimmed_len == text.len() {
+        return;
+    }
+    text.to_mut().truncate(trimmed_len);
+    if text.is_empty() {
+        elements.pop();
+    }
 }
 
 pub(crate) fn elements_contain_delayed(elements: &[Element<'_>]) -> bool {

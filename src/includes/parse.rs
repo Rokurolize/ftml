@@ -30,12 +30,19 @@ mod parser {
 }
 
 use self::parser::*;
-use super::IncludeRef;
+use super::{IncludeRef, VARIABLE_REGEX};
 use crate::data::{PageRef, PageRefParseError};
+use crate::tree::VariableMap;
 use pest::Parser;
 use pest::iterators::Pairs;
-use std::borrow::Cow;
 use std::collections::HashMap;
+
+#[derive(Debug)]
+struct RawIncludeArgument<'t> {
+    key: &'t str,
+    value: &'t str,
+    spaced_empty_value: bool,
+}
 
 /// Parses a single include block in the text.
 ///
@@ -79,8 +86,7 @@ fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError
     let page_ref = validate_include_page_ref(PageRef::parse(page_raw)?)?;
 
     trace!("Got page for include {page_ref:?}");
-    let mut arguments = HashMap::new();
-    let mut var_reference = String::new();
+    let mut raw_arguments = Vec::new();
     let mut spaced_empty_separator = false;
 
     for pair in pairs {
@@ -109,37 +115,104 @@ fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError
 
         trace!("Adding argument for include (key '{key}', value '{value}')");
 
-        // In Wikidot, the first argument takes precedence.
-        //
-        // However, with nested includes, you can set a fallback
-        // by making the first argument its corresponding value.
-        //
-        // For instance, if we're in `component:test`:
-        // ```
-        // [[include component:test-backend
-        //     width={$width} |
-        //     width=300px
-        // ]]
-        // ```
-
-        var_reference.clear();
-        str_write!(var_reference, "{{${key}}}");
-
         let spaced_empty_value = value.is_empty()
             && argument_source.split_once('=').is_some_and(|(_, after)| {
                 matches!(after.as_bytes().first(), Some(b' ' | b'\t'))
             });
 
-        if !arguments.contains_key(key) && !spaced_empty_value && value != var_reference {
-            let key = Cow::Borrowed(key);
-            let value = Cow::Borrowed(value);
-
-            arguments.insert(key, value);
-        }
+        raw_arguments.push(RawIncludeArgument {
+            key,
+            value,
+            spaced_empty_value,
+        });
     }
+    let arguments = resolve_include_arguments(&raw_arguments);
 
     Ok(IncludeRef::new(page_ref, arguments)
         .with_spaced_empty_separator(spaced_empty_separator))
+}
+
+fn resolve_include_arguments(
+    raw_arguments: &[RawIncludeArgument<'_>],
+) -> VariableMap<'static> {
+    let round_limit = raw_arguments.len().saturating_mul(2).clamp(1, 128);
+    let mut arguments = HashMap::<String, String>::new();
+
+    // Seed the graph with the first literal fallback for each fixed key. This
+    // gives dynamic expressions such as `{$mode_{$mode}}` a bounded value from
+    // which to resolve, while preserving Wikidot's first-concrete-value rule.
+    for argument in raw_arguments {
+        if argument.spaced_empty_value
+            || !is_static_identifier(argument.key)
+            || argument.value.contains("{$")
+        {
+            continue;
+        }
+        arguments
+            .entry(argument.key.to_owned())
+            .or_insert_with(|| argument.value.to_owned());
+    }
+
+    for _ in 0..round_limit {
+        let mut next = HashMap::new();
+        for argument in raw_arguments {
+            if argument.spaced_empty_value {
+                continue;
+            }
+            let key = expand_argument_expression(argument.key, &arguments, round_limit);
+            if !is_static_identifier(&key) {
+                continue;
+            }
+            let value =
+                expand_argument_expression(argument.value, &arguments, round_limit);
+            let fallback_reference = value.trim_end_matches([' ', '\t', '\r', '\n']);
+            if fallback_reference == format!("{{${key}}}") {
+                continue;
+            }
+            next.entry(key).or_insert(value);
+        }
+        if next == arguments {
+            break;
+        }
+        arguments = next;
+    }
+
+    arguments
+        .into_iter()
+        .map(|(key, value)| (key.into(), value.into()))
+        .collect()
+}
+
+fn expand_argument_expression(
+    expression: &str,
+    arguments: &HashMap<String, String>,
+    round_limit: usize,
+) -> String {
+    let mut output = expression.to_owned();
+    for _ in 0..round_limit {
+        let expanded = VARIABLE_REGEX
+            .replace_all(&output, |capture: &regex::Captures<'_>| {
+                arguments
+                    .get(&capture["name"])
+                    .map(|value| {
+                        value.trim_end_matches([' ', '\t', '\r', '\n']).to_owned()
+                    })
+                    .unwrap_or_else(|| capture[0].to_owned())
+            })
+            .into_owned();
+        if expanded == output {
+            break;
+        }
+        output = expanded;
+    }
+    output
+}
+
+fn is_static_identifier(value: &str) -> bool {
+    !value.is_empty()
+        && value.chars().all(|character| {
+            character.is_ascii_alphanumeric() || matches!(character, '-' | '_')
+        })
 }
 
 fn validate_include_page_ref(page_ref: PageRef) -> Result<PageRef, IncludeParseError> {
@@ -163,6 +236,7 @@ impl From<PageRefParseError> for IncludeParseError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::borrow::Cow;
 
     #[test]
     fn include_parse_error_converts_from_page_ref_parse_error() {

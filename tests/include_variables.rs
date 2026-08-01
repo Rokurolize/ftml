@@ -155,6 +155,27 @@ fn include_argument_first_concrete_value_wins_over_fallback() {
 }
 
 #[test]
+fn snippets_redirect_dynamic_fallback_arguments_select_the_default_backend() {
+    let (expanded, included_pages) = expand_pages(
+        concat!(
+            "[[include :snippets:redirect-backend\n",
+            "|mode={$mode_{$mode}}\n",
+            "|mode_advanced=advanced | mode=default\n",
+            "|mode_{$mode}={$mode_default} | mode_default=default\n",
+            "|url=http://example.test/target\n",
+            "]]",
+        ),
+        [(":snippets:redirect-backend", "MODE={$mode}|URL={$url}")],
+    );
+
+    assert_eq!(
+        included_pages,
+        vec![PageRef::page_and_site("snippets", "redirect-backend")],
+    );
+    assert_eq!(expanded, "MODE=default\n|URL=http://example.test/target\n",);
+}
+
+#[test]
 fn scp_6823_empty_include_argument_leaves_target_variable_unresolved() {
     let expanded = expand(
         "[[include component:card\n|secondary-class= \n|other=value\n]]",

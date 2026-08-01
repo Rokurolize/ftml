@@ -489,7 +489,7 @@
             "data": {
                 "type": "div",
                 "attributes": {
-                    "class": "box ",
+                    "class": "box",
                     "id": "fruit"
                 },
                 "elements": [

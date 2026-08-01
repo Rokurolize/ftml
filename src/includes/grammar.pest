@@ -97,7 +97,8 @@ page_name = _{ (!(" " | "\n" | "\t" | "[" | "|" | "]") ~ ANY)+ }
 
 // Helpers
 
-identifier = { (ASCII_ALPHANUMERIC | "-" | "_")+ }
+identifier = { (ASCII_ALPHANUMERIC | "-" | "_" | variable_reference)+ }
+variable_reference = { "{$" ~ (ASCII_ALPHANUMERIC | "-" | "_")+ ~ "}" }
 comment = _{ "[!--" ~ (!("--]") ~ ANY)* ~ "--]" }
 space = _{ (" " | "\n" | "\t" | comment)+ }
 

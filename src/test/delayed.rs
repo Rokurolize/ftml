@@ -46,8 +46,17 @@ fn page_bindings_for(page: PageRef, label: &'static str) -> SlotBindings<'static
 }
 
 fn render(source: &str) -> String {
+    render_with_layout(source, Layout::Wikidot)
+}
+
+fn render_with_layout(source: &str, layout: Layout) -> String {
     let input = page_link_input(source);
-    render_input(&input)
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::List, layout);
+    let delayed = parse_delayed_list(&input, &page_info, &settings)
+        .expect("supported delayed input");
+    let bound = delayed.bind(&page_bindings()).expect("matching bindings");
+    bound.render_html(&page_info, &settings).body().to_owned()
 }
 
 fn render_input(input: &DelayedInput<'_>) -> String {
@@ -499,6 +508,18 @@ fn delayed_code_shell_keeps_the_parsed_opener() {
             "<a href=\"/component:image-block\">Standard Image Block</a>",
             "<br>\n[[/code]]|END</p>",
         ),
+    );
+}
+
+#[test]
+fn delayed_code_shell_handles_unicode_space_before_name() {
+    let html = render_with_layout(
+        "[[\u{2003}code]]\n%%title_linked%%\n[[/code]]",
+        Layout::Wikijump,
+    );
+    assert!(
+        html.contains("[[\u{2003}code]]"),
+        "delayed code shell must start at its parsed opener: {html}",
     );
 }
 

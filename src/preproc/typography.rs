@@ -35,6 +35,7 @@
 use super::Replacer;
 use super::parser_functions::LiteralRegionIndex;
 use regex::Regex;
+use std::ops::Range;
 use std::sync::LazyLock;
 
 // ‘ - LEFT SINGLE QUOTATION MARK
@@ -158,31 +159,120 @@ fn replace_low_quotes_within_paragraphs(text: &mut String, buffer: &mut String) 
     *text = output;
 }
 
-fn replace_number_spaces(text: &mut String) {
-    let chars = text.char_indices().collect::<Vec<_>>();
-    let mut buffer = String::with_capacity(text.len());
-    let mut last_copied = 0;
+fn wikidot_uses_getattrs(head: &str) -> bool {
+    let name = head
+        .strip_prefix("[[")
+        .unwrap_or(head)
+        .trim_start_matches([' ', '\t'])
+        .split(|character: char| {
+            character.is_ascii_whitespace() || matches!(character, ']' | '_')
+        })
+        .next()
+        .unwrap_or_default();
+    ["collapsible", "div", "table", "row", "cell", "hcell"]
+        .iter()
+        .any(|candidate| name.eq_ignore_ascii_case(candidate))
+}
 
-    for window in chars.windows(3) {
-        let [(_, left), (space_index, ' '), (_, right)] = window else {
-            continue;
-        };
-        if !left.is_ascii_digit() || !right.is_ascii_digit() {
+fn wikidot_getattrs_attribute_ranges(text: &str) -> Vec<Range<usize>> {
+    if !text.contains("=\"") {
+        return Vec::new();
+    }
+
+    let mut ranges = Vec::new();
+    let mut cursor = 0usize;
+    while let Some(relative_open) = text[cursor..].find("[[") {
+        let open = cursor + relative_open;
+        let end = text[open + 2..]
+            .find("]]")
+            .map_or(text.len(), |relative_close| open + 2 + relative_close + 2);
+        let head = &text[open..end];
+        if !wikidot_uses_getattrs(head) {
+            cursor = end;
+            if cursor == text.len() {
+                break;
+            }
             continue;
         }
 
-        buffer.push_str(&text[last_copied..*space_index]);
+        // These six Wikidot blocks use the legacy getAttrs path, not FTML's
+        // generic quoted-argument parser. Match its exact `="` delimiter,
+        // last-quote recovery, and first-`]]` head boundary.
+        let delimiters = head
+            .match_indices("=\"")
+            .map(|(index, _)| index)
+            .collect::<Vec<_>>();
+        for (index, delimiter) in delimiters.iter().copied().enumerate() {
+            let value_start = delimiter + 2;
+            let segment_end = delimiters.get(index + 1).copied().unwrap_or(head.len());
+            let segment = &head[value_start..segment_end];
+            if let Some(value_end) = segment.rfind('"') {
+                ranges.push(open + value_start..open + value_start + value_end);
+            }
+        }
+        cursor = end;
+        if cursor == text.len() {
+            break;
+        }
+    }
+    ranges
+}
+
+fn digit_space_positions(text: &str) -> Vec<usize> {
+    text.match_indices(' ')
+        .filter_map(|(space_index, _)| {
+            space_index
+                .checked_sub(1)
+                .and_then(|index| text.as_bytes().get(index))
+                .is_some_and(u8::is_ascii_digit)
+                .then_some(space_index)
+        })
+        .collect()
+}
+
+fn index_in_ranges(ranges: &[Range<usize>], index: usize) -> bool {
+    let candidate = ranges.partition_point(|range| range.end <= index);
+    ranges
+        .get(candidate)
+        .is_some_and(|range| range.start <= index)
+}
+
+fn replace_number_spaces(
+    text: &mut String,
+    protected: &[Range<usize>],
+    digit_spaces: &[usize],
+) -> bool {
+    let mut spaces = Vec::new();
+    for &space_index in digit_spaces {
+        if !text
+            .as_bytes()
+            .get(space_index + 1)
+            .is_some_and(u8::is_ascii_digit)
+        {
+            continue;
+        }
+        if index_in_ranges(protected, space_index) {
+            continue;
+        }
+        spaces.push(space_index);
+    }
+    if spaces.is_empty() {
+        return false;
+    }
+
+    let mut buffer = String::with_capacity(text.len() + spaces.len());
+    let mut last_copied = 0;
+    for space_index in spaces {
+        buffer.push_str(&text[last_copied..space_index]);
         buffer.push('\u{a0}');
         last_copied = space_index + 1;
     }
-
-    if last_copied > 0 {
-        buffer.push_str(&text[last_copied..]);
-        *text = buffer;
-    }
+    buffer.push_str(&text[last_copied..]);
+    *text = buffer;
+    true
 }
 
-fn replace_unit_spaces(text: &mut String) {
+fn replace_unit_spaces(text: &mut String, protected: &[Range<usize>]) {
     let mut buffer = String::with_capacity(text.len());
     let mut last_copied = 0;
 
@@ -195,6 +285,9 @@ fn replace_unit_spaces(text: &mut String) {
 
         let number = captures.name("number").unwrap();
         let unit = captures.name("unit").unwrap();
+        if index_in_ranges(protected, number.end()) {
+            continue;
+        }
         buffer.push_str(&text[last_copied..number.end()]);
         buffer.push('\u{a0}');
         buffer.push_str(unit.as_str());
@@ -233,8 +326,18 @@ pub(super) fn substitute_wikidot(text: &mut String) {
     replace!(LEFT_ANGLE_QUOTES);
     replace!(RIGHT_ANGLE_QUOTES);
 
-    replace_number_spaces(text);
-    replace_unit_spaces(text);
+    let digit_spaces = digit_space_positions(text);
+    let mut quoted_block_attributes = if digit_spaces.is_empty() {
+        Vec::new()
+    } else {
+        wikidot_getattrs_attribute_ranges(text)
+    };
+    if replace_number_spaces(text, &quoted_block_attributes, &digit_spaces) {
+        // Recompute after replacing number spaces because U+00A0 occupies one
+        // more UTF-8 byte than the ASCII space it replaces.
+        quoted_block_attributes = wikidot_getattrs_attribute_ranges(text);
+    }
+    replace_unit_spaces(text, &quoted_block_attributes);
 
     // Miscellaneous
     replace_wikidot_ellipsis_outside_literals(text, &mut buffer);
@@ -377,6 +480,30 @@ fn wikidot_preprocessing_keeps_literal_dot_runs_outside_authored_prose() {
     assert!(text.contains("SPACED:x…x"), "{text}");
     assert!(text.contains("CODE:x....x"), "{text}");
     assert!(text.contains("ESCAPED:x....x"), "{text}");
+}
+
+#[test]
+fn wikidot_unit_typography_skips_quoted_block_attributes() {
+    let mut text = concat!(
+        "NUMBER: 1 2\n",
+        "[[hcell style =\"padding: 0 2px; width: 75%;\"]]CELL[[/hcell]]\n",
+        "[[hcell style=\"padding: 0\u{00a0}2px; width: 75%;\"]]NBSP[[/hcell]]\n",
+        "PROSE: 0 2px",
+    )
+    .to_owned();
+
+    crate::preprocess_for_layout(&mut text, crate::layout::Layout::Wikidot);
+
+    assert!(text.contains("NUMBER: 1\u{00a0}2"), "{text}");
+    assert!(
+        text.contains(r#"style ="padding: 0 2px; width: 75%;""#),
+        "{text}",
+    );
+    assert!(
+        text.contains("style=\"padding: 0\u{00a0}2px; width: 75%;\""),
+        "{text}",
+    );
+    assert!(text.contains("PROSE: 0\u{00a0}2px"), "{text}");
 }
 
 #[test]

@@ -132,6 +132,59 @@ fn delayed_page_link_is_an_active_inline_leaf_without_textual_substitution() {
 }
 
 #[test]
+fn delayed_page_link_keeps_authored_block_container_active() {
+    for (source, expected) in [
+        (
+            concat!(
+                "[[div class=\"card-block\"]]\n",
+                "%%title_linked%%\n",
+                "[[/div]]",
+            ),
+            concat!(
+                "<div class=\"card-block\"><p>",
+                "<a href=\"/component:image-block\">Standard Image Block</a>",
+                "</p></div>",
+            ),
+        ),
+        (
+            concat!(
+                "[[div_ class=\"card-block\"]]\n",
+                "%%title_linked%%\n",
+                "[[/div]]",
+            ),
+            concat!(
+                "<div class=\"card-block\">",
+                "<a href=\"/component:image-block\">Standard Image Block</a>",
+                "</div>",
+            ),
+        ),
+    ] {
+        assert_eq!(render(source), expected, "source: {source}");
+    }
+}
+
+#[test]
+fn delayed_page_link_keeps_inline_structural_div_continuation_active() {
+    let html = render(concat!(
+        "[[div_ class=\"outer\"]]\n",
+        "[[ul]][[li class=\"folded\"]][[ul]]_[[/ul]]",
+        "[[div class=\"linked-row\"]]\n",
+        "%%title_linked%%\n",
+        "[[/div]][[/li]][[/ul]][[/div]]",
+    ));
+
+    assert!(
+        html.contains("<div class=\"linked-row\"><p>")
+            && html.contains(concat!(
+                "<a href=\"/component:image-block\">",
+                "Standard Image Block</a>",
+            ))
+            && !html.contains("[[div"),
+        "{html}",
+    );
+}
+
+#[test]
 fn delayed_page_link_uses_legacy_source_projection_inside_inline_raw() {
     assert_eq!(
         render("BEGIN|@@%%title_linked%%@@|END"),

@@ -138,6 +138,32 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_alignment_close_unwraps_the_following_physical_line() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let render = |source| {
+            let tokenization = crate::tokenize(source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            assert!(errors.is_empty(), "{errors:?}");
+            HtmlRender.render(&tree, &page_info, &settings).body
+        };
+
+        assert_eq!(
+            render("[[=]]\ncentered\n[[/=]]\nafter"),
+            "<div style=\"text-align: center;\"><p>centered</p></div><br>\nafter",
+        );
+        assert_eq!(
+            render("[[=]]\ncentered\n[[/=]]"),
+            "<div style=\"text-align: center;\"><p>centered</p></div>",
+        );
+        assert_eq!(
+            render("[[=]]\ncentered\n[[/=]]\n\nafter"),
+            "<div style=\"text-align: center;\"><p>centered</p></div><p>after</p>",
+        );
+    }
+
+    #[test]
     fn quoted_alignment_blocks_remain_native_and_bounded() {
         const BLOCK_COUNT: usize = 64;
 

@@ -157,6 +157,23 @@ mod tests {
                 "[[code type=\"python\"]]import antigravity[[/code]]",
                 r#"<div class="code"><div class="hl-main"><pre><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">antigravity</span></pre></div></div>"#,
             ),
+            (
+                "[[code type=\"css\"]]:root {\n     --right-1: 0%;\n}[[/code]]",
+                concat!(
+                    r#"<div class="code"><div class="hl-main"><pre>"#,
+                    r#"<span class="hl-special">:root</span>"#,
+                    r#"<span class="hl-code"> </span>"#,
+                    r#"<span class="hl-brackets">{</span>"#,
+                    "<span class=\"hl-code\">\n     --</span>",
+                    r#"<span class="hl-reserved">right-1:</span>"#,
+                    r#"<span class="hl-code"> </span>"#,
+                    r#"<span class="hl-number">0</span>"#,
+                    r#"<span class="hl-string">%</span>"#,
+                    "<span class=\"hl-code\">;\n</span>",
+                    r#"<span class="hl-brackets">}</span>"#,
+                    "</pre></div></div>",
+                ),
+            ),
         ] {
             let tokenization = crate::tokenize(source);
             let (tree, errors) =

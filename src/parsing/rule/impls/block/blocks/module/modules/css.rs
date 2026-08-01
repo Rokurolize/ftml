@@ -101,6 +101,17 @@ where
     let mut nested_end_blocks = 0;
 
     loop {
+        // A new root-level CSS module cannot belong to the current CSS body once
+        // we have seen complete ListPages modules. Stop at that boundary rather
+        // than scanning the rest of the document again for every unclosed CSS
+        // module.
+        if nested_end_blocks > 0
+            && open_list_pages == 0
+            && wikidot_parser_starts_css(&body_probe)
+        {
+            return Some(CssListPagesBoundary::Unclosed);
+        }
+
         if wikidot_parser_starts_list_pages(&body_probe) {
             open_list_pages += 1;
         }
@@ -124,6 +135,14 @@ where
 }
 
 fn wikidot_parser_starts_list_pages(parser: &Parser<'_, '_>) -> bool {
+    wikidot_parser_starts_module(parser, "listpages")
+}
+
+fn wikidot_parser_starts_css(parser: &Parser<'_, '_>) -> bool {
+    wikidot_parser_starts_module(parser, "css")
+}
+
+fn wikidot_parser_starts_module(parser: &Parser<'_, '_>, module_name: &str) -> bool {
     let source = parser.full_text().inner();
     let start = parser.current().span.start;
     if start > 0 && !source[..start].ends_with('\n') {
@@ -132,7 +151,7 @@ fn wikidot_parser_starts_list_pages(parser: &Parser<'_, '_>) -> bool {
     let line = source[start..]
         .split_once('\n')
         .map_or(&source[start..], |(line, _)| line);
-    wikidot_line_starts_list_pages(line)
+    wikidot_line_starts_module(line, module_name)
 }
 
 fn wikidot_list_pages_head_offsets(body: &str) -> Vec<usize> {
@@ -150,6 +169,10 @@ fn wikidot_list_pages_head_offsets(body: &str) -> Vec<usize> {
 }
 
 fn wikidot_line_starts_list_pages(line: &str) -> bool {
+    wikidot_line_starts_module(line, "listpages")
+}
+
+fn wikidot_line_starts_module(line: &str, module_name: &str) -> bool {
     let Some(head) = line.get(.."[[module".len()) else {
         return false;
     };
@@ -161,13 +184,13 @@ fn wikidot_line_starts_list_pages(line: &str) -> bool {
         return false;
     }
     let head = head.trim_start_matches([' ', '\t']);
-    let Some(name) = head.get(.."listpages".len()) else {
+    let Some(name) = head.get(..module_name.len()) else {
         return false;
     };
-    if !name.eq_ignore_ascii_case("listpages") {
+    if !name.eq_ignore_ascii_case(module_name) {
         return false;
     }
-    let rest = &head["listpages".len()..];
+    let rest = &head[module_name.len()..];
     rest.starts_with([']', ' ', '\t'])
 }
 
@@ -331,6 +354,41 @@ mod tests {
             2,
         );
         assert!(output.styles.is_empty());
+    }
+
+    #[test]
+    fn wikidot_repeated_unclosed_css_modules_preserve_each_list_pages() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let unit = concat!(
+            "[[module CSS]]\n",
+            "[[module ListPages name=\"missing\"]]\n",
+            "BODY\n",
+            "[[/module]]\n",
+        );
+        let source = unit.repeat(128);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            tree.elements
+                .iter()
+                .filter(|element| {
+                    matches!(
+                        element,
+                        Element::Module(crate::tree::Module::ListPages { .. })
+                    )
+                })
+                .count(),
+            128,
+        );
+        assert!(
+            !tree
+                .elements
+                .iter()
+                .any(|element| matches!(element, Element::Style(_)))
+        );
     }
 
     #[test]

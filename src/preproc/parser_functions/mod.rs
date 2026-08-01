@@ -130,6 +130,11 @@ struct ConditionalScanBudget {
     remaining: usize,
 }
 
+#[derive(Debug)]
+struct WikidotDelimiterIndex {
+    unmatched_openers: Vec<usize>,
+}
+
 impl Default for CandidateBudget {
     fn default() -> Self {
         Self {
@@ -154,6 +159,30 @@ impl ConditionalScanBudget {
     }
 }
 
+impl WikidotDelimiterIndex {
+    fn new(source: &str) -> Self {
+        let bytes = source.as_bytes();
+        let mut cursor = 0usize;
+        let mut unmatched_openers = Vec::new();
+        while cursor + 1 < bytes.len() {
+            if bytes[cursor..].starts_with(b"[[") {
+                unmatched_openers.push(cursor);
+                cursor += 2;
+            } else if bytes[cursor..].starts_with(b"]]") {
+                unmatched_openers.pop();
+                cursor += 2;
+            } else {
+                cursor += 1;
+            }
+        }
+        Self { unmatched_openers }
+    }
+
+    fn is_unmatched_opener(&self, offset: usize) -> bool {
+        self.unmatched_openers.binary_search(&offset).is_ok()
+    }
+}
+
 impl CandidateBudget {
     fn take(&mut self) -> bool {
         if self.remaining == 0 {
@@ -171,6 +200,7 @@ impl CandidateBudget {
 #[derive(Debug)]
 enum ConditionalSearch {
     Found(ConditionalParts),
+    CrossingLink(ConditionalParts),
     NotFound,
     Exhausted,
 }
@@ -190,6 +220,7 @@ fn resolve_conditional_pass(
     scan_budget: &mut ConditionalScanBudget,
 ) -> String {
     let literal_regions = LiteralRegionIndex::new(source);
+    let delimiter_index = WikidotDelimiterIndex::new(source);
     let mut replacements = Vec::new();
     let mut search_start = 0usize;
 
@@ -205,8 +236,14 @@ fn resolve_conditional_pass(
             .name("kind")
             .expect("conditional kind capture exists")
             .as_str();
-        let parts = match find_conditional_parts(source, condition_start, scan_budget) {
-            ConditionalSearch::Found(parts) => parts,
+        let (parts, crossing_link) = match find_conditional_parts_indexed(
+            source,
+            condition_start,
+            &delimiter_index,
+            scan_budget,
+        ) {
+            ConditionalSearch::Found(parts) => (parts, false),
+            ConditionalSearch::CrossingLink(parts) => (parts, true),
             ConditionalSearch::NotFound => {
                 search_start = condition_start;
                 continue;
@@ -235,6 +272,15 @@ fn resolve_conditional_pass(
             search_start = condition_start;
             continue;
         };
+        if crossing_link
+            && (!kind.eq_ignore_ascii_case("ifexpr") || !matches!(&truth, Ok(false)))
+        {
+            // Only the provenance-backed false ifexpr shape may share the
+            // inline link's closing delimiter. Unsupported outcomes remain
+            // literal while independently valid nested functions may resolve.
+            search_start = condition_start;
+            continue;
+        }
         let replacement = match truth {
             Ok(true) => source[parts.when_true].trim().to_owned(),
             Ok(false) => parts
@@ -255,22 +301,62 @@ fn simple_condition(condition: &str) -> bool {
     !condition.is_empty() && condition != "0" && !condition.eq_ignore_ascii_case("false")
 }
 
-fn find_conditional_parts(
+fn find_conditional_parts_indexed(
     source: &str,
     condition_start: usize,
+    delimiter_index: &WikidotDelimiterIndex,
     scan_budget: &mut ConditionalScanBudget,
 ) -> ConditionalSearch {
     let bytes = source.as_bytes();
     let mut cursor = condition_start;
     let mut depth = 1usize;
     let mut separators = [None, None];
+    let mut true_branch_whitespace_only = true;
+    let mut crossing_link_depth = None;
+    let mut crossing_link_fallback = None;
+    let mut crossing_link_confirmed = false;
+    let mut expected_adjacent_conditional = None;
+    let mut adjacent_conditional_depth = None;
+    let mut adjacent_conditional_has_separator = false;
+    let mut crossing_suffix_is_adjacent_conditionals = false;
 
-    while cursor + 1 < bytes.len() {
+    while cursor < bytes.len() {
         if !scan_budget.take() {
             return ConditionalSearch::Exhausted;
         }
         if bytes[cursor..].starts_with(b"[[") {
-            depth += 1;
+            if depth == 1 && crossing_link_confirmed {
+                if crossing_suffix_is_adjacent_conditionals
+                    && delimiter_index.is_unmatched_opener(cursor)
+                    && is_wikidot_ifexpr_opener(&source[cursor..])
+                {
+                    return crossing_link_fallback.map_or(
+                        ConditionalSearch::NotFound,
+                        ConditionalSearch::CrossingLink,
+                    );
+                }
+                if !is_wikidot_conditional_opener(&source[cursor..]) {
+                    crossing_suffix_is_adjacent_conditionals = false;
+                }
+            }
+            let next_depth = depth + 1;
+            if expected_adjacent_conditional == Some(cursor) {
+                adjacent_conditional_depth = Some(next_depth);
+                expected_adjacent_conditional = None;
+            }
+            let in_true_branch =
+                depth == 1 && separators[0].is_some() && separators[1].is_none();
+            let crossing_link = in_true_branch
+                && true_branch_whitespace_only
+                && crossing_link_fallback.is_none()
+                && is_wikidot_crossing_link_opener(&source[cursor..]);
+            if in_true_branch {
+                true_branch_whitespace_only = false;
+            }
+            depth = next_depth;
+            if crossing_link {
+                crossing_link_depth = Some(depth);
+            }
             cursor += 2;
             continue;
         }
@@ -287,24 +373,125 @@ fn find_conditional_parts(
                     when_false: separators[1].map(|second| second + 1..cursor),
                 });
             }
+            if crossing_link_depth == Some(depth)
+                && let Some(first) = separators[0]
+            {
+                // Wikidot permits the final `]]` of an inline `[[a ...]]` or
+                // `[[/a ...]]` branch to close the surrounding conditional as
+                // well. Prefer an ordinary balanced outer close whenever one
+                // exists; this fallback is used only if the remaining source
+                // never closes the conditional.
+                let close_end = cursor + 2;
+                if close_end == source.len()
+                    || is_wikidot_conditional_opener(&source[close_end..])
+                {
+                    crossing_link_fallback = Some(ConditionalParts {
+                        end: close_end,
+                        condition: condition_start..first,
+                        when_true: first + 1..close_end,
+                        when_false: None,
+                    });
+                    if close_end == source.len() {
+                        crossing_link_confirmed = true;
+                    } else {
+                        expected_adjacent_conditional = Some(close_end);
+                    }
+                }
+            }
+            if crossing_link_depth == Some(depth) {
+                crossing_link_depth = None;
+            }
+            if adjacent_conditional_depth == Some(depth) {
+                adjacent_conditional_depth = None;
+                if adjacent_conditional_has_separator {
+                    crossing_link_confirmed = true;
+                    crossing_suffix_is_adjacent_conditionals = true;
+                }
+                adjacent_conditional_has_separator = false;
+            }
             depth -= 1;
             cursor += 2;
             continue;
         }
-        if depth == 1 && bytes[cursor] == b'|' {
+        if bytes[cursor] == b'|' {
             if bytes.get(cursor + 1) == Some(&b'|') {
+                if depth == 1 && separators[0].is_some() && separators[1].is_none() {
+                    true_branch_whitespace_only = false;
+                }
+                if depth == 1 && crossing_link_confirmed {
+                    crossing_suffix_is_adjacent_conditionals = false;
+                }
                 cursor += 2;
                 continue;
             }
-            if separators[0].is_none() {
-                separators[0] = Some(cursor);
-            } else if separators[1].is_none() {
-                separators[1] = Some(cursor);
+            if depth == 1 {
+                if crossing_link_confirmed {
+                    crossing_suffix_is_adjacent_conditionals = false;
+                }
+                if separators[0].is_none() {
+                    separators[0] = Some(cursor);
+                } else if separators[1].is_none() {
+                    separators[1] = Some(cursor);
+                }
+            } else if adjacent_conditional_depth == Some(depth) {
+                adjacent_conditional_has_separator = true;
+            }
+            cursor += 1;
+            continue;
+        }
+        if depth == 1
+            && separators[0].is_some()
+            && separators[1].is_none()
+            && !bytes[cursor].is_ascii_whitespace()
+        {
+            true_branch_whitespace_only = false;
+            if crossing_link_confirmed {
+                crossing_suffix_is_adjacent_conditionals = false;
             }
         }
         cursor += 1;
     }
-    ConditionalSearch::NotFound
+    if depth == 1
+        && separators[1].is_none()
+        && crossing_link_confirmed
+        && expected_adjacent_conditional.is_none()
+        && adjacent_conditional_depth.is_none()
+    {
+        crossing_link_fallback
+            .map_or(ConditionalSearch::NotFound, ConditionalSearch::CrossingLink)
+    } else {
+        ConditionalSearch::NotFound
+    }
+}
+
+fn is_wikidot_crossing_link_opener(source: &str) -> bool {
+    ["[[a", "[[/a"].iter().any(|prefix| {
+        source
+            .get(..prefix.len())
+            .is_some_and(|candidate| candidate.eq_ignore_ascii_case(prefix))
+            && source
+                .as_bytes()
+                .get(prefix.len())
+                .is_some_and(u8::is_ascii_whitespace)
+    })
+}
+
+fn is_wikidot_conditional_opener(source: &str) -> bool {
+    is_wikidot_ifexpr_opener(source) || has_wikidot_opener(source, "[[#if")
+}
+
+fn is_wikidot_ifexpr_opener(source: &str) -> bool {
+    has_wikidot_opener(source, "[[#ifexpr")
+}
+
+fn has_wikidot_opener(source: &str, prefix: &str) -> bool {
+    source
+        .get(..prefix.len())
+        .is_some_and(|candidate| candidate.eq_ignore_ascii_case(prefix))
+        && source
+            .as_bytes()
+            .get(prefix.len())
+            .is_some_and(u8::is_ascii_whitespace)
 }
 
 fn resolve_expression_pass(
@@ -409,12 +596,225 @@ mod tests {
         let source = concat!(
             "[[#ifexpr 1 | [[span data-value=\"a|b\"]]shown[[/span]] | hidden]]",
             "[[#if 1 | [[#ifexpr 0 | no | nested]] | outer-hidden]]",
+            "[[#if 1 | [[a href=\"/target\" | linked ]][[#if 1 | adjacent | no]] | hidden]]",
         );
 
         assert_eq!(
             resolve_wikidot_parser_functions(source),
-            "[[span data-value=\"a|b\"]]shown[[/span]]nested",
+            "[[span data-value=\"a|b\"]]shown[[/span]]nested[[a href=\"/target\" | linked ]]adjacent",
         );
+    }
+
+    #[test]
+    fn resolves_crossing_listpages_link_conditionals() {
+        // Live provenance: the exact ListPages body from
+        // jp:old:scp-7884:L87:B2643, observed anonymously through
+        // edit/PagePreviewModule on 2026-07-30. Source SHA-256:
+        // 42e104fbe6b89be364fc99a331c59ddf8c368996650ff696c687fb54600f1916.
+        // Runtime substitution makes each condition false and each
+        // %%content{0}%% branch empty.
+        let source = concat!(
+            "[[#ifexpr 0-0>0 | [[a class=\"point\" href=\"https://scp-jp.wikidot.com/example\" ",
+            "style=\"bottom: calc(172px + 0px * sin(56)); left: calc(172px + 0px * cos(56));\" | ",
+            "]][[#ifexpr 0-0>0 | ] | ]][[#ifexpr 0-0>0 | ] | ]]",
+            "[[#ifexpr 0-0>0 | [[/a | ]][[#ifexpr 0-0>0 | ] | ]][[#ifexpr 0-0>0 | ] | ]]",
+        );
+
+        assert_eq!(resolve_wikidot_parser_functions(source), "");
+    }
+
+    #[test]
+    fn crossing_link_fallback_rejects_an_unclosed_explicit_false_branch() {
+        for (source, expected) in [
+            (
+                concat!(
+                    "[[#if 1 | selected | [[a href=\"/x\" | hidden ]]",
+                    "[[#if 1 | adjacent | no]]",
+                ),
+                "[[#if 1 | selected | [[a href=\"/x\" | hidden ]]adjacent",
+            ),
+            (
+                concat!(
+                    "[[#if 0 | prefix [[a href=\"/x\" | hidden ]]",
+                    "[[#if 1 | adjacent | no]]",
+                ),
+                "[[#if 0 | prefix [[a href=\"/x\" | hidden ]]adjacent",
+            ),
+            (
+                concat!(
+                    "[[#if 0 | [[a href=\"/target\" | linked ]]",
+                    "[[#if 1 | nested | no]] | explicit false",
+                ),
+                "[[#if 0 | [[a href=\"/target\" | linked ]]nested | explicit false",
+            ),
+        ] {
+            assert_eq!(resolve_wikidot_parser_functions(source), expected);
+        }
+    }
+
+    #[test]
+    fn crossing_link_fallback_requires_a_complete_adjacent_conditional() {
+        let source = concat!(
+            "[[#ifexpr 0 | [[a href=\"/x\" | hidden ]]",
+            "[[#if 1 | open",
+        );
+
+        assert_eq!(resolve_wikidot_parser_functions(source), source);
+    }
+
+    #[test]
+    fn crossing_link_must_be_the_first_structural_true_branch_token() {
+        for (source, expected) in [
+            (
+                concat!(
+                    "[[#ifexpr 0 | [[#if 1 | prefix | no]] ",
+                    "[[a href=\"/x\" | hidden ]]",
+                    "[[#if 1 | adjacent | no]]",
+                ),
+                "[[#ifexpr 0 | prefix [[a href=\"/x\" | hidden ]]adjacent",
+            ),
+            (
+                concat!(
+                    "[[#ifexpr 0 | [[a href=\"/one\" | first ]] ",
+                    "[[a href=\"/two\" | second ]]",
+                    "[[#if 1 | adjacent | no]]",
+                ),
+                concat!(
+                    "[[#ifexpr 0 | [[a href=\"/one\" | first ]] ",
+                    "[[a href=\"/two\" | second ]]adjacent",
+                ),
+            ),
+        ] {
+            assert_eq!(resolve_wikidot_parser_functions(source), expected);
+        }
+    }
+
+    #[test]
+    fn crossing_link_rejects_a_double_pipe_true_branch_prefix() {
+        let source = concat!(
+            "[[#ifexpr 0 | || [[a href=\"/x\" | hidden ]]",
+            "[[#if 1 | adjacent | no]]",
+        );
+
+        assert_eq!(
+            resolve_wikidot_parser_functions(source),
+            "[[#ifexpr 0 | || [[a href=\"/x\" | hidden ]]adjacent",
+        );
+    }
+
+    #[test]
+    fn crossing_link_rejects_a_terminal_false_separator() {
+        let source = concat!(
+            "[[#ifexpr 0 | [[a href=\"/x\" | hidden ]]",
+            "[[#if 1 | adjacent | no]]|",
+        );
+
+        assert_eq!(
+            resolve_wikidot_parser_functions(source),
+            "[[#ifexpr 0 | [[a href=\"/x\" | hidden ]]adjacent|",
+        );
+    }
+
+    #[test]
+    fn crossing_link_requires_a_structurally_valid_adjacent_conditional() {
+        let source = concat!(
+            "[[#ifexpr 0 | [[a href=\"/x\" | hidden ]]",
+            "[[#if malformed]]",
+        );
+
+        assert_eq!(resolve_wikidot_parser_functions(source), source);
+    }
+
+    #[test]
+    fn crossing_link_fallback_keeps_the_first_candidate() {
+        let source = concat!(
+            "[[#ifexpr 0 | [[a href=\"/one\" | first ]]",
+            "[[#if 1 | adjacent | no]]",
+            "[[a href=\"/two\" | outside ]]",
+        );
+
+        assert_eq!(
+            resolve_wikidot_parser_functions(source),
+            "adjacent[[a href=\"/two\" | outside ]]",
+        );
+    }
+
+    #[test]
+    fn crossing_link_lookahead_is_strictly_anchored() {
+        assert!(is_wikidot_conditional_opener("[[#ifexpr 1 | yes | no]]"));
+        assert!(is_wikidot_conditional_opener("[[#IF 1 | yes | no]]"));
+        assert!(!is_wikidot_conditional_opener(
+            "prefix [[#ifexpr 1 | yes | no]]",
+        ));
+        assert!(!is_wikidot_conditional_opener("[[#ifexpr]"));
+
+        let links = "[[a href=\"/x\" | x ]]x".repeat(2_000);
+        let source = format!("[[#ifexpr 0 | {links}");
+        assert_eq!(resolve_wikidot_parser_functions(&source), source);
+    }
+
+    #[test]
+    fn repeated_crossing_links_do_not_rescan_the_remaining_document() {
+        let unit = concat!(
+            "[[#ifexpr 0 | [[a href=\"/x\" | ]]",
+            "[[#ifexpr 0 | ] | ]]",
+            "[[#ifexpr 0 | ] | ]]",
+            "[[#ifexpr 0 | [[/a | ]]",
+            "[[#ifexpr 0 | ] | ]]",
+            "[[#ifexpr 0 | ] | ]]",
+        );
+        let source = unit.repeat(200);
+        let delimiter_index = WikidotDelimiterIndex::new(&source);
+        assert!(delimiter_index.is_unmatched_opener(0));
+        assert!(delimiter_index.is_unmatched_opener(unit.len()));
+        let mut scan_budget = ConditionalScanBudget { remaining: 256 };
+        let result = find_conditional_parts_indexed(
+            &source,
+            "[[#ifexpr ".len(),
+            &delimiter_index,
+            &mut scan_budget,
+        );
+
+        assert!(
+            matches!(result, ConditionalSearch::CrossingLink(_),),
+            "{result:?}"
+        );
+
+        let resolved = resolve_wikidot_parser_functions(&source);
+        assert!(
+            resolved.is_empty(),
+            "{} bytes of repeated crossing source remain after the bounded passes",
+            resolved.len(),
+        );
+    }
+
+    #[test]
+    fn crossing_link_fallback_rejects_unevidenced_conditions() {
+        for (source, expected) in [
+            (
+                concat!(
+                    "[[#if 0 | [[a href=\"/x\" | hidden ]]",
+                    "[[#if 1 | adjacent | no]]",
+                ),
+                "[[#if 0 | [[a href=\"/x\" | hidden ]]adjacent",
+            ),
+            (
+                concat!(
+                    "[[#ifexpr 1 | [[a href=\"/x\" | selected ]]",
+                    "[[#if 1 | adjacent | no]]",
+                ),
+                "[[#ifexpr 1 | [[a href=\"/x\" | selected ]]adjacent",
+            ),
+            (
+                concat!(
+                    "[[#ifexpr 1/0 | [[a href=\"/x\" | error ]]",
+                    "[[#if 1 | adjacent | no]]",
+                ),
+                "[[#ifexpr 1/0 | [[a href=\"/x\" | error ]]adjacent",
+            ),
+        ] {
+            assert_eq!(resolve_wikidot_parser_functions(source), expected);
+        }
     }
 
     #[test]

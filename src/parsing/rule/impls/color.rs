@@ -159,8 +159,9 @@ fn normalize_color(color: &str) -> Cow<'_, str> {
         return Cow::Borrowed("inherit");
     }
 
-    if HEX_COLOR.is_match(color) {
-        Cow::Owned(format!("#{color}"))
+    let hex = color.strip_prefix('#').unwrap_or(color);
+    if HEX_COLOR.is_match(hex) {
+        Cow::Owned(format!("#{}", hex.to_ascii_lowercase()))
     } else {
         Cow::Borrowed(color)
     }
@@ -192,6 +193,8 @@ mod tests {
     #[test]
     fn color_normalization_rejects_css_declaration_breakout() {
         assert_eq!(normalize_color("abc"), "#abc");
+        assert_eq!(normalize_color("ABC"), "#abc");
+        assert_eq!(normalize_color("#B01"), "#b01");
         assert_eq!(normalize_color("").as_ref(), "");
         assert_eq!(normalize_color("red").as_ref(), "red");
         assert_eq!(

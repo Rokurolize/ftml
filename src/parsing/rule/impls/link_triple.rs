@@ -135,6 +135,7 @@ fn build_same<'r, 't>(
     };
     let label = if parser.settings().layout.legacy()
         && target.is_some()
+        && !is_url(url)
         && strip_category(url).is_none()
     {
         Cow::Owned(format!("*{label}"))
@@ -314,6 +315,12 @@ fn parse_link_location<'r, 't>(
 /// It returns `Some(_)` if a slice was performed, and `None` if
 /// the string would have been returned as-is.
 fn strip_category(url: &str) -> Option<&str> {
+    // A URL scheme colon is not a Wikidot page-category separator. Live
+    // Wikidot keeps the complete URL as the default label for both ordinary
+    // and new-tab unlabeled external triple links.
+    if is_url(url) {
+        return None;
+    }
     match url.find(':') {
         // Link with site, e.g. :scp-wiki:component:image-block.
         Some(0) => {
@@ -423,6 +430,29 @@ mod wikidot_tests {
         );
         assert!(
             html.contains(r#"<a href="http://ja.scp-wiki.net/scp-040-jp">ordinary</a>"#,),
+            "{html}",
+        );
+    }
+
+    #[test]
+    fn wikidot_unlabeled_external_triple_links_keep_the_scheme_in_the_label() {
+        let html = render(concat!(
+            "[[[http://sandbox-for-codex.wikidot.com/example]]] ",
+            "[[[*http://sandbox-for-codex.wikidot.com/new-tab]]]",
+        ));
+
+        assert!(
+            html.contains(concat!(
+                r#"<a href="http://sandbox-for-codex.wikidot.com/example">"#,
+                "http://sandbox-for-codex.wikidot.com/example</a>",
+            )),
+            "{html}",
+        );
+        assert!(
+            html.contains(concat!(
+                r#"<a href="http://sandbox-for-codex.wikidot.com/new-tab" target="_blank">"#,
+                "http://sandbox-for-codex.wikidot.com/new-tab</a>",
+            )),
             "{html}",
         );
     }

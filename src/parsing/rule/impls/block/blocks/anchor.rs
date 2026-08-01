@@ -61,6 +61,15 @@ fn parse_fn<'r, 't>(
     // Get body content, without paragraphs
     let body = parser.get_body_elements(&BLOCK_ANCHOR, false)?;
     let (mut elements, errors, paragraph_safe) = body.into();
+    if parser.settings().layout.legacy()
+        && let Some(Element::Text(text)) = elements.first_mut()
+        && text.starts_with(' ')
+    {
+        text.to_mut().remove(0);
+        if text.is_empty() {
+            elements.remove(0);
+        }
+    }
 
     if flag_score {
         strip_newlines(&mut elements);

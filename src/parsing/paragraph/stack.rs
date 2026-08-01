@@ -368,11 +368,16 @@ impl<'t> ParagraphStack<'t> {
             let invisible_block_line = self.wikidot && element == Element::LineBreak;
             let nested_literal_collapsible =
                 self.wikidot && collapsible_has_direct_literal_nested_opener(&element);
+            let literal_table_block_boundary = self.current_unwrapped
+                && self.wikidot_current_line_is_literal_advanced_table_opener();
             if wikidot_section_marker
                 && self.current_unwrapped
                 && !self.current.is_empty()
                 && !matches!(self.current.last(), Some(Element::LineBreak))
             {
+                self.current.push(text!("\n"));
+            }
+            if literal_table_block_boundary {
                 self.current.push(text!("\n"));
             }
             if invisible_block_line {
@@ -389,6 +394,43 @@ impl<'t> ParagraphStack<'t> {
                 self.suppress_next_line_break = true;
             }
         }
+    }
+
+    fn wikidot_current_line_is_literal_advanced_table_opener(&self) -> bool {
+        if !self.wikidot || self.current.is_empty() {
+            return false;
+        }
+
+        let mut chunks = Vec::new();
+        let mut byte_len = 0usize;
+        for element in self.current.iter().rev() {
+            match element {
+                Element::Text(text) | Element::Raw(text) => {
+                    byte_len = byte_len.saturating_add(text.len());
+                    if byte_len > 4_096 {
+                        return false;
+                    }
+                    chunks.push(text.as_ref());
+                }
+                Element::LineBreak => break,
+                _ => return false,
+            }
+        }
+        chunks.reverse();
+        let line = chunks.concat();
+        let line = line.trim();
+        let lower = line.to_ascii_lowercase();
+        let Some(suffix) = lower
+            .strip_prefix("[[cell")
+            .or_else(|| lower.strip_prefix("[[hcell"))
+        else {
+            return false;
+        };
+        suffix
+            .chars()
+            .next()
+            .is_some_and(|character| character == ']' || character.is_whitespace())
+            && line.ends_with("]]")
     }
 
     pub fn push_paragraph_safe_elements(&mut self, mut elements: Vec<Element<'t>>) {

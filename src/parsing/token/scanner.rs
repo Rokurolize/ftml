@@ -230,6 +230,7 @@ fn scan_url(bytes: &[u8], start: usize) -> Option<usize> {
         && !matches!(bytes[end], b'\n' | b'\r' | b' ' | b'"' | b'|' | b'[' | b']')
         && !is_discarded_control(bytes[end])
         && !has(bytes, end, b">@")
+        && !has(bytes, end, b"@@")
     {
         end += 1;
     }
@@ -278,7 +279,17 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
     while dot < bytes.len()
         && !matches!(
             bytes[dot],
-            b' ' | b'\t' | b'.' | b'[' | b']' | b'{' | b'}' | b'<' | b'>' | b'\n' | b'\r'
+            b' ' | b'\t'
+                | b'.'
+                | b'@'
+                | b'['
+                | b']'
+                | b'{'
+                | b'}'
+                | b'<'
+                | b'>'
+                | b'\n'
+                | b'\r'
         )
         && !is_discarded_control(bytes[dot])
     {
@@ -292,7 +303,7 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
     while end < bytes.len()
         && !matches!(
             bytes[end],
-            b' ' | b'\t' | b'[' | b']' | b'{' | b'}' | b'<' | b'>' | b'\n' | b'\r'
+            b' ' | b'\t' | b'@' | b'[' | b']' | b'{' | b'}' | b'<' | b'>' | b'\n' | b'\r'
         )
         && !is_discarded_control(bytes[end])
     {

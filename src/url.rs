@@ -156,12 +156,12 @@ pub fn normalize_link<'a>(
 #[cfg(feature = "html")]
 fn normalize_page_href<'a>(page: &'a str, extra: Option<&'a str>) -> Cow<'a, str> {
     let extra = extra.unwrap_or("");
-
-    if page.starts_with('/') {
-        Cow::Owned(format!("{page}{extra}"))
+    let href = if page.starts_with('/') {
+        format!("{page}{extra}")
     } else {
-        Cow::Owned(format!("/{page}{extra}"))
-    }
+        format!("/{page}{extra}")
+    };
+    Cow::Owned(percent_encode_non_ascii(&href).into_owned())
 }
 
 /// Normalize a URL string.
@@ -325,6 +325,10 @@ fn normalize_link_preserves_local_pages_with_dangerous_scheme_names() {
     test!("javascript:example" => "/javascript:example");
     test!("data:example#target" => "/data:example#target");
     test!("javascript:example/edit" => "/javascript:example/edit");
+    test!(
+        "system:page-tags/tag/파무왁"
+            => "/system:page-tags/tag/%ED%8C%8C%EB%AC%B4%EC%99%81",
+    );
 
     let location = LinkLocation::Page(crate::data::PageRef {
         site: None,

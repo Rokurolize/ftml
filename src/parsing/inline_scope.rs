@@ -386,26 +386,54 @@ fn lower_sequence<'t>(
             let current = *ordinal;
             *ordinal += 1;
             if valid.contains(&current) {
+                let leading_space =
+                    matches!(source.peek(), Some(Element::Text(text)) if text == " ");
+                if leading_space {
+                    source.next();
+                    if !elements_end_with_space(&output) {
+                        run.push(text!(" "));
+                        flush_run(
+                            &mut output,
+                            &mut run,
+                            active,
+                            &mut last_run_outer_scope,
+                        );
+                    }
+                }
                 let mut attributes = AttributeMap::new();
                 attributes.insert("style", style);
                 active.push(ScopeKind::Size, ContainerType::Size, attributes, false);
-                if matches!(source.peek(), Some(Element::Text(text)) if text == " ") {
-                    source.next();
-                }
             }
             continue;
         }
         if matches!(element, Element::Partial(PartialElement::InlineSizeClose)) {
-            flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
+            let empty = !active.top_has_content(ScopeKind::Size) && run.is_empty();
+            let trailing_space =
+                matches!(run.last(), Some(Element::Text(text)) if text == " ");
+            let next_starts_with_space = matches!(
+                source.peek(),
+                Some(Element::Text(text)) if text.starts_with(' ')
+            );
             let current = *ordinal;
             *ordinal += 1;
             if valid.contains(&current) {
+                if trailing_space {
+                    run.pop();
+                }
+                flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
                 trim_trailing_space(&mut output);
                 active.remove(ScopeKind::Size);
+                if trailing_space && !next_starts_with_space && !empty {
+                    run.push(text!(" "));
+                }
             } else {
+                flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
                 output.push(text!("[[/size]]"));
             }
             continue;
+        }
+        if matches!(element, Element::Footnote) {
+            trim_one_trailing_text_space(&mut run);
         }
         if let Element::Partial(PartialElement::InlineSpanOpen(mut attributes)) = element
         {
@@ -429,6 +457,12 @@ fn lower_sequence<'t>(
         if let Element::Partial(PartialElement::InlineSpanClose(close_source)) = element {
             let scored = active.top_is_scored(ScopeKind::Span);
             let empty = !active.top_has_content(ScopeKind::Span) && run.is_empty();
+            let trailing_space =
+                !scored && matches!(run.last(), Some(Element::Text(text)) if text == " ");
+            let next_starts_with_space = matches!(
+                source.peek(),
+                Some(Element::Text(text)) if text.starts_with(' ')
+            );
             if scored {
                 while matches!(
                     run.last(),
@@ -436,12 +470,7 @@ fn lower_sequence<'t>(
                 ) {
                     run.pop();
                 }
-            } else if matches!(run.last(), Some(Element::Text(text)) if text == " ")
-                && matches!(
-                    source.peek(),
-                    Some(Element::Text(text)) if text.starts_with(' ')
-                )
-            {
+            } else if trailing_space && next_starts_with_space {
                 run.pop();
             }
             flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
@@ -453,6 +482,9 @@ fn lower_sequence<'t>(
             if valid.contains(&current) {
                 trim_trailing_space(&mut output);
                 active.remove(ScopeKind::Span);
+                if trailing_space && !next_starts_with_space && !empty && !scored {
+                    output.push(text!(" "));
+                }
                 if scored {
                     effects.scored_span_closed = true;
                     *trim_next_break = true;
@@ -462,7 +494,27 @@ fn lower_sequence<'t>(
             }
             continue;
         }
-        if !matches!(element, Element::Partial(_))
+        if active.has_active_scope()
+            && element.paragraph_safe()
+            && contains_inline_scope_control(&element)
+            && inline_scope_controls_are_self_contained(&element)
+        {
+            let mut nested_active = ActiveScopes::default();
+            if lower_children(
+                &mut element,
+                valid,
+                ordinal,
+                &mut nested_active,
+                trim_next_break,
+            ) {
+                debug_assert!(!nested_active.has_active_scope());
+                run.push(element);
+            } else {
+                flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
+                output.push(element);
+                last_run_outer_scope = None;
+            }
+        } else if !matches!(element, Element::Partial(_))
             && element.paragraph_safe()
             && !contains_inline_scope_control(&element)
         {
@@ -555,6 +607,28 @@ fn trim_trailing_space(elements: &mut Vec<Element<'_>>) {
     }
 }
 
+fn trim_one_trailing_text_space(elements: &mut Vec<Element<'_>>) {
+    let Some(Element::Text(text)) = elements.last_mut() else {
+        return;
+    };
+    if text.ends_with(' ') {
+        text.to_mut().pop();
+        if text.is_empty() {
+            elements.pop();
+        }
+    }
+}
+
+fn elements_end_with_space(elements: &[Element<'_>]) -> bool {
+    match elements.last() {
+        Some(Element::Text(text)) => text.ends_with(' '),
+        Some(Element::Container(container)) => {
+            elements_end_with_space(container.elements())
+        }
+        _ => false,
+    }
+}
+
 fn is_empty_paragraph(element: &Element<'_>) -> bool {
     matches!(
         element,
@@ -580,6 +654,50 @@ fn contains_inline_scope_control(element: &Element<'_>) -> bool {
         contains |= children.iter().any(contains_inline_scope_control);
     });
     contains
+}
+
+fn inline_scope_controls_are_self_contained(element: &Element<'_>) -> bool {
+    fn visit(element: &Element<'_>, sizes: &mut usize, spans: &mut usize) -> bool {
+        match element {
+            Element::Partial(PartialElement::InlineSizeOpen(_)) => {
+                *sizes += 1;
+                true
+            }
+            Element::Partial(PartialElement::InlineSizeClose) => {
+                if *sizes == 0 {
+                    false
+                } else {
+                    *sizes -= 1;
+                    true
+                }
+            }
+            Element::Partial(PartialElement::InlineSpanOpen(_)) => {
+                *spans += 1;
+                true
+            }
+            Element::Partial(PartialElement::InlineSpanClose(_)) => {
+                if *spans == 0 {
+                    false
+                } else {
+                    *spans -= 1;
+                    true
+                }
+            }
+            _ => {
+                let mut valid = true;
+                visit_children(element, &mut |children| {
+                    for child in children {
+                        valid &= visit(child, sizes, spans);
+                    }
+                });
+                valid
+            }
+        }
+    }
+
+    let mut sizes = 0;
+    let mut spans = 0;
+    visit(element, &mut sizes, &mut spans) && sizes == 0 && spans == 0
 }
 
 fn lower_children<'t>(
@@ -823,7 +941,7 @@ mod tests {
     }
 
     #[test]
-    fn size_close_trims_trailing_space() {
+    fn size_close_moves_trailing_space_outside_the_scope() {
         let mut elements = vec![Element::Container(Container::new(
             ContainerType::Paragraph,
             vec![
@@ -840,11 +958,13 @@ mod tests {
         let [Element::Container(paragraph)] = elements.as_slice() else {
             panic!("expected one paragraph: {elements:#?}");
         };
-        let [Element::Container(container)] = paragraph.elements() else {
-            panic!("expected one lowered size container: {paragraph:#?}");
+        let [Element::Container(container), Element::Text(space)] = paragraph.elements()
+        else {
+            panic!("expected a lowered size container and outer space: {paragraph:#?}");
         };
         assert_eq!(container.ctype(), ContainerType::Size);
         assert_eq!(container.elements(), &[text!("literal")]);
+        assert_eq!(space, " ");
     }
 
     #[test]

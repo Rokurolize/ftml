@@ -153,6 +153,42 @@ impl<'t> ActiveScopes<'t> {
 }
 
 pub(crate) fn lower_wikidot_inline_size_scopes<'t>(elements: &mut Vec<Element<'t>>) {
+    let valid = collect_valid_scope_pairs(elements);
+
+    let mut ordinal = 0;
+    let mut active = ActiveScopes::default();
+    let mut trim_next_break = false;
+    lower_root_sequence(
+        elements,
+        &valid,
+        &mut ordinal,
+        &mut active,
+        &mut trim_next_break,
+    );
+}
+
+/// Lower Wikidot inline scopes in an already-inline sequence.
+///
+/// Footnote bodies are stored without their paragraph container, so they need
+/// the same continuous sequence treatment as the contents of a paragraph.
+pub(crate) fn lower_wikidot_inline_size_scopes_inline<'t>(
+    elements: &mut Vec<Element<'t>>,
+) {
+    let valid = collect_valid_scope_pairs(elements);
+
+    let mut ordinal = 0;
+    let mut active = ActiveScopes::default();
+    let mut trim_next_break = false;
+    lower_sequence(
+        elements,
+        &valid,
+        &mut ordinal,
+        &mut active,
+        &mut trim_next_break,
+    );
+}
+
+fn collect_valid_scope_pairs(elements: &[Element<'_>]) -> BTreeSet<usize> {
     let mut ordinal = 0;
     // Separate stacks keep crossed size/span closure matching constant-time.
     let mut open_sizes = Vec::new();
@@ -168,16 +204,7 @@ pub(crate) fn lower_wikidot_inline_size_scopes<'t>(elements: &mut Vec<Element<'t
         &mut valid,
     );
 
-    ordinal = 0;
-    let mut active = ActiveScopes::default();
-    let mut trim_next_break = false;
-    lower_root_sequence(
-        elements,
-        &valid,
-        &mut ordinal,
-        &mut active,
-        &mut trim_next_break,
-    );
+    valid
 }
 
 #[derive(Default)]

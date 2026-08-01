@@ -238,6 +238,21 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_footnote_lowers_inline_span_scopes() {
+        let (html, errors) = render_wikidot(
+            "before[[footnote]]以[[span class=\"ruby\"]]精神-物质[[span class=\"rt\"]]灵与肉[[/span]][[/span]]后[[/footnote]]after[[footnoteblock]]",
+        );
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert!(
+            html.contains(
+                ". 以<span class=\"ruby\">精神-物质<span class=\"rt\">灵与肉</span></span>后",
+            ),
+            "{html}",
+        );
+    }
+
+    #[test]
     fn wikidot_footnote_block_ignores_unknown_arguments() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);

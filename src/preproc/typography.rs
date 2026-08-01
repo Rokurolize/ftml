@@ -232,8 +232,9 @@ fn wikidot_local_link_separator_ranges(text: &str) -> Vec<Range<usize>> {
             .find('\n')
             .map_or(text.len(), |offset| body_start + offset);
         let Some(relative_close) = text[body_start..line_end].find(']') else {
-            cursor = line_end.saturating_add(1);
-            continue;
+            // There can be no further local-link opener before this line's
+            // end. Leave the incomplete bracket literal and finish safely.
+            break;
         };
         let close = body_start + relative_close;
         let body = &text[body_start..close];
@@ -501,6 +502,15 @@ fn test_substitute() {
     use super::test::test_substitution;
 
     test_substitution("typography", substitute_wikidot, &TEST_CASES);
+}
+
+#[test]
+fn wikidot_typography_leaves_an_unmatched_local_bracket_literal() {
+    let mut text = "1 [".to_owned();
+
+    substitute_wikidot(&mut text);
+
+    assert_eq!(text, "1 [");
 }
 
 #[test]

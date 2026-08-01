@@ -597,7 +597,21 @@ pub fn parse_delayed_list<'t>(
     if settings.mode != WikitextMode::List {
         return Err(DelayedError::WrongMode);
     }
-    let (tree, errors) = parse(input.tokenization(), page_info, settings).into();
+    let (mut tree, errors) = parse(input.tokenization(), page_info, settings).into();
+    if settings.list_pages_inline {
+        let elements = std::mem::take(&mut tree.elements);
+        tree.elements = elements
+            .into_iter()
+            .flat_map(|element| match element {
+                Element::Container(container)
+                    if container.ctype() == crate::tree::ContainerType::Paragraph =>
+                {
+                    container.into()
+                }
+                element => vec![element],
+            })
+            .collect();
+    }
     let mut schema = BTreeMap::new();
     let mut expected_occurrences = 0usize;
     for segment in input.segments() {

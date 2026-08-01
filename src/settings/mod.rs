@@ -36,6 +36,14 @@ pub struct WikitextSettings {
     /// What mode we're running in.
     pub mode: WikitextMode,
 
+    /// Whether top-level delayed ListPages values should remain outside a
+    /// paragraph when the caller is composing an inline combined wrapper.
+    ///
+    /// This is disabled by default; Wikijump enables it only for the
+    /// evidenced `separate="no"` wrapper path.
+    #[serde(default)]
+    pub list_pages_inline: bool,
+
     /// What layout we're targeting.
     ///
     /// For instance, generating Wikidot's legacy HTML structure.
@@ -109,6 +117,7 @@ impl WikitextSettings {
         match mode {
             WikitextMode::Page => WikitextSettings {
                 mode,
+                list_pages_inline: false,
                 layout,
                 enable_page_syntax: true,
                 enable_html_blocks: DEFAULT_ENABLE_HTML_BLOCKS,
@@ -120,6 +129,7 @@ impl WikitextSettings {
             },
             WikitextMode::PageNav => WikitextSettings {
                 mode,
+                list_pages_inline: false,
                 layout,
                 enable_page_syntax: true,
                 enable_html_blocks: DEFAULT_ENABLE_HTML_BLOCKS,
@@ -131,6 +141,7 @@ impl WikitextSettings {
             },
             WikitextMode::Draft => WikitextSettings {
                 mode,
+                list_pages_inline: false,
                 layout,
                 enable_page_syntax: true,
                 enable_html_blocks: DEFAULT_ENABLE_HTML_BLOCKS,
@@ -142,6 +153,7 @@ impl WikitextSettings {
             },
             WikitextMode::ForumPost | WikitextMode::DirectMessage => WikitextSettings {
                 mode,
+                list_pages_inline: false,
                 layout,
                 enable_page_syntax: false,
                 enable_html_blocks: DEFAULT_ENABLE_HTML_BLOCKS,
@@ -153,6 +165,7 @@ impl WikitextSettings {
             },
             WikitextMode::List => WikitextSettings {
                 mode,
+                list_pages_inline: false,
                 layout,
                 enable_page_syntax: true,
                 enable_html_blocks: DEFAULT_ENABLE_HTML_BLOCKS,

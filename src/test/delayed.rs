@@ -59,6 +59,23 @@ fn render_with_layout(source: &str, layout: Layout) -> String {
     bound.render_html(&page_info, &settings).body().to_owned()
 }
 
+fn render_inline_list(source: &str) -> String {
+    let input = DelayedInput::new(
+        source,
+        vec![InputSegment::text(0..source.len(), TextOrigin::Authored)],
+    )
+    .expect("valid inline authored input");
+    let page_info = PageInfo::dummy();
+    let mut settings = WikitextSettings::from_mode(WikitextMode::List, Layout::Wikidot);
+    settings.list_pages_inline = true;
+    let delayed = parse_delayed_list(&input, &page_info, &settings)
+        .expect("supported inline delayed input");
+    let bound = delayed
+        .bind(&SlotBindings::empty())
+        .expect("empty inline bindings");
+    bound.render_html(&page_info, &settings).body().to_owned()
+}
+
 fn render_input(input: &DelayedInput<'_>) -> String {
     render_input_with_bindings(input, &page_bindings())
 }
@@ -103,6 +120,19 @@ fn delayed_html_blocks_remain_observable_after_binding() {
 
     assert!(sealed.body().contains(r#"src="https://example.com/""#));
     assert_eq!(sealed.html_blocks(), ["<strong>delayed payload</strong>"],);
+}
+
+#[test]
+fn inline_list_delayed_anchor_is_not_wrapped_in_a_paragraph() {
+    let source = "[[a_ href=\"/component:image-block\"]]inline row[[/a]]";
+    assert_eq!(
+        render_inline_list(source),
+        "<a href=\"/component:image-block\">inline row</a>",
+    );
+    assert_eq!(
+        render_authored(source),
+        "<p><a href=\"/component:image-block\">inline row</a></p>",
+    );
 }
 
 fn render_with_runtime_scalar(source: &str, scalar: &str) -> String {

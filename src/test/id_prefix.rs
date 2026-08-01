@@ -54,6 +54,7 @@ fn isolate_user_ids() {
 
     let settings = WikitextSettings {
         mode: WikitextMode::Page,
+        list_pages_inline: false,
         layout: Layout::Wikijump,
         enable_page_syntax: true,
         enable_html_blocks: true,

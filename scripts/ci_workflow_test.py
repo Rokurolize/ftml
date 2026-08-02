@@ -200,7 +200,7 @@ class CiWorkflowPolicyTests(unittest.TestCase):
         self.assertNotIn("uses: actions/cache@", self.workflow)
         save_steps = re.findall(r"^[ \t]*- name: Save ", self.workflow, flags=re.MULTILINE)
         save_conditions = re.findall(r"^[ \t]*- name: Save [^\n]+\n[ \t]+if: ([^\n]+)\n[ \t]+uses: actions/cache/save@([0-9a-f]{40})[ \t]*(?:#.*)?$", self.workflow, flags=re.MULTILINE)
-        target_keys = re.findall(r"^[ \t]+key: ([^\n]*-target-v2-[^\n]*)$", self.workflow, flags=re.MULTILINE)
+        target_keys = re.findall(r"^[ \t]+key: ([^\n]*-target-v3-[^\n]*)$", self.workflow, flags=re.MULTILINE)
 
         self.assertEqual(len(save_steps), 5)
         self.assertEqual(len(save_conditions), 5)

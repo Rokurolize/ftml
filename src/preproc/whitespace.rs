@@ -45,6 +45,19 @@ static WHITESPACE_ONLY_LINE: LazyLock<Replacer> =
             .unwrap(),
         replacement: "",
     });
+// Wikidot treats a line containing a non-breaking space as authored content:
+// it remains in the surrounding paragraph and renders as line breaks around
+// the space. Strip only ordinary indentation lines in the legacy layout;
+// the leading-space pass below converts the preserved NBSP to an ordinary
+// parser-space without turning it into a paragraph break.
+static WIKIDOT_WHITESPACE_ONLY_LINE: LazyLock<Replacer> =
+    LazyLock::new(|| Replacer::RegexReplace {
+        regex: RegexBuilder::new(r"^[ \t\r\n]+$")
+            .multi_line(true)
+            .build()
+            .unwrap(),
+        replacement: "",
+    });
 static LEADING_DOCUMENT_WHITESPACE: LazyLock<Replacer> =
     LazyLock::new(|| Replacer::RegexReplace {
         regex: Regex::new(r"^[ \t\n]+").unwrap(),
@@ -236,13 +249,18 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
     }
     replace!(LEADING_DOCUMENT_WHITESPACE);
 
-    // Replace leading non-standard spaces with regular spaces
-    // Leave other non-standard spaces as-is (such as nbsp in
-    // the middle of paragraphs)
-    replace_leading_spaces(text);
-
-    // Strip lines with only whitespace
-    replace!(WHITESPACE_ONLY_LINE);
+    if wikidot_compatibility {
+        // NBSP-only lines are not blank lines to Wikidot. Remove ordinary
+        // indentation-only lines before converting leading NBSP characters,
+        // then preserve the latter as paragraph content.
+        replace!(WIKIDOT_WHITESPACE_ONLY_LINE);
+        replace_leading_spaces(text);
+    } else {
+        // Replace leading non-standard spaces with regular spaces and strip
+        // lines with only whitespace for the native parser.
+        replace_leading_spaces(text);
+        replace!(WHITESPACE_ONLY_LINE);
+    }
 
     // Join concatenated lines (ending with '\').
     join_continued_lines(text, &mut buffer, wikidot_compatibility);
@@ -487,6 +505,7 @@ const TEST_CASES: [(&str, &str); 10] = [
 fn regexes() {
     let _ = &*LEADING_NONSTANDARD_WHITESPACE;
     let _ = &*WHITESPACE_ONLY_LINE;
+    let _ = &*WIKIDOT_WHITESPACE_ONLY_LINE;
     let _ = &*LEADING_DOCUMENT_WHITESPACE;
     let _ = &*TRAILING_NEWLINES;
     let _ = &*DOS_MAC_NEWLINES;
@@ -497,6 +516,15 @@ fn test_substitute() {
     use super::test::test_substitution;
 
     test_substitution("miscellaneous", substitute_wikidot, &TEST_CASES);
+}
+
+#[test]
+fn wikidot_preserves_nbsp_only_lines_inside_a_paragraph() {
+    let mut text = "Alpha\n\u{00a0}\nBeta\n\nGamma".to_owned();
+
+    substitute_wikidot(&mut text);
+
+    assert_eq!(text, "Alpha\n \nBeta\n\nGamma");
 }
 
 #[test]

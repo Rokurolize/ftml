@@ -162,6 +162,9 @@ pub enum Token {
     DoubleQuote,
     EscapedDoubleQuote,
     EscapedBackslash,
+    DiscardedControl,
+    GeneratedPageLink,
+    GeneratedTagLinks,
 
     //
     // Miscellaneous
@@ -310,6 +313,8 @@ impl Token {
             Rule::double_quote => Token::DoubleQuote,
             Rule::escaped_double_quote => Token::EscapedDoubleQuote,
             Rule::escaped_backslash => Token::EscapedBackslash,
+            Rule::terminal_backslash => Token::LineBreak,
+            Rule::discarded_control => Token::DiscardedControl,
 
             // Other
             Rule::other => Token::Other,

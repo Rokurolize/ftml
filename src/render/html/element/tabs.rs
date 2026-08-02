@@ -25,6 +25,11 @@ use std::iter;
 pub fn render_tabview(ctx: &mut HtmlContext, tabs: &[Tab]) {
     debug!("Rendering tabview (tabs {})", tabs.len());
 
+    if ctx.layout().legacy() {
+        render_wikidot_tabview(ctx, tabs);
+        return;
+    }
+
     // Generate IDs for each tab
     let button_ids = generate_ids(ctx.random(), tabs.len());
     let tab_ids = generate_ids(ctx.random(), tabs.len());
@@ -92,8 +97,98 @@ pub fn render_tabview(ctx: &mut HtmlContext, tabs: &[Tab]) {
         });
 }
 
+fn render_wikidot_tabview(ctx: &mut HtmlContext, tabs: &[Tab]) {
+    let id = ctx.random().generate_wikidot_tabview_id();
+
+    ctx.push_raw_str("<!-- Wikidot tabview bootstrap omitted -->\n");
+    ctx.html()
+        .div()
+        .attr(attr!("id" => &id, "class" => "yui-navset"))
+        .inner(|ctx| {
+            ctx.html()
+                .ul()
+                .attr(attr!("class" => "yui-nav"))
+                .inner(|ctx| {
+                    for (index, tab) in tabs.iter().enumerate() {
+                        ctx.html()
+                            .li()
+                            .attr(attr!("class" => "selected"; if index == 0))
+                            .inner(|ctx| {
+                                ctx.html()
+                                    .a()
+                                    .attr(attr!("href" => "javascript:;"))
+                                    .inner(|ctx| {
+                                        ctx.html().em().contents(&tab.label);
+                                    });
+                            });
+                        ctx.push_raw('\n');
+                    }
+                });
+
+            ctx.html()
+                .div()
+                .attr(attr!("class" => "yui-content"))
+                .inner(|ctx| {
+                    for (index, tab) in tabs.iter().enumerate() {
+                        let tab_id = format!("wiki-tab-0-{index}");
+                        ctx.html()
+                            .div()
+                            .attr(attr!(
+                                "id" => &tab_id,
+                                "style" => "display:none"; if index > 0,
+                            ))
+                            .contents(&tab.elements);
+                    }
+                });
+        });
+}
+
 fn generate_ids(random: &mut Random, len: usize) -> Vec<String> {
     iter::repeat_n((), len)
         .map(|_| random.generate_html_id())
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::SyntaxTree;
+
+    #[test]
+    fn wikidot_tabview_uses_yui_dom_and_separates_labels() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tree = SyntaxTree {
+            elements: vec![Element::TabView(vec![
+                Tab {
+                    label: cow!("Apple"),
+                    elements: vec![text!("one")],
+                },
+                Tab {
+                    label: cow!("Banana"),
+                    elements: vec![text!("two")],
+                },
+            ])],
+            ..SyntaxTree::default()
+        };
+
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert!(html.contains("class=\"yui-navset\""), "{html}");
+        assert!(html.contains("<em>Apple</em></a></li>\n<li>"), "{html}");
+        assert!(
+            html.contains("<div id=\"wiki-tab-0-0\">one</div>"),
+            "{html}",
+        );
+        assert!(!html.contains("style=\"display:block\""), "{html}");
+        assert!(
+            html.contains("id=\"wiki-tab-0-1\" style=\"display:none\""),
+            "{html}",
+        );
+        assert!(!html.contains("<wj-tabs"), "{html}");
+        assert!(!html.contains("<script"), "{html}");
+    }
 }

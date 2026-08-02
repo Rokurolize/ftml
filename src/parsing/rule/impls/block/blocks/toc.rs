@@ -43,7 +43,7 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "Table of Contents doesn't allow score flag");
     assert_block_name(&BLOCK_TABLE_OF_CONTENTS, name);
 
-    let arguments = parser.get_head_map(&BLOCK_TABLE_OF_CONTENTS, in_head)?;
+    let arguments = parser.get_head_map_wikidot(&BLOCK_TABLE_OF_CONTENTS, in_head)?;
     let attributes = arguments.to_attribute_map(parser.settings());
     let align = FloatAlignment::parse(name).map(|float| float.align);
     let element = Element::TableOfContents { align, attributes };

@@ -34,8 +34,12 @@ fn try_consume_fn<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create italics (emphasis) container");
 
+    if has_ambiguous_crossed_bold_pair(parser) {
+        return collect_ambiguous_crossed_bold_italics(parser);
+    }
+
     // Wikidot canonicalizes the real-world crossed pair
-    // `//**text//**` as bold containing italics. Handle only the unambiguous
+    // `//**text//**` as italics containing bold. Handle only the unambiguous
     // single-pair shape here; ordinary nested formatting continues through
     // the standard collector below.
     if has_crossed_bold_pair(parser) {
@@ -50,7 +54,72 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::token_pair(Token::Whitespace, Token::Italics),
     ];
     let ctype = ContainerType::Italics;
-    collect_container(parser, RULE_ITALICS, ctype, &close, &invalid, None)
+    let collected =
+        collect_container(parser, RULE_ITALICS, ctype, &close, &invalid, None)?;
+    let (elements, errors, paragraph_safe) = collected.into();
+    if parser.settings().layout.legacy()
+        && matches!(
+            &elements,
+            Elements::Single(Element::Container(container)) if container.elements().is_empty()
+        )
+    {
+        return ok!(paragraph_safe; Elements::None, errors);
+    }
+    ok!(paragraph_safe; elements, errors)
+}
+
+fn has_ambiguous_crossed_bold_pair(parser: &Parser<'_, '_>) -> bool {
+    if !matches!(
+        parser.next_two_tokens(),
+        (Token::Italics, Some(Token::Bold))
+    ) {
+        return false;
+    }
+
+    let tokens = parser.remaining();
+    let mut saw_intermediate_bold = false;
+    for (index, token) in tokens.iter().enumerate().skip(1) {
+        match token.token {
+            Token::Italics
+                if tokens
+                    .get(index + 1)
+                    .is_some_and(|next| next.token == Token::Bold) =>
+            {
+                return saw_intermediate_bold;
+            }
+            Token::Bold => saw_intermediate_bold = true,
+            Token::ParagraphBreak | Token::InputEnd => return false,
+            _ => {}
+        }
+    }
+    false
+}
+
+fn collect_ambiguous_crossed_bold_italics<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> ParseResult<'r, 't, Elements<'t>> {
+    assert_step(parser, Token::Italics)?;
+    assert_step(parser, Token::Bold)?;
+    let source = collect_text(
+        parser,
+        RULE_ITALICS,
+        &[ParseCondition::token_pair(Token::Italics, Token::Bold)],
+        &[ParseCondition::current(Token::ParagraphBreak)],
+        None,
+    )?;
+    assert_step(parser, Token::Bold)?;
+
+    let bold = Element::Container(Container::new(
+        ContainerType::Bold,
+        vec![text!(source)],
+        AttributeMap::new(),
+    ));
+    let italics = Element::Container(Container::new(
+        ContainerType::Italics,
+        vec![bold],
+        AttributeMap::new(),
+    ));
+    success_elements(italics)
 }
 
 fn has_crossed_bold_pair(parser: &Parser<'_, '_>) -> bool {
@@ -88,7 +157,7 @@ fn collect_crossed_bold_italics<'r, 't>(
     let inner = collect_container(
         parser,
         RULE_ITALICS,
-        ContainerType::Italics,
+        ContainerType::Bold,
         &close,
         &invalid,
         None,
@@ -98,7 +167,7 @@ fn collect_crossed_bold_italics<'r, 't>(
     let (inner, errors, paragraph_safe) = inner.into();
     let elements = inner.into_iter().collect();
     let outer = Element::Container(Container::new(
-        ContainerType::Bold,
+        ContainerType::Italics,
         elements,
         AttributeMap::new(),
     ));
@@ -129,7 +198,7 @@ mod tests {
 
         assert!(errors.is_empty(), "{errors:#?}");
         assert!(
-            html.contains("<strong><em>You liked this</em></strong>"),
+            html.contains("<em><strong>You liked this</strong></em>"),
             "{html}",
         );
     }
@@ -146,9 +215,10 @@ mod tests {
     }
 
     #[test]
-    fn ambiguous_crossed_delimiters_are_not_rewritten() {
-        let (_, errors) = render("//**one **two//**");
+    fn ambiguous_crossed_delimiters_match_wikidot_nesting() {
+        let (html, errors) = render("//**one **two//**");
 
-        assert!(!errors.is_empty());
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html, "<p><em><strong>one **two</strong></em></p>");
     }
 }

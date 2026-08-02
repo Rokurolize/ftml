@@ -24,6 +24,7 @@ default  = ["html", "mathml"]
 html     = ["lightningcss"]
 # Adds LaTeX -> MathML support for rendering.
 mathml   = ["html", "latex2mathml"]
+test-source-recorder = []
 
 [dependencies]
 cfg-if = "1"
@@ -88,6 +89,21 @@ unexpected_cfgs = { level = "warn", check-cfg = ["cfg(tarpaulin)"] }
 
 [profile.release]
 lto = true
+
+# Keep ordinary development and test artifacts bounded. Full debug information
+# is opt-in through `cargo --profile debugging` below.
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
+
+[profile.debugging]
+inherits = "dev"
+debug = true
+
+[profile.debugging.package."*"]
+debug = true
 
 [[test]]
 name = "integration"

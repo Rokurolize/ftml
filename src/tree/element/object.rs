@@ -19,6 +19,7 @@
  */
 
 use crate::data::PageRef;
+use crate::delayed::DelayedElement;
 use crate::tree::clone::*;
 use crate::tree::{
     Alignment, AnchorTarget, AttributeMap, ClearFloat, CodeBlock, Container, DateItem,
@@ -69,6 +70,10 @@ pub enum Element<'t> {
     /// is up to the render implementation.
     Email(Cow<'t, str>),
 
+    /// Out-of-band generated List-mode semantics.
+    #[serde(skip)]
+    Delayed(DelayedElement<'t>),
+
     /// An element representing an HTML table.
     Table(Table<'t>),
 
@@ -105,6 +110,12 @@ pub enum Element<'t> {
         link: LinkLocation<'t>,
         label: LinkLabel<'t>,
         target: Option<AnchorTarget>,
+    },
+
+    /// A link to a file attached to the current or another wiki page.
+    FileLink {
+        file: Cow<'t, str>,
+        label: Cow<'t, str>,
     },
 
     /// An element representing an image and its associated metadata.
@@ -214,7 +225,11 @@ pub enum Element<'t> {
     ///
     /// The `brackets` field tells whether the resultant HTML should be surrounded
     /// in `[..]`, which is not very easily possible when using `[[bibcite ...]]`.
-    BibliographyCite { label: Cow<'t, str>, brackets: bool },
+    BibliographyCite {
+        label: Cow<'t, str>,
+        brackets: bool,
+        inline: bool,
+    },
 
     /// A bibliography block, containing all the cited items from throughout the page.
     ///
@@ -344,11 +359,13 @@ impl Element<'_> {
             Element::Raw(_) => "Raw",
             Element::Variable(_) => "Variable",
             Element::Email(_) => "Email",
+            Element::Delayed(_) => "Delayed",
             Element::Table(_) => "Table",
             Element::TabView(_) => "TabView",
             Element::Anchor { .. } => "Anchor",
             Element::AnchorName(_) => "AnchorName",
             Element::Link { .. } => "Link",
+            Element::FileLink { .. } => "FileLink",
             Element::Image { .. } => "Image",
             Element::Audio { .. } => "Audio",
             Element::Video { .. } => "Video",
@@ -399,11 +416,13 @@ impl Element<'_> {
             | Element::Raw(_)
             | Element::Variable(_)
             | Element::Email(_) => true,
+            Element::Delayed(_) => true,
             Element::Table(_) => false,
             Element::TabView(_) => false,
-            Element::Anchor { .. } | Element::AnchorName(_) | Element::Link { .. } => {
-                true
-            }
+            Element::Anchor { .. }
+            | Element::AnchorName(_)
+            | Element::Link { .. }
+            | Element::FileLink { .. } => true,
             Element::Image { .. } => true,
             Element::Audio { .. } => true,
             Element::Video { .. } => true,
@@ -430,10 +449,15 @@ impl Element<'_> {
             Element::LineBreak | Element::LineBreaks { .. } => true,
             Element::ClearFloat(_) => false,
             Element::HorizontalRule => false,
+            // Partial elements are intermediate parser structures.  Inline
+            // formatting controls can remain inside a paragraph, while a
+            // structural partial must force the enclosing paragraph to stay
+            // unwrapped until its owner consumes it.  Malformed or
+            // unterminated input can leave such a partial at the top level;
+            // treating it as unsafe keeps rendering fail-closed instead of
+            // panicking while computing paragraph safety.
             Element::Partial(partial) if partial.is_inline_format_control() => true,
-            Element::Partial(_) => {
-                panic!("Should not check for paragraph safety of partials")
-            }
+            Element::Partial(_) => false,
         }
     }
 
@@ -450,6 +474,7 @@ impl Element<'_> {
             Element::Raw(text) => Element::Raw(string_to_owned(text)),
             Element::Variable(name) => Element::Variable(string_to_owned(name)),
             Element::Email(email) => Element::Email(string_to_owned(email)),
+            Element::Delayed(delayed) => Element::Delayed(delayed.to_owned()),
             Element::Table(table) => Element::Table(table.to_owned()),
             Element::TabView(tabs) => {
                 Element::TabView(tabs.iter().map(|tab| tab.to_owned()).collect())
@@ -474,6 +499,10 @@ impl Element<'_> {
                 link: link.to_owned(),
                 label: label.to_owned(),
                 target: *target,
+            },
+            Element::FileLink { file, label } => Element::FileLink {
+                file: string_to_owned(file),
+                label: string_to_owned(label),
             },
             Element::List {
                 ltype,
@@ -558,9 +587,14 @@ impl Element<'_> {
                 title: option_string_to_owned(title),
                 hide: *hide,
             },
-            Element::BibliographyCite { label, brackets } => Element::BibliographyCite {
+            Element::BibliographyCite {
+                label,
+                brackets,
+                inline,
+            } => Element::BibliographyCite {
                 label: string_to_owned(label),
                 brackets: *brackets,
+                inline: *inline,
             },
             Element::BibliographyBlock { index, title, hide } => {
                 Element::BibliographyBlock {

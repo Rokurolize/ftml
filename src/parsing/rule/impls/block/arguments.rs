@@ -22,9 +22,9 @@ use crate::parsing::{ParseError, ParseErrorKind, Parser, parse_boolean};
 use crate::settings::WikitextSettings;
 use crate::tree::{AttributeMap, RawModuleArgument};
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher};
 use std::str::FromStr;
-use unicase::UniCase;
 
 macro_rules! make_err {
     ($parser:expr) => {
@@ -32,10 +32,96 @@ macro_rules! make_err {
     };
 }
 
+fn normalize_wikidot_html_attribute_value<'t>(value: &Cow<'t, str>) -> Cow<'t, str> {
+    let input = value.as_ref();
+    let mut output = String::with_capacity(input.len());
+    let mut pending_space = false;
+    let mut changed = false;
+
+    for ch in input.chars() {
+        match ch {
+            ' ' | '\t' | '\n' | '\r' => {
+                if output.is_empty() {
+                    changed = true;
+                    continue;
+                }
+                if pending_space || ch != ' ' {
+                    changed = true;
+                }
+                pending_space = true;
+            }
+            '\0'..='\u{001F}' | '\u{007F}' => {
+                changed = true;
+            }
+            _ => {
+                if pending_space {
+                    output.push(' ');
+                    pending_space = false;
+                }
+                output.push(ch);
+            }
+        }
+    }
+
+    if pending_space {
+        changed = true;
+    }
+
+    if changed {
+        Cow::Owned(output)
+    } else {
+        value.clone()
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct ArgumentKey<'t> {
+    value: &'t str,
+    case_sensitive: bool,
+}
+
+impl<'t> ArgumentKey<'t> {
+    #[inline]
+    fn as_str(self) -> &'t str {
+        self.value
+    }
+}
+
+impl PartialEq for ArgumentKey<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.case_sensitive == other.case_sensitive
+            && if self.case_sensitive {
+                self.value == other.value
+            } else {
+                self.value.eq_ignore_ascii_case(other.value)
+            }
+    }
+}
+
+impl Eq for ArgumentKey<'_> {}
+
+impl Hash for ArgumentKey<'_> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.case_sensitive.hash(state);
+        self.value.len().hash(state);
+        for byte in self.value.bytes() {
+            state.write_u8(if self.case_sensitive {
+                byte
+            } else {
+                byte.to_ascii_lowercase()
+            });
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct Arguments<'t> {
-    inner: HashMap<UniCase<&'t str>, Cow<'t, str>>,
+    inner: HashMap<ArgumentKey<'t>, Cow<'t, str>>,
     raw: Vec<RawModuleArgument<'t>>,
+    bare: HashSet<ArgumentKey<'t>>,
+    case_sensitive: bool,
+    source_present: bool,
+    spaced_equals: bool,
 }
 
 impl<'t> Arguments<'t> {
@@ -44,21 +130,51 @@ impl<'t> Arguments<'t> {
         Arguments::default()
     }
 
+    #[inline]
+    pub(crate) fn new_case_sensitive() -> Self {
+        Arguments {
+            case_sensitive: true,
+            ..Arguments::default()
+        }
+    }
+
+    #[inline]
+    fn key(&self, key: &'t str) -> ArgumentKey<'t> {
+        ArgumentKey {
+            value: key,
+            case_sensitive: self.case_sensitive,
+        }
+    }
+
     /// Inserts a key / value pair into the list of arguments.
     pub fn insert(&mut self, key: &'t str, value: Cow<'t, str>) {
-        let key = UniCase::ascii(key);
+        self.source_present = true;
+        let argument_key = self.key(key);
+        self.bare.remove(&argument_key);
         self.raw.push(RawModuleArgument {
-            name: cow!(key.into_inner()),
+            name: cow!(key),
             value: value.clone(),
         });
-        self.inner.insert(key, value);
+        self.inner.insert(argument_key, value);
+    }
+
+    pub fn insert_bare(&mut self, key: &'t str, value: Cow<'t, str>) {
+        self.insert(key, value);
+        self.bare.insert(self.key(key));
     }
 
     /// Gets **and removes** a string value from the arguments from its key.
     #[must_use = "non-idempotent getter method"]
     pub fn get(&mut self, key: &'t str) -> Option<Cow<'t, str>> {
-        let key = UniCase::ascii(key);
+        let key = self.key(key);
+        self.bare.remove(&key);
         self.inner.remove(&key)
+    }
+
+    pub fn get_with_bare(&mut self, key: &'t str) -> Option<(Cow<'t, str>, bool)> {
+        let key = self.key(key);
+        let bare = self.bare.remove(&key);
+        self.inner.remove(&key).map(|value| (value, bare))
     }
 
     /// Gets **and removes** a boolean value from the arguments from its the key.
@@ -98,7 +214,25 @@ impl<'t> Arguments<'t> {
         self.inner.is_empty()
     }
 
-    /// Removes the `UniCase` wrappers to produce a separate hash map of keys to values.
+    #[inline]
+    pub(crate) fn mark_source_present(&mut self) {
+        self.source_present = true;
+    }
+
+    #[inline]
+    pub(crate) fn has_source(&self) -> bool {
+        self.source_present
+    }
+
+    pub fn mark_spaced_equals(&mut self) {
+        self.spaced_equals = true;
+    }
+
+    pub fn has_spaced_equals(&self) -> bool {
+        self.spaced_equals
+    }
+
+    /// Produces a separate hash map of argument keys to values.
     ///
     /// This returns a new `HashMap` suitable for inclusion in final `Element`s.
     /// It does not clone any string allocations, as they are all borrowed
@@ -108,7 +242,7 @@ impl<'t> Arguments<'t> {
         self.inner
             .iter()
             .map(|(key, value)| {
-                let key = cow!(key.into_inner());
+                let key = cow!(key.as_str());
                 let value = value.clone();
 
                 (key, value)
@@ -126,9 +260,68 @@ impl<'t> Arguments<'t> {
     /// if that is enabled, and so needs `WikitextSettings` to be passed in.
     #[inline]
     pub fn to_attribute_map(&self, settings: &WikitextSettings) -> AttributeMap<'t> {
-        let mut map = AttributeMap::from_arguments(&self.inner);
+        let mut map = self.attribute_map_from_entries(settings, |_| true);
         map.isolate_id(settings);
         map
+    }
+
+    pub fn to_wikidot_anchor_attribute_map(
+        &self,
+        settings: &WikitextSettings,
+    ) -> AttributeMap<'t> {
+        let mut map = self.to_attribute_map(settings);
+        map.remove("title");
+        let href = self.inner.get(&self.key("href")).filter(|value| {
+            matches!(
+                crate::url::classify_href(value),
+                crate::url::HrefKind::Relative
+            ) && !value.contains(':')
+        });
+        if let Some(href) = href {
+            map.insert_wikidot_relative_href(normalize_wikidot_html_attribute_value(
+                href,
+            ));
+        }
+        map.isolate_id(settings);
+        map
+    }
+
+    pub fn to_attribute_map_without_bare(
+        &self,
+        settings: &WikitextSettings,
+    ) -> AttributeMap<'t> {
+        let mut map =
+            self.attribute_map_from_entries(settings, |key| !self.bare.contains(key));
+        map.isolate_id(settings);
+        map
+    }
+
+    fn attribute_map_from_entries(
+        &self,
+        settings: &WikitextSettings,
+        include: impl Fn(&ArgumentKey<'t>) -> bool,
+    ) -> AttributeMap<'t> {
+        let mut attributes = AttributeMap::new();
+
+        for (key, value) in &self.inner {
+            if !include(key) {
+                continue;
+            }
+
+            let key = key.as_str();
+            if self.case_sensitive && key.bytes().any(|byte| byte.is_ascii_uppercase()) {
+                continue;
+            }
+
+            let value = if settings.layout.legacy() {
+                normalize_wikidot_html_attribute_value(value)
+            } else {
+                value.clone()
+            };
+            attributes.insert(key, value);
+        }
+
+        attributes
     }
 }
 

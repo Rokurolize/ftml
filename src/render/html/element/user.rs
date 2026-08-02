@@ -34,7 +34,7 @@ pub fn render_user(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
 fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
     let handle = ctx.handle();
 
-    match handle.get_user_info(name) {
+    match ctx.user_info(name) {
         Some(user_info) => {
             let user_profile_url = normalize_href(&user_info.user_profile_url, None);
             let user_avatar_src = normalize_user_avatar_src(&user_info.user_avatar_data);
@@ -46,6 +46,10 @@ fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
 
             let wikidot_onclick = format!(
                 "WIKIDOT.page.listeners.userInfo({}); return false;",
+                user_info.user_id,
+            );
+            let wikidot_karma_style = format!(
+                "background-image:url(http://www.wikidot.com/userkarma.php?u={})",
                 user_info.user_id,
             );
 
@@ -62,14 +66,12 @@ fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
                                 "onclick" => &wikidot_onclick,
                             ))
                             .inner(|ctx| {
-                                ctx.html()
-                                    .img()
-                                    .attr(attr!(
-                                        "class" => "small",
-                                        "src" => &user_avatar_src,
-                                        "alt" => name,
-                                        "style" => handle.get_karma_style(user_info.user_karma),
-                                    ));
+                                ctx.html().img().attr(attr!(
+                                    "class" => "small",
+                                    "src" => &user_avatar_src,
+                                    "alt" => &user_info.user_name,
+                                    "style" => &wikidot_karma_style,
+                                ));
                             });
                     }
 
@@ -80,7 +82,7 @@ fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
                             "href" => &user_profile_url,
                             "onclick" => &wikidot_onclick,
                         ))
-                        .contents(name);
+                        .contents(&user_info.user_name);
                 });
         }
         None => {
@@ -111,7 +113,7 @@ fn render_user_wikijump(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
     ctx.html()
         .span()
         .attr(attr!("class" => "wj-user-info"))
-        .inner(|ctx| match ctx.handle().get_user_info(name) {
+        .inner(|ctx| match ctx.user_info(name) {
             Some(info) => {
                 let user_profile_url = normalize_href(&info.user_profile_url, None);
                 let user_avatar_src = normalize_user_avatar_src(&info.user_avatar_data);

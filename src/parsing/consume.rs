@@ -31,7 +31,7 @@ use super::parser::QuoteBodyLineStatus;
 use super::prelude::*;
 use super::rule::{
     get_rules_for_token,
-    impls::{RULE_FALLBACK, starts_own_line_rule},
+    impls::{RULE_FALLBACK, starts_own_line_rule, url_elements},
 };
 use crate::tree::{LinkLabel, LinkLocation, LinkType, PartialElement};
 use std::mem;
@@ -42,6 +42,26 @@ fn try_consume_inline_format_close<'r, 't>(
 where
     'r: 't,
 {
+    if parser.settings().layout.legacy()
+        && parser.pending_wikidot_collapsible_closer()
+        && parser.current().token == Token::LeftBlockEnd
+    {
+        let unquoted_close = parser.native_blockquote_depth().is_none();
+        let mut close = parser.clone();
+        if close
+            .get_end_block()
+            .is_ok_and(|name| name.eq_ignore_ascii_case("collapsible"))
+        {
+            parser.update(&close);
+            parser.set_pending_wikidot_collapsible_closer(false);
+            return Ok(Some(if unquoted_close {
+                Element::LineBreak.into()
+            } else {
+                Elements::None
+            }));
+        }
+    }
+
     if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlockEnd
     {
         return Ok(None);
@@ -64,6 +84,80 @@ where
 
     parser.update(&close);
     Ok(Some(Element::Partial(partial).into()))
+}
+
+fn try_consume_wikidot_adjacent_unmatched_closes_as_link<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<Option<Elements<'t>>, ParseError>
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlockEnd
+    {
+        return Ok(None);
+    }
+
+    let source = parser.full_text().inner();
+    let first_start = parser.current().span.start;
+    let mut scan = parser.clone();
+    if scan.get_end_block().is_err() || scan.current().token != Token::Whitespace {
+        return Ok(None);
+    }
+    let first_end = scan.current().span.start;
+    scan.step()?;
+    while !matches!(
+        scan.current().token,
+        Token::LeftBlock
+            | Token::LeftBlockEnd
+            | Token::LineBreak
+            | Token::ParagraphBreak
+            | Token::InputEnd
+    ) {
+        scan.step()?;
+    }
+    if !matches!(scan.current().token, Token::LeftBlock | Token::LeftBlockEnd) {
+        return Ok(None);
+    }
+    let second_start = scan.current().span.start;
+    let second_is_close = scan.current().token == Token::LeftBlockEnd;
+    let second_valid = if second_is_close {
+        scan.get_end_block().is_ok()
+    } else {
+        scan.get_block_name(false).is_ok()
+    };
+    if !second_valid
+        || second_is_close
+            && !matches!(
+                scan.current().token,
+                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+            )
+    {
+        return Ok(None);
+    }
+    let second_end = scan.current().span.start;
+    let first = &source[first_start..first_end];
+    let second = &source[second_start..second_end];
+    if !first.starts_with("[[/")
+        || !first.ends_with("]]")
+        || !(second.starts_with("[[/") || second.starts_with("[["))
+        || !second.ends_with("]]")
+    {
+        return Ok(None);
+    }
+
+    let url = &first[2..];
+    let label = source[first_end..second_end - 2].trim();
+    parser.update(&scan);
+    Ok(Some(Elements::Multiple(vec![
+        text!("["),
+        Element::Link {
+            ltype: LinkType::Direct,
+            link: LinkLocation::Url(cow!(url)),
+            label: LinkLabel::Text(cow!(label)),
+            target: None,
+        },
+        text!("]"),
+    ])))
 }
 
 fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
@@ -89,11 +183,12 @@ fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
         }
 
         Token::Underscore => {
-            !(parser.start_of_line()
-                && matches!(
-                    parser.look_ahead(0).map(|token| token.token),
-                    Some(Token::LineBreak | Token::ParagraphBreak)
-                ))
+            parser.settings().layout.legacy()
+                || !(parser.start_of_line()
+                    && matches!(
+                        parser.look_ahead(0).map(|token| token.token),
+                        Some(Token::LineBreak | Token::ParagraphBreak)
+                    ))
         }
 
         // Wikidot leaves padded formatting openers as literal text. A
@@ -104,7 +199,7 @@ fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
             matches!(
                 parser.look_ahead(0).map(|token| token.token),
                 Some(Token::Whitespace | Token::LeftBlockEnd)
-            ) || repeated_underline_run_ends_at_literal_boundary(parser)
+            )
         }
 
         Token::Bold | Token::Italics | Token::Superscript | Token::Subscript => matches!(
@@ -118,6 +213,10 @@ fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
             !parser.start_of_line()
         }
 
+        // Wikidot treats a nested monospace opener as literal text and closes
+        // the outer span at the first following terminator.
+        Token::LeftMonospace => parser.rule().name() == "monospace",
+
         // A closing raw marker is intercepted by the raw collector when it
         // has a matching opener. Outside a raw span Wikidot preserves it.
         Token::RightRaw => true,
@@ -126,49 +225,76 @@ fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
         // block collectors intercept their own closer before `consume()`.
         Token::RightBlock => parser.start_of_line(),
 
-        Token::BulletItem
-        | Token::NumberedItem
-        | Token::Equals
-        | Token::Colon
-        | Token::TripleDash => !parser.start_of_line(),
+        Token::BulletItem | Token::NumberedItem | Token::Equals | Token::Colon => {
+            !parser.start_of_line()
+        }
+
+        // Four-or-more hyphen runs can be horizontal rules only at an
+        // immediate line boundary, but Wikidot still gives their inline
+        // fallback structured dash/strikethrough semantics.
+        Token::TripleDash => false,
 
         _ => false,
     }
 }
 
-fn repeated_underline_run_ends_at_literal_boundary(parser: &Parser<'_, '_>) -> bool {
-    let start = parser.current().span.start;
-    if let Some(literal) = parser.literal_underline_run(start) {
-        return literal;
-    }
-
-    let mut repeated = false;
-    let mut starts = vec![start];
-    for token in parser.remaining() {
-        if token.token == Token::Underline {
-            repeated = true;
-            starts.push(token.span.start);
-            continue;
-        }
-        let literal =
-            repeated && matches!(token.token, Token::Whitespace | Token::LeftBlockEnd);
-        parser.cache_literal_underline_run(starts, literal);
-        return literal;
-    }
-    parser.cache_literal_underline_run(starts, false);
-    false
-}
-
 fn try_consume_text_token<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> Result<Option<Elements<'t>>, ParseError> {
+    if parser.settings().layout.legacy()
+        && parser.current().slice == "\u{fffd}"
+        && parser
+            .look_ahead(0)
+            .is_some_and(|token| token.token == Token::LineBreak && token.slice == "\\")
+    {
+        parser.step()?;
+        return Ok(Some(Elements::None));
+    }
+    if parser.current().token == Token::DiscardedControl {
+        parser.step()?;
+        return Ok(Some(Elements::None));
+    }
+    if parser.settings().layout.legacy() && parser.current().token == Token::Underline {
+        let mut count = 1;
+        while parser
+            .look_ahead(count - 1)
+            .is_some_and(|token| token.token == Token::Underline)
+        {
+            count += 1;
+        }
+        let boundary = parser.look_ahead(count - 1).map(|token| token.token);
+        let paired = count / 2 * 2;
+        if paired > 0
+            && matches!(
+                boundary,
+                Some(Token::Whitespace | Token::LeftBlockEnd | Token::InputEnd)
+            )
+        {
+            for _ in 0..paired {
+                parser.step()?;
+            }
+            return Ok(Some(Elements::None));
+        }
+    }
     if !can_consume_as_text_token(parser) {
         return Ok(None);
     }
 
+    let token = parser.current().token;
     let slice = parser.current().slice;
+    let trailing_whitespace = token == Token::Whitespace
+        && matches!(
+            parser.look_ahead(0).map(|next| next.token),
+            Some(Token::LineBreak | Token::ParagraphBreak | Token::InputEnd)
+        );
     parser.step()?;
-    Ok(Some(text!(slice).into()))
+    if trailing_whitespace {
+        Ok(Some(Elements::None))
+    } else if token == Token::Whitespace {
+        Ok(Some(text!(" ").into()))
+    } else {
+        Ok(Some(text!(slice).into()))
+    }
 }
 
 fn try_consume_line_break<'r, 't>(
@@ -177,19 +303,25 @@ fn try_consume_line_break<'r, 't>(
     if parser.current().token != Token::LineBreak {
         return Ok(None);
     }
+    if parser.settings().layout.legacy()
+        && parser.current().slice != "\\"
+        && parser
+            .look_ahead(0)
+            .is_some_and(|token| token.token == Token::InputEnd)
+    {
+        parser.step()?;
+        return Ok(Some(Elements::None));
+    }
 
     // A conditional quote cursor can interpret a marker remaining after its
     // required physical prefix as literal content. The raw lookahead fast path
     // sees only the outer Quote token, so defer that one shape to the generic
     // line-break rule after preparing the prefix.
-    if parser.quote_body_has_literal_residuals() {
+    if parser.quote_body_cursor().is_some() {
         let mut next = parser.clone();
         next.step()?;
         next.get_optional_space()?;
-        if next.prepare_quote_body_line()? == QuoteBodyLineStatus::Prepared
-            && next.current().token == Token::Quote
-            && !next.start_of_line()
-        {
+        if next.prepare_quote_body_line()? == QuoteBodyLineStatus::Prepared {
             return Ok(None);
         }
     }
@@ -212,9 +344,32 @@ fn try_consume_line_break<'r, 't>(
     } else {
         0
     };
-    let skip = parser
-        .look_ahead(next_offset)
-        .is_some_and(|token| starts_own_line_rule(token.token));
+    let skip = parser.look_ahead(next_offset).is_some_and(|token| {
+        let following = parser.look_ahead(next_offset + 1).map(|next| next.token);
+        let valid_shape = match token.token {
+            Token::Heading | Token::BulletItem | Token::NumberedItem => {
+                following == Some(Token::Whitespace)
+            }
+            Token::Equals => {
+                following == Some(Token::Whitespace)
+                    || parser
+                        .remaining()
+                        .iter()
+                        .skip(next_offset + 1)
+                        .take_while(|next| next.token == Token::Equals)
+                        .count()
+                        >= 3
+            }
+            _ => true,
+        };
+        starts_own_line_rule(token.token)
+            && valid_shape
+            && !(next_offset == 1
+                && matches!(
+                    token.token,
+                    Token::Quote | Token::BulletItem | Token::NumberedItem
+                ))
+    });
 
     parser.step()?;
     if skip {
@@ -246,15 +401,14 @@ fn upcoming_block_ends_with_single_bracket(parser: &Parser<'_, '_>) -> bool {
 fn try_consume_leaf_token<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> Result<Option<Elements<'t>>, ParseError> {
+    if parser.current().token == Token::Url {
+        let elements = url_elements(parser);
+        parser.step()?;
+        return Ok(Some(elements));
+    }
+
     let element = match parser.current().token {
         Token::Email => Element::Email(cow!(parser.current().slice)),
-
-        Token::Url => Element::Link {
-            ltype: LinkType::Direct,
-            link: LinkLocation::Url(cow!(parser.current().slice)),
-            label: LinkLabel::Url,
-            target: None,
-        },
 
         Token::Variable => {
             let slice = parser.current().slice;
@@ -282,7 +436,19 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
     // Will fail if we're too many layers in
     parser.depth_increment()?;
 
+    let pending_unquoted_collapsible_close = parser.settings().layout.legacy()
+        && parser.pending_wikidot_collapsible_closer()
+        && parser.native_blockquote_depth().is_none();
     if let Some(elements) = try_consume_inline_format_close(parser)? {
+        parser.depth_decrement();
+        if pending_unquoted_collapsible_close {
+            return ok!(false; elements);
+        }
+        return ok!(elements);
+    }
+
+    if let Some(elements) = try_consume_wikidot_adjacent_unmatched_closes_as_link(parser)?
+    {
         parser.depth_decrement();
         return ok!(elements);
     }
@@ -306,6 +472,11 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
     let current = parser.current();
 
     for &rule in get_rules_for_token(current) {
+        if rule.name() == "delayed-conditional"
+            && parser.generated_until_right_block().is_empty()
+        {
+            continue;
+        }
         let old_remaining = parser.remaining();
         let footnote_count = parser.footnote_count();
         match rule.try_consume(parser) {
@@ -349,7 +520,15 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
         }
     }
 
-    let element = text!(current.slice);
+    let element = if parser.settings().layout.legacy() {
+        match current.token {
+            Token::LeftComment => text!("[!\u{2014}"),
+            Token::RightComment => text!("\u{2014}]"),
+            _ => text!(current.slice),
+        }
+    } else {
+        text!(current.slice)
+    };
     parser.step()?;
 
     // If we've hit the recursion limit, just bail
@@ -450,26 +629,28 @@ mod tests {
             .expect("padded italics marker should use the text fast path");
         assert_eq!(elements, text!("//").into());
 
-        let (tokens, page_info, settings) = parser_for("text~~~!!!");
+        let (tokens, page_info, settings) = parser_for("text~~~~!!!");
         let mut parser = parser_at(&tokens, &page_info, &settings, 2);
         let elements = try_consume_text_token(&mut parser)
             .expect("mid-line clear-float marker should not fail")
             .expect("mid-line clear-float marker should use the text fast path");
-        assert_eq!(elements, text!("~~~").into());
+        assert_eq!(elements, text!("~~~~").into());
 
-        let (tokens, page_info, settings) = parser_for("______ ______");
+        let (tokens, page_info, mut settings) = parser_for("______ ______");
+        settings.layout = Layout::Wikidot;
         let mut parser = parser_at(&tokens, &page_info, &settings, 1);
         let elements = try_consume_text_token(&mut parser)
             .expect("repeated underline spacer should not fail")
             .expect("repeated underline spacer should use the text fast path");
-        assert_eq!(elements, text!("__").into());
+        assert_eq!(elements, Elements::None);
 
-        let (tokens, page_info, settings) = parser_for("______[[/span]]");
+        let (tokens, page_info, mut settings) = parser_for("______[[/span]]");
+        settings.layout = Layout::Wikidot;
         let mut parser = parser_at(&tokens, &page_info, &settings, 1);
         let elements = try_consume_text_token(&mut parser)
             .expect("repeated underline before a block closer should not fail")
             .expect("repeated underline before a block closer should stay literal");
-        assert_eq!(elements, text!("__").into());
+        assert_eq!(elements, Elements::None);
 
         let (tokens, page_info, settings) = parser_for("x>@");
         let mut parser = parser_at(&tokens, &page_info, &settings, 2);
@@ -584,5 +765,80 @@ mod tests {
             .expect("variable should use leaf fast path");
         assert_eq!(elements, Element::Variable(cow!("title")).into());
         assert_eq!(parser.current().token, Token::InputEnd);
+    }
+
+    #[test]
+    fn wikidot_url_leaf_fast_path_splits_terminal_period() {
+        let (tokens, page_info, mut settings) =
+            parser_for("https://example.com/test. next");
+        settings.layout = Layout::Wikidot;
+        let mut parser = parser_at(&tokens, &page_info, &settings, 1);
+        let elements = try_consume_leaf_token(&mut parser)
+            .expect("URL fast path should not fail")
+            .expect("URL should use leaf fast path");
+        assert_eq!(
+            elements,
+            Elements::Multiple(vec![
+                Element::Link {
+                    ltype: LinkType::Direct,
+                    link: LinkLocation::Url(cow!("https://example.com/test")),
+                    label: LinkLabel::Url,
+                    target: None,
+                },
+                text!("."),
+            ]),
+        );
+        assert_eq!(parser.current().token, Token::Whitespace);
+    }
+
+    #[test]
+    fn wikidot_adjacent_unmatched_block_closes_reenter_single_link_lexing() {
+        let (tokens, page_info, mut settings) = parser_for("[[/cell]] [[/table]]");
+        settings.layout = Layout::Wikidot;
+        let mut parser = parser_at(&tokens, &page_info, &settings, 1);
+        let elements = try_consume_wikidot_adjacent_unmatched_closes_as_link(&mut parser)
+            .expect("adjacent close fallback should not fail")
+            .expect("adjacent unmatched closes should reenter link lexing");
+
+        assert_eq!(
+            elements,
+            Elements::Multiple(vec![
+                text!("["),
+                Element::Link {
+                    ltype: LinkType::Direct,
+                    link: LinkLocation::Url(cow!("/cell]]")),
+                    label: LinkLabel::Text(cow!("[[/table")),
+                    target: None,
+                },
+                text!("]"),
+            ]),
+        );
+        assert_eq!(parser.current().token, Token::InputEnd);
+
+        let (tokens, page_info, mut settings) = parser_for("[[/cell]]");
+        settings.layout = Layout::Wikidot;
+        let mut parser = parser_at(&tokens, &page_info, &settings, 1);
+        assert!(
+            try_consume_wikidot_adjacent_unmatched_closes_as_link(&mut parser)
+                .expect("single unmatched close should not fail")
+                .is_none(),
+        );
+
+        let (tokens, page_info, mut settings) = parser_for("[[/cell]][[/table]]");
+        settings.layout = Layout::Wikidot;
+        let mut parser = parser_at(&tokens, &page_info, &settings, 1);
+        assert!(
+            try_consume_wikidot_adjacent_unmatched_closes_as_link(&mut parser)
+                .expect("unspaced unmatched closes should not fail")
+                .is_none(),
+        );
+
+        let (tokens, page_info, settings) = parser_for("[[/cell]] [[/table]]");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 1);
+        assert!(
+            try_consume_wikidot_adjacent_unmatched_closes_as_link(&mut parser)
+                .expect("Wikijump layout fallback should not fail")
+                .is_none(),
+        );
     }
 }

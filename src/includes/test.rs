@@ -24,6 +24,36 @@ use crate::settings::{WikitextMode, WikitextSettings};
 use std::borrow::Cow;
 
 #[test]
+fn multiline_self_referencing_argument_uses_later_fallback() {
+    let source = concat!(
+        "[[include component:backend\n",
+        "ifprot={$ifprot}\n",
+        "|ifprot=0\n",
+        "|nohide=true\n",
+        "|nohide=0\n",
+        "]]",
+    );
+    let (include, end) =
+        super::parse::parse_include_block(source, 0).expect("valid multiline include");
+
+    assert_eq!(end, source.len());
+    assert_eq!(
+        include
+            .variables()
+            .get("ifprot")
+            .map(|value| value.trim_end()),
+        Some("0"),
+    );
+    assert_eq!(
+        include
+            .variables()
+            .get("nohide")
+            .map(|value| value.trim_end()),
+        Some("true"),
+    );
+}
+
+#[test]
 fn includes() {
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
 
@@ -615,4 +645,68 @@ fn quoted_include_scanner_handles_many_one_line_includes_in_bounded_time() {
         "quoted one-line include scan took {:?}",
         started.elapsed(),
     );
+}
+
+#[test]
+fn include_tolerates_stray_open_brackets_before_arguments() {
+    // Four pages in the imported Wikidot corpus (scp-9507, scp-6823, scp-7446,
+    // fragment:scp-9988-2) write a bare "[[" on the line after the page
+    // reference. Live Wikidot discards it, parses every argument, and shows no
+    // bracket: scp-9507 renders
+    // <div class="anom-bar-container item-9507-D clear-3 Decommissioned …">.
+    // Previously the grammar rejected the block and the directive was left
+    // literal, so the raw include text appeared in the article body.
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let text = "[[include :scp-wiki:component:anomaly-class-bar-source\n\
+                [[\n\
+                \n\
+                |item-number= 9507-D\n\
+                \n\
+                |clearance= 3\n\
+                \n\
+                ]]\n";
+
+    let (output, pages) = include(text, &settings, DebugIncluder, || unreachable!())
+        .expect("include failed");
+
+    assert_eq!(
+        pages,
+        vec![PageRef::page_and_site(
+            "scp-wiki",
+            "component:anomaly-class-bar-source",
+        )],
+    );
+    assert!(
+        !output.contains("[[include"),
+        "the directive must not survive as literal text: {output}"
+    );
+    for expected in ["item-number", "9507-D", "clearance"] {
+        assert!(
+            output.contains(expected),
+            "argument {expected} must reach the included page: {output}"
+        );
+    }
+    assert!(
+        !output.contains('['),
+        "the stray bracket must not survive into the output: {output}"
+    );
+}
+
+#[test]
+fn include_without_stray_brackets_is_unchanged() {
+    // The tolerance must not change the ordinary shape, and must not swallow an
+    // argument that is written without a leading pipe.
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let text = "[[include component:info\nitem-number= PLAIN\n|clearance= 1\n]]\n";
+
+    let (output, pages) = include(text, &settings, DebugIncluder, || unreachable!())
+        .expect("include failed");
+
+    assert_eq!(pages, vec![PageRef::page_only("component:info")]);
+    for expected in ["item-number", "PLAIN", "clearance"] {
+        assert!(
+            output.contains(expected),
+            "argument {expected} must still be parsed: {output}"
+        );
+    }
 }

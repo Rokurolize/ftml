@@ -31,6 +31,8 @@ use crate::data::PageInfo;
 #[cfg(test)]
 use crate::layout::Layout;
 #[cfg(test)]
+use crate::render::Render;
+#[cfg(test)]
 use crate::settings::{WikitextMode, WikitextSettings};
 #[cfg(test)]
 use time::macros::{date, datetime};
@@ -56,11 +58,16 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "Date doesn't allow score flag");
     assert_block_name(&BLOCK_DATE, name);
 
-    let (value, mut arguments) = parser.get_head_name_map(&BLOCK_DATE, in_head)?;
+    let (value, mut arguments) =
+        parser.get_head_name_map_wikidot(&BLOCK_DATE, in_head)?;
     let (format, ago_hover) = split_ago_hover_format(arguments.get("format"));
     let format = filter_supported_format(format);
     let arg_timezone = arguments.get("tz");
     let hover = arguments.get_bool(parser, "hover")?.unwrap_or(false) || ago_hover;
+
+    if parser.settings().layout.legacy() && value.parse::<i64>().is_err() {
+        return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
+    }
 
     // Parse out timestamp given by user
     let mut date = parse_date(value)
@@ -404,7 +411,7 @@ fn parse_date_supports_non_rfc3339_datetime_formats() {
 #[test]
 fn date_block_builds_element_with_format_and_ago_hover() {
     let page_info = PageInfo::dummy();
-    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
     let tokenization = crate::tokenize(r#"[[date 2001-09-11 format="%Y|agohover"]]"#);
     let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
@@ -426,6 +433,29 @@ fn date_block_builds_element_with_format_and_ago_hover() {
     assert_eq!(*value, DateItem::from(date!(2001 - 09 - 11)));
     assert_eq!(format.as_deref(), Some("%Y"));
     assert!(*hover);
+}
+
+#[test]
+fn wikidot_date_block_accepts_only_unix_timestamps() {
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+    let tokenization = crate::tokenize("[[date 1234567890]]");
+    let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+    assert!(errors.is_empty(), "{errors:?}");
+    assert!(matches!(
+        tree.elements.as_slice(),
+        [Element::Container(paragraph)]
+            if matches!(paragraph.elements(), [Element::Date { .. }])
+    ));
+
+    let tokenization = crate::tokenize("[[date 2009-12-25]]");
+    let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+    assert!(!errors.is_empty());
+    let html = crate::render::html::HtmlRender
+        .render(&tree, &page_info, &settings)
+        .body;
+    assert_eq!(html, "<p>[[date 2009-12-25]]</p>");
 }
 
 #[test]

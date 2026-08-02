@@ -54,7 +54,8 @@ fn parse_tabview<'r, 't>(
     assert!(!flag_score, "Tabview doesn't allow score flag");
     assert_block_name(&BLOCK_TABVIEW, name);
 
-    parser.get_head_none(&BLOCK_TABVIEW, in_head)?;
+    let tabview_name =
+        parser.get_head_value(&BLOCK_TABVIEW, in_head, |_, value| Ok(value))?;
 
     let (elements, errors, _) = parser.get_body_elements(&BLOCK_TABVIEW, false)?.into();
 
@@ -79,7 +80,20 @@ fn parse_tabview<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::TabViewEmpty));
     }
 
-    success_elements_with_paragraph_safety(false, Element::TabView(tabs), errors)
+    let tabview = Element::TabView(tabs);
+    if parser.settings().layout.legacy()
+        && let Some(name) = tabview_name
+    {
+        return ok!(
+            false;
+            vec![
+                Element::Text(std::borrow::Cow::Owned(format!("{name} {name}\n"))),
+                tabview,
+            ],
+            errors
+        );
+    }
+    success_elements_with_paragraph_safety(false, tabview, errors)
 }
 
 fn parse_tab<'r, 't>(
@@ -94,7 +108,13 @@ fn parse_tab<'r, 't>(
     assert!(!flag_score, "Tab doesn't allow score flag");
     assert_block_name(&BLOCK_TAB, name);
 
-    let label = parser.get_head_value(&BLOCK_TAB, in_head, require_block_argument)?;
+    let label = parser.get_head_value(&BLOCK_TAB, in_head, |parser, value| {
+        if parser.settings().layout.legacy() {
+            Ok(value.unwrap_or("untitled"))
+        } else {
+            require_block_argument(parser, value)
+        }
+    })?;
 
     let (elements, errors, _) = parser.get_body_elements(&BLOCK_TAB, true)?.into();
 
@@ -105,4 +125,40 @@ fn parse_tab<'r, 't>(
     }));
 
     success_elements_with_paragraph_safety(false, element, errors)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    fn render_wikidot(source: &str) -> (String, Vec<ParseError>) {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        (HtmlRender.render(&tree, &page_info, &settings).body, errors)
+    }
+
+    #[test]
+    fn wikidot_named_tabview_and_untitled_tab_match_live_behavior() {
+        let (html, errors) = render_wikidot(
+            "NAME:\n[[tabview Foo]]\n[[tab Bar]].[[/tab]]\n[[/tabview]]\nNO LABEL:\n[[tabview]]\n[[tab]].[[/tab]]\n[[/tabview]]",
+        );
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(
+            html.starts_with(
+                "NAME:<br>\nFoo Foo\n<!-- Wikidot tabview bootstrap omitted -->\n"
+            ),
+            "{html}",
+        );
+        assert!(html.contains("<em>Bar</em>"), "{html}");
+        assert!(html.contains("NO LABEL:<br>\n"), "{html}");
+        assert!(html.contains("<em>untitled</em>"), "{html}");
+        assert!(!html.contains("<p>NAME:"), "{html}");
+    }
 }

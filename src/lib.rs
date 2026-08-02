@@ -118,6 +118,7 @@ mod utf16;
 pub mod wasm;
 
 pub mod data;
+pub mod delayed;
 pub mod includes;
 pub mod info;
 pub mod layout;
@@ -125,6 +126,8 @@ pub mod parsing;
 pub mod preproc;
 pub mod render;
 pub mod settings;
+#[cfg(feature = "test-source-recorder")]
+mod source_recorder;
 pub mod tokenizer;
 pub mod tree;
 
@@ -132,7 +135,8 @@ pub use self::includes::include;
 pub use self::parsing::parse;
 pub use self::preproc::{
     WikidotParserFunctionOptions, WikidotZeroOperatorPolicy, preprocess,
-    resolve_wikidot_parser_functions, resolve_wikidot_parser_functions_with_options,
+    preprocess_for_layout, resolve_wikidot_parser_functions,
+    resolve_wikidot_parser_functions_with_options,
 };
 pub use self::tokenizer::{Tokenization, tokenize};
 pub use self::utf16::Utf16IndexMap;

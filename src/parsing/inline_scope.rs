@@ -21,6 +21,8 @@ struct PendingScope {
 struct ActiveScope<'t> {
     ctype: ContainerType,
     attributes: AttributeMap<'t>,
+    scored: bool,
+    has_content: bool,
     previous_same_kind: Option<usize>,
     previous_active: Option<usize>,
     next_active: Option<usize>,
@@ -56,6 +58,7 @@ impl<'t> ActiveScopes<'t> {
         kind: ScopeKind,
         ctype: ContainerType,
         attributes: AttributeMap<'t>,
+        scored: bool,
     ) {
         let position = self.scopes.len();
         let previous_same_kind = self.top_mut(kind).replace(position);
@@ -63,6 +66,8 @@ impl<'t> ActiveScopes<'t> {
         self.scopes.push(ActiveScope {
             ctype,
             attributes,
+            scored,
+            has_content: false,
             previous_same_kind,
             previous_active,
             next_active: None,
@@ -98,6 +103,40 @@ impl<'t> ActiveScopes<'t> {
         }
     }
 
+    fn top_is_scored(&self, kind: ScopeKind) -> bool {
+        self.top(kind)
+            .is_some_and(|position| self.scopes[position].scored)
+    }
+
+    fn top_has_content(&self, kind: ScopeKind) -> bool {
+        self.top(kind)
+            .is_some_and(|position| self.scopes[position].has_content)
+    }
+
+    fn mark_active_content(&mut self) {
+        let mut position = self.active_tail;
+        while let Some(current) = position {
+            self.scopes[current].has_content = true;
+            position = self.scopes[current].previous_active;
+        }
+    }
+
+    fn has_active_scope(&self) -> bool {
+        self.active_tail.is_some()
+    }
+
+    fn outer_active_position(&self) -> Option<usize> {
+        let mut position = self.active_tail?;
+        while let Some(previous) = self.scopes[position].previous_active {
+            position = previous;
+        }
+        Some(position)
+    }
+
+    fn has_scored_scope(&self) -> bool {
+        self.iter_active_rev().any(|scope| scope.scored)
+    }
+
     fn top(&self, kind: ScopeKind) -> &Option<usize> {
         match kind {
             ScopeKind::Size => &self.top_size,
@@ -114,6 +153,42 @@ impl<'t> ActiveScopes<'t> {
 }
 
 pub(crate) fn lower_wikidot_inline_size_scopes<'t>(elements: &mut Vec<Element<'t>>) {
+    let valid = collect_valid_scope_pairs(elements);
+
+    let mut ordinal = 0;
+    let mut active = ActiveScopes::default();
+    let mut trim_next_break = false;
+    lower_root_sequence(
+        elements,
+        &valid,
+        &mut ordinal,
+        &mut active,
+        &mut trim_next_break,
+    );
+}
+
+/// Lower Wikidot inline scopes in an already-inline sequence.
+///
+/// Footnote bodies are stored without their paragraph container, so they need
+/// the same continuous sequence treatment as the contents of a paragraph.
+pub(crate) fn lower_wikidot_inline_size_scopes_inline<'t>(
+    elements: &mut Vec<Element<'t>>,
+) {
+    let valid = collect_valid_scope_pairs(elements);
+
+    let mut ordinal = 0;
+    let mut active = ActiveScopes::default();
+    let mut trim_next_break = false;
+    lower_sequence(
+        elements,
+        &valid,
+        &mut ordinal,
+        &mut active,
+        &mut trim_next_break,
+    );
+}
+
+fn collect_valid_scope_pairs(elements: &[Element<'_>]) -> BTreeSet<usize> {
     let mut ordinal = 0;
     // Separate stacks keep crossed size/span closure matching constant-time.
     let mut open_sizes = Vec::new();
@@ -129,9 +204,112 @@ pub(crate) fn lower_wikidot_inline_size_scopes<'t>(elements: &mut Vec<Element<'t
         &mut valid,
     );
 
-    ordinal = 0;
-    let mut active = ActiveScopes::default();
-    lower_sequence(elements, &valid, &mut ordinal, &mut active);
+    valid
+}
+
+#[derive(Default)]
+struct SequenceEffects {
+    scored_span_opened_at_start: bool,
+    scored_span_closed: bool,
+}
+
+fn lower_root_sequence<'t>(
+    elements: &mut Vec<Element<'t>>,
+    valid: &BTreeSet<usize>,
+    ordinal: &mut usize,
+    active: &mut ActiveScopes<'t>,
+    trim_next_break: &mut bool,
+) {
+    let mut output = Vec::with_capacity(elements.len());
+    let mut paragraph_group: Option<(bool, AttributeMap<'t>, Vec<Element<'t>>)> = None;
+    let mut previous_scored_close = false;
+
+    for mut element in mem::take(elements) {
+        if let Element::Container(container) = &mut element
+            && container.ctype() == ContainerType::Paragraph
+        {
+            let paragraph_attributes = container.attributes().clone();
+            let starts_in_scored_span = active.has_scored_scope();
+            let starts_in_inline_scope = active.has_active_scope();
+            if starts_in_inline_scope && !output.is_empty() && paragraph_group.is_none() {
+                container.elements_mut().insert(0, Element::LineBreak);
+            }
+            let effects = lower_sequence(
+                container.elements_mut(),
+                valid,
+                ordinal,
+                active,
+                trim_next_break,
+            );
+            let joins_previous =
+                previous_scored_close || effects.scored_span_opened_at_start;
+
+            if !joins_previous {
+                flush_paragraph_group(&mut output, &mut paragraph_group);
+            }
+            let (_, _, group) = paragraph_group.get_or_insert_with(|| {
+                (
+                    !starts_in_scored_span && !starts_in_inline_scope,
+                    paragraph_attributes,
+                    Vec::new(),
+                )
+            });
+            group.append(container.elements_mut());
+            previous_scored_close = effects.scored_span_closed;
+            continue;
+        }
+
+        flush_paragraph_group(&mut output, &mut paragraph_group);
+        let scope_before = active.outer_active_position();
+        let mut sequence = vec![element];
+        lower_sequence(&mut sequence, valid, ordinal, active, trim_next_break);
+        let scope_continues =
+            scope_before.is_some() && scope_before == active.outer_active_position();
+        append_root_sequence(&mut output, &mut sequence, scope_continues);
+        previous_scored_close = false;
+    }
+
+    flush_paragraph_group(&mut output, &mut paragraph_group);
+    *elements = output;
+}
+
+fn append_root_sequence<'t>(
+    output: &mut Vec<Element<'t>>,
+    sequence: &mut Vec<Element<'t>>,
+    scope_continues: bool,
+) {
+    if scope_continues
+        && let (Some(Element::Container(previous)), Some(Element::Container(next))) =
+            (output.last_mut(), sequence.first_mut())
+        && matches!(previous.ctype(), ContainerType::Span | ContainerType::Size)
+        && previous.ctype() == next.ctype()
+        && previous.attributes() == next.attributes()
+    {
+        previous.elements_mut().append(next.elements_mut());
+        sequence.remove(0);
+    }
+    output.append(sequence);
+}
+
+fn flush_paragraph_group<'t>(
+    output: &mut Vec<Element<'t>>,
+    paragraph_group: &mut Option<(bool, AttributeMap<'t>, Vec<Element<'t>>)>,
+) {
+    let Some((wrapped, attributes, elements)) = paragraph_group.take() else {
+        return;
+    };
+    if elements.is_empty() {
+        return;
+    }
+    if wrapped {
+        output.push(Element::Container(Container::new(
+            ContainerType::Paragraph,
+            elements,
+            attributes,
+        )));
+    } else {
+        output.extend(elements);
+    }
 }
 
 fn collect_valid_pairs(
@@ -215,75 +393,192 @@ fn lower_sequence<'t>(
     valid: &BTreeSet<usize>,
     ordinal: &mut usize,
     active: &mut ActiveScopes<'t>,
-) {
+    trim_next_break: &mut bool,
+) -> SequenceEffects {
     let mut output = Vec::with_capacity(elements.len());
     let mut run = Vec::new();
+    let mut effects = SequenceEffects::default();
+    let mut last_run_outer_scope = None;
 
-    for mut element in mem::take(elements) {
+    let mut source = mem::take(elements).into_iter().peekable();
+    while let Some(mut element) = source.next() {
+        if *trim_next_break {
+            if matches!(element, Element::LineBreak | Element::LineBreaks(_)) {
+                continue;
+            }
+            *trim_next_break = false;
+        }
         if let Element::Partial(PartialElement::InlineSizeOpen(style)) = element {
-            flush_run(&mut output, &mut run, active);
+            flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
             let current = *ordinal;
             *ordinal += 1;
             if valid.contains(&current) {
+                let leading_space =
+                    matches!(source.peek(), Some(Element::Text(text)) if text == " ");
+                if leading_space {
+                    source.next();
+                    if !elements_end_with_space(&output) {
+                        run.push(text!(" "));
+                        flush_run(
+                            &mut output,
+                            &mut run,
+                            active,
+                            &mut last_run_outer_scope,
+                        );
+                    }
+                }
                 let mut attributes = AttributeMap::new();
                 attributes.insert("style", style);
-                active.push(ScopeKind::Size, ContainerType::Size, attributes);
+                active.push(ScopeKind::Size, ContainerType::Size, attributes, false);
             }
             continue;
         }
         if matches!(element, Element::Partial(PartialElement::InlineSizeClose)) {
-            flush_run(&mut output, &mut run, active);
+            let empty = !active.top_has_content(ScopeKind::Size) && run.is_empty();
+            let trailing_space =
+                matches!(run.last(), Some(Element::Text(text)) if text == " ");
+            let next_starts_with_space = matches!(
+                source.peek(),
+                Some(Element::Text(text)) if text.starts_with(' ')
+            );
             let current = *ordinal;
             *ordinal += 1;
             if valid.contains(&current) {
+                if trailing_space {
+                    run.pop();
+                }
+                flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
+                trim_trailing_space(&mut output);
                 active.remove(ScopeKind::Size);
-            }
-            continue;
-        }
-        if let Element::Partial(PartialElement::InlineSpanOpen(attributes)) = element {
-            flush_run(&mut output, &mut run, active);
-            let current = *ordinal;
-            *ordinal += 1;
-            if valid.contains(&current) {
-                active.push(ScopeKind::Span, ContainerType::Span, attributes);
-            }
-            continue;
-        }
-        if let Element::Partial(PartialElement::InlineSpanClose(source)) = element {
-            flush_run(&mut output, &mut run, active);
-            let current = *ordinal;
-            *ordinal += 1;
-            if valid.contains(&current) {
-                active.remove(ScopeKind::Span);
+                if trailing_space && !next_starts_with_space && !empty {
+                    run.push(text!(" "));
+                }
             } else {
-                output.push(Element::Text(source));
+                flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
+                output.push(text!("[[/size]]"));
             }
             continue;
         }
-        if lower_children(&mut element, valid, ordinal, active) {
-            flush_run(&mut output, &mut run, active);
+        if matches!(element, Element::Footnote) {
+            trim_one_trailing_text_space(&mut run);
+        }
+        if let Element::Partial(PartialElement::InlineSpanOpen(mut attributes)) = element
+        {
+            let at_start = output.is_empty() && run.is_empty();
+            flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
+            let current = *ordinal;
+            *ordinal += 1;
+            if valid.contains(&current) {
+                let scored = attributes.remove("data-ftml-score-span").is_some();
+                active.push(ScopeKind::Span, ContainerType::Span, attributes, scored);
+                if matches!(source.peek(), Some(Element::Text(text)) if text == " ") {
+                    source.next();
+                }
+                if scored {
+                    effects.scored_span_opened_at_start = at_start;
+                    *trim_next_break = true;
+                }
+            }
+            continue;
+        }
+        if let Element::Partial(PartialElement::InlineSpanClose(close_source)) = element {
+            let scored = active.top_is_scored(ScopeKind::Span);
+            let empty = !active.top_has_content(ScopeKind::Span) && run.is_empty();
+            let trailing_space =
+                !scored && matches!(run.last(), Some(Element::Text(text)) if text == " ");
+            let next_starts_with_space = matches!(
+                source.peek(),
+                Some(Element::Text(text)) if text.starts_with(' ')
+            );
+            if scored {
+                while matches!(
+                    run.last(),
+                    Some(Element::LineBreak | Element::LineBreaks(_))
+                ) {
+                    run.pop();
+                }
+            } else if trailing_space && next_starts_with_space {
+                run.pop();
+            }
+            flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
+            if empty && !scored {
+                trim_trailing_space(&mut output);
+            }
+            let current = *ordinal;
+            *ordinal += 1;
+            if valid.contains(&current) {
+                trim_trailing_space(&mut output);
+                active.remove(ScopeKind::Span);
+                if trailing_space && !next_starts_with_space && !empty && !scored {
+                    output.push(text!(" "));
+                }
+                if scored {
+                    effects.scored_span_closed = true;
+                    *trim_next_break = true;
+                }
+            } else {
+                output.push(Element::Text(close_source));
+            }
+            continue;
+        }
+        if active.has_active_scope()
+            && element.paragraph_safe()
+            && contains_inline_scope_control(&element)
+            && inline_scope_controls_are_self_contained(&element)
+        {
+            let mut nested_active = ActiveScopes::default();
+            if lower_children(
+                &mut element,
+                valid,
+                ordinal,
+                &mut nested_active,
+                trim_next_break,
+            ) {
+                debug_assert!(!nested_active.has_active_scope());
+                run.push(element);
+            } else {
+                flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
+                output.push(element);
+                last_run_outer_scope = None;
+            }
+        } else if !matches!(element, Element::Partial(_))
+            && element.paragraph_safe()
+            && !contains_inline_scope_control(&element)
+        {
+            if matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                && matches!(run.last(), Some(Element::Text(text)) if text == " ")
+            {
+                run.pop();
+            }
+            run.push(element);
+        } else if lower_children(&mut element, valid, ordinal, active, trim_next_break) {
+            flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
             if !is_empty_paragraph(&element) {
                 output.push(element);
+                last_run_outer_scope = None;
             }
-        } else if element.paragraph_safe() {
-            run.push(element);
         } else {
-            flush_run(&mut output, &mut run, active);
+            flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
             output.push(element);
+            last_run_outer_scope = None;
         }
     }
-    flush_run(&mut output, &mut run, active);
+    flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
     *elements = output;
+    effects
 }
 
 fn flush_run<'t>(
     output: &mut Vec<Element<'t>>,
     run: &mut Vec<Element<'t>>,
-    active: &ActiveScopes<'t>,
+    active: &mut ActiveScopes<'t>,
+    last_run_outer_scope: &mut Option<usize>,
 ) {
     if run.is_empty() {
         return;
     }
+    let outer_scope = active.outer_active_position();
+    active.mark_active_content();
     let mut wrapped = mem::take(run);
     for scope in active.iter_active_rev() {
         wrapped = vec![Element::Container(Container::new(
@@ -292,7 +587,73 @@ fn flush_run<'t>(
             scope.attributes.clone(),
         ))];
     }
-    output.extend(wrapped);
+    let [Element::Container(next)] = wrapped.as_mut_slice() else {
+        output.extend(wrapped);
+        *last_run_outer_scope = None;
+        return;
+    };
+    let Some(Element::Container(previous)) = output.last_mut() else {
+        output.extend(wrapped);
+        *last_run_outer_scope = outer_scope;
+        return;
+    };
+    let inline_scope =
+        matches!(previous.ctype(), ContainerType::Span | ContainerType::Size);
+    if inline_scope
+        && outer_scope.is_some()
+        && outer_scope == *last_run_outer_scope
+        && previous.ctype() == next.ctype()
+        && previous.attributes() == next.attributes()
+    {
+        let next = wrapped.pop().expect("wrapped scope container");
+        let Element::Container(next) = next else {
+            unreachable!("checked wrapped scope container");
+        };
+        previous.elements_mut().extend(Vec::from(next));
+    } else {
+        output.extend(wrapped);
+    }
+    *last_run_outer_scope = outer_scope;
+}
+
+fn trim_trailing_space(elements: &mut Vec<Element<'_>>) {
+    let Some(last) = elements.last_mut() else {
+        return;
+    };
+    if let Element::Container(container) = last
+        && matches!(container.ctype(), ContainerType::Span | ContainerType::Size)
+    {
+        trim_trailing_space(container.elements_mut());
+        if container.elements().is_empty() {
+            elements.pop();
+        }
+        return;
+    }
+    if matches!(last, Element::Text(text) if text == " ") {
+        elements.pop();
+    }
+}
+
+fn trim_one_trailing_text_space(elements: &mut Vec<Element<'_>>) {
+    let Some(Element::Text(text)) = elements.last_mut() else {
+        return;
+    };
+    if text.ends_with(' ') {
+        text.to_mut().pop();
+        if text.is_empty() {
+            elements.pop();
+        }
+    }
+}
+
+fn elements_end_with_space(elements: &[Element<'_>]) -> bool {
+    match elements.last() {
+        Some(Element::Text(text)) => text.ends_with(' '),
+        Some(Element::Container(container)) => {
+            elements_end_with_space(container.elements())
+        }
+        _ => false,
+    }
 }
 
 fn is_empty_paragraph(element: &Element<'_>) -> bool {
@@ -303,19 +664,115 @@ fn is_empty_paragraph(element: &Element<'_>) -> bool {
     )
 }
 
+fn contains_inline_scope_control(element: &Element<'_>) -> bool {
+    if matches!(
+        element,
+        Element::Partial(
+            PartialElement::InlineSizeOpen(_)
+                | PartialElement::InlineSizeClose
+                | PartialElement::InlineSpanOpen(_)
+                | PartialElement::InlineSpanClose(_)
+        )
+    ) {
+        return true;
+    }
+    let mut contains = false;
+    visit_children(element, &mut |children| {
+        contains |= children.iter().any(contains_inline_scope_control);
+    });
+    contains
+}
+
+fn inline_scope_controls_are_self_contained(element: &Element<'_>) -> bool {
+    fn visit(element: &Element<'_>, sizes: &mut usize, spans: &mut usize) -> bool {
+        match element {
+            Element::Partial(PartialElement::InlineSizeOpen(_)) => {
+                *sizes += 1;
+                true
+            }
+            Element::Partial(PartialElement::InlineSizeClose) => {
+                if *sizes == 0 {
+                    false
+                } else {
+                    *sizes -= 1;
+                    true
+                }
+            }
+            Element::Partial(PartialElement::InlineSpanOpen(_)) => {
+                *spans += 1;
+                true
+            }
+            Element::Partial(PartialElement::InlineSpanClose(_)) => {
+                if *spans == 0 {
+                    false
+                } else {
+                    *spans -= 1;
+                    true
+                }
+            }
+            _ => {
+                let mut valid = true;
+                visit_children(element, &mut |children| {
+                    for child in children {
+                        valid &= visit(child, sizes, spans);
+                    }
+                });
+                valid
+            }
+        }
+    }
+
+    let mut sizes = 0;
+    let mut spans = 0;
+    visit(element, &mut sizes, &mut spans) && sizes == 0 && spans == 0
+}
+
 fn lower_children<'t>(
     element: &mut Element<'t>,
     valid: &BTreeSet<usize>,
     ordinal: &mut usize,
     active: &mut ActiveScopes<'t>,
+    trim_next_break: &mut bool,
 ) -> bool {
+    if let Element::Container(container) = element
+        && matches!(container.ctype(), ContainerType::Header(_))
+    {
+        let scope_crosses_heading = active.has_active_scope();
+        lower_sequence(
+            container.elements_mut(),
+            valid,
+            ordinal,
+            active,
+            trim_next_break,
+        );
+        if scope_crosses_heading {
+            insert_wikidot_heading_label_span(container.elements_mut());
+        }
+        return true;
+    }
+
     let mut lowered = false;
     let mut visit = |children: &mut Vec<Element<'t>>| {
         lowered = true;
-        lower_sequence(children, valid, ordinal, active);
+        lower_sequence(children, valid, ordinal, active, trim_next_break);
     };
     visit_children_mut(element, &mut visit);
     lowered
+}
+
+fn insert_wikidot_heading_label_span(elements: &mut Vec<Element<'_>>) {
+    if let [Element::Container(container)] = elements.as_mut_slice()
+        && matches!(container.ctype(), ContainerType::Span | ContainerType::Size)
+    {
+        insert_wikidot_heading_label_span(container.elements_mut());
+        return;
+    }
+    let label = mem::take(elements);
+    elements.push(Element::Container(Container::new(
+        ContainerType::Span,
+        label,
+        AttributeMap::new(),
+    )));
 }
 
 fn visit_children<'t>(element: &Element<'t>, visit: &mut dyn FnMut(&[Element<'t>])) {
@@ -508,6 +965,33 @@ mod tests {
             max_inline_scope_container_depth(&elements),
             MAX_ACTIVE_INLINE_SCOPES
         );
+    }
+
+    #[test]
+    fn size_close_moves_trailing_space_outside_the_scope() {
+        let mut elements = vec![Element::Container(Container::new(
+            ContainerType::Paragraph,
+            vec![
+                Element::Partial(PartialElement::InlineSizeOpen(cow!("font-size:0%;"))),
+                text!("literal"),
+                text!(" "),
+                Element::Partial(PartialElement::InlineSizeClose),
+            ],
+            AttributeMap::new(),
+        ))];
+
+        lower_wikidot_inline_size_scopes(&mut elements);
+
+        let [Element::Container(paragraph)] = elements.as_slice() else {
+            panic!("expected one paragraph: {elements:#?}");
+        };
+        let [Element::Container(container), Element::Text(space)] = paragraph.elements()
+        else {
+            panic!("expected a lowered size container and outer space: {paragraph:#?}");
+        };
+        assert_eq!(container.ctype(), ContainerType::Size);
+        assert_eq!(container.elements(), &[text!("literal")]);
+        assert_eq!(space, " ");
     }
 
     #[test]

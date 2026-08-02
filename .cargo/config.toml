@@ -1,0 +1,5 @@
+[build]
+# Keep the single FTML package on one explicit canonical development cache.
+# Candidate and one-shot CI builds override this with CARGO_TARGET_DIR or
+# CARGO_INCREMENTAL as documented in docs/development/cargo-target-policy.md.
+target-dir = "target"

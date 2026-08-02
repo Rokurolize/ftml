@@ -21,7 +21,7 @@ fn render(input: &str) -> (String, String) {
     let page_info = page_info();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let mut source = input.to_owned();
-    ftml::preprocess(&mut source);
+    ftml::preprocess_for_layout(&mut source, settings.layout);
     let tokens = ftml::tokenize(&source);
     let result = ftml::parse(&tokens, &page_info, &settings);
     let (tree, errors) = result.into();
@@ -67,7 +67,7 @@ fn expression_prefix_matrix_matches_saved_wikidot() {
 }
 
 #[test]
-fn document_leading_whitespace_uses_saved_page_semantics() {
+fn document_leading_indented_quote_remains_literal_after_parser_functions() {
     // Live provenance:
     // ftml-oracle-20260712T214547Z/run-quote-indentation and
     // ftml-oracle-20260712T215005Z/run-quote-document-leading-whitespace.
@@ -76,7 +76,8 @@ fn document_leading_whitespace_uses_saved_page_semantics() {
     assert!(text.contains("42 OMEGA_FIRST"), "{text}");
     assert!(text.contains("> OMEGA_SECOND"), "{text}");
     assert!(text.contains("OMEGA_AFTER"), "{text}");
-    assert_eq!(html.matches("<blockquote>").count(), 1, "{html}");
+    assert_eq!(html.matches("<blockquote>").count(), 0, "{html}");
+    assert!(html.contains("&gt; 42 OMEGA_FIRST"), "{html}");
     assert!(html.contains("&gt; OMEGA_SECOND"), "{html}");
 
     let (text, html) = render("[!-- comment --]\n  > [[#expr 7*6 ]] OMEGA_AFTER_COMMENT");

@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use super::inline_delimiter::assert_unpadded_open;
+use super::inline_delimiter::{append_wikidot_line_close_space, assert_unpadded_open};
 use super::prelude::*;
 
 pub const RULE_SUPERSCRIPT: Rule = Rule {
@@ -39,5 +39,18 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::token_pair(Token::Whitespace, Token::Superscript),
     ];
     let ctype = ContainerType::Superscript;
-    collect_container(parser, RULE_SUPERSCRIPT, ctype, &close, &invalid, None)
+    let collected =
+        collect_container(parser, RULE_SUPERSCRIPT, ctype, &close, &invalid, None)?;
+    let (elements, errors, paragraph_safe) = collected.into();
+    if parser.settings().layout.legacy()
+        && matches!(
+            &elements,
+            Elements::Single(Element::Container(container)) if container.elements().is_empty()
+        )
+    {
+        return ok!(paragraph_safe; Elements::None, errors);
+    }
+    let elements =
+        append_wikidot_line_close_space(elements, parser.settings().layout.legacy());
+    ok!(paragraph_safe; elements, errors)
 }

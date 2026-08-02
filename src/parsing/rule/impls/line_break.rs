@@ -19,6 +19,10 @@
  */
 
 use super::prelude::*;
+use super::{
+    RULE_BLOCKQUOTE, RULE_CENTER, RULE_CLEAR_FLOAT, RULE_HEADER, RULE_HORIZONTAL_RULE,
+    RULE_LIST, RULE_SECTION_MARKER, RULE_TABLE,
+};
 
 pub const RULE_LINE_BREAK: Rule = Rule {
     name: "line-break",
@@ -52,6 +56,24 @@ pub(crate) fn starts_own_line_rule(token: Token) -> bool {
     START_OF_LINE_RULE_TOKENS.contains(&token)
 }
 
+fn own_line_rules(token: Token) -> &'static [Rule] {
+    match token {
+        Token::Quote => &[RULE_BLOCKQUOTE],
+        Token::BulletItem | Token::NumberedItem => &[RULE_LIST],
+        Token::Heading => &[RULE_HEADER],
+        Token::Equals => &[RULE_SECTION_MARKER, RULE_CENTER],
+        Token::TripleDash => &[RULE_HORIZONTAL_RULE],
+        Token::ClearFloatLeft | Token::ClearFloatRight | Token::ClearFloatBoth => {
+            &[RULE_CLEAR_FLOAT]
+        }
+        Token::TableColumn
+        | Token::TableColumnRight
+        | Token::TableColumnCenter
+        | Token::TableColumnTitle => &[RULE_TABLE],
+        _ => &[],
+    }
+}
+
 fn line_break<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Consuming newline token as line break");
 
@@ -60,7 +82,7 @@ fn line_break<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
     //
     // Grep for "LineRequirement::StartOfLine" and compare that with this list.
 
-    let quote_aware = parser.quote_body_has_literal_residuals();
+    let quote_aware = parser.quote_body_cursor().is_some();
     let upcoming_skip = parser.evaluate_fn(|parser| {
         parser.step()?;
         parser.get_optional_space()?;
@@ -68,8 +90,18 @@ fn line_break<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
             parser.prepare_quote_body_line()?;
         }
 
-        Ok(starts_own_line_rule(parser.current().token)
-            && (!quote_aware || parser.start_of_line()))
+        if quote_aware && !parser.start_of_line() {
+            return Ok(false);
+        }
+
+        if parser.current().token == Token::Heading
+            && parser.look_ahead(0).map(|token| token.token) != Some(Token::Whitespace)
+        {
+            return Ok(false);
+        }
+
+        let rules = own_line_rules(parser.current().token);
+        Ok(rules.iter().any(|rule| rule.try_consume(parser).is_ok()))
     });
 
     if upcoming_skip {

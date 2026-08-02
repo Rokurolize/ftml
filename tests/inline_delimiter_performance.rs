@@ -30,6 +30,8 @@ fn padded_inline_openers_inside_list_items_stay_literal_in_bounded_time() {
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
 
         let started = Instant::now();
+        let mut input = input;
+        ftml::preprocess_for_layout(&mut input, settings.layout);
         let tokenization = ftml::tokenize(&input);
         let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
@@ -47,21 +49,22 @@ fn padded_inline_openers_inside_list_items_stay_literal_in_bounded_time() {
 }
 
 #[test]
-fn repeated_underline_spacer_run_stays_linear_and_literal() {
+fn repeated_underline_spacer_run_stays_linear_and_invisible() {
     const MARKER_COUNT: usize = 16_384;
 
-    let input = format!("{} ", "__".repeat(MARKER_COUNT));
+    let mut input = format!("{} ", "__".repeat(MARKER_COUNT));
     let page_info = page_info();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let started = Instant::now();
 
+    ftml::preprocess_for_layout(&mut input, settings.layout);
     let tokenization = ftml::tokenize(&input);
     let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
     let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
     assert!(started.elapsed() < Duration::from_secs(5));
     assert!(errors.is_empty(), "{errors:#?}");
-    assert_eq!(html.matches("__").count(), MARKER_COUNT);
+    assert!(html.is_empty(), "{html}");
 }
 
 #[test]
@@ -73,25 +76,26 @@ fn quoted_multiline_inline_delimiter_pairs_stay_bounded() {
     // where repeated journal paragraphs open italics on one quoted line and
     // close them on the next. Twelve pairs exceeded the replay's five-second
     // parse budget before the quote cursor was carried into inline collectors.
-    for (marker, tag) in [
-        ("**", "strong"),
-        ("//", "em"),
-        ("__", "u"),
-        ("^^", "sup"),
-        (",,", "sub"),
+    for (marker, opening) in [
+        ("**", "<strong>"),
+        ("//", "<em>"),
+        ("__", "<span style=\"text-decoration: underline;\">"),
+        ("^^", "<sup>"),
+        (",,", "<sub>"),
     ] {
-        let input = format!("> {marker}\n> quoted text{marker}\n").repeat(PAIR_COUNT);
+        let mut input = format!("> {marker}\n> quoted text{marker}\n").repeat(PAIR_COUNT);
         let page_info = page_info();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         let started = Instant::now();
 
+        ftml::preprocess_for_layout(&mut input, settings.layout);
         let tokenization = ftml::tokenize(&input);
         let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert!(started.elapsed() < Duration::from_secs(5), "{marker}");
         assert!(errors.is_empty(), "{marker}: {errors:#?}");
-        assert_eq!(html.matches(&format!("<{tag}>")).count(), PAIR_COUNT);
+        assert_eq!(html.matches(opening).count(), PAIR_COUNT, "{marker}");
         assert_eq!(html.matches("quoted text").count(), PAIR_COUNT);
     }
 }
@@ -153,7 +157,7 @@ fn repeated_wikidot_size_scopes_crossing_structural_blocks_stay_bounded() {
 
     assert!(started.elapsed() < Duration::from_secs(5));
     assert!(errors.is_empty(), "{errors:#?}");
-    assert_eq!(html.matches("font-size: larger;").count(), ROW_COUNT * 2);
+    assert_eq!(html.matches("font-size:larger;").count(), ROW_COUNT * 3);
     assert_eq!(html.matches("colmod-content").count(), ROW_COUNT);
     assert_eq!(html.matches("body").count(), ROW_COUNT);
     assert!(!html.contains("font-size: larger;\">body"));

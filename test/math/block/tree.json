@@ -132,6 +132,9 @@
                         "data": "EMPTY"
                     },
                     {
+                        "element": "line-break"
+                    },
+                    {
                         "element": "text",
                         "data": "[["
                     },

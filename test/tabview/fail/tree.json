@@ -15,6 +15,9 @@
                         "data": ":"
                     },
                     {
+                        "element": "line-break"
+                    },
+                    {
                         "element": "text",
                         "data": "[["
                     },
@@ -114,86 +117,32 @@
                     {
                         "element": "text",
                         "data": ":"
-                    },
-                    {
-                        "element": "text",
-                        "data": "[["
-                    },
-                    {
-                        "element": "text",
-                        "data": "tabview"
-                    },
-                    {
-                        "element": "text",
-                        "data": " "
-                    },
-                    {
-                        "element": "text",
-                        "data": "Foo"
-                    },
-                    {
-                        "element": "text",
-                        "data": "]]"
-                    },
-                    {
-                        "element": "text",
-                        "data": "[["
-                    },
-                    {
-                        "element": "text",
-                        "data": "tab"
-                    },
-                    {
-                        "element": "text",
-                        "data": " "
-                    },
-                    {
-                        "element": "text",
-                        "data": "Bar"
-                    },
-                    {
-                        "element": "text",
-                        "data": "]]"
-                    },
-                    {
-                        "element": "line-break"
-                    },
-                    {
-                        "element": "text",
-                        "data": "."
-                    },
-                    {
-                        "element": "line-break"
-                    },
-                    {
-                        "element": "text",
-                        "data": "[[/"
-                    },
-                    {
-                        "element": "text",
-                        "data": "tab"
-                    },
-                    {
-                        "element": "text",
-                        "data": "]]"
-                    },
-                    {
-                        "element": "line-break"
-                    },
-                    {
-                        "element": "text",
-                        "data": "[[/"
-                    },
-                    {
-                        "element": "text",
-                        "data": "tabview"
-                    },
-                    {
-                        "element": "text",
-                        "data": "]]"
                     }
                 ]
             }
+        },
+        {
+            "element": "tab-view",
+            "data": [
+                {
+                    "label": "Bar",
+                    "elements": [
+                        {
+                            "element": "container",
+                            "data": {
+                                "type": "paragraph",
+                                "attributes": {},
+                                "elements": [
+                                    {
+                                        "element": "text",
+                                        "data": "."
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
         },
         {
             "element": "container",
@@ -218,6 +167,9 @@
                         "data": ":"
                     },
                     {
+                        "element": "line-break"
+                    },
+                    {
                         "element": "text",
                         "data": "[["
                     },
@@ -228,6 +180,9 @@
                     {
                         "element": "text",
                         "data": "]]"
+                    },
+                    {
+                        "element": "line-break"
                     },
                     {
                         "element": "text",

@@ -66,6 +66,12 @@ fn parse_fn<'r, 't>(
     {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
+    if parser.settings().layout.legacy()
+        && parser.discarding_hidden_body()
+        && !parser.has_two_body_end_blocks(&BLOCK_IFTAGS)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     // A closed no-argument gate is false on Wikidot. Keeping this explicit
     // avoids changing ElementCondition's general empty-set semantics.

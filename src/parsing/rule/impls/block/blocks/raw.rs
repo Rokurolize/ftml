@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 use super::prelude::*;
+use crate::delayed::DelayedElement;
 use std::borrow::Cow;
 
 // NOTE: "accepts_newlines" needs to be false here to avoid end trimming from get_body_text
@@ -45,6 +46,35 @@ fn parse_fn<'r, 't>(
 
     if parser.native_blockquote_depth().is_some() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
+    if parser.settings().layout.legacy() && !parser.discarding_hidden_body() {
+        let source = parser.full_text().inner();
+        let owner_start = (name.as_ptr() as usize)
+            .checked_sub(source.as_ptr() as usize + 2)
+            .expect("parsed raw name follows its opener");
+        let mut owner = parser.clone();
+        if in_head {
+            while !matches!(owner.current().token, Token::RightBlock | Token::InputEnd) {
+                owner.step()?;
+            }
+            owner.get_token(
+                Token::RightBlock,
+                ParseErrorKind::BlockMissingCloseBrackets,
+            )?;
+        }
+        let _ = owner.get_body_text(&BLOCK_RAW)?;
+        let owner_end = owner.current().span.start;
+        let generated = owner.generated_in_range(owner_start..owner_end);
+        if generated.is_empty() {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+        parser.update(&owner);
+        return success_elements(Element::Delayed(DelayedElement::shell(
+            source,
+            owner_start..owner_end,
+            &generated,
+        )));
     }
 
     let mut content = parser.get_body_text(&BLOCK_RAW)?;
@@ -81,9 +111,9 @@ mod tests {
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
-    fn raw_block_preserves_unparsed_multiline_text_without_outer_newlines() {
+    fn raw_block_preserves_unparsed_multiline_text_without_outer_newlines_in_wikijump() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tokenization = crate::tokenize("[[raw]]\n**not bold**\n[[/raw]]");
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
@@ -97,6 +127,16 @@ mod tests {
             panic!("expected one raw element, got {:?}", paragraph.elements());
         };
         assert_eq!(text.as_ref(), "**not bold**");
+    }
+
+    #[test]
+    fn raw_block_markers_remain_literal_in_wikidot() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[raw]]\n**bold**\n[[/raw]]");
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(!format!("{tree:?}").contains("Raw("), "{tree:#?}");
     }
 
     #[test]

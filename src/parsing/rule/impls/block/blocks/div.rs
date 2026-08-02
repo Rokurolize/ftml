@@ -19,6 +19,10 @@
  */
 
 use super::prelude::*;
+use crate::delayed::DelayedElement;
+use crate::parsing::rule::impls::block::parser::BlockBodyStart;
+use crate::tree::AcceptsPartial;
+use std::borrow::Cow;
 
 pub const BLOCK_DIV: BlockRule = BlockRule {
     name: "block-div",
@@ -28,6 +32,55 @@ pub const BLOCK_DIV: BlockRule = BlockRule {
     accepts_newlines: true,
     parse_fn,
 };
+
+fn wikidot_div_head_started_physical_line(
+    parser: &Parser<'_, '_>,
+    body_start: BlockBodyStart,
+) -> bool {
+    let source = parser.full_text().inner();
+    let head_end = parser.current().span.start;
+    let head_line_end = if body_start == BlockBodyStart::NextPhysicalLine {
+        source[..head_end].trim_end_matches(['\r', '\n']).len()
+    } else {
+        head_end
+    };
+    let line_start = source[..head_line_end]
+        .rfind('\n')
+        .map_or(0, |offset| offset + 1);
+    source[line_start..head_line_end]
+        .trim_start_matches([' ', '\t'])
+        .get(..5)
+        .is_some_and(|head| head.eq_ignore_ascii_case("[[div"))
+}
+
+fn wikidot_div_follows_inline_structural_close(
+    parser: &Parser<'_, '_>,
+    body_start: BlockBodyStart,
+) -> bool {
+    if parser.accepts_partial() != AcceptsPartial::ListItem {
+        return false;
+    }
+    let source = parser.full_text().inner();
+    let head_end = parser.current().span.start;
+    let literal_end = if body_start == BlockBodyStart::NextPhysicalLine {
+        source[..head_end].trim_end_matches(['\r', '\n']).len()
+    } else {
+        head_end
+    };
+    let line_start = source[..literal_end]
+        .rfind('\n')
+        .map_or(0, |offset| offset + 1);
+    let opener_start = source[line_start..literal_end]
+        .rfind("[[")
+        .map_or(line_start, |offset| line_start + offset);
+    let prefix = source[line_start..opener_start].trim_end();
+    prefix
+        .get(prefix.len().saturating_sub(8)..)
+        .is_some_and(|close| close.eq_ignore_ascii_case("[[/div]]"))
+        || prefix
+            .get(prefix.len().saturating_sub(7)..)
+            .is_some_and(|close| close.eq_ignore_ascii_case("[[/ul]]"))
+}
 
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
@@ -39,26 +92,206 @@ fn parse_fn<'r, 't>(
     debug!("Parsing div block (name '{name}', in-head {in_head}, score {flag_score})");
     assert!(!flag_star, "Div doesn't allow star flag");
     assert_block_name(&BLOCK_DIV, name);
+    let source = parser.full_text().inner();
+    let owner_start = (name.as_ptr() as usize)
+        .checked_sub(source.as_ptr() as usize + 2)
+        .expect("parsed div name follows its opener");
 
-    let head = parser.get_head_map_with_body_start(&BLOCK_DIV, in_head)?;
-    let (arguments, body_start) = head;
+    let head = parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;
+    let (arguments, mut body_start) = head;
+    let head_started_physical_line =
+        wikidot_div_head_started_physical_line(parser, body_start);
+    let follows_inline_structural_close =
+        wikidot_div_follows_inline_structural_close(parser, body_start);
+    if parser.settings().layout.legacy()
+        && parser.in_wikidot_div_body()
+        && !head_started_physical_line
+        && !follows_inline_structural_close
+    {
+        let source = parser.full_text().inner();
+        let head_end = parser.current().span.start;
+        let literal_end = if body_start == BlockBodyStart::NextPhysicalLine {
+            source[..head_end].trim_end_matches(['\r', '\n']).len()
+        } else {
+            head_end
+        };
+        let line_start = source[..literal_end]
+            .rfind('\n')
+            .map_or(0, |offset| offset + 1);
+        let opener_start = source[line_start..literal_end]
+            .rfind("[[")
+            .map_or(line_start, |offset| line_start + offset);
+        let literal = text!(&source[opener_start..literal_end]);
+        return if body_start == BlockBodyStart::NextPhysicalLine {
+            ok!(Elements::Multiple(vec![literal, Element::LineBreak]))
+        } else {
+            ok!(literal)
+        };
+    }
+    if parser.settings().layout.legacy()
+        && parser.in_wikidot_div_body()
+        && flag_score
+        && body_start == BlockBodyStart::Inline
+        && parser.current().token == Token::LeftBlockEnd
+    {
+        let mut close = parser.clone();
+        if close
+            .get_end_block()
+            .is_ok_and(|name| name.eq_ignore_ascii_case("div"))
+        {
+            parser.update(&close);
+            return ok!(false; Elements::None);
+        }
+    }
+    if parser.settings().layout.legacy()
+        && body_start == BlockBodyStart::Inline
+        && parser.in_wikidot_div_body()
+        && head_started_physical_line
+        && !parser.in_native_blockquote_line()
+        && !flag_score
+    {
+        while !matches!(
+            parser.current().token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        ) {
+            parser.step()?;
+        }
+        if parser.current().token == Token::LineBreak {
+            parser.step()?;
+        }
+        body_start = BlockBodyStart::NextPhysicalLine;
+    }
+    if parser.settings().layout.legacy()
+        && !parser.in_wikidot_div_body()
+        && !parser.has_body_end_block(&BLOCK_DIV)
+    {
+        let kind = if flag_score {
+            ParseErrorKind::RuleFailed
+        } else {
+            ParseErrorKind::BlockExpectedEnd
+        };
+        return Err(parser.make_err(kind));
+    }
+    if parser.settings().layout.legacy()
+        && !head_started_physical_line
+        && !follows_inline_structural_close
+        && parser.body_has_generated(&BLOCK_DIV)
+    {
+        let _ = parser.get_body_text(&BLOCK_DIV)?;
+        let owner_end = parser.current().span.start;
+        let generated = parser.generated_in_range(owner_start..owner_end);
+        return success_elements(Element::Delayed(DelayedElement::shell(
+            source,
+            owner_start..owner_end,
+            &generated,
+        )));
+    }
 
     // "div" means we wrap in paragraphs, like normal
     // "div_" means we don't wrap it
     let wrap_paragraphs = !flag_score;
-
     // Get body content, based on whether we want paragraphs or not.
     // Discard paragraph_safe, since divs never are.
-    let (elements, errors, _) = parser
-        .get_body_elements_with_context(&BLOCK_DIV, wrap_paragraphs, body_start)?
-        .into();
+    if parser.settings().layout.legacy() {
+        parser.enter_wikidot_div_body();
+    }
+    let parse_as_paragraphs =
+        wrap_paragraphs || parser.settings().layout.legacy() && flag_score;
+    let body = parser.get_body_elements_with_context(
+        &BLOCK_DIV,
+        parse_as_paragraphs,
+        body_start,
+    );
+    if parser.settings().layout.legacy() {
+        parser.leave_wikidot_div_body();
+    }
+    let (mut elements, errors, _) = body?.into();
+    if parser.settings().layout.legacy() && flag_score {
+        let item_count = elements.len();
+        let mut unwrapped = Vec::with_capacity(item_count.saturating_mul(2));
+        for (index, element) in elements.drain(..).enumerate() {
+            if index > 0 {
+                unwrapped.push(text!("\n"));
+            }
+            match element {
+                Element::Container(container)
+                    if container.ctype() == ContainerType::Paragraph
+                        && (index == 0 || index + 1 == item_count) =>
+                {
+                    unwrapped.extend(Vec::<Element>::from(container));
+                }
+                element => unwrapped.push(element),
+            }
+        }
+        elements = unwrapped;
+        while matches!(
+            elements.last(),
+            Some(Element::LineBreak | Element::LineBreaks(_))
+        ) {
+            elements.pop();
+        }
+        let mut previous_was_div = false;
+        elements.retain(|element| {
+            if previous_was_div
+                && (matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                    || matches!(element, Element::Text(text) if text == "\n"))
+            {
+                return false;
+            }
+            previous_was_div = matches!(
+                element,
+                Element::Container(container)
+                    if container.ctype() == ContainerType::Div
+            );
+            true
+        });
+    } else if parser.settings().layout.legacy() {
+        if matches!(elements.last(), Some(Element::LineBreak)) {
+            elements.pop();
+        }
+        let mut cleaned = Vec::with_capacity(elements.len());
+        for element in elements.drain(..) {
+            let line_break_after_div =
+                matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                    && cleaned
+                        .iter()
+                        .rev()
+                        .find(|previous| {
+                            !matches!(
+                                previous,
+                                Element::Text(text)
+                                    if !text.is_empty()
+                                        && text.chars().all(|character| character == '\n')
+                            )
+                        })
+                        .is_some_and(|previous| {
+                            matches!(
+                                previous,
+                                Element::Container(container)
+                                    if container.ctype() == ContainerType::Div
+                            )
+                        });
+            if !line_break_after_div {
+                cleaned.push(element);
+            }
+        }
+        elements = cleaned;
+    }
+
+    if parser.settings().layout.legacy() && arguments.is_empty() && elements.is_empty() {
+        return ok!(false; Elements::None, errors);
+    }
 
     // Build element and return
-    let element = Element::Container(Container::new(
-        ContainerType::Div,
-        elements,
-        arguments.to_attribute_map(parser.settings()),
-    ));
+    let mut attributes = arguments.to_attribute_map(parser.settings());
+    if parser.settings().layout.legacy()
+        && let Some(class) = attributes.remove("class")
+    {
+        let class = class.trim_end_matches([' ', '\t']).to_owned();
+        attributes.insert("class", Cow::Owned(class));
+    }
+    let element =
+        Element::Container(Container::new(ContainerType::Div, elements, attributes));
 
     ok!(element, errors)
 }
@@ -67,8 +300,152 @@ fn parse_fn<'r, 't>(
 mod tests {
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::parsing::ParseErrorKind;
     use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
+
+    fn render(input: &str, layout: Layout) -> String {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
+        let tokenization = crate::tokenize(input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:#?}");
+        HtmlRender.render(&tree, &page_info, &settings).body
+    }
+
+    #[test]
+    fn wikidot_div_trims_trailing_class_whitespace_only_in_legacy_layout() {
+        let input = "[[div class=\"box \"]]\nbody\n[[/div]]";
+
+        assert_eq!(
+            render(input, Layout::Wikidot),
+            "<div class=\"box\"><p>body</p></div>",
+        );
+        assert_eq!(
+            render(input, Layout::Wikijump),
+            "<div class=\"box \"><p>body</p></div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_continuation_before_a_div_preserves_its_block_boundary() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut source = concat!(
+            "[[div id=\"outer\"]]\n",
+            "[[a href=\"x\"]]x[[/a]]\\\n",
+            "[[div_ class=\"image\"]]\n",
+            "x\n",
+            "[[/div]]\n",
+            "[[/div]]",
+        )
+        .to_owned();
+        crate::preprocess_for_layout(&mut source, settings.layout);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            "<div id=\"u-outer\"><a href=\"x\">x</a>\n<div class=\"image\">x</div></div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_continuation_before_a_div_like_name_remains_inline() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut source = concat!(
+            "[[a href=\"x\"]]x[[/a]]\\\n",
+            "[[division]]\n",
+            "x\n",
+            "[[/div]]",
+        )
+        .to_owned();
+        crate::preprocess_for_layout(&mut source, settings.layout);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(!errors.is_empty());
+        assert_eq!(
+            html,
+            "<p><a href=\"x\">x</a>[[division]]<br>\nx<br>\n[[/div]]</p>",
+        );
+    }
+
+    #[test]
+    fn wikidot_exact_div_names_discard_malformed_arguments() {
+        for (name, normal, continued) in [
+            (
+                "div",
+                "<p>before</p><div><p>x</p></div><br>\nafter",
+                "<a href=\"x\">x</a>\n<div><p>x</p></div>",
+            ),
+            (
+                "div_",
+                "<p>before</p><div>x</div><br>\nafter",
+                "<a href=\"x\">x</a>\n<div>x</div>",
+            ),
+        ] {
+            let normal_source =
+                format!("before\n[[{name} @=\"value\"]]\nx\n[[/div]]\nafter",);
+            assert_eq!(render_preprocessed_wikidot(&normal_source), normal);
+
+            let continued_source = format!(
+                "[[a href=\"x\"]]x[[/a]]\\\n[[{name} @=\"value\"]]\nx\n[[/div]]",
+            );
+            assert_eq!(render_preprocessed_wikidot(&continued_source), continued,);
+        }
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let mut source = "before\n[[div @=\"value\"]]\nx\n[[/div]]\nafter".to_owned();
+        crate::preprocess_for_layout(&mut source, settings.layout);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert!(
+            errors
+                .iter()
+                .any(|error| { error.kind() == ParseErrorKind::BlockMalformedArguments })
+        );
+        assert!(html.contains("[[div @=&quot;value&quot;]]"), "{html}");
+        assert!(!html.contains("<div>"), "{html}");
+    }
+
+    fn render_preprocessed_wikidot(source: &str) -> String {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut source = source.to_owned();
+        crate::preprocess_for_layout(&mut source, settings.layout);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:#?}");
+        HtmlRender.render(&tree, &page_info, &settings).body
+    }
+
+    #[test]
+    fn wikidot_div_drops_the_terminal_break_after_a_nested_list() {
+        let input = concat!(
+            "[[div id=\"fruit\" class=\"box\"]]\n",
+            "  [[ul]]\n",
+            "    [[li]] 1  [[/li]]\n",
+            "    [[li]] 2  [[/li]]\n",
+            "  [[/ul]]\n",
+            "[[/div]]",
+        );
+
+        assert_eq!(
+            render(input, Layout::Wikidot),
+            "<div class=\"box\" id=\"u-fruit\"><ul>\n<li>1</li>\n<li>2</li>\n</ul></div>",
+        );
+        assert_eq!(
+            render(input, Layout::Wikijump),
+            "<div class=\"box\" id=\"fruit\"><ul><li>1 </li><li>2 </li></ul></div>",
+        );
+    }
 
     #[test]
     fn quoted_multiline_div_with_quoted_close_remains_native_and_bounded() {
@@ -86,16 +463,14 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert!(html.contains("<blockquote>"), "{html}");
-        assert!(html.contains("<div style="), "{html}");
-        assert!(html.contains("First quoted line."), "{html}");
-        assert!(html.contains("Second quoted line."), "{html}");
-        assert!(!html.contains("[[div"), "{html}");
-        assert!(!html.contains("[[/div]]"), "{html}");
+        assert_eq!(
+            html,
+            "<blockquote><div style=\"font-weight: bold;\"><p>First quoted line.</p><p>Second quoted line.</p></div></blockquote>",
+        );
     }
 
     #[test]
-    fn quoted_div_with_close_on_same_line_remains_native() {
+    fn quoted_inline_div_remains_literal_like_wikidot() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         let input = "> [[div class=\"notice\"]]Quoted body.[[/div]]\n";
@@ -103,11 +478,83 @@ mod tests {
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
-        assert!(errors.is_empty(), "{errors:#?}");
-        assert!(html.contains("<blockquote>"), "{html}");
-        assert!(html.contains("<div class=\"notice\">"), "{html}");
-        assert!(html.contains("Quoted body."), "{html}");
-        assert!(!html.contains("[[div"), "{html}");
+        assert!(!errors.is_empty());
+        assert_eq!(
+            html,
+            "<blockquote><p>[[div class=&quot;notice&quot;]]Quoted body.[[/div]]</p></blockquote>",
+        );
+    }
+
+    #[test]
+    fn inline_div_remains_literal_in_wikidot_layout() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let input = "[[div id=\"credit-view\"]]X[[/div]]";
+        let tokenization = crate::tokenize(input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(!errors.is_empty());
+        assert_eq!(html, "[[div id=&quot;credit-view&quot;]]X[[/div]]",);
+    }
+
+    #[test]
+    fn wikidot_divs_follow_inline_list_and_div_closers() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for row_count in [1, 2] {
+            let mut input = String::new();
+            for _ in 0..row_count {
+                input.push_str(
+                    "[[div_ class=\"colmod-block\"]]\n\
+                     [[ul]][[li class=\"folded\"]][[ul]]_[[/ul]][[div class=\"colmod-link-top\"]]\n\
+                     [[div_ class=\"foldable-list-container\"]]\n\
+                     link[[/div]][[/div]][[div class=\"colmod-content\"]]\n",
+                );
+            }
+            for _ in 0..row_count {
+                input.push_str(
+                    "[[/div]][[div]]\n\
+                     [[div_ class=\"foldable-list-container\"]]\n\
+                     link[[/div]][[/div]][[/li]][[/ul]][[/div]]\n",
+                );
+            }
+
+            let tokenization = crate::tokenize(&input);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+            assert!(errors.is_empty(), "{errors:#?}");
+            assert_eq!(html.matches("colmod-link-top").count(), row_count);
+            assert_eq!(html.matches("colmod-content").count(), row_count);
+            assert_eq!(
+                html.matches("foldable-list-container").count(),
+                row_count * 2,
+            );
+            assert!(!html.contains("[[div"), "{html}");
+            assert!(!html.contains("[[/div]]"), "{html}");
+        }
+    }
+
+    #[test]
+    fn unclosed_normal_div_lines_remain_in_a_paragraph() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let input = "[[div]]\n[[div]]\n[[div]]";
+        let tokenization = crate::tokenize(input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(
+            errors.iter().any(|error| {
+                error.rule() == "block-div"
+                    && error.kind() == ParseErrorKind::BlockExpectedEnd
+            }),
+            "{errors:#?}",
+        );
+        assert_eq!(html, "<p>[[div]]<br>\n[[div]]<br>\n[[div]]</p>");
     }
 
     #[test]
@@ -131,5 +578,70 @@ mod tests {
         let div_end = html.find("</div>").expect("div close missing");
         let following = html.find("following page").expect("following text missing");
         assert!(div_end < following, "{html}");
+    }
+
+    #[test]
+    fn scored_div_does_not_accept_scored_close_in_wikidot_layout() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[div_]]\nbody\n[[/div_]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(!errors.is_empty());
+        assert_eq!(html, "[[div_]]<br>\nbody<br>\n[[/div_]]");
+    }
+
+    #[test]
+    fn wikidot_scored_div_discards_formatting_breaks_around_nested_divs() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = concat!(
+            "[[div_ class=\"outer\"]]\n",
+            "    \t[[div_ class=\"left\"]]\n",
+            "    \t\t[[span]]alpha[[/span]] [[span]]beta[[/span]]\n",
+            "    \t[[/div]]\n",
+            "    \t[[div_ class=\"empty\"]]\n",
+            "    \t[[/div]]\n",
+            "[[/div]]",
+        );
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            "<div class=\"outer\"><div class=\"left\"><span>alpha</span> <span>beta</span></div><div class=\"empty\"></div></div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_nested_div_line_and_scored_paragraph_boundaries_match_live_dom() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = concat!(
+            "[[div]]\n",
+            "cherry\n",
+            "[[div id=\"tasty\"]]mango[[/div]]\n",
+            "melon\n",
+            "[[/div]]\n",
+            "[[div_]][[/div]]\n",
+            "[[div_ class=\"blockquote\"]]\n",
+            "Apple\n",
+            "[[/div]]\n",
+            "[[div_]]Banana[[/div]]\n",
+            "[[div_]]\n",
+            "alpha\n\nbeta\n\ngamma\n",
+            "[[/div]]",
+        );
+        let tokenization = crate::tokenize(source);
+        let (tree, _) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert_eq!(
+            html,
+            "<div><p>cherry</p><div id=\"u-tasty\"><p>melon</p></div><div class=\"blockquote\">Apple</div>\n[[div_]]Banana</div><div>alpha\n<p>beta</p>\ngamma</div>",
+        );
     }
 }

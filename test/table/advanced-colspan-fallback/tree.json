@@ -28,6 +28,7 @@
                                 "column-span": 1,
                                 "align": null,
                                 "attributes": {
+                                    "colspan": "abc",
                                     "data-name": "bad"
                                 },
                                 "elements": [

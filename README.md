@@ -1,11 +1,6 @@
 ## ftml
 
 <p>
-  <a href="https://codecov.io/gh/Rokurolize/ftml">
-    <img src="https://codecov.io/gh/Rokurolize/ftml/branch/main/graph/badge.svg"
-         alt="Codecov report for Rokurolize/ftml main">
-  </a>
-
   <a href="https://coderabbit.ai">
     <img src="https://img.shields.io/coderabbit/prs/github/Rokurolize/ftml.svg?label=CodeRabbit%20Reviews"
          alt="CodeRabbit Reviews for Rokurolize/ftml">

@@ -44,6 +44,9 @@ fn dash<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>
 
 fn tilde<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
     trace!("Trying to create a double tilde strikethrough");
+    if parser.settings().layout.legacy() {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     try_consume_strikethrough(parser, RULE_STRIKETHROUGH_TILDE, Token::DoubleTilde)
 }
 
@@ -91,6 +94,9 @@ fn validate_reachable_close(
                     .get_or_insert_with(|| scan.make_err(ParseErrorKind::RuleFailed));
             }
             current if current == token => {
+                if let Some(error) = paragraph_error {
+                    return Err(error);
+                }
                 if previous.current().token == Token::Whitespace {
                     return Err(previous.make_err(ParseErrorKind::RuleFailed));
                 }
@@ -133,6 +139,26 @@ mod tests {
         assert_eq!(
             render_text("before --removed-- after"),
             "before removed after"
+        );
+    }
+
+    #[test]
+    fn wikidot_keeps_double_tildes_literal() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("Some ~~struck through~~ text");
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert_eq!(
+            HtmlRender.render(&tree, &page_info, &settings).body,
+            "<p>Some ~~struck through~~ text</p>",
+        );
+    }
+
+    #[test]
+    fn double_dashes_do_not_form_strikethrough_across_paragraphs() {
+        assert_eq!(
+            render_html("--\n* item\n\n--"),
+            "<p>—</p><ul>\n<li>item</li>\n</ul><p>—</p>"
         );
     }
 

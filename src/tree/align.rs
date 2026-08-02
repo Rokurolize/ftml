@@ -125,6 +125,7 @@ impl TryFrom<&'_ str> for FloatAlignment {
             "<" => (Alignment::Left, false),
             ">" => (Alignment::Right, false),
             "f<" | "F<" => (Alignment::Left, true),
+            "f=" | "F=" => (Alignment::Center, true),
             "f>" | "F>" => (Alignment::Right, true),
             _ => return Err(()),
         };
@@ -166,15 +167,18 @@ fn image_alignment() {
     test!("<image", Alignment::Left, false);
     test!("f>image", Alignment::Right, true);
     test!("f<image", Alignment::Left, true);
+    test!("f=image", Alignment::Center, true);
 
     test!("=IMAGE", Alignment::Center, false);
     test!(">IMAGE", Alignment::Right, false);
     test!("<IMAGE", Alignment::Left, false);
     test!("f>IMAGE", Alignment::Right, true);
     test!("f<IMAGE", Alignment::Left, true);
+    test!("f=IMAGE", Alignment::Center, true);
 
     test!("F>IMAGE", Alignment::Right, true);
     test!("F<IMAGE", Alignment::Left, true);
+    test!("F=IMAGE", Alignment::Center, true);
 }
 
 #[test]
@@ -282,6 +286,12 @@ fn float_alignment_helpers_cover_classes() {
             float: true,
         }),
     );
-    assert_eq!(FloatAlignment::try_from("f="), Err(()));
+    assert_eq!(
+        FloatAlignment::try_from("f="),
+        Ok(FloatAlignment {
+            align: Alignment::Center,
+            float: true,
+        }),
+    );
     assert_eq!(FloatAlignment::try_from("=="), Err(()));
 }

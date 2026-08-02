@@ -19,11 +19,12 @@
  */
 
 use super::{BlockRule, blocks::*};
+use crate::layout::Layout;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use unicase::UniCase;
 
-pub const BLOCK_RULES: [BlockRule; 63] = [
+pub const BLOCK_RULES: [BlockRule; 65] = [
     BLOCK_ALIGN_CENTER,
     BLOCK_ALIGN_JUSTIFY,
     BLOCK_ALIGN_LEFT,
@@ -43,6 +44,7 @@ pub const BLOCK_RULES: [BlockRule; 63] = [
     BLOCK_DIV,
     BLOCK_EMBED,
     BLOCK_EQUATION_REF,
+    BLOCK_FILE,
     BLOCK_FOOTNOTE,
     BLOCK_FOOTNOTE_BLOCK,
     BLOCK_HIDDEN,
@@ -63,6 +65,7 @@ pub const BLOCK_RULES: [BlockRule; 63] = [
     BLOCK_MATH,
     BLOCK_MODULE,
     BLOCK_MONOSPACE,
+    BLOCK_NOTE,
     BLOCK_OL,
     BLOCK_PARAGRAPH,
     BLOCK_RADIO,
@@ -100,6 +103,75 @@ pub fn get_block_rule_with_name(name: &str) -> Option<&'static BlockRule> {
     let name = UniCase::ascii(name); // case-insensitive
 
     BLOCK_RULE_MAP.get(&name).copied()
+}
+
+#[inline]
+pub fn get_block_rule_with_name_for_layout(
+    name: &str,
+    layout: Layout,
+) -> Option<&'static BlockRule> {
+    if layout.legacy() && !wikidot_supports_block_name(name) {
+        return None;
+    }
+    get_block_rule_with_name(name)
+}
+
+fn wikidot_supports_block_name(name: &str) -> bool {
+    const FTML_ONLY_NAMES: &[&str] = &[
+        "anchortarget",
+        "audio",
+        "b",
+        "bibcite",
+        "blockquote",
+        "bold",
+        "checkbox",
+        "char",
+        "character",
+        "del",
+        "deletion",
+        "em",
+        "emphasis",
+        "embed",
+        "equation",
+        "eqref",
+        "hidden",
+        "highlight",
+        "i",
+        "include-elements",
+        "ins",
+        "insertion",
+        "invisible",
+        "italics",
+        "later",
+        "lines",
+        "mark",
+        "mono",
+        "monospace",
+        "newlines",
+        "p",
+        "paragraph",
+        "quote",
+        "radio",
+        "radio-button",
+        "rb",
+        "rt",
+        "ruby",
+        "ruby2",
+        "rubytext",
+        "s",
+        "strikethrough",
+        "strong",
+        "target",
+        "tt",
+        "u",
+        "underline",
+        "video",
+    ];
+
+    let name = name.strip_suffix('_').unwrap_or(name);
+    !FTML_ONLY_NAMES
+        .iter()
+        .any(|candidate| name.eq_ignore_ascii_case(candidate))
 }
 
 fn build_block_rule_map(block_rules: &'static [BlockRule]) -> BlockRuleMap {
@@ -151,6 +223,29 @@ fn block_rule_map_accepts_case_insensitive_names() {
         map.get(&UniCase::ascii("customblock"))
             .map(|rule| rule.name),
         Some("block-custom"),
+    );
+}
+
+#[test]
+fn wikidot_layout_rejects_ftml_only_block_names() {
+    assert!(get_block_rule_with_name_for_layout("strong", Layout::Wikidot).is_none());
+    assert!(get_block_rule_with_name_for_layout("video", Layout::Wikidot).is_none());
+    assert!(get_block_rule_with_name_for_layout("embed", Layout::Wikidot).is_none());
+    assert_eq!(
+        get_block_rule_with_name_for_layout("math", Layout::Wikidot)
+            .map(|rule| rule.name),
+        Some("block-math"),
+    );
+    assert!(get_block_rule_with_name_for_layout("char", Layout::Wikidot).is_none());
+    assert!(get_block_rule_with_name_for_layout("radio", Layout::Wikidot).is_none());
+    assert_eq!(
+        get_block_rule_with_name_for_layout("strong", Layout::Wikijump)
+            .map(|rule| rule.name),
+        Some("block-bold"),
+    );
+    assert_eq!(
+        get_block_rule_with_name_for_layout("div", Layout::Wikidot).map(|rule| rule.name),
+        Some("block-div"),
     );
 }
 

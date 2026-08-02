@@ -21,18 +21,24 @@
 use super::prelude::*;
 use crate::tree::Bibliography;
 
-pub fn render_bibcite(ctx: &mut HtmlContext, label: &str, brackets: bool) {
+pub fn render_bibcite(ctx: &mut HtmlContext, label: &str, brackets: bool, inline: bool) {
     debug!("Rendering bibliography citation (label {label}, brackets {brackets})");
 
     if !ctx.enter_bibliography_ref(label) {
         warn!("Recursive bibliography citation detected for label {label}");
-        render_missing_bibcite(ctx);
+        render_missing_bibcite(ctx, label, brackets, inline);
         return;
     }
 
     match ctx.get_bibliography_ref(label) {
         // Valid bibliography reference, render it
         Some((index, contents)) => {
+            if ctx.layout().legacy() {
+                render_wikidot_bibcite(ctx, index, brackets);
+                ctx.exit_bibliography_ref(label);
+                return;
+            }
+
             // TODO make this into a locale template string
             let reference_string = ctx
                 .handle()
@@ -93,14 +99,62 @@ pub fn render_bibcite(ctx: &mut HtmlContext, label: &str, brackets: bool) {
                 });
         }
         None => {
-            render_missing_bibcite(ctx);
+            render_missing_bibcite(ctx, label, brackets, inline);
         }
     }
 
     ctx.exit_bibliography_ref(label);
 }
 
-fn render_missing_bibcite(ctx: &mut HtmlContext) {
+fn render_wikidot_bibcite(ctx: &mut HtmlContext, index: usize, brackets: bool) {
+    if brackets {
+        ctx.push_raw('[');
+    }
+
+    let id = ctx.random().generate_wikidot_bibcite_id(index);
+    let onclick = format!("WIKIDOT.page.utils.scrollToReference('bibitem-{index}')",);
+    ctx.html()
+        .a()
+        .attr(attr!(
+            "class" => "bibcite",
+            "href" => "javascript:;",
+            "id" => &id,
+            "onclick" => &onclick,
+        ))
+        .inner(|ctx| str_write!(ctx, "{index}"));
+
+    if brackets {
+        ctx.push_raw(']');
+    }
+}
+
+fn render_missing_bibcite(
+    ctx: &mut HtmlContext,
+    label: &str,
+    brackets: bool,
+    inline: bool,
+) {
+    if ctx.layout().legacy() {
+        if inline {
+            ctx.html()
+                .span()
+                .attr(attr!("class" => "error-inline"))
+                .inner(|ctx| {
+                    ctx.push_escaped("Bibliography item ");
+                    ctx.html().em().contents(label);
+                    ctx.push_escaped(" not found.");
+                });
+            return;
+        } else if brackets {
+            ctx.push_escaped("[[bibcite ");
+        } else {
+            ctx.push_escaped("[[bibcite_ ");
+        }
+        ctx.push_escaped(label);
+        ctx.push_escaped("]]");
+        return;
+    }
+
     let message = ctx
         .handle()
         .get_message(ctx.language(), "bibliography-cite-not-found");
@@ -109,6 +163,41 @@ fn render_missing_bibcite(ctx: &mut HtmlContext) {
         .span()
         .attr(attr!("class" => "wj-error-inline"))
         .inner(|ctx| ctx.push_escaped(message));
+}
+
+fn render_wikidot_bibliography(
+    ctx: &mut HtmlContext,
+    title: &str,
+    bibliography: &Bibliography,
+) {
+    ctx.html()
+        .div()
+        .attr(attr!("class" => "bibitems"))
+        .inner(|ctx| {
+            ctx.html()
+                .div()
+                .attr(attr!("class" => "title"))
+                .contents(title);
+
+            let mut entry_index = 0;
+            for (label, elements) in bibliography.slice() {
+                if Bibliography::is_residual(label) {
+                    ctx.push_raw('\n');
+                    render_elements(ctx, elements);
+                    continue;
+                }
+
+                entry_index += 1;
+                let id = format!("bibitem-{entry_index}");
+                ctx.html()
+                    .div()
+                    .attr(attr!("class" => "bibitem", "id" => &id))
+                    .inner(|ctx| {
+                        str_write!(ctx, "{entry_index}. ");
+                        render_elements(ctx, elements);
+                    });
+            }
+        });
 }
 
 pub fn render_bibliography(
@@ -134,6 +223,11 @@ pub fn render_bibliography(
             title_default
         }
     };
+
+    if ctx.layout().legacy() {
+        render_wikidot_bibliography(ctx, title, bibliography);
+        return;
+    }
 
     ctx.html()
         .div()
@@ -226,8 +320,8 @@ mod tests {
             0,
         );
 
-        render_bibcite(&mut ctx, "missing", false);
-        render_bibcite(&mut ctx, "alpha", false);
+        render_bibcite(&mut ctx, "missing", false, false);
+        render_bibcite(&mut ctx, "alpha", false, false);
         render_bibliography(&mut ctx, Some("Works Cited"), 0, bibliography_ref);
 
         let output = HtmlOutput::from(ctx);

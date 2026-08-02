@@ -7,7 +7,7 @@ ATTRS語 (go) ruby-attributes.json"
 NESTED
 
 
-語 (go)  
+語 (go) 
 
 
 NEWLINES漢 (kan)

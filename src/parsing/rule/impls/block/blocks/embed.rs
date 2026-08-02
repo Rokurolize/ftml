@@ -110,7 +110,7 @@ fn embed_rejects_unknown_provider() {
     use crate::settings::{WikitextMode, WikitextSettings};
 
     let page_info = PageInfo::dummy();
-    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
     let tokenization = crate::tokenize("[[embed unknown video=\"abc123\"]]");
     let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 

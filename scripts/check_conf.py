@@ -18,7 +18,7 @@ MODULE_DIRECTORY = "src/parsing/rule/impls/block/blocks/module/modules"
 BLOCK_RULE_REGEX = re.compile(
     r"""pub const BLOCK_\w+: BlockRule = BlockRule \{
     name: "block-([\w\-]+)",
-    accepts_names: &(\[(?:"[^"]+"(?:, )?)+\]),
+    accepts_names: &(\[\s*(?:"[^"]+"\s*,?\s*)+\]),
     accepts_star: (true|false),
     accepts_score: (true|false),
     accepts_newlines: (true|false),
@@ -29,7 +29,7 @@ BLOCK_RULE_REGEX = re.compile(
 MODULE_RULE_REGEX = re.compile(
     r"""pub const MODULE_\w+: ModuleRule = ModuleRule \{
     name: "module-([\w\-]+)",
-    accepts_names: &(\[(?:"[^"]+"(?:, )?)+\]),
+    accepts_names: &(\[\s*(?:"[^"]+"\s*,?\s*)+\]),
     parse_fn.*
 \};"""
 )
@@ -49,6 +49,7 @@ BLOCK_NAME_IGNORE_PREFIXES = [
     "=",
     ">",
     "f<",
+    "f=",
     "f>",
     "module654",
 ]

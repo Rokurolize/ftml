@@ -24,8 +24,9 @@ fn repeated_wikidot_header_cell_closers_stay_bounded() {
 
     // Reduced from EN:scp-4354 (source SHA-256
     // ebcf9926f045d2aaa8f73596e5a256d12fe4d0ac3364eb7fb66cc7caa447f169).
-    // Wikidot closes hcell blocks with /cell. Treating that closer as a
-    // mismatch made four sibling advanced tables exceed five seconds.
+    // Wikidot accepts /cell as the closer but renders the mismatched hcell as
+    // a regular cell. Treating it as an unclosed block made four sibling
+    // advanced tables exceed five seconds.
     let table = "[[table]]\n[[row]]\n[[hcell]]Heading[[/cell]]\n[[/row]]\n[[/table]]\n";
     let input = table.repeat(TABLE_COUNT);
     let page_info = page_info();
@@ -39,7 +40,7 @@ fn repeated_wikidot_header_cell_closers_stay_bounded() {
     assert!(started.elapsed() < Duration::from_secs(5));
     assert!(errors.is_empty(), "{errors:#?}");
     assert_eq!(html.matches("<table").count(), TABLE_COUNT);
-    assert_eq!(html.matches("<th").count(), TABLE_COUNT);
+    assert_eq!(html.matches("<td").count(), TABLE_COUNT);
 }
 
 #[test]

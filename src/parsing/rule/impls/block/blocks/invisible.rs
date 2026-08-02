@@ -66,7 +66,7 @@ mod tests {
     #[test]
     fn invisible_block_wraps_multiline_body() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tokenization =
             crate::tokenize("[[invisible]]\ninvisible text\n[[/invisible]]");
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();

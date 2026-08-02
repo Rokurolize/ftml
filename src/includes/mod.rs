@@ -60,6 +60,7 @@ static VARIABLE_REGEX: LazyLock<Regex> =
 
 /// Replaces the include blocks in a string with the content of the pages referenced by those
 /// blocks.
+#[track_caller]
 pub fn include<'t, I, E, F>(
     input: &'t str,
     settings: &WikitextSettings,
@@ -70,6 +71,13 @@ where
     I: Includer<'t, Error = E>,
     F: FnOnce() -> E,
 {
+    #[cfg(feature = "test-source-recorder")]
+    crate::source_recorder::record(
+        "include-input",
+        input,
+        std::panic::Location::caller(),
+    );
+
     if !settings.enable_page_syntax {
         debug!("Includes are disabled for this input, skipping");
 

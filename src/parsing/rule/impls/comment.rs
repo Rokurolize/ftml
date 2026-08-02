@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use crate::delayed::{DelayedElement, GeneratedInput};
 
 pub const RULE_COMMENT: Rule = Rule {
     name: "comment",
@@ -32,9 +33,20 @@ fn try_consume_fn<'r, 't>(
     debug!("Consuming tokens until end of comment");
 
     assert_step(parser, Token::LeftComment)?;
+    let mut generated = Vec::<GeneratedInput>::new();
 
     loop {
+        if parser.settings().layout.legacy()
+            && parser.discarding_hidden_body()
+            && parser.at_hidden_body_boundary()
+        {
+            return Err(parser.make_err(ParseErrorKind::BlockExpectedEnd));
+        }
+
         let token = parser.current().token;
+        if let Some(slot) = parser.current_generated().cloned() {
+            generated.push(slot);
+        }
 
         trace!("Received token '{}' inside comment", token.name());
 
@@ -43,7 +55,29 @@ fn try_consume_fn<'r, 't>(
             Token::RightComment => {
                 trace!("Reached end of comment, returning");
                 parser.step()?;
-                return ok!(Elements::None);
+                return if generated.is_empty() {
+                    ok!(Elements::None)
+                } else {
+                    success_elements(Element::Delayed(DelayedElement::omitted(
+                        &generated,
+                    )))
+                };
+            }
+
+            // Wikidot accepts any run of at least two hyphens immediately
+            // followed by `]` as a comment closer while it is scanning a
+            // comment. Keep this contextual: outside a comment, longer runs
+            // retain their ordinary dash and horizontal-rule tokenization.
+            _ if let Some(token_count) = wikidot_extended_closer_token_count(parser) => {
+                trace!("Reached extended Wikidot comment closer, returning");
+                parser.step_n(token_count)?;
+                return if generated.is_empty() {
+                    ok!(Elements::None)
+                } else {
+                    success_elements(Element::Delayed(DelayedElement::omitted(
+                        &generated,
+                    )))
+                };
             }
 
             // Hit the end of the input, abort
@@ -61,11 +95,33 @@ fn try_consume_fn<'r, 't>(
     }
 }
 
+fn wikidot_extended_closer_token_count(parser: &Parser<'_, '_>) -> Option<usize> {
+    let mut hyphens = 0;
+
+    for (index, token) in std::iter::once(parser.current())
+        .chain(parser.remaining())
+        .enumerate()
+    {
+        if !token.slice.is_empty() && token.slice.bytes().all(|byte| byte == b'-') {
+            hyphens += token.slice.len();
+            continue;
+        }
+
+        return (hyphens >= 2
+            && token.token == Token::RightBracket
+            && token.slice == "]")
+            .then_some(index + 1);
+    }
+
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
@@ -83,5 +139,67 @@ mod tests {
             .try_consume(&mut parser)
             .expect_err("unterminated comment should fail");
         assert_eq!(error.kind(), ParseErrorKind::EndOfInput);
+    }
+
+    #[test]
+    fn wikidot_unterminated_comment_opener_falls_back_with_typographic_dash() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[!-- unfinished");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(!errors.is_empty());
+        assert_eq!(html, "<p>[!\u{2014} unfinished</p>");
+    }
+
+    #[test]
+    fn wikidot_unmatched_comment_closer_falls_back_with_typographic_dash() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("raw-comment --]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(!errors.is_empty());
+        assert_eq!(html, "<p>raw-comment \u{2014}]</p>");
+    }
+
+    #[test]
+    fn wikidot_unmatched_extended_comment_closers_remain_ordinary_dashes() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for (source, expected) in [
+            ("raw ---]", "<p>raw \u{2014}-]</p>"),
+            ("raw ----]", "<p>raw \u{2014}\u{2014}]</p>"),
+        ] {
+            let tokenization = crate::tokenize(source);
+            let (tree, _) = crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+            assert_eq!(html, expected, "{source:?}");
+        }
+    }
+
+    #[test]
+    fn wikidot_comment_closer_accepts_extra_leading_hyphens() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for source in [
+            "[!-- hidden ---]\nvisible",
+            "[!----\nhidden module-shaped text\n---]\nvisible",
+            "[!-- hidden ----]\nvisible",
+            "[!-- hidden -----]\nvisible",
+        ] {
+            let tokenization = crate::tokenize(source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+            assert!(errors.is_empty(), "{source:?}: {errors:?}");
+            assert_eq!(html, "<p>visible</p>", "{source:?}");
+        }
     }
 }

@@ -61,7 +61,7 @@ mod tests {
     #[test]
     fn later_block_ignores_star_flag_and_outputs_literal_text() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tokenization = crate::tokenize("[[*later]]");
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 

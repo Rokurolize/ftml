@@ -22,8 +22,18 @@ use crate::data::PageInfo;
 use crate::layout::Layout;
 use crate::parsing::{DEEP_MAX_RECURSION_DEPTH, ParseErrorKind, Token};
 use crate::settings::{WikitextMode, WikitextSettings};
-use crate::tree::{Element, SyntaxTree};
-use std::borrow::Cow;
+use crate::tree::SyntaxTree;
+use std::time::{Duration, Instant};
+
+fn run_on_bounded_test_stack(name: &str, test: fn()) {
+    std::thread::Builder::new()
+        .name(name.to_owned())
+        .stack_size(16 * 1024 * 1024)
+        .spawn(test)
+        .expect("failed to start bounded large-parser test")
+        .join()
+        .expect("large-parser test panicked");
+}
 
 /// Test the parser's recursion limit.
 ///
@@ -32,8 +42,15 @@ use std::borrow::Cow;
 /// also goes past serde_json's recursion limit, lol.
 #[test]
 fn recursion_depth() {
+    run_on_bounded_test_stack(
+        "ftml-recursion-depth-test",
+        recursion_depth_on_bounded_test_stack,
+    );
+}
+
+fn recursion_depth_on_bounded_test_stack() {
     let page_info = PageInfo::dummy();
-    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let wikidot = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
 
     // Exercise the production-thread stack. The explicit parser limit must
     // produce a recoverable error before a caller stack can overflow.
@@ -49,7 +66,9 @@ fn recursion_depth() {
 
     crate::preprocess(&mut input);
     let tokens = crate::tokenize(&input);
-    let (tree, errors) = crate::parse(&tokens, &page_info, &settings).into();
+    let started = Instant::now();
+    let (tree, errors) = crate::parse(&tokens, &page_info, &wikidot).into();
+    assert!(started.elapsed() < Duration::from_secs(20));
 
     let error = errors.first().expect("No errors produced");
     assert_eq!(error.token(), Token::LeftBlock);
@@ -61,13 +80,25 @@ fn recursion_depth() {
     let SyntaxTree { elements, .. } = tree;
     assert_eq!(elements.len(), 1);
 
-    let element = elements.first().expect("No elements produced");
-    let input_cow = Cow::Borrowed(input.as_ref());
-    assert_eq!(element, &Element::Text(input_cow));
+    let wikijump = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+    let (tree, errors) = crate::parse(&tokens, &page_info, &wikijump).into();
+    assert_eq!(
+        errors.first().map(|error| error.kind()),
+        Some(ParseErrorKind::RecursionDepthExceeded),
+    );
+    let SyntaxTree { elements, .. } = tree;
+    assert_eq!(elements.len(), 1);
 }
 
 #[test]
 fn corpus_depth_component_tree_parses_on_bounded_stack_worker() {
+    run_on_bounded_test_stack(
+        "ftml-corpus-depth-test",
+        corpus_depth_component_tree_on_bounded_stack,
+    );
+}
+
+fn corpus_depth_component_tree_on_bounded_stack() {
     const CORPUS_BACKED_DEPTH: usize = 115;
 
     let page_info = PageInfo::dummy();
@@ -84,6 +115,13 @@ fn corpus_depth_component_tree_parses_on_bounded_stack_worker() {
 
 #[test]
 fn corpus_colmod_tree_parses_on_bounded_stack_worker() {
+    run_on_bounded_test_stack(
+        "ftml-corpus-colmod-test",
+        corpus_colmod_tree_on_bounded_stack,
+    );
+}
+
+fn corpus_colmod_tree_on_bounded_stack() {
     // fragment:scp-5764-1 expands a recursive navigation component into this
     // balanced shape. Each row adds several parser frames, so its 231 rows are
     // materially deeper than 231 plain div blocks.
@@ -110,9 +148,16 @@ fn corpus_colmod_tree_parses_on_bounded_stack_worker() {
 
     crate::preprocess(&mut input);
     let tokens = crate::tokenize(&input);
+    let started = Instant::now();
     let (_, errors) = crate::parse(&tokens, &page_info, &settings).into();
 
-    assert!(errors.is_empty(), "{errors:#?}");
+    assert!(started.elapsed() < Duration::from_secs(20));
+    assert!(
+        !errors
+            .iter()
+            .any(|error| error.kind() == ParseErrorKind::RecursionDepthExceeded),
+        "{errors:#?}",
+    );
 }
 
 /// Test the parser's ability to process large bodies

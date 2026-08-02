@@ -19,11 +19,18 @@
  */
 
 use super::prelude::*;
+use crate::tree::Container;
 
 pub const RULE_DASH: Rule = Rule {
     name: "dash",
     position: LineRequirement::Any,
     try_consume_fn,
+};
+
+pub const RULE_DASH_RUN: Rule = Rule {
+    name: "dash-run",
+    position: LineRequirement::Any,
+    try_consume_fn: consume_run,
 };
 
 fn try_consume_fn<'r, 't>(
@@ -33,4 +40,76 @@ fn try_consume_fn<'r, 't>(
 
     // — - EM DASH
     success_elements(text!("\u{2014}"))
+}
+
+fn consume_run<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
+    let current = parser.current();
+    assert_eq!(current.token, Token::TripleDash);
+    debug!(
+        "Consuming Wikidot dash run of length {}",
+        current.slice.len()
+    );
+
+    let mut elements = Vec::with_capacity(current.slice.len() / 2);
+    let strike_count = current.slice.len() / 5;
+    let remainder = current.slice.len() % 5;
+
+    for _ in 0..strike_count {
+        elements.push(Element::Container(Container::new(
+            ContainerType::Strikethrough,
+            vec![text!("-")],
+            AttributeMap::new(),
+        )));
+    }
+    for _ in 0..remainder / 2 {
+        elements.push(text!("\u{2014}"));
+    }
+    if remainder % 2 == 1 {
+        elements.push(text!("-"));
+    }
+
+    success_elements(elements)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    fn render_html(input: &str) -> String {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{input:?}: {errors:?}");
+        HtmlRender.render(&tree, &page_info, &settings).body
+    }
+
+    #[test]
+    fn wikidot_long_dash_runs_use_five_hyphen_strikethrough_chunks() {
+        for (count, expected) in [
+            (4, "<p>raw ——] tail</p>"),
+            (
+                5,
+                "<p>raw <span style=\"text-decoration: line-through;\">-</span>] tail</p>",
+            ),
+            (
+                9,
+                "<p>raw <span style=\"text-decoration: line-through;\">-</span>——] tail</p>",
+            ),
+            (
+                10,
+                "<p>raw <span style=\"text-decoration: line-through;\">-</span><span style=\"text-decoration: line-through;\">-</span>] tail</p>",
+            ),
+            (
+                15,
+                "<p>raw <span style=\"text-decoration: line-through;\">-</span><span style=\"text-decoration: line-through;\">-</span><span style=\"text-decoration: line-through;\">-</span>] tail</p>",
+            ),
+        ] {
+            let source = format!("raw {}] tail", "-".repeat(count));
+            assert_eq!(render_html(&source), expected, "run length {count}");
+        }
+    }
 }

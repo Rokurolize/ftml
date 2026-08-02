@@ -85,11 +85,12 @@ fn coverage_trace_logger_exercises_all_tree_fixtures_through_public_api() {
     ];
 
     for path in files {
-        let mut input = std::fs::read_to_string(&path).expect("read fixture input");
-        ftml::preprocess(&mut input);
-        let tokens = ftml::tokenize(&input);
+        let source = std::fs::read_to_string(&path).expect("read fixture input");
 
         for settings in &settings {
+            let mut input = source.clone();
+            ftml::preprocess_for_layout(&mut input, settings.layout);
+            let tokens = ftml::tokenize(&input);
             let result = ftml::parse(&tokens, &page_info, settings);
             let (tree, _errors) = result.into();
 

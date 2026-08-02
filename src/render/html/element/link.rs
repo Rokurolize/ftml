@@ -42,6 +42,7 @@ pub fn render_anchor(
         .a()
         .attr(attr!(
             "class" => "wj-anchor"; if layout == Layout::Wikijump,
+            "href" => ""; if layout == Layout::Wikidot && !attributes.get().contains_key("href"),
             "target" => target_value; if target.is_some();;
             attributes,
         ))
@@ -106,16 +107,18 @@ pub fn render_link(
                 ));
             }
             LinkLocation::Page(page) => {
-                let class = if ctx.page_exists(page) {
-                    "active"
+                if !page.page().is_empty() && ctx.page_exists(page) {
+                    write_a!(attr!(
+                        "href" => &url,
+                        "target" => target_value; if target.is_some(),
+                    ));
                 } else {
-                    "newpage"
-                };
-                write_a!(attr!(
-                    "class" => class,
-                    "href" => &url,
-                    "target" => target_value; if target.is_some(),
-                ));
+                    write_a!(attr!(
+                        "class" => "newpage",
+                        "href" => &url,
+                        "target" => target_value; if target.is_some(),
+                    ));
+                }
             }
         },
         Layout::Wikijump => {
@@ -154,10 +157,10 @@ pub fn render_link(
 
 #[cfg(test)]
 mod tests {
-    use crate::data::PageInfo;
+    use crate::data::{PageInfo, PageRef};
     use crate::layout::Layout;
-    use crate::render::Render;
     use crate::render::html::HtmlRender;
+    use crate::render::{PageExistenceResolver, Render};
     use crate::settings::{WikitextMode, WikitextSettings};
     use crate::tree::{Element, LinkLabel, LinkLocation, LinkType, SyntaxTree};
 
@@ -202,5 +205,75 @@ mod tests {
         assert!(!output.body.contains("javascript:alert"));
         assert!(output.backlinks.external_links.is_empty());
         assert!(output.backlinks.internal_links.is_empty());
+    }
+
+    #[derive(Debug)]
+    struct FixturePageExistence;
+
+    impl PageExistenceResolver for FixturePageExistence {
+        fn page_exists(&self, _site: &str, page: &str) -> bool {
+            page == "present"
+        }
+    }
+
+    fn page_link(page: &str) -> Element<'static> {
+        Element::Link {
+            ltype: LinkType::Page,
+            link: LinkLocation::Page(PageRef::page_only(page)),
+            label: LinkLabel::Slug(std::borrow::Cow::Owned(page.to_owned())),
+            target: None,
+        }
+    }
+
+    #[test]
+    fn wikidot_page_classes_follow_injected_page_existence() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tree = SyntaxTree {
+            elements: vec![page_link("present"), page_link("missing-page")],
+            ..SyntaxTree::default()
+        };
+
+        let output = HtmlRender.render_with_page_existence(
+            &tree,
+            &page_info,
+            &settings,
+            &FixturePageExistence,
+        );
+
+        assert_eq!(
+            output.body,
+            concat!(
+                r#"<a href="/present">present</a>"#,
+                r#"<a class="newpage" href="/missing-page">missing-page</a>"#,
+            ),
+        );
+        assert!(!output.body.contains(r#"class="active""#));
+    }
+
+    #[test]
+    fn wikijump_missing_page_class_still_uses_injected_page_existence() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let tree = SyntaxTree {
+            elements: vec![page_link("present"), page_link("missing-page")],
+            ..SyntaxTree::default()
+        };
+
+        let output = HtmlRender.render_with_page_existence(
+            &tree,
+            &page_info,
+            &settings,
+            &FixturePageExistence,
+        );
+
+        assert!(
+            output
+                .body
+                .contains(r#"class="wj-link wj-link-internal" data-link-type="page""#),
+        );
+        assert!(output.body.contains(
+            r#"class="wj-link wj-link-internal wj-link-missing" data-link-type="page""#,
+        ));
     }
 }

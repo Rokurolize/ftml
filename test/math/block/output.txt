@@ -6,7 +6,8 @@ Pineapple[navier-stokes]Blueberry
 
 FAIL
 
-EMPTY[[math]]
+EMPTY
+[[math]]
 [[/math]]
 
 Durian[[eref]]

@@ -25,6 +25,9 @@ pub fn render_definition_list(ctx: &mut HtmlContext, items: &[DefinitionListItem
     debug!("Rendering definition list (length {})", items.len());
 
     ctx.html().dl().inner(|ctx| {
+        if ctx.layout().legacy() {
+            ctx.push_raw('\n');
+        }
         for DefinitionListItem {
             key_elements,
             value_elements,
@@ -32,7 +35,37 @@ pub fn render_definition_list(ctx: &mut HtmlContext, items: &[DefinitionListItem
         } in items
         {
             ctx.html().dt().contents(key_elements);
+            if ctx.layout().legacy() {
+                ctx.push_raw('\n');
+            }
             ctx.html().dd().contents(value_elements);
+            if ctx.layout().legacy() {
+                ctx.push_raw('\n');
+            }
         }
     });
+    if ctx.layout().legacy() {
+        ctx.push_raw('\n');
+    }
+}
+
+#[test]
+fn wikidot_definition_lists_keep_tag_separating_newlines() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize(": Alpha : One\n: Beta : Two");
+    let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+    assert!(errors.is_empty());
+
+    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+    assert_eq!(
+        html,
+        "<dl>\n<dt>Alpha</dt>\n<dd>One</dd>\n<dt>Beta</dt>\n<dd>Two</dd>\n</dl>\n",
+    );
 }

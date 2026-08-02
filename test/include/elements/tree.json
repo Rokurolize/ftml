@@ -20,7 +20,8 @@
                 "variables": {},
                 "location": {
                     "site": null,
-                    "page": "page-name"
+                    "page": "page-name",
+                    "extra": null
                 },
                 "elements": [
                     {
@@ -50,7 +51,8 @@
                 "variables": {},
                 "location": {
                     "site": "some-site",
-                    "page": "page-name"
+                    "page": "page-name",
+                    "extra": null
                 },
                 "elements": [
                     {
@@ -83,7 +85,8 @@
                 },
                 "location": {
                     "site": null,
-                    "page": "component:image-block"
+                    "page": "component:image-block",
+                    "extra": null
                 },
                 "elements": [
                     {
@@ -115,6 +118,9 @@
                     {
                         "element": "text",
                         "data": "FAIL"
+                    },
+                    {
+                        "element": "line-break"
                     },
                     {
                         "element": "text",

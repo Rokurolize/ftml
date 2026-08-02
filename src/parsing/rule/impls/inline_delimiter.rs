@@ -36,3 +36,22 @@ pub(super) fn assert_unpadded_open<'r, 't>(
         Ok(())
     }
 }
+
+pub(super) fn append_wikidot_line_close_space(
+    elements: Elements<'_>,
+    wikidot: bool,
+) -> Elements<'_> {
+    let closes_at_line_start = wikidot
+        && matches!(
+            &elements,
+            Elements::Single(Element::Container(container))
+                if matches!(container.elements().last(), Some(Element::LineBreak))
+        );
+    if !closes_at_line_start {
+        return elements;
+    }
+    match elements {
+        Elements::Single(element) => Elements::Multiple(vec![element, text!(" ")]),
+        _ => unreachable!("line-close check requires one container"),
+    }
+}

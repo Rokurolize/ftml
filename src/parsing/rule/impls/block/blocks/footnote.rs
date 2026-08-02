@@ -86,6 +86,27 @@ fn parse_footnote_ref<'r, 't>(
             // Other element, keep as-is.
             element => elements.push(element),
         };
+    } else if parser.settings().layout.legacy()
+        && matches!(
+            elements.first(),
+            Some(Element::Container(container))
+                if container.ctype() == ContainerType::Paragraph
+        )
+    {
+        let Element::Container(container) = elements.remove(0) else {
+            unreachable!("first element was checked above");
+        };
+        let mut first: Vec<Element> = container.into();
+        first.append(&mut elements);
+        elements = first;
+    }
+
+    if parser.settings().layout.legacy()
+        && let Some(Element::Container(container)) = elements.last_mut()
+        && container.ctype() == ContainerType::Paragraph
+        && matches!(container.elements().last(), Some(Element::LineBreak))
+    {
+        container.elements_mut().pop();
     }
 
     // Append footnote contents and return.
@@ -106,14 +127,21 @@ fn parse_footnote_block<'r, 't>(
     assert!(!flag_score, "Footnote block doesn't allow score flag");
     assert_block_name(&BLOCK_FOOTNOTE_BLOCK, name);
 
+    if parser.settings().layout.legacy() && parser.has_footnote_block() {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     // Parse arguments
-    let mut arguments = parser.get_head_map(&BLOCK_FOOTNOTE_BLOCK, in_head)?;
+    let mut arguments = parser.get_head_map_wikidot(&BLOCK_FOOTNOTE_BLOCK, in_head)?;
 
     let title = arguments.get("title");
     let hide = arguments.get_bool(parser, "hide")?.unwrap_or(false);
 
     if !arguments.is_empty() {
         warn!("Invalid argument keys found");
+        if parser.settings().layout.legacy() {
+            return ok!(Elements::None);
+        }
         return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
     }
 
@@ -169,7 +197,16 @@ mod tests {
     use super::*;
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
+
+    fn render_wikidot(source: &str) -> (String, Vec<ParseError>) {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        (HtmlRender.render(&tree, &page_info, &settings).body, errors)
+    }
 
     #[test]
     fn footnote_rejects_nested_footnotes() {
@@ -201,17 +238,29 @@ mod tests {
     }
 
     #[test]
-    fn footnote_block_rejects_unknown_arguments() {
+    fn wikidot_footnote_lowers_inline_span_scopes() {
+        let (html, errors) = render_wikidot(
+            "before[[footnote]]以[[span class=\"ruby\"]]精神-物质[[span class=\"rt\"]]灵与肉[[/span]][[/span]]后[[/footnote]]after[[footnoteblock]]",
+        );
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert!(
+            html.contains(
+                ". 以<span class=\"ruby\">精神-物质<span class=\"rt\">灵与肉</span></span>后",
+            ),
+            "{html}",
+        );
+    }
+
+    #[test]
+    fn wikidot_footnote_block_ignores_unknown_arguments() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         let tokenization = crate::tokenize("[[footnoteblock bogus=\"true\"]]");
-        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
-        assert!(
-            errors
-                .iter()
-                .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments)
-        );
+        assert!(errors.is_empty(), "{errors:?}");
+        assert!(tree.elements.is_empty());
     }
 
     #[test]
@@ -230,5 +279,42 @@ mod tests {
 
         assert!(!parser.in_footnote());
         assert!(parser.has_footnote_block());
+    }
+
+    #[test]
+    fn wikidot_second_footnote_block_remains_literal() {
+        let (html, errors) = render_wikidot(
+            "Alpha[[footnote]]A[[/footnote]]\n[[footnoteblock]]\n\nBeta[[footnote]]B[[/footnote]]\n[[footnoteblock]]",
+        );
+
+        assert!(!errors.is_empty());
+        assert_eq!(html.matches("class=\"footnotes-footer\"").count(), 1);
+        assert!(html.contains("Beta<sup class=\"footnoteref\""), "{html}");
+        assert!(html.contains("<br>\n[[footnoteblock]]</p>"), "{html}");
+    }
+
+    #[test]
+    fn wikidot_multiline_footnote_unwraps_its_first_paragraph() {
+        let (html, errors) = render_wikidot(
+            "Apple[[footnote]]\nfirst line\n\nsecond paragraph\nlast line\n[[/footnote]]",
+        );
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(
+            html.contains("\">1</a>. first line\n<p>second paragraph<br>\nlast line</p>"),
+            "{html}",
+        );
+        assert!(!html.contains("\">1</a>. <p>first line</p>"), "{html}");
+    }
+
+    #[test]
+    fn wikidot_footnote_block_ignores_hide_true() {
+        let (html, errors) = render_wikidot(
+            "Apple[[footnote]]Banana[[/footnote]]\n\n[[footnoteblock hide=\"true\"]]",
+        );
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains("class=\"footnotes-footer\""), "{html}");
+        assert!(html.contains(">1</a>. Banana</div>"), "{html}");
     }
 }

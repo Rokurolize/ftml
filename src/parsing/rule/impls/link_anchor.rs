@@ -54,11 +54,14 @@ fn try_consume_fn<'r, 't>(
     let url = if url.is_empty() {
         Cow::Borrowed("javascript:;")
     } else {
-        // Make URL "#name", where 'name' is normalized.
+        // Wikidot preserves the authored fragment spelling. Wikijump keeps
+        // its normalized, optionally isolated identifier behavior.
         let mut url = str!(url);
-        normalize(&mut url);
-        if parser.settings().isolate_user_ids {
-            url = isolate_ids(&url);
+        if !parser.settings().layout.legacy() {
+            normalize(&mut url);
+            if parser.settings().isolate_user_ids {
+                url = isolate_ids(&url);
+            }
         }
         url.insert(0, '#');
 
@@ -97,4 +100,25 @@ where
     'r: 't,
 {
     collect_text(parser, RULE_LINK_ANCHOR, close, invalid, None)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn wikidot_anchor_links_keep_the_live_fragment_name() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[#Patrick Jump]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html, r##"<p><a href="#Patrick">Jump</a></p>"##);
+    }
 }

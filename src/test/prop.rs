@@ -196,6 +196,11 @@ fn arb_image() -> impl Strategy<Value = Element<'static>> {
         })
 }
 
+fn arb_file_link() -> impl Strategy<Value = Element<'static>> {
+    (cow!("[A-Za-z0-9._-]+"), cow!(".*"))
+        .prop_map(|(file, label)| Element::FileLink { file, label })
+}
+
 fn arb_list<S>(elements: S) -> impl Strategy<Value = Element<'static>>
 where
     S: Strategy<Value = Vec<Element<'static>>> + 'static,
@@ -357,6 +362,7 @@ fn arb_element_leaf() -> impl Strategy<Value = Element<'static>> {
         cow!(SIMPLE_EMAIL_REGEX).prop_map(Element::Email),
         arb_module(),
         arb_link_element(),
+        arb_file_link(),
         arb_image(),
         // TODO: Element::RadioButton
         arb_checkbox(),

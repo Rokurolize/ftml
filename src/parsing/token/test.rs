@@ -86,6 +86,11 @@ fn fast_tokenizer_matches_pest_on_adversarial_inputs() {
         "--- -- --] ---]",
         "@@ @< >@ [!-- comment --]",
         "\\\" \\\\ \\x",
+        "line\\\ncontinued",
+        "\\",
+        "terminal\\",
+        "escaped\\\\",
+        "odd\\\\\\",
         "雪 & 火",
         "abc@example.com",
         "foo%bar@example.com",
@@ -96,9 +101,36 @@ fn fast_tokenizer_matches_pest_on_adversarial_inputs() {
         "abc@.com",
         "abc@example.",
         "abc.def no-at",
+        "A\0>\u{0006}name@\u{000b}site.com\u{001f}B",
     ] {
         assert_fast_tokens_match_pest(input);
     }
+}
+
+#[test]
+fn continued_line_is_one_line_break_token() {
+    let input = "\\\n";
+    assert_fast_tokens_match_pest(input);
+    assert_eq!(
+        Token::extract_all_pest(input),
+        vec![
+            ExtractedToken {
+                token: Token::InputStart,
+                slice: "",
+                span: 0..0,
+            },
+            ExtractedToken {
+                token: Token::LineBreak,
+                slice: input,
+                span: 0..2,
+            },
+            ExtractedToken {
+                token: Token::InputEnd,
+                slice: "",
+                span: 2..2,
+            },
+        ],
+    );
 }
 
 #[test]
@@ -420,9 +452,19 @@ fn tokens() {
                 span: 15..16,
             },
             ExtractedToken {
+                token: Token::Identifier,
+                slice: "foo",
+                span: 16..19,
+            },
+            ExtractedToken {
+                token: Token::Other,
+                slice: "%",
+                span: 19..20,
+            },
+            ExtractedToken {
                 token: Token::Email,
-                slice: "foo%bar@example.com",
-                span: 16..35,
+                slice: "bar@example.com",
+                span: 20..35,
             },
         ],
     );

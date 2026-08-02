@@ -89,10 +89,10 @@ fn expand_pages(
 
 fn render_html(source: &str) -> String {
     let mut text = source.to_owned();
-    ftml::preprocess(&mut text);
-    let tokens = ftml::tokenize(&text);
     let page_info = page_info();
     let settings = page_settings();
+    ftml::preprocess_for_layout(&mut text, settings.layout);
+    let tokens = ftml::tokenize(&text);
     let result = ftml::parse(&tokens, &page_info, &settings);
     let (tree, errors) = result.into();
 
@@ -102,10 +102,10 @@ fn render_html(source: &str) -> String {
 
 fn render_text(source: &str) -> String {
     let mut text = source.to_owned();
-    ftml::preprocess(&mut text);
-    let tokens = ftml::tokenize(&text);
     let page_info = page_info();
     let settings = page_settings();
+    ftml::preprocess_for_layout(&mut text, settings.layout);
+    let tokens = ftml::tokenize(&text);
     let result = ftml::parse(&tokens, &page_info, &settings);
     let (tree, errors) = result.into();
 
@@ -119,7 +119,7 @@ fn legacy_include_variables_expand_inside_quoted_div_attributes() {
         "[[include component:card class=highlight|data_value=42]]",
         [(
             "component:card",
-            r#"[[div class="card {$class}" data-value="{$data_value}"]]Body[[/div]]"#,
+            "[[div class=\"card {$class}\" data-value=\"{$data_value}\"]]\nBody\n[[/div]]",
         )],
     );
 
@@ -155,6 +155,38 @@ fn include_argument_first_concrete_value_wins_over_fallback() {
 }
 
 #[test]
+fn snippets_redirect_dynamic_fallback_arguments_select_the_default_backend() {
+    let (expanded, included_pages) = expand_pages(
+        concat!(
+            "[[include :snippets:redirect-backend\n",
+            "|mode={$mode_{$mode}}\n",
+            "|mode_advanced=advanced | mode=default\n",
+            "|mode_{$mode}={$mode_default} | mode_default=default\n",
+            "|url=http://example.test/target\n",
+            "]]",
+        ),
+        [(":snippets:redirect-backend", "MODE={$mode}|URL={$url}")],
+    );
+
+    assert_eq!(
+        included_pages,
+        vec![PageRef::page_and_site("snippets", "redirect-backend")],
+    );
+    assert_eq!(expanded, "MODE=default\n|URL=http://example.test/target\n",);
+}
+
+#[test]
+fn scp_6823_empty_include_argument_leaves_target_variable_unresolved() {
+    let expanded = expand(
+        "[[include component:card\n|secondary-class= \n|other=value\n]]",
+        [("component:card", "{$secondary-class}")],
+    );
+
+    assert_eq!(expanded, "{$secondary-class}");
+    assert_eq!(render_text(&expanded), "{$secondary-class}");
+}
+
+#[test]
 fn include_expansion_separates_caller_and_target_paragraphs_like_wikidot() {
     let expanded = expand(
         "CALLER_BEFORE\n[[include component:card]]\nCALLER_AFTER",
@@ -169,7 +201,7 @@ fn include_expansion_separates_caller_and_target_paragraphs_like_wikidot() {
     let html = render_html(&expanded);
     assert!(html.contains("<p>CALLER_BEFORE</p>"), "{html}");
     assert!(
-        html.contains("<p>TARGET_FIRST<br>TARGET_SECOND</p>"),
+        html.contains("<p>TARGET_FIRST<br>\nTARGET_SECOND</p>"),
         "{html}",
     );
     assert!(html.contains("<p>CALLER_AFTER</p>"), "{html}");
@@ -232,7 +264,7 @@ fn adjacent_include_expansions_remain_separate_blocks() {
     for paragraph in [
         "<p>CALLER_BEFORE</p>",
         "<p>TARGET_ONE</p>",
-        "<p>TARGET_TWO_FIRST<br>TARGET_TWO_SECOND</p>",
+        "<p>TARGET_TWO_FIRST<br>\nTARGET_TWO_SECOND</p>",
         "<p>CALLER_AFTER</p>",
     ] {
         assert!(html.contains(paragraph), "missing {paragraph}: {html}");

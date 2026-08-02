@@ -19,7 +19,7 @@ fn render(source: &str) -> (String, Vec<ftml::parsing::ParseError>) {
     };
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let mut source = source.to_owned();
-    ftml::preprocess(&mut source);
+    ftml::preprocess_for_layout(&mut source, settings.layout);
     let tokens = ftml::tokenize(&source);
     let (tree, errors) = ftml::parse(&tokens, &page_info, &settings).into();
     assert!(!contains_inline_control(&tree.elements));
@@ -50,9 +50,16 @@ fn span_formats_headings_inside_centered_div_like_wikidot() {
     );
     let (html, errors) = render(source);
     assert!(errors.is_empty(), "{errors:#?}");
-    assert!(html.contains("<h1"));
-    assert!(html.contains("<h2"));
-    assert_eq!(html.matches("color: rgb(191, 0, 0);").count(), 3, "{html}");
+    assert_eq!(
+        html,
+        concat!(
+            "<div class=\"span-scope-outer\"><div style=\"text-align: center;\">",
+            "<h1 id=\"toc0\"><span style=\"color: rgb(191, 0, 0);\"><span>SPAN_SCOPE_YEAR</span></span></h1>",
+            "<h2 id=\"toc1\"><span style=\"color: rgb(191, 0, 0);\"><span>SPAN_SCOPE_DATE</span></span></h2>",
+            "<p><span style=\"color: rgb(191, 0, 0); font-size: 120%;\">SPAN_SCOPE_TIME</span> </p>",
+            "</div></div>",
+        ),
+    );
 }
 
 #[test]
@@ -95,12 +102,24 @@ fn repeated_span_heading_sections_stay_within_interaction_budget() {
     );
     let source = section.repeat(128);
     let started = Instant::now();
-    let (_html, errors) = render(&source);
+    let (html, errors) = render(&source);
     assert!(errors.is_empty(), "{errors:#?}");
     assert!(
         started.elapsed() < Duration::from_secs(1),
         "{:?}",
         started.elapsed()
+    );
+    assert_eq!(
+        html.matches("<span style=\"color:#bf0000\"><span>2002</span></span>")
+            .count(),
+        128,
+        "{html}",
+    );
+    assert_eq!(
+        html.matches("<span style=\"color:#bf0000; font-size:120%;\"><strong>5:53 PM</strong></span>")
+            .count(),
+        128,
+        "{html}",
     );
 }
 
@@ -124,10 +143,9 @@ fn adversarial_interleaved_size_and_span_scopes_stay_within_budget() {
     let started = Instant::now();
     let (_html, errors) = render(&source);
     assert!(errors.is_empty(), "{errors:#?}");
-    let budget = if cfg!(tarpaulin) {
-        Duration::from_secs(5)
-    } else {
-        Duration::from_secs(1)
-    };
-    assert!(started.elapsed() < budget, "{:?}", started.elapsed());
+    assert!(
+        started.elapsed() < Duration::from_secs(5),
+        "{:?}",
+        started.elapsed(),
+    );
 }

@@ -95,6 +95,7 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | [Div](#div)                                     | `div`                            | No    | Yes    | Yes       | Map           | Elements  |
 | [Embed](#embed)                                 | `embed`                          | No    | No     | Yes       | Value + Map   | None      |
 | [Equation Reference](#equation-ref)             | `equation`, `eref`, `eqref`      | No    | No     | No        | Value         | None      |
+| [File](#file)                                   | `file`                           | No    | No     | No        | Value         | None      |
 | [Footnote](#footnote)                           | `footnote`                       | No    | No     | No        | None          | Elements  |
 | [Footnote Block](#footnote-block)               | `footnoteblock`                  | No    | No     | Yes       | Map           | None      |
 | [Hidden](#hidden)                               | `hidden`                         | No    | No     | Yes       | Map           | Elements  |
@@ -115,6 +116,7 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | [Math (Inline)](#math-inline)                   | (See below)                      | No    | No     | No        | (See below)   | (See below) |
 | [Module](#module)                               | `module`                         | No    | No     | Yes       | (See below)   | (See below) |
 | [Monospace](#monospace)                         | `tt`, `mono`, `monospace`        | No    | No     | No        | Map           | Elements  |
+| [Note](#note)                                   | `note`                           | No    | No     | Yes       | None          | Elements  |
 | [Paragraph](#paragraph)                         | `p`, `paragraph`                 | No    | No     | Yes       | Map           | Elements  |
 | [Radio](#radio)                                 | `radio`, `radio-button`          | Yes   | No     | No        | Value + Map   | None      |
 | [Raw](#raw)                                     | `raw`                            | No    | No     | Yes       | None          | Raw       |
@@ -547,6 +549,21 @@ Arguments:
 * `link` &mdash; (String) The link that this image should point to.
 * All accepted attributes.
 
+### File
+
+Output: `Element::FileLink` / `<a>`
+
+Body: None
+
+Arguments:
+* Value &mdash; A current-page attachment filename, followed by ` | ` and the link label.
+
+Example:
+
+```
+[[file elements.tsv | Download Catalog]]
+```
+
 ### Audio
 
 Output: `Element::Audio` / `<audio>`
@@ -788,6 +805,22 @@ Example:
 
 ```
 [[tt]]This output looks like it came from a typewriter or computer terminal.[[/tt]]
+```
+
+### Note
+
+Outputs: `Element::Container(ContainerType::Div)` / `<div class="wiki-note">`
+
+Body: Elements
+
+Accepts newline separation.
+
+Example:
+
+```
+[[note]]
+Evidence-backed note.
+[[/note]]
 ```
 
 ### Paragraph

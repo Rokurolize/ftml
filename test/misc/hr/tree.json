@@ -121,12 +121,20 @@
                     {
                         "element": "text",
                         "data": "3"
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "text",
+                        "data": "—"
+                    },
+                    {
+                        "element": "text",
+                        "data": "-"
                     }
                 ]
             }
-        },
-        {
-            "element": "horizontal-rule"
         },
         {
             "element": "container",

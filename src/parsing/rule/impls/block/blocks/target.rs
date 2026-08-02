@@ -71,7 +71,7 @@ mod tests {
     #[test]
     fn target_block_requires_name_argument() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tokenization = crate::tokenize("[[target]]");
         let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 

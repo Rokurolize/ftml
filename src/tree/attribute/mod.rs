@@ -78,6 +78,10 @@ impl<'t> AttributeMap<'t> {
         true
     }
 
+    pub(crate) fn insert_wikidot_relative_href(&mut self, value: Cow<'t, str>) {
+        self.inner.insert(cow!("href"), value);
+    }
+
     #[inline]
     pub fn remove(&mut self, attribute: &str) -> Option<Cow<'t, str>> {
         self.inner.remove(attribute)

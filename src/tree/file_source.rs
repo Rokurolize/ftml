@@ -78,6 +78,41 @@ impl<'t> FileSource<'t> {
         Some(source)
     }
 
+    pub fn parse_wikidot(source: &'t str) -> Option<FileSource<'t>> {
+        let quoted_inner = source
+            .as_bytes()
+            .first()
+            .copied()
+            .filter(|quote| matches!(quote, b'\'' | b'"'))
+            .filter(|quote| source.as_bytes().last() == Some(quote))
+            .and_then(|_| source.get(1..source.len().saturating_sub(1)));
+        if quoted_inner.is_some_and(is_url) {
+            return Some(FileSource::Url(cow!(source)));
+        }
+        if quoted_inner.is_some() {
+            return Some(FileSource::File1 { file: cow!(source) });
+        }
+        if is_url(source) || source.starts_with("/local--files/") {
+            return Some(FileSource::Url(cow!(source)));
+        }
+
+        if source.starts_with('/') && !source[1..].contains('/') {
+            return Some(FileSource::File1 { file: cow!(source) });
+        }
+
+        let source = source.strip_prefix('/').unwrap_or(source);
+        match source.rsplit_once('/') {
+            Some((page, file)) if !page.is_empty() && !file.is_empty() => {
+                Some(FileSource::File2 {
+                    page: cow!(page),
+                    file: cow!(file),
+                })
+            }
+            None if !source.is_empty() => Some(FileSource::File1 { file: cow!(source) }),
+            _ => None,
+        }
+    }
+
     #[inline]
     pub fn name(&self) -> &'static str {
         self.into()
@@ -148,5 +183,52 @@ mod tests {
     #[test]
     fn rejects_unknown_deeper_path_shapes() {
         assert_eq!(FileSource::parse("site/page/assets/image.png"), None);
+        assert_eq!(
+            FileSource::parse_wikidot("site/page/assets/image.png"),
+            Some(FileSource::File2 {
+                page: cow!("site/page/assets"),
+                file: cow!("image.png"),
+            }),
+        );
+        assert_eq!(
+            FileSource::parse_wikidot("/local--files/page/image.png"),
+            Some(FileSource::Url(cow!("/local--files/page/image.png"))),
+        );
+        assert_eq!(
+            FileSource::parse_wikidot("/image.png"),
+            Some(FileSource::File1 {
+                file: cow!("/image.png"),
+            }),
+        );
+    }
+
+    #[test]
+    fn wikidot_preserves_quotes_around_absolute_image_urls() {
+        for source in [
+            r#""https://example.com/image.png""#,
+            "'https://example.com/image.png'",
+        ] {
+            assert_eq!(
+                FileSource::parse_wikidot(source),
+                Some(FileSource::Url(cow!(source))),
+                "{source}",
+            );
+        }
+
+        for source in [
+            r#""image.png""#,
+            "'image.png'",
+            "'Ranch_Hand'_run.jpg",
+            r#""/local--files/page/image.png""#,
+            "'/local--files/page/image.png'",
+            r#""page/image.png""#,
+            "'page/image.png'",
+        ] {
+            assert_eq!(
+                FileSource::parse_wikidot(source),
+                Some(FileSource::File1 { file: cow!(source) }),
+                "{source}",
+            );
+        }
     }
 }

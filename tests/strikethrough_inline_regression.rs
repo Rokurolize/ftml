@@ -133,10 +133,10 @@ fn dash_strikethrough_opener_does_not_match_across_paragraph_break() {
 }
 
 #[test]
-fn dash_strikethrough_preserves_line_start_rule_before_paragraph_break() {
+fn dash_strikethrough_does_not_cross_a_list_and_paragraph_break() {
     let tree = parse("--\n* item\n\n--");
 
-    assert_eq!(count_container(&tree, ContainerType::Strikethrough), 1);
+    assert_eq!(count_container(&tree, ContainerType::Strikethrough), 0);
 }
 
 #[test]

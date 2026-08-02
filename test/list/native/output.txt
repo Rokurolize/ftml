@@ -10,7 +10,9 @@ two
 three
 four
 
-   * four  * three * two
+* four
+* three
+* two
 one
 durian
 mango
@@ -34,7 +36,9 @@ two
 three
 four
 
-   # four  # three # two
+# four
+# three
+# two
 one
 durian
 eggplant

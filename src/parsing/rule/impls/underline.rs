@@ -39,5 +39,44 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::token_pair(Token::Whitespace, Token::Underline),
     ];
     let ctype = ContainerType::Underline;
-    collect_container(parser, RULE_UNDERLINE, ctype, &close, &invalid, None)
+    let collected =
+        collect_container(parser, RULE_UNDERLINE, ctype, &close, &invalid, None)?;
+    let (elements, errors, paragraph_safe) = collected.into();
+    if parser.settings().layout.legacy()
+        && matches!(
+            &elements,
+            Elements::Single(Element::Container(container)) if container.elements().is_empty()
+        )
+    {
+        return ok!(paragraph_safe; Elements::None, errors);
+    }
+    ok!(paragraph_safe; elements, errors)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn wikidot_discards_complete_empty_underline_pairs_in_runs() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        for (input, expected) in [
+            ("______[[/span]]", "<p>__[[/span]]</p>"),
+            ("______x", "<p>__x</p>"),
+            ("x________y", "<p>xy</p>"),
+            ("______ ______", "<p>__ __</p>"),
+        ] {
+            let mut source = input.to_owned();
+            crate::preprocess(&mut source);
+            let tokenization = crate::tokenize(&source);
+            let (tree, _errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+            assert_eq!(html, expected, "{input:?}");
+        }
+    }
 }

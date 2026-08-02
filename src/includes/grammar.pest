@@ -39,9 +39,15 @@ include = {
     SOI ~ // Because we slice from the start of an include block using regex
     "[[" ~ space? ~ ^"include" ~ space ~
     page_ref ~ space? ~
-    (separator ~ space?)? ~
-    (argument ~ space? ~ separator ~ space?)* ~
-    (argument ~ space? ~ separator?)? ~
+    stray_open_brackets? ~
+    (
+        spaced_empty_separator |
+        (
+            (separator ~ space?)? ~
+            (argument ~ space? ~ separator ~ space?)* ~
+            (argument ~ space? ~ separator?)?
+        )
+    ) ~
     space? ~ include_end
 }
 
@@ -55,8 +61,26 @@ argument = {
     value
 }
 
+spaced_empty_separator = {
+    "|" ~ horizontal_space ~ &include_end
+}
+
+horizontal_space = _{
+    (" " | "\t")+
+}
+
 separator = _{
     "|" ~ (space? ~ "|")*
+}
+
+// Wikidot tolerates a run of stray open brackets between the page reference and
+// the arguments, discarding it and parsing the arguments normally. Four pages in
+// the imported corpus rely on this, all writing a bare "[[" on the line after
+// the page reference; live renders their arguments and shows no bracket. Only
+// open brackets are accepted, and only in this position, because that is the
+// shape the evidence covers.
+stray_open_brackets = _{
+    "["+ ~ space?
 }
 
 value = {
@@ -73,7 +97,8 @@ page_name = _{ (!(" " | "\n" | "\t" | "[" | "|" | "]") ~ ANY)+ }
 
 // Helpers
 
-identifier = { (ASCII_ALPHANUMERIC | "-" | "_")+ }
+identifier = { (ASCII_ALPHANUMERIC | "-" | "_" | variable_reference)+ }
+variable_reference = { "{$" ~ (ASCII_ALPHANUMERIC | "-" | "_")+ ~ "}" }
 comment = _{ "[!--" ~ (!("--]") ~ ANY)* ~ "--]" }
 space = _{ (" " | "\n" | "\t" | comment)+ }
 

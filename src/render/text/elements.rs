@@ -102,6 +102,9 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
         Element::Text(text) | Element::Raw(text) | Element::Email(text) => {
             ctx.push_str(text);
         }
+        Element::Delayed(_) => {
+            panic!("unbound delayed element reached the text renderer")
+        }
         Element::Variable(name) => {
             let value = match ctx.variables().get(name) {
                 Some(value) => str!(value),
@@ -154,6 +157,7 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
                 ctx.push_str(label);
             });
         }
+        Element::FileLink { label, .. } => ctx.push_str(label),
         Element::Image { .. } => {
             // Text cannot render images, so we don't add anything
         }
@@ -393,6 +397,7 @@ fn text_render_skips_non_textual_elements_and_expands_include_variables() {
             Element::BibliographyCite {
                 label: cow!("ref"),
                 brackets: true,
+                inline: false,
             },
             Element::BibliographyBlock {
                 index: 0,

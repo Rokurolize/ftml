@@ -30,6 +30,8 @@ use crate::tree::VariableMap;
 pub struct IncludeRef<'t> {
     page_ref: PageRef,
     variables: VariableMap<'t>,
+    #[serde(default)]
+    spaced_empty_separator: bool,
 }
 
 impl<'t> IncludeRef<'t> {
@@ -38,7 +40,14 @@ impl<'t> IncludeRef<'t> {
         IncludeRef {
             page_ref,
             variables,
+            spaced_empty_separator: false,
         }
+    }
+
+    /// Records whether this include used a single separator followed by horizontal spacing and no arguments.
+    pub fn with_spaced_empty_separator(mut self, spaced_empty_separator: bool) -> Self {
+        self.spaced_empty_separator = spaced_empty_separator;
+        self
     }
 
     #[inline]
@@ -52,6 +61,11 @@ impl<'t> IncludeRef<'t> {
 
     pub fn variables(&self) -> &VariableMap<'t> {
         &self.variables
+    }
+
+    /// Returns whether this include used a single separator followed by horizontal spacing and no arguments.
+    pub fn has_spaced_empty_separator(&self) -> bool {
+        self.spaced_empty_separator
     }
 }
 
@@ -76,9 +90,26 @@ fn to_owned() {
     assert_eq!(include_ref_1, include_ref_2);
     assert_eq!(include_ref_1.page_ref(), &page_ref_2);
     assert!(include_ref_1.variables().is_empty());
+    assert!(!include_ref_1.has_spaced_empty_separator());
 
     // Deconstruct IncludeRef
     let (page_ref, variables) = include_ref_2.into();
     assert_eq!(page_ref, page_ref_2);
     assert!(variables.is_empty());
+}
+
+#[test]
+fn deserialize_without_spaced_empty_separator_defaults_to_false() {
+    let mut value =
+        serde_json::to_value(IncludeRef::page_only(PageRef::page_only("scp-001")))
+            .expect("include reference should serialize");
+    value
+        .as_object_mut()
+        .expect("include reference should serialize as an object")
+        .remove("spaced-empty-separator");
+
+    let include: IncludeRef<'static> = serde_json::from_value(value)
+        .expect("legacy include reference should deserialize");
+
+    assert!(!include.has_spaced_empty_separator());
 }

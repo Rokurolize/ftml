@@ -110,7 +110,8 @@
                         "element": "bibliography-cite",
                         "data": {
                             "label": "bell",
-                            "brackets": false
+                            "brackets": false,
+                            "inline": true
                         }
                     },
                     {
@@ -157,7 +158,8 @@
                         "element": "bibliography-cite",
                         "data": {
                             "label": "guy",
-                            "brackets": false
+                            "brackets": false,
+                            "inline": true
                         }
                     },
                     {
@@ -200,7 +202,8 @@
                         "element": "bibliography-cite",
                         "data": {
                             "label": "bell",
-                            "brackets": true
+                            "brackets": true,
+                            "inline": false
                         }
                     },
                     {
@@ -210,7 +213,8 @@
                         "element": "bibliography-cite",
                         "data": {
                             "label": "guy",
-                            "brackets": false
+                            "brackets": false,
+                            "inline": false
                         }
                     }
                 ]

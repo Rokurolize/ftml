@@ -76,6 +76,7 @@ pub use self::result::{
     ParseResult, ParseSuccess, success_elements, success_elements_with_paragraph_safety,
     success_value,
 };
+pub(crate) use self::rule::impls::decode_semicolon_entities;
 pub use self::token::{ExtractedToken, Token};
 
 /// Parse through the given tokens and produce an AST.
@@ -175,7 +176,7 @@ where
     let html_blocks = parsed.html_blocks;
     let code_blocks = parsed.code_blocks;
     let table_of_contents_depths = parsed.table_of_contents_depths;
-    let footnotes = parsed.footnotes;
+    let mut footnotes = parsed.footnotes;
     let has_footnote_block = parsed.has_footnote_block;
     let bibliographies = parsed.bibliographies;
 
@@ -189,6 +190,9 @@ where
             let errors = success.errors;
             if settings.layout.legacy() {
                 inline_scope::lower_wikidot_inline_size_scopes(&mut elements);
+                for footnote in &mut footnotes {
+                    inline_scope::lower_wikidot_inline_size_scopes_inline(footnote);
+                }
             }
             debug!(
                 "Finished parsing into syntax tree ({} errors)",

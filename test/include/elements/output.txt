@@ -6,4 +6,5 @@ Cherry
 <INCLUDED PAGE (ELEMENTS)>
 Mango
 
-FAIL[[include-elements ::invalid-page]]
+FAIL
+[[include-elements ::invalid-page]]

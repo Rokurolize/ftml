@@ -293,11 +293,10 @@ fn partial_element_surface_helpers() {
 }
 
 #[test]
-#[should_panic(expected = "Should not check for paragraph safety of partials")]
-fn partial_element_paragraph_safe_panics() {
+fn structural_partial_element_is_paragraph_unsafe() {
     let partial = Element::Partial(PartialElement::RubyText(RubyText::default()));
 
-    partial.paragraph_safe();
+    assert!(!partial.paragraph_safe());
 }
 
 fn exercise_syntax_tree_helpers(tree: &SyntaxTree<'_>) -> usize {

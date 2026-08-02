@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use crate::delayed::DelayedElement;
 use crate::tree::CodeBlock;
 use wikidot_normalize::normalize;
 
@@ -42,12 +43,30 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Code doesn't allow star flag");
     assert!(!flag_score, "Code doesn't allow score flag");
     assert_block_name(&BLOCK_CODE, name);
+    let source = parser.full_text().inner();
+    let name_start = (name.as_ptr() as usize)
+        .checked_sub(source.as_ptr() as usize)
+        .expect("parsed code name belongs to the source");
+    let owner_start = source[..name_start]
+        .rfind("[[")
+        .expect("parsed code name follows its opener");
+
+    if parser.settings().layout.legacy() && !parser.discarding_hidden_body() {
+        let head = &source[..parser.current().span.start];
+        if head
+            .rfind("[[")
+            .and_then(|start| head[start + 2..].chars().next())
+            .is_some_and(char::is_whitespace)
+        {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+    }
 
     if parser.native_blockquote_depth().is_some() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    let mut arguments = parser.get_head_map(&BLOCK_CODE, in_head)?;
+    let mut arguments = parser.get_head_map_wikidot(&BLOCK_CODE, in_head)?;
 
     let mut language = arguments.get("type");
     if let Some(ref mut language) = language {
@@ -57,6 +76,17 @@ fn parse_fn<'r, 't>(
     let mut name = arguments.get("name");
     if let Some(ref mut name) = name {
         normalize(name.to_mut());
+    }
+
+    if parser.body_has_generated(&BLOCK_CODE) {
+        let _ = parser.get_body_text(&BLOCK_CODE)?;
+        let owner_end = parser.current().span.start;
+        let generated = parser.generated_in_range(owner_start..owner_end);
+        return success_elements(Element::Delayed(DelayedElement::shell(
+            source,
+            owner_start..owner_end,
+            &generated,
+        )));
     }
 
     let code = parser.get_body_text(&BLOCK_CODE)?;
@@ -79,6 +109,7 @@ mod tests {
     use super::*;
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
@@ -106,6 +137,104 @@ mod tests {
             assert_eq!(code_block.language.as_deref(), Some("rust"));
             assert_eq!(code_block.name.as_deref(), Some("sample-heading"));
         }
+    }
+
+    #[test]
+    fn wikidot_code_uses_legacy_plain_and_highlighted_dom() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        for (source, expected) in [
+            (
+                "[[code]]apple[[/code]]",
+                r#"<div class="code"><pre><code>apple</code></pre></div>"#,
+            ),
+            ("[[code]][[/code]]", r#"<div class="code"></div>"#),
+            (
+                "[[code type=\"rust\"]]fn main() {}[[/code]]",
+                r#"<div class="code"><pre><code>fn main() {}</code></pre></div>"#,
+            ),
+            (
+                "[[code type=\"python\"]]import antigravity[[/code]]",
+                r#"<div class="code"><div class="hl-main"><pre><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">antigravity</span></pre></div></div>"#,
+            ),
+            (
+                "[[code type=\"css\"]]:root {\n     --right-1: 0%;\n}[[/code]]",
+                concat!(
+                    r#"<div class="code"><div class="hl-main"><pre>"#,
+                    r#"<span class="hl-special">:root</span>"#,
+                    r#"<span class="hl-code"> </span>"#,
+                    r#"<span class="hl-brackets">{</span>"#,
+                    "<span class=\"hl-code\">\n     --</span>",
+                    r#"<span class="hl-reserved">right-1:</span>"#,
+                    r#"<span class="hl-code"> </span>"#,
+                    r#"<span class="hl-number">0</span>"#,
+                    r#"<span class="hl-string">%</span>"#,
+                    "<span class=\"hl-code\">;\n</span>",
+                    r#"<span class="hl-brackets">}</span>"#,
+                    "</pre></div></div>",
+                ),
+            ),
+        ] {
+            let tokenization = crate::tokenize(source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+            assert!(errors.is_empty(), "{source}: {errors:#?}");
+            assert_eq!(html, expected, "{source}");
+        }
+    }
+
+    #[test]
+    fn wikidot_code_accepts_bare_and_unbalanced_type_values() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        for source in [
+            "[[code type=css]][[/code]]",
+            "[[code type=\"css]][[/code]]",
+            "[[code type=css\"]][[/code]]",
+        ] {
+            let tokenization = crate::tokenize(source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+            assert!(errors.is_empty(), "{source}: {errors:#?}");
+            assert_eq!(html, r#"<div class="code"></div>"#, "{source}");
+        }
+    }
+
+    #[test]
+    fn wikidot_code_followed_by_inline_raw_stays_unwrapped() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[code]]\n====\n[[/code]]\n@@====@@");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            concat!(
+                "<div class=\"code\"><pre><code>====</code></pre></div>",
+                "<br>\n<span style=\"white-space: pre-wrap;\">====</span>",
+            ),
+        );
+    }
+
+    #[test]
+    fn wikidot_spaced_code_opener_stays_literal_without_stealing_the_next_block() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = "[[ code ]]\nNESTED\n[[code]]\n[[/code]]";
+        let tokenization = crate::tokenize(source);
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert_eq!(
+            html,
+            "<p>[[ code ]]<br>\nNESTED</p><div class=\"code\"></div>",
+        );
     }
 
     #[test]

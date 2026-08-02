@@ -25,6 +25,7 @@
 //! Its syntax is `[https://example.com/ Label text]`.
 
 use super::prelude::*;
+use crate::delayed::{DelayedElement, GeneratedKind};
 use crate::tree::{AnchorTarget, LinkLabel, LinkLocation, LinkType};
 use crate::url::is_url;
 
@@ -67,9 +68,25 @@ fn try_consume_link<'r, 't>(
     ];
     let url = collect_text(parser, rule, &url_close, &url_invalid, None)?;
 
-    // Return error if the resultant URL is not valid.
-    if !url_valid(url) {
+    let wikidot_javascript_fallback =
+        parser.settings().layout.legacy() && is_javascript_url(url);
+    if !url_valid(url) && !wikidot_javascript_fallback {
         return Err(parser.make_err(ParseErrorKind::InvalidUrl));
+    }
+
+    if target.is_none()
+        && let Some(generated) = parser.current_generated().cloned()
+        && generated.kind == GeneratedKind::TagLinks
+    {
+        parser.step()?;
+        if parser.current().token != Token::RightBracket {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+        parser.step()?;
+        return success_elements(Element::Delayed(DelayedElement::tag_external_label(
+            generated.id,
+            url,
+        )));
     }
 
     // Gather label for link
@@ -83,16 +100,25 @@ fn try_consume_link<'r, 't>(
     // Trim label
     let label = label.trim();
 
-    // Build link element
-    let element = Element::Link {
-        ltype: LinkType::Direct,
-        link: LinkLocation::Url(cow!(url)),
-        label: LinkLabel::Text(cow!(label)),
-        target,
+    let element = if wikidot_javascript_fallback {
+        Element::Text(cow!(label))
+    } else {
+        Element::Link {
+            ltype: LinkType::Direct,
+            link: LinkLocation::Url(cow!(url)),
+            label: LinkLabel::Text(cow!(label)),
+            target,
+        }
     };
 
     // Return result
     success_elements(element)
+}
+
+fn is_javascript_url(url: &str) -> bool {
+    url.trim_start()
+        .get(.."javascript:".len())
+        .is_some_and(|scheme| scheme.eq_ignore_ascii_case("javascript:"))
 }
 
 fn url_valid(url: &str) -> bool {
@@ -112,4 +138,29 @@ fn url_valid(url: &str) -> bool {
     }
 
     false
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn wikidot_layout_does_not_weaken_dangerous_single_link_sanitization() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization =
+            crate::tokenize("[javascript:alert(1) XSS] [data:text/html,alert(2) XSS]");
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(!html.contains("[javascript:alert(1) XSS]"), "{html}");
+        assert!(html.contains("XSS"), "{html}");
+        assert!(html.contains("[data:text/html,alert(2) XSS]"), "{html}");
+        assert!(!html.contains("href=\"javascript:"), "{html}");
+        assert!(!html.contains("href=\"data:"), "{html}");
+    }
 }

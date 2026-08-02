@@ -39,7 +39,7 @@ fn expand_parse_render_with_layout(
             unreachable!("DebugIncluder returns one page for every include request")
         })
         .expect("DebugIncluder cannot fail");
-    ftml::preprocess(&mut text);
+    ftml::preprocess_for_layout(&mut text, settings.layout);
 
     let tokenization = ftml::tokenize(&text);
     let page_info = page_info();

@@ -89,19 +89,6 @@
                 },
                 "elements": [
                     {
-                        "element": "container",
-                        "data": {
-                            "type": "paragraph",
-                            "attributes": {},
-                            "elements": [
-                                {
-                                    "element": "text",
-                                    "data": "  "
-                                }
-                            ]
-                        }
-                    },
-                    {
                         "element": "list",
                         "data": {
                             "type": "bullet",
@@ -117,7 +104,7 @@
                                         },
                                         {
                                             "element": "text",
-                                            "data": "  "
+                                            "data": " "
                                         }
                                     ]
                                 },
@@ -131,7 +118,7 @@
                                         },
                                         {
                                             "element": "text",
-                                            "data": "  "
+                                            "data": " "
                                         }
                                     ]
                                 }
@@ -151,19 +138,6 @@
                 },
                 "elements": [
                     {
-                        "element": "container",
-                        "data": {
-                            "type": "paragraph",
-                            "attributes": {},
-                            "elements": [
-                                {
-                                    "element": "text",
-                                    "data": "  "
-                                }
-                            ]
-                        }
-                    },
-                    {
                         "element": "list",
                         "data": {
                             "type": "bullet",
@@ -179,7 +153,7 @@
                                         },
                                         {
                                             "element": "text",
-                                            "data": "  "
+                                            "data": " "
                                         }
                                     ]
                                 },
@@ -213,19 +187,6 @@
                 },
                 "elements": [
                     {
-                        "element": "container",
-                        "data": {
-                            "type": "paragraph",
-                            "attributes": {},
-                            "elements": [
-                                {
-                                    "element": "text",
-                                    "data": "  "
-                                }
-                            ]
-                        }
-                    },
-                    {
                         "element": "list",
                         "data": {
                             "type": "bullet",
@@ -241,7 +202,7 @@
                                         },
                                         {
                                             "element": "text",
-                                            "data": "  "
+                                            "data": " "
                                         }
                                     ]
                                 },
@@ -255,7 +216,7 @@
                                         },
                                         {
                                             "element": "text",
-                                            "data": "  "
+                                            "data": " "
                                         }
                                     ]
                                 }
@@ -275,19 +236,6 @@
                 },
                 "elements": [
                     {
-                        "element": "container",
-                        "data": {
-                            "type": "paragraph",
-                            "attributes": {},
-                            "elements": [
-                                {
-                                    "element": "text",
-                                    "data": "  "
-                                }
-                            ]
-                        }
-                    },
-                    {
                         "element": "list",
                         "data": {
                             "type": "bullet",
@@ -303,7 +251,7 @@
                                         },
                                         {
                                             "element": "text",
-                                            "data": "  "
+                                            "data": " "
                                         }
                                     ]
                                 },
@@ -350,19 +298,6 @@
                 },
                 "elements": [
                     {
-                        "element": "container",
-                        "data": {
-                            "type": "paragraph",
-                            "attributes": {},
-                            "elements": [
-                                {
-                                    "element": "text",
-                                    "data": "  "
-                                }
-                            ]
-                        }
-                    },
-                    {
                         "element": "list",
                         "data": {
                             "type": "bullet",
@@ -378,69 +313,7 @@
                                         },
                                         {
                                             "element": "text",
-                                            "data": "  "
-                                        }
-                                    ]
-                                },
-                                {
-                                    "item-type": "elements",
-                                    "attributes": {},
-                                    "elements": [
-                                        {
-                                            "element": "text",
-                                            "data": "2"
-                                        },
-                                        {
-                                            "element": "text",
-                                            "data": "  "
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "element": "container",
-            "data": {
-                "type": "div",
-                "attributes": {
-                    "class": "box ",
-                    "id": "fruit"
-                },
-                "elements": [
-                    {
-                        "element": "container",
-                        "data": {
-                            "type": "paragraph",
-                            "attributes": {},
-                            "elements": [
-                                {
-                                    "element": "text",
-                                    "data": "  "
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "element": "list",
-                        "data": {
-                            "type": "bullet",
-                            "attributes": {},
-                            "items": [
-                                {
-                                    "item-type": "elements",
-                                    "attributes": {},
-                                    "elements": [
-                                        {
-                                            "element": "text",
-                                            "data": "1"
-                                        },
-                                        {
-                                            "element": "text",
-                                            "data": "  "
+                                            "data": " "
                                         }
                                     ]
                                 },
@@ -474,19 +347,6 @@
                 },
                 "elements": [
                     {
-                        "element": "container",
-                        "data": {
-                            "type": "paragraph",
-                            "attributes": {},
-                            "elements": [
-                                {
-                                    "element": "text",
-                                    "data": "  "
-                                }
-                            ]
-                        }
-                    },
-                    {
                         "element": "list",
                         "data": {
                             "type": "bullet",
@@ -502,69 +362,7 @@
                                         },
                                         {
                                             "element": "text",
-                                            "data": "  "
-                                        }
-                                    ]
-                                },
-                                {
-                                    "item-type": "elements",
-                                    "attributes": {},
-                                    "elements": [
-                                        {
-                                            "element": "text",
-                                            "data": "2"
-                                        },
-                                        {
-                                            "element": "text",
-                                            "data": "  "
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "element": "container",
-            "data": {
-                "type": "div",
-                "attributes": {
-                    "class": "box ",
-                    "id": "fruit"
-                },
-                "elements": [
-                    {
-                        "element": "container",
-                        "data": {
-                            "type": "paragraph",
-                            "attributes": {},
-                            "elements": [
-                                {
-                                    "element": "text",
-                                    "data": "  "
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "element": "list",
-                        "data": {
-                            "type": "bullet",
-                            "attributes": {},
-                            "items": [
-                                {
-                                    "item-type": "elements",
-                                    "attributes": {},
-                                    "elements": [
-                                        {
-                                            "element": "text",
-                                            "data": "1"
-                                        },
-                                        {
-                                            "element": "text",
-                                            "data": "  "
+                                            "data": " "
                                         }
                                     ]
                                 },
@@ -598,18 +396,54 @@
                 },
                 "elements": [
                     {
-                        "element": "container",
+                        "element": "list",
                         "data": {
-                            "type": "paragraph",
+                            "type": "bullet",
                             "attributes": {},
-                            "elements": [
+                            "items": [
                                 {
-                                    "element": "text",
-                                    "data": "  "
+                                    "item-type": "elements",
+                                    "attributes": {},
+                                    "elements": [
+                                        {
+                                            "element": "text",
+                                            "data": "1"
+                                        },
+                                        {
+                                            "element": "text",
+                                            "data": " "
+                                        }
+                                    ]
+                                },
+                                {
+                                    "item-type": "elements",
+                                    "attributes": {},
+                                    "elements": [
+                                        {
+                                            "element": "text",
+                                            "data": "2"
+                                        },
+                                        {
+                                            "element": "text",
+                                            "data": " "
+                                        }
+                                    ]
                                 }
                             ]
                         }
-                    },
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {
+                    "class": "box ",
+                    "id": "fruit"
+                },
+                "elements": [
                     {
                         "element": "list",
                         "data": {
@@ -626,7 +460,56 @@
                                         },
                                         {
                                             "element": "text",
-                                            "data": "  "
+                                            "data": " "
+                                        }
+                                    ]
+                                },
+                                {
+                                    "item-type": "elements",
+                                    "attributes": {},
+                                    "elements": [
+                                        {
+                                            "element": "text",
+                                            "data": "2"
+                                        },
+                                        {
+                                            "element": "text",
+                                            "data": " "
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {
+                    "class": "box",
+                    "id": "fruit"
+                },
+                "elements": [
+                    {
+                        "element": "list",
+                        "data": {
+                            "type": "bullet",
+                            "attributes": {},
+                            "items": [
+                                {
+                                    "item-type": "elements",
+                                    "attributes": {},
+                                    "elements": [
+                                        {
+                                            "element": "text",
+                                            "data": "1"
+                                        },
+                                        {
+                                            "element": "text",
+                                            "data": " "
                                         }
                                     ]
                                 },
@@ -673,19 +556,6 @@
                 },
                 "elements": [
                     {
-                        "element": "container",
-                        "data": {
-                            "type": "paragraph",
-                            "attributes": {},
-                            "elements": [
-                                {
-                                    "element": "text",
-                                    "data": "  "
-                                }
-                            ]
-                        }
-                    },
-                    {
                         "element": "list",
                         "data": {
                             "type": "bullet",
@@ -701,7 +571,7 @@
                                         },
                                         {
                                             "element": "text",
-                                            "data": "  "
+                                            "data": " "
                                         }
                                     ]
                                 },
@@ -747,19 +617,6 @@
                     "id": "fruit"
                 },
                 "elements": [
-                    {
-                        "element": "container",
-                        "data": {
-                            "type": "paragraph",
-                            "attributes": {},
-                            "elements": [
-                                {
-                                    "element": "text",
-                                    "data": "  "
-                                }
-                            ]
-                        }
-                    },
                     {
                         "element": "list",
                         "data": {

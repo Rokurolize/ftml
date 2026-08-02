@@ -55,6 +55,48 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::current(Token::ParagraphBreak),
         ParseCondition::current(Token::InputEnd),
     ];
-    let ctype = ContainerType::Align(Alignment::Center);
-    collect_container(parser, RULE_CENTER, ctype, &close, &[], None)
+    if parser.settings().layout.legacy() {
+        let collected = collect_container(
+            parser,
+            RULE_CENTER,
+            ContainerType::Paragraph,
+            &close,
+            &[],
+            None,
+        )?;
+        let (mut elements, errors, _) = collected.into();
+        let Elements::Single(Element::Container(paragraph)) = &mut elements else {
+            unreachable!("center rule always creates one container");
+        };
+        assert!(
+            paragraph
+                .attributes_mut()
+                .insert("style", cow!(Alignment::Center.wd_html_style()))
+        );
+        ok!(false; elements, errors)
+    } else {
+        let ctype = ContainerType::Align(Alignment::Center);
+        collect_container(parser, RULE_CENTER, ctype, &close, &[], None)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn wikidot_center_line_is_a_styled_paragraph() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("= centered");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html, r#"<p style="text-align: center;">centered</p>"#);
+    }
 }

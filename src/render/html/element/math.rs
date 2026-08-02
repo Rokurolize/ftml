@@ -44,12 +44,64 @@ pub fn render_math_block(ctx: &mut HtmlContext, name: Option<&str>, latex_source
     );
 
     let index = ctx.next_equation_index();
+    if ctx.layout().legacy() {
+        if let Some(name) = name {
+            ctx.register_named_equation(name, index);
+        }
+        render_wikidot_math_block(ctx, index, latex_source);
+        return;
+    }
 
     render_latex(ctx, name, Some(index), latex_source, DisplayStyle::Block);
 }
 
+fn render_wikidot_math_block(
+    ctx: &mut HtmlContext,
+    index: NonZeroUsize,
+    latex_source: &str,
+) {
+    let environment = if latex_source.contains('{') {
+        "align"
+    } else {
+        "equation"
+    };
+    let source = latex_source
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ");
+    let wrapped = if source.is_empty() {
+        format!("\\begin{{{environment}}} \\end{{{environment}}}")
+    } else {
+        format!("\\begin{{{environment}}} {source} \\end{{{environment}}}")
+    };
+    let id = format!("equation-{index}");
+
+    ctx.html()
+        .span()
+        .attr(attr!("class" => "equation-number"))
+        .inner(|ctx| str_write!(ctx, "({index})"));
+    ctx.push_raw('\n');
+    ctx.html()
+        .div()
+        .attr(attr!("class" => "math-equation", "id" => &id))
+        .contents(&wrapped);
+}
+
 pub fn render_math_inline(ctx: &mut HtmlContext, latex_source: &str) {
     debug!("Rendering math inline (source '{latex_source}'");
+    if ctx.layout().legacy() {
+        ctx.html()
+            .span()
+            .attr(attr!("class" => "math-inline"))
+            .inner(|ctx| {
+                ctx.push_raw('$');
+                ctx.push_escaped(latex_source);
+                ctx.push_raw('$');
+            });
+        return;
+    }
     render_latex(ctx, None, None, latex_source, DisplayStyle::Inline);
 }
 
@@ -362,6 +414,26 @@ fn mathml_text_tag(tag: &str) -> bool {
 
 pub fn render_equation_reference(ctx: &mut HtmlContext, name: &str) {
     debug!("Rendering equation reference (name '{name}')");
+
+    if ctx.layout().legacy() {
+        let index = ctx.get_named_equation(name);
+        let target = index.map_or_else(String::new, |index| index.to_string());
+        let onclick =
+            format!("WIKIDOT.page.utils.scrollToReference('equation-{target}')");
+        ctx.html()
+            .a()
+            .attr(attr!(
+                "class" => "eref",
+                "href" => "javascript:;",
+                "onclick" => &onclick,
+            ))
+            .inner(|ctx| {
+                if let Some(index) = index {
+                    str_write!(ctx, "{index}");
+                }
+            });
+        return;
+    }
 
     ctx.html()
         .span()

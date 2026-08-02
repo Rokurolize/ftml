@@ -94,15 +94,21 @@ impl<'r, 't> Parser<'r, 't> {
                 .expect("a tokenized line break always has a following token");
         }
 
-        let Ok(name) = probe.get_end_block() else {
+        let Ok(raw_name) = probe.get_end_block() else {
             return false;
         };
-        let name = name.strip_suffix('_').unwrap_or(name);
+        let score_close = raw_name.ends_with('_');
+        let name = raw_name.strip_suffix('_').unwrap_or(raw_name);
 
         boundaries.iter().rev().any(|boundary| {
             let names = boundary.accepts_names;
             let matches_name = names.iter().any(|item| name.eq_ignore_ascii_case(item));
-            (!after_line_break || boundary.accepts_newlines) && matches_name
+            let invalid_iftags_score_close = self.settings().layout.legacy()
+                && score_close
+                && names.contains(&"iftags");
+            (!after_line_break || boundary.accepts_newlines)
+                && matches_name
+                && !invalid_iftags_score_close
         })
     }
 
@@ -126,7 +132,7 @@ mod tests {
     fn hidden_body_boundaries_match_normalized_names_and_stack_scope() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize("plain\n[[/IFTAGS_]]");
+        let tokenization = crate::tokenize("plain\n[[/IFTAGS]]");
         let mut parser = Parser::new(&tokenization, &page_info, &settings);
 
         assert!(!parser.at_hidden_body_boundary());

@@ -42,15 +42,24 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "User doesn't allow score flag");
     assert_block_name(&BLOCK_MATH, name);
 
+    if parser.settings().layout.legacy() && parser.native_blockquote_depth().is_some() {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     let name = parser.get_head_value(&BLOCK_MATH, in_head, |_, value| {
         Ok(value.map(|s| std::borrow::Cow::Borrowed(s.trim())))
     })?;
+    if parser.settings().layout.legacy()
+        && name.as_deref().is_some_and(|name| !wikidot_math_name(name))
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     let latex_source = match parser.get_body_text(&BLOCK_MATH)? {
         Cow::Borrowed(source) => Cow::Borrowed(source.trim()),
         Cow::Owned(source) => Cow::Owned(source.trim().to_owned()),
     };
-    if latex_source.is_empty() {
+    if latex_source.is_empty() && !parser.settings().layout.legacy() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
@@ -59,16 +68,34 @@ fn parse_fn<'r, 't>(
     success_elements(element)
 }
 
+pub(crate) fn wikidot_math_name(name: &str) -> bool {
+    !name.is_empty()
+        && name
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_')
+}
+
 #[cfg(test)]
 mod tests {
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
+
+    fn render(layout: Layout, source: &str) -> (String, Vec<crate::parsing::ParseError>) {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
+        let mut source = source.to_owned();
+        crate::preprocess(&mut source);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        (HtmlRender.render(&tree, &page_info, &settings).body, errors)
+    }
 
     #[test]
     fn quoted_math_block_trims_owned_source() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tokenization = crate::tokenize(concat!(
             "> [[collapsible]]\n",
             "> [[math]]\n",
@@ -80,5 +107,54 @@ mod tests {
 
         assert!(errors.is_empty(), "{errors:?}");
         assert!(format!("{tree:?}").contains("x + y"));
+    }
+
+    #[test]
+    fn wikidot_math_preserves_live_block_boundaries_and_dom() {
+        let source = concat!(
+            "[[math]] A [[/math]]\n\n",
+            "[[math]]\nB\n[[/math]]\n\n",
+            "[[math invalid-name]]\n\\frac{x}{y}\n[[/math]]\n\n",
+            "[[math valid_name]]\nC\n[[/math]]\n",
+            "X[[eref valid_name]]Y[[eref missing]]Z\n\n",
+            "[[math]]\n[[/math]]",
+        );
+        let (html, errors) = render(Layout::Wikidot, source);
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains(
+            r#"<span class="equation-number">(1)</span>
+<div class="math-equation" id="equation-1">\begin{align} A [[/math]] [[math]] B [[/math]] [[math invalid-name]] \frac{x}{y} \end{align}</div>"#,
+        ), "{html}");
+        assert!(
+            html.contains(
+                r#"<span class="equation-number">(2)</span>
+<div class="math-equation" id="equation-2">\begin{equation} C \end{equation}</div>"#,
+            ),
+            "{html}"
+        );
+        assert!(html.contains(
+            r#"X<a class="eref" href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference(&#39;equation-2&#39;)">2</a>Y<a class="eref" href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference(&#39;equation-&#39;)"></a>Z"#,
+        ), "{html}");
+        assert!(
+            html.contains(
+                r#"<span class="equation-number">(3)</span>
+<div class="math-equation" id="equation-3">\begin{equation} \end{equation}</div>"#,
+            ),
+            "{html}"
+        );
+    }
+
+    #[test]
+    fn wikijump_math_rendering_is_unchanged() {
+        let (html, errors) = render(
+            Layout::Wikijump,
+            "[[math named-equation]]\nx + y\n[[/math]]",
+        );
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains(r#"class="wj-math wj-math-block""#), "{html}");
+        assert!(html.contains(r#"data-name="named-equation""#), "{html}");
+        assert!(!html.contains(r#"class="math-equation""#), "{html}");
     }
 }

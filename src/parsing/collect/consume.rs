@@ -56,9 +56,22 @@ pub fn collect_consume_keep<'r, 't>(
         consume(parser)?.map_ok(|elements| append_elements(&mut all_elements, elements))
     })?;
     let (last, errors, paragraph_safe) = collection.into();
+    if parser.settings().layout.legacy() {
+        collapse_adjacent_ascii_spaces(&mut all_elements);
+    }
 
     let item = (all_elements, last);
     Ok(ParseSuccess::new(item, errors, paragraph_safe))
+}
+
+fn collapse_adjacent_ascii_spaces(elements: &mut Vec<Element<'_>>) {
+    let mut previous_was_space = false;
+    elements.retain(|element| {
+        let is_space = matches!(element, Element::Text(text) if text.as_ref() == " ");
+        let keep = !is_space || !previous_was_space;
+        previous_was_space = is_space;
+        keep
+    });
 }
 
 fn append_elements<'t>(all_elements: &mut Vec<Element<'t>>, elements: Elements<'t>) {

@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use crate::parsing::consume::consume;
 use crate::parsing::{ParseError, ParseErrorKind};
 
 pub const BLOCK_COLLAPSIBLE: BlockRule = BlockRule {
@@ -42,7 +43,8 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "Collapsible doesn't allow score flag");
     assert_block_name(&BLOCK_COLLAPSIBLE, name);
 
-    let head = parser.get_head_map_with_body_start(&BLOCK_COLLAPSIBLE, in_head)?;
+    let head =
+        parser.get_head_map_with_body_start_wikidot(&BLOCK_COLLAPSIBLE, in_head)?;
     let (mut arguments, body_start) = head;
 
     // Get display arguments
@@ -60,9 +62,24 @@ fn parse_fn<'r, 't>(
 
     // Get body content, with paragraphs.
     // Discard paragraph_safe, since collapsibles never are.
-    let body =
-        parser.get_body_elements_with_context(&BLOCK_COLLAPSIBLE, true, body_start)?;
-    let (elements, errors, _) = body.into();
+    let previous_collapsible_context = parser.in_wikidot_collapsible();
+    if parser.settings().layout.legacy() {
+        parser.set_in_wikidot_collapsible(true);
+    }
+    let body = parser.get_body_elements_with_literal_quote_context(
+        &BLOCK_COLLAPSIBLE,
+        true,
+        body_start,
+    );
+    parser.set_in_wikidot_collapsible(previous_collapsible_context);
+    let body = body?;
+    let (elements, mut errors, _) = body.into();
+    if parser.settings().layout.legacy()
+        && parser.pending_wikidot_collapsible_closer()
+        && parser.current().token == Token::LineBreak
+    {
+        parser.step()?;
+    }
 
     // Build element and return
     let element = Element::Collapsible {
@@ -75,12 +92,35 @@ fn parse_fn<'r, 't>(
         show_bottom,
     };
 
-    ok!(element, errors)
+    let mut output = vec![element];
+    if parser.settings().layout.legacy()
+        && parser.native_blockquote_depth().is_some()
+        && !parser.start_of_line()
+        && !matches!(
+            parser.current().token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        )
+    {
+        let mut paragraph_safe = true;
+        while !matches!(
+            parser.current().token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        ) {
+            let suffix = consume(parser)?.chain(&mut errors, &mut paragraph_safe);
+            output.extend(suffix);
+        }
+        if parser.current().token == Token::LineBreak {
+            parser.step()?;
+        }
+    }
+
+    ok!(false; output, errors)
 }
 
 fn parse_hide_location(s: &str, parser: &Parser) -> Result<(bool, bool), ParseError> {
-    const NAMES: [(&str, (bool, bool)); 5] = [
+    const NAMES: [(&str, (bool, bool)); 6] = [
         ("top", (true, false)),
+        ("side", (true, false)),
         ("bottom", (false, true)),
         ("both", (true, true)),
         ("neither", (false, false)),
@@ -90,6 +130,9 @@ fn parse_hide_location(s: &str, parser: &Parser) -> Result<(bool, bool), ParseEr
     let s = s.trim();
     for &(name, value) in &NAMES {
         if name.eq_ignore_ascii_case(s) {
+            if parser.settings().layout.legacy() && matches!(name, "neither" | "none") {
+                return Ok((true, false));
+            }
             return Ok(value);
         }
     }
@@ -135,12 +178,16 @@ mod tests {
 
         let tokenization =
             crate::tokenize("[[collapsible hideLocation=\"side\"]]Body[[/collapsible]]");
-        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
-        assert!(
-            errors
-                .iter()
-                .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments)
-        );
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains("+&nbsp;show&nbsp;block"), "{html}");
+        assert!(html.contains("–&nbsp;hide&nbsp;block"), "{html}");
+
+        let (html, _, errors) =
+            render("[[collapsible hideLocation=\"neither\"]]Body[[/collapsible]]");
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains("–&nbsp;hide&nbsp;block"), "{html}");
     }
 
     fn render(input: &str) -> (String, String, Vec<ParseError>) {
@@ -151,6 +198,26 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
         let text = TextRender.render(&tree, &page_info, &settings);
         (html, text, errors)
+    }
+
+    #[test]
+    fn wikidot_collapsible_uses_legacy_labels_and_drops_outer_attributes() {
+        let (html, _, errors) = render(
+            r#"[[collapsible id="hider" class="custom" style="color: teal" data-hider="yes"]]Body[[/collapsible]]"#,
+        );
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains("+&nbsp;show&nbsp;block"), "{html}");
+        assert!(html.contains("–&nbsp;hide&nbsp;block"), "{html}");
+        assert!(!html.contains("custom"), "{html}");
+        assert!(!html.contains("hider"), "{html}");
+        assert!(!html.contains("color: teal"), "{html}");
+        assert!(!html.contains("data-hider"), "{html}");
+
+        let (html, _, errors) =
+            render(r#"[[collapsible show="" hide="close"]]Body[[/collapsible]]"#);
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains("+&nbsp;show&nbsp;block"), "{html}");
     }
 
     #[test]
@@ -222,7 +289,11 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
         assert!(html.contains("inline body"), "{html}");
-        assert!(html.contains("following content"), "{html}");
+        assert!(
+            html.contains("</blockquote><br>\nfollowing content"),
+            "{html}"
+        );
+        assert!(!html.contains("<p>following content</p>"), "{html}");
     }
 
     #[test]
@@ -254,15 +325,23 @@ mod tests {
 
         assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
         assert_eq!(html.matches("<blockquote>").count(), 1, "{html}");
-        assert!(html.contains("[[/collapsible]] stray"), "{html}");
+        assert!(
+            html.contains(
+                r#"<div class="collapsible-block-content"><p>before</p></div>"#
+            ),
+            "{html}"
+        );
+        assert!(html.contains("stray<br>\nbody after false close"), "{html}");
+        assert!(html.contains("[[/collapsible]]<br>"), "{html}");
         assert!(html.contains("body after false close"), "{html}");
         assert!(html.contains("following quote"), "{html}");
-        assert!(text.contains("[[/collapsible]] stray"), "{text}");
+        assert!(!text.contains("[[/collapsible]] stray"), "{text}");
+        assert!(text.contains("[[/collapsible]]"), "{text}");
         assert!(text.contains("body after false close"), "{text}");
     }
 
     #[test]
-    fn quoted_close_with_trailing_text_fails_closed_inside_blockquote() {
+    fn quoted_close_with_trailing_text_closes_before_the_remaining_line() {
         let input = concat!(
             "> [[collapsible show=\"show\" hide=\"hide\"]]\n",
             "> body\n",
@@ -271,9 +350,9 @@ mod tests {
         );
         let (html, _, _) = render(input);
 
-        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 0);
-        assert!(html.contains("[[collapsible"), "{html}");
-        assert!(html.contains("[[/collapsible]] still quoted"), "{html}");
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
+        assert!(!html.contains("[[collapsible"), "{html}");
+        assert!(!html.contains("[[/collapsible]]"), "{html}");
         let quoted = html.find("still quoted").expect("quoted text missing");
         let blockquote_end = html
             .find("</blockquote>")
@@ -284,27 +363,36 @@ mod tests {
     }
 
     #[test]
-    fn quoted_collapsible_does_not_cross_unquoted_boundaries() {
-        for input in [
-            concat!(
-                "> [[collapsible show=\"show\"]]\n",
-                "unquoted body\n",
-                "[[/collapsible]]\n",
-                "following page\n",
-            ),
-            concat!(
-                "> [[collapsible show=\"show\"]]\n",
-                "> body\n",
-                "\n",
-                "> [[/collapsible]]\n",
-                "following page\n",
-            ),
-        ] {
-            let (html, _, _) = render(input);
-            assert_eq!(html.matches("class=\"collapsible-block\"").count(), 0);
-            assert!(html.contains("[[collapsible"), "{html}");
-            assert!(html.contains("following page"), "{html}");
-        }
+    fn quoted_collapsible_ends_at_quote_boundary_before_a_later_close() {
+        let (html, _, errors) = render(concat!(
+            "> [[collapsible show=\"show\"]]\n",
+            "unquoted body\n",
+            "[[/collapsible]]\n",
+            "following page\n",
+        ));
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
+        assert!(
+            html.contains("</blockquote><p>unquoted body</p><br>\nfollowing page"),
+            "{html}"
+        );
+        assert!(!html.contains("[[collapsible"), "{html}");
+
+        let (html, _, errors) = render(concat!(
+            "> [[collapsible show=\"show\"]]\n",
+            "> body\n",
+            "\n",
+            "> [[/collapsible]]\n",
+            "following page\n",
+        ));
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
+        assert!(
+            html.contains("<div class=\"collapsible-block-content\"><p>body</p></div>"),
+            "{html}"
+        );
+        assert!(html.contains("</blockquote><p>following page"), "{html}");
+        assert!(!html.contains("[[collapsible"), "{html}");
     }
 
     #[test]
@@ -350,7 +438,7 @@ mod tests {
             1,
             "{html}"
         );
-        assert!(html.contains("<strong>alphabeta</strong>"), "{html}");
+        assert!(html.contains("<strong>alpha<br>\nbeta</strong>"), "{html}");
         assert!(html.contains("following quote"), "{html}");
         assert!(!html.contains("&gt; beta"), "{html}");
     }
@@ -407,13 +495,22 @@ mod tests {
         );
         let (html, _, errors) = render(input);
 
-        assert!(errors.is_empty(), "{errors:#?}");
-        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 2);
+        assert!(!errors.is_empty());
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
         assert_eq!(html.matches("<blockquote>").count(), 2, "{html}");
+        assert!(
+            html.contains("[[collapsible show=&quot;inner&quot;]]"),
+            "{html}"
+        );
         assert!(html.contains("inner body"), "{html}");
         assert!(html.contains("outer body"), "{html}");
         assert!(html.contains("following quote"), "{html}");
-        assert!(!html.contains("[[collapsible"), "{html}");
+        assert!(
+            html.contains(
+                "</blockquote><p>outer body<br>\n[[/collapsible]]<br>\nfollowing quote</p>"
+            ),
+            "{html}"
+        );
     }
 
     #[test]
@@ -429,17 +526,18 @@ mod tests {
         );
         let (html, _, errors) = render(input);
 
-        assert!(errors.is_empty(), "{errors:#?}");
-        assert_eq!(
-            html.matches("class=\"collapsible-block\"").count(),
-            2,
+        assert!(!errors.is_empty());
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
+        assert_eq!(html.matches("<blockquote>").count(), 1, "{html}");
+        assert!(
+            html.contains("&gt; [[collapsible show=&quot;inner&quot;]]"),
             "{html}"
         );
-        assert_eq!(html.matches("<blockquote>").count(), 2, "{html}");
         assert!(html.contains("inner body"), "{html}");
         assert!(html.contains("outer body"), "{html}");
         assert!(html.contains("following quote"), "{html}");
-        assert!(!html.contains("[[collapsible"), "{html}");
+        assert!(html.contains("[[/collapsible]]"), "{html}");
+        assert!(!html.contains("<p>outer body"), "{html}");
     }
 
     #[test]
@@ -477,9 +575,10 @@ mod tests {
         assert_eq!(html.matches("<blockquote>").count(), 1, "{html}");
         assert!(html.contains("hello code"), "{html}");
         assert!(
-            html.contains("[[/collapsible]] literal code text"),
+            !html.contains("[[/collapsible]] literal code text"),
             "{html}"
         );
+        assert!(html.contains("literal code text"), "{html}");
         assert!(html.contains("<strong>raw text</strong>"), "{html}");
         assert!(html.contains("[[code]]"), "{html}");
         assert!(html.contains("[[/code]]"), "{html}");
@@ -487,6 +586,49 @@ mod tests {
         assert!(html.contains("[[/raw]]"), "{html}");
         assert!(!html.contains("&gt; hello code"), "{html}");
         assert!(html.contains("following quote"), "{html}");
+    }
+
+    #[test]
+    fn wikidot_spaced_and_nested_collapsible_openers_remain_literal() {
+        let (html, _, errors) = render(concat!(
+            "[[ collapsible hideLocation=\"both\" ]]\n",
+            "spaced body\n",
+            "[[/collapsible]]\n",
+            "[[collapsible show=\"outer\"]]\n",
+            "outer body\n",
+            "[[collapsible show=\"inner\"]]\n",
+            "inner body\n",
+            "[[/collapsible]]\n",
+            "[[/collapsible]]",
+        ));
+
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
+        assert!(html.contains("[[ collapsible hideLocation="), "{html}");
+        assert!(html.contains("spaced body"), "{html}");
+        assert!(
+            html.contains("[[collapsible show=&quot;inner&quot;]]"),
+            "{html}"
+        );
+        assert!(html.contains("inner body"), "{html}");
+        assert!(html.contains("[[/collapsible]]"), "{html}");
+        assert!(!errors.is_empty());
+    }
+
+    #[test]
+    fn quoted_raw_markers_retain_physical_line_breaks_in_collapsible_body() {
+        let (html, _, _errors) = render(concat!(
+            "> [[collapsible]]\n",
+            "> [[raw]]\n",
+            "> raw body\n",
+            "> [[/raw]]\n",
+            "> [[/collapsible]]\n",
+        ));
+
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
+        assert!(
+            html.contains("<p>[[raw]]<br>\nraw body<br>\n[[/raw]]</p>"),
+            "{html}"
+        );
     }
 
     #[test]

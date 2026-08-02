@@ -39,15 +39,21 @@ fn skip_newline<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Seeing if we skip due to an upcoming definition list");
 
-    match parser.next_three_tokens() {
-        // It looks like a definition list is upcoming
-        (Token::LineBreak, Some(Token::Colon), Some(Token::Whitespace)) => {
-            ok!(Elements::None)
+    if parser.next_three_tokens()
+        == (
+            Token::LineBreak,
+            Some(Token::Colon),
+            Some(Token::Whitespace),
+        )
+    {
+        let mut next_line = parser.clone();
+        next_line.step()?;
+        if has_definition_separator(&next_line) {
+            return ok!(Elements::None);
         }
-
-        // Anything else
-        _ => Err(parser.make_err(ParseErrorKind::RuleFailed)),
     }
+
+    Err(parser.make_err(ParseErrorKind::RuleFailed))
 }
 
 fn parse_definition_list<'r, 't>(
@@ -58,6 +64,19 @@ fn parse_definition_list<'r, 't>(
     let mut items = Vec::new();
     let mut errors = Vec::new();
     let mut _paragraph_safe = false;
+
+    if starts_definition_item(parser) && !has_definition_separator(parser) {
+        while !matches!(
+            parser.current().token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        ) {
+            parser.step()?;
+        }
+        if parser.current().token == Token::LineBreak {
+            parser.step()?;
+        }
+        return ok!(false; Elements::None, errors);
+    }
 
     // Definition list needs at least one item
     let (item, at_end) = parse_item(parser)?.chain(&mut errors, &mut _paragraph_safe);
@@ -149,6 +168,33 @@ fn starts_definition_item<'r, 't>(parser: &Parser<'r, 't>) -> bool {
     parser.next_two_tokens() == (Token::Colon, Some(Token::Whitespace))
 }
 
+fn has_definition_separator<'r, 't>(parser: &Parser<'r, 't>) -> bool {
+    if !starts_definition_item(parser) {
+        return false;
+    }
+
+    let mut cursor = parser.clone();
+    if cursor.step_n(2).is_err() {
+        return false;
+    }
+    loop {
+        if cursor.next_two_tokens() == (Token::Whitespace, Some(Token::Colon)) {
+            return cursor.step_n(2).is_ok()
+                && !matches!(
+                    cursor.current().token,
+                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                );
+        }
+        if matches!(
+            cursor.current().token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        ) || cursor.step().is_err()
+        {
+            return false;
+        }
+    }
+}
+
 fn collect_key<'r, 't>(
     parser: &mut Parser<'r, 't>,
     errors: &mut Vec<ParseError>,
@@ -199,6 +245,27 @@ where
 
     strip_whitespace(&mut value_elements);
     Ok((value_elements, last))
+}
+
+#[test]
+fn wikidot_definition_lists_leave_adjacent_prose_unwrapped() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    let source = "ALPHA\n: Key : Value\n: **Apple** : //Banana// split\n\nBETA\n: Pineapple : Very long";
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize(source);
+    let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+    assert!(errors.is_empty(), "{errors:?}");
+    assert_eq!(
+        html,
+        "ALPHA<br>\n<dl>\n<dt>Key</dt>\n<dd>Value</dd>\n<dt><strong>Apple</strong></dt>\n<dd><em>Banana</em> split</dd>\n</dl>\nBETA<br>\n<dl>\n<dt>Pineapple</dt>\n<dd>Very long</dd>\n</dl>\n",
+    );
 }
 
 #[cfg(test)]
@@ -298,6 +365,17 @@ mod tests {
     }
 
     #[test]
+    fn malformed_definition_item_suppresses_the_preceding_paragraph_wrapper() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("alpha\n: term");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!(tree.elements, [text!("alpha"), Element::LineBreak]);
+    }
+
+    #[test]
     fn parse_item_rejects_non_definition_starts() {
         enable_test_logging();
 
@@ -321,5 +399,19 @@ mod tests {
         let error =
             parse_item(&mut parser).expect_err("missing space should reject the item");
         assert_eq!(error.kind(), ParseErrorKind::RuleFailed);
+    }
+
+    #[test]
+    fn malformed_definition_lines_are_discarded_like_wikidot() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for source in [": term", ": term :", ": term:value"] {
+            let tokenization = crate::tokenize(source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            assert!(errors.is_empty(), "{source:?}: {errors:?}");
+            assert!(tree.elements.is_empty(), "{source:?}: {:?}", tree.elements);
+        }
     }
 }

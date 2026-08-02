@@ -27,11 +27,11 @@ empty
 INLINE:
 A
 
- 1 
+ 1
 
 B
 
- 2 
+ 2
 
 
 NESTED AND ALIAS:

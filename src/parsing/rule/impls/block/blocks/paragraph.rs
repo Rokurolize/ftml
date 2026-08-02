@@ -71,7 +71,7 @@ mod tests {
     #[test]
     fn paragraph_block_applies_attributes_to_body_paragraph() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tokenization = crate::tokenize(
             r#"[[p class="lead"]]
 paragraph text

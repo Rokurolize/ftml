@@ -46,6 +46,7 @@ fn bibliography_cite(label: &str, brackets: bool) -> Element<'_> {
     Element::BibliographyCite {
         label: cow!(label),
         brackets,
+        inline: false,
     }
 }
 
@@ -79,7 +80,7 @@ mod tests {
     #[test]
     fn block_bibcite_requires_label() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         for input in ["[[bibcite]]", "[[bibcite   ]]"] {
             let tokenization = crate::tokenize(input);
             let (_tree, errors) =
@@ -97,7 +98,7 @@ mod tests {
     #[test]
     fn block_bibcite_parses_bracketed_and_bare_variants() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tokenization = crate::tokenize("[[bibcite alpha]]\n[[bibcite_ beta]]");
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
@@ -108,11 +109,13 @@ mod tests {
                     Element::BibliographyCite {
                         label: first_label,
                         brackets: first_brackets,
+                        ..
                     },
                     Element::LineBreak,
                     Element::BibliographyCite {
                         label: second_label,
                         brackets: second_brackets,
+                        ..
                     },
                 ] => {
                     assert_eq!(first_label, "alpha");

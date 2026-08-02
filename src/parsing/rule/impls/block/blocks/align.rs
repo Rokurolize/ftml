@@ -105,7 +105,7 @@ mod tests {
     fn alignment_block_wraps_body_in_align_container() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize("[[=]]centered[[/=]]");
+        let tokenization = crate::tokenize("[[=]]\ncentered[[/=]]");
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
         assert!(errors.is_empty(), "{errors:?}");
@@ -118,6 +118,49 @@ mod tests {
         };
         assert_eq!(paragraph.ctype(), ContainerType::Paragraph);
         assert_eq!(paragraph.elements(), &[text!("centered")]);
+    }
+
+    #[test]
+    fn wikidot_separates_adjacent_alignment_blocks_with_breaks() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(
+            "[[=]]\n[[div class=\"blockquote\"]]\ncard body 0\n\n[[/div]]\n[[/=]]\n[[=]]\n[[div class=\"blockquote\"]]\ncard body 1\n\n[[/div]]\n[[/=]]",
+        );
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!(
+            html,
+            "<div style=\"text-align: center;\"><div class=\"blockquote\"><p>card body 0</p></div></div><br>\n<div style=\"text-align: center;\"><div class=\"blockquote\"><p>card body 1</p></div></div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_alignment_close_unwraps_the_following_physical_line() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let render = |source| {
+            let tokenization = crate::tokenize(source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            assert!(errors.is_empty(), "{errors:?}");
+            HtmlRender.render(&tree, &page_info, &settings).body
+        };
+
+        assert_eq!(
+            render("[[=]]\ncentered\n[[/=]]\nafter"),
+            "<div style=\"text-align: center;\"><p>centered</p></div><br>\nafter",
+        );
+        assert_eq!(
+            render("[[=]]\ncentered\n[[/=]]"),
+            "<div style=\"text-align: center;\"><p>centered</p></div>",
+        );
+        assert_eq!(
+            render("[[=]]\ncentered\n[[/=]]\n\nafter"),
+            "<div style=\"text-align: center;\"><p>centered</p></div><p>after</p>",
+        );
     }
 
     #[test]
@@ -135,6 +178,7 @@ mod tests {
             input.push('\n');
         }
         input.push_str("outside-sentinel\n");
+        crate::preprocess(&mut input);
 
         let started = Instant::now();
         let tokenization = crate::tokenize(&input);
@@ -151,6 +195,8 @@ mod tests {
         assert!(html.contains("outside-sentinel"), "{html}");
         assert!(!html.contains("[[>]]"), "{html}");
         assert!(!html.contains("[[/>]]"), "{html}");
+        assert_eq!(html.matches("<br>").count(), BLOCK_COUNT * 2 - 1, "{html}");
+        assert_eq!(html.matches("<p>").count(), BLOCK_COUNT + 1, "{html}");
     }
 
     #[test]

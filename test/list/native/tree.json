@@ -187,10 +187,6 @@
                 "elements": [
                     {
                         "element": "text",
-                        "data": "   "
-                    },
-                    {
-                        "element": "text",
                         "data": "*"
                     },
                     {
@@ -202,8 +198,7 @@
                         "data": "four"
                     },
                     {
-                        "element": "text",
-                        "data": "  "
+                        "element": "line-break"
                     },
                     {
                         "element": "text",
@@ -218,8 +213,7 @@
                         "data": "three"
                     },
                     {
-                        "element": "text",
-                        "data": " "
+                        "element": "line-break"
                     },
                     {
                         "element": "text",
@@ -663,10 +657,6 @@
                 "elements": [
                     {
                         "element": "text",
-                        "data": "   "
-                    },
-                    {
-                        "element": "text",
                         "data": "#"
                     },
                     {
@@ -678,8 +668,7 @@
                         "data": "four"
                     },
                     {
-                        "element": "text",
-                        "data": "  "
+                        "element": "line-break"
                     },
                     {
                         "element": "text",
@@ -694,8 +683,7 @@
                         "data": "three"
                     },
                     {
-                        "element": "text",
-                        "data": " "
+                        "element": "line-break"
                     },
                     {
                         "element": "text",

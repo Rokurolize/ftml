@@ -41,6 +41,10 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "Superscript doesn't allow score flag");
     assert_block_name(&BLOCK_SUPERSCRIPT, name);
 
+    if parser.settings().layout.legacy() {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     let arguments = parser.get_head_map(&BLOCK_SUPERSCRIPT, in_head)?;
 
     // Get body content, without paragraphs
@@ -66,7 +70,7 @@ mod tests {
     #[test]
     fn superscript_block_alias_wraps_inline_body() {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tokenization = crate::tokenize("[[super]]super text[[/super]]");
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 

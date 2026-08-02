@@ -122,6 +122,11 @@ head = "map"
 body = "none"
 html-output = "html,div,wj-footnotes-list"
 
+[file]
+head = "value"
+body = "none"
+html-output = "html,a"
+
 [hidden]
 accepts-newlines = true
 head = "map"
@@ -154,7 +159,7 @@ body = "none"
 html-output = "html,iframe"
 
 [image]
-aliases = ["=image", "<image", ">image", "f<image", "f>image"]
+aliases = ["=image", "<image", ">image", "f<image", "f=image", "f>image"]
 head = "value+map"
 body = "none"
 html-attributes = true
@@ -264,6 +269,12 @@ head = "map"
 body = "elements"
 html-attributes = true
 html-output = "html,code,wj-monospace"
+
+[note]
+accepts-newlines = true
+head = "none"
+body = "elements"
+html-output = "html,div,wiki-note"
 
 [paragraph]
 aliases = ["p"]

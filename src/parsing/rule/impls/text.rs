@@ -30,6 +30,36 @@ fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Consuming token as plain text element");
-    let ExtractedToken { slice, .. } = parser.current();
+    let ExtractedToken { token, slice, .. } = parser.current();
+    if *token == Token::Whitespace {
+        if parser.start_of_line()
+            || matches!(
+                parser.look_ahead(0).map(|next| next.token),
+                Some(Token::LineBreak | Token::ParagraphBreak | Token::InputEnd)
+            )
+        {
+            return ok!(Elements::None);
+        }
+        return ok!(text!(" "));
+    }
     ok!(text!(slice))
+}
+
+#[test]
+fn wikidot_plain_text_collapses_and_trims_ascii_space_runs() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let mut source = "A  B  \n  C".to_owned();
+    crate::preprocess(&mut source);
+    let tokenization = crate::tokenize(&source);
+    let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+    assert!(errors.is_empty(), "{errors:?}");
+
+    let output = HtmlRender.render(&tree, &page_info, &settings);
+    assert_eq!(output.body, "<p>A B<br>\nC</p>");
 }

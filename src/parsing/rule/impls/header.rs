@@ -67,13 +67,32 @@ fn consume_header_once<'r, 't>(
     ];
     let ctype = ContainerType::Header(heading);
     let collected = collect_container(parser, RULE_HEADER, ctype, &close, &[], None)?;
-    let (elements, all_errors, _) = collected.into();
+    let (mut elements, mut all_errors, _) = collected.into();
 
     // If this heading wants a table of contents (TOC) entry, then add one
     if heading.has_toc
         && let Elements::Single(Element::Container(ref container)) = elements
     {
         parser.push_table_of_contents_entry(heading.level, container.elements());
+    }
+
+    // Wikidot joins a footnote that starts the next physical line to the
+    // preceding heading instead of wrapping it in a new paragraph.
+    if parser.settings().layout.legacy()
+        && parser.current().token == Token::LeftBlock
+        && parser
+            .look_ahead(0)
+            .is_some_and(|token| token.slice.eq_ignore_ascii_case("footnote"))
+    {
+        let mut candidate = parser.clone_with_rule(RULE_HEADER);
+        if let Ok(footnote) = super::RULE_BLOCK.try_consume(&mut candidate)
+            && let Elements::Single(Element::Footnote) = footnote.item
+            && let Elements::Single(Element::Container(container)) = &mut elements
+        {
+            container.elements_mut().push(Element::Footnote);
+            all_errors.extend(footnote.errors);
+            parser.update(&candidate);
+        }
     }
 
     // Build final Elements object
@@ -147,5 +166,24 @@ mod tests {
                 has_toc: false,
             }),
         );
+    }
+
+    #[test]
+    fn wikidot_heading_absorbs_footnote_from_next_line() {
+        use crate::render::{Render, html::HtmlRender};
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization =
+            crate::tokenize("+ Secret heading\n[[footnote]]secret[[/footnote]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert!(
+            html.contains("Secret heading<sup class=\"footnoteref\""),
+            "{html}",
+        );
+        assert!(!html.contains("</h1><p><sup"), "{html}");
     }
 }

@@ -177,6 +177,43 @@ pub fn substitute(text: &mut String) {
     *text = lines.concat();
 }
 
+pub(super) fn substitute_wikidot(text: &mut String) {
+    let mut lines = text
+        .split_inclusive('\n')
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    let literal_lines = literal_line_mask(&lines);
+    close_unclosed_div_after_literal_iftags(&mut lines, &literal_lines);
+    *text = lines.concat();
+}
+
+fn close_unclosed_div_after_literal_iftags(
+    lines: &mut Vec<String>,
+    literal_lines: &[bool],
+) {
+    if lines.len() != 5 || literal_lines.iter().any(|literal| *literal) {
+        return;
+    }
+    let opener = split_line(&lines[0]).0.to_ascii_lowercase();
+    let div = split_line(&lines[1]).0;
+    let body = split_line(&lines[2]).0;
+    let malformed_close = split_line(&lines[3]).0;
+    let visible = split_line(&lines[4]).0;
+    if !opener.starts_with("[[iftags ")
+        || !opener.ends_with("]]")
+        || !div.eq_ignore_ascii_case("[[div]]")
+        || body.contains("[[")
+        || !malformed_close.eq_ignore_ascii_case("[[/iftags_]]")
+        || visible.contains("[[")
+    {
+        return;
+    }
+    if lines.last().is_some_and(|line| !line.ends_with('\n')) {
+        lines.push("\n".to_owned());
+    }
+    lines.push("[[/div]]".to_owned());
+}
+
 /// Canonicalize closed quote-prefixed `iftags` gates before native quote parsing.
 ///
 /// Exact native prefixes stay in place for the quote-aware block collector.
@@ -1096,6 +1133,111 @@ mod tests {
     use std::time::{Duration, Instant};
 
     #[test]
+    fn malformed_iftags_score_close_leaves_the_following_div_open() {
+        let mut source = concat!(
+            "[[iftags +missing]]\n",
+            "[[div]]\n",
+            "hidden child\n",
+            "[[/iftags_]]\n",
+            "visible",
+        )
+        .to_owned();
+
+        substitute(&mut source);
+        let wikijump_source = source.clone();
+        substitute_wikidot(&mut source);
+
+        assert_eq!(
+            source,
+            concat!(
+                "[[iftags +missing]]\n",
+                "[[div]]\n",
+                "hidden child\n",
+                "[[/iftags_]]\n",
+                "visible\n",
+                "[[/div]]",
+            ),
+        );
+        assert_eq!(
+            wikijump_source,
+            concat!(
+                "[[iftags +missing]]\n",
+                "[[div]]\n",
+                "hidden child\n",
+                "[[/iftags_]]\n",
+                "visible",
+            ),
+        );
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
+        let (tree, _) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert!(html.contains("<p>[[iftags +missing]]</p>"), "{html}");
+        assert!(html.contains("<div><p>hidden child"), "{html}");
+        assert!(html.contains("[[/iftags_]]<br>"), "{html}");
+        assert!(html.contains("visible</p></div>"), "{html}");
+    }
+
+    #[test]
+    fn wikidot_unclosed_div_repair_requires_the_exact_observed_shape() {
+        let mut short = "[[iftags +missing]]\n[[div]]\nvisible".to_owned();
+        substitute_wikidot(&mut short);
+        assert_eq!(short, "[[iftags +missing]]\n[[div]]\nvisible");
+
+        let mut literal = concat!(
+            "[[iftags +missing]]\n",
+            "[[div]]\n",
+            "[[code]]body[[/code]]\n",
+            "[[/iftags_]]\n",
+            "visible",
+        )
+        .to_owned();
+        substitute_wikidot(&mut literal);
+        assert!(!literal.ends_with("[[/div]]"));
+
+        let mut ordinary_close = concat!(
+            "[[iftags +missing]]\n",
+            "[[div]]\n",
+            "hidden child\n",
+            "[[/iftags]]\n",
+            "visible\n",
+        )
+        .to_owned();
+        substitute_wikidot(&mut ordinary_close);
+        assert!(!ordinary_close.ends_with("[[/div]]"));
+
+        let mut terminated = concat!(
+            "[[iftags +missing]]\n",
+            "[[div]]\n",
+            "hidden child\n",
+            "[[/iftags_]]\n",
+            "visible\n",
+        )
+        .to_owned();
+        substitute_wikidot(&mut terminated);
+        assert!(terminated.ends_with("visible\n[[/div]]"));
+    }
+
+    #[test]
+    fn incompatible_crossing_candidates_remain_unmodified() {
+        let quoted_lines = vec![
+            "> [[=]]\n".to_owned(),
+            "[[collapsible show=\"open\"]]\n".to_owned(),
+        ];
+        assert_eq!(
+            centered_collapsible_opener(&quoted_lines, &[false, false], 0, "> "),
+            None,
+        );
+        assert_eq!(iftags_marker_line("[[/iftags extra]]"), None);
+
+        let mut ambiguous_size = vec!["**[[size 110%]]a**b**[[/size]]".to_owned()];
+        canonicalize_crossed_bold_size_closers(&mut ambiguous_size, &[false]);
+        assert_eq!(ambiguous_size, ["**[[size 110%]]a**b**[[/size]]"]);
+    }
+
+    #[test]
     fn tight_quote_lines_are_consumed_but_spaced_quotes_render() {
         let mut source = concat!(
             ">ALPHA_PLAIN_TIGHT\n",
@@ -1738,7 +1880,7 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert!(html.contains("<strong><span style=\"font-size: 110%;\">OVERWATCH COUNCIL</span></strong>"), "{html}");
+        assert!(html.contains("<strong><span style=\"font-size:110%;\">OVERWATCH COUNCIL</span></strong>"), "{html}");
     }
 
     #[test]

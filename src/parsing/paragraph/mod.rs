@@ -433,6 +433,14 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_nbsp_only_line_stays_in_its_surrounding_paragraph() {
+        assert_eq!(
+            render_wikidot("Alpha\n\u{00a0}\nBeta"),
+            "<p>Alpha<br>\n\u{00a0}<br>\nBeta</p>",
+        );
+    }
+
+    #[test]
     fn wikidot_html_block_starts_a_new_paragraph() {
         assert_eq!(
             render_wikidot(

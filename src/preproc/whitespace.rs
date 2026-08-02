@@ -48,8 +48,8 @@ static WHITESPACE_ONLY_LINE: LazyLock<Replacer> =
 // Wikidot treats a line containing a non-breaking space as authored content:
 // it remains in the surrounding paragraph and renders as line breaks around
 // the space. Strip only ordinary indentation lines in the legacy layout;
-// the leading-space pass below converts the preserved NBSP to an ordinary
-// parser-space without turning it into a paragraph break.
+// the leading-space pass below preserves an NBSP-only line so the parser can
+// emit that authored content instead of manufacturing a paragraph break.
 static WIKIDOT_WHITESPACE_ONLY_LINE: LazyLock<Replacer> =
     LazyLock::new(|| Replacer::RegexReplace {
         regex: RegexBuilder::new(r"^[ \t\r\n]+$")
@@ -444,7 +444,9 @@ fn wikidot_continued_div_opener(text: &str) -> bool {
     WIKIDOT_CONTINUED_DIV_OPENER.is_match(marker)
 }
 
-/// In-place replaces the leading non-standard spaces (such as nbsp) on each line with standard spaces
+/// In-place replaces leading non-standard spaces (such as nbsp) on content
+/// lines with standard spaces. A line containing only those spaces and ASCII
+/// indentation is authored Wikidot content and must retain its NBSP bytes.
 fn replace_leading_spaces(text: &mut String) {
     trace!("Replacing leading non-standard spaces with regular spaces");
 
@@ -464,7 +466,17 @@ fn replace_leading_spaces(text: &mut String) {
         let count = mtch.as_str().chars().count();
 
         buffer.push_str(&text[last_copied..mtch.start()]);
-        buffer.extend(std::iter::repeat_n(' ', count));
+        let line_suffix = text[mtch.end()..]
+            .split_once('\n')
+            .map_or(&text[mtch.end()..], |(line, _)| line);
+        if line_suffix
+            .chars()
+            .all(|character| matches!(character, ' ' | '\t' | '\r'))
+        {
+            buffer.push_str(mtch.as_str());
+        } else {
+            buffer.extend(std::iter::repeat_n(' ', count));
+        }
         last_copied = mtch.end();
     }
 
@@ -524,7 +536,7 @@ fn wikidot_preserves_nbsp_only_lines_inside_a_paragraph() {
 
     substitute_wikidot(&mut text);
 
-    assert_eq!(text, "Alpha\n \nBeta\n\nGamma");
+    assert_eq!(text, "Alpha\n\u{00a0}\nBeta\n\nGamma");
 }
 
 #[test]

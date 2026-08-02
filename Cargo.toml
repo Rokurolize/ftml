@@ -28,7 +28,7 @@ test-source-recorder = []
 
 [dependencies]
 cfg-if = "1"
-enum-map = "2"
+enum-map = "3"
 entities = "1"
 icu_calendar = "2.2"
 icu_decimal = "2.2"

@@ -43,15 +43,31 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "HTML doesn't allow score flag");
     assert_block_name(&BLOCK_HTML, name);
 
-    if !parser.settings().enable_html_blocks {
-        return Err(parser.make_err(ParseErrorKind::RuleFailed));
-    }
-
     if parser.settings().layout.legacy() && !parser.discarding_hidden_body() && in_head {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
+
     let (arguments, body_start) =
         parser.get_head_map_with_body_start(&BLOCK_HTML, in_head)?;
+    if !parser.settings().enable_html_blocks {
+        if parser.native_blockquote_depth().is_some() {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+        let source = parser.full_text().inner();
+        let owner_start = (name.as_ptr() as usize)
+            .checked_sub(source.as_ptr() as usize + 2)
+            .expect("parsed HTML block name follows its opener");
+        let _ = parser.get_body_text(&BLOCK_HTML)?;
+        let owner_end = parser.current().span.start;
+        let mut elements = literal_elements(&source[owner_start..owner_end]);
+        if source[..owner_start].ends_with('\n') {
+            if let Elements::Multiple(elements) = &mut elements {
+                elements.insert(0, Element::LineBreak);
+            }
+        }
+        return success_elements(elements);
+    }
+
     let body_content_start = parser.current().span.start;
     let html = parser.get_body_text(&BLOCK_HTML)?;
     let stored_html = if parser.settings().layout.legacy() {
@@ -84,6 +100,26 @@ fn parse_fn<'r, 't>(
     };
     parser.push_html_block(stored_html);
     ok!(parser.settings().layout.legacy(); element)
+}
+
+fn literal_elements<'t>(source: &'t str) -> Elements<'t> {
+    let mut elements = Vec::new();
+    for chunk in source.split_inclusive('\n') {
+        let has_newline = chunk.ends_with('\n');
+        let line = chunk;
+        let line = line.strip_suffix('\n').unwrap_or(line);
+        let line = line.strip_suffix('\r').unwrap_or(line);
+        if !line.is_empty() {
+            elements.push(text!(line));
+        }
+        if has_newline {
+            elements.push(Element::LineBreak);
+        }
+    }
+    if elements.is_empty() {
+        elements.push(text!(source));
+    }
+    Elements::Multiple(elements)
 }
 
 #[cfg(test)]
@@ -227,6 +263,32 @@ mod tests {
             assert!(tree.html_blocks.is_empty(), "{source:?}: {tree:#?}");
             assert_eq!(html, expected, "{source:?}");
         }
+    }
+
+    #[test]
+    fn disabled_wikidot_html_blocks_keep_nested_modules_literal() {
+        let page_info = PageInfo::dummy();
+        let mut settings =
+            WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        settings.enable_html_blocks = false;
+        let source = concat!(
+            "[[html]]\n",
+            "[[module ListPages]]\n",
+            "%%title%%\n",
+            "[[/module]]\n",
+            "[[/html]]",
+        );
+        let tokenization = crate::tokenize(source);
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &page_info, &settings)
+            .body;
+
+        assert!(tree.html_blocks.is_empty(), "{tree:#?}");
+        assert_eq!(
+            html,
+            "<p>[[html]]<br>\n[[module ListPages]]<br>\n%%title%%<br>\n[[/module]]<br>\n[[/html]]</p>",
+        );
     }
 
     #[test]

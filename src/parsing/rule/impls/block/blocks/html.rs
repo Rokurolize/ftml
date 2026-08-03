@@ -60,10 +60,10 @@ fn parse_fn<'r, 't>(
         let _ = parser.get_body_text(&BLOCK_HTML)?;
         let owner_end = parser.current().span.start;
         let mut elements = literal_elements(&source[owner_start..owner_end]);
-        if source[..owner_start].ends_with('\n') {
-            if let Elements::Multiple(elements) = &mut elements {
-                elements.insert(0, Element::LineBreak);
-            }
+        if source[..owner_start].ends_with('\n')
+            && let Elements::Multiple(elements) = &mut elements
+        {
+            elements.insert(0, Element::LineBreak);
         }
         return success_elements(elements);
     }

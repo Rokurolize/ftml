@@ -88,7 +88,12 @@ fn block_skip<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
 }
 
 fn block_rule_enabled(parser: &Parser<'_, '_>, block_rule: &BlockRule) -> bool {
-    block_rule.name != BLOCK_HTML.name || parser.settings().enable_html_blocks
+    // Preview callers disable hosted HTML execution, but the block still owns
+    // its complete body so nested module syntax remains literal as Wikidot
+    // renders it. `BLOCK_HTML::parse_fn` performs the escaped-literal branch.
+    block_rule.name != BLOCK_HTML.name
+        || parser.settings().enable_html_blocks
+        || parser.settings().layout.legacy()
 }
 
 // Block parsing implementation

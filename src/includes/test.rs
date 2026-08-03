@@ -54,6 +54,22 @@ fn multiline_self_referencing_argument_uses_later_fallback() {
 }
 
 #[test]
+fn self_referential_argument_prefix_is_not_reexpanded() {
+    let source = "[[include component:earthworm | class=earthworm--anth24 {$class}]]";
+    let (include, end) =
+        super::parse::parse_include_block(source, 0).expect("valid include");
+
+    assert_eq!(end, source.len());
+    assert_eq!(
+        include
+            .variables()
+            .get("class")
+            .map(|value| value.trim_end()),
+        Some("earthworm--anth24 {$class}"),
+    );
+}
+
+#[test]
 fn includes() {
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
 

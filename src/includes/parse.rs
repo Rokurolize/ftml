@@ -159,12 +159,27 @@ fn resolve_include_arguments(
             if argument.spaced_empty_value {
                 continue;
             }
-            let key = expand_argument_expression(argument.key, &arguments, round_limit);
+            let key =
+                expand_argument_expression(argument.key, &arguments, round_limit, None);
             if !is_static_identifier(&key) {
                 continue;
             }
-            let value =
-                expand_argument_expression(argument.value, &arguments, round_limit);
+            let self_reference = format!("{{${key}}}");
+            let blocked_name = argument
+                .value
+                .contains(&self_reference)
+                .then_some(key.as_str())
+                .filter(|_| {
+                    arguments
+                        .get(&key)
+                        .is_some_and(|value| value.contains(&self_reference))
+                });
+            let value = expand_argument_expression(
+                argument.value,
+                &arguments,
+                round_limit,
+                blocked_name,
+            );
             let fallback_reference = value.trim_end_matches([' ', '\t', '\r', '\n']);
             if fallback_reference == format!("{{${key}}}") {
                 continue;
@@ -187,11 +202,15 @@ fn expand_argument_expression(
     expression: &str,
     arguments: &HashMap<String, String>,
     round_limit: usize,
+    blocked_name: Option<&str>,
 ) -> String {
     let mut output = expression.to_owned();
     for _ in 0..round_limit {
         let expanded = VARIABLE_REGEX
             .replace_all(&output, |capture: &regex::Captures<'_>| {
+                if blocked_name.is_some_and(|name| name == &capture["name"]) {
+                    return capture[0].to_owned();
+                }
                 arguments
                     .get(&capture["name"])
                     .map(|value| {

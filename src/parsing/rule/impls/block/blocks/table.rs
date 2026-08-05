@@ -552,6 +552,32 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_quoted_simple_table_keeps_adjacent_rows_in_one_table() {
+        // Live full-page oracle: sandbox-oracle-20260805-p5-r2,
+        // frozen-captures.json (SHA-256
+        // 3d175d8ea69434a214c252954be8fc65e80632973dba3668e528bd2801d2765f).
+        let source = concat!(
+            "> Quote lead\n",
+            ">\n",
+            "> ||~ H || V ||\n",
+            "> || A || //B// ||\n",
+            ">\n",
+            "> trailing quote\n",
+            "\n",
+            "Intro [[footnote]]note[[/footnote]] tail.",
+        );
+
+        let html = render(source);
+
+        assert_eq!(
+            html.matches("<table class=\"wiki-content-table\">").count(),
+            1,
+            "{html}"
+        );
+        assert_eq!(html.matches("<tr>").count(), 2, "{html}");
+    }
+
+    #[test]
     fn advanced_header_cell_accepts_wikidot_cell_closer() {
         with_parse(
             "[[table]][[row]][[hcell]]Heading[[/cell]][[/row]][[/table]]",

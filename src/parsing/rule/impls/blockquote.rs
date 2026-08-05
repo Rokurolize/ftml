@@ -391,6 +391,7 @@ fn push_native_quote_row<'t>(
     if row.empty_spaced {
         stack.pop_line_break();
         stack.end_paragraph();
+        stack.mark_wikidot_simple_table_boundary();
         return;
     }
     let alignment_block = row.elements.iter().any(|element| {
@@ -427,8 +428,17 @@ fn push_native_quote_row<'t>(
         .iter()
         .any(collapsible_has_direct_literal_nested_opener)
         || (wikidot && alignment_block);
+    let has_simple_table = row.elements.iter().any(|element| {
+        matches!(
+            element,
+            Element::Table(table) if table.table_type == crate::tree::TableType::Simple
+        )
+    });
     for element in row.elements {
         stack.push_element(element, row.paragraph_safe);
+    }
+    if has_simple_table {
+        stack.merge_wikidot_adjacent_simple_tables();
     }
     if leaves_following_content_unwrapped {
         stack.mark_next_unwrapped();
@@ -534,6 +544,42 @@ mod tests {
 
         assert!(errors.is_empty(), "{errors:#?}");
         assert!(html.trim().is_empty(), "{html}");
+    }
+
+    #[test]
+    fn native_quote_simple_tables_join_across_unspaced_empty_row() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = concat!("> ||~ H || V ||\n", ">\n", "> || A || B ||",);
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html.matches("<table class=\"wiki-content-table\">").count(),
+            1,
+            "{html}"
+        );
+        assert_eq!(html.matches("<tr>").count(), 2, "{html}");
+    }
+
+    #[test]
+    fn native_quote_simple_tables_stay_separate_after_spaced_empty_row() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = concat!("> ||~ H || V ||\n", "> \n", "> || A || B ||",);
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html.matches("<table class=\"wiki-content-table\">").count(),
+            2,
+            "{html}"
+        );
+        assert_eq!(html.matches("<tr>").count(), 2, "{html}");
     }
 
     #[test]

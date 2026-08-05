@@ -72,6 +72,7 @@ pub struct ParagraphStack<'t> {
     wikidot_literal_div_line: bool,
     trim_unwrapped_trailing_line_break: bool,
     suppress_next_line_break: bool,
+    wikidot_simple_table_boundary: bool,
 
     /// Previous elements created, to be outputted in the final [`SyntaxTree`].
     finished: Vec<Element<'t>>,
@@ -178,6 +179,47 @@ impl<'t> ParagraphStack<'t> {
     pub(crate) fn mark_wikidot_literal_iftags_line(&mut self) {
         if self.wikidot {
             self.wikidot_literal_iftags_line = true;
+        }
+    }
+
+    /// Preserve the paragraph boundary represented by a spaced empty native
+    /// quote row. Wikidot keeps this row invisible, but it still prevents
+    /// adjacent quoted simple-table rows from joining into one table.
+    pub(crate) fn mark_wikidot_simple_table_boundary(&mut self) {
+        if self.wikidot {
+            self.wikidot_simple_table_boundary = true;
+        }
+    }
+
+    /// Merge simple tables split by native quote physical lines.
+    ///
+    /// The simple-table rule consumes one physical line at a time while a
+    /// native quote is being assembled. Wikidot joins those rows when the
+    /// intervening empty quote marker is unspaced. This helper is deliberately
+    /// opt-in from native-quote assembly so ordinary page-level table
+    /// boundaries keep their existing semantics.
+    pub(crate) fn merge_wikidot_adjacent_simple_tables(&mut self) {
+        if !self.wikidot || self.wikidot_simple_table_boundary {
+            self.wikidot_simple_table_boundary = false;
+            return;
+        }
+
+        let mut current = match self.finished.pop() {
+            Some(Element::Table(table)) => table,
+            Some(other) => {
+                self.finished.push(other);
+                return;
+            }
+            None => return,
+        };
+
+        if let Some(Element::Table(previous)) = self.finished.last_mut()
+            && previous.table_type == TableType::Simple
+            && current.table_type == TableType::Simple
+        {
+            previous.rows.append(&mut current.rows);
+        } else {
+            self.finished.push(Element::Table(current));
         }
     }
 

@@ -54,8 +54,11 @@ fn parse_fn<'r, 't>(
             return Err(parser.make_err(ParseErrorKind::RuleFailed));
         }
         let source = parser.full_text().inner();
-        let owner_start = (name.as_ptr() as usize)
-            .checked_sub(source.as_ptr() as usize + 2)
+        let name_start = (name.as_ptr() as usize)
+            .checked_sub(source.as_ptr() as usize)
+            .expect("parsed HTML block name belongs to the source");
+        let owner_start = source[..name_start]
+            .rfind("[[")
             .expect("parsed HTML block name follows its opener");
         let _ = parser.get_body_text(&BLOCK_HTML)?;
         let owner_end = parser.current().span.start;
@@ -263,6 +266,25 @@ mod tests {
             assert!(tree.html_blocks.is_empty(), "{source:?}: {tree:#?}");
             assert_eq!(html, expected, "{source:?}");
         }
+    }
+
+    #[test]
+    fn disabled_wikidot_html_block_with_unicode_spacing_remains_literal() {
+        let page_info = PageInfo::dummy();
+        let mut settings =
+            WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        settings.enable_html_blocks = false;
+        let source = "[[\u{2003}html]]x[[/html]]";
+        let tokenization = crate::tokenize(source);
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(tree.html_blocks.is_empty(), "{tree:#?}");
+        assert_eq!(
+            crate::render::html::HtmlRender
+                .render(&tree, &page_info, &settings)
+                .body,
+            format!("<p>{source}</p>"),
+        );
     }
 
     #[test]

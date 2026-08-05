@@ -31,6 +31,7 @@ const MAX_CACHED_STYLE_BYTES: usize = 64 * 1024;
 struct StyleCacheKey {
     input_css: String,
     minify: bool,
+    render_site: String,
 }
 
 thread_local! {
@@ -40,12 +41,14 @@ thread_local! {
 
 pub fn render_style(ctx: &mut HtmlContext, input_css: &str) {
     let minify = ctx.settings().minify_css;
-    if let Some(output_css) = cached_style_css(input_css, minify) {
+    if let Some(output_css) =
+        cached_style_css(input_css, minify, ctx.info().site.as_ref())
+    {
         ctx.add_style(output_css);
     }
 }
 
-fn cached_style_css(input_css: &str, minify: bool) -> Option<String> {
+fn cached_style_css(input_css: &str, minify: bool, render_site: &str) -> Option<String> {
     if input_css.len() > MAX_CACHED_STYLE_BYTES {
         return render_uncached_style_css(input_css, minify);
     }
@@ -53,6 +56,7 @@ fn cached_style_css(input_css: &str, minify: bool) -> Option<String> {
     let key = StyleCacheKey {
         input_css: input_css.to_owned(),
         minify,
+        render_site: render_site.to_owned(),
     };
 
     if let Some(output_css) =
@@ -148,6 +152,12 @@ fn style_css_cache_len() -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{Element, SyntaxTree};
 
     #[test]
     fn style_css_helper_covers_printer_success_and_error_paths() {
@@ -182,17 +192,17 @@ mod tests {
 
         let input = "body { color: red; }";
         assert_eq!(
-            cached_style_css(input, true).as_deref(),
+            cached_style_css(input, true, "test-site").as_deref(),
             Some("body{color:red}")
         );
         assert_eq!(style_css_cache_len(), 1);
         assert_eq!(
-            cached_style_css(input, true).as_deref(),
+            cached_style_css(input, true, "test-site").as_deref(),
             Some("body{color:red}")
         );
         assert_eq!(style_css_cache_len(), 1);
         assert!(
-            cached_style_css(input, false)
+            cached_style_css(input, false, "test-site")
                 .as_deref()
                 .is_some_and(|css| css.contains("color: red"))
         );
@@ -200,9 +210,30 @@ mod tests {
 
         let large_input =
             format!("/* {} */ body {{ color: red; }}", "x".repeat(64 * 1024));
-        assert!(cached_style_css(&large_input, true).is_some());
+        assert!(cached_style_css(&large_input, true, "test-site").is_some());
         assert_eq!(style_css_cache_len(), 2);
 
+        clear_style_css_cache();
+    }
+
+    #[test]
+    fn style_css_cache_separates_rendering_sites() {
+        clear_style_css_cache();
+
+        let tree = SyntaxTree {
+            elements: vec![Element::Style(cow!("body { color: red; }"))],
+            ..SyntaxTree::default()
+        };
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut first_page = PageInfo::dummy();
+        first_page.site = cow!("site-a");
+        let mut second_page = PageInfo::dummy();
+        second_page.site = cow!("site-b");
+
+        HtmlRender.render(&tree, &first_page, &settings);
+        HtmlRender.render(&tree, &second_page, &settings);
+
+        assert_eq!(style_css_cache_len(), 2);
         clear_style_css_cache();
     }
 
@@ -212,11 +243,11 @@ mod tests {
 
         for index in 0..MAX_CACHED_STYLE_ENTRIES {
             let input = format!(".rule-{index} {{ color: blue; }}");
-            assert!(cached_style_css(&input, true).is_some());
+            assert!(cached_style_css(&input, true, "test-site").is_some());
         }
         assert_eq!(style_css_cache_len(), MAX_CACHED_STYLE_ENTRIES);
 
-        assert!(cached_style_css("body { color: green; }", true).is_some());
+        assert!(cached_style_css("body { color: green; }", true, "test-site").is_some());
         assert_eq!(style_css_cache_len(), 1);
 
         clear_style_css_cache();

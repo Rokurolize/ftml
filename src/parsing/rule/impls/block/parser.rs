@@ -1480,10 +1480,11 @@ mod tests {
     fn two_block_end_scan_reuses_cached_suffix_outcomes() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let input = format!("{}[[/iftags]]", "body ".repeat(256));
+        let input =
+            format!("{}hidden\n[[/iftags]]", "[[iftags +missing]]\n".repeat(256),);
         let tokenization = crate::tokenize(&input);
         let mut parser = Parser::new(&tokenization, &page_info, &settings);
-        parser.step().expect("body should follow input start");
+        parser.step().expect("the first nested opener should exist");
 
         assert!(!parser.has_two_body_end_blocks(&BLOCK_IFTAGS));
         let first_scan_visits = parser.block_end_scan_token_visits();

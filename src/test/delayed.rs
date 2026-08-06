@@ -791,13 +791,17 @@ fn empty_generated_tag_links_remove_their_empty_list_mode_paragraph() {
 }
 
 #[test]
-fn delayed_image_attributes_preserve_authored_link_and_suffix() {
-    let linked =
-        render_tag(r#"[[image x.png alt="%%tags_linked%%" link="https://example.com"]]"#);
+fn delayed_image_attributes_preserve_authored_internal_link_and_suffix() {
+    let linked = render_tag(r#"[[image x.png alt="%%tags_linked%%" link="SCP-002"]]"#);
     assert!(
-        linked.contains(r#"<a href="https://example.com"><img "#),
+        linked.contains(r#"<a href="/SCP-002"><img "#),
         "authored image link must survive delayed alt binding: {linked}",
     );
+
+    let external =
+        render_tag(r#"[[image x.png alt="%%tags_linked%%" link="https://example.com"]]"#);
+    assert!(!external.contains("<img"), "{external}");
+    assert!(external.contains("[[image x.png"), "{external}");
 
     let suffixed = render_tag(r#"[[image x.png alt="%%tags_linked%% suffix"]]"#);
     assert!(

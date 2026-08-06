@@ -269,21 +269,66 @@ mod tests {
     }
 
     #[test]
-    fn disabled_wikidot_html_block_with_unicode_spacing_remains_literal() {
+    fn disabled_wikidot_html_blocks_with_unicode_spacing_remain_literal() {
         let page_info = PageInfo::dummy();
         let mut settings =
             WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         settings.enable_html_blocks = false;
-        let source = "[[\u{2003}html]]x[[/html]]";
+
+        for spacing in ["\u{a0}", "\u{2003}", "\u{3000}", "\u{a0}\u{2003}\u{3000}"] {
+            let source = format!("[[{spacing}html]]x[[/html]]");
+            let tokenization = crate::tokenize(&source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+
+            assert!(tree.html_blocks.is_empty(), "{source:?}: {tree:#?}");
+            assert!(
+                errors.iter().all(|error| error.rule() != BLOCK_HTML.name),
+                "{source:?}: {errors:#?}",
+            );
+            assert_eq!(
+                crate::render::html::HtmlRender
+                    .render(&tree, &page_info, &settings)
+                    .body,
+                format!("<p>{source}</p>"),
+                "{source:?}",
+            );
+        }
+    }
+
+    #[test]
+    fn disabled_unicode_spaced_html_blocks_keep_crlf_and_later_blocks_independent() {
+        let page_info = PageInfo::dummy();
+        let mut settings =
+            WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        settings.enable_html_blocks = false;
+        let source = concat!(
+            "prefix [[ unrelated\r\n",
+            "[[\u{2003}html]]\r\n",
+            "<b>X</b>\r\n",
+            "[[/html]]\r\n",
+            "[[div class=\"later\"]]\r\n",
+            "Y\r\n",
+            "[[/div]]",
+        );
         let tokenization = crate::tokenize(source);
-        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &page_info, &settings)
+            .body;
 
         assert!(tree.html_blocks.is_empty(), "{tree:#?}");
-        assert_eq!(
-            crate::render::html::HtmlRender
-                .render(&tree, &page_info, &settings)
-                .body,
-            format!("<p>{source}</p>"),
+        assert!(
+            errors.iter().all(|error| error.rule() != BLOCK_HTML.name),
+            "{errors:#?}",
+        );
+        assert!(
+            html.contains("[[\u{2003}html]]<br>\n&lt;b&gt;X&lt;/b&gt;<br>\n[[/html]]"),
+            "{html}",
+        );
+        assert!(
+            html.contains(r#"<div class="later"><p>Y</p></div>"#),
+            "{html}",
         );
     }
 

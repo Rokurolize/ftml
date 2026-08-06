@@ -604,37 +604,82 @@ fn bibliography_definition_values_bind_before_rendering() {
 }
 
 #[test]
-fn adjacent_text_segments_do_not_create_synthetic_token_boundaries() {
+fn adjacent_authored_text_segments_do_not_create_synthetic_token_boundaries() {
     let source = "**bold** %%title_linked%%";
     let marker_start = source.find("%%title_linked%%").expect("fixture marker");
     let marker_end = source.len();
 
-    for second_origin in [TextOrigin::Authored, TextOrigin::RuntimeScalar] {
-        let input = DelayedInput::new(
-            source,
-            vec![
-                InputSegment::text(0..1, TextOrigin::Authored),
-                InputSegment::text(1..marker_start, second_origin),
-                InputSegment::generated(GeneratedInput {
-                    source_range: marker_start..marker_end,
-                    id: SlotId::new(1),
-                    kind: GeneratedKind::PageLink,
-                    occurrence: 0,
-                }),
-            ],
-        )
-        .expect("adjacent text remains a valid provenance split");
+    let input = DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..1, TextOrigin::Authored),
+            InputSegment::text(1..marker_start, TextOrigin::Authored),
+            InputSegment::generated(GeneratedInput {
+                source_range: marker_start..marker_end,
+                id: SlotId::new(1),
+                kind: GeneratedKind::PageLink,
+                occurrence: 0,
+            }),
+        ],
+    )
+    .expect("adjacent authored text remains a valid provenance split");
 
-        assert_eq!(
-            render_input(&input),
-            concat!(
-                "<p><strong>bold</strong> ",
-                "<a href=\"/component:image-block\">Standard Image Block</a>",
-                "</p>",
-            ),
-            "text provenance must not alter syntax: {second_origin:?}",
-        );
-    }
+    assert_eq!(
+        render_input(&input),
+        concat!(
+            "<p><strong>bold</strong> ",
+            "<a href=\"/component:image-block\">Standard Image Block</a>",
+            "</p>",
+        ),
+    );
+}
+
+#[test]
+fn runtime_scalar_text_renders_without_markup_activation() {
+    let source = "**bold** [[html]]X[[/html]] https://tracker.example/";
+    let input = DelayedInput::new(
+        source,
+        vec![InputSegment::text(
+            0..source.len(),
+            TextOrigin::RuntimeScalar,
+        )],
+    )
+    .expect("runtime scalar input is valid");
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::List, Layout::Wikidot);
+    let delayed = parse_delayed_list(&input, &page_info, &settings)
+        .expect("runtime scalar text is supported");
+    let bound = delayed
+        .bind(&SlotBindings::empty())
+        .expect("runtime scalar text has no generated bindings");
+    let html = bound.render_html(&page_info, &settings);
+
+    assert_eq!(
+        html.body(),
+        "<p>**bold** [[html]]X[[/html]] https://tracker.example/</p>",
+    );
+    assert!(html.html_blocks().is_empty());
+    assert!(!html.body().contains("<strong>"));
+    assert!(!html.body().contains("<a "));
+}
+
+#[test]
+fn runtime_scalar_text_does_not_complete_authored_delimiters() {
+    let source = "**injected**";
+    let input = DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..1, TextOrigin::Authored),
+            InputSegment::text(1..source.len() - 1, TextOrigin::RuntimeScalar),
+            InputSegment::text(source.len() - 1..source.len(), TextOrigin::Authored),
+        ],
+    )
+    .expect("mixed provenance input is valid");
+
+    assert_eq!(
+        render_input_with_bindings(&input, &SlotBindings::empty()),
+        "<p>**injected**</p>",
+    );
 }
 
 #[test]
@@ -748,6 +793,30 @@ fn delayed_raw_decodes_entities_and_div_shell_keeps_the_parsed_opener() {
         div.contains(r#"[[div title=&quot;[[probe&quot;]]"#),
         "delayed div shell must start at its parsed opener: {div}",
     );
+
+    for source in [
+        "[[ raw]]%%title_linked%%[[/raw]]",
+        "[[\u{2003}raw]]%%title_linked%%[[/raw]]",
+    ] {
+        let html = render(source);
+        let opener = source.split("%%title_linked%%").next().unwrap();
+        assert!(
+            html.contains(opener),
+            "delayed raw shell must preserve the complete opener {opener:?}: {html}",
+        );
+    }
+
+    for source in [
+        "[[   div]]%%title_linked%%[[/div]]",
+        "[[\u{2003}div]]%%title_linked%%[[/div]]",
+    ] {
+        let html = render(source);
+        let opener = source.split("%%title_linked%%").next().unwrap();
+        assert!(
+            html.contains(opener),
+            "delayed div shell must preserve the complete opener {opener:?}: {html}",
+        );
+    }
 }
 
 #[test]

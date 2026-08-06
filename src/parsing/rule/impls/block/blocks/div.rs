@@ -93,8 +93,11 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Div doesn't allow star flag");
     assert_block_name(&BLOCK_DIV, name);
     let source = parser.full_text().inner();
-    let owner_start = (name.as_ptr() as usize)
-        .checked_sub(source.as_ptr() as usize + 2)
+    let name_start = (name.as_ptr() as usize)
+        .checked_sub(source.as_ptr() as usize)
+        .expect("parsed div name belongs to the source");
+    let owner_start = source[..name_start]
+        .rfind("[[")
         .expect("parsed div name follows its opener");
 
     let head = parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;

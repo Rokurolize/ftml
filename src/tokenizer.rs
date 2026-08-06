@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use crate::delayed::{GeneratedInput, GeneratedKind, InputSegment};
+use crate::delayed::{GeneratedInput, GeneratedKind, InputSegment, TextOrigin};
 use crate::parsing::{ExtractedToken, Token};
 use crate::text::FullText;
 use std::collections::BTreeMap;
@@ -100,34 +100,52 @@ pub(crate) fn tokenize_delayed_segments<'t>(
     let mut segment_index = 0;
     while let Some(segment) = segments.get(segment_index) {
         match segment {
-            InputSegment::Text { source_range, .. } => {
+            InputSegment::Text {
+                source_range,
+                origin,
+            } => {
                 let start = source_range.start;
                 let mut end = source_range.end;
                 while let Some(InputSegment::Text {
                     source_range: next_range,
-                    ..
+                    origin: next_origin,
                 }) = segments.get(segment_index + 1)
                 {
-                    // Input validation guarantees contiguity. Text origins are
-                    // retained in DelayedInput; both origins are syntax-bearing,
-                    // so provenance boundaries must not become lexer boundaries.
+                    if next_origin != origin {
+                        break;
+                    }
                     debug_assert_eq!(end, next_range.start);
                     end = next_range.end;
                     segment_index += 1;
                 }
                 let segment_text = &text[start..end];
-                tokens.extend(
-                    Token::extract_all(segment_text)
-                        .into_iter()
-                        .filter(|token| {
-                            !matches!(token.token, Token::InputStart | Token::InputEnd)
-                        })
-                        .map(|mut token| {
-                            token.span.start += start;
-                            token.span.end += start;
-                            token
-                        }),
-                );
+                match origin {
+                    TextOrigin::Authored => {
+                        tokens.extend(
+                            Token::extract_all(segment_text)
+                                .into_iter()
+                                .filter(|token| {
+                                    !matches!(
+                                        token.token,
+                                        Token::InputStart | Token::InputEnd
+                                    )
+                                })
+                                .map(|mut token| {
+                                    token.span.start += start;
+                                    token.span.end += start;
+                                    token
+                                }),
+                        );
+                    }
+                    TextOrigin::RuntimeScalar if !segment_text.is_empty() => {
+                        tokens.push(ExtractedToken {
+                            token: Token::RuntimeText,
+                            slice: segment_text,
+                            span: start..end,
+                        });
+                    }
+                    TextOrigin::RuntimeScalar => {}
+                }
             }
             InputSegment::Generated(generated) => {
                 let start = generated.source_range.start;

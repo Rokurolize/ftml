@@ -84,6 +84,7 @@ pub(crate) enum QuoteScanOutcome {
 
 type QuoteScanKey = (&'static str, usize, bool, usize);
 type BlockEndScanKey = (&'static str, usize, bool);
+type LostOwnerScanKey = (&'static str, usize, usize);
 
 fn token_starts_line(token: Token) -> bool {
     token == Token::InputStart
@@ -165,12 +166,17 @@ pub struct Parser<'r, 't> {
     // needs a separate cache because a successful one-close scan does not say
     // whether a second close exists in the same suffix.
     two_block_end_scan_cache: Rc<RefCell<BTreeMap<BlockEndScanKey, u8>>>,
+    // Lost-owner parsing is speculative. Cache its immutable close lookahead so
+    // malformed openers cannot repeatedly scan the same source suffix.
+    lost_owner_scan_cache: Rc<RefCell<BTreeMap<LostOwnerScanKey, bool>>>,
     #[cfg(test)]
     quote_scan_token_visits: Rc<Cell<usize>>,
     #[cfg(test)]
     underline_fast_path_visits: Rc<Cell<usize>>,
     #[cfg(test)]
     block_end_scan_token_visits: Rc<Cell<usize>>,
+    #[cfg(test)]
+    lost_owner_scan_token_visits: Rc<Cell<usize>>,
 
     // Flags
     accepts_partial: AcceptsPartial,
@@ -232,12 +238,15 @@ impl<'r, 't> Parser<'r, 't> {
             quote_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
             block_end_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
             two_block_end_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
+            lost_owner_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
             #[cfg(test)]
             quote_scan_token_visits: Rc::new(Cell::new(0)),
             #[cfg(test)]
             underline_fast_path_visits: Rc::new(Cell::new(0)),
             #[cfg(test)]
             block_end_scan_token_visits: Rc::new(Cell::new(0)),
+            #[cfg(test)]
+            lost_owner_scan_token_visits: Rc::new(Cell::new(0)),
             accepts_partial: AcceptsPartial::None,
             in_footnote: false,
             has_footnote_block: false,
@@ -559,6 +568,34 @@ impl<'r, 't> Parser<'r, 't> {
                 total_matches.saturating_sub(preceding_matches).min(2),
             );
         }
+    }
+
+    pub(crate) fn lost_owner_scan_outcome(&self, key: LostOwnerScanKey) -> Option<bool> {
+        self.lost_owner_scan_cache.borrow().get(&key).copied()
+    }
+
+    pub(crate) fn cache_lost_owner_scan_outcomes(
+        &self,
+        close_name: &'static str,
+        owner: usize,
+        token_starts: &[usize],
+        outcome: bool,
+    ) {
+        let mut cache = self.lost_owner_scan_cache.borrow_mut();
+        for &token_start in token_starts {
+            cache.insert((close_name, owner, token_start), outcome);
+        }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn lost_owner_scan_token_visits(&self) -> usize {
+        self.lost_owner_scan_token_visits.get()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn increment_lost_owner_scan_token_visits(&self) {
+        self.lost_owner_scan_token_visits
+            .set(self.lost_owner_scan_token_visits.get() + 1);
     }
 
     #[cfg(test)]

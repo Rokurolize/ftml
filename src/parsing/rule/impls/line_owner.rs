@@ -171,6 +171,9 @@ where
     {
         return Ok(None);
     }
+    if !has_matching_close(parser, close_name, owner)? {
+        return Ok(None);
+    }
 
     let previous_depth = parser.native_blockquote_depth();
     let previous_cursor = parser.quote_body_cursor();
@@ -229,6 +232,54 @@ where
         errors,
         append_unquoted_close_break,
     }))
+}
+
+fn has_matching_close<'r, 't>(
+    parser: &Parser<'r, 't>,
+    close_name: &'static str,
+    owner: LineOwner,
+) -> Result<bool, ParseError>
+where
+    'r: 't,
+{
+    let owner_key = match owner {
+        LineOwner::Quote { depth } => depth << 2,
+        LineOwner::List {
+            ltype: ListType::Bullet,
+        } => 1,
+        LineOwner::List {
+            ltype: ListType::Numbered,
+        } => 2,
+        LineOwner::List {
+            ltype: ListType::Generic,
+        } => 3,
+    };
+    let mut scan = parser.clone();
+    let mut visited = Vec::new();
+    loop {
+        let token_start = scan.current().span.start;
+        if let Some(outcome) =
+            scan.lost_owner_scan_outcome((close_name, owner_key, token_start))
+        {
+            parser
+                .cache_lost_owner_scan_outcomes(close_name, owner_key, &visited, outcome);
+            return Ok(outcome);
+        }
+        visited.push(token_start);
+        #[cfg(test)]
+        parser.increment_lost_owner_scan_token_visits();
+
+        let mut ignored_break = false;
+        if consume_matching_close(&mut scan, close_name, owner, &mut ignored_break)? {
+            parser.cache_lost_owner_scan_outcomes(close_name, owner_key, &visited, true);
+            return Ok(true);
+        }
+        if scan.current().token == Token::InputEnd {
+            parser.cache_lost_owner_scan_outcomes(close_name, owner_key, &visited, false);
+            return Ok(false);
+        }
+        scan.step()?;
+    }
 }
 
 fn alignment_rule(name: &str) -> Option<(&'static BlockRule, Alignment, &'static str)> {
@@ -384,6 +435,40 @@ mod tests {
             "[[div]]\n> body\n> [[/div]]",
             LineOwner::Quote { depth: 1 },
             |lost| assert!(lost.is_none()),
+        );
+    }
+
+    #[test]
+    fn missing_lost_owner_closes_scan_each_token_once() {
+        let source = "[[div]]\nbody\n".repeat(256);
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().unwrap();
+
+        let mut openers = 0;
+        while parser.current().token != Token::InputEnd {
+            if parser.current().token == Token::LeftBlock {
+                assert!(
+                    try_consume_lost_owner_block(
+                        &mut parser,
+                        LineOwner::Quote { depth: 1 },
+                    )
+                    .unwrap()
+                    .is_none()
+                );
+                openers += 1;
+            }
+            parser.step().unwrap();
+        }
+
+        assert_eq!(openers, 256);
+        assert!(
+            parser.lost_owner_scan_token_visits() <= tokenization.tokens().len(),
+            "visited {} tokens for {} input tokens",
+            parser.lost_owner_scan_token_visits(),
+            tokenization.tokens().len(),
         );
     }
 }

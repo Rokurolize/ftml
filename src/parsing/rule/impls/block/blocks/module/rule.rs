@@ -87,7 +87,7 @@ fn wikidot_unknown_module_error<'t>(name: &'t str) -> Element<'t> {
     ));
     let documentation_link = Element::Link {
         ltype: LinkType::Direct,
-        link: LinkLocation::Url(cow!("http://www.wikidot.com/doc:modules")),
+        link: LinkLocation::Url(cow!("https://www.wikidot.com/doc:modules")),
         label: LinkLabel::Text(cow!("check available modules")),
         target: Some(AnchorTarget::NewTab),
     };
@@ -195,7 +195,7 @@ mod tests {
             HtmlRender.render(&tree, &page_info, &settings).body,
             concat!(
                 r#"<div class="error-block">[[module <em>NoSuchModuleWithThisName</em>]] No such module, please "#,
-                r#"<a href="http://www.wikidot.com/doc:modules" target="_blank">check available modules</a>"#,
+                r#"<a href="https://www.wikidot.com/doc:modules" target="_blank" rel="noopener noreferrer">check available modules</a>"#,
                 " and fix this page.</div>",
             ),
         );

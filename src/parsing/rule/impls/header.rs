@@ -106,6 +106,10 @@ fn try_consume_fn<'r, 't>(
     let (elements, mut all_errors, _) = success.into();
     let mut all_elements: Vec<_> = elements.into_iter().collect();
 
+    if parser.native_blockquote_depth().is_some() {
+        return ok!(false; all_elements, all_errors);
+    }
+
     loop {
         let parser_state = parser.get_mutable_state();
         let mut sub_parser = parser.clone_with_rule(RULE_HEADER);

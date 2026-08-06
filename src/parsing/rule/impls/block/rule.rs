@@ -21,6 +21,7 @@
 use super::super::prelude::*;
 use super::mapping::{get_block_rule_with_name, get_block_rule_with_name_for_layout};
 use super::{BlockRule, blocks::BLOCK_HTML};
+use crate::settings::WikitextMode;
 
 pub const RULE_BLOCK: Rule = Rule {
     name: "block",
@@ -106,6 +107,7 @@ where
     'r: 't,
 {
     let parent_rule = parser.rule();
+    let opener_start = parser.current().span.start;
 
     // Set general rule based on presence of star flag
     parser.set_rule(if flag_star {
@@ -137,6 +139,24 @@ where
         None => return Err(parser.make_err(ParseErrorKind::NoSuchBlock)),
     };
     if !block_rule_enabled(parser, block) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    if parser.settings().layout.legacy()
+        && !parser.discarding_hidden_body()
+        && !wikidot_block_has_physical_line_ownership(
+            parser,
+            parent_rule,
+            block,
+            opener_start,
+        )
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    if parser.settings().layout.legacy()
+        && !parser.discarding_hidden_body()
+        && parent_rule.name() == "list"
+        && matches!(block.name, "block-div" | "block-collapsible")
+    {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     if parser.settings().layout.legacy()
@@ -177,4 +197,41 @@ where
     // and terminating the block (the ']]' token),
     // then processing the body (if any) and tail block.
     (block.parse_fn)(parser, name, flag_star, flag_score, in_head)
+}
+
+fn wikidot_block_has_physical_line_ownership(
+    parser: &Parser<'_, '_>,
+    parent_rule: Rule,
+    block: &BlockRule,
+    opener_start: usize,
+) -> bool {
+    if parser.settings().mode == WikitextMode::List
+        || parser.in_native_blockquote_line()
+        || parser.in_footnote()
+        || parent_rule.name() == "block-footnote"
+    {
+        return true;
+    }
+
+    let needs_line_owner = matches!(
+        block.name,
+        "block-code" | "block-math" | "block-module" | "block-bibliography" | "block-toc"
+    );
+    if !needs_line_owner {
+        return true;
+    }
+
+    let source = parser.full_text().inner();
+    let line_start = source[..opener_start]
+        .rfind('\n')
+        .map_or(0, |index| index + 1);
+    let prefix = &source[line_start..opener_start];
+
+    if block.name == "block-module" {
+        prefix.is_empty()
+    } else {
+        prefix
+            .bytes()
+            .all(|byte| matches!(byte, b' ' | b'\t' | b'\0'))
+    }
 }

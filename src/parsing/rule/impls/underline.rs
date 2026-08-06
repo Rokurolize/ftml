@@ -79,4 +79,40 @@ mod tests {
             assert_eq!(html, expected, "{input:?}");
         }
     }
+
+    #[test]
+    fn wikidot_discards_long_underline_run_before_text() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut source = "__".repeat(4096);
+        source.push('x');
+        let tokenization = crate::tokenize(&source);
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert_eq!(html, "<p>x</p>");
+    }
+
+    #[test]
+    fn wikidot_short_underline_runs_keep_odd_even_semantics() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for marker_count in 1..=12 {
+            let source = format!("{}x", "__".repeat(marker_count));
+            let tokenization = crate::tokenize(&source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+            let expected = if marker_count % 2 == 0 {
+                "<p>x</p>"
+            } else {
+                "<p>__x</p>"
+            };
+
+            assert_eq!(html, expected, "{marker_count} underline tokens");
+            if marker_count % 2 == 0 {
+                assert!(errors.is_empty(), "{marker_count}: {errors:#?}");
+            }
+        }
+    }
 }

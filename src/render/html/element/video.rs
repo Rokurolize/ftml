@@ -143,21 +143,24 @@ fn video_renders_missing_when_local_paths_are_disabled() {
     let mut settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
     settings.allow_local_paths = false;
 
-    let tree = SyntaxTree {
-        elements: vec![Element::Video {
-            source: FileSource::File1 {
-                file: cow!("local.mp4"),
-            },
-            alignment: None,
-            attributes: AttributeMap::new(),
-        }],
-        ..SyntaxTree::default()
-    };
-
-    let output = HtmlRender.render(&tree, &page_info, &settings);
-
-    assert_eq!(
-        output.body,
-        r#"<div class="wj-error-block">No videos in this context</div>"#
-    );
+    for source in [
+        FileSource::File1 {
+            file: cow!("local.mp4"),
+        },
+        FileSource::Url(cow!("/local--files/private-page/secret.mp4")),
+    ] {
+        let tree = SyntaxTree {
+            elements: vec![Element::Video {
+                source,
+                alignment: None,
+                attributes: AttributeMap::new(),
+            }],
+            ..SyntaxTree::default()
+        };
+        let output = HtmlRender.render(&tree, &page_info, &settings);
+        assert_eq!(
+            output.body,
+            r#"<div class="wj-error-block">No videos in this context</div>"#,
+        );
+    }
 }

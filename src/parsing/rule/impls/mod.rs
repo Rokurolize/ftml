@@ -80,6 +80,7 @@ pub use self::bold::RULE_BOLD;
 pub use self::center::RULE_CENTER;
 pub use self::clear_float::RULE_CLEAR_FLOAT;
 pub use self::color::RULE_COLOR;
+pub(crate) use self::color::normalize_color;
 pub use self::comment::RULE_COMMENT;
 pub use self::dash::{RULE_DASH, RULE_DASH_RUN};
 pub use self::definition_list::{

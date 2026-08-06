@@ -95,7 +95,11 @@ fn try_consume_link<'r, 't>(
         ParseCondition::current(Token::ParagraphBreak),
         ParseCondition::current(Token::LineBreak),
     ];
-    let label = collect_text(parser, rule, &label_close, &label_invalid, None)?;
+    let label = if parser.settings().layout.legacy() {
+        collect_wikidot_label(parser)?
+    } else {
+        collect_text(parser, rule, &label_close, &label_invalid, None)?
+    };
 
     // Trim label
     let label = label.trim();
@@ -113,6 +117,39 @@ fn try_consume_link<'r, 't>(
 
     // Return result
     success_elements(element)
+}
+
+fn collect_wikidot_label<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<&'t str, ParseError>
+where
+    'r: 't,
+{
+    let start = parser.current().span.start;
+    loop {
+        match parser.current().token {
+            Token::RightBracket => {
+                let end = parser.current().span.start;
+                parser.step()?;
+                return Ok(&parser.full_text().inner()[start..end]);
+            }
+            Token::RightComment if parser.current().slice == "--]" => {
+                let end = parser.current().span.end - 1;
+                parser.step()?;
+                return Ok(&parser.full_text().inner()[start..end]);
+            }
+            Token::LineBreak | Token::ParagraphBreak => {
+                return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
+            Token::InputEnd => return Err(parser.make_err(ParseErrorKind::EndOfInput)),
+            Token::GeneratedPageLink | Token::GeneratedTagLinks => {
+                return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
+            _ => {
+                parser.step()?;
+            }
+        }
+    }
 }
 
 fn is_javascript_url(url: &str) -> bool {

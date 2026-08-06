@@ -247,7 +247,7 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_quoted_local_paths_remain_single_local_filenames() {
+    fn wikidot_structural_quoted_local_paths_remain_literal() {
         let mut page_info = PageInfo::dummy();
         page_info.site = cow!("sandbox-for-codex");
         page_info.page = cow!("");
@@ -260,15 +260,11 @@ mod tests {
             .render(&tree, &page_info, &settings)
             .body;
 
-        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(!errors.is_empty(), "{errors:#?}");
+        assert!(!format!("{tree:?}").contains("Image {"), "{tree:#?}");
         assert_eq!(
             html,
-            concat!(
-                "<a href=\"https://sandbox-for-codex.wjfiles.com/local--files//&quot;/local--files/source-page/image.png&quot;\">",
-                "<img src=\"https://sandbox-for-codex.wjfiles.com/local--resized-images//&quot;/local--files/source-page/image.png&quot;/medium.jpg\" ",
-                "alt=\"image.png&quot;\" class=\"image\">",
-                "</a>",
-            ),
+            r#"<p>[[image &quot;/local—files/source-page/image.png&quot;]]</p>"#,
         );
     }
 

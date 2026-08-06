@@ -41,6 +41,9 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Bibliography doesn't allow star flag");
     assert!(!flag_score, "Bibliography doesn't allow score flag");
     assert_block_name(&BLOCK_BIBLIOGRAPHY, name);
+    if parser.settings().layout.legacy() && name != "bibliography" {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     let mut arguments = parser.get_head_map_wikidot(&BLOCK_BIBLIOGRAPHY, in_head)?;
 

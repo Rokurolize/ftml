@@ -89,8 +89,11 @@ impl<'t> FileSource<'t> {
         if quoted_inner.is_some_and(is_url) {
             return Some(FileSource::Url(cow!(source)));
         }
-        if quoted_inner.is_some() {
+        if quoted_inner.is_some_and(is_safe_quoted_wikidot_filename) {
             return Some(FileSource::File1 { file: cow!(source) });
+        }
+        if quoted_inner.is_some() {
+            return None;
         }
         if is_url(source) || source.starts_with("/local--files/") {
             return Some(FileSource::Url(cow!(source)));
@@ -135,6 +138,23 @@ impl<'t> FileSource<'t> {
             },
         }
     }
+}
+
+fn is_safe_quoted_wikidot_filename(filename: &str) -> bool {
+    if filename.is_empty() || matches!(filename, "." | "..") {
+        return false;
+    }
+    if filename
+        .bytes()
+        .any(|byte| byte.is_ascii_control() || matches!(byte, b'/' | b'\\' | b'?' | b'#'))
+    {
+        return false;
+    }
+
+    let lowercase = filename.to_ascii_lowercase();
+    !["%2f", "%5c", "%3f", "%23", "%2e%2e", "%2e.", ".%2e", "%25"]
+        .iter()
+        .any(|syntax| lowercase.contains(syntax))
 }
 
 #[cfg(test)]
@@ -215,20 +235,27 @@ mod tests {
             );
         }
 
-        for source in [
-            r#""image.png""#,
-            "'image.png'",
-            "'Ranch_Hand'_run.jpg",
-            r#""/local--files/page/image.png""#,
-            "'/local--files/page/image.png'",
-            r#""page/image.png""#,
-            "'page/image.png'",
-        ] {
+        for source in [r#""image.png""#, "'image.png'", "'Ranch_Hand'_run.jpg"] {
             assert_eq!(
                 FileSource::parse_wikidot(source),
                 Some(FileSource::File1 { file: cow!(source) }),
                 "{source}",
             );
+        }
+    }
+
+    #[test]
+    fn wikidot_rejects_structural_quoted_local_paths() {
+        for source in [
+            r#""/local--files/page/image.png""#,
+            "'/local--files/page/image.png'",
+            r#""page/image.png""#,
+            "'../private/image.png?x'",
+            r#""%2e%2e%2fprivate%2fimage.png""#,
+            r#""double%252fencoded.png""#,
+            r#""fragment#image.png""#,
+        ] {
+            assert_eq!(FileSource::parse_wikidot(source), None, "{source}");
         }
     }
 }

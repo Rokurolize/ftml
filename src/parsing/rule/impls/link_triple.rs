@@ -182,7 +182,11 @@ fn build_separate<'r, 't>(
     } else {
         &native_label_invalid[..]
     };
-    let label = collect_text(parser, rule, &label_close, label_invalid, None)?;
+    let label = if legacy {
+        collect_wikidot_separate_label(parser)?
+    } else {
+        collect_text(parser, rule, &label_close, label_invalid, None)?
+    };
 
     // Trim label
     let label = label.trim();
@@ -220,6 +224,46 @@ fn build_separate<'r, 't>(
 
     // Return result
     success_elements(element)
+}
+
+fn collect_wikidot_separate_label<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<&'t str, ParseError>
+where
+    'r: 't,
+{
+    let start = parser.current().span.start;
+    loop {
+        match parser.next_two_tokens() {
+            (Token::RightLink, _) => {
+                let end = parser.current().span.start;
+                parser.step()?;
+                return Ok(&parser.full_text().inner()[start..end]);
+            }
+            (Token::RightComment, Some(Token::RightBlock))
+                if parser.current().slice == "--]" =>
+            {
+                let end = parser.current().span.end - 1;
+                parser.step()?;
+                parser.step()?;
+                return Ok(&parser.full_text().inner()[start..end]);
+            }
+            (Token::ParagraphBreak | Token::InputEnd, _) => {
+                let kind = if parser.current().token == Token::InputEnd {
+                    ParseErrorKind::EndOfInput
+                } else {
+                    ParseErrorKind::RuleFailed
+                };
+                return Err(parser.make_err(kind));
+            }
+            (Token::GeneratedPageLink | Token::GeneratedTagLinks, _) => {
+                return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
+            _ => {
+                parser.step()?;
+            }
+        }
+    }
 }
 
 fn wikidot_target(
@@ -424,7 +468,7 @@ mod wikidot_tests {
 
         assert!(
             html.contains(
-                r#"<a href="http://ja.scp-wiki.net/scp-040-jp" target="_blank">ねこでした。</a>"#,
+                r#"<a href="http://ja.scp-wiki.net/scp-040-jp" target="_blank" rel="noopener noreferrer">ねこでした。</a>"#,
             ),
             "{html}",
         );
@@ -450,7 +494,7 @@ mod wikidot_tests {
         );
         assert!(
             html.contains(concat!(
-                r#"<a href="http://sandbox-for-codex.wikidot.com/new-tab" target="_blank">"#,
+                r#"<a href="http://sandbox-for-codex.wikidot.com/new-tab" target="_blank" rel="noopener noreferrer">"#,
                 "http://sandbox-for-codex.wikidot.com/new-tab</a>",
             )),
             "{html}",

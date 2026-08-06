@@ -71,5 +71,6 @@ mod tests {
         assert_eq!(render_html("----   "), "<p>——</p>");
         assert_eq!(render_html("---- \nnext"), "<p>——<br>\nnext</p>");
         assert_eq!(render_html(" ----"), "<p>——</p>");
+        assert_eq!(render_html("alpha\n---- tail"), "<p>alpha<br>\n—— tail</p>",);
     }
 }

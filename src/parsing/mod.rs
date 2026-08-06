@@ -30,6 +30,7 @@ mod depth;
 mod element_condition;
 mod error;
 mod hidden_body;
+mod inline_format;
 mod inline_scope;
 mod outcome;
 mod paragraph;
@@ -189,6 +190,10 @@ where
             let mut elements = success.item;
             let errors = success.errors;
             if settings.layout.legacy() {
+                inline_format::normalize_wikidot_inline_formats(&mut elements);
+                for footnote in &mut footnotes {
+                    inline_format::normalize_wikidot_inline_formats(footnote);
+                }
                 inline_scope::lower_wikidot_inline_size_scopes(&mut elements);
                 for footnote in &mut footnotes {
                     inline_scope::lower_wikidot_inline_size_scopes_inline(footnote);

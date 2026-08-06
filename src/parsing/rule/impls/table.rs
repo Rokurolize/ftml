@@ -210,6 +210,9 @@ fn try_consume_fn<'r, 't>(
     let mut paragraph_break = false;
 
     loop {
+        if parser.native_blockquote_depth().is_some() && !rows.is_empty() {
+            return finish_simple_table(rows, errors);
+        }
         let mut cells = Vec::new();
 
         // Loop for each cell in the row

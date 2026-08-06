@@ -164,7 +164,9 @@ impl Test {
             let (wikidot_tree, _) =
                 crate::parse(&wikidot_tokens, &page_info, &settings).into();
             let actual_output = HtmlRender.render(&wikidot_tree, &page_info, &settings);
-            if &actual_output.body != expected_html {
+            let expected_html = harden_expected_new_tab_links(expected_html);
+            let expected_html = harden_expected_user_karma_urls(&expected_html);
+            if actual_output.body != expected_html {
                 result = TestResult::Fail;
                 eprintln!("Wikidot HTML did not match:");
                 eprintln!("Expected: {:?}", expected_html);
@@ -176,7 +178,8 @@ impl Test {
         if let Some(expected_html) = &self.html_output {
             let settings = settings!(Wikijump);
             let actual_output = HtmlRender.render(&tree, &page_info, &settings);
-            if &actual_output.body != expected_html {
+            let expected_html = harden_expected_new_tab_links(expected_html);
+            if actual_output.body != expected_html {
                 result = TestResult::Fail;
                 eprintln!("Wikijump HTML did not match:");
                 eprintln!("Expected: {:?}", expected_html);
@@ -321,6 +324,60 @@ fn test_applies(test_name: &str, patterns: &[&str]) -> bool {
     }
 
     false
+}
+
+fn harden_expected_new_tab_links(html: &str) -> Cow<'_, str> {
+    const TARGET: &str = r#"target="_blank""#;
+    const REL: &str = r#" rel="noopener noreferrer""#;
+
+    let Some(first) = html.find(TARGET) else {
+        return Cow::Borrowed(html);
+    };
+
+    let mut output = String::with_capacity(html.len() + REL.len());
+    output.push_str(&html[..first]);
+    let mut remaining = &html[first..];
+
+    while let Some(index) = remaining.find(TARGET) {
+        output.push_str(&remaining[..index + TARGET.len()]);
+        remaining = &remaining[index + TARGET.len()..];
+        if !remaining.starts_with(REL) {
+            output.push_str(REL);
+        }
+    }
+    output.push_str(remaining);
+    Cow::Owned(output)
+}
+
+#[test]
+fn ast_fixtures_require_new_tab_link_isolation() {
+    assert_eq!(
+        harden_expected_new_tab_links(
+            r#"<a target="_blank">A</a><a target="_blank" rel="noopener noreferrer">B</a>"#,
+        ),
+        r#"<a target="_blank" rel="noopener noreferrer">A</a><a target="_blank" rel="noopener noreferrer">B</a>"#,
+    );
+}
+
+fn harden_expected_user_karma_urls(html: &str) -> Cow<'_, str> {
+    const INSECURE: &str = "background-image:url(http://www.wikidot.com/userkarma.php";
+    const SECURE: &str = "background-image:url(https://www.wikidot.com/userkarma.php";
+
+    if html.contains(INSECURE) {
+        Cow::Owned(html.replace(INSECURE, SECURE))
+    } else {
+        Cow::Borrowed(html)
+    }
+}
+
+#[test]
+fn ast_fixtures_require_https_user_karma_images() {
+    assert_eq!(
+        harden_expected_user_karma_urls(
+            "background-image:url(http://www.wikidot.com/userkarma.php?u=42)",
+        ),
+        "background-image:url(https://www.wikidot.com/userkarma.php?u=42)",
+    );
 }
 
 fn json_writer<T, W>(object: &T, writer: W)

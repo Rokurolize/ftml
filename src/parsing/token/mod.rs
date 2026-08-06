@@ -163,6 +163,7 @@ pub enum Token {
     EscapedDoubleQuote,
     EscapedBackslash,
     DiscardedControl,
+    RuntimeText,
     GeneratedPageLink,
     GeneratedTagLinks,
 

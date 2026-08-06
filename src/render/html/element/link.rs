@@ -37,13 +37,15 @@ pub fn render_anchor(
         Some(target) => target.html_attr(),
         None => "",
     };
+    let opens_new_tab = target == Some(AnchorTarget::NewTab);
 
     ctx.html()
         .a()
         .attr(attr!(
             "class" => "wj-anchor"; if layout == Layout::Wikijump,
             "href" => ""; if layout == Layout::Wikidot && !attributes.get().contains_key("href"),
-            "target" => target_value; if target.is_some();;
+            "target" => target_value; if target.is_some(),
+            "rel" => "noopener noreferrer"; if opens_new_tab;;
             attributes,
         ))
         .contents(elements);
@@ -86,6 +88,7 @@ pub fn render_link(
         Some(target) => target.html_attr(),
         None => "",
     };
+    let opens_new_tab = target == Some(AnchorTarget::NewTab);
 
     macro_rules! write_a {
         ($attr:expr) => {{
@@ -104,6 +107,7 @@ pub fn render_link(
                 write_a!(attr!(
                     "href" => &url,
                     "target" => target_value; if target.is_some(),
+                    "rel" => "noopener noreferrer"; if opens_new_tab,
                 ));
             }
             LinkLocation::Page(page) => {
@@ -111,12 +115,14 @@ pub fn render_link(
                     write_a!(attr!(
                         "href" => &url,
                         "target" => target_value; if target.is_some(),
+                        "rel" => "noopener noreferrer"; if opens_new_tab,
                     ));
                 } else {
                     write_a!(attr!(
                         "class" => "newpage",
                         "href" => &url,
                         "target" => target_value; if target.is_some(),
+                        "rel" => "noopener noreferrer"; if opens_new_tab,
                     ));
                 }
             }
@@ -150,6 +156,7 @@ pub fn render_link(
                 "data-link-type" => ltype.name(),
                 "href" => &url,
                 "target" => target_value; if target.is_some(),
+                "rel" => "noopener noreferrer"; if opens_new_tab,
             ));
         }
     }
@@ -162,7 +169,9 @@ mod tests {
     use crate::render::html::HtmlRender;
     use crate::render::{PageExistenceResolver, Render};
     use crate::settings::{WikitextMode, WikitextSettings};
-    use crate::tree::{Element, LinkLabel, LinkLocation, LinkType, SyntaxTree};
+    use crate::tree::{
+        AnchorTarget, Element, LinkLabel, LinkLocation, LinkType, SyntaxTree,
+    };
 
     #[test]
     fn wikijump_interwiki_links_include_interwiki_class() {
@@ -205,6 +214,55 @@ mod tests {
         assert!(!output.body.contains("javascript:alert"));
         assert!(output.backlinks.external_links.is_empty());
         assert!(output.backlinks.internal_links.is_empty());
+    }
+
+    #[test]
+    fn new_tab_links_are_isolated_from_the_opening_page() {
+        let page_info = PageInfo::dummy();
+
+        for layout in [Layout::Wikidot, Layout::Wikijump] {
+            let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
+            let tree = SyntaxTree {
+                elements: vec![Element::Link {
+                    ltype: LinkType::Direct,
+                    link: LinkLocation::Url(cow!("https://example.com/")),
+                    label: LinkLabel::Text(cow!("example")),
+                    target: Some(AnchorTarget::NewTab),
+                }],
+                ..SyntaxTree::default()
+            };
+            let output = HtmlRender.render(&tree, &page_info, &settings).body;
+
+            assert!(
+                output.contains(r#"target="_blank""#),
+                "{layout:?}: {output}"
+            );
+            assert!(
+                output.contains(r#"rel="noopener noreferrer""#),
+                "{layout:?}: {output}",
+            );
+        }
+    }
+
+    #[test]
+    fn non_new_tab_targets_do_not_gain_a_rel_attribute() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for target in [None, Some(AnchorTarget::Same), Some(AnchorTarget::Parent)] {
+            let tree = SyntaxTree {
+                elements: vec![Element::Link {
+                    ltype: LinkType::Direct,
+                    link: LinkLocation::Url(cow!("https://example.com/")),
+                    label: LinkLabel::Text(cow!("example")),
+                    target,
+                }],
+                ..SyntaxTree::default()
+            };
+            let output = HtmlRender.render(&tree, &page_info, &settings).body;
+
+            assert!(!output.contains(" rel="), "{target:?}: {output}");
+        }
     }
 
     #[derive(Debug)]

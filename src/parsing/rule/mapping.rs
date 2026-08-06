@@ -65,7 +65,12 @@ pub fn get_rules_for_token(current: &ExtractedToken) -> &'static [Rule] {
         Token::Underscore => &[RULE_UNDERSCORE_LINE_BREAK, RULE_TEXT],
         Token::Quote => &[RULE_BLOCKQUOTE, RULE_DOUBLE_ANGLE, RULE_TEXT],
         Token::Heading => &[RULE_HEADER, RULE_TEXT],
-        Token::Whitespace => &[RULE_UNDERSCORE_LINE_BREAK, RULE_LIST, RULE_TEXT],
+        Token::Whitespace => &[
+            RULE_UNDERSCORE_LINE_BREAK,
+            RULE_LIST,
+            RULE_CENTER,
+            RULE_TEXT,
+        ],
 
         // Formatting
         Token::Bold => &[RULE_BOLD],

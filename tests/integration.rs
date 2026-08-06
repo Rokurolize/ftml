@@ -87,3 +87,6 @@ mod wikidot_footnote_first;
 
 #[path = "wikidot_blockquote_boundaries.rs"]
 mod wikidot_blockquote_boundaries;
+
+#[path = "wikidot_alignment_ownership.rs"]
+mod wikidot_alignment_ownership;

@@ -853,6 +853,7 @@ where
                 Ok(consumed) => process(consumed),
                 Err(_error)
                     if self.discarding_hidden_body()
+                        && !self.settings().layout.legacy()
                         && self.at_hidden_body_boundary() => {}
                 Err(error) => return Err(error),
             }

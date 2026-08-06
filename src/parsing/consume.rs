@@ -354,6 +354,10 @@ fn try_consume_line_break<'r, 't>(
                         .count()
                         >= 3
             }
+            Token::TripleDash => matches!(
+                following,
+                Some(Token::LineBreak | Token::ParagraphBreak | Token::InputEnd)
+            ),
             _ => true,
         };
         starts_own_line_rule(token.token)

@@ -85,11 +85,10 @@ fn scan_literal(bytes: &[u8], start: usize) -> Option<(Token, usize)> {
         b'[' if has(bytes, start, b"[!--") => (Token::LeftComment, start + 4),
         b'-' if has(bytes, start, b"--]") => (Token::RightComment, start + 3),
         b'[' if has(bytes, start, b"[[[[")
-            && previous_byte(bytes, start) != Some(b'[') =>
+            && repeated_symbol_offset(bytes, start, b'[').is_multiple_of(4) =>
         {
             (Token::LeftBracket, start + 1)
         }
-        b']' if has(bytes, start, b"]]]]") => (Token::RightLink, start + 3),
         b'[' if has(bytes, start, b"[[[*") => (Token::LeftLinkStar, start + 4),
         b'[' if has(bytes, start, b"[[[") => (Token::LeftLink, start + 3),
         b'[' if has(bytes, start, b"[[$") => (Token::LeftMath, start + 3),
@@ -143,14 +142,16 @@ fn scan_literal(bytes: &[u8], start: usize) -> Option<(Token, usize)> {
     Some(result)
 }
 
-fn previous_byte(bytes: &[u8], start: usize) -> Option<u8> {
-    start.checked_sub(1).map(|index| bytes[index])
+fn repeated_symbol_offset(bytes: &[u8], start: usize, symbol: u8) -> usize {
+    let mut run_start = start;
+    while run_start > 0 && bytes[run_start - 1] == symbol {
+        run_start -= 1;
+    }
+    start - run_start
 }
 
 fn is_right_link_trailing_bracket(bytes: &[u8], start: usize) -> bool {
-    start >= 3
-        && bytes[start - 3..start].iter().all(|&byte| byte == b']')
-        && previous_byte(bytes, start - 3) != Some(b']')
+    repeated_symbol_offset(bytes, start, b']') % 4 == 3
 }
 
 fn scan_repeated_symbol(bytes: &[u8], start: usize) -> Option<(Token, usize)> {

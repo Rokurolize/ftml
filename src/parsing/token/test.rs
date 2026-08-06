@@ -108,6 +108,17 @@ fn fast_tokenizer_matches_pest_on_adversarial_inputs() {
 }
 
 #[test]
+fn fast_tokenizer_matches_pest_for_bracket_runs_through_sixty_four() {
+    for length in 0..=64 {
+        for bracket in ['[', ']'] {
+            let run = bracket.to_string().repeat(length);
+            assert_fast_tokens_match_pest(&run);
+            assert_fast_tokens_match_pest(&format!("A{run}B"));
+        }
+    }
+}
+
+#[test]
 fn continued_line_is_one_line_break_token() {
     let input = "\\\n";
     assert_fast_tokens_match_pest(input);

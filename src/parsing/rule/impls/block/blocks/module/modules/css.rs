@@ -50,6 +50,25 @@ fn parse_with_wikidot_boundary<'r, 't>(
     assert_module_name(&MODULE_CSS, name);
 
     if parser.settings().layout.legacy() {
+        if parser.current().token == Token::InputEnd {
+            return parse_fn(parser, name, arguments);
+        }
+        if !wikidot_css_body_starts_on_new_line(parser) {
+            let source = parser.full_text().inner();
+            let name_start = (name.as_ptr() as usize)
+                .checked_sub(source.as_ptr() as usize)
+                .expect("parsed CSS module name belongs to the source");
+            let owner_start = source[..name_start]
+                .rfind("[[")
+                .expect("parsed CSS module name follows its opener");
+            let _ = parser.get_body_text(&BLOCK_MODULE)?;
+            let owner_end = parser.current().span.start;
+            return success_value(
+                ModuleParseOutput::Element(text!(&source[owner_start..owner_end])),
+                Vec::new(),
+                true,
+            );
+        }
         let mut body_probe = parser.clone();
         if wikidot_css_body_starts_on_new_line(parser)
             && let Ok(body) = body_probe.get_body_text(&BLOCK_MODULE)
@@ -200,7 +219,7 @@ mod tests {
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::render::Render;
-    use crate::render::html::HtmlRender;
+    use crate::render::{html::HtmlRender, text::TextRender};
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
@@ -489,28 +508,25 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_inline_css_preserves_raw_body_without_nested_module_execution() {
+    fn wikidot_inline_css_remains_literal_without_nested_module_execution() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
 
-        for (source, body) in [
-            (
-                "[[module CSS]].inline { color: red; }[[/module]]",
-                ".inline { color: red; }",
-            ),
-            (
-                "[[module CSS]][[module ListPages name=\"=\"]]%%title%%[[/module]]",
-                "[[module ListPages name=\"=\"]]%%title%%",
-            ),
+        for source in [
+            "[[module CSS]].inline { color: red; }[[/module]]",
+            "[[module CSS]][[module ListPages name=\"=\"]]%%title%%[[/module]]",
         ] {
             let tokenization = crate::tokenize(source);
             let (tree, errors) =
                 crate::parse(&tokenization, &page_info, &settings).into();
             let output = HtmlRender.render(&tree, &page_info, &settings);
+            let text = TextRender.render(&tree, &page_info, &settings);
 
             assert!(errors.is_empty(), "{source:?}: {errors:#?}");
-            assert_eq!(tree.elements, [Element::Style(cow!(body))], "{source:?}");
-            assert!(output.body.is_empty(), "{source:?}");
+            assert_eq!(text, source, "{source:?}: {}", output.body);
+            assert!(!format!("{tree:?}").contains("Style("), "{source:?}");
+            assert!(!format!("{tree:?}").contains("Module("), "{source:?}");
+            assert!(output.styles.is_empty(), "{source:?}");
         }
     }
 

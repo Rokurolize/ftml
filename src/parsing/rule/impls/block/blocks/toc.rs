@@ -42,6 +42,9 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Table of Contents doesn't allow star flag");
     assert!(!flag_score, "Table of Contents doesn't allow score flag");
     assert_block_name(&BLOCK_TABLE_OF_CONTENTS, name);
+    if parser.settings().layout.legacy() && !matches!(name, "toc" | "f<toc" | "f>toc") {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     let arguments = parser.get_head_map_wikidot(&BLOCK_TABLE_OF_CONTENTS, in_head)?;
     let attributes = arguments.to_attribute_map(parser.settings());

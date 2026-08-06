@@ -73,7 +73,7 @@ fn try_consume_fn<'r, 't>(
             ListItemStep::End => ended = true,
             ListItemStep::Item(item, ends_run) => {
                 depths.push(item);
-                ended = ends_run;
+                ended = ends_run || parser.native_blockquote_depth().is_some();
             }
         }
     }

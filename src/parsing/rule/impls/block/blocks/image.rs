@@ -21,6 +21,7 @@
 use super::prelude::*;
 use crate::delayed::{DelayedElement, GeneratedImageAttribute, GeneratedKind};
 use crate::tree::{FileSource, FloatAlignment, LinkLocation};
+use std::borrow::Cow;
 
 pub const BLOCK_IMAGE: BlockRule = BlockRule {
     name: "block-image",
@@ -69,13 +70,23 @@ fn parse_fn<'r, 't>(
 
     let (source, mut arguments) =
         parser.get_head_name_map_wikidot(&BLOCK_IMAGE, in_head)?;
-    let link = arguments.get_with_bare("link").and_then(|(value, bare)| {
-        if bare && value == "#" {
-            None
-        } else {
-            Some(LinkLocation::parse(value))
+    let link = if parser.settings().layout.legacy() {
+        match arguments.get("link") {
+            None => None,
+            Some(value) => Some(
+                parse_wikidot_image_link_target(value)
+                    .ok_or_else(|| parser.make_err(ParseErrorKind::RuleFailed))?,
+            ),
         }
-    });
+    } else {
+        arguments.get_with_bare("link").and_then(|(value, bare)| {
+            if bare && value == "#" {
+                None
+            } else {
+                Some(LinkLocation::parse(value))
+            }
+        })
+    };
     let alignment = FloatAlignment::parse(name);
 
     // Parse the image source based on format
@@ -119,6 +130,35 @@ fn parse_fn<'r, 't>(
     success_elements(element)
 }
 
+fn parse_wikidot_image_link_target<'t>(target: Cow<'t, str>) -> Option<LinkLocation<'t>> {
+    if target.starts_with("https://") {
+        return None;
+    }
+
+    const HEX: &[u8; 16] = b"0123456789ABCDEF";
+    let anchor = target.starts_with('#');
+    let target = if anchor {
+        target.as_ref()
+    } else {
+        target.trim_start_matches('/')
+    };
+    let mut encoded = String::with_capacity(target.len() + usize::from(!anchor));
+    if !anchor {
+        encoded.push('/');
+    }
+    for byte in target.bytes() {
+        if byte == b' ' || !byte.is_ascii() {
+            encoded.push('%');
+            encoded.push(char::from(HEX[usize::from(byte >> 4)]));
+            encoded.push(char::from(HEX[usize::from(byte & 0x0f)]));
+        } else {
+            encoded.push(char::from(byte));
+        }
+    }
+
+    Some(LinkLocation::Url(Cow::Owned(encoded)))
+}
+
 fn delayed_image_attribute<'a>(
     source: &'a str,
     slot: &crate::delayed::GeneratedInput,
@@ -157,6 +197,163 @@ mod tests {
     use crate::layout::Layout;
     use crate::render::Render;
     use crate::settings::{WikitextMode, WikitextSettings};
+    use std::time::{Duration, Instant};
+
+    fn render_image(
+        source: &str,
+        layout: Layout,
+    ) -> (String, Vec<crate::parsing::ParseError>) {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
+        let mut source = source.to_owned();
+        crate::preprocess_for_layout(&mut source, layout);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &page_info, &settings)
+            .body;
+
+        (html, errors)
+    }
+
+    #[test]
+    fn wikidot_double_quoted_image_links_preserve_legacy_internal_targets() {
+        // Immutable live preview evidence:
+        // /mnt/oracle-store/wjlab/ftml-scout-20260730/image-link-target-live.jsonl
+        for (target, expected_href) in [
+            ("SCP-002", "/SCP-002"),
+            ("scp-002", "/scp-002"),
+            ("ScP-002", "/ScP-002"),
+            ("Component:Image-Block", "/Component:Image-Block"),
+            ("component:image-block", "/component:image-block"),
+            ("Foo Bar", "/Foo%20Bar"),
+            ("foo_bar", "/foo_bar"),
+            ("日本語", "/%E6%97%A5%E6%9C%AC%E8%AA%9E"),
+            ("SCP-002/noredirect/true", "/SCP-002/noredirect/true"),
+            ("/SCP-002", "/SCP-002"),
+            ("#Section", "#Section"),
+            (".", "/."),
+            ("..", "/.."),
+            ("//Example.COM/Path", "/Example.COM/Path"),
+            ("mailto:User@Example.COM", "/mailto:User@Example.COM"),
+            ("", "/"),
+        ] {
+            let source =
+                format!(r#"[[image https://example.com/x.png link="{target}"]]"#,);
+            let (html, errors) = render_image(&source, Layout::Wikidot);
+
+            assert!(errors.is_empty(), "{target:?}: {errors:#?}");
+            assert_eq!(
+                html,
+                format!(
+                    r#"<a href="{expected_href}"><img src="https://example.com/x.png" class="image" alt="x.png"></a>"#,
+                ),
+                "{target:?}",
+            );
+        }
+    }
+
+    #[test]
+    fn wikidot_qualified_https_image_link_rejects_the_whole_image_candidate() {
+        let source = concat!(
+            "BEGIN|[[image https://example.com/x.png ",
+            r#"link="https://Example.COM/Path?Q=X#Frag"]]|END"#,
+        );
+        let (html, errors) = render_image(source, Layout::Wikidot);
+
+        assert!(!errors.is_empty());
+        assert_eq!(
+            html,
+            concat!(
+                "<p>BEGIN|[[image ",
+                r#"<a href="https://example.com/x.png">https://example.com/x.png</a> "#,
+                r#"link=&quot;<a href="https://Example.COM/Path?Q=X#Frag">"#,
+                "https://Example.COM/Path?Q=X#Frag</a>&quot;]]|END</p>",
+            ),
+        );
+        assert!(!html.contains("<a href=\"https://Example.COM/Path?Q=X#Frag\"><img"));
+    }
+
+    #[test]
+    fn wikidot_single_quoted_and_bare_image_links_remain_inert() {
+        for target in [
+            "SCP-002",
+            "scp-002",
+            "ScP-002",
+            "Component:Image-Block",
+            "component:image-block",
+            "Foo Bar",
+            "foo_bar",
+            "日本語",
+            "/SCP-002",
+            "SCP-002/noredirect/true",
+            "#Section",
+            ".",
+            "..",
+            "https://Example.COM/Path?Q=X#Frag",
+            "//Example.COM/Path",
+            "mailto:User@Example.COM",
+            "",
+        ] {
+            for argument in [format!("link='{target}'"), format!("link={target}")] {
+                let source = format!("[[image https://example.com/x.png {argument}]]");
+                let (html, errors) = render_image(&source, Layout::Wikidot);
+
+                assert!(errors.is_empty(), "{argument}: {errors:#?}");
+                assert_eq!(
+                    html,
+                    r#"<img src="https://example.com/x.png" class="image" alt="x.png">"#,
+                    "{argument}",
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn malformed_qualified_image_link_target_stays_literal_and_inert() {
+        let source = concat!(
+            "[[image https://example.com/x.png ",
+            r#"link="https://"]]tail"#,
+        );
+        let (html, errors) = render_image(source, Layout::Wikidot);
+
+        assert!(!errors.is_empty());
+        assert!(!html.contains("<img"), "{html}");
+        assert!(!html.contains("<a href=\"https://\"><img"));
+        assert!(html.contains("[[image "), "{html}");
+        assert!(html.contains("]]tail"), "{html}");
+    }
+
+    #[test]
+    fn repeated_malformed_qualified_image_links_stay_bounded_and_inert() {
+        const CANDIDATE_COUNT: usize = 128;
+        let candidate = concat!(
+            "[[image https://example.com/x.png ",
+            r#"link="https://"]]"#,
+            "\n",
+        );
+        let source = candidate.repeat(CANDIDATE_COUNT);
+        let started = Instant::now();
+        let (html, errors) = render_image(&source, Layout::Wikidot);
+
+        assert!(started.elapsed() < Duration::from_secs(5));
+        assert!(!errors.is_empty());
+        assert_eq!(html.matches("[[image ").count(), CANDIDATE_COUNT);
+        assert_eq!(html.matches("<img").count(), 0);
+    }
+
+    #[test]
+    fn wikijump_image_link_behavior_is_unchanged() {
+        let source = concat!(
+            "[[image https://example.com/x.png ",
+            r#"link="https://Example.COM/Path?Q=X#Frag"]]"#,
+        );
+        let (html, errors) = render_image(source, Layout::Wikijump);
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains(r#"href="https://Example.COM/Path?Q=X#Frag""#));
+        assert!(html.contains("<img"));
+    }
 
     #[test]
     fn wikidot_image_accepts_multi_segment_local_source() {

@@ -50,8 +50,11 @@ fn parse_fn<'r, 't>(
 
     if parser.settings().layout.legacy() && !parser.discarding_hidden_body() {
         let source = parser.full_text().inner();
-        let owner_start = (name.as_ptr() as usize)
-            .checked_sub(source.as_ptr() as usize + 2)
+        let name_start = (name.as_ptr() as usize)
+            .checked_sub(source.as_ptr() as usize)
+            .expect("parsed raw name belongs to the source");
+        let owner_start = source[..name_start]
+            .rfind("[[")
             .expect("parsed raw name follows its opener");
         let mut owner = parser.clone();
         if in_head {

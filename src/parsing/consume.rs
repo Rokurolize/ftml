@@ -172,6 +172,7 @@ fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
         | Token::DoubleQuote
         | Token::EscapedDoubleQuote
         | Token::EscapedBackslash
+        | Token::RuntimeText
         | Token::Other => true,
 
         Token::Whitespace => {

@@ -61,6 +61,9 @@ mod wikidot_span_scope;
 #[path = "wikidot_span_attributes.rs"]
 mod wikidot_span_attributes;
 
+#[path = "wikidot_single_link_recovery.rs"]
+mod wikidot_single_link_recovery;
+
 #[path = "wikidot_line_ownership.rs"]
 mod wikidot_line_ownership;
 

@@ -171,6 +171,47 @@ where
         })
     }
 
+    pub(crate) fn get_wikidot_end_block_with_residual(
+        &mut self,
+    ) -> Result<(&'t str, bool), ParseError> {
+        debug_assert!(self.settings().layout.legacy());
+        self.get_token(Token::LeftBlockEnd, ParseErrorKind::BlockExpectedEnd)?;
+        self.get_optional_space()?;
+
+        let end_conditions = [
+            ParseCondition::current(Token::Whitespace),
+            ParseCondition::current(Token::LineBreak),
+            ParseCondition::current(Token::ParagraphBreak),
+            ParseCondition::current(Token::RightBlock),
+            ParseCondition::current(Token::RightLink),
+        ];
+        let rule = self.rule();
+        let (name, last) = collect_text_keep(
+            self,
+            rule,
+            &end_conditions,
+            &[],
+            Some(ParseErrorKind::BlockMissingName),
+        )?;
+        let residual_close_bracket = match last.token {
+            Token::RightLink if last.slice == "]]]" => true,
+            Token::RightBlock => false,
+            Token::Whitespace => match self.current().token {
+                Token::RightLink if self.current().slice == "]]]" => {
+                    self.step()?;
+                    true
+                }
+                Token::RightBlock => {
+                    self.step()?;
+                    false
+                }
+                _ => return Err(self.make_err(ParseErrorKind::BlockExpectedEnd)),
+            },
+            _ => return Err(self.make_err(ParseErrorKind::BlockExpectedEnd)),
+        };
+        Ok((name.trim(), residual_close_bracket))
+    }
+
     /// Matches an ending block, returning the name present.
     pub fn get_end_block(&mut self) -> Result<&'t str, ParseError> {
         self.get_token(Token::LeftBlockEnd, ParseErrorKind::BlockExpectedEnd)?;

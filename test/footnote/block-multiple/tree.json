@@ -11,7 +11,8 @@
                         "data": "Alpha"
                     },
                     {
-                        "element": "footnote"
+                        "element": "footnote",
+                        "data": 1
                     }
                 ]
             }
@@ -34,7 +35,8 @@
                         "data": "Beta"
                     },
                     {
-                        "element": "footnote"
+                        "element": "footnote",
+                        "data": 2
                     }
                 ]
             }

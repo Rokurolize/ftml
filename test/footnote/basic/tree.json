@@ -11,7 +11,8 @@
                         "data": "Apple"
                     },
                     {
-                        "element": "footnote"
+                        "element": "footnote",
+                        "data": 1
                     },
                     {
                         "element": "text",
@@ -30,7 +31,8 @@
                         "data": "pineapple"
                     },
                     {
-                        "element": "footnote"
+                        "element": "footnote",
+                        "data": 2
                     },
                     {
                         "element": "text",
@@ -41,7 +43,8 @@
                         "data": "mango"
                     },
                     {
-                        "element": "footnote"
+                        "element": "footnote",
+                        "data": 3
                     }
                 ]
             }
@@ -57,7 +60,8 @@
                         "data": "Blueberry"
                     },
                     {
-                        "element": "footnote"
+                        "element": "footnote",
+                        "data": 4
                     }
                 ]
             }

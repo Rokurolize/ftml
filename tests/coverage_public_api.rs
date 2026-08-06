@@ -232,8 +232,8 @@ fn public_api_html_render_covers_fallback_branches_from_ast() {
                 name: Some(Cow::Borrowed("eq-main")),
                 latex_source: Cow::Borrowed("x^2"),
             },
-            Element::Footnote,
-            Element::Footnote,
+            Element::Footnote(1),
+            Element::Footnote(2),
             Element::FootnoteBlock {
                 title: None,
                 hide: false,

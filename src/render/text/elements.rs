@@ -217,7 +217,7 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
         Element::TableOfContents { .. } => {
             // Doesn't make sense to have a textual table of contents, skip
         }
-        Element::Footnote
+        Element::Footnote(_)
         | Element::FootnoteBlock { .. }
         | Element::BibliographyCite { .. }
         | Element::BibliographyBlock { .. } => {
@@ -285,7 +285,8 @@ fn render_partial(ctx: &mut TextContext, partial: &PartialElement) {
     );
 
     match partial {
-        PartialElement::InlineSizeOpen(_)
+        PartialElement::WikidotEmptyInlineOwner
+        | PartialElement::InlineSizeOpen(_)
         | PartialElement::InlineSizeClose
         | PartialElement::InlineSpanOpen(_)
         | PartialElement::InlineSpanClose(_) => {}
@@ -389,7 +390,7 @@ fn text_render_skips_non_textual_elements_and_expands_include_variables() {
                 align: Some(Alignment::Left),
                 attributes: AttributeMap::new(),
             },
-            Element::Footnote,
+            Element::Footnote(1),
             Element::FootnoteBlock {
                 title: Some(cow!("Notes")),
                 hide: false,

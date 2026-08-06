@@ -83,7 +83,6 @@ where
     table_of_contents_index: Incrementer,
     equation_index: NonZeroUsize,
     named_equations: HashMap<String, NonZeroUsize>,
-    footnote_index: NonZeroUsize,
     bibliography_render_stack: Vec<String>,
 }
 
@@ -185,7 +184,6 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
             table_of_contents_index: settings.id_indexer(),
             equation_index: NonZeroUsize::new(1).unwrap(),
             named_equations: HashMap::new(),
-            footnote_index: NonZeroUsize::new(1).unwrap(),
             bibliography_render_stack: Vec::new(),
         }
     }
@@ -328,11 +326,6 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
 
     pub fn get_named_equation(&self, name: &str) -> Option<NonZeroUsize> {
         self.named_equations.get(name).copied()
-    }
-
-    pub fn next_footnote_index(&mut self) -> NonZeroUsize {
-        let next = NonZeroUsize::new(self.footnote_index.get() + 1).unwrap();
-        std::mem::replace(&mut self.footnote_index, next)
     }
 
     #[inline]
@@ -536,9 +529,6 @@ mod tests {
         assert_eq!(ctx.next_code_snippet_index().get(), 2);
         assert_eq!(ctx.next_equation_index().get(), 1);
         assert_eq!(ctx.next_equation_index().get(), 2);
-        assert_eq!(ctx.next_footnote_index().get(), 1);
-        assert_eq!(ctx.next_footnote_index().get(), 2);
-
         ctx.add_link(&LinkLocation::Url(cow!("javascript:;")));
         ctx.add_link(&LinkLocation::Url(cow!("javascript:alert(1)")));
         ctx.add_link(&LinkLocation::Url(cow!("#local-anchor")));

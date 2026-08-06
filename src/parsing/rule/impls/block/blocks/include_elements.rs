@@ -70,9 +70,11 @@ fn parse_fn<'r, 't>(
 
     let result = result?;
     set_included_footnote_block(parser, has_footnote_block);
-    let elements = result.item;
+    let mut elements = result.item;
     let errors = result.errors;
     let paragraph_safe = result.paragraph_safe;
+
+    offset_footnote_references(&mut elements, &mut footnotes, parser.footnote_count());
 
     let html = &mut html_blocks;
     let code = &mut code_blocks;
@@ -90,6 +92,21 @@ fn parse_fn<'r, 't>(
     };
 
     ok!(element, errors)
+}
+
+fn offset_footnote_references(
+    elements: &mut [Element<'_>],
+    footnotes: &mut [Vec<Element<'_>>],
+    offset: usize,
+) {
+    for element in elements {
+        element.offset_footnote_indices(offset);
+    }
+    for footnote in footnotes {
+        for element in footnote {
+            element.offset_footnote_indices(offset);
+        }
+    }
 }
 
 fn set_included_footnote_block(parser: &mut Parser<'_, '_>, has_footnote_block: bool) {
@@ -155,5 +172,28 @@ mod tests {
 
         let error = include_page(&parser, &empty).expect_err("empty page should reject");
         assert_eq!(error.kind(), ParseErrorKind::BlockMalformedArguments);
+    }
+
+    #[test]
+    fn included_footnote_references_are_offset_after_outer_footnotes() {
+        let mut elements = vec![
+            Element::Footnote(1),
+            Element::Include {
+                paragraph_safe: true,
+                variables: Default::default(),
+                location: PageRef::new(None::<String>, "nested"),
+                elements: vec![Element::Footnote(2)],
+            },
+        ];
+        let mut footnotes = vec![vec![Element::Footnote(1)]];
+
+        offset_footnote_references(&mut elements, &mut footnotes, 3);
+
+        assert!(matches!(elements[0], Element::Footnote(4)));
+        let Element::Include { elements, .. } = &elements[1] else {
+            panic!("expected nested include: {elements:#?}");
+        };
+        assert!(matches!(elements[0], Element::Footnote(5)));
+        assert!(matches!(footnotes[0][0], Element::Footnote(4)));
     }
 }

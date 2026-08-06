@@ -21,6 +21,7 @@
 use super::entity::decode_semicolon_entities;
 use super::prelude::*;
 use crate::delayed::DelayedElement;
+use crate::tree::PartialElement;
 use std::borrow::Cow;
 
 macro_rules! raw {
@@ -98,7 +99,13 @@ fn try_consume_fn<'r, 't>(
                 (Token::Raw, _) => {
                     trace!("Found empty raw (\"@@@@\"), returning");
                     parser.step_n(2)?;
-                    return ok!(Elements::None);
+                    return if parser.settings().layout.legacy()
+                        && super::footnote_first::starts_footnote(parser)
+                    {
+                        ok!(Element::Partial(PartialElement::WikidotEmptyInlineOwner,))
+                    } else {
+                        ok!(Elements::None)
+                    };
                 }
 
                 // "@@ \n @@" -> Abort

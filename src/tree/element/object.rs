@@ -208,9 +208,10 @@ pub enum Element<'t> {
     /// This specifies that a `[[footnote]]` was here, and that a clickable
     /// link to the footnote block should be added.
     ///
-    /// The index is not saved because it is part of the rendering context.
-    /// It is indirectly preserved as the index of the `footnotes` list in the syntax tree.
-    Footnote,
+    /// The one-based index of the corresponding entry in the syntax tree's
+    /// `footnotes` list. Keeping the index on the reference preserves global
+    /// numbering when Wikidot suppresses an earlier body reference.
+    Footnote(usize),
 
     /// A footnote block, containing all the footnotes from throughout the page.
     ///
@@ -375,7 +376,7 @@ impl Element<'_> {
             Element::CheckBox { .. } => "CheckBox",
             Element::Collapsible { .. } => "Collapsible",
             Element::TableOfContents { .. } => "TableOfContents",
-            Element::Footnote => "Footnote",
+            Element::Footnote(_) => "Footnote",
             Element::FootnoteBlock { .. } => "FootnoteBlock",
             Element::BibliographyCite { .. } => "BibliographyCite",
             Element::BibliographyBlock { .. } => "BibliographyBlock",
@@ -396,6 +397,79 @@ impl Element<'_> {
             Element::ClearFloat(_) => "ClearFloat",
             Element::HorizontalRule => "HorizontalRule",
             Element::Partial(partial) => partial.name(),
+        }
+    }
+
+    pub(crate) fn offset_footnote_indices(&mut self, offset: usize) {
+        if offset == 0 {
+            return;
+        }
+
+        let offset_elements = |elements: &mut [Element<'_>]| {
+            for element in elements {
+                element.offset_footnote_indices(offset);
+            }
+        };
+
+        match self {
+            Element::Container(container) => offset_elements(container.elements_mut()),
+            Element::Table(table) => {
+                for row in &mut table.rows {
+                    for cell in &mut row.cells {
+                        offset_elements(&mut cell.elements);
+                    }
+                }
+            }
+            Element::TabView(tabs) => {
+                for tab in tabs {
+                    offset_elements(&mut tab.elements);
+                }
+            }
+            Element::Anchor { elements, .. }
+            | Element::Collapsible { elements, .. }
+            | Element::Color { elements, .. }
+            | Element::Include { elements, .. } => offset_elements(elements),
+            Element::List { items, .. } => {
+                for item in items {
+                    match item {
+                        ListItem::Elements { elements, .. } => offset_elements(elements),
+                        ListItem::SubList { element } => {
+                            element.offset_footnote_indices(offset);
+                        }
+                    }
+                }
+            }
+            Element::DefinitionList(items) => {
+                for item in items {
+                    offset_elements(&mut item.key_elements);
+                    offset_elements(&mut item.value_elements);
+                }
+            }
+            Element::Footnote(index) => *index += offset,
+            Element::Partial(partial) => match partial {
+                PartialElement::ListItem(ListItem::Elements { elements, .. }) => {
+                    offset_elements(elements);
+                }
+                PartialElement::ListItem(ListItem::SubList { element }) => {
+                    element.offset_footnote_indices(offset);
+                }
+                PartialElement::TableRow(row) => {
+                    for cell in &mut row.cells {
+                        offset_elements(&mut cell.elements);
+                    }
+                }
+                PartialElement::TableCell(cell) => offset_elements(&mut cell.elements),
+                PartialElement::Tab(tab) => offset_elements(&mut tab.elements),
+                PartialElement::RubyText(ruby_text) => {
+                    offset_elements(&mut ruby_text.elements);
+                }
+                PartialElement::WikidotEmptyInlineOwner
+                | PartialElement::InlineSizeOpen(_)
+                | PartialElement::InlineSizeClose
+                | PartialElement::InlineSpanOpen(_)
+                | PartialElement::InlineSpanClose(_) => {}
+            },
+            _ => {}
         }
     }
 
@@ -431,7 +505,7 @@ impl Element<'_> {
             Element::RadioButton { .. } | Element::CheckBox { .. } => true,
             Element::Collapsible { .. } => false,
             Element::TableOfContents { .. } => false,
-            Element::Footnote => true,
+            Element::Footnote(_) => true,
             Element::FootnoteBlock { .. } => false,
             Element::BibliographyCite { .. } => true,
             Element::BibliographyBlock { .. } => false,
@@ -582,7 +656,7 @@ impl Element<'_> {
                 align: *align,
                 attributes: attributes.to_owned(),
             },
-            Element::Footnote => Element::Footnote,
+            Element::Footnote(index) => Element::Footnote(*index),
             Element::FootnoteBlock { title, hide } => Element::FootnoteBlock {
                 title: option_string_to_owned(title),
                 hide: *hide,

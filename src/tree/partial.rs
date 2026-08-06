@@ -29,6 +29,10 @@ use std::borrow::Cow;
 /// context, they are errors are parsing will fail.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum PartialElement<'t> {
+    /// A parse-only empty Wikidot inline owner whose phase remains observable
+    /// until inline-scope lowering decides adjacent whitespace ownership.
+    WikidotEmptyInlineOwner,
+
     /// A parse-only Wikidot inline size scope opener.
     InlineSizeOpen(Cow<'t, str>),
 
@@ -62,6 +66,7 @@ pub enum PartialElement<'t> {
 impl PartialElement<'_> {
     pub fn name(&self) -> &'static str {
         match self {
+            PartialElement::WikidotEmptyInlineOwner => "WikidotEmptyInlineOwner",
             PartialElement::InlineSizeOpen(_) => "InlineSizeOpen",
             PartialElement::InlineSizeClose => "InlineSizeClose",
             PartialElement::InlineSpanOpen(_) => "InlineSpanOpen",
@@ -77,7 +82,8 @@ impl PartialElement<'_> {
     #[inline]
     pub fn parse_error_kind(&self) -> ParseErrorKind {
         match self {
-            PartialElement::InlineSizeOpen(_)
+            PartialElement::WikidotEmptyInlineOwner
+            | PartialElement::InlineSizeOpen(_)
             | PartialElement::InlineSizeClose
             | PartialElement::InlineSpanOpen(_)
             | PartialElement::InlineSpanClose(_) => ParseErrorKind::NoRulesMatch,
@@ -91,6 +97,9 @@ impl PartialElement<'_> {
 
     pub fn to_owned(&self) -> PartialElement<'static> {
         match self {
+            PartialElement::WikidotEmptyInlineOwner => {
+                PartialElement::WikidotEmptyInlineOwner
+            }
             PartialElement::InlineSizeOpen(value) => {
                 PartialElement::InlineSizeOpen(Cow::Owned(value.to_string()))
             }
@@ -119,7 +128,8 @@ impl PartialElement<'_> {
     pub(crate) fn is_inline_format_control(&self) -> bool {
         matches!(
             self,
-            PartialElement::InlineSizeOpen(_)
+            PartialElement::WikidotEmptyInlineOwner
+                | PartialElement::InlineSizeOpen(_)
                 | PartialElement::InlineSizeClose
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_)

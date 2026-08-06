@@ -47,6 +47,7 @@ mod double_angle;
 mod email;
 mod entity;
 mod fallback;
+mod footnote_first;
 mod header;
 mod horizontal_rule;
 mod inline_delimiter;

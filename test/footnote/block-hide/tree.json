@@ -11,7 +11,8 @@
                         "data": "Apple"
                     },
                     {
-                        "element": "footnote"
+                        "element": "footnote",
+                        "data": 1
                     }
                 ]
             }

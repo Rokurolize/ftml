@@ -220,7 +220,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         Element::TableOfContents { align, attributes } => {
             render_table_of_contents(ctx, *align, attributes)
         }
-        Element::Footnote => render_footnote(ctx),
+        Element::Footnote(index) => render_footnote(ctx, *index),
         Element::FootnoteBlock { title, hide } => {
             if (ctx.layout().legacy() || !*hide) && !ctx.footnotes().is_empty() {
                 render_footnote_block(ctx, ref_cow!(title));
@@ -350,7 +350,8 @@ fn render_partial(ctx: &mut HtmlContext, partial: &PartialElement) {
     );
 
     match partial {
-        PartialElement::InlineSizeOpen(_)
+        PartialElement::WikidotEmptyInlineOwner
+        | PartialElement::InlineSizeOpen(_)
         | PartialElement::InlineSizeClose
         | PartialElement::InlineSpanOpen(_)
         | PartialElement::InlineSpanClose(_) => {}

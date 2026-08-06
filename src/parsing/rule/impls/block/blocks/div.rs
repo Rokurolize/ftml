@@ -21,6 +21,7 @@
 use super::prelude::*;
 use crate::delayed::DelayedElement;
 use crate::parsing::rule::impls::block::parser::BlockBodyStart;
+use crate::settings::WikitextMode;
 use crate::tree::AcceptsPartial;
 use std::borrow::Cow;
 
@@ -102,6 +103,17 @@ fn parse_fn<'r, 't>(
 
     let head = parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;
     let (arguments, mut body_start) = head;
+    if parser.settings().layout.legacy()
+        && parser.settings().mode != WikitextMode::List
+        && !parser.in_wikidot_div_body()
+        && !parser.in_native_blockquote_line()
+        && body_start == BlockBodyStart::Inline
+        && parser.has_body_end_block_on_line(&BLOCK_DIV)
+    {
+        let _ = parser.get_body_text(&BLOCK_DIV)?;
+        let owner_end = parser.current().span.start;
+        return ok!(true; text!(&source[owner_start..owner_end]));
+    }
     let head_started_physical_line =
         wikidot_div_head_started_physical_line(parser, body_start);
     let follows_inline_structural_close =
@@ -497,8 +509,21 @@ mod tests {
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
-        assert!(!errors.is_empty());
-        assert_eq!(html, "[[div id=&quot;credit-view&quot;]]X[[/div]]",);
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html, "<p>[[div id=&quot;credit-view&quot;]]X[[/div]]</p>",);
+    }
+
+    #[test]
+    fn prose_adjacent_inline_div_remains_one_literal_paragraph() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let input = "BEFORE|[[div]]X[[/div]]|AFTER";
+        let tokenization = crate::tokenize(input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html, "<p>BEFORE|[[div]]X[[/div]]|AFTER</p>");
     }
 
     #[test]

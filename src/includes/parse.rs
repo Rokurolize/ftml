@@ -37,6 +37,10 @@ use pest::Parser;
 use pest::iterators::Pairs;
 use std::collections::HashMap;
 
+// Recursive references are part of the Wikidot include contract, but their
+// resolved representation must remain proportional to the authored source.
+const INCLUDE_ARGUMENT_EXPANSION_ALLOWANCE: usize = 64 * 1024;
+
 #[derive(Debug)]
 struct RawIncludeArgument<'t> {
     key: &'t str,
@@ -136,6 +140,13 @@ fn resolve_include_arguments(
     raw_arguments: &[RawIncludeArgument<'_>],
 ) -> VariableMap<'static> {
     let round_limit = raw_arguments.len().saturating_mul(2).clamp(1, 128);
+    let expansion_limit = raw_arguments
+        .iter()
+        .fold(0usize, |size, argument| {
+            size.saturating_add(argument.key.len())
+                .saturating_add(argument.value.len())
+        })
+        .saturating_add(INCLUDE_ARGUMENT_EXPANSION_ALLOWANCE);
     let mut arguments = HashMap::<String, String>::new();
 
     // Seed the graph with the first literal fallback for each fixed key. This
@@ -154,13 +165,19 @@ fn resolve_include_arguments(
     }
 
     for _ in 0..round_limit {
-        let mut next = HashMap::new();
+        let mut next = HashMap::<String, String>::new();
+        let mut next_size = 0usize;
         for argument in raw_arguments {
             if argument.spaced_empty_value {
                 continue;
             }
-            let key =
-                expand_argument_expression(argument.key, &arguments, round_limit, None);
+            let key = expand_argument_expression(
+                argument.key,
+                &arguments,
+                round_limit,
+                None,
+                expansion_limit,
+            );
             if !is_static_identifier(&key) {
                 continue;
             }
@@ -179,12 +196,25 @@ fn resolve_include_arguments(
                 &arguments,
                 round_limit,
                 blocked_name,
+                expansion_limit,
             );
             let fallback_reference = value.trim_end_matches([' ', '\t', '\r', '\n']);
             if fallback_reference == format!("{{${key}}}") {
                 continue;
             }
-            next.entry(key).or_insert(value);
+            if next.contains_key(&key) {
+                continue;
+            }
+            next_size = next_size
+                .saturating_add(key.len())
+                .saturating_add(value.len());
+            if next_size > expansion_limit {
+                return arguments
+                    .into_iter()
+                    .map(|(key, value)| (key.into(), value.into()))
+                    .collect();
+            }
+            next.insert(key, value);
         }
         if next == arguments {
             break;
@@ -203,28 +233,64 @@ fn expand_argument_expression(
     arguments: &HashMap<String, String>,
     round_limit: usize,
     blocked_name: Option<&str>,
+    expansion_limit: usize,
 ) -> String {
     let mut output = expression.to_owned();
     for _ in 0..round_limit {
-        let expanded = VARIABLE_REGEX
-            .replace_all(&output, |capture: &regex::Captures<'_>| {
-                if blocked_name.is_some_and(|name| name == &capture["name"]) {
-                    return capture[0].to_owned();
-                }
-                arguments
-                    .get(&capture["name"])
-                    .map(|value| {
-                        value.trim_end_matches([' ', '\t', '\r', '\n']).to_owned()
-                    })
-                    .unwrap_or_else(|| capture[0].to_owned())
-            })
-            .into_owned();
+        let Some(expanded) = expand_argument_expression_once(
+            &output,
+            arguments,
+            blocked_name,
+            expansion_limit,
+        ) else {
+            break;
+        };
         if expanded == output {
             break;
         }
         output = expanded;
     }
     output
+}
+
+fn expand_argument_expression_once(
+    expression: &str,
+    arguments: &HashMap<String, String>,
+    blocked_name: Option<&str>,
+    expansion_limit: usize,
+) -> Option<String> {
+    let mut expanded = String::with_capacity(expression.len().min(expansion_limit));
+    let mut copied_until = 0;
+
+    for capture in VARIABLE_REGEX.captures_iter(expression) {
+        let matched = capture.get(0).expect("variable capture has a full match");
+        let replacement = if blocked_name.is_some_and(|name| name == &capture["name"]) {
+            matched.as_str()
+        } else {
+            arguments
+                .get(&capture["name"])
+                .map(|value| value.trim_end_matches([' ', '\t', '\r', '\n']))
+                .unwrap_or(matched.as_str())
+        };
+        let literal = &expression[copied_until..matched.start()];
+        let new_len = expanded
+            .len()
+            .checked_add(literal.len())?
+            .checked_add(replacement.len())?;
+        if new_len > expansion_limit {
+            return None;
+        }
+        expanded.push_str(literal);
+        expanded.push_str(replacement);
+        copied_until = matched.end();
+    }
+
+    let remainder = &expression[copied_until..];
+    if expanded.len().checked_add(remainder.len())? > expansion_limit {
+        return None;
+    }
+    expanded.push_str(remainder);
+    Some(expanded)
 }
 
 fn is_static_identifier(value: &str) -> bool {
@@ -347,5 +413,73 @@ mod tests {
                 .unwrap_or_else(|_| panic!("include should parse: {source:?}"));
             assert!(!include.has_spaced_empty_separator(), "{source:?}");
         }
+    }
+
+    #[test]
+    fn recursive_include_argument_growth_is_bounded() {
+        let mut source = String::from("[[include page|a={$a}{$a}|a=x");
+        for index in 0..24 {
+            source.push_str(&format!("|dummy{index}=x"));
+        }
+        source.push_str("]]");
+
+        let (include, _) = parse_include_block(&source, 0).expect("include should parse");
+        let value = include.variables().get("a").expect("a should resolve");
+
+        assert!(
+            value.len() <= source.len() + INCLUDE_ARGUMENT_EXPANSION_ALLOWANCE,
+            "recursive expansion exceeded its source-relative allowance: {} bytes",
+            value.len(),
+        );
+    }
+
+    #[test]
+    fn mutually_recursive_include_arguments_remain_bounded() {
+        let source = format!(
+            "[[include page|a={{$b}}{{$b}}|b={{$a}}{{$a}}|a=x|{}]]",
+            (0..24)
+                .map(|index| format!("dummy{index}=x"))
+                .collect::<Vec<_>>()
+                .join("|"),
+        );
+        let (include, _) = parse_include_block(&source, 0).expect("include should parse");
+        let total_size = include
+            .variables()
+            .iter()
+            .map(|(key, value)| key.len() + value.len())
+            .sum::<usize>();
+
+        assert!(
+            total_size <= source.len() + INCLUDE_ARGUMENT_EXPANSION_ALLOWANCE,
+            "resolved map exceeded its source-relative allowance: {total_size} bytes",
+        );
+    }
+
+    #[test]
+    fn expansion_budget_is_checked_before_copying_a_replacement() {
+        let arguments = HashMap::from([("a".to_owned(), "1234".to_owned())]);
+
+        assert_eq!(
+            expand_argument_expression_once("{$a}", &arguments, None, 4),
+            Some("1234".to_owned()),
+        );
+        assert_eq!(
+            expand_argument_expression_once("{$a}", &arguments, None, 3),
+            None,
+        );
+    }
+
+    #[test]
+    fn ordinary_acyclic_include_argument_expansion_is_unchanged() {
+        let (include, _) =
+            parse_include_block("[[include page | a=x | b={$a}{$a} | c=prefix-{$b}]]", 0)
+                .expect("include should parse");
+
+        assert_eq!(include.variables().get("a").map(Cow::as_ref), Some("x "));
+        assert_eq!(include.variables().get("b").map(Cow::as_ref), Some("xx "));
+        assert_eq!(
+            include.variables().get("c").map(Cow::as_ref),
+            Some("prefix-xx"),
+        );
     }
 }

@@ -956,6 +956,49 @@ fn false_iftags_deep_nested_conditionals_parse_within_budget() {
 }
 
 #[test]
+fn wikidot_false_iftags_sparse_closer_matrix_preserves_public_behavior() {
+    for closer_count in 0..=3 {
+        let input = format!(
+            "[[iftags +missing]]\n{}hidden\n{}visible",
+            "[[iftags +missing]]\n".repeat(3),
+            "[[/iftags]]\n".repeat(closer_count),
+        );
+        let (tree, _) = parse_with_errors(&input, Layout::Wikidot);
+        let text = render_text(&tree, Layout::Wikidot);
+
+        match closer_count {
+            0 => {
+                assert!(text.contains("[[iftags +missing]]"), "{text}");
+                assert!(text.contains("hidden"), "{text}");
+                assert!(text.contains("visible"), "{text}");
+            }
+            1 => assert_eq!(text, "visible"),
+            2 | 3 => assert!(text.is_empty(), "{closer_count}: {text}"),
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[test]
+fn wikidot_false_iftags_sparse_closer_scans_scale_linearly() {
+    for nested_count in [64, 128, 256, 512] {
+        let input = format!(
+            "[[iftags +missing]]\n{}hidden\n[[/iftags]]\nvisible",
+            "[[iftags +missing]]\n".repeat(nested_count),
+        );
+        let started = Instant::now();
+        let (tree, _) = parse_with_errors(&input, Layout::Wikidot);
+        let elapsed = started.elapsed();
+
+        assert_eq!(render_text(&tree, Layout::Wikidot), "visible");
+        assert!(
+            elapsed < Duration::from_secs(3),
+            "{nested_count} nested candidates took {elapsed:?}",
+        );
+    }
+}
+
+#[test]
 fn false_iftags_unclosed_outer_body_keeps_layout_specific_semantics() {
     let input = "[[iftags +missing]]\nfollowing body";
 

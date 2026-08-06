@@ -29,6 +29,7 @@ mod consume;
 mod depth;
 mod element_condition;
 mod error;
+mod heading;
 mod hidden_body;
 mod inline_format;
 mod inline_scope;
@@ -195,6 +196,7 @@ where
                     inline_format::normalize_wikidot_inline_formats(footnote);
                 }
                 inline_scope::lower_wikidot_inline_size_scopes(&mut elements);
+                heading::normalize_wikidot_headings(&mut elements);
                 for footnote in &mut footnotes {
                     inline_scope::lower_wikidot_inline_size_scopes_inline(footnote);
                 }

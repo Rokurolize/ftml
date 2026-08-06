@@ -22,6 +22,13 @@ use super::prelude::*;
 use crate::tree::Heading;
 use std::convert::TryInto;
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+enum WikidotHeadingContent {
+    Empty,
+    FootnoteFirst,
+    Other,
+}
+
 pub const RULE_HEADER: Rule = Rule {
     name: "header",
     position: LineRequirement::StartOfLine,
@@ -69,6 +76,44 @@ fn consume_header_once<'r, 't>(
     let collected = collect_container(parser, RULE_HEADER, ctype, &close, &[], None)?;
     let (mut elements, mut all_errors, _) = collected.into();
 
+    let content = match &elements {
+        Elements::Single(Element::Container(container)) => {
+            wikidot_heading_content(container.elements())
+        }
+        _ => unreachable!("header collection always returns one container"),
+    };
+
+    if parser.settings().layout.legacy()
+        && content == WikidotHeadingContent::FootnoteFirst
+    {
+        return ok!(
+            wikidot_literal_heading(heading_token.slice, elements),
+            all_errors,
+        );
+    }
+
+    // An empty heading cannot acquire syntax authority from a footnote on the
+    // next physical line. Consume the footnote through its ordinary block
+    // rule, then return the heading marker as paragraph text.
+    if parser.settings().layout.legacy()
+        && content == WikidotHeadingContent::Empty
+        && parser.current().token == Token::LeftBlock
+        && parser
+            .look_ahead(0)
+            .is_some_and(|token| token.slice.eq_ignore_ascii_case("footnote"))
+    {
+        let mut candidate = parser.clone_with_rule(RULE_HEADER);
+        if let Ok(footnote) = super::RULE_BLOCK.try_consume(&mut candidate)
+            && let Elements::Single(Element::Footnote) = footnote.item
+        {
+            let mut literal = wikidot_literal_heading(heading_token.slice, elements);
+            literal.push(Element::Footnote);
+            all_errors.extend(footnote.errors);
+            parser.update(&candidate);
+            return ok!(literal, all_errors);
+        }
+    }
+
     // If this heading wants a table of contents (TOC) entry, then add one
     if heading.has_toc
         && let Elements::Single(Element::Container(ref container)) = elements
@@ -79,6 +124,7 @@ fn consume_header_once<'r, 't>(
     // Wikidot joins a footnote that starts the next physical line to the
     // preceding heading instead of wrapping it in a new paragraph.
     if parser.settings().layout.legacy()
+        && content == WikidotHeadingContent::Other
         && parser.current().token == Token::LeftBlock
         && parser
             .look_ahead(0)
@@ -99,10 +145,54 @@ fn consume_header_once<'r, 't>(
     ok!(false; elements, all_errors)
 }
 
+fn wikidot_literal_heading<'t>(
+    marker: &'t str,
+    elements: Elements<'t>,
+) -> Vec<Element<'t>> {
+    let Elements::Single(Element::Container(container)) = elements else {
+        unreachable!("header collection always returns one container");
+    };
+    let mut literal = Vec::with_capacity(container.elements().len() + 1);
+    literal.push(text!(marker));
+    literal.extend(Vec::from(container));
+    literal
+}
+
+fn wikidot_heading_content(elements: &[Element<'_>]) -> WikidotHeadingContent {
+    for element in elements {
+        let content = match element {
+            Element::Text(text) | Element::Raw(text)
+                if text.chars().all(char::is_whitespace) =>
+            {
+                WikidotHeadingContent::Empty
+            }
+            Element::Container(container) => {
+                wikidot_heading_content(container.elements())
+            }
+            Element::Anchor { elements, .. } | Element::Color { elements, .. } => {
+                wikidot_heading_content(elements)
+            }
+            Element::Footnote => WikidotHeadingContent::FootnoteFirst,
+            Element::LineBreak => WikidotHeadingContent::Empty,
+            Element::Partial(partial) if partial.is_inline_format_control() => {
+                WikidotHeadingContent::Empty
+            }
+            _ => WikidotHeadingContent::Other,
+        };
+        if content != WikidotHeadingContent::Empty {
+            return content;
+        }
+    }
+    WikidotHeadingContent::Empty
+}
+
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     let success = consume_header_once(parser)?;
+    if success.paragraph_safe {
+        return Ok(success);
+    }
     let (elements, mut all_errors, _) = success.into();
     let mut all_elements: Vec<_> = elements.into_iter().collect();
 
@@ -121,6 +211,11 @@ fn try_consume_fn<'r, 't>(
                 return ok!(false; all_elements, all_errors);
             }
         };
+
+        if success.paragraph_safe {
+            parser.reset_mutable_state(parser_state);
+            return ok!(false; all_elements, all_errors);
+        }
 
         parser.update(&sub_parser);
 

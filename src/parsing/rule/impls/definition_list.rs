@@ -177,6 +177,15 @@ fn has_definition_separator<'r, 't>(parser: &Parser<'r, 't>) -> bool {
     if cursor.step_n(2).is_err() {
         return false;
     }
+    if cursor.current().token == Token::Colon {
+        if cursor.step().is_err() || cursor.get_optional_space().is_err() {
+            return false;
+        }
+        return !matches!(
+            cursor.current().token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        );
+    }
     loop {
         if cursor.next_two_tokens() == (Token::Whitespace, Some(Token::Colon)) {
             return cursor.step_n(2).is_ok()
@@ -203,6 +212,12 @@ fn collect_key<'r, 't>(
 where
     'r: 't,
 {
+    if parser.current().token == Token::Colon {
+        parser.step()?;
+        parser.get_optional_space()?;
+        return Ok(("", Vec::new()));
+    }
+
     let start_token = parser.current();
     let close = [ParseCondition::token_pair(Token::Whitespace, Token::Colon)];
     let invalid = [
@@ -362,6 +377,23 @@ mod tests {
             }
             other => panic!("expected definition list, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn wikidot_definition_list_keeps_an_empty_term() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(":  : Value");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        let [Element::DefinitionList(items)] = tree.elements.as_slice() else {
+            panic!("expected one definition list, got {:#?}", tree.elements);
+        };
+        assert_eq!(items.len(), 1);
+        assert!(items[0].key_string.is_empty());
+        assert!(items[0].key_elements.is_empty());
+        assert_eq!(items[0].value_elements, [text!("Value")]);
     }
 
     #[test]

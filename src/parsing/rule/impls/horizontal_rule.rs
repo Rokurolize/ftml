@@ -34,15 +34,26 @@ fn try_consume_fn<'r, 't>(
     let start = parser.current().span.start;
     let physical_line_start =
         start == 0 || matches!(source.get(start - 1), Some(b'\n' | b'\r'));
-    if (!physical_line_start && !parser.in_native_blockquote_line())
-        || !matches!(
-            parser.look_ahead(0).map(|token| token.token),
-            Some(Token::LineBreak | Token::ParagraphBreak | Token::InputEnd)
-        )
-    {
+    if !physical_line_start && !parser.in_native_blockquote_line() {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    let next = parser.look_ahead(0).map(|token| token.token);
+    let trailing_space = next == Some(Token::Whitespace);
+    let boundary = if trailing_space {
+        parser.look_ahead(1).map(|token| token.token)
+    } else {
+        next
+    };
+    if !matches!(
+        boundary,
+        Some(Token::LineBreak | Token::ParagraphBreak | Token::InputEnd)
+    ) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     assert_step(parser, Token::TripleDash)?;
+    if trailing_space {
+        parser.step()?;
+    }
     parser.get_optional_line_break()?;
     ok!(Element::HorizontalRule)
 }
@@ -68,8 +79,8 @@ mod tests {
         assert_eq!(render_html("----"), "<hr>");
         assert_eq!(render_html("----\nnext"), "<hr><p>next</p>");
         assert_eq!(render_html("---- tail"), "<p>—— tail</p>");
-        assert_eq!(render_html("----   "), "<p>——</p>");
-        assert_eq!(render_html("---- \nnext"), "<p>——<br>\nnext</p>");
+        assert_eq!(render_html("----   "), "<hr>");
+        assert_eq!(render_html("---- \nnext"), "<hr><p>next</p>");
         assert_eq!(render_html(" ----"), "<p>——</p>");
         assert_eq!(render_html("alpha\n---- tail"), "<p>alpha<br>\n—— tail</p>",);
     }

@@ -11,6 +11,7 @@
  */
 
 use super::prelude::*;
+use std::borrow::Cow;
 pub const BLOCK_FILE: BlockRule = BlockRule {
     name: "block-file",
     accepts_names: &["file"],
@@ -19,6 +20,12 @@ pub const BLOCK_FILE: BlockRule = BlockRule {
     accepts_newlines: false,
     parse_fn,
 };
+
+struct WikidotFileHead<'t> {
+    file: Cow<'t, str>,
+    label: Cow<'t, str>,
+    trailing_bracket: bool,
+}
 
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
@@ -32,10 +39,62 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "File doesn't allow score flag");
     assert_block_name(&BLOCK_FILE, name);
 
-    let (file, label) =
-        parser.get_head_value(&BLOCK_FILE, in_head, parse_evidenced_file_link)?;
+    let (file, label, trailing_bracket) = if parser.settings().layout.legacy() {
+        let head = parse_wikidot_file_head(parser, in_head)?;
+        (head.file, head.label, head.trailing_bracket)
+    } else {
+        let (file, label) =
+            parser.get_head_value(&BLOCK_FILE, in_head, parse_evidenced_file_link)?;
+        (file, label, false)
+    };
 
-    success_elements(Element::FileLink { file, label })
+    let link = Element::FileLink { file, label };
+    if trailing_bracket {
+        ok!(Elements::Multiple(vec![link, text!("]")]))
+    } else {
+        success_elements(link)
+    }
+}
+
+fn parse_wikidot_file_head<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    in_head: bool,
+) -> Result<WikidotFileHead<'t>, ParseError>
+where
+    'r: 't,
+{
+    if !parser.settings().allow_local_paths {
+        return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
+    }
+    if !in_head {
+        return Err(parser.make_err(ParseErrorKind::BlockMissingArguments));
+    }
+
+    let start = parser.current().span.start;
+    loop {
+        let current = parser.current();
+        let trailing_bracket = match current.token {
+            Token::RightBlock => false,
+            Token::RightLink if current.slice == "]]]" => true,
+            Token::LineBreak | Token::ParagraphBreak => {
+                return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
+            }
+            Token::InputEnd => return Err(parser.make_err(ParseErrorKind::EndOfInput)),
+            _ => {
+                parser.step()?;
+                continue;
+            }
+        };
+
+        let value = &parser.full_text().inner()[start..current.span.start];
+        let (file, label) = parse_evidenced_file_link(parser, Some(value))?;
+        parser.step()?;
+        return Ok(WikidotFileHead {
+            file,
+            label,
+            trailing_bracket,
+        });
+    }
 }
 
 fn parse_evidenced_file_link<'t>(
@@ -58,7 +117,7 @@ fn parse_evidenced_file_link<'t>(
     }
 
     let (file, label) = match value.split_once('|') {
-        Some((file, label)) if !label.contains('|') => {
+        Some((file, label)) => {
             let file = file.trim();
             let label = label.trim();
             (
@@ -70,8 +129,14 @@ fn parse_evidenced_file_link<'t>(
                 },
             )
         }
-        Some(_) => return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments)),
-        None => (value, file_name(value)),
+        None => (
+            value,
+            if value.bytes().any(|byte| matches!(byte, b' ' | b'\t')) {
+                value
+            } else {
+                file_name(value)
+            },
+        ),
     };
     if !is_evidenced_wikidot_file_source(file) {
         return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
@@ -85,16 +150,7 @@ fn file_name(source: &str) -> &str {
 }
 
 fn is_evidenced_wikidot_file_source(source: &str) -> bool {
-    for part in source.split('/') {
-        if part.is_empty()
-            || part == "."
-            || part == ".."
-            || !is_evidenced_file_path_part(part)
-        {
-            return false;
-        }
-    }
-    true
+    !source.is_empty()
 }
 
 fn is_evidenced_file_name(source: &str) -> bool {
@@ -157,34 +213,68 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_file_link_rejects_shapes_without_live_evidence() {
+    fn wikidot_file_link_preserves_opaque_live_path_and_label_data() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
 
-        for source in [
-            "[[file .]]",
-            "[[file ..]]",
-            "[[file ../elements.tsv | Download Catalog]]",
-            "[[file elements.tsv | label | extra]]",
-            "[[file path with spaces/elements.tsv]]",
+        for (source, file, label, trailing) in [
+            ("[[file .]]", ".", ".", false),
+            ("[[file ..]]", "..", "..", false),
+            (
+                "[[file ../elements.tsv | Download Catalog]]",
+                "../elements.tsv",
+                "Download Catalog",
+                false,
+            ),
+            (
+                "[[file elements.tsv | label | extra]]",
+                "elements.tsv",
+                "label | extra",
+                false,
+            ),
+            (
+                "[[file path with spaces/elements.tsv]]",
+                "path with spaces/elements.tsv",
+                "path with spaces/elements.tsv",
+                false,
+            ),
+            ("[[file a.txt#x]]", "a.txt#x", "a.txt#x", false),
+            ("[[file a.txt?x=1]]", "a.txt?x=1", "a.txt?x=1", false),
+            ("[[file 日本語.txt]]", "日本語.txt", "日本語.txt", false),
+            (
+                "[[file elements.tsv]]]",
+                "elements.tsv",
+                "elements.tsv",
+                true,
+            ),
         ] {
             let tokenization = crate::tokenize(source);
             let (tree, errors) =
                 crate::parse(&tokenization, &page_info, &settings).into();
 
-            assert!(
-                errors
-                    .iter()
-                    .any(|error| error.kind() == ParseErrorKind::BlockMalformedArguments),
-                "{source} should fail closed: {errors:#?}",
-            );
-            assert!(
-                !tree
-                    .elements
-                    .iter()
-                    .any(|element| matches!(element, Element::FileLink { .. })),
-                "{source} must not become a file link",
-            );
+            assert!(errors.is_empty(), "{source} should parse: {errors:#?}");
+            let [Element::Container(paragraph)] = tree.elements.as_slice() else {
+                panic!(
+                    "{source} should produce one paragraph: {:#?}",
+                    tree.elements
+                );
+            };
+            let [
+                Element::FileLink {
+                    file: actual_file,
+                    label: actual_label,
+                },
+                rest @ ..,
+            ] = paragraph.elements()
+            else {
+                panic!(
+                    "{source} should produce a file link: {:#?}",
+                    paragraph.elements()
+                );
+            };
+            assert_eq!(actual_file, file, "{source}");
+            assert_eq!(actual_label, label, "{source}");
+            assert_eq!(rest == [text!("]")], trailing, "{source}");
         }
     }
 

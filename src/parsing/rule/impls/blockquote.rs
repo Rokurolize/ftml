@@ -21,6 +21,7 @@
 use super::footnote_first::{
     remove_first_footnote, starts_footnote, unowned_footnote_first,
 };
+use super::line_owner::{LineOwner, try_consume_lost_owner_block};
 use super::prelude::*;
 use crate::parsing::paragraph::{
     ParagraphStack, collapsible_has_direct_literal_nested_opener,
@@ -122,6 +123,7 @@ fn try_consume_fn<'r, 't>(
     // Context variables
     let mut depths = Vec::new();
     let mut escaped_rows = Vec::new();
+    let mut escaped_elements = Vec::new();
     let mut errors = Vec::new();
     let mut consumed_pruned_row = false;
     let mut quote_run_active = true;
@@ -158,6 +160,35 @@ fn try_consume_fn<'r, 't>(
         // Check that the depth isn't obscenely deep, to avoid DOS attacks via stack overflow.
         if absolute_depth > MAX_BLOCKQUOTE_DEPTH {
             return Err(parser.make_err(ParseErrorKind::BlockquoteDepthExceeded));
+        }
+
+        if parser.settings().layout.legacy()
+            && let Some(lost) = try_consume_lost_owner_block(
+                parser,
+                LineOwner::Quote {
+                    depth: physical_depth,
+                },
+            )?
+        {
+            errors.extend(lost.errors);
+            if let Some(control) = lost.control {
+                depths.push((
+                    depth - 1,
+                    (),
+                    NativeQuoteRow {
+                        elements: vec![control],
+                        paragraph_safe: false,
+                        empty_spaced: false,
+                    },
+                ));
+            } else {
+                consumed_pruned_row = true;
+            }
+            escaped_elements.extend(lost.body);
+            if lost.append_unquoted_close_break {
+                escaped_elements.push(Element::LineBreak);
+            }
+            break;
         }
 
         // Parse elements until we hit the end of the line
@@ -294,7 +325,7 @@ fn try_consume_fn<'r, 't>(
     }
 
     // This blockquote has no rows, so the rule fails
-    if depths.is_empty() {
+    if depths.is_empty() && escaped_elements.is_empty() {
         if consumed_pruned_row {
             return ok!(false; Elements::None, errors);
         }
@@ -310,6 +341,7 @@ fn try_consume_fn<'r, 't>(
     if !escaped_rows.is_empty() {
         elements.extend(build_flattened_quote_rows(escaped_rows, wikidot));
     }
+    elements.extend(escaped_elements);
     if append_unquoted_close_break {
         elements.push(Element::LineBreak);
     }

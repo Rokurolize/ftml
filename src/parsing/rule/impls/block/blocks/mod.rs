@@ -139,6 +139,7 @@ pub use self::char::BLOCK_CHAR;
 pub use self::checkbox::BLOCK_CHECKBOX;
 pub use self::code::BLOCK_CODE;
 pub use self::collapsible::BLOCK_COLLAPSIBLE;
+pub(crate) use self::collapsible::{CollapsibleHead, parse_collapsible_head};
 pub use self::date::BLOCK_DATE;
 pub use self::del::BLOCK_DEL;
 pub use self::div::BLOCK_DIV;

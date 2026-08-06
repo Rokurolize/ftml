@@ -53,6 +53,7 @@ mod horizontal_rule;
 mod inline_delimiter;
 mod italics;
 mod line_break;
+mod line_owner;
 mod link_anchor;
 mod link_single;
 mod link_triple;

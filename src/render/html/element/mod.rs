@@ -352,7 +352,7 @@ fn render_partial(ctx: &mut HtmlContext, partial: &PartialElement) {
     match partial {
         PartialElement::WikidotEmptyInlineOwner
         | PartialElement::InlineSizeOpen(_)
-        | PartialElement::InlineSizeClose
+        | PartialElement::InlineSizeClose(_)
         | PartialElement::InlineSpanOpen(_)
         | PartialElement::InlineSpanClose(_) => {}
         PartialElement::ListItem(ListItem::Elements { elements, .. }) => {

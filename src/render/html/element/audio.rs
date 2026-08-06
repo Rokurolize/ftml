@@ -142,21 +142,24 @@ fn audio_renders_missing_when_local_paths_are_disabled() {
     let mut settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
     settings.allow_local_paths = false;
 
-    let tree = SyntaxTree {
-        elements: vec![Element::Audio {
-            source: FileSource::File1 {
-                file: cow!("local.mp3"),
-            },
-            alignment: None,
-            attributes: AttributeMap::new(),
-        }],
-        ..SyntaxTree::default()
-    };
-
-    let output = HtmlRender.render(&tree, &page_info, &settings);
-
-    assert_eq!(
-        output.body,
-        r#"<div class="wj-error-block">No audio in this context</div>"#
-    );
+    for source in [
+        FileSource::File1 {
+            file: cow!("local.mp3"),
+        },
+        FileSource::Url(cow!("/local--files/private-page/secret.mp3")),
+    ] {
+        let tree = SyntaxTree {
+            elements: vec![Element::Audio {
+                source,
+                alignment: None,
+                attributes: AttributeMap::new(),
+            }],
+            ..SyntaxTree::default()
+        };
+        let output = HtmlRender.render(&tree, &page_info, &settings);
+        assert_eq!(
+            output.body,
+            r#"<div class="wj-error-block">No audio in this context</div>"#,
+        );
+    }
 }

@@ -165,6 +165,7 @@ impl Test {
                 crate::parse(&wikidot_tokens, &page_info, &settings).into();
             let actual_output = HtmlRender.render(&wikidot_tree, &page_info, &settings);
             let expected_html = harden_expected_new_tab_links(expected_html);
+            let expected_html = harden_expected_user_karma_urls(&expected_html);
             if actual_output.body != expected_html {
                 result = TestResult::Fail;
                 eprintln!("Wikidot HTML did not match:");
@@ -355,6 +356,27 @@ fn ast_fixtures_require_new_tab_link_isolation() {
             r#"<a target="_blank">A</a><a target="_blank" rel="noopener noreferrer">B</a>"#,
         ),
         r#"<a target="_blank" rel="noopener noreferrer">A</a><a target="_blank" rel="noopener noreferrer">B</a>"#,
+    );
+}
+
+fn harden_expected_user_karma_urls(html: &str) -> Cow<'_, str> {
+    const INSECURE: &str = "background-image:url(http://www.wikidot.com/userkarma.php";
+    const SECURE: &str = "background-image:url(https://www.wikidot.com/userkarma.php";
+
+    if html.contains(INSECURE) {
+        Cow::Owned(html.replace(INSECURE, SECURE))
+    } else {
+        Cow::Borrowed(html)
+    }
+}
+
+#[test]
+fn ast_fixtures_require_https_user_karma_images() {
+    assert_eq!(
+        harden_expected_user_karma_urls(
+            "background-image:url(http://www.wikidot.com/userkarma.php?u=42)",
+        ),
+        "background-image:url(https://www.wikidot.com/userkarma.php?u=42)",
     );
 }
 

@@ -61,6 +61,9 @@ mod wikidot_span_attributes;
 #[path = "wikidot_line_ownership.rs"]
 mod wikidot_line_ownership;
 
+#[path = "wikidot_math_blocks.rs"]
+mod wikidot_math_blocks;
+
 #[path = "wikidot_automatic_links.rs"]
 mod wikidot_automatic_links;
 

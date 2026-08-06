@@ -152,7 +152,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert!(
             html.starts_with(
-                "NAME:<br>\nFoo Foo\n<!-- Wikidot tabview bootstrap omitted -->\n"
+                "NAME:<br>\nFoo Foo\n<script type=\"text/javascript\" src=\"http://d3g0gp89917ko0.cloudfront.net/v--7690939296dc/common--javascript/yahooui/tabview-min.js\"></script>\n"
             ),
             "{html}",
         );

@@ -175,9 +175,10 @@ pub struct Parser<'r, 't> {
     // Flags
     accepts_partial: AcceptsPartial,
     // Only the next consume depth is a direct child of the partial owner.
-    // Descendant blocks retain the variant for ordinary tree traversal but
-    // cannot claim direct structural ownership from an ancestor.
-    accepts_partial_depth: Option<usize>,
+    // Zero means inactive. The parser limit is 1024, so a compact u16 keeps
+    // this ownership state out of every deep recursive frame's pointer-sized
+    // footprint.
+    accepts_partial_depth: u16,
     in_footnote: bool, // Whether we're currently inside [[footnote]] ... [[/footnote]].
     has_footnote_block: bool, // Whether a [[footnoteblock]] was created.
     start_of_line: bool,
@@ -243,7 +244,7 @@ impl<'r, 't> Parser<'r, 't> {
             #[cfg(test)]
             block_end_scan_token_visits: Rc::new(Cell::new(0)),
             accepts_partial: AcceptsPartial::None,
-            accepts_partial_depth: None,
+            accepts_partial_depth: 0,
             in_footnote: false,
             has_footnote_block: false,
             start_of_line: true,
@@ -331,7 +332,9 @@ impl<'r, 't> Parser<'r, 't> {
 
     #[inline]
     pub(crate) fn accepts_partial_here(&self, value: AcceptsPartial) -> bool {
-        self.accepts_partial == value && self.accepts_partial_depth == Some(self.depth)
+        self.accepts_partial == value
+            && self.accepts_partial_depth != 0
+            && usize::from(self.accepts_partial_depth) == self.depth
     }
 
     #[inline]
@@ -651,16 +654,17 @@ impl<'r, 't> Parser<'r, 't> {
     #[inline]
     pub(crate) fn set_accepts_partial_child(&mut self, value: AcceptsPartial) {
         self.accepts_partial = value;
-        self.accepts_partial_depth = Some(self.depth + 1);
+        self.accepts_partial_depth =
+            u16::try_from(self.depth + 1).expect("parser depth limit fits in u16");
     }
 
     #[inline]
-    pub(crate) fn accepts_partial_depth(&self) -> Option<usize> {
+    pub(crate) fn accepts_partial_depth(&self) -> u16 {
         self.accepts_partial_depth
     }
 
     #[inline]
-    pub(crate) fn set_accepts_partial_depth(&mut self, value: Option<usize>) {
+    pub(crate) fn set_accepts_partial_depth(&mut self, value: u16) {
         self.accepts_partial_depth = value;
     }
 
@@ -1424,4 +1428,13 @@ fn parser_append_shared_items_and_optional_spaces_cover_helpers() {
     );
     assert_eq!(parser.remove_footnotes(), vec![vec![text!("note")]]);
     assert_eq!(parser.remove_bibliographies().next_index(), 1);
+}
+
+#[test]
+fn parser_state_fits_the_bounded_deep_parse_stack_budget() {
+    let size = std::mem::size_of::<Parser<'static, 'static>>();
+    assert!(
+        size <= 304,
+        "Parser grew to {size} bytes; deep recursive parsing requires at most 304 bytes",
+    );
 }

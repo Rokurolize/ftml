@@ -1239,6 +1239,15 @@ where
         block_rule: &BlockRule,
         in_head: bool,
     ) -> Result<(&'t str, Arguments<'t>), ParseError> {
+        self.get_head_name_map_with_body_start(block_rule, in_head)
+            .map(|(name, arguments, _)| (name, arguments))
+    }
+
+    pub(crate) fn get_head_name_map_with_body_start(
+        &mut self,
+        block_rule: &BlockRule,
+        in_head: bool,
+    ) -> Result<(&'t str, Arguments<'t>, BlockBodyStart), ParseError> {
         if !in_head {
             return Err(self.make_err(ParseErrorKind::BlockMissingName));
         }
@@ -1248,9 +1257,10 @@ where
         let (subname, in_head) = self.get_block_name_internal(missing_name)?;
 
         // Get arguments and end of block
-        let arguments = self.get_head_map(block_rule, in_head)?;
+        let (arguments, body_start) =
+            self.get_head_map_with_body_start(block_rule, in_head)?;
 
-        Ok((subname, arguments))
+        Ok((subname, arguments, body_start))
     }
 
     /// Parses a positional block-head value followed by Wikidot `getAttrs`

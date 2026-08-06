@@ -519,15 +519,7 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
         }
     }
 
-    let element = if parser.settings().layout.legacy() {
-        match current.token {
-            Token::LeftComment => text!("[!\u{2014}"),
-            Token::RightComment => text!("\u{2014}]"),
-            _ => text!(current.slice),
-        }
-    } else {
-        text!(current.slice)
-    };
+    let element = text!(current.slice);
     parser.step()?;
 
     // If we've hit the recursion limit, just bail

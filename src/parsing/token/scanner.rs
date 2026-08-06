@@ -1,20 +1,115 @@
 use super::{ExtractedToken, Token};
 
 pub fn extract_all(text: &str) -> Vec<ExtractedToken<'_>> {
+    extract_all_with_trailing_comment_closer(text, false)
+}
+
+pub(super) fn extract_all_with_trailing_comment_closer(
+    text: &str,
+    trailing_comment_closer: bool,
+) -> Vec<ExtractedToken<'_>> {
+    extract_all_with_comment_scan_visits(text, trailing_comment_closer).0
+}
+
+fn extract_all_with_comment_scan_visits(
+    text: &str,
+    trailing_comment_closer: bool,
+) -> (Vec<ExtractedToken<'_>>, usize) {
     let mut tokens = Vec::with_capacity(text.len() / 2 + 2);
     push(&mut tokens, text, Token::InputStart, 0, 0);
 
     let bytes = text.as_bytes();
+    let mut comment_closers = CommentCloserCursor::new(bytes);
+    // A failed `[!--` candidate must retain ordinary token ownership. Once a
+    // validated opener is active, remember the exact closer bracket so a
+    // following `]]` run cannot swallow it into a block or link token.
+    let mut comment_active = false;
+    let mut comment_closer_bracket = None;
     let mut index = 0;
     while index < bytes.len() {
         let start = index;
-        let (token, end) = next_token(text, bytes, start);
+        let force_right_bracket = comment_closer_bracket == Some(start);
+        if force_right_bracket {
+            comment_closer_bracket = None;
+        }
+        if comment_active && let Some(bracket) = comment_closer_bracket_at(bytes, start) {
+            comment_active = false;
+            comment_closer_bracket = Some(bracket);
+        }
+        let valid_comment_opener = has(bytes, start, b"[!--")
+            && (trailing_comment_closer
+                || comment_closers.has_at_or_after(start + b"[!--".len()));
+        let was_comment_active = comment_active;
+        let (token, end) = next_token(
+            text,
+            bytes,
+            start,
+            valid_comment_opener,
+            force_right_bracket,
+        );
+        if was_comment_active
+            && text[start..end].ends_with("--")
+            && bytes.get(end) == Some(&b']')
+        {
+            comment_active = false;
+            comment_closer_bracket = Some(end);
+        }
+        if token == Token::LeftComment {
+            comment_active = true;
+        }
         push(&mut tokens, text, token, start, end);
         index = end;
     }
 
     push(&mut tokens, text, Token::InputEnd, text.len(), text.len());
-    tokens
+    (tokens, comment_closers.scan_visits)
+}
+
+struct CommentCloserCursor<'a> {
+    bytes: &'a [u8],
+    initialized: bool,
+    next: Option<usize>,
+    search_start: usize,
+    scan_visits: usize,
+}
+
+impl<'a> CommentCloserCursor<'a> {
+    fn new(bytes: &'a [u8]) -> Self {
+        Self {
+            bytes,
+            initialized: false,
+            next: None,
+            search_start: 0,
+            scan_visits: 0,
+        }
+    }
+
+    fn has_at_or_after(&mut self, minimum: usize) -> bool {
+        if !self.initialized {
+            self.initialized = true;
+            self.find_next();
+        }
+        while self.next.is_some_and(|position| position < minimum) {
+            self.find_next();
+        }
+        self.next.is_some()
+    }
+
+    fn find_next(&mut self) {
+        // search_start only moves forward, so all opener checks together
+        // visit each possible closer position at most once.
+        while self.search_start + 2 < self.bytes.len() {
+            let position = self.search_start;
+            self.search_start += 1;
+            self.scan_visits += 1;
+            if has(self.bytes, position, b"--]") {
+                self.next = Some(position);
+                return;
+            }
+        }
+        self.search_start = self.bytes.len();
+        self.next = None;
+    }
 }
 
 fn push<'t>(
@@ -31,7 +126,13 @@ fn push<'t>(
     });
 }
 
-fn next_token(text: &str, bytes: &[u8], start: usize) -> (Token, usize) {
+fn next_token(
+    text: &str,
+    bytes: &[u8],
+    start: usize,
+    valid_comment_opener: bool,
+    force_right_bracket: bool,
+) -> (Token, usize) {
     let byte = bytes[start];
     if is_discarded_control(byte) {
         return (Token::DiscardedControl, start + 1);
@@ -62,7 +163,9 @@ fn next_token(text: &str, bytes: &[u8], start: usize) -> (Token, usize) {
         return (Token::Whitespace, scan_space(bytes, start));
     }
 
-    if let Some((token, end)) = scan_literal(bytes, start) {
+    if let Some((token, end)) =
+        scan_literal(bytes, start, valid_comment_opener, force_right_bracket)
+    {
         return (token, end);
     }
 
@@ -77,13 +180,17 @@ fn is_discarded_control(byte: u8) -> bool {
     matches!(byte, 0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
 }
 
-fn scan_literal(bytes: &[u8], start: usize) -> Option<(Token, usize)> {
+fn scan_literal(
+    bytes: &[u8],
+    start: usize,
+    valid_comment_opener: bool,
+    force_right_bracket: bool,
+) -> Option<(Token, usize)> {
     let result = match bytes[start] {
         b'@' if has(bytes, start, b"@@") => (Token::Raw, start + 2),
         b'@' if has(bytes, start, b"@<") => (Token::LeftRaw, start + 2),
         b'>' if has(bytes, start, b">@") => (Token::RightRaw, start + 2),
-        b'[' if has(bytes, start, b"[!--") => (Token::LeftComment, start + 4),
-        b'-' if has(bytes, start, b"--]") => (Token::RightComment, start + 3),
+        b'[' if valid_comment_opener => (Token::LeftComment, start + 4),
         b'[' if has(bytes, start, b"[[[[")
             && repeated_symbol_offset(bytes, start, b'[').is_multiple_of(4) =>
         {
@@ -100,6 +207,7 @@ fn scan_literal(bytes: &[u8], start: usize) -> Option<(Token, usize)> {
         b'[' if has(bytes, start, b"[*") => (Token::LeftBracketStar, start + 2),
         b'[' => (Token::LeftBracket, start + 1),
         b'(' if has(bytes, start, b"((") => (Token::LeftParentheses, start + 2),
+        b']' if force_right_bracket => (Token::RightBracket, start + 1),
         b']' if has(bytes, start, b"]]]")
             && !is_right_link_trailing_bracket(bytes, start) =>
         {
@@ -396,6 +504,14 @@ fn has(bytes: &[u8], start: usize, literal: &[u8]) -> bool {
         .is_some_and(|candidate| candidate == literal)
 }
 
+fn comment_closer_bracket_at(bytes: &[u8], start: usize) -> Option<usize> {
+    if bytes.get(start) != Some(&b'-') {
+        return None;
+    }
+    let end = scan_same(bytes, start, b'-');
+    (end - start >= 2 && bytes.get(end) == Some(&b']')).then_some(end)
+}
+
 fn next_char_end(text: &str, start: usize) -> usize {
     if text.as_bytes()[start].is_ascii() {
         start + 1
@@ -422,5 +538,46 @@ mod tests {
         assert_eq!(tokens[1].token, Token::LineBreak);
         assert_eq!(tokens[1].slice, "\\\n");
         assert_eq!(tokens[2].token, Token::InputEnd);
+    }
+
+    #[test]
+    fn malformed_comment_candidate_scan_is_linear_and_token_memory_is_bounded() {
+        let input = "A[!--hidden------ ]B".repeat(32_768);
+        let (tokens, comment_scan_visits) =
+            extract_all_with_comment_scan_visits(&input, false);
+
+        assert!(comment_scan_visits <= input.len());
+        assert!(tokens.len() <= input.len() + 2);
+        assert!(tokens.iter().all(|token| token.token != Token::LeftComment),);
+    }
+
+    #[test]
+    fn comment_closer_scan_is_lazy_for_inputs_without_candidates() {
+        let input = "ordinary --] punctuation".repeat(4_096);
+        let (_, comment_scan_visits) =
+            extract_all_with_comment_scan_visits(&input, false);
+
+        assert_eq!(comment_scan_visits, 0);
+    }
+
+    #[test]
+    fn active_comment_closer_owns_only_the_first_bracket_of_a_run() {
+        let active = extract_all("[!--x--]]]");
+        let active_tokens = active.iter().map(|token| token.token).collect::<Vec<_>>();
+        assert_eq!(
+            active_tokens,
+            vec![
+                Token::InputStart,
+                Token::LeftComment,
+                Token::Identifier,
+                Token::DoubleDash,
+                Token::RightBracket,
+                Token::RightBlock,
+                Token::InputEnd,
+            ],
+        );
+
+        let ordinary = extract_all("x--]]]");
+        assert!(ordinary.iter().any(|token| token.token == Token::RightLink),);
     }
 }

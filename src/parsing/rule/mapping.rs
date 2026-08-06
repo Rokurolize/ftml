@@ -119,7 +119,6 @@ pub fn get_rules_for_token(current: &ExtractedToken) -> &'static [Rule] {
 
         // Miscellaneous
         Token::LeftComment => &[RULE_COMMENT],
-        Token::RightComment => &[],
 
         // Fallback
         Token::RuntimeText | Token::Other => &[RULE_TEXT],
@@ -216,7 +215,6 @@ mod tests {
             (Token::GeneratedPageLink, vec!["delayed"]),
             (Token::GeneratedTagLinks, vec!["delayed"]),
             (Token::LeftComment, vec!["comment"]),
-            (Token::RightComment, vec![]),
             (Token::InputStart, vec!["null"]),
             (Token::InputEnd, vec!["null"]),
             (Token::Other, vec!["text"]),

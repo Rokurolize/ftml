@@ -445,6 +445,45 @@ fn delayed_page_link_is_omitted_with_its_comment_owner() {
 }
 
 #[test]
+fn runtime_scalar_comment_closer_cannot_validate_an_authored_opener() {
+    let source = "[!--x--]";
+    let scalar_start = source.find("--]").expect("runtime closer fixture");
+    let input = DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..scalar_start, TextOrigin::Authored),
+            InputSegment::text(scalar_start..source.len(), TextOrigin::RuntimeScalar),
+        ],
+    )
+    .expect("valid mixed-provenance comment fixture");
+
+    let html = render_input_with_bindings(&input, &SlotBindings::empty());
+    assert!(html.contains('x'), "{html}");
+    assert!(html.contains("--]"), "{html}");
+}
+
+#[test]
+fn runtime_scalar_dashes_cannot_close_a_valid_authored_comment_early() {
+    let source = "[!--a--]b--]";
+    let scalar_start = source.find("a--]").expect("runtime dash fixture") + 1;
+    let scalar_end = scalar_start + 2;
+    let input = DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..scalar_start, TextOrigin::Authored),
+            InputSegment::text(scalar_start..scalar_end, TextOrigin::RuntimeScalar),
+            InputSegment::text(scalar_end..source.len(), TextOrigin::Authored),
+        ],
+    )
+    .expect("valid mixed-provenance comment fixture");
+
+    assert_eq!(
+        render_input_with_bindings(&input, &SlotBindings::empty()),
+        "",
+    );
+}
+
+#[test]
 fn slot_occupancy_recovers_outer_links_as_authored_source() {
     assert_eq!(
         render("BEGIN|[[[scp-003|%%title_linked%%]]]|END"),

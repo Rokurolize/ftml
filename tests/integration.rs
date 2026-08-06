@@ -96,3 +96,6 @@ mod wikidot_alignment_ownership;
 
 #[path = "wikidot_code_blocks.rs"]
 mod wikidot_code_blocks;
+
+#[path = "wikidot_comment_rollback.rs"]
+mod wikidot_comment_rollback;

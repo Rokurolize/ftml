@@ -202,6 +202,36 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_avatar_karma_image_uses_https() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tree = SyntaxTree {
+            elements: vec![Element::User {
+                name: cow!("SYSTEM"),
+                show_avatar: true,
+            }],
+            ..SyntaxTree::default()
+        };
+
+        let output = HtmlRender.render_with_resolvers(
+            &tree,
+            &page_info,
+            &settings,
+            &Handle,
+            &CanonicalUser,
+        );
+
+        assert!(
+            output.body.contains(
+                "background-image:url(https://www.wikidot.com/userkarma.php?u=42)"
+            ),
+            "{}",
+            output.body,
+        );
+        assert!(!output.body.contains("url(http://"), "{}", output.body);
+    }
+
+    #[test]
     fn page_language_localizes_default_footnote_heading() {
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tree = SyntaxTree {

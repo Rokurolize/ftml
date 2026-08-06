@@ -68,7 +68,8 @@ where
     }
 
     let mut close = parser.clone();
-    let Ok(name) = close.get_end_block() else {
+    let Ok((name, residual_close_bracket)) = close.get_wikidot_end_block_with_residual()
+    else {
         return Ok(None);
     };
     let normalized = name.strip_suffix('_').unwrap_or(name);
@@ -84,7 +85,12 @@ where
     };
 
     parser.update(&close);
-    Ok(Some(Element::Partial(partial).into()))
+    let element = Element::Partial(partial);
+    Ok(Some(if residual_close_bracket {
+        Elements::Multiple(vec![element, text!("]")])
+    } else {
+        element.into()
+    }))
 }
 
 fn try_consume_wikidot_adjacent_unmatched_closes_as_link<'r, 't>(

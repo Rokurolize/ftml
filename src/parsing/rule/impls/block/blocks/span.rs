@@ -63,7 +63,9 @@ fn parse_fn<'r, 't>(
     }
 
     let arguments = parser.get_head_map_wikidot(&BLOCK_SPAN, in_head)?;
-    let has_close = parser.has_body_end_block(&BLOCK_SPAN);
+    let has_close = parser.has_body_end_block(&BLOCK_SPAN)
+        || parser.settings().layout.legacy()
+            && has_wikidot_composite_span_close_on_line(parser);
 
     if parser.settings().layout.legacy() {
         if !has_close {
@@ -111,6 +113,30 @@ fn parse_fn<'r, 't>(
     ));
 
     success_elements_with_paragraph_safety(paragraph_safe, element, errors)
+}
+
+fn has_wikidot_composite_span_close_on_line<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    let mut scan = parser.clone();
+    loop {
+        match scan.current().token {
+            Token::LeftBlockEnd => {
+                let mut close = scan.clone();
+                if close.get_wikidot_end_block_with_residual().is_ok_and(
+                    |(name, residual)| residual && name.eq_ignore_ascii_case("span"),
+                ) {
+                    return true;
+                }
+            }
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd => return false,
+            _ => {}
+        }
+        if scan.step().is_err() {
+            return false;
+        }
+    }
 }
 
 fn retain_wikidot_span_attributes(attributes: &mut crate::tree::AttributeMap<'_>) {

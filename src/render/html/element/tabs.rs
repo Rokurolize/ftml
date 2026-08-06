@@ -100,10 +100,16 @@ pub fn render_tabview(ctx: &mut HtmlContext, tabs: &[Tab]) {
 fn render_wikidot_tabview(ctx: &mut HtmlContext, tabs: &[Tab]) {
     let id = ctx.random().generate_wikidot_tabview_id();
 
-    ctx.push_raw_str("<!-- Wikidot tabview bootstrap omitted -->\n");
+    // Wikidot emits the legacy YUI bootstrap and initializes each tab view
+    // from its generated id. Keep this in the legacy syntax renderer so
+    // Deepwell does not need a post-render compatibility rewrite.
+    ctx.push_raw_str(
+        r#"<script type="text/javascript" src="http://d3g0gp89917ko0.cloudfront.net/v--7690939296dc/common--javascript/yahooui/tabview-min.js"></script>
+"#,
+    );
     ctx.html()
         .div()
-        .attr(attr!("id" => &id, "class" => "yui-navset"))
+        .attr(attr!("id" => &id, "class" => "yui-navset yui-navset-top"))
         .inner(|ctx| {
             ctx.html()
                 .ul()
@@ -112,7 +118,10 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, tabs: &[Tab]) {
                     for (index, tab) in tabs.iter().enumerate() {
                         ctx.html()
                             .li()
-                            .attr(attr!("class" => "selected"; if index == 0))
+                            .attr(attr!(
+                                "class" => "selected"; if index == 0,
+                                "title" => "active"; if index == 0,
+                            ))
                             .inner(|ctx| {
                                 ctx.html()
                                     .a()
@@ -135,12 +144,25 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, tabs: &[Tab]) {
                             .div()
                             .attr(attr!(
                                 "id" => &tab_id,
+                                "style" => "display: block;"; if index == 0,
                                 "style" => "display:none"; if index > 0,
                             ))
                             .contents(&tab.elements);
                     }
                 });
         });
+
+    ctx.push_raw_str(&format!(
+        r#"<script type="text/javascript">
+//<![CDATA[
+OZONE.dom.onDomReady(function(){{
+        var tabView{id} = new YAHOO.widget.TabView('{id}');
+                }}, "dummy-ondomready-block");
+
+//]]>
+</script>
+"#,
+    ));
 }
 
 fn generate_ids(random: &mut Random, len: usize) -> Vec<String> {
@@ -177,18 +199,26 @@ mod tests {
         };
 
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
-        assert!(html.contains("class=\"yui-navset\""), "{html}");
+        assert!(
+            html.contains("class=\"yui-navset yui-navset-top\""),
+            "{html}"
+        );
+        assert!(html.contains("tabview-min.js"), "{html}");
+        assert!(html.contains("title=\"active\""), "{html}");
         assert!(html.contains("<em>Apple</em></a></li>\n<li>"), "{html}");
         assert!(
-            html.contains("<div id=\"wiki-tab-0-0\">one</div>"),
+            html.contains("<div id=\"wiki-tab-0-0\" style=\"display: block;\">one</div>"),
             "{html}",
         );
-        assert!(!html.contains("style=\"display:block\""), "{html}");
         assert!(
             html.contains("id=\"wiki-tab-0-1\" style=\"display:none\""),
             "{html}",
         );
         assert!(!html.contains("<wj-tabs"), "{html}");
-        assert!(!html.contains("<script"), "{html}");
+        assert!(html.contains("new YAHOO.widget.TabView"), "{html}");
+        assert!(
+            !html.contains("Wikidot tabview bootstrap omitted"),
+            "{html}"
+        );
     }
 }

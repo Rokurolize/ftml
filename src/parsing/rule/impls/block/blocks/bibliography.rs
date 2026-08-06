@@ -50,6 +50,17 @@ fn parse_fn<'r, 't>(
     let title = arguments.get("title");
     let hide = arguments.get_bool(parser, "hide")?.unwrap_or(false);
 
+    // Wikidot leaves a bibliography opener without a matching closer
+    // literal at the end of a page. The legacy parser otherwise treats EOF
+    // as an implicit close and invents an empty bibliography container.
+    if parser.settings().layout.legacy() && parser.current().token == Token::InputEnd {
+        let source = parser.full_text().inner();
+        let opener_start = source[..parser.current().span.start]
+            .rfind("[[")
+            .unwrap_or(parser.current().span.start);
+        return ok!(Element::Text(cow!(&source[opener_start..])));
+    }
+
     // Get body content. Wikidot accepts non-definition content and renders it
     // directly inside the bibliography container.
     //
@@ -175,5 +186,17 @@ mod tests {
         assert_eq!(html.matches(r#"class="bibcite""#).count(), 2, "{html}");
         assert!(!html.contains("wj-bibliography"), "{html}");
         assert!(!html.contains("error-inline"), "{html}");
+    }
+
+    #[test]
+    fn wikidot_unclosed_bibliography_opener_remains_literal() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[bibliography]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html, "<p>[[bibliography]]</p>");
     }
 }

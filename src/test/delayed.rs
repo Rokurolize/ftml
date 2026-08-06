@@ -445,6 +445,26 @@ fn delayed_page_link_is_omitted_with_its_comment_owner() {
 }
 
 #[test]
+fn comment_elided_consumers_do_not_flatten_generated_provenance() {
+    let link = render("BEGIN|[[[start|A[!-- %%title_linked%% --]B]]]|END");
+    assert!(!link.contains("Standard Image Block"), "{link}");
+    assert!(!link.contains("%%title_linked%%"), "{link}");
+
+    let attribute =
+        render("BEGIN|[[span class=\"A[!-- %%title_linked%% --]B\"]]X[[/span]]|END");
+    assert!(!attribute.contains("Standard Image Block"), "{attribute}");
+    assert!(!attribute.contains("%%title_linked%%"), "{attribute}");
+    assert!(!attribute.contains("class=\"AB\""), "{attribute}");
+}
+
+#[test]
+fn runtime_comment_shaped_text_cannot_enter_an_authored_field_view() {
+    let html = render_with_runtime_scalar("[[[start|A[!--x--]B]]]", "[!--x--]");
+    assert!(html.contains("[!--x--]"), "{html}");
+    assert!(!html.contains("href=\"/start\""), "{html}");
+}
+
+#[test]
 fn runtime_scalar_comment_closer_cannot_validate_an_authored_opener() {
     let source = "[!--x--]";
     let scalar_start = source.find("--]").expect("runtime closer fixture");

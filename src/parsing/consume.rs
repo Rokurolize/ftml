@@ -406,7 +406,10 @@ fn upcoming_block_ends_with_single_bracket(parser: &Parser<'_, '_>) -> bool {
 
 fn try_consume_leaf_token<'r, 't>(
     parser: &mut Parser<'r, 't>,
-) -> Result<Option<Elements<'t>>, ParseError> {
+) -> Result<Option<Elements<'t>>, ParseError>
+where
+    'r: 't,
+{
     if parser.current().token == Token::Url {
         let elements = url_elements(parser)?;
         return Ok(Some(elements));

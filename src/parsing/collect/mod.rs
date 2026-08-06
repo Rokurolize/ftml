@@ -37,11 +37,15 @@ mod prelude {
     pub use crate::parsing::token::{ExtractedToken, Token};
 }
 
+mod comment;
 mod consume;
 mod container;
 mod generic;
 mod text;
 
+pub(crate) use self::comment::{
+    CommentElidedText, collect_comment_elided_keep, consume_valid_comment,
+};
 pub use self::consume::{collect_consume, collect_consume_keep};
 pub use self::container::collect_container;
 pub use self::generic::collect;

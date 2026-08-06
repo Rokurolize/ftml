@@ -25,6 +25,7 @@ use crate::parsing::{ParserWrap, strip_whitespace};
 use crate::tree::{
     AcceptsPartial, AttributeMap, PartialElement, Table, TableCell, TableRow, TableType,
 };
+use std::borrow::Cow;
 use std::num::NonZeroU32;
 
 pub const BLOCK_TABLE: BlockRule = BlockRule {
@@ -63,12 +64,11 @@ pub const BLOCK_TABLE_CELL_HEADER: BlockRule = BlockRule {
     parse_fn: parse_cell_header,
 };
 
-// Wikidot closes header cells with `[[/cell]]`, while FTML has historically
-// also accepted the symmetric `[[/hcell]]` spelling. Keep the registered
-// opener rule restricted to `hcell` so `[[cell]]` still dispatches to the
-// regular-cell parser, and use this body-only rule for the two valid closers.
-const BLOCK_TABLE_CELL_HEADER_BODY: BlockRule = BlockRule {
-    name: "block-table-cell-header-body",
+// The closer, rather than the opener, selects Wikidot's rendered cell type.
+// Keep the registered opener rules distinct for dispatch, then accept either
+// closer while collecting either cell body.
+const BLOCK_TABLE_CELL_BODY: BlockRule = BlockRule {
+    name: "block-table-cell-body",
     accepts_names: &["hcell", "cell"],
     accepts_star: false,
     accepts_score: false,
@@ -130,14 +130,19 @@ where
 fn extract_table_rows<'r, 't>(
     parser: &Parser<'r, 't>,
     elements: Vec<Element<'t>>,
-) -> Result<Vec<TableRow<'t>>, ParseError> {
+) -> Result<(Vec<TableRow<'t>>, Vec<Cow<'t, str>>), ParseError> {
     let mut rows = Vec::new();
+    let mut residuals = Vec::new();
 
     for element in elements {
         match element {
             // Append the next table row.
             Element::Partial(PartialElement::TableRow(row)) => {
                 rows.push(row);
+            }
+
+            Element::Text(text) if is_cell_closer(&text) => {
+                residuals.push(text);
             }
 
             // Ignore internal whitespace.
@@ -148,20 +153,25 @@ fn extract_table_rows<'r, 't>(
         }
     }
 
-    Ok(rows)
+    Ok((rows, residuals))
 }
 
 fn extract_table_cells<'r, 't>(
     parser: &Parser<'r, 't>,
     elements: Vec<Element<'t>>,
-) -> Result<Vec<TableCell<'t>>, ParseError> {
+) -> Result<(Vec<TableCell<'t>>, Vec<Cow<'t, str>>), ParseError> {
     let mut cells = Vec::new();
+    let mut residuals = Vec::new();
 
     for element in elements {
         match element {
             // Append the next table cell.
-            Element::Partial(PartialElement::TableCell(cell)) => {
+            Element::Partial(PartialElement::TableCell(cell)) if residuals.is_empty() => {
                 cells.push(cell);
+            }
+
+            Element::Text(text) if !cells.is_empty() && is_cell_closer(&text) => {
+                residuals.push(text);
             }
 
             // Ignore internal whitespace.
@@ -172,7 +182,68 @@ fn extract_table_cells<'r, 't>(
         }
     }
 
-    Ok(cells)
+    Ok((cells, residuals))
+}
+
+fn is_cell_closer(source: &str) -> bool {
+    source.eq_ignore_ascii_case("[[/cell]]") || source.eq_ignore_ascii_case("[[/hcell]]")
+}
+
+fn closing_block_name(source: &str) -> Option<&str> {
+    let (_, closer) = source.rsplit_once("[[/")?;
+    let end = closer
+        .find(|character: char| character == ']' || character.is_ascii_whitespace())
+        .unwrap_or(closer.len());
+    Some(&closer[..end])
+}
+
+fn has_explicit_closer(source: &str, accepted: &[&str]) -> bool {
+    closing_block_name(source).is_some_and(|name| {
+        accepted
+            .iter()
+            .any(|accepted| name.eq_ignore_ascii_case(accepted))
+    })
+}
+
+fn legacy_opener_start(parser: &Parser<'_, '_>) -> Option<usize> {
+    if !parser.settings().layout.legacy() || parser.discarding_hidden_body() {
+        return None;
+    }
+
+    parser.full_text().inner()[..parser.current().span.start].rfind("[[")
+}
+
+fn legacy_block_name_is_spaced(parser: &Parser<'_, '_>) -> bool {
+    let Some(opener_start) = legacy_opener_start(parser) else {
+        return false;
+    };
+    parser.full_text().inner()[opener_start + 2..]
+        .bytes()
+        .next()
+        .is_some_and(|byte| matches!(byte, b' ' | b'\t'))
+}
+
+fn legacy_table_follows_heading_marker(parser: &Parser<'_, '_>) -> bool {
+    let Some(opener_start) = legacy_opener_start(parser) else {
+        return false;
+    };
+    let source = parser.full_text().inner();
+    let line_start = source[..opener_start]
+        .rfind('\n')
+        .map_or(0, |index| index + 1);
+    let mut prefix = &source[line_start..opener_start];
+
+    while let Some(rest) = prefix.strip_prefix('>') {
+        prefix = rest.trim_start_matches([' ', '\t']);
+    }
+
+    let heading_markers = prefix.bytes().take_while(|byte| *byte == b'+').count();
+    let heading_spacing = &prefix[heading_markers..];
+    (1..=6).contains(&heading_markers)
+        && !heading_spacing.is_empty()
+        && heading_spacing
+            .bytes()
+            .all(|byte| matches!(byte, b' ' | b'\t'))
 }
 
 fn recover_legacy_attributed_table<'r, 't>(
@@ -234,13 +305,28 @@ fn parse_table<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    if legacy_block_name_is_spaced(parser) || legacy_table_follows_heading_marker(parser)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     let parser = &mut ParserWrap::new(parser, AcceptsPartial::TableRow);
     let block = (&BLOCK_TABLE, "table block");
+    let legacy = parser.settings().layout.legacy();
+    let source_start = parser.current().span.start;
 
     // Get block contents.
     let parsed = parse_block(parser, name, flag_star, flag_score, in_head, block)?;
+    let source_end = parser.current().span.start;
+    if legacy
+        && !has_explicit_closer(
+            &parser.full_text().inner()[source_start..source_end],
+            &["table"],
+        )
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
-    let mut rows = extract_table_rows(parser, parsed.elements)?;
+    let (mut rows, residuals) = extract_table_rows(parser, parsed.elements)?;
     let mut errors = parsed.errors;
     if rows.is_empty()
         && parsed.has_arguments
@@ -264,7 +350,20 @@ fn parse_table<'r, 't>(
         table_type,
     };
     let element = Element::Table(table);
-    ok!(false; element, errors)
+    if residuals.is_empty() {
+        ok!(false; element, errors)
+    } else {
+        let mut elements = Vec::with_capacity(residuals.len() * 2 + 1);
+        for (index, residual) in residuals.into_iter().enumerate() {
+            if index > 0 {
+                elements.push(Element::LineBreak);
+            }
+            elements.push(Element::Text(residual));
+        }
+        elements.push(text!("\n"));
+        elements.push(element);
+        ok!(false; Elements::Multiple(elements), errors)
+    }
 }
 
 // Table row
@@ -276,13 +375,27 @@ fn parse_row<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    if legacy_block_name_is_spaced(parser) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     let parser = &mut ParserWrap::new(parser, AcceptsPartial::TableCell);
     let block = (&BLOCK_TABLE_ROW, "table row");
+    let legacy = parser.settings().layout.legacy();
+    let source_start = parser.current().span.start;
 
     // Get block contents.
     let parsed = parse_block(parser, name, flag_star, flag_score, in_head, block)?;
+    let source_end = parser.current().span.start;
+    if legacy
+        && !has_explicit_closer(
+            &parser.full_text().inner()[source_start..source_end],
+            &["row"],
+        )
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
-    let cells = extract_table_cells(parser, parsed.elements)?;
+    let (cells, residuals) = extract_table_cells(parser, parsed.elements)?;
     if cells.is_empty() && parser.settings().layout.legacy() {
         return Err(parser.make_err(ParseErrorKind::TableRowContainsNonCell));
     }
@@ -292,8 +405,13 @@ fn parse_row<'r, 't>(
     // Build and return table row
     let row = TableRow { cells, attributes };
     let element = Element::Partial(PartialElement::TableRow(row));
-
-    ok!(false; element, errors)
+    if residuals.is_empty() {
+        ok!(false; element, errors)
+    } else {
+        let mut elements = residuals.into_iter().map(Element::Text).collect::<Vec<_>>();
+        elements.push(element);
+        ok!(false; Elements::Multiple(elements), errors)
+    }
 }
 
 // Table cell
@@ -305,21 +423,32 @@ fn parse_cell_regular<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    let block = (&BLOCK_TABLE_CELL_REGULAR, "table cell (regular)");
+    if legacy_block_name_is_spaced(parser) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     let legacy = parser.settings().layout.legacy();
+    let block = if legacy {
+        (&BLOCK_TABLE_CELL_BODY, "table cell (regular)")
+    } else {
+        (&BLOCK_TABLE_CELL_REGULAR, "table cell (regular)")
+    };
     let source_start = parser.current().span.start;
 
     // Get block contents.
     let parsed = parse_block(parser, name, flag_star, flag_score, in_head, block)?;
     let source_end = parser.current().span.start;
-    let wrap_paragraph =
-        legacy && parser.full_text().inner()[source_start..source_end].contains("\n\n");
+    let source = &parser.full_text().inner()[source_start..source_end];
+    if legacy && !has_explicit_closer(source, &["cell", "hcell"]) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    let wrap_paragraph = legacy && source.contains("\n\n");
+    let header = legacy && cell_closer_is_header(source);
 
     parse_cell(
         parsed.elements,
         parsed.attributes,
         parsed.errors,
-        false,
+        header,
         wrap_paragraph,
     )
 }
@@ -331,19 +460,23 @@ fn parse_cell_header<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    if legacy_block_name_is_spaced(parser) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     let parser = &mut ParserWrap::new(parser, AcceptsPartial::TableCell);
-    let block = (&BLOCK_TABLE_CELL_HEADER_BODY, "table cell (header)");
+    let block = (&BLOCK_TABLE_CELL_BODY, "table cell (header)");
     let legacy = parser.settings().layout.legacy();
     let source_start = parser.current().span.start;
 
     // Get block contents.
     let parsed = parse_block(parser, name, flag_star, flag_score, in_head, block)?;
     let source_end = parser.current().span.start;
-    let source =
-        parser.full_text().inner()[source_start..source_end].to_ascii_lowercase();
+    let source = &parser.full_text().inner()[source_start..source_end];
+    if legacy && !has_explicit_closer(source, &["cell", "hcell"]) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     let wrap_paragraph = legacy && source.contains("\n\n");
-    let header =
-        source.rfind("[[/hcell").unwrap_or(0) > source.rfind("[[/cell").unwrap_or(0);
+    let header = cell_closer_is_header(source);
 
     parse_cell(
         parsed.elements,
@@ -352,6 +485,10 @@ fn parse_cell_header<'r, 't>(
         header,
         wrap_paragraph,
     )
+}
+
+fn cell_closer_is_header(source: &str) -> bool {
+    closing_block_name(source) == Some("hcell")
 }
 
 fn parse_cell<'r, 't>(

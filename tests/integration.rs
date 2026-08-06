@@ -4,6 +4,9 @@ mod coverage_parser_edges;
 #[path = "advanced_table_performance.rs"]
 mod advanced_table_performance;
 
+#[path = "advanced_table_recovery.rs"]
+mod advanced_table_recovery;
+
 #[path = "canonical_wikidot_source.rs"]
 mod canonical_wikidot_source;
 

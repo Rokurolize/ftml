@@ -763,9 +763,25 @@ where
         allow_inline_quote_close: bool,
     ) -> ParseResult<'r, 't, Vec<Element<'t>>> {
         let mut first = true;
+        let wikidot_tab = self.settings().layout.legacy()
+            && !self.discarding_hidden_body()
+            && block_rule.name == "block-tab";
+        let mut nested_wikidot_tabs = 0_usize;
+        let mut last_nested_wikidot_tab = None;
         let rule = self.rule();
 
         let is_end = move |parser: &mut Parser<'r, 't>| {
+            // A rejected complete nested tab opener is literal, so its
+            // matching closer is literal too and cannot close the active
+            // outer tab.
+            if wikidot_tab
+                && let Some(opener) = parser.wikidot_nested_tab_opener()
+                && last_nested_wikidot_tab != Some(opener)
+            {
+                last_nested_wikidot_tab = Some(opener);
+                nested_wikidot_tabs += 1;
+            }
+            let before_end = parser.clone();
             let result = parser.verify_end_block(
                 first,
                 block_rule,
@@ -773,6 +789,22 @@ where
                 allow_inline_quote_close,
             );
             first = false;
+
+            if result.is_some() && nested_wikidot_tabs > 0 {
+                parser.update(&before_end);
+                // The close probe can see through the preceding physical line
+                // break. Keep the reservation until the closer itself is the
+                // current token so the same literal closer is not counted
+                // twice.
+                if matches!(
+                    before_end.current().token,
+                    Token::LineBreak | Token::ParagraphBreak
+                ) {
+                    return Ok(false);
+                }
+                nested_wikidot_tabs -= 1;
+                return Ok(false);
+            }
 
             if result.is_none()
                 && parser.discarding_hidden_body()
@@ -784,6 +816,27 @@ where
             Ok(result.is_some())
         };
         gather_paragraphs(self, rule, Some(is_end))
+    }
+
+    fn wikidot_nested_tab_opener(&self) -> Option<usize> {
+        let start = match self.current().token {
+            Token::LeftBlock => self.current().span.start,
+            Token::LineBreak | Token::ParagraphBreak => self.current().span.end,
+            _ => return None,
+        };
+        let full_text = self.full_text().inner();
+        let suffix = &full_text[start..];
+        let leading_space = suffix.len() - suffix.trim_start_matches([' ', '\t']).len();
+        let opener = start + leading_space;
+        let source = &full_text[opener..];
+        let physical_line = source.split_once('\n').map_or(source, |(line, _)| line);
+        let end = physical_line.find("]]")?;
+        let head = source[..end].strip_prefix("[[")?;
+        let mut parts = head.split_whitespace();
+        parts
+            .next()
+            .is_some_and(|name| name.eq_ignore_ascii_case("tab"))
+            .then_some(opener)
     }
 
     fn get_body_elements_no_paragraphs(

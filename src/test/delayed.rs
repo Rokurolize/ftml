@@ -595,6 +595,23 @@ fn nested_line_start_owners_bind_without_retaining_delayed_leaves() {
 }
 
 #[test]
+fn orphan_tab_fallback_keeps_generated_fragment_provenance() {
+    let source = concat!("[[tab]]\n", "%%title_linked%%\n", "[[/tab]]",);
+    let html = render(source);
+
+    assert!(html.contains("[[tab]]"), "{html}");
+    assert!(html.contains("[[/tab]]"), "{html}");
+    assert!(
+        html.contains(concat!(
+            r#"<a href="/component:image-block">"#,
+            "Standard Image Block</a>",
+        )),
+        "{html}",
+    );
+    assert!(!html.contains("%%title_linked%%"), "{html}");
+}
+
+#[test]
 fn bibliography_definition_values_bind_before_rendering() {
     let html = render(concat!(
         "[[bibliography title=\"Works\"]]\n",

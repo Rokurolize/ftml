@@ -30,15 +30,21 @@ use std::ops::{Deref, DerefMut};
 pub struct ParserWrap<'p, 'r, 't> {
     parser: &'p mut Parser<'r, 't>,
     original: AcceptsPartial,
+    original_depth: Option<usize>,
 }
 
 impl<'p, 'r, 't> ParserWrap<'p, 'r, 't> {
     #[inline]
     pub fn new(parser: &'p mut Parser<'r, 't>, flag: AcceptsPartial) -> Self {
         let original = parser.accepts_partial();
-        parser.set_accepts_partial(flag);
+        let original_depth = parser.accepts_partial_depth();
+        parser.set_accepts_partial_child(flag);
 
-        ParserWrap { parser, original }
+        ParserWrap {
+            parser,
+            original,
+            original_depth,
+        }
     }
 }
 
@@ -59,6 +65,7 @@ impl<'r, 't> DerefMut for ParserWrap<'_, 'r, 't> {
 impl Drop for ParserWrap<'_, '_, '_> {
     fn drop(&mut self) {
         self.parser.set_accepts_partial(self.original);
+        self.parser.set_accepts_partial_depth(self.original_depth);
     }
 }
 

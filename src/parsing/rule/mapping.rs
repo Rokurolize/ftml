@@ -181,7 +181,7 @@ mod tests {
             (Token::ParagraphBreak, vec!["line-break-paragraph"]),
             (
                 Token::Whitespace,
-                vec!["underscore-line-break", "list", "text"],
+                vec!["underscore-line-break", "list", "center", "text"],
             ),
             (Token::Bold, vec!["bold"]),
             (Token::Italics, vec!["italics"]),

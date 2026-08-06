@@ -250,6 +250,52 @@ fn wikidot_layout_rejects_ftml_only_block_names() {
 }
 
 #[test]
+fn unmatched_case_variant_closers_preserve_source_for_every_block_name() {
+    use crate::data::PageInfo;
+    use crate::render::{Render, html::HtmlRender};
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    for name in BLOCK_RULES
+        .iter()
+        .flat_map(|block_rule| block_rule.accepts_names)
+    {
+        let mut uppercase = true;
+        let mixed = name
+            .chars()
+            .map(|character| {
+                if character.is_ascii_alphabetic() {
+                    let output = if uppercase {
+                        character.to_ascii_uppercase()
+                    } else {
+                        character.to_ascii_lowercase()
+                    };
+                    uppercase = !uppercase;
+                    output
+                } else {
+                    character
+                }
+            })
+            .collect::<String>();
+        let source = format!("[[/{mixed}]]");
+        let tokenization = crate::tokenize(&source);
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        let escaped_source = source
+            .replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;");
+
+        assert_eq!(
+            html,
+            format!("<p>{escaped_source}</p>"),
+            "block name {name:?}"
+        );
+    }
+}
+
+#[test]
 #[should_panic(expected = "Rule has no accepted names")]
 fn block_rule_map_rejects_empty_accepted_names() {
     static BLOCK_RULES: [BlockRule; 1] = [BlockRule {

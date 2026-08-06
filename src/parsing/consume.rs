@@ -72,12 +72,13 @@ where
         return Ok(None);
     };
     let normalized = name.strip_suffix('_').unwrap_or(name);
+    let start = parser.current().span.start;
+    let end = close.current().span.start;
+    let close_source = cow!(&parser.full_text().inner()[start..end]);
     let partial = if normalized.eq_ignore_ascii_case("size") {
-        PartialElement::InlineSizeClose
+        PartialElement::InlineSizeClose(close_source)
     } else if normalized.eq_ignore_ascii_case("span") {
-        let start = parser.current().span.start;
-        let end = close.current().span.start;
-        PartialElement::InlineSpanClose(cow!(&parser.full_text().inner()[start..end]))
+        PartialElement::InlineSpanClose(close_source)
     } else {
         return Ok(None);
     };

@@ -207,6 +207,18 @@ fn delayed_page_link_is_an_active_inline_leaf_without_textual_substitution() {
 }
 
 #[test]
+fn delayed_binding_preserves_rejected_size_closer_source() {
+    assert_eq!(
+        render("[[SIZE]]before %%title_linked%% after[[/SiZe]]"),
+        concat!(
+            "<p>[[SIZE]]before ",
+            "<a href=\"/component:image-block\">Standard Image Block</a>",
+            " after[[/SiZe]]</p>",
+        ),
+    );
+}
+
+#[test]
 fn delayed_list_collapses_spaces_around_suppressed_monospace_owners() {
     assert_eq!(
         render("%%title_linked%%|A {{0}} {{****}} {{****}} B"),

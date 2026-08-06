@@ -465,7 +465,7 @@ impl Element<'_> {
                 }
                 PartialElement::WikidotEmptyInlineOwner
                 | PartialElement::InlineSizeOpen(_)
-                | PartialElement::InlineSizeClose
+                | PartialElement::InlineSizeClose(_)
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_) => {}
             },

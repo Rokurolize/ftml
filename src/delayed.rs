@@ -762,7 +762,7 @@ fn resolve_elements(
                 }
                 PartialElement::WikidotEmptyInlineOwner
                 | PartialElement::InlineSizeOpen(_)
-                | PartialElement::InlineSizeClose
+                | PartialElement::InlineSizeClose(_)
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_) => {}
             },
@@ -832,7 +832,7 @@ fn element_contains_delayed(element: &Element<'_>) -> bool {
             PartialElement::RubyText(text) => elements_contain_delayed(&text.elements),
             PartialElement::WikidotEmptyInlineOwner
             | PartialElement::InlineSizeOpen(_)
-            | PartialElement::InlineSizeClose
+            | PartialElement::InlineSizeClose(_)
             | PartialElement::InlineSpanOpen(_)
             | PartialElement::InlineSpanClose(_) => false,
         },

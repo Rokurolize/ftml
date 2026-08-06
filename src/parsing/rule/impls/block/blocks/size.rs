@@ -137,6 +137,15 @@ mod tests {
     use crate::layout::Layout;
     use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
+    use std::time::{Duration, Instant};
+
+    fn render_wikidot(source: &str) -> String {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(source);
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        HtmlRender.render(&tree, &page_info, &settings).body
+    }
 
     #[test]
     fn size_block_requires_size_argument() {
@@ -229,5 +238,54 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert_eq!(html, "<p>[[size larger]]text</p>");
+    }
+
+    #[test]
+    fn rejected_wikidot_size_preserves_literal_closer_spelling() {
+        for source in [
+            "[[SIZE]]v7 body[[/SIZE]]",
+            "[[SiZe]]mixed case[[/sIzE]]",
+            "[[ SIZE ]]spaced opener[[/ SIZE ]]",
+            "[[SIZE_]]scored variant[[/SIZE_]]",
+            r"[[SIZE bad\ value]]escaped head[[/SiZe]]",
+        ] {
+            assert_eq!(
+                render_wikidot(source),
+                format!("<p>{source}</p>"),
+                "{source:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn rejected_size_candidates_do_not_rewrite_later_valid_closers() {
+        let source = concat!(
+            "[[SIZE]]outer ",
+            "[[size 80%]]valid[[/size]]",
+            " tail[[/SIZE]] ",
+            "[[size 90%]]later[[/size]]",
+        );
+        assert_eq!(
+            render_wikidot(source),
+            concat!(
+                "<p>[[SIZE]]outer ",
+                "<span style=\"font-size:80%;\">valid</span>",
+                " tail[[/SIZE]] ",
+                "<span style=\"font-size:90%;\">later</span>",
+                "</p>",
+            ),
+        );
+    }
+
+    #[test]
+    fn rejected_size_closer_preservation_stays_bounded() {
+        const ROW_COUNT: usize = 2_048;
+        let source = "[[SIZE]]body[[/SiZe]]\n".repeat(ROW_COUNT);
+        let started = Instant::now();
+        let html = render_wikidot(&source);
+        let elapsed = started.elapsed();
+
+        assert!(elapsed < Duration::from_secs(3), "took {elapsed:?}");
+        assert_eq!(html.matches("[[SIZE]]body[[/SiZe]]").count(), ROW_COUNT);
     }
 }

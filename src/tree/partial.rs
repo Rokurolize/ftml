@@ -37,7 +37,7 @@ pub enum PartialElement<'t> {
     InlineSizeOpen(Cow<'t, str>),
 
     /// A parse-only Wikidot inline size scope closer.
-    InlineSizeClose,
+    InlineSizeClose(Cow<'t, str>),
 
     /// A parse-only Wikidot inline span scope opener.
     InlineSpanOpen(AttributeMap<'t>),
@@ -68,7 +68,7 @@ impl PartialElement<'_> {
         match self {
             PartialElement::WikidotEmptyInlineOwner => "WikidotEmptyInlineOwner",
             PartialElement::InlineSizeOpen(_) => "InlineSizeOpen",
-            PartialElement::InlineSizeClose => "InlineSizeClose",
+            PartialElement::InlineSizeClose(_) => "InlineSizeClose",
             PartialElement::InlineSpanOpen(_) => "InlineSpanOpen",
             PartialElement::InlineSpanClose(_) => "InlineSpanClose",
             PartialElement::ListItem(_) => "ListItem",
@@ -84,7 +84,7 @@ impl PartialElement<'_> {
         match self {
             PartialElement::WikidotEmptyInlineOwner
             | PartialElement::InlineSizeOpen(_)
-            | PartialElement::InlineSizeClose
+            | PartialElement::InlineSizeClose(_)
             | PartialElement::InlineSpanOpen(_)
             | PartialElement::InlineSpanClose(_) => ParseErrorKind::NoRulesMatch,
             PartialElement::ListItem(_) => ParseErrorKind::ListItemOutsideList,
@@ -103,7 +103,9 @@ impl PartialElement<'_> {
             PartialElement::InlineSizeOpen(value) => {
                 PartialElement::InlineSizeOpen(Cow::Owned(value.to_string()))
             }
-            PartialElement::InlineSizeClose => PartialElement::InlineSizeClose,
+            PartialElement::InlineSizeClose(source) => {
+                PartialElement::InlineSizeClose(Cow::Owned(source.to_string()))
+            }
             PartialElement::InlineSpanOpen(attributes) => {
                 PartialElement::InlineSpanOpen(attributes.to_owned())
             }
@@ -130,7 +132,7 @@ impl PartialElement<'_> {
             self,
             PartialElement::WikidotEmptyInlineOwner
                 | PartialElement::InlineSizeOpen(_)
-                | PartialElement::InlineSizeClose
+                | PartialElement::InlineSizeClose(_)
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_)
         )
@@ -228,7 +230,7 @@ mod tests {
         }
         for partial in [
             PartialElement::InlineSizeOpen(cow!("font-size: larger;")),
-            PartialElement::InlineSizeClose,
+            PartialElement::InlineSizeClose(cow!("[[/SiZe]]")),
             PartialElement::InlineSpanOpen(AttributeMap::new()),
             PartialElement::InlineSpanClose(cow!("[[/span]]")),
         ] {

@@ -297,7 +297,7 @@ fn collect_page_references(
                 }
                 PartialElement::WikidotEmptyInlineOwner
                 | PartialElement::InlineSizeOpen(_)
-                | PartialElement::InlineSizeClose
+                | PartialElement::InlineSizeClose(_)
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_) => {}
             },
@@ -390,7 +390,7 @@ fn collect_user_references(
                 }
                 PartialElement::WikidotEmptyInlineOwner
                 | PartialElement::InlineSizeOpen(_)
-                | PartialElement::InlineSizeClose
+                | PartialElement::InlineSizeClose(_)
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_) => {}
             },

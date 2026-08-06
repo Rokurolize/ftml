@@ -30,7 +30,7 @@ use std::ops::{Deref, DerefMut};
 pub struct ParserWrap<'p, 'r, 't> {
     parser: &'p mut Parser<'r, 't>,
     original: AcceptsPartial,
-    original_depth: Option<usize>,
+    original_depth: u16,
 }
 
 impl<'p, 'r, 't> ParserWrap<'p, 'r, 't> {

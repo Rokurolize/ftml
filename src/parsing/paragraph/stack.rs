@@ -224,13 +224,6 @@ impl<'t> ParagraphStack<'t> {
     }
 
     #[inline]
-    pub fn mark_wikidot_literal_list_item(&mut self) {
-        if self.wikidot {
-            self.mark_current_unwrapped();
-        }
-    }
-
-    #[inline]
     pub fn mark_wikidot_tabview_boundary(&mut self) {
         if !self.wikidot || self.current.is_empty() {
             return;

@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::footnote_first::{starts_footnote, unowned_footnote_first};
 use super::prelude::*;
 use crate::parsing::{DepthItem, DepthList, process_depths};
 use crate::tree::{AttributeMap, ListItem, ListType};
@@ -35,6 +36,7 @@ const fn get_list_type(token: Token) -> Option<ListType> {
 enum ListItemStep<'t> {
     End,
     Item((usize, ListType, Vec<Element<'t>>), bool),
+    Fallback(Vec<Element<'t>>),
 }
 
 pub const RULE_LIST: Rule = Rule {
@@ -69,11 +71,52 @@ fn try_consume_fn<'r, 't>(
 
     let mut ended = false;
     while !ended {
-        match parse_next_list_item(parser, &mut errors, &mut paragraph_safe)? {
+        match parse_next_list_item(
+            parser,
+            &mut errors,
+            &mut paragraph_safe,
+            !depths.is_empty(),
+        )? {
             ListItemStep::End => ended = true,
             ListItemStep::Item(item, ends_run) => {
                 depths.push(item);
                 ended = ends_run || parser.native_blockquote_depth().is_some();
+            }
+            ListItemStep::Fallback(elements) => {
+                debug_assert!(depths.is_empty());
+                return ok!(true; elements, errors);
+            }
+        }
+    }
+
+    if parser.settings().layout.legacy() && starts_footnote(parser) {
+        let only_item = depths.len() == 1;
+        if let Some((_, list_type, elements)) = depths.last_mut() {
+            let mut candidate = parser.clone_with_rule(RULE_LIST);
+            if let Ok(footnote) = super::RULE_BLOCK.try_consume(&mut candidate)
+                && let Elements::Single(Element::Footnote(index)) = footnote.item
+            {
+                if elements.is_empty() && only_item {
+                    let marker = match list_type {
+                        ListType::Bullet => "*",
+                        ListType::Numbered => "#",
+                        ListType::Generic => {
+                            unreachable!("native item has a concrete type")
+                        }
+                    };
+                    errors.extend(footnote.errors);
+                    parser.update(&candidate);
+                    return ok!(
+                        true;
+                        vec![text!(marker), Element::Footnote(index)],
+                        errors,
+                    );
+                }
+                if !elements.is_empty() {
+                    elements.push(Element::Footnote(index));
+                    errors.extend(footnote.errors);
+                    parser.update(&candidate);
+                }
             }
         }
     }
@@ -125,10 +168,12 @@ fn parse_next_list_item<'r, 't>(
     parser: &mut Parser<'r, 't>,
     errors: &mut Vec<ParseError>,
     paragraph_safe: &mut bool,
+    has_prior_items: bool,
 ) -> Result<ListItemStep<'t>, ParseError>
 where
     'r: 't,
 {
+    let parser_state = parser.get_mutable_state();
     let mut sub_parser = parser.clone();
 
     let Some(depth) = parse_list_depth(&mut sub_parser)? else {
@@ -139,6 +184,7 @@ where
         return Err(parser.make_err(ParseErrorKind::ListDepthExceeded));
     }
 
+    let marker = sub_parser.current().slice;
     let Some(list_type) = get_list_type(sub_parser.current().token) else {
         return Ok(ListItemStep::End);
     };
@@ -148,9 +194,29 @@ where
         return Ok(ListItemStep::End);
     }
     sub_parser.step()?;
+    let content_start = sub_parser.current().span.start;
 
     let item_result = collect_list_item_elements(&mut sub_parser)?;
-    let (elements, ends_run) = item_result.chain(errors, paragraph_safe);
+    let content_end = sub_parser.current().span.start;
+    let ((elements, ends_run), mut item_errors, item_paragraph_safe) = item_result.into();
+    if parser.settings().layout.legacy()
+        && unowned_footnote_first(&sub_parser, content_start, content_end, &elements)
+    {
+        if has_prior_items {
+            parser.reset_mutable_state(parser_state);
+            return Ok(ListItemStep::End);
+        }
+        let mut fallback = Vec::with_capacity(elements.len() + 1);
+        fallback.push(text!(marker));
+        fallback.extend(elements);
+        errors.append(&mut item_errors);
+        *paragraph_safe &= item_paragraph_safe;
+        parser.update(&sub_parser);
+        return Ok(ListItemStep::Fallback(fallback));
+    }
+
+    errors.append(&mut item_errors);
+    *paragraph_safe &= item_paragraph_safe;
     parser.update(&sub_parser);
     Ok(ListItemStep::Item((depth, list_type, elements), ends_run))
 }

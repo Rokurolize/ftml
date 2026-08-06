@@ -397,7 +397,7 @@ fn mismatched_link_labels_render_fallback_text() {
 #[test]
 fn malformed_ast_footnote_reference_renders_error() {
     let tree = SyntaxTree {
-        elements: vec![Element::Footnote],
+        elements: vec![Element::Footnote(1)],
         footnotes: vec![],
         ..SyntaxTree::default()
     };

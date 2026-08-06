@@ -733,8 +733,10 @@ impl<'r, 't> Parser<'r, 't> {
     }
 
     // Footnotes
-    pub fn push_footnote(&mut self, contents: Vec<Element<'t>>) {
-        self.footnotes.borrow_mut().push(contents);
+    pub fn push_footnote(&mut self, contents: Vec<Element<'t>>) -> usize {
+        let mut footnotes = self.footnotes.borrow_mut();
+        footnotes.push(contents);
+        footnotes.len()
     }
 
     pub fn footnote_count(&self) -> usize {

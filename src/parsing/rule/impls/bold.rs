@@ -20,6 +20,7 @@
 
 use super::inline_delimiter::assert_unpadded_open;
 use super::prelude::*;
+use crate::tree::PartialElement;
 
 pub const RULE_BOLD: Rule = Rule {
     name: "bold",
@@ -47,7 +48,15 @@ fn try_consume_fn<'r, 't>(
             Elements::Single(Element::Container(container)) if container.elements().is_empty()
         )
     {
-        return ok!(paragraph_safe; Elements::None, errors);
+        return if super::footnote_first::starts_footnote(parser) {
+            ok!(
+                paragraph_safe;
+                Element::Partial(PartialElement::WikidotEmptyInlineOwner),
+                errors,
+            )
+        } else {
+            ok!(paragraph_safe; Elements::None, errors)
+        };
     }
     ok!(paragraph_safe; elements, errors)
 }

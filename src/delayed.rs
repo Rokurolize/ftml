@@ -760,7 +760,8 @@ fn resolve_elements(
                 PartialElement::RubyText(text) => {
                     resolve_elements(&mut text.elements, bindings, resolved_occurrences)?;
                 }
-                PartialElement::InlineSizeOpen(_)
+                PartialElement::WikidotEmptyInlineOwner
+                | PartialElement::InlineSizeOpen(_)
                 | PartialElement::InlineSizeClose
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_) => {}
@@ -829,7 +830,8 @@ fn element_contains_delayed(element: &Element<'_>) -> bool {
             PartialElement::TableCell(cell) => elements_contain_delayed(&cell.elements),
             PartialElement::Tab(tab) => elements_contain_delayed(&tab.elements),
             PartialElement::RubyText(text) => elements_contain_delayed(&text.elements),
-            PartialElement::InlineSizeOpen(_)
+            PartialElement::WikidotEmptyInlineOwner
+            | PartialElement::InlineSizeOpen(_)
             | PartialElement::InlineSizeClose
             | PartialElement::InlineSpanOpen(_)
             | PartialElement::InlineSpanClose(_) => false,
@@ -848,7 +850,7 @@ fn element_contains_delayed(element: &Element<'_>) -> bool {
         | Element::RadioButton { .. }
         | Element::CheckBox { .. }
         | Element::TableOfContents { .. }
-        | Element::Footnote
+        | Element::Footnote(_)
         | Element::FootnoteBlock { .. }
         | Element::BibliographyCite { .. }
         | Element::BibliographyBlock { .. }

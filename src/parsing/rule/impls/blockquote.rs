@@ -18,6 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::footnote_first::{
+    remove_first_footnote, starts_footnote, unowned_footnote_first,
+};
 use super::prelude::*;
 use crate::parsing::paragraph::{
     ParagraphStack, collapsible_has_direct_literal_nested_opener,
@@ -150,6 +153,7 @@ fn try_consume_fn<'r, 't>(
             // A marker after horizontal space is literal quoted content.
             parser.mark_virtual_start_of_line();
         }
+        let content_start = parser.current().span.start;
 
         // Check that the depth isn't obscenely deep, to avoid DOS attacks via stack overflow.
         if absolute_depth > MAX_BLOCKQUOTE_DEPTH {
@@ -180,6 +184,12 @@ fn try_consume_fn<'r, 't>(
         parser.set_native_blockquote_depth(original_depth);
         let errors_before = errors.len();
         let mut elements = result?.chain(&mut errors, &mut paragraph_safe);
+        if parser.settings().layout.legacy()
+            && unowned_footnote_first(parser, content_start, physical_line_end, &elements)
+        {
+            let removed = remove_first_footnote(&mut elements);
+            debug_assert!(removed, "footnote-first classification found no footnote");
+        }
 
         // An unquoted blank line terminates the current native quote run.
         // A following quote at the same depth starts a sibling blockquote.
@@ -187,6 +197,22 @@ fn try_consume_fn<'r, 't>(
 
         // A multiline inline child can finish on a later quoted row. Wikidot keeps the next quoted row in the same native blockquote after that child's trailing line break.
         let row_is_empty = elements.is_empty() && errors.len() == errors_before;
+        let mut absorbed_unquoted_footnote = false;
+        if parser.settings().layout.legacy() && starts_footnote(parser) {
+            let mut candidate = parser.clone_with_rule(RULE_BLOCKQUOTE);
+            if let Ok(footnote) = super::RULE_BLOCK.try_consume(&mut candidate)
+                && let Elements::Single(Element::Footnote(index)) = footnote.item
+            {
+                errors.extend(footnote.errors);
+                parser.update(&candidate);
+                if row_is_empty {
+                    consumed_pruned_row = true;
+                    continue;
+                }
+                elements.push(Element::Footnote(index));
+                absorbed_unquoted_footnote = true;
+            }
+        }
         let consumed_past_line = parser.current().span.start > physical_line_end;
         let escaped_after_deeper_close = parser.settings().layout.legacy()
             && consumed_past_line
@@ -242,6 +268,7 @@ fn try_consume_fn<'r, 't>(
         // Add a line break for the end of the line
         if !empty_spaced_row
             && keep_line_break
+            && !absorbed_unquoted_footnote
             && !parser.pending_wikidot_collapsible_closer()
         {
             elements.push(Element::LineBreak);

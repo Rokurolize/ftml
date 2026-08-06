@@ -295,7 +295,8 @@ fn collect_page_references(
                 PartialElement::RubyText(ruby_text) => {
                     collect_page_references(&ruby_text.elements, references, seen);
                 }
-                PartialElement::InlineSizeOpen(_)
+                PartialElement::WikidotEmptyInlineOwner
+                | PartialElement::InlineSizeOpen(_)
                 | PartialElement::InlineSizeClose
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_) => {}
@@ -387,7 +388,8 @@ fn collect_user_references(
                 PartialElement::RubyText(ruby_text) => {
                     collect_user_references(&ruby_text.elements, references, seen);
                 }
-                PartialElement::InlineSizeOpen(_)
+                PartialElement::WikidotEmptyInlineOwner
+                | PartialElement::InlineSizeOpen(_)
                 | PartialElement::InlineSizeClose
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_) => {}

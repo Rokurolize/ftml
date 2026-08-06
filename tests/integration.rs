@@ -72,3 +72,6 @@ mod yossistyle_wikidot_syntax;
 
 #[path = "wikidot_css_module_scope.rs"]
 mod wikidot_css_module_scope;
+
+#[path = "wikidot_footnote_first.rs"]
+mod wikidot_footnote_first;

@@ -21,11 +21,15 @@
 use super::prelude::*;
 use crate::render::text::TextRender;
 use crate::tree::ContainerType;
+use std::num::NonZeroUsize;
 
-pub fn render_footnote(ctx: &mut HtmlContext) {
+pub fn render_footnote(ctx: &mut HtmlContext, index: usize) {
     debug!("Rendering footnote reference");
 
-    let index = ctx.next_footnote_index();
+    let Some(index) = NonZeroUsize::new(index) else {
+        render_missing_footnote(ctx, index);
+        return;
+    };
     let id = str!(index);
 
     // TODO make this into a locale template string
@@ -33,15 +37,7 @@ pub fn render_footnote(ctx: &mut HtmlContext) {
     let label = format!("{footnote_string} {index}.");
 
     let Some(contents) = ctx.get_footnote(index) else {
-        warn!("Footnote index out of bounds from gathered footnote list: {index}");
-        let message = ctx
-            .handle()
-            .get_message(ctx.language(), "footnote-cite-not-found");
-
-        ctx.html()
-            .span()
-            .attr(attr!("class" => "wj-error-inline"))
-            .inner(|ctx| ctx.push_escaped(message));
+        render_missing_footnote(ctx, index.get());
         return;
     };
 
@@ -117,6 +113,18 @@ pub fn render_footnote(ctx: &mut HtmlContext) {
                         });
                 });
         });
+}
+
+fn render_missing_footnote(ctx: &mut HtmlContext, index: usize) {
+    warn!("Footnote index out of bounds from gathered footnote list: {index}");
+    let message = ctx
+        .handle()
+        .get_message(ctx.language(), "footnote-cite-not-found");
+
+    ctx.html()
+        .span()
+        .attr(attr!("class" => "wj-error-inline"))
+        .inner(|ctx| ctx.push_escaped(message));
 }
 
 fn render_tooltip_text(ctx: &mut HtmlContext, text: &str) {

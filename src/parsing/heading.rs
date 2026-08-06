@@ -72,7 +72,8 @@ fn visit_children_mut<'t>(element: &mut Element<'t>, visit: fn(&mut Vec<Element<
             PartialElement::TableCell(cell) => visit(&mut cell.elements),
             PartialElement::Tab(tab) => visit(&mut tab.elements),
             PartialElement::RubyText(ruby_text) => visit(&mut ruby_text.elements),
-            PartialElement::InlineSizeOpen(_)
+            PartialElement::WikidotEmptyInlineOwner
+            | PartialElement::InlineSizeOpen(_)
             | PartialElement::InlineSizeClose
             | PartialElement::InlineSpanOpen(_)
             | PartialElement::InlineSpanClose(_) => {}

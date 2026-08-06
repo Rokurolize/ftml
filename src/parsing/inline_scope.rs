@@ -422,6 +422,7 @@ fn lower_sequence<'t>(
     let mut run = Vec::new();
     let mut effects = SequenceEffects::default();
     let mut last_run_outer_scope = None;
+    let mut preserve_space_before_footnote = false;
 
     let mut source = mem::take(elements).into_iter().peekable();
     while let Some(mut element) = source.next() {
@@ -430,6 +431,16 @@ fn lower_sequence<'t>(
                 continue;
             }
             *trim_next_break = false;
+        }
+        if matches!(
+            element,
+            Element::Partial(PartialElement::WikidotEmptyInlineOwner)
+        ) {
+            preserve_space_before_footnote =
+                matches!(source.peek(), Some(Element::Footnote(_)))
+                    && sequence_starts_with_repeated_list_marker(&output, &run)
+                    && sequence_ends_with_space(&output, &run);
+            continue;
         }
         if let Element::Partial(PartialElement::InlineSizeOpen(style)) = element {
             flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
@@ -482,8 +493,17 @@ fn lower_sequence<'t>(
             }
             continue;
         }
-        if matches!(element, Element::Footnote) {
-            trim_one_trailing_text_space(&mut run);
+        if matches!(element, Element::Footnote(_)) {
+            if matches!(run.last(), Some(Element::LineBreak))
+                && sequence_starts_with_repeated_list_marker(&output, &run)
+            {
+                run.pop();
+            }
+            if preserve_space_before_footnote {
+                preserve_space_before_footnote = false;
+            } else {
+                trim_one_trailing_text_space(&mut run);
+            }
         }
         if let Element::Partial(PartialElement::InlineSpanOpen(mut attributes)) = element
         {
@@ -524,13 +544,20 @@ fn lower_sequence<'t>(
                 run.pop();
             }
             flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
-            if empty && !scored {
+            let preserve_empty_owner_space = empty
+                && !scored
+                && matches!(source.peek(), Some(Element::Footnote(_)))
+                && sequence_starts_with_repeated_list_marker(&output, &run)
+                && sequence_ends_with_space(&output, &run);
+            if empty && !scored && !preserve_empty_owner_space {
                 trim_trailing_space(&mut output);
             }
             let current = *ordinal;
             *ordinal += 1;
             if valid.contains(&current) {
-                trim_trailing_space(&mut output);
+                if !preserve_empty_owner_space {
+                    trim_trailing_space(&mut output);
+                }
                 active.remove(ScopeKind::Span);
                 if trailing_space && !next_starts_with_space && !empty && !scored {
                     output.push(text!(" "));
@@ -539,6 +566,7 @@ fn lower_sequence<'t>(
                     effects.scored_span_closed = true;
                     *trim_next_break = true;
                 }
+                preserve_space_before_footnote |= preserve_empty_owner_space;
             } else {
                 output.push(Element::Text(close_source));
             }
@@ -667,6 +695,25 @@ fn trim_one_trailing_text_space(elements: &mut Vec<Element<'_>>) {
             elements.pop();
         }
     }
+}
+
+fn sequence_starts_with_repeated_list_marker(
+    output: &[Element<'_>],
+    run: &[Element<'_>],
+) -> bool {
+    output
+        .iter()
+        .chain(run)
+        .next()
+        .is_some_and(|element| {
+            matches!(element, Element::Text(text) if matches!(text.as_ref(), "**" | "##"))
+        })
+}
+
+fn sequence_ends_with_space(output: &[Element<'_>], run: &[Element<'_>]) -> bool {
+    run.last().or_else(|| output.last()).is_some_and(
+        |element| matches!(element, Element::Text(text) if text.ends_with(' ')),
+    )
 }
 
 fn elements_end_with_space(elements: &[Element<'_>]) -> bool {
@@ -847,7 +894,8 @@ fn visit_children<'t>(element: &Element<'t>, visit: &mut dyn FnMut(&[Element<'t>
             PartialElement::TableCell(cell) => visit(&cell.elements),
             PartialElement::Tab(tab) => visit(&tab.elements),
             PartialElement::RubyText(ruby_text) => visit(&ruby_text.elements),
-            PartialElement::InlineSizeOpen(_)
+            PartialElement::WikidotEmptyInlineOwner
+            | PartialElement::InlineSizeOpen(_)
             | PartialElement::InlineSizeClose
             | PartialElement::InlineSpanOpen(_)
             | PartialElement::InlineSpanClose(_) => {}
@@ -907,7 +955,8 @@ fn visit_children_mut<'t>(
             PartialElement::TableCell(cell) => visit(&mut cell.elements),
             PartialElement::Tab(tab) => visit(&mut tab.elements),
             PartialElement::RubyText(ruby_text) => visit(&mut ruby_text.elements),
-            PartialElement::InlineSizeOpen(_)
+            PartialElement::WikidotEmptyInlineOwner
+            | PartialElement::InlineSizeOpen(_)
             | PartialElement::InlineSizeClose
             | PartialElement::InlineSpanOpen(_)
             | PartialElement::InlineSpanClose(_) => {}

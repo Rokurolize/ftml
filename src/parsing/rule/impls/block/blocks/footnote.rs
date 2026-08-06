@@ -110,9 +110,9 @@ fn parse_footnote_ref<'r, 't>(
     }
 
     // Append footnote contents and return.
-    parser.push_footnote(elements);
+    let index = parser.push_footnote(elements);
 
-    ok!(Element::Footnote, errors)
+    ok!(Element::Footnote(index), errors)
 }
 
 fn parse_footnote_block<'r, 't>(

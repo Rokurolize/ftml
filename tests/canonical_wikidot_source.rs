@@ -191,25 +191,24 @@ fn wikidot_document_leading_indented_quote_remains_literal() {
 }
 
 #[test]
-fn wikidot_saved_page_list_policy_beats_preview_for_document_leading_indentation() {
-    // Saved-page evidence in
-    // run-native-list-skipped-depth-empty-parent/verdict.json says Wikidot
-    // strips document-leading indentation before list activation. PagePreview
-    // leaves the same marker literal, but imported saved pages are the product
-    // compatibility target.
+fn wikidot_document_leading_indented_list_requires_a_later_root_marker() {
+    // The July 31 live recheck in
+    // issue-scout-20260731/v7-existing-live-current supersedes the earlier
+    // saved-page normalization inference: FTML keeps the indented marker
+    // literal at the syntax seam. A later unindented marker starts its own
+    // root list.
     for input in [
         " * saved-list-item",
         "                     * saved-list-item",
     ] {
         let (text, html) = render_text_and_html(input);
-        assert_eq!(text, "saved-list-item");
-        assert_eq!(html, "<ul>\n<li>saved-list-item</li>\n</ul>");
+        assert_eq!(text, "* saved-list-item");
+        assert_eq!(html, "<p>* saved-list-item</p>");
     }
 
     let (text, html) = render_text_and_html(" * orphan\n* root");
-    assert_eq!(text, "orphan\nroot");
-    assert_eq!(html.matches("<ul>").count(), 1);
-    assert_eq!(html.matches("<li>").count(), 2);
+    assert_eq!(text, "* orphan\nroot");
+    assert_eq!(html, "<p>* orphan</p><ul>\n<li>root</li>\n</ul>",);
 }
 
 #[test]

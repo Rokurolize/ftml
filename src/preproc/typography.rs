@@ -39,6 +39,12 @@ use regex::Regex;
 use std::ops::Range;
 use std::sync::LazyLock;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct WikidotSeamEdit {
+    pub range: Range<usize>,
+    pub replacement: &'static str,
+}
+
 // ‘ - LEFT SINGLE QUOTATION MARK
 // ’ - RIGHT SINGLE QUOTATION MARK
 static SINGLE_QUOTES: LazyLock<Replacer> = LazyLock::new(|| Replacer::RegexSurround {
@@ -131,17 +137,29 @@ fn replace_within_paragraphs(
     text: &mut String,
     buffer: &mut String,
 ) {
+    let literal_regions = LiteralRegionIndex::new(text);
     let mut output = String::with_capacity(text.len());
+    let mut paragraph_start = 0;
     for paragraph in text.split_inclusive("\n\n") {
+        let source_len = paragraph.len();
         let mut paragraph = paragraph.to_owned();
-        replacer.replace(&mut paragraph, buffer);
+        replace_surround_outside_closed_iftags(
+            replacer,
+            &mut paragraph,
+            buffer,
+            paragraph_start,
+            &literal_regions,
+        );
         output.push_str(&paragraph);
+        paragraph_start += source_len;
     }
     *text = output;
 }
 
 fn replace_low_quotes_within_paragraphs(text: &mut String, buffer: &mut String) {
+    let literal_regions = LiteralRegionIndex::new(text);
     let mut output = String::with_capacity(text.len());
+    let mut paragraph_start = 0;
     for paragraph in text.split_inclusive("\n\n") {
         let positions = paragraph
             .match_indices(",,")
@@ -154,10 +172,93 @@ fn replace_low_quotes_within_paragraphs(text: &mut String, buffer: &mut String) 
         output.push_str(&paragraph[..protected_end]);
 
         let mut suffix = paragraph[protected_end..].to_owned();
-        LOW_DOUBLE_QUOTES.replace(&mut suffix, buffer);
+        replace_surround_outside_closed_iftags(
+            &LOW_DOUBLE_QUOTES,
+            &mut suffix,
+            buffer,
+            paragraph_start + protected_end,
+            &literal_regions,
+        );
         output.push_str(&suffix);
+        paragraph_start += paragraph.len();
     }
     *text = output;
+}
+
+fn replace_surround_outside_closed_iftags(
+    replacer: &Replacer,
+    text: &mut String,
+    buffer: &mut String,
+    source_offset: usize,
+    literal_regions: &LiteralRegionIndex,
+) {
+    let Replacer::RegexSurround { regex, begin, end } = replacer else {
+        unreachable!("Wikidot quote replacement requires a surround replacer");
+    };
+    let mut last_copied = 0;
+    buffer.clear();
+    buffer.reserve(text.len());
+    for captures in regex.captures_iter(text.as_str()) {
+        let full = captures.get(0).unwrap();
+        if contains_closed_conditional(
+            full.as_str(),
+            &["iftags"],
+            source_offset + full.start(),
+            literal_regions,
+        ) {
+            continue;
+        }
+        let content = captures.get(1).unwrap();
+        buffer.push_str(&text[last_copied..full.start()]);
+        buffer.push_str(begin);
+        buffer.push_str(content.as_str());
+        buffer.push_str(end);
+        last_copied = full.end();
+    }
+    if last_copied == 0 {
+        return;
+    }
+    buffer.push_str(&text[last_copied..]);
+    std::mem::swap(text, buffer);
+}
+
+fn contains_closed_conditional(
+    text: &str,
+    names: &[&str],
+    source_offset: usize,
+    literal_regions: &LiteralRegionIndex,
+) -> bool {
+    let lower = text.to_ascii_lowercase();
+    names.iter().any(|name| {
+        let opener = format!("[[{name}");
+        let closer = format!("[[/{name}");
+        let mut search_start = 0;
+        while let Some(relative_open) = lower[search_start..].find(&opener) {
+            let open = search_start + relative_open;
+            let open_tail = &lower[open + opener.len()..];
+            let valid_head = open_tail.chars().next().is_some_and(|character| {
+                character == ']' || character.is_ascii_whitespace()
+            });
+            if valid_head && !literal_regions.contains(source_offset + open) {
+                let mut close_search_start = 0;
+                while let Some(relative_close) =
+                    open_tail[close_search_start..].find(&closer)
+                {
+                    let close = close_search_start + relative_close;
+                    let close_tail = &open_tail[close + closer.len()..];
+                    let close_offset = source_offset + open + opener.len() + close;
+                    if !literal_regions.contains(close_offset)
+                        && close_tail.trim_start_matches([' ', '\t']).starts_with("]]")
+                    {
+                        return true;
+                    }
+                    close_search_start = close + closer.len();
+                }
+            }
+            search_start = open + opener.len();
+        }
+        false
+    })
 }
 
 fn wikidot_uses_getattrs(head: &str) -> bool {
@@ -348,10 +449,42 @@ fn replace_unit_spaces(text: &mut String, protected: &[Range<usize>]) {
 /// Performs all typographic substitutions in-place in the given text
 pub fn substitute(text: &mut String) {
     let mut buffer = String::new();
-    NATIVE_DOUBLE_QUOTES.replace(text, &mut buffer);
-    NATIVE_LOW_DOUBLE_QUOTES.replace(text, &mut buffer);
-    NATIVE_SINGLE_QUOTES.replace(text, &mut buffer);
+    replace_native_quotes(&NATIVE_DOUBLE_QUOTES, text, &mut buffer);
+    replace_native_quotes(&NATIVE_LOW_DOUBLE_QUOTES, text, &mut buffer);
+    replace_native_quotes(&NATIVE_SINGLE_QUOTES, text, &mut buffer);
     HORIZONTAL_ELLIPSIS.replace(text, &mut buffer);
+}
+
+fn replace_native_quotes(replacer: &Replacer, text: &mut String, buffer: &mut String) {
+    let Replacer::RegexSurround { regex, begin, end } = replacer else {
+        unreachable!("native quote replacement requires a surround replacer");
+    };
+    let mut last_copied = 0;
+    let literal_regions = LiteralRegionIndex::new(text);
+    buffer.clear();
+    buffer.reserve(text.len());
+    for captures in regex.captures_iter(text.as_str()) {
+        let full = captures.get(0).unwrap();
+        if contains_closed_conditional(
+            full.as_str(),
+            &["iftags", "ifcategory"],
+            full.start(),
+            &literal_regions,
+        ) {
+            continue;
+        }
+        let content = captures.get(1).unwrap();
+        buffer.push_str(&text[last_copied..full.start()]);
+        buffer.push_str(begin);
+        buffer.push_str(content.as_str());
+        buffer.push_str(end);
+        last_copied = full.end();
+    }
+    if last_copied == 0 {
+        return;
+    }
+    buffer.push_str(&text[last_copied..]);
+    std::mem::swap(text, buffer);
 }
 
 /// Performs Wikidot-compatible typographic substitutions in-place.
@@ -384,6 +517,170 @@ pub fn substitute_wikidot(text: &mut String) {
 
     // Miscellaneous
     replace_wikidot_ellipsis_outside_literals(text, &mut buffer);
+}
+
+/// Return only typography edits whose lexical match crosses a removed,
+/// authored-source seam.
+///
+/// Callers keep element provenance and syntax ownership; this function never
+/// tokenizes or parses the joined text. The seam positions are byte offsets in
+/// `text`, sorted in ascending order.
+pub(crate) fn wikidot_seam_edits(text: &str, seams: &[usize]) -> Vec<WikidotSeamEdit> {
+    if seams.is_empty() {
+        return Vec::new();
+    }
+
+    let mut edits = Vec::new();
+    let mut paired_ranges = Vec::new();
+    collect_surround_seam_edits(
+        &DOUBLE_QUOTES,
+        text,
+        seams,
+        "\u{201c}",
+        "\u{201d}",
+        &mut paired_ranges,
+        &mut edits,
+    );
+    collect_surround_seam_edits(
+        &LOW_DOUBLE_QUOTES,
+        text,
+        seams,
+        "\u{201e}",
+        "\u{201d}",
+        &mut paired_ranges,
+        &mut edits,
+    );
+    collect_surround_seam_edits(
+        &SINGLE_QUOTES,
+        text,
+        seams,
+        "\u{2018}",
+        "\u{2019}",
+        &mut paired_ranges,
+        &mut edits,
+    );
+
+    for candidate in LEFT_ANGLE_QUOTES.regex().find_iter(text) {
+        let range = candidate.range();
+        if range_crosses_seam(&range, seams) {
+            edits.push(WikidotSeamEdit {
+                range,
+                replacement: "\u{ab}",
+            });
+        }
+    }
+    for captures in RIGHT_ANGLE_QUOTES.regex().captures_iter(text) {
+        let candidate = captures.name("repl").unwrap();
+        let full = captures.get(0).unwrap().range();
+        if range_crosses_seam(&full, seams) {
+            edits.push(WikidotSeamEdit {
+                range: candidate.range(),
+                replacement: "\u{bb}",
+            });
+        }
+    }
+    for captures in HORIZONTAL_ELLIPSIS.regex().captures_iter(text) {
+        let candidate = captures.name("repl").unwrap();
+        let range = candidate.range();
+        if range_crosses_seam(&range, seams) {
+            edits.push(WikidotSeamEdit {
+                range,
+                replacement: "\u{2026}",
+            });
+        }
+    }
+
+    edits.sort_unstable_by_key(|edit| (edit.range.start, edit.range.end));
+    edits
+}
+
+pub(crate) fn native_seam_edits(text: &str, seams: &[usize]) -> Vec<WikidotSeamEdit> {
+    if seams.is_empty() {
+        return Vec::new();
+    }
+
+    let mut edits = Vec::new();
+    let mut paired_ranges = Vec::new();
+    collect_surround_seam_edits(
+        &NATIVE_DOUBLE_QUOTES,
+        text,
+        seams,
+        "\u{201c}",
+        "\u{201d}",
+        &mut paired_ranges,
+        &mut edits,
+    );
+    collect_surround_seam_edits(
+        &NATIVE_LOW_DOUBLE_QUOTES,
+        text,
+        seams,
+        "\u{201e}",
+        "\u{201d}",
+        &mut paired_ranges,
+        &mut edits,
+    );
+    collect_surround_seam_edits(
+        &NATIVE_SINGLE_QUOTES,
+        text,
+        seams,
+        "\u{2018}",
+        "\u{2019}",
+        &mut paired_ranges,
+        &mut edits,
+    );
+    for captures in HORIZONTAL_ELLIPSIS.regex().captures_iter(text) {
+        let candidate = captures.name("repl").unwrap();
+        let range = candidate.range();
+        if range_crosses_seam(&range, seams) {
+            edits.push(WikidotSeamEdit {
+                range,
+                replacement: "\u{2026}",
+            });
+        }
+    }
+    edits.sort_unstable_by_key(|edit| (edit.range.start, edit.range.end));
+    edits
+}
+
+fn collect_surround_seam_edits(
+    replacer: &Replacer,
+    text: &str,
+    seams: &[usize],
+    begin: &'static str,
+    end: &'static str,
+    paired_ranges: &mut Vec<Range<usize>>,
+    edits: &mut Vec<WikidotSeamEdit>,
+) {
+    let regex = replacer.regex();
+    for captures in regex.captures_iter(text) {
+        let full = captures.get(0).unwrap().range();
+        if paired_ranges
+            .iter()
+            .any(|range| ranges_overlap(range, &full))
+            || !range_crosses_seam(&full, seams)
+        {
+            continue;
+        }
+        let content = captures.get(1).unwrap().range();
+        edits.push(WikidotSeamEdit {
+            range: full.start..content.start,
+            replacement: begin,
+        });
+        edits.push(WikidotSeamEdit {
+            range: content.end..full.end,
+            replacement: end,
+        });
+        paired_ranges.push(full);
+    }
+}
+
+fn range_crosses_seam(range: &Range<usize>, seams: &[usize]) -> bool {
+    let candidate = seams.partition_point(|seam| *seam <= range.start);
+    seams.get(candidate).is_some_and(|seam| *seam < range.end)
+}
+
+fn ranges_overlap(left: &Range<usize>, right: &Range<usize>) -> bool {
+    left.start < right.end && right.start < left.end
 }
 
 fn replace_wikidot_angle_quotes_outside_owners(text: &mut String, buffer: &mut String) {
@@ -665,6 +962,19 @@ fn wikijump_substitution_keeps_native_typography_scope() {
     let mut text = "`one\nline' << 1 234".to_owned();
     substitute(&mut text);
     assert_eq!(text, "`one\nline' << 1 234");
+}
+
+#[test]
+fn literal_conditional_shapes_do_not_defer_existing_quote_typography() {
+    let mut text = "@@``[[iftags]]x[[/iftags]]''@@".to_owned();
+
+    substitute_wikidot(&mut text);
+
+    assert_eq!(text, "@@“[[iftags]]x[[/iftags]]”@@");
+
+    let mut literal_close = "`[[iftags +missing]]@@[[/iftags]]@@'".to_owned();
+    substitute_wikidot(&mut literal_close);
+    assert_eq!(literal_close, "‘[[iftags +missing]]@@[[/iftags]]@@’",);
 }
 
 #[test]

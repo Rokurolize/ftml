@@ -16,6 +16,9 @@ mod advanced_table_attributes;
 #[path = "canonical_wikidot_source.rs"]
 mod canonical_wikidot_source;
 
+#[path = "suppressed_conditional_typography.rs"]
+mod suppressed_conditional_typography;
+
 #[path = "coverage_public_api.rs"]
 mod coverage_public_api;
 

@@ -625,23 +625,29 @@ fn lower_dash_runs(elements: &mut Vec<Element<'_>>) {
             output.push(element);
             continue;
         };
-        if run_len == 2 {
-            output.push(Element::Text(Cow::Borrowed("\u{2014}")));
-            continue;
-        }
-
-        for _ in 0..run_len / 5 {
-            output.push(strike_shell().build(vec![Element::Text(Cow::Borrowed("-"))]));
-        }
-        let remainder = run_len % 5;
-        for _ in 0..remainder / 2 {
-            output.push(Element::Text(Cow::Borrowed("\u{2014}")));
-        }
-        if remainder % 2 == 1 {
-            output.push(Element::Text(Cow::Borrowed("-")));
-        }
+        output.extend(wikidot_dash_run_elements(run_len));
     }
     *elements = output;
+}
+
+pub(crate) fn wikidot_dash_run_elements<'t>(run_len: usize) -> Vec<Element<'t>> {
+    debug_assert!(run_len >= 2);
+    if run_len == 2 {
+        return vec![Element::Text(Cow::Borrowed("\u{2014}"))];
+    }
+
+    let mut elements = Vec::with_capacity(run_len / 2);
+    for _ in 0..run_len / 5 {
+        elements.push(strike_shell().build(vec![Element::Text(Cow::Borrowed("-"))]));
+    }
+    let remainder = run_len % 5;
+    for _ in 0..remainder / 2 {
+        elements.push(Element::Text(Cow::Borrowed("\u{2014}")));
+    }
+    if remainder % 2 == 1 {
+        elements.push(Element::Text(Cow::Borrowed("-")));
+    }
+    elements
 }
 
 fn outer_candidate<'t>(

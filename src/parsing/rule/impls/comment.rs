@@ -61,7 +61,7 @@ fn try_consume_fn<'r, 't>(
                 return if generated.is_empty() {
                     ok!(Elements::None)
                 } else {
-                    success_elements(Element::Delayed(DelayedElement::omitted(
+                    success_elements(Element::Delayed(DelayedElement::suppressed(
                         &generated,
                     )))
                 };

@@ -54,6 +54,11 @@ pub struct ParagraphStack<'t> {
     /// Elements being accumulated in the current paragraph.
     current: Vec<Element<'t>>,
 
+    /// Suppressed-owner phase markers awaiting the next authored element.
+    /// They must remain typed for later typography without occupying a
+    /// physical Wikidot line or interfering with line-break cleanup.
+    pending_suppression_seams: Vec<Element<'t>>,
+
     /// Whether Wikidot renders the current physical paragraph without a
     /// paragraph wrapper because it contains a naked image block.
     current_unwrapped: bool,
@@ -302,11 +307,19 @@ impl<'t> ParagraphStack<'t> {
             };
             debug_assert_eq!(paragraph.ctype(), ContainerType::Paragraph);
             self.current = paragraph.into();
+            self.current.append(&mut self.pending_suppression_seams);
             self.current.push(element);
             return;
         }
         self.wikidot_reopen_for_footnote = false;
 
+        if element != Element::LineBreak {
+            if paragraph_safe || !self.current.is_empty() {
+                self.current.append(&mut self.pending_suppression_seams);
+            } else {
+                self.finished.append(&mut self.pending_suppression_seams);
+            }
+        }
         if self.suppress_next_line_break {
             self.suppress_next_line_break = false;
             if element == Element::LineBreak {
@@ -546,6 +559,12 @@ impl<'t> ParagraphStack<'t> {
     }
 
     pub fn push_paragraph_safe_elements(&mut self, mut elements: Vec<Element<'t>>) {
+        if let Some(index) = elements
+            .iter()
+            .position(|element| *element != Element::LineBreak)
+        {
+            elements.splice(index..index, self.pending_suppression_seams.drain(..));
+        }
         if self.current.is_empty() {
             if let Some(index) = elements
                 .iter()
@@ -575,13 +594,19 @@ impl<'t> ParagraphStack<'t> {
     /// This should only be between lines in the blockquote.
     #[inline]
     pub fn pop_line_break(&mut self) {
-        if let Some(Element::LineBreak) = self.current.last() {
-            self.current.pop();
+        if let Some(index) = self.current.iter().rposition(|element| {
+            !matches!(element, Element::Delayed(delayed) if delayed.is_suppression_seam())
+        }) && self.current[index] == Element::LineBreak
+        {
+            self.current.remove(index);
         } else if self.wikidot
             && self.current.is_empty()
-            && matches!(self.finished.last(), Some(Element::LineBreak))
+            && let Some(index) = self.finished.iter().rposition(|element| {
+                !matches!(element, Element::Delayed(delayed) if delayed.is_suppression_seam())
+            })
+            && self.finished[index] == Element::LineBreak
         {
-            self.finished.pop();
+            self.finished.remove(index);
         }
     }
 
@@ -616,13 +641,27 @@ impl<'t> ParagraphStack<'t> {
     }
 
     fn trim_trailing_ascii_space(&mut self) {
-        if matches!(self.current.last(), Some(Element::Text(text)) if text == " ") {
-            self.current.pop();
+        if let Some(index) = self.current.iter().rposition(|element| {
+            !matches!(element, Element::Delayed(delayed) if delayed.is_suppression_seam())
+        }) && matches!(&self.current[index], Element::Text(text) if text == " ")
+        {
+            self.current.remove(index);
         }
     }
 
     /// Set the finished field in this struct to the paragraph element.
     pub fn end_paragraph(&mut self) {
+        if self.current.is_empty() {
+            self.finished.append(&mut self.pending_suppression_seams);
+        } else {
+            let index = self
+                .current
+                .iter()
+                .rposition(|element| *element != Element::LineBreak)
+                .map_or(0, |index| index + 1);
+            self.current
+                .splice(index..index, self.pending_suppression_seams.drain(..));
+        }
         if self.current_unwrapped {
             if self.trim_unwrapped_trailing_line_break
                 && matches!(self.current.last(), Some(Element::LineBreak))
@@ -643,6 +682,14 @@ impl<'t> ParagraphStack<'t> {
         self.wikidot_literal_div_line = false;
         self.trim_unwrapped_trailing_line_break = false;
         self.suppress_next_line_break = false;
+    }
+
+    #[inline]
+    pub(crate) fn defer_suppression_seam(&mut self, element: Element<'t>) {
+        debug_assert!(
+            matches!(&element, Element::Delayed(delayed) if delayed.is_suppression_seam())
+        );
+        self.pending_suppression_seams.push(element);
     }
 
     pub fn end_paragraph_at_break(&mut self) {

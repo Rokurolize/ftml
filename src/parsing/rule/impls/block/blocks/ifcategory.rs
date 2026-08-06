@@ -20,6 +20,7 @@
 
 use super::prelude::*;
 use crate::data::PageInfo;
+use crate::delayed::DelayedElement;
 use crate::parsing::{ElementCondition, ElementConditionType};
 
 pub const BLOCK_IFCATEGORY: BlockRule = BlockRule {
@@ -80,7 +81,9 @@ fn parse_fn<'r, 't>(
 
     // Get body content, never with paragraphs
     let parser_state = parser.get_mutable_state();
+    let body_start = parser.current().span.start;
     let body = parser.get_body_elements(&BLOCK_IFCATEGORY, false)?;
+    let body_end = parser.current().span.start;
     let (elements, errors, paragraph_safe) = body.into();
 
     trace!(
@@ -92,13 +95,17 @@ fn parse_fn<'r, 't>(
     // Return elements based on condition
     let elements = if check_ifcategory(parser.page_info(), &conditions) {
         trace!("Conditions passed, including elements");
-
-        Elements::Multiple(elements)
+        let mut bounded = Vec::with_capacity(elements.len() + 2);
+        bounded.push(Element::Delayed(DelayedElement::typography_boundary()));
+        bounded.extend(elements);
+        bounded.push(Element::Delayed(DelayedElement::typography_boundary()));
+        Elements::Multiple(bounded)
     } else {
         trace!("Conditions failed, excluding elements");
         parser.reset_mutable_state(parser_state);
 
-        Elements::None
+        let generated = parser.generated_in_range(body_start..body_end);
+        Elements::Single(Element::Delayed(DelayedElement::suppressed(&generated)))
     };
 
     ok!(paragraph_safe; elements, errors)

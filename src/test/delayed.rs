@@ -6,6 +6,7 @@ use crate::delayed::{
 use crate::layout::Layout;
 use crate::settings::{WikitextMode, WikitextSettings};
 use std::borrow::Cow;
+use std::time::{Duration, Instant};
 
 fn page_link_input(source: &str) -> DelayedInput<'_> {
     let marker = "%%title_linked%%";
@@ -99,6 +100,55 @@ fn render_authored(source: &str) -> String {
     )
     .expect("valid authored delayed fixture");
     render_input_with_bindings(&input, &SlotBindings::empty())
+}
+
+fn page_link_input_with_runtime_prefix<'t>(
+    source: &'t str,
+    runtime_prefix: &str,
+) -> DelayedInput<'t> {
+    let marker = "%%title_linked%%";
+    let marker_start = source.find(marker).expect("fixture marker");
+    let marker_end = marker_start + marker.len();
+    DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..runtime_prefix.len(), TextOrigin::RuntimeScalar),
+            InputSegment::text(runtime_prefix.len()..marker_start, TextOrigin::Authored),
+            InputSegment::generated(GeneratedInput {
+                source_range: marker_start..marker_end,
+                id: SlotId::new(1),
+                kind: GeneratedKind::PageLink,
+                occurrence: 0,
+            }),
+            InputSegment::text(marker_end..source.len(), TextOrigin::Authored),
+        ],
+    )
+    .expect("valid runtime-prefix fixture")
+}
+
+fn page_link_input_with_runtime_suffix<'t>(
+    source: &'t str,
+    runtime_suffix: &str,
+) -> DelayedInput<'t> {
+    let marker = "%%title_linked%%";
+    let marker_start = source.find(marker).expect("fixture marker");
+    let marker_end = marker_start + marker.len();
+    let runtime_start = source.len() - runtime_suffix.len();
+    DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..marker_start, TextOrigin::Authored),
+            InputSegment::generated(GeneratedInput {
+                source_range: marker_start..marker_end,
+                id: SlotId::new(1),
+                kind: GeneratedKind::PageLink,
+                occurrence: 0,
+            }),
+            InputSegment::text(marker_end..runtime_start, TextOrigin::Authored),
+            InputSegment::text(runtime_start..source.len(), TextOrigin::RuntimeScalar),
+        ],
+    )
+    .expect("valid runtime-suffix fixture")
 }
 
 #[test]
@@ -1404,4 +1454,159 @@ fn delayed_slots_preserve_the_frozen_listpages_owner_boundaries() {
     ] {
         assert_eq!(render_tag(source), expected, "source: {source}");
     }
+}
+
+#[test]
+fn suppressed_delayed_owners_apply_typography_only_across_authored_text() {
+    assert_eq!(
+        render("left-[[iftags]]\n%%title_linked%%\n[[/iftags]]-right"),
+        "<p>left—right</p>",
+    );
+    assert_eq!(
+        render("left.[!-- %%title_linked%% --]..right"),
+        "<p>left…right</p>",
+    );
+
+    let source = "`[!-- %%title_linked%% --]`quoted'[!-- %%title_linked%% --]'";
+    let marker = "%%title_linked%%";
+    let ranges = source
+        .match_indices(marker)
+        .map(|(start, marker)| start..start + marker.len())
+        .collect::<Vec<_>>();
+    let mut segments = Vec::new();
+    let mut cursor = 0;
+    for (occurrence, range) in ranges.into_iter().enumerate() {
+        segments.push(InputSegment::text(
+            cursor..range.start,
+            TextOrigin::Authored,
+        ));
+        segments.push(InputSegment::generated(GeneratedInput {
+            source_range: range.clone(),
+            id: SlotId::new(1),
+            kind: GeneratedKind::PageLink,
+            occurrence: occurrence as u32,
+        }));
+        cursor = range.end;
+    }
+    segments.push(InputSegment::text(
+        cursor..source.len(),
+        TextOrigin::Authored,
+    ));
+    let input =
+        DelayedInput::new(source, segments).expect("valid repeated suppression input");
+    assert_eq!(render_input(&input), "<p>“quoted”</p>");
+
+    let source = "runtime-[!-- %%title_linked%% --]-authored";
+    let input = page_link_input_with_runtime_prefix(source, "runtime-");
+    assert_eq!(
+        render_input(&input),
+        "<p>runtime--authored</p>",
+        "runtime-origin text must remain a seam barrier",
+    );
+
+    let source = "authored-[!-- %%title_linked%% --]-runtime";
+    let input = page_link_input_with_runtime_suffix(source, "-runtime");
+    assert_eq!(
+        render_input(&input),
+        "<p>authored--runtime</p>",
+        "runtime-origin text must remain a seam barrier on either side",
+    );
+}
+
+#[test]
+fn generated_values_do_not_gain_typography_or_general_syntax_authority() {
+    let input = page_link_input("left-%%title_linked%%-right");
+    let bindings = page_bindings_for(PageRef::page_only("target"), "--[[html]]");
+    assert_eq!(
+        render_input_with_bindings(&input, &bindings),
+        concat!("<p>left-<a href=\"/target\">", "--[[html]]</a>-right</p>",),
+    );
+}
+
+#[test]
+fn delayed_suppression_binding_is_atomic_and_rolls_back_hidden_metadata() {
+    let source = concat!(
+        "start-[[iftags]]\n",
+        "[[html]]<b>hidden</b>[[/html]]\n",
+        "%%title_linked%%\n",
+        "[[/iftags]]-middle",
+    );
+    let input = page_link_input(source);
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::List, Layout::Wikidot);
+    let delayed = parse_delayed_list(&input, &page_info, &settings)
+        .expect("supported delayed input");
+
+    assert_eq!(
+        delayed.bind(&SlotBindings::empty()).unwrap_err(),
+        crate::delayed::DelayedError::BindingSchemaMismatch,
+    );
+
+    let bound = delayed
+        .bind(&page_bindings())
+        .expect("the same parsed tree must bind after a rejected candidate");
+    let sealed = bound.render_html(&page_info, &settings);
+    assert_eq!(sealed.body(), "<p>start—middle</p>");
+    assert!(sealed.html_blocks().is_empty());
+}
+
+#[test]
+fn many_adjacent_suppressed_delayed_nodes_resolve_within_a_bounded_budget() {
+    const COUNT: usize = 2_048;
+    let mut source = String::from("left-");
+    let mut generated_ranges = Vec::with_capacity(COUNT);
+    for index in 0..COUNT {
+        source.push_str("[!-- ");
+        let start = source.len();
+        source.push_str(&format!("%%slot-{index}%%"));
+        generated_ranges.push(start..source.len());
+        source.push_str(" --]");
+    }
+    source.push_str("-right");
+
+    let mut segments = Vec::with_capacity(COUNT * 2 + 1);
+    let mut bindings = Vec::with_capacity(COUNT);
+    let mut cursor = 0;
+    for (index, range) in generated_ranges.into_iter().enumerate() {
+        segments.push(InputSegment::text(
+            cursor..range.start,
+            TextOrigin::Authored,
+        ));
+        let id = SlotId::new(index as u32);
+        segments.push(InputSegment::generated(GeneratedInput {
+            source_range: range.clone(),
+            id,
+            kind: GeneratedKind::PageLink,
+            occurrence: 0,
+        }));
+        bindings.push((
+            id,
+            GeneratedValue::PageLink {
+                page: PageRef::page_only("suppressed"),
+                label: Cow::Borrowed("suppressed"),
+            },
+        ));
+        cursor = range.end;
+    }
+    segments.push(InputSegment::text(
+        cursor..source.len(),
+        TextOrigin::Authored,
+    ));
+
+    let input = DelayedInput::new(&source, segments).expect("valid dense delayed input");
+    let bindings = SlotBindings::new(bindings).expect("unique dense bindings");
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::List, Layout::Wikidot);
+    let started = Instant::now();
+    let delayed = parse_delayed_list(&input, &page_info, &settings)
+        .expect("dense delayed input parses");
+    let bound = delayed.bind(&bindings).expect("dense delayed input binds");
+    let body = bound.render_html(&page_info, &settings);
+
+    assert_eq!(body.body(), "<p>left—right</p>");
+    assert!(
+        started.elapsed() < Duration::from_secs(10),
+        "dense delayed suppression exceeded its bounded budget: {:?}",
+        started.elapsed(),
+    );
 }

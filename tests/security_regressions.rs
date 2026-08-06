@@ -709,6 +709,30 @@ fn hidden_conditionals_do_not_publish_metadata_blocks() {
 }
 
 #[test]
+fn disabled_html_blocks_remain_opaque_inside_false_wikidot_iftags() {
+    let input = concat!(
+        "[[iftags +missing]]\n",
+        "[[html]]\n",
+        "[[/iftags]]\n",
+        "SECRET\n",
+        "[[/html]]\n",
+        "[[/iftags]]\n",
+        "public",
+    );
+    let page_info = page_info();
+    let mut settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    settings.enable_html_blocks = false;
+    let tokenization = ftml::tokenize(input);
+    let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+    let text = TextRender.render(&tree, &page_info, &settings);
+
+    assert!(errors.is_empty(), "{errors:#?}");
+    assert_eq!(text, "public");
+    assert!(tree.html_blocks.is_empty(), "{tree:#?}");
+    assert!(!format!("{tree:?}").contains("SECRET"), "{tree:#?}");
+}
+
+#[test]
 fn false_iftags_raw_body_end_markers_stay_hidden() {
     let raw_bodies = [
         "[[code]]\n[[/iftags]]\n[[html]]\n<b>raw-code</b>\n[[/html]]\n[[/code]]",
@@ -730,6 +754,13 @@ fn false_iftags_raw_body_end_markers_stay_hidden() {
                     || raw_body.starts_with("[[math]]\n\\text{")
                     || raw_body.starts_with("[!-- "))
             {
+                let input = format!(
+                    "[[iftags +missing]]\n{raw_body}\n[[html]]\n<b>guarded</b>\n[[/html]]\n[[/iftags]]\nvisible",
+                );
+                let tree = parse(&input, layout);
+                assert!(tree.elements.is_empty(), "{raw_body}: {tree:#?}");
+                assert!(tree.html_blocks.is_empty(), "{raw_body}: {tree:#?}");
+                assert!(tree.code_blocks.is_empty(), "{raw_body}: {tree:#?}");
                 continue;
             }
             assert_false_iftags_guarded(raw_body, layout);
@@ -750,10 +781,9 @@ fn false_iftags_raw_body_end_markers_stay_hidden() {
         ),
         Layout::Wikidot,
     );
-    assert!(
-        render_text(&wikidot_math, Layout::Wikidot).starts_with("raw-math}"),
-        "{wikidot_math:?}",
-    );
+    assert!(wikidot_math.elements.is_empty(), "{wikidot_math:#?}");
+    assert!(wikidot_math.html_blocks.is_empty(), "{wikidot_math:#?}");
+    assert!(wikidot_math.code_blocks.is_empty(), "{wikidot_math:#?}");
 }
 
 #[test]
@@ -791,48 +821,33 @@ fn false_iftags_malformed_hidden_structures_fail_closed() {
 }
 
 #[test]
-fn wikidot_false_iftags_unclosed_raw_child_yields_to_conditional_boundary() {
-    for (hidden, expected) in [
-        ("[[code]]\n[[/iftags]]\nunclosed code", "unclosed code"),
-        (
-            "[[html]]\n[[/iftags]]\n<b>unclosed html</b>",
-            "<b>unclosed html</b>",
-        ),
-        ("[[raw]]\n[[/iftags]]\nunclosed raw", "unclosed raw"),
+fn wikidot_false_iftags_unclosed_raw_child_fails_closed() {
+    for hidden in [
+        "[[code]]\n[[/iftags]]\nunclosed code",
+        "[[html]]\n[[/iftags]]\n<b>unclosed html</b>",
+        "[[raw]]\n[[/iftags]]\nunclosed raw",
     ] {
         let tree = parse(&format!("[[iftags +missing]]\n{hidden}"), Layout::Wikidot);
 
-        assert_eq!(render_text(&tree, Layout::Wikidot), expected, "{hidden}");
+        assert!(tree.elements.is_empty(), "{hidden}: {tree:#?}");
+        assert!(tree.html_blocks.is_empty(), "{hidden}: {tree:#?}");
+        assert!(tree.code_blocks.is_empty(), "{hidden}: {tree:#?}");
     }
 }
 
 #[test]
-fn wikidot_false_iftags_closed_raw_and_comment_yield_to_conditional_boundary() {
-    for (hidden, expected, html_blocks) in [
-        (
-            "[[raw]]\n[[/iftags]]\n[[html]]raw-raw[[/html]]\n[[/raw]]",
-            "[[/raw]]\n[[/iftags]]\nvisible",
-            vec!["raw-raw", "\n<b>guarded</b>\n"],
-        ),
-        (
-            "[!-- [[/iftags]] raw-comment --]",
-            "raw-comment —]\n[[/iftags]]\nvisible",
-            vec!["\n<b>guarded</b>\n"],
-        ),
+fn wikidot_false_iftags_closed_raw_and_comment_fail_closed() {
+    for hidden in [
+        "[[raw]]\n[[/iftags]]\n[[html]]raw-raw[[/html]]\n[[/raw]]",
+        "[!-- [[/iftags]] raw-comment --]",
     ] {
         let input = format!(
             "[[iftags +missing]]\n{hidden}\n[[html]]\n<b>guarded</b>\n[[/html]]\n[[/iftags]]\nvisible",
         );
         let (tree, _) = parse_with_errors(&input, Layout::Wikidot);
-        let text = render_text(&tree, Layout::Wikidot);
-        let visible_lines = text
-            .lines()
-            .filter(|line| !line.is_empty())
-            .collect::<Vec<_>>()
-            .join("\n");
-
-        assert_eq!(visible_lines, expected, "{hidden}: {text}");
-        assert_eq!(tree.html_blocks, html_blocks, "{hidden}: {tree:#?}");
+        assert!(tree.elements.is_empty(), "{hidden}: {tree:#?}");
+        assert!(tree.html_blocks.is_empty(), "{hidden}: {tree:#?}");
+        assert!(tree.code_blocks.is_empty(), "{hidden}: {tree:#?}");
     }
 }
 

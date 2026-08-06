@@ -19,6 +19,9 @@
  */
 
 use super::footnote_first::{starts_footnote, unowned_footnote_first};
+use super::line_owner::{
+    LineOwner, try_consume_literal_list_alignment, try_consume_lost_owner_block,
+};
 use super::prelude::*;
 use crate::parsing::{DepthItem, DepthList, process_depths};
 use crate::tree::{AttributeMap, ListItem, ListType};
@@ -37,6 +40,10 @@ enum ListItemStep<'t> {
     End,
     Item((usize, ListType, Vec<Element<'t>>), bool),
     Fallback(Vec<Element<'t>>),
+    Split {
+        control: Option<(usize, ListType, Vec<Element<'t>>)>,
+        escaped: Vec<Element<'t>>,
+    },
 }
 
 pub const RULE_LIST: Rule = Rule {
@@ -64,6 +71,7 @@ fn try_consume_fn<'r, 't>(
     // Context variables
     let mut depths = Vec::new();
     let mut errors = Vec::new();
+    let mut escaped_elements = Vec::new();
 
     // Blockquotes are always paragraph-unsafe,
     // but we need this binding for chain().
@@ -86,10 +94,20 @@ fn try_consume_fn<'r, 't>(
                 debug_assert!(depths.is_empty());
                 return ok!(true; elements, errors);
             }
+            ListItemStep::Split { control, escaped } => {
+                if let Some(control) = control {
+                    depths.push(control);
+                }
+                escaped_elements.extend(escaped);
+                ended = true;
+            }
         }
     }
 
-    if parser.settings().layout.legacy() && starts_footnote(parser) {
+    if escaped_elements.is_empty()
+        && parser.settings().layout.legacy()
+        && starts_footnote(parser)
+    {
         let only_item = depths.len() == 1;
         if let Some((_, list_type, elements)) = depths.last_mut() {
             let mut candidate = parser.clone_with_rule(RULE_LIST);
@@ -122,16 +140,17 @@ fn try_consume_fn<'r, 't>(
     }
 
     // This list has no rows, so the rule fails
-    if depths.is_empty() {
+    if depths.is_empty() && escaped_elements.is_empty() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
     let depths = retain_active_nested_list_types(depths);
     let depth_lists = process_depths(ListType::Generic, depths);
-    let elements: Vec<Element> = depth_lists
+    let mut elements: Vec<Element> = depth_lists
         .into_iter()
         .filter_map(|(ltype, depth_list)| build_list_element(ltype, depth_list))
         .collect();
+    elements.extend(escaped_elements);
 
     ok!(paragraph_safe; elements, errors)
 }
@@ -173,6 +192,10 @@ fn parse_next_list_item<'r, 't>(
 where
     'r: 't,
 {
+    if at_lost_owner_close(parser) {
+        return Ok(ListItemStep::End);
+    }
+
     let parser_state = parser.get_mutable_state();
     let mut sub_parser = parser.clone();
 
@@ -195,6 +218,29 @@ where
     }
     sub_parser.step()?;
     let content_start = sub_parser.current().span.start;
+
+    if parser.settings().layout.legacy() {
+        if let Some(literal) =
+            try_consume_literal_list_alignment(&mut sub_parser, list_type)?
+        {
+            parser.update(&sub_parser);
+            return Ok(ListItemStep::Item((depth, list_type, vec![literal]), false));
+        }
+        if let Some(lost) = try_consume_lost_owner_block(
+            &mut sub_parser,
+            LineOwner::List { ltype: list_type },
+        )? {
+            errors.extend(lost.errors);
+            let control = lost
+                .control
+                .map(|control| (depth, list_type, vec![control]));
+            parser.update(&sub_parser);
+            return Ok(ListItemStep::Split {
+                control,
+                escaped: lost.body,
+            });
+        }
+    }
 
     let item_result = collect_list_item_elements(&mut sub_parser)?;
     let content_end = sub_parser.current().span.start;
@@ -219,6 +265,42 @@ where
     *paragraph_safe &= item_paragraph_safe;
     parser.update(&sub_parser);
     Ok(ListItemStep::Item((depth, list_type, elements), ends_run))
+}
+
+fn at_lost_owner_close<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    if !parser.quote_boundary_closes_body()
+        || !matches!(
+            parser.current().token,
+            Token::BulletItem | Token::NumberedItem
+        )
+    {
+        return false;
+    }
+
+    let mut close = parser.clone();
+    if close.step().is_err() || close.current().token != Token::Whitespace {
+        return false;
+    }
+    if close.step().is_err() {
+        return false;
+    }
+    let Ok(name) = close.get_end_block() else {
+        return false;
+    };
+    let owner_matches = (name.eq_ignore_ascii_case("div")
+        && parser.in_wikidot_div_body())
+        || (name.eq_ignore_ascii_case("collapsible") && parser.in_wikidot_collapsible());
+    if !owner_matches {
+        return false;
+    }
+    let _ = close.get_optional_space();
+    matches!(
+        close.current().token,
+        Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+    )
 }
 
 fn parse_list_depth<'r, 't>(

@@ -20,7 +20,10 @@
 
 use super::prelude::*;
 use crate::parsing::consume::consume;
+use crate::parsing::rule::impls::block::parser::BlockBodyStart;
 use crate::parsing::{ParseError, ParseErrorKind};
+use crate::tree::AttributeMap;
+use std::borrow::Cow;
 
 pub const BLOCK_COLLAPSIBLE: BlockRule = BlockRule {
     name: "block-collapsible",
@@ -30,6 +33,62 @@ pub const BLOCK_COLLAPSIBLE: BlockRule = BlockRule {
     accepts_newlines: true,
     parse_fn,
 };
+
+pub(crate) struct CollapsibleHead<'t> {
+    attributes: AttributeMap<'t>,
+    start_open: bool,
+    show_text: Option<Cow<'t, str>>,
+    hide_text: Option<Cow<'t, str>>,
+    show_top: bool,
+    show_bottom: bool,
+}
+
+impl<'t> CollapsibleHead<'t> {
+    pub(crate) fn into_element(self, elements: Vec<Element<'t>>) -> Element<'t> {
+        Element::Collapsible {
+            elements,
+            attributes: self.attributes,
+            start_open: self.start_open,
+            show_text: self.show_text,
+            hide_text: self.hide_text,
+            show_top: self.show_top,
+            show_bottom: self.show_bottom,
+        }
+    }
+}
+
+pub(crate) fn parse_collapsible_head<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    name: &'t str,
+    in_head: bool,
+) -> Result<(CollapsibleHead<'t>, BlockBodyStart), ParseError>
+where
+    'r: 't,
+{
+    let (mut arguments, body_start) =
+        parser.get_head_map_with_body_start_wikidot(&BLOCK_COLLAPSIBLE, in_head)?;
+    let show_text = arguments.get("show");
+    let hide_text = arguments.get("hide");
+    let start_open = !arguments.get_bool(parser, "folded")?.unwrap_or(true);
+    let (show_top, show_bottom) = match arguments.get("hideLocation") {
+        Some(value) => parse_hide_location(&value, parser)?,
+        None => (true, false),
+    };
+    let attributes = arguments.to_attribute_map(parser.settings());
+    assert_block_name(&BLOCK_COLLAPSIBLE, name);
+
+    Ok((
+        CollapsibleHead {
+            attributes,
+            start_open,
+            show_text,
+            hide_text,
+            show_top,
+            show_bottom,
+        },
+        body_start,
+    ))
+}
 
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
@@ -43,22 +102,7 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "Collapsible doesn't allow score flag");
     assert_block_name(&BLOCK_COLLAPSIBLE, name);
 
-    let head =
-        parser.get_head_map_with_body_start_wikidot(&BLOCK_COLLAPSIBLE, in_head)?;
-    let (mut arguments, body_start) = head;
-
-    // Get display arguments
-    let show_text = arguments.get("show");
-    let hide_text = arguments.get("hide");
-
-    // Get folding arguments
-    //
-    // We invert this first argument since "folded=no" means "start_open=yes"
-    let start_open = !arguments.get_bool(parser, "folded")?.unwrap_or(true);
-    let (show_top, show_bottom) = match arguments.get("hideLocation") {
-        Some(value) => parse_hide_location(&value, parser)?,
-        None => (true, false),
-    };
+    let (head, body_start) = parse_collapsible_head(parser, name, in_head)?;
 
     // Get body content, with paragraphs.
     // Discard paragraph_safe, since collapsibles never are.
@@ -82,15 +126,7 @@ fn parse_fn<'r, 't>(
     }
 
     // Build element and return
-    let element = Element::Collapsible {
-        elements,
-        attributes: arguments.to_attribute_map(parser.settings()),
-        start_open,
-        show_text,
-        hide_text,
-        show_top,
-        show_bottom,
-    };
+    let element = head.into_element(elements);
 
     let mut output = vec![element];
     if parser.settings().layout.legacy()

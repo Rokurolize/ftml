@@ -75,3 +75,6 @@ mod wikidot_css_module_scope;
 
 #[path = "wikidot_footnote_first.rs"]
 mod wikidot_footnote_first;
+
+#[path = "wikidot_blockquote_boundaries.rs"]
+mod wikidot_blockquote_boundaries;

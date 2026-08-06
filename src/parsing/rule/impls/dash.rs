@@ -34,9 +34,13 @@ pub const RULE_DASH_RUN: Rule = Rule {
 };
 
 fn try_consume_fn<'r, 't>(
-    _parser: &mut Parser<'r, 't>,
+    parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Consuming token to create an em dash");
+
+    if parser.settings().layout.legacy() {
+        return success_elements(text!("--"));
+    }
 
     // — - EM DASH
     success_elements(text!("\u{2014}"))
@@ -49,6 +53,10 @@ fn consume_run<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
         "Consuming Wikidot dash run of length {}",
         current.slice.len()
     );
+
+    if parser.settings().layout.legacy() {
+        return success_elements(text!(current.slice));
+    }
 
     let mut elements = Vec::with_capacity(current.slice.len() / 2);
     let strike_count = current.slice.len() / 5;

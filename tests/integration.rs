@@ -19,6 +19,9 @@ mod include_variables;
 #[path = "inline_delimiter_performance.rs"]
 mod inline_delimiter_performance;
 
+#[path = "wikidot_inline_delimiter_ownership.rs"]
+mod wikidot_inline_delimiter_ownership;
+
 #[path = "parser_functions_wikidot_syntax.rs"]
 mod parser_functions_wikidot_syntax;
 

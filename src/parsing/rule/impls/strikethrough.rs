@@ -23,6 +23,7 @@
 //! Wikidot had implemented strikethrough using --text--
 //! however we also added the more conventional way ~~text~~
 
+use super::inline_delimiter::assert_unpadded_open;
 use super::prelude::*;
 
 pub const RULE_STRIKETHROUGH_DASH: Rule = Rule {
@@ -58,7 +59,11 @@ fn try_consume_strikethrough<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create a strikethrough (token {})", token.name());
     validate_reachable_close(parser, token)?;
-    assert_step(parser, token)?;
+    if token == Token::DoubleDash {
+        assert_unpadded_open(parser, token)?;
+    } else {
+        assert_step(parser, token)?;
+    }
     let close = [ParseCondition::current(token)];
     let invalid = [
         ParseCondition::current(Token::ParagraphBreak),

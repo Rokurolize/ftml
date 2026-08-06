@@ -51,23 +51,6 @@ fn try_consume_fn<'r, 't>(
     let collected = collect_consume_keep(parser, RULE_MONOSPACE, &close, &invalid, None)?;
     let ((mut elements, terminator), errors, paragraph_safe) = collected.into();
 
-    // A delayed ListPages value inside Wikidot's `{{{value}}}` shape is an
-    // active leaf, while the surplus braces remain literal content owned by
-    // the monospace container. The ordinary lexer sees the first closing pair
-    // as the terminator; consume the final authored brace into the same owner
-    // without ever tokenizing the generated value as source.
-    if terminator.token == Token::RightMonospace
-        && matches!(elements.first(), Some(Element::Text(text)) if text.as_ref() == "{")
-        && elements
-            .iter()
-            .any(|element| matches!(element, Element::Delayed(_)))
-        && parser.current().token == Token::Other
-        && parser.current().slice == "}"
-    {
-        elements.push(text!("}"));
-        parser.step()?;
-    }
-
     let trailing_padding = if parser.current().token == Token::RightMonospace {
         // A run of closing braces uses its final pair as the terminator. Every
         // preceding pair remains monospace text.
@@ -79,6 +62,10 @@ fn try_consume_fn<'r, 't>(
             parser.step()?;
         }
         assert_step(parser, Token::RightMonospace)?;
+        false
+    } else if parser.current().token == Token::Other && parser.current().slice == "}" {
+        elements.push(text!("}"));
+        parser.step()?;
         false
     } else {
         let has_padding = parser
@@ -94,6 +81,16 @@ fn try_consume_fn<'r, 't>(
         }
         has_padding
     };
+
+    // Wikidot assigns the unmatched final brace of an odd closing run to the
+    // monospace owner. This applies equally to authored and delayed content.
+    if terminator.token == Token::RightMonospace
+        && parser.current().token == Token::Other
+        && parser.current().slice == "}"
+    {
+        elements.push(text!("}"));
+        parser.step()?;
+    }
 
     if parser.settings().layout.legacy()
         && !leading_padding

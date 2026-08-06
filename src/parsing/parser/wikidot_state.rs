@@ -3,6 +3,7 @@ use super::Parser;
 #[derive(Debug, Default, Clone, Copy)]
 pub(super) struct WikidotState {
     div_body_depth: usize,
+    in_note_body: bool,
     in_collapsible: bool,
     quote_boundary_closes_body: bool,
     pending_collapsible_closer: bool,
@@ -23,6 +24,23 @@ impl Parser<'_, '_> {
     #[inline]
     pub(crate) fn leave_wikidot_div_body(&mut self) {
         self.wikidot.div_body_depth -= 1;
+    }
+
+    #[inline]
+    pub(crate) fn in_wikidot_note_body(&self) -> bool {
+        self.wikidot.in_note_body
+    }
+
+    #[inline]
+    pub(crate) fn enter_wikidot_note_body(&mut self) {
+        debug_assert!(!self.wikidot.in_note_body);
+        self.wikidot.in_note_body = true;
+    }
+
+    #[inline]
+    pub(crate) fn leave_wikidot_note_body(&mut self) {
+        debug_assert!(self.wikidot.in_note_body);
+        self.wikidot.in_note_body = false;
     }
 
     pub(crate) fn in_wikidot_collapsible(&self) -> bool {

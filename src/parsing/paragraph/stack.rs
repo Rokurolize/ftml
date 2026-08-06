@@ -414,6 +414,7 @@ impl<'t> ParagraphStack<'t> {
             // This has to be its own "finished" element, outside of any
             // paragraph wrapper. So finish up what we have, then add this element.
             let invisible_block_line = self.wikidot && element == Element::LineBreak;
+            let escaped_note_prefix = self.wikidot_note_follows_escaped_prefix(&element);
             let nested_literal_collapsible =
                 self.wikidot && collapsible_has_direct_literal_nested_opener(&element);
             let literal_table_block_boundary = self.current_unwrapped
@@ -431,6 +432,9 @@ impl<'t> ParagraphStack<'t> {
             if invisible_block_line {
                 self.pop_line_break();
             }
+            if escaped_note_prefix {
+                self.current_unwrapped = true;
+            }
             self.end_paragraph();
             self.finished.push(element);
             if invisible_block_line {
@@ -442,6 +446,28 @@ impl<'t> ParagraphStack<'t> {
                 self.suppress_next_line_break = true;
             }
         }
+    }
+
+    fn wikidot_note_follows_escaped_prefix(&self, element: &Element<'_>) -> bool {
+        if !self.wikidot
+            || !matches!(
+                self.current.as_slice(),
+                [Element::Text(prefix)] if prefix.as_ref() == "\\"
+            )
+        {
+            return false;
+        }
+
+        matches!(
+            element,
+            Element::Container(container)
+                if container.ctype() == ContainerType::Div
+                    && container
+                        .attributes()
+                        .get()
+                        .get("class")
+                        .is_some_and(|class| class.as_ref() == "wiki-note")
+        )
     }
 
     fn wikidot_current_line_is_literal_advanced_table_opener(&self) -> bool {

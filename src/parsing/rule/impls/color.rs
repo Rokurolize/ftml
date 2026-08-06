@@ -177,7 +177,7 @@ fn collect_crossed_bold_color<'r, 't>(
 /// Normally we pass the color as-is, such as `blue` or `rgb(10, 12, 14)`,
 /// but if a hex specification is passed, and it doesn't already begin with
 /// `#`, then one should be prepended.
-fn normalize_color(color: &str) -> Cow<'_, str> {
+pub(crate) fn normalize_color(color: &str) -> Cow<'_, str> {
     if !is_safe_color(color) {
         return Cow::Borrowed("inherit");
     }

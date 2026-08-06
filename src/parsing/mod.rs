@@ -29,6 +29,7 @@ mod consume;
 mod depth;
 mod element_condition;
 mod error;
+mod footnote;
 mod heading;
 mod hidden_body;
 mod inline_format;
@@ -191,6 +192,12 @@ where
             let mut elements = success.item;
             let errors = success.errors;
             if settings.layout.legacy() {
+                if has_footnote_block {
+                    footnote::normalize_wikidot_blocks(
+                        &mut elements,
+                        footnotes.is_empty(),
+                    );
+                }
                 inline_format::normalize_wikidot_inline_formats(&mut elements);
                 for footnote in &mut footnotes {
                     inline_format::normalize_wikidot_inline_formats(footnote);

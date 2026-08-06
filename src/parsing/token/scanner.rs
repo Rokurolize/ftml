@@ -37,7 +37,7 @@ fn next_token(text: &str, bytes: &[u8], start: usize) -> (Token, usize) {
         return (Token::DiscardedControl, start + 1);
     }
     if byte.is_ascii_alphanumeric() {
-        if matches!(byte, b'f' | b'h')
+        if matches!(byte, b'f' | b'h' | b'm')
             && let Some(end) = scan_url(bytes, start)
         {
             return (Token::Url, end);
@@ -219,6 +219,8 @@ fn scan_url(bytes: &[u8], start: usize) -> Option<usize> {
         start + 8
     } else if has(bytes, start, b"ftp://") {
         start + 6
+    } else if has(bytes, start, b"mailto:") {
+        start + 7
     } else {
         return None;
     };
@@ -228,7 +230,10 @@ fn scan_url(bytes: &[u8], start: usize) -> Option<usize> {
     // splits an ordinary `https://example.com/a>@b` at the `>@` marker.
     let mut end = body_start;
     while end < bytes.len()
-        && !matches!(bytes[end], b'\n' | b'\r' | b' ' | b'"' | b'|' | b'[' | b']')
+        && !matches!(
+            bytes[end],
+            b'\n' | b'\r' | b' ' | b'\t' | b'"' | b'\'' | b'|' | b'[' | b']'
+        )
         && !is_discarded_control(bytes[end])
         && !has(bytes, end, b">@")
         && !has(bytes, end, b"@@")
@@ -265,6 +270,11 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
                 | b'}'
                 | b'<'
                 | b'>'
+                | b'|'
+                | b'('
+                | b')'
+                | b'"'
+                | b':'
                 | b'\n'
                 | b'\r'
         )

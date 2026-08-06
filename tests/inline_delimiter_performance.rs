@@ -128,7 +128,7 @@ fn email_after_block_closer_does_not_hide_the_closer() {
             .count(),
         ROW_COUNT
     );
-    assert_eq!(html.matches("mailto:19@scip.net").count(), ROW_COUNT);
+    assert_eq!(html.matches("ten.pics|91#ten.pics|91").count(), ROW_COUNT,);
 }
 
 #[test]

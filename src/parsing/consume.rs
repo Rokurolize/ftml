@@ -401,8 +401,7 @@ fn try_consume_leaf_token<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> Result<Option<Elements<'t>>, ParseError> {
     if parser.current().token == Token::Url {
-        let elements = url_elements(parser);
-        parser.step()?;
+        let elements = url_elements(parser)?;
         return Ok(Some(elements));
     }
 

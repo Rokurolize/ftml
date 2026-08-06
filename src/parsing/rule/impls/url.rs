@@ -27,18 +27,53 @@ pub const RULE_URL: Rule = Rule {
     try_consume_fn,
 };
 
-pub(crate) fn url_elements<'r, 't>(parser: &Parser<'r, 't>) -> Elements<'t> {
+pub(crate) fn url_elements<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<Elements<'t>, ParseError> {
     let token = parser.current();
+    let source = parser.full_text().inner();
+    let start = token.span.start;
+    let mut end = token.span.end;
+    let mut extension_tokens = 0;
+
+    if parser.settings().layout.legacy() {
+        end = wikidot_automatic_url_end(source, end);
+        extension_tokens = parser
+            .remaining()
+            .iter()
+            .take_while(|token| token.token != Token::InputEnd && token.span.end <= end)
+            .count();
+    }
+
+    let mut suffix = None;
+    if parser.settings().layout.legacy() {
+        let previous = start
+            .checked_sub(1)
+            .and_then(|index| source.as_bytes().get(index));
+        let last = end
+            .checked_sub(1)
+            .and_then(|index| source.as_bytes().get(index));
+        if matches!(
+            (previous, last),
+            (Some(b'('), Some(b')')) | (Some(b'['), Some(b']'))
+        ) {
+            suffix = source.get(end - 1..end);
+            end -= 1;
+        }
+    }
+
+    let url = &source[start..end];
     let split_terminal_period = parser.settings().layout.legacy()
-        && token.slice.ends_with('.')
+        && url.ends_with('.')
         && matches!(
             parser.look_ahead(0).map(|next| next.token),
             Some(Token::Whitespace | Token::InputEnd)
-        );
+        )
+        || parser.settings().layout.legacy() && url.ends_with('.') && suffix.is_some();
     let url = if split_terminal_period {
-        &token.slice[..token.slice.len() - 1]
+        &url[..url.len() - 1]
     } else {
-        token.slice
+        url
     };
     let link = Element::Link {
         ltype: LinkType::Direct,
@@ -47,18 +82,47 @@ pub(crate) fn url_elements<'r, 't>(parser: &Parser<'r, 't>) -> Elements<'t> {
         target: None,
     };
 
+    parser.step_n(extension_tokens + 1)?;
+
+    let mut elements = vec![link];
     if split_terminal_period {
-        Elements::Multiple(vec![link, text!(".")])
-    } else {
-        link.into()
+        elements.push(text!("."));
     }
+    if let Some(suffix) = suffix {
+        elements.push(text!(suffix));
+    }
+
+    Ok(if elements.len() == 1 {
+        Elements::Single(elements.pop().unwrap())
+    } else {
+        Elements::Multiple(elements)
+    })
+}
+
+fn wikidot_automatic_url_end(source: &str, mut end: usize) -> usize {
+    let bytes = source.as_bytes();
+    while end < bytes.len() {
+        if matches!(
+            bytes[end],
+            b'\n' | b'\r' | b' ' | b'\t' | b'"' | b'\'' | b'['
+        ) || matches!(bytes[end], 0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
+            || source[end..].starts_with(">@")
+            || source[end..].starts_with("@@")
+            || source[end..].starts_with("]]")
+            || source[end..].starts_with("||")
+        {
+            break;
+        }
+        end += source[end..].chars().next().unwrap().len_utf8();
+    }
+    end
 }
 
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Consuming token as a URL");
-    success_elements(url_elements(parser))
+    ok!(url_elements(parser)?)
 }
 
 #[cfg(test)]
@@ -114,5 +178,33 @@ mod tests {
             Layout::Wikijump,
             link("https://example.com/test.").into(),
         );
+    }
+
+    #[test]
+    fn wikidot_url_rule_extends_live_punctuation_and_stops_at_block_syntax() {
+        assert_url_rule(
+            "http://example.com/path|END next",
+            Layout::Wikidot,
+            link("http://example.com/path|END").into(),
+        );
+        assert_url_rule(
+            "mailto:User@example.com|END next",
+            Layout::Wikidot,
+            link("mailto:User@example.com|END").into(),
+        );
+
+        let source = "https://example.com/video[[/embedvideo]]";
+        let tokenization = crate::tokenize(source);
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("URL token should follow input start");
+        let actual = RULE_URL
+            .try_consume(&mut parser)
+            .expect("URL rule should stop before block syntax")
+            .item;
+
+        assert_eq!(actual, link("https://example.com/video").into());
+        assert_eq!(parser.current().token, Token::LeftBlockEnd);
     }
 }

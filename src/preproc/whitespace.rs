@@ -28,7 +28,10 @@
 //! * Compress groups of 3+ newlines into 2 newlines
 
 use super::Replacer;
+use super::parser_functions::LiteralRegionIndex;
 use regex::{Regex, RegexBuilder};
+use std::collections::BTreeSet;
+use std::ops::Range;
 use std::sync::LazyLock;
 
 static LEADING_NONSTANDARD_WHITESPACE: LazyLock<Regex> = LazyLock::new(|| {
@@ -265,6 +268,10 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
     // Join concatenated lines (ending with '\').
     join_continued_lines(text, &mut buffer, wikidot_compatibility);
 
+    if wikidot_compatibility {
+        preserve_adjacent_wikidot_tab_link_spacing(text);
+    }
+
     // Replace tabs in one linear pass instead of repeatedly shifting the
     // remaining string for every match. Wikidot normally collapses a tab to
     // one parser-space, but preserves its four-column width inside a legacy
@@ -278,6 +285,124 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
 
     // Remove trailing newlines
     replace!(TRAILING_NEWLINES);
+}
+
+fn preserve_adjacent_wikidot_tab_link_spacing(text: &mut String) {
+    if !text.contains('\t') || !text.contains('[') {
+        return;
+    }
+
+    let literal_regions = LiteralRegionIndex::new(text);
+    let mut protected_ranges = literal_regions.ranges().to_vec();
+    protected_ranges.extend(wikidot_comment_ranges(text));
+    protected_ranges.sort_unstable_by_key(|range| (range.start, range.end));
+    let mut merged_ranges: Vec<Range<usize>> = Vec::with_capacity(protected_ranges.len());
+    for range in protected_ranges {
+        if let Some(previous) = merged_ranges.last_mut()
+            && range.start <= previous.end
+        {
+            previous.end = previous.end.max(range.end);
+        } else {
+            merged_ranges.push(range);
+        }
+    }
+
+    let mut insertions = BTreeSet::new();
+    let mut cursor = 0;
+    while let Some(relative_open) = text[cursor..].find('[') {
+        let open = cursor + relative_open;
+        cursor = open + 1;
+        if index_in_ranges(&merged_ranges, open) || text[open..].starts_with("[[") {
+            continue;
+        }
+
+        let target_start = if text[open..].starts_with("[*") {
+            open + 2
+        } else {
+            open + 1
+        };
+        let mut target_end = target_start;
+        let mut tab = None;
+        while target_end < text.len() {
+            let character = text[target_end..]
+                .chars()
+                .next()
+                .expect("target cursor remains on a character boundary");
+            if character == '\t' {
+                tab = Some(target_end);
+                break;
+            }
+            if character.is_whitespace() {
+                break;
+            }
+            target_end += character.len_utf8();
+        }
+        let Some(tab) = tab else {
+            cursor = target_end.max(cursor);
+            continue;
+        };
+        cursor = tab + 1;
+        if index_in_ranges(&merged_ranges, tab) {
+            continue;
+        }
+
+        let target = &text[target_start..target_end];
+        if target.is_empty()
+            || target.ends_with(']')
+            || !(crate::url::is_url(target) || target.starts_with('/'))
+        {
+            continue;
+        }
+
+        if text[..open]
+            .chars()
+            .next_back()
+            .is_some_and(|character| !character.is_whitespace())
+        {
+            insertions.insert(open);
+        }
+    }
+
+    if insertions.is_empty() {
+        return;
+    }
+
+    let mut output = String::with_capacity(text.len() + insertions.len());
+    let mut copied = 0;
+    for insertion in insertions {
+        output.push_str(&text[copied..insertion]);
+        output.push(' ');
+        copied = insertion;
+    }
+    output.push_str(&text[copied..]);
+    *text = output;
+}
+
+fn wikidot_comment_ranges(source: &str) -> Vec<Range<usize>> {
+    let mut ranges = Vec::new();
+    let mut cursor = 0;
+    while let Some(relative_start) = source[cursor..].find("[!--") {
+        let start = cursor + relative_start;
+        let body_start = start + "[!--".len();
+        let end = source[body_start..]
+            .find("--]")
+            .map_or(source.len(), |relative_end| {
+                body_start + relative_end + "--]".len()
+            });
+        ranges.push(start..end);
+        cursor = end;
+        if cursor == source.len() {
+            break;
+        }
+    }
+    ranges
+}
+
+fn index_in_ranges(ranges: &[Range<usize>], index: usize) -> bool {
+    let candidate = ranges.partition_point(|range| range.end <= index);
+    ranges
+        .get(candidate)
+        .is_some_and(|range| range.start <= index)
 }
 
 fn append_replaced_tabs(output: &mut String, input: &str, width: usize) {
@@ -563,6 +688,35 @@ fn wikidot_substitution_preserves_tab_width_inside_getattrs_values() {
             "plain text\n",
             "[[collapsible show=\"OPEN    SECOND\" ",
             "bogus=bare id=\"alpha    beta\"]]",
+        ),
+    );
+}
+
+#[test]
+fn wikidot_adjacent_tab_link_separator_keeps_its_visible_spacing() {
+    let mut text = concat!(
+        "BEGIN|[http://example.com/path\tEND]\n",
+        "BEGIN|[*https://example.com/path\tEND]\n",
+        "[http://example.com/path\tEND]\n",
+        "BEGIN|[http://example.com/path END]\n",
+        "[!--BEGIN|[http://example.com/path\tEND]--]\n",
+        "[[code]]\nBEGIN|[http://example.com/path\tEND]\n[[/code]]\n",
+        "@@BEGIN|[http://example.com/path\tEND]@@",
+    )
+    .to_owned();
+
+    substitute_wikidot(&mut text);
+
+    assert_eq!(
+        text,
+        concat!(
+            "BEGIN| [http://example.com/path END]\n",
+            "BEGIN| [*https://example.com/path END]\n",
+            "[http://example.com/path END]\n",
+            "BEGIN|[http://example.com/path END]\n",
+            "[!--BEGIN|[http://example.com/path END]--]\n",
+            "[[code]]\nBEGIN|[http://example.com/path END]\n[[/code]]\n",
+            "@@BEGIN|[http://example.com/path END]@@",
         ),
     );
 }

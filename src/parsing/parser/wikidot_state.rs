@@ -2,7 +2,10 @@ use super::Parser;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(super) struct WikidotState {
-    div_body_depth: usize,
+    // Parser recursion is capped well below `u16::MAX`; compact counters keep
+    // this state out of every recursive parser frame's pointer-sized padding.
+    div_body_depth: u16,
+    bibliography_body_depth: u16,
     in_note_body: bool,
     literal_triple_link_depth: u16,
     in_collapsible: bool,
@@ -13,18 +16,35 @@ pub(super) struct WikidotState {
 
 impl Parser<'_, '_> {
     #[inline]
+    pub(crate) fn in_wikidot_bibliography_body(&self) -> bool {
+        self.wikidot.bibliography_body_depth > 0
+    }
+
+    #[inline]
+    pub(crate) fn enter_wikidot_bibliography_body(&mut self) {
+        self.wikidot.bibliography_body_depth =
+            self.wikidot.bibliography_body_depth.saturating_add(1);
+    }
+
+    #[inline]
+    pub(crate) fn leave_wikidot_bibliography_body(&mut self) {
+        self.wikidot.bibliography_body_depth =
+            self.wikidot.bibliography_body_depth.saturating_sub(1);
+    }
+
+    #[inline]
     pub(crate) fn in_wikidot_div_body(&self) -> bool {
         self.wikidot.div_body_depth > 0
     }
 
     #[inline]
     pub(crate) fn enter_wikidot_div_body(&mut self) {
-        self.wikidot.div_body_depth += 1;
+        self.wikidot.div_body_depth = self.wikidot.div_body_depth.saturating_add(1);
     }
 
     #[inline]
     pub(crate) fn leave_wikidot_div_body(&mut self) {
-        self.wikidot.div_body_depth -= 1;
+        self.wikidot.div_body_depth = self.wikidot.div_body_depth.saturating_sub(1);
     }
 
     #[inline]

@@ -21,7 +21,7 @@
 use super::builder::HtmlBuilder;
 use super::escape::escape;
 use super::meta::{HtmlMeta, HtmlMetaType};
-use super::output::HtmlOutput;
+use super::output::{HtmlOutput, HtmlResourceRequirement};
 use super::random::Random;
 use crate::data::PageRef;
 use crate::data::{Backlinks, PageInfo};
@@ -49,6 +49,7 @@ where
     body: String,
     meta: Vec<HtmlMeta>,
     styles: Vec<String>,
+    resource_requirements: Vec<HtmlResourceRequirement>,
     backlinks: Backlinks<'static>,
     info: &'i PageInfo<'i>,
     handle: &'h Handle,
@@ -92,6 +93,7 @@ impl fmt::Debug for HtmlContext<'_, '_, '_, '_> {
             .field("body", &self.body)
             .field("meta", &self.meta)
             .field("styles", &self.styles)
+            .field("resource_requirements", &self.resource_requirements)
             .field("backlinks", &self.backlinks)
             .field("info", &self.info)
             .field("settings", &self.settings)
@@ -165,6 +167,7 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
             body: String::with_capacity(capacity),
             meta: Self::initial_metadata(info, settings.layout),
             styles: Vec::new(),
+            resource_requirements: Vec::new(),
             backlinks: Backlinks::new(),
             info,
             handle: &Handle,
@@ -447,6 +450,11 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     pub fn add_style(&mut self, css: String) {
         self.styles.push(css);
     }
+
+    pub(super) fn require_wikidot_tab_view(&mut self, id: String) {
+        self.resource_requirements
+            .push(HtmlResourceRequirement::wikidot_tab_view(id));
+    }
 }
 
 impl<'i, 'h, 'e, 't> From<HtmlContext<'i, 'h, 'e, 't>> for HtmlOutput {
@@ -461,6 +469,7 @@ impl<'i, 'h, 'e, 't> From<HtmlContext<'i, 'h, 'e, 't>> for HtmlOutput {
             body,
             meta: ctx.meta,
             styles: ctx.styles,
+            resource_requirements: ctx.resource_requirements,
             backlinks: ctx.backlinks,
         }
     }

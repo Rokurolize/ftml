@@ -259,6 +259,9 @@ where
 
     loop {
         match parser.current().token {
+            Token::RightLink if parser.in_wikidot_literal_triple_link() => {
+                return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
             Token::RightBracket | Token::RightBlock | Token::RightLink => {
                 let end = parser.current().span.start;
                 if let Some(output) = without_comments.as_mut() {

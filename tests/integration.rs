@@ -16,6 +16,9 @@ mod coverage_trace_fixture_paths;
 #[path = "include_variables.rs"]
 mod include_variables;
 
+#[path = "include_grammar.rs"]
+mod include_grammar;
+
 #[path = "inline_delimiter_performance.rs"]
 mod inline_delimiter_performance;
 

@@ -15,7 +15,7 @@ use crate::render::html::{HtmlOutput, HtmlRender};
 use crate::settings::{WikitextMode, WikitextSettings};
 use crate::tokenizer::{Tokenization, tokenize_delayed_segments};
 use crate::tree::{
-    AttributeMap, Container, Element, FileSource, FloatAlignment, LinkLabel,
+    AttributeMap, Container, Element, FloatAlignment, ImageSource, LinkLabel,
     LinkLocation, LinkType, ListItem, PartialElement, SyntaxTree,
 };
 use std::borrow::Cow;
@@ -234,7 +234,7 @@ enum DelayedNode<'t> {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 struct DelayedTagImage<'t> {
-    source: FileSource<'t>,
+    source: ImageSource<'t>,
     link: Option<LinkLocation<'t>>,
     alignment: Option<FloatAlignment>,
     attributes: AttributeMap<'t>,
@@ -304,7 +304,7 @@ impl<'t> DelayedElement<'t> {
     }
 
     pub(crate) fn tag_image(
-        source: FileSource<'t>,
+        source: ImageSource<'t>,
         link: Option<LinkLocation<'t>>,
         alignment: Option<FloatAlignment>,
         attributes: AttributeMap<'t>,

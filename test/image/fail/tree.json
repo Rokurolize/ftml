@@ -25,9 +25,12 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file1",
+                    "type": "direct",
                     "data": {
-                        "file": "landscape.jpg"
+                        "type": "file1",
+                        "data": {
+                            "file": "landscape.jpg"
+                        }
                     }
                 },
                 "link": null,

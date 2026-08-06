@@ -22,8 +22,8 @@ use crate::data::{PageInfo, ScoreValue};
 use crate::layout::Layout;
 use crate::settings::{EMPTY_INTERWIKI, WikitextMode, WikitextSettings};
 use crate::tree::{
-    AttributeMap, Container, ContainerType, Element, FileSource, LinkLabel, LinkLocation,
-    LinkType, ListItem, ListType,
+    AttributeMap, Container, ContainerType, Element, FileSource, ImageSource, LinkLabel,
+    LinkLocation, LinkType, ListItem, ListType,
 };
 use std::borrow::Cow;
 
@@ -189,9 +189,9 @@ fn isolate_user_ids() {
     test!(
         r#"[[image example.png class="apple" id="banana"]]"#,
         vec![Element::Image {
-            source: FileSource::File1 {
+            source: ImageSource::Direct(FileSource::File1 {
                 file: cow!("example.png"),
-            },
+            }),
             link: None,
             alignment: None,
             attributes: AttributeMap::from(btreemap! {
@@ -203,9 +203,9 @@ fn isolate_user_ids() {
     test!(
         r#"[[image example.png class="u-apple" id="u-banana"]]"#,
         vec![Element::Image {
-            source: FileSource::File1 {
+            source: ImageSource::Direct(FileSource::File1 {
                 file: cow!("example.png"),
-            },
+            }),
             link: None,
             alignment: None,
             attributes: AttributeMap::from(btreemap! {

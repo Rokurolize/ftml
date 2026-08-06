@@ -660,6 +660,29 @@ fn page_slot_recovers_image_owner_while_tag_slot_stays_attribute_text() {
 }
 
 #[test]
+fn generated_image_attributes_preserve_implicit_attachment_disposition() {
+    assert_eq!(
+        render_tag(r#"[[=image photo.png alt="%%tags_linked%%"]]"#),
+        concat!(
+            "<div class=\"image-container aligncenter\">",
+            "<a href=\"https://sandbox.wjfiles.com/local--files/some-page/photo.png\">",
+            "<img src=\"https://sandbox.wjfiles.com/local--resized-images/some-page/photo.png/medium.jpg\" ",
+            "class=\"image\" alt=\"[/system:page-tags/tag/component component]\">",
+            "</a></div>",
+        ),
+    );
+    assert_eq!(
+        render_tag(r#"[[image photo.png link="%%tags_linked%%"]]"#),
+        concat!(
+            "<a href=\"/[/system:page-tags/tag/component%20component]\">",
+            "<img src=\"https://sandbox.wjfiles.com/local--resized-images/some-page/photo.png/medium.jpg\" ",
+            "class=\"image\" alt=\"photo.png\">",
+            "</a>",
+        ),
+    );
+}
+
+#[test]
 fn slot_schema_rejects_missing_and_wrong_kind_bindings_atomically() {
     let source = "%%title_linked%%";
     let input = page_link_input(source);

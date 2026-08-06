@@ -93,3 +93,6 @@ mod wikidot_blockquote_boundaries;
 
 #[path = "wikidot_alignment_ownership.rs"]
 mod wikidot_alignment_ownership;
+
+#[path = "wikidot_code_blocks.rs"]
+mod wikidot_code_blocks;

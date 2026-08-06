@@ -29,6 +29,7 @@ impl LiteralRegionIndex {
     pub(in crate::preproc) fn new(source: &str) -> Self {
         let mut ranges = Vec::new();
         collect_wikidot_literal_blocks(source, &mut ranges);
+        ranges.extend(crate::wikidot_code::active_ranges(source));
         collect_same_line_paired_ranges(source, "@@", "@@", &mut ranges);
         collect_html_literal_ranges(source, &mut ranges);
         ranges.sort_unstable_by_key(|range| (range.start, range.end));
@@ -286,6 +287,21 @@ mod tests {
         let index = LiteralRegionIndex::new(source);
 
         assert!(index.contains(source.find("inside").unwrap()));
+        assert!(!index.contains(source.find("outside").unwrap()));
+    }
+
+    #[test]
+    fn nested_code_keeps_the_complete_outer_body_literal() {
+        let source = concat!(
+            "[[code]]\n",
+            "[[code]]\ninner\n[[/code]]\n",
+            "[[#expr 1 + 1]]\n",
+            "[[/code]]\n",
+            "outside",
+        );
+        let index = LiteralRegionIndex::new(source);
+
+        assert!(index.contains(source.find("[[#expr").unwrap()));
         assert!(!index.contains(source.find("outside").unwrap()));
     }
 

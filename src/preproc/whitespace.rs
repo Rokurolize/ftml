@@ -274,6 +274,7 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
     join_continued_lines(text, &mut buffer, wikidot_compatibility);
 
     if wikidot_compatibility {
+        normalize_wikidot_code_body_bytes(text);
         expand_wikidot_list_indentation_tabs(text);
         preserve_adjacent_wikidot_tab_link_spacing(text);
     }
@@ -291,6 +292,38 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
 
     // Remove trailing newlines
     replace!(TRAILING_NEWLINES);
+}
+
+fn normalize_wikidot_code_body_bytes(text: &mut String) {
+    if !text.contains(['\t', '\u{00a0}']) || !text.contains("[[") {
+        return;
+    }
+
+    let ranges = crate::wikidot_code::active_body_ranges(text);
+    if ranges.is_empty() {
+        return;
+    }
+
+    let mut output = String::with_capacity(text.len());
+    let mut range_index = 0usize;
+    for (index, character) in text.char_indices() {
+        while ranges
+            .get(range_index)
+            .is_some_and(|range| range.end <= index)
+        {
+            range_index += 1;
+        }
+        let in_code = ranges
+            .get(range_index)
+            .is_some_and(|range| range.contains(&index));
+
+        match (in_code, character) {
+            (true, '\t') => output.push_str("    "),
+            (true, '\u{00a0}') => output.push(' '),
+            _ => output.push(character),
+        }
+    }
+    *text = output;
 }
 
 fn expand_wikidot_list_indentation_tabs(text: &mut String) {
@@ -772,7 +805,7 @@ fn wikidot_list_indentation_uses_four_columns_per_tab() {
             "     * D\n",
             "     * E\n",
             "[[code]]\n",
-            " * literal\n",
+            "    * literal\n",
             "[[/code]]",
         ),
     );
@@ -801,7 +834,7 @@ fn wikidot_adjacent_tab_link_separator_keeps_its_visible_spacing() {
             "[http://example.com/path END]\n",
             "BEGIN|[http://example.com/path END]\n",
             "[!--BEGIN|[http://example.com/path END]--]\n",
-            "[[code]]\nBEGIN|[http://example.com/path END]\n[[/code]]\n",
+            "[[code]]\nBEGIN|[http://example.com/path    END]\n[[/code]]\n",
             "@@BEGIN|[http://example.com/path END]@@",
         ),
     );

@@ -120,6 +120,7 @@ where
         let comment_started_line = comment && parser.start_of_line();
         let empty_quote_control =
             parser.current().token == Token::Quote && parser.start_of_line();
+        let explicit_list_opener = wikidot_explicit_list_opener(parser);
         let consumed = match parser.current().token {
             Token::InputEnd => {
                 if close_condition_fn.is_some() {
@@ -197,10 +198,13 @@ where
 
         if let Some(consumed) = consumed {
             let (elements, mut errors, paragraph_safe) = consumed.into();
-            let literal_list_item = stack.current_empty()
-                && errors
-                    .iter()
-                    .any(|error| error.kind() == ParseErrorKind::ListItemOutsideList);
+            let list_has_same_line_residual = explicit_list_opener
+                && !paragraph_safe
+                && elements_end_with_list(&elements)
+                && !matches!(
+                    parser.current().token,
+                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                );
             let literal_iftags_line = parser.settings().layout.legacy()
                 && errors.iter().any(|error| {
                     error.kind() == ParseErrorKind::RuleFailed
@@ -221,6 +225,9 @@ where
             } else {
                 push_elements(&mut stack, elements, paragraph_safe);
             }
+            if list_has_same_line_residual {
+                stack.mark_next_unwrapped_after_block();
+            }
             if complete_raw_line_break {
                 stack.clear_wikidot_complete_raw_line_occupancy();
             }
@@ -230,9 +237,6 @@ where
             {
                 stack.push_paragraph_safe_elements(vec![text!(" ")]);
                 parser.step()?;
-            }
-            if literal_list_item {
-                stack.mark_wikidot_literal_list_item();
             }
             if literal_iftags_line {
                 stack.mark_wikidot_literal_iftags_line();
@@ -266,6 +270,31 @@ where
     }
 
     stack.into_result()
+}
+
+fn wikidot_explicit_list_opener<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlock {
+        return false;
+    }
+
+    let mut probe = parser.clone();
+    probe.get_block_name(false).is_ok_and(|(name, _)| {
+        let name = name.strip_suffix('_').unwrap_or(name);
+        name.eq_ignore_ascii_case("ol") || name.eq_ignore_ascii_case("ul")
+    })
+}
+
+fn elements_end_with_list(elements: &Elements<'_>) -> bool {
+    match elements {
+        Elements::Single(element) => matches!(element, Element::List { .. }),
+        Elements::Multiple(elements) => {
+            matches!(elements.last(), Some(Element::List { .. }))
+        }
+        Elements::None => false,
+    }
 }
 
 #[derive(Clone, Copy)]

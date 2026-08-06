@@ -99,3 +99,6 @@ mod wikidot_code_blocks;
 
 #[path = "wikidot_comment_rollback.rs"]
 mod wikidot_comment_rollback;
+
+#[path = "wikidot_explicit_list_grammar.rs"]
+mod wikidot_explicit_list_grammar;

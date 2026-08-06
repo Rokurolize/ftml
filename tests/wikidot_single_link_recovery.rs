@@ -454,6 +454,120 @@ fn malformed_nested_owners_remain_literal_link_labels() {
 }
 
 #[test]
+fn complete_inline_bibcite_owns_single_link_label_recovery() {
+    let source = "[https://example.com ((bibcite alpha))]";
+    let (html, text) = render(source);
+
+    assert_eq!(
+        anchors(&html),
+        vec![anchor("https://example.com", None, "https://example.com")],
+        "{html}",
+    );
+    assert_eq!(
+        text, "[https://example.com Bibliography item alpha not found.]",
+        "{html}",
+    );
+    assert_eq!(html.matches("error-inline").count(), 1, "{html}");
+}
+
+#[test]
+fn bibcite_owner_transfer_is_complete_nested_and_comment_aware() {
+    for source in [
+        "[https://example.com **((bibcite alpha))**]",
+        "[https://example.com [!--before--]((bibcite alpha))[!--after--]]",
+    ] {
+        let (html, text) = render(source);
+        assert_eq!(
+            anchors(&html),
+            vec![anchor("https://example.com", None, "https://example.com")],
+            "{source:?}: {html}",
+        );
+        assert_eq!(
+            html.matches("error-inline").count(),
+            1,
+            "{source:?}: {html}"
+        );
+        assert!(
+            text.starts_with("[https://example.com "),
+            "{source:?}: {html}"
+        );
+        assert!(text.ends_with(']'), "{source:?}: {html}");
+    }
+
+    let source = concat!(
+        "[https://example.com ",
+        "((bibcite alpha))((bibcite beta))",
+        "]]",
+    );
+    let (html, text) = render(source);
+    assert_eq!(
+        anchors(&html),
+        vec![anchor("https://example.com", None, "https://example.com")],
+        "{html}",
+    );
+    assert_eq!(html.matches("error-inline").count(), 2, "{html}");
+    assert!(text.ends_with("]]"), "{html}");
+}
+
+#[test]
+fn empty_invalid_malformed_and_commented_bibcites_do_not_take_link_ownership() {
+    for (source, label) in [
+        ("[https://example.com ((bibcite alpha)]", "((bibcite alpha)"),
+        ("[https://example.com ((bibcite ))]", "((bibcite ))"),
+        (
+            "[https://example.com ((bibcite alpha|beta))]",
+            "((bibcite alpha|beta))",
+        ),
+        (
+            "[https://example.com [!--((bibcite alpha))--]Label]",
+            "Label",
+        ),
+    ] {
+        let (html, _) = render(source);
+        assert_eq!(
+            anchors(&html),
+            vec![anchor("https://example.com", None, label)],
+            "{source:?}: {html}",
+        );
+        assert!(!html.contains("error-inline"), "{source:?}: {html}");
+    }
+}
+
+#[test]
+fn bibcite_link_recovery_escapes_invalid_html_labels() {
+    let source = "[https://example.com ((bibcite <script>alert_1</script>))]";
+    let (html, _) = render(source);
+
+    assert_eq!(
+        anchors(&html),
+        vec![anchor(
+            "https://example.com",
+            None,
+            "((bibcite <script>alert_1</script>))",
+        )],
+        "{html}",
+    );
+    assert!(!html.contains("<script>"), "{html}");
+    assert!(html.contains("&lt;script&gt;"), "{html}");
+}
+
+#[test]
+fn malformed_bibcite_owner_candidates_stay_bounded() {
+    let malformed = "((bibcite a(".repeat(8 * 1024);
+    let source = format!("[https://example.com {malformed}]");
+    let started = Instant::now();
+    let (html, _) = render(&source);
+    let elapsed = started.elapsed();
+
+    assert_eq!(html.matches("href=\"https://example.com\"").count(), 1);
+    assert!(!html.contains("error-inline"), "{html}");
+    assert!(
+        elapsed < Duration::from_secs(3),
+        "bibcite owner scan took {elapsed:?}",
+    );
+}
+
+#[test]
 fn closer_runs_leave_every_extra_bracket_as_residual_text() {
     for (source, expected_text) in [
         ("A[https://example.com Label]]B", "ALabel]B"),

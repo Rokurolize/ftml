@@ -55,6 +55,9 @@ mod wikidot_span_attributes;
 #[path = "wikidot_line_ownership.rs"]
 mod wikidot_line_ownership;
 
+#[path = "wikidot_automatic_links.rs"]
+mod wikidot_automatic_links;
+
 #[path = "wikidot_block_argument_grammar.rs"]
 mod wikidot_block_argument_grammar;
 

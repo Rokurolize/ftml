@@ -44,18 +44,11 @@ pub fn render_email(ctx: &mut HtmlContext, email: &str) {
 
     match ctx.layout() {
         Layout::Wikidot => {
+            let obfuscated = wikidot_obfuscated_email(email);
             ctx.html()
                 .span()
-                .attr(attr!(
-                    "class" => "wiki-email",
-                    "style" => "visibility: visible;",
-                ))
-                .inner(|ctx| {
-                    ctx.html()
-                        .a()
-                        .attr(attr!("href" => "mailto:" email))
-                        .contents(email);
-                });
+                .attr(attr!("class" => "wiki-email"))
+                .contents(&obfuscated);
         }
         Layout::Wikijump => {
             // Since our usecase doesn't typically have emails as real,
@@ -67,6 +60,15 @@ pub fn render_email(ctx: &mut HtmlContext, email: &str) {
                 .contents(email);
         }
     }
+}
+
+fn wikidot_obfuscated_email(email: &str) -> String {
+    let Some((local, domain)) = email.split_once('@') else {
+        return email.to_owned();
+    };
+    let reversed_local = local.chars().rev().collect::<String>();
+    let reversed_domain = domain.chars().rev().collect::<String>();
+    format!("{reversed_domain}|{reversed_local}#{reversed_domain}|{reversed_local}")
 }
 
 pub fn render_code(ctx: &mut HtmlContext, language: Option<&str>, contents: &str) {
@@ -239,4 +241,18 @@ fn wikidot_highlight_token(language: &str, input: &str) -> (&'static str, usize)
         _ => "hl-identifier",
     };
     (class, length)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::wikidot_obfuscated_email;
+
+    #[test]
+    fn wikidot_email_obfuscation_reverses_local_and_domain_independently() {
+        assert_eq!(
+            wikidot_obfuscated_email("support@wikidot.com"),
+            "moc.todikiw|troppus#moc.todikiw|troppus",
+        );
+        assert_eq!(wikidot_obfuscated_email("not-an-email"), "not-an-email");
+    }
 }

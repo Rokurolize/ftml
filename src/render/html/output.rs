@@ -21,11 +21,80 @@
 use super::meta::HtmlMeta;
 use crate::data::Backlinks;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct WikidotTabViewRequirement {
+    id: String,
+}
+
+impl WikidotTabViewRequirement {
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+}
+
+#[derive(Serialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[serde(tag = "type", content = "requirement", rename_all = "kebab-case")]
+#[non_exhaustive]
+pub enum HtmlResourceRequirement {
+    WikidotTabView(WikidotTabViewRequirement),
+}
+
+impl HtmlResourceRequirement {
+    pub(crate) fn wikidot_tab_view(id: String) -> Self {
+        assert!(
+            valid_wikidot_tab_view_id(&id),
+            "tabview requirement id must be renderer-generated",
+        );
+        Self::WikidotTabView(WikidotTabViewRequirement { id })
+    }
+
+    pub fn wikidot_tab_view_requirement(&self) -> Option<&WikidotTabViewRequirement> {
+        match self {
+            Self::WikidotTabView(requirement) => Some(requirement),
+        }
+    }
+}
+
+fn valid_wikidot_tab_view_id(id: &str) -> bool {
+    let Some(suffix) = id.strip_prefix("wiki-tabview-") else {
+        return false;
+    };
+    suffix.len() == 32 && suffix.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+#[derive(Serialize, Debug, Clone)]
 pub struct HtmlOutput {
     pub body: String,
     pub meta: Vec<HtmlMeta>,
-    #[serde(default)]
     pub styles: Vec<String>,
+    pub resource_requirements: Vec<HtmlResourceRequirement>,
     pub backlinks: Backlinks<'static>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tabview_requirement_serializes_only_its_typed_generated_id() {
+        let id = "wiki-tabview-0123456789abcdef0123456789abcdef";
+        let requirement = HtmlResourceRequirement::wikidot_tab_view(id.to_owned());
+
+        assert_eq!(
+            serde_json::to_value(&requirement).unwrap(),
+            serde_json::json!({
+                "type": "wikidot-tab-view",
+                "requirement": { "id": id },
+            }),
+        );
+        assert_eq!(requirement.wikidot_tab_view_requirement().unwrap().id(), id,);
+    }
+
+    #[test]
+    #[should_panic(expected = "tabview requirement id must be renderer-generated")]
+    fn tabview_requirement_rejects_authored_script_data() {
+        HtmlResourceRequirement::wikidot_tab_view(
+            "wiki-tabview-x');alert(1)//".to_owned(),
+        );
+    }
 }

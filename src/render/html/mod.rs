@@ -32,7 +32,7 @@ mod render;
 mod test_utils;
 
 pub use self::meta::{HtmlMeta, HtmlMetaType};
-pub use self::output::HtmlOutput;
+pub use self::output::{HtmlOutput, HtmlResourceRequirement, WikidotTabViewRequirement};
 
 use self::context::HtmlContext;
 use self::element::{render_element, render_elements};

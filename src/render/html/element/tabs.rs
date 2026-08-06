@@ -99,17 +99,11 @@ pub fn render_tabview(ctx: &mut HtmlContext, tabs: &[Tab]) {
 
 fn render_wikidot_tabview(ctx: &mut HtmlContext, tabs: &[Tab]) {
     let id = ctx.random().generate_wikidot_tabview_id();
+    ctx.require_wikidot_tab_view(id.clone());
 
-    // Wikidot emits the legacy YUI bootstrap and initializes each tab view
-    // from its generated id. Keep this in the legacy syntax renderer so
-    // Deepwell does not need a post-render compatibility rewrite.
-    ctx.push_raw_str(
-        r#"<script type="text/javascript" src="http://d3g0gp89917ko0.cloudfront.net/v--7690939296dc/common--javascript/yahooui/tabview-min.js"></script>
-"#,
-    );
     ctx.html()
         .div()
-        .attr(attr!("id" => &id, "class" => "yui-navset yui-navset-top"))
+        .attr(attr!("id" => &id, "class" => "yui-navset"))
         .inner(|ctx| {
             ctx.html()
                 .ul()
@@ -120,7 +114,6 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, tabs: &[Tab]) {
                             .li()
                             .attr(attr!(
                                 "class" => "selected"; if index == 0,
-                                "title" => "active"; if index == 0,
                             ))
                             .inner(|ctx| {
                                 ctx.html()
@@ -142,27 +135,11 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, tabs: &[Tab]) {
                         let tab_id = format!("wiki-tab-0-{index}");
                         ctx.html()
                             .div()
-                            .attr(attr!(
-                                "id" => &tab_id,
-                                "style" => "display: block;"; if index == 0,
-                                "style" => "display:none"; if index > 0,
-                            ))
+                            .attr(attr!("id" => &tab_id))
                             .contents(&tab.elements);
                     }
                 });
         });
-
-    ctx.push_raw_str(&format!(
-        r#"<script type="text/javascript">
-//<![CDATA[
-OZONE.dom.onDomReady(function(){{
-        var tabView{id} = new YAHOO.widget.TabView('{id}');
-                }}, "dummy-ondomready-block");
-
-//]]>
-</script>
-"#,
-    ));
 }
 
 fn generate_ids(random: &mut Random, len: usize) -> Vec<String> {
@@ -198,27 +175,123 @@ mod tests {
             ..SyntaxTree::default()
         };
 
-        let html = HtmlRender.render(&tree, &page_info, &settings).body;
-        assert!(
-            html.contains("class=\"yui-navset yui-navset-top\""),
-            "{html}"
-        );
-        assert!(html.contains("tabview-min.js"), "{html}");
-        assert!(html.contains("title=\"active\""), "{html}");
+        let output = HtmlRender.render(&tree, &page_info, &settings);
+        let html = &output.body;
+        assert!(html.contains("class=\"yui-navset\""), "{html}");
+        assert!(!html.contains("yui-navset-top"), "{html}");
+        assert!(!html.contains("tabview-min.js"), "{html}");
+        assert!(!html.contains("title=\"active\""), "{html}");
         assert!(html.contains("<em>Apple</em></a></li>\n<li>"), "{html}");
         assert!(
-            html.contains("<div id=\"wiki-tab-0-0\" style=\"display: block;\">one</div>"),
+            html.contains("<div id=\"wiki-tab-0-0\">one</div>"),
             "{html}",
         );
-        assert!(
-            html.contains("id=\"wiki-tab-0-1\" style=\"display:none\""),
-            "{html}",
-        );
+        assert!(html.contains("id=\"wiki-tab-0-1\""), "{html}");
+        assert!(!html.contains("display:"), "{html}");
         assert!(!html.contains("<wj-tabs"), "{html}");
-        assert!(html.contains("new YAHOO.widget.TabView"), "{html}");
+        assert!(!html.contains("new YAHOO.widget.TabView"), "{html}");
+        assert!(!html.contains("<script"), "{html}");
+
+        let [resource] = output.resource_requirements.as_slice() else {
+            panic!(
+                "expected one tabview requirement, got {:?}",
+                output.resource_requirements
+            );
+        };
+        let requirement = resource
+            .wikidot_tab_view_requirement()
+            .expect("tabview renderer emits a tabview requirement");
         assert!(
-            !html.contains("Wikidot tabview bootstrap omitted"),
-            "{html}"
+            html.contains(&format!("id=\"{}\"", requirement.id())),
+            "{html}",
         );
+    }
+
+    #[test]
+    fn multiple_wikidot_tabviews_emit_distinct_typed_requirements() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tree = SyntaxTree {
+            elements: vec![
+                Element::TabView(vec![Tab {
+                    label: cow!("A"),
+                    elements: vec![text!("one")],
+                }]),
+                Element::TabView(vec![Tab {
+                    label: cow!("B"),
+                    elements: vec![text!("two")],
+                }]),
+            ],
+            ..SyntaxTree::default()
+        };
+
+        let output = HtmlRender.render(&tree, &page_info, &settings);
+        assert_eq!(output.resource_requirements.len(), 2);
+        let ids = output
+            .resource_requirements
+            .iter()
+            .map(|resource| {
+                resource
+                    .wikidot_tab_view_requirement()
+                    .expect("only tabview requirements are emitted")
+                    .id()
+            })
+            .collect::<Vec<_>>();
+        assert_ne!(ids[0], ids[1]);
+        for id in ids {
+            assert!(output.body.contains(&format!("id=\"{id}\"")));
+        }
+        assert!(!output.body.contains("<script"));
+        assert!(!output.body.contains("tabview-min.js"));
+        assert!(!output.body.contains("YAHOO.widget.TabView"));
+    }
+
+    #[test]
+    fn authored_tab_data_cannot_inject_resource_authority() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let attack = "wiki-tabview-x');alert(1)//";
+        let tree = SyntaxTree {
+            elements: vec![Element::TabView(vec![Tab {
+                label: cow!("</em><script>alert(1)</script>"),
+                elements: vec![text!(attack)],
+            }])],
+            ..SyntaxTree::default()
+        };
+
+        let output = HtmlRender.render(&tree, &page_info, &settings);
+        let [resource] = output.resource_requirements.as_slice() else {
+            panic!("expected one resource requirement");
+        };
+        let id = resource
+            .wikidot_tab_view_requirement()
+            .expect("tabview requirement")
+            .id();
+        assert_ne!(id, attack);
+        assert!(id.starts_with("wiki-tabview-"));
+        assert!(output.body.contains("&lt;/em&gt;&lt;script&gt;"));
+        assert!(!output.body.contains("<script"));
+        assert!(!output.body.contains("alert(1)// = new"));
+    }
+
+    #[test]
+    fn empty_wikidot_tab_body_keeps_static_dom_and_requirement() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tree = SyntaxTree {
+            elements: vec![Element::TabView(vec![Tab {
+                label: cow!("Empty"),
+                elements: Vec::new(),
+            }])],
+            ..SyntaxTree::default()
+        };
+
+        let output = HtmlRender.render(&tree, &page_info, &settings);
+        assert!(
+            output.body.contains("<div id=\"wiki-tab-0-0\"></div>"),
+            "{}",
+            output.body,
+        );
+        assert_eq!(output.resource_requirements.len(), 1);
     }
 }

@@ -231,7 +231,16 @@ fn lower_root_sequence<'t>(
             let paragraph_attributes = container.attributes().clone();
             let starts_in_scored_span = active.has_scored_scope();
             let starts_in_inline_scope = active.has_active_scope();
-            if starts_in_inline_scope && !output.is_empty() && paragraph_group.is_none() {
+            let reopens_paragraph_after_separator = starts_in_inline_scope
+                && output.last().is_some_and(|element| {
+                    matches!(element, Element::HorizontalRule)
+                        || is_wikidot_content_separator(element)
+                });
+            if starts_in_inline_scope
+                && !reopens_paragraph_after_separator
+                && !output.is_empty()
+                && paragraph_group.is_none()
+            {
                 container.elements_mut().insert(0, Element::LineBreak);
             }
             let effects = lower_sequence(
@@ -249,7 +258,8 @@ fn lower_root_sequence<'t>(
             }
             let (_, _, group) = paragraph_group.get_or_insert_with(|| {
                 (
-                    !starts_in_scored_span && !starts_in_inline_scope,
+                    reopens_paragraph_after_separator
+                        || !starts_in_scored_span && !starts_in_inline_scope,
                     paragraph_attributes,
                     Vec::new(),
                 )
@@ -271,6 +281,19 @@ fn lower_root_sequence<'t>(
 
     flush_paragraph_group(&mut output, &mut paragraph_group);
     *elements = output;
+}
+
+fn is_wikidot_content_separator(element: &Element<'_>) -> bool {
+    matches!(
+        element,
+        Element::Container(container)
+            if container.ctype() == ContainerType::Div
+                && container
+                    .attributes()
+                    .get()
+                    .get("class")
+                    .is_some_and(|value| value.as_ref() == "content-separator")
+    )
 }
 
 fn append_root_sequence<'t>(
@@ -898,6 +921,72 @@ mod tests {
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::settings::{WikitextMode, WikitextSettings};
+    use std::time::{Duration, Instant};
+
+    fn render_wikidot(source: &str) -> String {
+        use crate::render::{Render, html::HtmlRender};
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut source = source.to_owned();
+        crate::preprocess_for_layout(&mut source, settings.layout);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:#?}");
+        HtmlRender.render(&tree, &page_info, &settings).body
+    }
+
+    #[test]
+    fn wikidot_inline_scopes_reopen_in_paragraphs_after_separators() {
+        for (source, expected) in [
+            (
+                "[[size 120%]]A\n====\nB[[/size]]",
+                concat!(
+                    r#"<p><span style="font-size:120%;">A</span></p>"#,
+                    r#"<div class="content-separator" style="display: none:"></div>"#,
+                    r#"<p><span style="font-size:120%;">B</span></p>"#,
+                ),
+            ),
+            (
+                "[[size 120%]]A\n----\nB[[/size]]",
+                concat!(
+                    r#"<p><span style="font-size:120%;">A</span></p>"#,
+                    "<hr>",
+                    r#"<p><span style="font-size:120%;">B</span></p>"#,
+                ),
+            ),
+            (
+                "[[span]]A\n====\nB[[/span]]",
+                concat!(
+                    "<p><span>A</span></p>",
+                    r#"<div class="content-separator" style="display: none:"></div>"#,
+                    "<p><span>B</span></p>",
+                ),
+            ),
+            (
+                "[[span]]A\n----\nB[[/span]]",
+                "<p><span>A</span></p><hr><p><span>B</span></p>",
+            ),
+        ] {
+            assert_eq!(render_wikidot(source), expected, "{source:?}");
+        }
+    }
+
+    #[test]
+    fn repeated_separator_scope_restarts_stay_bounded() {
+        let unit = "[[size 120%]]A\n====\nB[[/size]]\n";
+        let source = unit.repeat(1_024);
+        let started = Instant::now();
+        let html = render_wikidot(&source);
+        let elapsed = started.elapsed();
+
+        assert_eq!(html.matches("content-separator").count(), 1_024, "{html}");
+        assert_eq!(html.matches("font-size:120%").count(), 2_048, "{html}");
+        assert!(
+            elapsed < Duration::from_secs(3),
+            "separator scope lowering took {elapsed:?}",
+        );
+    }
 
     #[test]
     fn lowering_traverses_partial_list_items_without_paragraph_safety_checks() {

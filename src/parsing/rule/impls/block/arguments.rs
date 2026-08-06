@@ -308,6 +308,10 @@ impl<'t> Arguments<'t> {
                 continue;
             }
 
+            if settings.layout.legacy() && contains_unresolved_wikidot_variable(value) {
+                continue;
+            }
+
             let key = key.as_str();
             if self.case_sensitive && key.bytes().any(|byte| byte.is_ascii_uppercase()) {
                 continue;
@@ -325,9 +329,83 @@ impl<'t> Arguments<'t> {
     }
 }
 
+fn contains_unresolved_wikidot_variable(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    let mut index = 0;
+    while index + 3 < bytes.len() {
+        if bytes[index] != b'{' || bytes[index + 1] != b'$' {
+            index += 1;
+            continue;
+        }
+
+        let escaped = bytes[..index]
+            .iter()
+            .rev()
+            .take_while(|byte| **byte == b'\\')
+            .count()
+            % 2
+            == 1;
+        if escaped {
+            index += 2;
+            continue;
+        }
+
+        let name_start = index + 2;
+        let mut end = name_start;
+        while bytes.get(end).is_some_and(u8::is_ascii_alphanumeric) {
+            end += 1;
+        }
+        if end > name_start && bytes.get(end) == Some(&b'}') {
+            return true;
+        }
+        index += 2;
+    }
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn wikidot_attribute_maps_drop_only_complete_unescaped_variables() {
+        let settings = WikitextSettings::from_mode(
+            crate::settings::WikitextMode::Page,
+            crate::layout::Layout::Wikidot,
+        );
+        let mut arguments = Arguments::new();
+        arguments.insert("title", cow!("{$x}"));
+        arguments.insert("class", cow!("prefix {$X1} suffix"));
+        arguments.insert("data-malformed", cow!("{$x"));
+        arguments.insert("data-escaped", cow!(r"\{$x}"));
+        arguments.insert("data-dash", cow!("{$foo-bar}"));
+        arguments.insert("data-underscore", cow!("{$foo_bar}"));
+        arguments.insert("data-double-dollar", cow!("{$$x}"));
+
+        let attributes = arguments.to_attribute_map(&settings);
+        assert!(!attributes.get().contains_key("title"));
+        assert!(!attributes.get().contains_key("class"));
+        assert_eq!(
+            attributes.get().get("data-malformed").map(Cow::as_ref),
+            Some("{$x"),
+        );
+        assert_eq!(
+            attributes.get().get("data-escaped").map(Cow::as_ref),
+            Some(r"\{$x}"),
+        );
+        assert_eq!(
+            attributes.get().get("data-dash").map(Cow::as_ref),
+            Some("{$foo-bar}"),
+        );
+        assert_eq!(
+            attributes.get().get("data-underscore").map(Cow::as_ref),
+            Some("{$foo_bar}"),
+        );
+        assert_eq!(
+            attributes.get().get("data-double-dollar").map(Cow::as_ref),
+            Some("{$$x}"),
+        );
+    }
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::settings::{WikitextMode, WikitextSettings};

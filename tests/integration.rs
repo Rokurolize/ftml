@@ -25,6 +25,9 @@ mod wikidot_inline_delimiter_ownership;
 #[path = "wikidot_lexical_owner_residuals.rs"]
 mod wikidot_lexical_owner_residuals;
 
+#[path = "wikidot_variable_ownership.rs"]
+mod wikidot_variable_ownership;
+
 #[path = "parser_functions_wikidot_syntax.rs"]
 mod parser_functions_wikidot_syntax;
 

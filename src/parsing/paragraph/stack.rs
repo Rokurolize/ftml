@@ -73,6 +73,7 @@ pub struct ParagraphStack<'t> {
     trim_unwrapped_trailing_line_break: bool,
     suppress_next_line_break: bool,
     wikidot_simple_table_boundary: bool,
+    wikidot_reopen_for_footnote: bool,
 
     /// Previous elements created, to be outputted in the final [`SyntaxTree`].
     finished: Vec<Element<'t>>,
@@ -269,6 +270,18 @@ impl<'t> ParagraphStack<'t> {
 
     #[inline]
     pub fn push_element(&mut self, element: Element<'t>, paragraph_safe: bool) {
+        if self.wikidot_reopen_for_footnote && matches!(element, Element::Footnote(_)) {
+            self.wikidot_reopen_for_footnote = false;
+            let Some(Element::Container(paragraph)) = self.finished.pop() else {
+                unreachable!("footnote reopening requires a preceding paragraph");
+            };
+            debug_assert_eq!(paragraph.ctype(), ContainerType::Paragraph);
+            self.current = paragraph.into();
+            self.current.push(element);
+            return;
+        }
+        self.wikidot_reopen_for_footnote = false;
+
         if self.suppress_next_line_break {
             self.suppress_next_line_break = false;
             if element == Element::LineBreak {
@@ -574,6 +587,12 @@ impl<'t> ParagraphStack<'t> {
         let unwrapped_after_block_line = self.unwrapped_after_block_line;
         let complete_raw_run_after_block = self.wikidot_complete_raw_run_after_block;
         self.end_paragraph();
+        self.wikidot_reopen_for_footnote = self.wikidot
+            && matches!(
+                self.finished.last(),
+                Some(Element::Container(container))
+                    if container.ctype() == ContainerType::Paragraph
+            );
         if unwrapped && !complete_raw_run_after_block {
             self.finished
                 .push(if literal_div_line || unwrapped_after_block_line {

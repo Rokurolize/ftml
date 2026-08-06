@@ -257,15 +257,18 @@ fn try_consume_text_token<'r, 't>(
     // Wikidot discards adjacent underline delimiters as empty containers. Do
     // that one pair at a time so a long run never needs a forward scan at
     // every delimiter.
-    if parser.settings().layout.legacy()
-        && parser.current().token == Token::Underline
-        && parser
+    if parser.settings().layout.legacy() && parser.current().token == Token::Underline {
+        #[cfg(test)]
+        parser.increment_underline_fast_path_visits();
+
+        if parser
             .look_ahead(0)
             .is_some_and(|token| token.token == Token::Underline)
-    {
-        parser.step()?;
-        parser.step()?;
-        return Ok(Some(Elements::None));
+        {
+            parser.step()?;
+            parser.step()?;
+            return Ok(Some(Elements::None));
+        }
     }
     if !can_consume_as_text_token(parser) {
         return Ok(None);
@@ -720,6 +723,31 @@ mod tests {
                 .is_none(),
         );
         assert_eq!(parser.current().token, Token::LineBreak);
+    }
+
+    #[test]
+    fn wikidot_underline_pair_consumption_has_linear_deterministic_work() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for marker_count in [1, 2, 3, 4, 255, 256, 511, 512] {
+            let input = format!("{}x", "__".repeat(marker_count));
+            let tokenization = crate::tokenize(&input);
+            let mut parser = Parser::new(&tokenization, &page_info, &settings);
+            parser
+                .step()
+                .expect("the first underline token should exist");
+
+            while parser.current().token != Token::InputEnd {
+                let _ = consume(&mut parser).expect("the underline run should parse");
+            }
+
+            assert_eq!(
+                parser.underline_fast_path_visits(),
+                marker_count.div_ceil(2),
+                "{marker_count} underline tokens",
+            );
+        }
     }
 
     #[test]

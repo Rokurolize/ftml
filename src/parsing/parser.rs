@@ -163,6 +163,8 @@ pub struct Parser<'r, 't> {
     block_end_scan_cache: Rc<RefCell<BTreeMap<BlockEndScanKey, bool>>>,
     #[cfg(test)]
     quote_scan_token_visits: Rc<Cell<usize>>,
+    #[cfg(test)]
+    underline_fast_path_visits: Rc<Cell<usize>>,
 
     // Flags
     accepts_partial: AcceptsPartial,
@@ -225,6 +227,8 @@ impl<'r, 't> Parser<'r, 't> {
             block_end_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
             #[cfg(test)]
             quote_scan_token_visits: Rc::new(Cell::new(0)),
+            #[cfg(test)]
+            underline_fast_path_visits: Rc::new(Cell::new(0)),
             accepts_partial: AcceptsPartial::None,
             in_footnote: false,
             has_footnote_block: false,
@@ -538,6 +542,17 @@ impl<'r, 't> Parser<'r, 't> {
     pub(crate) fn increment_quote_scan_token_visits(&self) {
         self.quote_scan_token_visits
             .set(self.quote_scan_token_visits.get() + 1);
+    }
+
+    #[cfg(test)]
+    pub(crate) fn underline_fast_path_visits(&self) -> usize {
+        self.underline_fast_path_visits.get()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn increment_underline_fast_path_visits(&self) {
+        self.underline_fast_path_visits
+            .set(self.underline_fast_path_visits.get() + 1);
     }
 
     // Setters

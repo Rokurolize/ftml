@@ -20,6 +20,7 @@
 
 use super::mapping::get_module_rule_with_name;
 use super::prelude::*;
+use crate::parsing::rule::impls::block::parser::BlockBodyStart;
 use crate::tree::{AnchorTarget, AttributeMap, LinkLabel, LinkLocation, LinkType};
 
 pub const BLOCK_MODULE: BlockRule = BlockRule {
@@ -52,7 +53,8 @@ fn parse_fn<'r, 't>(
     }
 
     // Get module name and arguments
-    let (subname, arguments) = parser.get_head_name_map(&BLOCK_MODULE, in_head)?;
+    let (subname, arguments, body_start) =
+        parser.get_head_name_map_with_body_start(&BLOCK_MODULE, in_head)?;
 
     if parser.settings().layout.legacy()
         && let Some(literal) = wikidot_extra_bracket_css_literal(parser, subname)
@@ -60,10 +62,37 @@ fn parse_fn<'r, 't>(
         return ok!(true; text!(literal));
     }
 
+    if parser.settings().layout.legacy() && !wikidot_valid_module_name(subname) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     // Get the module rule for this name
     let module_rule = match get_module_rule_with_name(subname) {
         Some(rule) => rule,
-        None if parser.settings().layout.legacy() && arguments.is_empty() => {
+        None if parser.settings().layout.legacy() => {
+            let has_body_end = parser.has_body_end_block(&BLOCK_MODULE);
+            if arguments.is_empty()
+                && body_start == BlockBodyStart::Inline
+                && parser.current().token != Token::InputEnd
+            {
+                let source = parser.full_text().inner();
+                let name_start = (subname.as_ptr() as usize)
+                    .checked_sub(source.as_ptr() as usize)
+                    .expect("parsed module name belongs to the source");
+                let owner_start = source[..name_start]
+                    .rfind("[[")
+                    .expect("parsed module name follows its opener");
+                let owner_end = if has_body_end {
+                    let _ = parser.get_body_text(&BLOCK_MODULE)?;
+                    parser.current().span.start
+                } else {
+                    parser.current().span.start
+                };
+                return ok!(true; text!(&source[owner_start..owner_end]));
+            }
+            if has_body_end {
+                let _ = parser.get_body_text(&BLOCK_MODULE)?;
+            }
             return ok!(false; wikidot_unknown_module_error(subname));
         }
         None => return Err(parser.make_err(ParseErrorKind::NoSuchModule)),
@@ -81,6 +110,12 @@ fn parse_fn<'r, 't>(
     let (elements, errors, paragraph_safe) = output.into();
 
     success_elements_with_paragraph_safety(paragraph_safe, elements, errors)
+}
+
+fn wikidot_valid_module_name(name: &str) -> bool {
+    let mut chars = name.bytes();
+    chars.next().is_some_and(|byte| byte.is_ascii_alphabetic())
+        && chars.all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-'))
 }
 
 fn wikidot_extra_bracket_css_literal<'t>(
@@ -219,6 +254,140 @@ mod tests {
                 r#"<a href="https://www.wikidot.com/doc:modules" target="_blank" rel="noopener noreferrer">check available modules</a>"#,
                 " and fix this page.</div>",
             ),
+        );
+    }
+
+    #[test]
+    fn wikidot_unknown_inline_body_remains_literal() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization =
+            crate::tokenize("[[module UnknownOracleModule]]preserved body[[/module]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            HtmlRender.render(&tree, &page_info, &settings).body,
+            "<p>[[module UnknownOracleModule]]preserved body[[/module]]</p>",
+        );
+    }
+
+    #[test]
+    fn wikidot_unknown_module_boundary_matches_live_source_shapes() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        for (input, literal) in [
+            ("[[module UnknownOracleModule]]TAIL", true),
+            ("[[module UnknownOracleModule]][[/module]]", true),
+            ("[[module UnknownOracleModule]]\nbody\n[[/module]]", false),
+            ("[[module UnknownOracleModule foo=\"bar\"]]", false),
+        ] {
+            let tokenization = crate::tokenize(input);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            assert!(errors.is_empty(), "{input:?}: {errors:#?}");
+
+            let body = HtmlRender.render(&tree, &page_info, &settings).body;
+            if literal {
+                assert_eq!(body, format!("<p>{input}</p>"), "{input:?}");
+            } else {
+                assert!(
+                    body.starts_with(r#"<div class="error-block">[[module <em>UnknownOracleModule</em>]] No such module"#),
+                    "{input:?}: {body}",
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn wikidot_unknown_module_body_ownership_matches_live_boundaries() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        // Live c18 evidence: /home/roku/oracle-store/wjlab/
+        // sandbox-oracle-20260806-unknown-c18/{unknown-inline-tail-later,
+        // unknown-newline-unclosed-later}.html.
+        let inline_tail =
+            crate::tokenize("[[module UnknownOracleModule]]TAIL\n[[module RandomPage]]");
+        let (tree, errors) = crate::parse(&inline_tail, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(
+            HtmlRender
+                .render(&tree, &page_info, &settings)
+                .body
+                .contains("[[module UnknownOracleModule]]TAIL</p>")
+        );
+        assert!(
+            HtmlRender
+                .render(&tree, &page_info, &settings)
+                .body
+                .contains("[[module <em>RandomPage</em>]] No such module")
+        );
+
+        let newline_unclosed = crate::tokenize(
+            "[[module UnknownOracleModule]]\nbody\n[[module RandomPage]]",
+        );
+        let (tree, errors) =
+            crate::parse(&newline_unclosed, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            HtmlRender.render(&tree, &page_info, &settings).body,
+            concat!(
+                r#"<div class="error-block">[[module <em>UnknownOracleModule</em>]] No such module, please "#,
+                r#"<a href="https://www.wikidot.com/doc:modules" target="_blank" rel="noopener noreferrer">check available modules</a>"#,
+                " and fix this page.</div>",
+                "<p>body</p>",
+                r#"<div class="error-block">[[module <em>RandomPage</em>]] No such module, please "#,
+                r#"<a href="https://www.wikidot.com/doc:modules" target="_blank" rel="noopener noreferrer">check available modules</a>"#,
+                " and fix this page.</div>",
+            ),
+        );
+    }
+
+    #[test]
+    fn wikidot_invalid_module_heads_remain_literal() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        // Live c17 evidence: /home/roku/oracle-store/wjlab/
+        // sandbox-oracle-20260806-unknown-c17/{assignment-only,url-shaped}.html.
+        for (input, expected_body) in [
+            (
+                r#"[[module foo="bar"]]"#,
+                r#"<p>[[module foo=&quot;bar&quot;]]</p>"#,
+            ),
+            (
+                "[[module https://example.com]]",
+                r#"<p>[[module <a href="https://example.com">https://example.com</a>]]</p>"#,
+            ),
+        ] {
+            let tokenization = crate::tokenize(input);
+            let (tree, _errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            assert_eq!(
+                HtmlRender.render(&tree, &page_info, &settings).body,
+                expected_body
+            );
+        }
+    }
+
+    #[test]
+    fn wikidot_module654_keeps_the_live_name_boundary() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let valid_unknown = crate::tokenize("[[module654 UnknownOracleModule]]");
+        let (tree, errors) = crate::parse(&valid_unknown, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(HtmlRender.render(&tree, &page_info, &settings)
+            .body
+            .starts_with(
+                r#"<div class="error-block">[[module <em>UnknownOracleModule</em>]] No such module"#,
+            ));
+
+        let invalid =
+            crate::tokenize("[[module654 class=\"\"]]\nv7 body\n[[/module654]]");
+        let (tree, _errors) = crate::parse(&invalid, &page_info, &settings).into();
+        assert_eq!(
+            HtmlRender.render(&tree, &page_info, &settings).body,
+            "<p>[[module654 class=&quot;&quot;]]<br>\nv7 body<br>\n[[/module654]]</p>",
         );
     }
 

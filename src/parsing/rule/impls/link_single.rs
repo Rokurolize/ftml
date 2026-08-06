@@ -133,11 +133,6 @@ where
                 parser.step()?;
                 return Ok(&parser.full_text().inner()[start..end]);
             }
-            Token::RightComment if parser.current().slice == "--]" => {
-                let end = parser.current().span.end - 1;
-                parser.step()?;
-                return Ok(&parser.full_text().inner()[start..end]);
-            }
             Token::LineBreak | Token::ParagraphBreak => {
                 return Err(parser.make_err(ParseErrorKind::RuleFailed));
             }

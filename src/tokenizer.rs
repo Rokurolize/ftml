@@ -97,6 +97,8 @@ pub(crate) fn tokenize_delayed_segments<'t>(
     }];
 
     let mut generated_slots = BTreeMap::new();
+    let trailing_authored_comment_closers =
+        trailing_authored_comment_closers(text, segments);
     let mut segment_index = 0;
     while let Some(segment) = segments.get(segment_index) {
         match segment {
@@ -121,20 +123,25 @@ pub(crate) fn tokenize_delayed_segments<'t>(
                 let segment_text = &text[start..end];
                 match origin {
                     TextOrigin::Authored => {
+                        let trailing_comment_closer =
+                            trailing_authored_comment_closers[segment_index];
                         tokens.extend(
-                            Token::extract_all(segment_text)
-                                .into_iter()
-                                .filter(|token| {
-                                    !matches!(
-                                        token.token,
-                                        Token::InputStart | Token::InputEnd
-                                    )
-                                })
-                                .map(|mut token| {
-                                    token.span.start += start;
-                                    token.span.end += start;
-                                    token
-                                }),
+                            Token::extract_all_with_trailing_comment_closer(
+                                segment_text,
+                                trailing_comment_closer,
+                            )
+                            .into_iter()
+                            .filter(|token| {
+                                !matches!(
+                                    token.token,
+                                    Token::InputStart | Token::InputEnd
+                                )
+                            })
+                            .map(|mut token| {
+                                token.span.start += start;
+                                token.span.end += start;
+                                token
+                            }),
                         );
                     }
                     TextOrigin::RuntimeScalar if !segment_text.is_empty() => {
@@ -172,6 +179,29 @@ pub(crate) fn tokenize_delayed_segments<'t>(
         full_text: FullText::new(text),
         generated: generated_slots,
     }
+}
+
+fn trailing_authored_comment_closers(text: &str, segments: &[InputSegment]) -> Vec<bool> {
+    // Authored comments may span delayed slots, but runtime and generated
+    // bytes cannot create a closer. Record only later authored boundaries.
+    let mut trailing = vec![false; segments.len()];
+    let mut found = false;
+
+    for (index, segment) in segments.iter().enumerate().rev() {
+        trailing[index] = found;
+        if let InputSegment::Text {
+            source_range,
+            origin: TextOrigin::Authored,
+        } = segment
+        {
+            found |= text[source_range.clone()]
+                .as_bytes()
+                .windows(3)
+                .any(|window| window == b"--]");
+        }
+    }
+
+    trailing
 }
 
 #[cfg(test)]

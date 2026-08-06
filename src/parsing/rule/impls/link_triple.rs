@@ -240,14 +240,6 @@ where
                 parser.step()?;
                 return Ok(&parser.full_text().inner()[start..end]);
             }
-            (Token::RightComment, Some(Token::RightBlock))
-                if parser.current().slice == "--]" =>
-            {
-                let end = parser.current().span.end - 1;
-                parser.step()?;
-                parser.step()?;
-                return Ok(&parser.full_text().inner()[start..end]);
-            }
             (Token::ParagraphBreak | Token::InputEnd, _) => {
                 let kind = if parser.current().token == Token::InputEnd {
                     ParseErrorKind::EndOfInput

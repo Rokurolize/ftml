@@ -51,25 +51,12 @@ fn try_consume_fn<'r, 't>(
         trace!("Received token '{}' inside comment", token.name());
 
         match token {
-            // Hit the end of the comment, return
-            Token::RightComment => {
-                trace!("Reached end of comment, returning");
-                parser.step()?;
-                return if generated.is_empty() {
-                    ok!(Elements::None)
-                } else {
-                    success_elements(Element::Delayed(DelayedElement::omitted(
-                        &generated,
-                    )))
-                };
-            }
-
             // Wikidot accepts any run of at least two hyphens immediately
             // followed by `]` as a comment closer while it is scanning a
             // comment. Keep this contextual: outside a comment, longer runs
             // retain their ordinary dash and horizontal-rule tokenization.
-            _ if let Some(token_count) = wikidot_extended_closer_token_count(parser) => {
-                trace!("Reached extended Wikidot comment closer, returning");
+            _ if let Some(token_count) = comment_closer_token_count(parser) => {
+                trace!("Reached Wikidot comment closer, returning");
                 parser.step_n(token_count)?;
                 return if generated.is_empty() {
                     ok!(Elements::None)
@@ -95,13 +82,44 @@ fn try_consume_fn<'r, 't>(
     }
 }
 
-fn wikidot_extended_closer_token_count(parser: &Parser<'_, '_>) -> Option<usize> {
+fn comment_closer_token_count(parser: &Parser<'_, '_>) -> Option<usize> {
+    let current = parser.current();
+    let current_is_inert = matches!(
+        current.token,
+        Token::RuntimeText | Token::GeneratedPageLink | Token::GeneratedTagLinks
+    );
+    // URL and email tokens may own the comment body's last authored bytes.
+    // Their adjacent trailing hyphens still close the active comment.
+    let trailing_hyphens = current
+        .slice
+        .bytes()
+        .rev()
+        .take_while(|byte| *byte == b'-')
+        .count();
+    if !current_is_inert
+        && trailing_hyphens >= 2
+        && trailing_hyphens < current.slice.len()
+        && parser
+            .look_ahead(0)
+            .is_some_and(|token| token.token == Token::RightBracket && token.slice == "]")
+    {
+        return Some(2);
+    }
+
     let mut hyphens = 0;
 
     for (index, token) in std::iter::once(parser.current())
         .chain(parser.remaining())
         .enumerate()
     {
+        // Runtime and generated values are data. They cannot contribute even
+        // one half of an authored closer across a provenance boundary.
+        if matches!(
+            token.token,
+            Token::RuntimeText | Token::GeneratedPageLink | Token::GeneratedTagLinks
+        ) {
+            return None;
+        }
         if !token.slice.is_empty() && token.slice.bytes().all(|byte| byte == b'-') {
             hyphens += token.slice.len();
             continue;
@@ -125,31 +143,34 @@ mod tests {
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
-    fn comment_rule_rejects_unterminated_comment() {
-        let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    fn unterminated_comment_candidate_is_tokenized_as_ordinary_syntax() {
         let tokenization = crate::tokenize("[!-- unfinished");
-        let mut parser = Parser::new(&tokenization, &page_info, &settings);
-        parser
-            .step()
-            .expect("left comment token should follow input start");
-        parser.set_rule(RULE_COMMENT);
 
-        let error = RULE_COMMENT
-            .try_consume(&mut parser)
-            .expect_err("unterminated comment should fail");
-        assert_eq!(error.kind(), ParseErrorKind::EndOfInput);
+        assert!(
+            tokenization
+                .tokens()
+                .iter()
+                .all(|token| token.token != Token::LeftComment),
+        );
+        assert!(
+            tokenization
+                .tokens()
+                .iter()
+                .any(|token| token.token == Token::DoubleDash),
+        );
     }
 
     #[test]
     fn wikidot_unterminated_comment_opener_falls_back_with_typographic_dash() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize("[!-- unfinished");
+        let mut source = "[!-- unfinished".to_owned();
+        crate::preprocess_for_layout(&mut source, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
-        assert!(!errors.is_empty());
+        assert!(errors.is_empty(), "{errors:?}");
         assert_eq!(html, "<p>[!\u{2014} unfinished</p>");
     }
 
@@ -157,11 +178,13 @@ mod tests {
     fn wikidot_unmatched_comment_closer_falls_back_with_typographic_dash() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize("raw-comment --]");
+        let mut source = "raw-comment --]".to_owned();
+        crate::preprocess_for_layout(&mut source, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
-        assert!(!errors.is_empty());
+        assert!(errors.is_empty(), "{errors:?}");
         assert_eq!(html, "<p>raw-comment \u{2014}]</p>");
     }
 

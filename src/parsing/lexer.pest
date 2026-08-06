@@ -42,7 +42,6 @@ token = _{
 
     // Comments
     left_comment |
-    right_comment |
 
     // Text-like
     url |
@@ -156,8 +155,7 @@ raw = @{ "@@" }
 left_raw = @{ "@<" }
 right_raw = @{ ">@" }
 
-left_comment = @{ "[!--" }
-right_comment = @{ "--]" }
+left_comment = @{ "[!--" ~ &((!"--]" ~ ANY)* ~ "--]") }
 
 left_bracket = @{ "[" }
 left_bracket_anchor = @{ "[#" }

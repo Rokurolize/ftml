@@ -62,6 +62,9 @@ fn parse_with_wikidot_boundary<'r, 't>(
                 .rfind("[[")
                 .expect("parsed CSS module name follows its opener");
             let _ = parser.get_body_text(&BLOCK_MODULE)?;
+            if arguments.has_source() {
+                return ok!(false; ModuleParseOutput::None);
+            }
             let owner_end = parser.current().span.start;
             return success_value(
                 ModuleParseOutput::Element(text!(&source[owner_start..owner_end])),
@@ -69,28 +72,62 @@ fn parse_with_wikidot_boundary<'r, 't>(
                 true,
             );
         }
+
+        let body_start = parser.current().span.start;
+        let source = parser.full_text().inner();
         let mut body_probe = parser.clone();
-        if wikidot_css_body_starts_on_new_line(parser)
-            && let Ok(body) = body_probe.get_body_text(&BLOCK_MODULE)
-            && !wikidot_list_pages_head_offsets(&body).is_empty()
-        {
-            match wikidot_css_list_pages_boundary(parser) {
-                Some(CssListPagesBoundary::Unclosed) => {
-                    return ok!(false; ModuleParseOutput::None);
+        match body_probe.get_body_text(&BLOCK_MODULE) {
+            Ok(body) => {
+                if body.chars().all(char::is_whitespace) {
+                    let _ = parser.get_body_text(&BLOCK_MODULE)?;
+                    let owner_end = parser.current().span.start;
+                    let closer = wikidot_css_closer(source, body_start, owner_end)
+                        .expect("empty closed CSS body has a module closer");
+                    return success_value(
+                        ModuleParseOutput::Element(text!(closer)),
+                        Vec::new(),
+                        true,
+                    );
                 }
-                Some(CssListPagesBoundary::Closed { nested_end_blocks }) => {
-                    let css = parser.get_body_text_after_skipping_end_blocks(
-                        &BLOCK_MODULE,
-                        nested_end_blocks,
-                    )?;
-                    return success_value(Element::Style(css).into(), Vec::new(), false);
+
+                if !wikidot_list_pages_head_offsets(&body).is_empty() {
+                    match wikidot_css_list_pages_boundary(parser) {
+                        Some(CssListPagesBoundary::Unclosed) => {
+                            return ok!(false; ModuleParseOutput::None);
+                        }
+                        Some(CssListPagesBoundary::Closed { nested_end_blocks }) => {
+                            let css = parser.get_body_text_after_skipping_end_blocks(
+                                &BLOCK_MODULE,
+                                nested_end_blocks,
+                            )?;
+                            return success_value(
+                                Element::Style(css).into(),
+                                Vec::new(),
+                                false,
+                            );
+                        }
+                        None => {}
+                    }
                 }
-                None => {}
             }
+            Err(error) if error.kind() == ParseErrorKind::EndOfInput => {
+                return ok!(false; ModuleParseOutput::None);
+            }
+            Err(_) => {}
         }
     }
 
     parse_fn(parser, name, arguments)
+}
+
+fn wikidot_css_closer(source: &str, body_start: usize, owner_end: usize) -> Option<&str> {
+    let body = &source[body_start..owner_end];
+    let closer_start = body
+        .as_bytes()
+        .windows("[[/module".len())
+        .position(|window| window.eq_ignore_ascii_case(b"[[/module"))?;
+    let close = body[closer_start..].find("]]")?;
+    source.get(body_start + closer_start..body_start + closer_start + close + 2)
 }
 
 fn wikidot_css_body_starts_on_new_line(parser: &Parser<'_, '_>) -> bool {

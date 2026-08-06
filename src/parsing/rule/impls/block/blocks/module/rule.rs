@@ -54,6 +54,12 @@ fn parse_fn<'r, 't>(
     // Get module name and arguments
     let (subname, arguments) = parser.get_head_name_map(&BLOCK_MODULE, in_head)?;
 
+    if parser.settings().layout.legacy()
+        && let Some(literal) = wikidot_extra_bracket_css_literal(parser, subname)
+    {
+        return ok!(true; text!(literal));
+    }
+
     // Get the module rule for this name
     let module_rule = match get_module_rule_with_name(subname) {
         Some(rule) => rule,
@@ -75,6 +81,21 @@ fn parse_fn<'r, 't>(
     let (elements, errors, paragraph_safe) = output.into();
 
     success_elements_with_paragraph_safety(paragraph_safe, elements, errors)
+}
+
+fn wikidot_extra_bracket_css_literal<'t>(
+    parser: &Parser<'_, 't>,
+    subname: &'t str,
+) -> Option<&'t str> {
+    let source = parser.full_text().inner();
+    let name_start = (subname.as_ptr() as usize).checked_sub(source.as_ptr() as usize)?;
+    let owner_start = source[..name_start].rfind("[[")?;
+    let prefix = source[owner_start..].get(.."[[module CSS]]]".len())?;
+    if !prefix.eq_ignore_ascii_case("[[module CSS]]]") {
+        return None;
+    }
+
+    source.get(owner_start..parser.current().span.start)
 }
 
 fn wikidot_unknown_module_error<'t>(name: &'t str) -> Element<'t> {

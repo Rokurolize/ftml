@@ -82,10 +82,25 @@ fn block_skip<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
     });
 
     if result {
-        parse_block(parser, flag_star)
+        let success = parse_block(parser, flag_star)?;
+        if success.paragraph_safe && wikidot_literal_css_module(&success.item) {
+            Err(parser.make_err(ParseErrorKind::RuleFailed))
+        } else {
+            Ok(success)
+        }
     } else {
         Err(parser.make_err(ParseErrorKind::RuleFailed))
     }
+}
+
+fn wikidot_literal_css_module(elements: &Elements<'_>) -> bool {
+    let Elements::Single(Element::Text(text)) = elements else {
+        return false;
+    };
+    let Some(prefix) = text.get(.."[[module CSS".len()) else {
+        return false;
+    };
+    prefix.eq_ignore_ascii_case("[[module CSS")
 }
 
 fn block_rule_enabled(parser: &Parser<'_, '_>, block_rule: &BlockRule) -> bool {

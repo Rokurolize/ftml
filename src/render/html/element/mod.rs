@@ -101,9 +101,35 @@ pub fn render_elements(ctx: &mut HtmlContext, elements: &[Element]) {
             element => {
                 render_element(ctx, element);
                 index += 1;
+                if ctx.layout().legacy()
+                    && matches!(element, Element::HorizontalRule)
+                    && matches!(elements.get(index), Some(Element::HorizontalRule))
+                {
+                    ctx.push_raw('\n');
+                }
             }
         }
     }
+}
+
+#[test]
+fn wikidot_separates_adjacent_horizontal_rules_with_a_text_newline() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize("----\n----");
+    let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+    assert!(errors.is_empty(), "{errors:#?}");
+    assert_eq!(
+        HtmlRender.render(&tree, &page_info, &settings).body,
+        "<hr>\n<hr>",
+    );
 }
 
 pub fn render_element(ctx: &mut HtmlContext, element: &Element) {

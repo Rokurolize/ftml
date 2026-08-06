@@ -34,6 +34,7 @@
 
 use super::Replacer;
 use super::parser_functions::LiteralRegionIndex;
+use crate::parsing::Token;
 use regex::Regex;
 use std::ops::Range;
 use std::sync::LazyLock;
@@ -362,18 +363,11 @@ pub fn substitute_wikidot(text: &mut String) {
     let mut buffer = String::new();
     debug!("Performing typography substitutions");
 
-    macro_rules! replace {
-        ($replacer:expr) => {
-            $replacer.replace(text, &mut buffer)
-        };
-    }
-
     // Quotes
     replace_within_paragraphs(&DOUBLE_QUOTES, text, &mut buffer);
     replace_low_quotes_within_paragraphs(text, &mut buffer);
     replace_within_paragraphs(&SINGLE_QUOTES, text, &mut buffer);
-    replace!(LEFT_ANGLE_QUOTES);
-    replace!(RIGHT_ANGLE_QUOTES);
+    replace_wikidot_angle_quotes_outside_owners(text, &mut buffer);
 
     let digit_spaces = digit_space_positions(text);
     let mut protected_ranges = if digit_spaces.is_empty() {
@@ -390,6 +384,159 @@ pub fn substitute_wikidot(text: &mut String) {
 
     // Miscellaneous
     replace_wikidot_ellipsis_outside_literals(text, &mut buffer);
+}
+
+fn replace_wikidot_angle_quotes_outside_owners(text: &mut String, buffer: &mut String) {
+    if !text.contains("<<") && !text.contains(">>") {
+        return;
+    }
+
+    let protected = wikidot_angle_quote_protected_ranges(text);
+    if protected.is_empty() {
+        LEFT_ANGLE_QUOTES.replace(text, buffer);
+        RIGHT_ANGLE_QUOTES.replace(text, buffer);
+        return;
+    }
+
+    let source = std::mem::take(text);
+    let mut output = String::with_capacity(source.len());
+    let mut cursor = 0;
+    for range in protected {
+        replace_angle_quotes_in_segment(
+            &source[cursor..range.start],
+            &mut output,
+            buffer,
+        );
+        output.push_str(&source[range.clone()]);
+        cursor = range.end;
+    }
+    replace_angle_quotes_in_segment(&source[cursor..], &mut output, buffer);
+    *text = output;
+}
+
+fn replace_angle_quotes_in_segment(
+    segment: &str,
+    output: &mut String,
+    buffer: &mut String,
+) {
+    let mut segment = segment.to_owned();
+    LEFT_ANGLE_QUOTES.replace(&mut segment, buffer);
+    RIGHT_ANGLE_QUOTES.replace(&mut segment, buffer);
+    output.push_str(&segment);
+}
+
+fn wikidot_angle_quote_protected_ranges(text: &str) -> Vec<Range<usize>> {
+    let mut ranges = LiteralRegionIndex::new(text).ranges().to_vec();
+    let tokenization = crate::tokenize(text);
+    let tokens = tokenization.tokens();
+
+    for token in tokens {
+        if token.token == Token::Url {
+            ranges.push(token.span.clone());
+        }
+    }
+
+    collect_link_ranges(tokens, &mut ranges);
+    ranges = merge_ranges(ranges);
+    let literal_ranges = ranges.clone();
+    collect_math_ranges(tokens, text.len(), &literal_ranges, &mut ranges);
+    merge_ranges(ranges)
+}
+
+fn merge_ranges(mut ranges: Vec<Range<usize>>) -> Vec<Range<usize>> {
+    ranges.sort_unstable_by_key(|range| (range.start, range.end));
+    let mut merged: Vec<Range<usize>> = Vec::with_capacity(ranges.len());
+    for range in ranges {
+        if let Some(previous) = merged.last_mut()
+            && range.start <= previous.end
+        {
+            previous.end = previous.end.max(range.end);
+        } else {
+            merged.push(range);
+        }
+    }
+    merged
+}
+
+fn collect_link_ranges(
+    tokens: &[crate::parsing::ExtractedToken<'_>],
+    ranges: &mut Vec<Range<usize>>,
+) {
+    let mut triple_start = None;
+    let mut single_start = None;
+    for (index, token) in tokens.iter().enumerate() {
+        match token.token {
+            Token::LeftLink | Token::LeftLinkStar if triple_start.is_none() => {
+                triple_start = Some(token.span.start);
+            }
+            Token::RightLink => {
+                if let Some(start) = triple_start.take() {
+                    ranges.push(start..token.span.end);
+                }
+            }
+            Token::LeftBracket
+                if tokens
+                    .get(index + 1)
+                    .is_some_and(|next| next.token == Token::Url) =>
+            {
+                single_start = Some(token.span.start);
+            }
+            Token::RightBracket => {
+                if let Some(start) = single_start.take() {
+                    ranges.push(start..token.span.end);
+                }
+            }
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd => {
+                single_start = None;
+            }
+            _ => {}
+        }
+    }
+}
+
+fn collect_math_ranges(
+    tokens: &[crate::parsing::ExtractedToken<'_>],
+    source_len: usize,
+    existing: &[Range<usize>],
+    ranges: &mut Vec<Range<usize>>,
+) {
+    let mut active = None;
+    let mut index = 0;
+    while index < tokens.len() {
+        let token = &tokens[index];
+        if token.token == Token::LeftBlock
+            && active.is_none()
+            && !index_in_ranges(existing, token.span.start)
+            && block_name_after(tokens, index + 1)
+                .is_some_and(|name| name.eq_ignore_ascii_case("math"))
+        {
+            active = Some(token.span.start);
+        } else if token.token == Token::LeftBlockEnd
+            && active.is_some()
+            && block_name_after(tokens, index + 1)
+                .is_some_and(|name| name.eq_ignore_ascii_case("math"))
+            && let Some(close) = tokens[index..]
+                .iter()
+                .find(|candidate| candidate.token == Token::RightBlock)
+        {
+            ranges.push(active.take().unwrap()..close.span.end);
+        }
+        index += 1;
+    }
+    if let Some(start) = active {
+        ranges.push(start..source_len);
+    }
+}
+
+fn block_name_after<'t>(
+    tokens: &[crate::parsing::ExtractedToken<'t>],
+    mut index: usize,
+) -> Option<&'t str> {
+    while tokens.get(index)?.token == Token::Whitespace {
+        index += 1;
+    }
+    let token = tokens.get(index)?;
+    (token.token == Token::Identifier).then_some(token.slice)
 }
 
 fn replace_wikidot_ellipsis_outside_literals(text: &mut String, buffer: &mut String) {
@@ -596,4 +743,31 @@ fn wikidot_inline_escape_markers_do_not_pair_across_lines() {
     assert!(text.contains("CROSS:@@OPEN"), "{text}");
     assert!(text.contains("CLOSE:END…@@ AFTER…"), "{text}");
     assert!(text.contains("CLOSED:@@KEEP...@@ CHANGE…"), "{text}");
+}
+
+#[test]
+fn wikidot_angle_quotes_respect_literal_and_link_owners() {
+    let mut text = concat!(
+        "PROSE:<<A>>\n",
+        "[[code]]\n<<CODE>>\n[[/code]]\n",
+        "[[math]]\n<<MATH>>\n[[/math]]\n",
+        "[[[scp-002|<<LINK>>]]]\n",
+        "[https://example.com/x <<EXTERNAL>>]\n",
+        "https://example.com/a>>b\n",
+        "@@<<RAW>>@@",
+    )
+    .to_owned();
+
+    substitute_wikidot(&mut text);
+
+    assert!(text.contains("PROSE:«A»"), "{text}");
+    assert!(text.contains("<<CODE>>"), "{text}");
+    assert!(text.contains("<<MATH>>"), "{text}");
+    assert!(text.contains("[[[scp-002|<<LINK>>]]]"), "{text}");
+    assert!(
+        text.contains("[https://example.com/x <<EXTERNAL>>]"),
+        "{text}",
+    );
+    assert!(text.contains("https://example.com/a>>b"), "{text}");
+    assert!(text.contains("@@<<RAW>>@@"), "{text}");
 }

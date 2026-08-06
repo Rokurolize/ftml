@@ -34,9 +34,11 @@ pub fn render_definition_list(ctx: &mut HtmlContext, items: &[DefinitionListItem
             ..
         } in items
         {
-            ctx.html().dt().contents(key_elements);
-            if ctx.layout().legacy() {
-                ctx.push_raw('\n');
+            if !key_elements.is_empty() {
+                ctx.html().dt().contents(key_elements);
+                if ctx.layout().legacy() {
+                    ctx.push_raw('\n');
+                }
             }
             ctx.html().dd().contents(value_elements);
             if ctx.layout().legacy() {
@@ -47,6 +49,26 @@ pub fn render_definition_list(ctx: &mut HtmlContext, items: &[DefinitionListItem
     if ctx.layout().legacy() {
         ctx.push_raw('\n');
     }
+}
+
+#[test]
+fn wikidot_definition_list_omits_an_empty_term_tag() {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::Render;
+    use crate::render::html::HtmlRender;
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tokenization = crate::tokenize(":  : Value");
+    let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+    assert!(errors.is_empty(), "{errors:#?}");
+    assert_eq!(
+        HtmlRender.render(&tree, &page_info, &settings).body,
+        "<dl>\n<dd>Value</dd>\n</dl>\n",
+    );
 }
 
 #[test]

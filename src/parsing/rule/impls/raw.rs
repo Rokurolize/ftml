@@ -21,6 +21,7 @@
 use super::entity::decode_semicolon_entities;
 use super::prelude::*;
 use crate::delayed::DelayedElement;
+use std::borrow::Cow;
 
 macro_rules! raw {
     ($value:expr) => {
@@ -199,6 +200,19 @@ fn try_consume_fn<'r, 't>(
                     Token::Raw => cow!(slice),
                     _ => unreachable!(),
                 };
+                if parser.settings().layout.legacy()
+                    && ending_token == Token::Raw
+                    && let Some(inner) = slice
+                        .strip_prefix("<<")
+                        .and_then(|slice| slice.strip_suffix(">>"))
+                {
+                    let raw = format!("<{inner}>");
+                    return ok!(Elements::Multiple(vec![
+                        text!("@"),
+                        Element::Raw(Cow::Owned(raw)),
+                        text!("@"),
+                    ]));
+                }
                 let element = Element::Raw(raw);
                 return success_elements(element);
             }
@@ -303,6 +317,16 @@ mod tests {
             assert_eq!(
                 result.unwrap(),
                 Elements::Multiple(vec![raw!("alpha>"), text!("@")]),
+            );
+        });
+    }
+
+    #[test]
+    fn wikidot_angle_raw_uses_the_overlapping_at_angle_owner() {
+        with_raw_elements("@@<<A>>@@", |result| {
+            assert_eq!(
+                result.unwrap(),
+                Elements::Multiple(vec![text!("@"), raw!("<A>"), text!("@")]),
             );
         });
     }

@@ -22,6 +22,9 @@ mod inline_delimiter_performance;
 #[path = "wikidot_inline_delimiter_ownership.rs"]
 mod wikidot_inline_delimiter_ownership;
 
+#[path = "wikidot_lexical_owner_residuals.rs"]
+mod wikidot_lexical_owner_residuals;
+
 #[path = "parser_functions_wikidot_syntax.rs"]
 mod parser_functions_wikidot_syntax;
 

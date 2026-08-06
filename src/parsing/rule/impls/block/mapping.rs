@@ -118,6 +118,7 @@ pub fn get_block_rule_with_name_for_layout(
 
 fn wikidot_supports_block_name(name: &str) -> bool {
     const FTML_ONLY_NAMES: &[&str] = &[
+        "anchor",
         "anchortarget",
         "audio",
         "b",
@@ -228,6 +229,7 @@ fn block_rule_map_accepts_case_insensitive_names() {
 
 #[test]
 fn wikidot_layout_rejects_ftml_only_block_names() {
+    assert!(get_block_rule_with_name_for_layout("anchor", Layout::Wikidot).is_none());
     assert!(get_block_rule_with_name_for_layout("strong", Layout::Wikidot).is_none());
     assert!(get_block_rule_with_name_for_layout("video", Layout::Wikidot).is_none());
     assert!(get_block_rule_with_name_for_layout("embed", Layout::Wikidot).is_none());
@@ -238,6 +240,11 @@ fn wikidot_layout_rejects_ftml_only_block_names() {
     );
     assert!(get_block_rule_with_name_for_layout("char", Layout::Wikidot).is_none());
     assert!(get_block_rule_with_name_for_layout("radio", Layout::Wikidot).is_none());
+    assert_eq!(
+        get_block_rule_with_name_for_layout("anchor", Layout::Wikijump)
+            .map(|rule| rule.name),
+        Some("block-anchor"),
+    );
     assert_eq!(
         get_block_rule_with_name_for_layout("strong", Layout::Wikijump)
             .map(|rule| rule.name),

@@ -44,7 +44,10 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    let arguments = parser.get_head_map(&BLOCK_ANCHOR, in_head)?;
+    let arguments = parser.get_head_map_wikidot(&BLOCK_ANCHOR, in_head)?;
+    if parser.settings().layout.legacy() && !parser.has_body_end_block(&BLOCK_ANCHOR) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     let attributes = if parser.settings().layout.legacy() {
         arguments.to_wikidot_anchor_attribute_map(parser.settings())
     } else {
@@ -134,6 +137,17 @@ mod tests {
         assert_eq!(
             render_with_layout(source, Layout::Wikijump),
             r#"<p><a class="wj-anchor" href="https://example.com/" title="Label">Label</a></p>"#,
+        );
+    }
+
+    #[test]
+    fn wikijump_anchor_alias_remains_active() {
+        assert_eq!(
+            render_with_layout(
+                r#"[[anchor href="some-page"]]click[[/anchor]]"#,
+                Layout::Wikijump,
+            ),
+            r#"<p><a class="wj-anchor" href="/some-page">click</a></p>"#,
         );
     }
 

@@ -64,6 +64,9 @@ mod wikidot_line_ownership;
 #[path = "wikidot_automatic_links.rs"]
 mod wikidot_automatic_links;
 
+#[path = "wikidot_anchor_block.rs"]
+mod wikidot_anchor_block;
+
 #[path = "wikidot_block_argument_grammar.rs"]
 mod wikidot_block_argument_grammar;
 

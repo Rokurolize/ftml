@@ -260,7 +260,7 @@ impl<'t> Arguments<'t> {
     /// if that is enabled, and so needs `WikitextSettings` to be passed in.
     #[inline]
     pub fn to_attribute_map(&self, settings: &WikitextSettings) -> AttributeMap<'t> {
-        let mut map = self.attribute_map_from_entries(settings, |_| true);
+        let mut map = self.attribute_map_from_entries(settings, |_, _| true);
         map.isolate_id(settings);
         map
     }
@@ -269,7 +269,8 @@ impl<'t> Arguments<'t> {
         &self,
         settings: &WikitextSettings,
     ) -> AttributeMap<'t> {
-        let mut map = self.to_attribute_map(settings);
+        let mut map =
+            self.attribute_map_from_entries(settings, |_, value| !value.is_empty());
         map.remove("title");
         let href = self.inner.get(&self.key("href")).filter(|value| {
             matches!(
@@ -291,7 +292,7 @@ impl<'t> Arguments<'t> {
         settings: &WikitextSettings,
     ) -> AttributeMap<'t> {
         let mut map =
-            self.attribute_map_from_entries(settings, |key| !self.bare.contains(key));
+            self.attribute_map_from_entries(settings, |key, _| !self.bare.contains(key));
         map.isolate_id(settings);
         map
     }
@@ -299,12 +300,12 @@ impl<'t> Arguments<'t> {
     fn attribute_map_from_entries(
         &self,
         settings: &WikitextSettings,
-        include: impl Fn(&ArgumentKey<'t>) -> bool,
+        include: impl Fn(&ArgumentKey<'t>, &Cow<'t, str>) -> bool,
     ) -> AttributeMap<'t> {
         let mut attributes = AttributeMap::new();
 
         for (key, value) in &self.inner {
-            if !include(key) {
+            if !include(key, value) {
                 continue;
             }
 

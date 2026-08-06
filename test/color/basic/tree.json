@@ -10,6 +10,7 @@
                         "element": "color",
                         "data": {
                             "color": "#c00",
+                            "background": false,
                             "elements": [
                                 {
                                     "element": "text",
@@ -31,6 +32,7 @@
                         "element": "color",
                         "data": {
                             "color": "#fff",
+                            "background": false,
                             "elements": [
                                 {
                                     "element": "text",
@@ -52,6 +54,7 @@
                         "element": "color",
                         "data": {
                             "color": "#cd3636",
+                            "background": false,
                             "elements": [
                                 {
                                     "element": "text",
@@ -73,6 +76,7 @@
                         "element": "color",
                         "data": {
                             "color": "blue",
+                            "background": false,
                             "elements": [
                                 {
                                     "element": "text",
@@ -94,6 +98,7 @@
                         "element": "color",
                         "data": {
                             "color": "rgb(241, 194, 50)",
+                            "background": false,
                             "elements": [
                                 {
                                     "element": "text",

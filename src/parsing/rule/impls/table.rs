@@ -214,6 +214,7 @@ fn try_consume_fn<'r, 't>(
             return finish_simple_table(rows, errors);
         }
         let mut cells = Vec::new();
+        let mut pending_color_close = false;
 
         // Loop for each cell in the row
         'row: loop {
@@ -228,6 +229,12 @@ fn try_consume_fn<'r, 't>(
 
             // Loop for each element in the cell
             'cell: loop {
+                if pending_color_close && parser.current().token == Token::Color {
+                    parser.step()?;
+                    pending_color_close = false;
+                    continue;
+                }
+
                 match parser.next_two_tokens() {
                     // End the cell or row
                     (current, Some(next)) if is_table_column_token(current) => {
@@ -322,7 +329,19 @@ fn try_consume_fn<'r, 't>(
 
                     // Consume tokens like normal
                     _ => {
-                        let consumed = consume(parser)?;
+                        let wikidot = parser.settings().layout.legacy();
+                        if wikidot {
+                            parser.set_in_wikidot_simple_table_cell(true);
+                        }
+                        let consumed = consume(parser);
+                        if wikidot {
+                            parser.set_in_wikidot_simple_table_cell(false);
+                        }
+                        let consumed = consumed?;
+                        if wikidot {
+                            pending_color_close |=
+                                parser.take_color_crossed_wikidot_simple_table_cell();
+                        }
                         let new_items = consumed.chain(&mut errors, &mut paragraph_break);
 
                         append_cell_elements(&mut elements, new_items);

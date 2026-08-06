@@ -12,6 +12,8 @@ pub(super) struct WikidotState {
     quote_boundary_closes_body: bool,
     pending_collapsible_closer: bool,
     collapsible_closed_at_deeper_quote: bool,
+    in_simple_table_cell: bool,
+    color_crossed_simple_table_cell: bool,
 }
 
 impl Parser<'_, '_> {
@@ -116,5 +118,21 @@ impl Parser<'_, '_> {
 
     pub(crate) fn set_wikidot_collapsible_closed_at_deeper_quote(&mut self, value: bool) {
         self.wikidot.collapsible_closed_at_deeper_quote = value;
+    }
+
+    pub(crate) fn in_wikidot_simple_table_cell(&self) -> bool {
+        self.wikidot.in_simple_table_cell
+    }
+
+    pub(crate) fn set_in_wikidot_simple_table_cell(&mut self, value: bool) {
+        self.wikidot.in_simple_table_cell = value;
+    }
+
+    pub(crate) fn mark_color_crossed_wikidot_simple_table_cell(&mut self) {
+        self.wikidot.color_crossed_simple_table_cell = true;
+    }
+
+    pub(crate) fn take_color_crossed_wikidot_simple_table_cell(&mut self) -> bool {
+        std::mem::take(&mut self.wikidot.color_crossed_simple_table_cell)
     }
 }

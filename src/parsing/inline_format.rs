@@ -1,4 +1,4 @@
-use crate::parsing::rule::impls::normalize_color;
+use crate::parsing::rule::impls::normalize_wikidot_color;
 use crate::tree::{
     AttributeMap, Container, ContainerType, Element, ListItem, PartialElement,
 };
@@ -82,6 +82,7 @@ enum FormatShell<'t> {
     },
     Color {
         color: Cow<'t, str>,
+        background: bool,
     },
 }
 
@@ -109,8 +110,9 @@ impl<'t> FormatShell<'t> {
             FormatShell::Container {
                 ctype, attributes, ..
             } => Element::Container(Container::new(*ctype, elements, attributes.clone())),
-            FormatShell::Color { color } => Element::Color {
+            FormatShell::Color { color, background } => Element::Color {
                 color: color.clone(),
+                background: *background,
                 elements,
             },
         }
@@ -126,8 +128,11 @@ impl<'t> FormatShell<'t> {
                     attributes: container.attributes().clone(),
                 })
             }
-            Element::Color { color, .. } => Some(FormatShell::Color {
+            Element::Color {
+                color, background, ..
+            } => Some(FormatShell::Color {
                 color: color.clone(),
+                background: *background,
             }),
             _ => None,
         }
@@ -149,9 +154,11 @@ impl<'t> FormatShell<'t> {
                     elements,
                 ))
             }
-            Element::Color { color, elements } => {
-                Some((FormatShell::Color { color }, elements))
-            }
+            Element::Color {
+                color,
+                background,
+                elements,
+            } => Some((FormatShell::Color { color, background }, elements)),
             _ => None,
         }
     }
@@ -687,16 +694,18 @@ fn outer_candidate<'t>(
         return None;
     }
     let mut color = String::new();
+    let mut background = false;
     for (offset, element) in elements[start + 1..].iter().enumerate() {
         let value = text(element)?;
         if value == "|" {
-            if color.is_empty() {
-                return None;
+            if color.trim().is_empty() && !background {
+                background = true;
+                color.clear();
+                continue;
             }
+            let color = normalize_wikidot_color(&color)?.into_owned().into();
             return Some(OuterCandidate {
-                shell: FormatShell::Color {
-                    color: normalize_color(&color).into_owned().into(),
-                },
+                shell: FormatShell::Color { color, background },
                 opener_len: offset + 2,
                 literal_marker: "##",
             });

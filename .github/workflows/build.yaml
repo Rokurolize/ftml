@@ -474,13 +474,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          prior_gate_success=$(gh api --method GET "repos/${GITHUB_REPOSITORY}/commits/${HEAD_SHA}/check-runs" -f check_name='CI / gate' -f filter=all -f per_page=100 --jq 'any(.check_runs[]; .app.slug == "github-actions" and .conclusion == "success")')
-          if [[ "${prior_gate_success}" != "true" ]]; then
-            echo "No prior successful GitHub Actions CI / gate exists for ${HEAD_SHA}." >&2
+          latest_gate_conclusion=$(gh api --method GET "repos/${GITHUB_REPOSITORY}/commits/${HEAD_SHA}/check-runs" -f check_name='CI / gate' -f filter=all -f per_page=100 --jq '[.check_runs[] | select(.app.slug == "github-actions")] | sort_by(.id) | last | .conclusion // ""')
+          if [[ "${latest_gate_conclusion}" != "success" ]]; then
+            echo "The latest GitHub Actions CI / gate for ${HEAD_SHA} is not successful: ${latest_gate_conclusion:-missing}." >&2
             exit 1
           fi
 
-          echo "Preserving the prior successful CI / gate for metadata-only event on ${HEAD_SHA}."
+          echo "Preserving the latest successful CI / gate for metadata-only event on ${HEAD_SHA}."
 
       - name: Record inactive PR gate
         if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == true && needs.classify.outputs.run_ci != 'true' }}

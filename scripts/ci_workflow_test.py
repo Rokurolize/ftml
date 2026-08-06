@@ -75,6 +75,13 @@ def classify_event(event_name, action, draft, labels=(), changed_label=None, bas
     return run_ci, candidate, False, gate_name
 
 
+def latest_gate_is_successful(check_runs):
+    candidates = [run for run in check_runs if run.get("app", {}).get("slug") == "github-actions"]
+    if not candidates:
+        return False
+    return max(candidates, key=lambda run: run["id"]).get("conclusion") == "success"
+
+
 class CiWorkflowPolicyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -101,7 +108,9 @@ class CiWorkflowPolicyTests(unittest.TestCase):
         self.assertIn("if: ${{ github.event_name == 'pull_request' && needs.classify.outputs.run_ci == 'true' }}", gate)
         self.assertIn("Preserve required PR gate on metadata-only event", gate)
         self.assertIn("check_name='CI / gate'", gate)
-        self.assertIn('.app.slug == \"github-actions\" and .conclusion == \"success\"', gate)
+        self.assertIn('select(.app.slug == \"github-actions\")', gate)
+        self.assertIn("sort_by(.id) | last | .conclusion", gate)
+        self.assertNotIn("any(.check_runs[]", gate)
         self.assertIn("Record inactive PR gate", gate)
         for required_job in ("classify", "rust_unit", "library_build_and_test", "wasm", "clippy_lint", "configuration_check"):
             self.assertIn(f"      - {required_job}\n", gate)
@@ -145,6 +154,19 @@ class CiWorkflowPolicyTests(unittest.TestCase):
             self.assertIn("needs.classify.outputs.run_ci == 'true'", job_section(self.workflow, job))
         self.assertIn("needs.classify.outputs.run_ci == 'true'", job_section(self.workflow, "pr_gate"))
         self.assertNotIn("codecov", self.workflow.lower())
+
+    def test_metadata_gate_uses_only_the_latest_github_actions_result(self):
+        success = {"id": 10, "conclusion": "success", "app": {"slug": "github-actions"}}
+        failure = {"id": 11, "conclusion": "failure", "app": {"slug": "github-actions"}}
+        running = {"id": 12, "conclusion": None, "app": {"slug": "github-actions"}}
+        foreign = {"id": 99, "conclusion": "success", "app": {"slug": "other-app"}}
+
+        self.assertFalse(latest_gate_is_successful([]))
+        self.assertTrue(latest_gate_is_successful([success]))
+        self.assertFalse(latest_gate_is_successful([success, failure]))
+        self.assertTrue(latest_gate_is_successful([failure, {**success, "id": 12}]))
+        self.assertFalse(latest_gate_is_successful([success, running]))
+        self.assertFalse(latest_gate_is_successful([foreign]))
 
     def test_classifier_owns_all_build_and_configuration_inputs(self):
         classifier = self.workflow.split("\n  classify:\n", maxsplit=1)[1].split("\n  library_build_and_test:\n", maxsplit=1)[0]

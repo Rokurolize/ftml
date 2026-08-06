@@ -66,3 +66,6 @@ mod wikidot_block_argument_grammar;
 
 #[path = "yossistyle_wikidot_syntax.rs"]
 mod yossistyle_wikidot_syntax;
+
+#[path = "wikidot_css_module_scope.rs"]
+mod wikidot_css_module_scope;

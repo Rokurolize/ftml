@@ -119,6 +119,7 @@ pub struct Arguments<'t> {
     inner: HashMap<ArgumentKey<'t>, Cow<'t, str>>,
     raw: Vec<RawModuleArgument<'t>>,
     bare: HashSet<ArgumentKey<'t>>,
+    bare_source_present: bool,
     case_sensitive: bool,
     source_present: bool,
     spaced_equals: bool,
@@ -160,6 +161,7 @@ impl<'t> Arguments<'t> {
 
     pub fn insert_bare(&mut self, key: &'t str, value: Cow<'t, str>) {
         self.insert(key, value);
+        self.bare_source_present = true;
         self.bare.insert(self.key(key));
     }
 
@@ -222,6 +224,11 @@ impl<'t> Arguments<'t> {
     #[inline]
     pub(crate) fn has_source(&self) -> bool {
         self.source_present
+    }
+
+    #[inline]
+    pub(crate) fn has_bare_source(&self) -> bool {
+        self.bare_source_present
     }
 
     pub fn mark_spaced_equals(&mut self) {

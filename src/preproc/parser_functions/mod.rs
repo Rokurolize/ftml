@@ -25,18 +25,13 @@ mod literal;
 
 use self::expression::{evaluate, format_value, truthy};
 pub(in crate::preproc) use self::literal::LiteralRegionIndex;
-use regex::Regex;
 use std::ops::Range;
-use std::sync::LazyLock;
 
-const MAX_RESOLUTION_PASSES: usize = 32;
 const MAX_DOCUMENT_CANDIDATES: usize = 8_192;
+const MAX_PARSER_FUNCTION_NESTING: usize = 256;
+const MAX_UNMATCHED_DELIMITERS: usize = MAX_DOCUMENT_CANDIDATES;
+const MAX_UNSUPPORTED_PAYLOAD_LENGTH: usize = 4_096;
 const MAX_CONDITIONAL_SCAN_MULTIPLIER: usize = 32;
-
-static CONDITIONAL_OPEN_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?is)\[\[#(?P<kind>ifexpr|if)\s+").unwrap());
-static EXPR_OPEN_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?is)\[\[#expr\s+").unwrap());
 
 /// Policy for arithmetic division or remainder operations with a zero divisor.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -75,42 +70,16 @@ pub fn resolve_wikidot_parser_functions(source: &str) -> String {
 
 /// Resolve parser functions with an explicit context-free evaluation policy.
 ///
-/// At most 8,192 parser-function candidates, 32 nested passes, and a
-/// document-proportional amount of malformed-conditional scan work are
-/// examined per document. Content beyond those bounds remains literal.
+/// At most 8,192 parser-function candidates and a document-proportional amount
+/// of parser-function scan work are examined per document. Content beyond
+/// those bounds remains literal.
 pub fn resolve_wikidot_parser_functions_with_options(
     source: &str,
     options: WikidotParserFunctionOptions,
 ) -> String {
-    let mut resolved = source.to_owned();
     let mut budget = CandidateBudget::default();
     let mut scan_budget = ConditionalScanBudget::new(source.len());
-
-    for _ in 0..MAX_RESOLUTION_PASSES {
-        let conditional =
-            resolve_conditional_pass(&resolved, options, &mut budget, &mut scan_budget);
-        if conditional != resolved {
-            resolved = conditional;
-            if budget.exhausted() {
-                break;
-            }
-            continue;
-        }
-        if budget.exhausted() {
-            break;
-        }
-
-        let expression = resolve_expression_pass(&resolved, options, &mut budget);
-        if expression == resolved {
-            break;
-        }
-        resolved = expression;
-        if budget.exhausted() {
-            break;
-        }
-    }
-
-    resolved
+    resolve_function_pass(source, options, &mut budget, &mut scan_budget)
 }
 
 pub(super) fn substitute(text: &mut String) {
@@ -133,6 +102,7 @@ struct ConditionalScanBudget {
 #[derive(Debug)]
 struct WikidotDelimiterIndex {
     unmatched_openers: Vec<usize>,
+    overflowed: bool,
 }
 
 impl Default for CandidateBudget {
@@ -164,22 +134,32 @@ impl WikidotDelimiterIndex {
         let bytes = source.as_bytes();
         let mut cursor = 0usize;
         let mut unmatched_openers = Vec::new();
+        let mut overflowed = false;
         while cursor + 1 < bytes.len() {
             if bytes[cursor..].starts_with(b"[[") {
-                unmatched_openers.push(cursor);
+                if unmatched_openers.len() == MAX_UNMATCHED_DELIMITERS {
+                    overflowed = true;
+                } else if !overflowed {
+                    unmatched_openers.push(cursor);
+                }
                 cursor += 2;
             } else if bytes[cursor..].starts_with(b"]]") {
-                unmatched_openers.pop();
+                if !overflowed {
+                    unmatched_openers.pop();
+                }
                 cursor += 2;
             } else {
                 cursor += 1;
             }
         }
-        Self { unmatched_openers }
+        Self {
+            unmatched_openers,
+            overflowed,
+        }
     }
 
     fn is_unmatched_opener(&self, offset: usize) -> bool {
-        self.unmatched_openers.binary_search(&offset).is_ok()
+        !self.overflowed && self.unmatched_openers.binary_search(&offset).is_ok()
     }
 }
 
@@ -191,10 +171,37 @@ impl CandidateBudget {
         self.remaining -= 1;
         true
     }
+}
 
-    fn exhausted(&self) -> bool {
-        self.remaining == 0
-    }
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ParserFunctionKind {
+    If,
+    IfExpr,
+    Expr,
+    Unsupported,
+    UnsupportedEmptyName,
+    WrongCase,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct ParserFunctionCandidate {
+    body_start: usize,
+    kind: ParserFunctionKind,
+}
+
+#[derive(Debug)]
+struct FlatConditionalParts {
+    end: usize,
+    condition: Range<usize>,
+    when_true: Option<Range<usize>>,
+    when_false: Option<Range<usize>>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ScanResult<T> {
+    Found(T),
+    NotFound,
+    Exhausted,
 }
 
 #[derive(Debug)]
@@ -213,7 +220,7 @@ struct ConditionalParts {
     when_false: Option<Range<usize>>,
 }
 
-fn resolve_conditional_pass(
+fn resolve_function_pass(
     source: &str,
     options: WikidotParserFunctionOptions,
     budget: &mut CandidateBudget,
@@ -224,81 +231,528 @@ fn resolve_conditional_pass(
     let mut replacements = Vec::new();
     let mut search_start = 0usize;
 
-    while let Some(captures) = CONDITIONAL_OPEN_REGEX.captures(&source[search_start..]) {
+    while let Some(relative_start) = source[search_start..].find("[[#") {
         if !budget.take() {
             break;
         }
 
-        let full_open = captures.get(0).expect("conditional opening capture exists");
-        let function_start = search_start + full_open.start();
-        let condition_start = search_start + full_open.end();
-        let kind = captures
-            .name("kind")
-            .expect("conditional kind capture exists")
-            .as_str();
-        let (parts, crossing_link) = match find_conditional_parts_indexed(
-            source,
-            condition_start,
-            &delimiter_index,
-            scan_budget,
-        ) {
-            ConditionalSearch::Found(parts) => (parts, false),
-            ConditionalSearch::CrossingLink(parts) => (parts, true),
-            ConditionalSearch::NotFound => {
-                search_start = condition_start;
-                continue;
-            }
-            ConditionalSearch::Exhausted => break,
+        let function_start = search_start + relative_start;
+        search_start = function_start + "[[#".len();
+        let Some(candidate) = classify_candidate(source, function_start) else {
+            continue;
         };
 
         if literal_regions.contains(function_start) {
-            search_start = parts.end;
             continue;
         }
 
-        let condition = source[parts.condition.clone()].trim();
-        let truth = if kind.eq_ignore_ascii_case("ifexpr") {
-            match evaluate(condition, options) {
-                Ok(value) => Some(Ok(truthy(value))),
-                Err(error) => error.runtime_message().map(Err),
+        let resolution = match candidate.kind {
+            ParserFunctionKind::If | ParserFunctionKind::IfExpr => {
+                resolve_conditional_candidate(
+                    source,
+                    candidate,
+                    options,
+                    &delimiter_index,
+                    scan_budget,
+                )
             }
-        } else {
-            Some(Ok(simple_condition(condition)))
+            ParserFunctionKind::Expr => {
+                resolve_expression_candidate(source, candidate, options, scan_budget)
+            }
+            ParserFunctionKind::Unsupported
+            | ParserFunctionKind::UnsupportedEmptyName => {
+                resolve_unsupported_candidate(source, candidate, scan_budget)
+            }
+            ParserFunctionKind::WrongCase => {
+                resolve_empty_candidate(source, candidate, scan_budget)
+            }
         };
 
-        let Some(truth) = truth else {
-            // Continue inside an invalid outer function so a valid nested
-            // function can still be resolved in this bounded pass.
-            search_start = condition_start;
-            continue;
-        };
-        if crossing_link
-            && (!kind.eq_ignore_ascii_case("ifexpr") || !matches!(&truth, Ok(false)))
-        {
-            // Only the provenance-backed false ifexpr shape may share the
-            // inline link's closing delimiter. Unsupported outcomes remain
-            // literal while independently valid nested functions may resolve.
-            search_start = condition_start;
-            continue;
+        match resolution {
+            ScanResult::Found((end, replacement)) => {
+                replacements.push((function_start..end, replacement));
+                search_start = end;
+            }
+            ScanResult::NotFound => {}
+            ScanResult::Exhausted => break,
         }
-        let replacement = match truth {
-            Ok(true) => source[parts.when_true].trim().to_owned(),
-            Ok(false) => parts
-                .when_false
-                .map_or("", |range| &source[range])
-                .trim()
-                .to_owned(),
-            Err(message) => message,
-        };
-        replacements.push((function_start..parts.end, replacement));
-        search_start = parts.end;
     }
 
     apply_replacements(source, replacements)
 }
 
+fn classify_candidate(source: &str, start: usize) -> Option<ParserFunctionCandidate> {
+    let bytes = source.as_bytes();
+    let name_start = start + "[[#".len();
+    let mut name_end = name_start;
+    while bytes.get(name_end).is_some_and(u8::is_ascii_alphanumeric) {
+        name_end += 1;
+    }
+
+    let separator = *bytes.get(name_end)?;
+    if !matches!(separator, b' ' | b'\t') {
+        return None;
+    }
+
+    let name = &source[name_start..name_end];
+    let kind = match name {
+        "if" => ParserFunctionKind::If,
+        "ifexpr" => ParserFunctionKind::IfExpr,
+        "expr" => ParserFunctionKind::Expr,
+        _ if ["if", "ifexpr", "expr"]
+            .iter()
+            .any(|known| name.eq_ignore_ascii_case(known)) =>
+        {
+            ParserFunctionKind::WrongCase
+        }
+        "" => ParserFunctionKind::UnsupportedEmptyName,
+        _ => ParserFunctionKind::Unsupported,
+    };
+
+    Some(ParserFunctionCandidate {
+        body_start: name_end + 1,
+        kind,
+    })
+}
+
+fn resolve_conditional_candidate(
+    source: &str,
+    candidate: ParserFunctionCandidate,
+    options: WikidotParserFunctionOptions,
+    delimiter_index: &WikidotDelimiterIndex,
+    scan_budget: &mut ConditionalScanBudget,
+) -> ScanResult<(usize, String)> {
+    let flat_parts =
+        match find_flat_conditional_parts(source, candidate.body_start, scan_budget) {
+            ScanResult::Found(parts) => parts,
+            ScanResult::NotFound => {
+                return resolve_single_bracket_candidate(source, candidate, scan_budget);
+            }
+            ScanResult::Exhausted => return ScanResult::Exhausted,
+        };
+
+    let has_branches = flat_parts.when_true.is_some();
+    let crossing_link_candidate = flat_parts
+        .when_true
+        .as_ref()
+        .map(|range| source[range.clone()].trim_start_matches([' ', '\t']))
+        .is_some_and(is_wikidot_crossing_link_opener);
+    if !crossing_link_candidate {
+        match contains_wikidot_double_bracket_link(
+            source,
+            candidate.body_start,
+            flat_parts.end - 2,
+            scan_budget,
+        ) {
+            ScanResult::Found(true) => return ScanResult::NotFound,
+            ScanResult::Found(false) | ScanResult::NotFound => {}
+            ScanResult::Exhausted => return ScanResult::Exhausted,
+        }
+    }
+    if candidate.kind == ParserFunctionKind::IfExpr
+        && source[flat_parts.end..]
+            .trim_start_matches([' ', '\t'])
+            .starts_with("[[a ")
+    {
+        return ScanResult::NotFound;
+    }
+    let mut crossing_link = false;
+    let parts = if crossing_link_candidate {
+        match find_conditional_parts_indexed(
+            source,
+            candidate.body_start,
+            delimiter_index,
+            scan_budget,
+        ) {
+            ConditionalSearch::Found(parts) => parts,
+            ConditionalSearch::CrossingLink(parts) => {
+                crossing_link = true;
+                parts
+            }
+            ConditionalSearch::NotFound => return ScanResult::NotFound,
+            ConditionalSearch::Exhausted => return ScanResult::Exhausted,
+        }
+    } else {
+        ConditionalParts {
+            end: flat_parts.end,
+            condition: flat_parts.condition,
+            when_true: flat_parts
+                .when_true
+                .unwrap_or(candidate.body_start..candidate.body_start),
+            when_false: flat_parts.when_false,
+        }
+    };
+
+    let raw_condition = &source[parts.condition.clone()];
+    let condition = raw_condition.trim_matches([' ', '\t']);
+    let truth = match candidate.kind {
+        ParserFunctionKind::If => {
+            if !has_branches {
+                let condition = condition.trim_matches([' ', '\t']);
+                if condition.is_empty()
+                    || condition == "0"
+                    || condition == "1"
+                    || condition.starts_with("0|")
+                    || condition.starts_with("1|")
+                    || condition.starts_with("0 |")
+                    || condition.starts_with("1 |")
+                {
+                    return ScanResult::Found((parts.end, String::new()));
+                }
+                return ScanResult::NotFound;
+            }
+            Ok(simple_condition(raw_condition))
+        }
+        ParserFunctionKind::IfExpr => {
+            let condition = if has_branches {
+                condition
+            } else {
+                source[candidate.body_start..parts.end - 2].trim_matches([' ', '\t'])
+            };
+            if condition.is_empty() {
+                Ok(false)
+            } else {
+                match evaluate(condition, options) {
+                    Ok(value) => Ok(truthy(value)),
+                    Err(error) => match error.runtime_message() {
+                        Some(message) => Err(message),
+                        None => return ScanResult::NotFound,
+                    },
+                }
+            }
+        }
+        _ => unreachable!("only conditionals reach conditional resolution"),
+    };
+
+    if crossing_link
+        && (candidate.kind != ParserFunctionKind::IfExpr || !matches!(&truth, Ok(false)))
+    {
+        return ScanResult::NotFound;
+    }
+
+    let replacement = match truth {
+        Ok(true) if has_branches => source[parts.when_true].trim_matches(' ').to_owned(),
+        Ok(false) if has_branches => parts
+            .when_false
+            .map_or("", |range| &source[range])
+            .trim_matches(' ')
+            .to_owned(),
+        Ok(_) => String::new(),
+        Err(message) => message,
+    };
+    if let Some(recovered) =
+        recover_branch_residual(source, parts.end, &replacement, scan_budget)
+    {
+        return ScanResult::Found(recovered);
+    }
+    ScanResult::Found((parts.end, replacement))
+}
+
+fn recover_branch_residual(
+    source: &str,
+    replacement_end: usize,
+    replacement: &str,
+    scan_budget: &mut ConditionalScanBudget,
+) -> Option<(usize, String)> {
+    for prefix in ["[[#expr ", "[[#if "] {
+        let Some(payload) = replacement.strip_prefix(prefix) else {
+            continue;
+        };
+        let payload = if prefix == "[[#if " {
+            payload.split(" | ").next().unwrap_or(payload)
+        } else {
+            payload
+        };
+        if !is_safe_legacy_payload(payload) {
+            return None;
+        }
+        let ScanResult::Found(close_start) =
+            find_closer(source, replacement_end, scan_budget)
+        else {
+            return None;
+        };
+        let suffix = &source[replacement_end..close_start];
+        if !is_safe_legacy_payload(suffix) {
+            return None;
+        }
+        return Some((close_start + 2, format!("[{payload}{suffix}]")));
+    }
+
+    let opener = replacement.strip_prefix("[[")?;
+    let name_end = opener
+        .bytes()
+        .position(|byte| !byte.is_ascii_alphanumeric())
+        .unwrap_or(opener.len());
+    let name = &opener[..name_end];
+    if name.is_empty() {
+        return None;
+    }
+    let closing = format!("[[/{name}]]");
+    let ScanResult::Found(closing_start) =
+        find_bytes(source, replacement_end, closing.as_bytes(), scan_budget)
+    else {
+        return None;
+    };
+    let after_closing = closing_start + closing.len();
+    let ScanResult::Found(outer_close) = find_closer(source, after_closing, scan_budget)
+    else {
+        return None;
+    };
+    let before_closing = &source[replacement_end..closing_start];
+    let after_closing = source[after_closing..outer_close]
+        .strip_prefix(' ')
+        .unwrap_or(&source[after_closing..outer_close]);
+    Some((
+        outer_close + 2,
+        format!("{replacement}{before_closing}[{after_closing}]"),
+    ))
+}
+
+fn is_safe_legacy_payload(payload: &str) -> bool {
+    payload.bytes().all(|byte| {
+        byte.is_ascii_alphanumeric()
+            || byte.is_ascii_whitespace()
+            || b"_|+-*/%<>=!().,".contains(&byte)
+    })
+}
+
+fn find_flat_conditional_parts(
+    source: &str,
+    condition_start: usize,
+    scan_budget: &mut ConditionalScanBudget,
+) -> ScanResult<FlatConditionalParts> {
+    let bytes = source.as_bytes();
+    let mut cursor = condition_start;
+    let mut first_separator = None;
+    let mut last_separator = None;
+    let mut separator_count = 0usize;
+    let mut nested_candidates = 0usize;
+
+    while cursor + 1 < bytes.len() {
+        if !scan_budget.take() {
+            return ScanResult::Exhausted;
+        }
+        if bytes[cursor..].starts_with(b"]]") {
+            let condition_end = first_separator.unwrap_or(cursor);
+            let when_true = first_separator.map(|first| {
+                let true_end = if separator_count > 1 {
+                    last_separator.expect("multiple separators have a last separator")
+                } else {
+                    cursor
+                };
+                first + 1..true_end
+            });
+            let when_false = (separator_count > 1).then(|| {
+                last_separator.expect("multiple separators have a last separator") + 1
+                    ..cursor
+            });
+            return ScanResult::Found(FlatConditionalParts {
+                end: cursor + 2,
+                condition: condition_start..condition_end,
+                when_true,
+                when_false,
+            });
+        }
+        if cursor > condition_start && bytes[cursor..].starts_with(b"[[#") {
+            nested_candidates += 1;
+            if nested_candidates > MAX_PARSER_FUNCTION_NESTING {
+                return ScanResult::Exhausted;
+            }
+        }
+        if bytes[cursor] == b'|'
+            && bytes
+                .get(cursor.wrapping_sub(1))
+                .is_some_and(|byte| matches!(byte, b' ' | b'\t'))
+            && bytes
+                .get(cursor + 1)
+                .is_some_and(|byte| matches!(byte, b' ' | b'\t'))
+        {
+            first_separator.get_or_insert(cursor);
+            last_separator = Some(cursor);
+            separator_count += 1;
+        }
+        cursor += 1;
+    }
+    ScanResult::NotFound
+}
+
+fn contains_wikidot_double_bracket_link(
+    source: &str,
+    start: usize,
+    end: usize,
+    scan_budget: &mut ConditionalScanBudget,
+) -> ScanResult<bool> {
+    let mut cursor = start;
+    while cursor + 1 < end {
+        if !scan_budget.take() {
+            return ScanResult::Exhausted;
+        }
+        if is_wikidot_crossing_link_opener(&source[cursor..]) {
+            return ScanResult::Found(true);
+        }
+        cursor += 1;
+    }
+    ScanResult::Found(false)
+}
+
+fn resolve_expression_candidate(
+    source: &str,
+    candidate: ParserFunctionCandidate,
+    options: WikidotParserFunctionOptions,
+    scan_budget: &mut ConditionalScanBudget,
+) -> ScanResult<(usize, String)> {
+    let close_start = match find_closer(source, candidate.body_start, scan_budget) {
+        ScanResult::Found(close_start) => close_start,
+        ScanResult::NotFound => {
+            return resolve_single_bracket_candidate(source, candidate, scan_budget);
+        }
+        ScanResult::Exhausted => return ScanResult::Exhausted,
+    };
+    let expression = source[candidate.body_start..close_start].trim_matches([' ', '\t']);
+    let replacement = if expression.is_empty() {
+        String::new()
+    } else {
+        match evaluate(expression, options) {
+            Ok(value) => format_value(value),
+            Err(error) => match error.runtime_message() {
+                Some(message) => message,
+                None => return ScanResult::NotFound,
+            },
+        }
+    };
+    ScanResult::Found((close_start + 2, replacement))
+}
+
+fn resolve_unsupported_candidate(
+    source: &str,
+    candidate: ParserFunctionCandidate,
+    scan_budget: &mut ConditionalScanBudget,
+) -> ScanResult<(usize, String)> {
+    let close_start = match find_closer(source, candidate.body_start, scan_budget) {
+        ScanResult::Found(close_start) => close_start,
+        ScanResult::NotFound => return ScanResult::NotFound,
+        ScanResult::Exhausted => return ScanResult::Exhausted,
+    };
+    let payload = &source[candidate.body_start..close_start];
+    let trailing_horizontal_space = payload
+        .as_bytes()
+        .last()
+        .is_some_and(|byte| matches!(byte, b' ' | b'\t'));
+    if payload.len() > MAX_UNSUPPORTED_PAYLOAD_LENGTH
+        || !is_safe_unsupported_payload(payload)
+    {
+        return ScanResult::NotFound;
+    }
+    if candidate.kind == ParserFunctionKind::Unsupported && !payload.contains('|') {
+        return ScanResult::NotFound;
+    }
+    if candidate.kind == ParserFunctionKind::UnsupportedEmptyName
+        && !payload.contains('|')
+        && !trailing_horizontal_space
+    {
+        return ScanResult::NotFound;
+    }
+    // A space after `#` is the live empty-name fallback. Its replacement is
+    // generated literal text, not authored single-bracket syntax. Shield the
+    // evidenced trailing-space shape so the ordinary bracket parser does not
+    // trim the generated payload during the next phase.
+    let replacement = if candidate.kind == ParserFunctionKind::UnsupportedEmptyName
+        && trailing_horizontal_space
+    {
+        format!("@@[{payload}]@@")
+    } else {
+        format!("[{payload}]")
+    };
+    ScanResult::Found((close_start + 2, replacement))
+}
+
+fn is_safe_unsupported_payload(payload: &str) -> bool {
+    payload.bytes().all(|byte| {
+        byte.is_ascii_alphanumeric()
+            || matches!(byte, b' ' | b'\t')
+            || b"|#_=:+-*/%().,?!".contains(&byte)
+    })
+}
+
+fn resolve_empty_candidate(
+    source: &str,
+    candidate: ParserFunctionCandidate,
+    scan_budget: &mut ConditionalScanBudget,
+) -> ScanResult<(usize, String)> {
+    match find_closer(source, candidate.body_start, scan_budget) {
+        ScanResult::Found(close_start) => {
+            ScanResult::Found((close_start + 2, String::new()))
+        }
+        ScanResult::NotFound => ScanResult::NotFound,
+        ScanResult::Exhausted => ScanResult::Exhausted,
+    }
+}
+
+fn resolve_single_bracket_candidate(
+    source: &str,
+    candidate: ParserFunctionCandidate,
+    scan_budget: &mut ConditionalScanBudget,
+) -> ScanResult<(usize, String)> {
+    let bytes = source.as_bytes();
+    let mut cursor = candidate.body_start;
+    while cursor < bytes.len() {
+        if !scan_budget.take() {
+            return ScanResult::Exhausted;
+        }
+        if bytes[cursor] == b']' {
+            return ScanResult::Found((
+                cursor + 1,
+                format!("[{}", &source[candidate.body_start..cursor]),
+            ));
+        }
+        cursor += 1;
+    }
+    ScanResult::NotFound
+}
+
+fn find_closer(
+    source: &str,
+    start: usize,
+    scan_budget: &mut ConditionalScanBudget,
+) -> ScanResult<usize> {
+    let bytes = source.as_bytes();
+    let mut cursor = start;
+    while cursor + 1 < bytes.len() {
+        if !scan_budget.take() {
+            return ScanResult::Exhausted;
+        }
+        if bytes[cursor..].starts_with(b"]]") {
+            return ScanResult::Found(cursor);
+        }
+        cursor += 1;
+    }
+    ScanResult::NotFound
+}
+
+fn find_bytes(
+    source: &str,
+    start: usize,
+    needle: &[u8],
+    scan_budget: &mut ConditionalScanBudget,
+) -> ScanResult<usize> {
+    let bytes = source.as_bytes();
+    let mut cursor = start;
+    while cursor.saturating_add(needle.len()) <= bytes.len() {
+        if !scan_budget.take() {
+            return ScanResult::Exhausted;
+        }
+        if bytes[cursor..].starts_with(needle) {
+            return ScanResult::Found(cursor);
+        }
+        cursor += 1;
+    }
+    ScanResult::NotFound
+}
+
 fn simple_condition(condition: &str) -> bool {
-    !condition.is_empty() && condition != "0" && !condition.eq_ignore_ascii_case("false")
+    let authored = condition.strip_suffix([' ', '\t']).unwrap_or(condition);
+    let semantic = condition.trim_matches([' ', '\t']);
+    !authored.is_empty() && semantic != "0" && !semantic.eq_ignore_ascii_case("false")
 }
 
 fn find_conditional_parts_indexed(
@@ -487,54 +941,11 @@ fn is_wikidot_ifexpr_opener(source: &str) -> bool {
 fn has_wikidot_opener(source: &str, prefix: &str) -> bool {
     source
         .get(..prefix.len())
-        .is_some_and(|candidate| candidate.eq_ignore_ascii_case(prefix))
+        .is_some_and(|candidate| candidate == prefix)
         && source
             .as_bytes()
             .get(prefix.len())
-            .is_some_and(u8::is_ascii_whitespace)
-}
-
-fn resolve_expression_pass(
-    source: &str,
-    options: WikidotParserFunctionOptions,
-    budget: &mut CandidateBudget,
-) -> String {
-    let literal_regions = LiteralRegionIndex::new(source);
-    let mut replacements = Vec::new();
-    let mut search_start = 0usize;
-
-    while let Some(open) = EXPR_OPEN_REGEX.find(&source[search_start..]) {
-        if !budget.take() {
-            break;
-        }
-
-        let function_start = search_start + open.start();
-        let expression_start = search_start + open.end();
-        let Some(relative_end) = source[expression_start..].find("]]") else {
-            break;
-        };
-        let close_start = expression_start + relative_end;
-        let function_end = close_start + 2;
-        search_start = function_end;
-
-        if literal_regions.contains(function_start) {
-            continue;
-        }
-
-        let original = &source[function_start..function_end];
-        let replacement =
-            match evaluate(source[expression_start..close_start].trim(), options) {
-                Ok(value) => format_value(value),
-                Err(error) => error
-                    .runtime_message()
-                    .unwrap_or_else(|| original.to_owned()),
-            };
-        if replacement != original {
-            replacements.push((function_start..function_end, replacement));
-        }
-    }
-
-    apply_replacements(source, replacements)
+            .is_some_and(|byte| matches!(byte, b' ' | b'\t'))
 }
 
 fn apply_replacements(source: &str, replacements: Vec<(Range<usize>, String)>) -> String {
@@ -592,7 +1003,7 @@ mod tests {
     }
 
     #[test]
-    fn balances_wikidot_markup_and_nested_parser_functions_in_branches() {
+    fn first_closer_owns_block_and_nested_branch_text() {
         let source = concat!(
             "[[#ifexpr 1 | [[span data-value=\"a|b\"]]shown[[/span]] | hidden]]",
             "[[#if 1 | [[#ifexpr 0 | no | nested]] | outer-hidden]]",
@@ -601,7 +1012,11 @@ mod tests {
 
         assert_eq!(
             resolve_wikidot_parser_functions(source),
-            "[[span data-value=\"a|b\"]]shown[[/span]]nested[[a href=\"/target\" | linked ]]adjacent",
+            concat!(
+                "[[span data-value=\"a|b\"shown[| hidden]",
+                "[[#ifexpr 0 | no | outer-hidden]]",
+                "[[a href=\"/target\" | linked ]][[#if 1 | adjacent | no]]",
+            ),
         );
     }
 
@@ -742,7 +1157,7 @@ mod tests {
     #[test]
     fn crossing_link_lookahead_is_strictly_anchored() {
         assert!(is_wikidot_conditional_opener("[[#ifexpr 1 | yes | no]]"));
-        assert!(is_wikidot_conditional_opener("[[#IF 1 | yes | no]]"));
+        assert!(!is_wikidot_conditional_opener("[[#IF 1 | yes | no]]"));
         assert!(!is_wikidot_conditional_opener(
             "prefix [[#ifexpr 1 | yes | no]]",
         ));
@@ -818,7 +1233,7 @@ mod tests {
     }
 
     #[test]
-    fn preserves_unclosed_outer_conditionals_but_resolves_nested_functions() {
+    fn first_nested_closer_recovers_an_unclosed_outer_conditional() {
         let source = concat!(
             "[[#ifexpr 0 || 1 | chosen | hidden]] ",
             "[[#if 1 | open [[#if 1 | nested | no]]",
@@ -826,7 +1241,7 @@ mod tests {
 
         assert_eq!(
             resolve_wikidot_parser_functions(source),
-            "chosen [[#if 1 | open nested",
+            "chosen open [[#if 1 | nested",
         );
     }
 
@@ -891,26 +1306,15 @@ mod tests {
 
     #[test]
     fn unverified_invalid_inputs_fail_closed() {
-        for source in [
-            "[[#expr abs(1,2)]]",
-            "[[#ifexpr missing | leaked | hidden]]",
-        ] {
+        for source in ["[[#expr abs(1,2)]]", "[[#expr 1 + <script>]]"] {
             assert_eq!(resolve_wikidot_parser_functions(source), source);
         }
     }
 
     #[test]
-    fn expression_and_nested_resolution_limits_fail_closed() {
+    fn expression_length_limit_fails_closed() {
         let overlong = format!("[[#expr {}]]", "1+".repeat(129));
         assert_eq!(resolve_wikidot_parser_functions(&overlong), overlong);
-
-        let mut nested = "leaf".to_owned();
-        for _ in 0..(MAX_RESOLUTION_PASSES + 8) {
-            nested = format!("[[#if 1 | {nested} | hidden]]");
-        }
-        let resolved = resolve_wikidot_parser_functions(&nested);
-        assert_eq!(resolved.matches("[[#if").count(), 8);
-        assert!(resolved.contains("leaf"));
     }
 
     #[test]

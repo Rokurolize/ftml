@@ -158,6 +158,13 @@ where
     }
     if parser.settings().layout.legacy()
         && !parser.discarding_hidden_body()
+        && block.name == "block-tab"
+        && !parser.accepts_partial_here(crate::tree::AcceptsPartial::Tab)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    if parser.settings().layout.legacy()
+        && !parser.discarding_hidden_body()
         && !wikidot_block_has_physical_line_ownership(
             parser,
             parent_rule,

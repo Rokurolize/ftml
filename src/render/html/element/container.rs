@@ -66,7 +66,9 @@ pub fn render_container_internal(ctx: &mut HtmlContext, container: &Container) {
     };
 
     if layout.legacy() && matches!(container.ctype(), ContainerType::Header(_)) {
-        if has_wikidot_heading_label_span(container.elements()) {
+        if container.elements().is_empty()
+            || has_wikidot_heading_label_span(container.elements())
+        {
             tag.contents(container.elements());
         } else {
             tag.inner(|ctx| {
@@ -80,11 +82,12 @@ pub fn render_container_internal(ctx: &mut HtmlContext, container: &Container) {
 
 fn has_wikidot_heading_label_span(elements: &[Element]) -> bool {
     if let [Element::Container(container)] = elements
-        && matches!(container.ctype(), ContainerType::Span | ContainerType::Size)
+        && matches!(
+            container.ctype(),
+            ContainerType::Span | ContainerType::Size | ContainerType::HeadingLabel
+        )
     {
-        if container.ctype() == ContainerType::Span
-            && container.attributes().get().is_empty()
-        {
+        if container.ctype() == ContainerType::HeadingLabel {
             true
         } else {
             has_wikidot_heading_label_span(container.elements())

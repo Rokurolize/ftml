@@ -770,6 +770,7 @@ fn lower_children<'t>(
         );
         if scope_crosses_heading {
             insert_wikidot_heading_label_span(container.elements_mut());
+            *trim_next_break = true;
         }
         return true;
     }
@@ -792,7 +793,7 @@ fn insert_wikidot_heading_label_span(elements: &mut Vec<Element<'_>>) {
     }
     let label = mem::take(elements);
     elements.push(Element::Container(Container::new(
-        ContainerType::Span,
+        ContainerType::HeadingLabel,
         label,
         AttributeMap::new(),
     )));

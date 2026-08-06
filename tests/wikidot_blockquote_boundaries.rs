@@ -1,12 +1,20 @@
-use ftml::data::{PageInfo, ScoreValue};
+use ftml::data::{PageInfo, PageRef, ScoreValue};
+use ftml::delayed::{
+    DelayedInput, InputSegment, SlotBindings, TextOrigin, parse_delayed_list,
+};
+use ftml::includes::{FetchedPage, IncludeRef, Includer};
 use ftml::layout::Layout;
-use ftml::render::{Render, html::HtmlRender};
+use ftml::render::{Render, html::HtmlRender, text::TextRender};
 use ftml::settings::{WikitextMode, WikitextSettings};
 use std::borrow::Cow;
 use std::time::{Duration, Instant};
 
 fn render(source: &str) -> String {
-    let page_info = PageInfo {
+    render_details(source).html
+}
+
+fn page_info() -> PageInfo<'static> {
+    PageInfo {
         page: Cow::Borrowed("blockquote-boundaries"),
         category: None,
         site: Cow::Borrowed("syntax-differential"),
@@ -15,13 +23,67 @@ fn render(source: &str) -> String {
         score: ScoreValue::Integer(0),
         tags: Vec::new(),
         language: Cow::Borrowed("en"),
-    };
+    }
+}
+
+#[derive(Debug)]
+struct Rendered {
+    html: String,
+    text: String,
+    styles: Vec<String>,
+    code_blocks: usize,
+    ast: String,
+}
+
+fn render_details(source: &str) -> Rendered {
+    let page_info = page_info();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let mut source = source.to_owned();
     ftml::preprocess_for_layout(&mut source, settings.layout);
     let tokenization = ftml::tokenize(&source);
     let (tree, _errors) = ftml::parse(&tokenization, &page_info, &settings).into();
-    HtmlRender.render(&tree, &page_info, &settings).body
+    let output = HtmlRender.render(&tree, &page_info, &settings);
+    let text = TextRender.render(&tree, &page_info, &settings);
+    Rendered {
+        html: output.body,
+        text,
+        styles: output.styles,
+        code_blocks: tree.code_blocks.len(),
+        ast: format!("{:#?}", tree.elements),
+    }
+}
+
+#[derive(Debug)]
+struct ListAuthorityIncluder;
+
+impl<'t> Includer<'t> for ListAuthorityIncluder {
+    type Error = String;
+
+    fn include_pages(
+        &mut self,
+        includes: &[IncludeRef<'t>],
+    ) -> Result<Vec<FetchedPage<'t>>, Self::Error> {
+        Ok(includes
+            .iter()
+            .map(|include| FetchedPage {
+                page_ref: include.page_ref().clone(),
+                content: Some(Cow::Borrowed(concat!(
+                    "* outer\n",
+                    " * [[div]]\n",
+                    " * inner\n",
+                    " * [[/div]]\n",
+                    "* after",
+                ))),
+            })
+            .collect())
+    }
+
+    fn no_such_include(
+        &mut self,
+        page_ref: &PageRef,
+    ) -> Result<Cow<'t, str>, Self::Error> {
+        Err(format!("missing include fixture for {page_ref}"))
+    }
 }
 
 #[test]
@@ -911,6 +973,176 @@ fn lost_owner_body_keeps_metadata_and_collapsible_arguments() {
 }
 
 #[test]
+fn wikidot_list_owner_extended_matrix_matches_live_dom() {
+    // Anonymous edit/PagePreviewModule observations from sandbox-for-codex,
+    // captured 2026-08-07 after the issue's original 2026-07-30 matrix.
+    for (case_id, source, expected) in [
+        (
+            "issue-305-nested-ul-div",
+            "* outer\n * [[div]]\n * inner\n * [[/div]]\n* after",
+            concat!(
+                "<ul>\n<li>outer</li>\n</ul><p>* inner<br>\n*</p>",
+                "<ul>\n<li>after</li>\n</ul>",
+            ),
+        ),
+        (
+            "issue-305-nested-mixed-collapsible",
+            concat!(
+                "* outer\n",
+                " # [[collapsible]]\n",
+                " # inner\n",
+                " # [[/collapsible]]\n",
+                "* after",
+            ),
+            concat!(
+                "<ul>\n<li>outer\n<ol>\n<li>",
+                r#"<div class="collapsible-block"><div class="collapsible-block-folded"><a class="collapsible-block-link" href="javascript:;">+&nbsp;show&nbsp;block</a></div><div class="collapsible-block-unfolded" style="display:none"><div class="collapsible-block-unfolded-link"><a class="collapsible-block-link" href="javascript:;">–&nbsp;hide&nbsp;block</a></div><div class="collapsible-block-content"></div></div></div>"#,
+                "</li>\n</ol>\n</li>\n</ul><p># inner<br>\n#</p>",
+                "<ul>\n<li>after</li>\n</ul>",
+            ),
+        ),
+        (
+            "issue-305-blank-inside-div",
+            "* [[div]]\n* before\n\n* after-blank\n* [[/div]]\n* later",
+            concat!(
+                "<ul>\n<li>before</li>\n</ul>",
+                "<ul>\n<li>after-blank</li>\n</ul>",
+                "<ul>\n<li>later</li>\n</ul>",
+            ),
+        ),
+        (
+            "issue-305-adjacent-blocks",
+            concat!(
+                "* [[div]]\n* alpha\n* [[/div]]\n",
+                "* [[collapsible]]\n* beta\n* [[/collapsible]]\n",
+                "* later",
+            ),
+            concat!(
+                "<ul>\n<li>alpha</li>\n</ul><ul>\n<li>",
+                r#"<div class="collapsible-block"><div class="collapsible-block-folded"><a class="collapsible-block-link" href="javascript:;">+&nbsp;show&nbsp;block</a></div><div class="collapsible-block-unfolded" style="display:none"><div class="collapsible-block-unfolded-link"><a class="collapsible-block-link" href="javascript:;">–&nbsp;hide&nbsp;block</a></div><div class="collapsible-block-content"></div></div></div>"#,
+                "</li>\n</ul><ul>\n<li>beta</li>\n</ul>",
+                "<ul>\n<li>later</li>\n</ul>",
+            ),
+        ),
+        (
+            "issue-305-crossed-close",
+            "* [[collapsible]]\n* body\n* [[/div]]\n* later",
+            concat!(
+                "<ul>\n<li>[[collapsible]]</li>\n<li>body</li>\n",
+                "<li>[[/div]]</li>\n<li>later</li>\n</ul>",
+            ),
+        ),
+        (
+            "issue-305-malformed-head",
+            "# [[div class=\"unterminated]]\nbody\n[[/div]]\n# later",
+            "<p>body</p><ol>\n<li>later</li>\n</ol>",
+        ),
+        (
+            "issue-305-unclosed-preserves-row",
+            "* [[div]]\nbody\n* later",
+            concat!(
+                "<ul>\n<li>[[div]]</li>\n</ul><p>body</p>",
+                "<ul>\n<li>later</li>\n</ul>",
+            ),
+        ),
+        (
+            "issue-305-max-depth-div",
+            concat!(
+                "* root\n",
+                "                    * [[div]]\n",
+                "                    * deep\n",
+                "                    * [[/div]]\n",
+                "* after",
+            ),
+            concat!(
+                "<ul>\n<li>root</li>\n</ul><p>* deep<br>\n*</p>",
+                "<ul>\n<li>after</li>\n</ul>",
+            ),
+        ),
+    ] {
+        assert_eq!(render(source), expected, "{case_id}: {source:?}");
+    }
+}
+
+#[test]
+fn list_owned_executable_blocks_remain_literal_before_ast_extraction() {
+    for (case_id, source, expected_text) in [
+        ("unknown-module", "* [[module FooBar]]", "[[module FooBar]]"),
+        (
+            "code",
+            "* [[code]]\n* A\n* [[/code]]",
+            "[[code]]\nA\n[[/code]]",
+        ),
+        (
+            "css",
+            "# [[module CSS]]\n# x{}\n# [[/module]]",
+            "[[module CSS]]\nx{}\n[[/module]]",
+        ),
+    ] {
+        let rendered = render_details(source);
+        assert_eq!(rendered.text, expected_text, "{case_id}: {rendered:#?}");
+        assert!(rendered.styles.is_empty(), "{case_id}: {rendered:#?}");
+        assert_eq!(rendered.code_blocks, 0, "{case_id}: {rendered:#?}");
+        assert!(!rendered.html.contains("error-block"), "{rendered:#?}");
+        assert!(!rendered.html.contains("class=\"code\""), "{rendered:#?}");
+        assert!(!rendered.ast.contains("Module("), "{rendered:#?}");
+    }
+}
+
+#[test]
+fn included_and_runtime_generated_text_cannot_bypass_list_authority() {
+    let page_settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let (expanded, pages) = ftml::include(
+        "[[include component:list-authority]]",
+        &page_settings,
+        ListAuthorityIncluder,
+        || "invalid include fixture".to_owned(),
+    )
+    .expect("include expansion succeeds");
+    assert_eq!(pages, [PageRef::page_only("component:list-authority")]);
+    assert_eq!(
+        render(&expanded),
+        concat!(
+            "<ul>\n<li>outer</li>\n</ul><p>* inner<br>\n*</p>",
+            "<ul>\n<li>after</li>\n</ul>",
+        ),
+    );
+
+    let runtime_source = concat!(
+        "* [[module FooBar]]\n",
+        "* [[module CSS]]\n",
+        "* x{}\n",
+        "* [[/module]]",
+    );
+    let input = DelayedInput::new(
+        runtime_source,
+        vec![InputSegment::text(
+            0..runtime_source.len(),
+            TextOrigin::RuntimeScalar,
+        )],
+    )
+    .expect("runtime scalar fixture is valid");
+    let page_info = page_info();
+    let list_settings = WikitextSettings::from_mode(WikitextMode::List, Layout::Wikidot);
+    let delayed = parse_delayed_list(&input, &page_info, &list_settings)
+        .expect("runtime scalar list input parses");
+    let bound = delayed
+        .bind(&SlotBindings::empty())
+        .expect("fixture has no delayed bindings");
+    let html = bound.render_html(&page_info, &list_settings);
+    assert_eq!(
+        html.body(),
+        concat!(
+            "<p>* [[module FooBar]]\n",
+            "* [[module CSS]]\n",
+            "* x{}\n",
+            "* [[/module]]</p>",
+        ),
+    );
+    assert!(html.html_blocks().is_empty(), "{html:#?}");
+}
+
+#[test]
 fn malformed_and_cross_closed_owners_fail_closed() {
     for source in [
         "> [[div]]\nbody",
@@ -944,5 +1176,28 @@ fn repeated_lost_owner_sections_stay_bounded() {
     assert!(
         elapsed < Duration::from_secs(3),
         "lost-owner parsing took {elapsed:?}",
+    );
+}
+
+#[test]
+fn repeated_max_depth_list_compositions_stay_bounded() {
+    const COUNT: usize = 512;
+    let unit = concat!(
+        "* root\n",
+        "                    * [[div]]\n",
+        "                    * deep\n",
+        "                    * [[/div]]\n",
+        "* after\n\n",
+    );
+    let source = unit.repeat(COUNT);
+    let started = Instant::now();
+    let html = render(&source);
+    let elapsed = started.elapsed();
+
+    assert_eq!(html.matches("<p>* deep<br>\n*</p>").count(), COUNT);
+    assert!(!html.contains("<div>"), "nested div acquired authority");
+    assert!(
+        elapsed < Duration::from_secs(3),
+        "max-depth list composition parsing took {elapsed:?}",
     );
 }

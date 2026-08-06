@@ -221,14 +221,17 @@ where
 
     if parser.settings().layout.legacy() {
         if let Some(literal) =
-            try_consume_literal_list_alignment(&mut sub_parser, list_type)?
+            try_consume_literal_list_alignment(&mut sub_parser, depth, list_type)?
         {
             parser.update(&sub_parser);
             return Ok(ListItemStep::Item((depth, list_type, vec![literal]), false));
         }
         if let Some(lost) = try_consume_lost_owner_block(
             &mut sub_parser,
-            LineOwner::List { ltype: list_type },
+            LineOwner::List {
+                depth,
+                ltype: list_type,
+            },
         )? {
             errors.extend(lost.errors);
             let control = lost

@@ -49,6 +49,9 @@ mod strikethrough_inline_regression;
 #[path = "wikidot_span_scope.rs"]
 mod wikidot_span_scope;
 
+#[path = "wikidot_span_attributes.rs"]
+mod wikidot_span_attributes;
+
 #[path = "wikidot_line_ownership.rs"]
 mod wikidot_line_ownership;
 

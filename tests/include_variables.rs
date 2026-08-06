@@ -428,7 +428,7 @@ hidden branch
 }
 
 #[test]
-fn rendered_div_and_span_keep_safe_attributes_and_filter_unsafe_attributes() {
+fn rendered_div_and_span_apply_their_element_specific_attribute_contracts() {
     let html = render_html(
         r#"[[div class="card" id="panel" style="color: red" data-value="42" aria-label="Panel" onclick="alert(1)" data-="bad"]]
 [[span class="badge" id="tag" style="font-weight: bold" data-kind="status" aria-live="polite" onmouseover="alert(1)" aria-="bad"]]Open[[/span]]
@@ -445,7 +445,6 @@ fn rendered_div_and_span_keep_safe_attributes_and_filter_unsafe_attributes() {
         r#"id="u-tag""#,
         r#"style="font-weight: bold""#,
         r#"data-kind="status""#,
-        r#"aria-live="polite""#,
     ] {
         assert!(html.contains(expected), "missing {expected} in {html}");
     }
@@ -455,6 +454,7 @@ fn rendered_div_and_span_keep_safe_attributes_and_filter_unsafe_attributes() {
         "onmouseover",
         r#"data-="bad""#,
         r#"aria-="bad""#,
+        r#"aria-live="polite""#,
         "alert(1)",
     ] {
         assert!(!html.contains(forbidden), "found {forbidden} in {html}");

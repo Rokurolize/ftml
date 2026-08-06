@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use crate::delayed::DelayedElement;
 use crate::tree::{Alignment, AttributeMap};
 
 macro_rules! make_align_block {
@@ -72,9 +73,40 @@ pub fn parse_alignment_block<'r, 't>(
     assert!(!flag_score, "Alignment block doesn't allow score flag");
     assert_block_name(block_rule, name);
 
+    let source = parser.full_text().inner();
+    let name_start = (name.as_ptr() as usize)
+        .checked_sub(source.as_ptr() as usize)
+        .expect("parsed alignment name belongs to the source");
+    let owner_start = source[..name_start]
+        .rfind("[[")
+        .expect("parsed alignment name follows its opener");
+    let escaped_owner = parser.settings().layout.legacy()
+        && source[..owner_start]
+            .bytes()
+            .rev()
+            .take_while(|byte| *byte == b'\\')
+            .count()
+            % 2
+            == 1;
+
     let body_start = parser.get_head_none_with_body_start(block_rule, in_head)?;
     if !parser.has_body_end_block(block_rule) {
         return Err(parser.make_end_of_input_err());
+    }
+
+    if escaped_owner {
+        let _ = parser.get_body_text(block_rule)?;
+        let owner_end = parser.current().span.start;
+        let generated = parser.generated_in_range(owner_start..owner_end);
+        return if generated.is_empty() {
+            ok!(true; literal_elements(&source[owner_start..owner_end]))
+        } else {
+            ok!(true; Element::Delayed(DelayedElement::shell(
+                source,
+                owner_start..owner_end,
+                &generated,
+            )))
+        };
     }
 
     // Get body content, with paragraphs
@@ -90,6 +122,22 @@ pub fn parse_alignment_block<'r, 't>(
     ));
 
     ok!(element, errors)
+}
+
+fn literal_elements(source: &str) -> Elements<'_> {
+    let mut elements = Vec::new();
+    for chunk in source.split_inclusive('\n') {
+        let has_newline = chunk.ends_with('\n');
+        let line = chunk.strip_suffix('\n').unwrap_or(chunk);
+        let line = line.strip_suffix('\r').unwrap_or(line);
+        if !line.is_empty() {
+            elements.push(text!(line));
+        }
+        if has_newline {
+            elements.push(Element::LineBreak);
+        }
+    }
+    Elements::Multiple(elements)
 }
 
 #[cfg(test)]

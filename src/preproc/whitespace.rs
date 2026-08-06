@@ -169,9 +169,11 @@ pub(super) fn preserve_wikidot_document_indentation_barrier(text: &mut String) {
         return;
     }
     let structural = text.as_bytes().get(leading_len).copied();
+    let centered_line = text[leading_len..].starts_with("= ");
     if text[..leading_len]
         .bytes()
         .any(|byte| matches!(byte, b' ' | b'\t'))
+        && !centered_line
         && matches!(
             structural,
             Some(b'>' | b'=' | b'+' | b'|' | b'[' | b'_' | b'*' | b'#')
@@ -846,9 +848,9 @@ fn trims_document_indentation_before_a_spaced_inner_include_example() {
 }
 
 #[test]
-fn preserves_a_syntax_barrier_for_indented_non_list_document_openers() {
+fn preserves_a_syntax_barrier_for_indented_non_center_document_openers() {
     for (input, expected) in [
-        ("\t= x", "\0= x"),
+        ("\t== x", "\0== x"),
         (" + x", "\0+ x"),
         (" [[div]]x[[/div]]", "\0[[div]]x[[/div]]"),
     ] {
@@ -857,6 +859,16 @@ fn preserves_a_syntax_barrier_for_indented_non_list_document_openers() {
         substitute_wikidot(&mut text);
         assert_eq!(text, expected);
     }
+}
+
+#[test]
+fn trims_document_indentation_before_a_centered_line() {
+    let mut text = "\t= centered".to_owned();
+
+    preserve_wikidot_document_indentation_barrier(&mut text);
+    substitute_wikidot(&mut text);
+
+    assert_eq!(text, "= centered");
 }
 
 #[test]

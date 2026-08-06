@@ -19,7 +19,7 @@
  */
 
 use crate::parsing::prelude::*;
-use crate::tree::{Alignment, AttributeMap, Container, ContainerType, TableType};
+use crate::tree::{AttributeMap, Container, ContainerType, TableType};
 use std::mem;
 
 pub(crate) fn collapsible_has_direct_literal_nested_opener(
@@ -313,11 +313,11 @@ impl<'t> ParagraphStack<'t> {
                 &element,
                 Element::Table(table) if table.table_type == TableType::Simple
             );
-        let wikidot_center_alignment = self.wikidot
+        let wikidot_alignment = self.wikidot
             && matches!(
                 &element,
                 Element::Container(container)
-                    if container.ctype() == ContainerType::Align(Alignment::Center)
+                    if matches!(container.ctype(), ContainerType::Align(_))
             );
 
         if self.wikidot
@@ -335,7 +335,7 @@ impl<'t> ParagraphStack<'t> {
             self.current_unwrapped = true;
         }
 
-        if wikidot_center_alignment
+        if wikidot_alignment
             && !self.current.is_empty()
             && !matches!(self.current.last(), Some(Element::LineBreak))
         {

@@ -70,13 +70,24 @@ impl<'de> serde::Deserialize<'de> for SourceSha256 {
                 "SHA-256 must contain 64 hexadecimal digits",
             ));
         }
+        fn nibble(byte: u8) -> Option<u8> {
+            match byte {
+                b'0'..=b'9' => Some(byte - b'0'),
+                b'a'..=b'f' => Some(byte - b'a' + 10),
+                b'A'..=b'F' => Some(byte - b'A' + 10),
+                _ => None,
+            }
+        }
+
         let mut digest = [0; 32];
-        for (index, output) in digest.iter_mut().enumerate() {
-            let offset = index * 2;
-            *output =
-                u8::from_str_radix(&value[offset..offset + 2], 16).map_err(|_| {
-                    D::Error::custom("SHA-256 contains a non-hexadecimal digit")
-                })?;
+        for (pair, output) in value.as_bytes().chunks_exact(2).zip(&mut digest) {
+            let Some(high) = nibble(pair[0]) else {
+                return Err(D::Error::custom("SHA-256 contains a non-hexadecimal digit"));
+            };
+            let Some(low) = nibble(pair[1]) else {
+                return Err(D::Error::custom("SHA-256 contains a non-hexadecimal digit"));
+            };
+            *output = (high << 4) | low;
         }
         Ok(Self(digest))
     }

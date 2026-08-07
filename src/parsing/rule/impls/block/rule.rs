@@ -20,7 +20,10 @@
 
 use super::super::prelude::*;
 use super::mapping::{get_block_rule_with_name, get_block_rule_with_name_for_layout};
-use super::{BlockRule, blocks::BLOCK_HTML};
+use super::{
+    BlockRule,
+    blocks::{BLOCK_EMBED_VIDEO, BLOCK_HTML},
+};
 use crate::settings::WikitextMode;
 
 pub const RULE_BLOCK: Rule = Rule {
@@ -107,6 +110,9 @@ fn block_rule_enabled(parser: &Parser<'_, '_>, block_rule: &BlockRule) -> bool {
     // Preview callers disable hosted HTML execution, but the block still owns
     // its complete body so nested module syntax remains literal as Wikidot
     // renders it. `BLOCK_HTML::parse_fn` performs the escaped-literal branch.
+    if block_rule.name == BLOCK_EMBED_VIDEO.name {
+        return parser.settings().layout.legacy();
+    }
     block_rule.name != BLOCK_HTML.name
         || parser.settings().enable_html_blocks
         || parser.settings().layout.legacy()
@@ -137,7 +143,19 @@ where
         .is_some_and(|token| token.token == Token::Whitespace);
     parser.get_optional_space()?;
 
-    let (name, in_head) = parser.get_block_name(flag_star)?;
+    let extra_embed_video_bracket = parser.settings().layout.legacy()
+        && !flag_star
+        && parser
+            .full_text()
+            .inner()
+            .get(opener_start..)
+            .and_then(|source| source.get(.."[[embedvideo]]]".len()))
+            .is_some_and(|opener| opener.eq_ignore_ascii_case("[[embedvideo]]]"));
+    let (name, in_head) = if extra_embed_video_bracket {
+        parser.get_wikidot_embed_video_name_with_residual_opener()?
+    } else {
+        parser.get_block_name(flag_star)?
+    };
 
     let (name, flag_score) = match name.strip_suffix('_') {
         Some(name) => (name, true),
@@ -156,7 +174,10 @@ where
     if !block_rule_enabled(parser, block) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
-    if block.name == "block-embedvideo" && spaced_name {
+    if parser.settings().layout.legacy()
+        && block.name == "block-embedvideo"
+        && spaced_name
+    {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     if parser.settings().layout.legacy()

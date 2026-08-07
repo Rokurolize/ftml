@@ -11,6 +11,7 @@
  */
 
 use super::prelude::*;
+use crate::parsing::parser::QuoteScanOutcome;
 use crate::tree::EmbedVideo;
 
 pub const BLOCK_EMBED_VIDEO: BlockRule = BlockRule {
@@ -66,14 +67,22 @@ fn parse_fn<'r, 't>(
 
     let opener_quote_depth = quote_depth(source, opener_start);
     let mut close = parser.clone();
-    let initial_state = (close.current().span.start, false);
-    if parser.missing_block_end_at_or_before(BLOCK_EMBED_VIDEO.name, initial_state.0) {
+    let initial_start = close.current().span.start;
+    if parser.quote_scan_outcome((
+        BLOCK_EMBED_VIDEO.name,
+        opener_quote_depth,
+        true,
+        initial_start,
+    )) == Some(QuoteScanOutcome::Missing)
+    {
         return Err(parser.make_err(ParseErrorKind::BlockExpectedEnd));
     }
+    let mut traversed_token_starts = Vec::new();
     loop {
         #[cfg(test)]
-        parser.increment_block_end_scan_token_visits();
+        parser.increment_quote_scan_token_visits();
         let current = close.current();
+        traversed_token_starts.push(current.span.start);
 
         if matches!(
             current.token,
@@ -109,10 +118,12 @@ fn parse_fn<'r, 't>(
         }
 
         if current.token == Token::InputEnd {
-            parser.cache_block_end_scan_outcomes(
+            parser.cache_quote_scan_outcomes(
                 BLOCK_EMBED_VIDEO.name,
-                &[initial_state],
-                false,
+                opener_quote_depth,
+                true,
+                &traversed_token_starts,
+                QuoteScanOutcome::Missing,
             );
             return Err(parser.make_err(ParseErrorKind::BlockExpectedEnd));
         }
@@ -155,9 +166,9 @@ mod tests {
         }
 
         assert!(
-            parser.block_end_scan_token_visits() <= tokenization.tokens().len(),
+            parser.quote_scan_token_visits() <= tokenization.tokens().len(),
             "{} visits for {} tokens",
-            parser.block_end_scan_token_visits(),
+            parser.quote_scan_token_visits(),
             tokenization.tokens().len(),
         );
     }

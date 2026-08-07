@@ -178,6 +178,10 @@ fn exact_activation_payload_and_recovery_are_typed() {
             "{source:?}"
         );
     }
+
+    let wikijump = render("[[embedvideo]]X[[/embedvideo]]", Layout::Wikijump);
+    assert!(embed_requirements(&wikijump).is_empty());
+    assert_eq!(wikijump.body, "<p>[[embedvideo]]X[[/embedvideo]]</p>",);
     for source in [
         "[[embedvideos]]X[[/embedvideos]]",
         "[[ embedvideo]]X[[/embedvideo]]",
@@ -241,6 +245,10 @@ fn literal_owners_exclude_embedvideo_syntax() {
     }
 
     let source = "[[html]]<div>[[embedvideo]]X[[/embedvideo]]</div>[[/html]]";
+    assert!(
+        embed_requirements(&render(source, Layout::Wikidot)).is_empty(),
+        "disabled hosted HTML must retain literal ownership",
+    );
     for layout in [Layout::Wikidot, Layout::Wikijump] {
         let page_info = page_info();
         let mut settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
@@ -281,6 +289,13 @@ fn typed_owner_serializes_and_deep_owns_exact_identity() {
     assert!(
         serde_json::from_value::<SyntaxTree<'_>>(forged).is_err(),
         "deserialization must reject a forged source identity",
+    );
+
+    let mut non_ascii = serde_json::to_value(&owned).expect("tree value");
+    non_ascii["elements"][0]["data"]["source-sha256"] = Value::String("é".repeat(32));
+    assert!(
+        serde_json::from_value::<SyntaxTree<'_>>(non_ascii).is_err(),
+        "non-ASCII digest text must be rejected without panicking",
     );
 }
 

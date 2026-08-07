@@ -556,17 +556,6 @@ impl<'r, 't> Parser<'r, 't> {
             .copied()
     }
 
-    pub(crate) fn missing_block_end_at_or_before(
-        &self,
-        rule: &'static str,
-        token_start: usize,
-    ) -> bool {
-        self.block_end_scan_cache
-            .borrow()
-            .range((rule, 0, false)..=(rule, token_start, true))
-            .any(|(_, outcome)| !outcome)
-    }
-
     pub(crate) fn cache_block_end_scan_outcomes(
         &self,
         rule: &'static str,

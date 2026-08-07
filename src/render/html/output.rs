@@ -136,7 +136,10 @@ fn valid_embed_video_id(id: &str) -> bool {
     let Some(suffix) = id.strip_prefix("wj-embed-video-") else {
         return false;
     };
-    suffix.len() == 32 && suffix.bytes().all(|byte| byte.is_ascii_hexdigit())
+    suffix.len() == 32
+        && suffix
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
 }
 
 fn valid_standalone_button_id(id: &str) -> bool {

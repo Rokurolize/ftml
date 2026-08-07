@@ -23,9 +23,9 @@ use crate::delayed::DelayedElement;
 use crate::tree::clone::*;
 use crate::tree::{
     Alignment, AnchorTarget, AttributeMap, ClearFloat, CodeBlock, Container, DateItem,
-    DefinitionListItem, Embed, EmbedVideo, FileSource, FloatAlignment, ImageSource,
-    LinkLabel, LinkLocation, LinkType, ListItem, ListType, Module, PartialElement,
-    StandaloneButton, Tab, Table, VariableMap,
+    DefinitionListItem, Embed, EmbedVideo, FileSource, FloatAlignment, Gallery,
+    ImageSource, LinkLabel, LinkLocation, LinkType, ListItem, ListType, Module,
+    PartialElement, StandaloneButton, Tab, Table, VariableMap,
 };
 use ref_map::*;
 use std::borrow::Cow;
@@ -93,6 +93,9 @@ pub enum Element<'t> {
 
     /// An opaque authored `[[embedvideo]]` block resolved by the caller.
     EmbedVideo(EmbedVideo<'t>),
+
+    /// A typed authored `[[gallery]]` request resolved by the caller.
+    Gallery(Gallery<'t>),
 
     /// An element representing an arbitrary anchor.
     ///
@@ -388,6 +391,7 @@ impl Element<'_> {
             Element::TabView(_) => "TabView",
             Element::StandaloneButton(_) => "StandaloneButton",
             Element::EmbedVideo(_) => "EmbedVideo",
+            Element::Gallery(_) => "Gallery",
             Element::Anchor { .. } => "Anchor",
             Element::AnchorName(_) => "AnchorName",
             Element::Link { .. } => "Link",
@@ -452,6 +456,7 @@ impl Element<'_> {
             }
             Element::StandaloneButton(_) => {}
             Element::EmbedVideo(_) => {}
+            Element::Gallery(_) => {}
             Element::Anchor { elements, .. }
             | Element::Collapsible { elements, .. }
             | Element::Color { elements, .. }
@@ -523,6 +528,7 @@ impl Element<'_> {
             Element::TabView(_) => false,
             Element::StandaloneButton(_) => true,
             Element::EmbedVideo(_) => false,
+            Element::Gallery(_) => false,
             Element::Anchor { .. }
             | Element::AnchorName(_)
             | Element::Link { .. }
@@ -590,6 +596,7 @@ impl Element<'_> {
             Element::EmbedVideo(embed_video) => {
                 Element::EmbedVideo(embed_video.to_owned())
             }
+            Element::Gallery(gallery) => Element::Gallery(gallery.to_owned()),
             Element::Anchor {
                 target,
                 attributes,

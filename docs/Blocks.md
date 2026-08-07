@@ -98,6 +98,7 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | EmbedVideo                                      | `embedvideo`                     | No    | No     | No        | None          | Raw       |
 | [Equation Reference](#equation-ref)             | `equation`, `eref`, `eqref`      | No    | No     | No        | Value         | None      |
 | [File](#file)                                   | `file`                           | No    | No     | No        | Value         | None      |
+| Gallery                                         | `gallery`                        | No    | No     | Yes       | Map           | Raw       |
 | [Footnote](#footnote)                           | `footnote`                       | No    | No     | No        | None          | Elements  |
 | [Footnote Block](#footnote-block)               | `footnoteblock`                  | No    | No     | Yes       | Map           | None      |
 | [Hidden](#hidden)                               | `hidden`                         | No    | No     | Yes       | Map           | Elements  |

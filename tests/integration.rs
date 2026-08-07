@@ -97,6 +97,9 @@ mod wikidot_standalone_buttons;
 #[path = "wikidot_embedvideo.rs"]
 mod wikidot_embedvideo;
 
+#[path = "wikidot_gallery.rs"]
+mod wikidot_gallery;
+
 #[path = "wikidot_single_link_recovery.rs"]
 mod wikidot_single_link_recovery;
 

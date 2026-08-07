@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::gallery::authored_gallery_line_offset;
 use super::prelude::*;
 use super::span::wikidot_literal_with_empty_scored_spans_elided;
 use crate::parsing::rule::impls::block::parser::BlockBodyStart;
@@ -69,6 +70,12 @@ fn parse_fn<'r, 't>(
             .chain(parser.remaining())
             .take_while(|token| token.span.start < owner_end)
             .any(|token| token.token == Token::RuntimeText);
+        if generated.is_empty()
+            && !has_runtime
+            && authored_gallery_line_offset(&source[owner_start..owner_end]).is_some()
+        {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
         let mut elements = if generated.is_empty() && !has_runtime {
             wikidot_literal_with_empty_scored_spans_elided(
                 &source[owner_start..owner_end],

@@ -87,6 +87,15 @@ impl Random {
         }
         id
     }
+
+    pub fn generate_gallery_id(&mut self) -> String {
+        let mut id = String::from("wj-gallery-");
+        for _ in 0..32 {
+            let digit = self.rng.random_range(0..16);
+            id.push(char::from_digit(digit, 16).expect("hex digit is in range"));
+        }
+        id
+    }
 }
 
 #[test]

@@ -32,6 +32,7 @@ mod embed;
 mod embed_video;
 mod file;
 mod footnotes;
+mod gallery;
 mod iframe;
 mod image;
 mod include;
@@ -68,6 +69,7 @@ use self::embed::render_embed;
 use self::embed_video::render_embed_video;
 use self::file::render_file_link;
 use self::footnotes::{render_footnote, render_footnote_block};
+use self::gallery::render_gallery;
 use self::iframe::{render_html, render_iframe};
 use self::image::render_image;
 use self::include::{render_include, render_variable};
@@ -166,6 +168,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         Element::TabView(tabs) => render_tabview(ctx, tabs),
         Element::StandaloneButton(button) => render_standalone_button(ctx, button),
         Element::EmbedVideo(embed_video) => render_embed_video(ctx, embed_video),
+        Element::Gallery(gallery) => render_gallery(ctx, gallery),
         Element::Anchor {
             elements,
             attributes,

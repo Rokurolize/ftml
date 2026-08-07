@@ -149,6 +149,9 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
         Element::EmbedVideo(_) => {
             // Provider payloads are intentionally invisible in plain text.
         }
+        Element::Gallery(_) => {
+            // Gallery file selection and entries are caller-resolved media.
+        }
         Element::Anchor { elements, .. } => render_elements(ctx, elements),
         Element::AnchorName(_) => {
             // Anchor names are an invisible addition to the HTML

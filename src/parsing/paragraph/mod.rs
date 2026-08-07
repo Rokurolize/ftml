@@ -124,6 +124,13 @@ where
         let explicit_list_opener = wikidot_explicit_list_opener(parser);
         let div_opener = wikidot_div_opener(parser);
         let inline_div_opener = div_opener && !parser.start_of_line();
+        stack.record_next_element_line_start(
+            parser.start_of_line()
+                || matches!(
+                    parser.current().token,
+                    Token::LineBreak | Token::ParagraphBreak
+                ),
+        );
         let consumed = match parser.current().token {
             Token::InputEnd => {
                 if close_condition_fn.is_some() {
@@ -448,6 +455,10 @@ fn push_element<'t>(
     element: Element<'t>,
     paragraph_safe: bool,
 ) {
+    if paragraph_safe && stack.wikidot_inline_residual_follows_collapsible() {
+        stack.mark_next_unwrapped_after_block();
+    }
+
     // Don't add a line break if the paragraph is otherwise empty
     if !(paragraph_safe
         && stack.current_empty()

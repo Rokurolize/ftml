@@ -100,6 +100,9 @@ mod wikidot_block_argument_grammar;
 #[path = "wikidot_empty_key_div_fallback.rs"]
 mod wikidot_empty_key_div_fallback;
 
+#[path = "wikidot_collapsible_state.rs"]
+mod wikidot_collapsible_state;
+
 #[path = "yossistyle_wikidot_syntax.rs"]
 mod yossistyle_wikidot_syntax;
 

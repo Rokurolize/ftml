@@ -31,6 +31,9 @@ mod wikidot_inline_delimiter_ownership;
 #[path = "wikidot_triple_link_label_ownership.rs"]
 mod wikidot_triple_link_label_ownership;
 
+#[path = "wikidot_triple_link_special_targets.rs"]
+mod wikidot_triple_link_special_targets;
+
 #[path = "wikidot_lexical_owner_residuals.rs"]
 mod wikidot_lexical_owner_residuals;
 

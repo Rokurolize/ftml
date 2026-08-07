@@ -407,6 +407,7 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
                 | b'}'
                 | b'<'
                 | b'>'
+                | b'|'
                 | b'\n'
                 | b'\r'
         )
@@ -422,7 +423,17 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
     while end < bytes.len()
         && !matches!(
             bytes[end],
-            b' ' | b'\t' | b'@' | b'[' | b']' | b'{' | b'}' | b'<' | b'>' | b'\n' | b'\r'
+            b' ' | b'\t'
+                | b'@'
+                | b'['
+                | b']'
+                | b'{'
+                | b'}'
+                | b'<'
+                | b'>'
+                | b'|'
+                | b'\n'
+                | b'\r'
         )
         && !is_discarded_control(bytes[end])
     {
@@ -579,5 +590,27 @@ mod tests {
 
         let ordinary = extract_all("x--]]]");
         assert!(ordinary.iter().any(|token| token.token == Token::RightLink),);
+    }
+
+    #[test]
+    fn email_tokens_leave_pipe_ownership_to_the_parser() {
+        for input in [
+            "MAILTO:User@Example.COM|Label",
+            "MailTo:User@Example.COM|Label",
+            "mailto:o'hara@example.com|Label",
+        ] {
+            let tokens = extract_all(input);
+            assert!(
+                tokens.iter().any(|token| token.token == Token::Pipe),
+                "{input}: {tokens:#?}"
+            );
+            assert!(
+                tokens
+                    .iter()
+                    .filter(|token| token.token == Token::Email)
+                    .all(|token| !token.slice.contains('|')),
+                "{input}: {tokens:#?}",
+            );
+        }
     }
 }

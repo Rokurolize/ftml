@@ -474,6 +474,10 @@ fn parse_link_location<'r, 't>(
         return Some((LinkLocation::Page(PageRef::page_only("")), LinkType::Page));
     }
 
+    if matches!(url.as_ref(), "." | "..") {
+        return Some((LinkLocation::Page(PageRef::page_only("")), LinkType::Page));
+    }
+
     if let Some(interwiki) = url.strip_prefix('!') {
         if let Some(expanded) = parser.settings().interwiki.build(interwiki) {
             return Some((LinkLocation::Url(Cow::Owned(expanded)), LinkType::Interwiki));
@@ -496,7 +500,7 @@ fn parse_link_location<'r, 't>(
             .collect::<Vec<_>>()
             .join(":");
         if page.is_empty() {
-            return None;
+            return Some((LinkLocation::Page(PageRef::page_only("")), LinkType::Page));
         }
         page.make_ascii_lowercase();
         return Some((
@@ -529,6 +533,10 @@ fn parse_link_location<'r, 't>(
             LinkLocation::Page(PageRef::page_only(url.replace('/', "-"))),
             LinkType::Page,
         ));
+    }
+
+    if !url.is_ascii() && !is_url(&url) {
+        return Some((LinkLocation::Page(PageRef::page_only("")), LinkType::Page));
     }
 
     if is_url(&url) && !authored_url_prefix_is_url {

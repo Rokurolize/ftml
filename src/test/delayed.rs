@@ -584,6 +584,33 @@ fn page_and_tag_slots_have_distinct_span_attribute_recovery() {
 }
 
 #[test]
+fn malformed_empty_key_blocks_cannot_promote_generated_values_to_structure() {
+    for (open, close) in [
+        ("[[div =\"%%title_linked%%\"]]", "[[/div]]"),
+        ("[[span =\"%%title_linked%%\"]]", "[[/span]]"),
+    ] {
+        let source = format!("{open}**literal**{close}");
+        let html = render(&source);
+
+        assert!(html.contains("[["), "{html}");
+        assert!(html.contains(close), "{html}");
+        assert!(
+            html.contains(concat!(
+                r#"<a href="/component:image-block">"#,
+                "Standard Image Block</a>",
+            )),
+            "{html}",
+        );
+        assert!(!html.contains("<div "), "{html}");
+        assert!(!html.contains("<div>"), "{html}");
+        assert!(!html.contains("<span "), "{html}");
+        assert!(!html.contains("<span>"), "{html}");
+        assert!(!html.contains("<strong>"), "{html}");
+        assert!(!html.contains("%%title_linked%%"), "{html}");
+    }
+}
+
+#[test]
 fn page_slot_recovers_image_owner_while_tag_slot_stays_attribute_text() {
     assert_eq!(
         render("BEGIN|[[image https://example.com/x.png alt=\"%%title_linked%%\"]]|END",),

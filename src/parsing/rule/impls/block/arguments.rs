@@ -121,6 +121,7 @@ pub struct Arguments<'t> {
     bare: HashSet<ArgumentKey<'t>>,
     bare_source_present: bool,
     case_sensitive: bool,
+    empty_key_present: bool,
     source_present: bool,
     spaced_equals: bool,
 }
@@ -229,6 +230,17 @@ impl<'t> Arguments<'t> {
     #[inline]
     pub(crate) fn has_bare_source(&self) -> bool {
         self.bare_source_present
+    }
+
+    #[inline]
+    pub(crate) fn mark_empty_key_present(&mut self) {
+        self.empty_key_present = true;
+        self.source_present = true;
+    }
+
+    #[inline]
+    pub(crate) fn has_empty_key(&self) -> bool {
+        self.empty_key_present
     }
 
     pub fn mark_spaced_equals(&mut self) {

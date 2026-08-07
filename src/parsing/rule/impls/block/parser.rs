@@ -140,8 +140,12 @@ fn parse_wikidot_attribute_field<'t>(field: &CommentElidedText<'t>) -> Arguments
     }
 
     let mut arguments = Arguments::new_case_sensitive();
-    if !wikidot_trim_argument_fragment(source).is_empty() {
+    let trimmed_source = wikidot_trim_argument_fragment(source);
+    if !trimmed_source.is_empty() {
         arguments.mark_source_present();
+    }
+    if trimmed_source.starts_with('=') {
+        arguments.mark_empty_key_present();
     }
 
     let first_delimiter = delimiters.first().copied().unwrap_or(source.len());
@@ -164,10 +168,15 @@ fn parse_wikidot_attribute_field<'t>(field: &CommentElidedText<'t>) -> Arguments
         };
         let value_range = span.start + value_range.start..span.start + value_range.end;
         let (value, seams) = field.elide_range_with_seams(value_range);
-        if key != "style" || !dangerous_scheme_crosses_seam(&value, &seams) {
+        if key.is_empty() {
+            arguments.mark_empty_key_present();
+        } else if key != "style" || !dangerous_scheme_crosses_seam(&value, &seams) {
             arguments.insert(key, wikidot_stripslashes(value));
         }
         key = wikidot_attribute_key(field, &comment_mask, next_key_range);
+    }
+    if key.starts_with('=') {
+        arguments.mark_empty_key_present();
     }
 
     arguments

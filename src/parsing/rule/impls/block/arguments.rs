@@ -306,12 +306,14 @@ impl<'t> Arguments<'t> {
         map
     }
 
-    pub fn to_attribute_map_without_bare(
+    pub(crate) fn to_attribute_map_without_bare_where(
         &self,
         settings: &WikitextSettings,
+        include: impl Fn(&str, &str) -> bool,
     ) -> AttributeMap<'t> {
-        let mut map =
-            self.attribute_map_from_entries(settings, |key, _| !self.bare.contains(key));
+        let mut map = self.attribute_map_from_entries(settings, |key, value| {
+            !self.bare.contains(key) && include(key.as_str(), value)
+        });
         map.isolate_id(settings);
         map
     }

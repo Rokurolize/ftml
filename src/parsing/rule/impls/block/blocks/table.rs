@@ -86,6 +86,31 @@ struct ParsedBlock<'t> {
     has_arguments: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum AdvancedTableElement {
+    Table,
+    Row,
+    Cell,
+}
+
+impl AdvancedTableElement {
+    fn accepts_attribute(self, key: &str, authored_value: &str) -> bool {
+        // This check intentionally precedes Wikidot whitespace normalization:
+        // authored `""` is absent, while authored `" "` survives as an empty
+        // DOM value. AttributeMap applies the shared safety policy afterward.
+        if authored_value.is_empty() || key == "title" {
+            return false;
+        }
+
+        match self {
+            AdvancedTableElement::Cell => true,
+            AdvancedTableElement::Table | AdvancedTableElement::Row => {
+                !matches!(key, "colspan" | "rowspan")
+            }
+        }
+    }
+}
+
 fn parse_block<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &str,
@@ -93,6 +118,7 @@ fn parse_block<'r, 't>(
     flag_score: bool,
     in_head: bool,
     (block_rule, description): (&BlockRule, &str),
+    attribute_owner: AdvancedTableElement,
 ) -> Result<ParsedBlock<'t>, ParseError>
 where
     'r: 't,
@@ -103,12 +129,33 @@ where
     assert!(!flag_score, "{description} block doesn't allow score flag");
     assert_block_name(block_rule, name);
 
+    if parser.settings().layout.legacy()
+        && in_head
+        && std::iter::once(parser.current())
+            .chain(parser.remaining())
+            .take_while(|token| {
+                !matches!(token.token, Token::RightBlock | Token::InputEnd)
+            })
+            .any(|token| {
+                matches!(
+                    token.token,
+                    Token::GeneratedPageLink
+                        | Token::GeneratedTagLinks
+                        | Token::RuntimeText
+                )
+            })
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     // Get attributes
     let (arguments, body_start) =
         parser.get_head_map_with_body_start_wikidot(block_rule, in_head)?;
     let has_arguments = arguments.has_source();
     let attributes = if parser.settings().layout.legacy() {
-        arguments.to_attribute_map_without_bare(parser.settings())
+        arguments.to_attribute_map_without_bare_where(parser.settings(), |key, value| {
+            attribute_owner.accepts_attribute(key, value)
+        })
     } else {
         arguments.to_attribute_map(parser.settings())
     };
@@ -315,7 +362,15 @@ fn parse_table<'r, 't>(
     let source_start = parser.current().span.start;
 
     // Get block contents.
-    let parsed = parse_block(parser, name, flag_star, flag_score, in_head, block)?;
+    let parsed = parse_block(
+        parser,
+        name,
+        flag_star,
+        flag_score,
+        in_head,
+        block,
+        AdvancedTableElement::Table,
+    )?;
     let source_end = parser.current().span.start;
     if legacy
         && !has_explicit_closer(
@@ -384,7 +439,15 @@ fn parse_row<'r, 't>(
     let source_start = parser.current().span.start;
 
     // Get block contents.
-    let parsed = parse_block(parser, name, flag_star, flag_score, in_head, block)?;
+    let parsed = parse_block(
+        parser,
+        name,
+        flag_star,
+        flag_score,
+        in_head,
+        block,
+        AdvancedTableElement::Row,
+    )?;
     let source_end = parser.current().span.start;
     if legacy
         && !has_explicit_closer(
@@ -435,7 +498,15 @@ fn parse_cell_regular<'r, 't>(
     let source_start = parser.current().span.start;
 
     // Get block contents.
-    let parsed = parse_block(parser, name, flag_star, flag_score, in_head, block)?;
+    let parsed = parse_block(
+        parser,
+        name,
+        flag_star,
+        flag_score,
+        in_head,
+        block,
+        AdvancedTableElement::Cell,
+    )?;
     let source_end = parser.current().span.start;
     let source = &parser.full_text().inner()[source_start..source_end];
     if legacy && !has_explicit_closer(source, &["cell", "hcell"]) {
@@ -450,6 +521,7 @@ fn parse_cell_regular<'r, 't>(
         parsed.errors,
         header,
         wrap_paragraph,
+        legacy,
     )
 }
 
@@ -469,7 +541,15 @@ fn parse_cell_header<'r, 't>(
     let source_start = parser.current().span.start;
 
     // Get block contents.
-    let parsed = parse_block(parser, name, flag_star, flag_score, in_head, block)?;
+    let parsed = parse_block(
+        parser,
+        name,
+        flag_star,
+        flag_score,
+        in_head,
+        block,
+        AdvancedTableElement::Cell,
+    )?;
     let source_end = parser.current().span.start;
     let source = &parser.full_text().inner()[source_start..source_end];
     if legacy && !has_explicit_closer(source, &["cell", "hcell"]) {
@@ -484,6 +564,7 @@ fn parse_cell_header<'r, 't>(
         parsed.errors,
         header,
         wrap_paragraph,
+        legacy,
     )
 }
 
@@ -497,6 +578,7 @@ fn parse_cell<'r, 't>(
     errors: Vec<ParseError>,
     header: bool,
     wrap_paragraph: bool,
+    legacy: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     // Remove leading and trailing whitespace
     strip_whitespace(&mut elements);
@@ -504,18 +586,41 @@ fn parse_cell<'r, 't>(
         wrap_cell_paragraph(&mut elements);
     }
 
-    // Extract column-span if specified via attributes.
-    // If not specified, then the default.
-    let column_span = match attributes.remove("colspan") {
-        Some(value) => match value.parse() {
-            Ok(value) => value,
-            Err(_) if value == "0" => NonZeroU32::new(1).unwrap(),
-            Err(_) => {
-                assert!(attributes.insert("colspan", value));
-                NonZeroU32::new(1).unwrap()
-            }
-        },
-        None => NonZeroU32::new(1).unwrap(),
+    // Wikidot exposes the normalized authored colspan lexeme in the DOM, even
+    // when it is invalid or numerically one. Keep that lexeme in attributes
+    // while deriving the separate bounded numeric value used by table layout.
+    let column_span = if legacy {
+        if attributes
+            .get()
+            .get("colspan")
+            .is_some_and(|value| value == "0")
+        {
+            attributes.remove("colspan");
+        }
+        if attributes
+            .get()
+            .get("rowspan")
+            .is_some_and(|value| value == "0")
+        {
+            attributes.remove("rowspan");
+        }
+        attributes
+            .get()
+            .get("colspan")
+            .and_then(|value| parse_column_span_semantic(value))
+            .unwrap_or_else(column_span_one)
+    } else {
+        match attributes.remove("colspan") {
+            Some(value) => match value.parse() {
+                Ok(value) => value,
+                Err(_) if value == "0" => column_span_one(),
+                Err(_) => {
+                    assert!(attributes.insert("colspan", value));
+                    column_span_one()
+                }
+            },
+            None => column_span_one(),
+        }
     };
 
     let cell = TableCell {
@@ -528,6 +633,24 @@ fn parse_cell<'r, 't>(
     let element = Element::Partial(PartialElement::TableCell(cell));
 
     ok!(false; element, errors)
+}
+
+fn column_span_one() -> NonZeroU32 {
+    NonZeroU32::new(1).expect("one is non-zero")
+}
+
+fn parse_column_span_semantic(value: &str) -> Option<NonZeroU32> {
+    const MAX_U32_DECIMAL_DIGITS: usize = 10;
+
+    // Discard leading zeroes before the fixed-width bound so a padded value
+    // retains its numeric meaning without ever feeding a long lexeme to the
+    // integer parser.
+    let digits = value.strip_prefix('+').unwrap_or(value);
+    let significant = digits.trim_start_matches('0');
+    if significant.is_empty() || significant.len() > MAX_U32_DECIMAL_DIGITS {
+        return None;
+    }
+    significant.parse().ok()
 }
 
 fn wrap_cell_paragraph(elements: &mut Vec<Element<'_>>) {
@@ -605,6 +728,7 @@ mod tests {
                 flag_score,
                 false,
                 (&BLOCK_TABLE, "table block"),
+                AdvancedTableElement::Table,
             );
         };
 
@@ -857,7 +981,8 @@ mod tests {
             Element::Text(cow!("Cell")),
             Element::Text(cow!(" ")),
         ];
-        let success = parse_cell(elements, attributes, Vec::new(), false, false).unwrap();
+        let success =
+            parse_cell(elements, attributes, Vec::new(), false, false, true).unwrap();
         let Elements::Single(Element::Partial(PartialElement::TableCell(cell))) =
             success.item
         else {

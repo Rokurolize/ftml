@@ -7,6 +7,9 @@ mod advanced_table_performance;
 #[path = "advanced_table_recovery.rs"]
 mod advanced_table_recovery;
 
+#[path = "advanced_table_attributes.rs"]
+mod advanced_table_attributes;
+
 #[path = "canonical_wikidot_source.rs"]
 mod canonical_wikidot_source;
 

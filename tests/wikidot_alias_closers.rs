@@ -37,7 +37,9 @@ fn page_info() -> PageInfo<'static> {
 }
 
 fn settings(mode: WikitextMode) -> WikitextSettings {
-    WikitextSettings::from_mode(mode, Layout::Wikidot)
+    let mut settings = WikitextSettings::from_mode(mode, Layout::Wikidot);
+    settings.enable_html_blocks = false;
+    settings
 }
 
 fn parse_render(source: &str) -> (SyntaxTree<'static>, String, String, Vec<ParseError>) {
@@ -60,6 +62,7 @@ fn normalize_live_html(html: &str) -> String {
         .replace("<br />", "<br>")
         .replace("&#171;", "«")
         .replace("&#187;", "»")
+        .replace("&#32;", " ")
         .replace("&nbsp;", "\u{a0}")
         .replace("</table>\r\n", "</table>")
         .replace("</table>\n", "</table>");

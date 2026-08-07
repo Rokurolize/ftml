@@ -265,7 +265,6 @@ where
             ParseCondition::current(Token::LineBreak),
             ParseCondition::current(Token::ParagraphBreak),
             ParseCondition::current(Token::RightBlock),
-            ParseCondition::current(Token::RightLink),
         ];
         let rule = self.rule();
         let stops = &end_conditions;
@@ -277,7 +276,7 @@ where
         })
     }
 
-    pub(crate) fn get_wikidot_embed_video_name_with_residual_opener(
+    pub(crate) fn get_wikidot_block_name_with_residual_opener(
         &mut self,
     ) -> Result<(&'t str, bool), ParseError> {
         debug_assert!(self.settings().layout.legacy());
@@ -1253,6 +1252,12 @@ where
                                 }
                             }
                         } else if let Some((resolved_start, scored)) = owners.pop() {
+                            if block_rule.name == "block-span" {
+                                self.cache_wikidot_span_alias_close_score(
+                                    close_start,
+                                    scored,
+                                );
+                            }
                             if scored {
                                 self.cache_block_end_scan_outcomes(
                                     cache_name,
@@ -1273,12 +1278,19 @@ where
             if scan.current().token == Token::LeftBlock {
                 let opener_start = scan.current().span.start;
                 let mut opener = scan.clone();
-                if opener
-                    .get_token(Token::LeftBlock, ParseErrorKind::BlockExpectedEnd)
-                    .is_ok()
-                    && opener.get_optional_space().is_ok()
-                    && let Ok((name, in_head)) = opener.get_block_name(false)
-                {
+                let scored_span_residual_opener = block_rule.name == "block-span"
+                    && scan
+                        .full_text()
+                        .inner()
+                        .get(opener_start..)
+                        .and_then(|source| source.get(.."[[span_]]]".len()))
+                        .is_some_and(|source| source.eq_ignore_ascii_case("[[span_]]]"));
+                let parsed_name = if scored_span_residual_opener {
+                    opener.get_wikidot_block_name_with_residual_opener()
+                } else {
+                    opener.get_block_name(false)
+                };
+                if let Ok((name, in_head)) = parsed_name {
                     let scored = name.ends_with('_');
                     let base_name = name.strip_suffix('_').unwrap_or(name);
                     let scored_span_empty_spaced_head =
@@ -1287,13 +1299,6 @@ where
                             head.get_optional_space().is_ok()
                                 && head.current().token == Token::RightBlock
                         };
-                    let scored_span_residual_opener = block_rule.name == "block-span"
-                        && scored
-                        && opener.current().token == Token::RightLink
-                        && opener.current().slice == "]]]";
-                    if scored_span_residual_opener {
-                        opener.step().expect("residual opener has following input");
-                    }
                     if block_rule_accepts_name(block_rule, base_name)
                         && !scored_span_empty_spaced_head
                         && (scored_span_residual_opener

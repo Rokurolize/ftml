@@ -128,11 +128,56 @@ fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: b
                             if paragraph.ctype() == ContainerType::Paragraph)));
             true
         });
+        let mut cleaned = Vec::with_capacity(elements.len());
+        for element in elements.drain(..) {
+            let redundant_newline_after_nested_div =
+                matches!(&element, Element::Text(text) if text == "\n")
+                    && matches!(cleaned.last(), Some(Element::LineBreak | Element::LineBreaks(_)))
+                    && cleaned[..cleaned.len().saturating_sub(1)]
+                        .iter()
+                        .rev()
+                        .find(|previous| {
+                            !matches!(previous, Element::Text(text) if text == "\n")
+                        })
+                        .is_some_and(|previous| {
+                            matches!(previous, Element::Container(container)
+                                if container.ctype() == ContainerType::Div)
+                        });
+            if !redundant_newline_after_nested_div {
+                cleaned.push(element);
+            }
+        }
+        *elements = cleaned;
         return;
     }
 
     if matches!(elements.last(), Some(Element::LineBreak)) {
         elements.pop();
+    }
+    for index in 1..elements.len() {
+        if !matches!(elements[index], Element::LineBreak | Element::LineBreaks(_))
+            || !matches!(&elements[index - 1], Element::Container(container)
+                if container.ctype() == ContainerType::Div)
+        {
+            continue;
+        }
+        let inline_scored_div_follows = matches!(elements.get(index + 1), Some(Element::Text(text))
+                if text.to_ascii_lowercase().starts_with("[[div_]]"))
+            || matches!(
+                elements.get(index + 1..index + 5),
+                Some([
+                    Element::Text(open),
+                    Element::Text(name),
+                    Element::Text(score),
+                    Element::Text(close),
+                ]) if open == "[["
+                    && name.eq_ignore_ascii_case("div")
+                    && score == "_"
+                    && close == "]]"
+            );
+        if inline_scored_div_follows {
+            elements[index] = text!("\n");
+        }
     }
 }
 
@@ -677,7 +722,7 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert!(!errors.is_empty());
-        assert_eq!(html, "[[div_]]<br>\nbody<br>\n[[/div_]]");
+        assert_eq!(html, "<p>[[div_]]<br>\nbody<br>\n[[/div_]]</p>");
     }
 
     #[test]

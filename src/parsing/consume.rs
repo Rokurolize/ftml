@@ -77,6 +77,19 @@ where
     let start = parser.current().span.start;
     let end = close.current().span.start;
     let close_source = &parser.full_text().inner()[start..end];
+    if let Some(label) = wikidot_leading_space_close_label(close_source) {
+        parser.update(&close);
+        return Ok(Some(Elements::Multiple(vec![
+            text!("["),
+            Element::Link {
+                ltype: LinkType::Direct,
+                link: LinkLocation::Url(cow!("/")),
+                label: LinkLabel::Text(cow!(label)),
+                target: None,
+            },
+            text!("]"),
+        ])));
+    }
     let element = if scored_close && normalized.eq_ignore_ascii_case("span") {
         text!(close_source)
     } else if normalized.eq_ignore_ascii_case("size") {
@@ -93,9 +106,12 @@ where
         return Ok(None);
     };
 
+    let closes_scored_span = !scored_close
+        && normalized.eq_ignore_ascii_case("span")
+        && parser.wikidot_span_alias_close_is_scored(start);
     parser.update(&close);
     if !scored_close && normalized.eq_ignore_ascii_case("span") {
-        parser.leave_wikidot_span_body();
+        parser.leave_wikidot_span_body(closes_scored_span);
     }
     Ok(Some(if residual_close_bracket {
         Elements::Multiple(vec![element, text!("]")])
@@ -176,6 +192,19 @@ where
         },
         text!("]"),
     ])))
+}
+
+fn wikidot_leading_space_close_label(source: &str) -> Option<&str> {
+    let inner = source.strip_prefix("[[/")?.strip_suffix("]]")?;
+    let label = inner.strip_prefix([' ', '\t'])?;
+    let label = label.trim_start_matches([' ', '\t']);
+    if label.is_empty()
+        || label.chars().any(char::is_whitespace)
+        || !matches!(label.to_ascii_lowercase().as_str(), "div" | "span")
+    {
+        return None;
+    }
+    Some(label)
 }
 
 fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {

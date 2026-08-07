@@ -324,9 +324,7 @@ where
 
     let source = parser.full_text().inner();
     let candidate = &source[parser.current().span.start..];
-    let Some(after_open) = candidate.strip_prefix("[[") else {
-        return None;
-    };
+    let after_open = candidate.strip_prefix("[[")?;
     let after_open = after_open.trim_start_matches([' ', '\t']);
     let name_end = after_open
         .find(|character: char| character.is_whitespace() || character == ']')

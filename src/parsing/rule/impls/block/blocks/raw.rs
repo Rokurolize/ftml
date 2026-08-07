@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 use super::prelude::*;
+use super::span::wikidot_literal_with_empty_scored_spans_elided;
 use crate::delayed::DelayedElement;
 use std::borrow::Cow;
 
@@ -70,6 +71,18 @@ fn parse_fn<'r, 't>(
         let owner_end = owner.current().span.start;
         let generated = owner.generated_in_range(owner_start..owner_end);
         if generated.is_empty() {
+            let has_runtime = std::iter::once(parser.current())
+                .chain(parser.remaining())
+                .take_while(|token| token.span.start < owner_end)
+                .any(|token| token.token == Token::RuntimeText);
+            if !has_runtime
+                && let Some(elements) = wikidot_literal_with_empty_scored_spans_elided(
+                    &source[owner_start..owner_end],
+                )
+            {
+                parser.update(&owner);
+                return success_elements(elements);
+            }
             return Err(parser.make_err(ParseErrorKind::RuleFailed));
         }
         parser.update(&owner);

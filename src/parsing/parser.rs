@@ -91,6 +91,7 @@ type LostOwnerScanKey = (&'static str, u8, usize, usize, bool);
 struct BlockScanCache {
     body_end_outcomes: BTreeMap<BlockEndScanKey, bool>,
     lost_owner_outcomes: BTreeMap<LostOwnerScanKey, bool>,
+    span_alias_close_scores: BTreeMap<usize, bool>,
     literal_ranges: Option<Vec<Range<usize>>>,
 }
 
@@ -635,6 +636,26 @@ impl<'r, 't> Parser<'r, 't> {
         }
     }
 
+    pub(crate) fn cache_wikidot_span_alias_close_score(
+        &self,
+        close_start: usize,
+        scored: bool,
+    ) {
+        self.block_end_scan_cache
+            .borrow_mut()
+            .span_alias_close_scores
+            .insert(close_start, scored);
+    }
+
+    pub(crate) fn wikidot_span_alias_close_is_scored(&self, close_start: usize) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .span_alias_close_scores
+            .get(&close_start)
+            .copied()
+            .unwrap_or(false)
+    }
+
     #[cfg(test)]
     pub(crate) fn lost_owner_scan_token_visits(&self) -> usize {
         self.block_end_scan_token_visits()
@@ -966,7 +987,7 @@ impl<'r, 't> Parser<'r, 't> {
         self.start_of_line = parser.start_of_line;
         self.native_blockquote_depth = parser.native_blockquote_depth;
         self.quote_body_cursor = parser.quote_body_cursor;
-        self.wikidot.clone_from(&parser.wikidot);
+        self.wikidot = parser.wikidot;
 
         // Token pointers
         self.current = parser.current;

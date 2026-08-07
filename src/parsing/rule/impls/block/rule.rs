@@ -22,7 +22,7 @@ use super::super::prelude::*;
 use super::mapping::{get_block_rule_with_name, get_block_rule_with_name_for_layout};
 use super::{
     BlockRule,
-    blocks::{BLOCK_EMBED_VIDEO, BLOCK_HTML},
+    blocks::{BLOCK_EMBED_VIDEO, BLOCK_HTML, BLOCK_SPAN},
 };
 use crate::settings::WikitextMode;
 
@@ -49,7 +49,11 @@ pub const RULE_BLOCK_SKIP_NEWLINE: Rule = Rule {
 fn block_regular<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    parse_block(parser, false)
+    if wikidot_scored_span_residual_opener(parser) {
+        parse_wikidot_scored_span_residual(parser)
+    } else {
+        parse_block(parser, false)
+    }
 }
 
 fn block_star<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
@@ -94,6 +98,51 @@ fn block_skip<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
     } else {
         Err(parser.make_err(ParseErrorKind::RuleFailed))
     }
+}
+
+fn wikidot_scored_span_residual_opener(parser: &Parser<'_, '_>) -> bool {
+    if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlock {
+        return false;
+    }
+    let start = parser.current().span.start;
+    parser
+        .full_text()
+        .inner()
+        .get(start..)
+        .and_then(|source| source.get(.."[[span_]]]".len()))
+        .is_some_and(|source| source.eq_ignore_ascii_case("[[span_]]]"))
+}
+
+#[inline(never)]
+fn parse_wikidot_scored_span_residual<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> ParseResult<'r, 't, Elements<'t>>
+where
+    'r: 't,
+{
+    parser.set_rule(RULE_BLOCK);
+    parser.get_optional_space()?;
+    let (name, in_head) = parser.get_wikidot_block_name_with_residual_opener()?;
+    let Some(name) = name.strip_suffix('_') else {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    };
+    if !name.eq_ignore_ascii_case("span") || in_head {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    parser.set_block(&BLOCK_SPAN);
+    parser.get_optional_space()?;
+
+    (BLOCK_SPAN.parse_fn)(parser, name, false, true, false).map(|parsed| {
+        parsed.map(|elements| {
+            let mut elements = match elements {
+                Elements::Multiple(elements) => elements,
+                Elements::Single(element) => vec![element],
+                Elements::None => Vec::new(),
+            };
+            elements.insert(1.min(elements.len()), text!("]"));
+            Elements::Multiple(elements)
+        })
+    })
 }
 
 fn wikidot_literal_css_module(elements: &Elements<'_>) -> bool {
@@ -152,7 +201,7 @@ where
             .and_then(|source| source.get(.."[[embedvideo]]]".len()))
             .is_some_and(|opener| opener.eq_ignore_ascii_case("[[embedvideo]]]"));
     let (name, in_head) = if extra_embed_video_bracket {
-        parser.get_wikidot_embed_video_name_with_residual_opener()?
+        parser.get_wikidot_block_name_with_residual_opener()?
     } else {
         parser.get_block_name(flag_star)?
     };
@@ -236,40 +285,12 @@ where
     }
 
     parser.get_optional_space()?;
-    let scored_span_residual_opener = parser.settings().layout.legacy()
-        && block.name == "block-span"
-        && flag_score
-        && parser.current().token == Token::RightLink
-        && parser.current().slice == "]]]";
-    if scored_span_residual_opener {
-        parser.step()?;
-    }
-
     // Run the parse function until the end.
     //
     // This is responsible for parsing any arguments,
     // and terminating the block (the ']]' token),
     // then processing the body (if any) and tail block.
-    let parsed = (block.parse_fn)(
-        parser,
-        name,
-        flag_star,
-        flag_score,
-        in_head && !scored_span_residual_opener,
-    )?;
-    if scored_span_residual_opener {
-        Ok(parsed.map(|elements| {
-            let mut elements = match elements {
-                Elements::Multiple(elements) => elements,
-                Elements::Single(element) => vec![element],
-                Elements::None => Vec::new(),
-            };
-            elements.insert(1.min(elements.len()), text!("]"));
-            Elements::Multiple(elements)
-        }))
-    } else {
-        Ok(parsed)
-    }
+    (block.parse_fn)(parser, name, flag_star, flag_score, in_head)
 }
 
 fn wikidot_block_has_physical_line_ownership(

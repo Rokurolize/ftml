@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use super::span::wikidot_literal_with_empty_scored_spans_elided;
 use crate::parsing::rule::impls::block::parser::BlockBodyStart;
 use std::borrow::Cow;
 
@@ -60,9 +61,23 @@ fn parse_fn<'r, 't>(
         let owner_start = source[..name_start]
             .rfind("[[")
             .expect("parsed HTML block name follows its opener");
-        let _ = parser.get_body_text(&BLOCK_HTML)?;
-        let owner_end = parser.current().span.start;
-        let mut elements = literal_elements(&source[owner_start..owner_end]);
+        let mut owner = parser.clone();
+        let _ = owner.get_body_text(&BLOCK_HTML)?;
+        let owner_end = owner.current().span.start;
+        let generated = owner.generated_in_range(owner_start..owner_end);
+        let has_runtime = std::iter::once(parser.current())
+            .chain(parser.remaining())
+            .take_while(|token| token.span.start < owner_end)
+            .any(|token| token.token == Token::RuntimeText);
+        let mut elements = if generated.is_empty() && !has_runtime {
+            wikidot_literal_with_empty_scored_spans_elided(
+                &source[owner_start..owner_end],
+            )
+            .unwrap_or_else(|| literal_elements(&source[owner_start..owner_end]))
+        } else {
+            literal_elements(&source[owner_start..owner_end])
+        };
+        parser.update(&owner);
         if source[..owner_start].ends_with('\n')
             && let Elements::Multiple(elements) = &mut elements
         {

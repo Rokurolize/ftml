@@ -22,6 +22,7 @@ use super::prelude::*;
 use crate::delayed::DelayedElement;
 use crate::parsing::strip_newlines;
 use crate::tree::PartialElement;
+use std::borrow::Cow;
 
 pub const BLOCK_SPAN: BlockRule = BlockRule {
     name: "block-span",
@@ -31,6 +32,49 @@ pub const BLOCK_SPAN: BlockRule = BlockRule {
     accepts_newlines: false,
     parse_fn,
 };
+
+pub(super) fn wikidot_literal_with_empty_scored_spans_elided<'t>(
+    source: &str,
+) -> Option<Elements<'t>> {
+    const EMPTY_SCORED_SPAN: &str = "[[span_]][[/span]]";
+
+    let lowercase = source.to_ascii_lowercase();
+    let mut cursor = 0;
+    let mut output = String::with_capacity(source.len());
+    let mut found = false;
+    while let Some(relative) = lowercase[cursor..].find(EMPTY_SCORED_SPAN) {
+        let start = cursor + relative;
+        output.push_str(&source[cursor..start]);
+        cursor = start + EMPTY_SCORED_SPAN.len();
+        if source[cursor..].starts_with("\r\n") {
+            cursor += 2;
+        } else if source[cursor..].starts_with('\n') {
+            cursor += 1;
+        }
+        found = true;
+    }
+    if !found {
+        return None;
+    }
+    output.push_str(&source[cursor..]);
+
+    let mut elements = Vec::new();
+    for chunk in output.split_inclusive('\n') {
+        let has_newline = chunk.ends_with('\n');
+        let line = chunk
+            .strip_suffix('\n')
+            .unwrap_or(chunk)
+            .strip_suffix('\r')
+            .unwrap_or_else(|| chunk.strip_suffix('\n').unwrap_or(chunk));
+        if !line.is_empty() {
+            elements.push(Element::Text(Cow::Owned(line.to_owned())));
+        }
+        if has_newline {
+            elements.push(Element::LineBreak);
+        }
+    }
+    Some(Elements::Multiple(elements))
+}
 
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
@@ -57,6 +101,11 @@ fn parse_fn<'r, 't>(
         };
     let generated = parser.generated_until_right_block();
     let arguments = parser.get_head_map_wikidot(&BLOCK_SPAN, in_head)?;
+    let scored_starts_next_physical_line = flag_score
+        && matches!(
+            parser.current().token,
+            Token::LineBreak | Token::ParagraphBreak
+        );
     if scored_empty_spaced_head {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
@@ -110,6 +159,9 @@ fn parse_fn<'r, 't>(
         }
         if flag_score {
             attributes.insert("data-ftml-score-span", cow!(""));
+            if scored_starts_next_physical_line {
+                attributes.insert("data-ftml-score-span-own-line", cow!(""));
+            }
         }
         let span = Element::Partial(PartialElement::InlineSpanOpen(attributes));
         parser.enter_wikidot_span_body(flag_score);
@@ -219,21 +271,10 @@ mod tests {
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
         assert!(errors.is_empty(), "{errors:?}");
-        let span = match tree.elements.as_slice() {
-            [Element::Container(paragraph)] => paragraph
-                .elements()
-                .iter()
-                .find_map(|element| match element {
-                    Element::Container(container)
-                        if container.ctype() == ContainerType::Span =>
-                    {
-                        Some(container)
-                    }
-                    _ => None,
-                })
-                .expect("paragraph should contain span container"),
-            other => panic!("expected paragraph containing span, got {other:?}"),
+        let [Element::Container(span)] = tree.elements.as_slice() else {
+            panic!("expected one scored span, got {:?}", tree.elements);
         };
+        assert_eq!(span.ctype(), ContainerType::Span);
 
         assert_eq!(span.elements(), &[text!("alpha")]);
         assert_eq!(

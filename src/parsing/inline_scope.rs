@@ -210,6 +210,7 @@ fn collect_valid_scope_pairs(elements: &[Element<'_>]) -> BTreeSet<usize> {
 #[derive(Default)]
 struct SequenceEffects {
     scored_span_opened_at_start: bool,
+    scored_span_opened_unwrapped_at_start: bool,
     scored_span_closed: bool,
 }
 
@@ -259,7 +260,7 @@ fn lower_root_sequence<'t>(
             let (_, _, group) = paragraph_group.get_or_insert_with(|| {
                 (
                     reopens_paragraph_after_separator
-                        || !effects.scored_span_opened_at_start
+                        || !effects.scored_span_opened_unwrapped_at_start
                             && !starts_in_scored_span
                             && !starts_in_inline_scope,
                     paragraph_attributes,
@@ -502,6 +503,8 @@ fn lower_sequence<'t>(
         {
             let at_start = output.is_empty() && run.is_empty();
             let scored = attributes.remove("data-ftml-score-span").is_some();
+            let scored_starts_next_physical_line =
+                attributes.remove("data-ftml-score-span-own-line").is_some();
             if scored {
                 while matches!(
                     run.last(),
@@ -520,6 +523,8 @@ fn lower_sequence<'t>(
                 }
                 if scored {
                     effects.scored_span_opened_at_start |= at_start;
+                    effects.scored_span_opened_unwrapped_at_start |=
+                        at_start && scored_starts_next_physical_line;
                     *trim_next_break = true;
                 }
             }

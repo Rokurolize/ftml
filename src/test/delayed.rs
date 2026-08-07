@@ -548,6 +548,32 @@ fn anchor_links_preserve_delayed_owner_and_runtime_scalar_provenance() {
 }
 
 #[test]
+fn named_anchor_markers_preserve_delayed_and_runtime_provenance() {
+    assert_eq!(
+        render_authored("BEGIN|[[# alpha]]|END"),
+        r#"<p>BEGIN|<a name="alpha"></a>|END</p>"#,
+    );
+
+    let generated = render("BEGIN|[[# %%title_linked%%]]|END");
+    assert!(generated.contains("BEGIN|[[# "), "{generated}");
+    assert!(generated.contains(concat!(
+        r#"<a href="/component:image-block">"#,
+        "Standard Image Block</a>",
+    )));
+    assert!(generated.contains("]]|END"), "{generated}");
+    assert!(!generated.contains("<a name"), "{generated}");
+
+    let runtime_name = render_with_runtime_scalar("BEGIN|[[# alpha]]|END", "alpha");
+    assert_eq!(runtime_name, "<p>BEGIN|[[# alpha]]|END</p>");
+    assert!(!runtime_name.contains("<a name"), "{runtime_name}");
+
+    let runtime_marker =
+        render_with_runtime_scalar("BEGIN|[[# alpha]]|END", "[[# alpha]]");
+    assert_eq!(runtime_marker, "<p>BEGIN|[[# alpha]]|END</p>");
+    assert!(!runtime_marker.contains("<a name"), "{runtime_marker}");
+}
+
+#[test]
 fn slot_occupancy_recovers_outer_links_as_authored_source() {
     assert_eq!(
         render("BEGIN|[[[scp-003|%%title_linked%%]]]|END"),

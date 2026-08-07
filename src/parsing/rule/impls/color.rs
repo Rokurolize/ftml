@@ -21,12 +21,15 @@
 use super::prelude::*;
 use crate::parsing::ParseSuccess;
 use crate::tree::Container;
-use regex::Regex;
+use cssparser::{Parser as CssParser, ParserInput};
+use cssparser_color::Color;
 use std::borrow::Cow;
-use std::sync::LazyLock;
 
-static HEX_COLOR: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$").unwrap());
+#[derive(Debug, Clone)]
+struct ColorSpec<'t> {
+    color: Cow<'t, str>,
+    background: bool,
+}
 
 pub const RULE_COLOR: Rule = Rule {
     name: "color",
@@ -38,54 +41,156 @@ fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create color container");
+    let starts_line = parser.start_of_line();
     assert_step(parser, Token::Color)?;
 
-    // The pattern for color is:
-    // ## [color-style] | [text to be colored] ##
-
-    // Gather the color name until the separator
-    let color_close = [ParseCondition::current(Token::Pipe)];
+    // Foreground: ## color | body ##
+    // Background: ## | color | body ##
+    let legacy = parser.settings().layout.legacy();
+    let color_close = if legacy {
+        &[
+            ParseCondition::current(Token::Pipe),
+            ParseCondition::current(Token::TableColumn),
+            ParseCondition::current(Token::TableColumnTitle),
+            ParseCondition::current(Token::TableColumnCenter),
+            ParseCondition::current(Token::TableColumnRight),
+        ][..]
+    } else {
+        &[ParseCondition::current(Token::Pipe)][..]
+    };
     let color_invalid = [
         ParseCondition::current(Token::ParagraphBreak),
         ParseCondition::current(Token::LineBreak),
     ];
-    let color = collect_text(parser, RULE_COLOR, &color_close, &color_invalid, None)?;
-    if parser.settings().layout.legacy() && (color.is_empty() || !is_safe_color(color)) {
+    let (first_field, first_terminator) =
+        collect_text_keep(parser, RULE_COLOR, color_close, &color_invalid, None)?;
+    let mut body_pipe_prefix = (legacy && is_table_column_token(first_terminator.token))
+        .then(|| text!(&first_terminator.slice[1..]));
+    let (color, background) = if legacy && first_field.trim().is_empty() {
+        let (background, terminator) =
+            collect_text_keep(parser, RULE_COLOR, color_close, &color_invalid, None)?;
+        body_pipe_prefix = is_table_column_token(terminator.token)
+            .then(|| text!(&terminator.slice[1..]));
+        (background.trim(), true)
+    } else if legacy {
+        (first_field.trim(), false)
+    } else {
+        (first_field, false)
+    };
+    let color = if legacy {
+        normalize_wikidot_color(color)
+            .ok_or_else(|| parser.make_err(ParseErrorKind::RuleFailed))?
+    } else {
+        normalize_color(color)
+    };
+    let spec = ColorSpec { color, background };
+
+    trace!(
+        "Retrieved color descriptor, now building container ('{}')",
+        spec.color
+    );
+
+    if legacy {
+        let mut crossed = parser.clone();
+        let leading_space = if crossed.current().token == Token::Whitespace {
+            let whitespace = crossed.current();
+            crossed.step()?;
+            has_crossed_bold_close(&crossed)
+                .then(|| text!(crossed.full_text().slice(whitespace, whitespace)))
+        } else {
+            None
+        };
+        if has_crossed_bold_close(parser) {
+            return collect_crossed_bold_color(parser, spec, None);
+        }
+        if let Some(leading_space) = leading_space {
+            parser.update(&crossed);
+            return collect_crossed_bold_color(
+                parser,
+                spec,
+                (!starts_line).then_some(leading_space),
+            );
+        }
+    }
+
+    let table_owned = legacy && parser.in_wikidot_simple_table_cell();
+    let close = if table_owned {
+        &[
+            ParseCondition::current(Token::Color),
+            ParseCondition::current(Token::TableColumn),
+            ParseCondition::current(Token::TableColumnTitle),
+            ParseCondition::current(Token::TableColumnCenter),
+            ParseCondition::current(Token::TableColumnRight),
+        ][..]
+    } else {
+        &[ParseCondition::current(Token::Color)][..]
+    };
+    let invalid = [ParseCondition::current(Token::ParagraphBreak)];
+    let body = if table_owned {
+        collect_consume_before(parser, RULE_COLOR, close, &invalid, None)?
+    } else {
+        collect_consume_keep(parser, RULE_COLOR, close, &invalid, None)?
+    };
+    let ((mut elements, terminator), errors, paragraph_safe) = body.into();
+    if let Some(prefix) = body_pipe_prefix {
+        elements.insert(0, prefix);
+    }
+    if terminator.token == Token::Color && table_owned {
+        parser.step()?;
+    } else if is_table_column_token(terminator.token) {
+        parser.mark_color_crossed_wikidot_simple_table_cell();
+    }
+
+    let leading_space = take_edge_space(&mut elements, true);
+    let trailing_space = take_edge_space(&mut elements, false);
+    if legacy && elements.is_empty() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    trace!("Retrieved color descriptor, now building container ('{color}')");
-
-    let leading_space = if parser.settings().layout.legacy()
-        && parser.current().token == Token::Whitespace
-    {
-        let whitespace = assert_step(parser, Token::Whitespace)?;
-        Some(text!(parser.full_text().slice(whitespace, whitespace)))
-    } else {
-        None
-    };
-
-    if parser.settings().layout.legacy() && has_crossed_bold_close(parser) {
-        return collect_crossed_bold_color(parser, color, leading_space);
+    let element = color_element(spec, elements);
+    let mut output = Vec::with_capacity(3);
+    if !starts_line && let Some(space) = leading_space {
+        output.push(space);
+    }
+    output.push(element);
+    if let Some(space) = trailing_space {
+        output.push(space);
     }
 
-    // Build color container
-    let close = [ParseCondition::current(Token::Color)];
-    let invalid = [ParseCondition::current(Token::ParagraphBreak)];
-    let body = collect_consume(parser, RULE_COLOR, &close, &invalid, None)?;
-    let (elements, errors, paragraph_safe) = body.into();
+    ok!(paragraph_safe; Elements::Multiple(output), errors)
+}
 
-    // Return result
-    let element = Element::Color {
-        color: normalize_color(color),
-        elements,
+fn is_table_column_token(token: Token) -> bool {
+    matches!(
+        token,
+        Token::TableColumn
+            | Token::TableColumnTitle
+            | Token::TableColumnCenter
+            | Token::TableColumnRight
+    )
+}
+
+fn take_edge_space<'t>(
+    elements: &mut Vec<Element<'t>>,
+    leading: bool,
+) -> Option<Element<'t>> {
+    let index = if leading {
+        0
+    } else {
+        elements.len().checked_sub(1)?
     };
+    if matches!(elements.get(index), Some(Element::Text(text)) if text.as_ref() == " ") {
+        Some(elements.remove(index))
+    } else {
+        None
+    }
+}
 
-    match leading_space {
-        Some(leading_space) => {
-            ok!(paragraph_safe; Elements::Multiple(vec![leading_space, element]), errors)
-        }
-        None => ok!(paragraph_safe; element, errors),
+fn color_element<'t>(spec: ColorSpec<'t>, elements: Vec<Element<'t>>) -> Element<'t> {
+    Element::Color {
+        color: spec.color,
+        background: spec.background,
+        elements,
     }
 }
 
@@ -118,7 +223,7 @@ fn has_crossed_bold_close(parser: &Parser<'_, '_>) -> bool {
 
 fn collect_crossed_bold_color<'r, 't>(
     parser: &mut Parser<'r, 't>,
-    color: &'t str,
+    spec: ColorSpec<'t>,
     leading_space: Option<Element<'t>>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     assert_step(parser, Token::Bold)?;
@@ -147,10 +252,7 @@ fn collect_crossed_bold_color<'r, 't>(
         colored,
         AttributeMap::new(),
     ));
-    let color = Element::Color {
-        color: normalize_color(color),
-        elements: vec![colored],
-    };
+    let color = color_element(spec, vec![colored]);
     let mut elements = Vec::with_capacity(3);
     if let Some(leading_space) = leading_space {
         elements.push(leading_space);
@@ -183,7 +285,7 @@ pub(crate) fn normalize_color(color: &str) -> Cow<'_, str> {
     }
 
     let hex = color.strip_prefix('#').unwrap_or(color);
-    if HEX_COLOR.is_match(hex) {
+    if matches!(hex.len(), 3 | 6) && hex.bytes().all(|byte| byte.is_ascii_hexdigit()) {
         Cow::Owned(format!("#{}", hex.to_ascii_lowercase()))
     } else {
         Cow::Borrowed(color)
@@ -195,6 +297,29 @@ fn is_safe_color(color: &str) -> bool {
         !ch.is_control()
             && !matches!(ch, ';' | '{' | '}' | '<' | '>' | '"' | '\'' | '\\' | '&')
     })
+}
+
+pub(crate) fn normalize_wikidot_color(color: &str) -> Option<Cow<'_, str>> {
+    let color = color.trim();
+    if color.is_empty() {
+        return None;
+    }
+    let (hex, has_hash) = color
+        .strip_prefix('#')
+        .map_or((color, false), |hex| (hex, true));
+    if matches!(hex.len(), 3 | 6) && hex.bytes().all(|byte| byte.is_ascii_hexdigit())
+        || has_hash
+            && matches!(hex.len(), 4 | 8)
+            && hex.bytes().all(|byte| byte.is_ascii_hexdigit())
+    {
+        return Some(Cow::Owned(format!("#{}", hex.to_ascii_lowercase())));
+    }
+
+    let mut input = ParserInput::new(color);
+    let mut parser = CssParser::new(&mut input);
+    let parsed: Result<_, cssparser::ParseError<'_, ()>> =
+        parser.parse_entirely(Color::parse);
+    parsed.ok().map(|_| Cow::Borrowed(color))
 }
 
 #[cfg(test)]

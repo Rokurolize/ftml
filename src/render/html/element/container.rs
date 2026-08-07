@@ -97,13 +97,23 @@ fn has_wikidot_heading_label_span(elements: &[Element]) -> bool {
     }
 }
 
-pub fn render_color(ctx: &mut HtmlContext, color: &str, elements: &[Element]) {
+pub fn render_color(
+    ctx: &mut HtmlContext,
+    color: &str,
+    background: bool,
+    elements: &[Element],
+) {
     debug!("Rendering color container (color '{color}')");
 
-    let style = if ctx.layout().legacy() {
-        format!("color: {color}")
+    let property = if background {
+        "background-color"
     } else {
-        format!("color: {color};")
+        "color"
+    };
+    let style = if ctx.layout().legacy() {
+        format!("{property}: {color}")
+    } else {
+        format!("{property}: {color};")
     };
     ctx.html()
         .span()

@@ -66,6 +66,55 @@ pub fn collect<'p, 'r, 't, F>(
     close_conditions: &[ParseCondition],
     invalid_conditions: &[ParseCondition],
     error_kind: Option<ParseErrorKind>,
+    process: F,
+) -> ParseResult<'r, 't, &'r ExtractedToken<'t>>
+where
+    F: FnMut(&mut Parser<'r, 't>) -> ParseResult<'r, 't, ()>,
+{
+    collect_with_terminator(
+        parser,
+        _rule,
+        close_conditions,
+        invalid_conditions,
+        error_kind,
+        true,
+        process,
+    )
+}
+
+/// Variant of [`collect`] that leaves a matching closing token unconsumed.
+///
+/// This is used when an enclosing rule owns the terminator and the nested
+/// collector must stop immediately before it.
+pub(super) fn collect_before<'p, 'r, 't, F>(
+    parser: &'p mut Parser<'r, 't>,
+    rule: Rule,
+    close_conditions: &[ParseCondition],
+    invalid_conditions: &[ParseCondition],
+    error_kind: Option<ParseErrorKind>,
+    process: F,
+) -> ParseResult<'r, 't, &'r ExtractedToken<'t>>
+where
+    F: FnMut(&mut Parser<'r, 't>) -> ParseResult<'r, 't, ()>,
+{
+    collect_with_terminator(
+        parser,
+        rule,
+        close_conditions,
+        invalid_conditions,
+        error_kind,
+        false,
+        process,
+    )
+}
+
+fn collect_with_terminator<'p, 'r, 't, F>(
+    parser: &'p mut Parser<'r, 't>,
+    _rule: Rule,
+    close_conditions: &[ParseCondition],
+    invalid_conditions: &[ParseCondition],
+    error_kind: Option<ParseErrorKind>,
+    consume_terminator: bool,
     mut process: F,
 ) -> ParseResult<'r, 't, &'r ExtractedToken<'t>>
 where
@@ -83,7 +132,9 @@ where
             && parser.evaluate_any(close_conditions)
         {
             let last = parser.current();
-            parser.step()?;
+            if consume_terminator {
+                parser.step()?;
+            }
             return ok!(paragraph_safe; last, errors);
         }
 
@@ -100,7 +151,7 @@ where
         // See if the container has ended
         if parser.evaluate_any(close_conditions) {
             let last = parser.current();
-            if parser.current().token != Token::InputEnd {
+            if consume_terminator && parser.current().token != Token::InputEnd {
                 parser.step()?;
             }
 

@@ -152,6 +152,19 @@ fn page_link_input_with_runtime_suffix<'t>(
 }
 
 #[test]
+fn generated_values_cannot_become_color_authority() {
+    for source in ["##%%title_linked%%|A##", "##|%%title_linked%%|A##"] {
+        let input = page_link_input(source);
+        let html = render_input(&input);
+
+        assert!(html.contains("##"), "{html}");
+        assert!(html.contains("Standard Image Block"), "{html}");
+        assert!(!html.contains("style=\"color:"), "{html}");
+        assert!(!html.contains("background-color:"), "{html}");
+    }
+}
+
+#[test]
 fn delayed_html_blocks_remain_observable_after_binding() {
     let source = "[[html]]<strong>delayed payload</strong>[[/html]]";
     let input = DelayedInput::new(

@@ -261,9 +261,11 @@ pub enum Element<'t> {
 
     /// Element containing colored text.
     ///
-    /// The CSS designation of the color is specified, followed by the elements contained within.
+    /// The validated static CSS color and whether it applies to the background
+    /// are specified, followed by the elements contained within.
     Color {
         color: Cow<'t, str>,
+        background: bool,
         elements: Vec<Element<'t>>,
     },
 
@@ -700,8 +702,13 @@ impl Element<'_> {
                 format: option_string_to_owned(format),
                 hover: *hover,
             },
-            Element::Color { color, elements } => Element::Color {
+            Element::Color {
+                color,
+                background,
+                elements,
+            } => Element::Color {
                 color: string_to_owned(color),
+                background: *background,
                 elements: elements_to_owned(elements),
             },
             Element::Code(code_block) => Element::Code(code_block.to_owned()),

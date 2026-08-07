@@ -255,6 +255,7 @@ fn public_api_html_render_covers_fallback_branches_from_ast() {
             },
             Element::Color {
                 color: Cow::Borrowed("rebeccapurple"),
+                background: false,
                 elements: vec![Element::Text(Cow::Borrowed("colored"))],
             },
             Element::Image {

@@ -257,7 +257,11 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
             format,
             hover,
         } => render_date(ctx, *value, ref_cow!(format), *hover),
-        Element::Color { color, elements } => render_color(ctx, color, elements),
+        Element::Color {
+            color,
+            background,
+            elements,
+        } => render_color(ctx, color, *background, elements),
         Element::Code(CodeBlock {
             contents,
             language,

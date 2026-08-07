@@ -889,6 +889,45 @@ fn runtime_scalar_advanced_table_markers_remain_inert() {
 }
 
 #[test]
+fn generated_values_do_not_become_advanced_table_attributes() {
+    for source in [
+        concat!(
+            "[[table class=\"%%title_linked%%\"]]\n",
+            "[[row]]\n[[cell]]A[[/cell]]\n[[/row]]\n[[/table]]",
+        ),
+        concat!(
+            "[[table]]\n[[row]]\n",
+            "[[cell colspan=\"%%title_linked%%\"]]A[[/cell]]\n",
+            "[[/row]]\n[[/table]]",
+        ),
+    ] {
+        let html = render(source);
+        assert!(!html.contains("<table>"), "{html}");
+        assert!(
+            html.contains(concat!(
+                r#"<a href="/component:image-block">"#,
+                "Standard Image Block</a>",
+            )),
+            "{html}",
+        );
+        assert!(!html.contains("%%title_linked%%"), "{html}");
+    }
+}
+
+#[test]
+fn runtime_scalar_values_do_not_become_advanced_table_attributes() {
+    let source = concat!(
+        "[[table class=\"runtime-value\"]]\n",
+        "[[row]]\n[[cell]]A[[/cell]]\n[[/row]]\n[[/table]]",
+    );
+    let html = render_with_runtime_scalar(source, "runtime-value");
+
+    assert!(!html.contains("<table>"), "{html}");
+    assert!(html.contains("runtime-value"), "{html}");
+    assert!(html.contains('A'), "{html}");
+}
+
+#[test]
 fn runtime_scalar_text_does_not_complete_authored_delimiters() {
     let source = "**injected**";
     let input = DelayedInput::new(

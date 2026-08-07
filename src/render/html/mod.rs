@@ -33,8 +33,8 @@ mod test_utils;
 
 pub use self::meta::{HtmlMeta, HtmlMetaType};
 pub use self::output::{
-    HtmlOutput, HtmlResourceRequirement, StandaloneButtonRequirement,
-    WikidotTabViewRequirement,
+    EmbedVideoRequirement, HtmlOutput, HtmlResourceRequirement,
+    StandaloneButtonRequirement, WikidotTabViewRequirement,
 };
 
 use self::context::HtmlContext;

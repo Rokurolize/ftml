@@ -23,9 +23,9 @@ use crate::delayed::DelayedElement;
 use crate::tree::clone::*;
 use crate::tree::{
     Alignment, AnchorTarget, AttributeMap, ClearFloat, CodeBlock, Container, DateItem,
-    DefinitionListItem, Embed, FileSource, FloatAlignment, ImageSource, LinkLabel,
-    LinkLocation, LinkType, ListItem, ListType, Module, PartialElement, StandaloneButton,
-    Tab, Table, VariableMap,
+    DefinitionListItem, Embed, EmbedVideo, FileSource, FloatAlignment, ImageSource,
+    LinkLabel, LinkLocation, LinkType, ListItem, ListType, Module, PartialElement,
+    StandaloneButton, Tab, Table, VariableMap,
 };
 use ref_map::*;
 use std::borrow::Cow;
@@ -90,6 +90,9 @@ pub enum Element<'t> {
 
     /// A typed standalone action control with no authored executable behavior.
     StandaloneButton(StandaloneButton<'t>),
+
+    /// An opaque authored `[[embedvideo]]` block resolved by the caller.
+    EmbedVideo(EmbedVideo<'t>),
 
     /// An element representing an arbitrary anchor.
     ///
@@ -384,6 +387,7 @@ impl Element<'_> {
             Element::Table(_) => "Table",
             Element::TabView(_) => "TabView",
             Element::StandaloneButton(_) => "StandaloneButton",
+            Element::EmbedVideo(_) => "EmbedVideo",
             Element::Anchor { .. } => "Anchor",
             Element::AnchorName(_) => "AnchorName",
             Element::Link { .. } => "Link",
@@ -447,6 +451,7 @@ impl Element<'_> {
                 }
             }
             Element::StandaloneButton(_) => {}
+            Element::EmbedVideo(_) => {}
             Element::Anchor { elements, .. }
             | Element::Collapsible { elements, .. }
             | Element::Color { elements, .. }
@@ -517,6 +522,7 @@ impl Element<'_> {
             Element::Table(_) => false,
             Element::TabView(_) => false,
             Element::StandaloneButton(_) => true,
+            Element::EmbedVideo(_) => false,
             Element::Anchor { .. }
             | Element::AnchorName(_)
             | Element::Link { .. }
@@ -580,6 +586,9 @@ impl Element<'_> {
             }
             Element::StandaloneButton(button) => {
                 Element::StandaloneButton(button.to_owned())
+            }
+            Element::EmbedVideo(embed_video) => {
+                Element::EmbedVideo(embed_video.to_owned())
             }
             Element::Anchor {
                 target,

@@ -625,6 +625,12 @@ impl SealedFragment {
     pub fn html_blocks(&self) -> &[Cow<'static, str>] {
         &self.html_blocks
     }
+
+    pub fn resource_requirements(
+        &self,
+    ) -> &[crate::render::html::HtmlResourceRequirement] {
+        &self.output.resource_requirements
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -905,6 +911,7 @@ fn element_contains_delayed(element: &Element<'_>) -> bool {
         | Element::Audio { .. }
         | Element::Video { .. }
         | Element::StandaloneButton(_)
+        | Element::EmbedVideo(_)
         | Element::RadioButton { .. }
         | Element::CheckBox { .. }
         | Element::TableOfContents { .. }

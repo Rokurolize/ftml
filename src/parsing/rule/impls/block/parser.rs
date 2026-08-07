@@ -250,12 +250,13 @@ where
             ParseCondition::current(Token::LineBreak),
             ParseCondition::current(Token::ParagraphBreak),
             ParseCondition::current(Token::RightBlock),
+            ParseCondition::current(Token::RightLink),
         ];
         let rule = self.rule();
         let stops = &end_conditions;
         collect_text_keep(self, rule, stops, &[], Some(kind)).map(|(name, last)| {
             let name = name.trim();
-            let in_head = !matches!(last.token, Token::RightBlock);
+            let in_head = !matches!(last.token, Token::RightBlock | Token::RightLink);
 
             (name, in_head)
         })
@@ -264,7 +265,6 @@ where
     pub(crate) fn get_wikidot_end_block_with_residual(
         &mut self,
     ) -> Result<(&'t str, bool), ParseError> {
-        debug_assert!(self.settings().layout.legacy());
         self.get_token(Token::LeftBlockEnd, ParseErrorKind::BlockExpectedEnd)?;
         self.get_optional_space()?;
 

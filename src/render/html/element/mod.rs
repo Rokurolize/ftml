@@ -29,6 +29,7 @@ mod container;
 mod date;
 mod definition_list;
 mod embed;
+mod embed_video;
 mod file;
 mod footnotes;
 mod iframe;
@@ -64,6 +65,7 @@ use self::container::{render_color, render_container};
 use self::date::render_date;
 use self::definition_list::render_definition_list;
 use self::embed::render_embed;
+use self::embed_video::render_embed_video;
 use self::file::render_file_link;
 use self::footnotes::{render_footnote, render_footnote_block};
 use self::iframe::{render_html, render_iframe};
@@ -163,6 +165,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         Element::Table(table) => render_table(ctx, table),
         Element::TabView(tabs) => render_tabview(ctx, tabs),
         Element::StandaloneButton(button) => render_standalone_button(ctx, button),
+        Element::EmbedVideo(embed_video) => render_embed_video(ctx, embed_video),
         Element::Anchor {
             elements,
             attributes,

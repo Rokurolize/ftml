@@ -156,6 +156,9 @@ where
     if !block_rule_enabled(parser, block) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
+    if block.name == "block-embedvideo" && spaced_name {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     if parser.settings().layout.legacy()
         && !parser.discarding_hidden_body()
         && block.name == "block-tab"

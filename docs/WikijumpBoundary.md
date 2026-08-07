@@ -11,11 +11,12 @@ The frozen responsibility boundary between FTML and its primary consumer Wikijum
 - Escaping and sanitization at the syntax render boundary.
 - Wikidot comment semantics (`[!-- --]`), including the visibility of tokens inside comments during the include scan.
 - Structured preserved/delayed representations for runtime constructs (includes, ListPages, CountPages, unknown modules, conditional blocks) rather than erasing or approximating them.
+- Exact authored `[[embedvideo]]` ownership as an opaque `EmbedVideo` AST value. HTML output exposes an `EmbedVideoRequirement` containing the exact source, payload, and SHA-256 identity while rendering only a static marker.
 - A parser performance envelope where dense real corpus pages parse within production budget or fail in a structured, caller-detectable way.
 
 ### What FTML must not absorb
 
-Site-runtime semantics stay in Wikijump or the caller: page/site/user lookup, permissions, DB queries, include source fetching, ListPages/CountPages execution, file URL materialization, module runtime data, browser capture, and fidelity validation. See `AGENTS.md` in this repository and the Wikijump contract document for the full split.
+Site-runtime semantics stay in Wikijump or the caller: page/site/user lookup, permissions, DB queries, include source fetching, ListPages/CountPages execution, file URL materialization, `[[embedvideo]]` provider recognition and iframe sanitization, module runtime data, browser capture, and fidelity validation. See `AGENTS.md` in this repository and the Wikijump contract document for the full split.
 
 ### Consumer coupling to be aware of
 

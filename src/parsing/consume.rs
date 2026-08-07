@@ -36,7 +36,7 @@ use super::rule::{
 use crate::tree::{LinkLabel, LinkLocation, LinkType, PartialElement};
 use std::mem;
 
-fn try_consume_inline_format_close<'r, 't>(
+fn try_consume_structural_close<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> Result<Option<Elements<'t>>, ParseError>
 where
@@ -75,17 +75,22 @@ where
     let normalized = name.strip_suffix('_').unwrap_or(name);
     let start = parser.current().span.start;
     let end = close.current().span.start;
-    let close_source = cow!(&parser.full_text().inner()[start..end]);
-    let partial = if normalized.eq_ignore_ascii_case("size") {
-        PartialElement::InlineSizeClose(close_source)
+    let close_source = &parser.full_text().inner()[start..end];
+    let element = if normalized.eq_ignore_ascii_case("size") {
+        Element::Partial(PartialElement::InlineSizeClose(cow!(close_source)))
     } else if normalized.eq_ignore_ascii_case("span") {
-        PartialElement::InlineSpanClose(close_source)
+        Element::Partial(PartialElement::InlineSpanClose(cow!(close_source)))
+    } else if !parser.discarding_hidden_body()
+        && parser.rule().name() == "block-table-row"
+        && (normalized.eq_ignore_ascii_case("cell")
+            || normalized.eq_ignore_ascii_case("hcell"))
+    {
+        text!(close_source)
     } else {
         return Ok(None);
     };
 
     parser.update(&close);
-    let element = Element::Partial(partial);
     Ok(Some(if residual_close_bracket {
         Elements::Multiple(vec![element, text!("]")])
     } else {
@@ -453,7 +458,7 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
     let pending_unquoted_collapsible_close = parser.settings().layout.legacy()
         && parser.pending_wikidot_collapsible_closer()
         && parser.native_blockquote_depth().is_none();
-    if let Some(elements) = try_consume_inline_format_close(parser)? {
+    if let Some(elements) = try_consume_structural_close(parser)? {
         parser.depth_decrement();
         if pending_unquoted_collapsible_close {
             return ok!(false; elements);

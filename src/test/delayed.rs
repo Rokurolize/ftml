@@ -849,6 +849,23 @@ fn runtime_scalar_text_renders_without_markup_activation() {
 }
 
 #[test]
+fn runtime_scalar_advanced_table_markers_remain_inert() {
+    let source = "[[table]]\n[[row]]\n[[cell]]A[[/cell]]\n[[/row]]\n[[/table]]";
+    let input = DelayedInput::new(
+        source,
+        vec![InputSegment::text(
+            0..source.len(),
+            TextOrigin::RuntimeScalar,
+        )],
+    )
+    .expect("runtime scalar input is valid");
+
+    let html = render_input_with_bindings(&input, &SlotBindings::empty());
+    assert_eq!(html, format!("<p>{source}</p>"));
+    assert!(!html.contains("<table>"));
+}
+
+#[test]
 fn runtime_scalar_text_does_not_complete_authored_delimiters() {
     let source = "**injected**";
     let input = DelayedInput::new(

@@ -101,6 +101,23 @@ fn try_consume_fn<'r, 't>(
         return ok!(paragraph_safe; Elements::None, errors);
     }
 
+    if parser.settings().layout.legacy()
+        && matches!(elements.as_slice(), [Element::Table(_)])
+    {
+        let opening = Element::Container(Container::new(
+            ContainerType::Paragraph,
+            vec![text!("{{")],
+            AttributeMap::new(),
+        ));
+        let closing = Element::Container(Container::new(
+            ContainerType::Paragraph,
+            vec![text!("}}")],
+            AttributeMap::new(),
+        ));
+        let table = elements.pop().expect("matched one table element");
+        return ok!(false; vec![opening, table, closing], errors);
+    }
+
     let element = Element::Container(Container::new(
         ContainerType::Monospace,
         elements,

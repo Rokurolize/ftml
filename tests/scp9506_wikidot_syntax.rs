@@ -164,7 +164,7 @@ fn scp9506_theme_and_component_includes_expand_with_variables() {
     assert!(expanded.contains("ACS ANIMATION CSS"));
     assert!(expanded.contains("AUTHOR TOOL SCPs"));
     assert!(expanded.contains("[[module ListPages"));
-    assert!(expanded.contains("order=\"\""));
+    assert!(expanded.contains("order=\"{$order}\""));
     assert!(expanded.contains("+scp -co-authored"));
     assert!(expanded.contains("perPage=\"250"));
     assert!(expanded.contains("content-box no"));

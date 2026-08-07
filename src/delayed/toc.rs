@@ -19,25 +19,18 @@ use std::collections::{BTreeMap, BTreeSet};
 pub(super) fn entry_indices(tree: &SyntaxTree<'_>) -> Vec<usize> {
     let mut delayed = Vec::new();
     let mut entry_index = 0usize;
-    let mut footnote_index = 0usize;
-    visit_headings(
-        &tree.elements,
-        &tree.footnotes,
-        &mut footnote_index,
-        &mut |elements| {
-            if elements_contain_delayed(elements) {
-                delayed.push(entry_index);
-            }
-            entry_index += 1;
-        },
-    );
+    visit_headings(&tree.elements, &tree.footnotes, &mut |elements| {
+        if elements_contain_delayed(elements) {
+            delayed.push(entry_index);
+        }
+        entry_index += 1;
+    });
     delayed
 }
 
 fn visit_headings<'a, 't>(
     elements: &'a [Element<'t>],
     footnotes: &'a [Vec<Element<'t>>],
-    footnote_index: &mut usize,
     visitor: &mut impl FnMut(&'a [Element<'t>]),
 ) {
     for element in elements {
@@ -49,36 +42,30 @@ fn visit_headings<'a, 't>(
                 ) {
                     visitor(container.elements());
                 }
-                visit_headings(container.elements(), footnotes, footnote_index, visitor);
+                visit_headings(container.elements(), footnotes, visitor);
             }
             Element::Table(table) => {
                 for row in &table.rows {
                     for cell in &row.cells {
-                        visit_headings(
-                            &cell.elements,
-                            footnotes,
-                            footnote_index,
-                            visitor,
-                        );
+                        visit_headings(&cell.elements, footnotes, visitor);
                     }
                 }
             }
             Element::TabView(tabs) => {
                 for tab in tabs {
-                    visit_headings(&tab.elements, footnotes, footnote_index, visitor);
+                    visit_headings(&tab.elements, footnotes, visitor);
                 }
             }
             Element::List { items, .. } => {
                 for item in items {
                     match item {
                         ListItem::Elements { elements, .. } => {
-                            visit_headings(elements, footnotes, footnote_index, visitor);
+                            visit_headings(elements, footnotes, visitor);
                         }
                         ListItem::SubList { element } => {
                             visit_headings(
                                 std::slice::from_ref(element.as_ref()),
                                 footnotes,
-                                footnote_index,
                                 visitor,
                             );
                         }
@@ -87,67 +74,52 @@ fn visit_headings<'a, 't>(
             }
             Element::DefinitionList(items) => {
                 for item in items {
-                    visit_headings(
-                        &item.key_elements,
-                        footnotes,
-                        footnote_index,
-                        visitor,
-                    );
-                    visit_headings(
-                        &item.value_elements,
-                        footnotes,
-                        footnote_index,
-                        visitor,
-                    );
+                    visit_headings(&item.key_elements, footnotes, visitor);
+                    visit_headings(&item.value_elements, footnotes, visitor);
                 }
             }
             Element::Anchor { elements, .. }
             | Element::Collapsible { elements, .. }
             | Element::Color { elements, .. }
             | Element::Include { elements, .. } => {
-                visit_headings(elements, footnotes, footnote_index, visitor);
+                visit_headings(elements, footnotes, visitor);
             }
             Element::Partial(partial) => match partial {
                 PartialElement::ListItem(ListItem::Elements { elements, .. }) => {
-                    visit_headings(elements, footnotes, footnote_index, visitor);
+                    visit_headings(elements, footnotes, visitor);
                 }
                 PartialElement::ListItem(ListItem::SubList { element }) => {
                     visit_headings(
                         std::slice::from_ref(element.as_ref()),
                         footnotes,
-                        footnote_index,
                         visitor,
                     );
                 }
                 PartialElement::TableRow(row) => {
                     for cell in &row.cells {
-                        visit_headings(
-                            &cell.elements,
-                            footnotes,
-                            footnote_index,
-                            visitor,
-                        );
+                        visit_headings(&cell.elements, footnotes, visitor);
                     }
                 }
                 PartialElement::TableCell(cell) => {
-                    visit_headings(&cell.elements, footnotes, footnote_index, visitor);
+                    visit_headings(&cell.elements, footnotes, visitor);
                 }
                 PartialElement::Tab(tab) => {
-                    visit_headings(&tab.elements, footnotes, footnote_index, visitor);
+                    visit_headings(&tab.elements, footnotes, visitor);
                 }
                 PartialElement::RubyText(text) => {
-                    visit_headings(&text.elements, footnotes, footnote_index, visitor);
+                    visit_headings(&text.elements, footnotes, visitor);
                 }
-                PartialElement::InlineSizeOpen(_)
-                | PartialElement::InlineSizeClose
+                PartialElement::WikidotEmptyInlineOwner
+                | PartialElement::InlineSizeOpen(_)
+                | PartialElement::InlineSizeClose(_)
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_) => {}
             },
-            Element::Footnote => {
-                let index = *footnote_index;
-                *footnote_index += 1;
-                if let Some(contents) = footnotes.get(index) {
-                    visit_headings(contents, footnotes, footnote_index, visitor);
+            Element::Footnote(index) => {
+                if let Some(contents) =
+                    index.checked_sub(1).and_then(|index| footnotes.get(index))
+                {
+                    visit_headings(contents, footnotes, visitor);
                 }
             }
             _ => {}
@@ -169,21 +141,15 @@ pub(super) fn bind_labels(
     let targets = delayed_entries.iter().copied().collect::<BTreeSet<_>>();
     let mut labels = BTreeMap::new();
     let mut entry_index = 0usize;
-    let mut footnote_index = 0usize;
-    visit_headings(
-        &tree.elements,
-        &tree.footnotes,
-        &mut footnote_index,
-        &mut |elements| {
-            if targets.contains(&entry_index) {
-                labels.insert(
-                    entry_index,
-                    TextRender.render_partial(elements, page_info, settings, 0),
-                );
-            }
-            entry_index += 1;
-        },
-    );
+    visit_headings(&tree.elements, &tree.footnotes, &mut |elements| {
+        if targets.contains(&entry_index) {
+            labels.insert(
+                entry_index,
+                TextRender.render_partial(elements, page_info, settings, 0),
+            );
+        }
+        entry_index += 1;
+    });
     debug_assert_eq!(labels.len(), delayed_entries.len());
 
     let mut current = 0usize;
@@ -230,5 +196,34 @@ fn replace_labels(
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::delayed::{DelayedElement, GeneratedKind, SlotId};
+    use crate::tree::{AttributeMap, Container, Heading, HeadingLevel};
+
+    #[test]
+    fn delayed_toc_uses_the_registered_footnote_index() {
+        let delayed_heading = Element::Container(Container::new(
+            ContainerType::Header(Heading {
+                level: HeadingLevel::One,
+                has_toc: true,
+            }),
+            vec![Element::Delayed(DelayedElement::active(
+                SlotId::new(1),
+                GeneratedKind::PageLink,
+            ))],
+            AttributeMap::new(),
+        ));
+        let tree = SyntaxTree {
+            elements: vec![Element::Footnote(2)],
+            footnotes: vec![vec![text!("first")], vec![delayed_heading]],
+            ..SyntaxTree::default()
+        };
+
+        assert_eq!(entry_indices(&tree), vec![0]);
     }
 }

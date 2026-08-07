@@ -28,6 +28,8 @@ test-source-recorder = []
 
 [dependencies]
 cfg-if = "1"
+cssparser = "0.37"
+cssparser-color = "0.5"
 enum-map = "3"
 entities = "1"
 icu_calendar = "2.2"
@@ -48,6 +50,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_repr = "0.1"
 serde-wasm-bindgen = "0.6"
+sha2 = "0.11"
 str-macro = "1"
 strum = "0.28"
 strum_macros = "0.28"

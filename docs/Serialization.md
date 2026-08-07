@@ -40,6 +40,21 @@ Some elements have no associated data at all, such as `Element::LineBreak` or `E
 }
 ```
 
+Authored content-section separators are serialized as the unit variant
+`content-separator`. They remain typed in both layouts even though only the
+Wikidot HTML renderer emits the legacy hidden div:
+
+```json
+{
+    "element": "content-separator"
+}
+```
+
+Rust consumers can use `SyntaxTree::content_segments()` (or the public
+`content_segments()` function for a nested element slice) to iterate sections
+and boundaries in order. The iterator includes empty sections before, after,
+and between adjacent boundaries.
+
 Any element which contains other elements (e.g. bold, paragraph, divs) is called a "container", and are typically represented by the generic `Container` structure. These are similar to `Element` in that they are a discriminated enum, however their data fields are always the same (just `elements: Vec<Element<'t>>`).
 
 For instance:

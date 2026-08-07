@@ -66,6 +66,16 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
+    let wikidot_candidate =
+        if parser.settings().layout.legacy() && !parser.discarding_hidden_body() {
+            Some(
+                crate::wikidot_code::candidate_at_owned_opener(source, owner_start)
+                    .ok_or_else(|| parser.make_err(ParseErrorKind::RuleFailed))?,
+            )
+        } else {
+            None
+        };
+
     let mut arguments = parser.get_head_map_wikidot(&BLOCK_CODE, in_head)?;
 
     let mut language = arguments.get("type");
@@ -78,10 +88,27 @@ fn parse_fn<'r, 't>(
         normalize(name.to_mut());
     }
 
-    let head_has_runtime_literal =
-        parser.has_runtime_literal_in_range(owner_start..parser.current().span.start);
-    if head_has_runtime_literal || parser.body_has_delayed_input(&BLOCK_CODE) {
-        let _ = parser.get_body_text(&BLOCK_CODE)?;
+    let has_delayed_input = wikidot_candidate.as_ref().map_or_else(
+        || {
+            parser.has_runtime_literal_in_range(owner_start..parser.current().span.start)
+                || parser.body_has_delayed_input(&BLOCK_CODE)
+        },
+        |candidate| {
+            let owner_range = owner_start..candidate.owner_end;
+            parser.has_generated_in_range(owner_range.clone())
+                || parser.has_runtime_literal_in_range(owner_range)
+        },
+    );
+    let code = match wikidot_candidate {
+        Some(candidate) if candidate.end_blocks_to_skip > 0 => parser
+            .get_body_text_after_skipping_end_blocks(
+                &BLOCK_CODE,
+                candidate.end_blocks_to_skip,
+            )?,
+        _ => parser.get_body_text(&BLOCK_CODE)?,
+    };
+
+    if has_delayed_input {
         let owner_end = parser.current().span.start;
         let generated = parser.generated_in_range(owner_start..owner_end);
         return success_elements(Element::Delayed(DelayedElement::shell(
@@ -91,7 +118,6 @@ fn parse_fn<'r, 't>(
         )));
     }
 
-    let code = parser.get_body_text(&BLOCK_CODE)?;
     let code_block = CodeBlock {
         contents: code,
         language,
@@ -222,6 +248,18 @@ mod tests {
                 "<br>\n<span style=\"white-space: pre-wrap;\">====</span>",
             ),
         );
+    }
+
+    #[test]
+    fn wikidot_code_list_mode_keeps_its_existing_inline_owner() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::List, Layout::Wikidot);
+        let tokenization = crate::tokenize("prefix[[code]]body[[/code]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(tree.code_blocks.len(), 1, "{tree:#?}");
+        assert_eq!(tree.code_blocks[0].contents, "body");
     }
 
     #[test]

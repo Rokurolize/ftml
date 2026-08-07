@@ -31,6 +31,11 @@ fn try_consume_fn<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Consuming token as plain text element");
     let ExtractedToken { token, slice, .. } = parser.current();
+    if *token == Token::RuntimeText {
+        return ok!(Element::Delayed(
+            crate::delayed::DelayedElement::runtime_text(slice),
+        ));
+    }
     if *token == Token::Whitespace {
         if parser.start_of_line()
             || matches!(

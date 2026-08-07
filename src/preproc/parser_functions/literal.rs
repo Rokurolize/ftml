@@ -21,14 +21,15 @@
 use std::ops::Range;
 
 #[derive(Debug, Default)]
-pub(in crate::preproc) struct LiteralRegionIndex {
+pub(crate) struct LiteralRegionIndex {
     ranges: Vec<Range<usize>>,
 }
 
 impl LiteralRegionIndex {
-    pub(in crate::preproc) fn new(source: &str) -> Self {
+    pub(crate) fn new(source: &str) -> Self {
         let mut ranges = Vec::new();
         collect_wikidot_literal_blocks(source, &mut ranges);
+        ranges.extend(crate::wikidot_code::active_ranges(source));
         collect_same_line_paired_ranges(source, "@@", "@@", &mut ranges);
         collect_html_literal_ranges(source, &mut ranges);
         ranges.sort_unstable_by_key(|range| (range.start, range.end));
@@ -46,12 +47,12 @@ impl LiteralRegionIndex {
         Self { ranges: merged }
     }
 
-    pub(in crate::preproc) fn contains(&self, offset: usize) -> bool {
+    pub(crate) fn contains(&self, offset: usize) -> bool {
         let insertion = self.ranges.partition_point(|range| range.start <= offset);
         insertion > 0 && offset < self.ranges[insertion - 1].end
     }
 
-    pub(in crate::preproc) fn ranges(&self) -> &[Range<usize>] {
+    pub(crate) fn ranges(&self) -> &[Range<usize>] {
         &self.ranges
     }
 }
@@ -286,6 +287,21 @@ mod tests {
         let index = LiteralRegionIndex::new(source);
 
         assert!(index.contains(source.find("inside").unwrap()));
+        assert!(!index.contains(source.find("outside").unwrap()));
+    }
+
+    #[test]
+    fn nested_code_keeps_the_complete_outer_body_literal() {
+        let source = concat!(
+            "[[code]]\n",
+            "[[code]]\ninner\n[[/code]]\n",
+            "[[#expr 1 + 1]]\n",
+            "[[/code]]\n",
+            "outside",
+        );
+        let index = LiteralRegionIndex::new(source);
+
+        assert!(index.contains(source.find("[[#expr").unwrap()));
         assert!(!index.contains(source.find("outside").unwrap()));
     }
 

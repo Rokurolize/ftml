@@ -378,8 +378,9 @@ fn exercise_partial_element_helpers(partial: &PartialElement<'_>) -> usize {
     let _owned = partial.to_owned();
 
     match partial {
-        PartialElement::InlineSizeOpen(_)
-        | PartialElement::InlineSizeClose
+        PartialElement::WikidotEmptyInlineOwner
+        | PartialElement::InlineSizeOpen(_)
+        | PartialElement::InlineSizeClose(_)
         | PartialElement::InlineSpanOpen(_)
         | PartialElement::InlineSpanClose(_) => 0,
         PartialElement::ListItem(item) => exercise_list_item_helpers(item),

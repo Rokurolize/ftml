@@ -31,7 +31,8 @@ use crate::next_index::{Incrementer, NextIndex, TableOfContentsIndex};
 use crate::render::{Handle, PageExistenceResolver, UserInfoResolver};
 use crate::settings::WikitextSettings;
 use crate::tree::{
-    Bibliography, BibliographyList, Element, LinkLocation, VariableScopes,
+    Bibliography, BibliographyList, Element, EmbedVideo, Gallery, LinkLocation,
+    StandaloneButtonAction, VariableScopes,
 };
 use crate::url::{HrefKind, classify_href, normalize_href};
 use std::collections::HashMap;
@@ -83,7 +84,6 @@ where
     table_of_contents_index: Incrementer,
     equation_index: NonZeroUsize,
     named_equations: HashMap<String, NonZeroUsize>,
-    footnote_index: NonZeroUsize,
     bibliography_render_stack: Vec<String>,
 }
 
@@ -185,7 +185,6 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
             table_of_contents_index: settings.id_indexer(),
             equation_index: NonZeroUsize::new(1).unwrap(),
             named_equations: HashMap::new(),
-            footnote_index: NonZeroUsize::new(1).unwrap(),
             bibliography_render_stack: Vec::new(),
         }
     }
@@ -330,11 +329,6 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
         self.named_equations.get(name).copied()
     }
 
-    pub fn next_footnote_index(&mut self) -> NonZeroUsize {
-        let next = NonZeroUsize::new(self.footnote_index.get() + 1).unwrap();
-        std::mem::replace(&mut self.footnote_index, next)
-    }
-
     #[inline]
     pub fn get_footnote(&self, index_one: NonZeroUsize) -> Option<&'e [Element<'t>]> {
         self.footnotes
@@ -455,6 +449,29 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
         self.resource_requirements
             .push(HtmlResourceRequirement::wikidot_tab_view(id));
     }
+
+    pub(super) fn require_standalone_button(
+        &mut self,
+        id: String,
+        action: &StandaloneButtonAction<'_>,
+    ) {
+        self.resource_requirements
+            .push(HtmlResourceRequirement::standalone_button(id, action));
+    }
+
+    pub(super) fn require_embed_video(
+        &mut self,
+        id: String,
+        embed_video: &EmbedVideo<'_>,
+    ) {
+        self.resource_requirements
+            .push(HtmlResourceRequirement::embed_video(id, embed_video));
+    }
+
+    pub(super) fn require_gallery(&mut self, id: String, gallery: &Gallery<'_>) {
+        self.resource_requirements
+            .push(HtmlResourceRequirement::gallery(id, gallery));
+    }
 }
 
 impl<'i, 'h, 'e, 't> From<HtmlContext<'i, 'h, 'e, 't>> for HtmlOutput {
@@ -536,9 +553,6 @@ mod tests {
         assert_eq!(ctx.next_code_snippet_index().get(), 2);
         assert_eq!(ctx.next_equation_index().get(), 1);
         assert_eq!(ctx.next_equation_index().get(), 2);
-        assert_eq!(ctx.next_footnote_index().get(), 1);
-        assert_eq!(ctx.next_footnote_index().get(), 2);
-
         ctx.add_link(&LinkLocation::Url(cow!("javascript:;")));
         ctx.add_link(&LinkLocation::Url(cow!("javascript:alert(1)")));
         ctx.add_link(&LinkLocation::Url(cow!("#local-anchor")));

@@ -218,7 +218,8 @@
                                     "data": "die"
                                 },
                                 {
-                                    "element": "footnote"
+                                    "element": "footnote",
+                                    "data": 1
                                 },
                                 {
                                     "element": "text",

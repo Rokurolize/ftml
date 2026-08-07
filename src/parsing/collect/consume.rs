@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::generic::collect_before;
 use super::prelude::*;
 
 /// Convenience wrapper around `collect()` to consume each token iteration.
@@ -64,6 +65,31 @@ pub fn collect_consume_keep<'r, 't>(
     Ok(ParseSuccess::new(item, errors, paragraph_safe))
 }
 
+/// Collect elements up to a closing condition without consuming its token.
+pub fn collect_consume_before<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    rule: Rule,
+    closes: &[ParseCondition],
+    invalids: &[ParseCondition],
+    kind: Option<ParseErrorKind>,
+) -> ParseResult<'r, 't, (Vec<Element<'t>>, &'r ExtractedToken<'t>)> {
+    let mut all_elements = Vec::new();
+
+    let collection = collect_before(parser, rule, closes, invalids, kind, |parser| {
+        consume(parser)?.map_ok(|elements| append_elements(&mut all_elements, elements))
+    })?;
+    let (last, errors, paragraph_safe) = collection.into();
+    if parser.settings().layout.legacy() {
+        collapse_adjacent_ascii_spaces(&mut all_elements);
+    }
+
+    Ok(ParseSuccess::new(
+        (all_elements, last),
+        errors,
+        paragraph_safe,
+    ))
+}
+
 fn collapse_adjacent_ascii_spaces(elements: &mut Vec<Element<'_>>) {
     let mut previous_was_space = false;
     elements.retain(|element| {
@@ -91,6 +117,10 @@ fn append_elements<'t>(all_elements: &mut Vec<Element<'t>>, elements: Elements<'
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::parsing::rule::impls::RULE_TEXT;
+    use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
     fn append_elements_adopts_first_multiple_vector() {
@@ -113,5 +143,30 @@ mod tests {
             vec![text!("a"), text!("b"), text!("c"), text!("d")],
         );
         assert!(all_elements.capacity() >= capacity);
+    }
+
+    #[test]
+    fn collect_before_leaves_the_owner_terminator_unconsumed() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("alpha]]tail");
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("identifier follows input start");
+
+        let success = collect_consume_before(
+            &mut parser,
+            RULE_TEXT,
+            &[ParseCondition::current(Token::RightBlock)],
+            &[],
+            None,
+        )
+        .expect("collection stops before the owner terminator");
+        let ((elements, terminator), errors, paragraph_safe) = success.into();
+
+        assert_eq!(elements, vec![text!("alpha")]);
+        assert_eq!(terminator.token, Token::RightBlock);
+        assert_eq!(parser.current().token, Token::RightBlock);
+        assert!(errors.is_empty());
+        assert!(paragraph_safe);
     }
 }

@@ -44,21 +44,61 @@ fn parse_fn<'r, 't>(
     if parser.settings().layout.legacy() && name != "bibliography" {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
+    let wikidot_candidate =
+        parser.settings().layout.legacy() && !parser.discarding_hidden_body();
+    let nested_wikidot_opener =
+        wikidot_candidate && parser.in_wikidot_bibliography_body();
+    let source = parser.full_text().inner();
+    let name_start = (name.as_ptr() as usize)
+        .checked_sub(source.as_ptr() as usize)
+        .expect("parsed bibliography name belongs to the source");
+    let opener_start = source[..name_start]
+        .rfind("[[")
+        .expect("parsed bibliography name follows its opener");
 
-    let mut arguments = parser.get_head_map_wikidot(&BLOCK_BIBLIOGRAPHY, in_head)?;
+    let (mut arguments, _) =
+        parser.get_head_map_with_body_start_wikidot(&BLOCK_BIBLIOGRAPHY, in_head)?;
+    let opener_end = opener_start
+        + source[opener_start..]
+            .find("]]")
+            .expect("parsed bibliography opener has closing brackets")
+        + "]]".len();
+
+    // A canonical bibliography nested directly in another bibliography is
+    // literal. Wikidot also folds the one physical line break after that
+    // marker into a space before the outer body continues.
+    if nested_wikidot_opener {
+        let opener = &source[opener_start..opener_end];
+        if opener != "[[bibliography]]" {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+
+        let mut elements = vec![Element::Text(cow!(opener))];
+        if &source[opener_end..parser.current().span.start] == "\n" {
+            elements.push(text!(" "));
+        }
+        return success_elements(elements);
+    }
 
     let title = arguments.get("title");
     let hide = arguments.get_bool(parser, "hide")?.unwrap_or(false);
 
-    // Wikidot leaves a bibliography opener without a matching closer
-    // literal at the end of a page. The legacy parser otherwise treats EOF
-    // as an implicit close and invents an empty bibliography container.
-    if parser.settings().layout.legacy() && parser.current().token == Token::InputEnd {
-        let source = parser.full_text().inner();
-        let opener_start = source[..parser.current().span.start]
-            .rfind("[[")
-            .unwrap_or(parser.current().span.start);
-        return ok!(Element::Text(cow!(&source[opener_start..])));
+    // Wikidot commits a bibliography only after finding its closing marker.
+    // Validate before body parsing so an EOF candidate cannot commit delayed
+    // metadata or an invented bibliography container.
+    if wikidot_candidate && !parser.has_body_end_block(&BLOCK_BIBLIOGRAPHY) {
+        let body_start = parser.current().span.start;
+        parser.enter_wikidot_bibliography_body();
+        let body = parser.get_body_elements(&BLOCK_BIBLIOGRAPHY, false);
+        parser.leave_wikidot_bibliography_body();
+        let body = body?;
+        let (mut body_elements, errors, _) = body.into();
+        let mut literal = vec![Element::Text(cow!(&source[opener_start..opener_end]))];
+        if &source[opener_end..body_start] == "\n" {
+            literal.push(Element::LineBreak);
+        }
+        literal.append(&mut body_elements);
+        return ok!(literal, errors);
     }
 
     // Get body content. Wikidot accepts non-definition content and renders it
@@ -66,7 +106,18 @@ fn parse_fn<'r, 't>(
     //
     // We also discard paragraph_safe, since it's not relevant, and this element
     // never is (uses <div>).
-    let body = parser.get_body_elements(&BLOCK_BIBLIOGRAPHY, false)?;
+    let body_start = parser.current().span.start;
+    if wikidot_candidate {
+        parser.enter_wikidot_bibliography_body();
+    }
+    let body = parser.get_body_elements(&BLOCK_BIBLIOGRAPHY, false);
+    if wikidot_candidate {
+        parser.leave_wikidot_bibliography_body();
+    }
+    let body = body?;
+    if wikidot_candidate && wikidot_bibliography_crosses_bold_owner(parser, body_start) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     let (elements, errors, _) = body.into();
 
     // Build up the bibliography
@@ -101,6 +152,55 @@ fn parse_fn<'r, 't>(
     let index = parser.push_bibliography(bibliography);
 
     ok!(Element::BibliographyBlock { index, title, hide }, errors)
+}
+
+fn wikidot_bibliography_crosses_bold_owner(
+    parser: &Parser<'_, '_>,
+    body_start: usize,
+) -> bool {
+    let source = parser.full_text().inner();
+    let owner_end = parser.current().span.start;
+    let Some(closer_start) = source[body_start..owner_end].rfind("[[/") else {
+        return false;
+    };
+    let body = &source[body_start..body_start + closer_start];
+    if wikidot_unclosed_block_depth(body, "bold") == 0 {
+        return false;
+    }
+
+    let suffix = source[owner_end..].trim_start_matches([' ', '\t', '\r', '\n', '\0']);
+    let Some(close) = suffix.strip_prefix("[[/") else {
+        return false;
+    };
+    let Some(end) = close.find("]]") else {
+        return false;
+    };
+    close[..end].trim().eq_ignore_ascii_case("bold")
+}
+
+fn wikidot_unclosed_block_depth(source: &str, block_name: &str) -> usize {
+    let mut depth = 0_usize;
+    let mut remaining = source;
+
+    while let Some(start) = remaining.find("[[") {
+        remaining = &remaining[start + 2..];
+        let Some(end) = remaining.find("]]") else {
+            break;
+        };
+        let marker = remaining[..end].trim();
+        let marker_name = marker.split_ascii_whitespace().next().unwrap_or_default();
+        if marker_name.eq_ignore_ascii_case(block_name) {
+            depth += 1;
+        } else if marker_name
+            .strip_prefix('/')
+            .is_some_and(|name| name.eq_ignore_ascii_case(block_name))
+        {
+            depth = depth.saturating_sub(1);
+        }
+        remaining = &remaining[end + 2..];
+    }
+
+    depth
 }
 
 #[cfg(test)]
@@ -198,5 +298,22 @@ mod tests {
 
         assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(html, "<p>[[bibliography]]</p>");
+    }
+
+    #[test]
+    fn wikidot_unclosed_bibliography_after_footnote_remains_literal() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(
+            "A claim[[footnote]]with a note[[/footnote]].\n\n[[bibliography]]",
+        );
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            "<p>A claim<sup class=\"footnoteref\"><a id=\"footnoteref-1\" href=\"javascript:;\" class=\"footnoteref\" onclick=\"WIKIDOT.page.utils.scrollToReference(&#39;footnote-1&#39;)\">1</a></sup>.</p><p>[[bibliography]]</p><div class=\"footnotes-footer\"><div class=\"title\">Footnotes</div><div class=\"footnote-footer\" id=\"footnote-1\"><a href=\"javascript:;\" onclick=\"WIKIDOT.page.utils.scrollToReference(&#39;footnoteref-1&#39;)\">1</a>. with a note</div></div>",
+        );
     }
 }

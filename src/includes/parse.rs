@@ -45,7 +45,7 @@ const INCLUDE_ARGUMENT_EXPANSION_ALLOWANCE: usize = 64 * 1024;
 struct RawIncludeArgument<'t> {
     key: &'t str,
     value: &'t str,
-    spaced_empty_value: bool,
+    authored_empty_value: bool,
 }
 
 /// Parses a single include block in the text.
@@ -91,49 +91,144 @@ fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError
 
     trace!("Got page for include {page_ref:?}");
     let mut raw_arguments = Vec::new();
-    let mut spaced_empty_separator = false;
+    let argument_tail = pairs
+        .next()
+        .map(|pair| {
+            debug_assert_eq!(pair.as_rule(), Rule::argument_tail);
+            pair.as_str()
+        })
+        .unwrap_or_default();
+    scan_include_arguments(argument_tail, &mut raw_arguments)?;
 
-    for pair in pairs {
-        if pair.as_rule() == Rule::spaced_empty_separator {
-            spaced_empty_separator = true;
-            continue;
-        }
-        debug_assert_eq!(pair.as_rule(), Rule::argument);
-
-        let argument_source = pair.as_str();
-        let (key, value) = {
-            let mut argument_pairs = pair.into_inner();
-
-            let key = argument_pairs
-                .next()
-                .expect("Argument pairs terminated early")
-                .as_str();
-
-            let value = argument_pairs
-                .next()
-                .expect("Argument pairs terminated early")
-                .as_str();
-
-            (key, value)
-        };
-
-        trace!("Adding argument for include (key '{key}', value '{value}')");
-
-        let spaced_empty_value = value.is_empty()
-            && argument_source.split_once('=').is_some_and(|(_, after)| {
-                matches!(after.as_bytes().first(), Some(b' ' | b'\t'))
-            });
-
-        raw_arguments.push(RawIncludeArgument {
-            key,
-            value,
-            spaced_empty_value,
-        });
-    }
+    let spaced_empty_separator = argument_tail.strip_prefix('|').is_some_and(|spacing| {
+        !spacing.is_empty() && spacing.bytes().all(|byte| matches!(byte, b' ' | b'\t'))
+    });
     let arguments = resolve_include_arguments(&raw_arguments);
 
     Ok(IncludeRef::new(page_ref, arguments)
         .with_spaced_empty_separator(spaced_empty_separator))
+}
+
+fn scan_include_arguments<'t>(
+    tail: &'t str,
+    arguments: &mut Vec<RawIncludeArgument<'t>>,
+) -> Result<(), IncludeParseError> {
+    let bytes = tail.as_bytes();
+    let mut segment_start = 0;
+    let mut index = 0;
+
+    while index < bytes.len() {
+        if bytes[index..].starts_with(b"[!--") {
+            if let Some(end) = complete_comment_end(bytes, index) {
+                index = end;
+                continue;
+            }
+            // An unterminated comment can own every later pipe and candidate
+            // closer. Its boundary is ambiguous, so recovery must fail closed.
+            return Err(IncludeParseError);
+        }
+        if bytes[index] == b'|' {
+            scan_include_argument_segment(&tail[segment_start..index], arguments);
+            segment_start = index + 1;
+        }
+        index += 1;
+    }
+
+    scan_include_argument_segment(&tail[segment_start..], arguments);
+    Ok(())
+}
+
+fn scan_include_argument_segment<'t>(
+    segment: &'t str,
+    arguments: &mut Vec<RawIncludeArgument<'t>>,
+) {
+    let (source, _) = trim_include_space_start(segment);
+    let key_end = include_argument_key_end(source);
+    if key_end == 0 {
+        return;
+    }
+
+    let key = &source[..key_end];
+    let (after_key, _) = trim_include_space_start(&source[key_end..]);
+    let Some(after_equals) = after_key.strip_prefix('=') else {
+        return;
+    };
+    let value_starts_with_comment = after_equals.as_bytes().starts_with(b"[!--")
+        && complete_comment_end(after_equals.as_bytes(), 0).is_some();
+    let (value, _) = trim_include_space_start(after_equals);
+    let authored_empty_value = value.is_empty() && !value_starts_with_comment;
+
+    trace!("Adding argument for include (key '{key}', value '{value}')");
+    arguments.push(RawIncludeArgument {
+        key,
+        value,
+        authored_empty_value,
+    });
+}
+
+fn include_argument_key_end(source: &str) -> usize {
+    let bytes = source.as_bytes();
+    let mut index = 0;
+
+    while index < bytes.len() {
+        if bytes[index].is_ascii_alphanumeric() || matches!(bytes[index], b'-' | b'_') {
+            index += 1;
+            continue;
+        }
+        if bytes[index..].starts_with(b"{$") {
+            let reference_start = index;
+            index += 2;
+            let name_start = index;
+            while index < bytes.len()
+                && (bytes[index].is_ascii_alphanumeric()
+                    || matches!(bytes[index], b'-' | b'_'))
+            {
+                index += 1;
+            }
+            if index == name_start || bytes.get(index) != Some(&b'}') {
+                return reference_start;
+            }
+            index += 1;
+            continue;
+        }
+        break;
+    }
+
+    index
+}
+
+fn trim_include_space_start(source: &str) -> (&str, bool) {
+    let bytes = source.as_bytes();
+    let mut index = 0;
+    let mut skipped_comment = false;
+
+    loop {
+        while matches!(bytes.get(index), Some(b' ' | b'\n' | b'\t')) {
+            index += 1;
+        }
+        let Some(end) = complete_comment_end(bytes, index) else {
+            break;
+        };
+        skipped_comment = true;
+        index = end;
+    }
+
+    (&source[index..], skipped_comment)
+}
+
+fn complete_comment_end(bytes: &[u8], start: usize) -> Option<usize> {
+    if !bytes.get(start..)?.starts_with(b"[!--") {
+        return None;
+    }
+
+    let mut index = start + 4;
+    while index + 3 <= bytes.len() {
+        if bytes[index..].starts_with(b"--]") {
+            return Some(index + 3);
+        }
+        index += 1;
+    }
+    None
 }
 
 fn resolve_include_arguments(
@@ -153,7 +248,7 @@ fn resolve_include_arguments(
     // gives dynamic expressions such as `{$mode_{$mode}}` a bounded value from
     // which to resolve, while preserving Wikidot's first-concrete-value rule.
     for argument in raw_arguments {
-        if argument.spaced_empty_value
+        if argument.authored_empty_value
             || !is_static_identifier(argument.key)
             || argument.value.contains("{$")
         {
@@ -168,7 +263,7 @@ fn resolve_include_arguments(
         let mut next = HashMap::<String, String>::new();
         let mut next_size = 0usize;
         for argument in raw_arguments {
-            if argument.spaced_empty_value {
+            if argument.authored_empty_value {
                 continue;
             }
             let key = expand_argument_expression(
@@ -416,8 +511,101 @@ mod tests {
     }
 
     #[test]
+    fn parse_include_block_enforces_the_live_target_boundary() {
+        for source in [
+            "[[include page |x=1]]",
+            "[[include page\t|x=1]]",
+            "[[include page\n|x=1\n]]",
+            "[[include page x=1]]",
+            "[[include page]]",
+        ] {
+            parse_include_block(source, 0).unwrap_or_else(|_| {
+                panic!("spaced or target-only include should parse: {source:?}")
+            });
+        }
+
+        for source in [
+            "[[include page|x=1]]",
+            "[[include \"page\" |x=1]]",
+            "[[include 'page' |x=1]]",
+        ] {
+            assert!(
+                parse_include_block(source, 0).is_err(),
+                "tight separators and quoted targets must remain literal: {source:?}",
+            );
+        }
+
+        let (include, _) =
+            parse_include_block("[[include :run-owned:component |x=1]]", 0)
+                .expect("a leading-colon target with a site and page should parse");
+        assert_eq!(
+            include.page_ref(),
+            &PageRef::page_and_site("run-owned", "component"),
+        );
+    }
+
+    #[test]
+    fn inert_segments_resume_without_changing_duplicate_state() {
+        let source = concat!(
+            "[[include page ",
+            "|FLAG|x=|日本語=discarded|x=2|x=3|n=\"A|quoted-suffix\"",
+            "|[!-- ignored=1|also-ignored=2 --]|z=4|trailing-key]]",
+        );
+        let (include, end) =
+            parse_include_block(source, 0).expect("include should recover");
+
+        assert_eq!(end, source.len());
+        assert_eq!(include.variables().get("x").map(Cow::as_ref), Some("2"));
+        assert_eq!(include.variables().get("n").map(Cow::as_ref), Some("\"A"),);
+        assert_eq!(include.variables().get("z").map(Cow::as_ref), Some("4"));
+        for inert in ["FLAG", "日本語", "quoted-suffix", "ignored", "also-ignored"] {
+            assert!(!include.variables().contains_key(inert), "{inert}");
+        }
+    }
+
+    #[test]
+    fn include_argument_segment_scans_are_bounded() {
+        const RUNS: usize = 4_096;
+
+        let mut source = String::from("[[include page ");
+        for index in 0..RUNS {
+            source.push_str(&format!(
+                "|FLAG{index}|empty{index}=|日本語{index}=discarded|quoted{index}=\"A|B\"|[!--ignored{index}=1|still-ignored=2--]"
+            ));
+        }
+        source.push_str("|x=winner]]");
+
+        let started = std::time::Instant::now();
+        let (include, end) =
+            parse_include_block(&source, 0).expect("long include should parse");
+        assert_eq!(end, source.len());
+        assert_eq!(
+            include.variables().get("x").map(Cow::as_ref),
+            Some("winner"),
+        );
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(5),
+            "include segment scan took {:?}",
+            started.elapsed(),
+        );
+
+        let mut incomplete = String::from("[[include page ");
+        for _ in 0..RUNS {
+            incomplete.push_str("|FLAG|x=|日本語=1|\"A|B\"|[!--");
+        }
+        incomplete.push(']');
+        let started = std::time::Instant::now();
+        assert!(parse_include_block(&incomplete, 0).is_err());
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(5),
+            "incomplete include scan took {:?}",
+            started.elapsed(),
+        );
+    }
+
+    #[test]
     fn recursive_include_argument_growth_is_bounded() {
-        let mut source = String::from("[[include page|a={$a}{$a}|a=x");
+        let mut source = String::from("[[include page |a={$a}{$a}|a=x");
         for index in 0..24 {
             source.push_str(&format!("|dummy{index}=x"));
         }
@@ -436,7 +624,7 @@ mod tests {
     #[test]
     fn mutually_recursive_include_arguments_remain_bounded() {
         let source = format!(
-            "[[include page|a={{$b}}{{$b}}|b={{$a}}{{$a}}|a=x|{}]]",
+            "[[include page |a={{$b}}{{$b}}|b={{$a}}{{$a}}|a=x|{}]]",
             (0..24)
                 .map(|index| format!("dummy{index}=x"))
                 .collect::<Vec<_>>()

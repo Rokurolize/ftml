@@ -68,15 +68,18 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::current(Token::LineBreak),
     ];
     let label = collect_text(parser, RULE_BIBCITE, &close, &invalid, None)?;
-    if parser.settings().layout.legacy()
-        && !label
-            .chars()
-            .all(|character| character.is_ascii_alphanumeric() || character == '_')
-    {
+    if parser.settings().layout.legacy() && !valid_wikidot_inline_label(label) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
     ok!(bibliography_cite(label))
+}
+
+fn valid_wikidot_inline_label(label: &str) -> bool {
+    !label.is_empty()
+        && label
+            .chars()
+            .all(|character| character.is_ascii_alphanumeric() || character == '_')
 }
 
 #[cfg(test)]
@@ -178,6 +181,50 @@ mod tests {
                 other => panic!("expected bare bibliography cite, got {other:?}"),
             },
             other => panic!("expected citation paragraph, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn wikidot_inline_bibcite_preserves_an_empty_label_literally() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("((bibcite ))");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        match tree.elements.as_slice() {
+            [Element::Container(container)] => {
+                let literal = container
+                    .elements()
+                    .iter()
+                    .map(|element| match element {
+                        Element::Text(text) => text.as_ref(),
+                        other => panic!("expected only literal text, got {other:?}"),
+                    })
+                    .collect::<String>();
+                assert_eq!(literal, "((bibcite ))");
+            }
+            other => panic!("expected a literal citation paragraph, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn wikijump_inline_bibcite_keeps_its_existing_empty_label_behavior() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let tokenization = crate::tokenize("((bibcite ))");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        match tree.elements.as_slice() {
+            [Element::Container(container)] => match container.elements() {
+                [Element::BibliographyCite { label, inline, .. }] => {
+                    assert!(label.is_empty());
+                    assert!(*inline);
+                }
+                other => panic!("expected the existing Wikijump citation, got {other:?}"),
+            },
+            other => panic!("expected a Wikijump citation paragraph, got {other:?}"),
         }
     }
 }

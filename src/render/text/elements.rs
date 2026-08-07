@@ -105,6 +105,7 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
         Element::Delayed(_) => {
             panic!("unbound delayed element reached the text renderer")
         }
+        Element::ContentSeparator => {}
         Element::Variable(name) => {
             let value = match ctx.variables().get(name) {
                 Some(value) => str!(value),
@@ -143,6 +144,13 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
                 render_elements(ctx, elements);
                 ctx.add_newline();
             }
+        }
+        Element::StandaloneButton(button) => ctx.push_str(&button.label),
+        Element::EmbedVideo(_) => {
+            // Provider payloads are intentionally invisible in plain text.
+        }
+        Element::Gallery(_) => {
+            // Gallery file selection and entries are caller-resolved media.
         }
         Element::Anchor { elements, .. } => render_elements(ctx, elements),
         Element::AnchorName(_) => {
@@ -217,7 +225,7 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
         Element::TableOfContents { .. } => {
             // Doesn't make sense to have a textual table of contents, skip
         }
-        Element::Footnote
+        Element::Footnote(_)
         | Element::FootnoteBlock { .. }
         | Element::BibliographyCite { .. }
         | Element::BibliographyBlock { .. } => {
@@ -285,8 +293,9 @@ fn render_partial(ctx: &mut TextContext, partial: &PartialElement) {
     );
 
     match partial {
-        PartialElement::InlineSizeOpen(_)
-        | PartialElement::InlineSizeClose
+        PartialElement::WikidotEmptyInlineOwner
+        | PartialElement::InlineSizeOpen(_)
+        | PartialElement::InlineSizeClose(_)
         | PartialElement::InlineSpanOpen(_)
         | PartialElement::InlineSpanClose(_) => {}
         PartialElement::ListItem(ListItem::Elements { elements, .. }) => {
@@ -389,7 +398,7 @@ fn text_render_skips_non_textual_elements_and_expands_include_variables() {
                 align: Some(Alignment::Left),
                 attributes: AttributeMap::new(),
             },
-            Element::Footnote,
+            Element::Footnote(1),
             Element::FootnoteBlock {
                 title: Some(cow!("Notes")),
                 hide: false,

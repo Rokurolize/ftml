@@ -22,14 +22,17 @@
 
 mod audio;
 mod bibliography;
+mod button;
 mod clear_float;
 mod collapsible;
 mod container;
 mod date;
 mod definition_list;
 mod embed;
+mod embed_video;
 mod file;
 mod footnotes;
+mod gallery;
 mod iframe;
 mod image;
 mod include;
@@ -56,14 +59,17 @@ mod prelude {
 
 use self::audio::render_audio;
 use self::bibliography::{render_bibcite, render_bibliography};
+use self::button::render_standalone_button;
 use self::clear_float::render_clear_float;
 use self::collapsible::{Collapsible, render_collapsible};
 use self::container::{render_color, render_container};
 use self::date::render_date;
 use self::definition_list::render_definition_list;
 use self::embed::render_embed;
+use self::embed_video::render_embed_video;
 use self::file::render_file_link;
 use self::footnotes::{render_footnote, render_footnote_block};
+use self::gallery::render_gallery;
 use self::iframe::{render_html, render_iframe};
 use self::image::render_image;
 use self::include::{render_include, render_variable};
@@ -151,8 +157,18 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         Element::Delayed(_) => {
             panic!("unbound delayed element reached the HTML renderer")
         }
+        Element::ContentSeparator => {
+            if ctx.layout().legacy() {
+                ctx.push_raw_str(
+                    r#"<div class="content-separator" style="display: none:"></div>"#,
+                );
+            }
+        }
         Element::Table(table) => render_table(ctx, table),
         Element::TabView(tabs) => render_tabview(ctx, tabs),
+        Element::StandaloneButton(button) => render_standalone_button(ctx, button),
+        Element::EmbedVideo(embed_video) => render_embed_video(ctx, embed_video),
+        Element::Gallery(gallery) => render_gallery(ctx, gallery),
         Element::Anchor {
             elements,
             attributes,
@@ -220,7 +236,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         Element::TableOfContents { align, attributes } => {
             render_table_of_contents(ctx, *align, attributes)
         }
-        Element::Footnote => render_footnote(ctx),
+        Element::Footnote(index) => render_footnote(ctx, *index),
         Element::FootnoteBlock { title, hide } => {
             if (ctx.layout().legacy() || !*hide) && !ctx.footnotes().is_empty() {
                 render_footnote_block(ctx, ref_cow!(title));
@@ -254,7 +270,11 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
             format,
             hover,
         } => render_date(ctx, *value, ref_cow!(format), *hover),
-        Element::Color { color, elements } => render_color(ctx, color, elements),
+        Element::Color {
+            color,
+            background,
+            elements,
+        } => render_color(ctx, color, *background, elements),
         Element::Code(CodeBlock {
             contents,
             language,
@@ -350,8 +370,9 @@ fn render_partial(ctx: &mut HtmlContext, partial: &PartialElement) {
     );
 
     match partial {
-        PartialElement::InlineSizeOpen(_)
-        | PartialElement::InlineSizeClose
+        PartialElement::WikidotEmptyInlineOwner
+        | PartialElement::InlineSizeOpen(_)
+        | PartialElement::InlineSizeClose(_)
         | PartialElement::InlineSpanOpen(_)
         | PartialElement::InlineSpanClose(_) => {}
         PartialElement::ListItem(ListItem::Elements { elements, .. }) => {

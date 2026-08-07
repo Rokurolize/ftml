@@ -45,9 +45,27 @@ fn try_consume_fn<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create centered container");
 
+    if parser.current().token == Token::Whitespace {
+        if !parser.settings().layout.legacy() {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+        step_expected(parser, Token::Whitespace)?;
+    }
+
     // Check that the rule has "= "
     step_expected(parser, Token::Equals)?;
     step_expected(parser, Token::Whitespace)?;
+
+    // Wikidot keeps an empty `= ` line as a literal equals sign. Returning a
+    // failed rule here restores the leading whitespace and marker together.
+    if parser.settings().layout.legacy()
+        && matches!(
+            parser.current().token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        )
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     // Collect contents
     let close = [

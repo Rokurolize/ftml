@@ -21,7 +21,7 @@
 use crate::data::{KarmaLevel, PageInfo, UserInfo};
 use crate::render::messages;
 use crate::settings::WikitextSettings;
-use crate::tree::{FileSource, LinkLabel, LinkLocation, Module};
+use crate::tree::{FileSource, ImageSize, LinkLabel, LinkLocation, Module};
 use crate::url::BuildSiteUrl;
 use std::borrow::Cow;
 use std::num::NonZeroUsize;
@@ -156,6 +156,45 @@ impl Handle {
         Some(Cow::Owned(format!(
             "https://{site}.wjfiles.com/local--files/{page}/{file}",
         )))
+    }
+
+    /// Resolves the display and original-file URLs for an attachment image.
+    ///
+    /// The parser retains the attachment filename. This handle materializes
+    /// the URLs without asserting that the file exists or is authorized.
+    pub fn get_implicit_attachment_image_links(
+        &self,
+        file: &str,
+        size: ImageSize,
+        info: &PageInfo,
+        settings: &WikitextSettings,
+    ) -> Option<(String, String)> {
+        if !settings.layout.legacy() {
+            warn!("Specified a Wikidot attachment image in a non-legacy layout");
+            return None;
+        }
+        if !settings.allow_local_paths {
+            warn!("Specified an attachment image when local paths are disabled");
+            return None;
+        }
+
+        let page = match info.category.as_deref() {
+            Some(category) if category != "_default" => {
+                format!("{category}:{}", info.page)
+            }
+            _ => info.page.to_string(),
+        };
+        let file = file.replace('\\', "/");
+        let original = format!(
+            "https://{}.wjfiles.com/local--files/{page}/{file}",
+            info.site,
+        );
+        let display = format!(
+            "https://{}.wjfiles.com/local--resized-images/{page}/{file}/{}",
+            info.site,
+            size.file_name(),
+        );
+        Some((display, original))
     }
 
     pub fn get_link_label<F>(
@@ -356,6 +395,18 @@ fn handle_fallbacks_cover_rendering_helpers() {
             )
             .as_deref(),
         Some("https://sandbox.wjfiles.com/local--files/run-owned:some-page/local.png"),
+    );
+    assert_eq!(
+        handle.get_implicit_attachment_image_links(
+            r#"folder\image.png"#,
+            ImageSize::Medium,
+            &legacy_info,
+            &legacy_settings,
+        ),
+        Some((
+            "https://sandbox.wjfiles.com/local--resized-images/run-owned:some-page/folder/image.png/medium.jpg".to_owned(),
+            "https://sandbox.wjfiles.com/local--files/run-owned:some-page/folder/image.png".to_owned(),
+        )),
     );
 
     settings.allow_local_paths = false;

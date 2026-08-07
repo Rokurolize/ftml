@@ -1,0 +1,368 @@
+{
+  "schema": "ftml.wikidot_alias_closers_live_observation.v1",
+  "captured_at": "2026-07-30T16:16:37.506289+00:00",
+  "provenance": {
+    "authenticated": false,
+    "module": "edit/PagePreviewModule",
+    "mutated": false,
+    "requirements_sha256": "45717e5351f7eb1c46431dd44bf15db9777dbbc4fa40026931bd2e6458b2fcc9",
+    "site": "scp-wiki",
+    "site_domain": "scp-wiki.wikidot.com",
+    "wikidot_py_commit": "2434bf77744488cb2095327c9e0e4450add78df3",
+    "wikidot_py_version": "4.4.1"
+  },
+  "evidence_bundle": "/mnt/oracle-store/wjlab/issue-scout-20260731/focused-uncovered",
+  "bundle_sha256s": "SHA256SUMS",
+  "rows": [
+    {
+      "case_id": "focused-div-underscore-adjacent",
+      "source": "[[div_]]\nA\n[[/div_]]\n[[div_]]\nB\n[[/div_]]",
+      "source_sha256": "18131a9385572f37fa4e6f8d1c33862599421ae5ee294b06ffae46788a46d98a",
+      "raw_html_sha256": "f749e78392fdb0e5888fd4c964ebf2a63f35ee2537bbd15c6cd481917354c7ed",
+      "raw_html": "\n\n<p>[[div_]]<br />\nA<br />\n[[/div_]]<br />\n[[div_]]<br />\nB<br />\n[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-bare",
+      "source": "[[div_ ]]",
+      "source_sha256": "64d54ebb847fe218eabd54aaac23335b5bbbe1aac28ecc04f0284b8c0453611a",
+      "raw_html_sha256": "48fd298cde0649b5f78384c95b72e4994b06f6cb62d86b2b224dd6882e70bfe8",
+      "raw_html": "\n\n<p>[[div_ ]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-basic-underscore-close",
+      "source": "[[div_]]\nBODY\n[[/div_]]",
+      "source_sha256": "693da51d17843e5f5e8ba0d4ed6ec158ba43c4078d4511376185de6962dfd0e7",
+      "raw_html_sha256": "c7e26b7d3450393e15cb485d5b104fa5a7f5bbceeed372b103bb4419b4607cb1",
+      "raw_html": "\n\n<p>[[div_]]<br />\nBODY<br />\n[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-class",
+      "source": "[[div_ class=\"x\"]]\nBODY\n[[/div_]]",
+      "source_sha256": "dbf07670fd0e4bb3f92f7fe80753b7c590adcbaff3512bae47010de008abdb4a",
+      "raw_html_sha256": "8fabbe3c6409fdb9481705713407961a075e6580f237c6771454275b21299ca4",
+      "raw_html": "\n\n<p>[[div_ class=&quot;x&quot;]]<br />\nBODY<br />\n[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-class-empty",
+      "source": "[[div_ class=\"\"]]\nBODY\n[[/div_]]",
+      "source_sha256": "e37b94d68e7d65eec082a477679a6f47caddffc504532fd9d3ff486aca2c022f",
+      "raw_html_sha256": "7d49e6044b10a2fd2b2179ee26e4b49729fca897441d5c0969f89bcbde53e98d",
+      "raw_html": "\n\n<p>[[div_ class=&quot;&quot;]]<br />\nBODY<br />\n[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-code-owner",
+      "source": "[[code]]\n[[div_]]\nBODY\n[[/div_]]\n[[/code]]",
+      "source_sha256": "b703b4a93df99c4ceb1de2860816d5e85a01361663fb30c66d9d9ee775b151ce",
+      "raw_html_sha256": "3bed8b0ffae86512cd972363ed68ceef6610914ee98aaa83eebc614438b8dc0b",
+      "raw_html": "\n\n<div class=\"code\">\n<pre><code>[[div_]]\nBODY\n[[/div_]]</code></pre></div>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-duplicate",
+      "source": "[[div_ class=\"a\" class=\"b\"]]\nBODY\n[[/div_]]",
+      "source_sha256": "95f6c15e47f5cb8680461c79f8422dada9941c9a2a7363331b6c7cb4a207cfe2",
+      "raw_html_sha256": "6d656e6b5f591ef9411e791d4d1374b0b0b02b943df1803691df280d7f345f06",
+      "raw_html": "\n\n<p>[[div_ class=&quot;a&quot; class=&quot;b&quot;]]<br />\nBODY<br />\n[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-empty",
+      "source": "[[div_]]\n\n[[/div_]]",
+      "source_sha256": "b7f797db4a04e5ce77b04a7e7dd9ba92fb39bb2c6b9e7b7d7b188b0aa47d5f1f",
+      "raw_html_sha256": "496d64aec0359978e24235ce5c5329081109be433d8638a3f316682004724e49",
+      "raw_html": "\n\n<p>[[div_]]</p>\n<p>[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-escaped",
+      "source": "\\[[div_]]\nBODY\n[[/div_]]",
+      "source_sha256": "7a878ba57c80d5131fda9fef3cec3d8d99151b8bdce0acb82a24f8ef62ce9ad9",
+      "raw_html_sha256": "b9b71b3900cab4645784772ff6ece8ce64af9780f7c7aeb082838e4f250c0f88",
+      "raw_html": "\n\n<p>\\[[div_]]<br />\nBODY<br />\n[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-extra-open",
+      "source": "[[div_]]]\nBODY\n[[/div_]]",
+      "source_sha256": "7731a2b60906556d482f4462033e7cf5d469df84a110bc88c47ba91fa1f019ab",
+      "raw_html_sha256": "5db2e498eadee8b3fc947cfa54d8e268258564335b96ccb0636d9e9a00fb3839",
+      "raw_html": "\n\n<p>[[div_]]]<br />\nBODY<br />\n[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-heading",
+      "source": "[[div_]]\n+ H\n[[/div_]]",
+      "source_sha256": "27da0c24c4c2cbc710449da337ff6c56d5b454f2808f5b6b0a78d7665f54f6e8",
+      "raw_html_sha256": "9ad102064428d0a5fd501ea6e352fc670bc93704d0a8df824ebf2e3575f207a8",
+      "raw_html": "\n\n<p>[[div_]]</p>\n<h1 id=\"toc0\"><span>H</span></h1>\n<p>[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-inline",
+      "source": "[[div_]]BODY[[/div_]]",
+      "source_sha256": "99b8bcff060a213e6cb36814a0a5a092b064d8421be0814e4a11188bf7fbc329",
+      "raw_html_sha256": "bb23a0a96ffffba1bff3f234e63a4c4c915c01e38968e131b829030c86c55fe9",
+      "raw_html": "\n\n<p>[[div_]]BODY[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-list",
+      "source": "[[div_]]\n* A\n[[/div_]]",
+      "source_sha256": "edb4100e8a252fc6ded76d9ab8104cf29b60aa53f05810fbaf752cf51c95a02d",
+      "raw_html_sha256": "2ab4b89ae4a82227d576de536d9690c40240319f4dec65b5a33fb9e345d8a10b",
+      "raw_html": "\n\n<p>[[div_]]</p>\n<ul>\n<li>A</li>\n</ul>\n<p>[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-nested",
+      "source": "[[div_]]\nA\n[[div_]]\nB\n[[/div_]]\nC\n[[/div_]]",
+      "source_sha256": "6c687aea49860bc289530df1ad428e289b4b8f86db0ec06b292484c2270d8b9e",
+      "raw_html_sha256": "7d44c2969a94cbb88add0da84f636810aec0058b581dc9afa76589832a82e249",
+      "raw_html": "\n\n<p>[[div_]]<br />\nA<br />\n[[div_]]<br />\nB<br />\n[[/div_]]<br />\nC<br />\n[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-normal-close",
+      "source": "[[div_]]\nBODY\n[[/div]]",
+      "source_sha256": "376bc8ed669f2a6ba4ccd189e1b0cc661f2421a5f823e5f0e951c488768c33a0",
+      "raw_html_sha256": "4463d7e32d027e8d57a5f959698883c1433856b31515bd040f420cb0489a3db9",
+      "raw_html": "\n\n<div>BODY</div>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-normal-nested",
+      "source": "[[div]]\nA\n[[div_]]\nB\n[[/div_]]\n[[/div]]",
+      "source_sha256": "1c655d20f314afcc888126fd4f9a67934545cb6691fab4158cfcb7614bb888d4",
+      "raw_html_sha256": "ff2bd3c3fa17a771e9f78e2e813f363724fbb2bbe365d5e2a5f537bc0d878436",
+      "raw_html": "\n\n<div>\n<p>A<br />\n[[div_]]<br />\nB<br />\n[[/div_]]</p>\n</div>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-paragraph",
+      "source": "[[div_]]\nA\n\nB\n[[/div_]]",
+      "source_sha256": "a1de59ebd4255d9bb538e7aec36bec16d608a2524c81fc5949b0953dc2574819",
+      "raw_html_sha256": "3efea61d237847dcee9e47cf7c93e7ffa613558a04ea35ade97922cdaa658c38",
+      "raw_html": "\n\n<p>[[div_]]<br />\nA</p>\n<p>B<br />\n[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-prose",
+      "source": "BEFORE\n[[div_]]\nBODY\n[[/div_]]\nAFTER",
+      "source_sha256": "145819d195dfb1b1605cffe137f7ea786b9e6a1d85acc96f14073f751005a23c",
+      "raw_html_sha256": "4383cb07f20b966f78a935bd2b7f5945c503a8f0dd0dffa85b12fd7f50573b58",
+      "raw_html": "\n\n<p>BEFORE<br />\n[[div_]]<br />\nBODY<br />\n[[/div_]]<br />\nAFTER</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-style",
+      "source": "[[div_ style=\"color:red\"]]\nBODY\n[[/div_]]",
+      "source_sha256": "b5cfc0e667c983f277e1125195299c50127b7905f578d2a531ee0c4d4c0341be",
+      "raw_html_sha256": "b996b70304f366d2e500db46f20f4303545672dc88d9bacbc84f3006e4a8f84c",
+      "raw_html": "\n\n<p>[[div_ style=&quot;color:red&quot;]]<br />\nBODY<br />\n[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-table",
+      "source": "[[div_]]\n|| A ||\n[[/div_]]",
+      "source_sha256": "13cfcd48f9afd45c7d811f38baccb996c5d0f456580369b6f1fe12815686fbaf",
+      "raw_html_sha256": "306e34a7b3fc4824130a22bffcf8876ba2be95f337b00b53a12689942b18745f",
+      "raw_html": "\n\n[[div_]]<br />\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n<p>[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-unclosed",
+      "source": "[[div_]]\nBODY",
+      "source_sha256": "6962296f2fc21e7e931c72c7b3144463471c47e61e51316fcbb35f42f06a7aec",
+      "raw_html_sha256": "e3a2b8ccb3e6c3fb6e2dc134a5ef1422fd79375b0bcbe77f4dad7d534a3d6deb",
+      "raw_html": "\n\n<p>[[div_]]<br />\nBODY</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-unknown",
+      "source": "[[div_ unknown=\"x\"]]\nBODY\n[[/div_]]",
+      "source_sha256": "0605e6e1b8ec3421c90a9062f44c19579afd2ba9a9ba95610d89edea2acb8970",
+      "raw_html_sha256": "a1201d3c19cf2c0e5ac5c56448f62b2703d25d73c390aa732469b2c6ae4581c8",
+      "raw_html": "\n\n<p>[[div_ unknown=&quot;x&quot;]]<br />\nBODY<br />\n[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-unsafe-style",
+      "source": "[[div_ style=\"background:url(javascript:alert(1))\"]]\nBODY\n[[/div_]]",
+      "source_sha256": "fcde8a54237b1ef99f3ef77c1804787f62bebfe797d4023426e17f97b11a9d2e",
+      "raw_html_sha256": "e7c2f3dfc53864362b0495a606bafbede6088f7121c1505365fa7e9cb14fef8e",
+      "raw_html": "\n\n<p>[[div_ style=&quot;background:url(javascript:alert(1))&quot;]]<br />\nBODY<br />\n[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-upper",
+      "source": "[[DIV_]]\nBODY\n[[/DIV_]]",
+      "source_sha256": "df22b9c4e7a9ec1770167daffbc7a78540acdfd50434e41435cc53c9d35ca8cf",
+      "raw_html_sha256": "cf8975e290a96a121446cc95244338106cdeafdbbaffcd649a3480ac1e4921b6",
+      "raw_html": "\n\n<p>[[DIV_]]<br />\nBODY<br />\n[[/DIV_]]</p>\n"
+    },
+    {
+      "case_id": "focused-div-underscore-wrong-close",
+      "source": "[[div_]]\nBODY\n[[/span_]]",
+      "source_sha256": "5c08c059f0c0c141e0e97841e1ce0170a6e11fea27fbc220c07abc38a8bbf235",
+      "raw_html_sha256": "ee42809093400dcd4e924274d535cf92f1ce97a77a0dbc5f7b9e7cadea889786",
+      "raw_html": "\n\n<p>[[div_]]<br />\nBODY<br />\n[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-adjacent",
+      "source": "[[span_]]\nA\n[[/span_]]\n[[span_]]\nB\n[[/span_]]",
+      "source_sha256": "ee2fd748e18c315e50787ada300d144998518b5c363bb4ef4d16c9fa5b0efc8d",
+      "raw_html_sha256": "23a5cf7408fd2277c1925286f4f9318b08d90fb841f925d5f9d2411add09353d",
+      "raw_html": "\n\n<p>[[span_]]<br />\nA<br />\n[[/span_]]<br />\n[[span_]]<br />\nB<br />\n[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-bare",
+      "source": "[[span_ ]]",
+      "source_sha256": "ecaf56428ab3a9af5be0b161ff18e21b7be8e54eb8bb37f3c655d65ba5bd09c2",
+      "raw_html_sha256": "317b8e8a6b6626eeb454fb155ec20dc638ef6708560848d98783925bcba8a1c5",
+      "raw_html": "\n\n<p>[[span_ ]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-basic-underscore-close",
+      "source": "[[span_]]\nBODY\n[[/span_]]",
+      "source_sha256": "9e96d6dbbe038944f6142ebc3bd24c69db14beffb6989edf7fc42926541a9830",
+      "raw_html_sha256": "a19cfbce4063e1dac9f18a10e7367bdfce86a5c2f4ccc8ca6fab7b308de93a3f",
+      "raw_html": "\n\n<p>[[span_]]<br />\nBODY<br />\n[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-class",
+      "source": "[[span_ class=\"x\"]]\nBODY\n[[/span_]]",
+      "source_sha256": "fdb9ce5c82fb4874fc83bab3e7a2ef565e6ae20bf86e80cece8a334a39c270c9",
+      "raw_html_sha256": "0056b2f39dc7f5c280bb2cb501d4fe8b098ff084f68d38fc137f8a459d8631b2",
+      "raw_html": "\n\n<p>[[span_ class=&quot;x&quot;]]<br />\nBODY<br />\n[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-class-empty",
+      "source": "[[span_ class=\"\"]]\nBODY\n[[/span_]]",
+      "source_sha256": "784530624040e2143fcb6f6226f796293ce08aa45c737273da77ae3f1adc6e04",
+      "raw_html_sha256": "0a20eed29444647a7b64bd75f5624c98ddd7526d41620f7004962d5a46b6e2ec",
+      "raw_html": "\n\n<p>[[span_ class=&quot;&quot;]]<br />\nBODY<br />\n[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-code-owner",
+      "source": "[[code]]\n[[span_]]\nBODY\n[[/span_]]\n[[/code]]",
+      "source_sha256": "093921f55a546feb75c732b32133991fe67ab36ee203a9e953bf8cea50e0a65e",
+      "raw_html_sha256": "2da4041afe893e4ef77b68a45e5be557d7991f4f6381661316817449bb8292e7",
+      "raw_html": "\n\n<div class=\"code\">\n<pre><code>[[span_]]\nBODY\n[[/span_]]</code></pre></div>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-duplicate",
+      "source": "[[span_ class=\"a\" class=\"b\"]]\nBODY\n[[/span_]]",
+      "source_sha256": "51e61d026ffe37d176296d2337f4149f1fc45f3263cea1d22c74fccdf131ee82",
+      "raw_html_sha256": "5fedfba57e32ee6ae9f3a87f190e4de61995cd095657b91e2e79457d1127b945",
+      "raw_html": "\n\n<p>[[span_ class=&quot;a&quot; class=&quot;b&quot;]]<br />\nBODY<br />\n[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-empty",
+      "source": "[[span_]]\n\n[[/span_]]",
+      "source_sha256": "3ce3c629c28edf3e2d534d55e62e612727a68fc326b5d2aed3c174688d6a6b34",
+      "raw_html_sha256": "dd48e35816e99bd517fd35a2a75f8cc1cfa26376fe0706642edad819044ddfb4",
+      "raw_html": "\n\n<p>[[span_]]</p>\n<p>[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-escaped",
+      "source": "\\[[span_]]\nBODY\n[[/span_]]",
+      "source_sha256": "005dd4648a6bbc821bdc78782b3361e3f2cbdad41e781aeac00b16349ae15d96",
+      "raw_html_sha256": "cfde565aa3ca41a181d314da0efb1656babdc74acb2c4dd7e2188e30e837ca97",
+      "raw_html": "\n\n<p>\\[[span_]]<br />\nBODY<br />\n[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-extra-open",
+      "source": "[[span_]]]\nBODY\n[[/span_]]",
+      "source_sha256": "ace8a1103c337ea8223511e57b34017beb14f5990bb9f1fcf6494f52527fd9ff",
+      "raw_html_sha256": "3ae0e5bb18f785e4c78d214d3962c42ceb10ef160db153a3cc0a4486f9ea312e",
+      "raw_html": "\n\n<p>[[span_]]]<br />\nBODY<br />\n[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-heading",
+      "source": "[[span_]]\n+ H\n[[/span_]]",
+      "source_sha256": "8c75857921207d484da59bd24d36c385aa904883c03f8f7384678994b8fab872",
+      "raw_html_sha256": "f9f57355fb99b297fcdbeead1ba81f292e2c515827bba7efb92706df032ef3e7",
+      "raw_html": "\n\n<p>[[span_]]</p>\n<h1 id=\"toc0\"><span>H</span></h1>\n<p>[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-inline",
+      "source": "[[span_]]BODY[[/span_]]",
+      "source_sha256": "f426bdaeb0d99d5a154ddd53622a4979c4b49149d2dff36901265677dfdebb05",
+      "raw_html_sha256": "8caee17850d612cdc025067041e7c86b4dc4b6a50f9a3aa53fab6af1e6bbb0f9",
+      "raw_html": "\n\n<p>[[span_]]BODY[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-list",
+      "source": "[[span_]]\n* A\n[[/span_]]",
+      "source_sha256": "9eb48c539b904a1b98fde953b8d7b585f79b701ec305fd2bac56157263a21944",
+      "raw_html_sha256": "c55c83c8b8ef500580b6170d04b6b732b3a5f5f978a30d7764bd9884d65edb18",
+      "raw_html": "\n\n<p>[[span_]]</p>\n<ul>\n<li>A</li>\n</ul>\n<p>[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-nested",
+      "source": "[[span_]]\nA\n[[span_]]\nB\n[[/span_]]\nC\n[[/span_]]",
+      "source_sha256": "d79c698bca215357a05e2938f1a58d571f696ec4b1a7b7f514aadb79e54b04a0",
+      "raw_html_sha256": "0e957a8d762549f95305378a2c6af730569dcf30cf3e12dfb6ddcae1d8195b25",
+      "raw_html": "\n\n<p>[[span_]]<br />\nA<br />\n[[span_]]<br />\nB<br />\n[[/span_]]<br />\nC<br />\n[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-normal-close",
+      "source": "[[span_]]\nBODY\n[[/span]]",
+      "source_sha256": "363c4cf539eaf015dba155ea21bde73de5a35a514f1042b8c58f38a02c546600",
+      "raw_html_sha256": "f1a0779941f4c43606e175cd58be5dc39ab866f4e343a08f55e6dbccf69c65a8",
+      "raw_html": "\n\n<span>BODY</span>"
+    },
+    {
+      "case_id": "focused-span-underscore-normal-nested",
+      "source": "[[span]]\nA\n[[span_]]\nB\n[[/span_]]\n[[/span]]",
+      "source_sha256": "936edd200aa23c67b8483a90bcd48b1f126bcd63be8b64a6eee9924aebf8834f",
+      "raw_html_sha256": "ffbb307b2813ea9475b922f667d4ce6f70f2811dfa08fc3635ef7940353d4f0f",
+      "raw_html": "\n\n<p><span><br />\nA<br />\n[[span_]]<br />\nB<br />\n[[/span_]]<br /></span></p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-paragraph",
+      "source": "[[span_]]\nA\n\nB\n[[/span_]]",
+      "source_sha256": "ec2e80576426785890c17dbc17b089c234c90f426744a31514eaadc0c0799fd0",
+      "raw_html_sha256": "a897da61f9718c2124f33738242c20562b2009aab13be35780b06dd182d4e592",
+      "raw_html": "\n\n<p>[[span_]]<br />\nA</p>\n<p>B<br />\n[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-prose",
+      "source": "BEFORE\n[[span_]]\nBODY\n[[/span_]]\nAFTER",
+      "source_sha256": "b489fccfb75eeeaf97e606db1bc54b758c1b8e501972d6d38d0a2b9c16bfc59e",
+      "raw_html_sha256": "738fa46bbd51b69b0078a827e80109b5189617ec37cb7ace2296d293b320bdca",
+      "raw_html": "\n\n<p>BEFORE<br />\n[[span_]]<br />\nBODY<br />\n[[/span_]]<br />\nAFTER</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-style",
+      "source": "[[span_ style=\"color:red\"]]\nBODY\n[[/span_]]",
+      "source_sha256": "ee9faaf95cd0ccf229f0a720673a017297c0f21230087de21157771ab57d2aca",
+      "raw_html_sha256": "a17f5a9b6ab8e3032f48ea435c349e4abd425e5df1fe421848a88e9e21e9e34f",
+      "raw_html": "\n\n<p>[[span_ style=&quot;color:red&quot;]]<br />\nBODY<br />\n[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-table",
+      "source": "[[span_]]\n|| A ||\n[[/span_]]",
+      "source_sha256": "d9e2cbd230c9c899d82a59c55dceca57f94bdcd5591dd472bc35f4493ea2fac4",
+      "raw_html_sha256": "785a58ae0d6e091b11a5bb59fb07e30584abf04844abe247bf410afbd0908e12",
+      "raw_html": "\n\n[[span_]]<br />\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n<p>[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-unclosed",
+      "source": "[[span_]]\nBODY",
+      "source_sha256": "9f01b541889815afd91c0ed82a6c49ee799813f0b51ac94b9645965b8d372fe4",
+      "raw_html_sha256": "199c7b1e27f07ac0660b63488bdf2d570266eb1c1520e66bd352ad3c6ec1334b",
+      "raw_html": "\n\n<p>[[span_]]<br />\nBODY</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-unknown",
+      "source": "[[span_ unknown=\"x\"]]\nBODY\n[[/span_]]",
+      "source_sha256": "e08bdeab4e4e34a814025b00dfc40e48b83590be495923b084bdf83336b99923",
+      "raw_html_sha256": "42735753ee26568ecd44ba0710fd834b81b2496bbbc8b2dce3ce094f24eff6ed",
+      "raw_html": "\n\n<p>[[span_ unknown=&quot;x&quot;]]<br />\nBODY<br />\n[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-unsafe-style",
+      "source": "[[span_ style=\"background:url(javascript:alert(1))\"]]\nBODY\n[[/span_]]",
+      "source_sha256": "7a0406e9a75f5c48f2ec4ea1d2bb626d4e94375f7d217ab8b92c5ce5324bebaf",
+      "raw_html_sha256": "5075a888f09d98a163cd8bbd19864933ebd6a54789047e8cb8174017ddd0c8b5",
+      "raw_html": "\n\n<p>[[span_ style=&quot;background:url(javascript:alert(1))&quot;]]<br />\nBODY<br />\n[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-upper",
+      "source": "[[SPAN_]]\nBODY\n[[/SPAN_]]",
+      "source_sha256": "767d1d1eb3e4be6b1682bc9ad9131877b09a67c9644c39fdc6f424edbe4513d2",
+      "raw_html_sha256": "c493c10ce3af736ff05d3babe09aa5023ab2ccea24b43497f22647dcc7f441b0",
+      "raw_html": "\n\n<p>[[SPAN_]]<br />\nBODY<br />\n[[/SPAN_]]</p>\n"
+    },
+    {
+      "case_id": "focused-span-underscore-wrong-close",
+      "source": "[[span_]]\nBODY\n[[/div_]]",
+      "source_sha256": "1484ad3f3366502bace317ab440094177a18d0a798d6b64c33cf7016d1d06772",
+      "raw_html_sha256": "8a4e3b68305fa18174b2fe3a681b61e118b03106749100467ebf8ca534c2d3ae",
+      "raw_html": "\n\n<p>[[span_]]<br />\nBODY<br />\n[[/div_]]</p>\n"
+    }
+  ]
+}

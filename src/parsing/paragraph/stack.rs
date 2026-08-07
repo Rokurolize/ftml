@@ -72,6 +72,9 @@ pub struct ParagraphStack<'t> {
     wikidot_literal_div_line: bool,
     trim_unwrapped_trailing_line_break: bool,
     suppress_next_line_break: bool,
+    // A line-break rule may consume the following block in the same result,
+    // so retain that physical boundary until the element reaches this stack.
+    next_element_started_line: bool,
     wikidot_simple_table_boundary: bool,
     wikidot_reopen_for_footnote: bool,
 
@@ -117,6 +120,19 @@ impl<'t> ParagraphStack<'t> {
                         )
                 ) || matches!(element, Element::Code(_) | Element::Collapsible { .. })
             })
+    }
+
+    #[inline]
+    pub(crate) fn wikidot_inline_residual_follows_collapsible(&self) -> bool {
+        self.wikidot
+            && self.current_empty()
+            && self.unwrapped_after_block_line
+            && matches!(self.finished.last(), Some(Element::Collapsible { .. }))
+    }
+
+    #[inline]
+    pub(crate) fn record_next_element_line_start(&mut self, start_of_line: bool) {
+        self.next_element_started_line = start_of_line;
     }
 
     #[cfg(test)]
@@ -335,6 +351,16 @@ impl<'t> ParagraphStack<'t> {
                     if matches!(container.ctype(), ContainerType::Align(_))
             );
 
+        let wikidot_collapsible =
+            self.wikidot && matches!(element, Element::Collapsible { .. });
+
+        if wikidot_collapsible
+            && !self.current.is_empty()
+            && !self.next_element_started_line
+        {
+            self.current_unwrapped = true;
+        }
+
         if self.wikidot
             && matches!(element, Element::DefinitionList(_))
             && !self.current.is_empty()
@@ -446,6 +472,9 @@ impl<'t> ParagraphStack<'t> {
             }
             self.end_paragraph();
             self.finished.push(element);
+            if wikidot_collapsible {
+                self.unwrapped_after_block_line = true;
+            }
             if invisible_block_line {
                 self.current_unwrapped = true;
                 self.trim_unwrapped_trailing_line_break = true;

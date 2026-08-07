@@ -69,7 +69,13 @@ where
         parser.get_head_map_with_body_start_wikidot(&BLOCK_COLLAPSIBLE, in_head)?;
     let show_text = arguments.get("show");
     let hide_text = arguments.get("hide");
-    let start_open = !arguments.get_bool(parser, "folded")?.unwrap_or(true);
+    // Wikidot unfolds only these two exact values. Every other present value,
+    // including an empty value, retains the default folded state.
+    let start_open = if parser.settings().layout.legacy() {
+        matches!(arguments.get("folded").as_deref(), Some("no" | "false"))
+    } else {
+        !arguments.get_bool(parser, "folded")?.unwrap_or(true)
+    };
     let (show_top, show_bottom) = match arguments.get("hideLocation") {
         Some(value) => parse_hide_location(&value, parser)?,
         None => (true, false),
@@ -154,6 +160,15 @@ fn parse_fn<'r, 't>(
 }
 
 fn parse_hide_location(s: &str, parser: &Parser) -> Result<(bool, bool), ParseError> {
+    // Wikidot treats every unrecognized or differently-cased value as `top`.
+    if parser.settings().layout.legacy() {
+        return Ok(match s {
+            "bottom" => (false, true),
+            "both" => (true, true),
+            _ => (true, false),
+        });
+    }
+
     const NAMES: [(&str, (bool, bool)); 6] = [
         ("top", (true, false)),
         ("side", (true, false)),
@@ -166,9 +181,6 @@ fn parse_hide_location(s: &str, parser: &Parser) -> Result<(bool, bool), ParseEr
     let s = s.trim();
     for &(name, value) in &NAMES {
         if name.eq_ignore_ascii_case(s) {
-            if parser.settings().layout.legacy() && matches!(name, "neither" | "none") {
-                return Ok((true, false));
-            }
             return Ok(value);
         }
     }

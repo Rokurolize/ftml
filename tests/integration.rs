@@ -46,6 +46,9 @@ mod wikidot_inline_delimiter_ownership;
 #[path = "wikidot_color.rs"]
 mod wikidot_color;
 
+#[path = "wikidot_simple_table_precedence.rs"]
+mod wikidot_simple_table_precedence;
+
 #[path = "wikidot_triple_link_label_ownership.rs"]
 mod wikidot_triple_link_label_ownership;
 

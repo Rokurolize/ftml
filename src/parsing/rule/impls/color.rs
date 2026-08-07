@@ -138,7 +138,7 @@ fn try_consume_fn<'r, 't>(
     if terminator.token == Token::Color && table_owned {
         parser.step()?;
     } else if is_table_column_token(terminator.token) {
-        parser.mark_color_crossed_wikidot_simple_table_cell();
+        parser.mark_wikidot_simple_table_crossed_closer(Token::Color);
     }
 
     let leading_space = take_edge_space(&mut elements, true);

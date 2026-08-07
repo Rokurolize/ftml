@@ -1,4 +1,5 @@
 use super::Parser;
+use crate::parsing::Token;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(super) struct WikidotState {
@@ -13,7 +14,7 @@ pub(super) struct WikidotState {
     pending_collapsible_closer: bool,
     collapsible_closed_at_deeper_quote: bool,
     in_simple_table_cell: bool,
-    color_crossed_simple_table_cell: bool,
+    simple_table_crossed_closers: u16,
 }
 
 impl Parser<'_, '_> {
@@ -128,11 +129,29 @@ impl Parser<'_, '_> {
         self.wikidot.in_simple_table_cell = value;
     }
 
-    pub(crate) fn mark_color_crossed_wikidot_simple_table_cell(&mut self) {
-        self.wikidot.color_crossed_simple_table_cell = true;
+    pub(crate) fn mark_wikidot_simple_table_crossed_closer(&mut self, token: Token) {
+        self.wikidot.simple_table_crossed_closers |= simple_table_closer_bit(token);
     }
 
-    pub(crate) fn take_color_crossed_wikidot_simple_table_cell(&mut self) -> bool {
-        std::mem::take(&mut self.wikidot.color_crossed_simple_table_cell)
+    pub(crate) fn take_wikidot_simple_table_crossed_closers(&mut self) -> u16 {
+        std::mem::take(&mut self.wikidot.simple_table_crossed_closers)
+    }
+
+    pub(crate) fn wikidot_simple_table_closer_bit(token: Token) -> u16 {
+        simple_table_closer_bit(token)
+    }
+}
+
+fn simple_table_closer_bit(token: Token) -> u16 {
+    match token {
+        Token::Bold => 1 << 0,
+        Token::Italics => 1 << 1,
+        Token::DoubleDash => 1 << 2,
+        Token::Underline => 1 << 3,
+        Token::Superscript => 1 << 4,
+        Token::Subscript => 1 << 5,
+        Token::RightMonospace => 1 << 6,
+        Token::Color => 1 << 7,
+        _ => 0,
     }
 }

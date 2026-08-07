@@ -1,0 +1,1134 @@
+{
+  "schema": "ftml.wikidot_simple_table_precedence_evidence.v1",
+  "provenance": {
+    "captured_at": "2026-07-30",
+    "observation": "anonymous edit/PagePreviewModule on sandbox-for-codex",
+    "ftml_commit": "ef7135934f8e72879b3f2f6ec939deb816cc378f",
+    "ftml_tree": "2c13c3ac88cd4d8c2571788dd105321810b331b5",
+    "renderer_sha256": "eeb6c53a2430074ca3cb4fe843ed24c7218675b4f3065ac5fc7ae8e93341d8aa",
+    "broad_cases_sha256": "a49bdb93f00f5effb78b372ee646a8b5cc1d18c9d18d724f7e108ede03edaef7",
+    "broad_live_sha256": "dfa9933fbde2ef6f4989b4797d03e4b41630fc3158555a5054299713a2ded378",
+    "focused_cases_sha256": "d85bc270012f622cf9e48da3b3f3ac8441bb0042e5955a32589459eff2d19a8b",
+    "focused_live_sha256": "58f5e5fa9ddbc242dc91a69c842b1a042ca55d79c26f25378bc258091bbf28a1",
+    "supplemental_cases_sha256": "31db31c40e9cffd955cc5bbe749980ee1acbde3cb9f0b7f5b74754989d849957"
+  },
+  "broad": [
+    {
+      "id": "scout-table-one-cell",
+      "source": "|| A ||",
+      "source_sha256": "75a1ae99a3cb04444fe612436ff32fd560cbe4d145720157d84dbe37503f530c",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1f5e2718fc4bdf49bf79ecc5f2619c43c2625c1e1afe1f625e9e592cf237907c"
+    },
+    {
+      "id": "scout-table-two-cells",
+      "source": "|| A || B ||",
+      "source_sha256": "183040ddd2ec9b9a842eb97b6a910244e8e54ac2cbb9d7982fff0007bda00f95",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n<td>B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "5ebc975d7728ebf3d392b2eeec4e9ff85478e54b39cd7e710b7ac00e6e9cc521"
+    },
+    {
+      "id": "scout-table-header-cell",
+      "source": "||~ H ||",
+      "source_sha256": "d3fe86503a9f71d8d8cc5b14383e262b262816abc6b76b149676f1ebcabea994",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<th>H</th>\n</tr>\n</table>\n",
+      "raw_html_sha256": "5c8f6a59fd74fa599663f92957cc6d13994073e027da39d1228a8aa53d41ab24"
+    },
+    {
+      "id": "scout-table-header-two",
+      "source": "||~ H1 ||~ H2 ||",
+      "source_sha256": "98f44ce1bc577d98df5d98ef54851586d12273bae3e59004e5c8e0114e66f03f",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<th>H1</th>\n<th>H2</th>\n</tr>\n</table>\n",
+      "raw_html_sha256": "684209f782e8b911813bbbfc962e7d4cd3ae432177d94bf8367fb376b764aed7"
+    },
+    {
+      "id": "scout-table-mixed-header",
+      "source": "||~ H || C ||",
+      "source_sha256": "93749f82fddfa17d2e5bf5a2296d128cd966b167bace2e2683125c9b2340325c",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<th>H</th>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "de9305feabb14525c61f18fcbf540497eb90b20bc2cba56e5420b80f934722bb"
+    },
+    {
+      "id": "scout-table-empty-cell",
+      "source": "|| ||",
+      "source_sha256": "6fce9a9c75e330fa1500b571b5aab5012f9e9efae5379985166789a4d25f3f62",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-empty-two",
+      "source": "|| || ||",
+      "source_sha256": "1526199afd91a28c1fb818f68ffdcf79e660bb709bdf2640b84684fbf56ee30e",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "05fa157c48c6f97692858f4b2529c5be1350a49a248c2c99eb77d4e226576671"
+    },
+    {
+      "id": "scout-table-empty-middle",
+      "source": "|| A || || B ||",
+      "source_sha256": "f29a359cb0ac92a26f2aa8f2eea613c05c9a583e9a322e129639e73eef6df5e9",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n<td></td>\n<td>B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "5e967455ae04ca8a925e4ecca5bbc41a5cb4a80ad68ea2d23f2a27993b70237c"
+    },
+    {
+      "id": "scout-table-empty-leading",
+      "source": "|||| A ||",
+      "source_sha256": "84ce58f63cbee19084099bd1363867c5031fc9cb6923b9b6f284a4ea73f0d2dc",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td colspan=\"2\">A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "4ecc595ed66e78e0496ee05b0a0512bd0dc95cf17dca14c3ce7aafe8f3ab022f"
+    },
+    {
+      "id": "scout-table-empty-trailing",
+      "source": "|| A ||||",
+      "source_sha256": "0fea12d9a9da7b4025bb1558280f1b545ab239fe1c96c33ad04dfe1653b1dd60",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1f5e2718fc4bdf49bf79ecc5f2619c43c2625c1e1afe1f625e9e592cf237907c"
+    },
+    {
+      "id": "scout-table-no-space",
+      "source": "||A||B||",
+      "source_sha256": "881911083400c2dd0bff05c806ca15d89ed6359285635b09eb9bff557c1a69e0",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n<td>B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "5ebc975d7728ebf3d392b2eeec4e9ff85478e54b39cd7e710b7ac00e6e9cc521"
+    },
+    {
+      "id": "scout-table-one-leading-space",
+      "source": "|| A|| B||",
+      "source_sha256": "6acddc55d0e8f3cc2da4c4f7a10cd7faa40b9e5fcd947f6b97bc2e26c951c99e",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n<td>B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "5ebc975d7728ebf3d392b2eeec4e9ff85478e54b39cd7e710b7ac00e6e9cc521"
+    },
+    {
+      "id": "scout-table-trailing-space",
+      "source": "||A ||B ||",
+      "source_sha256": "85ebf254c984284b1f5ae5bd7f7b0afd9bd91f7e3193229ff797be84f5dc51ac",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n<td>B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "5ebc975d7728ebf3d392b2eeec4e9ff85478e54b39cd7e710b7ac00e6e9cc521"
+    },
+    {
+      "id": "scout-table-many-spaces",
+      "source": "||   A   ||   B   ||",
+      "source_sha256": "e220faec7dca7e53125e569665d003834987c7f908474aa85ce8e894c4cda922",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n<td>B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "5ebc975d7728ebf3d392b2eeec4e9ff85478e54b39cd7e710b7ac00e6e9cc521"
+    },
+    {
+      "id": "scout-table-tab-cells",
+      "source": "||\tA\t||\tB\t||",
+      "source_sha256": "b29a8074351513f6214121f2a9e5d1751ad8831e1a375f7c89adea83edb54cd8",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n<td>B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "5ebc975d7728ebf3d392b2eeec4e9ff85478e54b39cd7e710b7ac00e6e9cc521"
+    },
+    {
+      "id": "scout-table-nbsp-cell",
+      "source": "|| A ||",
+      "source_sha256": "20adb42f95a5251df51c2eb2363a3b716b2e9857345c8a495005301643358ec1",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&nbsp;A&nbsp;</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "09008039bb7c75cdabcaf155c978523fb968c297c3c25c88e23e308e499cc348"
+    },
+    {
+      "id": "scout-table-one-pipe-left",
+      "source": "| A ||",
+      "source_sha256": "cb210f70996748f398c8da11ca9c394b80b4a6f6a26b221a863d3e5f674e9a0e",
+      "raw_html": "\n\n<p>| A ||</p>\n",
+      "raw_html_sha256": "bce2d90d69f4a01397820db7f9eded846ddd1a92b39236b3a5cbed2e2aaad747"
+    },
+    {
+      "id": "scout-table-one-pipe-right",
+      "source": "|| A |",
+      "source_sha256": "12fe01a945556d75c3b959e6ff433391018ea73c875a60b12dfc0820e92ecd76",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-one-both",
+      "source": "| A |",
+      "source_sha256": "61e40921f9a7fd621bad4030c430e6bdb66f79bb9e80ba080ce1c48f9408301a",
+      "raw_html": "\n\n<p>| A |</p>\n",
+      "raw_html_sha256": "c38f5f2f78015b9414fc0f2f91755047dede647009d8d39691d5102845b75737"
+    },
+    {
+      "id": "scout-table-three-left",
+      "source": "||| A ||",
+      "source_sha256": "d3bb9b8f1db9ede02d5e776ad6d43ca5157bef1600bf1fb017125110344e8847",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>| A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "bf1cab6104d2b35dfe6484a4579ddd8414bb94ee97abefca5c8f5c568b4a3098"
+    },
+    {
+      "id": "scout-table-three-right",
+      "source": "|| A |||",
+      "source_sha256": "dfb98f3c1bfce395e2fed92a54e0f2e169d55105236eaef428d10881dc892bea",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1f5e2718fc4bdf49bf79ecc5f2619c43c2625c1e1afe1f625e9e592cf237907c"
+    },
+    {
+      "id": "scout-table-four-left",
+      "source": "|||| A ||",
+      "source_sha256": "84ce58f63cbee19084099bd1363867c5031fc9cb6923b9b6f284a4ea73f0d2dc",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td colspan=\"2\">A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "4ecc595ed66e78e0496ee05b0a0512bd0dc95cf17dca14c3ce7aafe8f3ab022f"
+    },
+    {
+      "id": "scout-table-four-right",
+      "source": "|| A ||||",
+      "source_sha256": "0fea12d9a9da7b4025bb1558280f1b545ab239fe1c96c33ad04dfe1653b1dd60",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1f5e2718fc4bdf49bf79ecc5f2619c43c2625c1e1afe1f625e9e592cf237907c"
+    },
+    {
+      "id": "scout-table-five-left",
+      "source": "||||| A ||",
+      "source_sha256": "4ada91a1fb4482c0ed38142f141af14d1690c59ecd388bb6c9446fb5acc427bd",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td colspan=\"2\">| A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "24b25137a759948e31548d0491489e1dc7d1f89f38f47177201818a323712edf"
+    },
+    {
+      "id": "scout-table-five-right",
+      "source": "|| A |||||",
+      "source_sha256": "cb147112c71ed2bfaafc0a1f18cd9a547f006465ef3879db70cd1e32450fbef7",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1f5e2718fc4bdf49bf79ecc5f2619c43c2625c1e1afe1f625e9e592cf237907c"
+    },
+    {
+      "id": "scout-table-only-two",
+      "source": "||",
+      "source_sha256": "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-only-four",
+      "source": "||||",
+      "source_sha256": "45ca31c3315a5978f40438aab46040d75e99c9b125c2fd01db6e10ac80bef906",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-only-six",
+      "source": "||||||",
+      "source_sha256": "2dca6397f6798483d79ea9e0dcd45477d3fed0547a9194bef7440cfee3b2bf32",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-pipe-text-pipe",
+      "source": "A || B",
+      "source_sha256": "998f0b9ec6c70b98abaeaf47e0946bf7518869aa2693ee1240a76796c85d7c5e",
+      "raw_html": "\n\n<p>A || B</p>\n",
+      "raw_html_sha256": "69ac943d1015295530e5c215da0e9f2bd9289ce642ed0a21f33b36387a55aaa2"
+    },
+    {
+      "id": "scout-table-prefix-text",
+      "source": "BEGIN| || A ||",
+      "source_sha256": "f61e92751597bdd256e50c6275f4290124af10310d6bb62377561369afc7b384",
+      "raw_html": "\n\n<p>BEGIN| || A ||</p>\n",
+      "raw_html_sha256": "9b752b7bf2d7672eb30d6be2662410efb65173d85c38c04c7ce7c8cc58dae483"
+    },
+    {
+      "id": "scout-table-suffix-text",
+      "source": "|| A || |END",
+      "source_sha256": "ea010e56781aeb69f88cee878d369071a175c45cf2d531aca739e126c2110345",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1f5e2718fc4bdf49bf79ecc5f2619c43c2625c1e1afe1f625e9e592cf237907c"
+    },
+    {
+      "id": "scout-table-prefix-suffix",
+      "source": "BEGIN| || A || |END",
+      "source_sha256": "e44654b3c9ba17eb14929f96a5221562add7f55c8fcc94d541d1cc53b66c4d6a",
+      "raw_html": "\n\n<p>BEGIN| || A || |END</p>\n",
+      "raw_html_sha256": "c3c163785b995dc3bd8f7cd9847dde97368ff058eb673b19ab18d8e245c7dc57"
+    },
+    {
+      "id": "scout-table-leading-space-line",
+      "source": " || A ||",
+      "source_sha256": "6206bc550d0a73797900f3a90b29bc557a1078f4dbf93284df0f73a97a723b9e",
+      "raw_html": "\n\n<p>|| A ||</p>\n",
+      "raw_html_sha256": "053f64e68681669975688ed44d68b3e7adbdf5f6d2e73c95412b68e2f3b92fe4"
+    },
+    {
+      "id": "scout-table-leading-two-space",
+      "source": "  || A ||",
+      "source_sha256": "963afe4ae9a4cabd87b8564e19cd32c1cf5256f56a86a8c97b3423a9f400b7e4",
+      "raw_html": "\n\n<p>|| A ||</p>\n",
+      "raw_html_sha256": "053f64e68681669975688ed44d68b3e7adbdf5f6d2e73c95412b68e2f3b92fe4"
+    },
+    {
+      "id": "scout-table-leading-tab-line",
+      "source": "\t|| A ||",
+      "source_sha256": "85945bfd244103cc626baf465937f2cb44d641946c01873a897bd380436ef2ae",
+      "raw_html": "\n\n<p>|| A ||</p>\n",
+      "raw_html_sha256": "053f64e68681669975688ed44d68b3e7adbdf5f6d2e73c95412b68e2f3b92fe4"
+    },
+    {
+      "id": "scout-table-quote-prefix",
+      "source": "> || A ||",
+      "source_sha256": "2ec22bb01a23dfa1b66b8e6f8454b54dbfefa98966a648288bd828ab7343d8f6",
+      "raw_html": "\n\n<blockquote>\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n</blockquote>\n",
+      "raw_html_sha256": "ed29e798087d5705b2fb2992c79ca9ea7f6188c21fdd9557788abd53252c0f29"
+    },
+    {
+      "id": "scout-table-tight-quote",
+      "source": ">|| A ||",
+      "source_sha256": "a75be590901e7b0ad4fd44adf7065d0c5b3e546ba740cd382b157ffa232074f7",
+      "raw_html": "\n\n",
+      "raw_html_sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070"
+    },
+    {
+      "id": "scout-table-list-prefix",
+      "source": "* || A ||",
+      "source_sha256": "aa48a5632ebb7c64c9a7bd195fdd325c24d082b1da0974d26ddc024541ce43dc",
+      "raw_html": "\n\n<ul>\n<li>|| A ||</li>\n</ul>\n",
+      "raw_html_sha256": "654fddda3d1a9b684137835635b5a785fe663981e8c74ba7d8233c28e35b9952"
+    },
+    {
+      "id": "scout-table-number-prefix",
+      "source": "# || A ||",
+      "source_sha256": "a3019f9039f1f765271e3eae5a5cdc8a9314e04fce21b65d74eb63d2a292b3d9",
+      "raw_html": "\n\n<ol>\n<li>|| A ||</li>\n</ol>\n",
+      "raw_html_sha256": "accfac61aba1e507337a41b73a72337fc90248a998f9cde09720462b81b31f30"
+    },
+    {
+      "id": "scout-table-indent-prefix",
+      "source": "    || A ||",
+      "source_sha256": "e90f641c396102878d69b9378935e425ad17cd4a5ae1056357a3c31fda6c2f19",
+      "raw_html": "\n\n<p>|| A ||</p>\n",
+      "raw_html_sha256": "053f64e68681669975688ed44d68b3e7adbdf5f6d2e73c95412b68e2f3b92fe4"
+    },
+    {
+      "id": "scout-table-two-rows",
+      "source": "|| A ||\n|| B ||",
+      "source_sha256": "7ab0b7c3770a72d41de631e696f72c4b0c7e48db58737ea53048b0e3f8cae913",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n<tr>\n<td>B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1915ad3667ae1874cebab8ee5a9a5b419b65e8338d5c375536086a9f684ac2c6"
+    },
+    {
+      "id": "scout-table-two-rows-blank",
+      "source": "|| A ||\n\n|| B ||",
+      "source_sha256": "aca6b92de804f273facaa7b5c1822dbd2ff1053fc7fb9e1e2a5e1356ce871112",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n<table class=\"wiki-content-table\">\n<tr>\n<td>B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "15010aa336f64b88e222d16aad1ba916e053bf90cb97c1a0808690e453aa5a68"
+    },
+    {
+      "id": "scout-table-two-rows-space",
+      "source": "|| A ||\n || B ||",
+      "source_sha256": "e74da783a7a7e0931041b6c5b80b9b6a694c07929441689ebc4f588431d2e8a8",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n<p>|| B ||</p>\n",
+      "raw_html_sha256": "a7cb708ffea240b6a80f159c8d56afc4d13cdac1736f3c507a36087fb28b98fe"
+    },
+    {
+      "id": "scout-table-two-rows-tab",
+      "source": "|| A ||\n\t|| B ||",
+      "source_sha256": "a72db31ec3d51414956f4962d0851497b487feabc3f36f5541793abc5c95efc9",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n<p>|| B ||</p>\n",
+      "raw_html_sha256": "a7cb708ffea240b6a80f159c8d56afc4d13cdac1736f3c507a36087fb28b98fe"
+    },
+    {
+      "id": "scout-table-two-rows-text",
+      "source": "|| A ||\nTEXT\n|| B ||",
+      "source_sha256": "cc31756967d70adc74b665e92826dbc2e9c6457712ff065d5e47eb582e747e3d",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\nTEXT<br />\n<table class=\"wiki-content-table\">\n<tr>\n<td>B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "7d138171f9ca11e0ec0a64349aeaffd678556dc4445511cedfc0ee4317323293"
+    },
+    {
+      "id": "scout-table-two-rows-no-newline",
+      "source": "|| A |||| B ||",
+      "source_sha256": "bc33b0cc5441722b07fc8122b59b1e900013cc3a2b6ee056c2fe312042592fed",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n<td colspan=\"2\">B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "284e786094a7efa9f21c6785b02ea91bed231ddf31afba0bfd5cd5a67e426bf6"
+    },
+    {
+      "id": "scout-table-three-rows",
+      "source": "|| A ||\n|| B ||\n|| C ||",
+      "source_sha256": "5acaa4bcb9723b4fb433785689f164b3b3a34a567f26733a2bffe101ccc3abea",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n<tr>\n<td>B</td>\n</tr>\n<tr>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "6b64833c0633cb90744f4c46109a76356b3bc1fc28299535ab89ecd640f58f62"
+    },
+    {
+      "id": "scout-table-header-then-row",
+      "source": "||~ H ||\n|| C ||",
+      "source_sha256": "ccf9e7108786d6cef5ab9d1d940539a24d2a5a246098357620087123c21bdb26",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<th>H</th>\n</tr>\n<tr>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "9c0a05078cec073064cedcc11993dafd49ca23d6834f6d5ea58b83c61bc117d7"
+    },
+    {
+      "id": "scout-table-row-then-header",
+      "source": "|| C ||\n||~ H ||",
+      "source_sha256": "6eab3d56da92eef0b9ec7b40462c581385b574388b2447fbec14536dbf7eb014",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>C</td>\n</tr>\n<tr>\n<th>H</th>\n</tr>\n</table>\n",
+      "raw_html_sha256": "9bd5a15eead594d66e25eb4a5c00e4221102133baaa51a27e598a633b1412e90"
+    },
+    {
+      "id": "scout-table-cell-left-align",
+      "source": "||< A ||",
+      "source_sha256": "1679a656ab0f8a0a278d60afba2f6d76d056ffbd7851d048b7f3c313a148ef01",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td style=\"text-align: left;\">A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "a44c9e4807a8d69afef6eead43b0081c7da5139701a22a7c6dbec4d5df18bfee"
+    },
+    {
+      "id": "scout-table-cell-right-align",
+      "source": "||> A ||",
+      "source_sha256": "e0b964a8b2bc4d1e3fd1368f78d61293025e0faf213345cafbadae4c25e2f41d",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td style=\"text-align: right;\">A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "e0f247b31d8561d7c93d4fea68314daa70d2538fe361b6f9cc755973393d221b"
+    },
+    {
+      "id": "scout-table-cell-center-align",
+      "source": "||= A ||",
+      "source_sha256": "00fea68e858ca9bd937bc8f9eb10919f4adb2d335ef2880c78b33956ba7f829b",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td style=\"text-align: center;\">A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "fb05e7e15aeafbe4f25ea3a4a29cc7a6111103cc2bdc71b0b27876a273bcefe4"
+    },
+    {
+      "id": "scout-table-cell-header-space",
+      "source": "|| ~ H ||",
+      "source_sha256": "ec3eb191f6505f0b05a0eb2939ab4900daa9d0c80d7ca72398b0236307c25f0e",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>~ H</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "df0be85830f47c49954f8cd30a459c02814372b6317ca7ef353f177c82425904"
+    },
+    {
+      "id": "scout-table-cell-header-double",
+      "source": "||~~ H ||",
+      "source_sha256": "b7bb455e35f5a55ae28af97788f14dde90d3f90c1306291ad1ecdcbe8e82e0da",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>~~ H</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "a0b0ecb631084ccf2244151b2a26fa396c94dda80983e2c17c61a494d0cac76b"
+    },
+    {
+      "id": "scout-table-cell-equals-double",
+      "source": "||== A ||",
+      "source_sha256": "95bddd917fe80bcda1bba5108eb220f656bf880d9b2583b0f17d4b44bee443d2",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>== A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "066fd503eaec0d45f3c0201d6ab92b8c2e4252500ddf1bd7be49557f690ff493"
+    },
+    {
+      "id": "scout-table-cell-angle-both",
+      "source": "||<> A ||",
+      "source_sha256": "25e8224bd13bb92f583ff021366d50da937a49e32c1cb72e6ef75a3743471dbc",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&lt;&gt; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "e6bfe4f18a343008ced3abb1bd40e02fbebc3c27e201b2f90bf46e8dc567ddbe"
+    },
+    {
+      "id": "scout-table-cell-style",
+      "source": "|| style=\"color:red\" A ||",
+      "source_sha256": "a184d8eb6b8a228222e675dfa398d31e680280f8ff5c98c360200246ac2f696b",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>style=&quot;color:red&quot; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "9407883ac3e97beec0a302a081ea0cff02c596a7ed5b77adf42b59db85d12b1a"
+    },
+    {
+      "id": "scout-table-cell-class",
+      "source": "|| class=\"x\" A ||",
+      "source_sha256": "09696b075419e4077e0fed15fc1e2fa35b15341eb5c6ea7a26ca96650e1781c3",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>class=&quot;x&quot; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "467be9b1185e0c4314d7a5ad048387897c5106c6967b502db2b96966fd1b40e8"
+    },
+    {
+      "id": "scout-table-cell-colspan",
+      "source": "|| colspan=\"2\" A ||",
+      "source_sha256": "26131b85dd22e3c4eef441f8b21220a4fbfee57c57e11dccbc023585d3a51615",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>colspan=&quot;2&quot; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "ba3079fb4b70817029626a0d076f68c9c69288218b4fff5b8ea85587fcf5d39e"
+    },
+    {
+      "id": "scout-table-cell-tilde-attr",
+      "source": "||~ class=\"x\" H ||",
+      "source_sha256": "56cd7cda8b6f7f6c27ed0db000d094c73f6bee9e569d5024299e43b07e3776ac",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<th>class=&quot;x&quot; H</th>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1a439779da16148d02e1a3a3d638b9739cbbc239487905d4cf39a3acdd8170f2"
+    },
+    {
+      "id": "scout-table-bold-cell",
+      "source": "|| **A** ||",
+      "source_sha256": "f3048bd1801f183c04fde64f1973d47a1e432b40e8b292b2e181ede0ab520693",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><strong>A</strong></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "96d6d618f862dc5090a6e7e3afcc82f22111fd5784dabeae168a03d950129ce6"
+    },
+    {
+      "id": "scout-table-link-cell",
+      "source": "|| [[[page|A]]] ||",
+      "source_sha256": "c267b93153dc41905b93eb902055f5c36873734f41dae9244a568fe40a90601c",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><a class=\"newpage\" href=\"/page\">A</a></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "ba73844f58be1317578fdc3d1e730e38d0bf0f7f490b0d9a40490999feb51383"
+    },
+    {
+      "id": "scout-table-raw-cell",
+      "source": "|| @@A||B@@ || C ||",
+      "source_sha256": "de619acaf0bc87c8c35749c3af01893f8d13131df21ac6d4c7801a016a985123",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><span style=\"white-space: pre-wrap;\">A||B</span></td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "e5f17b3438ef0f54532e9dd060759ad18fe2ff71fd59a5ed4f5b0e94a05add32"
+    },
+    {
+      "id": "scout-table-monospace-cell",
+      "source": "|| {{A||B}} || C ||",
+      "source_sha256": "17fec971372cb7fec90a7ec0e5e0b9e44fcf99f574e015f2ef079868de1b262a",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><tt>A</tt></td>\n<td>B</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "45d580ad0c54c48d37d38f1f6d52c0526abb1840bc223c605b8eb50c62d44e5e"
+    },
+    {
+      "id": "scout-table-comment-cell",
+      "source": "|| A [!-- || hidden --] B || C ||",
+      "source_sha256": "8836aae65197641fc48decfacb63bc15076d18c3435868a3cdc1d544dbdb4f8d",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A B</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "c987587e9084cc8b63472e6ed13485793eaf8b085fa6a35d88f970442c642fa4"
+    },
+    {
+      "id": "scout-table-escaped-pipe",
+      "source": "|| A \\|| B ||",
+      "source_sha256": "59c41899b31f9992eb87f8e9b9d09d99521ae0785187d8ef3aa47cef463e54e8",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A \\</td>\n<td>B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "697e1e9b4eafd2ef82f5612d5667c28e34c20c9cf64ef0e2a077f0cb6ba7b400"
+    },
+    {
+      "id": "scout-table-url-pipe",
+      "source": "|| http://example.com/a|b || C ||",
+      "source_sha256": "e89ae6228cb1b58ae46613541650c8651e36bb62b77a509a9d504953178f1f22",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><a href=\"http://example.com/a|b\">http://example.com/a|b</a></td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "756aa01856926036051bdd2f2a31f99a5565a5fb4b19c3fb8300a67212f504bb"
+    },
+    {
+      "id": "scout-table-in-comment",
+      "source": "[!--\n|| A ||\n--]",
+      "source_sha256": "34cda4c47c78b1c97f707406bdc10a6f871ec53f2897d78cafd04310adfabd66",
+      "raw_html": "\n\n",
+      "raw_html_sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070"
+    },
+    {
+      "id": "scout-table-in-code",
+      "source": "[[code]]\n|| A ||\n[[/code]]",
+      "source_sha256": "d5b4657beb0535e8461821068940785501705b3f5d66127caa494a35f731365f",
+      "raw_html": "\n\n<div class=\"code\">\n<pre><code>|| A ||</code></pre></div>\n",
+      "raw_html_sha256": "f963f8cb9f220a09435c098d57fb470819642e6233b90eb1d9b1fbae084babaa"
+    },
+    {
+      "id": "scout-table-in-raw",
+      "source": "@@\n|| A ||\n@@",
+      "source_sha256": "e8017687aae9779b29cbccae10527671511e3ca5e20f1f54af762fc4d424a247",
+      "raw_html": "\n\n@@<br />\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n<p>@@</p>\n",
+      "raw_html_sha256": "484ee0926886f4cd89c3f1da2d0cdb2108c607baa914d6e875f931869a4a78b1"
+    },
+    {
+      "id": "scout-table-in-html",
+      "source": "[[html]]\n|| A ||\n[[/html]]",
+      "source_sha256": "0f1bd68096a2744ce7ecc3066c156e904d920a0b25ee0cefbeca266210797ab4",
+      "raw_html": "\n\n[[html]]<br />\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n<p>[[/html]]</p>\n",
+      "raw_html_sha256": "298302ba319a1571225128aba60fec48ce4cf239f4ad46fbec820cad6f8ecc9a"
+    },
+    {
+      "id": "scout-table-after-paragraph",
+      "source": "BEFORE\n\n|| A ||\n\nAFTER",
+      "source_sha256": "6ea4d3817e3845fcc30099ca298afbf2222ffd9d8d59999015b4096c54df0f2d",
+      "raw_html": "\n\n<p>BEFORE</p>\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n<p>AFTER</p>\n",
+      "raw_html_sha256": "dcd0341debaec2f10fcc58d7564acedbb6a4a203de260a19cf35a2d42a9acc7e"
+    },
+    {
+      "id": "scout-table-after-no-blank",
+      "source": "BEFORE\n|| A ||\nAFTER",
+      "source_sha256": "5ff299692202dec61f78ec20061967d1c7dea5c429a0e0b05dc352bc0c53dccb",
+      "raw_html": "\n\nBEFORE<br />\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n<p>AFTER</p>\n",
+      "raw_html_sha256": "205f1a8edefed143d12ff7687ffbddd3311e28eac41c54d00b262bb2d9b1a249"
+    },
+    {
+      "id": "scout-table-crlf-rows",
+      "source": "|| A ||\r\n|| B ||\r\n",
+      "source_sha256": "bfdf299bd9f4d142f9eff28d63442a9b76a728d9c2bd37c309bf6f86d2759399",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n<tr>\n<td>B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1915ad3667ae1874cebab8ee5a9a5b419b65e8338d5c375536086a9f684ac2c6"
+    },
+    {
+      "id": "scout-table-cr-only",
+      "source": "|| A ||\r|| B ||",
+      "source_sha256": "e9b303b7a195c4f66c306f35f4cfa1eacdc6d144a33b7035f7f17d791c5fb816",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n<tr>\n<td>B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1915ad3667ae1874cebab8ee5a9a5b419b65e8338d5c375536086a9f684ac2c6"
+    }
+  ],
+  "focused": [
+    {
+      "id": "scout-table-delim-only-pipes-2",
+      "source": "||",
+      "source_sha256": "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-delim-only-pipes-3",
+      "source": "|||",
+      "source_sha256": "be5be69f55e91af25e54ecc2154d4da359b67b3b27e25f5cc0b3ff54eb74dff3",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-delim-only-pipes-4",
+      "source": "||||",
+      "source_sha256": "45ca31c3315a5978f40438aab46040d75e99c9b125c2fd01db6e10ac80bef906",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-delim-only-pipes-5",
+      "source": "|||||",
+      "source_sha256": "1867f76f89b18a0f04c72020a91ed03b5557354322022ed5b08d045d20b8689c",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-delim-only-pipes-6",
+      "source": "||||||",
+      "source_sha256": "2dca6397f6798483d79ea9e0dcd45477d3fed0547a9194bef7440cfee3b2bf32",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-delim-only-pipes-7",
+      "source": "|||||||",
+      "source_sha256": "543082649ab324aed040584422da1cfe576ec16860460b0c3571c2f49b2b24bb",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-delim-only-pipes-8",
+      "source": "||||||||",
+      "source_sha256": "47c2d626fa3179a3cea11612ed4a79bed4ed1a55c72f7b139625346714cb963b",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-delim-only-pipes-9",
+      "source": "|||||||||",
+      "source_sha256": "866418f3efffb02bebf2dfdb9361be41058eb0446eca533e6d33dec68f2c6cfe",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-delim-only-pipes-10",
+      "source": "||||||||||",
+      "source_sha256": "756514a3231dbf6ab3d5dbc1c15ae68bb074afd83ec41118ca7adfa02a8c57c9",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-delim-only-pipes-11",
+      "source": "|||||||||||",
+      "source_sha256": "a55dc521fe991b76cf6ec104fabd3493396ee2f9d6c80266c5ab64055ce18ea0",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-delim-only-pipes-12",
+      "source": "||||||||||||",
+      "source_sha256": "dcc86096e9804ddc96c4be0b541384d709b12d90e97d9df04f07697c8bc87805",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69fc4fda5204b9748da38cedae7079f4067726d2e41efe05ed038698520b68b3"
+    },
+    {
+      "id": "scout-table-delim-left-run-2",
+      "source": "||<< A ||",
+      "source_sha256": "7caf6b4ea2a0fea4b5ce228d891141857634b1c01f34ce0895a931bff47bf92e",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&#171; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "c407d492a11d584e8dc6aec994a4da06bccf6dd6b69fc94fb8f51428cfb3b37e"
+    },
+    {
+      "id": "scout-table-delim-right-run-2",
+      "source": "||>> A ||",
+      "source_sha256": "4805d34a9d5411093f9d79df20f7a4982babed7175c6bd18716e84dd01e5e803",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&#187; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "0cc3fdb9e7411e54c55dc03c62cb6f8413781f7b244d895fa7c5ee737cd3753c"
+    },
+    {
+      "id": "scout-table-delim-both-run-2",
+      "source": "|| A ||",
+      "source_sha256": "75a1ae99a3cb04444fe612436ff32fd560cbe4d145720157d84dbe37503f530c",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1f5e2718fc4bdf49bf79ecc5f2619c43c2625c1e1afe1f625e9e592cf237907c"
+    },
+    {
+      "id": "scout-table-delim-left-run-3",
+      "source": "||<<< A ||",
+      "source_sha256": "a4e9046133e62963381c09a6aef5e6d4fdf105c75ac21c3378ea312842036181",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&#171;&lt; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "b08d4ad0f0edce3701095fed905cf0d23307c7ad553105153b96c0e6e967e5f4"
+    },
+    {
+      "id": "scout-table-delim-right-run-3",
+      "source": "||>>> A ||",
+      "source_sha256": "3d59a50e77041d1de29dfca943750402b5bdcc41bd7df893c8a12e2039192c69",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&#187;&gt; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "69e5e076e333f2bbf5f2cb04f668a95c925a4531ac3a4a63cf124dc69bada787"
+    },
+    {
+      "id": "scout-table-delim-both-run-3",
+      "source": "||| A |||",
+      "source_sha256": "bdfbbdcce09c2c3c86b978c788b685d66f79c82ea554ba0272cd8c745ebe1cf4",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>| A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "bf1cab6104d2b35dfe6484a4579ddd8414bb94ee97abefca5c8f5c568b4a3098"
+    },
+    {
+      "id": "scout-table-delim-left-run-4",
+      "source": "||<<<< A ||",
+      "source_sha256": "ad6fc491058c2a0ce931c1e3897d9b30cbc3ee7b9543efd8b87bfb465cf43ceb",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&#171;&#171; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "bad512e91803d82cc3b452d65d52844721cdbd7997459b8cc4ebcfcbc060e161"
+    },
+    {
+      "id": "scout-table-delim-right-run-4",
+      "source": "||>>>> A ||",
+      "source_sha256": "81c62259f80cb659b7915e307649ec10e7163a8bb89f06a44358ff7998d7786e",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&#187;&#187; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "39c36fde6f5cf04f0175a6789d6a2f69ac680f7ef328576d2d81bca48ffcff50"
+    },
+    {
+      "id": "scout-table-delim-both-run-4",
+      "source": "|||| A ||||",
+      "source_sha256": "b13291ccb3878030afecf4f0875997186724dcdab4aa8019b063baf6132a7f44",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td colspan=\"2\">A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "4ecc595ed66e78e0496ee05b0a0512bd0dc95cf17dca14c3ce7aafe8f3ab022f"
+    },
+    {
+      "id": "scout-table-delim-left-run-5",
+      "source": "||<<<<< A ||",
+      "source_sha256": "67bf2ea5657984765ba64da6d72e0f540383d3e46a0134ffad1cbb601ea4c4da",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&#171;&#171;&lt; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "0fedb260830dd5c6d37e06ab2dfbb5f327e3ab2efb0fee285168ae94a7464799"
+    },
+    {
+      "id": "scout-table-delim-right-run-5",
+      "source": "||>>>>> A ||",
+      "source_sha256": "391a6b0e7a67bef6d5a1cf767d475616d6682902485f17e7cebdf8681f03838b",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&#187;&#187;&gt; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "b629017e8320164ed5fc5a84ce31a77fac0afb9e31cf1d5c80fa1e8c1826292f"
+    },
+    {
+      "id": "scout-table-delim-both-run-5",
+      "source": "||||| A |||||",
+      "source_sha256": "2a8036a61a19e9ed2ed9eb4371a6862bf85cdea6e2f9256ffafb4d6dd0942b6e",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td colspan=\"2\">| A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "24b25137a759948e31548d0491489e1dc7d1f89f38f47177201818a323712edf"
+    },
+    {
+      "id": "scout-table-delim-left-run-6",
+      "source": "|||||| A ||",
+      "source_sha256": "5876a774d18838357afcb490c9ddd3dc6500164f6a7d853cfc1b700e90ae8f48",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td colspan=\"3\">A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "3e22bdbaf940d127db452066f6648432472e7bdb8e477b4b551033b684cabb50"
+    },
+    {
+      "id": "scout-table-delim-right-run-6",
+      "source": "|| A ||||||",
+      "source_sha256": "b97a85420f3aa74a3c966aac2faa61df90be1898951cf4426e818bee3c4b267a",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1f5e2718fc4bdf49bf79ecc5f2619c43c2625c1e1afe1f625e9e592cf237907c"
+    },
+    {
+      "id": "scout-table-delim-both-run-6",
+      "source": "|||||| A ||||||",
+      "source_sha256": "aa19c63f33e1604be3840d756dd347746095f506c7b95005d82314ed498162cf",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td colspan=\"3\">A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "3e22bdbaf940d127db452066f6648432472e7bdb8e477b4b551033b684cabb50"
+    },
+    {
+      "id": "scout-table-delim-left-run-7",
+      "source": "||||||| A ||",
+      "source_sha256": "a54ec53e36b268a497843e8a617b8ee0e80d73feeb75ceb251ff25741f882bc4",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td colspan=\"3\">| A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "f1be019079dae022794b83ae170e75fee356619e95e89af25fc595d0b3154327"
+    },
+    {
+      "id": "scout-table-delim-right-run-7",
+      "source": "|| A |||||||",
+      "source_sha256": "5a91ae8579a01b88931f819e8c28982da26abd96f156ee78cf1d097b760012b8",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1f5e2718fc4bdf49bf79ecc5f2619c43c2625c1e1afe1f625e9e592cf237907c"
+    },
+    {
+      "id": "scout-table-delim-both-run-7",
+      "source": "||||||| A |||||||",
+      "source_sha256": "d8fb4869ae1e8404550fbaba8bd98b4d3b0f979435cec56971d337e31a046fa6",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td colspan=\"3\">| A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "f1be019079dae022794b83ae170e75fee356619e95e89af25fc595d0b3154327"
+    },
+    {
+      "id": "scout-table-delim-left-run-8",
+      "source": "|||||||| A ||",
+      "source_sha256": "558ed1d0eff8b9c16fca004c6f5af87ff397e1c1ac481fb79218ddaa64f25454",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td colspan=\"4\">A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "af32c6bd83c0c4b927f3e4fd7e69f6b5cf53bacdf9786e7c404a4a816eeed8c2"
+    },
+    {
+      "id": "scout-table-delim-right-run-8",
+      "source": "|| A ||||||||",
+      "source_sha256": "0caf9880878ac55694b03834687c124fcce364803ff90a445e2ef09ffedbc90c",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1f5e2718fc4bdf49bf79ecc5f2619c43c2625c1e1afe1f625e9e592cf237907c"
+    },
+    {
+      "id": "scout-table-delim-both-run-8",
+      "source": "|||||||| A ||||||||",
+      "source_sha256": "1ef2c8831a3860574785fb714a1e0d2faab6bcf7f98df645ac9f5f6917babb9a",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td colspan=\"4\">A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "af32c6bd83c0c4b927f3e4fd7e69f6b5cf53bacdf9786e7c404a4a816eeed8c2"
+    },
+    {
+      "id": "scout-table-delim-tilde-run-1",
+      "source": "||~ A ||",
+      "source_sha256": "a102fa9cc6ca85356e0153039007b3cafee7dc41d9e29ee39faa7ca0512c63e2",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<th>A</th>\n</tr>\n</table>\n",
+      "raw_html_sha256": "2b68b553e870aa67e989ec0a89e76953c2f3accee8f4df1b2a16f69cd1236463"
+    },
+    {
+      "id": "scout-table-delim-tilde-run-2",
+      "source": "||~~ A ||",
+      "source_sha256": "db8f95e17ec4643fbefa4f28c4c1cd1153ca1aff5d4bd0e6254f4c044b88f5ac",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>~~ A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "3dc2691b809b7a7282c7a3b57dff177d1fe9f74c6a9281f724f64dfccab4ed18"
+    },
+    {
+      "id": "scout-table-delim-tilde-run-3",
+      "source": "||~~~ A ||",
+      "source_sha256": "3c8662d763e36fe6310651b336a50e2b109a0e8379d4b38e1474dc5ed56aa632",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>~~~ A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "e6b7086fc34ff36d212803605967823f14b7d8249dbdb922a473816af9b07f7f"
+    },
+    {
+      "id": "scout-table-delim-tilde-run-4",
+      "source": "||~~~~ A ||",
+      "source_sha256": "002bb794629196fe474ec30db7e5f585db00cf872941ea9e8a69a6fb533bfca9",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>~~~~ A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "18e65263b572b25dc891b1631408abe66c909ae92e8bc8b842c1750642812a54"
+    },
+    {
+      "id": "scout-table-delim-tilde-run-5",
+      "source": "||~~~~~ A ||",
+      "source_sha256": "7c847717f109dcdb373e6366d2269380f3db9a90c6e6afa090f9778f56eec1da",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>~~~~~ A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "bffe84038aa022270215f16988fe293c030aeb1bffa78108c5bf7cbd1eb238fd"
+    },
+    {
+      "id": "scout-table-delim-equals-run-1",
+      "source": "||= A ||",
+      "source_sha256": "00fea68e858ca9bd937bc8f9eb10919f4adb2d335ef2880c78b33956ba7f829b",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td style=\"text-align: center;\">A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "fb05e7e15aeafbe4f25ea3a4a29cc7a6111103cc2bdc71b0b27876a273bcefe4"
+    },
+    {
+      "id": "scout-table-delim-equals-run-2",
+      "source": "||== A ||",
+      "source_sha256": "95bddd917fe80bcda1bba5108eb220f656bf880d9b2583b0f17d4b44bee443d2",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>== A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "066fd503eaec0d45f3c0201d6ab92b8c2e4252500ddf1bd7be49557f690ff493"
+    },
+    {
+      "id": "scout-table-delim-equals-run-3",
+      "source": "||=== A ||",
+      "source_sha256": "acab334b9a20a7f4681ef09b1338b0be08e080323d5225571ae21ca47d5887fc",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>=== A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "afa0d52b81efb06f98fb85a39799378dd4560f551126603c4d75fd544bab5865"
+    },
+    {
+      "id": "scout-table-delim-equals-run-4",
+      "source": "||==== A ||",
+      "source_sha256": "7a9cbd7f601f2ee2bd79e8d3f0bb62e3e82a323994907d9884f2740432dd8537",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>==== A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "a5a0e25f1d1b0f6bf2af7a66e3324224c48d3aafddbe243da70f9f0354454df1"
+    },
+    {
+      "id": "scout-table-delim-equals-run-5",
+      "source": "||===== A ||",
+      "source_sha256": "7e92cf24b11eb7280e42b200866ec50e9ba249ceaaed6d718bb049c80ea9130b",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>===== A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "376f76147ff3a7c53a4206fd890aa83f9bd4285396350f5bcbae5828d922bd77"
+    },
+    {
+      "id": "scout-table-delim-left-run-1",
+      "source": "||< A ||",
+      "source_sha256": "1679a656ab0f8a0a278d60afba2f6d76d056ffbd7851d048b7f3c313a148ef01",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td style=\"text-align: left;\">A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "a44c9e4807a8d69afef6eead43b0081c7da5139701a22a7c6dbec4d5df18bfee"
+    },
+    {
+      "id": "scout-table-delim-right-run-1",
+      "source": "||> A ||",
+      "source_sha256": "e0b964a8b2bc4d1e3fd1368f78d61293025e0faf213345cafbadae4c25e2f41d",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td style=\"text-align: right;\">A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "e0f247b31d8561d7c93d4fea68314daa70d2538fe361b6f9cc755973393d221b"
+    },
+    {
+      "id": "scout-table-delim-owner-bold",
+      "source": "|| **A||B** || C ||",
+      "source_sha256": "442af906aa99e61a6dd35cf5d8838787fdefd88c55cebb6269ea864568de4666",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><strong>A</strong></td>\n<td>B</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "b6c1300fe979d70260b83da7f64f3bd66b879458e645bd8379a3df1c97743b3c"
+    },
+    {
+      "id": "scout-table-delim-owner-italic",
+      "source": "|| //A||B// || C ||",
+      "source_sha256": "7d124faae53ac50b418d8133146880cb576b18d60cfd5d4ad95c90f807ccde15",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><em>A</em></td>\n<td>B</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "765a358427f4f269db38080d3441fa43a9f7399b144fd88b67b2800909808778"
+    },
+    {
+      "id": "scout-table-delim-owner-strike",
+      "source": "|| --A||B-- || C ||",
+      "source_sha256": "12374eeec5c641823175b48a87168ee796226fbeecb84fabfb0d8f388cf9381e",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><span style=\"text-decoration: line-through;\">A</span></td>\n<td>B</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "7e68a8b4ab961a53fb9e8b71051e5ae3d33ca772eb5b6357c95923e8ac5e7955"
+    },
+    {
+      "id": "scout-table-delim-owner-underline",
+      "source": "|| __A||B__ || C ||",
+      "source_sha256": "1c154b00d5a5c32d2f1c3c231f679887d064cb5872f995d751f691434471a6df",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><span style=\"text-decoration: underline;\">A</span></td>\n<td>B</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "02014c3cd22d657f6cb9f6be40dca6d95e79e9baa8fc8b2fb33f6cffe205d39b"
+    },
+    {
+      "id": "scout-table-delim-owner-sup",
+      "source": "|| ^^A||B^^ || C ||",
+      "source_sha256": "5c93cf498e379d8a1260ce9c9d0d010dc61850d49c1220525feba2a71b247747",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><sup>A</sup></td>\n<td>B</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "6191cb8d0120753d91f7e48abee78dee06cda24bc06f3af5b86d731414619f21"
+    },
+    {
+      "id": "scout-table-delim-owner-sub",
+      "source": "|| ,,A||B,, || C ||",
+      "source_sha256": "c243d88d8567be4c91a6e572332b35d9147504e100c1c71e6ac1a2c98b66f367",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><sub>A</sub></td>\n<td>B</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "aedeedda72b35352bad1ae8ae1fe704fffd2cb2f6b1d755dd9c69606d207e0bb"
+    },
+    {
+      "id": "scout-table-delim-owner-raw-inline",
+      "source": "|| @@A||B@@ || C ||",
+      "source_sha256": "de619acaf0bc87c8c35749c3af01893f8d13131df21ac6d4c7801a016a985123",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><span style=\"white-space: pre-wrap;\">A||B</span></td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "e5f17b3438ef0f54532e9dd060759ad18fe2ff71fd59a5ed4f5b0e94a05add32"
+    },
+    {
+      "id": "scout-table-delim-owner-monospace",
+      "source": "|| {{A||B}} || C ||",
+      "source_sha256": "17fec971372cb7fec90a7ec0e5e0b9e44fcf99f574e015f2ef079868de1b262a",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><tt>A</tt></td>\n<td>B</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "45d580ad0c54c48d37d38f1f6d52c0526abb1840bc223c605b8eb50c62d44e5e"
+    },
+    {
+      "id": "scout-table-delim-owner-comment",
+      "source": "|| A[!--X||Y--]B || C ||",
+      "source_sha256": "1e2d7d7eae46c52003f493e9afcab744667c31f59b3deff8e3258dd3d168076e",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>AB</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "fc072be6dba19593d261d6ec27b35a56b5a8c65b7a385fe28a0d612b99ac82c6"
+    },
+    {
+      "id": "scout-table-delim-owner-triple-label",
+      "source": "|| [[[page|A||B]]] || C ||",
+      "source_sha256": "d11186705e4fdb89ddcc1c465cd9291616c2abcf037d00cdcf0ccd54cfa88b17",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><a class=\"newpage\" href=\"/page\">A||B</a></td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "c34c621c1d161a71180b01b425be3c94f079dd9dc8795895090fbbd7bf45c3ce"
+    },
+    {
+      "id": "scout-table-delim-owner-single-link",
+      "source": "|| [https://example.com A||B] || C ||",
+      "source_sha256": "ada296c83496a9109fa4feddf2e4a4a57fbf17f7f0cfb6e5e2450144ae11fd67",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>[<a href=\"https://example.com\">https://example.com</a> A</td>\n<td>B]</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "6efa1ad4b3bdd096d3dcc533f3522111c1e47eb99ea01501b9fb1947055aef73"
+    },
+    {
+      "id": "scout-table-delim-owner-color",
+      "source": "|| ##red|A||B## || C ||",
+      "source_sha256": "ea0dab2684202f96dc0bf5f2f1caf47c1905bd04e5b2397e8a65e1f02dc47870",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><span style=\"color: red\">A</span></td>\n<td>B</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "16e3badeb5d297c36a9b05bb886e879d1c59de943e1a9a3399353b26d8afaefb"
+    },
+    {
+      "id": "scout-table-delim-owner-span",
+      "source": "|| [[span]]A||B[[/span]] || C ||",
+      "source_sha256": "76bfa666cf89fe0475d0a916379752a9a1e0eaa65751a66a28022d81408832f7",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><span>A</span></td>\n<td>B</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "c08da1a0f387cb26d4d3b3b660d5cda3e0d2e6a62a977be783b1397e72d2dd9e"
+    },
+    {
+      "id": "scout-table-delim-owner-div-inline",
+      "source": "|| [[div]]A||B[[/div]] || C ||",
+      "source_sha256": "99ff32c5fb50123d9b382dd9493f77e83bc15e84e5a45a1cd5a1b7423a419428",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>[[div]]A</td>\n<td>B[[/div]]</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1716255bed3d47ba3b498c30d937c8ef0e848b9ea54dbdc83a46647d2f828a86"
+    },
+    {
+      "id": "scout-table-delim-owner-code-inline",
+      "source": "|| {{{A||B}}} || C ||",
+      "source_sha256": "6cc7cba4c9cbce9351f4510e3aeb0519cf110ae9fa62f0fa6f851ec47468a46e",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><tt>{A</tt></td>\n<td>B}</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "56ccfaa32154099b73ad431add26c4bf543e7921119571aaeccc8b0a11abf4a5"
+    },
+    {
+      "id": "scout-table-delim-owner-escaped-left",
+      "source": "|| @<A||B>@ || C ||",
+      "source_sha256": "e236b8a51e3fad6b14d0ad9d9af2396cc1c07d67049ffb8daf8fa6a048d6632d",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><span style=\"white-space: pre-wrap;\">A||B</span></td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "e5f17b3438ef0f54532e9dd060759ad18fe2ff71fd59a5ed4f5b0e94a05add32"
+    },
+    {
+      "id": "scout-table-delim-owner-parser-fn",
+      "source": "|| [[#if 1|A||B|C]] || C ||",
+      "source_sha256": "3e5380cccff4d5b4a7833cdc3c829e381835578888b8f3771ebd83958f6bdae3",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td></td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1261c80b130821b34bc1e4f07c6666142280b1b2a8bf22e810f8c08dfa26ae6b"
+    },
+    {
+      "id": "scout-table-delim-owner-url",
+      "source": "|| http://example.com/a|b || C ||",
+      "source_sha256": "e89ae6228cb1b58ae46613541650c8651e36bb62b77a509a9d504953178f1f22",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td><a href=\"http://example.com/a|b\">http://example.com/a|b</a></td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "756aa01856926036051bdd2f2a31f99a5565a5fb4b19c3fb8300a67212f504bb"
+    },
+    {
+      "id": "scout-table-delim-owner-leading-llAppBrr",
+      "source": "|||| {{A||B}} ||",
+      "source_sha256": "16aff4fbda669ac90dda34908ead967cb4217482124f3d1756a8b84ad27ac7dd",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td colspan=\"2\"><tt>A</tt></td>\n<td>B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "74c34696a08dd9fbf271d7a86cdc473bb2df99efd8e0a176683b67659cccb982"
+    },
+    {
+      "id": "scout-table-delim-owner-middle-llAppBrr",
+      "source": "|| X || {{A||B}} || Y ||",
+      "source_sha256": "3792c5807b0b54f04d34c5c23d2dc49c3b39be203ea94d809eff14d4552f1d26",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>X</td>\n<td><tt>A</tt></td>\n<td>B</td>\n<td>Y</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "a1f8f97285082ad26f67478c676daf41cbbce5d21322e42e3d79164f44d8d518"
+    },
+    {
+      "id": "scout-table-delim-owner-leading-aaAppBaa",
+      "source": "|||| @@A||B@@ ||",
+      "source_sha256": "c89a7ef380ccdca385c862c0bad7990548b04bf1e1cf3d6f8e0605597ab1860b",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td colspan=\"2\"><span style=\"white-space: pre-wrap;\">A||B</span></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "4f3efa8b083404c5ea52d3416f3e51492187a44bdcecbfab93745fd443d02a52"
+    },
+    {
+      "id": "scout-table-delim-owner-middle-aaAppBaa",
+      "source": "|| X || @@A||B@@ || Y ||",
+      "source_sha256": "94a9161078c4a49b5a520c36e75fd5fe19becc873ef754a56235451bff31bf05",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>X</td>\n<td><span style=\"white-space: pre-wrap;\">A||B</span></td>\n<td>Y</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "a0787b807bdfdfd609b4d0aa3290064197d32844474ef2ea6b246add78b5c543"
+    },
+    {
+      "id": "scout-table-delim-owner-leading-ssAppBss",
+      "source": "|||| **A||B** ||",
+      "source_sha256": "3bad6bddb8ce792fb31146de12723c253479d65a2d2b292d05c93a8e2735ad41",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td colspan=\"2\"><strong>A</strong></td>\n<td>B</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "487f63f1c3614c3b96d1a89d7393acc479196a1bf0a992c549d3fd51c6cf519b"
+    },
+    {
+      "id": "scout-table-delim-owner-middle-ssAppBss",
+      "source": "|| X || **A||B** || Y ||",
+      "source_sha256": "ad656d45d002366b62212509e7c2e3d1c526a488052ae86cc59396a63f768903",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>X</td>\n<td><strong>A</strong></td>\n<td>B</td>\n<td>Y</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "2ec435b0d76d8eafc748ab15c61842e5dfd818141b87e52c5ada8edede5b8543"
+    },
+    {
+      "id": "scout-table-delim-owner-leading-biddAppBdde",
+      "source": "|||| [!--A||B--] ||",
+      "source_sha256": "8948d351a38c1ca73a6f2b2ac6bfd34c421c9680339423ccf592c1a5a6380beb",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td colspan=\"2\"></td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "04561a9ebfb960f0a6876b401241f81a95e9fbcd99600b1d52904b585dc60be7"
+    },
+    {
+      "id": "scout-table-delim-owner-middle-biddAppBdde",
+      "source": "|| X || [!--A||B--] || Y ||",
+      "source_sha256": "69bd134851db4c8653ff7b506be89fa8ef43b9e77a943a3ca4a564f5ec429b7f",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>X</td>\n<td></td>\n<td>Y</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "aaba40a783c9a4cbdf7a38963c3ec765769262d37cea15a568b67209ebaf8097"
+    },
+    {
+      "id": "scout-table-delim-tilde-after-space",
+      "source": "|| ~ A ||",
+      "source_sha256": "01c0ef2381055ec2a6e9cb71c877b6f3a4ff828344b731ff0b1641ba1b6d41f1",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>~ A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "e542f92917d34396fdd043a1640d89dd3c369996baf0fbe682b3dc48ee3cf032"
+    },
+    {
+      "id": "scout-table-delim-tilde-after-tab",
+      "source": "||\t~ A ||",
+      "source_sha256": "a0d7c31a28eaf92f110e6574a6087bf064ac22628305a0b2fe5fed6d9042049e",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>~ A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "e542f92917d34396fdd043a1640d89dd3c369996baf0fbe682b3dc48ee3cf032"
+    },
+    {
+      "id": "scout-table-delim-tilde-double-after-space",
+      "source": "|| ~~ A ||",
+      "source_sha256": "5c3537b694316b472ba0439ab3b38eaa961956c493729076f0ce94735b942e56",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>~~ A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "3dc2691b809b7a7282c7a3b57dff177d1fe9f74c6a9281f724f64dfccab4ed18"
+    },
+    {
+      "id": "scout-table-delim-equals-after-space",
+      "source": "|| = A ||",
+      "source_sha256": "71e645d0e6348793d374f9a90976a0f5a10cb1fa1449d81acaa6b3907b7662cc",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>= A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1f4ee7926a2a55bfadecb8f47b67c7bbfd4ac83433d63fde2ef6bef7e1f5603e"
+    },
+    {
+      "id": "scout-table-delim-equals-after-tab",
+      "source": "||\t= A ||",
+      "source_sha256": "5dd20ea4315642e8af90f38db457861f8b4793930e2fb36caec71ae3b2b9edcf",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>= A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "1f4ee7926a2a55bfadecb8f47b67c7bbfd4ac83433d63fde2ef6bef7e1f5603e"
+    },
+    {
+      "id": "scout-table-delim-equals-double-after-space",
+      "source": "|| == A ||",
+      "source_sha256": "85a6c5fc3b3addc51b805fdd9f09d56671d3f738d68e6d2ab401ea4a37e45a40",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>== A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "066fd503eaec0d45f3c0201d6ab92b8c2e4252500ddf1bd7be49557f690ff493"
+    },
+    {
+      "id": "scout-table-delim-left-after-space",
+      "source": "|| < A ||",
+      "source_sha256": "bfe2e89c194a3882c9fb7d6a8decfc5c23cff92243df698d5fb2ccd93a20cfc2",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&lt; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "5b263cedc13cc496ee2ee8d21c0f9284c78f886727e91223bbff55bd051cc987"
+    },
+    {
+      "id": "scout-table-delim-left-after-tab",
+      "source": "||\t< A ||",
+      "source_sha256": "31a75e45eccae94640803d07188b8191a34ec1d7e2bbc7897724f2a1e9a93948",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&lt; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "5b263cedc13cc496ee2ee8d21c0f9284c78f886727e91223bbff55bd051cc987"
+    },
+    {
+      "id": "scout-table-delim-left-double-after-space",
+      "source": "|| << A ||",
+      "source_sha256": "4fe064fd1636be801a160b4f0b8d8e45c3dedd49a71b7b071667b7653cd5442e",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&#171; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "c407d492a11d584e8dc6aec994a4da06bccf6dd6b69fc94fb8f51428cfb3b37e"
+    },
+    {
+      "id": "scout-table-delim-right-after-space",
+      "source": "|| > A ||",
+      "source_sha256": "dfd9aa9a99a576f9870763246445e059f8387a0999ca00d3269038dd8004e149",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&gt; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "ac87f62289068e1cd7c2c6cd7529d24069d722e668415d0c02167b7646990522"
+    },
+    {
+      "id": "scout-table-delim-right-after-tab",
+      "source": "||\t> A ||",
+      "source_sha256": "a41dc30a7d4de03b6c51ced30114e6adb98f9c236653dfe3615e64df85a3f799",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&gt; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "ac87f62289068e1cd7c2c6cd7529d24069d722e668415d0c02167b7646990522"
+    },
+    {
+      "id": "scout-table-delim-right-double-after-space",
+      "source": "|| >> A ||",
+      "source_sha256": "7c3ab873d94fbfcbe43d325c4cf30f9140776afd8d166fccbb6dcb23bfb0c0dc",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>&#187; A</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "0cc3fdb9e7411e54c55dc03c62cb6f8413781f7b244d895fa7c5ee737cd3753c"
+    }
+  ],
+  "supplemental_comments": [
+    {
+      "id": "scout-comment-block-table",
+      "source": "|| A[!--x--]B || C ||",
+      "source_sha256": "b2e012687599c9bc13710d86b8c5fbd8866ff63c5142f445c056ef7bb52cbf26",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>AB</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "fc072be6dba19593d261d6ec27b35a56b5a8c65b7a385fe28a0d612b99ac82c6"
+    },
+    {
+      "id": "scout-comment-block-table-separator",
+      "source": "|| A [!-- || hidden --] B || C ||",
+      "source_sha256": "8836aae65197641fc48decfacb63bc15076d18c3435868a3cdc1d544dbdb4f8d",
+      "raw_html": "\n\n<table class=\"wiki-content-table\">\n<tr>\n<td>A B</td>\n<td>C</td>\n</tr>\n</table>\n",
+      "raw_html_sha256": "c987587e9084cc8b63472e6ed13485793eaf8b085fa6a35d88f970442c642fa4"
+    }
+  ]
+}

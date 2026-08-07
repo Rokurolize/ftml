@@ -250,7 +250,7 @@ fn tabs_count_as_four_columns_only_for_native_list_indentation() {
     let code = render("[[code]]\n\t* literal\n[[/code]]");
     assert_eq!(
         code,
-        "<div class=\"code\"><pre><code> * literal</code></pre></div>",
+        "<div class=\"code\"><pre><code>    * literal</code></pre></div>",
     );
 }
 

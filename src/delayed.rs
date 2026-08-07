@@ -4,6 +4,7 @@
 //! therefore cannot terminate or create authored syntax while FTML is parsing
 //! the List-mode stream.
 
+mod seam;
 mod toc;
 
 use crate::data::{PageInfo, PageRef};
@@ -212,9 +213,11 @@ enum DelayedNode<'t> {
         id: SlotId,
         kind: GeneratedKind,
     },
-    Omitted {
+    Suppressed {
         slots: Vec<(SlotId, GeneratedKind)>,
     },
+    TypographyBoundary,
+    RuntimeText(Cow<'t, str>),
     Raw {
         atoms: Vec<RecoveryAtom<'t>>,
     },
@@ -264,12 +267,31 @@ impl<'t> DelayedElement<'t> {
         }
     }
 
-    pub(crate) fn omitted(generated: &[GeneratedInput]) -> Self {
+    pub(crate) fn suppressed(generated: &[GeneratedInput]) -> Self {
         Self {
-            node: DelayedNode::Omitted {
+            node: DelayedNode::Suppressed {
                 slots: generated.iter().map(|slot| (slot.id, slot.kind)).collect(),
             },
         }
+    }
+
+    pub(crate) fn runtime_text(text: &'t str) -> Self {
+        Self {
+            node: DelayedNode::RuntimeText(Cow::Borrowed(text)),
+        }
+    }
+
+    pub(crate) fn typography_boundary() -> Self {
+        Self {
+            node: DelayedNode::TypographyBoundary,
+        }
+    }
+
+    pub(crate) fn is_suppression_seam(&self) -> bool {
+        matches!(
+            &self.node,
+            DelayedNode::Suppressed { .. } | DelayedNode::TypographyBoundary
+        )
     }
 
     pub(crate) fn raw(
@@ -376,7 +398,8 @@ impl<'t> DelayedElement<'t> {
             | DelayedNode::PageConditionalRecovery { .. }
             | DelayedNode::TagExternalLabel { .. }
             | DelayedNode::TagImage(_) => 1,
-            DelayedNode::Omitted { slots } => slots.len(),
+            DelayedNode::Suppressed { slots } => slots.len(),
+            DelayedNode::TypographyBoundary | DelayedNode::RuntimeText(_) => 0,
             DelayedNode::Raw { atoms } | DelayedNode::Shell { atoms } => atoms
                 .iter()
                 .filter(|atom| {
@@ -412,9 +435,13 @@ impl<'t> DelayedElement<'t> {
                 id: *id,
                 kind: *kind,
             },
-            DelayedNode::Omitted { slots } => DelayedNode::Omitted {
+            DelayedNode::Suppressed { slots } => DelayedNode::Suppressed {
                 slots: slots.clone(),
             },
+            DelayedNode::TypographyBoundary => DelayedNode::TypographyBoundary,
+            DelayedNode::RuntimeText(text) => {
+                DelayedNode::RuntimeText(Cow::Owned(text.to_string()))
+            }
             DelayedNode::Raw { atoms } => DelayedNode::Raw {
                 atoms: owned_recovery_atoms(atoms),
             },
@@ -456,6 +483,7 @@ pub struct DelayedSyntaxTree<'t> {
     expected_occurrences: usize,
     delayed_toc_entries: Vec<usize>,
     errors: Vec<ParseError>,
+    wikidot_typography: bool,
 }
 
 impl<'t> DelayedSyntaxTree<'t> {
@@ -485,6 +513,36 @@ impl<'t> DelayedSyntaxTree<'t> {
 
         let mut tree = self.tree.to_owned();
         let mut resolved_occurrences = 0usize;
+        resolve_bound_suppressions(
+            &mut tree.elements,
+            &bindings.values,
+            &mut resolved_occurrences,
+            self.wikidot_typography,
+        )?;
+        resolve_bound_suppressions(
+            &mut tree.table_of_contents,
+            &bindings.values,
+            &mut resolved_occurrences,
+            self.wikidot_typography,
+        )?;
+        for footnote in &mut tree.footnotes {
+            resolve_bound_suppressions(
+                footnote,
+                &bindings.values,
+                &mut resolved_occurrences,
+                self.wikidot_typography,
+            )?;
+        }
+        for bibliography in tree.bibliographies.slice_mut() {
+            for (_, elements) in bibliography.slice_mut() {
+                resolve_bound_suppressions(
+                    elements,
+                    &bindings.values,
+                    &mut resolved_occurrences,
+                    self.wikidot_typography,
+                )?;
+            }
+        }
         resolve_elements(
             &mut tree.elements,
             &bindings.values,
@@ -628,6 +686,7 @@ pub fn parse_delayed_list<'t>(
         expected_occurrences,
         delayed_toc_entries,
         errors,
+        wikidot_typography: settings.layout.legacy(),
     })
 }
 
@@ -875,16 +934,10 @@ fn resolve_delayed(
 ) -> Result<Vec<Element<'static>>, DelayedError> {
     match &delayed.node {
         DelayedNode::Active { id, kind } => resolve_active(*id, *kind, bindings),
-        DelayedNode::Omitted { slots } => {
-            for (id, kind) in slots {
-                let Some(value) = bindings.get(id) else {
-                    return Err(DelayedError::BindingSchemaMismatch);
-                };
-                if value.kind() != *kind {
-                    return Err(DelayedError::BindingSchemaMismatch);
-                }
-            }
-            Ok(Vec::new())
+        DelayedNode::Suppressed { .. } => Err(DelayedError::UnresolvedGeneratedOwner),
+        DelayedNode::TypographyBoundary => Err(DelayedError::UnresolvedGeneratedOwner),
+        DelayedNode::RuntimeText(text) => {
+            Ok(vec![Element::Text(Cow::Owned(text.to_string()))])
         }
         DelayedNode::Raw { atoms } => {
             let mut raw = String::new();
@@ -987,6 +1040,27 @@ fn resolve_delayed(
             }])
         }
     }
+}
+
+pub(crate) fn resolve_static_suppressions(
+    elements: &mut Vec<Element<'_>>,
+    apply_typography: bool,
+) {
+    seam::resolve_static_suppressions(elements, apply_typography);
+}
+
+fn resolve_bound_suppressions(
+    elements: &mut Vec<Element<'static>>,
+    bindings: &BTreeMap<SlotId, GeneratedValue<'_>>,
+    resolved_occurrences: &mut usize,
+    apply_typography: bool,
+) -> Result<(), DelayedError> {
+    seam::resolve_bound_suppressions(
+        elements,
+        bindings,
+        resolved_occurrences,
+        apply_typography,
+    )
 }
 
 fn append_shell_source<'t>(atoms: &mut Vec<RecoveryAtom<'t>>, mut source: &'t str) {

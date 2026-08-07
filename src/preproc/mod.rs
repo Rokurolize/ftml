@@ -68,6 +68,13 @@ pub enum Replacer {
 }
 
 impl Replacer {
+    fn regex(&self) -> &Regex {
+        match self {
+            Replacer::RegexReplace { regex, .. }
+            | Replacer::RegexSurround { regex, .. } => regex,
+        }
+    }
+
     /// Replaces the text in the manner defined by its enum, using the buffer as a temporary space
     /// to copy to.
     fn replace(&self, text: &mut String, buffer: &mut String) {

@@ -73,6 +73,7 @@ use std::borrow::Cow;
 
 pub use self::boolean::{NonBooleanValue, parse_boolean};
 pub use self::error::{ParseError, ParseErrorKind};
+pub(crate) use self::inline_format::wikidot_dash_run_elements;
 pub use self::outcome::ParseOutcome;
 pub(crate) use self::parser::DEEP_MAX_RECURSION_DEPTH;
 pub use self::result::{
@@ -181,7 +182,15 @@ where
     let table_of_contents_depths = parsed.table_of_contents_depths;
     let mut footnotes = parsed.footnotes;
     let has_footnote_block = parsed.has_footnote_block;
-    let bibliographies = parsed.bibliographies;
+    let mut bibliographies = parsed.bibliographies;
+    let has_suppression_seam_candidate = tokenization.tokens().iter().any(|token| {
+        (token.token == Token::LeftComment && !tokenization.generated().is_empty())
+            || (token.token == Token::Identifier
+                && (token.slice.eq_ignore_ascii_case("iftags")
+                    || token.slice.eq_ignore_ascii_case("ifcategory")
+                    || (!tokenization.generated().is_empty()
+                        && token.slice.eq_ignore_ascii_case("span"))))
+    });
 
     // Mutable state
     let mut toc_indexer = settings.id_indexer();
@@ -191,6 +200,26 @@ where
         Ok(success) => {
             let mut elements = success.item;
             let errors = success.errors;
+            if has_suppression_seam_candidate {
+                crate::delayed::resolve_static_suppressions(
+                    &mut elements,
+                    settings.layout.legacy(),
+                );
+                for footnote in &mut footnotes {
+                    crate::delayed::resolve_static_suppressions(
+                        footnote,
+                        settings.layout.legacy(),
+                    );
+                }
+                for bibliography in bibliographies.slice_mut() {
+                    for (_, elements) in bibliography.slice_mut() {
+                        crate::delayed::resolve_static_suppressions(
+                            elements,
+                            settings.layout.legacy(),
+                        );
+                    }
+                }
+            }
             if settings.layout.legacy() {
                 if has_footnote_block {
                     footnote::normalize_wikidot_blocks(

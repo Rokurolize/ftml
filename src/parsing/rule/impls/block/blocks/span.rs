@@ -103,7 +103,7 @@ fn parse_fn<'r, 't>(
         } else {
             ok!(Elements::Multiple(vec![
                 span,
-                Element::Delayed(DelayedElement::omitted(&generated)),
+                Element::Delayed(DelayedElement::suppressed(&generated)),
             ]))
         };
     }

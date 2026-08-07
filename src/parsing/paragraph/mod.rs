@@ -208,6 +208,8 @@ where
 
         if let Some(consumed) = consumed {
             let (elements, mut errors, paragraph_safe) = consumed.into();
+            let mut elements = elements;
+            defer_suppression_seams(&mut stack, &mut elements);
             let active_div = elements_contain_div(&elements);
             let list_has_same_line_residual = explicit_list_opener
                 && !paragraph_safe
@@ -448,6 +450,37 @@ fn push_elements<'t>(
             }
         }
     }
+}
+
+fn defer_suppression_seams<'t>(
+    stack: &mut ParagraphStack<'t>,
+    elements: &mut Elements<'t>,
+) {
+    let original = std::mem::replace(elements, Elements::None);
+    *elements = match original {
+        Elements::Single(element) if matches!(&element, Element::Delayed(delayed) if delayed.is_suppression_seam()) =>
+        {
+            stack.defer_suppression_seam(element);
+            Elements::None
+        }
+        Elements::Multiple(items) => {
+            let mut retained = Vec::with_capacity(items.len());
+            for element in items {
+                if matches!(&element, Element::Delayed(delayed) if delayed.is_suppression_seam())
+                {
+                    stack.defer_suppression_seam(element);
+                } else {
+                    retained.push(element);
+                }
+            }
+            match retained.len() {
+                0 => Elements::None,
+                1 => Elements::Single(retained.pop().unwrap()),
+                _ => Elements::Multiple(retained),
+            }
+        }
+        other => other,
+    };
 }
 
 fn push_element<'t>(

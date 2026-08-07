@@ -263,6 +263,12 @@ where
 
     loop {
         match parser.current().token {
+            token
+                if parser.in_wikidot_simple_table_cell()
+                    && is_table_column_token(token) =>
+            {
+                return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
             Token::RightLink if parser.in_wikidot_literal_triple_link() => {
                 return Err(parser.make_err(ParseErrorKind::RuleFailed));
             }
@@ -304,6 +310,16 @@ where
             }
         }
     }
+}
+
+fn is_table_column_token(token: Token) -> bool {
+    matches!(
+        token,
+        Token::TableColumn
+            | Token::TableColumnTitle
+            | Token::TableColumnCenter
+            | Token::TableColumnRight
+    )
 }
 
 fn wikidot_label_has_complete_owner<'r, 't>(parser: &Parser<'r, 't>) -> bool

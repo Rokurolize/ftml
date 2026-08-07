@@ -691,7 +691,7 @@ fn replace_wikidot_angle_quotes_outside_owners(text: &mut String, buffer: &mut S
     let protected = wikidot_angle_quote_protected_ranges(text);
     if protected.is_empty() {
         LEFT_ANGLE_QUOTES.replace(text, buffer);
-        RIGHT_ANGLE_QUOTES.replace(text, buffer);
+        replace_right_angle_quotes(text, buffer);
         return;
     }
 
@@ -718,8 +718,18 @@ fn replace_angle_quotes_in_segment(
 ) {
     let mut segment = segment.to_owned();
     LEFT_ANGLE_QUOTES.replace(&mut segment, buffer);
-    RIGHT_ANGLE_QUOTES.replace(&mut segment, buffer);
+    replace_right_angle_quotes(&mut segment, buffer);
     output.push_str(&segment);
+}
+
+fn replace_right_angle_quotes(text: &mut String, buffer: &mut String) {
+    loop {
+        let before = text.matches(">>").count();
+        RIGHT_ANGLE_QUOTES.replace(text, buffer);
+        if text.matches(">>").count() == before {
+            break;
+        }
+    }
 }
 
 fn wikidot_angle_quote_protected_ranges(text: &str) -> Vec<Range<usize>> {

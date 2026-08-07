@@ -19,16 +19,17 @@
  */
 
 use super::prelude::*;
-use crate::tree::{Alignment, Table, TableCell, TableRow, TableType};
+use crate::tree::{Alignment, PartialElement, Table, TableCell, TableRow, TableType};
+use std::borrow::Cow;
 use std::mem;
 use std::num::NonZeroU32;
 
 #[derive(Debug, Clone, Copy)]
-struct TableCellStart {
+struct TableCellStart<'t> {
     align: Option<Alignment>,
     header: bool,
     column_span: NonZeroU32,
-    literal_prefix: Option<&'static str>,
+    literal_prefix: Option<&'t str>,
 }
 
 pub const RULE_TABLE: Rule = Rule {
@@ -51,7 +52,7 @@ fn push_row<'t>(rows: &mut Vec<TableRow<'t>>, cells: &mut Vec<TableCell<'t>>) {
 
 fn take_cell<'t>(
     elements: &mut Vec<Element<'t>>,
-    cell_start: TableCellStart,
+    cell_start: TableCellStart<'t>,
 ) -> TableCell<'t> {
     let elements = mem::take(elements);
     let attributes = AttributeMap::new();
@@ -67,10 +68,65 @@ fn take_cell<'t>(
 fn push_cell<'t>(
     cells: &mut Vec<TableCell<'t>>,
     elements: &mut Vec<Element<'t>>,
-    cell_start: TableCellStart,
+    cell_start: TableCellStart<'t>,
+    pending_scopes: &mut PendingInlineScopes,
 ) {
+    clip_wikidot_inline_scopes_at_cell_boundary(elements, pending_scopes);
     let cell = take_cell(elements, cell_start);
     cells.push(cell);
+}
+
+#[derive(Debug, Default)]
+struct PendingInlineScopes {
+    spans: usize,
+    sizes: usize,
+}
+
+fn clip_wikidot_inline_scopes_at_cell_boundary<'t>(
+    elements: &mut Vec<Element<'t>>,
+    pending: &mut PendingInlineScopes,
+) {
+    let mut spans = 0usize;
+    let mut sizes = 0usize;
+    elements.retain(|element| match element {
+        Element::Partial(PartialElement::InlineSpanOpen(_)) => {
+            spans += 1;
+            true
+        }
+        Element::Partial(PartialElement::InlineSpanClose(_)) if pending.spans > 0 => {
+            pending.spans -= 1;
+            false
+        }
+        Element::Partial(PartialElement::InlineSpanClose(_)) if spans > 0 => {
+            spans -= 1;
+            true
+        }
+        Element::Partial(PartialElement::InlineSizeOpen(_)) => {
+            sizes += 1;
+            true
+        }
+        Element::Partial(PartialElement::InlineSizeClose(_)) if pending.sizes > 0 => {
+            pending.sizes -= 1;
+            false
+        }
+        Element::Partial(PartialElement::InlineSizeClose(_)) if sizes > 0 => {
+            sizes -= 1;
+            true
+        }
+        _ => true,
+    });
+    for _ in 0..spans {
+        elements.push(Element::Partial(PartialElement::InlineSpanClose(
+            Cow::Borrowed(""),
+        )));
+    }
+    for _ in 0..sizes {
+        elements.push(Element::Partial(PartialElement::InlineSizeClose(
+            Cow::Borrowed(""),
+        )));
+    }
+    pending.spans += spans;
+    pending.sizes += sizes;
 }
 
 fn append_cell_elements<'t>(all_elements: &mut Vec<Element<'t>>, elements: Elements<'t>) {
@@ -118,6 +174,7 @@ struct CellState<'a, 't> {
     rows: &'a mut Vec<TableRow<'t>>,
     cells: &'a mut Vec<TableCell<'t>>,
     elements: &'a mut Vec<Element<'t>>,
+    pending_scopes: &'a mut PendingInlineScopes,
 }
 
 impl<'a, 't> CellState<'a, 't> {
@@ -125,11 +182,13 @@ impl<'a, 't> CellState<'a, 't> {
         rows: &'a mut Vec<TableRow<'t>>,
         cells: &'a mut Vec<TableCell<'t>>,
         elements: &'a mut Vec<Element<'t>>,
+        pending_scopes: &'a mut PendingInlineScopes,
     ) -> Self {
         Self {
             rows,
             cells,
             elements,
+            pending_scopes,
         }
     }
 }
@@ -158,10 +217,15 @@ fn finish_table_or_fail<'r, 't>(
 fn finish_cell_and_table<'r, 't>(
     parser: &mut Parser<'r, 't>,
     state: &mut CellState<'_, 't>,
-    cell_start: TableCellStart,
+    cell_start: TableCellStart<'t>,
     steps: usize,
 ) -> Result<CellBoundary, ParseError> {
-    push_cell(state.cells, state.elements, cell_start);
+    push_cell(
+        state.cells,
+        state.elements,
+        cell_start,
+        state.pending_scopes,
+    );
     push_row(state.rows, state.cells);
     parser.step_n(steps)?;
     let boundary = CellBoundary::FinishTable;
@@ -171,10 +235,15 @@ fn finish_cell_and_table<'r, 't>(
 fn finish_cell_and_row<'r, 't>(
     parser: &mut Parser<'r, 't>,
     state: &mut CellState<'_, 't>,
-    cell_start: TableCellStart,
+    cell_start: TableCellStart<'t>,
     steps: usize,
 ) -> Result<CellBoundary, ParseError> {
-    push_cell(state.cells, state.elements, cell_start);
+    push_cell(
+        state.cells,
+        state.elements,
+        cell_start,
+        state.pending_scopes,
+    );
     parser.step_n(steps)?;
     let boundary = CellBoundary::FinishRow;
     Ok(boundary)
@@ -183,7 +252,7 @@ fn finish_cell_and_row<'r, 't>(
 fn cell_boundary<'r, 't>(
     parser: &mut Parser<'r, 't>,
     state: &mut CellState<'_, 't>,
-    cell_start: TableCellStart,
+    cell_start: TableCellStart<'t>,
     next: Token,
 ) -> Result<CellBoundary, ParseError> {
     match next {
@@ -214,7 +283,8 @@ fn try_consume_fn<'r, 't>(
             return finish_simple_table(rows, errors);
         }
         let mut cells = Vec::new();
-        let mut pending_color_close = false;
+        let mut pending_inline_closers = 0u16;
+        let mut pending_inline_scopes = PendingInlineScopes::default();
 
         // Loop for each cell in the row
         'row: loop {
@@ -229,9 +299,11 @@ fn try_consume_fn<'r, 't>(
 
             // Loop for each element in the cell
             'cell: loop {
-                if pending_color_close && parser.current().token == Token::Color {
+                let current_closer =
+                    Parser::wikidot_simple_table_closer_bit(parser.current().token);
+                if pending_inline_closers & current_closer != 0 {
                     parser.step()?;
-                    pending_color_close = false;
+                    pending_inline_closers &= !current_closer;
                     continue;
                 }
 
@@ -240,7 +312,8 @@ fn try_consume_fn<'r, 't>(
                     (current, Some(next)) if is_table_column_token(current) => {
                         let (r, c, e) = (&mut rows, &mut cells, &mut elements);
                         let p = std::convert::identity(&mut *parser);
-                        let mut state = CellState::new(r, c, e);
+                        let mut state =
+                            CellState::new(r, c, e, &mut pending_inline_scopes);
                         let boundary = cell_boundary(p, &mut state, cell_start, next)?;
                         let (finish_row, finish_cell) = match boundary {
                             CellBoundary::FinishTable => {
@@ -271,18 +344,36 @@ fn try_consume_fn<'r, 't>(
                             && parser.settings().layout.legacy()
                             && !cells.is_empty() =>
                     {
+                        if parser.current().token == Token::LineBreak
+                            && parser
+                                .look_ahead(0)
+                                .is_some_and(|token| is_table_column_token(token.token))
+                        {
+                            parser.step()?;
+                            break 'row;
+                        }
                         push_row(&mut rows, &mut cells);
                         return finish_simple_table(rows, errors);
                     }
 
                     (Token::LineBreak, _) if elements.is_empty() => {
-                        push_cell(&mut cells, &mut elements, cell_start);
+                        push_cell(
+                            &mut cells,
+                            &mut elements,
+                            cell_start,
+                            &mut pending_inline_scopes,
+                        );
                         parser.step()?;
                         break 'row;
                     }
 
                     (Token::ParagraphBreak, _) if elements.is_empty() => {
-                        push_cell(&mut cells, &mut elements, cell_start);
+                        push_cell(
+                            &mut cells,
+                            &mut elements,
+                            cell_start,
+                            &mut pending_inline_scopes,
+                        );
                         push_row(&mut rows, &mut cells);
                         parser.step()?;
                         return finish_simple_table(rows, errors);
@@ -293,7 +384,12 @@ fn try_consume_fn<'r, 't>(
                             push_row(&mut rows, &mut cells);
                             return finish_simple_table(rows, errors);
                         }
-                        push_cell(&mut cells, &mut elements, cell_start);
+                        push_cell(
+                            &mut cells,
+                            &mut elements,
+                            cell_start,
+                            &mut pending_inline_scopes,
+                        );
                         push_row(&mut rows, &mut cells);
                         return finish_simple_table(rows, errors);
                     }
@@ -313,7 +409,12 @@ fn try_consume_fn<'r, 't>(
                             column_span: NonZeroU32::new(1).unwrap(),
                             literal_prefix: None,
                         };
-                        push_cell(&mut cells, &mut elements, empty_cell_start);
+                        push_cell(
+                            &mut cells,
+                            &mut elements,
+                            empty_cell_start,
+                            &mut pending_inline_scopes,
+                        );
                         push_row(&mut rows, &mut cells);
                         return finish_simple_table(rows, errors);
                     }
@@ -321,6 +422,14 @@ fn try_consume_fn<'r, 't>(
                     // Invalid tokens
                     (Token::LineBreak | Token::ParagraphBreak | Token::InputEnd, _) => {
                         if parser.settings().layout.legacy() && !cells.is_empty() {
+                            if parser.current().token == Token::LineBreak
+                                && parser.look_ahead(0).is_some_and(|token| {
+                                    is_table_column_token(token.token)
+                                })
+                            {
+                                parser.step()?;
+                                break 'row;
+                            }
                             push_row(&mut rows, &mut cells);
                             return finish_simple_table(rows, errors);
                         }
@@ -330,6 +439,8 @@ fn try_consume_fn<'r, 't>(
                     // Consume tokens like normal
                     _ => {
                         let wikidot = parser.settings().layout.legacy();
+                        let comment =
+                            wikidot && parser.current().token == Token::LeftComment;
                         if wikidot {
                             parser.set_in_wikidot_simple_table_cell(true);
                         }
@@ -339,20 +450,44 @@ fn try_consume_fn<'r, 't>(
                         }
                         let consumed = consumed?;
                         if wikidot {
-                            pending_color_close |=
-                                parser.take_color_crossed_wikidot_simple_table_cell();
+                            pending_inline_closers |=
+                                parser.take_wikidot_simple_table_crossed_closers();
                         }
                         let new_items = consumed.chain(&mut errors, &mut paragraph_break);
+
+                        if comment
+                            && new_items.is_empty()
+                            && parser.current().token == Token::Whitespace
+                        {
+                            trim_one_trailing_ascii_space(&mut elements);
+                        }
 
                         append_cell_elements(&mut elements, new_items);
                     }
                 }
             }
 
-            push_cell(&mut cells, &mut elements, cell_start);
+            push_cell(
+                &mut cells,
+                &mut elements,
+                cell_start,
+                &mut pending_inline_scopes,
+            );
         }
 
         push_row(&mut rows, &mut cells);
+    }
+}
+
+fn trim_one_trailing_ascii_space(elements: &mut Vec<Element<'_>>) {
+    let Some(Element::Text(text)) = elements.last_mut() else {
+        return;
+    };
+    if text.ends_with(' ') {
+        text.to_mut().pop();
+        if text.is_empty() {
+            elements.pop();
+        }
     }
 }
 
@@ -367,7 +502,9 @@ fn try_consume_fn<'r, 't>(
 ///
 /// This is not an `Err(_)` case, because this may simply signal the end
 /// of the table if it already has rows.
-fn parse_cell_start(parser: &mut Parser) -> Result<Option<TableCellStart>, ParseError> {
+fn parse_cell_start<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<Option<TableCellStart<'t>>, ParseError> {
     let mut span = 0;
     let mut literal_prefix = None;
 
@@ -383,7 +520,15 @@ fn parse_cell_start(parser: &mut Parser) -> Result<Option<TableCellStart>, Parse
             // Style cases, terminal
             // NOTE: There is no TableColumnLeft
             Token::TableColumnTitle => {
+                let marker_start = parser.current().span.end - 1;
                 increase_span!();
+                if parser.settings().layout.legacy()
+                    && let Some(prefix) =
+                        take_repeated_cell_marker(parser, marker_start, b'~')?
+                {
+                    literal_prefix = Some(prefix);
+                    break (None, false);
+                }
                 if parser.settings().layout.legacy()
                     && matches!(parser.current().slice, ">" | "=")
                 {
@@ -393,7 +538,15 @@ fn parse_cell_start(parser: &mut Parser) -> Result<Option<TableCellStart>, Parse
                 break (None, true);
             }
             Token::TableColumnCenter => {
+                let marker_start = parser.current().span.end - 1;
                 increase_span!();
+                if parser.settings().layout.legacy()
+                    && let Some(prefix) =
+                        take_repeated_cell_marker(parser, marker_start, b'=')?
+                {
+                    literal_prefix = Some(prefix);
+                    break (None, false);
+                }
                 if parser.settings().layout.legacy() && parser.current().slice == "~" {
                     literal_prefix = Some("=");
                     break (None, false);
@@ -432,6 +585,12 @@ fn parse_cell_start(parser: &mut Parser) -> Result<Option<TableCellStart>, Parse
         }
     };
 
+    if parser.settings().layout.legacy()
+        && span > 1
+        && parser.current().token == Token::InputEnd
+    {
+        span = 1;
+    }
     let column_span =
         NonZeroU32::new(span).expect("Cell start exited without column span");
 
@@ -441,6 +600,27 @@ fn parse_cell_start(parser: &mut Parser) -> Result<Option<TableCellStart>, Parse
         column_span,
         literal_prefix,
     }))
+}
+
+fn take_repeated_cell_marker<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    marker_start: usize,
+    marker: u8,
+) -> Result<Option<&'t str>, ParseError> {
+    let mut marker_end = marker_start + 1;
+    let mut repeated = false;
+    while !parser.current().slice.is_empty()
+        && parser.current().slice.bytes().all(|byte| byte == marker)
+    {
+        repeated = true;
+        marker_end = parser.current().span.end;
+        parser.step()?;
+    }
+    if repeated {
+        Ok(Some(&parser.full_text().inner()[marker_start..marker_end]))
+    } else {
+        Ok(None)
+    }
 }
 
 #[cfg(test)]
@@ -471,39 +651,39 @@ mod tests {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
 
-        let start = with_parser("|||| body", &page_info, &settings, |parser| {
-            parse_cell_start(parser)
+        with_parser("|||| body", &page_info, &settings, |parser| {
+            let start = parse_cell_start(parser)
                 .expect("cell start should parse")
-                .expect("colspan should produce a cell start")
+                .expect("colspan should produce a cell start");
+            assert_eq!(start.align, None);
+            assert!(!start.header);
+            assert_eq!(start.column_span.get(), 2);
         });
-        assert_eq!(start.align, None);
-        assert!(!start.header);
-        assert_eq!(start.column_span.get(), 2);
 
-        let start = with_parser("||~ body", &page_info, &settings, |parser| {
-            parse_cell_start(parser)
+        with_parser("||~ body", &page_info, &settings, |parser| {
+            let start = parse_cell_start(parser)
                 .expect("header cell start should parse")
-                .expect("header should produce a cell start")
+                .expect("header should produce a cell start");
+            assert!(start.header);
+            assert_eq!(start.align, None);
+            assert_eq!(start.column_span.get(), 1);
         });
-        assert!(start.header);
-        assert_eq!(start.align, None);
-        assert_eq!(start.column_span.get(), 1);
 
-        let start = with_parser("||= body", &page_info, &settings, |parser| {
-            parse_cell_start(parser)
+        with_parser("||= body", &page_info, &settings, |parser| {
+            let start = parse_cell_start(parser)
                 .expect("center cell start should parse")
-                .expect("center marker should produce a cell start")
+                .expect("center marker should produce a cell start");
+            assert_eq!(start.align, Some(Alignment::Center));
+            assert!(!start.header);
         });
-        assert_eq!(start.align, Some(Alignment::Center));
-        assert!(!start.header);
 
-        let start = with_parser("||> body", &page_info, &settings, |parser| {
-            parse_cell_start(parser)
+        with_parser("||> body", &page_info, &settings, |parser| {
+            let start = parse_cell_start(parser)
                 .expect("right cell start should parse")
-                .expect("right marker should produce a cell start")
+                .expect("right marker should produce a cell start");
+            assert_eq!(start.align, Some(Alignment::Right));
+            assert!(!start.header);
         });
-        assert_eq!(start.align, Some(Alignment::Right));
-        assert!(!start.header);
 
         with_parser("plain", &page_info, &settings, |parser| {
             assert!(
@@ -529,7 +709,9 @@ mod tests {
             let mut rows = Vec::new();
             let mut cells = Vec::new();
             let mut elements = Vec::new();
-            let mut state = CellState::new(&mut rows, &mut cells, &mut elements);
+            let mut pending_scopes = PendingInlineScopes::default();
+            let mut state =
+                CellState::new(&mut rows, &mut cells, &mut elements, &mut pending_scopes);
             let boundary = cell_boundary(parser, &mut state, cell_start, Token::InputEnd)
                 .expect("input end should finish table");
             assert!(matches!(boundary, CellBoundary::FinishTable));
@@ -541,7 +723,9 @@ mod tests {
             let mut rows = Vec::new();
             let mut cells = Vec::new();
             let mut elements = Vec::new();
-            let mut state = CellState::new(&mut rows, &mut cells, &mut elements);
+            let mut pending_scopes = PendingInlineScopes::default();
+            let mut state =
+                CellState::new(&mut rows, &mut cells, &mut elements, &mut pending_scopes);
             let boundary =
                 cell_boundary(parser, &mut state, cell_start, Token::LineBreak)
                     .expect("line break should finish row");
@@ -554,7 +738,9 @@ mod tests {
             let mut rows = Vec::new();
             let mut cells = Vec::new();
             let mut elements = Vec::new();
-            let mut state = CellState::new(&mut rows, &mut cells, &mut elements);
+            let mut pending_scopes = PendingInlineScopes::default();
+            let mut state =
+                CellState::new(&mut rows, &mut cells, &mut elements, &mut pending_scopes);
             let boundary =
                 cell_boundary(parser, &mut state, cell_start, Token::Whitespace)
                     .expect("ordinary whitespace should continue cell");

@@ -20,6 +20,7 @@
 
 use super::prelude::*;
 use crate::delayed::DelayedElement;
+use crate::parsing::collect::consume_valid_comment;
 use crate::parsing::rule::impls::block::parser::BlockBodyStart;
 use crate::settings::WikitextMode;
 use crate::tree::AcceptsPartial;
@@ -185,6 +186,15 @@ fn parse_fn<'r, 't>(
         return recover_wikidot_empty_key_candidate(parser, &BLOCK_DIV, owner_start);
     }
     if parser.settings().layout.legacy()
+        && parser.in_wikidot_simple_table_cell()
+        && body_start == BlockBodyStart::Inline
+        && let Some(delimiter) = wikidot_inline_div_table_delimiter(parser)
+    {
+        let literal_end = delimiter.current().span.start;
+        parser.update(&delimiter);
+        return ok!(true; text!(&source[owner_start..literal_end]));
+    }
+    if parser.settings().layout.legacy()
         && parser.settings().mode != WikitextMode::List
         && !parser.in_wikidot_div_body()
         && !parser.in_native_blockquote_line()
@@ -322,6 +332,62 @@ fn parse_fn<'r, 't>(
         Element::Container(Container::new(ContainerType::Div, elements, attributes));
 
     ok!(element, errors)
+}
+
+fn wikidot_inline_div_table_delimiter<'r, 't>(
+    parser: &Parser<'r, 't>,
+) -> Option<Parser<'r, 't>>
+where
+    'r: 't,
+{
+    let mut scan = parser.clone();
+    let mut raw = false;
+    let mut alternate_raw = false;
+    let mut triple_link_depth = 0usize;
+
+    loop {
+        if matches!(
+            scan.current().token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        ) {
+            return None;
+        }
+
+        if !raw
+            && !alternate_raw
+            && triple_link_depth == 0
+            && scan.current().token == Token::LeftComment
+        {
+            let mut comment = scan.clone();
+            if consume_valid_comment(&mut comment).is_ok() {
+                scan.update(&comment);
+                continue;
+            }
+        }
+
+        match scan.current().token {
+            Token::Raw => raw = !raw,
+            Token::LeftRaw if !raw => alternate_raw = true,
+            Token::RightRaw if alternate_raw => alternate_raw = false,
+            Token::LeftLink | Token::LeftLinkStar if !raw && !alternate_raw => {
+                triple_link_depth += 1;
+            }
+            Token::RightLink if triple_link_depth > 0 => {
+                triple_link_depth -= 1;
+            }
+            Token::TableColumn
+            | Token::TableColumnTitle
+            | Token::TableColumnCenter
+            | Token::TableColumnRight
+                if !raw && !alternate_raw && triple_link_depth == 0 =>
+            {
+                return Some(scan);
+            }
+            _ => {}
+        }
+
+        scan.step().ok()?;
+    }
 }
 
 #[cfg(test)]

@@ -137,9 +137,9 @@ email = @{
     &(ASCII_ALPHANUMERIC) ~
     (!(" " | "\t" | "%" | "@" | "[" | "]" | "{" | "}" | "<" | ">" | "|" | "(" | ")" | "\"" | ":" | NEWLINE | discarded_control) ~ ANY)+ ~
     "@" ~
-    (!(" " | "\t" | "." | "@" | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE | discarded_control) ~ ANY)+ ~
+    (!(" " | "\t" | "." | "@" | "[" | "]" | "{" | "}" | "<" | ">" | "|" | NEWLINE | discarded_control) ~ ANY)+ ~
     "." ~
-    (!(" " | "\t" | "@" | "[" | "]" | "{" | "}" | "<" | ">" | NEWLINE | discarded_control) ~ ANY)+
+    (!(" " | "\t" | "@" | "[" | "]" | "{" | "}" | "<" | ">" | "|" | NEWLINE | discarded_control) ~ ANY)+
 }
 
 url = @{

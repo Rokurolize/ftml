@@ -31,7 +31,7 @@ use crate::next_index::{Incrementer, NextIndex, TableOfContentsIndex};
 use crate::render::{Handle, PageExistenceResolver, UserInfoResolver};
 use crate::settings::WikitextSettings;
 use crate::tree::{
-    Bibliography, BibliographyList, Element, EmbedVideo, LinkLocation,
+    Bibliography, BibliographyList, Element, EmbedVideo, Gallery, LinkLocation,
     StandaloneButtonAction, VariableScopes,
 };
 use crate::url::{HrefKind, classify_href, normalize_href};
@@ -466,6 +466,11 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     ) {
         self.resource_requirements
             .push(HtmlResourceRequirement::embed_video(id, embed_video));
+    }
+
+    pub(super) fn require_gallery(&mut self, id: String, gallery: &Gallery<'_>) {
+        self.resource_requirements
+            .push(HtmlResourceRequirement::gallery(id, gallery));
     }
 }
 

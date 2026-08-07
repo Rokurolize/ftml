@@ -33,7 +33,7 @@ mod test_utils;
 
 pub use self::meta::{HtmlMeta, HtmlMetaType};
 pub use self::output::{
-    EmbedVideoRequirement, HtmlOutput, HtmlResourceRequirement,
+    EmbedVideoRequirement, GalleryRequirement, HtmlOutput, HtmlResourceRequirement,
     StandaloneButtonRequirement, WikidotTabViewRequirement,
 };
 

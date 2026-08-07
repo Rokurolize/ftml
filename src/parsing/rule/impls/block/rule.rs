@@ -192,15 +192,21 @@ where
         .is_some_and(|token| token.token == Token::Whitespace);
     parser.get_optional_space()?;
 
-    let extra_embed_video_bracket = parser.settings().layout.legacy()
+    let residual_block_opener = parser.settings().layout.legacy()
         && !flag_star
         && parser
             .full_text()
             .inner()
             .get(opener_start..)
-            .and_then(|source| source.get(.."[[embedvideo]]]".len()))
-            .is_some_and(|opener| opener.eq_ignore_ascii_case("[[embedvideo]]]"));
-    let (name, in_head) = if extra_embed_video_bracket {
+            .is_some_and(|source| {
+                source
+                    .get(.."[[embedvideo]]]".len())
+                    .is_some_and(|opener| opener.eq_ignore_ascii_case("[[embedvideo]]]"))
+                    || source
+                        .get(.."[[gallery]]]".len())
+                        .is_some_and(|opener| opener.eq_ignore_ascii_case("[[gallery]]]"))
+            });
+    let (name, in_head) = if residual_block_opener {
         parser.get_wikidot_block_name_with_residual_opener()?
     } else {
         parser.get_block_name(flag_star)?
@@ -309,7 +315,12 @@ fn wikidot_block_has_physical_line_ownership(
 
     let needs_line_owner = matches!(
         block.name,
-        "block-code" | "block-math" | "block-module" | "block-bibliography" | "block-toc"
+        "block-code"
+            | "block-math"
+            | "block-module"
+            | "block-bibliography"
+            | "block-gallery"
+            | "block-toc"
     );
     if !needs_line_owner {
         return true;

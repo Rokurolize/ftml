@@ -983,6 +983,47 @@ fn delayed_raw_decodes_entities_and_div_shell_keeps_the_parsed_opener() {
 }
 
 #[test]
+fn delayed_raw_adjacency_does_not_flatten_generated_or_runtime_values() {
+    let generated = render("@@A@@@@%%title_linked%%@@");
+    assert_eq!(
+        generated.matches("white-space: pre-wrap;").count(),
+        2,
+        "{generated}",
+    );
+    assert!(
+        generated.contains("[[[component:image-block | Standard Image Block]]]"),
+        "{generated}",
+    );
+
+    let runtime = render_with_runtime_scalar("@@A@@@@B@@", "@@B@@");
+    assert_eq!(
+        runtime.matches("white-space: pre-wrap;").count(),
+        1,
+        "{runtime}",
+    );
+    assert!(runtime.contains("@@B@@"), "{runtime}");
+}
+
+#[test]
+fn delayed_raw_inside_math_rolls_back_without_erasing_values() {
+    let generated = render("[[$OUTER @@%%title_linked%%@@ TAIL$]]");
+    assert!(!generated.contains("math-inline"), "{generated}");
+    assert!(
+        generated.contains("[[[component:image-block | Standard Image Block]]]"),
+        "{generated}",
+    );
+    assert!(generated.contains("[[$OUTER "), "{generated}");
+    assert!(generated.contains(" TAIL$]]"), "{generated}");
+
+    let runtime =
+        render_with_runtime_scalar("[[$OUTER @@2026/08/02@@ TAIL$]]", "2026/08/02");
+    assert!(!runtime.contains("math-inline"), "{runtime}");
+    assert!(runtime.contains("2026/08/02"), "{runtime}");
+    assert!(runtime.contains("[[$OUTER "), "{runtime}");
+    assert!(runtime.contains(" TAIL$]]"), "{runtime}");
+}
+
+#[test]
 fn delayed_code_shell_keeps_the_parsed_opener() {
     assert_eq!(
         render(concat!(

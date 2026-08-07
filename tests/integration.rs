@@ -46,6 +46,9 @@ mod parser_functions_wikidot_syntax;
 #[path = "raw_url_delimiter.rs"]
 mod raw_url_delimiter;
 
+#[path = "wikidot_raw_ownership.rs"]
+mod wikidot_raw_ownership;
+
 #[path = "scp8980_wikidot_syntax.rs"]
 mod scp8980_wikidot_syntax;
 

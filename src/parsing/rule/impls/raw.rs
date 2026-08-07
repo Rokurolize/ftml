@@ -131,7 +131,7 @@ fn try_consume_fn<'r, 't>(
                 (_, Token::Raw) => {
                     trace!("Found single-element raw, returning");
                     parser.step_n(3)?;
-                    Some(raw!(next_1.slice))
+                    return finish_double_at_raw(parser, raw!(next_1.slice));
                 }
 
                 // Other, proceed with rule logic
@@ -156,11 +156,39 @@ fn try_consume_fn<'r, 't>(
     let mut saw_left_raw = false;
     let mut saw_nested_raw_pair = false;
     let mut generated = Vec::new();
+    let mut saw_non_authored = false;
 
     loop {
         let token = parser.current().token;
 
         trace!("Received token '{}' inside raw", token.name());
+
+        // `@@<...>@@` overlaps an angle-delimited raw span by one `@` on
+        // each side in Wikidot. The ordinary scanner therefore exposes the
+        // closing `>@` before it can expose a second `@@` token. Preserve the
+        // two residual at signs and give the authored angle span ownership.
+        if parser.settings().layout.legacy()
+            && ending_token == Token::Raw
+            && token == Token::RightRaw
+            && generated.is_empty()
+            && !saw_non_authored
+            && parser.current_generated().is_none()
+            && parser.look_ahead(0).is_some_and(|trailing| {
+                trailing.token == Token::Other
+                    && trailing.slice == "@"
+                    && parser.generated_for(trailing).is_none()
+            })
+        {
+            let slice = parser.full_text().slice_partial(start, end);
+            if let Some(inner) = slice.strip_prefix('<') {
+                parser.step_n(2)?;
+                return ok!(Elements::Multiple(vec![
+                    text!("@"),
+                    raw!(inner),
+                    text!("@"),
+                ]));
+            }
+        }
 
         if matches!(token, Token::RightRaw | Token::Raw) {
             if token == ending_token {
@@ -221,7 +249,11 @@ fn try_consume_fn<'r, 't>(
                     ]));
                 }
                 let element = Element::Raw(raw);
-                return success_elements(element);
+                return if ending_token == Token::Raw {
+                    finish_double_at_raw(parser, element)
+                } else {
+                    success_elements(element)
+                };
             }
 
             trace!("Wasn't end of raw, continuing");
@@ -241,11 +273,69 @@ fn try_consume_fn<'r, 't>(
         if let Some(slot) = parser.current_generated() {
             generated.push(slot.clone());
         }
+        if matches!(
+            token,
+            Token::RuntimeText | Token::GeneratedPageLink | Token::GeneratedTagLinks
+        ) {
+            saw_non_authored = true;
+        }
 
         trace!("Appending present token to raw");
 
         // Update last token and step.
         end = parser.step()?;
+    }
+}
+
+/// Finish an authored `@@...@@` owner without activating one immediately
+/// adjacent authored `@@...@@` candidate.
+///
+/// The preserved candidate remains canonical source text. Generated and
+/// runtime tokens abort this projection so delayed data is never flattened or
+/// granted authored delimiter authority.
+fn finish_double_at_raw<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    element: Element<'t>,
+) -> ParseResult<'r, 't, Elements<'t>>
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy() || parser.current().token != Token::Raw {
+        return success_elements(element);
+    }
+
+    let source = parser.full_text().inner();
+    let start = parser.current().span.start;
+    let mut candidate = parser.clone();
+    candidate.step()?;
+
+    loop {
+        if candidate.current_generated().is_some()
+            || matches!(
+                candidate.current().token,
+                Token::RuntimeText | Token::GeneratedPageLink | Token::GeneratedTagLinks
+            )
+        {
+            return success_elements(element);
+        }
+
+        match candidate.current().token {
+            Token::Raw => {
+                let end = candidate.current().span.end;
+                candidate.step()?;
+                parser.update(&candidate);
+                return ok!(Elements::Multiple(vec![
+                    element,
+                    text!(&source[start..end]),
+                ]));
+            }
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd => {
+                return success_elements(element);
+            }
+            _ => {
+                candidate.step()?;
+            }
+        }
     }
 }
 

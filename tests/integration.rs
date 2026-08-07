@@ -94,6 +94,9 @@ mod wikidot_line_ownership;
 #[path = "wikidot_math_blocks.rs"]
 mod wikidot_math_blocks;
 
+#[path = "wikidot_inline_math_ownership.rs"]
+mod wikidot_inline_math_ownership;
+
 #[path = "wikidot_orphan_tabs.rs"]
 mod wikidot_orphan_tabs;
 

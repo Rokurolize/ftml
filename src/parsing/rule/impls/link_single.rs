@@ -25,6 +25,7 @@
 //! Its syntax is `[https://example.com/ Label text]`.
 
 use super::RULE_COMMENT;
+use super::math::wikidot_math_candidate_is_complete;
 use super::prelude::*;
 use crate::delayed::{DelayedElement, GeneratedKind};
 use crate::parsing::collect::{collect_comment_elided_keep, consume_valid_comment};
@@ -311,6 +312,7 @@ where
 {
     if wikidot_label_has_complete_named_anchor_owner(parser)
         || wikidot_label_has_complete_bibcite_owner(parser)
+        || wikidot_label_has_complete_math_owner(parser)
     {
         return true;
     }
@@ -396,6 +398,43 @@ where
             | Token::RightBlock
             | Token::RightLink
             | Token::LineBreak
+            | Token::ParagraphBreak
+            | Token::InputEnd
+            | Token::RuntimeText
+            | Token::GeneratedPageLink
+            | Token::GeneratedTagLinks => return false,
+            _ => {}
+        }
+        if scan.step().is_err() {
+            return false;
+        }
+    }
+}
+
+/// Check link-label ownership without executing nested formula syntax.
+///
+/// Parser clones share footnote and other document state. This scan finds the
+/// authored candidate, while the math module's inert collector validates its
+/// close and comment/raw ownership without invoking formula contents.
+fn wikidot_label_has_complete_math_owner<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    let mut scan = parser.clone();
+    loop {
+        if scan.current().token == Token::LeftComment {
+            let mut comment = scan.clone();
+            if consume_valid_comment(&mut comment).is_ok() {
+                scan.update(&comment);
+                continue;
+            }
+        }
+
+        match scan.current().token {
+            Token::LeftMath => return wikidot_math_candidate_is_complete(&scan),
+            Token::RightBracket
+            | Token::RightBlock
+            | Token::RightLink
             | Token::ParagraphBreak
             | Token::InputEnd
             | Token::RuntimeText

@@ -20,6 +20,8 @@
 
 use super::prelude::*;
 use super::raw::RULE_RAW;
+use crate::parsing::collect::consume_valid_comment;
+use std::borrow::Cow;
 
 pub const RULE_MATH: Rule = Rule {
     name: "math",
@@ -27,89 +29,218 @@ pub const RULE_MATH: Rule = Rule {
     try_consume_fn,
 };
 
+#[derive(Debug)]
+struct WikidotMathSource<'t> {
+    latex_source: Cow<'t, str>,
+    residual_closer: &'t str,
+}
+
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create inline math equation");
     assert_step(parser, Token::LeftMath)?;
-    let close = [ParseCondition::current(Token::RightMath)];
-    let invalid = [
-        ParseCondition::current(Token::ParagraphBreak),
-        ParseCondition::current(Token::LineBreak),
-    ];
-    let source = if parser.settings().layout.legacy() {
-        collect_wikidot_math_source(parser, &close, &invalid)?
+    let WikidotMathSource {
+        latex_source,
+        residual_closer,
+    } = if parser.settings().layout.legacy() {
+        collect_wikidot_math_source(parser)?
     } else {
-        collect_text(parser, RULE_MATH, &close, &invalid, None)?.trim()
+        let close = [ParseCondition::current(Token::RightMath)];
+        let invalid = [
+            ParseCondition::current(Token::ParagraphBreak),
+            ParseCondition::current(Token::LineBreak),
+        ];
+        WikidotMathSource {
+            latex_source: Cow::Borrowed(
+                collect_text(parser, RULE_MATH, &close, &invalid, None)?.trim(),
+            ),
+            residual_closer: "",
+        }
     };
 
-    let element = Element::MathInline {
-        latex_source: std::borrow::Cow::Borrowed(source),
-    };
-    success_elements(element)
+    let element = Element::MathInline { latex_source };
+    if residual_closer.is_empty() {
+        success_elements(element)
+    } else {
+        success_elements(vec![element, text!(residual_closer)])
+    }
 }
 
+/// Collect Wikidot inline math without granting formula bytes parser authority.
+///
+/// Valid comments are transparent. A physical line break or a complete
+/// authored raw span suppresses the formula bytes while retaining the math
+/// node. A raw span that closes after the math candidate owns the crossed
+/// composition instead, so the math transaction rolls back.
 fn collect_wikidot_math_source<'r, 't>(
     parser: &mut Parser<'r, 't>,
-    closes: &[ParseCondition],
-    invalids: &[ParseCondition],
-) -> Result<&'t str, ParseError>
+) -> Result<WikidotMathSource<'t>, ParseError>
 where
     'r: 't,
 {
+    let source = parser.full_text().inner();
     let start = parser.current().span.start;
-    let mut saw_complete_authored_raw = false;
+    let mut segment_start = start;
+    let mut comment_elided = None::<String>;
+    let mut suppress_formula = false;
 
     loop {
-        if parser.evaluate_any(closes) {
-            let end = parser.current().span.start;
-            parser.step()?;
-            return if saw_complete_authored_raw {
-                Ok("")
-            } else {
-                Ok(parser.full_text().inner()[start..end].trim())
-            };
-        }
-        if parser.evaluate_any(invalids) {
-            return Err(parser.make_err(ParseErrorKind::RuleFailed));
-        }
-        if parser.current().token == Token::InputEnd {
-            return Err(parser.make_err(ParseErrorKind::EndOfInput));
-        }
+        match parser.current().token {
+            Token::RightMath => {
+                let end = parser.current().span.start;
+                parser.step()?;
+                if suppress_formula {
+                    return Ok(WikidotMathSource {
+                        latex_source: Cow::Borrowed(""),
+                        residual_closer: "",
+                    });
+                }
+                let latex_source = match comment_elided {
+                    Some(mut formula) => {
+                        formula.push_str(&source[segment_start..end]);
+                        Cow::Owned(formula.trim().to_owned())
+                    }
+                    None => Cow::Borrowed(source[start..end].trim()),
+                };
+                return Ok(WikidotMathSource {
+                    latex_source,
+                    residual_closer: "",
+                });
+            }
 
-        if parser.current().token == Token::Raw && parser.current_generated().is_none() {
-            let mut raw = parser.clone();
-            if RULE_RAW.try_consume(&mut raw).is_ok() {
+            Token::ParagraphBreak => {
+                return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
+            Token::InputEnd => return Err(parser.make_err(ParseErrorKind::EndOfInput)),
+
+            // Generated and runtime values must remain typed leaves. FTML has
+            // no delayed inline-math field that could retain their provenance.
+            Token::RuntimeText | Token::GeneratedPageLink | Token::GeneratedTagLinks => {
+                return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
+
+            Token::LeftComment => {
+                let comment_start = parser.current().span.start;
+                let mut comment = parser.clone();
+                if consume_valid_comment(&mut comment).is_err() {
+                    parser.step()?;
+                    continue;
+                }
+
+                comment_elided
+                    .get_or_insert_with(String::new)
+                    .push_str(&source[segment_start..comment_start]);
+                parser.update(&comment);
+                segment_start = parser.current().span.start;
+
+                let formula = comment_elided
+                    .as_mut()
+                    .expect("valid comments initialize the elided formula");
+                if let Some((visible_close_bytes, current_close_bytes)) =
+                    comment_joined_math_close(parser, formula)
+                {
+                    formula.truncate(formula.len() - visible_close_bytes);
+                    let residual_closer = &parser.current().slice[current_close_bytes..];
+                    parser.step()?;
+                    let latex_source = if suppress_formula {
+                        Cow::Borrowed("")
+                    } else {
+                        Cow::Owned(formula.trim().to_owned())
+                    };
+                    return Ok(WikidotMathSource {
+                        latex_source,
+                        residual_closer,
+                    });
+                }
+            }
+
+            Token::LineBreak => {
+                suppress_formula = true;
+                parser.step()?;
+            }
+
+            Token::Raw => {
+                let mut raw = parser.clone();
+                if RULE_RAW.try_consume(&mut raw).is_err() {
+                    parser.step()?;
+                    continue;
+                }
+
                 let raw_end = raw.current().span.start;
                 let mut owner = parser.clone();
-                let mut has_non_authored = false;
-
                 while owner.current().span.start < raw_end {
                     if owner.current().token == Token::RightMath {
                         return Err(parser.make_err(ParseErrorKind::RuleFailed));
                     }
-                    has_non_authored |= owner.current_generated().is_some()
+                    if owner.current_generated().is_some()
                         || matches!(
                             owner.current().token,
                             Token::RuntimeText
                                 | Token::GeneratedPageLink
                                 | Token::GeneratedTagLinks
-                        );
+                        )
+                    {
+                        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+                    }
                     owner.step()?;
                 }
 
-                // A delayed value inside raw must survive outer rollback as
-                // delayed raw data. It cannot be erased into an empty math
-                // node or flattened into an authored math field.
-                if has_non_authored {
-                    return Err(parser.make_err(ParseErrorKind::RuleFailed));
-                }
-
-                saw_complete_authored_raw = true;
+                suppress_formula = true;
                 parser.update(&raw);
-                continue;
+            }
+
+            _ => {
+                parser.step()?;
             }
         }
-        parser.step()?;
     }
+}
+
+/// Find a `$]]` closer whose bytes became adjacent after valid comments were
+/// removed. The visible prefix contains one or two delimiter bytes; the
+/// current bracket token supplies the rest and may retain a literal residual.
+fn comment_joined_math_close<'r, 't>(
+    parser: &Parser<'r, 't>,
+    visible: &str,
+) -> Option<(usize, usize)>
+where
+    'r: 't,
+{
+    if parser.current_generated().is_some()
+        || !matches!(
+            parser.current().token,
+            Token::RightBracket | Token::RightBlock | Token::RightLink
+        )
+    {
+        return None;
+    }
+
+    let current = parser.current().slice.as_bytes();
+    if visible.ends_with("$]") && current.starts_with(b"]") {
+        Some((2, 1))
+    } else if visible.ends_with('$') && current.starts_with(b"]]") {
+        Some((1, 2))
+    } else {
+        None
+    }
+}
+
+/// Validate one authored inline-math candidate without executing nested syntax.
+///
+/// Link-label lookahead uses the same inert collector on a parser clone, so
+/// formula contents cannot duplicate document side effects such as footnotes.
+pub(super) fn wikidot_math_candidate_is_complete<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    if parser.current().token != Token::LeftMath {
+        return false;
+    }
+
+    let mut scan = parser.clone();
+    if scan.step().is_err() {
+        return false;
+    }
+    collect_wikidot_math_source(&mut scan).is_ok()
 }

@@ -1,4 +1,4 @@
-use crate::parsing::rule::impls::normalize_color;
+use crate::parsing::rule::impls::normalize_wikidot_color;
 use crate::tree::{
     AttributeMap, Container, ContainerType, Element, ListItem, PartialElement,
 };
@@ -82,6 +82,7 @@ enum FormatShell<'t> {
     },
     Color {
         color: Cow<'t, str>,
+        background: bool,
     },
 }
 
@@ -109,8 +110,9 @@ impl<'t> FormatShell<'t> {
             FormatShell::Container {
                 ctype, attributes, ..
             } => Element::Container(Container::new(*ctype, elements, attributes.clone())),
-            FormatShell::Color { color } => Element::Color {
+            FormatShell::Color { color, background } => Element::Color {
                 color: color.clone(),
+                background: *background,
                 elements,
             },
         }
@@ -126,8 +128,11 @@ impl<'t> FormatShell<'t> {
                     attributes: container.attributes().clone(),
                 })
             }
-            Element::Color { color, .. } => Some(FormatShell::Color {
+            Element::Color {
+                color, background, ..
+            } => Some(FormatShell::Color {
                 color: color.clone(),
+                background: *background,
             }),
             _ => None,
         }
@@ -149,9 +154,11 @@ impl<'t> FormatShell<'t> {
                     elements,
                 ))
             }
-            Element::Color { color, elements } => {
-                Some((FormatShell::Color { color }, elements))
-            }
+            Element::Color {
+                color,
+                background,
+                elements,
+            } => Some((FormatShell::Color { color, background }, elements)),
             _ => None,
         }
     }
@@ -625,23 +632,29 @@ fn lower_dash_runs(elements: &mut Vec<Element<'_>>) {
             output.push(element);
             continue;
         };
-        if run_len == 2 {
-            output.push(Element::Text(Cow::Borrowed("\u{2014}")));
-            continue;
-        }
-
-        for _ in 0..run_len / 5 {
-            output.push(strike_shell().build(vec![Element::Text(Cow::Borrowed("-"))]));
-        }
-        let remainder = run_len % 5;
-        for _ in 0..remainder / 2 {
-            output.push(Element::Text(Cow::Borrowed("\u{2014}")));
-        }
-        if remainder % 2 == 1 {
-            output.push(Element::Text(Cow::Borrowed("-")));
-        }
+        output.extend(wikidot_dash_run_elements(run_len));
     }
     *elements = output;
+}
+
+pub(crate) fn wikidot_dash_run_elements<'t>(run_len: usize) -> Vec<Element<'t>> {
+    debug_assert!(run_len >= 2);
+    if run_len == 2 {
+        return vec![Element::Text(Cow::Borrowed("\u{2014}"))];
+    }
+
+    let mut elements = Vec::with_capacity(run_len / 2);
+    for _ in 0..run_len / 5 {
+        elements.push(strike_shell().build(vec![Element::Text(Cow::Borrowed("-"))]));
+    }
+    let remainder = run_len % 5;
+    for _ in 0..remainder / 2 {
+        elements.push(Element::Text(Cow::Borrowed("\u{2014}")));
+    }
+    if remainder % 2 == 1 {
+        elements.push(Element::Text(Cow::Borrowed("-")));
+    }
+    elements
 }
 
 fn outer_candidate<'t>(
@@ -681,16 +694,18 @@ fn outer_candidate<'t>(
         return None;
     }
     let mut color = String::new();
+    let mut background = false;
     for (offset, element) in elements[start + 1..].iter().enumerate() {
         let value = text(element)?;
         if value == "|" {
-            if color.is_empty() {
-                return None;
+            if color.trim().is_empty() && !background {
+                background = true;
+                color.clear();
+                continue;
             }
+            let color = normalize_wikidot_color(&color)?.into_owned().into();
             return Some(OuterCandidate {
-                shell: FormatShell::Color {
-                    color: normalize_color(&color).into_owned().into(),
-                },
+                shell: FormatShell::Color { color, background },
                 opener_len: offset + 2,
                 literal_marker: "##",
             });
@@ -828,7 +843,7 @@ fn visit_children_mut<'t>(element: &mut Element<'t>, visit: fn(&mut Vec<Element<
             PartialElement::RubyText(ruby_text) => visit(&mut ruby_text.elements),
             PartialElement::WikidotEmptyInlineOwner
             | PartialElement::InlineSizeOpen(_)
-            | PartialElement::InlineSizeClose
+            | PartialElement::InlineSizeClose(_)
             | PartialElement::InlineSpanOpen(_)
             | PartialElement::InlineSpanClose(_) => {}
         },

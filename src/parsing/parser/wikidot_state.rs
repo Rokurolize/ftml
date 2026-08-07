@@ -1,15 +1,40 @@
 use super::Parser;
+use crate::parsing::Token;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(super) struct WikidotState {
-    div_body_depth: usize,
+    // Parser recursion is capped well below `u16::MAX`; compact counters keep
+    // this state out of every recursive parser frame's pointer-sized padding.
+    div_body_depth: u16,
+    bibliography_body_depth: u16,
+    in_note_body: bool,
+    literal_triple_link_depth: u16,
     in_collapsible: bool,
     quote_boundary_closes_body: bool,
     pending_collapsible_closer: bool,
     collapsible_closed_at_deeper_quote: bool,
+    in_simple_table_cell: bool,
+    simple_table_crossed_closers: u16,
 }
 
 impl Parser<'_, '_> {
+    #[inline]
+    pub(crate) fn in_wikidot_bibliography_body(&self) -> bool {
+        self.wikidot.bibliography_body_depth > 0
+    }
+
+    #[inline]
+    pub(crate) fn enter_wikidot_bibliography_body(&mut self) {
+        self.wikidot.bibliography_body_depth =
+            self.wikidot.bibliography_body_depth.saturating_add(1);
+    }
+
+    #[inline]
+    pub(crate) fn leave_wikidot_bibliography_body(&mut self) {
+        self.wikidot.bibliography_body_depth =
+            self.wikidot.bibliography_body_depth.saturating_sub(1);
+    }
+
     #[inline]
     pub(crate) fn in_wikidot_div_body(&self) -> bool {
         self.wikidot.div_body_depth > 0
@@ -17,12 +42,51 @@ impl Parser<'_, '_> {
 
     #[inline]
     pub(crate) fn enter_wikidot_div_body(&mut self) {
-        self.wikidot.div_body_depth += 1;
+        self.wikidot.div_body_depth = self.wikidot.div_body_depth.saturating_add(1);
     }
 
     #[inline]
     pub(crate) fn leave_wikidot_div_body(&mut self) {
-        self.wikidot.div_body_depth -= 1;
+        self.wikidot.div_body_depth = self.wikidot.div_body_depth.saturating_sub(1);
+    }
+
+    #[inline]
+    pub(crate) fn in_wikidot_note_body(&self) -> bool {
+        self.wikidot.in_note_body
+    }
+
+    #[inline]
+    pub(crate) fn enter_wikidot_note_body(&mut self) {
+        debug_assert!(!self.wikidot.in_note_body);
+        self.wikidot.in_note_body = true;
+    }
+
+    #[inline]
+    pub(crate) fn leave_wikidot_note_body(&mut self) {
+        debug_assert!(self.wikidot.in_note_body);
+        self.wikidot.in_note_body = false;
+    }
+
+    #[inline]
+    pub(crate) fn in_wikidot_literal_triple_link(&self) -> bool {
+        self.wikidot.literal_triple_link_depth > 0
+    }
+
+    #[inline]
+    pub(crate) fn enter_wikidot_literal_triple_link(&mut self) {
+        self.wikidot.literal_triple_link_depth =
+            self.wikidot.literal_triple_link_depth.saturating_add(1);
+    }
+
+    #[inline]
+    pub(crate) fn leave_wikidot_literal_triple_link(&mut self) {
+        self.wikidot.literal_triple_link_depth =
+            self.wikidot.literal_triple_link_depth.saturating_sub(1);
+    }
+
+    #[inline]
+    pub(crate) fn clear_wikidot_literal_triple_links(&mut self) {
+        self.wikidot.literal_triple_link_depth = 0;
     }
 
     pub(crate) fn in_wikidot_collapsible(&self) -> bool {
@@ -55,5 +119,39 @@ impl Parser<'_, '_> {
 
     pub(crate) fn set_wikidot_collapsible_closed_at_deeper_quote(&mut self, value: bool) {
         self.wikidot.collapsible_closed_at_deeper_quote = value;
+    }
+
+    pub(crate) fn in_wikidot_simple_table_cell(&self) -> bool {
+        self.wikidot.in_simple_table_cell
+    }
+
+    pub(crate) fn set_in_wikidot_simple_table_cell(&mut self, value: bool) {
+        self.wikidot.in_simple_table_cell = value;
+    }
+
+    pub(crate) fn mark_wikidot_simple_table_crossed_closer(&mut self, token: Token) {
+        self.wikidot.simple_table_crossed_closers |= simple_table_closer_bit(token);
+    }
+
+    pub(crate) fn take_wikidot_simple_table_crossed_closers(&mut self) -> u16 {
+        std::mem::take(&mut self.wikidot.simple_table_crossed_closers)
+    }
+
+    pub(crate) fn wikidot_simple_table_closer_bit(token: Token) -> u16 {
+        simple_table_closer_bit(token)
+    }
+}
+
+fn simple_table_closer_bit(token: Token) -> u16 {
+    match token {
+        Token::Bold => 1 << 0,
+        Token::Italics => 1 << 1,
+        Token::DoubleDash => 1 << 2,
+        Token::Underline => 1 << 3,
+        Token::Superscript => 1 << 4,
+        Token::Subscript => 1 << 5,
+        Token::RightMonospace => 1 << 6,
+        Token::Color => 1 << 7,
+        _ => 0,
     }
 }

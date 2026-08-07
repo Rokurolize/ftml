@@ -65,7 +65,13 @@ pub fn get_rules_for_token(current: &ExtractedToken) -> &'static [Rule] {
         Token::Underscore => &[RULE_UNDERSCORE_LINE_BREAK, RULE_TEXT],
         Token::Quote => &[RULE_BLOCKQUOTE, RULE_DOUBLE_ANGLE, RULE_TEXT],
         Token::Heading => &[RULE_HEADER, RULE_TEXT],
-        Token::Whitespace => &[RULE_UNDERSCORE_LINE_BREAK, RULE_LIST, RULE_TEXT],
+        Token::Whitespace => &[
+            RULE_SECTION_MARKER,
+            RULE_UNDERSCORE_LINE_BREAK,
+            RULE_LIST,
+            RULE_CENTER,
+            RULE_TEXT,
+        ],
 
         // Formatting
         Token::Bold => &[RULE_BOLD],
@@ -114,7 +120,6 @@ pub fn get_rules_for_token(current: &ExtractedToken) -> &'static [Rule] {
 
         // Miscellaneous
         Token::LeftComment => &[RULE_COMMENT],
-        Token::RightComment => &[],
 
         // Fallback
         Token::RuntimeText | Token::Other => &[RULE_TEXT],
@@ -177,7 +182,13 @@ mod tests {
             (Token::ParagraphBreak, vec!["line-break-paragraph"]),
             (
                 Token::Whitespace,
-                vec!["underscore-line-break", "list", "text"],
+                vec![
+                    "section-marker",
+                    "underscore-line-break",
+                    "list",
+                    "center",
+                    "text",
+                ],
             ),
             (Token::Bold, vec!["bold"]),
             (Token::Italics, vec!["italics"]),
@@ -211,7 +222,6 @@ mod tests {
             (Token::GeneratedPageLink, vec!["delayed"]),
             (Token::GeneratedTagLinks, vec!["delayed"]),
             (Token::LeftComment, vec!["comment"]),
-            (Token::RightComment, vec![]),
             (Token::InputStart, vec!["null"]),
             (Token::InputEnd, vec!["null"]),
             (Token::Other, vec!["text"]),

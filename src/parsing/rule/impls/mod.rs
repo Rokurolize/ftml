@@ -82,8 +82,9 @@ pub use self::bold::RULE_BOLD;
 pub use self::center::RULE_CENTER;
 pub use self::clear_float::RULE_CLEAR_FLOAT;
 pub use self::color::RULE_COLOR;
-pub(crate) use self::color::normalize_color;
+pub(crate) use self::color::normalize_wikidot_color;
 pub use self::comment::RULE_COMMENT;
+pub(crate) use self::comment::comment_closer_token_count;
 pub use self::dash::{RULE_DASH, RULE_DASH_RUN};
 pub use self::definition_list::{
     RULE_DEFINITION_LIST, RULE_DEFINITION_LIST_SKIP_NEWLINE,

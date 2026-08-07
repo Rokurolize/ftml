@@ -284,16 +284,7 @@ fn lower_root_sequence<'t>(
 }
 
 fn is_wikidot_content_separator(element: &Element<'_>) -> bool {
-    matches!(
-        element,
-        Element::Container(container)
-            if container.ctype() == ContainerType::Div
-                && container
-                    .attributes()
-                    .get()
-                    .get("class")
-                    .is_some_and(|value| value.as_ref() == "content-separator")
-    )
+    element.is_content_separator()
 }
 
 fn append_root_sequence<'t>(
@@ -348,7 +339,7 @@ fn collect_valid_pairs(
             Element::Partial(PartialElement::InlineSizeOpen(_)) => {
                 push_pending_scope(open_sizes, ordinal, active_count);
             }
-            Element::Partial(PartialElement::InlineSizeClose) => {
+            Element::Partial(PartialElement::InlineSizeClose(_)) => {
                 let close = *ordinal;
                 *ordinal += 1;
                 if let Some(open) = open_sizes.pop() {
@@ -467,7 +458,7 @@ fn lower_sequence<'t>(
             }
             continue;
         }
-        if matches!(element, Element::Partial(PartialElement::InlineSizeClose)) {
+        if let Element::Partial(PartialElement::InlineSizeClose(close_source)) = element {
             let empty = !active.top_has_content(ScopeKind::Size) && run.is_empty();
             let trailing_space =
                 matches!(run.last(), Some(Element::Text(text)) if text == " ");
@@ -489,7 +480,7 @@ fn lower_sequence<'t>(
                 }
             } else {
                 flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
-                output.push(text!("[[/size]]"));
+                output.push(Element::Text(close_source));
             }
             continue;
         }
@@ -739,7 +730,7 @@ fn contains_inline_scope_control(element: &Element<'_>) -> bool {
         element,
         Element::Partial(
             PartialElement::InlineSizeOpen(_)
-                | PartialElement::InlineSizeClose
+                | PartialElement::InlineSizeClose(_)
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_)
         )
@@ -760,7 +751,7 @@ fn inline_scope_controls_are_self_contained(element: &Element<'_>) -> bool {
                 *sizes += 1;
                 true
             }
-            Element::Partial(PartialElement::InlineSizeClose) => {
+            Element::Partial(PartialElement::InlineSizeClose(_)) => {
                 if *sizes == 0 {
                     false
                 } else {
@@ -896,7 +887,7 @@ fn visit_children<'t>(element: &Element<'t>, visit: &mut dyn FnMut(&[Element<'t>
             PartialElement::RubyText(ruby_text) => visit(&ruby_text.elements),
             PartialElement::WikidotEmptyInlineOwner
             | PartialElement::InlineSizeOpen(_)
-            | PartialElement::InlineSizeClose
+            | PartialElement::InlineSizeClose(_)
             | PartialElement::InlineSpanOpen(_)
             | PartialElement::InlineSpanClose(_) => {}
         },
@@ -957,7 +948,7 @@ fn visit_children_mut<'t>(
             PartialElement::RubyText(ruby_text) => visit(&mut ruby_text.elements),
             PartialElement::WikidotEmptyInlineOwner
             | PartialElement::InlineSizeOpen(_)
-            | PartialElement::InlineSizeClose
+            | PartialElement::InlineSizeClose(_)
             | PartialElement::InlineSpanOpen(_)
             | PartialElement::InlineSpanClose(_) => {}
         },
@@ -1046,7 +1037,7 @@ mod tests {
                 elements: vec![
                     Element::Partial(PartialElement::InlineSizeOpen(cow!("170%"))),
                     text!("partial body"),
-                    Element::Partial(PartialElement::InlineSizeClose),
+                    Element::Partial(PartialElement::InlineSizeClose(cow!("[[/size]]"))),
                 ],
             },
         ))];
@@ -1095,7 +1086,9 @@ mod tests {
         }
         elements.push(text!("bounded"));
         for _ in 0..(MAX_ACTIVE_INLINE_SCOPES + 1) {
-            elements.push(Element::Partial(PartialElement::InlineSizeClose));
+            elements.push(Element::Partial(PartialElement::InlineSizeClose(cow!(
+                "[[/size]]"
+            ))));
         }
 
         lower_wikidot_inline_size_scopes(&mut elements);
@@ -1114,7 +1107,7 @@ mod tests {
                 Element::Partial(PartialElement::InlineSizeOpen(cow!("font-size:0%;"))),
                 text!("literal"),
                 text!(" "),
-                Element::Partial(PartialElement::InlineSizeClose),
+                Element::Partial(PartialElement::InlineSizeClose(cow!("[[/size]]"))),
             ],
             AttributeMap::new(),
         ))];
@@ -1159,7 +1152,9 @@ mod tests {
         for kind in kinds.iter().rev() {
             match kind {
                 ScopeKind::Size => {
-                    elements.push(Element::Partial(PartialElement::InlineSizeClose));
+                    elements.push(Element::Partial(PartialElement::InlineSizeClose(
+                        cow!("[[/size]]"),
+                    )));
                 }
                 ScopeKind::Span => elements.push(Element::Partial(
                     PartialElement::InlineSpanClose(cow!("[[/span]]")),

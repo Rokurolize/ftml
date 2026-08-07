@@ -19,7 +19,7 @@
  */
 
 use crate::parsing::prelude::*;
-use crate::tree::{Alignment, AttributeMap, Container, ContainerType, TableType};
+use crate::tree::{AttributeMap, Container, ContainerType, TableType};
 use std::mem;
 
 pub(crate) fn collapsible_has_direct_literal_nested_opener(
@@ -54,6 +54,11 @@ pub struct ParagraphStack<'t> {
     /// Elements being accumulated in the current paragraph.
     current: Vec<Element<'t>>,
 
+    /// Suppressed-owner phase markers awaiting the next authored element.
+    /// They must remain typed for later typography without occupying a
+    /// physical Wikidot line or interfering with line-break cleanup.
+    pending_suppression_seams: Vec<Element<'t>>,
+
     /// Whether Wikidot renders the current physical paragraph without a
     /// paragraph wrapper because it contains a naked image block.
     current_unwrapped: bool,
@@ -72,7 +77,11 @@ pub struct ParagraphStack<'t> {
     wikidot_literal_div_line: bool,
     trim_unwrapped_trailing_line_break: bool,
     suppress_next_line_break: bool,
+    // A line-break rule may consume the following block in the same result,
+    // so retain that physical boundary until the element reaches this stack.
+    next_element_started_line: bool,
     wikidot_simple_table_boundary: bool,
+    wikidot_reopen_for_footnote: bool,
 
     /// Previous elements created, to be outputted in the final [`SyntaxTree`].
     finished: Vec<Element<'t>>,
@@ -116,6 +125,19 @@ impl<'t> ParagraphStack<'t> {
                         )
                 ) || matches!(element, Element::Code(_) | Element::Collapsible { .. })
             })
+    }
+
+    #[inline]
+    pub(crate) fn wikidot_inline_residual_follows_collapsible(&self) -> bool {
+        self.wikidot
+            && self.current_empty()
+            && self.unwrapped_after_block_line
+            && matches!(self.finished.last(), Some(Element::Collapsible { .. }))
+    }
+
+    #[inline]
+    pub(crate) fn record_next_element_line_start(&mut self, start_of_line: bool) {
+        self.next_element_started_line = start_of_line;
     }
 
     #[cfg(test)]
@@ -162,6 +184,15 @@ impl<'t> ParagraphStack<'t> {
     pub(crate) fn mark_next_unwrapped_after_block(&mut self) {
         self.current_unwrapped = true;
         self.unwrapped_after_block_line = true;
+    }
+
+    #[inline]
+    pub(crate) fn mark_wikidot_same_line_div_residual(&mut self) {
+        if self.wikidot {
+            self.current.push(text!("\n"));
+            self.current_unwrapped = true;
+            self.unwrapped_after_block_line = true;
+        }
     }
 
     #[inline]
@@ -224,13 +255,6 @@ impl<'t> ParagraphStack<'t> {
     }
 
     #[inline]
-    pub fn mark_wikidot_literal_list_item(&mut self) {
-        if self.wikidot {
-            self.mark_current_unwrapped();
-        }
-    }
-
-    #[inline]
     pub fn mark_wikidot_tabview_boundary(&mut self) {
         if !self.wikidot || self.current.is_empty() {
             return;
@@ -276,6 +300,26 @@ impl<'t> ParagraphStack<'t> {
 
     #[inline]
     pub fn push_element(&mut self, element: Element<'t>, paragraph_safe: bool) {
+        if self.wikidot_reopen_for_footnote && matches!(element, Element::Footnote(_)) {
+            self.wikidot_reopen_for_footnote = false;
+            let Some(Element::Container(paragraph)) = self.finished.pop() else {
+                unreachable!("footnote reopening requires a preceding paragraph");
+            };
+            debug_assert_eq!(paragraph.ctype(), ContainerType::Paragraph);
+            self.current = paragraph.into();
+            self.current.append(&mut self.pending_suppression_seams);
+            self.current.push(element);
+            return;
+        }
+        self.wikidot_reopen_for_footnote = false;
+
+        if element != Element::LineBreak {
+            if paragraph_safe || !self.current.is_empty() {
+                self.current.append(&mut self.pending_suppression_seams);
+            } else {
+                self.finished.append(&mut self.pending_suppression_seams);
+            }
+        }
         if self.suppress_next_line_break {
             self.suppress_next_line_break = false;
             if element == Element::LineBreak {
@@ -297,28 +341,29 @@ impl<'t> ParagraphStack<'t> {
             }
         ) || matches!(&element, Element::Delayed(delayed) if delayed.image_alignment() == Some(None));
         let wikidot_html_block = self.wikidot && matches!(element, Element::Html { .. });
-        let wikidot_section_marker = self.wikidot
-            && matches!(
-                &element,
-                Element::Container(container)
-                    if container.ctype() == ContainerType::Div
-                        && container
-                            .attributes()
-                            .get()
-                            .get("class")
-                            .is_some_and(|value| value.as_ref() == "content-separator")
-            );
+        let wikidot_section_marker =
+            self.wikidot && matches!(&element, Element::ContentSeparator);
         let wikidot_simple_table = self.wikidot
             && matches!(
                 &element,
                 Element::Table(table) if table.table_type == TableType::Simple
             );
-        let wikidot_center_alignment = self.wikidot
+        let wikidot_alignment = self.wikidot
             && matches!(
                 &element,
                 Element::Container(container)
-                    if container.ctype() == ContainerType::Align(Alignment::Center)
+                    if matches!(container.ctype(), ContainerType::Align(_))
             );
+
+        let wikidot_collapsible =
+            self.wikidot && matches!(element, Element::Collapsible { .. });
+
+        if wikidot_collapsible
+            && !self.current.is_empty()
+            && !self.next_element_started_line
+        {
+            self.current_unwrapped = true;
+        }
 
         if self.wikidot
             && matches!(element, Element::DefinitionList(_))
@@ -335,7 +380,7 @@ impl<'t> ParagraphStack<'t> {
             self.current_unwrapped = true;
         }
 
-        if wikidot_center_alignment
+        if wikidot_alignment
             && !self.current.is_empty()
             && !matches!(self.current.last(), Some(Element::LineBreak))
         {
@@ -408,6 +453,7 @@ impl<'t> ParagraphStack<'t> {
             // This has to be its own "finished" element, outside of any
             // paragraph wrapper. So finish up what we have, then add this element.
             let invisible_block_line = self.wikidot && element == Element::LineBreak;
+            let escaped_note_prefix = self.wikidot_note_follows_escaped_prefix(&element);
             let nested_literal_collapsible =
                 self.wikidot && collapsible_has_direct_literal_nested_opener(&element);
             let literal_table_block_boundary = self.current_unwrapped
@@ -425,8 +471,14 @@ impl<'t> ParagraphStack<'t> {
             if invisible_block_line {
                 self.pop_line_break();
             }
+            if escaped_note_prefix {
+                self.current_unwrapped = true;
+            }
             self.end_paragraph();
             self.finished.push(element);
+            if wikidot_collapsible {
+                self.unwrapped_after_block_line = true;
+            }
             if invisible_block_line {
                 self.current_unwrapped = true;
                 self.trim_unwrapped_trailing_line_break = true;
@@ -436,6 +488,28 @@ impl<'t> ParagraphStack<'t> {
                 self.suppress_next_line_break = true;
             }
         }
+    }
+
+    fn wikidot_note_follows_escaped_prefix(&self, element: &Element<'_>) -> bool {
+        if !self.wikidot
+            || !matches!(
+                self.current.as_slice(),
+                [Element::Text(prefix)] if prefix.as_ref() == "\\"
+            )
+        {
+            return false;
+        }
+
+        matches!(
+            element,
+            Element::Container(container)
+                if container.ctype() == ContainerType::Div
+                    && container
+                        .attributes()
+                        .get()
+                        .get("class")
+                        .is_some_and(|class| class.as_ref() == "wiki-note")
+        )
     }
 
     fn wikidot_current_line_is_literal_advanced_table_opener(&self) -> bool {
@@ -476,6 +550,12 @@ impl<'t> ParagraphStack<'t> {
     }
 
     pub fn push_paragraph_safe_elements(&mut self, mut elements: Vec<Element<'t>>) {
+        if let Some(index) = elements
+            .iter()
+            .position(|element| *element != Element::LineBreak)
+        {
+            elements.splice(index..index, self.pending_suppression_seams.drain(..));
+        }
         if self.current.is_empty() {
             if let Some(index) = elements
                 .iter()
@@ -505,13 +585,19 @@ impl<'t> ParagraphStack<'t> {
     /// This should only be between lines in the blockquote.
     #[inline]
     pub fn pop_line_break(&mut self) {
-        if let Some(Element::LineBreak) = self.current.last() {
-            self.current.pop();
+        if let Some(index) = self.current.iter().rposition(|element| {
+            !matches!(element, Element::Delayed(delayed) if delayed.is_suppression_seam())
+        }) && self.current[index] == Element::LineBreak
+        {
+            self.current.remove(index);
         } else if self.wikidot
             && self.current.is_empty()
-            && matches!(self.finished.last(), Some(Element::LineBreak))
+            && let Some(index) = self.finished.iter().rposition(|element| {
+                !matches!(element, Element::Delayed(delayed) if delayed.is_suppression_seam())
+            })
+            && self.finished[index] == Element::LineBreak
         {
-            self.finished.pop();
+            self.finished.remove(index);
         }
     }
 
@@ -546,13 +632,27 @@ impl<'t> ParagraphStack<'t> {
     }
 
     fn trim_trailing_ascii_space(&mut self) {
-        if matches!(self.current.last(), Some(Element::Text(text)) if text == " ") {
-            self.current.pop();
+        if let Some(index) = self.current.iter().rposition(|element| {
+            !matches!(element, Element::Delayed(delayed) if delayed.is_suppression_seam())
+        }) && matches!(&self.current[index], Element::Text(text) if text == " ")
+        {
+            self.current.remove(index);
         }
     }
 
     /// Set the finished field in this struct to the paragraph element.
     pub fn end_paragraph(&mut self) {
+        if self.current.is_empty() {
+            self.finished.append(&mut self.pending_suppression_seams);
+        } else {
+            let index = self
+                .current
+                .iter()
+                .rposition(|element| *element != Element::LineBreak)
+                .map_or(0, |index| index + 1);
+            self.current
+                .splice(index..index, self.pending_suppression_seams.drain(..));
+        }
         if self.current_unwrapped {
             if self.trim_unwrapped_trailing_line_break
                 && matches!(self.current.last(), Some(Element::LineBreak))
@@ -575,12 +675,26 @@ impl<'t> ParagraphStack<'t> {
         self.suppress_next_line_break = false;
     }
 
+    #[inline]
+    pub(crate) fn defer_suppression_seam(&mut self, element: Element<'t>) {
+        debug_assert!(
+            matches!(&element, Element::Delayed(delayed) if delayed.is_suppression_seam())
+        );
+        self.pending_suppression_seams.push(element);
+    }
+
     pub fn end_paragraph_at_break(&mut self) {
         let unwrapped = self.current_unwrapped && !self.current.is_empty();
         let literal_div_line = self.wikidot_literal_div_line;
         let unwrapped_after_block_line = self.unwrapped_after_block_line;
         let complete_raw_run_after_block = self.wikidot_complete_raw_run_after_block;
         self.end_paragraph();
+        self.wikidot_reopen_for_footnote = self.wikidot
+            && matches!(
+                self.finished.last(),
+                Some(Element::Container(container))
+                    if container.ctype() == ContainerType::Paragraph
+            );
         if unwrapped && !complete_raw_run_after_block {
             self.finished
                 .push(if literal_div_line || unwrapped_after_block_line {

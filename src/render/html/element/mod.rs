@@ -22,6 +22,7 @@
 
 mod audio;
 mod bibliography;
+mod button;
 mod clear_float;
 mod collapsible;
 mod container;
@@ -56,6 +57,7 @@ mod prelude {
 
 use self::audio::render_audio;
 use self::bibliography::{render_bibcite, render_bibliography};
+use self::button::render_standalone_button;
 use self::clear_float::render_clear_float;
 use self::collapsible::{Collapsible, render_collapsible};
 use self::container::{render_color, render_container};
@@ -151,8 +153,16 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         Element::Delayed(_) => {
             panic!("unbound delayed element reached the HTML renderer")
         }
+        Element::ContentSeparator => {
+            if ctx.layout().legacy() {
+                ctx.push_raw_str(
+                    r#"<div class="content-separator" style="display: none:"></div>"#,
+                );
+            }
+        }
         Element::Table(table) => render_table(ctx, table),
         Element::TabView(tabs) => render_tabview(ctx, tabs),
+        Element::StandaloneButton(button) => render_standalone_button(ctx, button),
         Element::Anchor {
             elements,
             attributes,
@@ -254,7 +264,11 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
             format,
             hover,
         } => render_date(ctx, *value, ref_cow!(format), *hover),
-        Element::Color { color, elements } => render_color(ctx, color, elements),
+        Element::Color {
+            color,
+            background,
+            elements,
+        } => render_color(ctx, color, *background, elements),
         Element::Code(CodeBlock {
             contents,
             language,
@@ -352,7 +366,7 @@ fn render_partial(ctx: &mut HtmlContext, partial: &PartialElement) {
     match partial {
         PartialElement::WikidotEmptyInlineOwner
         | PartialElement::InlineSizeOpen(_)
-        | PartialElement::InlineSizeClose
+        | PartialElement::InlineSizeClose(_)
         | PartialElement::InlineSpanOpen(_)
         | PartialElement::InlineSpanClose(_) => {}
         PartialElement::ListItem(ListItem::Elements { elements, .. }) => {

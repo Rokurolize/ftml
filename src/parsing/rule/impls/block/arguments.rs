@@ -119,7 +119,9 @@ pub struct Arguments<'t> {
     inner: HashMap<ArgumentKey<'t>, Cow<'t, str>>,
     raw: Vec<RawModuleArgument<'t>>,
     bare: HashSet<ArgumentKey<'t>>,
+    bare_source_present: bool,
     case_sensitive: bool,
+    empty_key_present: bool,
     source_present: bool,
     spaced_equals: bool,
 }
@@ -160,6 +162,7 @@ impl<'t> Arguments<'t> {
 
     pub fn insert_bare(&mut self, key: &'t str, value: Cow<'t, str>) {
         self.insert(key, value);
+        self.bare_source_present = true;
         self.bare.insert(self.key(key));
     }
 
@@ -224,6 +227,22 @@ impl<'t> Arguments<'t> {
         self.source_present
     }
 
+    #[inline]
+    pub(crate) fn has_bare_source(&self) -> bool {
+        self.bare_source_present
+    }
+
+    #[inline]
+    pub(crate) fn mark_empty_key_present(&mut self) {
+        self.empty_key_present = true;
+        self.source_present = true;
+    }
+
+    #[inline]
+    pub(crate) fn has_empty_key(&self) -> bool {
+        self.empty_key_present
+    }
+
     pub fn mark_spaced_equals(&mut self) {
         self.spaced_equals = true;
     }
@@ -260,7 +279,7 @@ impl<'t> Arguments<'t> {
     /// if that is enabled, and so needs `WikitextSettings` to be passed in.
     #[inline]
     pub fn to_attribute_map(&self, settings: &WikitextSettings) -> AttributeMap<'t> {
-        let mut map = self.attribute_map_from_entries(settings, |_| true);
+        let mut map = self.attribute_map_from_entries(settings, |_, _| true);
         map.isolate_id(settings);
         map
     }
@@ -269,7 +288,8 @@ impl<'t> Arguments<'t> {
         &self,
         settings: &WikitextSettings,
     ) -> AttributeMap<'t> {
-        let mut map = self.to_attribute_map(settings);
+        let mut map =
+            self.attribute_map_from_entries(settings, |_, value| !value.is_empty());
         map.remove("title");
         let href = self.inner.get(&self.key("href")).filter(|value| {
             matches!(
@@ -286,12 +306,14 @@ impl<'t> Arguments<'t> {
         map
     }
 
-    pub fn to_attribute_map_without_bare(
+    pub(crate) fn to_attribute_map_without_bare_where(
         &self,
         settings: &WikitextSettings,
+        include: impl Fn(&str, &str) -> bool,
     ) -> AttributeMap<'t> {
-        let mut map =
-            self.attribute_map_from_entries(settings, |key| !self.bare.contains(key));
+        let mut map = self.attribute_map_from_entries(settings, |key, value| {
+            !self.bare.contains(key) && include(key.as_str(), value)
+        });
         map.isolate_id(settings);
         map
     }
@@ -299,12 +321,12 @@ impl<'t> Arguments<'t> {
     fn attribute_map_from_entries(
         &self,
         settings: &WikitextSettings,
-        include: impl Fn(&ArgumentKey<'t>) -> bool,
+        include: impl Fn(&ArgumentKey<'t>, &Cow<'t, str>) -> bool,
     ) -> AttributeMap<'t> {
         let mut attributes = AttributeMap::new();
 
         for (key, value) in &self.inner {
-            if !include(key) {
+            if !include(key, value) {
                 continue;
             }
 

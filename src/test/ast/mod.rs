@@ -380,7 +380,7 @@ fn exercise_partial_element_helpers(partial: &PartialElement<'_>) -> usize {
     match partial {
         PartialElement::WikidotEmptyInlineOwner
         | PartialElement::InlineSizeOpen(_)
-        | PartialElement::InlineSizeClose
+        | PartialElement::InlineSizeClose(_)
         | PartialElement::InlineSpanOpen(_)
         | PartialElement::InlineSpanClose(_) => 0,
         PartialElement::ListItem(item) => exercise_list_item_helpers(item),

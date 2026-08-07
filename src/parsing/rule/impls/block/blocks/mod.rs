@@ -20,6 +20,7 @@
 
 mod prelude {
     pub use super::super::{Arguments, BlockRule};
+    use crate::delayed::DelayedElement;
     pub use crate::parsing::ParseError;
     pub use crate::parsing::parser::Parser;
     pub use crate::parsing::prelude::*;
@@ -65,6 +66,56 @@ mod prelude {
     ) -> Result<&'t str, ParseError> {
         require_block_argument(parser, value).map(str::trim)
     }
+
+    #[cold]
+    #[inline(never)]
+    pub fn recover_wikidot_empty_key_candidate<'r, 't>(
+        parser: &mut Parser<'r, 't>,
+        block_rule: &BlockRule,
+        owner_start: usize,
+    ) -> ParseResult<'r, 't, Elements<'t>>
+    where
+        'r: 't,
+    {
+        let error = parser.make_err(ParseErrorKind::BlockMalformedArguments);
+        if !parser.has_body_end_block(block_rule) {
+            return Err(error);
+        }
+
+        let _ = parser.get_body_text(block_rule)?;
+        let owner_end = parser.current().span.start;
+        let source = parser.full_text().inner();
+        let generated = parser.generated_in_range(owner_start..owner_end);
+        let elements = if generated.is_empty() {
+            literal_block_candidate(&source[owner_start..owner_end])
+        } else {
+            Element::Delayed(DelayedElement::shell(
+                source,
+                owner_start..owner_end,
+                &generated,
+            ))
+            .into()
+        };
+
+        ok!(true; elements, vec![error])
+    }
+
+    fn literal_block_candidate(source: &str) -> Elements<'_> {
+        let mut elements = Vec::new();
+        for chunk in source.split_inclusive('\n') {
+            let (text, line_break) = match chunk.strip_suffix('\n') {
+                Some(text) => (text, true),
+                None => (chunk, false),
+            };
+            if !text.is_empty() {
+                elements.push(text!(text));
+            }
+            if line_break {
+                elements.push(Element::LineBreak);
+            }
+        }
+        Elements::Multiple(elements)
+    }
 }
 
 #[macro_use]
@@ -79,6 +130,7 @@ mod bibcite;
 mod bibliography;
 mod blockquote;
 mod bold;
+mod button;
 mod char;
 mod checkbox;
 mod code;
@@ -135,6 +187,7 @@ pub use self::bibcite::BLOCK_BIBCITE;
 pub use self::bibliography::BLOCK_BIBLIOGRAPHY;
 pub use self::blockquote::BLOCK_BLOCKQUOTE;
 pub use self::bold::BLOCK_BOLD;
+pub use self::button::BLOCK_BUTTON;
 pub use self::char::BLOCK_CHAR;
 pub use self::checkbox::BLOCK_CHECKBOX;
 pub use self::code::BLOCK_CODE;

@@ -24,7 +24,7 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 use unicase::UniCase;
 
-pub const BLOCK_RULES: [BlockRule; 65] = [
+pub const BLOCK_RULES: [BlockRule; 66] = [
     BLOCK_ALIGN_CENTER,
     BLOCK_ALIGN_JUSTIFY,
     BLOCK_ALIGN_LEFT,
@@ -35,6 +35,7 @@ pub const BLOCK_RULES: [BlockRule; 65] = [
     BLOCK_BIBLIOGRAPHY,
     BLOCK_BLOCKQUOTE,
     BLOCK_BOLD,
+    BLOCK_BUTTON,
     BLOCK_CHAR,
     BLOCK_CHECKBOX,
     BLOCK_CODE,
@@ -118,6 +119,7 @@ pub fn get_block_rule_with_name_for_layout(
 
 fn wikidot_supports_block_name(name: &str) -> bool {
     const FTML_ONLY_NAMES: &[&str] = &[
+        "anchor",
         "anchortarget",
         "audio",
         "b",
@@ -228,6 +230,7 @@ fn block_rule_map_accepts_case_insensitive_names() {
 
 #[test]
 fn wikidot_layout_rejects_ftml_only_block_names() {
+    assert!(get_block_rule_with_name_for_layout("anchor", Layout::Wikidot).is_none());
     assert!(get_block_rule_with_name_for_layout("strong", Layout::Wikidot).is_none());
     assert!(get_block_rule_with_name_for_layout("video", Layout::Wikidot).is_none());
     assert!(get_block_rule_with_name_for_layout("embed", Layout::Wikidot).is_none());
@@ -239,6 +242,11 @@ fn wikidot_layout_rejects_ftml_only_block_names() {
     assert!(get_block_rule_with_name_for_layout("char", Layout::Wikidot).is_none());
     assert!(get_block_rule_with_name_for_layout("radio", Layout::Wikidot).is_none());
     assert_eq!(
+        get_block_rule_with_name_for_layout("anchor", Layout::Wikijump)
+            .map(|rule| rule.name),
+        Some("block-anchor"),
+    );
+    assert_eq!(
         get_block_rule_with_name_for_layout("strong", Layout::Wikijump)
             .map(|rule| rule.name),
         Some("block-bold"),
@@ -247,6 +255,52 @@ fn wikidot_layout_rejects_ftml_only_block_names() {
         get_block_rule_with_name_for_layout("div", Layout::Wikidot).map(|rule| rule.name),
         Some("block-div"),
     );
+}
+
+#[test]
+fn unmatched_case_variant_closers_preserve_source_for_every_block_name() {
+    use crate::data::PageInfo;
+    use crate::render::{Render, html::HtmlRender};
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    for name in BLOCK_RULES
+        .iter()
+        .flat_map(|block_rule| block_rule.accepts_names)
+    {
+        let mut uppercase = true;
+        let mixed = name
+            .chars()
+            .map(|character| {
+                if character.is_ascii_alphabetic() {
+                    let output = if uppercase {
+                        character.to_ascii_uppercase()
+                    } else {
+                        character.to_ascii_lowercase()
+                    };
+                    uppercase = !uppercase;
+                    output
+                } else {
+                    character
+                }
+            })
+            .collect::<String>();
+        let source = format!("[[/{mixed}]]");
+        let tokenization = crate::tokenize(&source);
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        let escaped_source = source
+            .replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;");
+
+        assert_eq!(
+            html,
+            format!("<p>{escaped_source}</p>"),
+            "block name {name:?}"
+        );
+    }
 }
 
 #[test]

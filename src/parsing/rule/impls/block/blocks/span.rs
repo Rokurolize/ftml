@@ -43,7 +43,18 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Span doesn't allow star flag");
     assert_block_name(&BLOCK_SPAN, name);
 
+    let source = parser.full_text().inner();
+    let name_start = (name.as_ptr() as usize)
+        .checked_sub(source.as_ptr() as usize)
+        .expect("parsed span name belongs to the source");
+    let owner_start = source[..name_start]
+        .rfind("[[")
+        .expect("parsed span name follows its opener");
     let generated = parser.generated_until_right_block();
+    let arguments = parser.get_head_map_wikidot(&BLOCK_SPAN, in_head)?;
+    if parser.settings().layout.legacy() && arguments.has_empty_key() {
+        return recover_wikidot_empty_key_candidate(parser, &BLOCK_SPAN, owner_start);
+    }
     if generated
         .iter()
         .any(|slot| slot.kind == crate::delayed::GeneratedKind::TagLinks)
@@ -62,8 +73,9 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    let arguments = parser.get_head_map_wikidot(&BLOCK_SPAN, in_head)?;
-    let has_close = parser.has_body_end_block(&BLOCK_SPAN);
+    let has_close = parser.has_body_end_block(&BLOCK_SPAN)
+        || parser.settings().layout.legacy()
+            && has_wikidot_composite_span_close_on_line(parser);
 
     if parser.settings().layout.legacy() {
         if !has_close {
@@ -91,7 +103,7 @@ fn parse_fn<'r, 't>(
         } else {
             ok!(Elements::Multiple(vec![
                 span,
-                Element::Delayed(DelayedElement::omitted(&generated)),
+                Element::Delayed(DelayedElement::suppressed(&generated)),
             ]))
         };
     }
@@ -111,6 +123,30 @@ fn parse_fn<'r, 't>(
     ));
 
     success_elements_with_paragraph_safety(paragraph_safe, element, errors)
+}
+
+fn has_wikidot_composite_span_close_on_line<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    let mut scan = parser.clone();
+    loop {
+        match scan.current().token {
+            Token::LeftBlockEnd => {
+                let mut close = scan.clone();
+                if close.get_wikidot_end_block_with_residual().is_ok_and(
+                    |(name, residual)| residual && name.eq_ignore_ascii_case("span"),
+                ) {
+                    return true;
+                }
+            }
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd => return false,
+            _ => {}
+        }
+        if scan.step().is_err() {
+            return false;
+        }
+    }
 }
 
 fn retain_wikidot_span_attributes(attributes: &mut crate::tree::AttributeMap<'_>) {

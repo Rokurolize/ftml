@@ -20,6 +20,7 @@
 
 use super::prelude::*;
 use crate::delayed::DelayedElement;
+use crate::parsing::collect::consume_valid_comment;
 use crate::parsing::rule::impls::block::parser::BlockBodyStart;
 use crate::settings::WikitextMode;
 use crate::tree::AcceptsPartial;
@@ -83,6 +84,84 @@ fn wikidot_div_follows_inline_structural_close(
             .is_some_and(|close| close.eq_ignore_ascii_case("[[/ul]]"))
 }
 
+// Keep post-body normalization out of the recursively nested div parser's
+// stack frame. The deep parser deliberately supports 1024 nested owners on a
+// bounded worker stack.
+#[inline(never)]
+fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: bool) {
+    if flag_score {
+        let item_count = elements.len();
+        let mut unwrapped = Vec::with_capacity(item_count.saturating_mul(2));
+        for (index, element) in elements.drain(..).enumerate() {
+            if index > 0 {
+                unwrapped.push(text!("\n"));
+            }
+            match element {
+                Element::Container(container)
+                    if container.ctype() == ContainerType::Paragraph
+                        && (index == 0 || index + 1 == item_count) =>
+                {
+                    unwrapped.extend(Vec::<Element>::from(container));
+                }
+                element => unwrapped.push(element),
+            }
+        }
+        *elements = unwrapped;
+        while matches!(
+            elements.last(),
+            Some(Element::LineBreak | Element::LineBreaks(_))
+        ) {
+            elements.pop();
+        }
+        let mut previous_was_div = false;
+        elements.retain(|element| {
+            if previous_was_div
+                && (matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                    || matches!(element, Element::Text(text) if text == "\n"))
+            {
+                return false;
+            }
+            previous_was_div = matches!(
+                element,
+                Element::Container(container) if container.ctype() == ContainerType::Div
+            );
+            true
+        });
+        return;
+    }
+
+    if matches!(elements.last(), Some(Element::LineBreak)) {
+        elements.pop();
+    }
+    let mut cleaned = Vec::with_capacity(elements.len());
+    for element in elements.drain(..) {
+        let line_break_after_div =
+            matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                && cleaned
+                    .iter()
+                    .rev()
+                    .find(|previous| {
+                        !matches!(
+                            previous,
+                            Element::Text(text)
+                                if !text.is_empty()
+                                    && text.chars().all(|character| character == '\n')
+                        )
+                    })
+                    .is_some_and(|previous| {
+                        matches!(
+                            previous,
+                            Element::Container(container)
+                                if container.ctype() == ContainerType::Div
+                        )
+                    });
+        if !line_break_after_div {
+            cleaned.push(element);
+        }
+    }
+    *elements = cleaned;
+}
+
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &'t str,
@@ -103,6 +182,18 @@ fn parse_fn<'r, 't>(
 
     let head = parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;
     let (arguments, mut body_start) = head;
+    if parser.settings().layout.legacy() && arguments.has_empty_key() {
+        return recover_wikidot_empty_key_candidate(parser, &BLOCK_DIV, owner_start);
+    }
+    if parser.settings().layout.legacy()
+        && parser.in_wikidot_simple_table_cell()
+        && body_start == BlockBodyStart::Inline
+        && let Some(delimiter) = wikidot_inline_div_table_delimiter(parser)
+    {
+        let literal_end = delimiter.current().span.start;
+        parser.update(&delimiter);
+        return ok!(true; text!(&source[owner_start..literal_end]));
+    }
     if parser.settings().layout.legacy()
         && parser.settings().mode != WikitextMode::List
         && !parser.in_wikidot_div_body()
@@ -221,76 +312,8 @@ fn parse_fn<'r, 't>(
         parser.leave_wikidot_div_body();
     }
     let (mut elements, errors, _) = body?.into();
-    if parser.settings().layout.legacy() && flag_score {
-        let item_count = elements.len();
-        let mut unwrapped = Vec::with_capacity(item_count.saturating_mul(2));
-        for (index, element) in elements.drain(..).enumerate() {
-            if index > 0 {
-                unwrapped.push(text!("\n"));
-            }
-            match element {
-                Element::Container(container)
-                    if container.ctype() == ContainerType::Paragraph
-                        && (index == 0 || index + 1 == item_count) =>
-                {
-                    unwrapped.extend(Vec::<Element>::from(container));
-                }
-                element => unwrapped.push(element),
-            }
-        }
-        elements = unwrapped;
-        while matches!(
-            elements.last(),
-            Some(Element::LineBreak | Element::LineBreaks(_))
-        ) {
-            elements.pop();
-        }
-        let mut previous_was_div = false;
-        elements.retain(|element| {
-            if previous_was_div
-                && (matches!(element, Element::LineBreak | Element::LineBreaks(_))
-                    || matches!(element, Element::Text(text) if text == "\n"))
-            {
-                return false;
-            }
-            previous_was_div = matches!(
-                element,
-                Element::Container(container)
-                    if container.ctype() == ContainerType::Div
-            );
-            true
-        });
-    } else if parser.settings().layout.legacy() {
-        if matches!(elements.last(), Some(Element::LineBreak)) {
-            elements.pop();
-        }
-        let mut cleaned = Vec::with_capacity(elements.len());
-        for element in elements.drain(..) {
-            let line_break_after_div =
-                matches!(element, Element::LineBreak | Element::LineBreaks(_))
-                    && cleaned
-                        .iter()
-                        .rev()
-                        .find(|previous| {
-                            !matches!(
-                                previous,
-                                Element::Text(text)
-                                    if !text.is_empty()
-                                        && text.chars().all(|character| character == '\n')
-                            )
-                        })
-                        .is_some_and(|previous| {
-                            matches!(
-                                previous,
-                                Element::Container(container)
-                                    if container.ctype() == ContainerType::Div
-                            )
-                        });
-            if !line_break_after_div {
-                cleaned.push(element);
-            }
-        }
-        elements = cleaned;
+    if parser.settings().layout.legacy() {
+        normalize_wikidot_div_elements(&mut elements, flag_score);
     }
 
     if parser.settings().layout.legacy() && arguments.is_empty() && elements.is_empty() {
@@ -309,6 +332,62 @@ fn parse_fn<'r, 't>(
         Element::Container(Container::new(ContainerType::Div, elements, attributes));
 
     ok!(element, errors)
+}
+
+fn wikidot_inline_div_table_delimiter<'r, 't>(
+    parser: &Parser<'r, 't>,
+) -> Option<Parser<'r, 't>>
+where
+    'r: 't,
+{
+    let mut scan = parser.clone();
+    let mut raw = false;
+    let mut alternate_raw = false;
+    let mut triple_link_depth = 0usize;
+
+    loop {
+        if matches!(
+            scan.current().token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        ) {
+            return None;
+        }
+
+        if !raw
+            && !alternate_raw
+            && triple_link_depth == 0
+            && scan.current().token == Token::LeftComment
+        {
+            let mut comment = scan.clone();
+            if consume_valid_comment(&mut comment).is_ok() {
+                scan.update(&comment);
+                continue;
+            }
+        }
+
+        match scan.current().token {
+            Token::Raw => raw = !raw,
+            Token::LeftRaw if !raw => alternate_raw = true,
+            Token::RightRaw if alternate_raw => alternate_raw = false,
+            Token::LeftLink | Token::LeftLinkStar if !raw && !alternate_raw => {
+                triple_link_depth += 1;
+            }
+            Token::RightLink if triple_link_depth > 0 => {
+                triple_link_depth -= 1;
+            }
+            Token::TableColumn
+            | Token::TableColumnTitle
+            | Token::TableColumnCenter
+            | Token::TableColumnRight
+                if !raw && !alternate_raw && triple_link_depth == 0 =>
+            {
+                return Some(scan);
+            }
+            _ => {}
+        }
+
+        scan.step().ok()?;
+    }
 }
 
 #[cfg(test)]

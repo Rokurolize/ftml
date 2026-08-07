@@ -36,7 +36,7 @@ use super::rule::{
 use crate::tree::{LinkLabel, LinkLocation, LinkType, PartialElement};
 use std::mem;
 
-fn try_consume_inline_format_close<'r, 't>(
+fn try_consume_structural_close<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> Result<Option<Elements<'t>>, ParseError>
 where
@@ -68,22 +68,34 @@ where
     }
 
     let mut close = parser.clone();
-    let Ok(name) = close.get_end_block() else {
+    let Ok((name, residual_close_bracket)) = close.get_wikidot_end_block_with_residual()
+    else {
         return Ok(None);
     };
     let normalized = name.strip_suffix('_').unwrap_or(name);
-    let partial = if normalized.eq_ignore_ascii_case("size") {
-        PartialElement::InlineSizeClose
+    let start = parser.current().span.start;
+    let end = close.current().span.start;
+    let close_source = &parser.full_text().inner()[start..end];
+    let element = if normalized.eq_ignore_ascii_case("size") {
+        Element::Partial(PartialElement::InlineSizeClose(cow!(close_source)))
     } else if normalized.eq_ignore_ascii_case("span") {
-        let start = parser.current().span.start;
-        let end = close.current().span.start;
-        PartialElement::InlineSpanClose(cow!(&parser.full_text().inner()[start..end]))
+        Element::Partial(PartialElement::InlineSpanClose(cow!(close_source)))
+    } else if !parser.discarding_hidden_body()
+        && parser.rule().name() == "block-table-row"
+        && (normalized.eq_ignore_ascii_case("cell")
+            || normalized.eq_ignore_ascii_case("hcell"))
+    {
+        text!(close_source)
     } else {
         return Ok(None);
     };
 
     parser.update(&close);
-    Ok(Some(Element::Partial(partial).into()))
+    Ok(Some(if residual_close_bracket {
+        Elements::Multiple(vec![element, text!("]")])
+    } else {
+        element.into()
+    }))
 }
 
 fn try_consume_wikidot_adjacent_unmatched_closes_as_link<'r, 't>(
@@ -172,7 +184,6 @@ fn can_consume_as_text_token<'r, 't>(parser: &Parser<'r, 't>) -> bool {
         | Token::DoubleQuote
         | Token::EscapedDoubleQuote
         | Token::EscapedBackslash
-        | Token::RuntimeText
         | Token::Other => true,
 
         Token::Whitespace => {
@@ -399,7 +410,10 @@ fn upcoming_block_ends_with_single_bracket(parser: &Parser<'_, '_>) -> bool {
 
 fn try_consume_leaf_token<'r, 't>(
     parser: &mut Parser<'r, 't>,
-) -> Result<Option<Elements<'t>>, ParseError> {
+) -> Result<Option<Elements<'t>>, ParseError>
+where
+    'r: 't,
+{
     if parser.current().token == Token::Url {
         let elements = url_elements(parser)?;
         return Ok(Some(elements));
@@ -430,6 +444,12 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
         return Err(parser.make_err(ParseErrorKind::EndOfInput));
     }
 
+    if parser.settings().layout.legacy()
+        && parser.current().token == Token::ParagraphBreak
+    {
+        parser.clear_wikidot_literal_triple_links();
+    }
+
     // Incrementing recursion depth
     // Will fail if we're too many layers in
     parser.depth_increment()?;
@@ -437,7 +457,7 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
     let pending_unquoted_collapsible_close = parser.settings().layout.legacy()
         && parser.pending_wikidot_collapsible_closer()
         && parser.native_blockquote_depth().is_none();
-    if let Some(elements) = try_consume_inline_format_close(parser)? {
+    if let Some(elements) = try_consume_structural_close(parser)? {
         parser.depth_decrement();
         if pending_unquoted_collapsible_close {
             return ok!(false; elements);
@@ -518,15 +538,17 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
         }
     }
 
-    let element = if parser.settings().layout.legacy() {
+    if parser.settings().layout.legacy() {
         match current.token {
-            Token::LeftComment => text!("[!\u{2014}"),
-            Token::RightComment => text!("\u{2014}]"),
-            _ => text!(current.slice),
+            Token::LeftLink | Token::LeftLinkStar => {
+                parser.enter_wikidot_literal_triple_link();
+            }
+            Token::RightLink => parser.leave_wikidot_literal_triple_link(),
+            _ => {}
         }
-    } else {
-        text!(current.slice)
-    };
+    }
+
+    let element = text!(current.slice);
     parser.step()?;
 
     // If we've hit the recursion limit, just bail

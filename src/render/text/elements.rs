@@ -105,6 +105,7 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
         Element::Delayed(_) => {
             panic!("unbound delayed element reached the text renderer")
         }
+        Element::ContentSeparator => {}
         Element::Variable(name) => {
             let value = match ctx.variables().get(name) {
                 Some(value) => str!(value),
@@ -144,6 +145,7 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
                 ctx.add_newline();
             }
         }
+        Element::StandaloneButton(button) => ctx.push_str(&button.label),
         Element::Anchor { elements, .. } => render_elements(ctx, elements),
         Element::AnchorName(_) => {
             // Anchor names are an invisible addition to the HTML
@@ -287,7 +289,7 @@ fn render_partial(ctx: &mut TextContext, partial: &PartialElement) {
     match partial {
         PartialElement::WikidotEmptyInlineOwner
         | PartialElement::InlineSizeOpen(_)
-        | PartialElement::InlineSizeClose
+        | PartialElement::InlineSizeClose(_)
         | PartialElement::InlineSpanOpen(_)
         | PartialElement::InlineSpanClose(_) => {}
         PartialElement::ListItem(ListItem::Elements { elements, .. }) => {

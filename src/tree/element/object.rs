@@ -23,8 +23,9 @@ use crate::delayed::DelayedElement;
 use crate::tree::clone::*;
 use crate::tree::{
     Alignment, AnchorTarget, AttributeMap, ClearFloat, CodeBlock, Container, DateItem,
-    DefinitionListItem, Embed, FileSource, FloatAlignment, LinkLabel, LinkLocation,
-    LinkType, ListItem, ListType, Module, PartialElement, Tab, Table, VariableMap,
+    DefinitionListItem, Embed, FileSource, FloatAlignment, ImageSource, LinkLabel,
+    LinkLocation, LinkType, ListItem, ListType, Module, PartialElement, StandaloneButton,
+    Tab, Table, VariableMap,
 };
 use ref_map::*;
 use std::borrow::Cow;
@@ -74,11 +75,21 @@ pub enum Element<'t> {
     #[serde(skip)]
     Delayed(DelayedElement<'t>),
 
+    /// An authored physical-line content-section separator.
+    ///
+    /// This remains typed in every layout so runtime consumers can split
+    /// sections without reparsing source. Only the Wikidot HTML renderer emits
+    /// the legacy hidden div.
+    ContentSeparator,
+
     /// An element representing an HTML table.
     Table(Table<'t>),
 
     /// An element representing a tabview.
     TabView(Vec<Tab<'t>>),
+
+    /// A typed standalone action control with no authored executable behavior.
+    StandaloneButton(StandaloneButton<'t>),
 
     /// An element representing an arbitrary anchor.
     ///
@@ -124,7 +135,7 @@ pub enum Element<'t> {
     ///
     /// The "link" field is what the `<a>` points to, when the user clicks on the image.
     Image {
-        source: FileSource<'t>,
+        source: ImageSource<'t>,
         link: Option<LinkLocation<'t>>,
         alignment: Option<FloatAlignment>,
         attributes: AttributeMap<'t>,
@@ -257,9 +268,11 @@ pub enum Element<'t> {
 
     /// Element containing colored text.
     ///
-    /// The CSS designation of the color is specified, followed by the elements contained within.
+    /// The validated static CSS color and whether it applies to the background
+    /// are specified, followed by the elements contained within.
     Color {
         color: Cow<'t, str>,
+        background: bool,
         elements: Vec<Element<'t>>,
     },
 
@@ -335,6 +348,12 @@ pub enum Element<'t> {
 }
 
 impl Element<'_> {
+    /// Whether this is a typed authored content-section boundary.
+    #[inline]
+    pub const fn is_content_separator(&self) -> bool {
+        matches!(self, Self::ContentSeparator)
+    }
+
     /// Determines if the element is "unintentional whitespace".
     ///
     /// Specifically, it returns true if the element is:
@@ -361,8 +380,10 @@ impl Element<'_> {
             Element::Variable(_) => "Variable",
             Element::Email(_) => "Email",
             Element::Delayed(_) => "Delayed",
+            Element::ContentSeparator => "ContentSeparator",
             Element::Table(_) => "Table",
             Element::TabView(_) => "TabView",
+            Element::StandaloneButton(_) => "StandaloneButton",
             Element::Anchor { .. } => "Anchor",
             Element::AnchorName(_) => "AnchorName",
             Element::Link { .. } => "Link",
@@ -425,6 +446,7 @@ impl Element<'_> {
                     offset_elements(&mut tab.elements);
                 }
             }
+            Element::StandaloneButton(_) => {}
             Element::Anchor { elements, .. }
             | Element::Collapsible { elements, .. }
             | Element::Color { elements, .. }
@@ -465,7 +487,7 @@ impl Element<'_> {
                 }
                 PartialElement::WikidotEmptyInlineOwner
                 | PartialElement::InlineSizeOpen(_)
-                | PartialElement::InlineSizeClose
+                | PartialElement::InlineSizeClose(_)
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_) => {}
             },
@@ -491,8 +513,10 @@ impl Element<'_> {
             | Element::Variable(_)
             | Element::Email(_) => true,
             Element::Delayed(_) => true,
+            Element::ContentSeparator => false,
             Element::Table(_) => false,
             Element::TabView(_) => false,
+            Element::StandaloneButton(_) => true,
             Element::Anchor { .. }
             | Element::AnchorName(_)
             | Element::Link { .. }
@@ -549,9 +573,13 @@ impl Element<'_> {
             Element::Variable(name) => Element::Variable(string_to_owned(name)),
             Element::Email(email) => Element::Email(string_to_owned(email)),
             Element::Delayed(delayed) => Element::Delayed(delayed.to_owned()),
+            Element::ContentSeparator => Element::ContentSeparator,
             Element::Table(table) => Element::Table(table.to_owned()),
             Element::TabView(tabs) => {
                 Element::TabView(tabs.iter().map(|tab| tab.to_owned()).collect())
+            }
+            Element::StandaloneButton(button) => {
+                Element::StandaloneButton(button.to_owned())
             }
             Element::Anchor {
                 target,
@@ -690,8 +718,13 @@ impl Element<'_> {
                 format: option_string_to_owned(format),
                 hover: *hover,
             },
-            Element::Color { color, elements } => Element::Color {
+            Element::Color {
+                color,
+                background,
+                elements,
+            } => Element::Color {
                 color: string_to_owned(color),
+                background: *background,
                 elements: elements_to_owned(elements),
             },
             Element::Code(code_block) => Element::Code(code_block.to_owned()),

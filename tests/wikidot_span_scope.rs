@@ -30,7 +30,7 @@ fn contains_inline_control(elements: &[Element<'_>]) -> bool {
     elements.iter().any(|element| match element {
         Element::Partial(
             PartialElement::InlineSizeOpen(_)
-            | PartialElement::InlineSizeClose
+            | PartialElement::InlineSizeClose(_)
             | PartialElement::InlineSpanOpen(_)
             | PartialElement::InlineSpanClose(_),
         ) => true,

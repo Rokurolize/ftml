@@ -11,7 +11,7 @@ use crate::tree::{Alignment, AttributeMap, Container, ContainerType, ListType};
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum LineOwner {
     Quote { depth: usize },
-    List { ltype: ListType },
+    List { depth: usize, ltype: ListType },
 }
 
 #[derive(Debug)]
@@ -56,6 +56,7 @@ where
 
 pub(crate) fn try_consume_literal_list_alignment<'r, 't>(
     parser: &mut Parser<'r, 't>,
+    depth: usize,
     ltype: ListType,
 ) -> Result<Option<Element<'t>>, ParseError>
 where
@@ -78,7 +79,7 @@ where
         if body_start != BlockBodyStart::NextPhysicalLine {
             return Ok(None);
         }
-        if !first_matching_close_is_unprefixed(&candidate, close_name, ltype) {
+        if !first_matching_close_is_unprefixed(&candidate, close_name, depth, ltype) {
             return Ok(None);
         }
 
@@ -104,6 +105,7 @@ where
 fn first_matching_close_is_unprefixed(
     parser: &Parser<'_, '_>,
     close_name: &str,
+    depth: usize,
     ltype: ListType,
 ) -> bool {
     let marker = match ltype {
@@ -117,7 +119,14 @@ fn first_matching_close_is_unprefixed(
         if line_matches_close(line, close_name) {
             return true;
         }
-        let Some(body) = line.strip_prefix(marker) else {
+        let Some(body) = line.get(depth..).filter(|_| {
+            line.as_bytes()[..depth]
+                .iter()
+                .all(|byte| matches!(byte, b' ' | b'\t'))
+        }) else {
+            continue;
+        };
+        let Some(body) = body.strip_prefix(marker) else {
             continue;
         };
         let body = body.trim_start_matches([' ', '\t']);
@@ -193,6 +202,7 @@ where
         }
     }
     let mut append_unquoted_close_break = false;
+    let mut residual_list_close = None;
     let body = gather_paragraphs(
         parser,
         RULE_PAGE,
@@ -202,6 +212,7 @@ where
                 close_name,
                 owner,
                 &mut append_unquoted_close_break,
+                &mut residual_list_close,
             )
         }),
     );
@@ -216,6 +227,9 @@ where
     parser.set_quote_body_cursor(previous_cursor);
     let (mut body, errors, _) = body?.into();
     trim_trailing_physical_break(&mut body);
+    if let Some(ltype) = residual_list_close {
+        append_residual_list_close(&mut body, ltype);
+    }
 
     let control = match head {
         BlockHead::Div => None,
@@ -307,6 +321,26 @@ fn trim_trailing_physical_break(elements: &mut Vec<Element<'_>>) {
     }
 }
 
+fn append_residual_list_close<'t>(elements: &mut Vec<Element<'t>>, ltype: ListType) {
+    let marker = match ltype {
+        ListType::Bullet => "*",
+        ListType::Numbered => "#",
+        ListType::Generic => return,
+    };
+    if let Some(Element::Container(container)) = elements.last_mut()
+        && container.ctype() == ContainerType::Paragraph
+    {
+        container.elements_mut().push(Element::LineBreak);
+        container.elements_mut().push(text!(marker));
+        return;
+    }
+    elements.push(Element::Container(Container::new(
+        ContainerType::Paragraph,
+        vec![text!(marker)],
+        AttributeMap::new(),
+    )));
+}
+
 fn current_line_has_quote_owner(parser: &Parser<'_, '_>, required_depth: usize) -> bool {
     parser.start_of_line()
         && parser.current().token == Token::Quote
@@ -318,6 +352,7 @@ fn consume_matching_close<'r, 't>(
     close_name: &str,
     owner: LineOwner,
     append_unquoted_close_break: &mut bool,
+    residual_list_close: &mut Option<ListType>,
 ) -> Result<bool, ParseError>
 where
     'r: 't,
@@ -355,6 +390,12 @@ where
         if matches!(owner, LineOwner::Quote { .. }) && !prefixed && trailing_line_break {
             *append_unquoted_close_break = true;
         }
+        if let LineOwner::List { depth, ltype } = owner
+            && depth > 0
+            && prefixed
+        {
+            *residual_list_close = Some(ltype);
+        }
         parser.update(&close);
         return Ok(true);
     }
@@ -377,7 +418,15 @@ fn consume_owner_prefix(
             parser.get_optional_space()?;
             Ok(true)
         }
-        LineOwner::List { ltype } => {
+        LineOwner::List { depth, ltype } => {
+            if depth > 0 {
+                if parser.current().token != Token::Whitespace
+                    || parser.current().slice.len() != depth
+                {
+                    return Ok(false);
+                }
+                parser.step()?;
+            }
             let expected = match ltype {
                 ListType::Bullet => Token::BulletItem,
                 ListType::Numbered => Token::NumberedItem,

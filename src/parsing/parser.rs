@@ -180,6 +180,11 @@ pub struct Parser<'r, 't> {
 
     // Flags
     accepts_partial: AcceptsPartial,
+    // Only the next consume depth is a direct child of the partial owner.
+    // Zero means inactive. The parser limit is 1024, so a compact u16 keeps
+    // this ownership state out of every deep recursive frame's pointer-sized
+    // footprint.
+    accepts_partial_depth: u16,
     in_footnote: bool, // Whether we're currently inside [[footnote]] ... [[/footnote]].
     has_footnote_block: bool, // Whether a [[footnoteblock]] was created.
     start_of_line: bool,
@@ -248,6 +253,7 @@ impl<'r, 't> Parser<'r, 't> {
             #[cfg(test)]
             lost_owner_scan_token_visits: Rc::new(Cell::new(0)),
             accepts_partial: AcceptsPartial::None,
+            accepts_partial_depth: 0,
             in_footnote: false,
             has_footnote_block: false,
             start_of_line: true,
@@ -331,6 +337,13 @@ impl<'r, 't> Parser<'r, 't> {
     #[inline]
     pub fn accepts_partial(&self) -> AcceptsPartial {
         self.accepts_partial
+    }
+
+    #[inline]
+    pub(crate) fn accepts_partial_here(&self, value: AcceptsPartial) -> bool {
+        self.accepts_partial == value
+            && self.accepts_partial_depth != 0
+            && usize::from(self.accepts_partial_depth) == self.depth
     }
 
     #[inline]
@@ -676,6 +689,23 @@ impl<'r, 't> Parser<'r, 't> {
     }
 
     #[inline]
+    pub(crate) fn set_accepts_partial_child(&mut self, value: AcceptsPartial) {
+        self.accepts_partial = value;
+        self.accepts_partial_depth =
+            u16::try_from(self.depth + 1).expect("parser depth limit fits in u16");
+    }
+
+    #[inline]
+    pub(crate) fn accepts_partial_depth(&self) -> u16 {
+        self.accepts_partial_depth
+    }
+
+    #[inline]
+    pub(crate) fn set_accepts_partial_depth(&mut self, value: u16) {
+        self.accepts_partial_depth = value;
+    }
+
+    #[inline]
     pub fn set_footnote_flag(&mut self, value: bool) {
         self.in_footnote = value;
     }
@@ -896,6 +926,7 @@ impl<'r, 't> Parser<'r, 't> {
     pub fn update(&mut self, parser: &Parser<'r, 't>) {
         // Flags
         self.accepts_partial = parser.accepts_partial;
+        self.accepts_partial_depth = parser.accepts_partial_depth;
         self.in_footnote = parser.in_footnote;
         self.has_footnote_block = parser.has_footnote_block;
         self.start_of_line = parser.start_of_line;
@@ -1434,4 +1465,13 @@ fn parser_append_shared_items_and_optional_spaces_cover_helpers() {
     );
     assert_eq!(parser.remove_footnotes(), vec![vec![text!("note")]]);
     assert_eq!(parser.remove_bibliographies().next_index(), 1);
+}
+
+#[test]
+fn parser_state_fits_the_bounded_deep_parse_stack_budget() {
+    let size = std::mem::size_of::<Parser<'static, 'static>>();
+    assert!(
+        size <= 304,
+        "Parser grew to {size} bytes; deep recursive parsing requires at most 304 bytes",
+    );
 }

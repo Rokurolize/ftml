@@ -69,6 +69,21 @@ fn block_rule_accepts_name(block_rule: &BlockRule, name: &str) -> bool {
         .any(|accepted| name.eq_ignore_ascii_case(accepted))
 }
 
+fn wikidot_alias_pair_cache_name(block_rule: &BlockRule) -> &'static str {
+    match block_rule.name {
+        "block-div" => "block-div-alias-pair",
+        "block-span" => "block-span-alias-pair",
+        _ => panic!("alias pairing is only defined for div and span"),
+    }
+}
+
+fn wikidot_alias_close_is_exact(source: &str, name: &str) -> bool {
+    source.len() == name.len() + 5
+        && source.starts_with("[[/")
+        && source.ends_with("]]")
+        && source[3..source.len() - 2].eq_ignore_ascii_case(name)
+}
+
 fn wikidot_requires_next_physical_line(block_rule: &BlockRule) -> bool {
     matches!(
         block_rule.name,
@@ -250,6 +265,7 @@ where
             ParseCondition::current(Token::LineBreak),
             ParseCondition::current(Token::ParagraphBreak),
             ParseCondition::current(Token::RightBlock),
+            ParseCondition::current(Token::RightLink),
         ];
         let rule = self.rule();
         let stops = &end_conditions;
@@ -1170,6 +1186,147 @@ where
 
             parser.step().expect("missing input end");
             first = false;
+        }
+    }
+
+    /// Determine whether a scored Wikidot `div_` or `span_` opener owns a
+    /// compatible ordinary closer.
+    ///
+    /// Wikidot does not normalize underscore closers. A scored opener accepts
+    /// the ordinary closer, while its same-spelling underscore closer rejects
+    /// that opener. Nested ordinary and scored owners still pair independently,
+    /// so this scan records every scored opener it resolves instead of retrying
+    /// the recursive block parser for each suffix.
+    pub(crate) fn wikidot_alias_has_compatible_close(
+        &self,
+        block_rule: &BlockRule,
+        owner_start: usize,
+    ) -> bool {
+        debug_assert!(self.settings().layout.legacy());
+        debug_assert!(matches!(block_rule.name, "block-div" | "block-span"));
+
+        let cache_name = wikidot_alias_pair_cache_name(block_rule);
+        let root_key = (cache_name, owner_start, false);
+        if let Some(outcome) = self.block_end_scan_outcome(root_key) {
+            return outcome;
+        }
+
+        let mut scan = self.clone();
+        let mut owners = vec![(owner_start, true)];
+
+        loop {
+            if scan.current().token == Token::LeftComment {
+                let mut comment = scan.clone();
+                if crate::parsing::collect::consume_valid_comment(&mut comment).is_ok() {
+                    scan.update(&comment);
+                    continue;
+                }
+            }
+
+            if scan.current().token == Token::LeftBlockEnd {
+                let close_start = scan.current().span.start;
+                let mut close = scan.clone();
+                if let Ok(name) = close.get_end_block() {
+                    let close_end = close.current().span.start;
+                    if !wikidot_alias_close_is_exact(
+                        &scan.full_text().inner()[close_start..close_end],
+                        name,
+                    ) {
+                        scan.update(&close);
+                        continue;
+                    }
+                    let scored_close = name.ends_with('_');
+                    let base_name = name.strip_suffix('_').unwrap_or(name);
+                    if block_rule_accepts_name(block_rule, base_name) {
+                        if scored_close {
+                            if owners.last().is_some_and(|(_, scored)| *scored) {
+                                let (resolved_start, _) = owners
+                                    .pop()
+                                    .expect("scored closer requires an open owner");
+                                self.cache_block_end_scan_outcomes(
+                                    cache_name,
+                                    &[(resolved_start, false)],
+                                    false,
+                                );
+                                if owners.is_empty() {
+                                    return false;
+                                }
+                            }
+                        } else if let Some((resolved_start, scored)) = owners.pop() {
+                            if scored {
+                                self.cache_block_end_scan_outcomes(
+                                    cache_name,
+                                    &[(resolved_start, false)],
+                                    true,
+                                );
+                            }
+                            if owners.is_empty() {
+                                return true;
+                            }
+                        }
+                        scan.update(&close);
+                        continue;
+                    }
+                }
+            }
+
+            if scan.current().token == Token::LeftBlock {
+                let opener_start = scan.current().span.start;
+                let mut opener = scan.clone();
+                if opener
+                    .get_token(Token::LeftBlock, ParseErrorKind::BlockExpectedEnd)
+                    .is_ok()
+                    && opener.get_optional_space().is_ok()
+                    && let Ok((name, in_head)) = opener.get_block_name(false)
+                {
+                    let scored = name.ends_with('_');
+                    let base_name = name.strip_suffix('_').unwrap_or(name);
+                    let scored_span_empty_spaced_head =
+                        block_rule.name == "block-span" && scored && in_head && {
+                            let mut head = opener.clone();
+                            head.get_optional_space().is_ok()
+                                && head.current().token == Token::RightBlock
+                        };
+                    let scored_span_residual_opener = block_rule.name == "block-span"
+                        && scored
+                        && opener.current().token == Token::RightLink
+                        && opener.current().slice == "]]]";
+                    if scored_span_residual_opener {
+                        opener.step().expect("residual opener has following input");
+                    }
+                    if block_rule_accepts_name(block_rule, base_name)
+                        && !scored_span_empty_spaced_head
+                        && (scored_span_residual_opener
+                            || opener.get_optional_space().is_ok()
+                                && opener
+                                    .get_head_map_with_body_start_wikidot(
+                                        block_rule, in_head,
+                                    )
+                                    .is_ok_and(|(arguments, _)| {
+                                        !arguments.has_empty_key()
+                                    }))
+                    {
+                        owners.push((opener_start, scored));
+                        scan.update(&opener);
+                        continue;
+                    }
+                }
+            }
+
+            if scan.current().token == Token::InputEnd {
+                for (unclosed_start, scored) in owners {
+                    if scored {
+                        self.cache_block_end_scan_outcomes(
+                            cache_name,
+                            &[(unclosed_start, false)],
+                            false,
+                        );
+                    }
+                }
+                return false;
+            }
+
+            scan.step().expect("missing input end");
         }
     }
 

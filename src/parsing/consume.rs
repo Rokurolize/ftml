@@ -73,10 +73,13 @@ where
         return Ok(None);
     };
     let normalized = name.strip_suffix('_').unwrap_or(name);
+    let scored_close = normalized.len() != name.len();
     let start = parser.current().span.start;
     let end = close.current().span.start;
     let close_source = &parser.full_text().inner()[start..end];
-    let element = if normalized.eq_ignore_ascii_case("size") {
+    let element = if scored_close && normalized.eq_ignore_ascii_case("span") {
+        text!(close_source)
+    } else if normalized.eq_ignore_ascii_case("size") {
         Element::Partial(PartialElement::InlineSizeClose(cow!(close_source)))
     } else if normalized.eq_ignore_ascii_case("span") {
         Element::Partial(PartialElement::InlineSpanClose(cow!(close_source)))
@@ -91,6 +94,9 @@ where
     };
 
     parser.update(&close);
+    if !scored_close && normalized.eq_ignore_ascii_case("span") {
+        parser.leave_wikidot_span_body();
+    }
     Ok(Some(if residual_close_bracket {
         Elements::Multiple(vec![element, text!("]")])
     } else {

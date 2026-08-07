@@ -113,18 +113,19 @@ fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: b
         ) {
             elements.pop();
         }
-        let mut previous_was_div = false;
+        let mut previous_was_scored_div = false;
         elements.retain(|element| {
-            if previous_was_div
+            if previous_was_scored_div
                 && (matches!(element, Element::LineBreak | Element::LineBreaks(_))
                     || matches!(element, Element::Text(text) if text == "\n"))
             {
                 return false;
             }
-            previous_was_div = matches!(
-                element,
-                Element::Container(container) if container.ctype() == ContainerType::Div
-            );
+            previous_was_scored_div = matches!(element, Element::Container(container)
+                if container.ctype() == ContainerType::Div
+                    && !container.elements().iter().any(|child| matches!(child,
+                        Element::Container(paragraph)
+                            if paragraph.ctype() == ContainerType::Paragraph)));
             true
         });
         return;
@@ -133,33 +134,6 @@ fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: b
     if matches!(elements.last(), Some(Element::LineBreak)) {
         elements.pop();
     }
-    let mut cleaned = Vec::with_capacity(elements.len());
-    for element in elements.drain(..) {
-        let line_break_after_div =
-            matches!(element, Element::LineBreak | Element::LineBreaks(_))
-                && cleaned
-                    .iter()
-                    .rev()
-                    .find(|previous| {
-                        !matches!(
-                            previous,
-                            Element::Text(text)
-                                if !text.is_empty()
-                                    && text.chars().all(|character| character == '\n')
-                        )
-                    })
-                    .is_some_and(|previous| {
-                        matches!(
-                            previous,
-                            Element::Container(container)
-                                if container.ctype() == ContainerType::Div
-                        )
-                    });
-        if !line_break_after_div {
-            cleaned.push(element);
-        }
-    }
-    *elements = cleaned;
 }
 
 fn parse_fn<'r, 't>(
@@ -184,6 +158,12 @@ fn parse_fn<'r, 't>(
     let (arguments, mut body_start) = head;
     if parser.settings().layout.legacy() && arguments.has_empty_key() {
         return recover_wikidot_empty_key_candidate(parser, &BLOCK_DIV, owner_start);
+    }
+    if parser.settings().layout.legacy()
+        && flag_score
+        && !parser.wikidot_alias_has_compatible_close(&BLOCK_DIV, owner_start)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     if parser.settings().layout.legacy()
         && parser.in_wikidot_simple_table_cell()
@@ -271,12 +251,7 @@ fn parse_fn<'r, 't>(
         && !parser.in_wikidot_div_body()
         && !parser.has_body_end_block(&BLOCK_DIV)
     {
-        let kind = if flag_score {
-            ParseErrorKind::RuleFailed
-        } else {
-            ParseErrorKind::BlockExpectedEnd
-        };
-        return Err(parser.make_err(kind));
+        return Err(parser.make_err(ParseErrorKind::BlockExpectedEnd));
     }
     if parser.settings().layout.legacy()
         && !head_started_physical_line
@@ -300,6 +275,9 @@ fn parse_fn<'r, 't>(
     // Discard paragraph_safe, since divs never are.
     if parser.settings().layout.legacy() {
         parser.enter_wikidot_div_body();
+        if flag_score {
+            parser.enter_wikidot_scored_div_body();
+        }
     }
     let parse_as_paragraphs =
         wrap_paragraphs || parser.settings().layout.legacy() && flag_score;
@@ -309,6 +287,9 @@ fn parse_fn<'r, 't>(
         body_start,
     );
     if parser.settings().layout.legacy() {
+        if flag_score {
+            parser.leave_wikidot_scored_div_body();
+        }
         parser.leave_wikidot_div_body();
     }
     let (mut elements, errors, _) = body?.into();

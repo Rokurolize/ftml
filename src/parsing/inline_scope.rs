@@ -259,7 +259,9 @@ fn lower_root_sequence<'t>(
             let (_, _, group) = paragraph_group.get_or_insert_with(|| {
                 (
                     reopens_paragraph_after_separator
-                        || !starts_in_scored_span && !starts_in_inline_scope,
+                        || !effects.scored_span_opened_at_start
+                            && !starts_in_scored_span
+                            && !starts_in_inline_scope,
                     paragraph_attributes,
                     Vec::new(),
                 )
@@ -499,17 +501,25 @@ fn lower_sequence<'t>(
         if let Element::Partial(PartialElement::InlineSpanOpen(mut attributes)) = element
         {
             let at_start = output.is_empty() && run.is_empty();
+            let scored = attributes.remove("data-ftml-score-span").is_some();
+            if scored {
+                while matches!(
+                    run.last(),
+                    Some(Element::LineBreak | Element::LineBreaks(_))
+                ) {
+                    run.pop();
+                }
+            }
             flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
             let current = *ordinal;
             *ordinal += 1;
             if valid.contains(&current) {
-                let scored = attributes.remove("data-ftml-score-span").is_some();
                 active.push(ScopeKind::Span, ContainerType::Span, attributes, scored);
                 if matches!(source.peek(), Some(Element::Text(text)) if text == " ") {
                     source.next();
                 }
                 if scored {
-                    effects.scored_span_opened_at_start = at_start;
+                    effects.scored_span_opened_at_start |= at_start;
                     *trim_next_break = true;
                 }
             }

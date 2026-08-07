@@ -1,11 +1,13 @@
 use super::Parser;
 use crate::parsing::Token;
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone)]
 pub(super) struct WikidotState {
     // Parser recursion is capped well below `u16::MAX`; compact counters keep
     // this state out of every recursive parser frame's pointer-sized padding.
     div_body_depth: u16,
+    scored_div_body_depth: u16,
+    span_body_scores: Vec<bool>,
     bibliography_body_depth: u16,
     in_note_body: bool,
     literal_triple_link_depth: u16,
@@ -48,6 +50,34 @@ impl Parser<'_, '_> {
     #[inline]
     pub(crate) fn leave_wikidot_div_body(&mut self) {
         self.wikidot.div_body_depth = self.wikidot.div_body_depth.saturating_sub(1);
+    }
+
+    #[inline]
+    pub(crate) fn enter_wikidot_scored_div_body(&mut self) {
+        self.wikidot.scored_div_body_depth =
+            self.wikidot.scored_div_body_depth.saturating_add(1);
+    }
+
+    #[inline]
+    pub(crate) fn leave_wikidot_scored_div_body(&mut self) {
+        self.wikidot.scored_div_body_depth =
+            self.wikidot.scored_div_body_depth.saturating_sub(1);
+    }
+
+    #[inline]
+    pub(crate) fn enter_wikidot_span_body(&mut self, scored: bool) {
+        self.wikidot.span_body_scores.push(scored);
+    }
+
+    #[inline]
+    pub(crate) fn leave_wikidot_span_body(&mut self) {
+        self.wikidot.span_body_scores.pop();
+    }
+
+    #[inline]
+    pub(crate) fn in_wikidot_literal_alias_body(&self) -> bool {
+        self.wikidot.scored_div_body_depth > 0
+            || self.wikidot.span_body_scores.contains(&true)
     }
 
     #[inline]

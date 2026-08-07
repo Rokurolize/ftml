@@ -236,13 +236,40 @@ where
     }
 
     parser.get_optional_space()?;
+    let scored_span_residual_opener = parser.settings().layout.legacy()
+        && block.name == "block-span"
+        && flag_score
+        && parser.current().token == Token::RightLink
+        && parser.current().slice == "]]]";
+    if scored_span_residual_opener {
+        parser.step()?;
+    }
 
     // Run the parse function until the end.
     //
     // This is responsible for parsing any arguments,
     // and terminating the block (the ']]' token),
     // then processing the body (if any) and tail block.
-    (block.parse_fn)(parser, name, flag_star, flag_score, in_head)
+    let parsed = (block.parse_fn)(
+        parser,
+        name,
+        flag_star,
+        flag_score,
+        in_head && !scored_span_residual_opener,
+    )?;
+    if scored_span_residual_opener {
+        Ok(parsed.map(|elements| {
+            let mut elements = match elements {
+                Elements::Multiple(elements) => elements,
+                Elements::Single(element) => vec![element],
+                Elements::None => Vec::new(),
+            };
+            elements.insert(1.min(elements.len()), text!("]"));
+            Elements::Multiple(elements)
+        }))
+    } else {
+        Ok(parsed)
+    }
 }
 
 fn wikidot_block_has_physical_line_ownership(

@@ -966,7 +966,7 @@ impl<'r, 't> Parser<'r, 't> {
         self.start_of_line = parser.start_of_line;
         self.native_blockquote_depth = parser.native_blockquote_depth;
         self.quote_body_cursor = parser.quote_body_cursor;
-        self.wikidot = parser.wikidot;
+        self.wikidot.clone_from(&parser.wikidot);
 
         // Token pointers
         self.current = parser.current;

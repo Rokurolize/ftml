@@ -50,10 +50,24 @@ fn parse_fn<'r, 't>(
     let owner_start = source[..name_start]
         .rfind("[[")
         .expect("parsed span name follows its opener");
+    let scored_empty_spaced_head =
+        parser.settings().layout.legacy() && flag_score && in_head && {
+            let mut head = parser.clone();
+            head.get_optional_space().is_ok() && head.current().token == Token::RightBlock
+        };
     let generated = parser.generated_until_right_block();
     let arguments = parser.get_head_map_wikidot(&BLOCK_SPAN, in_head)?;
+    if scored_empty_spaced_head {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     if parser.settings().layout.legacy() && arguments.has_empty_key() {
         return recover_wikidot_empty_key_candidate(parser, &BLOCK_SPAN, owner_start);
+    }
+    if parser.settings().layout.legacy()
+        && flag_score
+        && !parser.wikidot_alias_has_compatible_close(&BLOCK_SPAN, owner_start)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     if generated
         .iter()
@@ -98,6 +112,7 @@ fn parse_fn<'r, 't>(
             attributes.insert("data-ftml-score-span", cow!(""));
         }
         let span = Element::Partial(PartialElement::InlineSpanOpen(attributes));
+        parser.enter_wikidot_span_body(flag_score);
         return if generated.is_empty() {
             ok!(span)
         } else {

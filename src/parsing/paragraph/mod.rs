@@ -122,7 +122,8 @@ where
         let empty_quote_control =
             parser.current().token == Token::Quote && parser.start_of_line();
         let explicit_list_opener = wikidot_explicit_list_opener(parser);
-        let div_opener = wikidot_div_opener(parser);
+        let div_score = wikidot_div_score(parser);
+        let div_opener = div_score.is_some();
         let inline_div_opener = div_opener && !parser.start_of_line();
         stack.record_next_element_line_start(
             parser.start_of_line()
@@ -230,6 +231,7 @@ where
                         && error.rule() == "block-iftags"
                 });
             let literal_div_line = parser.settings().layout.legacy()
+                && div_score != Some(true)
                 && errors.iter().any(|error| {
                     error.kind() == ParseErrorKind::RuleFailed
                         && error.rule() == "block-div"
@@ -312,27 +314,28 @@ where
     })
 }
 
-fn wikidot_div_opener<'r, 't>(parser: &Parser<'r, 't>) -> bool
+fn wikidot_div_score<'r, 't>(parser: &Parser<'r, 't>) -> Option<bool>
 where
     'r: 't,
 {
     if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlock {
-        return false;
+        return None;
     }
 
     let source = parser.full_text().inner();
     let candidate = &source[parser.current().span.start..];
     let Some(after_open) = candidate.strip_prefix("[[") else {
-        return false;
+        return None;
     };
     let after_open = after_open.trim_start_matches([' ', '\t']);
     let name_end = after_open
         .find(|character: char| character.is_whitespace() || character == ']')
         .unwrap_or(after_open.len());
     let name = &after_open[..name_end];
-    name.strip_suffix('_')
-        .unwrap_or(name)
-        .eq_ignore_ascii_case("div")
+    let (name, scored) = name
+        .strip_suffix('_')
+        .map_or((name, false), |name| (name, true));
+    name.eq_ignore_ascii_case("div").then_some(scored)
 }
 
 fn elements_contain_div(elements: &Elements<'_>) -> bool {

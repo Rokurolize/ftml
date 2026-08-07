@@ -83,6 +83,84 @@ fn wikidot_div_follows_inline_structural_close(
             .is_some_and(|close| close.eq_ignore_ascii_case("[[/ul]]"))
 }
 
+// Keep post-body normalization out of the recursively nested div parser's
+// stack frame. The deep parser deliberately supports 1024 nested owners on a
+// bounded worker stack.
+#[inline(never)]
+fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: bool) {
+    if flag_score {
+        let item_count = elements.len();
+        let mut unwrapped = Vec::with_capacity(item_count.saturating_mul(2));
+        for (index, element) in elements.drain(..).enumerate() {
+            if index > 0 {
+                unwrapped.push(text!("\n"));
+            }
+            match element {
+                Element::Container(container)
+                    if container.ctype() == ContainerType::Paragraph
+                        && (index == 0 || index + 1 == item_count) =>
+                {
+                    unwrapped.extend(Vec::<Element>::from(container));
+                }
+                element => unwrapped.push(element),
+            }
+        }
+        *elements = unwrapped;
+        while matches!(
+            elements.last(),
+            Some(Element::LineBreak | Element::LineBreaks(_))
+        ) {
+            elements.pop();
+        }
+        let mut previous_was_div = false;
+        elements.retain(|element| {
+            if previous_was_div
+                && (matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                    || matches!(element, Element::Text(text) if text == "\n"))
+            {
+                return false;
+            }
+            previous_was_div = matches!(
+                element,
+                Element::Container(container) if container.ctype() == ContainerType::Div
+            );
+            true
+        });
+        return;
+    }
+
+    if matches!(elements.last(), Some(Element::LineBreak)) {
+        elements.pop();
+    }
+    let mut cleaned = Vec::with_capacity(elements.len());
+    for element in elements.drain(..) {
+        let line_break_after_div =
+            matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                && cleaned
+                    .iter()
+                    .rev()
+                    .find(|previous| {
+                        !matches!(
+                            previous,
+                            Element::Text(text)
+                                if !text.is_empty()
+                                    && text.chars().all(|character| character == '\n')
+                        )
+                    })
+                    .is_some_and(|previous| {
+                        matches!(
+                            previous,
+                            Element::Container(container)
+                                if container.ctype() == ContainerType::Div
+                        )
+                    });
+        if !line_break_after_div {
+            cleaned.push(element);
+        }
+    }
+    *elements = cleaned;
+}
+
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &'t str,
@@ -103,6 +181,9 @@ fn parse_fn<'r, 't>(
 
     let head = parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;
     let (arguments, mut body_start) = head;
+    if parser.settings().layout.legacy() && arguments.has_empty_key() {
+        return recover_wikidot_empty_key_candidate(parser, &BLOCK_DIV, owner_start);
+    }
     if parser.settings().layout.legacy()
         && parser.settings().mode != WikitextMode::List
         && !parser.in_wikidot_div_body()
@@ -221,76 +302,8 @@ fn parse_fn<'r, 't>(
         parser.leave_wikidot_div_body();
     }
     let (mut elements, errors, _) = body?.into();
-    if parser.settings().layout.legacy() && flag_score {
-        let item_count = elements.len();
-        let mut unwrapped = Vec::with_capacity(item_count.saturating_mul(2));
-        for (index, element) in elements.drain(..).enumerate() {
-            if index > 0 {
-                unwrapped.push(text!("\n"));
-            }
-            match element {
-                Element::Container(container)
-                    if container.ctype() == ContainerType::Paragraph
-                        && (index == 0 || index + 1 == item_count) =>
-                {
-                    unwrapped.extend(Vec::<Element>::from(container));
-                }
-                element => unwrapped.push(element),
-            }
-        }
-        elements = unwrapped;
-        while matches!(
-            elements.last(),
-            Some(Element::LineBreak | Element::LineBreaks(_))
-        ) {
-            elements.pop();
-        }
-        let mut previous_was_div = false;
-        elements.retain(|element| {
-            if previous_was_div
-                && (matches!(element, Element::LineBreak | Element::LineBreaks(_))
-                    || matches!(element, Element::Text(text) if text == "\n"))
-            {
-                return false;
-            }
-            previous_was_div = matches!(
-                element,
-                Element::Container(container)
-                    if container.ctype() == ContainerType::Div
-            );
-            true
-        });
-    } else if parser.settings().layout.legacy() {
-        if matches!(elements.last(), Some(Element::LineBreak)) {
-            elements.pop();
-        }
-        let mut cleaned = Vec::with_capacity(elements.len());
-        for element in elements.drain(..) {
-            let line_break_after_div =
-                matches!(element, Element::LineBreak | Element::LineBreaks(_))
-                    && cleaned
-                        .iter()
-                        .rev()
-                        .find(|previous| {
-                            !matches!(
-                                previous,
-                                Element::Text(text)
-                                    if !text.is_empty()
-                                        && text.chars().all(|character| character == '\n')
-                            )
-                        })
-                        .is_some_and(|previous| {
-                            matches!(
-                                previous,
-                                Element::Container(container)
-                                    if container.ctype() == ContainerType::Div
-                            )
-                        });
-            if !line_break_after_div {
-                cleaned.push(element);
-            }
-        }
-        elements = cleaned;
+    if parser.settings().layout.legacy() {
+        normalize_wikidot_div_elements(&mut elements, flag_score);
     }
 
     if parser.settings().layout.legacy() && arguments.is_empty() && elements.is_empty() {

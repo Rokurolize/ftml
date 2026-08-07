@@ -29,6 +29,7 @@ use super::parser::QuoteBodyLineStatus;
 use super::prelude::*;
 use super::rule::Rule;
 use super::token::Token;
+use crate::tree::ContainerType;
 
 /// Wrapper type to satisfy the issue with generic closure types.
 ///
@@ -121,6 +122,8 @@ where
         let empty_quote_control =
             parser.current().token == Token::Quote && parser.start_of_line();
         let explicit_list_opener = wikidot_explicit_list_opener(parser);
+        let div_opener = wikidot_div_opener(parser);
+        let inline_div_opener = div_opener && !parser.start_of_line();
         let consumed = match parser.current().token {
             Token::InputEnd => {
                 if close_condition_fn.is_some() {
@@ -198,9 +201,16 @@ where
 
         if let Some(consumed) = consumed {
             let (elements, mut errors, paragraph_safe) = consumed.into();
+            let active_div = elements_contain_div(&elements);
             let list_has_same_line_residual = explicit_list_opener
                 && !paragraph_safe
                 && elements_end_with_list(&elements)
+                && !matches!(
+                    parser.current().token,
+                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                );
+            let div_has_same_line_residual = div_opener
+                && active_div
                 && !matches!(
                     parser.current().token,
                     Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
@@ -220,6 +230,9 @@ where
             if complete_raw_line_break && elements_begin_with_wikidot_center(&elements) {
                 stack.push_element(Element::LineBreak, true);
             }
+            if inline_div_opener && active_div {
+                stack.mark_wikidot_continued_block_boundary();
+            }
             if empty_quote_control && !paragraph_safe && elements.is_empty() {
                 stack.end_paragraph();
             } else {
@@ -227,6 +240,9 @@ where
             }
             if list_has_same_line_residual {
                 stack.mark_next_unwrapped_after_block();
+            }
+            if div_has_same_line_residual {
+                stack.mark_wikidot_same_line_div_residual();
             }
             if complete_raw_line_break {
                 stack.clear_wikidot_complete_raw_line_occupancy();
@@ -285,6 +301,43 @@ where
         let name = name.strip_suffix('_').unwrap_or(name);
         name.eq_ignore_ascii_case("ol") || name.eq_ignore_ascii_case("ul")
     })
+}
+
+fn wikidot_div_opener<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlock {
+        return false;
+    }
+
+    let source = parser.full_text().inner();
+    let candidate = &source[parser.current().span.start..];
+    let Some(after_open) = candidate.strip_prefix("[[") else {
+        return false;
+    };
+    let after_open = after_open.trim_start_matches([' ', '\t']);
+    let name_end = after_open
+        .find(|character: char| character.is_whitespace() || character == ']')
+        .unwrap_or(after_open.len());
+    let name = &after_open[..name_end];
+    name.strip_suffix('_')
+        .unwrap_or(name)
+        .eq_ignore_ascii_case("div")
+}
+
+fn elements_contain_div(elements: &Elements<'_>) -> bool {
+    let is_div = |element: &Element<'_>| {
+        matches!(
+            element,
+            Element::Container(container) if container.ctype() == ContainerType::Div
+        )
+    };
+    match elements {
+        Elements::None => false,
+        Elements::Single(element) => is_div(element),
+        Elements::Multiple(elements) => elements.iter().any(is_div),
+    }
 }
 
 fn elements_end_with_list(elements: &Elements<'_>) -> bool {

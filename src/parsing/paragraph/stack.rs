@@ -166,6 +166,15 @@ impl<'t> ParagraphStack<'t> {
     }
 
     #[inline]
+    pub(crate) fn mark_wikidot_same_line_div_residual(&mut self) {
+        if self.wikidot {
+            self.current.push(text!("\n"));
+            self.current_unwrapped = true;
+            self.unwrapped_after_block_line = true;
+        }
+    }
+
+    #[inline]
     pub(crate) fn mark_wikidot_literal_div_line(&mut self) {
         if self.wikidot && !self.wikidot_literal_iftags_line {
             if !self.finished.is_empty() && !self.current.is_empty() {

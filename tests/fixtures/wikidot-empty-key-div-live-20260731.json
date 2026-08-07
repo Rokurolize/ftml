@@ -1,0 +1,38 @@
+{
+  "schema": "ftml.wikidot_empty_key_div_live_observation.v1",
+  "transport": "anonymous edit/PagePreviewModule",
+  "mutated_server_state": false,
+  "reference_tree": "59f18f01a270782e6ac6b36c569593ecbc051758",
+  "evidence": [
+    "/mnt/oracle-store/wjlab/issue-scout-20260731/v7-existing-live-current/comparison.json",
+    "/mnt/oracle-store/wjlab/issue-scout-20260731/v7-full-syntax/analysis.json",
+    "/mnt/oracle-store/wjlab/issue-scout-20260731/v7-full-syntax/issue-assignment.json"
+  ],
+  "rows": [
+    {
+      "case_id": "record--70c72841e3511ad3ea1bcec8",
+      "source": "[[div =\"value\"]]body[[/div]]",
+      "source_sha256": "70c72841e3511ad3ea1bcec8601a4e7f1abc1c9880652a14d3eeb2e315320aaa",
+      "html": "<p>[[div =&quot;value&quot;]]body[[/div]]</p>",
+      "text": "[[div =\"value\"]]body[[/div]]"
+    },
+    {
+      "case_id": "codex-ftml-v7-20260513-170309-case-000287-block-div-div",
+      "source": "start-[[div]]\nv7 body\n[[/div]]-middle\n\n[[div]]\nend\n[[/div]]",
+      "source_sha256": "1ccef74390b2ca738a8abd5437b86c775618f69291937b51f511610e950737b1",
+      "html": "start-\n<div><p>v7 body</p></div>\n-middle\n<div><p>end</p></div>"
+    },
+    {
+      "case_id": "codex-ftml-v7-20260513-170309-case-000293-block-div-div",
+      "source": "[[div]]\nouter [[bold]]inner\n[[/div]][[/bold]]",
+      "source_sha256": "f9b61684c738b9d4ef0b9851f5a0a39c16db8f5816535f21f7523dd9614b198d",
+      "html": "<div><p>outer [[bold]]inner</p></div>\n[[/bold]]"
+    },
+    {
+      "case_id": "codex-ftml-v7-20260513-170309-case-000295-block-div-div",
+      "source": "[[div class=\"\"]]\nv7 body\n[[/div]]",
+      "source_sha256": "92d5bbeb52c1af33e19720aa8d4693fc5d041d91d34f716aaf165aa4bb8ee738",
+      "html": "<div><p>v7 body</p></div>"
+    }
+  ]
+}

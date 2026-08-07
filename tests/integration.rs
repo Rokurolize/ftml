@@ -79,6 +79,9 @@ mod wikidot_single_link_recovery;
 #[path = "wikidot_anchor_link_grammar.rs"]
 mod wikidot_anchor_link_grammar;
 
+#[path = "wikidot_named_anchor_marker.rs"]
+mod wikidot_named_anchor_marker;
+
 #[path = "wikidot_inline_bibcite.rs"]
 mod wikidot_inline_bibcite;
 

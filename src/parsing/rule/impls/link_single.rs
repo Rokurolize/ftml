@@ -59,6 +59,17 @@ enum WikidotBibciteOwnerScan {
     },
 }
 
+#[derive(Debug, Copy, Clone, Default)]
+enum WikidotNamedAnchorOwnerScan {
+    #[default]
+    Search,
+    Separator,
+    Name {
+        nonempty: bool,
+        valid: bool,
+    },
+}
+
 pub const RULE_LINK_SINGLE: Rule = Rule {
     name: "link-single",
     position: LineRequirement::Any,
@@ -298,7 +309,9 @@ fn wikidot_label_has_complete_owner<'r, 't>(parser: &Parser<'r, 't>) -> bool
 where
     'r: 't,
 {
-    if wikidot_label_has_complete_bibcite_owner(parser) {
+    if wikidot_label_has_complete_named_anchor_owner(parser)
+        || wikidot_label_has_complete_bibcite_owner(parser)
+    {
         return true;
     }
 
@@ -348,6 +361,46 @@ where
             | Token::InputEnd => {
                 return false;
             }
+            _ => {}
+        }
+        if scan.step().is_err() {
+            return false;
+        }
+    }
+}
+
+fn wikidot_label_has_complete_named_anchor_owner<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    // Scan once instead of trying the anchor rule at every candidate. A long
+    // malformed label can contain many openers, so repeated forward parses
+    // would make owner detection quadratic.
+    let mut scan = parser.clone();
+    let mut anchor = WikidotNamedAnchorOwnerScan::default();
+    loop {
+        if scan.current().token == Token::LeftComment {
+            anchor = WikidotNamedAnchorOwnerScan::Search;
+            let mut comment = scan.clone_with_rule(RULE_COMMENT);
+            if RULE_COMMENT.try_consume(&mut comment).is_ok() {
+                scan.update(&comment);
+                continue;
+            }
+        }
+        if anchor.advance(scan.current()) {
+            return true;
+        }
+
+        match scan.current().token {
+            Token::RightBracket
+            | Token::RightBlock
+            | Token::RightLink
+            | Token::LineBreak
+            | Token::ParagraphBreak
+            | Token::InputEnd
+            | Token::RuntimeText
+            | Token::GeneratedPageLink
+            | Token::GeneratedTagLinks => return false,
             _ => {}
         }
         if scan.step().is_err() {
@@ -425,6 +478,56 @@ impl WikidotBibciteOwnerScan {
             {
                 Self::Label {
                     nonempty: nonempty || !token.slice.is_empty(),
+                }
+            }
+            _ => restart(),
+        };
+        false
+    }
+}
+
+impl WikidotNamedAnchorOwnerScan {
+    fn advance(&mut self, token: &ExtractedToken<'_>) -> bool {
+        let restart = || {
+            if token.token == Token::LeftBlockAnchor {
+                Self::Separator
+            } else {
+                Self::Search
+            }
+        };
+
+        *self = match *self {
+            Self::Search if token.token == Token::LeftBlockAnchor => Self::Separator,
+            Self::Separator if token.token == Token::Whitespace => Self::Name {
+                nonempty: false,
+                valid: true,
+            },
+            Self::Name {
+                nonempty: true,
+                valid: true,
+            } if matches!(token.token, Token::RightBlock | Token::RightLink) => {
+                return true;
+            }
+            Self::Name { nonempty, valid }
+                if !matches!(
+                    token.token,
+                    Token::RightBlock
+                        | Token::RightLink
+                        | Token::LineBreak
+                        | Token::ParagraphBreak
+                        | Token::InputEnd
+                        | Token::RuntimeText
+                        | Token::GeneratedPageLink
+                        | Token::GeneratedTagLinks
+                ) =>
+            {
+                Self::Name {
+                    nonempty: nonempty || !token.slice.is_empty(),
+                    valid: valid
+                        && token.slice.chars().all(|character| {
+                            character.is_ascii_alphanumeric()
+                                || matches!(character, '-' | '_')
+                        }),
                 }
             }
             _ => restart(),

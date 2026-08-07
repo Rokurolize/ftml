@@ -66,6 +66,7 @@ pub fn get_rules_for_token(current: &ExtractedToken) -> &'static [Rule] {
         Token::Quote => &[RULE_BLOCKQUOTE, RULE_DOUBLE_ANGLE, RULE_TEXT],
         Token::Heading => &[RULE_HEADER, RULE_TEXT],
         Token::Whitespace => &[
+            RULE_SECTION_MARKER,
             RULE_UNDERSCORE_LINE_BREAK,
             RULE_LIST,
             RULE_CENTER,
@@ -181,7 +182,13 @@ mod tests {
             (Token::ParagraphBreak, vec!["line-break-paragraph"]),
             (
                 Token::Whitespace,
-                vec!["underscore-line-break", "list", "center", "text"],
+                vec![
+                    "section-marker",
+                    "underscore-line-break",
+                    "list",
+                    "center",
+                    "text",
+                ],
             ),
             (Token::Bold, vec!["bold"]),
             (Token::Italics, vec!["italics"]),

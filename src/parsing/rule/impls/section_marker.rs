@@ -19,7 +19,6 @@
  */
 
 use super::prelude::*;
-use crate::tree::Container;
 
 pub const RULE_SECTION_MARKER: Rule = Rule {
     name: "section-marker",
@@ -32,6 +31,13 @@ fn try_consume_fn<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to consume section marker");
 
+    // Wikidot accepts horizontal ASCII whitespace around the equals run. The
+    // tokenizer intentionally limits this token to SP and TAB; discarded
+    // controls and Unicode whitespace remain syntax barriers.
+    if parser.current().token == Token::Whitespace {
+        parser.step()?;
+    }
+
     let mut count = 0;
     while parser.current().token == Token::Equals {
         count += 1;
@@ -42,6 +48,10 @@ fn try_consume_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
+    if parser.current().token == Token::Whitespace {
+        parser.step()?;
+    }
+
     match parser.current().token {
         Token::LineBreak => {
             parser.step()?;
@@ -50,18 +60,7 @@ fn try_consume_fn<'r, 't>(
         _ => return Err(parser.make_err(ParseErrorKind::RuleFailed)),
     }
 
-    if parser.settings().layout.legacy() {
-        let mut attributes = AttributeMap::new();
-        assert!(attributes.insert("class", cow!("content-separator")));
-        assert!(attributes.insert("style", cow!("display: none:")));
-        ok!(Element::Container(Container::new(
-            ContainerType::Div,
-            Vec::new(),
-            attributes,
-        )))
-    } else {
-        ok!(Elements::None)
-    }
+    ok!(Element::ContentSeparator)
 }
 
 #[test]

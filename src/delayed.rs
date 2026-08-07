@@ -893,6 +893,7 @@ fn element_contains_delayed(element: &Element<'_>) -> bool {
             | PartialElement::InlineSpanClose(_) => false,
         },
         Element::Module(_)
+        | Element::ContentSeparator
         | Element::Text(_)
         | Element::Raw(_)
         | Element::Variable(_)

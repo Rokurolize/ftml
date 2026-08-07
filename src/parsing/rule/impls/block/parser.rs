@@ -108,7 +108,12 @@ fn wikidot_stripslashes(value: Cow<'_, str>) -> Cow<'_, str> {
     Cow::Owned(output)
 }
 
-fn parse_wikidot_attributes<'t>(field: &CommentElidedText<'t>) -> Arguments<'t> {
+pub(crate) fn parse_wikidot_attributes(value: &str) -> Arguments<'_> {
+    let field = CommentElidedText::new(value, 0..value.len(), Vec::new());
+    parse_wikidot_attribute_field(&field)
+}
+
+fn parse_wikidot_attribute_field<'t>(field: &CommentElidedText<'t>) -> Arguments<'t> {
     // Wikidot's getAttrs grammar splits only on the exact ASCII delimiter
     // `="`, then treats the last quote before the next delimiter as the
     // current value terminator. Valid comments are absent for value parsing,
@@ -1462,7 +1467,7 @@ where
             if head_has_comment && !head_has_non_authored_input {
                 let closes = [ParseCondition::current(Token::RightBlock)];
                 let (head, _) = collect_comment_elided_keep(self, &closes, &[], None)?;
-                (parse_wikidot_attributes(&head), true)
+                (parse_wikidot_attribute_field(&head), true)
             } else {
                 let start = self.current();
                 while !matches!(self.current().token, Token::RightBlock | Token::InputEnd)
@@ -1472,7 +1477,7 @@ where
                 let span = start.span.start..self.current().span.start;
                 let head =
                     CommentElidedText::new(self.full_text().inner(), span, Vec::new());
-                (parse_wikidot_attributes(&head), false)
+                (parse_wikidot_attribute_field(&head), false)
             }
         } else {
             (Arguments::new_case_sensitive(), false)

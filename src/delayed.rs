@@ -844,6 +844,7 @@ fn element_contains_delayed(element: &Element<'_>) -> bool {
         | Element::Image { .. }
         | Element::Audio { .. }
         | Element::Video { .. }
+        | Element::StandaloneButton(_)
         | Element::RadioButton { .. }
         | Element::CheckBox { .. }
         | Element::TableOfContents { .. }

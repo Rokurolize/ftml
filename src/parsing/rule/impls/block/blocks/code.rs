@@ -78,7 +78,9 @@ fn parse_fn<'r, 't>(
         normalize(name.to_mut());
     }
 
-    if parser.body_has_generated(&BLOCK_CODE) {
+    let head_has_runtime_literal =
+        parser.has_runtime_literal_in_range(owner_start..parser.current().span.start);
+    if head_has_runtime_literal || parser.body_has_delayed_input(&BLOCK_CODE) {
         let _ = parser.get_body_text(&BLOCK_CODE)?;
         let owner_end = parser.current().span.start;
         let generated = parser.generated_in_range(owner_start..owner_end);

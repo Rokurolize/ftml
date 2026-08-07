@@ -22,13 +22,36 @@ use crate::delayed::{GeneratedInput, GeneratedKind, InputSegment, TextOrigin};
 use crate::parsing::{ExtractedToken, Token};
 use crate::text::FullText;
 use std::collections::BTreeMap;
+use std::ops::Range;
 
 /// Struct that represents both a list of tokens and the text the tokens were generated from.
 #[derive(Debug, Clone)]
 pub struct Tokenization<'t> {
     tokens: Vec<ExtractedToken<'t>>,
     full_text: FullText<'t>,
-    generated: BTreeMap<usize, GeneratedInput>,
+    delayed_markers: BTreeMap<usize, DelayedMarker>,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum DelayedMarker {
+    Generated(GeneratedInput),
+    RuntimeLiteral(Range<usize>),
+}
+
+impl DelayedMarker {
+    pub(crate) fn generated(&self) -> Option<&GeneratedInput> {
+        match self {
+            Self::Generated(generated) => Some(generated),
+            Self::RuntimeLiteral(_) => None,
+        }
+    }
+
+    pub(crate) fn runtime_literal(&self) -> Option<&Range<usize>> {
+        match self {
+            Self::Generated(_) => None,
+            Self::RuntimeLiteral(range) => Some(range),
+        }
+    }
 }
 
 #[cfg(not(tarpaulin))]
@@ -44,8 +67,8 @@ impl<'t> Tokenization<'t> {
     }
 
     #[inline]
-    pub(crate) fn generated(&self) -> &BTreeMap<usize, GeneratedInput> {
-        &self.generated
+    pub(crate) fn delayed_markers(&self) -> &BTreeMap<usize, DelayedMarker> {
+        &self.delayed_markers
     }
 }
 
@@ -55,7 +78,7 @@ impl<'t> Tokenization<'t> {
 #[rustfmt::skip]
 impl<'t> Tokenization<'t> { pub fn tokens<'r>(&'r self) -> &'r [ExtractedToken<'t>] { &self.tokens }
     pub(crate) fn full_text(&self) -> FullText<'t> { self.full_text }
-    pub(crate) fn generated(&self) -> &BTreeMap<usize, GeneratedInput> { &self.generated }
+    pub(crate) fn delayed_markers(&self) -> &BTreeMap<usize, DelayedMarker> { &self.delayed_markers }
 }
 
 impl<'t> From<Tokenization<'t>> for Vec<ExtractedToken<'t>> {
@@ -82,7 +105,7 @@ pub fn tokenize(text: &str) -> Tokenization<'_> {
     Tokenization {
         tokens,
         full_text,
-        generated: BTreeMap::new(),
+        delayed_markers: BTreeMap::new(),
     }
 }
 
@@ -96,7 +119,7 @@ pub(crate) fn tokenize_delayed_segments<'t>(
         span: 0..0,
     }];
 
-    let mut generated_slots = BTreeMap::new();
+    let mut delayed_markers = BTreeMap::new();
     let mut segment_index = 0;
     while let Some(segment) = segments.get(segment_index) {
         match segment {
@@ -120,7 +143,11 @@ pub(crate) fn tokenize_delayed_segments<'t>(
                 }
                 let segment_text = &text[start..end];
                 match origin {
-                    TextOrigin::Authored => {
+                    TextOrigin::Authored | TextOrigin::RuntimeLiteral => {
+                        if *origin == TextOrigin::RuntimeLiteral {
+                            delayed_markers
+                                .insert(start, DelayedMarker::RuntimeLiteral(start..end));
+                        }
                         tokens.extend(
                             Token::extract_all(segment_text)
                                 .into_iter()
@@ -149,7 +176,8 @@ pub(crate) fn tokenize_delayed_segments<'t>(
             }
             InputSegment::Generated(generated) => {
                 let start = generated.source_range.start;
-                generated_slots.insert(start, generated.clone());
+                delayed_markers
+                    .insert(start, DelayedMarker::Generated(generated.clone()));
                 tokens.push(ExtractedToken {
                     token: match generated.kind {
                         GeneratedKind::PageLink => Token::GeneratedPageLink,
@@ -170,7 +198,7 @@ pub(crate) fn tokenize_delayed_segments<'t>(
     Tokenization {
         tokens,
         full_text: FullText::new(text),
-        generated: generated_slots,
+        delayed_markers,
     }
 }
 

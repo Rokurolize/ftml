@@ -26,7 +26,7 @@ use super::rule::Rule;
 use crate::data::PageInfo;
 use crate::delayed::{GeneratedInput, elements_contain_delayed};
 use crate::render::text::TextRender;
-use crate::tokenizer::Tokenization;
+use crate::tokenizer::{DelayedMarker, Tokenization};
 use crate::tree::{
     AcceptsPartial, Bibliography, BibliographyList, CodeBlock, HeadingLevel,
 };
@@ -109,7 +109,7 @@ pub struct Parser<'r, 't> {
     current: &'r ExtractedToken<'t>,
     remaining: &'r [ExtractedToken<'t>],
     full_text: FullText<'t>,
-    generated: &'r BTreeMap<usize, GeneratedInput>,
+    delayed_markers: &'r BTreeMap<usize, DelayedMarker>,
 
     // Rule state
     rule: Rule,
@@ -218,7 +218,7 @@ impl<'r, 't> Parser<'r, 't> {
             current,
             remaining,
             full_text,
-            generated: tokenization.generated(),
+            delayed_markers: tokenization.delayed_markers(),
             rule: RULE_PAGE,
             depth: 0,
             max_recursion_depth,
@@ -267,9 +267,10 @@ impl<'r, 't> Parser<'r, 't> {
     #[inline]
     pub(crate) fn current_generated(&self) -> Option<&GeneratedInput> {
         match self.current.token {
-            Token::GeneratedPageLink | Token::GeneratedTagLinks => {
-                self.generated.get(&self.current.span.start)
-            }
+            Token::GeneratedPageLink | Token::GeneratedTagLinks => self
+                .delayed_markers
+                .get(&self.current.span.start)
+                .and_then(DelayedMarker::generated),
             _ => None,
         }
     }
@@ -280,9 +281,10 @@ impl<'r, 't> Parser<'r, 't> {
         token: &ExtractedToken<'_>,
     ) -> Option<&GeneratedInput> {
         match token.token {
-            Token::GeneratedPageLink | Token::GeneratedTagLinks => {
-                self.generated.get(&token.span.start)
-            }
+            Token::GeneratedPageLink | Token::GeneratedTagLinks => self
+                .delayed_markers
+                .get(&token.span.start)
+                .and_then(DelayedMarker::generated),
             _ => None,
         }
     }
@@ -304,14 +306,28 @@ impl<'r, 't> Parser<'r, 't> {
     }
 
     pub(crate) fn has_generated_in_range(&self, range: Range<usize>) -> bool {
-        self.generated.range(range).next().is_some()
+        self.delayed_markers
+            .range(range)
+            .any(|(_, marker)| marker.generated().is_some())
     }
 
     pub(crate) fn generated_in_range(&self, range: Range<usize>) -> Vec<GeneratedInput> {
-        self.generated
+        self.delayed_markers
             .range(range)
-            .map(|(_, input)| input.clone())
+            .filter_map(|(_, marker)| marker.generated().cloned())
             .collect()
+    }
+
+    pub(crate) fn has_runtime_literal_in_range(&self, range: Range<usize>) -> bool {
+        self.delayed_markers
+            .range(range.start..range.end)
+            .any(|(_, marker)| marker.runtime_literal().is_some())
+            || self
+                .delayed_markers
+                .range(..range.start)
+                .next_back()
+                .and_then(|(_, marker)| marker.runtime_literal())
+                .is_some_and(|literal| literal.end > range.start)
     }
 
     #[inline]

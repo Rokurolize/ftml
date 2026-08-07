@@ -437,6 +437,12 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
         return Err(parser.make_err(ParseErrorKind::EndOfInput));
     }
 
+    if parser.settings().layout.legacy()
+        && parser.current().token == Token::ParagraphBreak
+    {
+        parser.clear_wikidot_literal_triple_links();
+    }
+
     // Incrementing recursion depth
     // Will fail if we're too many layers in
     parser.depth_increment()?;
@@ -522,6 +528,16 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
 
                 all_errors.push(error);
             }
+        }
+    }
+
+    if parser.settings().layout.legacy() {
+        match current.token {
+            Token::LeftLink | Token::LeftLinkStar => {
+                parser.enter_wikidot_literal_triple_link();
+            }
+            Token::RightLink => parser.leave_wikidot_literal_triple_link(),
+            _ => {}
         }
     }
 

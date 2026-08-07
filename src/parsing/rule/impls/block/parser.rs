@@ -226,6 +226,51 @@ where
         Ok(name)
     }
 
+    pub(crate) fn wikidot_link_owned_inline_end_block_ahead(&self) -> bool {
+        let source = &self.full_text().inner()[self.current().span.start..];
+        ["[[/span]]]", "[[/span_]]]", "[[/size]]]", "[[/size_]]]"]
+            .iter()
+            .any(|prefix| {
+                source
+                    .get(..prefix.len())
+                    .is_some_and(|source| source.eq_ignore_ascii_case(prefix))
+            })
+    }
+
+    /// Matches a legacy inline `span` or `size` close whose final `]]` is
+    /// lexically joined to a triple-link closer as one `]]]` token.
+    pub(crate) fn get_wikidot_link_owned_inline_end_block(
+        &mut self,
+    ) -> Result<&'t str, ParseError> {
+        self.get_token(Token::LeftBlockEnd, ParseErrorKind::BlockExpectedEnd)?;
+        self.get_optional_space()?;
+
+        let end_conditions = [
+            ParseCondition::current(Token::Whitespace),
+            ParseCondition::current(Token::LineBreak),
+            ParseCondition::current(Token::ParagraphBreak),
+            ParseCondition::current(Token::RightBlock),
+            ParseCondition::current(Token::RightLink),
+        ];
+        let rule = self.rule();
+        let (name, last) = collect_text_keep(
+            self,
+            rule,
+            &end_conditions,
+            &[],
+            Some(ParseErrorKind::BlockMissingName),
+        )?;
+        let name = name.trim();
+
+        if last.token == Token::RightLink
+            && (name.eq_ignore_ascii_case("span") || name.eq_ignore_ascii_case("size"))
+        {
+            Ok(name)
+        } else {
+            Err(self.make_err(ParseErrorKind::BlockExpectedEnd))
+        }
+    }
+
     /// Consumes an entire block end, validating that the newline and names match.
     ///
     /// Used internally by the body parsing methods.
@@ -291,7 +336,14 @@ where
             // This will ignore any errors produced,
             // since it's just more text
             let end_start = parser.current().span.start;
-            let name = parser.get_end_block()?;
+            let link_owned_inline_close = parser.settings().layout.legacy()
+                && matches!(block_rule.name, "block-span" | "block-size")
+                && parser.wikidot_link_owned_inline_end_block_ahead();
+            let name = if link_owned_inline_close {
+                parser.get_wikidot_link_owned_inline_end_block()?
+            } else {
+                parser.get_end_block()?
+            };
 
             if parser.settings().layout.legacy()
                 && !parser.discarding_hidden_body()

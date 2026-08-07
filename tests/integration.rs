@@ -28,6 +28,9 @@ mod wikidot_heading_content;
 #[path = "wikidot_inline_delimiter_ownership.rs"]
 mod wikidot_inline_delimiter_ownership;
 
+#[path = "wikidot_triple_link_label_ownership.rs"]
+mod wikidot_triple_link_label_ownership;
+
 #[path = "wikidot_lexical_owner_residuals.rs"]
 mod wikidot_lexical_owner_residuals;
 

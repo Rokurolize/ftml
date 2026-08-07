@@ -4,6 +4,7 @@ use super::Parser;
 pub(super) struct WikidotState {
     div_body_depth: usize,
     in_note_body: bool,
+    literal_triple_link_depth: u16,
     in_collapsible: bool,
     quote_boundary_closes_body: bool,
     pending_collapsible_closer: bool,
@@ -41,6 +42,28 @@ impl Parser<'_, '_> {
     pub(crate) fn leave_wikidot_note_body(&mut self) {
         debug_assert!(self.wikidot.in_note_body);
         self.wikidot.in_note_body = false;
+    }
+
+    #[inline]
+    pub(crate) fn in_wikidot_literal_triple_link(&self) -> bool {
+        self.wikidot.literal_triple_link_depth > 0
+    }
+
+    #[inline]
+    pub(crate) fn enter_wikidot_literal_triple_link(&mut self) {
+        self.wikidot.literal_triple_link_depth =
+            self.wikidot.literal_triple_link_depth.saturating_add(1);
+    }
+
+    #[inline]
+    pub(crate) fn leave_wikidot_literal_triple_link(&mut self) {
+        self.wikidot.literal_triple_link_depth =
+            self.wikidot.literal_triple_link_depth.saturating_sub(1);
+    }
+
+    #[inline]
+    pub(crate) fn clear_wikidot_literal_triple_links(&mut self) {
+        self.wikidot.literal_triple_link_depth = 0;
     }
 
     pub(crate) fn in_wikidot_collapsible(&self) -> bool {

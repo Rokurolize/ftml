@@ -484,6 +484,50 @@ fn runtime_scalar_dashes_cannot_close_a_valid_authored_comment_early() {
 }
 
 #[test]
+fn anchor_links_preserve_delayed_owner_and_runtime_scalar_provenance() {
+    assert_eq!(
+        render("BEGIN|[#toc1 %%title_linked%%]|END"),
+        concat!(
+            "<p>BEGIN|[#toc1 ",
+            "<a href=\"/component:image-block\">Standard Image Block</a>",
+            "]|END</p>",
+        ),
+    );
+    assert_eq!(
+        render("BEGIN|[#%%title_linked%% Label]|END"),
+        concat!(
+            "<p>BEGIN|[#",
+            "<a href=\"/component:image-block\">Standard Image Block</a>",
+            " Label]|END</p>",
+        ),
+    );
+    assert_eq!(
+        render("BEGIN|[*#toc1 %%title_linked%%]|END"),
+        concat!(
+            "<p>BEGIN|[*#toc1 ",
+            "<a href=\"/component:image-block\">Standard Image Block</a>",
+            "]|END</p>",
+        ),
+    );
+    assert_eq!(
+        render("BEGIN|[#toc1 A[!--%%title_linked%%--]B]|END"),
+        r##"<p>BEGIN|<a href="#toc1">AB</a>|END</p>"##,
+    );
+    assert_eq!(
+        render_with_runtime_scalar("[#toc1 Label]", "toc1"),
+        r##"<p><a href="#toc1">Label</a></p>"##,
+    );
+    assert_eq!(
+        render_with_runtime_scalar("[#toc1 Label]", "toc1 Label"),
+        "<p>[#toc1 Label]</p>",
+    );
+    assert_eq!(
+        render_with_runtime_scalar("[*#toc1 Label]", "#"),
+        "<p>[*#toc1 Label]</p>",
+    );
+}
+
+#[test]
 fn slot_occupancy_recovers_outer_links_as_authored_source() {
     assert_eq!(
         render("BEGIN|[[[scp-003|%%title_linked%%]]]|END"),

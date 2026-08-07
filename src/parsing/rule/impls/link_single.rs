@@ -68,6 +68,9 @@ fn link_new_tab<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     assert_step(parser, Token::LeftBracketStar)?;
+    if parser.settings().layout.legacy() && parser.current().slice == "#" {
+        return super::link_anchor::try_consume_wikidot_star_anchor(parser);
+    }
     try_consume_link(parser, RULE_LINK_SINGLE_NEW_TAB, Some(AnchorTarget::NewTab))
 }
 

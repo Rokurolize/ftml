@@ -67,6 +67,9 @@ mod wikidot_span_attributes;
 #[path = "wikidot_single_link_recovery.rs"]
 mod wikidot_single_link_recovery;
 
+#[path = "wikidot_anchor_link_grammar.rs"]
+mod wikidot_anchor_link_grammar;
+
 #[path = "wikidot_line_ownership.rs"]
 mod wikidot_line_ownership;
 

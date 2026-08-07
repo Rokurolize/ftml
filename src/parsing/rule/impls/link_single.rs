@@ -27,6 +27,7 @@
 use super::RULE_COMMENT;
 use super::prelude::*;
 use crate::delayed::{DelayedElement, GeneratedKind};
+use crate::parsing::collect::{collect_comment_elided_keep, consume_valid_comment};
 use crate::tree::{AnchorTarget, LinkLabel, LinkLocation, LinkType};
 use crate::url::is_url;
 use std::borrow::Cow;
@@ -119,7 +120,7 @@ fn try_consume_link<'r, 't>(
         parser.step()?;
         return success_elements(Element::Delayed(DelayedElement::tag_external_label(
             generated.id,
-            url,
+            Cow::Borrowed(url),
         )));
     }
 
@@ -152,8 +153,15 @@ fn try_consume_wikidot_link<'r, 't>(
 where
     'r: 't,
 {
-    let url = collect_wikidot_target(parser)?;
+    let (url, authored_prefix_has_link_authority) = collect_wikidot_target(parser)?;
     let disposition = wikidot_link_disposition(&url);
+    let disposition = if disposition == WikidotLinkDisposition::Link
+        && !authored_prefix_has_link_authority
+    {
+        WikidotLinkDisposition::Literal
+    } else {
+        disposition
+    };
     if disposition == WikidotLinkDisposition::Literal {
         return Err(parser.make_err(ParseErrorKind::InvalidUrl));
     }
@@ -170,7 +178,7 @@ where
         parser.step()?;
         return success_elements(Element::Delayed(DelayedElement::tag_external_label(
             generated.id,
-            url,
+            Cow::Borrowed(url),
         )));
     }
 
@@ -203,57 +211,27 @@ where
 
 fn collect_wikidot_target<'r, 't>(
     parser: &mut Parser<'r, 't>,
-) -> Result<Cow<'t, str>, ParseError>
+) -> Result<(Cow<'t, str>, bool), ParseError>
 where
     'r: 't,
 {
-    let source = parser.full_text().inner();
-    let start = parser.current().span.start;
-    let mut copied_until = start;
-    let mut without_comments = None::<String>;
-    loop {
-        if parser.current().span.start - start > MAX_WIKIDOT_SINGLE_LINK_TARGET_BYTES {
-            return Err(parser.make_err(ParseErrorKind::InvalidUrl));
-        }
-        match parser.current().token {
-            Token::Whitespace => {
-                let end = parser.current().span.start;
-                if let Some(output) = without_comments.as_mut() {
-                    output.push_str(&source[copied_until..end]);
-                }
-                parser.step()?;
-                let target = match without_comments {
-                    Some(output) => Cow::Owned(output),
-                    None => Cow::Borrowed(&source[start..end]),
-                };
-                if target.len() > MAX_WIKIDOT_SINGLE_LINK_TARGET_BYTES {
-                    return Err(parser.make_err(ParseErrorKind::InvalidUrl));
-                }
-                return Ok(target);
-            }
-            Token::LeftComment => {
-                let comment_start = parser.current().span.start;
-                let output = without_comments
-                    .get_or_insert_with(|| String::with_capacity(comment_start - start));
-                output.push_str(&source[copied_until..comment_start]);
-
-                let mut comment = parser.clone_with_rule(RULE_COMMENT);
-                let _comment = RULE_COMMENT.try_consume(&mut comment)?;
-                parser.update(&comment);
-                copied_until = parser.current().span.start;
-            }
-            Token::LineBreak | Token::ParagraphBreak => {
-                return Err(parser.make_err(ParseErrorKind::RuleFailed));
-            }
-            Token::InputEnd => return Err(parser.make_err(ParseErrorKind::EndOfInput)),
-            Token::GeneratedPageLink | Token::GeneratedTagLinks => {
-                return Err(parser.make_err(ParseErrorKind::RuleFailed));
-            }
-            _ => {
-                parser.step()?;
-            }
-        }
+    let closes = [ParseCondition::current(Token::Whitespace)];
+    let invalids = [
+        ParseCondition::current(Token::LineBreak),
+        ParseCondition::current(Token::ParagraphBreak),
+    ];
+    let (target, _) = collect_comment_elided_keep(parser, &closes, &invalids, None)?;
+    if target.span().len() > MAX_WIKIDOT_SINGLE_LINK_TARGET_BYTES {
+        return Err(parser.make_err(ParseErrorKind::InvalidUrl));
     }
+    let authored_prefix_has_link_authority = target.comment_ranges().is_empty()
+        || wikidot_link_disposition(target.prefix_before_first_comment())
+            == WikidotLinkDisposition::Link;
+    let target = target.into_cow();
+    if target.len() > MAX_WIKIDOT_SINGLE_LINK_TARGET_BYTES {
+        return Err(parser.make_err(ParseErrorKind::InvalidUrl));
+    }
+    Ok((target, authored_prefix_has_link_authority))
 }
 
 fn collect_wikidot_label<'r, 't>(
@@ -297,8 +275,8 @@ where
                     .get_or_insert_with(|| String::with_capacity(comment_start - start));
                 output.push_str(&source[copied_until..comment_start]);
 
-                let mut comment = parser.clone_with_rule(RULE_COMMENT);
-                let _comment = RULE_COMMENT.try_consume(&mut comment)?;
+                let mut comment = parser.clone();
+                consume_valid_comment(&mut comment)?;
                 parser.update(&comment);
                 copied_until = parser.current().span.start;
             }
@@ -306,7 +284,7 @@ where
                 return Err(parser.make_err(ParseErrorKind::RuleFailed));
             }
             Token::InputEnd => return Err(parser.make_err(ParseErrorKind::EndOfInput)),
-            Token::GeneratedPageLink | Token::GeneratedTagLinks => {
+            Token::GeneratedPageLink | Token::GeneratedTagLinks | Token::RuntimeText => {
                 return Err(parser.make_err(ParseErrorKind::RuleFailed));
             }
             _ => {

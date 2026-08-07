@@ -54,7 +54,7 @@ fn parse_fn<'r, 't>(
 
     // Get module name and arguments
     let (subname, arguments, body_start) =
-        parser.get_head_name_map_with_body_start(&BLOCK_MODULE, in_head)?;
+        parser.get_head_name_map_with_body_start_wikidot(&BLOCK_MODULE, in_head)?;
 
     if parser.settings().layout.legacy()
         && let Some(literal) = wikidot_extra_bracket_css_literal(parser, subname)

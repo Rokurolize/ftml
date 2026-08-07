@@ -82,7 +82,7 @@ fn try_consume_fn<'r, 't>(
     }
 }
 
-fn comment_closer_token_count(parser: &Parser<'_, '_>) -> Option<usize> {
+pub(crate) fn comment_closer_token_count(parser: &Parser<'_, '_>) -> Option<usize> {
     let current = parser.current();
     let current_is_inert = matches!(
         current.token,

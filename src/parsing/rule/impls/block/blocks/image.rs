@@ -21,6 +21,7 @@
 use super::prelude::*;
 use crate::delayed::{DelayedElement, GeneratedImageAttribute, GeneratedKind};
 use crate::tree::{FileSource, FloatAlignment, LinkLocation};
+use crate::url::is_url;
 use std::borrow::Cow;
 
 pub const BLOCK_IMAGE: BlockRule = BlockRule {
@@ -68,8 +69,16 @@ fn parse_fn<'r, 't>(
         _ => return Err(parser.make_err(ParseErrorKind::RuleFailed)),
     };
 
-    let (source, mut arguments) =
-        parser.get_head_name_map_wikidot(&BLOCK_IMAGE, in_head)?;
+    let (source, source_prefix_is_url, mut arguments) =
+        if parser.settings().layout.legacy() {
+            let (source, arguments) =
+                parser.get_head_field_map_wikidot(&BLOCK_IMAGE, in_head)?;
+            let source_prefix_is_url = is_url(source.prefix_before_first_comment());
+            (source.into_cow(), source_prefix_is_url, arguments)
+        } else {
+            let (source, arguments) = parser.get_head_name_map(&BLOCK_IMAGE, in_head)?;
+            (Cow::Borrowed(source), is_url(source), arguments)
+        };
     let link = if parser.settings().layout.legacy() {
         match arguments.get("link") {
             None => None,
@@ -90,10 +99,13 @@ fn parse_fn<'r, 't>(
     let alignment = FloatAlignment::parse(name);
 
     // Parse the image source based on format
+    if is_url(&source) && !source_prefix_is_url {
+        return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
+    }
     let source = match if parser.settings().layout.legacy() {
-        FileSource::parse_wikidot(source)
+        parse_wikidot_file_source(source)
     } else {
-        FileSource::parse(source)
+        FileSource::parse(&source).map(|source| source.to_owned())
     } {
         Some(source) => source,
         None => return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments)),
@@ -128,6 +140,15 @@ fn parse_fn<'r, 't>(
     };
 
     success_elements(element)
+}
+
+fn parse_wikidot_file_source<'t>(source: Cow<'t, str>) -> Option<FileSource<'t>> {
+    match source {
+        Cow::Borrowed(source) => FileSource::parse_wikidot(source),
+        Cow::Owned(source) => {
+            FileSource::parse_wikidot(&source).map(|source| source.to_owned())
+        }
+    }
 }
 
 fn parse_wikidot_image_link_target<'t>(target: Cow<'t, str>) -> Option<LinkLocation<'t>> {

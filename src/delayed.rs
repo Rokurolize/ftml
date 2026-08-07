@@ -357,12 +357,9 @@ impl<'t> DelayedElement<'t> {
         }
     }
 
-    pub(crate) fn tag_external_label(id: SlotId, url: &'t str) -> Self {
+    pub(crate) fn tag_external_label(id: SlotId, url: Cow<'t, str>) -> Self {
         Self {
-            node: DelayedNode::TagExternalLabel {
-                id,
-                url: Cow::Borrowed(url),
-            },
+            node: DelayedNode::TagExternalLabel { id, url },
         }
     }
 

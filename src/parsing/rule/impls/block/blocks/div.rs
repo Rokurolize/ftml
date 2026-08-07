@@ -113,53 +113,72 @@ fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: b
         ) {
             elements.pop();
         }
-        let mut previous_was_div = false;
+        let mut previous_was_scored_div = false;
         elements.retain(|element| {
-            if previous_was_div
+            if previous_was_scored_div
                 && (matches!(element, Element::LineBreak | Element::LineBreaks(_))
                     || matches!(element, Element::Text(text) if text == "\n"))
             {
                 return false;
             }
-            previous_was_div = matches!(
-                element,
-                Element::Container(container) if container.ctype() == ContainerType::Div
-            );
+            previous_was_scored_div = matches!(element, Element::Container(container)
+                if container.ctype() == ContainerType::Div
+                    && !container.elements().iter().any(|child| matches!(child,
+                        Element::Container(paragraph)
+                            if paragraph.ctype() == ContainerType::Paragraph)));
             true
         });
+        let mut cleaned = Vec::with_capacity(elements.len());
+        for element in elements.drain(..) {
+            let redundant_newline_after_nested_div =
+                matches!(&element, Element::Text(text) if text == "\n")
+                    && matches!(cleaned.last(), Some(Element::LineBreak | Element::LineBreaks(_)))
+                    && cleaned[..cleaned.len().saturating_sub(1)]
+                        .iter()
+                        .rev()
+                        .find(|previous| {
+                            !matches!(previous, Element::Text(text) if text == "\n")
+                        })
+                        .is_some_and(|previous| {
+                            matches!(previous, Element::Container(container)
+                                if container.ctype() == ContainerType::Div)
+                        });
+            if !redundant_newline_after_nested_div {
+                cleaned.push(element);
+            }
+        }
+        *elements = cleaned;
         return;
     }
 
     if matches!(elements.last(), Some(Element::LineBreak)) {
         elements.pop();
     }
-    let mut cleaned = Vec::with_capacity(elements.len());
-    for element in elements.drain(..) {
-        let line_break_after_div =
-            matches!(element, Element::LineBreak | Element::LineBreaks(_))
-                && cleaned
-                    .iter()
-                    .rev()
-                    .find(|previous| {
-                        !matches!(
-                            previous,
-                            Element::Text(text)
-                                if !text.is_empty()
-                                    && text.chars().all(|character| character == '\n')
-                        )
-                    })
-                    .is_some_and(|previous| {
-                        matches!(
-                            previous,
-                            Element::Container(container)
-                                if container.ctype() == ContainerType::Div
-                        )
-                    });
-        if !line_break_after_div {
-            cleaned.push(element);
+    for index in 1..elements.len() {
+        if !matches!(elements[index], Element::LineBreak | Element::LineBreaks(_))
+            || !matches!(&elements[index - 1], Element::Container(container)
+                if container.ctype() == ContainerType::Div)
+        {
+            continue;
+        }
+        let inline_scored_div_follows = matches!(elements.get(index + 1), Some(Element::Text(text))
+                if text.to_ascii_lowercase().starts_with("[[div_]]"))
+            || matches!(
+                elements.get(index + 1..index + 5),
+                Some([
+                    Element::Text(open),
+                    Element::Text(name),
+                    Element::Text(score),
+                    Element::Text(close),
+                ]) if open == "[["
+                    && name.eq_ignore_ascii_case("div")
+                    && score == "_"
+                    && close == "]]"
+            );
+        if inline_scored_div_follows {
+            elements[index] = text!("\n");
         }
     }
-    *elements = cleaned;
 }
 
 fn parse_fn<'r, 't>(
@@ -184,6 +203,12 @@ fn parse_fn<'r, 't>(
     let (arguments, mut body_start) = head;
     if parser.settings().layout.legacy() && arguments.has_empty_key() {
         return recover_wikidot_empty_key_candidate(parser, &BLOCK_DIV, owner_start);
+    }
+    if parser.settings().layout.legacy()
+        && flag_score
+        && !parser.wikidot_alias_has_compatible_close(&BLOCK_DIV, owner_start)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     if parser.settings().layout.legacy()
         && parser.in_wikidot_simple_table_cell()
@@ -271,12 +296,7 @@ fn parse_fn<'r, 't>(
         && !parser.in_wikidot_div_body()
         && !parser.has_body_end_block(&BLOCK_DIV)
     {
-        let kind = if flag_score {
-            ParseErrorKind::RuleFailed
-        } else {
-            ParseErrorKind::BlockExpectedEnd
-        };
-        return Err(parser.make_err(kind));
+        return Err(parser.make_err(ParseErrorKind::BlockExpectedEnd));
     }
     if parser.settings().layout.legacy()
         && !head_started_physical_line
@@ -300,6 +320,9 @@ fn parse_fn<'r, 't>(
     // Discard paragraph_safe, since divs never are.
     if parser.settings().layout.legacy() {
         parser.enter_wikidot_div_body();
+        if flag_score {
+            parser.enter_wikidot_scored_div_body();
+        }
     }
     let parse_as_paragraphs =
         wrap_paragraphs || parser.settings().layout.legacy() && flag_score;
@@ -309,6 +332,9 @@ fn parse_fn<'r, 't>(
         body_start,
     );
     if parser.settings().layout.legacy() {
+        if flag_score {
+            parser.leave_wikidot_scored_div_body();
+        }
         parser.leave_wikidot_div_body();
     }
     let (mut elements, errors, _) = body?.into();
@@ -696,7 +722,7 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert!(!errors.is_empty());
-        assert_eq!(html, "[[div_]]<br>\nbody<br>\n[[/div_]]");
+        assert_eq!(html, "<p>[[div_]]<br>\nbody<br>\n[[/div_]]</p>");
     }
 
     #[test]

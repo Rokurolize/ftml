@@ -274,6 +274,12 @@ fn cell_boundary<'r, 't>(
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    if parser.settings().layout.legacy() && parser.in_wikidot_literal_alias_body() {
+        let literal = parser.current().slice;
+        parser.step()?;
+        return ok!(text!(literal));
+    }
+
     let mut rows = Vec::new();
     let mut errors = Vec::new();
     let mut paragraph_break = false;

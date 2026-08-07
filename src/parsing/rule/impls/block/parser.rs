@@ -658,12 +658,14 @@ where
         }
     }
 
-    pub(crate) fn body_has_generated(&self, block_rule: &BlockRule) -> bool {
+    pub(crate) fn body_has_delayed_input(&self, block_rule: &BlockRule) -> bool {
         let mut probe = self.clone();
         let Ok((start, end)) = probe.get_body_generic(block_rule, |_| Ok(())) else {
             return false;
         };
-        probe.has_generated_in_range(start.span.start..end.span.end)
+        let range = start.span.start..end.span.end;
+        probe.has_generated_in_range(range.clone())
+            || probe.has_runtime_literal_in_range(range)
     }
 
     fn scan_absolute_quote_prefix(

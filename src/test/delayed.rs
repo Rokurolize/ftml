@@ -213,6 +213,21 @@ fn render_with_runtime_scalar(source: &str, scalar: &str) -> String {
     render_input_with_bindings(&input, &SlotBindings::empty())
 }
 
+fn render_with_runtime_literal(source: &str, literal: &str) -> String {
+    let start = source.find(literal).expect("runtime literal fixture");
+    let end = start + literal.len();
+    let input = DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..start, TextOrigin::Authored),
+            InputSegment::text(start..end, TextOrigin::RuntimeLiteral),
+            InputSegment::text(end..source.len(), TextOrigin::Authored),
+        ],
+    )
+    .expect("valid runtime literal fixture");
+    render_input_with_bindings(&input, &SlotBindings::empty())
+}
+
 fn render_tag(source: &str) -> String {
     render_tag_values(source, &["component"], " ")
 }
@@ -325,6 +340,46 @@ fn wikidot_delayed_list_quote_alignment_marker_is_not_visible_text() {
     assert!(
         wrapped.contains(expected),
         "generated container boundaries must not alter quote alignment: {wrapped}",
+    );
+}
+
+#[test]
+fn runtime_literal_preserves_owner_recovery_without_disabling_link_grammar() {
+    let literal = "%%unknown%%";
+
+    assert_eq!(
+        render_with_runtime_literal(
+            "BEGIN|[[code]]\n%%unknown%%\n[[/code]]|END",
+            literal,
+        ),
+        "<p>BEGIN|[[code]]<br>\n%%unknown%%<br>\n[[/code]]|END</p>",
+    );
+    assert_eq!(
+        render_with_runtime_literal(
+            "BEGIN|[[div class=\"%%unknown%%\"]]X[[/div]]|END",
+            literal,
+        ),
+        "<p>BEGIN|[[div class=&quot;%%unknown%%&quot;]]X[[/div]]|END</p>",
+    );
+    assert_eq!(
+        render_with_runtime_literal("BEGIN|[[[scp-003|%%unknown%%]]]|END", literal),
+        "<p>BEGIN|<a href=\"/scp-003\">%%unknown%%</a>|END</p>",
+    );
+    assert_eq!(
+        render_with_runtime_literal("BEGIN|[[[%%unknown%%|LABEL]]]|END", literal),
+        "<p>BEGIN|<a href=\"/unknown\">LABEL</a>|END</p>",
+    );
+}
+
+#[test]
+fn runtime_scalar_still_allows_authored_code_ownership() {
+    assert_eq!(
+        render_with_runtime_scalar("BEGIN|[[code]]\nRUNTIME\n[[/code]]|END", "RUNTIME",),
+        concat!(
+            "<p>BEGIN|</p>",
+            "<div class=\"code\"><pre><code>RUNTIME</code></pre></div>",
+            "<p>|END</p>",
+        ),
     );
 }
 
@@ -543,6 +598,25 @@ fn runtime_scalar_comment_closer_cannot_validate_an_authored_opener() {
     let html = render_input_with_bindings(&input, &SlotBindings::empty());
     assert!(html.contains('x'), "{html}");
     assert!(html.contains("--]"), "{html}");
+}
+
+#[test]
+fn runtime_literal_comment_closer_retains_source_grammar() {
+    let source = "[!--x--]";
+    let literal_start = source.find("--]").expect("runtime closer fixture");
+    let input = DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..literal_start, TextOrigin::Authored),
+            InputSegment::text(literal_start..source.len(), TextOrigin::RuntimeLiteral),
+        ],
+    )
+    .expect("valid mixed-provenance comment fixture");
+
+    assert_eq!(
+        render_input_with_bindings(&input, &SlotBindings::empty()),
+        "",
+    );
 }
 
 #[test]

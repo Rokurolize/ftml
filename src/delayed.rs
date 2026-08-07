@@ -51,6 +51,13 @@ pub enum GeneratedKind {
 pub enum TextOrigin {
     Authored,
     RuntimeScalar,
+    /// Source-identical text retained by a runtime substitution pass.
+    ///
+    /// Unlike `RuntimeScalar`, these bytes still participate in ordinary
+    /// source grammar (for example, as a link target). Their provenance
+    /// remains observable so block owners whose live behavior recovers around
+    /// delayed values can preserve the complete owner as literal text.
+    RuntimeLiteral,
 }
 
 /// One generated occurrence in the original source.

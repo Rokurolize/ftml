@@ -88,9 +88,16 @@ fn parse_fn<'r, 't>(
         normalize(name.to_mut());
     }
 
-    let has_generated = wikidot_candidate.as_ref().map_or_else(
-        || parser.body_has_generated(&BLOCK_CODE),
-        |candidate| parser.has_generated_in_range(owner_start..candidate.owner_end),
+    let has_delayed_input = wikidot_candidate.as_ref().map_or_else(
+        || {
+            parser.has_runtime_literal_in_range(owner_start..parser.current().span.start)
+                || parser.body_has_delayed_input(&BLOCK_CODE)
+        },
+        |candidate| {
+            let owner_range = owner_start..candidate.owner_end;
+            parser.has_generated_in_range(owner_range.clone())
+                || parser.has_runtime_literal_in_range(owner_range)
+        },
     );
     let code = match wikidot_candidate {
         Some(candidate) if candidate.end_blocks_to_skip > 0 => parser
@@ -101,7 +108,7 @@ fn parse_fn<'r, 't>(
         _ => parser.get_body_text(&BLOCK_CODE)?,
     };
 
-    if has_generated {
+    if has_delayed_input {
         let owner_end = parser.current().span.start;
         let generated = parser.generated_in_range(owner_start..owner_end);
         return success_elements(Element::Delayed(DelayedElement::shell(

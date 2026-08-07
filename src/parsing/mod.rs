@@ -183,13 +183,13 @@ where
     let mut footnotes = parsed.footnotes;
     let has_footnote_block = parsed.has_footnote_block;
     let mut bibliographies = parsed.bibliographies;
+    let has_generated = tokenization.has_generated();
     let has_suppression_seam_candidate = tokenization.tokens().iter().any(|token| {
-        (token.token == Token::LeftComment && !tokenization.generated().is_empty())
+        (token.token == Token::LeftComment && has_generated)
             || (token.token == Token::Identifier
                 && (token.slice.eq_ignore_ascii_case("iftags")
                     || token.slice.eq_ignore_ascii_case("ifcategory")
-                    || (!tokenization.generated().is_empty()
-                        && token.slice.eq_ignore_ascii_case("span"))))
+                    || (has_generated && token.slice.eq_ignore_ascii_case("span"))))
     });
 
     // Mutable state

@@ -928,6 +928,50 @@ fn runtime_scalar_values_do_not_become_advanced_table_attributes() {
 }
 
 #[test]
+fn delayed_advanced_table_paragraphs_keep_generated_links() {
+    let html = render(concat!(
+        "[[table]]\n[[row]]\n[[cell]]\n",
+        "A %%title_linked%%\n\nB\n",
+        "[[/cell]]\n[[/row]]\n[[/table]]",
+    ));
+
+    assert!(
+        html.contains(concat!(
+            "<td><p>A ",
+            "<a href=\"/component:image-block\">Standard Image Block</a>",
+            "</p><p>B</p></td>",
+        )),
+        "{html}",
+    );
+    assert!(!html.contains("%%title_linked%%"), "{html}");
+}
+
+#[test]
+fn runtime_scalar_nested_table_markers_stay_text_in_authored_cell_paragraphs() {
+    let nested = "[[table]][[row]][[cell]]I[[/cell]][[/row]][[/table]]";
+    let source = format!(
+        "[[table]]\n[[row]]\n[[cell]]\nA\n\n{nested}\n\nB\n[[/cell]]\n[[/row]]\n[[/table]]"
+    );
+    let start = source.find(nested).expect("nested marker fixture");
+    let end = start + nested.len();
+    let input = DelayedInput::new(
+        &source,
+        vec![
+            InputSegment::text(0..start, TextOrigin::Authored),
+            InputSegment::text(start..end, TextOrigin::RuntimeScalar),
+            InputSegment::text(end..source.len(), TextOrigin::Authored),
+        ],
+    )
+    .expect("mixed table provenance is valid");
+
+    let html = render_input_with_bindings(&input, &SlotBindings::empty());
+    assert_eq!(html.matches("<table>").count(), 1, "{html}");
+    assert!(html.contains(nested), "{html}");
+    assert!(html.contains("<p>A</p>"), "{html}");
+    assert!(html.contains("<p>B</p>"), "{html}");
+}
+
+#[test]
 fn runtime_scalar_text_does_not_complete_authored_delimiters() {
     let source = "**injected**";
     let input = DelayedInput::new(

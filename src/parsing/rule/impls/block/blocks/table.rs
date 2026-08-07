@@ -19,11 +19,11 @@
  */
 
 use super::prelude::*;
-use crate::parsing::paragraph::ParagraphStack;
+use crate::parsing::ParserWrap;
 use crate::parsing::rule::impls::block::RULE_BLOCK;
-use crate::parsing::{ParserWrap, strip_whitespace};
 use crate::tree::{
-    AcceptsPartial, AttributeMap, PartialElement, Table, TableCell, TableRow, TableType,
+    AcceptsPartial, AttributeMap, ContainerType, PartialElement, Table, TableCell,
+    TableRow, TableType,
 };
 use std::borrow::Cow;
 use std::num::NonZeroU32;
@@ -161,7 +161,10 @@ where
     };
 
     // Get body elements
-    let body = parser.get_body_elements_with_context(block_rule, false, body_start)?;
+    let as_paragraphs = parser.settings().layout.legacy()
+        && attribute_owner == AdvancedTableElement::Cell;
+    let body =
+        parser.get_body_elements_with_context(block_rule, as_paragraphs, body_start)?;
     let (elements, errors, _) = body.into();
 
     // Return result
@@ -512,7 +515,7 @@ fn parse_cell_regular<'r, 't>(
     if legacy && !has_explicit_closer(source, &["cell", "hcell"]) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
-    let wrap_paragraph = legacy && source.contains("\n\n");
+    let preserve_single_paragraph = legacy && source.contains("\n\n");
     let header = legacy && cell_closer_is_header(source);
 
     parse_cell(
@@ -520,7 +523,8 @@ fn parse_cell_regular<'r, 't>(
         parsed.attributes,
         parsed.errors,
         header,
-        wrap_paragraph,
+        legacy,
+        preserve_single_paragraph,
         legacy,
     )
 }
@@ -555,7 +559,7 @@ fn parse_cell_header<'r, 't>(
     if legacy && !has_explicit_closer(source, &["cell", "hcell"]) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
-    let wrap_paragraph = legacy && source.contains("\n\n");
+    let preserve_single_paragraph = legacy && source.contains("\n\n");
     let header = cell_closer_is_header(source);
 
     parse_cell(
@@ -563,7 +567,8 @@ fn parse_cell_header<'r, 't>(
         parsed.attributes,
         parsed.errors,
         header,
-        wrap_paragraph,
+        legacy,
+        preserve_single_paragraph,
         legacy,
     )
 }
@@ -577,13 +582,17 @@ fn parse_cell<'r, 't>(
     mut attributes: AttributeMap<'t>,
     errors: Vec<ParseError>,
     header: bool,
-    wrap_paragraph: bool,
+    wikidot_paragraphs: bool,
+    preserve_single_paragraph: bool,
     legacy: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     // Remove leading and trailing whitespace
-    strip_whitespace(&mut elements);
-    if wrap_paragraph {
-        wrap_cell_paragraph(&mut elements);
+    trim_cell_whitespace(&mut elements);
+    if wikidot_paragraphs {
+        strip_cell_paragraph_boundaries(&mut elements);
+        if !preserve_single_paragraph {
+            unwrap_single_cell_paragraph(&mut elements);
+        }
     }
 
     // Wikidot exposes the normalized authored colspan lexeme in the DOM, even
@@ -653,24 +662,65 @@ fn parse_column_span_semantic(value: &str) -> Option<NonZeroU32> {
     significant.parse().ok()
 }
 
-fn wrap_cell_paragraph(elements: &mut Vec<Element<'_>>) {
-    let table_index = elements
-        .iter()
-        .position(|element| matches!(element, Element::Table(_)))
-        .unwrap_or(elements.len());
+fn strip_cell_paragraph_boundaries(elements: &mut Vec<Element<'_>>) {
+    let mut leading_empty = 0;
+    for element in elements.iter_mut() {
+        let Element::Container(paragraph) = element else {
+            break;
+        };
+        if paragraph.ctype() != ContainerType::Paragraph {
+            break;
+        }
+        trim_cell_whitespace(paragraph.elements_mut());
+        if !paragraph.elements().is_empty() {
+            break;
+        }
+        leading_empty += 1;
+    }
+    if leading_empty > 0 {
+        elements.drain(..leading_empty);
+    }
 
-    let mut paragraph_elements: Vec<_> = elements.drain(..table_index).collect();
-    strip_whitespace(&mut paragraph_elements);
-    paragraph_elements.retain(|element| *element != Element::LineBreak);
-    if paragraph_elements.is_empty() {
+    while let Some(Element::Container(paragraph)) = elements.last_mut() {
+        if paragraph.ctype() != ContainerType::Paragraph {
+            break;
+        }
+        trim_cell_whitespace(paragraph.elements_mut());
+        if !paragraph.elements().is_empty() {
+            break;
+        }
+        elements.pop();
+    }
+}
+
+fn trim_cell_whitespace(elements: &mut Vec<Element<'_>>) {
+    let start = elements
+        .iter()
+        .position(|element| !element.is_whitespace())
+        .unwrap_or(elements.len());
+    let end = elements
+        .iter()
+        .rposition(|element| !element.is_whitespace())
+        .map_or(start, |index| index + 1);
+
+    elements.truncate(end);
+    if start > 0 {
+        elements.drain(..start);
+    }
+}
+
+fn unwrap_single_cell_paragraph(elements: &mut Vec<Element<'_>>) {
+    if !matches!(
+        elements.as_slice(),
+        [Element::Container(container)] if container.ctype() == ContainerType::Paragraph
+    ) {
         return;
     }
-    let mut paragraphs = ParagraphStack::new_wikidot();
-    for element in paragraph_elements {
-        let paragraph_safe = element.paragraph_safe();
-        paragraphs.push_element(element, paragraph_safe);
-    }
-    elements.splice(0..0, paragraphs.into_elements());
+
+    let Some(Element::Container(paragraph)) = elements.pop() else {
+        unreachable!("matched one paragraph container");
+    };
+    *elements = paragraph.into();
 }
 
 #[cfg(test)]
@@ -982,7 +1032,8 @@ mod tests {
             Element::Text(cow!(" ")),
         ];
         let success =
-            parse_cell(elements, attributes, Vec::new(), false, false, true).unwrap();
+            parse_cell(elements, attributes, Vec::new(), false, false, false, true)
+                .unwrap();
         let Elements::Single(Element::Partial(PartialElement::TableCell(cell))) =
             success.item
         else {

@@ -25,6 +25,7 @@ use super::prelude::*;
 use super::rule::Rule;
 use crate::data::PageInfo;
 use crate::delayed::{GeneratedInput, elements_contain_delayed};
+use crate::preproc::LiteralRegionIndex;
 use crate::render::text::TextRender;
 use crate::tokenizer::Tokenization;
 use crate::tree::{
@@ -84,6 +85,14 @@ pub(crate) enum QuoteScanOutcome {
 
 type QuoteScanKey = (&'static str, usize, bool, usize);
 type BlockEndScanKey = (&'static str, usize, bool);
+type LostOwnerScanKey = (&'static str, u8, usize, usize, bool);
+
+#[derive(Debug, Default)]
+struct BlockScanCache {
+    body_end_outcomes: BTreeMap<BlockEndScanKey, bool>,
+    lost_owner_outcomes: BTreeMap<LostOwnerScanKey, bool>,
+    literal_ranges: Option<Vec<Range<usize>>>,
+}
 
 fn token_starts_line(token: Token) -> bool {
     token == Token::InputStart
@@ -160,7 +169,7 @@ pub struct Parser<'r, 't> {
     // Matching block-end scans have the same clone-safe property. The key
     // retains first-iteration semantics because multiline blocks may consume
     // an initial line break differently from later scan positions.
-    block_end_scan_cache: Rc<RefCell<BTreeMap<BlockEndScanKey, bool>>>,
+    block_end_scan_cache: Rc<RefCell<BlockScanCache>>,
     // Two-close lookahead is used while recovering nested hidden iftags. It
     // needs a separate cache because a successful one-close scan does not say
     // whether a second close exists in the same suffix.
@@ -235,7 +244,7 @@ impl<'r, 't> Parser<'r, 't> {
             footnotes: make_shared_vec(),
             bibliographies: Rc::new(RefCell::new(BibliographyList::new())),
             quote_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
-            block_end_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
+            block_end_scan_cache: Rc::new(RefCell::new(BlockScanCache::default())),
             two_block_end_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
             #[cfg(test)]
             quote_scan_token_visits: Rc::new(Cell::new(0)),
@@ -540,7 +549,11 @@ impl<'r, 't> Parser<'r, 't> {
     }
 
     pub(crate) fn block_end_scan_outcome(&self, key: BlockEndScanKey) -> Option<bool> {
-        self.block_end_scan_cache.borrow().get(&key).copied()
+        self.block_end_scan_cache
+            .borrow()
+            .body_end_outcomes
+            .get(&key)
+            .copied()
     }
 
     pub(crate) fn cache_block_end_scan_outcomes(
@@ -551,7 +564,9 @@ impl<'r, 't> Parser<'r, 't> {
     ) {
         let mut cache = self.block_end_scan_cache.borrow_mut();
         for &(token_start, first_iteration) in token_states {
-            cache.insert((rule, token_start, first_iteration), outcome);
+            cache
+                .body_end_outcomes
+                .insert((rule, token_start, first_iteration), outcome);
         }
     }
 
@@ -572,6 +587,62 @@ impl<'r, 't> Parser<'r, 't> {
                 total_matches.saturating_sub(preceding_matches).min(2),
             );
         }
+    }
+
+    pub(crate) fn lost_owner_scan_outcome(&self, key: LostOwnerScanKey) -> Option<bool> {
+        self.block_end_scan_cache
+            .borrow()
+            .lost_owner_outcomes
+            .get(&key)
+            .copied()
+    }
+
+    pub(crate) fn cache_lost_owner_scan_outcomes(
+        &self,
+        close_name: &'static str,
+        owner_kind: u8,
+        owner_depth: usize,
+        token_states: &[(usize, bool)],
+        outcome: bool,
+    ) {
+        let mut cache = self.block_end_scan_cache.borrow_mut();
+        for &(token_start, start_of_line) in token_states {
+            cache.lost_owner_outcomes.insert(
+                (
+                    close_name,
+                    owner_kind,
+                    owner_depth,
+                    token_start,
+                    start_of_line,
+                ),
+                outcome,
+            );
+        }
+    }
+
+    pub(crate) fn lost_owner_literal_range_end(&self, offset: usize) -> Option<usize> {
+        let mut cache = self.block_end_scan_cache.borrow_mut();
+        let ranges = cache.literal_ranges.get_or_insert_with(|| {
+            LiteralRegionIndex::new(self.full_text.inner())
+                .ranges()
+                .to_vec()
+        });
+        let insertion = ranges.partition_point(|range| range.start <= offset);
+        if insertion == 0 || offset >= ranges[insertion - 1].end {
+            None
+        } else {
+            Some(ranges[insertion - 1].end)
+        }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn lost_owner_scan_token_visits(&self) -> usize {
+        self.block_end_scan_token_visits()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn increment_lost_owner_scan_token_visits(&self) {
+        self.increment_block_end_scan_token_visits();
     }
 
     #[cfg(test)]

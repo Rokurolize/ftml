@@ -27,6 +27,7 @@ pub mod whitespace;
 mod compatibility;
 mod parser_functions;
 
+pub(crate) use self::parser_functions::LiteralRegionIndex;
 pub use self::parser_functions::{
     WikidotParserFunctionOptions, WikidotZeroOperatorPolicy,
     resolve_wikidot_parser_functions, resolve_wikidot_parser_functions_with_options,

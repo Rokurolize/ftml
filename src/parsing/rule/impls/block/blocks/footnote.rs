@@ -135,6 +135,10 @@ fn parse_footnote_block<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
+    if parser.in_footnote() {
+        return Err(parser.make_err(ParseErrorKind::FootnotesNested));
+    }
+
     let inline_prose = parser.settings().layout.legacy()
         && wikidot_footnote_block_has_inline_prefix(parser);
 
@@ -244,6 +248,28 @@ mod tests {
                 .iter()
                 .any(|error| error.kind() == ParseErrorKind::FootnotesNested)
         );
+    }
+
+    #[test]
+    fn footnote_rejects_nested_footnote_blocks() {
+        for layout in [Layout::Wikidot, Layout::Wikijump] {
+            let page_info = PageInfo::dummy();
+            let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
+            let tokenization =
+                crate::tokenize("[[footnote]][[footnoteblock]][[/footnote]]");
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::FootnotesNested),
+                "{layout:?}: {errors:#?}",
+            );
+
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+            assert!(html.contains("footnoteblock"), "{layout:?}: {html}");
+        }
     }
 
     #[test]

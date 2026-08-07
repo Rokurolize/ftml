@@ -173,10 +173,10 @@ impl PageRef {
 impl Display for PageRef {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(site) = self.site() {
-            write!(f, ":{}:", &site)?;
+            write!(f, ":{}:", site)?;
         }
 
-        write!(f, "{}", &self.page)
+        write!(f, "{}", self.page)
     }
 }
 

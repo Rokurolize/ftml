@@ -86,6 +86,7 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | [Bibliography](#bibliography-block)             | `bibliography`                   | No    | No     | Yes       | Map           | (See below) |
 | [Blockquote](#blockquote)                       | `blockquote`, `quote`            | No    | No     | Yes       | Map           | Elements  |
 | [Bold](#bold)                                   | `b`, `bold`, `strong`            | No    | No     | No        | Map           | Elements  |
+| Button                                          | `button`                         | No    | No     | No        | Value         | None      |
 | [Char](#char)                                   | `char`, `character`              | No    | No     | No        | Value         | None      |
 | [Checkbox](#checkbox)                           | `checkbox`                       | Yes   | No     | No        | Map           | None      |
 | [Code](#code)                                   | `code`                           | No    | No     | Yes       | Map           | Raw       |
@@ -94,8 +95,10 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | [Deletion](#deletion)                           | `del`, `deletion`                | No    | No     | No        | Map           | Elements  |
 | [Div](#div)                                     | `div`                            | No    | Yes    | Yes       | Map           | Elements  |
 | [Embed](#embed)                                 | `embed`                          | No    | No     | Yes       | Value + Map   | None      |
+| EmbedVideo                                      | `embedvideo`                     | No    | No     | No        | None          | Raw       |
 | [Equation Reference](#equation-ref)             | `equation`, `eref`, `eqref`      | No    | No     | No        | Value         | None      |
 | [File](#file)                                   | `file`                           | No    | No     | No        | Value         | None      |
+| Gallery                                         | `gallery`                        | No    | No     | Yes       | Map           | Raw       |
 | [Footnote](#footnote)                           | `footnote`                       | No    | No     | No        | None          | Elements  |
 | [Footnote Block](#footnote-block)               | `footnoteblock`                  | No    | No     | Yes       | Map           | None      |
 | [Hidden](#hidden)                               | `hidden`                         | No    | No     | Yes       | Map           | Elements  |

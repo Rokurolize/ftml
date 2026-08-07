@@ -6,6 +6,7 @@ use crate::delayed::{
 use crate::layout::Layout;
 use crate::settings::{WikitextMode, WikitextSettings};
 use std::borrow::Cow;
+use std::time::{Duration, Instant};
 
 fn page_link_input(source: &str) -> DelayedInput<'_> {
     let marker = "%%title_linked%%";
@@ -99,6 +100,68 @@ fn render_authored(source: &str) -> String {
     )
     .expect("valid authored delayed fixture");
     render_input_with_bindings(&input, &SlotBindings::empty())
+}
+
+fn page_link_input_with_runtime_prefix<'t>(
+    source: &'t str,
+    runtime_prefix: &str,
+) -> DelayedInput<'t> {
+    let marker = "%%title_linked%%";
+    let marker_start = source.find(marker).expect("fixture marker");
+    let marker_end = marker_start + marker.len();
+    DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..runtime_prefix.len(), TextOrigin::RuntimeScalar),
+            InputSegment::text(runtime_prefix.len()..marker_start, TextOrigin::Authored),
+            InputSegment::generated(GeneratedInput {
+                source_range: marker_start..marker_end,
+                id: SlotId::new(1),
+                kind: GeneratedKind::PageLink,
+                occurrence: 0,
+            }),
+            InputSegment::text(marker_end..source.len(), TextOrigin::Authored),
+        ],
+    )
+    .expect("valid runtime-prefix fixture")
+}
+
+fn page_link_input_with_runtime_suffix<'t>(
+    source: &'t str,
+    runtime_suffix: &str,
+) -> DelayedInput<'t> {
+    let marker = "%%title_linked%%";
+    let marker_start = source.find(marker).expect("fixture marker");
+    let marker_end = marker_start + marker.len();
+    let runtime_start = source.len() - runtime_suffix.len();
+    DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..marker_start, TextOrigin::Authored),
+            InputSegment::generated(GeneratedInput {
+                source_range: marker_start..marker_end,
+                id: SlotId::new(1),
+                kind: GeneratedKind::PageLink,
+                occurrence: 0,
+            }),
+            InputSegment::text(marker_end..runtime_start, TextOrigin::Authored),
+            InputSegment::text(runtime_start..source.len(), TextOrigin::RuntimeScalar),
+        ],
+    )
+    .expect("valid runtime-suffix fixture")
+}
+
+#[test]
+fn generated_values_cannot_become_color_authority() {
+    for source in ["##%%title_linked%%|A##", "##|%%title_linked%%|A##"] {
+        let input = page_link_input(source);
+        let html = render_input(&input);
+
+        assert!(html.contains("##"), "{html}");
+        assert!(html.contains("Standard Image Block"), "{html}");
+        assert!(!html.contains("style=\"color:"), "{html}");
+        assert!(!html.contains("background-color:"), "{html}");
+    }
 }
 
 #[test]
@@ -217,6 +280,18 @@ fn delayed_page_link_is_an_active_inline_leaf_without_textual_substitution() {
             "<p>BEGIN|<strong>",
             "<a href=\"/component:image-block\">Standard Image Block</a>",
             "</strong>|END</p>",
+        ),
+    );
+}
+
+#[test]
+fn delayed_binding_preserves_rejected_size_closer_source() {
+    assert_eq!(
+        render("[[SIZE]]before %%title_linked%% after[[/SiZe]]"),
+        concat!(
+            "<p>[[SIZE]]before ",
+            "<a href=\"/component:image-block\">Standard Image Block</a>",
+            " after[[/SiZe]]</p>",
         ),
     );
 }
@@ -488,6 +563,154 @@ fn delayed_page_link_is_omitted_with_its_comment_owner() {
 }
 
 #[test]
+fn comment_elided_consumers_do_not_flatten_generated_provenance() {
+    let link = render("BEGIN|[[[start|A[!-- %%title_linked%% --]B]]]|END");
+    assert!(!link.contains("Standard Image Block"), "{link}");
+    assert!(!link.contains("%%title_linked%%"), "{link}");
+
+    let attribute =
+        render("BEGIN|[[span class=\"A[!-- %%title_linked%% --]B\"]]X[[/span]]|END");
+    assert!(!attribute.contains("Standard Image Block"), "{attribute}");
+    assert!(!attribute.contains("%%title_linked%%"), "{attribute}");
+    assert!(!attribute.contains("class=\"AB\""), "{attribute}");
+}
+
+#[test]
+fn runtime_comment_shaped_text_cannot_enter_an_authored_field_view() {
+    let html = render_with_runtime_scalar("[[[start|A[!--x--]B]]]", "[!--x--]");
+    assert!(html.contains("[!--x--]"), "{html}");
+    assert!(!html.contains("href=\"/start\""), "{html}");
+}
+
+#[test]
+fn runtime_scalar_comment_closer_cannot_validate_an_authored_opener() {
+    let source = "[!--x--]";
+    let scalar_start = source.find("--]").expect("runtime closer fixture");
+    let input = DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..scalar_start, TextOrigin::Authored),
+            InputSegment::text(scalar_start..source.len(), TextOrigin::RuntimeScalar),
+        ],
+    )
+    .expect("valid mixed-provenance comment fixture");
+
+    let html = render_input_with_bindings(&input, &SlotBindings::empty());
+    assert!(html.contains('x'), "{html}");
+    assert!(html.contains("--]"), "{html}");
+}
+
+#[test]
+fn runtime_literal_comment_closer_retains_source_grammar() {
+    let source = "[!--x--]";
+    let literal_start = source.find("--]").expect("runtime closer fixture");
+    let input = DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..literal_start, TextOrigin::Authored),
+            InputSegment::text(literal_start..source.len(), TextOrigin::RuntimeLiteral),
+        ],
+    )
+    .expect("valid mixed-provenance comment fixture");
+
+    assert_eq!(
+        render_input_with_bindings(&input, &SlotBindings::empty()),
+        "",
+    );
+}
+
+#[test]
+fn runtime_scalar_dashes_cannot_close_a_valid_authored_comment_early() {
+    let source = "[!--a--]b--]";
+    let scalar_start = source.find("a--]").expect("runtime dash fixture") + 1;
+    let scalar_end = scalar_start + 2;
+    let input = DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..scalar_start, TextOrigin::Authored),
+            InputSegment::text(scalar_start..scalar_end, TextOrigin::RuntimeScalar),
+            InputSegment::text(scalar_end..source.len(), TextOrigin::Authored),
+        ],
+    )
+    .expect("valid mixed-provenance comment fixture");
+
+    assert_eq!(
+        render_input_with_bindings(&input, &SlotBindings::empty()),
+        "",
+    );
+}
+
+#[test]
+fn anchor_links_preserve_delayed_owner_and_runtime_scalar_provenance() {
+    assert_eq!(
+        render("BEGIN|[#toc1 %%title_linked%%]|END"),
+        concat!(
+            "<p>BEGIN|[#toc1 ",
+            "<a href=\"/component:image-block\">Standard Image Block</a>",
+            "]|END</p>",
+        ),
+    );
+    assert_eq!(
+        render("BEGIN|[#%%title_linked%% Label]|END"),
+        concat!(
+            "<p>BEGIN|[#",
+            "<a href=\"/component:image-block\">Standard Image Block</a>",
+            " Label]|END</p>",
+        ),
+    );
+    assert_eq!(
+        render("BEGIN|[*#toc1 %%title_linked%%]|END"),
+        concat!(
+            "<p>BEGIN|[*#toc1 ",
+            "<a href=\"/component:image-block\">Standard Image Block</a>",
+            "]|END</p>",
+        ),
+    );
+    assert_eq!(
+        render("BEGIN|[#toc1 A[!--%%title_linked%%--]B]|END"),
+        r##"<p>BEGIN|<a href="#toc1">AB</a>|END</p>"##,
+    );
+    assert_eq!(
+        render_with_runtime_scalar("[#toc1 Label]", "toc1"),
+        r##"<p><a href="#toc1">Label</a></p>"##,
+    );
+    assert_eq!(
+        render_with_runtime_scalar("[#toc1 Label]", "toc1 Label"),
+        "<p>[#toc1 Label]</p>",
+    );
+    assert_eq!(
+        render_with_runtime_scalar("[*#toc1 Label]", "#"),
+        "<p>[*#toc1 Label]</p>",
+    );
+}
+
+#[test]
+fn named_anchor_markers_preserve_delayed_and_runtime_provenance() {
+    assert_eq!(
+        render_authored("BEGIN|[[# alpha]]|END"),
+        r#"<p>BEGIN|<a name="alpha"></a>|END</p>"#,
+    );
+
+    let generated = render("BEGIN|[[# %%title_linked%%]]|END");
+    assert!(generated.contains("BEGIN|[[# "), "{generated}");
+    assert!(generated.contains(concat!(
+        r#"<a href="/component:image-block">"#,
+        "Standard Image Block</a>",
+    )));
+    assert!(generated.contains("]]|END"), "{generated}");
+    assert!(!generated.contains("<a name"), "{generated}");
+
+    let runtime_name = render_with_runtime_scalar("BEGIN|[[# alpha]]|END", "alpha");
+    assert_eq!(runtime_name, "<p>BEGIN|[[# alpha]]|END</p>");
+    assert!(!runtime_name.contains("<a name"), "{runtime_name}");
+
+    let runtime_marker =
+        render_with_runtime_scalar("BEGIN|[[# alpha]]|END", "[[# alpha]]");
+    assert_eq!(runtime_marker, "<p>BEGIN|[[# alpha]]|END</p>");
+    assert!(!runtime_marker.contains("<a name"), "{runtime_marker}");
+}
+
+#[test]
 fn slot_occupancy_recovers_outer_links_as_authored_source() {
     assert_eq!(
         render("BEGIN|[[[scp-003|%%title_linked%%]]]|END"),
@@ -524,6 +747,33 @@ fn page_and_tag_slots_have_distinct_span_attribute_recovery() {
 }
 
 #[test]
+fn malformed_empty_key_blocks_cannot_promote_generated_values_to_structure() {
+    for (open, close) in [
+        ("[[div =\"%%title_linked%%\"]]", "[[/div]]"),
+        ("[[span =\"%%title_linked%%\"]]", "[[/span]]"),
+    ] {
+        let source = format!("{open}**literal**{close}");
+        let html = render(&source);
+
+        assert!(html.contains("[["), "{html}");
+        assert!(html.contains(close), "{html}");
+        assert!(
+            html.contains(concat!(
+                r#"<a href="/component:image-block">"#,
+                "Standard Image Block</a>",
+            )),
+            "{html}",
+        );
+        assert!(!html.contains("<div "), "{html}");
+        assert!(!html.contains("<div>"), "{html}");
+        assert!(!html.contains("<span "), "{html}");
+        assert!(!html.contains("<span>"), "{html}");
+        assert!(!html.contains("<strong>"), "{html}");
+        assert!(!html.contains("%%title_linked%%"), "{html}");
+    }
+}
+
+#[test]
 fn page_slot_recovers_image_owner_while_tag_slot_stays_attribute_text() {
     assert_eq!(
         render("BEGIN|[[image https://example.com/x.png alt=\"%%title_linked%%\"]]|END",),
@@ -542,6 +792,29 @@ fn page_slot_recovers_image_owner_while_tag_slot_stays_attribute_text() {
         concat!(
             "\n\nBEGIN|<img src=\"https://example.com/x.png\" class=\"image\" ",
             "alt=\"[/system:page-tags/tag/component component]\">|END",
+        ),
+    );
+}
+
+#[test]
+fn generated_image_attributes_preserve_implicit_attachment_disposition() {
+    assert_eq!(
+        render_tag(r#"[[=image photo.png alt="%%tags_linked%%"]]"#),
+        concat!(
+            "<div class=\"image-container aligncenter\">",
+            "<a href=\"https://sandbox.wjfiles.com/local--files/some-page/photo.png\">",
+            "<img src=\"https://sandbox.wjfiles.com/local--resized-images/some-page/photo.png/medium.jpg\" ",
+            "class=\"image\" alt=\"[/system:page-tags/tag/component component]\">",
+            "</a></div>",
+        ),
+    );
+    assert_eq!(
+        render_tag(r#"[[image photo.png link="%%tags_linked%%"]]"#),
+        concat!(
+            "<a href=\"/[/system:page-tags/tag/component%20component]\">",
+            "<img src=\"https://sandbox.wjfiles.com/local--resized-images/some-page/photo.png/medium.jpg\" ",
+            "class=\"image\" alt=\"photo.png\">",
+            "</a>",
         ),
     );
 }
@@ -638,6 +911,23 @@ fn nested_line_start_owners_bind_without_retaining_delayed_leaves() {
 }
 
 #[test]
+fn orphan_tab_fallback_keeps_generated_fragment_provenance() {
+    let source = concat!("[[tab]]\n", "%%title_linked%%\n", "[[/tab]]",);
+    let html = render(source);
+
+    assert!(html.contains("[[tab]]"), "{html}");
+    assert!(html.contains("[[/tab]]"), "{html}");
+    assert!(
+        html.contains(concat!(
+            r#"<a href="/component:image-block">"#,
+            "Standard Image Block</a>",
+        )),
+        "{html}",
+    );
+    assert!(!html.contains("%%title_linked%%"), "{html}");
+}
+
+#[test]
 fn bibliography_definition_values_bind_before_rendering() {
     let html = render(concat!(
         "[[bibliography title=\"Works\"]]\n",
@@ -716,6 +1006,106 @@ fn runtime_scalar_text_renders_without_markup_activation() {
     assert!(html.html_blocks().is_empty());
     assert!(!html.body().contains("<strong>"));
     assert!(!html.body().contains("<a "));
+}
+
+#[test]
+fn runtime_scalar_advanced_table_markers_remain_inert() {
+    let source = "[[table]]\n[[row]]\n[[cell]]A[[/cell]]\n[[/row]]\n[[/table]]";
+    let input = DelayedInput::new(
+        source,
+        vec![InputSegment::text(
+            0..source.len(),
+            TextOrigin::RuntimeScalar,
+        )],
+    )
+    .expect("runtime scalar input is valid");
+
+    let html = render_input_with_bindings(&input, &SlotBindings::empty());
+    assert_eq!(html, format!("<p>{source}</p>"));
+    assert!(!html.contains("<table>"));
+}
+
+#[test]
+fn generated_values_do_not_become_advanced_table_attributes() {
+    for source in [
+        concat!(
+            "[[table class=\"%%title_linked%%\"]]\n",
+            "[[row]]\n[[cell]]A[[/cell]]\n[[/row]]\n[[/table]]",
+        ),
+        concat!(
+            "[[table]]\n[[row]]\n",
+            "[[cell colspan=\"%%title_linked%%\"]]A[[/cell]]\n",
+            "[[/row]]\n[[/table]]",
+        ),
+    ] {
+        let html = render(source);
+        assert!(!html.contains("<table>"), "{html}");
+        assert!(
+            html.contains(concat!(
+                r#"<a href="/component:image-block">"#,
+                "Standard Image Block</a>",
+            )),
+            "{html}",
+        );
+        assert!(!html.contains("%%title_linked%%"), "{html}");
+    }
+}
+
+#[test]
+fn runtime_scalar_values_do_not_become_advanced_table_attributes() {
+    let source = concat!(
+        "[[table class=\"runtime-value\"]]\n",
+        "[[row]]\n[[cell]]A[[/cell]]\n[[/row]]\n[[/table]]",
+    );
+    let html = render_with_runtime_scalar(source, "runtime-value");
+
+    assert!(!html.contains("<table>"), "{html}");
+    assert!(html.contains("runtime-value"), "{html}");
+    assert!(html.contains('A'), "{html}");
+}
+
+#[test]
+fn delayed_advanced_table_paragraphs_keep_generated_links() {
+    let html = render(concat!(
+        "[[table]]\n[[row]]\n[[cell]]\n",
+        "A %%title_linked%%\n\nB\n",
+        "[[/cell]]\n[[/row]]\n[[/table]]",
+    ));
+
+    assert!(
+        html.contains(concat!(
+            "<td><p>A ",
+            "<a href=\"/component:image-block\">Standard Image Block</a>",
+            "</p><p>B</p></td>",
+        )),
+        "{html}",
+    );
+    assert!(!html.contains("%%title_linked%%"), "{html}");
+}
+
+#[test]
+fn runtime_scalar_nested_table_markers_stay_text_in_authored_cell_paragraphs() {
+    let nested = "[[table]][[row]][[cell]]I[[/cell]][[/row]][[/table]]";
+    let source = format!(
+        "[[table]]\n[[row]]\n[[cell]]\nA\n\n{nested}\n\nB\n[[/cell]]\n[[/row]]\n[[/table]]"
+    );
+    let start = source.find(nested).expect("nested marker fixture");
+    let end = start + nested.len();
+    let input = DelayedInput::new(
+        &source,
+        vec![
+            InputSegment::text(0..start, TextOrigin::Authored),
+            InputSegment::text(start..end, TextOrigin::RuntimeScalar),
+            InputSegment::text(end..source.len(), TextOrigin::Authored),
+        ],
+    )
+    .expect("mixed table provenance is valid");
+
+    let html = render_input_with_bindings(&input, &SlotBindings::empty());
+    assert_eq!(html.matches("<table>").count(), 1, "{html}");
+    assert!(html.contains(nested), "{html}");
+    assert!(html.contains("<p>A</p>"), "{html}");
+    assert!(html.contains("<p>B</p>"), "{html}");
 }
 
 #[test]
@@ -817,13 +1207,17 @@ fn empty_generated_tag_links_remove_their_empty_list_mode_paragraph() {
 }
 
 #[test]
-fn delayed_image_attributes_preserve_authored_link_and_suffix() {
-    let linked =
-        render_tag(r#"[[image x.png alt="%%tags_linked%%" link="https://example.com"]]"#);
+fn delayed_image_attributes_preserve_authored_internal_link_and_suffix() {
+    let linked = render_tag(r#"[[image x.png alt="%%tags_linked%%" link="SCP-002"]]"#);
     assert!(
-        linked.contains(r#"<a href="https://example.com"><img "#),
+        linked.contains(r#"<a href="/SCP-002"><img "#),
         "authored image link must survive delayed alt binding: {linked}",
     );
+
+    let external =
+        render_tag(r#"[[image x.png alt="%%tags_linked%%" link="https://example.com"]]"#);
+    assert!(!external.contains("<img"), "{external}");
+    assert!(external.contains("[[image x.png"), "{external}");
 
     let suffixed = render_tag(r#"[[image x.png alt="%%tags_linked%% suffix"]]"#);
     assert!(
@@ -872,6 +1266,47 @@ fn delayed_raw_decodes_entities_and_div_shell_keeps_the_parsed_opener() {
             "delayed div shell must preserve the complete opener {opener:?}: {html}",
         );
     }
+}
+
+#[test]
+fn delayed_raw_adjacency_does_not_flatten_generated_or_runtime_values() {
+    let generated = render("@@A@@@@%%title_linked%%@@");
+    assert_eq!(
+        generated.matches("white-space: pre-wrap;").count(),
+        2,
+        "{generated}",
+    );
+    assert!(
+        generated.contains("[[[component:image-block | Standard Image Block]]]"),
+        "{generated}",
+    );
+
+    let runtime = render_with_runtime_scalar("@@A@@@@B@@", "@@B@@");
+    assert_eq!(
+        runtime.matches("white-space: pre-wrap;").count(),
+        1,
+        "{runtime}",
+    );
+    assert!(runtime.contains("@@B@@"), "{runtime}");
+}
+
+#[test]
+fn delayed_raw_inside_math_rolls_back_without_erasing_values() {
+    let generated = render("[[$OUTER @@%%title_linked%%@@ TAIL$]]");
+    assert!(!generated.contains("math-inline"), "{generated}");
+    assert!(
+        generated.contains("[[[component:image-block | Standard Image Block]]]"),
+        "{generated}",
+    );
+    assert!(generated.contains("[[$OUTER "), "{generated}");
+    assert!(generated.contains(" TAIL$]]"), "{generated}");
+
+    let runtime =
+        render_with_runtime_scalar("[[$OUTER @@2026/08/02@@ TAIL$]]", "2026/08/02");
+    assert!(!runtime.contains("math-inline"), "{runtime}");
+    assert!(runtime.contains("2026/08/02"), "{runtime}");
+    assert!(runtime.contains("[[$OUTER "), "{runtime}");
+    assert!(runtime.contains(" TAIL$]]"), "{runtime}");
 }
 
 #[test]
@@ -1106,4 +1541,159 @@ fn delayed_slots_preserve_the_frozen_listpages_owner_boundaries() {
     ] {
         assert_eq!(render_tag(source), expected, "source: {source}");
     }
+}
+
+#[test]
+fn suppressed_delayed_owners_apply_typography_only_across_authored_text() {
+    assert_eq!(
+        render("left-[[iftags]]\n%%title_linked%%\n[[/iftags]]-right"),
+        "<p>left—right</p>",
+    );
+    assert_eq!(
+        render("left.[!-- %%title_linked%% --]..right"),
+        "<p>left…right</p>",
+    );
+
+    let source = "`[!-- %%title_linked%% --]`quoted'[!-- %%title_linked%% --]'";
+    let marker = "%%title_linked%%";
+    let ranges = source
+        .match_indices(marker)
+        .map(|(start, marker)| start..start + marker.len())
+        .collect::<Vec<_>>();
+    let mut segments = Vec::new();
+    let mut cursor = 0;
+    for (occurrence, range) in ranges.into_iter().enumerate() {
+        segments.push(InputSegment::text(
+            cursor..range.start,
+            TextOrigin::Authored,
+        ));
+        segments.push(InputSegment::generated(GeneratedInput {
+            source_range: range.clone(),
+            id: SlotId::new(1),
+            kind: GeneratedKind::PageLink,
+            occurrence: occurrence as u32,
+        }));
+        cursor = range.end;
+    }
+    segments.push(InputSegment::text(
+        cursor..source.len(),
+        TextOrigin::Authored,
+    ));
+    let input =
+        DelayedInput::new(source, segments).expect("valid repeated suppression input");
+    assert_eq!(render_input(&input), "<p>“quoted”</p>");
+
+    let source = "runtime-[!-- %%title_linked%% --]-authored";
+    let input = page_link_input_with_runtime_prefix(source, "runtime-");
+    assert_eq!(
+        render_input(&input),
+        "<p>runtime--authored</p>",
+        "runtime-origin text must remain a seam barrier",
+    );
+
+    let source = "authored-[!-- %%title_linked%% --]-runtime";
+    let input = page_link_input_with_runtime_suffix(source, "-runtime");
+    assert_eq!(
+        render_input(&input),
+        "<p>authored--runtime</p>",
+        "runtime-origin text must remain a seam barrier on either side",
+    );
+}
+
+#[test]
+fn generated_values_do_not_gain_typography_or_general_syntax_authority() {
+    let input = page_link_input("left-%%title_linked%%-right");
+    let bindings = page_bindings_for(PageRef::page_only("target"), "--[[html]]");
+    assert_eq!(
+        render_input_with_bindings(&input, &bindings),
+        concat!("<p>left-<a href=\"/target\">", "--[[html]]</a>-right</p>",),
+    );
+}
+
+#[test]
+fn delayed_suppression_binding_is_atomic_and_rolls_back_hidden_metadata() {
+    let source = concat!(
+        "start-[[iftags]]\n",
+        "[[html]]<b>hidden</b>[[/html]]\n",
+        "%%title_linked%%\n",
+        "[[/iftags]]-middle",
+    );
+    let input = page_link_input(source);
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::List, Layout::Wikidot);
+    let delayed = parse_delayed_list(&input, &page_info, &settings)
+        .expect("supported delayed input");
+
+    assert_eq!(
+        delayed.bind(&SlotBindings::empty()).unwrap_err(),
+        crate::delayed::DelayedError::BindingSchemaMismatch,
+    );
+
+    let bound = delayed
+        .bind(&page_bindings())
+        .expect("the same parsed tree must bind after a rejected candidate");
+    let sealed = bound.render_html(&page_info, &settings);
+    assert_eq!(sealed.body(), "<p>start—middle</p>");
+    assert!(sealed.html_blocks().is_empty());
+}
+
+#[test]
+fn many_adjacent_suppressed_delayed_nodes_resolve_within_a_bounded_budget() {
+    const COUNT: usize = 2_048;
+    let mut source = String::from("left-");
+    let mut generated_ranges = Vec::with_capacity(COUNT);
+    for index in 0..COUNT {
+        source.push_str("[!-- ");
+        let start = source.len();
+        source.push_str(&format!("%%slot-{index}%%"));
+        generated_ranges.push(start..source.len());
+        source.push_str(" --]");
+    }
+    source.push_str("-right");
+
+    let mut segments = Vec::with_capacity(COUNT * 2 + 1);
+    let mut bindings = Vec::with_capacity(COUNT);
+    let mut cursor = 0;
+    for (index, range) in generated_ranges.into_iter().enumerate() {
+        segments.push(InputSegment::text(
+            cursor..range.start,
+            TextOrigin::Authored,
+        ));
+        let id = SlotId::new(index as u32);
+        segments.push(InputSegment::generated(GeneratedInput {
+            source_range: range.clone(),
+            id,
+            kind: GeneratedKind::PageLink,
+            occurrence: 0,
+        }));
+        bindings.push((
+            id,
+            GeneratedValue::PageLink {
+                page: PageRef::page_only("suppressed"),
+                label: Cow::Borrowed("suppressed"),
+            },
+        ));
+        cursor = range.end;
+    }
+    segments.push(InputSegment::text(
+        cursor..source.len(),
+        TextOrigin::Authored,
+    ));
+
+    let input = DelayedInput::new(&source, segments).expect("valid dense delayed input");
+    let bindings = SlotBindings::new(bindings).expect("unique dense bindings");
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::List, Layout::Wikidot);
+    let started = Instant::now();
+    let delayed = parse_delayed_list(&input, &page_info, &settings)
+        .expect("dense delayed input parses");
+    let bound = delayed.bind(&bindings).expect("dense delayed input binds");
+    let body = bound.render_html(&page_info, &settings);
+
+    assert_eq!(body.body(), "<p>left—right</p>");
+    assert!(
+        started.elapsed() < Duration::from_secs(10),
+        "dense delayed suppression exceeded its bounded budget: {:?}",
+        started.elapsed(),
+    );
 }

@@ -171,7 +171,6 @@ pub enum Token {
     // Miscellaneous
     //
     LeftComment,
-    RightComment,
     InputStart,
     InputEnd,
 
@@ -190,6 +189,15 @@ impl Token {
         debug!("Running lexer on input");
 
         scanner::extract_all(text)
+    }
+
+    pub(crate) fn extract_all_with_trailing_comment_closer(
+        text: &str,
+        trailing_comment_closer: bool,
+    ) -> Vec<ExtractedToken<'_>> {
+        debug!("Running lexer on delayed authored input");
+
+        scanner::extract_all_with_trailing_comment_closer(text, trailing_comment_closer)
     }
 
     #[cfg(test)]
@@ -245,7 +253,6 @@ impl Token {
         match rule {
             // Symbols
             Rule::left_comment => Token::LeftComment,
-            Rule::right_comment => Token::RightComment,
             Rule::left_bracket => Token::LeftBracket,
             Rule::left_bracket_anchor => Token::LeftBracketAnchor,
             Rule::left_bracket_star => Token::LeftBracketStar,

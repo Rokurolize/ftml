@@ -169,10 +169,15 @@ pub(super) fn preserve_wikidot_document_indentation_barrier(text: &mut String) {
         return;
     }
     let structural = text.as_bytes().get(leading_len).copied();
+    let centered_line = text[leading_len..].starts_with("= ");
     if text[..leading_len]
         .bytes()
         .any(|byte| matches!(byte, b' ' | b'\t'))
-        && matches!(structural, Some(b'>' | b'=' | b'+' | b'|' | b'[' | b'_'))
+        && !centered_line
+        && matches!(
+            structural,
+            Some(b'>' | b'=' | b'+' | b'|' | b'[' | b'_' | b'*' | b'#')
+        )
     {
         let replacement = if text.as_bytes().get(leading_len) == Some(&b'_') {
             "\0 "
@@ -243,10 +248,10 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
     // Replace DOS and Mac newlines
     replace!(DOS_MAC_NEWLINES);
 
-    // Saved Wikidot trims ASCII whitespace at the beginning of the document,
-    // while preserving the same indentation on later physical lines. This is
-    // observably different from preview rendering for structural prefixes such
-    // as native blockquotes, so the saved-page behavior is authoritative.
+    // Preserve a syntax barrier when document-leading indentation precedes a
+    // structural marker. FTML owns the source grammar at this seam; any
+    // lifecycle-specific source normalization performed while Wikidot saves a
+    // page belongs to the caller before parsing.
     if wikidot_compatibility {
         preserve_document_leading_indentation_barrier(text);
     }
@@ -269,6 +274,8 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
     join_continued_lines(text, &mut buffer, wikidot_compatibility);
 
     if wikidot_compatibility {
+        normalize_wikidot_code_body_bytes(text);
+        expand_wikidot_list_indentation_tabs(text);
         preserve_adjacent_wikidot_tab_link_spacing(text);
     }
 
@@ -285,6 +292,87 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
 
     // Remove trailing newlines
     replace!(TRAILING_NEWLINES);
+}
+
+fn normalize_wikidot_code_body_bytes(text: &mut String) {
+    if !text.contains(['\t', '\u{00a0}']) || !text.contains("[[") {
+        return;
+    }
+
+    let ranges = crate::wikidot_code::active_body_ranges(text);
+    if ranges.is_empty() {
+        return;
+    }
+
+    let mut output = String::with_capacity(text.len());
+    let mut range_index = 0usize;
+    for (index, character) in text.char_indices() {
+        while ranges
+            .get(range_index)
+            .is_some_and(|range| range.end <= index)
+        {
+            range_index += 1;
+        }
+        let in_code = ranges
+            .get(range_index)
+            .is_some_and(|range| range.contains(&index));
+
+        match (in_code, character) {
+            (true, '\t') => output.push_str("    "),
+            (true, '\u{00a0}') => output.push(' '),
+            _ => output.push(character),
+        }
+    }
+    *text = output;
+}
+
+fn expand_wikidot_list_indentation_tabs(text: &mut String) {
+    if !text.contains('\t') {
+        return;
+    }
+
+    let literal_regions = LiteralRegionIndex::new(text);
+    let mut protected_ranges = literal_regions.ranges().to_vec();
+    protected_ranges.extend(wikidot_comment_ranges(text));
+    protected_ranges.sort_unstable_by_key(|range| (range.start, range.end));
+
+    let source = std::mem::take(text);
+    let mut output = String::with_capacity(source.len());
+    let mut line_start = 0;
+    while line_start < source.len() {
+        let line_end = source[line_start..]
+            .find('\n')
+            .map_or(source.len(), |offset| line_start + offset);
+        let line = &source[line_start..line_end];
+        let indent_len = line
+            .bytes()
+            .take_while(|byte| matches!(byte, b' ' | b'\t'))
+            .count();
+        let marker = line.as_bytes().get(indent_len).copied();
+        let repeated_marker = line.as_bytes().get(indent_len + 1) == marker.as_ref();
+        let list_marker = matches!(marker, Some(b'*' | b'#')) && !repeated_marker;
+        let protected = index_in_ranges(&protected_ranges, line_start + indent_len);
+
+        if list_marker && !protected && line[..indent_len].contains('\t') {
+            for character in line[..indent_len].chars() {
+                if character == '\t' {
+                    output.push_str("    ");
+                } else {
+                    output.push(character);
+                }
+            }
+            output.push_str(&line[indent_len..]);
+        } else {
+            output.push_str(line);
+        }
+        if line_end < source.len() {
+            output.push('\n');
+            line_start = line_end + 1;
+        } else {
+            break;
+        }
+    }
+    *text = output;
 }
 
 fn preserve_adjacent_wikidot_tab_link_spacing(text: &mut String) {
@@ -693,6 +781,37 @@ fn wikidot_substitution_preserves_tab_width_inside_getattrs_values() {
 }
 
 #[test]
+fn wikidot_list_indentation_uses_four_columns_per_tab() {
+    let mut text = concat!(
+        "* A\n",
+        "\t* B\n",
+        "\t\t* C\n",
+        " \t* D\n",
+        "\t * E\n",
+        "[[code]]\n",
+        "\t* literal\n",
+        "[[/code]]",
+    )
+    .to_owned();
+
+    substitute_wikidot(&mut text);
+
+    assert_eq!(
+        text,
+        concat!(
+            "* A\n",
+            "    * B\n",
+            "        * C\n",
+            "     * D\n",
+            "     * E\n",
+            "[[code]]\n",
+            "    * literal\n",
+            "[[/code]]",
+        ),
+    );
+}
+
+#[test]
 fn wikidot_adjacent_tab_link_separator_keeps_its_visible_spacing() {
     let mut text = concat!(
         "BEGIN|[http://example.com/path\tEND]\n",
@@ -715,7 +834,7 @@ fn wikidot_adjacent_tab_link_separator_keeps_its_visible_spacing() {
             "[http://example.com/path END]\n",
             "BEGIN|[http://example.com/path END]\n",
             "[!--BEGIN|[http://example.com/path END]--]\n",
-            "[[code]]\nBEGIN|[http://example.com/path END]\n[[/code]]\n",
+            "[[code]]\nBEGIN|[http://example.com/path    END]\n[[/code]]\n",
             "@@BEGIN|[http://example.com/path END]@@",
         ),
     );
@@ -762,9 +881,9 @@ fn trims_document_indentation_before_a_spaced_inner_include_example() {
 }
 
 #[test]
-fn preserves_a_syntax_barrier_for_indented_non_list_document_openers() {
+fn preserves_a_syntax_barrier_for_indented_non_center_document_openers() {
     for (input, expected) in [
-        ("\t= x", "\0= x"),
+        ("\t== x", "\0== x"),
         (" + x", "\0+ x"),
         (" [[div]]x[[/div]]", "\0[[div]]x[[/div]]"),
     ] {
@@ -776,8 +895,18 @@ fn preserves_a_syntax_barrier_for_indented_non_list_document_openers() {
 }
 
 #[test]
-fn trims_document_indentation_before_list_openers() {
-    for (input, expected) in [(" * x", "* x"), ("\t# x", "# x")] {
+fn trims_document_indentation_before_a_centered_line() {
+    let mut text = "\t= centered".to_owned();
+
+    preserve_wikidot_document_indentation_barrier(&mut text);
+    substitute_wikidot(&mut text);
+
+    assert_eq!(text, "= centered");
+}
+
+#[test]
+fn preserves_document_indentation_before_list_openers() {
+    for (input, expected) in [(" * x", "\0* x"), ("\t# x", "\0# x")] {
         let mut text = input.to_owned();
         preserve_wikidot_document_indentation_barrier(&mut text);
         substitute_wikidot(&mut text);

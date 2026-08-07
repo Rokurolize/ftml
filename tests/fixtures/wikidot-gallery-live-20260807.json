@@ -1,0 +1,260 @@
+{
+  "schema": "ftml.wikidot-gallery-evidence.v1",
+  "provenance": {
+    "archived_capture": {
+      "authenticated": false,
+      "module": "edit/PagePreviewModule",
+      "mutated": false,
+      "requirements_sha256": "45717e5351f7eb1c46431dd44bf15db9777dbbc4fa40026931bd2e6458b2fcc9",
+      "site": "scp-wiki",
+      "wikidot_py_commit": "2434bf77744488cb2095327c9e0e4450add78df3",
+      "wikidot_py_version": "4.4.1"
+    },
+    "supplemental_capture": {
+      "authenticated": false,
+      "captured_at": "2026-08-07T13:48:46Z",
+      "module": "edit/PagePreviewModule",
+      "mutated": false,
+      "site": "scp-wiki",
+      "wikidot_py_commit": "4d294a7d8197192d47302c15e5293433f90be1da",
+      "wikidot_py_version": "4.4.1"
+    },
+    "recovery_capture": {
+      "authenticated": false,
+      "captured_at": "2026-08-07T14:35:19.677982+00:00",
+      "module": "edit/PagePreviewModule",
+      "mutated": false,
+      "requirements_sha256": "45717e5351f7eb1c46431dd44bf15db9777dbbc4fa40026931bd2e6458b2fcc9",
+      "site": "scp-wiki",
+      "site_domain": "scp-wiki.wikidot.com",
+      "wikidot_py_commit": "2434bf77744488cb2095327c9e0e4450add78df3",
+      "wikidot_py_version": "4.4.1"
+    }
+  },
+  "cases": [
+    {
+      "id": "focused-gallery-closed",
+      "source": "[[gallery]]\nBODY\n[[/gallery]]",
+      "source_sha256": "33404a4fcd3f2486f283c920713c7b01d0e5eaf83f4f4d3843d4cb2bff88370e",
+      "raw_html_sha256": "d95553fae76f6779c60c98a913a57e42fb3b8dc7e347ec2a6eda04a2c65b4c0b"
+    },
+    {
+      "id": "focused-gallery-closed-empty",
+      "source": "[[gallery]]\n\n[[/gallery]]",
+      "source_sha256": "02c1d3eeea75e3de4bd54e17b2ee74cfa38b463786c8d8c737e24d390654935a",
+      "raw_html_sha256": "fbb45c5cae5b3c4fd56b28892a199f92ea6f290fe3066af450210b2263f83d6a"
+    },
+    {
+      "id": "focused-gallery-code",
+      "source": "[[code]]\n[[gallery]]\n[[/code]]",
+      "source_sha256": "25205cde19a432cf57d051ae360dc3eccf8ba82789226e29fadf6436f630553e",
+      "raw_html_sha256": "271b2f2fdf35b3b3c8afd79c790682465ae3111e3da2ad2c5fc4fb4f0dd2afc2"
+    },
+    {
+      "id": "focused-gallery-corpus-1-doc-data-forms:file-field",
+      "source": "[[gallery]]",
+      "source_sha256": "2e1fa80e22bbbc83b0a8ce41a4793c4b84cb339a08b38ac307f3e04e680207d7",
+      "raw_html_sha256": "a6e020fafd06db1b2787b52217d56e63647ffe9d92c05f72bdea4ebdcc1ecb3b"
+    },
+    {
+      "id": "focused-gallery-corpus-10-breaddddd-art-1",
+      "source": "[[gallery size=\"thumbnail\"]]\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/img008.webp\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/%25E5%25B0%258F%25E4%25BA%25BA-06.webp\n[[/gallery]]",
+      "source_sha256": "82c54e4f06357af9fa5b555861ab69c096604cf3cec11a5a22ab52a7297ff85b",
+      "raw_html_sha256": "0296d3ea219ae31a52f2b38e7505692d50334ad2d99dfb2a29ee311249ba2182"
+    },
+    {
+      "id": "focused-gallery-corpus-11-breaddddd-art-1",
+      "source": "[[gallery size=\"thumbnail\"]]\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/img0092.webp\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/%25E5%25B0%258F%25E4%25BA%25BA-07.webp\n[[/gallery]]",
+      "source_sha256": "34ce434d821d5179f218437c1c854abc4bd72599f67b4e2fc94f412114d97788",
+      "raw_html_sha256": "15080e2c2fe37b720e94930c07f978b8670653717b7843f60b93fe986692536d"
+    },
+    {
+      "id": "focused-gallery-corpus-12-breaddddd-art-1",
+      "source": "[[gallery size=\"thumbnail\"]]\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/img0102.webp\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/%25E5%25B0%258F%25E4%25BA%25BA-082.webp\n[[/gallery]]",
+      "source_sha256": "9b2f8426afee062c2c68e9b3b374a2d38d10ea0a296f254cab45546912e19192",
+      "raw_html_sha256": "ab872c75ed658e2f3e0447fb75068e6bce30657a31e09e0f88a018486e3c2a22"
+    },
+    {
+      "id": "focused-gallery-corpus-13-breaddddd-art-1",
+      "source": "[[gallery size=\"thumbnail\"]]\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/img0542.webp\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/%25E5%25B0%258F%25E4%25BA%25BA-092.webp\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/%25E5%25B0%258F%25E4%25BA%25BA-102.webp\n[[/gallery]]",
+      "source_sha256": "a94de326b8f931690c4b82359f8850f387e4e0b7b867080fa30cfb3cf3a54a24",
+      "raw_html_sha256": "35e6e450ed06c27b16a62f364513f1da8819538048663665cb09c94da1b5f199"
+    },
+    {
+      "id": "focused-gallery-corpus-14-breaddddd-art-1",
+      "source": "[[gallery size=\"thumbnail\"]]\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/img0552.webp\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/%25E5%25B0%258F%25E4%25BA%25BA-112.webp\n[[/gallery]]",
+      "source_sha256": "02da220b325ba8f34a6cdc3b76960f888794ebeb3d0ed47faf86cedff450599f",
+      "raw_html_sha256": "036a97f20ec4235b9a52d0e957739860a57af5e98d4547571bae8ca43a3d9179"
+    },
+    {
+      "id": "focused-gallery-corpus-15-breaddddd-art-1",
+      "source": "[[gallery size=\"thumbnail\"]]\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/img0492.webp\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/%25E5%25B0%258F%25E4%25BA%25BA-122.webp\n[[/gallery]]",
+      "source_sha256": "8f06fd8ba949b8dc10ee904c42549696b08d027fd28802a6d17234e195345c06",
+      "raw_html_sha256": "6a03471704a2ca633bc78d9f5f1fe156faacbdbf3c2c33cd49bcd83c4b536d1b"
+    },
+    {
+      "id": "focused-gallery-corpus-16-breaddddd-art-1",
+      "source": "[[gallery size=\"thumbnail\"]]\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/img0512.webp\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/%25E5%25B0%258F%25E4%25BA%25BA-13.webp\n[[/gallery]]",
+      "source_sha256": "0b6ecb3e332a36fd471a6a3626df1073d82d5517150a70175f1fa7455655745c",
+      "raw_html_sha256": "a12c1382891982990261912f33cd1b37f6a5706ef57f782593201c4cd8815b2d"
+    },
+    {
+      "id": "focused-gallery-corpus-2-doc-wiki-syntax:images",
+      "source": "[[gallery]]@@}} element:\n\n[[code]]\n[[gallery size=\"image-size\"]]\n[[/code]]\nor\n[[code]]\n[[gallery size=\"image-size\"]]\n: image-source1 attribute1=\"value1\" attribute2=\"value2\" ...\n: image-source2 attribute1=\"value1\" attribute2=\"value2\" ...\n...\n[[/gallery]]",
+      "source_sha256": "f68b70655044d5b2d6985083424a72aa1fd687a681885cd3d643a3a514fae29d",
+      "raw_html_sha256": "7f95ecb823d00342cc35eac737a867c7bd658da9d750e0c119e4507c42446f7f"
+    },
+    {
+      "id": "focused-gallery-corpus-3-doc-wiki-syntax:images",
+      "source": "[[gallery viewer=\"no\"]]",
+      "source_sha256": "56b22d6c37ddc0decfc9ddfe3539173d7727bd3b4dce9a44e0eb1a024bf28876",
+      "raw_html_sha256": "a6e020fafd06db1b2787b52217d56e63647ffe9d92c05f72bdea4ebdcc1ecb3b"
+    },
+    {
+      "id": "focused-gallery-corpus-4-doc-wiki-syntax:images",
+      "source": "[[gallery viewer=\"false\"]]",
+      "source_sha256": "a523fe4ec1399b908ba05a5493d78f97fedd1d91d6c5c28ab090a75a32e87e18",
+      "raw_html_sha256": "a6e020fafd06db1b2787b52217d56e63647ffe9d92c05f72bdea4ebdcc1ecb3b"
+    },
+    {
+      "id": "focused-gallery-corpus-5-breaddddd-art-1",
+      "source": "[[gallery size=\"thumbnail\"]]\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/img0522.webp\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/%25E5%25B0%258F%25E4%25BA%25BA-012.webp\n[[/gallery]]",
+      "source_sha256": "c1e613dcc3f6a7563187c77bfdc9528fc8ec01c80f42e234c011937ed33bb1c0",
+      "raw_html_sha256": "e908d072ef1b90c5c545fbd954347fddcb8e30966571581cdc9e1ad3134e74a3"
+    },
+    {
+      "id": "focused-gallery-corpus-6-breaddddd-art-1",
+      "source": "[[gallery size=\"thumbnail\"]]\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/img0032.webp\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/%25E5%25B0%258F%25E4%25BA%25BA-022.webp\n[[/gallery]]",
+      "source_sha256": "7449297dfe32129a083fbef84f07ff25a500e70876df55796cfd51dfaa651aa0",
+      "raw_html_sha256": "c522e757e2970b0d024ca778896b2e6db112ed2164b52c524b9cdf15aaa31772"
+    },
+    {
+      "id": "focused-gallery-corpus-7-breaddddd-art-1",
+      "source": "[[gallery size=\"thumbnail\"]]\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/img0022.webp\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/%25E5%25B0%258F%25E4%25BA%25BA-032.webp\n[[/gallery]]",
+      "source_sha256": "54e05428ea212fab699a5805d95df9524ce39e4f685d0d9da1d576b26f62360a",
+      "raw_html_sha256": "2fa17cd19bc10e0d381ff7dda138065afc179d9ae26bd2233b3942c5e7ef3aa9"
+    },
+    {
+      "id": "focused-gallery-corpus-8-breaddddd-art-1",
+      "source": "[[gallery size=\"thumbnail\"]]\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/img0072.webp\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/%25E5%25B0%258F%25E4%25BA%25BA-042.webp\n[[/gallery]]",
+      "source_sha256": "e2ccb80a4795ed8e17a7f23e7f8255db3cb8b211d012791029ace44beb2bcf62",
+      "raw_html_sha256": "96cc8fd338cc8f3dcc206cdd28f89bad5d8775653aec7018ea19bff23cd5594a"
+    },
+    {
+      "id": "focused-gallery-corpus-9-breaddddd-art-1",
+      "source": "[[gallery size=\"thumbnail\"]]\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/img0532.webp\n: https://scp-wiki.wikidot.com/local--files/breaddddd-art-1/%25E5%25B0%258F%25E4%25BA%25BA-052.webp\n[[/gallery]]",
+      "source_sha256": "bcd1ac8d434c91eef4fafdde9dba00e63a9e713f9afa686f904460513c66926a",
+      "raw_html_sha256": "93757caf5bca58d4c33699b27ec5b4b76712f5c2de5fd25de86628056c1eb837"
+    },
+    {
+      "id": "focused-gallery-duplicate",
+      "source": "[[gallery size=\"small\" size=\"large\"]]",
+      "source_sha256": "c81de5877b3a0bbff9c89aa1487149b462e7a9758726cf80c538715a901f3fd5",
+      "raw_html_sha256": "a6e020fafd06db1b2787b52217d56e63647ffe9d92c05f72bdea4ebdcc1ecb3b"
+    },
+    {
+      "id": "focused-gallery-empty-arg",
+      "source": "[[gallery size=\"\"]]",
+      "source_sha256": "19d1adbbbae898855e6ddd56b075af83b38e58678a169eea7b2eb0b8e816ba73",
+      "raw_html_sha256": "a6e020fafd06db1b2787b52217d56e63647ffe9d92c05f72bdea4ebdcc1ecb3b"
+    },
+    {
+      "id": "focused-gallery-escaped",
+      "source": "\\[[gallery]]",
+      "source_sha256": "043b42348b93791dd058ebb01ea61428af79e5cf3e9424c0f1431c49180be0e9",
+      "raw_html_sha256": "b3c5d01be2f2d09fe7df95088640aa68d2ec99ee99f480fb2afa61f06c025907"
+    },
+    {
+      "id": "focused-gallery-extra",
+      "source": "[[gallery]]]",
+      "source_sha256": "88026f76c2993715cf387ec002690e88d746b002064dc620e099928c84f331ce",
+      "raw_html_sha256": "05b7a497af0aa2d18fb4364b8b40b7f19d7acfd5de26491b7967a49998f7cd76"
+    },
+    {
+      "id": "focused-gallery-heading",
+      "source": "+ [[gallery]]",
+      "source_sha256": "21e4119dfa3aeae7f42e0285c733731abf9fb17dedbb5342534c854f69bf8d0b",
+      "raw_html_sha256": "e31c86b24551a9a8b13e37ad62bce2b731cfef221abb41ae0c2a503a16ca9305"
+    },
+    {
+      "id": "focused-gallery-prose",
+      "source": "A[[gallery]]B",
+      "source_sha256": "d17ffe0d0c7b2da2552f17c4f21b0d9beca901887ec8fa75bace485025565ae9",
+      "raw_html_sha256": "f5e07e2edfd9221df686f04548a61e3257c894a37680a18c81986a4400702857"
+    },
+    {
+      "id": "focused-gallery-size-medium",
+      "source": "[[gallery size=\"medium\"]]",
+      "source_sha256": "4e30f8928f899279ca1f245da57eb1707f5efec92ffa587b9eae9bd3c79f051a",
+      "raw_html_sha256": "a6e020fafd06db1b2787b52217d56e63647ffe9d92c05f72bdea4ebdcc1ecb3b"
+    },
+    {
+      "id": "focused-gallery-size-thumbnail",
+      "source": "[[gallery size=\"thumbnail\"]]",
+      "source_sha256": "ec0bc37244c9aba70b0f23964c2b2d91eebe10c31138d55dd9412cb3b04c8339",
+      "raw_html_sha256": "a6e020fafd06db1b2787b52217d56e63647ffe9d92c05f72bdea4ebdcc1ecb3b"
+    },
+    {
+      "id": "focused-gallery-table",
+      "source": "|| [[gallery]] ||",
+      "source_sha256": "c1e0c098c842f0677f66c766dc58b2cb223add890ed88b9c5e768425584b9649",
+      "raw_html_sha256": "c3f036ee959a0c51115ace892c0e7fca1f2436dfb1fef6b40b9a2ed83901cb11"
+    },
+    {
+      "id": "focused-gallery-title",
+      "source": "[[Gallery]]",
+      "source_sha256": "fe9d9e2c58a8b54ce8dd124081cca33fa4d38b6bfa1564b962ba92b0583f5e99",
+      "raw_html_sha256": "a6e020fafd06db1b2787b52217d56e63647ffe9d92c05f72bdea4ebdcc1ecb3b"
+    },
+    {
+      "id": "focused-gallery-unclosed",
+      "source": "[[gallery",
+      "source_sha256": "d05c10b93bbdb0e54bc4bcaeaeaaf410dfc4133a8c0a2aab84d0af0a8f79593e",
+      "raw_html_sha256": "955573a4f2b71f253e3ae6ef789a116c82e97d1bc7c94be3c21ade56dd32d6bd"
+    },
+    {
+      "id": "focused-gallery-unknown",
+      "source": "[[gallery unknown=\"x\"]]",
+      "source_sha256": "14ef253b989224259a0dedaee4b3f41c55f6194b82bebf879878b2eb7238c860",
+      "raw_html_sha256": "a6e020fafd06db1b2787b52217d56e63647ffe9d92c05f72bdea4ebdcc1ecb3b"
+    },
+    {
+      "id": "focused-gallery-upper",
+      "source": "[[GALLERY]]",
+      "source_sha256": "b7e48732b6722fe59c8242a0e306dee367eadb66265b674e9ac143564cd7026a",
+      "raw_html_sha256": "a6e020fafd06db1b2787b52217d56e63647ffe9d92c05f72bdea4ebdcc1ecb3b"
+    },
+    {
+      "id": "focused-gallery-raw",
+      "source": "[[raw]]\n[[gallery]]\n[[/raw]]",
+      "source_sha256": "1cf828873e5c688ec40fa5093a513b964a726eb3dda02ceca4e10afeb4fe96c9",
+      "raw_html_sha256": "4e3f6db201c7370ca16c77694f18c87245e82d07154610541ddca23cd4e02216"
+    },
+    {
+      "id": "focused-gallery-comment",
+      "source": "BEFORE[!-- [[gallery]] --]AFTER",
+      "source_sha256": "1a7eced23cd1dff1ed2c72fc8279d2b73befa70bfc8480f88204347c811d1beb",
+      "raw_html_sha256": "829ff1eed8e169bed63ecaa262bbe40fd268993c175098b54419f07302e60ca8"
+    },
+    {
+      "id": "focused-gallery-html",
+      "source": "[[html]]\n[[gallery]]\n[[/html]]",
+      "source_sha256": "ceb7ada204ce2d053f70b9cf545cf01beb34b1461b3acad93cd32916e08a452f",
+      "raw_html_sha256": "7c843a20ec000d5ffd3e6a6d02827866fc5e56fddf2de05565569d067bc62874"
+    }
+  ],
+  "recovery_cases": [
+    {
+      "id": "gallery-first-close-residual",
+      "source": "[[gallery size=\"thumbnail\"]]\n: https://example.com/first.png\n[[/gallery]]]\n: https://example.com/residual.png\n[[/gallery]]",
+      "source_sha256": "a733992d427612bdaf63b692bc0e47a3e358b48c9512bf0a466a6f190aa1a9ce",
+      "raw_html_sha256": "06a4893ee2af3749cb4c5f918a1b3bdee8663679412f25eab7c1de8ea8f6ca70"
+    },
+    {
+      "id": "gallery-extra-opener",
+      "source": "[[gallery]]]\nAFTER",
+      "source_sha256": "3c2346f415518db544a93c2b81e4b3116221f6a9e37e43fc60f2a3b69c05b8d8",
+      "raw_html_sha256": "b769f056b0c5f10c393eaf3bcdd21baf331a0ad4b3575d7a8a4f02e1a40e0cac"
+    }
+  ]
+}

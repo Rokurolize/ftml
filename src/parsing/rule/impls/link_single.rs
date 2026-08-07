@@ -24,10 +24,52 @@
 //! This method allows any URL, either opening in a new tab or not.
 //! Its syntax is `[https://example.com/ Label text]`.
 
+use super::RULE_COMMENT;
+use super::math::wikidot_math_candidate_is_complete;
 use super::prelude::*;
 use crate::delayed::{DelayedElement, GeneratedKind};
+use crate::parsing::collect::{collect_comment_elided_keep, consume_valid_comment};
 use crate::tree::{AnchorTarget, LinkLabel, LinkLocation, LinkType};
 use crate::url::is_url;
+use std::borrow::Cow;
+
+const MAX_WIKIDOT_SINGLE_LINK_TARGET_BYTES: usize = 8 * 1024;
+const MAX_WIKIDOT_SINGLE_LINK_SCHEME_BYTES: usize = 64;
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+enum WikidotLinkDisposition {
+    Link,
+    LabelOnly,
+    Literal,
+}
+
+#[derive(Debug)]
+struct WikidotLabel<'t> {
+    text: Cow<'t, str>,
+    residual_closer: &'t str,
+}
+
+#[derive(Debug, Copy, Clone, Default)]
+enum WikidotBibciteOwnerScan {
+    #[default]
+    Search,
+    Name,
+    Separator,
+    Label {
+        nonempty: bool,
+    },
+}
+
+#[derive(Debug, Copy, Clone, Default)]
+enum WikidotNamedAnchorOwnerScan {
+    #[default]
+    Search,
+    Separator,
+    Name {
+        nonempty: bool,
+        valid: bool,
+    },
+}
 
 pub const RULE_LINK_SINGLE: Rule = Rule {
     name: "link-single",
@@ -50,6 +92,9 @@ fn link_new_tab<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     assert_step(parser, Token::LeftBracketStar)?;
+    if parser.settings().layout.legacy() && parser.current().slice == "#" {
+        return super::link_anchor::try_consume_wikidot_star_anchor(parser);
+    }
     try_consume_link(parser, RULE_LINK_SINGLE_NEW_TAB, Some(AnchorTarget::NewTab))
 }
 
@@ -59,6 +104,10 @@ fn try_consume_link<'r, 't>(
     rule: Rule,
     target: Option<AnchorTarget>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    if parser.settings().layout.legacy() {
+        return try_consume_wikidot_link(parser, target);
+    }
+
     // Gather path for link
     let url_close = [ParseCondition::current(Token::Whitespace)];
     let url_invalid = [
@@ -68,9 +117,7 @@ fn try_consume_link<'r, 't>(
     ];
     let url = collect_text(parser, rule, &url_close, &url_invalid, None)?;
 
-    let wikidot_javascript_fallback =
-        parser.settings().layout.legacy() && is_javascript_url(url);
-    if !url_valid(url) && !wikidot_javascript_fallback {
+    if !url_valid(url) {
         return Err(parser.make_err(ParseErrorKind::InvalidUrl));
     }
 
@@ -85,7 +132,7 @@ fn try_consume_link<'r, 't>(
         parser.step()?;
         return success_elements(Element::Delayed(DelayedElement::tag_external_label(
             generated.id,
-            url,
+            Cow::Borrowed(url),
         )));
     }
 
@@ -95,54 +142,167 @@ fn try_consume_link<'r, 't>(
         ParseCondition::current(Token::ParagraphBreak),
         ParseCondition::current(Token::LineBreak),
     ];
-    let label = if parser.settings().layout.legacy() {
-        collect_wikidot_label(parser)?
-    } else {
-        collect_text(parser, rule, &label_close, &label_invalid, None)?
-    };
+    let label = collect_text(parser, rule, &label_close, &label_invalid, None)?;
 
     // Trim label
     let label = label.trim();
 
-    let element = if wikidot_javascript_fallback {
-        Element::Text(cow!(label))
-    } else {
-        Element::Link {
-            ltype: LinkType::Direct,
-            link: LinkLocation::Url(cow!(url)),
-            label: LinkLabel::Text(cow!(label)),
-            target,
-        }
+    let element = Element::Link {
+        ltype: LinkType::Direct,
+        link: LinkLocation::Url(cow!(url)),
+        label: LinkLabel::Text(cow!(label)),
+        target,
     };
 
     // Return result
     success_elements(element)
 }
 
-fn collect_wikidot_label<'r, 't>(
+fn try_consume_wikidot_link<'r, 't>(
     parser: &mut Parser<'r, 't>,
-) -> Result<&'t str, ParseError>
+    target: Option<AnchorTarget>,
+) -> ParseResult<'r, 't, Elements<'t>>
 where
     'r: 't,
 {
+    let (url, authored_prefix_has_link_authority) = collect_wikidot_target(parser)?;
+    let disposition = wikidot_link_disposition(&url);
+    let disposition = if disposition == WikidotLinkDisposition::Link
+        && !authored_prefix_has_link_authority
+    {
+        WikidotLinkDisposition::Literal
+    } else {
+        disposition
+    };
+    if disposition == WikidotLinkDisposition::Literal {
+        return Err(parser.make_err(ParseErrorKind::InvalidUrl));
+    }
+
+    if target.is_none()
+        && let Cow::Borrowed(url) = &url
+        && let Some(generated) = parser.current_generated().cloned()
+        && generated.kind == GeneratedKind::TagLinks
+    {
+        parser.step()?;
+        if parser.current().token != Token::RightBracket {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+        parser.step()?;
+        return success_elements(Element::Delayed(DelayedElement::tag_external_label(
+            generated.id,
+            Cow::Borrowed(url),
+        )));
+    }
+
+    let WikidotLabel {
+        text: label,
+        residual_closer,
+    } = collect_wikidot_label(parser)?;
+    let label = trim_cow(label);
+    if label.is_empty() {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
+    let element = match disposition {
+        WikidotLinkDisposition::Link => Element::Link {
+            ltype: LinkType::Direct,
+            link: LinkLocation::Url(url),
+            label: LinkLabel::Text(label),
+            target,
+        },
+        WikidotLinkDisposition::LabelOnly => Element::Text(label),
+        WikidotLinkDisposition::Literal => unreachable!(),
+    };
+
+    if residual_closer.is_empty() {
+        success_elements(element)
+    } else {
+        success_elements(vec![element, text!(residual_closer)])
+    }
+}
+
+fn collect_wikidot_target<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<(Cow<'t, str>, bool), ParseError>
+where
+    'r: 't,
+{
+    let closes = [ParseCondition::current(Token::Whitespace)];
+    let invalids = [
+        ParseCondition::current(Token::LineBreak),
+        ParseCondition::current(Token::ParagraphBreak),
+    ];
+    let (target, _) = collect_comment_elided_keep(parser, &closes, &invalids, None)?;
+    if target.span().len() > MAX_WIKIDOT_SINGLE_LINK_TARGET_BYTES {
+        return Err(parser.make_err(ParseErrorKind::InvalidUrl));
+    }
+    let authored_prefix_has_link_authority = target.comment_ranges().is_empty()
+        || wikidot_link_disposition(target.prefix_before_first_comment())
+            == WikidotLinkDisposition::Link;
+    let target = target.into_cow();
+    if target.len() > MAX_WIKIDOT_SINGLE_LINK_TARGET_BYTES {
+        return Err(parser.make_err(ParseErrorKind::InvalidUrl));
+    }
+    Ok((target, authored_prefix_has_link_authority))
+}
+
+fn collect_wikidot_label<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<WikidotLabel<'t>, ParseError>
+where
+    'r: 't,
+{
+    if wikidot_label_has_complete_owner(parser) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
+    let source = parser.full_text().inner();
     let start = parser.current().span.start;
+    let mut copied_until = start;
+    let mut without_comments = None::<String>;
+
     loop {
         match parser.current().token {
-            Token::RightBracket => {
-                let end = parser.current().span.start;
-                parser.step()?;
-                return Ok(&parser.full_text().inner()[start..end]);
+            token
+                if parser.in_wikidot_simple_table_cell()
+                    && is_table_column_token(token) =>
+            {
+                return Err(parser.make_err(ParseErrorKind::RuleFailed));
             }
-            Token::RightComment if parser.current().slice == "--]" => {
-                let end = parser.current().span.end - 1;
+            Token::RightLink if parser.in_wikidot_literal_triple_link() => {
+                return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
+            Token::RightBracket | Token::RightBlock | Token::RightLink => {
+                let end = parser.current().span.start;
+                if let Some(output) = without_comments.as_mut() {
+                    output.push_str(&source[copied_until..end]);
+                }
+                let residual_closer = &parser.current().slice[1..];
                 parser.step()?;
-                return Ok(&parser.full_text().inner()[start..end]);
+                return Ok(WikidotLabel {
+                    text: match without_comments {
+                        Some(output) => Cow::Owned(output),
+                        None => Cow::Borrowed(&source[start..end]),
+                    },
+                    residual_closer,
+                });
+            }
+            Token::LeftComment => {
+                let comment_start = parser.current().span.start;
+                let output = without_comments
+                    .get_or_insert_with(|| String::with_capacity(comment_start - start));
+                output.push_str(&source[copied_until..comment_start]);
+
+                let mut comment = parser.clone();
+                consume_valid_comment(&mut comment)?;
+                parser.update(&comment);
+                copied_until = parser.current().span.start;
             }
             Token::LineBreak | Token::ParagraphBreak => {
                 return Err(parser.make_err(ParseErrorKind::RuleFailed));
             }
             Token::InputEnd => return Err(parser.make_err(ParseErrorKind::EndOfInput)),
-            Token::GeneratedPageLink | Token::GeneratedTagLinks => {
+            Token::GeneratedPageLink | Token::GeneratedTagLinks | Token::RuntimeText => {
                 return Err(parser.make_err(ParseErrorKind::RuleFailed));
             }
             _ => {
@@ -152,10 +312,324 @@ where
     }
 }
 
-fn is_javascript_url(url: &str) -> bool {
-    url.trim_start()
-        .get(.."javascript:".len())
-        .is_some_and(|scheme| scheme.eq_ignore_ascii_case("javascript:"))
+fn is_table_column_token(token: Token) -> bool {
+    matches!(
+        token,
+        Token::TableColumn
+            | Token::TableColumnTitle
+            | Token::TableColumnCenter
+            | Token::TableColumnRight
+    )
+}
+
+fn wikidot_label_has_complete_owner<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    if wikidot_label_has_complete_named_anchor_owner(parser)
+        || wikidot_label_has_complete_bibcite_owner(parser)
+        || wikidot_label_has_complete_math_owner(parser)
+    {
+        return true;
+    }
+
+    let mut scan = parser.clone();
+    let mut raw_open = false;
+    let mut alternate_raw_open = false;
+    let mut triple_link_open = false;
+    let mut span_open = false;
+    let mut footnote_open = false;
+    loop {
+        match scan.current().token {
+            Token::Raw if raw_open => return true,
+            Token::Raw => raw_open = true,
+            Token::LeftRaw => alternate_raw_open = true,
+            Token::RightRaw if alternate_raw_open => return true,
+            Token::LeftLink | Token::LeftLinkStar => triple_link_open = true,
+            Token::RightLink if triple_link_open => return true,
+            Token::LeftBlock => {
+                let mut opener = scan.clone();
+                if let Ok((name, _)) = opener.get_block_name(false) {
+                    span_open |= name.eq_ignore_ascii_case("span");
+                    footnote_open |= name.eq_ignore_ascii_case("footnote");
+                    scan.update(&opener);
+                    continue;
+                }
+            }
+            Token::LeftBlockEnd => {
+                let mut close = scan.clone();
+                if let Ok((name, residual)) = close.get_wikidot_end_block_with_residual()
+                {
+                    if span_open && name.eq_ignore_ascii_case("span") {
+                        return true;
+                    }
+                    if footnote_open && !residual && name.eq_ignore_ascii_case("footnote")
+                    {
+                        return true;
+                    }
+                    scan.update(&close);
+                    continue;
+                }
+            }
+            Token::RightBracket
+            | Token::RightBlock
+            | Token::RightLink
+            | Token::LineBreak
+            | Token::ParagraphBreak
+            | Token::InputEnd => {
+                return false;
+            }
+            _ => {}
+        }
+        if scan.step().is_err() {
+            return false;
+        }
+    }
+}
+
+fn wikidot_label_has_complete_named_anchor_owner<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    // Scan once instead of trying the anchor rule at every candidate. A long
+    // malformed label can contain many openers, so repeated forward parses
+    // would make owner detection quadratic.
+    let mut scan = parser.clone();
+    let mut anchor = WikidotNamedAnchorOwnerScan::default();
+    loop {
+        if scan.current().token == Token::LeftComment {
+            anchor = WikidotNamedAnchorOwnerScan::Search;
+            let mut comment = scan.clone_with_rule(RULE_COMMENT);
+            if RULE_COMMENT.try_consume(&mut comment).is_ok() {
+                scan.update(&comment);
+                continue;
+            }
+        }
+        if anchor.advance(scan.current()) {
+            return true;
+        }
+
+        match scan.current().token {
+            Token::RightBracket
+            | Token::RightBlock
+            | Token::RightLink
+            | Token::LineBreak
+            | Token::ParagraphBreak
+            | Token::InputEnd
+            | Token::RuntimeText
+            | Token::GeneratedPageLink
+            | Token::GeneratedTagLinks => return false,
+            _ => {}
+        }
+        if scan.step().is_err() {
+            return false;
+        }
+    }
+}
+
+/// Check link-label ownership without executing nested formula syntax.
+///
+/// Parser clones share footnote and other document state. This scan finds the
+/// authored candidate, while the math module's inert collector validates its
+/// close and comment/raw ownership without invoking formula contents.
+fn wikidot_label_has_complete_math_owner<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    let mut scan = parser.clone();
+    loop {
+        if scan.current().token == Token::LeftComment {
+            let mut comment = scan.clone();
+            if consume_valid_comment(&mut comment).is_ok() {
+                scan.update(&comment);
+                continue;
+            }
+        }
+
+        match scan.current().token {
+            Token::LeftMath => return wikidot_math_candidate_is_complete(&scan),
+            Token::RightBracket
+            | Token::RightBlock
+            | Token::RightLink
+            | Token::ParagraphBreak
+            | Token::InputEnd
+            | Token::RuntimeText
+            | Token::GeneratedPageLink
+            | Token::GeneratedTagLinks => return false,
+            _ => {}
+        }
+        if scan.step().is_err() {
+            return false;
+        }
+    }
+}
+
+fn wikidot_label_has_complete_bibcite_owner<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    let mut scan = parser.clone();
+    let mut bibcite = WikidotBibciteOwnerScan::default();
+    loop {
+        if scan.current().token == Token::LeftComment {
+            bibcite = WikidotBibciteOwnerScan::Search;
+            let mut comment = scan.clone_with_rule(RULE_COMMENT);
+            if RULE_COMMENT.try_consume(&mut comment).is_ok() {
+                scan.update(&comment);
+                continue;
+            }
+        }
+        if bibcite.advance(scan.current()) {
+            return true;
+        }
+
+        match scan.current().token {
+            Token::RightBracket
+            | Token::RightBlock
+            | Token::RightLink
+            | Token::LineBreak
+            | Token::ParagraphBreak
+            | Token::InputEnd
+            | Token::GeneratedPageLink
+            | Token::GeneratedTagLinks => return false,
+            _ => {}
+        }
+        if scan.step().is_err() {
+            return false;
+        }
+    }
+}
+
+impl WikidotBibciteOwnerScan {
+    fn advance(&mut self, token: &ExtractedToken<'_>) -> bool {
+        let restart = || {
+            if token.token == Token::LeftParentheses {
+                Self::Name
+            } else {
+                Self::Search
+            }
+        };
+
+        *self = match *self {
+            Self::Search if token.token == Token::LeftParentheses => Self::Name,
+            Self::Name
+                if token.token == Token::Identifier
+                    && token.slice.eq_ignore_ascii_case("bibcite") =>
+            {
+                Self::Separator
+            }
+            Self::Separator if token.token == Token::Whitespace => {
+                Self::Label { nonempty: false }
+            }
+            Self::Label { nonempty }
+                if token.token == Token::RightParentheses && nonempty =>
+            {
+                return true;
+            }
+            Self::Label { nonempty }
+                if token.slice.chars().all(|character| {
+                    character.is_ascii_alphanumeric() || character == '_'
+                }) =>
+            {
+                Self::Label {
+                    nonempty: nonempty || !token.slice.is_empty(),
+                }
+            }
+            _ => restart(),
+        };
+        false
+    }
+}
+
+impl WikidotNamedAnchorOwnerScan {
+    fn advance(&mut self, token: &ExtractedToken<'_>) -> bool {
+        let restart = || {
+            if token.token == Token::LeftBlockAnchor {
+                Self::Separator
+            } else {
+                Self::Search
+            }
+        };
+
+        *self = match *self {
+            Self::Search if token.token == Token::LeftBlockAnchor => Self::Separator,
+            Self::Separator if token.token == Token::Whitespace => Self::Name {
+                nonempty: false,
+                valid: true,
+            },
+            Self::Name {
+                nonempty: true,
+                valid: true,
+            } if matches!(token.token, Token::RightBlock | Token::RightLink) => {
+                return true;
+            }
+            Self::Name { nonempty, valid }
+                if !matches!(
+                    token.token,
+                    Token::RightBlock
+                        | Token::RightLink
+                        | Token::LineBreak
+                        | Token::ParagraphBreak
+                        | Token::InputEnd
+                        | Token::RuntimeText
+                        | Token::GeneratedPageLink
+                        | Token::GeneratedTagLinks
+                ) =>
+            {
+                Self::Name {
+                    nonempty: nonempty || !token.slice.is_empty(),
+                    valid: valid
+                        && token.slice.chars().all(|character| {
+                            character.is_ascii_alphanumeric()
+                                || matches!(character, '-' | '_')
+                        }),
+                }
+            }
+            _ => restart(),
+        };
+        false
+    }
+}
+
+fn trim_cow(value: Cow<'_, str>) -> Cow<'_, str> {
+    match value {
+        Cow::Borrowed(value) => Cow::Borrowed(value.trim()),
+        Cow::Owned(value) => Cow::Owned(value.trim().to_owned()),
+    }
+}
+
+fn wikidot_link_disposition(url: &str) -> WikidotLinkDisposition {
+    if url.is_empty() || url.len() > MAX_WIKIDOT_SINGLE_LINK_TARGET_BYTES {
+        return WikidotLinkDisposition::Literal;
+    }
+    if url.starts_with('/')
+        || url.starts_with("http://")
+        || url.starts_with("https://")
+        || url.starts_with("ftp://")
+        || url.starts_with("mailto:")
+    {
+        return WikidotLinkDisposition::Link;
+    }
+
+    let Some((scheme, _)) = url.split_once(':') else {
+        return WikidotLinkDisposition::Literal;
+    };
+    if !valid_bounded_scheme(scheme) || scheme.eq_ignore_ascii_case("data") {
+        return WikidotLinkDisposition::Literal;
+    }
+
+    WikidotLinkDisposition::LabelOnly
+}
+
+fn valid_bounded_scheme(scheme: &str) -> bool {
+    if scheme.is_empty() || scheme.len() > MAX_WIKIDOT_SINGLE_LINK_SCHEME_BYTES {
+        return false;
+    }
+    let mut bytes = scheme.bytes();
+    bytes.next().is_some_and(|byte| byte.is_ascii_alphabetic())
+        && bytes.all(|byte| {
+            byte.is_ascii_alphanumeric() || matches!(byte, b'+' | b'-' | b'.')
+        })
 }
 
 fn url_valid(url: &str) -> bool {
@@ -179,11 +653,66 @@ fn url_valid(url: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use super::{
+        MAX_WIKIDOT_SINGLE_LINK_SCHEME_BYTES, WikidotLinkDisposition,
+        valid_bounded_scheme, wikidot_link_disposition,
+    };
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::render::Render;
     use crate::render::html::HtmlRender;
     use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn wikidot_single_link_disposition_separates_compatibility_and_security() {
+        for url in [
+            "http://example.com",
+            "https://example.com",
+            "ftp://example.com/a",
+            "mailto:user@example.com",
+            "/start",
+            "//example.com/a",
+        ] {
+            assert_eq!(
+                wikidot_link_disposition(url),
+                WikidotLinkDisposition::Link,
+                "{url}",
+            );
+        }
+        for url in [
+            "HTTPS://example.com",
+            "HtTpS://example.com",
+            "https:example.com",
+            "javascript:void(0)",
+            "foo:bar",
+        ] {
+            assert_eq!(
+                wikidot_link_disposition(url),
+                WikidotLinkDisposition::LabelOnly,
+                "{url}",
+            );
+        }
+        for url in ["", "example.com", "data:text/plain,x", "DATA:text/html,x"] {
+            assert_eq!(
+                wikidot_link_disposition(url),
+                WikidotLinkDisposition::Literal,
+                "{url}",
+            );
+        }
+    }
+
+    #[test]
+    fn wikidot_single_link_scheme_scan_has_an_explicit_bound() {
+        assert!(valid_bounded_scheme("web+demo"));
+        assert!(valid_bounded_scheme(
+            &"a".repeat(MAX_WIKIDOT_SINGLE_LINK_SCHEME_BYTES),
+        ));
+        assert!(!valid_bounded_scheme(
+            &"a".repeat(MAX_WIKIDOT_SINGLE_LINK_SCHEME_BYTES + 1),
+        ));
+        assert!(!valid_bounded_scheme("1http"));
+        assert!(!valid_bounded_scheme("java_script"));
+    }
 
     #[test]
     fn wikidot_layout_does_not_weaken_dangerous_single_link_sanitization() {

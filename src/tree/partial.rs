@@ -29,11 +29,15 @@ use std::borrow::Cow;
 /// context, they are errors are parsing will fail.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum PartialElement<'t> {
+    /// A parse-only empty Wikidot inline owner whose phase remains observable
+    /// until inline-scope lowering decides adjacent whitespace ownership.
+    WikidotEmptyInlineOwner,
+
     /// A parse-only Wikidot inline size scope opener.
     InlineSizeOpen(Cow<'t, str>),
 
     /// A parse-only Wikidot inline size scope closer.
-    InlineSizeClose,
+    InlineSizeClose(Cow<'t, str>),
 
     /// A parse-only Wikidot inline span scope opener.
     InlineSpanOpen(AttributeMap<'t>),
@@ -62,8 +66,9 @@ pub enum PartialElement<'t> {
 impl PartialElement<'_> {
     pub fn name(&self) -> &'static str {
         match self {
+            PartialElement::WikidotEmptyInlineOwner => "WikidotEmptyInlineOwner",
             PartialElement::InlineSizeOpen(_) => "InlineSizeOpen",
-            PartialElement::InlineSizeClose => "InlineSizeClose",
+            PartialElement::InlineSizeClose(_) => "InlineSizeClose",
             PartialElement::InlineSpanOpen(_) => "InlineSpanOpen",
             PartialElement::InlineSpanClose(_) => "InlineSpanClose",
             PartialElement::ListItem(_) => "ListItem",
@@ -77,8 +82,9 @@ impl PartialElement<'_> {
     #[inline]
     pub fn parse_error_kind(&self) -> ParseErrorKind {
         match self {
-            PartialElement::InlineSizeOpen(_)
-            | PartialElement::InlineSizeClose
+            PartialElement::WikidotEmptyInlineOwner
+            | PartialElement::InlineSizeOpen(_)
+            | PartialElement::InlineSizeClose(_)
             | PartialElement::InlineSpanOpen(_)
             | PartialElement::InlineSpanClose(_) => ParseErrorKind::NoRulesMatch,
             PartialElement::ListItem(_) => ParseErrorKind::ListItemOutsideList,
@@ -91,10 +97,15 @@ impl PartialElement<'_> {
 
     pub fn to_owned(&self) -> PartialElement<'static> {
         match self {
+            PartialElement::WikidotEmptyInlineOwner => {
+                PartialElement::WikidotEmptyInlineOwner
+            }
             PartialElement::InlineSizeOpen(value) => {
                 PartialElement::InlineSizeOpen(Cow::Owned(value.to_string()))
             }
-            PartialElement::InlineSizeClose => PartialElement::InlineSizeClose,
+            PartialElement::InlineSizeClose(source) => {
+                PartialElement::InlineSizeClose(Cow::Owned(source.to_string()))
+            }
             PartialElement::InlineSpanOpen(attributes) => {
                 PartialElement::InlineSpanOpen(attributes.to_owned())
             }
@@ -119,8 +130,9 @@ impl PartialElement<'_> {
     pub(crate) fn is_inline_format_control(&self) -> bool {
         matches!(
             self,
-            PartialElement::InlineSizeOpen(_)
-                | PartialElement::InlineSizeClose
+            PartialElement::WikidotEmptyInlineOwner
+                | PartialElement::InlineSizeOpen(_)
+                | PartialElement::InlineSizeClose(_)
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_)
         )
@@ -218,7 +230,7 @@ mod tests {
         }
         for partial in [
             PartialElement::InlineSizeOpen(cow!("font-size: larger;")),
-            PartialElement::InlineSizeClose,
+            PartialElement::InlineSizeClose(cow!("[[/SiZe]]")),
             PartialElement::InlineSpanOpen(AttributeMap::new()),
             PartialElement::InlineSpanClose(cow!("[[/span]]")),
         ] {

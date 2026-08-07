@@ -7,7 +7,7 @@ use ftml::render::text::TextRender;
 use ftml::settings::{WikitextMode, WikitextSettings};
 use ftml::tree::{
     Alignment, AttributeMap, Bibliography, BibliographyList, Element, FileSource,
-    ListItem, ListType, PartialElement, RubyText, SyntaxTree, Tab, Table,
+    ImageSource, ListItem, ListType, PartialElement, RubyText, SyntaxTree, Tab, Table,
 };
 use std::borrow::Cow;
 
@@ -232,8 +232,8 @@ fn public_api_html_render_covers_fallback_branches_from_ast() {
                 name: Some(Cow::Borrowed("eq-main")),
                 latex_source: Cow::Borrowed("x^2"),
             },
-            Element::Footnote,
-            Element::Footnote,
+            Element::Footnote(1),
+            Element::Footnote(2),
             Element::FootnoteBlock {
                 title: None,
                 hide: false,
@@ -255,12 +255,13 @@ fn public_api_html_render_covers_fallback_branches_from_ast() {
             },
             Element::Color {
                 color: Cow::Borrowed("rebeccapurple"),
+                background: false,
                 elements: vec![Element::Text(Cow::Borrowed("colored"))],
             },
             Element::Image {
-                source: FileSource::File1 {
+                source: ImageSource::Direct(FileSource::File1 {
                     file: Cow::Borrowed("local.png"),
-                },
+                }),
                 link: None,
                 alignment: None,
                 attributes: AttributeMap::new(),

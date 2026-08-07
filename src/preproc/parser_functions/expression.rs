@@ -27,7 +27,11 @@ const MAX_PARENTHESES: usize = 32;
 #[derive(Debug, PartialEq, Eq)]
 pub(super) enum ExpressionError {
     Invalid,
+    UndefinedConstant(String),
     UndefinedFunction(String),
+    TooFewParameters(&'static str),
+    MisplacedComma,
+    SyntaxNear(String),
     DivisionByZero,
     RemainderByZero,
 }
@@ -36,9 +40,19 @@ impl ExpressionError {
     pub(super) fn runtime_message(&self) -> Option<String> {
         match self {
             Self::Invalid => None,
+            Self::UndefinedConstant(name) => {
+                Some(format!(r#"run-time error: undefined constant "{name}""#))
+            }
             Self::UndefinedFunction(name) => {
                 Some(format!(r#"run-time error: undefined function "{name}""#))
             }
+            Self::TooFewParameters(operator) => Some(format!(
+                r#"run-time error: too few parameters for operator "{operator}" (2 -> 1)"#,
+            )),
+            Self::MisplacedComma => {
+                Some("parser error: missing token `(` or misplaced token `,`".to_owned())
+            }
+            Self::SyntaxNear(tail) => Some(format!("syntax error near `{tail}`")),
             Self::DivisionByZero => Some("run-time error: division by zero".to_owned()),
             Self::RemainderByZero => {
                 Some("run-time error: rest-division by zero".to_owned())
@@ -64,10 +78,29 @@ pub(super) fn evaluate(
     };
     let result = parser.parse_or()?;
     parser.skip_space();
-    if parser.offset != parser.input.len() || !result.is_finite() {
+    if parser.offset != parser.input.len() {
+        let tail = &expression[parser.offset..];
+        if tail.starts_with(',') && is_safe_error_tail(tail) {
+            return Err(ExpressionError::MisplacedComma);
+        }
+        if tail.starts_with('|') && is_safe_error_tail(tail) {
+            return Err(ExpressionError::SyntaxNear(tail.to_owned()));
+        }
+        return Err(ExpressionError::Invalid);
+    }
+    if !result.is_finite() {
         return Err(ExpressionError::Invalid);
     }
     Ok(result)
+}
+
+fn is_safe_error_tail(tail: &str) -> bool {
+    !tail.is_empty()
+        && tail.bytes().all(|byte| {
+            byte.is_ascii_alphanumeric()
+                || byte.is_ascii_whitespace()
+                || b"_|+-*/%<>=!().,".contains(&byte)
+        })
 }
 
 #[derive(Debug)]
@@ -127,6 +160,9 @@ impl ExpressionParser<'_> {
         loop {
             if self.consume("+") {
                 self.operation()?;
+                if self.at_end() {
+                    return Err(ExpressionError::TooFewParameters("+"));
+                }
                 value += self.parse_multiplicative()?;
             } else if self.consume("-") {
                 self.operation()?;
@@ -237,7 +273,9 @@ impl ExpressionParser<'_> {
             return Ok(0.0);
         }
         if !self.consume("(") {
-            return Err(ExpressionError::Invalid);
+            return Err(ExpressionError::UndefinedConstant(
+                String::from_utf8_lossy(name).into_owned(),
+            ));
         }
 
         self.parentheses += 1;
@@ -317,6 +355,11 @@ impl ExpressionParser<'_> {
         {
             self.offset += 1;
         }
+    }
+
+    fn at_end(&mut self) -> bool {
+        self.skip_space();
+        self.offset == self.input.len()
     }
 
     fn operation(&mut self) -> Result<(), ExpressionError> {
@@ -455,6 +498,22 @@ mod tests {
     fn invalid_and_bounded_expressions_are_distinct_from_runtime_errors() {
         let options = WikidotParserFunctionOptions::default();
         assert_eq!(evaluate("abs(1,2)", options), Err(ExpressionError::Invalid));
+        assert_eq!(
+            evaluate("missing", options),
+            Err(ExpressionError::UndefinedConstant("missing".to_owned())),
+        );
+        assert_eq!(
+            evaluate("1 +", options),
+            Err(ExpressionError::TooFewParameters("+")),
+        );
+        assert_eq!(
+            evaluate("1,2", options),
+            Err(ExpressionError::MisplacedComma),
+        );
+        assert_eq!(
+            evaluate("1|YES|NO", options),
+            Err(ExpressionError::SyntaxNear("|YES|NO".to_owned())),
+        );
         assert_eq!(
             evaluate("unknown(1)", options),
             Err(ExpressionError::UndefinedFunction("unknown".to_owned())),

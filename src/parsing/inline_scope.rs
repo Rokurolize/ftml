@@ -210,6 +210,7 @@ fn collect_valid_scope_pairs(elements: &[Element<'_>]) -> BTreeSet<usize> {
 #[derive(Default)]
 struct SequenceEffects {
     scored_span_opened_at_start: bool,
+    scored_span_opened_unwrapped_at_start: bool,
     scored_span_closed: bool,
 }
 
@@ -259,7 +260,9 @@ fn lower_root_sequence<'t>(
             let (_, _, group) = paragraph_group.get_or_insert_with(|| {
                 (
                     reopens_paragraph_after_separator
-                        || !starts_in_scored_span && !starts_in_inline_scope,
+                        || !effects.scored_span_opened_unwrapped_at_start
+                            && !starts_in_scored_span
+                            && !starts_in_inline_scope,
                     paragraph_attributes,
                     Vec::new(),
                 )
@@ -284,16 +287,7 @@ fn lower_root_sequence<'t>(
 }
 
 fn is_wikidot_content_separator(element: &Element<'_>) -> bool {
-    matches!(
-        element,
-        Element::Container(container)
-            if container.ctype() == ContainerType::Div
-                && container
-                    .attributes()
-                    .get()
-                    .get("class")
-                    .is_some_and(|value| value.as_ref() == "content-separator")
-    )
+    element.is_content_separator()
 }
 
 fn append_root_sequence<'t>(
@@ -348,7 +342,7 @@ fn collect_valid_pairs(
             Element::Partial(PartialElement::InlineSizeOpen(_)) => {
                 push_pending_scope(open_sizes, ordinal, active_count);
             }
-            Element::Partial(PartialElement::InlineSizeClose) => {
+            Element::Partial(PartialElement::InlineSizeClose(_)) => {
                 let close = *ordinal;
                 *ordinal += 1;
                 if let Some(open) = open_sizes.pop() {
@@ -422,6 +416,7 @@ fn lower_sequence<'t>(
     let mut run = Vec::new();
     let mut effects = SequenceEffects::default();
     let mut last_run_outer_scope = None;
+    let mut preserve_space_before_footnote = false;
 
     let mut source = mem::take(elements).into_iter().peekable();
     while let Some(mut element) = source.next() {
@@ -430,6 +425,16 @@ fn lower_sequence<'t>(
                 continue;
             }
             *trim_next_break = false;
+        }
+        if matches!(
+            element,
+            Element::Partial(PartialElement::WikidotEmptyInlineOwner)
+        ) {
+            preserve_space_before_footnote =
+                matches!(source.peek(), Some(Element::Footnote(_)))
+                    && sequence_starts_with_repeated_list_marker(&output, &run)
+                    && sequence_ends_with_space(&output, &run);
+            continue;
         }
         if let Element::Partial(PartialElement::InlineSizeOpen(style)) = element {
             flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
@@ -456,7 +461,7 @@ fn lower_sequence<'t>(
             }
             continue;
         }
-        if matches!(element, Element::Partial(PartialElement::InlineSizeClose)) {
+        if let Element::Partial(PartialElement::InlineSizeClose(close_source)) = element {
             let empty = !active.top_has_content(ScopeKind::Size) && run.is_empty();
             let trailing_space =
                 matches!(run.last(), Some(Element::Text(text)) if text == " ");
@@ -478,27 +483,48 @@ fn lower_sequence<'t>(
                 }
             } else {
                 flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
-                output.push(text!("[[/size]]"));
+                output.push(Element::Text(close_source));
             }
             continue;
         }
-        if matches!(element, Element::Footnote) {
-            trim_one_trailing_text_space(&mut run);
+        if matches!(element, Element::Footnote(_)) {
+            if matches!(run.last(), Some(Element::LineBreak))
+                && sequence_starts_with_repeated_list_marker(&output, &run)
+            {
+                run.pop();
+            }
+            if preserve_space_before_footnote {
+                preserve_space_before_footnote = false;
+            } else {
+                trim_one_trailing_text_space(&mut run);
+            }
         }
         if let Element::Partial(PartialElement::InlineSpanOpen(mut attributes)) = element
         {
             let at_start = output.is_empty() && run.is_empty();
+            let scored = attributes.remove("data-ftml-score-span").is_some();
+            let scored_starts_next_physical_line =
+                attributes.remove("data-ftml-score-span-own-line").is_some();
+            if scored {
+                while matches!(
+                    run.last(),
+                    Some(Element::LineBreak | Element::LineBreaks(_))
+                ) {
+                    run.pop();
+                }
+            }
             flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
             let current = *ordinal;
             *ordinal += 1;
             if valid.contains(&current) {
-                let scored = attributes.remove("data-ftml-score-span").is_some();
                 active.push(ScopeKind::Span, ContainerType::Span, attributes, scored);
                 if matches!(source.peek(), Some(Element::Text(text)) if text == " ") {
                     source.next();
                 }
                 if scored {
-                    effects.scored_span_opened_at_start = at_start;
+                    effects.scored_span_opened_at_start |= at_start;
+                    effects.scored_span_opened_unwrapped_at_start |=
+                        at_start && scored_starts_next_physical_line;
                     *trim_next_break = true;
                 }
             }
@@ -524,13 +550,20 @@ fn lower_sequence<'t>(
                 run.pop();
             }
             flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
-            if empty && !scored {
+            let preserve_empty_owner_space = empty
+                && !scored
+                && matches!(source.peek(), Some(Element::Footnote(_)))
+                && sequence_starts_with_repeated_list_marker(&output, &run)
+                && sequence_ends_with_space(&output, &run);
+            if empty && !scored && !preserve_empty_owner_space {
                 trim_trailing_space(&mut output);
             }
             let current = *ordinal;
             *ordinal += 1;
             if valid.contains(&current) {
-                trim_trailing_space(&mut output);
+                if !preserve_empty_owner_space {
+                    trim_trailing_space(&mut output);
+                }
                 active.remove(ScopeKind::Span);
                 if trailing_space && !next_starts_with_space && !empty && !scored {
                     output.push(text!(" "));
@@ -539,6 +572,7 @@ fn lower_sequence<'t>(
                     effects.scored_span_closed = true;
                     *trim_next_break = true;
                 }
+                preserve_space_before_footnote |= preserve_empty_owner_space;
             } else {
                 output.push(Element::Text(close_source));
             }
@@ -669,6 +703,25 @@ fn trim_one_trailing_text_space(elements: &mut Vec<Element<'_>>) {
     }
 }
 
+fn sequence_starts_with_repeated_list_marker(
+    output: &[Element<'_>],
+    run: &[Element<'_>],
+) -> bool {
+    output
+        .iter()
+        .chain(run)
+        .next()
+        .is_some_and(|element| {
+            matches!(element, Element::Text(text) if matches!(text.as_ref(), "**" | "##"))
+        })
+}
+
+fn sequence_ends_with_space(output: &[Element<'_>], run: &[Element<'_>]) -> bool {
+    run.last().or_else(|| output.last()).is_some_and(
+        |element| matches!(element, Element::Text(text) if text.ends_with(' ')),
+    )
+}
+
 fn elements_end_with_space(elements: &[Element<'_>]) -> bool {
     match elements.last() {
         Some(Element::Text(text)) => text.ends_with(' '),
@@ -692,7 +745,7 @@ fn contains_inline_scope_control(element: &Element<'_>) -> bool {
         element,
         Element::Partial(
             PartialElement::InlineSizeOpen(_)
-                | PartialElement::InlineSizeClose
+                | PartialElement::InlineSizeClose(_)
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_)
         )
@@ -713,7 +766,7 @@ fn inline_scope_controls_are_self_contained(element: &Element<'_>) -> bool {
                 *sizes += 1;
                 true
             }
-            Element::Partial(PartialElement::InlineSizeClose) => {
+            Element::Partial(PartialElement::InlineSizeClose(_)) => {
                 if *sizes == 0 {
                     false
                 } else {
@@ -847,8 +900,9 @@ fn visit_children<'t>(element: &Element<'t>, visit: &mut dyn FnMut(&[Element<'t>
             PartialElement::TableCell(cell) => visit(&cell.elements),
             PartialElement::Tab(tab) => visit(&tab.elements),
             PartialElement::RubyText(ruby_text) => visit(&ruby_text.elements),
-            PartialElement::InlineSizeOpen(_)
-            | PartialElement::InlineSizeClose
+            PartialElement::WikidotEmptyInlineOwner
+            | PartialElement::InlineSizeOpen(_)
+            | PartialElement::InlineSizeClose(_)
             | PartialElement::InlineSpanOpen(_)
             | PartialElement::InlineSpanClose(_) => {}
         },
@@ -907,8 +961,9 @@ fn visit_children_mut<'t>(
             PartialElement::TableCell(cell) => visit(&mut cell.elements),
             PartialElement::Tab(tab) => visit(&mut tab.elements),
             PartialElement::RubyText(ruby_text) => visit(&mut ruby_text.elements),
-            PartialElement::InlineSizeOpen(_)
-            | PartialElement::InlineSizeClose
+            PartialElement::WikidotEmptyInlineOwner
+            | PartialElement::InlineSizeOpen(_)
+            | PartialElement::InlineSizeClose(_)
             | PartialElement::InlineSpanOpen(_)
             | PartialElement::InlineSpanClose(_) => {}
         },
@@ -997,7 +1052,7 @@ mod tests {
                 elements: vec![
                     Element::Partial(PartialElement::InlineSizeOpen(cow!("170%"))),
                     text!("partial body"),
-                    Element::Partial(PartialElement::InlineSizeClose),
+                    Element::Partial(PartialElement::InlineSizeClose(cow!("[[/size]]"))),
                 ],
             },
         ))];
@@ -1046,7 +1101,9 @@ mod tests {
         }
         elements.push(text!("bounded"));
         for _ in 0..(MAX_ACTIVE_INLINE_SCOPES + 1) {
-            elements.push(Element::Partial(PartialElement::InlineSizeClose));
+            elements.push(Element::Partial(PartialElement::InlineSizeClose(cow!(
+                "[[/size]]"
+            ))));
         }
 
         lower_wikidot_inline_size_scopes(&mut elements);
@@ -1065,7 +1122,7 @@ mod tests {
                 Element::Partial(PartialElement::InlineSizeOpen(cow!("font-size:0%;"))),
                 text!("literal"),
                 text!(" "),
-                Element::Partial(PartialElement::InlineSizeClose),
+                Element::Partial(PartialElement::InlineSizeClose(cow!("[[/size]]"))),
             ],
             AttributeMap::new(),
         ))];
@@ -1110,7 +1167,9 @@ mod tests {
         for kind in kinds.iter().rev() {
             match kind {
                 ScopeKind::Size => {
-                    elements.push(Element::Partial(PartialElement::InlineSizeClose));
+                    elements.push(Element::Partial(PartialElement::InlineSizeClose(
+                        cow!("[[/size]]"),
+                    )));
                 }
                 ScopeKind::Span => elements.push(Element::Partial(
                     PartialElement::InlineSpanClose(cow!("[[/span]]")),

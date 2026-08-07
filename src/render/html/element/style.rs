@@ -107,11 +107,19 @@ where
 
     trace!("Rendering CSS into HTML (minify: {minify})");
     match print(&stylesheet, print_options) {
-        Ok(output_css) => Some(output_css),
+        Ok(output_css) => Some(escape_style_end_tags(output_css)),
         Err(error) => {
             log_css_output_error(input_css, &stylesheet, &error);
             None
         }
+    }
+}
+
+fn escape_style_end_tags(css: String) -> String {
+    if css.contains("</") {
+        css.replace("</", r"\3c/")
+    } else {
+        css
     }
 }
 
@@ -184,6 +192,28 @@ mod tests {
             handle_style_parse_result("bad css", Err::<(), _>("synthetic parse failure")),
             None,
         );
+    }
+
+    #[test]
+    fn style_css_neutralizes_html_raw_text_terminators() {
+        let input =
+            r#"#some-data::after { content: "</style><script>alert(2)</script>" }"#;
+        let output = render_uncached_style_css(input, true).expect("valid CSS");
+
+        assert!(!output.contains("</"), "{output}");
+        assert!(output.contains(r"\3c/style>"), "{output}");
+        assert!(output.contains(r"\3c/script>"), "{output}");
+
+        let tree = SyntaxTree {
+            elements: vec![Element::Style(cow!(input))],
+            ..SyntaxTree::default()
+        };
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let rendered = HtmlRender.render(&tree, &page_info, &settings);
+
+        assert!(rendered.body.is_empty());
+        assert_eq!(rendered.styles, vec![output]);
     }
 
     #[test]

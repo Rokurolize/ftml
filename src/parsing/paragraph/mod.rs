@@ -29,6 +29,7 @@ use super::parser::QuoteBodyLineStatus;
 use super::prelude::*;
 use super::rule::Rule;
 use super::token::Token;
+use crate::tree::ContainerType;
 
 /// Wrapper type to satisfy the issue with generic closure types.
 ///
@@ -120,6 +121,17 @@ where
         let comment_started_line = comment && parser.start_of_line();
         let empty_quote_control =
             parser.current().token == Token::Quote && parser.start_of_line();
+        let explicit_list_opener = wikidot_explicit_list_opener(parser);
+        let div_score = wikidot_div_score(parser);
+        let div_opener = div_score.is_some();
+        let inline_div_opener = div_opener && !parser.start_of_line();
+        stack.record_next_element_line_start(
+            parser.start_of_line()
+                || matches!(
+                    parser.current().token,
+                    Token::LineBreak | Token::ParagraphBreak
+                ),
+        );
         let consumed = match parser.current().token {
             Token::InputEnd => {
                 if close_condition_fn.is_some() {
@@ -197,16 +209,29 @@ where
 
         if let Some(consumed) = consumed {
             let (elements, mut errors, paragraph_safe) = consumed.into();
-            let literal_list_item = stack.current_empty()
-                && errors
-                    .iter()
-                    .any(|error| error.kind() == ParseErrorKind::ListItemOutsideList);
+            let mut elements = elements;
+            defer_suppression_seams(&mut stack, &mut elements);
+            let active_div = elements_contain_div(&elements);
+            let list_has_same_line_residual = explicit_list_opener
+                && !paragraph_safe
+                && elements_end_with_list(&elements)
+                && !matches!(
+                    parser.current().token,
+                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                );
+            let div_has_same_line_residual = div_opener
+                && active_div
+                && !matches!(
+                    parser.current().token,
+                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                );
             let literal_iftags_line = parser.settings().layout.legacy()
                 && errors.iter().any(|error| {
                     error.kind() == ParseErrorKind::RuleFailed
                         && error.rule() == "block-iftags"
                 });
             let literal_div_line = parser.settings().layout.legacy()
+                && div_score != Some(true)
                 && errors.iter().any(|error| {
                     error.kind() == ParseErrorKind::RuleFailed
                         && error.rule() == "block-div"
@@ -216,10 +241,19 @@ where
             if complete_raw_line_break && elements_begin_with_wikidot_center(&elements) {
                 stack.push_element(Element::LineBreak, true);
             }
+            if inline_div_opener && active_div {
+                stack.mark_wikidot_continued_block_boundary();
+            }
             if empty_quote_control && !paragraph_safe && elements.is_empty() {
                 stack.end_paragraph();
             } else {
                 push_elements(&mut stack, elements, paragraph_safe);
+            }
+            if list_has_same_line_residual {
+                stack.mark_next_unwrapped_after_block();
+            }
+            if div_has_same_line_residual {
+                stack.mark_wikidot_same_line_div_residual();
             }
             if complete_raw_line_break {
                 stack.clear_wikidot_complete_raw_line_occupancy();
@@ -230,9 +264,6 @@ where
             {
                 stack.push_paragraph_safe_elements(vec![text!(" ")]);
                 parser.step()?;
-            }
-            if literal_list_item {
-                stack.mark_wikidot_literal_list_item();
             }
             if literal_iftags_line {
                 stack.mark_wikidot_literal_iftags_line();
@@ -266,6 +297,67 @@ where
     }
 
     stack.into_result()
+}
+
+fn wikidot_explicit_list_opener<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlock {
+        return false;
+    }
+
+    let mut probe = parser.clone();
+    probe.get_block_name(false).is_ok_and(|(name, _)| {
+        let name = name.strip_suffix('_').unwrap_or(name);
+        name.eq_ignore_ascii_case("ol") || name.eq_ignore_ascii_case("ul")
+    })
+}
+
+fn wikidot_div_score<'r, 't>(parser: &Parser<'r, 't>) -> Option<bool>
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlock {
+        return None;
+    }
+
+    let source = parser.full_text().inner();
+    let candidate = &source[parser.current().span.start..];
+    let after_open = candidate.strip_prefix("[[")?;
+    let after_open = after_open.trim_start_matches([' ', '\t']);
+    let name_end = after_open
+        .find(|character: char| character.is_whitespace() || character == ']')
+        .unwrap_or(after_open.len());
+    let name = &after_open[..name_end];
+    let (name, scored) = name
+        .strip_suffix('_')
+        .map_or((name, false), |name| (name, true));
+    name.eq_ignore_ascii_case("div").then_some(scored)
+}
+
+fn elements_contain_div(elements: &Elements<'_>) -> bool {
+    let is_div = |element: &Element<'_>| {
+        matches!(
+            element,
+            Element::Container(container) if container.ctype() == ContainerType::Div
+        )
+    };
+    match elements {
+        Elements::None => false,
+        Elements::Single(element) => is_div(element),
+        Elements::Multiple(elements) => elements.iter().any(is_div),
+    }
+}
+
+fn elements_end_with_list(elements: &Elements<'_>) -> bool {
+    match elements {
+        Elements::Single(element) => matches!(element, Element::List { .. }),
+        Elements::Multiple(elements) => {
+            matches!(elements.last(), Some(Element::List { .. }))
+        }
+        Elements::None => false,
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -361,11 +453,46 @@ fn push_elements<'t>(
     }
 }
 
+fn defer_suppression_seams<'t>(
+    stack: &mut ParagraphStack<'t>,
+    elements: &mut Elements<'t>,
+) {
+    let original = std::mem::replace(elements, Elements::None);
+    *elements = match original {
+        Elements::Single(element) if matches!(&element, Element::Delayed(delayed) if delayed.is_suppression_seam()) =>
+        {
+            stack.defer_suppression_seam(element);
+            Elements::None
+        }
+        Elements::Multiple(items) => {
+            let mut retained = Vec::with_capacity(items.len());
+            for element in items {
+                if matches!(&element, Element::Delayed(delayed) if delayed.is_suppression_seam())
+                {
+                    stack.defer_suppression_seam(element);
+                } else {
+                    retained.push(element);
+                }
+            }
+            match retained.len() {
+                0 => Elements::None,
+                1 => Elements::Single(retained.pop().unwrap()),
+                _ => Elements::Multiple(retained),
+            }
+        }
+        other => other,
+    };
+}
+
 fn push_element<'t>(
     stack: &mut ParagraphStack<'t>,
     element: Element<'t>,
     paragraph_safe: bool,
 ) {
+    if paragraph_safe && stack.wikidot_inline_residual_follows_collapsible() {
+        stack.mark_next_unwrapped_after_block();
+    }
+
     // Don't add a line break if the paragraph is otherwise empty
     if !(paragraph_safe
         && stack.current_empty()

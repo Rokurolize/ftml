@@ -187,6 +187,41 @@ fn scp_6823_empty_include_argument_leaves_target_variable_unresolved() {
 }
 
 #[test]
+fn inert_and_empty_include_segments_preserve_live_variable_state() {
+    let component = [("component:card", "X={$x}\nN={$n}\nZ={$z}")];
+
+    for (arguments, expected) in [
+        ("|FLAG|x=1|n=2|z=3", "X=1\nN=2\nZ=3"),
+        ("|x=|n=2|z=3", "X={$x}\nN=2\nZ=3"),
+        ("|x=|x=2|n=3|z=4", "X=2\nN=3\nZ=4"),
+        ("|x|x=2|n=3|z=4", "X=2\nN=3\nZ=4"),
+        ("|日本語=1|x=2|n=3|z=4", "X=2\nN=3\nZ=4"),
+        ("|x=\"A|B\"|n=2|z=3", "X=\"A\nN=2\nZ=3"),
+    ] {
+        let source = format!("[[include component:card {arguments}]]");
+        let expanded = expand(&source, component);
+        assert_eq!(expanded, expected, "{arguments}");
+    }
+}
+
+#[test]
+fn nested_include_passes_recover_inert_arguments_locally() {
+    let (outer, outer_pages) = expand_pages(
+        "[[include component:outer]]",
+        [(
+            "component:outer",
+            "[[include component:card |FLAG|x=1|n=2|z=3]]",
+        )],
+    );
+    assert_eq!(outer_pages, vec![PageRef::page_only("component:outer")]);
+
+    let (expanded, inner_pages) =
+        expand_pages(&outer, [("component:card", "X={$x}\nN={$n}\nZ={$z}")]);
+    assert_eq!(inner_pages, vec![PageRef::page_only("component:card")]);
+    assert_eq!(expanded, "X=1\nN=2\nZ=3");
+}
+
+#[test]
 fn include_expansion_separates_caller_and_target_paragraphs_like_wikidot() {
     let expanded = expand(
         "CALLER_BEFORE\n[[include component:card]]\nCALLER_AFTER",

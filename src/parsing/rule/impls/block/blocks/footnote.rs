@@ -48,6 +48,10 @@ fn parse_footnote_ref<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Parsing footnote ref block (in-head {in_head})");
 
+    if parser.settings().layout.legacy() && name != "footnote" {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     // Check footnote flag
     //
     // This is true if we're a [[footnote]] inside a [[footnote]],
@@ -110,9 +114,9 @@ fn parse_footnote_ref<'r, 't>(
     }
 
     // Append footnote contents and return.
-    parser.push_footnote(elements);
+    let index = parser.push_footnote(elements);
 
-    ok!(Element::Footnote, errors)
+    ok!(Element::Footnote(index), errors)
 }
 
 fn parse_footnote_block<'r, 't>(
@@ -126,6 +130,17 @@ fn parse_footnote_block<'r, 't>(
     assert!(!flag_star, "Footnote block doesn't allow star flag");
     assert!(!flag_score, "Footnote block doesn't allow score flag");
     assert_block_name(&BLOCK_FOOTNOTE_BLOCK, name);
+
+    if parser.settings().layout.legacy() && name != "footnoteblock" {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
+    if parser.in_footnote() {
+        return Err(parser.make_err(ParseErrorKind::FootnotesNested));
+    }
+
+    let inline_prose = parser.settings().layout.legacy()
+        && wikidot_footnote_block_has_inline_prefix(parser);
 
     if parser.settings().layout.legacy() && parser.has_footnote_block() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -149,7 +164,18 @@ fn parse_footnote_block<'r, 't>(
     parser.set_footnote_block();
 
     // Build and return
-    ok!(Element::FootnoteBlock { title, hide })
+    ok!(inline_prose; Element::FootnoteBlock { title, hide })
+}
+
+fn wikidot_footnote_block_has_inline_prefix(parser: &Parser<'_, '_>) -> bool {
+    let source = parser.full_text().inner();
+    let head = parser.current().span.start;
+    let opener = source[..head].rfind("[[").unwrap_or(head);
+    let line_start = source[..opener].rfind('\n').map_or(0, |index| index + 1);
+
+    source[line_start..opener]
+        .chars()
+        .any(|character| !matches!(character, ' ' | '\t' | '\0'))
 }
 
 /// Helper structure to set the `in_footnote` flag.
@@ -222,6 +248,28 @@ mod tests {
                 .iter()
                 .any(|error| error.kind() == ParseErrorKind::FootnotesNested)
         );
+    }
+
+    #[test]
+    fn footnote_rejects_nested_footnote_blocks() {
+        for layout in [Layout::Wikidot, Layout::Wikijump] {
+            let page_info = PageInfo::dummy();
+            let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
+            let tokenization =
+                crate::tokenize("[[footnote]][[footnoteblock]][[/footnote]]");
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::FootnotesNested),
+                "{layout:?}: {errors:#?}",
+            );
+
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+            assert!(html.contains("footnoteblock"), "{layout:?}: {html}");
+        }
     }
 
     #[test]

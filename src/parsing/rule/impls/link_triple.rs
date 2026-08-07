@@ -30,6 +30,7 @@
 
 use super::prelude::*;
 use crate::data::PageRef;
+use crate::parsing::collect::{collect_comment_elided_keep, consume_valid_comment};
 use crate::tree::{AnchorTarget, LinkLabel, LinkLocation, LinkType};
 use crate::url::is_url;
 use std::borrow::Cow;
@@ -48,15 +49,22 @@ pub const RULE_LINK_TRIPLE_NEW_TAB: Rule = Rule {
 };
 
 fn link<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
+    let source_start = parser.current().span.start;
     assert_step(parser, Token::LeftLink)?;
-    try_consume_link(parser, RULE_LINK_TRIPLE, None)
+    try_consume_link(parser, RULE_LINK_TRIPLE, None, source_start)
 }
 
 fn link_new_tab<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    let source_start = parser.current().span.start;
     assert_step(parser, Token::LeftLinkStar)?;
-    try_consume_link(parser, RULE_LINK_TRIPLE_NEW_TAB, Some(AnchorTarget::NewTab))
+    try_consume_link(
+        parser,
+        RULE_LINK_TRIPLE_NEW_TAB,
+        Some(AnchorTarget::NewTab),
+        source_start,
+    )
 }
 
 /// Build a triple-bracket link with the given target.
@@ -64,6 +72,7 @@ fn try_consume_link<'r, 't>(
     parser: &mut Parser<'r, 't>,
     rule: Rule,
     target: Option<AnchorTarget>,
+    source_start: usize,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     // Gather path for link
     let url_close = [
@@ -80,12 +89,20 @@ fn try_consume_link<'r, 't>(
     } else {
         &native_url_invalid[..]
     };
-    let (url, last) = collect_text_keep(parser, rule, &url_close, url_invalid, None)?;
+    let (url, last, authored_url_prefix_is_url) = if parser.settings().layout.legacy() {
+        let (url, last) =
+            collect_comment_elided_keep(parser, &url_close, url_invalid, None)?;
+        let authored_url_prefix_is_url =
+            is_url(url.prefix_before_first_comment().trim_start());
+        (url.into_cow(), last, authored_url_prefix_is_url)
+    } else {
+        let (url, last) = collect_text_keep(parser, rule, &url_close, url_invalid, None)?;
+        (Cow::Borrowed(url), last, is_url(url.trim_start()))
+    };
 
     // Trim text
-    let trimmed_url = url.trim();
     let leading_space = url.trim_start().len() != url.len();
-    let url = trimmed_url;
+    let url = trim_cow(url);
 
     // If url is an empty string, parsing should fail, there's nothing here
     if url.is_empty()
@@ -93,7 +110,15 @@ fn try_consume_link<'r, 't>(
         && target.is_some()
         && last.token == Token::Pipe
     {
-        return build_separate(parser, rule, "", false, target);
+        return build_separate(
+            parser,
+            rule,
+            Cow::Borrowed(""),
+            false,
+            false,
+            target,
+            source_start,
+        );
     }
     if url.is_empty() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -102,10 +127,24 @@ fn try_consume_link<'r, 't>(
     // Determine what token we ended on, i.e. which [[[ variant it is.
     match last.token {
         // [[[name]]] type links
-        Token::RightLink => build_same(parser, url, leading_space, target),
+        Token::RightLink => build_same(
+            parser,
+            url,
+            leading_space,
+            authored_url_prefix_is_url,
+            target,
+        ),
 
         // [[[url|label]]] type links
-        Token::Pipe => build_separate(parser, rule, url, leading_space, target),
+        Token::Pipe => build_separate(
+            parser,
+            rule,
+            url,
+            leading_space,
+            authored_url_prefix_is_url,
+            target,
+            source_start,
+        ),
 
         // Token was already checked in collect_text(), impossible case
         _ => unreachable!(),
@@ -116,27 +155,21 @@ fn try_consume_link<'r, 't>(
 /// e.g. `[[[name]]]`
 fn build_same<'r, 't>(
     parser: &mut Parser<'r, 't>,
-    url: &'t str,
+    url: Cow<'t, str>,
     leading_space: bool,
+    authored_url_prefix_is_url: bool,
     target: Option<AnchorTarget>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     // Remove category, if present.
     // If None, then the label is the original URL.
-    let label = match strip_category(url) {
-        Some(_)
-            if parser.settings().layout.legacy()
-                && url.starts_with(':')
-                && (url.contains(" :") || url.contains(": ")) =>
-        {
-            cow!(url)
-        }
-        Some(stripped) => cow!(stripped),
-        None => Cow::Borrowed(url),
+    let label = match url.clone() {
+        Cow::Borrowed(url) => Cow::Borrowed(same_link_label(parser, url)),
+        Cow::Owned(url) => Cow::Owned(same_link_label(parser, &url).to_owned()),
     };
     let label = if parser.settings().layout.legacy()
         && target.is_some()
-        && !is_url(url)
-        && strip_category(url).is_none()
+        && !is_url(&url)
+        && strip_category(&url).is_none()
     {
         Cow::Owned(format!("*{label}"))
     } else {
@@ -144,7 +177,8 @@ fn build_same<'r, 't>(
     };
 
     // Parse out link location
-    let parsed_link = parse_link_location(parser, url, leading_space);
+    let parsed_link =
+        parse_link_location(parser, url, leading_space, authored_url_prefix_is_url);
     let Some((link, ltype)) = parsed_link else {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     };
@@ -160,14 +194,30 @@ fn build_same<'r, 't>(
     success_elements(element)
 }
 
+fn same_link_label<'t>(parser: &Parser<'_, '_>, url: &'t str) -> &'t str {
+    match strip_category(url) {
+        Some(_)
+            if parser.settings().layout.legacy()
+                && url.starts_with(':')
+                && (url.contains(" :") || url.contains(": ")) =>
+        {
+            url
+        }
+        Some(stripped) => stripped,
+        None => url,
+    }
+}
+
 /// Helper to build link with separate URL and label.
 /// e.g. `[[[page|label]]]`, or `[[[page|]]]`
 fn build_separate<'r, 't>(
     parser: &mut Parser<'r, 't>,
     rule: Rule,
-    url: &'t str,
+    url: Cow<'t, str>,
     leading_space: bool,
+    authored_url_prefix_is_url: bool,
     target: Option<AnchorTarget>,
+    source_start: usize,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     // Gather label for link
     let label_close = [ParseCondition::current(Token::RightLink)];
@@ -183,16 +233,35 @@ fn build_separate<'r, 't>(
         &native_label_invalid[..]
     };
     let label = if legacy {
-        collect_wikidot_separate_label(parser)?
+        match collect_wikidot_separate_label(parser, source_start)? {
+            WikidotLabelCandidate::Label(label) => label,
+            WikidotLabelCandidate::PreserveSource(source) => {
+                return ok!(Element::Text(source));
+            }
+        }
     } else {
-        collect_text(parser, rule, &label_close, label_invalid, None)?
+        Cow::Borrowed(collect_text(
+            parser,
+            rule,
+            &label_close,
+            label_invalid,
+            None,
+        )?)
     };
 
     // Trim label
-    let label = label.trim();
+    let label = match label {
+        Cow::Borrowed(label) => Cow::Borrowed(label.trim()),
+        Cow::Owned(label) => Cow::Owned(label.trim().to_owned()),
+    };
 
     // Parse out link location
-    let parsed_link = parse_link_location(parser, url, leading_space);
+    let parsed_link = parse_link_location(
+        parser,
+        url.clone(),
+        leading_space,
+        authored_url_prefix_is_url,
+    );
     let Some((link, ltype)) = parsed_link else {
         if legacy && (url.contains("###") || url.contains("/##/")) {
             return ok!(Element::Text(Cow::Owned(format!("[[[{url}|{label}]]]"))));
@@ -202,7 +271,7 @@ fn build_separate<'r, 't>(
 
     // Wikidot derives an empty external-link label from its normalized URL slug.
     let label = if label.is_empty() && legacy {
-        let mut normalized = str!(url);
+        let mut normalized = str!(url.as_ref());
         if normalized.starts_with(':') {
             normalized.remove(0);
         }
@@ -211,7 +280,7 @@ fn build_separate<'r, 't>(
     } else if label.is_empty() {
         LinkLabel::Page
     } else {
-        LinkLabel::Text(cow!(label))
+        LinkLabel::Text(label)
     };
 
     // Build link element
@@ -228,27 +297,100 @@ fn build_separate<'r, 't>(
 
 fn collect_wikidot_separate_label<'r, 't>(
     parser: &mut Parser<'r, 't>,
-) -> Result<&'t str, ParseError>
+    source_start: usize,
+) -> Result<WikidotLabelCandidate<'t>, ParseError>
 where
     'r: 't,
 {
+    use super::raw::RULE_RAW;
+
+    const BRACKET_OWNERS: &[Token] = &[
+        Token::LeftBracket,
+        Token::LeftBracketAnchor,
+        Token::LeftBracketStar,
+        Token::RightBracket,
+        Token::LeftBlock,
+        Token::LeftBlockEnd,
+        Token::LeftBlockAnchor,
+        Token::LeftBlockStar,
+        Token::LeftMath,
+        Token::RightBlock,
+        Token::RightMath,
+        Token::LeftLink,
+        Token::LeftLinkStar,
+    ];
+
+    let source = parser.full_text().inner();
     let start = parser.current().span.start;
+    let mut segment_start = start;
+    let mut visible_label = None::<String>;
+    let mut preserve_source = false;
+
     loop {
-        match parser.next_two_tokens() {
-            (Token::RightLink, _) => {
+        match parser.current().token {
+            Token::RightLink => {
                 let end = parser.current().span.start;
+                let source_end = parser.current().span.end;
                 parser.step()?;
-                return Ok(&parser.full_text().inner()[start..end]);
+                if preserve_source {
+                    return Ok(WikidotLabelCandidate::PreserveSource(Cow::Borrowed(
+                        &source[source_start..source_end],
+                    )));
+                }
+                return match visible_label {
+                    Some(mut label) => {
+                        label.push_str(&source[segment_start..end]);
+                        Ok(WikidotLabelCandidate::Label(Cow::Owned(label)))
+                    }
+                    None => Ok(WikidotLabelCandidate::Label(Cow::Borrowed(
+                        &source[start..end],
+                    ))),
+                };
             }
-            (Token::RightComment, Some(Token::RightBlock))
-                if parser.current().slice == "--]" =>
-            {
-                let end = parser.current().span.end - 1;
+
+            _ if preserve_source => {
                 parser.step()?;
-                parser.step()?;
-                return Ok(&parser.full_text().inner()[start..end]);
             }
-            (Token::ParagraphBreak | Token::InputEnd, _) => {
+
+            // A valid comment is transparent to the label. Speculatively use
+            // the ordinary comment rule so extended closers and generated
+            // input retain their existing behavior. An incomplete comment is
+            // a bracket owner and therefore rolls back the outer link.
+            Token::LeftComment => {
+                let comment_start = parser.current().span.start;
+                let mut comment_parser = parser.clone();
+                if consume_valid_comment(&mut comment_parser).is_err() {
+                    return Err(parser.make_err(ParseErrorKind::RuleFailed));
+                }
+
+                visible_label
+                    .get_or_insert_with(String::new)
+                    .push_str(&source[segment_start..comment_start]);
+                segment_start = comment_parser.current().span.start;
+                parser.update(&comment_parser);
+
+                // The comment's final `]` can also be the first bracket in
+                // the outer `]]]` closer, leaving `]]` as the current token.
+                if parser.current().token == Token::RightBlock {
+                    parser.step()?;
+                    return Ok(WikidotLabelCandidate::Label(Cow::Owned(
+                        visible_label.unwrap_or_default(),
+                    )));
+                }
+            }
+
+            // Only complete raw syntax owns the outer label. This preserves
+            // unmatched `@@` and `@<` as literal label text while allowing a
+            // valid raw span to render after the outer transaction rolls back.
+            Token::Raw | Token::LeftRaw => {
+                let mut raw_parser = parser.clone();
+                if RULE_RAW.try_consume(&mut raw_parser).is_ok() {
+                    return Err(parser.make_err(ParseErrorKind::RuleFailed));
+                }
+                parser.step()?;
+            }
+
+            Token::ParagraphBreak | Token::InputEnd => {
                 let kind = if parser.current().token == Token::InputEnd {
                     ParseErrorKind::EndOfInput
                 } else {
@@ -256,14 +398,51 @@ where
                 };
                 return Err(parser.make_err(kind));
             }
-            (Token::GeneratedPageLink | Token::GeneratedTagLinks, _) => {
+
+            Token::GeneratedPageLink | Token::GeneratedTagLinks | Token::RuntimeText => {
                 return Err(parser.make_err(ParseErrorKind::RuleFailed));
             }
+
+            // Only the live-backed inline block owners may execute after the
+            // outer link rolls back. Other block-shaped labels still invalidate
+            // the link, but preserve the complete invocation as text so hosted
+            // HTML, modules, includes, and future blocks gain no authority.
+            Token::LeftBlock => {
+                if wikidot_label_block_executes(parser) {
+                    return Err(parser.make_err(ParseErrorKind::RuleFailed));
+                }
+                preserve_source = true;
+                parser.step()?;
+            }
+
+            token if BRACKET_OWNERS.contains(&token) => {
+                return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
+
             _ => {
                 parser.step()?;
             }
         }
     }
+}
+
+enum WikidotLabelCandidate<'t> {
+    Label(Cow<'t, str>),
+    PreserveSource(Cow<'t, str>),
+}
+
+fn wikidot_label_block_executes<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    let mut block = parser.clone();
+    let Ok((name, _)) = block.get_block_name(false) else {
+        return false;
+    };
+
+    ["span", "size", "image", "footnote", "iframe"]
+        .iter()
+        .any(|owner| name.eq_ignore_ascii_case(owner))
 }
 
 fn wikidot_target(
@@ -279,11 +458,12 @@ fn wikidot_target(
 
 fn parse_link_location<'r, 't>(
     parser: &Parser<'r, 't>,
-    url: &'t str,
+    url: Cow<'t, str>,
     leading_space: bool,
+    authored_url_prefix_is_url: bool,
 ) -> Option<(LinkLocation<'t>, LinkType)> {
     if !parser.settings().layout.legacy() {
-        return LinkLocation::parse_with_interwiki(cow!(url), parser.settings());
+        return LinkLocation::parse_with_interwiki(url, parser.settings());
     }
 
     if url.contains("###") || url.contains("/##/") {
@@ -291,6 +471,10 @@ fn parse_link_location<'r, 't>(
     }
 
     if url.is_empty() {
+        return Some((LinkLocation::Page(PageRef::page_only("")), LinkType::Page));
+    }
+
+    if matches!(url.as_ref(), "." | "..") {
         return Some((LinkLocation::Page(PageRef::page_only("")), LinkType::Page));
     }
 
@@ -316,7 +500,7 @@ fn parse_link_location<'r, 't>(
             .collect::<Vec<_>>()
             .join(":");
         if page.is_empty() {
-            return None;
+            return Some((LinkLocation::Page(PageRef::page_only("")), LinkType::Page));
         }
         page.make_ascii_lowercase();
         return Some((
@@ -329,7 +513,7 @@ fn parse_link_location<'r, 't>(
         ));
     }
 
-    if leading_space && is_url(url) {
+    if leading_space && is_url(&url) && authored_url_prefix_is_url {
         let page = url.replace("://", ":");
         let page = page.trim_end_matches('/');
         return Some((LinkLocation::Page(PageRef::page_only(page)), LinkType::Page));
@@ -341,14 +525,32 @@ fn parse_link_location<'r, 't>(
         return Some((LinkLocation::Page(page_ref), LinkType::Page));
     }
 
-    if url.contains('/') && !url.starts_with('/') && !is_url(url) {
+    if url.contains('/')
+        && !url.starts_with('/')
+        && (!is_url(&url) || !authored_url_prefix_is_url)
+    {
         return Some((
             LinkLocation::Page(PageRef::page_only(url.replace('/', "-"))),
             LinkType::Page,
         ));
     }
 
-    LinkLocation::parse_with_interwiki(cow!(url), parser.settings())
+    if !url.is_ascii() && !is_url(&url) {
+        return Some((LinkLocation::Page(PageRef::page_only("")), LinkType::Page));
+    }
+
+    if is_url(&url) && !authored_url_prefix_is_url {
+        return Some((LinkLocation::Page(PageRef::page_only(&url)), LinkType::Page));
+    }
+
+    LinkLocation::parse_with_interwiki(url, parser.settings())
+}
+
+fn trim_cow(value: Cow<'_, str>) -> Cow<'_, str> {
+    match value {
+        Cow::Borrowed(value) => Cow::Borrowed(value.trim()),
+        Cow::Owned(value) => Cow::Owned(value.trim().to_owned()),
+    }
 }
 
 /// Strip off the category for use in URL triple-bracket links.

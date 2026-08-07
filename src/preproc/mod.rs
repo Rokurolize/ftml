@@ -27,6 +27,7 @@ pub mod whitespace;
 mod compatibility;
 mod parser_functions;
 
+pub(crate) use self::parser_functions::LiteralRegionIndex;
 pub use self::parser_functions::{
     WikidotParserFunctionOptions, WikidotZeroOperatorPolicy,
     resolve_wikidot_parser_functions, resolve_wikidot_parser_functions_with_options,
@@ -68,6 +69,13 @@ pub enum Replacer {
 }
 
 impl Replacer {
+    fn regex(&self) -> &Regex {
+        match self {
+            Replacer::RegexReplace { regex, .. }
+            | Replacer::RegexSurround { regex, .. } => regex,
+        }
+    }
+
     /// Replaces the text in the manner defined by its enum, using the buffer as a temporary space
     /// to copy to.
     fn replace(&self, text: &mut String, buffer: &mut String) {
@@ -171,11 +179,11 @@ impl Replacer {
 /// Run the preprocessor on the given wikitext, which is modified in-place.
 ///
 /// The following modifications are performed:
+/// * Resolve context-free Wikidot parser functions
 /// * Replacing DOS and legacy Mac newlines
 /// * Trimming whitespace lines
 /// * Concatenating lines that end with backslashes
 /// * Convert tabs to four spaces
-/// * Resolve context-free Wikidot parser functions
 /// * Wikidot typography transformations
 ///
 /// This call always succeeds. The return value designates where issues occurred
@@ -204,12 +212,12 @@ fn preprocess_internal(text: &mut String, wikidot_compatibility: bool) {
         whitespace::expose_wikidot_replacement_markers(text);
         whitespace::preserve_wikidot_terminal_backslash_run(text);
     }
+    parser_functions::substitute(text);
     if wikidot_compatibility {
         whitespace::substitute_wikidot(text);
     } else {
         whitespace::substitute(text);
     }
-    parser_functions::substitute(text);
     compatibility::substitute(text);
     if wikidot_compatibility {
         compatibility::substitute_wikidot(text);

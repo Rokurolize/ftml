@@ -23,8 +23,9 @@ use crate::delayed::DelayedElement;
 use crate::tree::clone::*;
 use crate::tree::{
     Alignment, AnchorTarget, AttributeMap, ClearFloat, CodeBlock, Container, DateItem,
-    DefinitionListItem, Embed, FileSource, FloatAlignment, LinkLabel, LinkLocation,
-    LinkType, ListItem, ListType, Module, PartialElement, Tab, Table, VariableMap,
+    DefinitionListItem, Embed, EmbedVideo, FileSource, FloatAlignment, Gallery,
+    ImageSource, LinkLabel, LinkLocation, LinkType, ListItem, ListType, Module,
+    PartialElement, StandaloneButton, Tab, Table, VariableMap,
 };
 use ref_map::*;
 use std::borrow::Cow;
@@ -74,11 +75,27 @@ pub enum Element<'t> {
     #[serde(skip)]
     Delayed(DelayedElement<'t>),
 
+    /// An authored physical-line content-section separator.
+    ///
+    /// This remains typed in every layout so runtime consumers can split
+    /// sections without reparsing source. Only the Wikidot HTML renderer emits
+    /// the legacy hidden div.
+    ContentSeparator,
+
     /// An element representing an HTML table.
     Table(Table<'t>),
 
     /// An element representing a tabview.
     TabView(Vec<Tab<'t>>),
+
+    /// A typed standalone action control with no authored executable behavior.
+    StandaloneButton(StandaloneButton<'t>),
+
+    /// An opaque authored `[[embedvideo]]` block resolved by the caller.
+    EmbedVideo(EmbedVideo<'t>),
+
+    /// A typed authored `[[gallery]]` request resolved by the caller.
+    Gallery(Gallery<'t>),
 
     /// An element representing an arbitrary anchor.
     ///
@@ -124,7 +141,7 @@ pub enum Element<'t> {
     ///
     /// The "link" field is what the `<a>` points to, when the user clicks on the image.
     Image {
-        source: FileSource<'t>,
+        source: ImageSource<'t>,
         link: Option<LinkLocation<'t>>,
         alignment: Option<FloatAlignment>,
         attributes: AttributeMap<'t>,
@@ -208,9 +225,10 @@ pub enum Element<'t> {
     /// This specifies that a `[[footnote]]` was here, and that a clickable
     /// link to the footnote block should be added.
     ///
-    /// The index is not saved because it is part of the rendering context.
-    /// It is indirectly preserved as the index of the `footnotes` list in the syntax tree.
-    Footnote,
+    /// The one-based index of the corresponding entry in the syntax tree's
+    /// `footnotes` list. Keeping the index on the reference preserves global
+    /// numbering when Wikidot suppresses an earlier body reference.
+    Footnote(usize),
 
     /// A footnote block, containing all the footnotes from throughout the page.
     ///
@@ -256,9 +274,11 @@ pub enum Element<'t> {
 
     /// Element containing colored text.
     ///
-    /// The CSS designation of the color is specified, followed by the elements contained within.
+    /// The validated static CSS color and whether it applies to the background
+    /// are specified, followed by the elements contained within.
     Color {
         color: Cow<'t, str>,
+        background: bool,
         elements: Vec<Element<'t>>,
     },
 
@@ -334,6 +354,12 @@ pub enum Element<'t> {
 }
 
 impl Element<'_> {
+    /// Whether this is a typed authored content-section boundary.
+    #[inline]
+    pub const fn is_content_separator(&self) -> bool {
+        matches!(self, Self::ContentSeparator)
+    }
+
     /// Determines if the element is "unintentional whitespace".
     ///
     /// Specifically, it returns true if the element is:
@@ -360,8 +386,12 @@ impl Element<'_> {
             Element::Variable(_) => "Variable",
             Element::Email(_) => "Email",
             Element::Delayed(_) => "Delayed",
+            Element::ContentSeparator => "ContentSeparator",
             Element::Table(_) => "Table",
             Element::TabView(_) => "TabView",
+            Element::StandaloneButton(_) => "StandaloneButton",
+            Element::EmbedVideo(_) => "EmbedVideo",
+            Element::Gallery(_) => "Gallery",
             Element::Anchor { .. } => "Anchor",
             Element::AnchorName(_) => "AnchorName",
             Element::Link { .. } => "Link",
@@ -375,7 +405,7 @@ impl Element<'_> {
             Element::CheckBox { .. } => "CheckBox",
             Element::Collapsible { .. } => "Collapsible",
             Element::TableOfContents { .. } => "TableOfContents",
-            Element::Footnote => "Footnote",
+            Element::Footnote(_) => "Footnote",
             Element::FootnoteBlock { .. } => "FootnoteBlock",
             Element::BibliographyCite { .. } => "BibliographyCite",
             Element::BibliographyBlock { .. } => "BibliographyBlock",
@@ -399,6 +429,82 @@ impl Element<'_> {
         }
     }
 
+    pub(crate) fn offset_footnote_indices(&mut self, offset: usize) {
+        if offset == 0 {
+            return;
+        }
+
+        let offset_elements = |elements: &mut [Element<'_>]| {
+            for element in elements {
+                element.offset_footnote_indices(offset);
+            }
+        };
+
+        match self {
+            Element::Container(container) => offset_elements(container.elements_mut()),
+            Element::Table(table) => {
+                for row in &mut table.rows {
+                    for cell in &mut row.cells {
+                        offset_elements(&mut cell.elements);
+                    }
+                }
+            }
+            Element::TabView(tabs) => {
+                for tab in tabs {
+                    offset_elements(&mut tab.elements);
+                }
+            }
+            Element::StandaloneButton(_) => {}
+            Element::EmbedVideo(_) => {}
+            Element::Gallery(_) => {}
+            Element::Anchor { elements, .. }
+            | Element::Collapsible { elements, .. }
+            | Element::Color { elements, .. }
+            | Element::Include { elements, .. } => offset_elements(elements),
+            Element::List { items, .. } => {
+                for item in items {
+                    match item {
+                        ListItem::Elements { elements, .. } => offset_elements(elements),
+                        ListItem::SubList { element } => {
+                            element.offset_footnote_indices(offset);
+                        }
+                    }
+                }
+            }
+            Element::DefinitionList(items) => {
+                for item in items {
+                    offset_elements(&mut item.key_elements);
+                    offset_elements(&mut item.value_elements);
+                }
+            }
+            Element::Footnote(index) => *index += offset,
+            Element::Partial(partial) => match partial {
+                PartialElement::ListItem(ListItem::Elements { elements, .. }) => {
+                    offset_elements(elements);
+                }
+                PartialElement::ListItem(ListItem::SubList { element }) => {
+                    element.offset_footnote_indices(offset);
+                }
+                PartialElement::TableRow(row) => {
+                    for cell in &mut row.cells {
+                        offset_elements(&mut cell.elements);
+                    }
+                }
+                PartialElement::TableCell(cell) => offset_elements(&mut cell.elements),
+                PartialElement::Tab(tab) => offset_elements(&mut tab.elements),
+                PartialElement::RubyText(ruby_text) => {
+                    offset_elements(&mut ruby_text.elements);
+                }
+                PartialElement::WikidotEmptyInlineOwner
+                | PartialElement::InlineSizeOpen(_)
+                | PartialElement::InlineSizeClose(_)
+                | PartialElement::InlineSpanOpen(_)
+                | PartialElement::InlineSpanClose(_) => {}
+            },
+            _ => {}
+        }
+    }
+
     /// Determines if this element type is able to be embedded in a paragraph.
     ///
     /// It does *not* look into the interiors of the element, it only does a
@@ -417,8 +523,12 @@ impl Element<'_> {
             | Element::Variable(_)
             | Element::Email(_) => true,
             Element::Delayed(_) => true,
+            Element::ContentSeparator => false,
             Element::Table(_) => false,
             Element::TabView(_) => false,
+            Element::StandaloneButton(_) => true,
+            Element::EmbedVideo(_) => false,
+            Element::Gallery(_) => false,
             Element::Anchor { .. }
             | Element::AnchorName(_)
             | Element::Link { .. }
@@ -431,7 +541,7 @@ impl Element<'_> {
             Element::RadioButton { .. } | Element::CheckBox { .. } => true,
             Element::Collapsible { .. } => false,
             Element::TableOfContents { .. } => false,
-            Element::Footnote => true,
+            Element::Footnote(_) => true,
             Element::FootnoteBlock { .. } => false,
             Element::BibliographyCite { .. } => true,
             Element::BibliographyBlock { .. } => false,
@@ -475,10 +585,18 @@ impl Element<'_> {
             Element::Variable(name) => Element::Variable(string_to_owned(name)),
             Element::Email(email) => Element::Email(string_to_owned(email)),
             Element::Delayed(delayed) => Element::Delayed(delayed.to_owned()),
+            Element::ContentSeparator => Element::ContentSeparator,
             Element::Table(table) => Element::Table(table.to_owned()),
             Element::TabView(tabs) => {
                 Element::TabView(tabs.iter().map(|tab| tab.to_owned()).collect())
             }
+            Element::StandaloneButton(button) => {
+                Element::StandaloneButton(button.to_owned())
+            }
+            Element::EmbedVideo(embed_video) => {
+                Element::EmbedVideo(embed_video.to_owned())
+            }
+            Element::Gallery(gallery) => Element::Gallery(gallery.to_owned()),
             Element::Anchor {
                 target,
                 attributes,
@@ -582,7 +700,7 @@ impl Element<'_> {
                 align: *align,
                 attributes: attributes.to_owned(),
             },
-            Element::Footnote => Element::Footnote,
+            Element::Footnote(index) => Element::Footnote(*index),
             Element::FootnoteBlock { title, hide } => Element::FootnoteBlock {
                 title: option_string_to_owned(title),
                 hide: *hide,
@@ -616,8 +734,13 @@ impl Element<'_> {
                 format: option_string_to_owned(format),
                 hover: *hover,
             },
-            Element::Color { color, elements } => Element::Color {
+            Element::Color {
+                color,
+                background,
+                elements,
+            } => Element::Color {
                 color: string_to_owned(color),
+                background: *background,
                 elements: elements_to_owned(elements),
             },
             Element::Code(code_block) => Element::Code(code_block.to_owned()),

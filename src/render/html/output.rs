@@ -20,6 +20,55 @@
 
 use super::meta::HtmlMeta;
 use crate::data::Backlinks;
+use crate::tree::{EmbedVideo, Gallery, StandaloneButtonAction};
+
+#[derive(Serialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct GalleryRequirement {
+    id: String,
+    gallery: Gallery<'static>,
+}
+
+impl GalleryRequirement {
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn gallery(&self) -> &Gallery<'static> {
+        &self.gallery
+    }
+}
+
+#[derive(Serialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct EmbedVideoRequirement {
+    id: String,
+    embed_video: EmbedVideo<'static>,
+}
+
+impl EmbedVideoRequirement {
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn embed_video(&self) -> &EmbedVideo<'static> {
+        &self.embed_video
+    }
+}
+
+#[derive(Serialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct StandaloneButtonRequirement {
+    id: String,
+    action: StandaloneButtonAction<'static>,
+}
+
+impl StandaloneButtonRequirement {
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn action(&self) -> &StandaloneButtonAction<'static> {
+        &self.action
+    }
+}
 
 #[derive(Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct WikidotTabViewRequirement {
@@ -36,10 +85,49 @@ impl WikidotTabViewRequirement {
 #[serde(tag = "type", content = "requirement", rename_all = "kebab-case")]
 #[non_exhaustive]
 pub enum HtmlResourceRequirement {
+    EmbedVideo(EmbedVideoRequirement),
+    Gallery(GalleryRequirement),
+    StandaloneButton(StandaloneButtonRequirement),
     WikidotTabView(WikidotTabViewRequirement),
 }
 
 impl HtmlResourceRequirement {
+    pub(crate) fn embed_video(id: String, embed_video: &EmbedVideo<'_>) -> Self {
+        assert!(
+            valid_embed_video_id(&id),
+            "embedvideo requirement id must be renderer-generated",
+        );
+        Self::EmbedVideo(EmbedVideoRequirement {
+            id,
+            embed_video: embed_video.to_owned(),
+        })
+    }
+
+    pub(crate) fn gallery(id: String, gallery: &Gallery<'_>) -> Self {
+        assert!(
+            valid_gallery_id(&id),
+            "gallery requirement id must be renderer-generated",
+        );
+        Self::Gallery(GalleryRequirement {
+            id,
+            gallery: gallery.to_owned(),
+        })
+    }
+
+    pub(crate) fn standalone_button(
+        id: String,
+        action: &StandaloneButtonAction<'_>,
+    ) -> Self {
+        assert!(
+            valid_standalone_button_id(&id),
+            "button requirement id must be renderer-generated",
+        );
+        Self::StandaloneButton(StandaloneButtonRequirement {
+            id,
+            action: action.to_owned(),
+        })
+    }
+
     pub(crate) fn wikidot_tab_view(id: String) -> Self {
         assert!(
             valid_wikidot_tab_view_id(&id),
@@ -51,8 +139,65 @@ impl HtmlResourceRequirement {
     pub fn wikidot_tab_view_requirement(&self) -> Option<&WikidotTabViewRequirement> {
         match self {
             Self::WikidotTabView(requirement) => Some(requirement),
+            Self::EmbedVideo(_) => None,
+            Self::Gallery(_) => None,
+            Self::StandaloneButton(_) => None,
         }
     }
+
+    pub fn standalone_button_requirement(&self) -> Option<&StandaloneButtonRequirement> {
+        match self {
+            Self::StandaloneButton(requirement) => Some(requirement),
+            Self::EmbedVideo(_) => None,
+            Self::Gallery(_) => None,
+            Self::WikidotTabView(_) => None,
+        }
+    }
+
+    pub fn embed_video_requirement(&self) -> Option<&EmbedVideoRequirement> {
+        match self {
+            Self::EmbedVideo(requirement) => Some(requirement),
+            Self::Gallery(_) | Self::StandaloneButton(_) | Self::WikidotTabView(_) => {
+                None
+            }
+        }
+    }
+
+    pub fn gallery_requirement(&self) -> Option<&GalleryRequirement> {
+        match self {
+            Self::Gallery(requirement) => Some(requirement),
+            Self::EmbedVideo(_) | Self::StandaloneButton(_) | Self::WikidotTabView(_) => {
+                None
+            }
+        }
+    }
+}
+
+fn valid_gallery_id(id: &str) -> bool {
+    let Some(suffix) = id.strip_prefix("wj-gallery-") else {
+        return false;
+    };
+    suffix.len() == 32
+        && suffix
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
+}
+
+fn valid_embed_video_id(id: &str) -> bool {
+    let Some(suffix) = id.strip_prefix("wj-embed-video-") else {
+        return false;
+    };
+    suffix.len() == 32
+        && suffix
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
+}
+
+fn valid_standalone_button_id(id: &str) -> bool {
+    let Some(suffix) = id.strip_prefix("wj-button-") else {
+        return false;
+    };
+    suffix.len() == 32 && suffix.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
 fn valid_wikidot_tab_view_id(id: &str) -> bool {
@@ -74,6 +219,86 @@ pub struct HtmlOutput {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn gallery_requirement_serializes_typed_source_and_generated_id() {
+        let id = "wj-gallery-0123456789abcdef0123456789abcdef";
+        let gallery = Gallery::new(
+            "[[gallery]]",
+            Vec::new(),
+            crate::tree::GallerySelection::CurrentPageFiles,
+        );
+        let requirement = HtmlResourceRequirement::gallery(id.to_owned(), &gallery);
+
+        assert_eq!(
+            serde_json::to_value(&requirement).unwrap(),
+            serde_json::json!({
+                "type": "gallery",
+                "requirement": {
+                    "id": id,
+                    "gallery": {
+                        "source": "[[gallery]]",
+                        "arguments": [],
+                        "selection": { "type": "current-page-files" },
+                        "source-sha256": "2e1fa80e22bbbc83b0a8ce41a4793c4b84cb339a08b38ac307f3e04e680207d7",
+                    },
+                },
+            }),
+        );
+        assert_eq!(requirement.gallery_requirement().unwrap().id(), id);
+    }
+
+    #[test]
+    #[should_panic(expected = "gallery requirement id must be renderer-generated")]
+    fn gallery_requirement_rejects_authored_script_data() {
+        let gallery = Gallery::new(
+            "[[gallery]]",
+            Vec::new(),
+            crate::tree::GallerySelection::CurrentPageFiles,
+        );
+        HtmlResourceRequirement::gallery(
+            "wj-gallery-x');alert(1)//".to_owned(),
+            &gallery,
+        );
+    }
+
+    #[test]
+    fn standalone_button_requirement_serializes_typed_action_and_generated_id() {
+        let id = "wj-button-0123456789abcdef0123456789abcdef";
+        let requirement = HtmlResourceRequirement::standalone_button(
+            id.to_owned(),
+            &StandaloneButtonAction::SetTags(vec![
+                crate::tree::TagAlteration::ClearVisible,
+                crate::tree::TagAlteration::Add(cow!("favorite")),
+            ]),
+        );
+
+        assert_eq!(
+            serde_json::to_value(&requirement).unwrap(),
+            serde_json::json!({
+                "type": "standalone-button",
+                "requirement": {
+                    "id": id,
+                    "action": {
+                        "type": "set-tags",
+                        "data": [
+                            { "operation": "clear-visible" },
+                            { "operation": "add", "tag": "favorite" },
+                        ],
+                    },
+                },
+            }),
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "button requirement id must be renderer-generated")]
+    fn standalone_button_requirement_rejects_authored_script_data() {
+        HtmlResourceRequirement::standalone_button(
+            "wj-button-x');alert(1)//".to_owned(),
+            &StandaloneButtonAction::Print,
+        );
+    }
 
     #[test]
     fn tabview_requirement_serializes_only_its_typed_generated_id() {

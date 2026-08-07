@@ -31,8 +31,8 @@ use crate::next_index::{Incrementer, NextIndex, TableOfContentsIndex};
 use crate::render::{Handle, PageExistenceResolver, UserInfoResolver};
 use crate::settings::WikitextSettings;
 use crate::tree::{
-    Bibliography, BibliographyList, Element, LinkLocation, StandaloneButtonAction,
-    VariableScopes,
+    Bibliography, BibliographyList, Element, EmbedVideo, LinkLocation,
+    StandaloneButtonAction, VariableScopes,
 };
 use crate::url::{HrefKind, classify_href, normalize_href};
 use std::collections::HashMap;
@@ -457,6 +457,15 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     ) {
         self.resource_requirements
             .push(HtmlResourceRequirement::standalone_button(id, action));
+    }
+
+    pub(super) fn require_embed_video(
+        &mut self,
+        id: String,
+        embed_video: &EmbedVideo<'_>,
+    ) {
+        self.resource_requirements
+            .push(HtmlResourceRequirement::embed_video(id, embed_video));
     }
 }
 

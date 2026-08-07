@@ -95,6 +95,7 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | [Deletion](#deletion)                           | `del`, `deletion`                | No    | No     | No        | Map           | Elements  |
 | [Div](#div)                                     | `div`                            | No    | Yes    | Yes       | Map           | Elements  |
 | [Embed](#embed)                                 | `embed`                          | No    | No     | Yes       | Value + Map   | None      |
+| EmbedVideo                                      | `embedvideo`                     | No    | No     | No        | None          | Raw       |
 | [Equation Reference](#equation-ref)             | `equation`, `eref`, `eqref`      | No    | No     | No        | Value         | None      |
 | [File](#file)                                   | `file`                           | No    | No     | No        | Value         | None      |
 | [Footnote](#footnote)                           | `footnote`                       | No    | No     | No        | None          | Elements  |

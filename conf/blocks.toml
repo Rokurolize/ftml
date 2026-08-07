@@ -107,6 +107,11 @@ head = "value+map"
 body = "none"
 html-output = "html,div,wj-embed"
 
+[embedvideo]
+head = "none"
+body = "raw"
+html-output = "other"
+
 [equation-ref]
 exclude-name = true
 aliases = ["equation", "eref", "eqref"]

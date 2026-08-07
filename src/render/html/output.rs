@@ -20,7 +20,23 @@
 
 use super::meta::HtmlMeta;
 use crate::data::Backlinks;
-use crate::tree::StandaloneButtonAction;
+use crate::tree::{EmbedVideo, StandaloneButtonAction};
+
+#[derive(Serialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct EmbedVideoRequirement {
+    id: String,
+    embed_video: EmbedVideo<'static>,
+}
+
+impl EmbedVideoRequirement {
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn embed_video(&self) -> &EmbedVideo<'static> {
+        &self.embed_video
+    }
+}
 
 #[derive(Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct StandaloneButtonRequirement {
@@ -53,11 +69,23 @@ impl WikidotTabViewRequirement {
 #[serde(tag = "type", content = "requirement", rename_all = "kebab-case")]
 #[non_exhaustive]
 pub enum HtmlResourceRequirement {
+    EmbedVideo(EmbedVideoRequirement),
     StandaloneButton(StandaloneButtonRequirement),
     WikidotTabView(WikidotTabViewRequirement),
 }
 
 impl HtmlResourceRequirement {
+    pub(crate) fn embed_video(id: String, embed_video: &EmbedVideo<'_>) -> Self {
+        assert!(
+            valid_embed_video_id(&id),
+            "embedvideo requirement id must be renderer-generated",
+        );
+        Self::EmbedVideo(EmbedVideoRequirement {
+            id,
+            embed_video: embed_video.to_owned(),
+        })
+    }
+
     pub(crate) fn standalone_button(
         id: String,
         action: &StandaloneButtonAction<'_>,
@@ -83,6 +111,7 @@ impl HtmlResourceRequirement {
     pub fn wikidot_tab_view_requirement(&self) -> Option<&WikidotTabViewRequirement> {
         match self {
             Self::WikidotTabView(requirement) => Some(requirement),
+            Self::EmbedVideo(_) => None,
             Self::StandaloneButton(_) => None,
         }
     }
@@ -90,9 +119,27 @@ impl HtmlResourceRequirement {
     pub fn standalone_button_requirement(&self) -> Option<&StandaloneButtonRequirement> {
         match self {
             Self::StandaloneButton(requirement) => Some(requirement),
+            Self::EmbedVideo(_) => None,
             Self::WikidotTabView(_) => None,
         }
     }
+
+    pub fn embed_video_requirement(&self) -> Option<&EmbedVideoRequirement> {
+        match self {
+            Self::EmbedVideo(requirement) => Some(requirement),
+            Self::StandaloneButton(_) | Self::WikidotTabView(_) => None,
+        }
+    }
+}
+
+fn valid_embed_video_id(id: &str) -> bool {
+    let Some(suffix) = id.strip_prefix("wj-embed-video-") else {
+        return false;
+    };
+    suffix.len() == 32
+        && suffix
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
 }
 
 fn valid_standalone_button_id(id: &str) -> bool {

@@ -261,6 +261,36 @@ where
         })
     }
 
+    pub(crate) fn get_wikidot_embed_video_name_with_residual_opener(
+        &mut self,
+    ) -> Result<(&'t str, bool), ParseError> {
+        debug_assert!(self.settings().layout.legacy());
+        self.get_optional_token(Token::LeftBlock)?;
+        self.get_optional_space()?;
+
+        let end_conditions = [
+            ParseCondition::current(Token::Whitespace),
+            ParseCondition::current(Token::LineBreak),
+            ParseCondition::current(Token::ParagraphBreak),
+            ParseCondition::current(Token::RightBlock),
+            ParseCondition::current(Token::RightLink),
+        ];
+        let rule = self.rule();
+        collect_text_keep(
+            self,
+            rule,
+            &end_conditions,
+            &[],
+            Some(ParseErrorKind::BlockMissingName),
+        )
+        .and_then(|(name, last)| {
+            if last.token != Token::RightLink || last.slice != "]]]" {
+                return Err(self.make_err(ParseErrorKind::BlockExpectedEnd));
+            }
+            Ok((name.trim(), false))
+        })
+    }
+
     pub(crate) fn get_wikidot_end_block_with_residual(
         &mut self,
     ) -> Result<(&'t str, bool), ParseError> {

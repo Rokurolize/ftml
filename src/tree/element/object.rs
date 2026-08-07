@@ -24,7 +24,8 @@ use crate::tree::clone::*;
 use crate::tree::{
     Alignment, AnchorTarget, AttributeMap, ClearFloat, CodeBlock, Container, DateItem,
     DefinitionListItem, Embed, FileSource, FloatAlignment, LinkLabel, LinkLocation,
-    LinkType, ListItem, ListType, Module, PartialElement, Tab, Table, VariableMap,
+    LinkType, ListItem, ListType, Module, PartialElement, StandaloneButton, Tab, Table,
+    VariableMap,
 };
 use ref_map::*;
 use std::borrow::Cow;
@@ -79,6 +80,9 @@ pub enum Element<'t> {
 
     /// An element representing a tabview.
     TabView(Vec<Tab<'t>>),
+
+    /// A typed standalone action control with no authored executable behavior.
+    StandaloneButton(StandaloneButton<'t>),
 
     /// An element representing an arbitrary anchor.
     ///
@@ -363,6 +367,7 @@ impl Element<'_> {
             Element::Delayed(_) => "Delayed",
             Element::Table(_) => "Table",
             Element::TabView(_) => "TabView",
+            Element::StandaloneButton(_) => "StandaloneButton",
             Element::Anchor { .. } => "Anchor",
             Element::AnchorName(_) => "AnchorName",
             Element::Link { .. } => "Link",
@@ -425,6 +430,7 @@ impl Element<'_> {
                     offset_elements(&mut tab.elements);
                 }
             }
+            Element::StandaloneButton(_) => {}
             Element::Anchor { elements, .. }
             | Element::Collapsible { elements, .. }
             | Element::Color { elements, .. }
@@ -493,6 +499,7 @@ impl Element<'_> {
             Element::Delayed(_) => true,
             Element::Table(_) => false,
             Element::TabView(_) => false,
+            Element::StandaloneButton(_) => true,
             Element::Anchor { .. }
             | Element::AnchorName(_)
             | Element::Link { .. }
@@ -552,6 +559,9 @@ impl Element<'_> {
             Element::Table(table) => Element::Table(table.to_owned()),
             Element::TabView(tabs) => {
                 Element::TabView(tabs.iter().map(|tab| tab.to_owned()).collect())
+            }
+            Element::StandaloneButton(button) => {
+                Element::StandaloneButton(button.to_owned())
             }
             Element::Anchor {
                 target,

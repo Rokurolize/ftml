@@ -144,6 +144,7 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
                 ctx.add_newline();
             }
         }
+        Element::StandaloneButton(button) => ctx.push_str(&button.label),
         Element::Anchor { elements, .. } => render_elements(ctx, elements),
         Element::AnchorName(_) => {
             // Anchor names are an invisible addition to the HTML

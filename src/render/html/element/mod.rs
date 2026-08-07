@@ -22,6 +22,7 @@
 
 mod audio;
 mod bibliography;
+mod button;
 mod clear_float;
 mod collapsible;
 mod container;
@@ -56,6 +57,7 @@ mod prelude {
 
 use self::audio::render_audio;
 use self::bibliography::{render_bibcite, render_bibliography};
+use self::button::render_standalone_button;
 use self::clear_float::render_clear_float;
 use self::collapsible::{Collapsible, render_collapsible};
 use self::container::{render_color, render_container};
@@ -153,6 +155,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         }
         Element::Table(table) => render_table(ctx, table),
         Element::TabView(tabs) => render_tabview(ctx, tabs),
+        Element::StandaloneButton(button) => render_standalone_button(ctx, button),
         Element::Anchor {
             elements,
             attributes,

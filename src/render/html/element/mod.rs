@@ -153,6 +153,13 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         Element::Delayed(_) => {
             panic!("unbound delayed element reached the HTML renderer")
         }
+        Element::ContentSeparator => {
+            if ctx.layout().legacy() {
+                ctx.push_raw_str(
+                    r#"<div class="content-separator" style="display: none:"></div>"#,
+                );
+            }
+        }
         Element::Table(table) => render_table(ctx, table),
         Element::TabView(tabs) => render_tabview(ctx, tabs),
         Element::StandaloneButton(button) => render_standalone_button(ctx, button),

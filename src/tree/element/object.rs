@@ -75,6 +75,13 @@ pub enum Element<'t> {
     #[serde(skip)]
     Delayed(DelayedElement<'t>),
 
+    /// An authored physical-line content-section separator.
+    ///
+    /// This remains typed in every layout so runtime consumers can split
+    /// sections without reparsing source. Only the Wikidot HTML renderer emits
+    /// the legacy hidden div.
+    ContentSeparator,
+
     /// An element representing an HTML table.
     Table(Table<'t>),
 
@@ -341,6 +348,12 @@ pub enum Element<'t> {
 }
 
 impl Element<'_> {
+    /// Whether this is a typed authored content-section boundary.
+    #[inline]
+    pub const fn is_content_separator(&self) -> bool {
+        matches!(self, Self::ContentSeparator)
+    }
+
     /// Determines if the element is "unintentional whitespace".
     ///
     /// Specifically, it returns true if the element is:
@@ -367,6 +380,7 @@ impl Element<'_> {
             Element::Variable(_) => "Variable",
             Element::Email(_) => "Email",
             Element::Delayed(_) => "Delayed",
+            Element::ContentSeparator => "ContentSeparator",
             Element::Table(_) => "Table",
             Element::TabView(_) => "TabView",
             Element::StandaloneButton(_) => "StandaloneButton",
@@ -499,6 +513,7 @@ impl Element<'_> {
             | Element::Variable(_)
             | Element::Email(_) => true,
             Element::Delayed(_) => true,
+            Element::ContentSeparator => false,
             Element::Table(_) => false,
             Element::TabView(_) => false,
             Element::StandaloneButton(_) => true,
@@ -558,6 +573,7 @@ impl Element<'_> {
             Element::Variable(name) => Element::Variable(string_to_owned(name)),
             Element::Email(email) => Element::Email(string_to_owned(email)),
             Element::Delayed(delayed) => Element::Delayed(delayed.to_owned()),
+            Element::ContentSeparator => Element::ContentSeparator,
             Element::Table(table) => Element::Table(table.to_owned()),
             Element::TabView(tabs) => {
                 Element::TabView(tabs.iter().map(|tab| tab.to_owned()).collect())

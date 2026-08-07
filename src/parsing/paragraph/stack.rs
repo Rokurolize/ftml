@@ -341,17 +341,8 @@ impl<'t> ParagraphStack<'t> {
             }
         ) || matches!(&element, Element::Delayed(delayed) if delayed.image_alignment() == Some(None));
         let wikidot_html_block = self.wikidot && matches!(element, Element::Html { .. });
-        let wikidot_section_marker = self.wikidot
-            && matches!(
-                &element,
-                Element::Container(container)
-                    if container.ctype() == ContainerType::Div
-                        && container
-                            .attributes()
-                            .get()
-                            .get("class")
-                            .is_some_and(|value| value.as_ref() == "content-separator")
-            );
+        let wikidot_section_marker =
+            self.wikidot && matches!(&element, Element::ContentSeparator);
         let wikidot_simple_table = self.wikidot
             && matches!(
                 &element,

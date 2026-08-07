@@ -105,6 +105,7 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
         Element::Delayed(_) => {
             panic!("unbound delayed element reached the text renderer")
         }
+        Element::ContentSeparator => {}
         Element::Variable(name) => {
             let value = match ctx.variables().get(name) {
                 Some(value) => str!(value),

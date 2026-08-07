@@ -284,16 +284,7 @@ fn lower_root_sequence<'t>(
 }
 
 fn is_wikidot_content_separator(element: &Element<'_>) -> bool {
-    matches!(
-        element,
-        Element::Container(container)
-            if container.ctype() == ContainerType::Div
-                && container
-                    .attributes()
-                    .get()
-                    .get("class")
-                    .is_some_and(|value| value.as_ref() == "content-separator")
-    )
+    element.is_content_separator()
 }
 
 fn append_root_sequence<'t>(

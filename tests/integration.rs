@@ -19,6 +19,9 @@ mod canonical_wikidot_source;
 #[path = "suppressed_conditional_typography.rs"]
 mod suppressed_conditional_typography;
 
+#[path = "wikidot_content_separators.rs"]
+mod wikidot_content_separators;
+
 #[path = "coverage_public_api.rs"]
 mod coverage_public_api;
 

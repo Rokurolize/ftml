@@ -109,6 +109,9 @@ mod wikidot_anchor_block;
 #[path = "wikidot_block_argument_grammar.rs"]
 mod wikidot_block_argument_grammar;
 
+#[path = "wikidot_bibliography.rs"]
+mod wikidot_bibliography;
+
 #[path = "wikidot_empty_key_div_fallback.rs"]
 mod wikidot_empty_key_div_fallback;
 

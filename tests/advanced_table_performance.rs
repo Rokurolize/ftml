@@ -134,3 +134,40 @@ fn large_malformed_advanced_table_body_stays_bounded() {
     );
     assert!(html.len() >= BODY_LEN, "large cell body was truncated");
 }
+
+#[test]
+fn many_paragraphs_and_nested_tables_stay_bounded() {
+    const PARAGRAPH_COUNT: usize = 2_048;
+    const NESTED_INTERVAL: usize = 64;
+
+    let mut input = String::from("[[table]]\n[[row]]\n[[cell]]\n");
+    for index in 0..PARAGRAPH_COUNT {
+        input.push_str(&format!("P{index}\n\n"));
+        if index % NESTED_INTERVAL == NESTED_INTERVAL - 1 {
+            input.push_str(concat!(
+                "[[table]]\n[[row]]\n[[cell]]I[[/cell]]\n",
+                "[[/row]]\n[[/table]]\n\n",
+            ));
+        }
+    }
+    input.push_str("[[/cell]]\n[[/row]]\n[[/table]]");
+
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let started = Instant::now();
+    let tokenization = ftml::tokenize(&input);
+    let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+    assert!(
+        started.elapsed() < Duration::from_secs(5),
+        "paragraph/table run took {:?}",
+        started.elapsed(),
+    );
+    assert!(errors.is_empty(), "{errors:#?}");
+    assert_eq!(html.matches("<p>").count(), PARAGRAPH_COUNT);
+    assert_eq!(
+        html.matches("<table>").count(),
+        1 + PARAGRAPH_COUNT / NESTED_INTERVAL,
+    );
+}

@@ -282,8 +282,8 @@ fn advanced_table_matching_controls_stay_unchanged() {
     );
     let nested_html = render(nested);
     assert_eq!(nested_html.matches("<table>").count(), 2, "{nested_html}");
-    assert!(nested_html.contains("O<table>"), "{nested_html}");
-    assert!(nested_html.contains("</table>Z"), "{nested_html}");
+    assert!(nested_html.contains("<p>O</p><table>"), "{nested_html}");
+    assert!(nested_html.contains("</table><p>Z</p>"), "{nested_html}");
 }
 
 #[test]

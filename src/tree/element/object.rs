@@ -23,9 +23,9 @@ use crate::delayed::DelayedElement;
 use crate::tree::clone::*;
 use crate::tree::{
     Alignment, AnchorTarget, AttributeMap, ClearFloat, CodeBlock, Container, DateItem,
-    DefinitionListItem, Embed, FileSource, FloatAlignment, LinkLabel, LinkLocation,
-    LinkType, ListItem, ListType, Module, PartialElement, StandaloneButton, Tab, Table,
-    VariableMap,
+    DefinitionListItem, Embed, FileSource, FloatAlignment, ImageSource, LinkLabel,
+    LinkLocation, LinkType, ListItem, ListType, Module, PartialElement, StandaloneButton,
+    Tab, Table, VariableMap,
 };
 use ref_map::*;
 use std::borrow::Cow;
@@ -128,7 +128,7 @@ pub enum Element<'t> {
     ///
     /// The "link" field is what the `<a>` points to, when the user clicks on the image.
     Image {
-        source: FileSource<'t>,
+        source: ImageSource<'t>,
         link: Option<LinkLocation<'t>>,
         alignment: Option<FloatAlignment>,
         attributes: AttributeMap<'t>,

@@ -19,12 +19,12 @@
  */
 
 use super::prelude::*;
-use crate::tree::{AttributeMap, FileSource, FloatAlignment, LinkLocation};
+use crate::tree::{AttributeMap, FloatAlignment, ImageSource, LinkLocation};
 use crate::url::normalize_link;
 
 pub fn render_image(
     ctx: &mut HtmlContext,
-    source: &FileSource,
+    source: &ImageSource,
     link: &Option<LinkLocation>,
     alignment: Option<FloatAlignment>,
     attributes: &AttributeMap,
@@ -43,52 +43,46 @@ pub fn render_image(
         },
     );
 
-    let source_url = ctx
-        .handle()
-        .get_file_link(source, ctx.info(), ctx.settings());
-
-    match source_url {
-        // Found URL
-        Some(url)
-            if ctx.layout() == Layout::Wikidot
-                && ctx.info().page.is_empty()
-                && link.is_none()
-                && alignment.is_none()
-                && attributes.get().is_empty()
-                && matches!(source, FileSource::File1 { file } if !file.starts_with('/')) =>
-        {
-            render_wikidot_preview_image(ctx, &url);
+    match source {
+        ImageSource::Direct(source) => {
+            match ctx
+                .handle()
+                .get_file_link(source, ctx.info(), ctx.settings())
+            {
+                Some(url) => render_image_element(
+                    ctx, &url, link, None, None, alignment, attributes,
+                ),
+                None => render_image_missing(ctx),
+            }
         }
-        Some(url) => render_image_element(ctx, &url, link, alignment, attributes),
-
-        // Missing or error
-        None => render_image_missing(ctx),
+        ImageSource::ImplicitAttachment { file, alt, size } => {
+            match ctx.handle().get_implicit_attachment_image_links(
+                file,
+                *size,
+                ctx.info(),
+                ctx.settings(),
+            ) {
+                Some((display_url, original_url)) => render_image_element(
+                    ctx,
+                    &display_url,
+                    link,
+                    Some(&original_url),
+                    Some(alt),
+                    alignment,
+                    attributes,
+                ),
+                None => render_image_missing(ctx),
+            }
+        }
     }
-}
-
-fn render_wikidot_preview_image(ctx: &mut HtmlContext, image_url: &str) {
-    let resized_url = format!(
-        "{}/medium.jpg",
-        image_url.replacen("/local--files/", "/local--resized-images/", 1),
-    );
-    let alt = image_url.rsplit('/').next().unwrap_or("");
-
-    ctx.html()
-        .a()
-        .attr(attr!("href" => image_url))
-        .inner(|ctx| {
-            ctx.html().img().attr(attr!(
-                "src" => &resized_url,
-                "alt" => alt,
-                "class" => "image",
-            ));
-        });
 }
 
 fn render_image_element(
     ctx: &mut HtmlContext,
     image_url: &str,
     link: &Option<LinkLocation>,
+    attachment_link: Option<&str>,
+    attachment_alt: Option<&str>,
     alignment: Option<FloatAlignment>,
     attributes: &AttributeMap,
 ) {
@@ -96,7 +90,15 @@ fn render_image_element(
 
     match ctx.layout() {
         Layout::Wikidot => {
-            render_image_element_wikidot(ctx, image_url, link, alignment, attributes);
+            render_image_element_wikidot(
+                ctx,
+                image_url,
+                link,
+                attachment_link,
+                attachment_alt,
+                alignment,
+                attributes,
+            );
         }
         Layout::Wikijump => {
             render_image_element_wikijump(ctx, image_url, link, alignment, attributes);
@@ -117,6 +119,8 @@ fn render_image_element_wikidot(
     ctx: &mut HtmlContext,
     image_url: &str,
     link: &Option<LinkLocation>,
+    attachment_link: Option<&str>,
+    attachment_alt: Option<&str>,
     alignment: Option<FloatAlignment>,
     attributes: &AttributeMap,
 ) {
@@ -128,7 +132,7 @@ fn render_image_element_wikidot(
         .rsplit('/')
         .next()
         .unwrap_or("");
-    let alt = get("alt").unwrap_or(default_alt);
+    let alt = get("alt").or(attachment_alt).unwrap_or(default_alt);
     let class = get("class").unwrap_or("image");
     let width = get("width");
     let height = get("height");
@@ -148,7 +152,6 @@ fn render_image_element_wikidot(
     };
 
     let build_link = |ctx: &mut HtmlContext| match link {
-        None => build_image(ctx),
         Some(link) => {
             let url = normalize_link(link, ctx.handle());
             ctx.html()
@@ -156,6 +159,12 @@ fn render_image_element_wikidot(
                 .attr(attr!("href" => &url))
                 .inner(build_image);
         }
+        None => match attachment_link {
+            Some(url) => {
+                ctx.html().a().attr(attr!("href" => url)).inner(build_image);
+            }
+            None => build_image(ctx),
+        },
     };
 
     match alignment {
@@ -240,7 +249,9 @@ fn image_renders_missing_for_canonical_local_files_when_local_paths_are_disabled
     settings.allow_local_paths = false;
     let tree = SyntaxTree {
         elements: vec![Element::Image {
-            source: FileSource::Url(cow!("/local--files/private-page/secret.png")),
+            source: ImageSource::Direct(crate::tree::FileSource::Url(cow!(
+                "/local--files/private-page/secret.png"
+            ))),
             link: None,
             alignment: None,
             attributes: AttributeMap::new(),

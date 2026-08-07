@@ -70,6 +70,9 @@ mod wikidot_single_link_recovery;
 #[path = "wikidot_anchor_link_grammar.rs"]
 mod wikidot_anchor_link_grammar;
 
+#[path = "wikidot_inline_bibcite.rs"]
+mod wikidot_inline_bibcite;
+
 #[path = "wikidot_line_ownership.rs"]
 mod wikidot_line_ownership;
 

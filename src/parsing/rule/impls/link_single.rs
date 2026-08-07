@@ -47,6 +47,17 @@ struct WikidotLabel<'t> {
     residual_closer: &'t str,
 }
 
+#[derive(Debug, Copy, Clone, Default)]
+enum WikidotBibciteOwnerScan {
+    #[default]
+    Search,
+    Name,
+    Separator,
+    Label {
+        nonempty: bool,
+    },
+}
+
 pub const RULE_LINK_SINGLE: Rule = Rule {
     name: "link-single",
     position: LineRequirement::Any,
@@ -309,6 +320,10 @@ fn wikidot_label_has_complete_owner<'r, 't>(parser: &Parser<'r, 't>) -> bool
 where
     'r: 't,
 {
+    if wikidot_label_has_complete_bibcite_owner(parser) {
+        return true;
+    }
+
     let mut scan = parser.clone();
     let mut raw_open = false;
     let mut alternate_raw_open = false;
@@ -360,6 +375,83 @@ where
         if scan.step().is_err() {
             return false;
         }
+    }
+}
+
+fn wikidot_label_has_complete_bibcite_owner<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    let mut scan = parser.clone();
+    let mut bibcite = WikidotBibciteOwnerScan::default();
+    loop {
+        if scan.current().token == Token::LeftComment {
+            bibcite = WikidotBibciteOwnerScan::Search;
+            let mut comment = scan.clone_with_rule(RULE_COMMENT);
+            if RULE_COMMENT.try_consume(&mut comment).is_ok() {
+                scan.update(&comment);
+                continue;
+            }
+        }
+        if bibcite.advance(scan.current()) {
+            return true;
+        }
+
+        match scan.current().token {
+            Token::RightBracket
+            | Token::RightBlock
+            | Token::RightLink
+            | Token::LineBreak
+            | Token::ParagraphBreak
+            | Token::InputEnd
+            | Token::GeneratedPageLink
+            | Token::GeneratedTagLinks => return false,
+            _ => {}
+        }
+        if scan.step().is_err() {
+            return false;
+        }
+    }
+}
+
+impl WikidotBibciteOwnerScan {
+    fn advance(&mut self, token: &ExtractedToken<'_>) -> bool {
+        let restart = || {
+            if token.token == Token::LeftParentheses {
+                Self::Name
+            } else {
+                Self::Search
+            }
+        };
+
+        *self = match *self {
+            Self::Search if token.token == Token::LeftParentheses => Self::Name,
+            Self::Name
+                if token.token == Token::Identifier
+                    && token.slice.eq_ignore_ascii_case("bibcite") =>
+            {
+                Self::Separator
+            }
+            Self::Separator if token.token == Token::Whitespace => {
+                Self::Label { nonempty: false }
+            }
+            Self::Label { nonempty }
+                if token.token == Token::RightParentheses && nonempty =>
+            {
+                return true;
+            }
+            Self::Label { nonempty }
+                if token.slice.chars().all(|character| {
+                    character.is_ascii_alphanumeric() || character == '_'
+                }) =>
+            {
+                Self::Label {
+                    nonempty: nonempty || !token.slice.is_empty(),
+                }
+            }
+            _ => restart(),
+        };
+        false
     }
 }
 

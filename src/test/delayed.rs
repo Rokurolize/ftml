@@ -4,6 +4,7 @@ use crate::delayed::{
     ResolvedTagRef, SlotBindings, SlotId, TextOrigin, parse_delayed_list,
 };
 use crate::layout::Layout;
+use crate::render::PageExistenceResolver;
 use crate::settings::{WikitextMode, WikitextSettings};
 use std::borrow::Cow;
 use std::time::{Duration, Instant};
@@ -368,6 +369,45 @@ fn runtime_literal_preserves_owner_recovery_without_disabling_link_grammar() {
     assert_eq!(
         render_with_runtime_literal("BEGIN|[[[%%unknown%%|LABEL]]]|END", literal),
         "<p>BEGIN|<a href=\"/unknown\">LABEL</a>|END</p>",
+    );
+}
+
+#[test]
+fn delayed_runtime_literal_links_use_page_existence_resolver() {
+    struct FixtureExistence;
+
+    impl PageExistenceResolver for FixtureExistence {
+        fn page_exists(&self, _site: &str, page: &str) -> bool {
+            page != "unknown"
+        }
+    }
+
+    let source = "BEGIN|[[[%%unknown%%|LABEL]]]|END";
+    let literal = "%%unknown%%";
+    let start = source.find(literal).expect("runtime literal fixture");
+    let end = start + literal.len();
+    let input = DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..start, TextOrigin::Authored),
+            InputSegment::text(start..end, TextOrigin::RuntimeLiteral),
+            InputSegment::text(end..source.len(), TextOrigin::Authored),
+        ],
+    )
+    .expect("valid runtime literal fixture");
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::List, Layout::Wikidot);
+    let delayed = parse_delayed_list(&input, &page_info, &settings)
+        .expect("supported delayed input");
+    let bound = delayed
+        .bind(&SlotBindings::empty())
+        .expect("empty bindings");
+
+    assert_eq!(
+        bound
+            .render_html_with_page_existence(&page_info, &settings, &FixtureExistence,)
+            .body(),
+        "<p>BEGIN|<a class=\"newpage\" href=\"/unknown\">LABEL</a>|END</p>",
     );
 }
 

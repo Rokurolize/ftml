@@ -10,9 +10,9 @@ mod toc;
 use crate::data::{PageInfo, PageRef};
 use crate::parsing::{ParseError, decode_semicolon_entities, parse};
 #[cfg(feature = "html")]
-use crate::render::Render;
-#[cfg(feature = "html")]
 use crate::render::html::{HtmlOutput, HtmlRender};
+#[cfg(feature = "html")]
+use crate::render::{PageExistenceResolver, Render};
 use crate::settings::{WikitextMode, WikitextSettings};
 use crate::tokenizer::{Tokenization, tokenize_delayed_segments};
 use crate::tree::{
@@ -610,6 +610,25 @@ impl BoundDelayedSyntaxTree {
         toc::bind_labels(&mut tree, &self.delayed_toc_entries, page_info, settings);
         SealedFragment {
             output: HtmlRender.render(&tree, page_info, settings),
+            html_blocks: tree.html_blocks,
+        }
+    }
+
+    pub fn render_html_with_page_existence(
+        &self,
+        page_info: &PageInfo,
+        settings: &WikitextSettings,
+        page_existence: &dyn PageExistenceResolver,
+    ) -> SealedFragment {
+        let mut tree = self.tree.clone();
+        toc::bind_labels(&mut tree, &self.delayed_toc_entries, page_info, settings);
+        SealedFragment {
+            output: HtmlRender.render_with_page_existence(
+                &tree,
+                page_info,
+                settings,
+                page_existence,
+            ),
             html_blocks: tree.html_blocks,
         }
     }

@@ -40,11 +40,6 @@ body = "elements"
 html-attributes = true
 html-output = "html,strong"
 
-[button]
-head = "value"
-body = "none"
-html-output = "other"
-
 [char]
 aliases = ["character"]
 head = "value"

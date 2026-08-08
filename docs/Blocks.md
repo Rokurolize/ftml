@@ -86,7 +86,6 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | [Bibliography](#bibliography-block)             | `bibliography`                   | No    | No     | Yes       | Map           | (See below) |
 | [Blockquote](#blockquote)                       | `blockquote`, `quote`            | No    | No     | Yes       | Map           | Elements  |
 | [Bold](#bold)                                   | `b`, `bold`, `strong`            | No    | No     | No        | Map           | Elements  |
-| Button                                          | `button`                         | No    | No     | No        | Value         | None      |
 | [Char](#char)                                   | `char`, `character`              | No    | No     | No        | Value         | None      |
 | [Checkbox](#checkbox)                           | `checkbox`                       | Yes   | No     | No        | Map           | None      |
 | [Code](#code)                                   | `code`                           | No    | No     | Yes       | Map           | Raw       |

@@ -132,6 +132,43 @@ where
     }
 
     let source = parser.full_text().inner();
+    if parser
+        .look_ahead(0)
+        .is_some_and(|token| token.token == Token::Whitespace)
+    {
+        let Some(label_start) = parser.look_ahead(1).map(|token| token.span.start) else {
+            return Ok(None);
+        };
+        let mut offset = 1usize;
+        let right_block_start = loop {
+            let Some(token) = parser.look_ahead(offset) else {
+                return Ok(None);
+            };
+            match token.token {
+                Token::RightBlock => break token.span.start,
+                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd => {
+                    return Ok(None);
+                }
+                _ => offset += 1,
+            }
+        };
+        let label = source[label_start..right_block_start].trim();
+        if label.is_empty() {
+            return Ok(None);
+        }
+        parser.step_n(offset + 2)?;
+        return Ok(Some(Elements::Multiple(vec![
+            text!("["),
+            Element::Link {
+                ltype: LinkType::Direct,
+                link: LinkLocation::Url(cow!("/")),
+                label: LinkLabel::Text(cow!(label)),
+                target: None,
+            },
+            text!("]"),
+        ])));
+    }
+
     let first_start = parser.current().span.start;
     let mut scan = parser.clone();
     if scan.get_end_block().is_err() || scan.current().token != Token::Whitespace {
@@ -914,6 +951,51 @@ mod tests {
         );
 
         let (tokens, page_info, settings) = parser_for("[[/cell]] [[/table]]");
+        let mut parser = parser_at(&tokens, &page_info, &settings, 1);
+        assert!(
+            try_consume_wikidot_adjacent_unmatched_closes_as_link(&mut parser)
+                .expect("Wikijump layout fallback should not fail")
+                .is_none(),
+        );
+    }
+
+    #[test]
+    fn wikidot_spaced_unmatched_block_close_reenters_single_link_lexing() {
+        let (tokens, page_info, mut settings) = parser_for("[[/ head]]");
+        settings.layout = Layout::Wikidot;
+        let mut parser = parser_at(&tokens, &page_info, &settings, 1);
+        let elements = try_consume_wikidot_adjacent_unmatched_closes_as_link(&mut parser)
+            .expect("spaced close fallback should not fail")
+            .expect("spaced unmatched close should reenter link lexing");
+
+        assert_eq!(
+            elements,
+            Elements::Multiple(vec![
+                text!("["),
+                Element::Link {
+                    ltype: LinkType::Direct,
+                    link: LinkLocation::Url(cow!("/")),
+                    label: LinkLabel::Text(cow!("head")),
+                    target: None,
+                },
+                text!("]"),
+            ]),
+        );
+        assert_eq!(parser.current().token, Token::InputEnd);
+
+        for source in ["[[/head]]", "[[/ ]]", "[[/ head\n]]"] {
+            let (tokens, page_info, mut settings) = parser_for(source);
+            settings.layout = Layout::Wikidot;
+            let mut parser = parser_at(&tokens, &page_info, &settings, 1);
+            assert!(
+                try_consume_wikidot_adjacent_unmatched_closes_as_link(&mut parser)
+                    .expect("negative spaced-close control should not fail")
+                    .is_none(),
+                "{source}",
+            );
+        }
+
+        let (tokens, page_info, settings) = parser_for("[[/ head]]");
         let mut parser = parser_at(&tokens, &page_info, &settings, 1);
         assert!(
             try_consume_wikidot_adjacent_unmatched_closes_as_link(&mut parser)

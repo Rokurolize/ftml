@@ -21,7 +21,7 @@
 use super::prelude::*;
 use crate::delayed::DelayedElement;
 use crate::parsing::strip_newlines;
-use crate::tree::PartialElement;
+use crate::tree::{PartialElement, WIKIDOT_GENERATED_EMPTY_CLASS_MARKER};
 
 pub const BLOCK_SPAN: BlockRule = BlockRule {
     name: "block-span",
@@ -78,6 +78,7 @@ fn parse_fn<'r, 't>(
                 }
                 "class" => {
                     attributes.insert("class", cow!(""));
+                    attributes.insert(WIKIDOT_GENERATED_EMPTY_CLASS_MARKER, cow!(""));
                 }
                 _ => unreachable!(),
             }

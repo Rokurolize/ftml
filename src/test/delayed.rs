@@ -554,6 +554,10 @@ fn page_and_tag_slots_have_distinct_span_attribute_recovery() {
         "<p>BEGIN|<span>X</span>|END</p>",
     );
     assert_eq!(
+        render("BEGIN|[[span class=\"%%title_linked%%\"]]X[[/span]]|END"),
+        "<p>BEGIN|<span class>X</span>|END</p>",
+    );
+    assert_eq!(
         render_tag("BEGIN|[[span title=\"%%tags_linked%%\"]]X[[/span]]|END"),
         concat!(
             "<p>BEGIN|[[span title=&quot;",

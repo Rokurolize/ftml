@@ -19,7 +19,9 @@
  */
 
 use super::prelude::*;
-use crate::tree::{Container, ContainerType, HtmlTag};
+use crate::tree::{
+    Container, ContainerType, HtmlTag, WIKIDOT_GENERATED_EMPTY_CLASS_MARKER,
+};
 
 pub fn render_container(ctx: &mut HtmlContext, container: &Container) {
     debug!("Rendering container '{}'", container.ctype().name());
@@ -48,20 +50,38 @@ pub fn render_container_internal(ctx: &mut HtmlContext, container: &Container) {
     // Build the tag
     let mut tag = ctx.html().tag(tag_spec.tag());
 
+    let mut generated_class_attributes = None;
+    let preserve_generated_empty_class = layout.legacy()
+        && container.ctype() == ContainerType::Span
+        && container
+            .attributes()
+            .get()
+            .contains_key(WIKIDOT_GENERATED_EMPTY_CLASS_MARKER);
+    let attributes = if preserve_generated_empty_class {
+        let mut attributes = container.attributes().clone();
+        attributes.remove(WIKIDOT_GENERATED_EMPTY_CLASS_MARKER);
+        generated_class_attributes.insert(attributes)
+    } else {
+        container.attributes()
+    };
+
     // Merge the class attribute with the container's class, if it conflicts
     match tag_spec {
-        HtmlTag::Tag(_) => tag.attr(attr!(;; container.attributes())),
+        HtmlTag::Tag(_) => tag.attr(attr!(
+            "class" => ""; if preserve_generated_empty_class;;
+            attributes,
+        )),
         HtmlTag::TagAndClass { class, .. } => tag.attr(attr!(
             "class" => class;;
-            container.attributes(),
+            attributes,
         )),
         HtmlTag::TagAndStyle { style, .. } => tag.attr(attr!(
             "style" => style;;
-            container.attributes(),
+            attributes,
         )),
         HtmlTag::TagAndId { id, .. } => {
             let id = random_id.as_deref().unwrap_or(&id);
-            tag.attr(attr!("id" => id;; container.attributes()))
+            tag.attr(attr!("id" => id;; attributes))
         }
     };
 

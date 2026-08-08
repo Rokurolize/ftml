@@ -80,6 +80,9 @@ pub use self::variables::*;
 use self::clone::{elements_lists_to_owned, elements_to_owned, string_to_owned};
 use crate::data::PageRef;
 use crate::parsing::{ParseError, ParseOutcome};
+
+pub(crate) const WIKIDOT_GENERATED_EMPTY_CLASS_MARKER: &str =
+    "data-ftml-generated-empty-class";
 use std::borrow::Cow;
 use std::collections::HashSet;
 use std::ops::Not;

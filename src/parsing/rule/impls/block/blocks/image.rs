@@ -188,8 +188,24 @@ fn parse_direct_image_source<'t>(source: Cow<'t, str>) -> Option<ImageSource<'t>
 }
 
 fn parse_wikidot_image_link_target<'t>(target: Cow<'t, str>) -> Option<LinkLocation<'t>> {
-    if target.starts_with("https://") {
-        return None;
+    if target.starts_with("http://") || target.starts_with("https://") {
+        let authority = target
+            .split_once("://")
+            .expect("qualified HTTP URL has a separator")
+            .1
+            .split(['/', '?', '#'])
+            .next()
+            .unwrap_or_default();
+        let host = authority.rsplit('@').next().unwrap_or_default();
+        let host = host
+            .strip_prefix('[')
+            .and_then(|host| host.split_once(']').map(|(host, _)| host))
+            .unwrap_or_else(|| host.split(':').next().unwrap_or_default());
+        let final_label = host.rsplit('.').next().unwrap_or_default();
+        if host.is_empty() || final_label.bytes().any(|byte| byte.is_ascii_uppercase()) {
+            return None;
+        }
+        return Some(LinkLocation::Url(target));
     }
 
     const HEX: &[u8; 16] = b"0123456789ABCDEF";
@@ -531,6 +547,30 @@ mod tests {
             ),
         );
         assert!(!html.contains("<a href=\"https://Example.COM/Path?Q=X#Frag\"><img"));
+    }
+
+    #[test]
+    fn wikidot_qualified_https_image_links_follow_the_live_tld_case_boundary() {
+        // Anonymous scp-wiki PagePreviewModule evidence captured 2026-08-09.
+        for (target, active) in [
+            ("http://example.com/Path?Q=X#Frag", true),
+            ("https://example.com/Path?Q=X#Frag", true),
+            ("https://Example.com/path", true),
+            ("http://example.COM/path", false),
+            ("https://example.COM/path", false),
+            ("https://EXAMPLE.COM/path", false),
+        ] {
+            let source =
+                format!(r#"[[image https://example.com/x.png link="{target}"]]"#);
+            let (html, errors) = render_image(&source, Layout::Wikidot);
+
+            assert_eq!(errors.is_empty(), active, "{target}: {errors:#?}");
+            assert_eq!(
+                html.contains(&format!(r#"<a href="{target}"><img "#)),
+                active
+            );
+            assert_eq!(html.contains("[[image "), !active, "{target}: {html}");
+        }
     }
 
     #[test]

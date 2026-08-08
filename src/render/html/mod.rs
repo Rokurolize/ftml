@@ -32,7 +32,10 @@ mod render;
 mod test_utils;
 
 pub use self::meta::{HtmlMeta, HtmlMetaType};
-pub use self::output::{HtmlOutput, HtmlResourceRequirement, WikidotTabViewRequirement};
+pub use self::output::{
+    EmbedVideoRequirement, GalleryRequirement, HtmlOutput, HtmlResourceRequirement,
+    StandaloneButtonRequirement, WikidotTabViewRequirement,
+};
 
 use self::context::HtmlContext;
 use self::element::{render_element, render_elements};
@@ -235,7 +238,7 @@ mod tests {
     fn page_language_localizes_default_footnote_heading() {
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tree = SyntaxTree {
-            elements: vec![Element::Footnote],
+            elements: vec![Element::Footnote(1)],
             footnotes: vec![vec![Element::Text(cow!("note body"))]],
             needs_footnote_block: true,
             ..SyntaxTree::default()
@@ -257,7 +260,7 @@ mod tests {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         let tree = SyntaxTree {
-            elements: vec![Element::Footnote],
+            elements: vec![Element::Footnote(1)],
             footnotes: vec![vec![Element::Text(cow!("note body"))]],
             needs_footnote_block: true,
             ..SyntaxTree::default()
@@ -278,7 +281,7 @@ mod tests {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         let tree = SyntaxTree {
-            elements: vec![Element::Footnote],
+            elements: vec![Element::Footnote(1)],
             footnotes: vec![vec![Element::Text(cow!("note body"))]],
             needs_footnote_block: true,
             ..SyntaxTree::default()

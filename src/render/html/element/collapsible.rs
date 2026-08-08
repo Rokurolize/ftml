@@ -79,10 +79,10 @@ pub fn render_collapsible(ctx: &mut HtmlContext, collapsible: Collapsible) {
     match ctx.layout() {
         Layout::Wikidot => {
             let show_text = show_text
-                .filter(|text| !text.is_empty())
+                .filter(|text| !text.is_empty() && *text != "0")
                 .unwrap_or("+ show block");
             let hide_text = hide_text
-                .filter(|text| !text.is_empty())
+                .filter(|text| !text.is_empty() && *text != "0")
                 .unwrap_or("– hide block");
             render_collapsible_wikidot(
                 ctx,

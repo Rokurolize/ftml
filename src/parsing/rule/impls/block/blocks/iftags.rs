@@ -20,6 +20,7 @@
 
 use super::prelude::*;
 use crate::data::PageInfo;
+use crate::delayed::DelayedElement;
 use crate::parsing::ElementCondition;
 
 pub const BLOCK_IFTAGS: BlockRule = BlockRule {
@@ -82,11 +83,14 @@ fn parse_fn<'r, 't>(
     };
     if !include_body {
         trace!("Conditions failed, skipping hidden body");
+        let hidden_start = parser.current().span.start;
         parser.discard_body_elements_with_literal_quote_context(
             &BLOCK_IFTAGS,
             body_start,
         )?;
-        return ok!(true; Elements::None, Vec::new());
+        let hidden_end = parser.current().span.start;
+        let generated = parser.generated_in_range(hidden_start..hidden_end);
+        return ok!(true; Element::Delayed(DelayedElement::suppressed(&generated)), Vec::new());
     }
 
     // Get body content, never with paragraphs
@@ -104,7 +108,11 @@ fn parse_fn<'r, 't>(
     );
 
     trace!("Conditions passed, including elements");
-    ok!(paragraph_safe; Elements::Multiple(elements), errors)
+    let mut bounded = Vec::with_capacity(elements.len() + 2);
+    bounded.push(Element::Delayed(DelayedElement::typography_boundary()));
+    bounded.extend(elements);
+    bounded.push(Element::Delayed(DelayedElement::typography_boundary()));
+    ok!(paragraph_safe; Elements::Multiple(bounded), errors)
 }
 
 pub fn check_iftags(info: &PageInfo, conditions: &[ElementCondition]) -> bool {

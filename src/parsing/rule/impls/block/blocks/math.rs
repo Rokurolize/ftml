@@ -46,9 +46,7 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    let name = parser.get_head_value(&BLOCK_MATH, in_head, |_, value| {
-        Ok(value.map(|s| std::borrow::Cow::Borrowed(s.trim())))
-    })?;
+    let name = get_math_head(parser, in_head)?;
     if parser.settings().layout.legacy()
         && name.as_deref().is_some_and(|name| !wikidot_math_name(name))
     {
@@ -59,6 +57,11 @@ fn parse_fn<'r, 't>(
         Cow::Borrowed(source) => Cow::Borrowed(source.trim()),
         Cow::Owned(source) => Cow::Owned(source.trim().to_owned()),
     };
+    if parser.settings().layout.legacy()
+        && wikidot_math_crosses_bold_owner(parser, latex_source.as_ref())
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     if latex_source.is_empty() && !parser.settings().layout.legacy() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
@@ -66,6 +69,70 @@ fn parse_fn<'r, 't>(
     let element = Element::Math { name, latex_source };
 
     success_elements(element)
+}
+
+fn get_math_head<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    in_head: bool,
+) -> Result<Option<Cow<'t, str>>, ParseError>
+where
+    'r: 't,
+{
+    if parser.settings().layout.legacy() && in_head {
+        let mut attribute_candidate = parser.clone();
+        if let Ok(arguments) = attribute_candidate.get_head_map(&BLOCK_MATH, in_head)
+            && arguments.has_source()
+            && !arguments.has_bare_source()
+        {
+            parser.update(&attribute_candidate);
+            return Ok(None);
+        }
+    }
+
+    parser.get_head_value(&BLOCK_MATH, in_head, |_, value| {
+        Ok(value.map(|source| Cow::Borrowed(source.trim())))
+    })
+}
+
+fn wikidot_math_crosses_bold_owner(parser: &Parser<'_, '_>, body: &str) -> bool {
+    if wikidot_unclosed_block_depth(body, "bold") == 0 {
+        return false;
+    }
+
+    let suffix = &parser.full_text().inner()[parser.current().span.start..];
+    let suffix = suffix.trim_start_matches([' ', '\t', '\r', '\n', '\0']);
+    let Some(close) = suffix.strip_prefix("[[/") else {
+        return false;
+    };
+    let Some(end) = close.find("]]") else {
+        return false;
+    };
+    close[..end].trim().eq_ignore_ascii_case("bold")
+}
+
+fn wikidot_unclosed_block_depth(source: &str, block_name: &str) -> usize {
+    let mut depth = 0_usize;
+    let mut remaining = source;
+
+    while let Some(start) = remaining.find("[[") {
+        remaining = &remaining[start + 2..];
+        let Some(end) = remaining.find("]]") else {
+            break;
+        };
+        let marker = remaining[..end].trim();
+        let marker_name = marker.split_ascii_whitespace().next().unwrap_or_default();
+        if marker_name.eq_ignore_ascii_case(block_name) {
+            depth += 1;
+        } else if marker_name
+            .strip_prefix('/')
+            .is_some_and(|name| name.eq_ignore_ascii_case(block_name))
+        {
+            depth = depth.saturating_sub(1);
+        }
+        remaining = &remaining[end + 2..];
+    }
+
+    depth
 }
 
 pub(crate) fn wikidot_math_name(name: &str) -> bool {

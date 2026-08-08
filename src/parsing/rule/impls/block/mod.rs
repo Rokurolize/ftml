@@ -39,6 +39,7 @@ mod rule;
 pub mod blocks;
 
 pub use self::arguments::Arguments;
+pub(crate) use self::parser::BlockBodyStart;
 pub use self::rule::{RULE_BLOCK, RULE_BLOCK_SKIP_NEWLINE, RULE_BLOCK_STAR};
 
 /// Define a rule for how to parse a block.

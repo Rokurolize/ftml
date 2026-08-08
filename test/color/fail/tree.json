@@ -35,6 +35,7 @@
                         "element": "color",
                         "data": {
                             "color": "",
+                            "background": false,
                             "elements": [
                                 {
                                     "element": "text",

@@ -20,7 +20,9 @@
 
 use super::BlockRule;
 use super::arguments::Arguments;
-use crate::parsing::collect::{collect_text, collect_text_keep};
+use crate::parsing::collect::{
+    CommentElidedText, collect_comment_elided_keep, collect_text, collect_text_keep,
+};
 use crate::parsing::condition::ParseCondition;
 use crate::parsing::consume::consume;
 use crate::parsing::parser::{QuoteBodyLineStatus, QuoteScanOutcome};
@@ -67,6 +69,21 @@ fn block_rule_accepts_name(block_rule: &BlockRule, name: &str) -> bool {
         .any(|accepted| name.eq_ignore_ascii_case(accepted))
 }
 
+fn wikidot_alias_pair_cache_name(block_rule: &BlockRule) -> &'static str {
+    match block_rule.name {
+        "block-div" => "block-div-alias-pair",
+        "block-span" => "block-span-alias-pair",
+        _ => panic!("alias pairing is only defined for div and span"),
+    }
+}
+
+fn wikidot_alias_close_is_exact(source: &str, name: &str) -> bool {
+    source.len() == name.len() + 5
+        && source.starts_with("[[/")
+        && source.ends_with("]]")
+        && source[3..source.len() - 2].eq_ignore_ascii_case(name)
+}
+
 fn wikidot_requires_next_physical_line(block_rule: &BlockRule) -> bool {
     matches!(
         block_rule.name,
@@ -83,9 +100,9 @@ fn wikidot_trim_argument_fragment(value: &str) -> &str {
     value.trim_matches([' ', '\t', '\n', '\r', '\0', '\u{000B}'])
 }
 
-fn wikidot_stripslashes(value: &str) -> Cow<'_, str> {
+fn wikidot_stripslashes(value: Cow<'_, str>) -> Cow<'_, str> {
     if !value.contains('\\') {
-        return Cow::Borrowed(value);
+        return value;
     }
 
     let mut output = String::with_capacity(value.len());
@@ -106,29 +123,117 @@ fn wikidot_stripslashes(value: &str) -> Cow<'_, str> {
     Cow::Owned(output)
 }
 
-fn parse_wikidot_attributes(value: &str) -> Arguments<'_> {
+pub(crate) fn parse_wikidot_attributes(value: &str) -> Arguments<'_> {
+    let field = CommentElidedText::new(value, 0..value.len(), Vec::new());
+    parse_wikidot_attribute_field(&field)
+}
+
+fn parse_wikidot_attribute_field<'t>(field: &CommentElidedText<'t>) -> Arguments<'t> {
     // Wikidot's getAttrs grammar splits only on the exact ASCII delimiter
     // `="`, then treats the last quote before the next delimiter as the
-    // current value terminator. This intentionally preserves its unusual
-    // malformed-fragment recovery and differs from FTML's strict grammar.
-    let value = wikidot_trim_argument_fragment(value);
-    let mut segments = value.split("=\"");
-    let mut key = wikidot_trim_argument_fragment(segments.next().unwrap_or_default());
-    let mut arguments = Arguments::new_case_sensitive();
-    if !value.is_empty() {
-        arguments.mark_source_present();
+    // current value terminator. Valid comments are absent for value parsing,
+    // but a comment cannot manufacture a new key or `="` delimiter.
+    let source = field.source();
+    let span = field.span();
+    let mut comment_mask = vec![false; source.len()];
+    for comment in field.comment_ranges() {
+        let start = comment.start.saturating_sub(span.start).min(source.len());
+        let end = comment.end.saturating_sub(span.start).min(source.len());
+        comment_mask[start..end].fill(true);
     }
 
-    for segment in segments {
-        let (raw_value, next_key) = match segment.rfind('"') {
-            Some(position) => (&segment[..position], &segment[position + 1..]),
-            None => ("", segment.get(1..).unwrap_or_default()),
+    let bytes = source.as_bytes();
+    let mut delimiters = Vec::new();
+    for index in 0..bytes.len().saturating_sub(1) {
+        if bytes[index] == b'='
+            && bytes[index + 1] == b'"'
+            && !comment_mask[index]
+            && !comment_mask[index + 1]
+        {
+            delimiters.push(index);
+        }
+    }
+
+    let mut arguments = Arguments::new_case_sensitive();
+    let trimmed_source = wikidot_trim_argument_fragment(source);
+    if !trimmed_source.is_empty() {
+        arguments.mark_source_present();
+    }
+    if trimmed_source.starts_with('=') {
+        arguments.mark_empty_key_present();
+    }
+
+    let first_delimiter = delimiters.first().copied().unwrap_or(source.len());
+    let mut key = wikidot_attribute_key(field, &comment_mask, 0..first_delimiter);
+    for (delimiter_index, delimiter) in delimiters.iter().copied().enumerate() {
+        let segment_start = delimiter + 2;
+        let segment_end = delimiters
+            .get(delimiter_index + 1)
+            .copied()
+            .unwrap_or(source.len());
+        let quote = (segment_start..segment_end)
+            .rev()
+            .find(|index| bytes[*index] == b'"' && !comment_mask[*index]);
+        let (value_range, next_key_range) = match quote {
+            Some(quote) => (segment_start..quote, quote + 1..segment_end),
+            None => (
+                segment_start..segment_start,
+                (segment_start + 1).min(segment_end)..segment_end,
+            ),
         };
-        arguments.insert(key, wikidot_stripslashes(raw_value));
-        key = wikidot_trim_argument_fragment(next_key);
+        let value_range = span.start + value_range.start..span.start + value_range.end;
+        let (value, seams) = field.elide_range_with_seams(value_range);
+        if key.is_empty() {
+            arguments.mark_empty_key_present();
+        } else if key != "style" || !dangerous_scheme_crosses_seam(&value, &seams) {
+            arguments.insert(key, wikidot_stripslashes(value));
+        }
+        key = wikidot_attribute_key(field, &comment_mask, next_key_range);
+    }
+    if key.starts_with('=') {
+        arguments.mark_empty_key_present();
     }
 
     arguments
+}
+
+fn dangerous_scheme_crosses_seam(value: &str, seams: &[usize]) -> bool {
+    for (colon, _) in value.match_indices(':') {
+        let scheme_start = value[..colon]
+            .char_indices()
+            .rev()
+            .find(|(_, character)| {
+                !(character.is_ascii_alphanumeric() || matches!(character, '_' | '-'))
+            })
+            .map_or(0, |(position, character)| position + character.len_utf8());
+        let scheme = &value[scheme_start..colon];
+        if (scheme.eq_ignore_ascii_case("javascript")
+            || scheme.eq_ignore_ascii_case("data"))
+            && seams
+                .iter()
+                .any(|seam| *seam > scheme_start && *seam <= colon)
+        {
+            return true;
+        }
+    }
+    false
+}
+
+fn wikidot_attribute_key<'t>(
+    field: &CommentElidedText<'t>,
+    comment_mask: &[bool],
+    range: std::ops::Range<usize>,
+) -> &'t str {
+    // A leading comment is removed before the next key. A comment within a
+    // key breaks that key instead of joining fragments into new authority.
+    let fragment_start = comment_mask[range.clone()]
+        .iter()
+        .rposition(|masked| *masked)
+        .map_or(range.start, |position| range.start + position + 1);
+    let span = field.span();
+    wikidot_trim_argument_fragment(
+        &field.source()[fragment_start..range.end.min(span.len())],
+    )
 }
 
 impl<'r, 't> Parser<'r, 't>
@@ -171,6 +276,77 @@ where
         })
     }
 
+    pub(crate) fn get_wikidot_block_name_with_residual_opener(
+        &mut self,
+    ) -> Result<(&'t str, bool), ParseError> {
+        debug_assert!(self.settings().layout.legacy());
+        self.get_optional_token(Token::LeftBlock)?;
+        self.get_optional_space()?;
+
+        let end_conditions = [
+            ParseCondition::current(Token::Whitespace),
+            ParseCondition::current(Token::LineBreak),
+            ParseCondition::current(Token::ParagraphBreak),
+            ParseCondition::current(Token::RightBlock),
+            ParseCondition::current(Token::RightLink),
+        ];
+        let rule = self.rule();
+        collect_text_keep(
+            self,
+            rule,
+            &end_conditions,
+            &[],
+            Some(ParseErrorKind::BlockMissingName),
+        )
+        .and_then(|(name, last)| {
+            if last.token != Token::RightLink || last.slice != "]]]" {
+                return Err(self.make_err(ParseErrorKind::BlockExpectedEnd));
+            }
+            Ok((name.trim(), false))
+        })
+    }
+
+    pub(crate) fn get_wikidot_end_block_with_residual(
+        &mut self,
+    ) -> Result<(&'t str, bool), ParseError> {
+        debug_assert!(self.settings().layout.legacy());
+        self.get_token(Token::LeftBlockEnd, ParseErrorKind::BlockExpectedEnd)?;
+        self.get_optional_space()?;
+
+        let end_conditions = [
+            ParseCondition::current(Token::Whitespace),
+            ParseCondition::current(Token::LineBreak),
+            ParseCondition::current(Token::ParagraphBreak),
+            ParseCondition::current(Token::RightBlock),
+            ParseCondition::current(Token::RightLink),
+        ];
+        let rule = self.rule();
+        let (name, last) = collect_text_keep(
+            self,
+            rule,
+            &end_conditions,
+            &[],
+            Some(ParseErrorKind::BlockMissingName),
+        )?;
+        let residual_close_bracket = match last.token {
+            Token::RightLink if last.slice == "]]]" => true,
+            Token::RightBlock => false,
+            Token::Whitespace => match self.current().token {
+                Token::RightLink if self.current().slice == "]]]" => {
+                    self.step()?;
+                    true
+                }
+                Token::RightBlock => {
+                    self.step()?;
+                    false
+                }
+                _ => return Err(self.make_err(ParseErrorKind::BlockExpectedEnd)),
+            },
+            _ => return Err(self.make_err(ParseErrorKind::BlockExpectedEnd)),
+        };
+        Ok((name.trim(), residual_close_bracket))
+    }
+
     /// Matches an ending block, returning the name present.
     pub fn get_end_block(&mut self) -> Result<&'t str, ParseError> {
         self.get_token(Token::LeftBlockEnd, ParseErrorKind::BlockExpectedEnd)?;
@@ -183,6 +359,51 @@ where
         }
 
         Ok(name)
+    }
+
+    pub(crate) fn wikidot_link_owned_inline_end_block_ahead(&self) -> bool {
+        let source = &self.full_text().inner()[self.current().span.start..];
+        ["[[/span]]]", "[[/span_]]]", "[[/size]]]", "[[/size_]]]"]
+            .iter()
+            .any(|prefix| {
+                source
+                    .get(..prefix.len())
+                    .is_some_and(|source| source.eq_ignore_ascii_case(prefix))
+            })
+    }
+
+    /// Matches a legacy inline `span` or `size` close whose final `]]` is
+    /// lexically joined to a triple-link closer as one `]]]` token.
+    pub(crate) fn get_wikidot_link_owned_inline_end_block(
+        &mut self,
+    ) -> Result<&'t str, ParseError> {
+        self.get_token(Token::LeftBlockEnd, ParseErrorKind::BlockExpectedEnd)?;
+        self.get_optional_space()?;
+
+        let end_conditions = [
+            ParseCondition::current(Token::Whitespace),
+            ParseCondition::current(Token::LineBreak),
+            ParseCondition::current(Token::ParagraphBreak),
+            ParseCondition::current(Token::RightBlock),
+            ParseCondition::current(Token::RightLink),
+        ];
+        let rule = self.rule();
+        let (name, last) = collect_text_keep(
+            self,
+            rule,
+            &end_conditions,
+            &[],
+            Some(ParseErrorKind::BlockMissingName),
+        )?;
+        let name = name.trim();
+
+        if last.token == Token::RightLink
+            && (name.eq_ignore_ascii_case("span") || name.eq_ignore_ascii_case("size"))
+        {
+            Ok(name)
+        } else {
+            Err(self.make_err(ParseErrorKind::BlockExpectedEnd))
+        }
     }
 
     /// Consumes an entire block end, validating that the newline and names match.
@@ -250,7 +471,14 @@ where
             // This will ignore any errors produced,
             // since it's just more text
             let end_start = parser.current().span.start;
-            let name = parser.get_end_block()?;
+            let link_owned_inline_close = parser.settings().layout.legacy()
+                && matches!(block_rule.name, "block-span" | "block-size")
+                && parser.wikidot_link_owned_inline_end_block_ahead();
+            let name = if link_owned_inline_close {
+                parser.get_wikidot_link_owned_inline_end_block()?
+            } else {
+                parser.get_end_block()?
+            };
 
             if parser.settings().layout.legacy()
                 && !parser.discarding_hidden_body()
@@ -765,9 +993,25 @@ where
         allow_inline_quote_close: bool,
     ) -> ParseResult<'r, 't, Vec<Element<'t>>> {
         let mut first = true;
+        let wikidot_tab = self.settings().layout.legacy()
+            && !self.discarding_hidden_body()
+            && block_rule.name == "block-tab";
+        let mut nested_wikidot_tabs = 0_usize;
+        let mut last_nested_wikidot_tab = None;
         let rule = self.rule();
 
         let is_end = move |parser: &mut Parser<'r, 't>| {
+            // A rejected complete nested tab opener is literal, so its
+            // matching closer is literal too and cannot close the active
+            // outer tab.
+            if wikidot_tab
+                && let Some(opener) = parser.wikidot_nested_tab_opener()
+                && last_nested_wikidot_tab != Some(opener)
+            {
+                last_nested_wikidot_tab = Some(opener);
+                nested_wikidot_tabs += 1;
+            }
+            let before_end = parser.clone();
             let result = parser.verify_end_block(
                 first,
                 block_rule,
@@ -775,6 +1019,22 @@ where
                 allow_inline_quote_close,
             );
             first = false;
+
+            if result.is_some() && nested_wikidot_tabs > 0 {
+                parser.update(&before_end);
+                // The close probe can see through the preceding physical line
+                // break. Keep the reservation until the closer itself is the
+                // current token so the same literal closer is not counted
+                // twice.
+                if matches!(
+                    before_end.current().token,
+                    Token::LineBreak | Token::ParagraphBreak
+                ) {
+                    return Ok(false);
+                }
+                nested_wikidot_tabs -= 1;
+                return Ok(false);
+            }
 
             if result.is_none()
                 && parser.discarding_hidden_body()
@@ -786,6 +1046,27 @@ where
             Ok(result.is_some())
         };
         gather_paragraphs(self, rule, Some(is_end))
+    }
+
+    fn wikidot_nested_tab_opener(&self) -> Option<usize> {
+        let start = match self.current().token {
+            Token::LeftBlock => self.current().span.start,
+            Token::LineBreak | Token::ParagraphBreak => self.current().span.end,
+            _ => return None,
+        };
+        let full_text = self.full_text().inner();
+        let suffix = &full_text[start..];
+        let leading_space = suffix.len() - suffix.trim_start_matches([' ', '\t']).len();
+        let opener = start + leading_space;
+        let source = &full_text[opener..];
+        let physical_line = source.split_once('\n').map_or(source, |(line, _)| line);
+        let end = physical_line.find("]]")?;
+        let head = source[..end].strip_prefix("[[")?;
+        let mut parts = head.split_whitespace();
+        parts
+            .next()
+            .is_some_and(|name| name.eq_ignore_ascii_case("tab"))
+            .then_some(opener)
     }
 
     fn get_body_elements_no_paragraphs(
@@ -906,6 +1187,153 @@ where
 
             parser.step().expect("missing input end");
             first = false;
+        }
+    }
+
+    /// Determine whether a scored Wikidot `div_` or `span_` opener owns a
+    /// compatible ordinary closer.
+    ///
+    /// Wikidot does not normalize underscore closers. A scored opener accepts
+    /// the ordinary closer, while its same-spelling underscore closer rejects
+    /// that opener. Nested ordinary and scored owners still pair independently,
+    /// so this scan records every scored opener it resolves instead of retrying
+    /// the recursive block parser for each suffix.
+    pub(crate) fn wikidot_alias_has_compatible_close(
+        &self,
+        block_rule: &BlockRule,
+        owner_start: usize,
+    ) -> bool {
+        debug_assert!(self.settings().layout.legacy());
+        debug_assert!(matches!(block_rule.name, "block-div" | "block-span"));
+
+        let cache_name = wikidot_alias_pair_cache_name(block_rule);
+        let root_key = (cache_name, owner_start, false);
+        if let Some(outcome) = self.block_end_scan_outcome(root_key) {
+            return outcome;
+        }
+
+        let mut scan = self.clone();
+        let mut owners = vec![(owner_start, true)];
+
+        loop {
+            if scan.current().token == Token::LeftComment {
+                let mut comment = scan.clone();
+                if crate::parsing::collect::consume_valid_comment(&mut comment).is_ok() {
+                    scan.update(&comment);
+                    continue;
+                }
+            }
+
+            if scan.current().token == Token::LeftBlockEnd {
+                let close_start = scan.current().span.start;
+                let mut close = scan.clone();
+                if let Ok(name) = close.get_end_block() {
+                    let close_end = close.current().span.start;
+                    if !wikidot_alias_close_is_exact(
+                        &scan.full_text().inner()[close_start..close_end],
+                        name,
+                    ) {
+                        scan.update(&close);
+                        continue;
+                    }
+                    let scored_close = name.ends_with('_');
+                    let base_name = name.strip_suffix('_').unwrap_or(name);
+                    if block_rule_accepts_name(block_rule, base_name) {
+                        if scored_close {
+                            if owners.last().is_some_and(|(_, scored)| *scored) {
+                                let (resolved_start, _) = owners
+                                    .pop()
+                                    .expect("scored closer requires an open owner");
+                                self.cache_block_end_scan_outcomes(
+                                    cache_name,
+                                    &[(resolved_start, false)],
+                                    false,
+                                );
+                                if owners.is_empty() {
+                                    return false;
+                                }
+                            }
+                        } else if let Some((resolved_start, scored)) = owners.pop() {
+                            if block_rule.name == "block-span" {
+                                self.cache_wikidot_span_alias_close_score(
+                                    close_start,
+                                    scored,
+                                );
+                            }
+                            if scored {
+                                self.cache_block_end_scan_outcomes(
+                                    cache_name,
+                                    &[(resolved_start, false)],
+                                    true,
+                                );
+                            }
+                            if owners.is_empty() {
+                                return true;
+                            }
+                        }
+                        scan.update(&close);
+                        continue;
+                    }
+                }
+            }
+
+            if scan.current().token == Token::LeftBlock {
+                let opener_start = scan.current().span.start;
+                let mut opener = scan.clone();
+                let scored_span_residual_opener = block_rule.name == "block-span"
+                    && scan
+                        .full_text()
+                        .inner()
+                        .get(opener_start..)
+                        .and_then(|source| source.get(.."[[span_]]]".len()))
+                        .is_some_and(|source| source.eq_ignore_ascii_case("[[span_]]]"));
+                let parsed_name = if scored_span_residual_opener {
+                    opener.get_wikidot_block_name_with_residual_opener()
+                } else {
+                    opener.get_block_name(false)
+                };
+                if let Ok((name, in_head)) = parsed_name {
+                    let scored = name.ends_with('_');
+                    let base_name = name.strip_suffix('_').unwrap_or(name);
+                    let scored_span_empty_spaced_head =
+                        block_rule.name == "block-span" && scored && in_head && {
+                            let mut head = opener.clone();
+                            head.get_optional_space().is_ok()
+                                && head.current().token == Token::RightBlock
+                        };
+                    if block_rule_accepts_name(block_rule, base_name)
+                        && !scored_span_empty_spaced_head
+                        && (scored_span_residual_opener
+                            || opener.get_optional_space().is_ok()
+                                && opener
+                                    .get_head_map_with_body_start_wikidot(
+                                        block_rule, in_head,
+                                    )
+                                    .is_ok_and(|(arguments, _)| {
+                                        !arguments.has_empty_key()
+                                    }))
+                    {
+                        owners.push((opener_start, scored));
+                        scan.update(&opener);
+                        continue;
+                    }
+                }
+            }
+
+            if scan.current().token == Token::InputEnd {
+                for (unclosed_start, scored) in owners {
+                    if scored {
+                        self.cache_block_end_scan_outcomes(
+                            cache_name,
+                            &[(unclosed_start, false)],
+                            false,
+                        );
+                    }
+                }
+                return false;
+            }
+
+            scan.step().expect("missing input end");
         }
     }
 
@@ -1222,17 +1650,45 @@ where
             return self.get_head_map_with_body_start(block_rule, in_head);
         }
 
-        let arguments = if in_head {
-            let start = self.current();
-            while !matches!(self.current().token, Token::RightBlock | Token::InputEnd) {
-                self.step()?;
+        let (arguments, right_block_consumed) = if in_head {
+            let mut head_tokens = std::iter::once(self.current())
+                .chain(self.remaining())
+                .take_while(|token| {
+                    !matches!(token.token, Token::RightBlock | Token::InputEnd)
+                });
+            let head_has_comment = head_tokens
+                .clone()
+                .any(|token| token.token == Token::LeftComment);
+            let head_has_non_authored_input = head_tokens.any(|token| {
+                matches!(
+                    token.token,
+                    Token::GeneratedPageLink
+                        | Token::GeneratedTagLinks
+                        | Token::RuntimeText
+                )
+            });
+            if head_has_comment && !head_has_non_authored_input {
+                let closes = [ParseCondition::current(Token::RightBlock)];
+                let (head, _) = collect_comment_elided_keep(self, &closes, &[], None)?;
+                (parse_wikidot_attribute_field(&head), true)
+            } else {
+                let start = self.current();
+                while !matches!(self.current().token, Token::RightBlock | Token::InputEnd)
+                {
+                    self.step()?;
+                }
+                let span = start.span.start..self.current().span.start;
+                let head =
+                    CommentElidedText::new(self.full_text().inner(), span, Vec::new());
+                (parse_wikidot_attribute_field(&head), false)
             }
-            let head_text = self.full_text().slice_partial(start, self.current());
-            parse_wikidot_attributes(head_text)
         } else {
-            Arguments::new_case_sensitive()
+            (Arguments::new_case_sensitive(), false)
         };
-        let body_start = self.get_head_block_with_body_start(block_rule, in_head)?;
+        let body_start = self.get_head_block_with_body_start(
+            block_rule,
+            in_head && !right_block_consumed,
+        )?;
         Ok((arguments, body_start))
     }
 
@@ -1265,6 +1721,36 @@ where
         Ok((subname, arguments, body_start))
     }
 
+    pub(crate) fn get_head_name_map_with_body_start_wikidot(
+        &mut self,
+        block_rule: &BlockRule,
+        in_head: bool,
+    ) -> Result<(&'t str, Arguments<'t>, BlockBodyStart), ParseError> {
+        if !self.settings().layout.legacy() {
+            return self.get_head_name_map_with_body_start(block_rule, in_head);
+        }
+        if !in_head {
+            return Err(self.make_err(ParseErrorKind::BlockMissingName));
+        }
+        let head_has_comment = std::iter::once(self.current())
+            .chain(self.remaining())
+            .take_while(|token| {
+                !matches!(token.token, Token::RightBlock | Token::InputEnd)
+            })
+            .any(|token| token.token == Token::LeftComment);
+        if !head_has_comment {
+            return self.get_head_name_map_with_body_start(block_rule, in_head);
+        }
+
+        // The positional module name retains its canonical source owner. Only
+        // the already-owned argument field receives the comment-elided view.
+        let missing_name = ParseErrorKind::ModuleMissingName;
+        let (subname, in_head) = self.get_block_name_internal(missing_name)?;
+        let (arguments, body_start) =
+            self.get_head_map_with_body_start_wikidot(block_rule, in_head)?;
+        Ok((subname, arguments, body_start))
+    }
+
     /// Parses a positional block-head value followed by Wikidot `getAttrs`
     /// arguments in `Layout::Wikidot`.
     pub fn get_head_name_map_wikidot(
@@ -1284,6 +1770,38 @@ where
         let arguments = self.get_head_map_wikidot(block_rule, in_head)?;
 
         Ok((subname, arguments))
+    }
+
+    /// Parses one already-owned positional field with valid comments elided,
+    /// followed by Wikidot `getAttrs` arguments. This does not participate in
+    /// block-name recognition, so joined text cannot create a new block owner.
+    pub(crate) fn get_head_field_map_wikidot(
+        &mut self,
+        block_rule: &BlockRule,
+        in_head: bool,
+    ) -> Result<(CommentElidedText<'t>, Arguments<'t>), ParseError> {
+        debug_assert!(self.settings().layout.legacy());
+        if !in_head {
+            return Err(self.make_err(ParseErrorKind::BlockMissingName));
+        }
+
+        let closes = [
+            ParseCondition::current(Token::Whitespace),
+            ParseCondition::current(Token::RightBlock),
+        ];
+        let invalids = [
+            ParseCondition::current(Token::LineBreak),
+            ParseCondition::current(Token::ParagraphBreak),
+        ];
+        let (field, last) = collect_comment_elided_keep(
+            self,
+            &closes,
+            &invalids,
+            Some(ParseErrorKind::ModuleMissingName),
+        )?;
+        let arguments =
+            self.get_head_map_wikidot(block_rule, last.token != Token::RightBlock)?;
+        Ok((field, arguments))
     }
 
     pub fn get_head_value<F, T>(

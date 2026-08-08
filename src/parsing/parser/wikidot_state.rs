@@ -1,15 +1,44 @@
 use super::Parser;
+use crate::parsing::Token;
+
+const NOTE_BODY: u8 = 1 << 0;
+const COLLAPSIBLE: u8 = 1 << 1;
+const QUOTE_BOUNDARY_CLOSES_BODY: u8 = 1 << 2;
+const PENDING_COLLAPSIBLE_CLOSER: u8 = 1 << 3;
+const COLLAPSIBLE_CLOSED_AT_DEEPER_QUOTE: u8 = 1 << 4;
+const SIMPLE_TABLE_CELL: u8 = 1 << 5;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(super) struct WikidotState {
-    div_body_depth: usize,
-    in_collapsible: bool,
-    quote_boundary_closes_body: bool,
-    pending_collapsible_closer: bool,
-    collapsible_closed_at_deeper_quote: bool,
+    // Parser recursion is capped well below `u16::MAX`; compact counters keep
+    // this state out of every recursive parser frame's pointer-sized padding.
+    div_body_depth: u16,
+    scored_div_body_depth: u16,
+    scored_span_body_depth: u16,
+    bibliography_body_depth: u16,
+    literal_triple_link_depth: u16,
+    simple_table_crossed_closers: u16,
+    flags: u8,
 }
 
 impl Parser<'_, '_> {
+    #[inline]
+    pub(crate) fn in_wikidot_bibliography_body(&self) -> bool {
+        self.wikidot.bibliography_body_depth > 0
+    }
+
+    #[inline]
+    pub(crate) fn enter_wikidot_bibliography_body(&mut self) {
+        self.wikidot.bibliography_body_depth =
+            self.wikidot.bibliography_body_depth.saturating_add(1);
+    }
+
+    #[inline]
+    pub(crate) fn leave_wikidot_bibliography_body(&mut self) {
+        self.wikidot.bibliography_body_depth =
+            self.wikidot.bibliography_body_depth.saturating_sub(1);
+    }
+
     #[inline]
     pub(crate) fn in_wikidot_div_body(&self) -> bool {
         self.wikidot.div_body_depth > 0
@@ -17,43 +46,161 @@ impl Parser<'_, '_> {
 
     #[inline]
     pub(crate) fn enter_wikidot_div_body(&mut self) {
-        self.wikidot.div_body_depth += 1;
+        self.wikidot.div_body_depth = self.wikidot.div_body_depth.saturating_add(1);
     }
 
     #[inline]
     pub(crate) fn leave_wikidot_div_body(&mut self) {
-        self.wikidot.div_body_depth -= 1;
+        self.wikidot.div_body_depth = self.wikidot.div_body_depth.saturating_sub(1);
+    }
+
+    #[inline]
+    pub(crate) fn enter_wikidot_scored_div_body(&mut self) {
+        self.wikidot.scored_div_body_depth =
+            self.wikidot.scored_div_body_depth.saturating_add(1);
+    }
+
+    #[inline]
+    pub(crate) fn leave_wikidot_scored_div_body(&mut self) {
+        self.wikidot.scored_div_body_depth =
+            self.wikidot.scored_div_body_depth.saturating_sub(1);
+    }
+
+    #[inline]
+    pub(crate) fn enter_wikidot_span_body(&mut self, scored: bool) {
+        if scored {
+            self.wikidot.scored_span_body_depth =
+                self.wikidot.scored_span_body_depth.saturating_add(1);
+        }
+    }
+
+    #[inline]
+    pub(crate) fn leave_wikidot_span_body(&mut self, scored: bool) {
+        if scored {
+            self.wikidot.scored_span_body_depth =
+                self.wikidot.scored_span_body_depth.saturating_sub(1);
+        }
+    }
+
+    #[inline]
+    pub(crate) fn in_wikidot_literal_alias_body(&self) -> bool {
+        self.wikidot.scored_div_body_depth > 0 || self.wikidot.scored_span_body_depth > 0
+    }
+
+    #[inline]
+    pub(crate) fn in_wikidot_note_body(&self) -> bool {
+        self.wikidot.flags & NOTE_BODY != 0
+    }
+
+    #[inline]
+    pub(crate) fn enter_wikidot_note_body(&mut self) {
+        debug_assert!(!self.in_wikidot_note_body());
+        self.wikidot.flags |= NOTE_BODY;
+    }
+
+    #[inline]
+    pub(crate) fn leave_wikidot_note_body(&mut self) {
+        debug_assert!(self.in_wikidot_note_body());
+        self.wikidot.flags &= !NOTE_BODY;
+    }
+
+    #[inline]
+    pub(crate) fn in_wikidot_literal_triple_link(&self) -> bool {
+        self.wikidot.literal_triple_link_depth > 0
+    }
+
+    #[inline]
+    pub(crate) fn enter_wikidot_literal_triple_link(&mut self) {
+        self.wikidot.literal_triple_link_depth =
+            self.wikidot.literal_triple_link_depth.saturating_add(1);
+    }
+
+    #[inline]
+    pub(crate) fn leave_wikidot_literal_triple_link(&mut self) {
+        self.wikidot.literal_triple_link_depth =
+            self.wikidot.literal_triple_link_depth.saturating_sub(1);
+    }
+
+    #[inline]
+    pub(crate) fn clear_wikidot_literal_triple_links(&mut self) {
+        self.wikidot.literal_triple_link_depth = 0;
     }
 
     pub(crate) fn in_wikidot_collapsible(&self) -> bool {
-        self.wikidot.in_collapsible
+        self.wikidot.flags & COLLAPSIBLE != 0
     }
 
     pub(crate) fn quote_boundary_closes_body(&self) -> bool {
-        self.wikidot.quote_boundary_closes_body
+        self.wikidot.flags & QUOTE_BOUNDARY_CLOSES_BODY != 0
     }
 
     pub(crate) fn pending_wikidot_collapsible_closer(&self) -> bool {
-        self.wikidot.pending_collapsible_closer
+        self.wikidot.flags & PENDING_COLLAPSIBLE_CLOSER != 0
     }
 
     pub(crate) fn wikidot_collapsible_closed_at_deeper_quote(&self) -> bool {
-        self.wikidot.collapsible_closed_at_deeper_quote
+        self.wikidot.flags & COLLAPSIBLE_CLOSED_AT_DEEPER_QUOTE != 0
     }
 
     pub(crate) fn set_in_wikidot_collapsible(&mut self, value: bool) {
-        self.wikidot.in_collapsible = value;
+        set_flag(&mut self.wikidot.flags, COLLAPSIBLE, value);
     }
 
     pub(crate) fn set_quote_boundary_closes_body(&mut self, value: bool) {
-        self.wikidot.quote_boundary_closes_body = value;
+        set_flag(&mut self.wikidot.flags, QUOTE_BOUNDARY_CLOSES_BODY, value);
     }
 
     pub(crate) fn set_pending_wikidot_collapsible_closer(&mut self, value: bool) {
-        self.wikidot.pending_collapsible_closer = value;
+        set_flag(&mut self.wikidot.flags, PENDING_COLLAPSIBLE_CLOSER, value);
     }
 
     pub(crate) fn set_wikidot_collapsible_closed_at_deeper_quote(&mut self, value: bool) {
-        self.wikidot.collapsible_closed_at_deeper_quote = value;
+        set_flag(
+            &mut self.wikidot.flags,
+            COLLAPSIBLE_CLOSED_AT_DEEPER_QUOTE,
+            value,
+        );
+    }
+
+    pub(crate) fn in_wikidot_simple_table_cell(&self) -> bool {
+        self.wikidot.flags & SIMPLE_TABLE_CELL != 0
+    }
+
+    pub(crate) fn set_in_wikidot_simple_table_cell(&mut self, value: bool) {
+        set_flag(&mut self.wikidot.flags, SIMPLE_TABLE_CELL, value);
+    }
+
+    pub(crate) fn mark_wikidot_simple_table_crossed_closer(&mut self, token: Token) {
+        self.wikidot.simple_table_crossed_closers |= simple_table_closer_bit(token);
+    }
+
+    pub(crate) fn take_wikidot_simple_table_crossed_closers(&mut self) -> u16 {
+        std::mem::take(&mut self.wikidot.simple_table_crossed_closers)
+    }
+
+    pub(crate) fn wikidot_simple_table_closer_bit(token: Token) -> u16 {
+        simple_table_closer_bit(token)
+    }
+}
+
+fn set_flag(flags: &mut u8, flag: u8, value: bool) {
+    if value {
+        *flags |= flag;
+    } else {
+        *flags &= !flag;
+    }
+}
+
+fn simple_table_closer_bit(token: Token) -> u16 {
+    match token {
+        Token::Bold => 1 << 0,
+        Token::Italics => 1 << 1,
+        Token::DoubleDash => 1 << 2,
+        Token::Underline => 1 << 3,
+        Token::Superscript => 1 << 4,
+        Token::Subscript => 1 << 5,
+        Token::RightMonospace => 1 << 6,
+        Token::Color => 1 << 7,
+        _ => 0,
     }
 }

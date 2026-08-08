@@ -23,16 +23,21 @@ pub mod attribute;
 mod align;
 mod anchor;
 mod bibliography;
+mod button;
 mod clear_float;
 mod clone;
 mod code;
 mod container;
+mod content;
 mod date;
 mod definition_list;
 mod element;
 mod embed;
+mod embed_video;
 mod file_source;
+mod gallery;
 mod heading;
+mod image_source;
 mod link;
 mod list;
 mod module;
@@ -47,16 +52,21 @@ pub use self::align::*;
 pub use self::anchor::*;
 pub use self::attribute::AttributeMap;
 pub use self::bibliography::*;
+pub use self::button::*;
 pub use self::clear_float::*;
 pub use self::code::CodeBlock;
 pub use self::container::*;
+pub use self::content::*;
 pub use self::date::DateItem;
 pub(crate) use self::date::date_format_within_limits;
 pub use self::definition_list::*;
 pub use self::element::*;
 pub use self::embed::*;
+pub use self::embed_video::*;
 pub use self::file_source::*;
+pub use self::gallery::*;
 pub use self::heading::*;
+pub use self::image_source::*;
 pub use self::link::*;
 pub use self::list::*;
 pub use self::module::*;
@@ -295,8 +305,9 @@ fn collect_page_references(
                 PartialElement::RubyText(ruby_text) => {
                     collect_page_references(&ruby_text.elements, references, seen);
                 }
-                PartialElement::InlineSizeOpen(_)
-                | PartialElement::InlineSizeClose
+                PartialElement::WikidotEmptyInlineOwner
+                | PartialElement::InlineSizeOpen(_)
+                | PartialElement::InlineSizeClose(_)
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_) => {}
             },
@@ -387,8 +398,9 @@ fn collect_user_references(
                 PartialElement::RubyText(ruby_text) => {
                     collect_user_references(&ruby_text.elements, references, seen);
                 }
-                PartialElement::InlineSizeOpen(_)
-                | PartialElement::InlineSizeClose
+                PartialElement::WikidotEmptyInlineOwner
+                | PartialElement::InlineSizeOpen(_)
+                | PartialElement::InlineSizeClose(_)
                 | PartialElement::InlineSpanOpen(_)
                 | PartialElement::InlineSpanClose(_) => {}
             },

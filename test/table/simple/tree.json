@@ -466,6 +466,7 @@
                                         "element": "color",
                                         "data": {
                                             "color": "blue",
+                                            "background": false,
                                             "elements": [
                                                 {
                                                     "element": "text",

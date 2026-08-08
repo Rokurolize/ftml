@@ -22,6 +22,7 @@ use super::prelude::*;
 use crate::delayed::DelayedElement;
 use crate::parsing::strip_newlines;
 use crate::tree::PartialElement;
+use std::borrow::Cow;
 
 pub const BLOCK_SPAN: BlockRule = BlockRule {
     name: "block-span",
@@ -31,6 +32,49 @@ pub const BLOCK_SPAN: BlockRule = BlockRule {
     accepts_newlines: false,
     parse_fn,
 };
+
+pub(super) fn wikidot_literal_with_empty_scored_spans_elided<'t>(
+    source: &str,
+) -> Option<Elements<'t>> {
+    const EMPTY_SCORED_SPAN: &str = "[[span_]][[/span]]";
+
+    let lowercase = source.to_ascii_lowercase();
+    let mut cursor = 0;
+    let mut output = String::with_capacity(source.len());
+    let mut found = false;
+    while let Some(relative) = lowercase[cursor..].find(EMPTY_SCORED_SPAN) {
+        let start = cursor + relative;
+        output.push_str(&source[cursor..start]);
+        cursor = start + EMPTY_SCORED_SPAN.len();
+        if source[cursor..].starts_with("\r\n") {
+            cursor += 2;
+        } else if source[cursor..].starts_with('\n') {
+            cursor += 1;
+        }
+        found = true;
+    }
+    if !found {
+        return None;
+    }
+    output.push_str(&source[cursor..]);
+
+    let mut elements = Vec::new();
+    for chunk in output.split_inclusive('\n') {
+        let has_newline = chunk.ends_with('\n');
+        let line = chunk
+            .strip_suffix('\n')
+            .unwrap_or(chunk)
+            .strip_suffix('\r')
+            .unwrap_or_else(|| chunk.strip_suffix('\n').unwrap_or(chunk));
+        if !line.is_empty() {
+            elements.push(Element::Text(Cow::Owned(line.to_owned())));
+        }
+        if has_newline {
+            elements.push(Element::LineBreak);
+        }
+    }
+    Some(Elements::Multiple(elements))
+}
 
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
@@ -43,7 +87,37 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Span doesn't allow star flag");
     assert_block_name(&BLOCK_SPAN, name);
 
+    let source = parser.full_text().inner();
+    let name_start = (name.as_ptr() as usize)
+        .checked_sub(source.as_ptr() as usize)
+        .expect("parsed span name belongs to the source");
+    let owner_start = source[..name_start]
+        .rfind("[[")
+        .expect("parsed span name follows its opener");
+    let scored_empty_spaced_head =
+        parser.settings().layout.legacy() && flag_score && in_head && {
+            let mut head = parser.clone();
+            head.get_optional_space().is_ok() && head.current().token == Token::RightBlock
+        };
     let generated = parser.generated_until_right_block();
+    let arguments = parser.get_head_map_wikidot(&BLOCK_SPAN, in_head)?;
+    let scored_starts_next_physical_line = flag_score
+        && matches!(
+            parser.current().token,
+            Token::LineBreak | Token::ParagraphBreak
+        );
+    if scored_empty_spaced_head {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    if parser.settings().layout.legacy() && arguments.has_empty_key() {
+        return recover_wikidot_empty_key_candidate(parser, &BLOCK_SPAN, owner_start);
+    }
+    if parser.settings().layout.legacy()
+        && flag_score
+        && !parser.wikidot_alias_has_compatible_close(&BLOCK_SPAN, owner_start)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     if generated
         .iter()
         .any(|slot| slot.kind == crate::delayed::GeneratedKind::TagLinks)
@@ -62,8 +136,9 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    let arguments = parser.get_head_map_wikidot(&BLOCK_SPAN, in_head)?;
-    let has_close = parser.has_body_end_block(&BLOCK_SPAN);
+    let has_close = parser.has_body_end_block(&BLOCK_SPAN)
+        || parser.settings().layout.legacy()
+            && has_wikidot_composite_span_close_on_line(parser);
 
     if parser.settings().layout.legacy() {
         if !has_close {
@@ -84,14 +159,18 @@ fn parse_fn<'r, 't>(
         }
         if flag_score {
             attributes.insert("data-ftml-score-span", cow!(""));
+            if scored_starts_next_physical_line {
+                attributes.insert("data-ftml-score-span-own-line", cow!(""));
+            }
         }
         let span = Element::Partial(PartialElement::InlineSpanOpen(attributes));
+        parser.enter_wikidot_span_body(flag_score);
         return if generated.is_empty() {
             ok!(span)
         } else {
             ok!(Elements::Multiple(vec![
                 span,
-                Element::Delayed(DelayedElement::omitted(&generated)),
+                Element::Delayed(DelayedElement::suppressed(&generated)),
             ]))
         };
     }
@@ -111,6 +190,30 @@ fn parse_fn<'r, 't>(
     ));
 
     success_elements_with_paragraph_safety(paragraph_safe, element, errors)
+}
+
+fn has_wikidot_composite_span_close_on_line<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    let mut scan = parser.clone();
+    loop {
+        match scan.current().token {
+            Token::LeftBlockEnd => {
+                let mut close = scan.clone();
+                if close.get_wikidot_end_block_with_residual().is_ok_and(
+                    |(name, residual)| residual && name.eq_ignore_ascii_case("span"),
+                ) {
+                    return true;
+                }
+            }
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd => return false,
+            _ => {}
+        }
+        if scan.step().is_err() {
+            return false;
+        }
+    }
 }
 
 fn retain_wikidot_span_attributes(attributes: &mut crate::tree::AttributeMap<'_>) {
@@ -168,21 +271,10 @@ mod tests {
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
         assert!(errors.is_empty(), "{errors:?}");
-        let span = match tree.elements.as_slice() {
-            [Element::Container(paragraph)] => paragraph
-                .elements()
-                .iter()
-                .find_map(|element| match element {
-                    Element::Container(container)
-                        if container.ctype() == ContainerType::Span =>
-                    {
-                        Some(container)
-                    }
-                    _ => None,
-                })
-                .expect("paragraph should contain span container"),
-            other => panic!("expected paragraph containing span, got {other:?}"),
+        let [Element::Container(span)] = tree.elements.as_slice() else {
+            panic!("expected one scored span, got {:?}", tree.elements);
         };
+        assert_eq!(span.ctype(), ContainerType::Span);
 
         assert_eq!(span.elements(), &[text!("alpha")]);
         assert_eq!(

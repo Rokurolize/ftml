@@ -1,0 +1,302 @@
+{
+  "schema": "ftml.wikidot_alias_closers_followup_live_observation.v1",
+  "captured_at": "2026-08-07T10:44:21.854791+00:00",
+  "provenance": {
+    "authenticated": false,
+    "module": "edit/PagePreviewModule",
+    "mutated": false,
+    "site": "scp-wiki",
+    "site_domain": "scp-wiki.wikidot.com",
+    "wikidot_py_commit": "4d294a7d8197192d47302c15e5293433f90be1da",
+    "wikidot_py_version": "4.4.1"
+  },
+  "rows": [
+    {
+      "case_id": "active-div-unicode-attributes",
+      "source": "[[div_ class=\"alias\" style=\"color:red\"]]\n雪 Ω\n[[/div]]",
+      "source_sha256": "30de3856cdfdcface613a6950503a1e9aecc35ca5108eea014521552d57663d4",
+      "raw_html_sha256": "6a459eea72c77cfb7bbb25717fe272b5d71dad72749483559be436b34318d62b",
+      "raw_html": "\n\n<div class=\"alias\" style=\"color:red\">雪 Ω</div>\n"
+    },
+    {
+      "case_id": "active-span-unicode-attributes",
+      "source": "[[span_ class=\"alias\" style=\"color:red\"]]\n雪 Ω\n[[/span]]",
+      "source_sha256": "e2f56fd370a047351f0df40571982c812d47b656a54bcfb52b92fcc20435d901",
+      "raw_html_sha256": "783aa75ab6ed64bb3a3d32c7fb4b8ad936a6bf36bbcb1d517c23dbe1284d7ef5",
+      "raw_html": "\n\n<span class=\"alias\" style=\"color:red\">雪 Ω</span>"
+    },
+    {
+      "case_id": "active-div-mixed-case",
+      "source": "[[DIV_]]\nBODY\n[[/dIv]]",
+      "source_sha256": "1a19acd787fd99f0e1746162dcf40cd1fbf117ff25900d87f0f2356874bbb030",
+      "raw_html_sha256": "4463d7e32d027e8d57a5f959698883c1433856b31515bd040f420cb0489a3db9",
+      "raw_html": "\n\n<div>BODY</div>\n"
+    },
+    {
+      "case_id": "active-span-mixed-case",
+      "source": "[[SPAN_]]\nBODY\n[[/sPaN]]",
+      "source_sha256": "7a85fc87f8e9345f51f588e7309c88fecd3a15d0e61f5bfa28bfd4c6505b64a7",
+      "raw_html_sha256": "f1a0779941f4c43606e175cd58be5dc39ab866f4e343a08f55e6dbccf69c65a8",
+      "raw_html": "\n\n<span>BODY</span>"
+    },
+    {
+      "case_id": "active-div-opener-space",
+      "source": "[[div_ ]]\nBODY\n[[/div]]",
+      "source_sha256": "e4dcf06672e7b6547a4274c60ced344c6b83a9d06748bfda9b33d453b0564e41",
+      "raw_html_sha256": "4463d7e32d027e8d57a5f959698883c1433856b31515bd040f420cb0489a3db9",
+      "raw_html": "\n\n<div>BODY</div>\n"
+    },
+    {
+      "case_id": "active-span-opener-space",
+      "source": "[[span_ ]]\nBODY\n[[/span]]",
+      "source_sha256": "0be5646e2b5c24b1e5034833832027415ac84d8d276c94d57b5aa560fc827b42",
+      "raw_html_sha256": "85f8bdc2f13c12e77b763dc0335ea879c0265bf36b92f148db40237a0ced6add",
+      "raw_html": "\n\n<p>[[span_ ]]<br />\nBODY<br />\n[[/span]]</p>\n"
+    },
+    {
+      "case_id": "active-div-closer-space",
+      "source": "[[div_]]\nBODY\n[[/div ]]",
+      "source_sha256": "d6ecc940efc83aee9ed9193680570c22bfdde08f902c728825b2654cbdf81269",
+      "raw_html_sha256": "db628d8c362f3071c38769a533031daf2cc12593047f750d7770b725aa372229",
+      "raw_html": "\n\n<p>[[div_]]<br />\nBODY<br />\n[[/div ]]</p>\n"
+    },
+    {
+      "case_id": "active-span-closer-space",
+      "source": "[[span_]]\nBODY\n[[/span ]]",
+      "source_sha256": "f5d18c4c14444fb90009dff14ea88e11313c1a6bbc2124e3d6f8e3574e955b56",
+      "raw_html_sha256": "acfb83c04c2dda72886a1b7c1832429491d85e7f34799d8fa3a171a392d6ec80",
+      "raw_html": "\n\n<p>[[span_]]<br />\nBODY<br />\n[[/span ]]</p>\n"
+    },
+    {
+      "case_id": "active-div-closer-leading-space",
+      "source": "[[div_]]\nBODY\n[[/ div]]",
+      "source_sha256": "60344ea3f2cb47f0241a6e904a71a3073f2d986b3f378afd4f1ed3e7d8ab4e5c",
+      "raw_html_sha256": "4755e02a6bb74174de699cfe4b3cfe903d80f4e998f44e6dc058c68ce75462b4",
+      "raw_html": "\n\n<p>[[div_]]<br />\nBODY<br />\n[<a href=\"/\">div</a>]</p>\n"
+    },
+    {
+      "case_id": "active-span-closer-leading-space",
+      "source": "[[span_]]\nBODY\n[[/ span]]",
+      "source_sha256": "582871326b52c2e2da01de0d6620a87848899eed9b4cd5a5274f912554d9a05e",
+      "raw_html_sha256": "8b422650d52f4db901b7ca48d12964a063c1cdfeb0962666abbd72873395f44b",
+      "raw_html": "\n\n<p>[[span_]]<br />\nBODY<br />\n[<a href=\"/\">span</a>]</p>\n"
+    },
+    {
+      "case_id": "active-div-empty-inline",
+      "source": "[[div_]][[/div]]",
+      "source_sha256": "ce5bdac6ec2bbf8204fa065434492cc55b96c163f382bcda8ef95132569c5d69",
+      "raw_html_sha256": "0a62d740ec644e94f0c2995c4f78276e51b321efa4db304ea0dc50c48c518b23",
+      "raw_html": "\n\n<p>[[div_]][[/div]]</p>\n"
+    },
+    {
+      "case_id": "active-span-empty-inline",
+      "source": "[[span_]][[/span]]",
+      "source_sha256": "784ce5218c3aa061063fb6d1b93d8a09707e5828cc05ba42f2cd45b69794fc92",
+      "raw_html_sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+      "raw_html": "\n\n"
+    },
+    {
+      "case_id": "active-div-empty-lines",
+      "source": "[[div_]]\n\n[[/div]]",
+      "source_sha256": "a1992c9421b6ed78c08818a8e65292c3d0a0436c99e28e6cbea62a3f416ae4de",
+      "raw_html_sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+      "raw_html": "\n\n"
+    },
+    {
+      "case_id": "active-span-empty-lines",
+      "source": "[[span_]]\n\n[[/span]]",
+      "source_sha256": "b67bd64dfc3988b942b9685da06f7ce89557bd8f899b5ded90062c50f44ef3d0",
+      "raw_html_sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+      "raw_html": "\n\n"
+    },
+    {
+      "case_id": "active-div-adjacent",
+      "source": "[[div_]]\nA\n[[/div]]\n[[div_]]\nB\n[[/div]]",
+      "source_sha256": "8129a47ee28f1c00ee8ee70db6a3651de4082c426f089738950d20eb43a9f3fc",
+      "raw_html_sha256": "aa20f61952f04d7598904ac22254934d8ef157c243cbc6326f853c3dcff72e64",
+      "raw_html": "\n\n<div>A</div>\n<div>B</div>\n"
+    },
+    {
+      "case_id": "active-span-adjacent",
+      "source": "[[span_]]\nA\n[[/span]]\n[[span_]]\nB\n[[/span]]",
+      "source_sha256": "f4f17641198dbccd94959cdbea9e5fe299feba8c278b397456c5548e09727c4e",
+      "raw_html_sha256": "a4e9d961ca1faa4c7cb7c0e79a93134008b697b570e8c0c65d284441a70b3479",
+      "raw_html": "\n\n<span>A</span><span>B</span>"
+    },
+    {
+      "case_id": "active-div-table",
+      "source": "[[div_ class=\"table-owner\"]]\n|| A ||\n[[/div]]",
+      "source_sha256": "706ffd14cfed7c4ad12295946c20c2593a42d2123d656006775ae73b804e8641",
+      "raw_html_sha256": "c97b5b06b494f598e7fa9fdd8839d1d76a2b6fa244042e36ea3b9b787b75306e",
+      "raw_html": "\n\n<div class=\"table-owner\">|| A ||</div>\n"
+    },
+    {
+      "case_id": "active-span-table",
+      "source": "[[span_ class=\"table-owner\"]]\n|| A ||\n[[/span]]",
+      "source_sha256": "6c34adee48fea4cf4d6512366d23b212fa3efd148150136568a74d9e1ed836c2",
+      "raw_html_sha256": "b56e998b49fff99524981a76878898b2941223901bbcc90d87fd0ae0560b69a2",
+      "raw_html": "\n\n<span class=\"table-owner\">|| A ||</span>"
+    },
+    {
+      "case_id": "div-alias-outer-rejected-alias-inner",
+      "source": "[[div_ class=\"outer\"]]\nA\n[[div_ class=\"inner\"]]\nB\n[[/div_]]\nC\n[[/div]]",
+      "source_sha256": "bad415be9be609735e830878844467acc521b0d850d1b00a95c2d02aeffdbedb",
+      "raw_html_sha256": "959404a49e2a6b7c06bec86ce67fe233f1da7963605053db747355a1781efdfa",
+      "raw_html": "\n\n<div class=\"outer\">A<br />\n[[div_ class=&quot;inner&quot;]]<br />\nB<br />\n[[/div_]]<br />\nC</div>\n"
+    },
+    {
+      "case_id": "div-alias-outer-ordinary-inner",
+      "source": "[[div_ class=\"outer\"]]\nA\n[[div class=\"inner\"]]\nB\n[[/div]]\nC\n[[/div]]",
+      "source_sha256": "10d982181fd0e4ba13aa4fe3b6ced3afc19f502707d6da4060fdf9ad586abcf0",
+      "raw_html_sha256": "e2eb93b80025768b46ecb8a8fcbfe755951ccaafd6f0502bd1d485b1593f863f",
+      "raw_html": "\n\n<div class=\"outer\">A\n<div class=\"inner\">\n<p>B</p>\n</div>\n<br />\nC</div>\n"
+    },
+    {
+      "case_id": "div-ordinary-outer-active-alias-inner",
+      "source": "[[div class=\"outer\"]]\nA\n[[div_ class=\"inner\"]]\nB\n[[/div]]\nC\n[[/div]]",
+      "source_sha256": "f8a5d4c3d5dcd43bb7827b19a9b94ee60ab972aee395337c6c82e7d0ef431edf",
+      "raw_html_sha256": "b924582cdd6c5157874c2e8090ff01fdc3508ed56c2e69de936cde26e9a35553",
+      "raw_html": "\n\n<div class=\"outer\">\n<p>A</p>\n<div class=\"inner\">B</div>\n<br />\nC</div>\n"
+    },
+    {
+      "case_id": "span-alias-outer-rejected-alias-inner",
+      "source": "[[span_ class=\"outer\"]]\nA\n[[span_ class=\"inner\"]]\nB\n[[/span_]]\nC\n[[/span]]",
+      "source_sha256": "cb77e7999a5285a8a6944f75edc7aaf9b667807d53112d8745457fac6b1809be",
+      "raw_html_sha256": "0a6260cd0e3d0bdf0c5b45e2800048e7167d2b6fbc2d8b11e0eff90e1c3be86f",
+      "raw_html": "\n\n<span class=\"outer\">A<br />\n[[span_ class=&quot;inner&quot;]]<br />\nB<br />\n[[/span_]]<br />\nC</span>"
+    },
+    {
+      "case_id": "span-alias-outer-ordinary-inner",
+      "source": "[[span_ class=\"outer\"]]\nA\n[[span class=\"inner\"]]\nB\n[[/span]]\nC\n[[/span]]",
+      "source_sha256": "bfdf71057f88bd809410d27bd4cd48aafd358914c8209d2f5c5a91d40839a2ed",
+      "raw_html_sha256": "30b385ec35792587f0fc71fb07a054d2696c4195828ff5539d0cbe71930e26bb",
+      "raw_html": "\n\n<span class=\"outer\">A<br />\n<span class=\"inner\"><br />\nB<br /></span><br />\nC</span>"
+    },
+    {
+      "case_id": "span-ordinary-outer-active-alias-inner",
+      "source": "[[span class=\"outer\"]]\nA\n[[span_ class=\"inner\"]]\nB\n[[/span]]\nC\n[[/span]]",
+      "source_sha256": "9baedc8be7d68575ecb52da47f60a16a597fc779c55455171ca2e25a710c2e9f",
+      "raw_html_sha256": "3576240125550373cbb473e17b01a3b4168b57e186035facfac1d8f0641b7d13",
+      "raw_html": "\n\n<p><span class=\"outer\"><br />\nA<span class=\"inner\">B</span>C<br /></span></p>\n"
+    },
+    {
+      "case_id": "active-div-crlf",
+      "source": "[[div_]]\r\n雪\r\n[[/div]]",
+      "source_sha256": "54db8ceab5d7ed3f6e2464f0ca598d19d6f5d1fbb5cf3bb7c7589d1b93b8a77f",
+      "raw_html_sha256": "1b9964a6f725acc15ee8812c88aa79d2dc049e8a8ac4b60f4e8025f18f657663",
+      "raw_html": "\n\n<div>雪</div>\n"
+    },
+    {
+      "case_id": "active-span-crlf",
+      "source": "[[span_]]\r\n雪\r\n[[/span]]",
+      "source_sha256": "1cbbd035a3cc23ffafd9ee2b75ceb10d5e3ea265b99a537e413798b2d9c3642e",
+      "raw_html_sha256": "32379586490559b2cbd5d6ed7b0e7ea80935960c2c576c33629e671b0dbc4970",
+      "raw_html": "\n\n<span>雪</span>"
+    },
+    {
+      "case_id": "rejected-div-crlf",
+      "source": "[[div_]]\r\n雪\r\n[[/div_]]",
+      "source_sha256": "8ed08e08005b95471f70d05f03368b0113ef26c2bcfedd7f2623dfe76ade92a4",
+      "raw_html_sha256": "2f5e5dc4c0b66a5205b1ad11c506c2934eb69899e1ef45b961da72fd970cbafd",
+      "raw_html": "\n\n<p>[[div_]]<br />\n雪<br />\n[[/div_]]</p>\n"
+    },
+    {
+      "case_id": "rejected-span-crlf",
+      "source": "[[span_]]\r\n雪\r\n[[/span_]]",
+      "source_sha256": "1129ee9b52a157f20e69a06877f83c9b8bdb9cf1af480e11182cca51e8a61214",
+      "raw_html_sha256": "f528c39dfbb9c436c65c749f854c6e1d774a34f49b8f2e2f93813bcb37fe8c65",
+      "raw_html": "\n\n<p>[[span_]]<br />\n雪<br />\n[[/span_]]</p>\n"
+    },
+    {
+      "case_id": "aliases-in-code-owner",
+      "source": "[[code]]\n[[div_]][[/div]] [[span_]][[/span]]\n[[/code]]",
+      "source_sha256": "af61f5204a7e49c667d9846af5d94b2b7769e276510b12bc35d8a851d4ccb237",
+      "raw_html_sha256": "d72db2a371d23208b826cc8275ddaf4e38b379d9220e233d30fc5f4b9f419e49",
+      "raw_html": "\n\n<div class=\"code\">\n<pre><code>[[div_]][[/div]] [[span_]][[/span]]</code></pre></div>\n"
+    },
+    {
+      "case_id": "aliases-in-raw-owner",
+      "source": "[[raw]]\n[[div_]][[/div]] [[span_]][[/span]]\n[[/raw]]",
+      "source_sha256": "8f6e60ac707b01f91b1a2685e3f95673df973619e086302559e8be11bab01d61",
+      "raw_html_sha256": "94280f5bb5cf4c2e0d44a1a2e85558c1be465fb9a53d52006e7ed983463f71a0",
+      "raw_html": "\n\n<p>[[raw]]<br />\n[[div_]][[/div]] [[/raw]]</p>\n"
+    },
+    {
+      "case_id": "aliases-in-inline-raw-owner",
+      "source": "@@[[div_]][[/div]] [[span_]][[/span]]@@",
+      "source_sha256": "3763930f6db76550c10d0b7e740e0a520fe89fa4b879ca7c019d8cf9d2cad1d5",
+      "raw_html_sha256": "17564923531eb7cc19b89fc0d53535d049ebc7526301df86489001079775c5d0",
+      "raw_html": "\n\n<p><span style=\"white-space: pre-wrap;\">[[div_]][[/div]]&#32;[[span_]][[/span]]</span></p>\n"
+    },
+    {
+      "case_id": "aliases-in-comment-owner",
+      "source": "BEFORE[!--[[div_]][[/div]] [[span_]][[/span]]--]AFTER",
+      "source_sha256": "2b160ee76ce94930855ae0f7b4a0f19418a77c665c9b975922ec524fa26f6f8d",
+      "raw_html_sha256": "829ff1eed8e169bed63ecaa262bbe40fd268993c175098b54419f07302e60ca8",
+      "raw_html": "\n\n<p>BEFOREAFTER</p>\n"
+    },
+    {
+      "case_id": "aliases-in-html-owner",
+      "source": "[[html]]\n[[div_]][[/div]] [[span_]][[/span]]\n[[/html]]",
+      "source_sha256": "8a254b04f1b475c4d549db95145873dccb6752fa0ce43e18ca9a96b3c1076216",
+      "raw_html_sha256": "22ae9f37ad1252dd4b063fd080a08538f802479b8aeba0a9a2b5e50c2f8c844c",
+      "raw_html": "\n\n<p>[[html]]<br />\n[[div_]][[/div]] [[/html]]</p>\n"
+    },
+    {
+      "case_id": "active-div-unsafe-attributes",
+      "source": "[[div_ onclick=\"alert(1)\" style=\"background:url(javascript:alert(2))\"]]\nBODY\n[[/div]]",
+      "source_sha256": "8ea212a0adcb3e33a9f18618fb686202920d5f1b33d1638a971fc1ca625f2f2a",
+      "raw_html_sha256": "86fbe2b3ce09270abbdd8e3efa63923b4707d0b8105ab21b1289f9553b750926",
+      "raw_html": "\n\n<div style=\"background:url(javascript:alert(2))\">BODY</div>\n"
+    },
+    {
+      "case_id": "active-span-unsafe-attributes",
+      "source": "[[span_ onclick=\"alert(1)\" style=\"background:url(javascript:alert(2))\"]]\nBODY\n[[/span]]",
+      "source_sha256": "6c2664a7343ae08218cb70edf1087c7b98118e0a099690a6d23b5130f24c672c",
+      "raw_html_sha256": "67cb9c42be33b3a538b762f38d7ce9fe7b265e5cc68387c3d40c9e0f52844f56",
+      "raw_html": "\n\n<span style=\"background:url(javascript:alert(2))\">BODY</span>"
+    },
+    {
+      "case_id": "ordinary-same-name-controls",
+      "source": "[[div class=\"ordinary\"]]\nD\n[[/div]]\n[[span class=\"ordinary\"]]S[[/span]]",
+      "source_sha256": "65d1ef94d0e2b239ab6c39feef92f9ada2c01a7c74b81a85c40cf94f94f42010",
+      "raw_html_sha256": "c7e8b99dcd6a666e5b7da1f15248ca734175b57157d941bf39a361ebae74eb20",
+      "raw_html": "\n\n<div class=\"ordinary\">\n<p>D</p>\n</div>\n<br />\n<span class=\"ordinary\">S</span>"
+    },
+    {
+      "case_id": "malformed-div-normal-close",
+      "source": "[[div_]]]\nBODY\n[[/div]]",
+      "source_sha256": "e151b93d7ab245d09485ff4e7afee646315a6eb626608ae3eb1edff156697792",
+      "raw_html_sha256": "0735dfabfd175e446c4c136d39ee5a2131fa050f1fedf0f0190c17616c429160",
+      "raw_html": "\n\n<p>[[div_]]]<br />\nBODY<br />\n[[/div]]</p>\n"
+    },
+    {
+      "case_id": "malformed-span-normal-close",
+      "source": "[[span_]]]\nBODY\n[[/span]]",
+      "source_sha256": "0cb91688f1c7fa7a3b87fde8cf05d3a83ada9eb3f193dc89a0bf9f8335079a8c",
+      "raw_html_sha256": "73d8d8e45517bbabc387b2ff95085c1b57040d95c3c294e78fda938829dfad9e",
+      "raw_html": "\n\n<span>]<br />\nBODY</span>"
+    },
+    {
+      "case_id": "wrong-div-normal-close",
+      "source": "[[div_]]\nBODY\n[[/span]]",
+      "source_sha256": "d707486578197548cba1bf21b61f66c6ce9eceefcfcd522bb8ca4b38d2e7181e",
+      "raw_html_sha256": "214b65f97055894736354ca871b2e5033b42a5f258546054f5fc6a07f1680c41",
+      "raw_html": "\n\n<p>[[div_]]<br />\nBODY<br />\n[[/span]]</p>\n"
+    },
+    {
+      "case_id": "wrong-span-normal-close",
+      "source": "[[span_]]\nBODY\n[[/div]]",
+      "source_sha256": "c5d0bc1a341a7acd3e35101747b14c3c9a4fc46767b6f6106e3c76b0400e614e",
+      "raw_html_sha256": "a32d6902d04eef01f2a319cb93b4269c5936880e826f28783fb8e4c49da9db31",
+      "raw_html": "\n\n<p>[[span_]]<br />\nBODY<br />\n[[/div]]</p>\n"
+    },
+    {
+      "case_id": "active-span-prose-adjacency",
+      "source": "BEFORE\n[[span_]]\nBODY\n[[/span]]\nAFTER",
+      "source_sha256": "a2b1798f25dda1f4bd7dacf37465bdba88485d9fa32255a9ee7d225286fca6bd",
+      "raw_html_sha256": "96730fee28a3a2ecf5cb478702993d032c6526d868600e6ad5711a28c8866803",
+      "raw_html": "\n\n<p>BEFORE<span>BODY</span>AFTER</p>\n"
+    }
+  ]
+}

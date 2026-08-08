@@ -62,7 +62,8 @@
                         "data": "1"
                     },
                     {
-                        "element": "footnote"
+                        "element": "footnote",
+                        "data": 1
                     }
                 ]
             }
@@ -78,7 +79,8 @@
                         "data": "2"
                     },
                     {
-                        "element": "footnote"
+                        "element": "footnote",
+                        "data": 2
                     }
                 ]
             }

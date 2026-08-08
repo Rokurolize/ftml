@@ -102,7 +102,7 @@ fn parse_list_block<'r, 't>(
     assert_block_name(block_rule, name);
 
     // Get attributes
-    let arguments = parser.get_head_map(block_rule, in_head)?;
+    let arguments = parser.get_head_map_wikidot(block_rule, in_head)?;
     let attributes = arguments.to_attribute_map(parser.settings());
     if parser.settings().layout.legacy() && !parser.has_body_end_block(block_rule) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -110,7 +110,21 @@ fn parse_list_block<'r, 't>(
 
     // Get body and convert into list form.
     let body = parser.get_body_elements(block_rule, false)?;
+    let closer_has_same_line_residual = !matches!(
+        parser.current().token,
+        Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+    );
     let (mut elements, errors, _) = body.into();
+
+    // Wikidot recognizes uppercase OL/UL controls, but does not activate the
+    // list wrapper. It keeps the parsed body as an unwrapped block line.
+    if wikidot && name != block_rule.accepts_names[0] {
+        strip_newlines(&mut elements);
+        if !closer_has_same_line_residual {
+            elements.push(Element::LineBreak);
+        }
+        return ok!(false; elements, errors);
+    }
 
     let mut items = Vec::new();
     let mut literal_elements = Vec::new();
@@ -200,7 +214,11 @@ fn parse_list_block<'r, 't>(
         attributes,
     };
 
-    if parser.settings().layout.legacy() && !nested && !flag_score {
+    if parser.settings().layout.legacy()
+        && !nested
+        && !flag_score
+        && !closer_has_same_line_residual
+    {
         ok!(false; vec![element, Element::LineBreak], errors)
     } else {
         success_elements_with_paragraph_safety(false, element, errors)
@@ -311,7 +329,7 @@ fn parse_list_item<'r, 't>(
     }
 
     // Get attributes
-    let arguments = parser.get_head_map(&BLOCK_LI, in_head)?;
+    let arguments = parser.get_head_map_wikidot(&BLOCK_LI, in_head)?;
     let attributes = arguments.to_attribute_map(parser.settings());
     let body_start = parser.current().span.start;
     if wikidot && !parser.has_body_end_block(&BLOCK_LI) {
@@ -394,7 +412,7 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_top_level_list_item_remains_an_unwrapped_literal_block() {
+    fn wikidot_top_level_list_item_remains_literal_in_its_paragraph() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         let tokenization = crate::tokenize("[[li]]\nBaz\n[[/li]]");
@@ -407,7 +425,7 @@ mod tests {
                 .any(|error| error.kind() == ParseErrorKind::ListItemOutsideList),
             "{errors:?}",
         );
-        assert_eq!(html, "[[li]]<br>\nBaz<br>\n[[/li]]");
+        assert_eq!(html, "<p>[[li]]<br>\nBaz<br>\n[[/li]]</p>");
     }
 
     #[test]

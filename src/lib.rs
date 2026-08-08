@@ -113,6 +113,7 @@ mod non_empty_vec;
 mod text;
 mod url;
 mod utf16;
+mod wikidot_code;
 
 #[cfg(target_arch = "wasm32")]
 pub mod wasm;

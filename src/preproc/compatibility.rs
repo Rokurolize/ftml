@@ -977,10 +977,13 @@ fn canonicalize_unmatched_quoted_tab_closers(
     lines: &mut [String],
     literal_lines: &[bool],
 ) {
-    let has_tab_open = lines
-        .iter()
-        .zip(literal_lines)
-        .any(|(line, literal)| !literal && line.to_ascii_lowercase().contains("[[tab "));
+    let has_tab_open = lines.iter().zip(literal_lines).any(|(line, literal)| {
+        if *literal {
+            return false;
+        }
+        let lower = line.to_ascii_lowercase();
+        lower.contains("[[tab]]") || lower.contains("[[tab ")
+    });
     let has_tabview_open = lines.iter().zip(literal_lines).any(|(line, literal)| {
         !literal && line.to_ascii_lowercase().contains("[[tabview]]")
     });
@@ -995,7 +998,9 @@ fn canonicalize_unmatched_quoted_tab_closers(
             continue;
         };
         let prefix = body[..marker_start].to_owned();
-        if !prefix.chars().all(|ch| matches!(ch, '>' | ' ' | '\t')) {
+        if !prefix.contains('>')
+            || !prefix.chars().all(|ch| matches!(ch, '>' | ' ' | '\t'))
+        {
             continue;
         }
 
@@ -2010,6 +2015,22 @@ mod tests {
     }
 
     #[test]
+    fn complete_quoted_orphan_tab_is_not_mistaken_for_an_unmatched_closer() {
+        let mut source = concat!(
+            "> [[tab]]\n",
+            "> orphan body\n",
+            "> [[/tab]]\n",
+            "outside\n",
+        )
+        .to_owned();
+        let original = source.clone();
+
+        substitute(&mut source);
+
+        assert_eq!(source, original);
+    }
+
+    #[test]
     fn compatibility_markers_inside_literal_regions_are_unchanged() {
         for mut source in [
             concat!(
@@ -2050,22 +2071,24 @@ mod tests {
     }
 
     #[test]
-    fn shallower_quote_boundary_ends_a_literal_candidate() {
+    fn root_orphan_tab_closer_after_quote_boundary_is_preserved() {
         let mut source =
             concat!("> [[code]]\n", "[[/tab]]\n", "> [[/code]]\n",).to_owned();
+        let original = source.clone();
 
         substitute(&mut source);
 
-        assert_eq!(source, concat!("> [[code]]\n", "\n", "> [[/code]]\n"));
+        assert_eq!(source, original);
     }
 
     #[test]
-    fn inline_raw_escape_does_not_mask_later_physical_lines() {
+    fn root_orphan_tab_closer_after_inline_raw_is_preserved() {
         let mut source = concat!("@@\n", "[[/tab]]\n", "@@\n").to_owned();
+        let original = source.clone();
 
         substitute(&mut source);
 
-        assert_eq!(source, "@@\n\n@@\n");
+        assert_eq!(source, original);
     }
 
     #[test]

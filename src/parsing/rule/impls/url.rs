@@ -19,7 +19,9 @@
  */
 
 use super::prelude::*;
+use crate::parsing::collect::{CommentElidedText, consume_valid_comment};
 use crate::tree::{LinkLabel, LinkLocation, LinkType};
+use std::borrow::Cow;
 
 pub const RULE_URL: Rule = Rule {
     name: "url",
@@ -29,52 +31,18 @@ pub const RULE_URL: Rule = Rule {
 
 pub(crate) fn url_elements<'r, 't>(
     parser: &mut Parser<'r, 't>,
-) -> Result<Elements<'t>, ParseError> {
+) -> Result<Elements<'t>, ParseError>
+where
+    'r: 't,
+{
+    if parser.settings().layout.legacy() {
+        return wikidot_url_elements(parser);
+    }
+
     let token = parser.current();
     let source = parser.full_text().inner();
     let start = token.span.start;
-    let mut end = token.span.end;
-    let mut extension_tokens = 0;
-
-    if parser.settings().layout.legacy() {
-        end = wikidot_automatic_url_end(source, end);
-        extension_tokens = parser
-            .remaining()
-            .iter()
-            .take_while(|token| token.token != Token::InputEnd && token.span.end <= end)
-            .count();
-    }
-
-    let mut suffix = None;
-    if parser.settings().layout.legacy() {
-        let previous = start
-            .checked_sub(1)
-            .and_then(|index| source.as_bytes().get(index));
-        let last = end
-            .checked_sub(1)
-            .and_then(|index| source.as_bytes().get(index));
-        if matches!(
-            (previous, last),
-            (Some(b'('), Some(b')')) | (Some(b'['), Some(b']'))
-        ) {
-            suffix = source.get(end - 1..end);
-            end -= 1;
-        }
-    }
-
-    let url = &source[start..end];
-    let split_terminal_period = parser.settings().layout.legacy()
-        && url.ends_with('.')
-        && matches!(
-            parser.look_ahead(0).map(|next| next.token),
-            Some(Token::Whitespace | Token::InputEnd)
-        )
-        || parser.settings().layout.legacy() && url.ends_with('.') && suffix.is_some();
-    let url = if split_terminal_period {
-        &url[..url.len() - 1]
-    } else {
-        url
-    };
+    let url = &source[start..token.span.end];
     let link = Element::Link {
         ltype: LinkType::Direct,
         link: LinkLocation::Url(cow!(url)),
@@ -82,8 +50,80 @@ pub(crate) fn url_elements<'r, 't>(
         target: None,
     };
 
-    parser.step_n(extension_tokens + 1)?;
+    parser.step()?;
+    Ok(Elements::Single(link))
+}
 
+fn wikidot_url_elements<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<Elements<'t>, ParseError>
+where
+    'r: 't,
+{
+    let source = parser.full_text().inner();
+    let start = parser.current().span.start;
+    let mut end = parser.current().span.end;
+    let mut comments = Vec::new();
+    parser.step()?;
+
+    loop {
+        if parser.current_generated().is_some()
+            || matches!(
+                parser.current().token,
+                Token::GeneratedPageLink | Token::GeneratedTagLinks | Token::RuntimeText
+            )
+        {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+        if parser.current().token == Token::LeftComment
+            && parser.current().span.start == end
+        {
+            comments.push(consume_valid_comment(parser)?);
+            end = parser.current().span.start;
+            continue;
+        }
+        if parser.current().token == Token::InputEnd {
+            break;
+        }
+
+        let token = parser.current();
+        let fragment_end =
+            wikidot_automatic_url_end(source, token.span.start, token.span.end);
+        if fragment_end != token.span.end {
+            debug_assert_eq!(fragment_end, token.span.start);
+            break;
+        }
+        end = token.span.end;
+        parser.step()?;
+    }
+
+    let field = CommentElidedText::new(source, start..end, comments);
+    let mut url = field.into_cow();
+    let previous = start
+        .checked_sub(1)
+        .and_then(|index| source.as_bytes().get(index));
+    let suffix = match (previous, url.as_bytes().last()) {
+        (Some(b'('), Some(b')')) => Some(")"),
+        (Some(b'['), Some(b']')) => Some("]"),
+        _ => None,
+    };
+    if suffix.is_some() {
+        url = without_last_byte(url);
+    }
+
+    let split_terminal_period = url.ends_with('.')
+        && (matches!(parser.current().token, Token::Whitespace | Token::InputEnd)
+            || suffix.is_some());
+    if split_terminal_period {
+        url = without_last_byte(url);
+    }
+
+    let link = Element::Link {
+        ltype: LinkType::Direct,
+        link: LinkLocation::Url(url),
+        label: LinkLabel::Url,
+        target: None,
+    };
     let mut elements = vec![link];
     if split_terminal_period {
         elements.push(text!("."));
@@ -99,9 +139,19 @@ pub(crate) fn url_elements<'r, 't>(
     })
 }
 
-fn wikidot_automatic_url_end(source: &str, mut end: usize) -> usize {
+fn without_last_byte(value: Cow<'_, str>) -> Cow<'_, str> {
+    match value {
+        Cow::Borrowed(value) => Cow::Borrowed(&value[..value.len() - 1]),
+        Cow::Owned(mut value) => {
+            value.pop();
+            Cow::Owned(value)
+        }
+    }
+}
+
+fn wikidot_automatic_url_end(source: &str, mut end: usize, limit: usize) -> usize {
     let bytes = source.as_bytes();
-    while end < bytes.len() {
+    while end < limit {
         if matches!(
             bytes[end],
             b'\n' | b'\r' | b' ' | b'\t' | b'"' | b'\'' | b'['

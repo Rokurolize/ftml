@@ -12,9 +12,12 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file1",
+                    "type": "direct",
                     "data": {
-                        "file": "filename.png"
+                        "type": "file1",
+                        "data": {
+                            "file": "filename.png"
+                        }
                     }
                 },
                 "link": null,
@@ -43,9 +46,12 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file1",
+                    "type": "direct",
                     "data": {
-                        "file": "filename.png"
+                        "type": "file1",
+                        "data": {
+                            "file": "filename.png"
+                        }
                     }
                 },
                 "link": null,
@@ -73,9 +79,12 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file1",
+                    "type": "direct",
                     "data": {
-                        "file": "filename.png"
+                        "type": "file1",
+                        "data": {
+                            "file": "filename.png"
+                        }
                     }
                 },
                 "link": null,
@@ -103,9 +112,12 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file1",
+                    "type": "direct",
                     "data": {
-                        "file": "filename.png"
+                        "type": "file1",
+                        "data": {
+                            "file": "filename.png"
+                        }
                     }
                 },
                 "link": null,
@@ -141,9 +153,12 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file1",
+                    "type": "direct",
                     "data": {
-                        "file": "landscape.jpg"
+                        "type": "file1",
+                        "data": {
+                            "file": "landscape.jpg"
+                        }
                     }
                 },
                 "link": null,
@@ -179,9 +194,12 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file1",
+                    "type": "direct",
                     "data": {
-                        "file": "landscape.jpg"
+                        "type": "file1",
+                        "data": {
+                            "file": "landscape.jpg"
+                        }
                     }
                 },
                 "link": null,
@@ -204,8 +222,11 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "url",
-                    "data": "https://example.com/some-image.webp"
+                    "type": "direct",
+                    "data": {
+                        "type": "url",
+                        "data": "https://example.com/some-image.webp"
+                    }
                 },
                 "link": null,
                 "alignment": null,
@@ -235,9 +256,12 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file1",
+                    "type": "direct",
                     "data": {
-                        "file": "my-picture.png"
+                        "type": "file1",
+                        "data": {
+                            "file": "my-picture.png"
+                        }
                     }
                 },
                 "link": null,
@@ -268,10 +292,13 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file2",
+                    "type": "direct",
                     "data": {
-                        "page": "some-other-page",
-                        "file": "my-picture.png"
+                        "type": "file2",
+                        "data": {
+                            "page": "some-other-page",
+                            "file": "my-picture.png"
+                        }
                     }
                 },
                 "link": null,
@@ -302,10 +329,13 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file2",
+                    "type": "direct",
                     "data": {
-                        "page": "some-other-page",
-                        "file": "my-picture.png"
+                        "type": "file2",
+                        "data": {
+                            "page": "some-other-page",
+                            "file": "my-picture.png"
+                        }
                     }
                 },
                 "link": null,
@@ -336,11 +366,14 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file3",
+                    "type": "direct",
                     "data": {
-                        "site": "scp-wiki",
-                        "page": "some-other-page",
-                        "file": "my-picture.png"
+                        "type": "file3",
+                        "data": {
+                            "site": "scp-wiki",
+                            "page": "some-other-page",
+                            "file": "my-picture.png"
+                        }
                     }
                 },
                 "link": null,
@@ -371,11 +404,14 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file3",
+                    "type": "direct",
                     "data": {
-                        "site": "scp-wiki",
-                        "page": "some-other-page",
-                        "file": "my-picture.png"
+                        "type": "file3",
+                        "data": {
+                            "site": "scp-wiki",
+                            "page": "some-other-page",
+                            "file": "my-picture.png"
+                        }
                     }
                 },
                 "link": null,
@@ -395,9 +431,12 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file1",
+                    "type": "direct",
                     "data": {
-                        "file": "foo.gif"
+                        "type": "file1",
+                        "data": {
+                            "file": "foo.gif"
+                        }
                     }
                 },
                 "link": null,
@@ -423,9 +462,12 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file1",
+                    "type": "direct",
                     "data": {
-                        "file": "foo.gif"
+                        "type": "file1",
+                        "data": {
+                            "file": "foo.gif"
+                        }
                     }
                 },
                 "link": "#gif-sucks",
@@ -448,9 +490,12 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file1",
+                    "type": "direct",
                     "data": {
-                        "file": "foo.gif"
+                        "type": "file1",
+                        "data": {
+                            "file": "foo.gif"
+                        }
                     }
                 },
                 "link": {
@@ -477,9 +522,12 @@
             "element": "image",
             "data": {
                 "source": {
-                    "type": "file1",
+                    "type": "direct",
                     "data": {
-                        "file": "foo.gif"
+                        "type": "file1",
+                        "data": {
+                            "file": "foo.gif"
+                        }
                     }
                 },
                 "link": "https://example.com/",

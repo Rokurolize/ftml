@@ -104,10 +104,10 @@ fn consume_header_once<'r, 't>(
     {
         let mut candidate = parser.clone_with_rule(RULE_HEADER);
         if let Ok(footnote) = super::RULE_BLOCK.try_consume(&mut candidate)
-            && let Elements::Single(Element::Footnote) = footnote.item
+            && let Elements::Single(Element::Footnote(index)) = footnote.item
         {
             let mut literal = wikidot_literal_heading(heading_token.slice, elements);
-            literal.push(Element::Footnote);
+            literal.push(Element::Footnote(index));
             all_errors.extend(footnote.errors);
             parser.update(&candidate);
             return ok!(literal, all_errors);
@@ -132,10 +132,10 @@ fn consume_header_once<'r, 't>(
     {
         let mut candidate = parser.clone_with_rule(RULE_HEADER);
         if let Ok(footnote) = super::RULE_BLOCK.try_consume(&mut candidate)
-            && let Elements::Single(Element::Footnote) = footnote.item
+            && let Elements::Single(Element::Footnote(index)) = footnote.item
             && let Elements::Single(Element::Container(container)) = &mut elements
         {
-            container.elements_mut().push(Element::Footnote);
+            container.elements_mut().push(Element::Footnote(index));
             all_errors.extend(footnote.errors);
             parser.update(&candidate);
         }
@@ -172,7 +172,7 @@ fn wikidot_heading_content(elements: &[Element<'_>]) -> WikidotHeadingContent {
             Element::Anchor { elements, .. } | Element::Color { elements, .. } => {
                 wikidot_heading_content(elements)
             }
-            Element::Footnote => WikidotHeadingContent::FootnoteFirst,
+            Element::Footnote(_) => WikidotHeadingContent::FootnoteFirst,
             Element::LineBreak => WikidotHeadingContent::Empty,
             Element::Partial(partial) if partial.is_inline_format_control() => {
                 WikidotHeadingContent::Empty

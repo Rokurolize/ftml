@@ -21,56 +21,26 @@
 // A simple parser generation exclusively to extract [[include]] directives
 // within the wikitext. Other elements should be ignored and left as-is.
 
-// Wikidot's "include" rule has some strange logic:
-//
-// [[include]]s can have leading *and* trailing pipe separators,
-// for instance [[include page | a = 1 ]] or [[include page a = 1 | ]] (or both)
-// and there can be multiple pipes,
-// for instance [[include page || a = 1]] or [[include | | a = 1]]
-//
-// Additionally, each argument must be separated from each other with a pipe.
-// We encapsulate this logic by essentially doing
-// "(parameter ~ separator)* ~ (parameter ~ separator?)?
-// That is, all internal parameters need pipes inside, but the last does not,
-// and is optional should the sequence end in a pipe.
+// Wikidot requires spacing between the target and an argument tail. Once the
+// tail starts, each pipe ends the current segment even when the pipe appears
+// between quotes. Segment recovery and argument validation are intentionally
+// handled by the include parser so one inert segment cannot reject the block.
 
 // Top-level rule
 include = {
     SOI ~ // Because we slice from the start of an include block using regex
     "[[" ~ space? ~ ^"include" ~ space ~
-    page_ref ~ space? ~
-    stray_open_brackets? ~
-    (
-        spaced_empty_separator |
-        (
-            (separator ~ space?)? ~
-            (argument ~ space? ~ separator ~ space?)* ~
-            (argument ~ space? ~ separator?)?
-        )
-    ) ~
-    space? ~ include_end
+    page_ref ~
+    (space ~ stray_open_brackets? ~ argument_tail)? ~
+    include_end
 }
 
 include_end = _{
     "]]" ~ &(NEWLINE | EOI)
 }
 
-argument = {
-    identifier ~ space? ~
-    "=" ~ space? ~
-    value
-}
-
-spaced_empty_separator = {
-    "|" ~ horizontal_space ~ &include_end
-}
-
-horizontal_space = _{
-    (" " | "\t")+
-}
-
-separator = _{
-    "|" ~ (space? ~ "|")*
+argument_tail = {
+    (!include_end ~ ANY)*
 }
 
 // Wikidot tolerates a run of stray open brackets between the page reference and
@@ -80,11 +50,7 @@ separator = _{
 // open brackets are accepted, and only in this position, because that is the
 // shape the evidence covers.
 stray_open_brackets = _{
-    "["+ ~ space?
-}
-
-value = {
-    (!(include_end | "|") ~ ANY)*
+    !"[!--" ~ "["+ ~ space?
 }
 
 // Reference to a page, possibly not on this wiki
@@ -92,13 +58,11 @@ value = {
 page_ref = {
     (":" ~ site_name ~ ":")? ~ page_name
 }
-site_name = _{ (!(" " | "\n" | "\t" | "[" | "|" | "]" | ":") ~ ANY)+ }
-page_name = _{ (!(" " | "\n" | "\t" | "[" | "|" | "]") ~ ANY)+ }
+site_name = _{ (!(" " | "\n" | "\t" | "[" | "|" | "]" | ":" | "\"" | "'") ~ ANY)+ }
+page_name = _{ (!(" " | "\n" | "\t" | "[" | "|" | "]" | "\"" | "'") ~ ANY)+ }
 
 // Helpers
 
-identifier = { (ASCII_ALPHANUMERIC | "-" | "_" | variable_reference)+ }
-variable_reference = { "{$" ~ (ASCII_ALPHANUMERIC | "-" | "_")+ ~ "}" }
 comment = _{ "[!--" ~ (!("--]") ~ ANY)* ~ "--]" }
 space = _{ (" " | "\n" | "\t" | comment)+ }
 

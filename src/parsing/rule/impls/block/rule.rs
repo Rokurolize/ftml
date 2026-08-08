@@ -20,7 +20,10 @@
 
 use super::super::prelude::*;
 use super::mapping::{get_block_rule_with_name, get_block_rule_with_name_for_layout};
-use super::{BlockRule, blocks::BLOCK_HTML};
+use super::{
+    BlockRule,
+    blocks::{BLOCK_EMBED_VIDEO, BLOCK_HTML, BLOCK_SPAN},
+};
 use crate::settings::WikitextMode;
 
 pub const RULE_BLOCK: Rule = Rule {
@@ -46,7 +49,11 @@ pub const RULE_BLOCK_SKIP_NEWLINE: Rule = Rule {
 fn block_regular<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    parse_block(parser, false)
+    if wikidot_scored_span_residual_opener(parser) {
+        parse_wikidot_scored_span_residual(parser)
+    } else {
+        parse_block(parser, false)
+    }
 }
 
 fn block_star<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
@@ -93,6 +100,51 @@ fn block_skip<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
     }
 }
 
+fn wikidot_scored_span_residual_opener(parser: &Parser<'_, '_>) -> bool {
+    if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlock {
+        return false;
+    }
+    let start = parser.current().span.start;
+    parser
+        .full_text()
+        .inner()
+        .get(start..)
+        .and_then(|source| source.get(.."[[span_]]]".len()))
+        .is_some_and(|source| source.eq_ignore_ascii_case("[[span_]]]"))
+}
+
+#[inline(never)]
+fn parse_wikidot_scored_span_residual<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> ParseResult<'r, 't, Elements<'t>>
+where
+    'r: 't,
+{
+    parser.set_rule(RULE_BLOCK);
+    parser.get_optional_space()?;
+    let (name, in_head) = parser.get_wikidot_block_name_with_residual_opener()?;
+    let Some(name) = name.strip_suffix('_') else {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    };
+    if !name.eq_ignore_ascii_case("span") || in_head {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    parser.set_block(&BLOCK_SPAN);
+    parser.get_optional_space()?;
+
+    (BLOCK_SPAN.parse_fn)(parser, name, false, true, false).map(|parsed| {
+        parsed.map(|elements| {
+            let mut elements = match elements {
+                Elements::Multiple(elements) => elements,
+                Elements::Single(element) => vec![element],
+                Elements::None => Vec::new(),
+            };
+            elements.insert(1.min(elements.len()), text!("]"));
+            Elements::Multiple(elements)
+        })
+    })
+}
+
 fn wikidot_literal_css_module(elements: &Elements<'_>) -> bool {
     let Elements::Single(Element::Text(text)) = elements else {
         return false;
@@ -107,6 +159,9 @@ fn block_rule_enabled(parser: &Parser<'_, '_>, block_rule: &BlockRule) -> bool {
     // Preview callers disable hosted HTML execution, but the block still owns
     // its complete body so nested module syntax remains literal as Wikidot
     // renders it. `BLOCK_HTML::parse_fn` performs the escaped-literal branch.
+    if block_rule.name == BLOCK_EMBED_VIDEO.name {
+        return parser.settings().layout.legacy();
+    }
     block_rule.name != BLOCK_HTML.name
         || parser.settings().enable_html_blocks
         || parser.settings().layout.legacy()
@@ -137,7 +192,25 @@ where
         .is_some_and(|token| token.token == Token::Whitespace);
     parser.get_optional_space()?;
 
-    let (name, in_head) = parser.get_block_name(flag_star)?;
+    let residual_block_opener = parser.settings().layout.legacy()
+        && !flag_star
+        && parser
+            .full_text()
+            .inner()
+            .get(opener_start..)
+            .is_some_and(|source| {
+                source
+                    .get(.."[[embedvideo]]]".len())
+                    .is_some_and(|opener| opener.eq_ignore_ascii_case("[[embedvideo]]]"))
+                    || source
+                        .get(.."[[gallery]]]".len())
+                        .is_some_and(|opener| opener.eq_ignore_ascii_case("[[gallery]]]"))
+            });
+    let (name, in_head) = if residual_block_opener {
+        parser.get_wikidot_block_name_with_residual_opener()?
+    } else {
+        parser.get_block_name(flag_star)?
+    };
 
     let (name, flag_score) = match name.strip_suffix('_') {
         Some(name) => (name, true),
@@ -154,6 +227,19 @@ where
         None => return Err(parser.make_err(ParseErrorKind::NoSuchBlock)),
     };
     if !block_rule_enabled(parser, block) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    if parser.settings().layout.legacy()
+        && block.name == "block-embedvideo"
+        && spaced_name
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    if parser.settings().layout.legacy()
+        && !parser.discarding_hidden_body()
+        && block.name == "block-tab"
+        && !parser.accepts_partial_here(crate::tree::AcceptsPartial::Tab)
+    {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     if parser.settings().layout.legacy()
@@ -205,7 +291,6 @@ where
     }
 
     parser.get_optional_space()?;
-
     // Run the parse function until the end.
     //
     // This is responsible for parsing any arguments,
@@ -230,7 +315,12 @@ fn wikidot_block_has_physical_line_ownership(
 
     let needs_line_owner = matches!(
         block.name,
-        "block-code" | "block-math" | "block-module" | "block-bibliography" | "block-toc"
+        "block-code"
+            | "block-math"
+            | "block-module"
+            | "block-bibliography"
+            | "block-gallery"
+            | "block-toc"
     );
     if !needs_line_owner {
         return true;

@@ -21,7 +21,9 @@
 use super::mapping::get_module_rule_with_name;
 use super::prelude::*;
 use crate::parsing::rule::impls::block::parser::BlockBodyStart;
-use crate::tree::{AnchorTarget, AttributeMap, LinkLabel, LinkLocation, LinkType};
+use crate::tree::{
+    AnchorTarget, AttributeMap, LinkLabel, LinkLocation, LinkType, Module,
+};
 
 pub const BLOCK_MODULE: BlockRule = BlockRule {
     name: "block-module",
@@ -89,6 +91,14 @@ fn parse_fn<'r, 't>(
                     parser.current().span.start
                 };
                 return ok!(true; text!(&source[owner_start..owner_end]));
+            }
+            if has_body_end && body_start == BlockBodyStart::NextPhysicalLine {
+                let body = parser.get_body_text(&BLOCK_MODULE)?;
+                return ok!(false; Element::Module(Module::Runtime {
+                    name: cow!(subname),
+                    arguments: arguments.into_raw_vec(),
+                    body,
+                }));
             }
             if has_body_end {
                 let _ = parser.get_body_text(&BLOCK_MODULE)?;

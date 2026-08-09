@@ -40,6 +40,7 @@ mod input;
 mod link;
 mod list;
 mod math;
+mod module;
 mod style;
 mod table;
 mod tabs;
@@ -77,6 +78,7 @@ use self::input::{render_checkbox, render_radio_button};
 use self::link::{render_anchor, render_anchor_target, render_link};
 use self::list::render_list;
 use self::math::{render_equation_reference, render_math_block, render_math_inline};
+use self::module::render_module;
 use self::style::render_style;
 use self::table::render_table;
 use self::tabs::render_tabview;
@@ -149,7 +151,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
 
     match element {
         Element::Container(container) => render_container(ctx, container),
-        Element::Module(module) => ctx.handle().render_module(ctx.buffer(), module),
+        Element::Module(module) => render_module(ctx, module),
         Element::Text(text) => ctx.push_escaped(text),
         Element::Raw(text) => render_wikitext_raw(ctx, text),
         Element::Variable(name) => render_variable(ctx, name),

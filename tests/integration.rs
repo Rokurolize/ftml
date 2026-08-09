@@ -115,6 +115,9 @@ mod wikidot_inline_bibcite;
 #[path = "wikidot_line_ownership.rs"]
 mod wikidot_line_ownership;
 
+#[path = "wikidot_runtime_module_ownership.rs"]
+mod wikidot_runtime_module_ownership;
+
 #[path = "wikidot_math_blocks.rs"]
 mod wikidot_math_blocks;
 

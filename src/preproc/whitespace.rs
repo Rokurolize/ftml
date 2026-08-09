@@ -548,13 +548,9 @@ fn append_wikidot_block_head_tabs(output: &mut String, head: &str) {
 }
 
 fn wikidot_user_block_head(head: &str) -> bool {
-    let Some(mut field) = head.strip_prefix("[[") else {
+    let Some(field) = head.strip_prefix("[[") else {
         return false;
     };
-    field = field.trim_start_matches([' ', '\t']);
-    if let Some(rest) = field.strip_prefix('*') {
-        field = rest.trim_start_matches([' ', '\t']);
-    }
     let name_end = field
         .find(|character: char| character.is_ascii_whitespace() || character == ']')
         .unwrap_or(field.len());

@@ -29,7 +29,8 @@
 
 use super::TextContext;
 use crate::tree::{
-    CodeBlock, ContainerType, DefinitionListItem, Element, ListItem, PartialElement, Tab,
+    CodeBlock, ContainerType, DefinitionListItem, Element, ListItem, Module,
+    PartialElement, Tab,
 };
 
 pub fn render_elements(ctx: &mut TextContext, elements: &[Element]) {
@@ -96,8 +97,19 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
                 ctx.disable_invisible();
             }
         }
+        Element::Module(Module::Runtime { name, .. })
+            if ctx.settings().layout.legacy() =>
+        {
+            ctx.add_newline();
+            ctx.push_str("[[module ");
+            ctx.push_str(name);
+            ctx.push_str(
+                "]] No such module, please check available modules and fix this page.",
+            );
+            ctx.add_newline();
+        }
         Element::Module(_) => {
-            // We don't want to render modules at all
+            // We don't want to render application-owned modules at all.
         }
         Element::Text(text) | Element::Raw(text) | Element::Email(text) => {
             ctx.push_str(text);

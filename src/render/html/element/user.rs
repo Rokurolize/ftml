@@ -102,9 +102,8 @@ fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
                 .inner(|ctx| {
                     // TODO localization
                     ctx.html().em().contents(name);
+                    ctx.push_escaped(message_post);
                 });
-
-            ctx.push_escaped(message_post);
         }
     }
 }

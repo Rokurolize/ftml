@@ -70,6 +70,16 @@ pub enum Module<'t> {
         body: Cow<'t, str>,
     },
 
+    /// A body-bearing module whose execution belongs to the application layer.
+    ///
+    /// FTML preserves the authored name, ordered arguments, and body without
+    /// asserting that the runtime recognizes or authorizes the invocation.
+    Runtime {
+        name: Cow<'t, str>,
+        arguments: Vec<RawModuleArgument<'t>>,
+        body: Cow<'t, str>,
+    },
+
     /// Lists the structure of pages as connected by parenthood.
     ///
     /// Shows the hierarchy of parent relationships present on the given page.
@@ -107,6 +117,15 @@ impl Module<'_> {
                 attributes: attributes.to_owned(),
             },
             Module::ListPages { arguments, body } => Module::ListPages {
+                arguments: arguments.iter().map(RawModuleArgument::to_owned).collect(),
+                body: string_to_owned(body),
+            },
+            Module::Runtime {
+                name,
+                arguments,
+                body,
+            } => Module::Runtime {
+                name: string_to_owned(name),
                 arguments: arguments.iter().map(RawModuleArgument::to_owned).collect(),
                 body: string_to_owned(body),
             },

@@ -1,8 +1,8 @@
-use ftml::data::{PageInfo, ScoreValue};
+use ftml::data::{PageInfo, ScoreValue, UserInfo};
 use ftml::layout::Layout;
 use ftml::parsing::ParseError;
-use ftml::render::Render;
 use ftml::render::html::HtmlRender;
+use ftml::render::{Render, UserInfoResolver};
 use ftml::settings::{WikitextMode, WikitextSettings};
 use std::borrow::Cow;
 
@@ -34,6 +34,51 @@ fn render_wikidot(source: &str) -> String {
     let (html, errors) = render(source, Layout::Wikidot);
     assert!(errors.is_empty(), "{source}: {errors:#?}");
     html
+}
+
+struct MissingUser;
+
+impl UserInfoResolver for MissingUser {
+    fn user_info(&self, _name: &str) -> Option<UserInfo<'static>> {
+        None
+    }
+}
+
+fn render_wikidot_with_missing_user(source: &str) -> String {
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let mut source = source.to_owned();
+    ftml::preprocess_for_layout(&mut source, settings.layout);
+    let tokenization = ftml::tokenize(&source);
+    let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+
+    assert!(errors.is_empty(), "{errors:#?}");
+    HtmlRender
+        .render_with_user_info(&tree, &page_info, &settings, &MissingUser)
+        .body
+}
+
+#[test]
+fn wikidot_missing_user_suffix_remains_inside_the_error_span() {
+    assert_eq!(
+        render_wikidot_with_missing_user("[[user missing]]"),
+        concat!(
+            r#"<p><span class="error-inline"><em>missing</em>"#,
+            " does not match any existing user name</span></p>",
+        ),
+    );
+
+    // Sealed #1026 V7 observation `block-user-whitespace-name`: Wikidot
+    // normalizes this one authored tab to one parser-space and retains NBSP.
+    assert_eq!(
+        render_wikidot_with_missing_user("[[user v7ws=\"alpha\tbeta\u{00a0}gamma\"]]",),
+        concat!(
+            r#"<p><span class="error-inline"><em>v7ws=&quot;alpha beta"#,
+            "\u{00a0}",
+            r#"gamma&quot;</em>"#,
+            " does not match any existing user name</span></p>",
+        ),
+    );
 }
 
 #[test]

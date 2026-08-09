@@ -504,6 +504,14 @@ fn append_replaced_tabs(output: &mut String, input: &str, width: usize) {
 }
 
 fn append_wikidot_block_head_tabs(output: &mut String, head: &str) {
+    if wikidot_user_block_head(head) {
+        // Live #1026 V7 evidence preserves NBSP but collapses an authored tab
+        // in the positional user lookup key to one parser-space. It is not a
+        // getAttrs quoted value even when the key contains the bytes `="`.
+        append_replaced_tabs(output, head, 1);
+        return;
+    }
+
     let delimiters = head
         .match_indices("=\"")
         .map(|(index, _)| index)
@@ -537,6 +545,20 @@ fn append_wikidot_block_head_tabs(output: &mut String, head: &str) {
             output.push(ch);
         }
     }
+}
+
+fn wikidot_user_block_head(head: &str) -> bool {
+    let Some(mut field) = head.strip_prefix("[[") else {
+        return false;
+    };
+    field = field.trim_start_matches([' ', '\t']);
+    if let Some(rest) = field.strip_prefix('*') {
+        field = rest.trim_start_matches([' ', '\t']);
+    }
+    let name_end = field
+        .find(|character: char| character.is_ascii_whitespace() || character == ']')
+        .unwrap_or(field.len());
+    field[..name_end].eq_ignore_ascii_case("user")
 }
 
 fn replace_tabs(text: &mut String, buffer: &mut String, wikidot_compatibility: bool) {

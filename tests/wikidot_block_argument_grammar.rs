@@ -73,7 +73,9 @@ fn wikidot_missing_user_suffix_remains_inside_the_error_span() {
     assert_eq!(
         render_wikidot_with_missing_user("[[user v7ws=\"alpha\tbeta\u{00a0}gamma\"]]",),
         concat!(
-            r#"<p><span class="error-inline"><em>v7ws=&quot;alpha beta&nbsp;gamma&quot;</em>"#,
+            r#"<p><span class="error-inline"><em>v7ws=&quot;alpha beta"#,
+            "\u{00a0}",
+            r#"gamma&quot;</em>"#,
             " does not match any existing user name</span></p>",
         ),
     );

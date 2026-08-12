@@ -28,7 +28,7 @@ fn render(source: &str) -> String {
 #[test]
 fn definition_list_horizontal_rule_and_underscore_residuals_match_wikidot() {
     assert_eq!(render(":  : Value"), "<dl>\n<dd>Value</dd>\n</dl>\n");
-    assert_eq!(render("---- "), "<hr>");
+    assert_eq!(render("---- "), "<p>——</p>");
     assert_eq!(render("----\n----"), "<hr>\n<hr>");
     assert_eq!(
         render("+ A _\nB"),

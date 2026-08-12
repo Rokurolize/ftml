@@ -37,8 +37,14 @@ fn try_consume_fn<'r, 't>(
     if !physical_line_start && !parser.in_native_blockquote_line() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
-    let next = parser.look_ahead(0).map(|token| token.token);
-    if parser.settings().layout.legacy() && next == Some(Token::Whitespace) {
+    let next_token = parser.look_ahead(0);
+    let trailing_ascii_spaces = next_token.is_some_and(|token| {
+        token.token == Token::Whitespace
+            && !token.span.is_empty()
+            && source[token.span.clone()].iter().all(|byte| *byte == b' ')
+    });
+    let next = next_token.map(|token| token.token);
+    if parser.settings().layout.legacy() && trailing_ascii_spaces {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     let trailing_space = next == Some(Token::Whitespace);
@@ -86,6 +92,8 @@ mod tests {
         );
         assert_eq!(render_html("---- tail", Layout::Wikidot), "<p>—— tail</p>",);
         assert_eq!(render_html("----   ", Layout::Wikidot), "<p>——</p>");
+        assert_eq!(render_html("----\t", Layout::Wikidot), "<hr>");
+        assert_eq!(render_html("---- \t", Layout::Wikidot), "<hr>");
         assert_eq!(
             render_html("---- \nnext", Layout::Wikidot),
             "<p>——<br>\nnext</p>",

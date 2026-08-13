@@ -587,7 +587,9 @@ fn contains_wikidot_double_bracket_link(
         if !scan_budget.take() {
             return ScanResult::Exhausted;
         }
-        if is_wikidot_crossing_link_opener(&source[cursor..]) {
+        if source.is_char_boundary(cursor)
+            && is_wikidot_crossing_link_opener(&source[cursor..])
+        {
             return ScanResult::Found(true);
         }
         cursor += 1;
@@ -999,6 +1001,15 @@ mod tests {
                 expected,
                 "{condition:?}",
             );
+        }
+    }
+
+    #[test]
+    fn conditional_scan_preserves_utf8_branch_text() {
+        for branch in ["\u{041e}", "\u{2003}"] {
+            let source = format!("[[#if 1 | {branch} | hidden]]");
+
+            assert_eq!(resolve_wikidot_parser_functions(&source), branch);
         }
     }
 

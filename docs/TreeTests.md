@@ -12,14 +12,14 @@ Consider this structure:
 
 ```
 test/
-├── diff
-│   ├── alias
-│   ├── basic
-│   └── newlines
-└── underline
-    ├── basic
-    ├── empty
-    └── fail
+|-- diff
+|   |-- alias
+|   |-- basic
+|   `-- newlines
+`-- underline
+    |-- basic
+    |-- empty
+    `-- fail
 ```
 
 These directories define the following six test cases:
@@ -42,11 +42,13 @@ This way, if a particular test only cares about, say, the Wikidot-compatible HTM
 
 ### Wikidot Parity Fixtures
 
-`wikidot.html` is the parity assertion for Layout::Wikidot. If a test case contains `wikidot.html`, it is claiming that FTML should preserve the captured Wikidot-compatible rendering behavior for that input.
+`wikidot.html` is a derived local regression snapshot for `Layout::Wikidot`. It is not independent evidence of Wikidot behavior and must never be generated and then cited as its own parity evidence.
 
 `output.html` is different: it records Layout::Wikijump native rendering. A case can have both files when it needs to protect both surfaces.
 
-New parity claims should include a `wikidot.html` fixture addition or update unless the evidence belongs in a focused integration test under `tests/*_wikidot_syntax.rs`. Link parity issues and PRs to the concrete fixture page or test that proves the behavior.
+The independent oracle is raw, provenance-backed Wikidot reference JSONL. Promote a reference into `wikidot.html` only after the external comparator reports `match`, the checked-in binding records that result, and the parity report confirms the case is accounted for. See [ParityTests.md](ParityTests.md) for the exact workflow.
+
+Cases that require a site, page database, actor, permissions, URL arguments, query execution, import state, files, or a browser are caller-owned runtime cases. Keep them in the inventory, but verify them through the adjacent Wikijump verification toolkit rather than adding a misleading FTML snapshot.
 
 ### Execution
 
@@ -70,7 +72,13 @@ You can either create the outputs manually, or (especially for the syntax tree J
 
 ### Updating Tests
 
-In `/src/test/ast/mod.rs`, there is a constant called `UPDATE_TESTS`. Tests are only able to pass if this is set to `false`, but setting this value to `true` can be of use during development. When enabled, any output files which diff from the current expected values will instead **overwrite those files** with the new outputs.
+Set `FTML_UPDATE_TESTS=1` to update existing output files whose generated values differ:
+
+```sh
+FTML_UPDATE_TESTS=1 cargo test --lib test::ast::ast -- --exact --nocapture
+```
+
+Update mode deliberately fails after writing. It is useful when adding tests or accepting an intentional tree or renderer change, but its output is never Wikidot evidence. For a new parity snapshot, first create an empty `wikidot.html` only for a case whose external binding has `status: "match"`, run update mode, inspect the diff, and then run the ordinary offline gate from [ParityTests.md](ParityTests.md).
 
 This is intended to be used in cases where you are adding new tests (see above), or a breaking change has been made to the tree structure or HTML generation for one or more tests.
 
@@ -78,7 +86,7 @@ In such a case, temporarily enable the feature, run `cargo test -- ast`, and the
 
 If a change is causing a ton of tree elements to change or disappear, and you weren't expecting that, _that's probably a bug_! If a bunch of things that were list structures is now all text, that doesn't seem right! Carefully review outputs whenever you use this feature.
 
-__NOTE:__ If your test case is not meant to produce errors, then **do not include an `errors.json` file**. Since in such case errors should never be happening, even when `UPDATE_TESTS` is enabled, instead of writing a `errors.json` file it will instead crash. If errors are expected, add a blank `errors.json`, if they're not, then fix your parser or fix your test.
+__NOTE:__ If your test case is not meant to produce errors, then **do not include an `errors.json` file**. If errors appear during update mode without that file, the runner fails. If errors are expected, add a blank `errors.json`; otherwise fix the parser or the test.
 
 To assist developers when adding new JSON test output files, `UPDATE_TESTS` mode includes a handy feature. Whenever it is updating outputs and encounters an _empty_ (size 0) JSON file, it will instead interpret it as a valid empty structure of that type.
 

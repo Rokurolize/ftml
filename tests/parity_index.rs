@@ -14,7 +14,7 @@ fn wikidot_fixture_dirs(path: &Path, fixtures: &mut BTreeSet<String>) {
                     .strip_prefix(env!("CARGO_MANIFEST_DIR"))
                     .expect("fixture is inside the repository")
                     .to_string_lossy()
-                    .into_owned(),
+                    .replace(std::path::MAIN_SEPARATOR, "/"),
             );
         }
     }

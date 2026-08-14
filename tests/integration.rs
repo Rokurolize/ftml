@@ -64,6 +64,9 @@ mod wikidot_variable_ownership;
 #[path = "parser_functions_wikidot_syntax.rs"]
 mod parser_functions_wikidot_syntax;
 
+#[path = "parity_index.rs"]
+mod parity_index;
+
 #[path = "raw_url_delimiter.rs"]
 mod raw_url_delimiter;
 

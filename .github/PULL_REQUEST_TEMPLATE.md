@@ -12,12 +12,14 @@ Coverage-only PRs should stay small and independently mergeable. Do not claim th
 Required when "Wikidot parity fix" is selected:
 
 - Fixture issue or PR:
-- Fixture page(s):
-- Fixture file(s), such as a `find test -name "wikidot.html"` result or `tests/*_wikidot_syntax.rs`:
+- Raw Wikidot reference JSONL and case ID(s):
+- Comparator verdict:
+- Checked-in binding(s):
+- Derived `wikidot.html` snapshot(s) or focused regression test(s):
 - Concrete expected behavior:
 - Concrete previous or observed failure:
 
-Parity claims must link to real fixture evidence. A broad assertion that behavior is "more like Wikidot" is not enough.
+Parity claims must link to raw provenance-backed Wikidot evidence. A generated `wikidot.html` snapshot is not independent evidence, and a broad assertion that behavior is "more like Wikidot" is not enough. Caller-owned runtime cases must name the Wikijump or other caller verification lane.
 
 ## Parser Behavior Impact
 
@@ -29,6 +31,7 @@ If a coverage refactor changes parser or renderer behavior, include either a fix
 
 ## Validation
 
+- [ ] `cargo test --test integration parity_index`
 - [ ] `cargo fmt --all -- --check`
 - [ ] `cargo test --all-features --lib`
 - [ ] `cargo test --all-features --tests`

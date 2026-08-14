@@ -1,42 +1,141 @@
 [<< Return to the README](../README.md)
 
-## Wikidot Parity Test Reference
+## Wikidot Parity Evidence
 
-This document lists tree-test cases with `wikidot.html`. These files are the current canonical parity assertions for Wikidot layout rendering.
+Raw, provenance-backed Wikidot reference JSONL is the independent oracle. A tree-test `wikidot.html` file is derived FTML output for a local `Layout::Wikidot` regression; it must never be generated and then cited as evidence for itself.
 
-Update this list whenever a new `wikidot.html` fixture is added or removed. Keep descriptions short and tied to behavior visible in the fixture.
+The machine-readable stable corpus is `tests/fixtures/wikidot-parity/cases.jsonl`. It inventories every `test/**/input.ftml` and `tests/fixtures/**/*.ftml` source, its hash and origin, and one execution class:
 
-| Category | Test case | Parity assertion |
-|---|---|---|
-| anchor | `test/anchor/basic` | Anchor syntax renders the Wikidot-compatible anchor target shape. |
-| audio | `test/audio/basic` | Audio blocks render expected Wikidot audio markup. |
-| collapsible | `test/collapsible/wikidot-parity` | Collapsible blocks preserve folded state, labels, and button placement. |
-| date | `test/date/agohover` | Date rendering preserves Wikidot ago-hover behavior. |
-| date | `test/date/hover` | Date rendering preserves Wikidot hover text behavior. |
-| date | `test/date/matrix` | Date formatting matrix matches Wikidot layout expectations. |
-| date | `test/date/timezone` | Date rendering handles timezone inputs in Wikidot layout. |
-| definition-list | `test/definition-list/basic` | Definition list syntax emits Wikidot-compatible definition markup. |
-| div | `test/div/wikidot-nested-list-boundary` | Div blocks preserve nested explicit-list boundaries in Wikidot layout. |
-| file | `test/file/wikidot-attachment` | Evidenced current-page file syntax emits a direct Wikidot attachment anchor. |
-| image | `test/image/basic` | Image syntax, alignment, local-file paths, attributes, and linked images render in Wikidot layout. |
-| link | `test/link/canonical-inline` | Inline link forms preserve their distinct label parsing behavior. |
-| link | `test/link/single` | Single-bracket links render expected Wikidot href and label output. |
-| link | `test/link/triple` | Triple-bracket links render expected Wikidot page and URL output. |
-| list | `test/list/native-skipped-depth-empty-parent` | Native lists distinguish styled synthetic skipped-depth items from authored empty parents. |
-| list | `test/list/native-wikidot-structure` | Native list nesting, mixed markers, run boundaries, and literal orphan rows match Wikidot. |
-| misc | `test/misc/clear-float` | Clear-float syntax renders the Wikidot clear element. |
-| misc | `test/misc/dash-edges` | Dash conversion preserves Wikidot behavior at ambiguous dash boundaries. |
-| misc | `test/misc/email` | Email syntax renders Wikidot-compatible mail links. |
-| radio | `test/radio/basic` | Radio inputs render expected Wikidot form markup. |
-| raw | `test/raw/basic` | Raw inline or block content preserves Wikidot layout output. |
-| raw | `test/raw/block` | Raw block content preserves Wikidot layout output. |
-| table | `test/table/advanced` | Advanced table syntax renders Wikidot-compatible table structure. |
-| table | `test/table/simple` | Simple table syntax renders Wikidot-compatible table structure. |
-| user | `test/user/basic` | User references render expected Wikidot user markup. |
-| video | `test/video/basic` | Video blocks render expected Wikidot video markup. |
+- `saved-page-batch` and `page-preview-isolated` are context-free PagePreview cases that the FTML comparator can run.
+- `wikijump-runtime` cases need site, page, actor, permission, query, import, file, or browser state and remain owned by Wikijump or another caller.
+- `not-applicable` cases remain accounted for but are outside both PagePreview classes.
 
-Run this command to verify the current parity fixture set:
+The dated `tests/fixtures/wikidot-parity/references-YYYYMMDD-NN.jsonl` files preserve the raw Wikidot responses and capture provenance. `tests/fixtures/wikidot-parity/bindings.json` binds each preview-compatible case to its reference hashes and comparator result. These files replace the old manual fixture table as the parity authority.
+
+Ordinary FTML tests are offline. They validate inventory completeness, reference provenance and hashes, binding completeness, stable FTML output hashes, and local snapshot admission:
 
 ```sh
-find test -name "wikidot.html" -exec dirname {} \; | sort
+cargo test --test integration parity_index
 ```
+
+The bibliography fixture is the one current exception to exact FTML output hashing because production rendering generates a random `bibcite` suffix. Its deterministic tree snapshot remains tested, and the external DOM comparator canonicalizes only that suffix. Add a normalized hash before admitting another volatile case.
+
+## Discovery Backlog
+
+The stable inventory is the CI authority. To discover additional sources exercised only by Rust tests, record one full run and build a candidate inventory:
+
+```sh
+DISCOVERY_TMP=$(mktemp -d)
+FTML_SOURCE_RECORD_PATH="$DISCOVERY_TMP/sources.jsonl" \
+  cargo test --features test-source-recorder
+node ../wikijump/install/local/wikidot-verification/scripts/build-ftml-recorded-live-pages.mjs \
+  --records "$DISCOVERY_TMP/sources.jsonl" \
+  --cases-output "$DISCOVERY_TMP/cases.jsonl" \
+  --pages-output "$DISCOVERY_TMP/pages.jsonl" \
+  --slug-prefix ftml-parity-discovery
+```
+
+This output is a discovery backlog, not evidence or a stable manifest. It includes intermediate stages and sources from generated tests, so runs can differ. Inspect each record origin and promote a useful source by adding or reusing a stable fixture before capture.
+
+## Regenerate, Capture, Compare, Bind, Report, and Promote
+
+Run capture and comparison from the FTML repository with the adjacent Wikijump repository at `../wikijump`. Use a fresh temporary directory because the external tools create outputs without replacement.
+
+### 1. Regenerate the inventory
+
+```sh
+PARITY_TMP=$(mktemp -d)
+node ../wikijump/install/local/wikidot-verification/scripts/build-ftml-live-pages.mjs \
+  --ftml-root . \
+  --cases-output "$PARITY_TMP/cases.jsonl" \
+  --pages-output "$PARITY_TMP/pages.jsonl" \
+  --slug-prefix ftml-parity
+diff -u tests/fixtures/wikidot-parity/cases.jsonl "$PARITY_TMP/cases.jsonl"
+```
+
+Review every inventory and classification change. If it is intentional, update `tests/fixtures/wikidot-parity/cases.jsonl` from the generated file. `pages.jsonl` is only a required planning output from the adjacent generator; it is not FTML evidence.
+
+### 2. Capture raw Wikidot references
+
+Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 134-row selection:
+
+```sh
+mkdir "$PARITY_TMP/batches"
+jq -c 'select(.execution_class == "saved-page-batch" or .execution_class == "page-preview-isolated")' \
+  tests/fixtures/wikidot-parity/cases.jsonl | \
+  split -l 16 -d -a 2 --additional-suffix=.jsonl - "$PARITY_TMP/batches/cases-"
+test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 134
+```
+
+For each batch, choose a new dated no-replace output name and run:
+
+```sh
+BATCH="$PARITY_TMP/batches/cases-00.jsonl"
+REFERENCE="tests/fixtures/wikidot-parity/references-$(date -u +%Y%m%d)-01.jsonl"
+../wikijump/install/local/wikidot-verification/.venv/bin/python \
+  ../wikijump/install/local/wikidot-verification/scripts/capture_wikidot_preview_references.py \
+  --cases "$BATCH" \
+  --output "$REFERENCE" \
+  --site sandbox-for-codex \
+  --batch-size 4 \
+  --live-execution-class saved-page-batch \
+  --live-execution-class page-preview-isolated
+```
+
+Change `BATCH` and the `REFERENCE` numeric suffix for each run. Both `--live-execution-class` options are required; otherwise the capture command defaults to only `page-preview-isolated`. The command is anonymous, read-only, and external to normal FTML tests. Never replace or edit a raw reference file to make a comparison pass. If a fixture source changes, keep its old row and add a new capture; the offline tools validate the old row as history and select the one whose source hash is current.
+
+### 3. Compare FTML with each reference batch
+
+Build the streaming renderer once, then create one no-replace verdict per newly captured current-source reference batch:
+
+```sh
+cargo build --example render_html_jsonl
+node ../wikijump/install/local/wikidot-verification/scripts/run-syntax-differential.mjs \
+  --references "tests/fixtures/wikidot-parity/references-YYYYMMDD-NN.jsonl" \
+  --renderer target/debug/examples/render_html_jsonl \
+  --output "$PARITY_TMP/verdict-YYYYMMDD-NN.json"
+```
+
+Repeat the comparator for every new reference file whose rows match the current fixture source hashes. It compares parsed DOM, DOM signature, and visible text, retains raw HTML diagnostics for mismatches, and exits nonzero for a mismatch or runner error. Keep historical reference files as `--references` inputs in later steps, but do not pass verdicts for their obsolete source rows.
+
+### 4. Bind the complete result
+
+Pass every dated reference file and the corresponding verdict for every current-source reference, including mismatches, with repeated options. Do not pass verdicts for historical source rows. Write to a temporary file first:
+
+```sh
+python3 scripts/wikidot_parity.py bind \
+  --cases tests/fixtures/wikidot-parity/cases.jsonl \
+  --references tests/fixtures/wikidot-parity/references-YYYYMMDD-01.jsonl \
+  --references tests/fixtures/wikidot-parity/references-YYYYMMDD-02.jsonl \
+  --verdict "$PARITY_TMP/verdict-YYYYMMDD-01.json" \
+  --verdict "$PARITY_TMP/verdict-YYYYMMDD-02.json" \
+  > "$PARITY_TMP/bindings.json"
+```
+
+Add all remaining repeated arguments in the same form. The command rejects missing, duplicate, extra, hash-invalid, or tier-incompatible evidence. Review the result before updating `tests/fixtures/wikidot-parity/bindings.json`.
+
+### 5. Report the corpus
+
+```sh
+python3 scripts/wikidot_parity.py report \
+  --cases tests/fixtures/wikidot-parity/cases.jsonl \
+  --references tests/fixtures/wikidot-parity/references-YYYYMMDD-01.jsonl \
+  --references tests/fixtures/wikidot-parity/references-YYYYMMDD-02.jsonl \
+  --bindings tests/fixtures/wikidot-parity/bindings.json \
+  --repo .
+```
+
+Add every dated reference file as a repeated `--references` argument. The report names all mismatches, caller-owned runtime cases, not-applicable cases, missing references, missing bindings, and matched cases that still need a local snapshot. A nonzero mismatch count is an explicit result, not permission to hide or normalize the difference.
+
+### 6. Promote matched cases
+
+For a new case, add `test/<group>/<case>/wikidot.html` only when its current binding has `status: "match"`. Create the empty file, run the existing FTML update path, and inspect every generated byte:
+
+```sh
+touch test/<group>/<case>/wikidot.html
+FTML_UPDATE_TESTS=1 cargo test --lib test::ast::ast -- --exact --nocapture
+git diff --no-index -- /dev/null test/<group>/<case>/wikidot.html || true
+cargo test --test integration parity_index
+```
+
+Update mode deliberately fails after writing. It generates a derived local snapshot; by itself it is never evidence. Existing snapshots with recorded mismatch bindings remain visible historical regressions, but a new or changed snapshot must not be promoted from a mismatch.

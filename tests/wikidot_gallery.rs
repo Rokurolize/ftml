@@ -213,6 +213,31 @@ fn gallery_head_and_entry_data_remain_ordered_and_inert() {
 }
 
 #[test]
+fn wikidot_gallery_non_assignment_tail_recovers_as_empty_arguments() {
+    let source = "[[gallery stray]]\n[[/gallery]]";
+    let output = render(source);
+    let requirements = gallery_requirements(&output);
+    let [requirement] = requirements.as_slice() else {
+        panic!("expected one gallery requirement: {}", output.body);
+    };
+    assert_eq!(requirement.gallery().source(), "[[gallery stray]]");
+    assert!(requirement.gallery().arguments().is_empty());
+    assert!(matches!(
+        requirement.gallery().selection(),
+        GallerySelection::CurrentPageFiles
+    ));
+    assert!(output.body.contains("[[/gallery]]"), "{}", output.body);
+
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+    let tokenization = ftml::tokenize(source);
+    let (tree, _errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+    let output = HtmlRender.render(&tree, &page_info, &settings);
+    assert!(gallery_requirements(&output).is_empty(), "{}", output.body);
+    assert!(output.body.contains("[[gallery stray]]"), "{}", output.body);
+}
+
+#[test]
 fn opener_only_and_first_closer_recovery_preserve_residual_source() {
     let ordinary = render("[[gallery]]\nBODY\n[[/gallery]]\nAFTER");
     assert_eq!(gallery_requirements(&ordinary).len(), 1);

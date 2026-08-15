@@ -133,7 +133,7 @@ select_python() {
     "$python_executable" -I -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")'
   )
   if [[ "$version" != 3.13 ]]; then
-    printf 'FTML configuration CI uses Python 3.13, got %s at %s.\n' "$version" "$python_executable" >&2
+    printf 'FTML validation uses Python 3.13, got %s at %s.\n' "$version" "$python_executable" >&2
     return 1
   fi
 }

@@ -151,7 +151,12 @@ fn parse_list_block<'r, 't>(
         match element {
             // Ensure all elements of a list are only items, i.e. [[li]].
             Element::Partial(PartialElement::ListItem(list_item)) => {
-                push_literal_list_item(&mut items, &mut literal_elements, wikidot);
+                push_literal_list_item(
+                    &mut items,
+                    &mut literal_elements,
+                    wikidot,
+                    flag_score,
+                );
                 if !matches!(&list_item, ListItem::Elements { elements, .. } if elements.is_empty())
                 {
                     items.push(list_item);
@@ -160,7 +165,12 @@ fn parse_list_block<'r, 't>(
 
             // Or sub-lists.
             element @ Element::List { .. } => {
-                push_literal_list_item(&mut items, &mut literal_elements, wikidot);
+                push_literal_list_item(
+                    &mut items,
+                    &mut literal_elements,
+                    wikidot,
+                    flag_score,
+                );
                 if parser.settings().layout.legacy()
                     && let Some(ListItem::Elements { elements, .. }) = items.last_mut()
                 {
@@ -180,7 +190,7 @@ fn parse_list_block<'r, 't>(
             element => literal_elements.push(element),
         }
     }
-    push_literal_list_item(&mut items, &mut literal_elements, wikidot);
+    push_literal_list_item(&mut items, &mut literal_elements, wikidot, flag_score);
 
     if wikidot && flag_score {
         for item in &mut items {
@@ -229,6 +239,7 @@ fn push_literal_list_item<'t>(
     items: &mut Vec<ListItem<'t>>,
     elements: &mut Vec<Element<'t>>,
     append_to_last: bool,
+    outer_list_is_scored: bool,
 ) {
     while elements.last().is_some_and(Element::is_whitespace) {
         elements.pop();
@@ -245,7 +256,7 @@ fn push_literal_list_item<'t>(
     {
         item_elements.append(elements);
     } else {
-        if append_to_last {
+        if append_to_last && !outer_list_is_scored {
             wrap_wikidot_malformed_scored_items(elements);
         }
         let mut attributes = AttributeMap::new();
@@ -515,6 +526,50 @@ mod tests {
 
                 assert_eq!(*ltype, ListType::Bullet);
                 assert!(attributes.get().is_empty());
+                let [ListItem::Elements { elements, .. }] = items.as_slice() else {
+                    panic!("expected one nested list item, got {items:?}");
+                };
+                assert_eq!(element_text(elements), "Child");
+            },
+        );
+    }
+
+    #[test]
+    fn scored_list_keeps_nested_list_attached_after_literal_recovery() {
+        with_parse(
+            concat!(
+                "[[ul_]]\n",
+                "[[li_]]\n",
+                "Parent\n",
+                "[[/li]]\n",
+                "[[ul]]\n",
+                "[[li]]Child[[/li]]\n",
+                "[[/ul]]\n",
+                "[[/ul_]]",
+            ),
+            |tree, errors| {
+                assert!(!errors.is_empty());
+                let [Element::List { items, .. }] = tree.as_slice() else {
+                    panic!("expected one list, got {tree:?}");
+                };
+                let [ListItem::Elements { elements, .. }] = items.as_slice() else {
+                    panic!("expected one synthetic parent item, got {items:?}");
+                };
+                assert!(!elements.iter().any(|element| {
+                    matches!(
+                        element,
+                        Element::Container(container)
+                            if container.ctype() == ContainerType::Paragraph
+                    )
+                }));
+                let Some(items) = elements.iter().find_map(|element| match element {
+                    Element::List { items, .. } => Some(items),
+                    _ => None,
+                }) else {
+                    panic!(
+                        "expected nested list attached to parent item, got {elements:?}"
+                    );
+                };
                 let [ListItem::Elements { elements, .. }] = items.as_slice() else {
                     panic!("expected one nested list item, got {items:?}");
                 };

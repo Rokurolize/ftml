@@ -64,6 +64,11 @@ fn parse_fn<'r, 't>(
                 continue;
             }
             Token::LineBreak | Token::ParagraphBreak => {
+                let head = &parser.full_text().inner()[start..current.span.start];
+                if parser.settings().layout.legacy() && is_set_tags_head(head) {
+                    parser.step()?;
+                    continue;
+                }
                 return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
             }
             Token::InputEnd => return Err(parser.make_err(ParseErrorKind::EndOfInput)),
@@ -78,7 +83,7 @@ fn parse_fn<'r, 't>(
             return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
         }
 
-        let element = match parse_button_head(head) {
+        let element = match parse_button_head(head, parser.settings().layout.legacy()) {
             Some(ParsedButton::Active(button)) => Element::StandaloneButton(button),
             Some(ParsedButton::Unknown(action)) => unknown_button_error(action),
             Some(ParsedButton::MissingSetTagsText) => missing_set_tags_text_error(),
@@ -94,18 +99,23 @@ fn parse_fn<'r, 't>(
     }
 }
 
-fn parse_button_head(head: &str) -> Option<ParsedButton<'_>> {
+fn parse_button_head(head: &str, wikidot: bool) -> Option<ParsedButton<'_>> {
     let head = trim_wikidot_space(head);
     if head.is_empty() {
         return None;
     }
 
-    let action_end = head.find([' ', '\t']).unwrap_or(head.len());
+    let action_end = if wikidot {
+        head.find(is_wikidot_set_tags_separator)
+    } else {
+        head.find([' ', '\t'])
+    }
+    .unwrap_or(head.len());
     let action = &head[..action_end];
     let tail = trim_wikidot_space(&head[action_end..]);
 
     if action.eq_ignore_ascii_case("set-tags") {
-        return Some(parse_set_tags(tail));
+        return Some(parse_set_tags(tail, wikidot));
     }
 
     let mut arguments = parse_wikidot_attributes(tail);
@@ -146,20 +156,32 @@ fn parse_button_head(head: &str) -> Option<ParsedButton<'_>> {
     }))
 }
 
-fn parse_set_tags(mut tail: &str) -> ParsedButton<'_> {
+fn parse_set_tags(mut tail: &str, wikidot: bool) -> ParsedButton<'_> {
     let mut alterations = Vec::new();
     loop {
-        tail = trim_wikidot_space(tail);
-        let end = tail.find([' ', '\t']).unwrap_or(tail.len());
+        tail = if wikidot {
+            tail.trim_start_matches(is_wikidot_set_tags_separator)
+        } else {
+            trim_wikidot_space(tail)
+        };
+        let end = if wikidot {
+            tail.find(is_wikidot_set_tags_separator)
+        } else {
+            tail.find([' ', '\t'])
+        }
+        .unwrap_or(tail.len());
         let token = &tail[..end];
+        if wikidot && token.contains(['\'', '"', '=', '&', '<', '>']) {
+            break;
+        }
         let alteration = match token {
             "-*" => Some(TagAlteration::ClearVisible),
             "-_*" => Some(TagAlteration::ClearHidden),
             token if token.len() > 1 && token.starts_with('+') => {
-                Some(TagAlteration::Add(Cow::Borrowed(&token[1..])))
+                set_tags_value(token, wikidot).map(TagAlteration::Add)
             }
             token if token.len() > 1 && token.starts_with('-') => {
-                Some(TagAlteration::Remove(Cow::Borrowed(&token[1..])))
+                set_tags_value(token, wikidot).map(TagAlteration::Remove)
             }
             _ => None,
         };
@@ -183,6 +205,31 @@ fn parse_set_tags(mut tail: &str) -> ParsedButton<'_> {
         class,
         style,
     })
+}
+
+fn is_set_tags_head(head: &str) -> bool {
+    let head = trim_wikidot_space(head);
+    let action_end = head
+        .find(is_wikidot_set_tags_separator)
+        .unwrap_or(head.len());
+    head[..action_end].eq_ignore_ascii_case("set-tags")
+}
+
+fn is_wikidot_set_tags_separator(character: char) -> bool {
+    matches!(
+        character,
+        ' ' | '\t' | '\r' | '\n' | '\u{000b}' | '\u{000c}'
+    )
+}
+
+fn set_tags_value<'t>(token: &'t str, wikidot: bool) -> Option<Cow<'t, str>> {
+    let value = &token[1..];
+    if wikidot && value.contains('\0') {
+        let value = value.replace('\0', "");
+        (!value.is_empty()).then_some(Cow::Owned(value))
+    } else {
+        Some(Cow::Borrowed(value))
+    }
 }
 
 fn nonempty(value: Option<Cow<'_, str>>) -> Option<Cow<'_, str>> {

@@ -143,7 +143,9 @@ fn typed_descriptors_keep_ordered_tag_data_and_no_authored_script() {
         ])
     );
     assert!(output.body.contains("Change &amp; &lt;tags&gt;"));
-    assert!(!output.body.contains("onclick"));
+    assert!(output.body.contains(
+        "onclick=\"WIKIDOT.page.listeners.updateTagsByButton(event, &#39;-* +favorite +_book -_movie&#39;)\""
+    ));
     assert!(!output.body.contains("alert(1)"));
 
     let serialized = serde_json::to_value(requirement).expect("serializable requirement");
@@ -164,9 +166,10 @@ fn legacy_and_wikijump_layouts_emit_static_controls_with_typed_hooks() {
         .standalone_button_requirement()
         .unwrap()
         .id();
+    assert!(!legacy.body.contains(legacy_id));
     assert_eq!(
-        legacy.body.replace(legacy_id, "BUTTON_ID"),
-        r#"<p><a class="print-control" id="BUTTON_ID" href="javascript:;" style="color:red">Print</a></p>"#
+        legacy.body,
+        r#"<p><a class="print-control" href="javascript:;" onclick="WIKIDOT.page.listeners.printClick(event)" style="color:red">Print</a></p>"#
     );
 
     let wikijump = render(
@@ -180,6 +183,123 @@ fn legacy_and_wikijump_layouts_emit_static_controls_with_typed_hooks() {
     assert_eq!(
         wikijump.body.replace(wikijump_id, "BUTTON_ID"),
         r#"<p><button type="button" class="wj-standalone-button primary" id="BUTTON_ID">Edit</button></p>"#
+    );
+}
+
+#[test]
+fn wikidot_layout_emits_live_standalone_button_handlers() {
+    for (source, handler) in [
+        ("[[button edit]]", "WIKIDOT.page.listeners.editClick(event)"),
+        (
+            "[[button history]]",
+            "WIKIDOT.page.listeners.historyClick(event)",
+        ),
+        (
+            "[[button source]]",
+            "WIKIDOT.page.listeners.viewSourceClick(event)",
+        ),
+        (
+            "[[button print]]",
+            "WIKIDOT.page.listeners.printClick(event)",
+        ),
+        (
+            r#"[[button set-tags +probe text="Set"]]"#,
+            "WIKIDOT.page.listeners.updateTagsByButton(event, &#39;+probe&#39;)",
+        ),
+    ] {
+        let output = render(source, Layout::Wikidot);
+        assert!(
+            output.body.contains(&format!(r#" onclick="{handler}""#)),
+            "{source:?}: {}",
+            output.body
+        );
+        assert!(!output.body.contains(" id="), "{source:?}: {}", output.body);
+    }
+}
+
+#[test]
+fn wikidot_set_tags_handler_escapes_authored_javascript_string_data() {
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let tree = SyntaxTree {
+        elements: vec![Element::StandaloneButton(StandaloneButton {
+            action: StandaloneButtonAction::SetTags(vec![
+                TagAlteration::Add(Cow::Borrowed("quote'")),
+                TagAlteration::Add(Cow::Borrowed("slash\\")),
+                TagAlteration::Add(Cow::Borrowed("line\u{2028}break")),
+            ]),
+            label: Cow::Borrowed("Set"),
+            class: None,
+            style: None,
+        })],
+        ..SyntaxTree::default()
+    };
+    let output = HtmlRender.render(&tree, &page_info, &settings);
+    assert!(output.body.contains(
+        r#"onclick="WIKIDOT.page.listeners.updateTagsByButton(event, &#39;+quote\x27 +slash\\ +line\u2028break&#39;)""#
+    ));
+}
+
+#[test]
+fn wikidot_set_tags_rejects_apostrophe_tag_without_changing_wikijump() {
+    let source = r#"[[button set-tags +quote' text="Set"]]"#;
+    assert_eq!(
+        render(source, Layout::Wikidot).body,
+        r#"<div class="error-block">You need to set text for set-tags button.</div>"#
+    );
+
+    let wikijump = render(source, Layout::Wikijump);
+    assert!(wikijump.body.contains(">Set</button>"), "{}", wikijump.body);
+    assert_eq!(
+        wikijump.resource_requirements[0]
+            .standalone_button_requirement()
+            .unwrap()
+            .action(),
+        &StandaloneButtonAction::SetTags(vec![TagAlteration::Add(Cow::Borrowed(
+            "quote'"
+        ))])
+    );
+}
+
+#[test]
+fn wikidot_set_tags_matches_live_delimiter_and_separator_boundaries() {
+    let error =
+        r#"<div class="error-block">You need to set text for set-tags button.</div>"#;
+    for source in [
+        r#"[[button set-tags +quote" text="Set"]]"#,
+        r#"[[button set-tags +a=b text="Set"]]"#,
+        r#"[[button set-tags +a&b text="Set"]]"#,
+        r#"[[button set-tags +a<b text="Set"]]"#,
+        r#"[[button set-tags +a>b text="Set"]]"#,
+    ] {
+        assert_eq!(render(source, Layout::Wikidot).body, error, "{source:?}");
+    }
+
+    for (source, alterations) in [
+        ("[[button set-tags +a\u{000b}+b text=\"Set\"]]", "+a +b"),
+        ("[[button set-tags +a\u{000c}+b text=\"Set\"]]", "+a +b"),
+        ("[[button set-tags +a\ntext=\"Set\"]]", "+a"),
+        ("[[button set-tags +a\rtext=\"Set\"]]", "+a"),
+        ("[[button set-tags +a\0b text=\"Set\"]]", "+ab"),
+        (
+            "[[button set-tags +a.b:c/d@e#f+g*h +\u{65e5}\u{672c}\u{8a9e} text=\"Set\"]]",
+            "+a.b:c/d@e#f+g*h +\u{65e5}\u{672c}\u{8a9e}",
+        ),
+    ] {
+        let output = render(source, Layout::Wikidot);
+        assert!(
+            output.body.contains(&format!(
+                "updateTagsByButton(event, &#39;{alterations}&#39;)"
+            )),
+            "{source:?}: {}",
+            output.body
+        );
+    }
+
+    assert!(
+        render(r#"[[button set-tags +a=b text="Set"]]"#, Layout::Wikijump)
+            .body
+            .contains(">Set</button>")
     );
 }
 
@@ -198,9 +318,10 @@ fn malformed_and_unsupported_forms_preserve_exact_residual_text() {
         .standalone_button_requirement()
         .unwrap()
         .id();
+    assert!(!trailing.body.contains(trailing_id));
     assert_eq!(
-        trailing.body.replace(trailing_id, "BUTTON_ID"),
-        r#"<p><a class="wiki-standalone-button" id="BUTTON_ID" href="javascript:;">edit</a>]</p>"#
+        trailing.body,
+        r#"<p><a class="wiki-standalone-button" href="javascript:;" onclick="WIKIDOT.page.listeners.editClick(event)">edit</a>]</p>"#
     );
     assert_eq!(
         render(r#"[[button unknown text="X"]]"#, Layout::Wikidot).body,

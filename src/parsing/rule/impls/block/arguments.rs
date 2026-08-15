@@ -174,6 +174,18 @@ impl<'t> Arguments<'t> {
         self.inner.remove(&key)
     }
 
+    #[must_use = "the normalized Wikidot class value must be used"]
+    pub(crate) fn take_normalized_wikidot_class(&mut self) -> Option<Cow<'t, str>> {
+        let key = ArgumentKey {
+            value: "class",
+            case_sensitive: true,
+        };
+        self.bare.remove(&key);
+        self.inner
+            .remove(&key)
+            .map(|value| normalize_wikidot_html_attribute_value(&value))
+    }
+
     pub fn get_with_bare(&mut self, key: &'t str) -> Option<(Cow<'t, str>, bool)> {
         let key = self.key(key);
         let bare = self.bare.remove(&key);

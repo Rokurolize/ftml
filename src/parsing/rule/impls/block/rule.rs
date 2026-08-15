@@ -315,12 +315,7 @@ fn wikidot_block_has_physical_line_ownership(
 
     let needs_line_owner = matches!(
         block.name,
-        "block-code"
-            | "block-math"
-            | "block-module"
-            | "block-bibliography"
-            | "block-gallery"
-            | "block-toc"
+        "block-code" | "block-math" | "block-module" | "block-bibliography" | "block-toc"
     );
     if !needs_line_owner {
         return true;
@@ -332,11 +327,5 @@ fn wikidot_block_has_physical_line_ownership(
         .map_or(0, |index| index + 1);
     let prefix = &source[line_start..opener_start];
 
-    if block.name == "block-module" {
-        prefix.is_empty()
-    } else {
-        prefix
-            .bytes()
-            .all(|byte| matches!(byte, b' ' | b'\t' | b'\0'))
-    }
+    prefix.is_empty()
 }

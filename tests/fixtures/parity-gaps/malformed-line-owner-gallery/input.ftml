@@ -1,0 +1,19 @@
+LINE
+[[gallery]]
+: https://example.com/line.png
+[[/gallery]]
+
+SPACE
+ [[gallery]]
+: https://example.com/space.png
+[[/gallery]]
+
+TAB
+	[[gallery]]
+: https://example.com/tab.png
+[[/gallery]]
+
+TEXT
+X[[gallery]]
+: https://example.com/text.png
+[[/gallery]]

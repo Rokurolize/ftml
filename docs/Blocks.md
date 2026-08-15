@@ -74,7 +74,9 @@ See [Modules](Modules.md) for information on each module currently implemented.
 
 ## List of Blocks
 
-A list of all blocks and their attributes is available at [`conf/blocks.toml`](../conf/blocks.toml) (with an explanation of the format in [`conf/blocks.schema.toml`](../conf/blocks.schema.toml). Our continuous integration system enforces that it is always up-to-date.
+A list of all blocks and their attributes is available at [`conf/blocks.toml`](../conf/blocks.toml) (with an explanation of the format in [`conf/blocks.schema.toml`](../conf/blocks.schema.toml). The local configuration check enforces that it is up to date.
+
+In `Layout::Wikidot`, `bibliography`, `code`, `gallery`, `math`, `module`, and `toc` own a physical line only when their opener starts at column zero. A space, tab, or text prefix keeps the syntax literal. `Layout::Wikijump` retains its whitespace-prefixed behavior.
 
 Alternatively you may look here for a formatted list: (though it may not be updated as consistently)
 

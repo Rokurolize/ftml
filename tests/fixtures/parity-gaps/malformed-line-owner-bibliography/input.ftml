@@ -1,0 +1,19 @@
+LINE
+[[bibliography]]
+LINE_BIB
+[[/bibliography]]
+
+SPACE
+ [[bibliography]]
+SPACE_BIB
+[[/bibliography]]
+
+TAB
+	[[bibliography]]
+TAB_BIB
+[[/bibliography]]
+
+TEXT
+X[[bibliography]]
+TEXT_BIB
+[[/bibliography]]

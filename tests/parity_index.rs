@@ -303,7 +303,7 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
     });
     assert_eq!(
         execution_counts,
-        [103, 108, 28, 1],
+        [103, 114, 28, 1],
         "campaign execution counts changed; evidence and classification need intentional review"
     );
     let binding_counts = manifest
@@ -318,7 +318,7 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
         });
     assert_eq!(
         binding_counts,
-        [201, 10],
+        [206, 11],
         "campaign binding counts changed; evidence and classification need intentional review"
     );
 
@@ -553,12 +553,10 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
             id
         );
         // ponytail: production Random makes these generated IDs volatile; functional DOM and text checks remain bound above.
-        if ![
-            "test--misc--bibliography",
-            "tests--fixtures--parity-gaps--embedvideo",
-            "tests--fixtures--parity-gaps--gallery",
-        ]
-        .contains(&id)
+        let source = case.source.to_ascii_lowercase();
+        if !["[[bibliography", "[[embedvideo", "[[gallery"]
+            .iter()
+            .any(|marker| source.contains(marker))
         {
             assert_eq!(
                 binding.ftml_html_sha256,

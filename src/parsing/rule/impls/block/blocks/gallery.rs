@@ -49,6 +49,7 @@ fn parse_fn<'r, 't>(
         source,
         opener_start,
         parser.in_native_blockquote_line(),
+        parser.settings().layout.legacy(),
     ) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
@@ -134,14 +135,21 @@ fn range_has_non_authored(
             })
 }
 
-fn gallery_owns_physical_line(source: &str, opener_start: usize, quoted: bool) -> bool {
+fn gallery_owns_physical_line(
+    source: &str,
+    opener_start: usize,
+    quoted: bool,
+    wikidot: bool,
+) -> bool {
     let line_start = source[..opener_start]
         .rfind(['\n', '\r'])
         .map_or(0, |newline| newline + 1);
     let prefix = &source[line_start..opener_start];
-    if prefix
-        .bytes()
-        .all(|byte| matches!(byte, b' ' | b'\t' | b'\0'))
+    if prefix.is_empty()
+        || !wikidot
+            && prefix
+                .bytes()
+                .all(|byte| matches!(byte, b' ' | b'\t' | b'\0'))
     {
         return true;
     }

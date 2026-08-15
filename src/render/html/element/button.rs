@@ -11,7 +11,10 @@
  */
 
 use super::prelude::*;
-use crate::tree::{StandaloneButton, is_safe_standalone_button_style};
+use crate::tree::{
+    StandaloneButton, StandaloneButtonAction, TagAlteration,
+    is_safe_standalone_button_style,
+};
 
 pub fn render_standalone_button(ctx: &mut HtmlContext, button: &StandaloneButton<'_>) {
     let id = ctx.random().generate_standalone_button_id();
@@ -19,11 +22,12 @@ pub fn render_standalone_button(ctx: &mut HtmlContext, button: &StandaloneButton
 
     if ctx.layout().legacy() {
         let class = button.class.as_deref().unwrap_or("wiki-standalone-button");
+        let onclick = wikidot_onclick(&button.action);
         let mut anchor = ctx.html().a();
         anchor.attr(attr!(
             "class" => class,
-            "id" => &id,
             "href" => "javascript:;",
+            "onclick" => &onclick,
         ));
         if let Some(style) = &button.style
             && is_safe_standalone_button_style(style)
@@ -50,4 +54,52 @@ pub fn render_standalone_button(ctx: &mut HtmlContext, button: &StandaloneButton
         control.attr(attr!("style" => style));
     }
     control.contents(&button.label);
+}
+
+fn wikidot_onclick(action: &StandaloneButtonAction<'_>) -> String {
+    match action {
+        StandaloneButtonAction::Edit => {
+            "WIKIDOT.page.listeners.editClick(event)".to_owned()
+        }
+        StandaloneButtonAction::History => {
+            "WIKIDOT.page.listeners.historyClick(event)".to_owned()
+        }
+        StandaloneButtonAction::Source => {
+            "WIKIDOT.page.listeners.viewSourceClick(event)".to_owned()
+        }
+        StandaloneButtonAction::Print => {
+            "WIKIDOT.page.listeners.printClick(event)".to_owned()
+        }
+        StandaloneButtonAction::SetTags(alterations) => {
+            let alterations = alterations
+                .iter()
+                .map(|alteration| match alteration {
+                    TagAlteration::Add(tag) => {
+                        format!("+{}", escape_javascript_string(tag))
+                    }
+                    TagAlteration::Remove(tag) => {
+                        format!("-{}", escape_javascript_string(tag))
+                    }
+                    TagAlteration::ClearVisible => "-*".to_owned(),
+                    TagAlteration::ClearHidden => "-_*".to_owned(),
+                })
+                .collect::<Vec<_>>()
+                .join(" ");
+            format!("WIKIDOT.page.listeners.updateTagsByButton(event, '{alterations}')")
+        }
+    }
+}
+
+fn escape_javascript_string(value: &str) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    for character in value.chars() {
+        match character {
+            '\\' => escaped.push_str("\\\\"),
+            '\'' => escaped.push_str("\\x27"),
+            '\u{2028}' => escaped.push_str("\\u2028"),
+            '\u{2029}' => escaped.push_str("\\u2029"),
+            character => escaped.push(character),
+        }
+    }
+    escaped
 }

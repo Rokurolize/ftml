@@ -24,7 +24,9 @@ use super::{
     BlockRule,
     blocks::{BLOCK_EMBED_VIDEO, BLOCK_HTML, BLOCK_SPAN},
 };
+use crate::parsing::inline_scope::WIKIDOT_SCORE_SPAN_UNWRAPPED_ATTRIBUTE;
 use crate::settings::WikitextMode;
+use crate::tree::PartialElement;
 
 pub const RULE_BLOCK: Rule = Rule {
     name: "block",
@@ -139,6 +141,13 @@ where
                 Elements::Single(element) => vec![element],
                 Elements::None => Vec::new(),
             };
+            if let Some(Element::Partial(PartialElement::InlineSpanOpen(attributes))) =
+                elements.first_mut()
+            {
+                // Wikidot gives this malformed root opener the same unwrapped
+                // paragraph ownership as a scored span starting on its own line.
+                attributes.insert(WIKIDOT_SCORE_SPAN_UNWRAPPED_ATTRIBUTE, cow!(""));
+            }
             elements.insert(1.min(elements.len()), text!("]"));
             Elements::Multiple(elements)
         })

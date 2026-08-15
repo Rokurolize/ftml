@@ -5,6 +5,10 @@ use ftml::settings::{WikitextMode, WikitextSettings};
 use std::borrow::Cow;
 
 fn render(source: &str) -> String {
+    render_with_layout(source, Layout::Wikidot)
+}
+
+fn render_with_layout(source: &str, layout: Layout) -> String {
     let page_info = PageInfo {
         page: Cow::Borrowed("span-attributes"),
         category: None,
@@ -15,12 +19,28 @@ fn render(source: &str) -> String {
         tags: Vec::new(),
         language: Cow::Borrowed("en"),
     };
-    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
     let mut source = source.to_owned();
     ftml::preprocess_for_layout(&mut source, settings.layout);
     let tokenization = ftml::tokenize(&source);
     let (tree, _errors) = ftml::parse(&tokenization, &page_info, &settings).into();
     HtmlRender.render(&tree, &page_info, &settings).body
+}
+
+#[test]
+fn wikidot_scored_span_residual_opener_owns_the_root_paragraph() {
+    let source = "[[span_]]]X[[/span]]";
+
+    assert_eq!(render(source), "<span>]X</span>");
+    assert_eq!(render("[[span]]X[[/span]]"), "<p><span>X</span></p>",);
+    assert_eq!(
+        render("[[span_]]X[[/span_]]"),
+        "<p>[[span_]]X[[/span_]]</p>",
+    );
+    assert_eq!(
+        render_with_layout(source, Layout::Wikijump),
+        "<p>[[span_]]]X[[/span]]</p>",
+    );
 }
 
 #[test]

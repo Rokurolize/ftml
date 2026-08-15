@@ -12,7 +12,7 @@ The machine-readable stable corpus is `tests/fixtures/wikidot-parity/cases.jsonl
 
 The dated `tests/fixtures/wikidot-parity/references-YYYYMMDD-NN.jsonl` files preserve the raw Wikidot responses and capture provenance. `tests/fixtures/wikidot-parity/bindings.json` binds each preview-compatible case to its reference hashes and comparator result. These files replace the old manual fixture table as the parity authority.
 
-The current stable inventory has 484 cases: 195 saved-page-batch cases, 257 page-preview-isolated cases, 31 caller-runtime cases, and 1 not-applicable case. The 452 PagePreview-compatible cases have 452 bindings: 434 matches and 18 classified mismatches. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
+The current stable inventory has 500 cases: 196 saved-page-batch cases, 272 page-preview-isolated cases, 31 caller-runtime cases, and 1 not-applicable case. The 468 PagePreview-compatible cases have 468 bindings: 450 matches and 18 classified mismatches. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
 
 Three reviewed lexical fixtures override the adjacent inventory generator's conservative runtime regexes: a plain email address uses deterministic Wikidot email obfuscation, a `mailto:` autolink is context-free, and a triple link with an external URL needs no page resolver. `tests/fixtures/wikidot-parity/classification-overrides.json` owns these decisions by exact fixture path and source hash. A source change invalidates its override instead of weakening the default runtime classification. Their exact inventory rows use the `reviewed-context-free-email-obfuscation`, `reviewed-context-free-mailto`, and `reviewed-context-free-external-triple-link` reasons and run as isolated PagePreview cases.
 
@@ -64,14 +64,14 @@ Review every inventory and classification change. If it is intentional, update `
 
 ### 2. Capture raw Wikidot references
 
-Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 452-row selection:
+Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 468-row selection:
 
 ```sh
 mkdir "$PARITY_TMP/batches"
 jq -c 'select(.execution_class == "saved-page-batch" or .execution_class == "page-preview-isolated")' \
   tests/fixtures/wikidot-parity/cases.jsonl | \
   split -l 16 -d -a 2 --additional-suffix=.jsonl - "$PARITY_TMP/batches/cases-"
-test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 452
+test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 468
 ```
 
 For each batch, choose a new dated no-replace output name and run:
@@ -191,6 +191,8 @@ Reference batch `references-20260815-34.jsonl` freezes 16 anonymous, non-mutatin
 Reference batch `references-20260815-36.jsonl` freezes 10 anonymous, non-mutating PagePreview observations for advanced-table closer selection, residual closers, casing, malformed names, and heading, quote, and list ownership. Nine cases match Wikidot across DOM tree, DOM signature, and visible text and have reviewed local snapshots. In `table-residual-hcell-closer`, PagePreview's standard leading root `\n\n` is merged into the residual text node; DOM signature and visible text match. Issue #537 reviewed this as `comparison-normalization`, not FTML behavior, so that row remains a visible classified mismatch and has no snapshot.
 
 Reference batches `references-20260815-37.jsonl` and `references-20260815-38.jsonl` freeze 17 anonymous, non-mutating PagePreview observations for the remaining context-free automatic-link and single-link recovery branches. The witnesses cover paired wrapper removal, terminal-period splitting, bare `www.` rejection, single-link target and label comment elision, empty and invalid target dispositions, empty-label and end-of-input recovery, residual closers, raw, span, footnote, and bibliography ownership, and case-sensitive and security-sensitive scheme handling. All 17 match Wikidot across DOM tree, DOM signature, and visible text on FTML engine commit `81d60e5db932b83c5101442e4534bf5ef13212f7`.
+
+Reference batch `references-20260815-39.jsonl` freezes 16 anonymous, non-mutating PagePreview observations for heading content and recovery. The witnesses cover empty TOC and no-TOC headings, comment, raw, inline-format, span, Color, footnote-first and next-line footnote ownership, adjacent heading retries, nested line ownership, and the trailing-underscore guard. All 16 match Wikidot across DOM tree, DOM signature, and visible text on FTML engine commit `926303b2931c4420c1ed3557399f74cc4375ef67`.
 
 ### 6. Promote matched cases
 

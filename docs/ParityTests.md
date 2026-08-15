@@ -12,7 +12,7 @@ The machine-readable stable corpus is `tests/fixtures/wikidot-parity/cases.jsonl
 
 The dated `tests/fixtures/wikidot-parity/references-YYYYMMDD-NN.jsonl` files preserve the raw Wikidot responses and capture provenance. `tests/fixtures/wikidot-parity/bindings.json` binds each preview-compatible case to its reference hashes and comparator result. These files replace the old manual fixture table as the parity authority.
 
-The current stable inventory has 335 cases: 128 saved-page-batch cases, 176 page-preview-isolated cases, 30 caller-runtime cases, and 1 not-applicable case. The 304 PagePreview-compatible cases have 304 bindings: 290 matches and 14 visible mismatches. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
+The current stable inventory has 412 cases: 158 saved-page-batch cases, 222 page-preview-isolated cases, 31 caller-runtime cases, and 1 not-applicable case. The 380 PagePreview-compatible cases have 380 bindings: 363 matches and 17 classified mismatches. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
 
 Each mismatch has one disposition: `intentional-security-divergence` means a frozen output difference that FTML deliberately preserves to enforce a security property; `caller-runtime` means a frozen output difference whose missing inputs belong to the caller runtime rather than FTML; `comparison-normalization` means a frozen raw-DOM difference with no demonstrated functional behavior difference; and `unresolved` remains allowed only for an active functional investigation. A classified mismatch remains visible as `status: "mismatch"` and does not become a match.
 
@@ -61,14 +61,14 @@ Review every inventory and classification change. If it is intentional, update `
 
 ### 2. Capture raw Wikidot references
 
-Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 304-row selection:
+Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 380-row selection:
 
 ```sh
 mkdir "$PARITY_TMP/batches"
 jq -c 'select(.execution_class == "saved-page-batch" or .execution_class == "page-preview-isolated")' \
   tests/fixtures/wikidot-parity/cases.jsonl | \
   split -l 16 -d -a 2 --additional-suffix=.jsonl - "$PARITY_TMP/batches/cases-"
-test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 304
+test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 380
 ```
 
 For each batch, choose a new dated no-replace output name and run:
@@ -174,6 +174,10 @@ Reference batch `references-20260815-25.jsonl` adds the security-sensitive inval
 Reference batches `references-20260815-26.jsonl` and `references-20260815-27.jsonl` freeze 25 button and date sources that were either missing live evidence for local regressions or added for the token boundaries in issue #521. The fixed Wikidot parser rejects quote, equals, ampersand, entity, and angle-bracket artifacts; treats ASCII tab, carriage return, line feed, vertical tab, and form feed as separators; removes NUL; and retains the observed broad punctuation and Unicode acceptance. Twenty-four cases match all three comparison surfaces. The live-accepted backslash case remains one visible `intentional-security-divergence`: FTML JavaScript-string escapes the backslash so authored tag data cannot change handler execution, while DOM signature and visible text still match.
 
 Batch `references-20260815-27.jsonl` also exposed issue #522. For `[[date 0 format="%Y"]]`, Wikidot records `format_%25Y` in the class but renders the default `01 Jan 1970 00:00` text rather than `1970`. `Layout::Wikidot` now matches that behavior, while `Layout::Wikijump` retains explicit-format rendering.
+
+Reference batches `references-20260815-28.jsonl` through `references-20260815-32.jsonl` freeze 76 anonymous PagePreview observations from a 77-source interaction set. The sources are grouped by shared parser branch rather than a Cartesian product: 8 lexical and malformed-block recovery cases, 12 quote-ownership cases, 9 native-list-ownership cases, 16 inline-delimiter cases, 16 math-boundary cases, and 16 table-ownership cases. The remaining `interaction-triple-link-span-close` source is inventoried as caller runtime, so all 77 remain accounted for.
+
+These batches exposed three FTML defects. Issue #527 removed the functional trailing line break after a code block at the end of a footnote; its remaining root formatting whitespace differs only in the raw DOM, while DOM signature and visible text match, so the binding is `comparison-normalization`. Issue #528 made a malformed scored span opener with a residual `]` use Wikidot's root ownership. Issue #529 made a residual gallery opener bracket and the following line share Wikidot's paragraph ownership. The embedvideo residual-opener row remains a `caller-runtime` mismatch under issue #506 because provider matching belongs to the caller, and the gallery residual-opener row remains a `caller-runtime` mismatch under issue #507 because current-page file selection belongs to the caller.
 
 ### 6. Promote matched cases
 

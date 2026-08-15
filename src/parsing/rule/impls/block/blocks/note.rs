@@ -11,6 +11,7 @@
  */
 
 use super::prelude::*;
+use crate::parsing::rule::impls::block::BlockBodyStart;
 use crate::tree::AttributeMap;
 
 pub const BLOCK_NOTE: BlockRule = BlockRule {
@@ -33,6 +34,22 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Note doesn't allow star flag");
     assert!(!flag_score, "Note doesn't allow score flag");
     assert_block_name(&BLOCK_NOTE, name);
+
+    if !parser.settings().layout.legacy() {
+        let (arguments, body_start) =
+            parser.get_head_map_with_body_start(&BLOCK_NOTE, in_head)?;
+        if matches!(body_start, BlockBodyStart::Inline) {
+            return Err(parser.make_err(ParseErrorKind::NotSupportedInline));
+        }
+        let (elements, errors, paragraph_safe) =
+            parser.get_body_elements(&BLOCK_NOTE, false)?.into();
+        let element = Element::Container(Container::new(
+            ContainerType::Note,
+            elements,
+            arguments.to_attribute_map(parser.settings()),
+        ));
+        return ok!(paragraph_safe; element, errors);
+    }
 
     let wikidot_note =
         parser.settings().layout.legacy() && !parser.discarding_hidden_body();
@@ -90,6 +107,16 @@ mod tests {
         render_wikidot_with_html(source, true)
     }
 
+    fn render_wikijump(source: &str) -> (String, Vec<crate::parsing::ParseError>) {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        (html, errors)
+    }
+
     #[test]
     fn note_block_renders_wikidot_note_dom_with_paragraph_body() {
         let (html, errors) = render_wikidot("[[note]]\nEvidence-backed note.[[/note]]");
@@ -99,6 +126,31 @@ mod tests {
             html,
             r#"<div class="wiki-note"><p>Evidence-backed note.</p></div>"#
         );
+    }
+
+    #[test]
+    fn wikijump_note_uses_native_dom_and_preserves_attributes() {
+        let (html, errors) = render_wikijump(
+            "[[note class=\"custom\" data-kind=\"example\"]]\nBody\n[[/note]]",
+        );
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            r#"<p><div class="wj-note custom" data-kind="example">Body</div></p>"#,
+        );
+    }
+
+    #[test]
+    fn wikijump_note_rejects_inline_openers() {
+        let (html, errors) = render_wikijump("prefix [[note]]Body[[/note]]");
+
+        assert!(
+            errors.iter().any(|error| error.kind()
+                == crate::parsing::ParseErrorKind::NotSupportedInline),
+            "html={html}; errors={errors:#?}",
+        );
+        assert!(!html.contains("class=\"wj-note"), "{html}");
     }
 
     #[test]
@@ -576,7 +628,7 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert_eq!(html.matches(r#"class="wiki-note""#).count(), 2, "{html}");
+        assert_eq!(html.matches(r#"class="wj-note""#).count(), 2, "{html}");
         assert!(!html.contains("[[note]]"), "{html}");
         assert!(!html.contains("[[/note]]"), "{html}");
     }

@@ -241,6 +241,27 @@ fn wikidot_set_tags_handler_escapes_authored_javascript_string_data() {
 }
 
 #[test]
+fn wikidot_set_tags_rejects_apostrophe_tag_without_changing_wikijump() {
+    let source = r#"[[button set-tags +quote' text="Set"]]"#;
+    assert_eq!(
+        render(source, Layout::Wikidot).body,
+        r#"<div class="error-block">You need to set text for set-tags button.</div>"#
+    );
+
+    let wikijump = render(source, Layout::Wikijump);
+    assert!(wikijump.body.contains(">Set</button>"), "{}", wikijump.body);
+    assert_eq!(
+        wikijump.resource_requirements[0]
+            .standalone_button_requirement()
+            .unwrap()
+            .action(),
+        &StandaloneButtonAction::SetTags(vec![TagAlteration::Add(Cow::Borrowed(
+            "quote'"
+        ))])
+    );
+}
+
+#[test]
 fn malformed_and_unsupported_forms_preserve_exact_residual_text() {
     assert_eq!(
         render("[[button]]", Layout::Wikidot).body,

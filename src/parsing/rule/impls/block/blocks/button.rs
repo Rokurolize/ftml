@@ -78,7 +78,7 @@ fn parse_fn<'r, 't>(
             return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
         }
 
-        let element = match parse_button_head(head) {
+        let element = match parse_button_head(head, parser.settings().layout.legacy()) {
             Some(ParsedButton::Active(button)) => Element::StandaloneButton(button),
             Some(ParsedButton::Unknown(action)) => unknown_button_error(action),
             Some(ParsedButton::MissingSetTagsText) => missing_set_tags_text_error(),
@@ -94,7 +94,7 @@ fn parse_fn<'r, 't>(
     }
 }
 
-fn parse_button_head(head: &str) -> Option<ParsedButton<'_>> {
+fn parse_button_head(head: &str, wikidot: bool) -> Option<ParsedButton<'_>> {
     let head = trim_wikidot_space(head);
     if head.is_empty() {
         return None;
@@ -105,7 +105,7 @@ fn parse_button_head(head: &str) -> Option<ParsedButton<'_>> {
     let tail = trim_wikidot_space(&head[action_end..]);
 
     if action.eq_ignore_ascii_case("set-tags") {
-        return Some(parse_set_tags(tail));
+        return Some(parse_set_tags(tail, wikidot));
     }
 
     let mut arguments = parse_wikidot_attributes(tail);
@@ -146,12 +146,15 @@ fn parse_button_head(head: &str) -> Option<ParsedButton<'_>> {
     }))
 }
 
-fn parse_set_tags(mut tail: &str) -> ParsedButton<'_> {
+fn parse_set_tags(mut tail: &str, wikidot: bool) -> ParsedButton<'_> {
     let mut alterations = Vec::new();
     loop {
         tail = trim_wikidot_space(tail);
         let end = tail.find([' ', '\t']).unwrap_or(tail.len());
         let token = &tail[..end];
+        if wikidot && token.contains('\'') {
+            break;
+        }
         let alteration = match token {
             "-*" => Some(TagAlteration::ClearVisible),
             "-_*" => Some(TagAlteration::ClearHidden),

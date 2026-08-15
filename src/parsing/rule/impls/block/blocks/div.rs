@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::BLOCK_SPAN;
 use super::prelude::*;
 use crate::delayed::DelayedElement;
 use crate::parsing::collect::consume_valid_comment;
@@ -174,6 +175,46 @@ where
             && source[line_start..owner_start]
                 .trim_matches([' ', '\t'])
                 .is_empty();
+        let mut outer = parser.clone();
+        let outer_end = outer
+            .get_body_elements(&BLOCK_DIV, false)
+            .ok()
+            .map(|_| outer.current().span.start);
+        let mut span = parser.clone();
+        let starts_with_bounded_span = if span.get_optional_space().is_ok()
+            && span.current().token == Token::LeftBlock
+        {
+            span.get_block_name(false)
+                .ok()
+                .map(|(name, in_head)| (name.eq_ignore_ascii_case("span"), in_head))
+                .is_some_and(|(is_span, in_head)| {
+                    is_span
+                        && {
+                            span.set_block(&BLOCK_SPAN);
+                            span.get_head_map_with_body_start_wikidot(
+                                &BLOCK_SPAN,
+                                in_head,
+                            )
+                            .and_then(|_| span.get_body_elements(&BLOCK_SPAN, false))
+                            .is_ok()
+                        }
+                        && outer_end.is_some_and(|outer_end| {
+                            span.current().span.start < outer_end
+                        })
+                })
+        } else {
+            false
+        };
+        if !flag_score && starts_with_bounded_span {
+            let literal_end = parser.current().span.start;
+            let literal = text!(&source[owner_start..literal_end]);
+            let elements = if line_started_after_physical_newline {
+                Elements::Multiple(vec![Element::LineBreak, literal])
+            } else {
+                literal.into()
+            };
+            return Ok(Some(ParseSuccess::new(elements, Vec::new(), true)));
+        }
         let _ = parser.get_body_text(&BLOCK_DIV)?;
         let owner_end = parser.current().span.start;
         let literal_start = if line_started_after_physical_newline {

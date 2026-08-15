@@ -124,6 +124,77 @@ fn same_line_div_literal_controls_follow_physical_line_ownership() {
 }
 
 #[test]
+fn same_line_div_nested_span_falls_back_to_inline_parsing() {
+    const DIV: &str =
+        "[[div]] [[span]] [[ruby]]語 [[rt]]go[[/rt]][[/ruby]] [[/span]] [[/div]]";
+    const SPAN: &str =
+        "[[div]] <span>[[ruby]]語 [[rt]]go[[/rt]][[/ruby]]</span> [[/div]]";
+    const TEXT: &str = "[[div]] [[ruby]]語 [[rt]]go[[/rt]][[/ruby]] [[/div]]";
+
+    for (source, expected_html, expected_text) in [
+        (DIV.to_owned(), format!("<p>{SPAN}</p>"), TEXT.to_owned()),
+        (
+            format!("NESTED\n{DIV}"),
+            format!("<p>NESTED<br>\n{SPAN}</p>"),
+            format!("NESTED\n{TEXT}"),
+        ),
+    ] {
+        let (html, text) = render(&source);
+        assert_eq!(html, expected_html);
+        assert_eq!(text, expected_text);
+    }
+}
+
+#[test]
+fn same_line_div_with_unmatched_span_close_stays_literal() {
+    let source = "[[div]] literal [[/span]] [[/div]]";
+    let (html, text) = render(source);
+    assert_eq!(html, "<p>[[div]] literal [[/span]] [[/div]]</p>");
+    assert_eq!(text, source);
+}
+
+#[test]
+fn same_line_div_span_ownership_requires_a_real_bounded_opener() {
+    for source in [
+        "[[div]] span [[ruby]]x[[/ruby]] [[/span]] [[/div]]",
+        "[[div]] [[span]]x[[/div]] [[/span]]",
+        "[[div]] [[span]]@@[[/span]]@@ [[/div]]",
+    ] {
+        let (html, text) = render(source);
+        assert_eq!(html, format!("<p>{source}</p>"));
+        assert_eq!(text, source);
+    }
+}
+
+#[test]
+fn same_line_div_span_marker_controls_stay_clean() {
+    for (name, source, expected_html, expected_text) in [
+        (
+            "raw",
+            "[[div]] @@[[/span]]@@ [[/div]]",
+            "<p>[[div]] @@[[/span]]@@ [[/div]]</p>",
+            "[[div]] @@[[/span]]@@ [[/div]]",
+        ),
+        (
+            "comment",
+            "[[div]] [!-- [[span]]x[[/span]] --] [[/div]]",
+            "<p>[[div]] [!-- [[span]]x[[/span]] --] [[/div]]</p>",
+            "[[div]] [!-- [[span]]x[[/span]] --] [[/div]]",
+        ),
+        (
+            "multiline",
+            "[[div]]\n[[span]]x\n[[/span]]\n[[/div]]",
+            "<div><p><span>x<br>\n</span></p></div>",
+            "x",
+        ),
+    ] {
+        let (html, text) = render(source);
+        assert_eq!(html, expected_html, "{name}");
+        assert_eq!(text, expected_text, "{name}");
+    }
+}
+
+#[test]
 fn css_requires_an_unprefixed_multiline_invocation() {
     for source in [
         "[[module CSS]]x{}[[/module]]",

@@ -1,0 +1,26 @@
+{
+  "schema": "ftml.wikidot_parity.classification_overrides.v1",
+  "overrides": [
+    {
+      "path": "tests/fixtures/parity-gaps/autolink-email/input.ftml",
+      "source_sha256": "12d71ef3fed5f291de7e0d7ebb208844a9253159bacfb6b7658a20f467a278a5",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-email-obfuscation"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/autolink-mailto/input.ftml",
+      "source_sha256": "e957641b7781bc31ef35d55b31271c2ae84cc3cd98e701dd5faeb22fee783e48",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-mailto"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/autolink-triple-owner/input.ftml",
+      "source_sha256": "0abfce110e514d0f8e8c2f76b9706048f5e6a7b5d632ca5ff05b518606f859bf",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-external-triple-link"
+    }
+  ]
+}

@@ -12,7 +12,7 @@ The machine-readable stable corpus is `tests/fixtures/wikidot-parity/cases.jsonl
 
 The dated `tests/fixtures/wikidot-parity/references-YYYYMMDD-NN.jsonl` files preserve the raw Wikidot responses and capture provenance. `tests/fixtures/wikidot-parity/bindings.json` binds each preview-compatible case to its reference hashes and comparator result. These files replace the old manual fixture table as the parity authority.
 
-The current stable inventory has 246 cases: 217 PagePreview-compatible cases, 28 caller-runtime cases, and 1 not-applicable case. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
+The current stable inventory has 335 cases: 128 saved-page-batch cases, 176 page-preview-isolated cases, 30 caller-runtime cases, and 1 not-applicable case. The 304 PagePreview-compatible cases have 304 bindings: 290 matches and 14 visible mismatches. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
 
 Each mismatch has one disposition: `intentional-security-divergence` means a frozen output difference that FTML deliberately preserves to enforce a security property; `caller-runtime` means a frozen output difference whose missing inputs belong to the caller runtime rather than FTML; `comparison-normalization` means a frozen raw-DOM difference with no demonstrated functional behavior difference; and `unresolved` remains allowed only for an active functional investigation. A classified mismatch remains visible as `status: "mismatch"` and does not become a match.
 
@@ -61,14 +61,14 @@ Review every inventory and classification change. If it is intentional, update `
 
 ### 2. Capture raw Wikidot references
 
-Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 217-row selection:
+Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 304-row selection:
 
 ```sh
 mkdir "$PARITY_TMP/batches"
 jq -c 'select(.execution_class == "saved-page-batch" or .execution_class == "page-preview-isolated")' \
   tests/fixtures/wikidot-parity/cases.jsonl | \
   split -l 16 -d -a 2 --additional-suffix=.jsonl - "$PARITY_TMP/batches/cases-"
-test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 217
+test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 304
 ```
 
 For each batch, choose a new dated no-replace output name and run:
@@ -164,6 +164,16 @@ Ordered alias-pair coverage refers to the state in which a configured opener and
 Reference batch `references-20260815-19.jsonl` freezes the 12 context-free argument-grammar sources asserted by `tests/wikidot_block_argument_grammar.rs` that previously lacked per-source evidence. All 12 match across DOM tree, DOM signature, and visible text. The remaining whitespace-name `user` source is inventoried as caller runtime because reproducing its missing-user result requires the caller-owned user resolver used by that test.
 
 Reference batch `references-20260815-20.jsonl` tests column-zero, space-prefixed, tab-prefixed, and text-prefixed ownership for `bibliography`, `code`, `gallery`, `math`, `module CSS`, and `toc`. It exposed issues #514 and #515: FTML accepted whitespace-prefixed physical-line blocks and joined a rejected gallery closer to the next line. After both fixes, five cases match all three comparison surfaces. Gallery line ownership and visible text also match; its remaining DOM mismatch is the caller-owned page/file rendering tracked by issue #507.
+
+Configured head-shape coverage refers to the state in which every head shape required by a block's effective parser appears in the stable parity inventory. The local ratchet requires empty and non-assignment value tails for no-head and value-head blocks; empty, assignment-map, and non-assignment value tails for map-head blocks; and empty, value, map, and value-plus-map tails for value-plus-map blocks. It applies the effective `html` map, `tabview` value, and `raw` custom-head overrides. The parity report now lists `missing-head-shape 0`.
+
+Reference batches `references-20260815-21.jsonl` through `references-20260815-24.jsonl` freeze 61 anonymous PagePreview head-shape observations; the remaining `file:none` and `module:map` sources are inventoried as caller runtime. The live comparisons exposed three FTML defects. Issue #517 covered standalone buttons missing Wikidot click handlers and incorrectly receiving a generated `id`; the fixed Wikidot output emits the live handlers without that ID. Issue #518 covered the localized host default for `[[date 0]]`; the fixed Wikidot default is the deterministic `01 Jan 1970 00:00`. Issue #519 covered a non-assignment gallery tail remaining literal instead of creating a gallery requirement. After the fixes, 59 of these 61 PagePreview cases match all three comparison surfaces. The `gallery:map` and `gallery:value` cases reach the correct gallery requirement but remain visible caller-runtime mismatches because current-page and file-service selection belongs to issue #507.
+
+Reference batch `references-20260815-25.jsonl` adds the security-sensitive invalid apostrophe tag token for `set-tags`. Issue #520 recorded that Wikidot rejects the token with its missing-text error while FTML previously emitted a functional button. FTML now rejects the token while retaining JavaScript-string escaping as defense in depth, and the frozen case matches all three comparison surfaces.
+
+Reference batches `references-20260815-26.jsonl` and `references-20260815-27.jsonl` freeze 25 button and date sources that were either missing live evidence for local regressions or added for the token boundaries in issue #521. The fixed Wikidot parser rejects quote, equals, ampersand, entity, and angle-bracket artifacts; treats ASCII tab, carriage return, line feed, vertical tab, and form feed as separators; removes NUL; and retains the observed broad punctuation and Unicode acceptance. Twenty-four cases match all three comparison surfaces. The live-accepted backslash case remains one visible `intentional-security-divergence`: FTML JavaScript-string escapes the backslash so authored tag data cannot change handler execution, while DOM signature and visible text still match.
+
+Batch `references-20260815-27.jsonl` also exposed issue #522. For `[[date 0 format="%Y"]]`, Wikidot records `format_%25Y` in the class but renders the default `01 Jan 1970 00:00` text rather than `1970`. `Layout::Wikidot` now matches that behavior, while `Layout::Wikijump` retains explicit-format rendering.
 
 ### 6. Promote matched cases
 

@@ -303,7 +303,7 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
     });
     assert_eq!(
         execution_counts,
-        [103, 114, 28, 1],
+        [128, 176, 30, 1],
         "campaign execution counts changed; evidence and classification need intentional review"
     );
     let binding_counts = manifest
@@ -318,7 +318,7 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
         });
     assert_eq!(
         binding_counts,
-        [206, 11],
+        [290, 14],
         "campaign binding counts changed; evidence and classification need intentional review"
     );
 

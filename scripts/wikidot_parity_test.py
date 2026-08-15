@@ -21,8 +21,8 @@ class WikidotParityTest(unittest.TestCase):
                 '[hidden-name]\nexclude-name = true\naliases = ["visible-alias"]\naccepts-score = true\n'
             )
             cases = {
-                "one": {"source": "[[alpha*]] [[/a]] [[a]][[/alpha]] [[alpha]][[/alpha]] [[a]][[/a]]"},
-                "two": {"source": "[[visible-alias_]]"},
+                "one": {"source": "[[alpha*]] [[alpha key=\"value\"]] [[alpha stray]] [[/a]] [[a]][[/alpha]] [[alpha]][[/alpha]] [[a]][[/a]]"},
+                "two": {"source": "[[visible-alias_]] [[visible-alias stray]]"},
             }
 
             self.assertEqual(
@@ -37,6 +37,7 @@ class WikidotParityTest(unittest.TestCase):
                 parity.missing_block_facets(root, cases),
                 {"star-flag": set(), "score-flag": set(), "body-close": set()},
             )
+            self.assertEqual(parity.missing_block_head_facets(root, cases), set())
             self.assertEqual(parity.missing_alias_pairs(root, cases), set())
             self.assertEqual(
                 parity.missing_alias_pairs(
@@ -58,6 +59,7 @@ class WikidotParityTest(unittest.TestCase):
             parity.missing_block_facets(ROOT, stable_cases),
             {"star-flag": set(), "score-flag": set(), "body-close": set()},
         )
+        self.assertEqual(parity.missing_block_head_facets(ROOT, stable_cases), set())
         self.assertEqual(parity.missing_alias_pairs(ROOT, stable_cases), set())
 
     def test_real_live_case_projection_and_compact_binding(self):

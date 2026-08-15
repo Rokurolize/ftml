@@ -1,0 +1,1 @@
+[[button set-tags -* +favorite +_book -_movie text="Change & <tags>" onclick="alert(1)"]]

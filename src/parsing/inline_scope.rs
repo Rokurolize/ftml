@@ -244,6 +244,7 @@ fn lower_root_sequence<'t>(
             {
                 container.elements_mut().insert(0, Element::LineBreak);
             }
+            let continued_from_paragraph = paragraph_group.is_some();
             let effects = lower_sequence(
                 container.elements_mut(),
                 valid,
@@ -262,7 +263,7 @@ fn lower_root_sequence<'t>(
                     reopens_paragraph_after_separator
                         || !effects.scored_span_opened_unwrapped_at_start
                             && !starts_in_scored_span
-                            && !starts_in_inline_scope,
+                            && (!starts_in_inline_scope || continued_from_paragraph),
                     paragraph_attributes,
                     Vec::new(),
                 )
@@ -561,7 +562,7 @@ fn lower_sequence<'t>(
             let current = *ordinal;
             *ordinal += 1;
             if valid.contains(&current) {
-                if !preserve_empty_owner_space {
+                if !(preserve_empty_owner_space || empty && scored) {
                     trim_trailing_space(&mut output);
                 }
                 active.remove(ScopeKind::Span);

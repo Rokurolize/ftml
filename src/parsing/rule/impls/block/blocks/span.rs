@@ -299,7 +299,7 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
         assert_eq!(
             html,
-            "<p>PREVIOUS</p><p>EMPTYBASIC <span>durian</span>NEWLINES<span>eggplant<br>\nrafflesia</span><span>paragraph</span></p><span>in span</span><span id=\"u-this-thing\">span2</span>",
+            "<p>PREVIOUS</p><p>EMPTY BASIC <span>durian</span>NEWLINES<span>eggplant<br>\nrafflesia</span><span>paragraph</span></p><span>in span</span><span id=\"u-this-thing\">span2</span>",
         );
     }
 
@@ -314,6 +314,22 @@ mod tests {
         assert!(errors.is_empty(), "{errors:?}");
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
         assert_eq!(html, "<p><span>literal</span> tail</p>");
+    }
+
+    #[test]
+    fn wikidot_span_wraps_continuation_after_paragraph_break() {
+        let source = "[[span]]mango\n\npineapple\n[[/span]]";
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert_eq!(
+            html,
+            "<p><span>mango</span></p><p><span>pineapple<br>\n</span></p>",
+        );
     }
 
     #[test]

@@ -84,6 +84,167 @@ fn wikidot_div_follows_inline_structural_close(
             .is_some_and(|close| close.eq_ignore_ascii_case("[[/ul]]"))
 }
 
+fn wikidot_div_is_inline_scored_line_literal(
+    parser: &Parser<'_, '_>,
+    arguments_empty: bool,
+    body_start: BlockBodyStart,
+    owner_start: usize,
+    flag_score: bool,
+) -> bool {
+    if !flag_score
+        || !arguments_empty
+        || body_start != BlockBodyStart::Inline
+        || parser.current().token == Token::LeftBlockEnd
+    {
+        return false;
+    }
+    let source = parser.full_text().inner();
+    let line_start = source[..owner_start]
+        .rfind('\n')
+        .map_or(0, |offset| offset + 1);
+    line_start > 0
+        && source[line_start..owner_start]
+            .trim_matches([' ', '\t'])
+            .is_empty()
+}
+
+fn recover_wikidot_empty_key_div<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    owner_start: usize,
+) -> ParseResult<'r, 't, Elements<'t>>
+where
+    'r: 't,
+{
+    let source = parser.full_text().inner();
+    let line_start = source[..owner_start]
+        .rfind('\n')
+        .map_or(0, |offset| offset + 1);
+    let line_started_after_physical_newline = line_start > 0
+        && source[line_start..owner_start]
+            .trim_matches([' ', '\t'])
+            .is_empty();
+    let literal_start = if line_started_after_physical_newline {
+        line_start - 1
+    } else {
+        owner_start
+    };
+    recover_wikidot_empty_key_candidate(
+        parser,
+        &BLOCK_DIV,
+        literal_start,
+        !line_started_after_physical_newline,
+    )
+}
+
+fn try_recover_wikidot_div_literal<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    owner_start: usize,
+    arguments_empty: bool,
+    body_start: BlockBodyStart,
+    flag_score: bool,
+    head_started_physical_line: bool,
+    follows_inline_structural_close: bool,
+) -> Result<Option<ParseSuccess<'r, 't, Elements<'t>>>, ParseError>
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy() {
+        return Ok(None);
+    }
+    let inline_scored_line_literal = wikidot_div_is_inline_scored_line_literal(
+        parser,
+        arguments_empty,
+        body_start,
+        owner_start,
+        flag_score,
+    );
+    let source = parser.full_text().inner();
+
+    if parser.settings().mode != WikitextMode::List
+        && !parser.in_wikidot_div_body()
+        && !parser.in_native_blockquote_line()
+        && body_start == BlockBodyStart::Inline
+        && parser.has_body_end_block_on_line(&BLOCK_DIV)
+        && (!flag_score || inline_scored_line_literal)
+    {
+        let line_start = source[..owner_start]
+            .rfind('\n')
+            .map_or(0, |offset| offset + 1);
+        let line_started_after_physical_newline = line_start > 0
+            && source[line_start..owner_start]
+                .trim_matches([' ', '\t'])
+                .is_empty();
+        let _ = parser.get_body_text(&BLOCK_DIV)?;
+        let owner_end = parser.current().span.start;
+        let literal_start = if line_started_after_physical_newline {
+            line_start - 1
+        } else {
+            owner_start
+        };
+        let literal_end = if source.as_bytes().get(owner_end) == Some(&b'\n') {
+            owner_end + 1
+        } else {
+            owner_end
+        };
+        return Ok(Some(ParseSuccess::new(
+            text!(&source[literal_start..literal_end]).into(),
+            Vec::new(),
+            !line_started_after_physical_newline,
+        )));
+    }
+
+    if parser.in_wikidot_div_body()
+        && (!head_started_physical_line
+            || inline_scored_line_literal
+                && (parser.in_wikidot_literal_alias_body()
+                    || parser.has_body_end_block_on_line(&BLOCK_DIV)))
+        && !follows_inline_structural_close
+    {
+        let head_end = parser.current().span.start;
+        let literal_end = if body_start == BlockBodyStart::NextPhysicalLine {
+            source[..head_end].trim_end_matches(['\r', '\n']).len()
+        } else {
+            head_end
+        };
+        let line_start = source[..literal_end]
+            .rfind('\n')
+            .map_or(0, |offset| offset + 1);
+        let opener_start = source[line_start..literal_end]
+            .rfind("[[")
+            .map_or(line_start, |offset| line_start + offset);
+        if inline_scored_line_literal {
+            let body_start = parser.current().span.start;
+            let mut body = parser.clone();
+            let body_text = body.get_body_text(&BLOCK_DIV)?;
+            let body_end = body_start + body_text.len();
+            let mut close = parser.clone();
+            while close.current().span.start < body_end {
+                close.step()?;
+            }
+            parser.update(&close);
+            return Ok(Some(ParseSuccess::new(
+                text!(&source[line_start - 1..body_end]).into(),
+                Vec::new(),
+                false,
+            )));
+        }
+        let literal = text!(&source[opener_start..literal_end]);
+        let elements = if body_start == BlockBodyStart::NextPhysicalLine {
+            Elements::Multiple(vec![literal, Element::LineBreak])
+        } else {
+            literal.into()
+        };
+        let paragraph_safe = elements.paragraph_safe();
+        return Ok(Some(ParseSuccess::new(
+            elements,
+            Vec::new(),
+            paragraph_safe,
+        )));
+    }
+
+    Ok(None)
+}
+
 // Keep post-body normalization out of the recursively nested div parser's
 // stack frame. The deep parser deliberately supports 1024 nested owners on a
 // bounded worker stack.
@@ -202,7 +363,7 @@ fn parse_fn<'r, 't>(
     let head = parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;
     let (arguments, mut body_start) = head;
     if parser.settings().layout.legacy() && arguments.has_empty_key() {
-        return recover_wikidot_empty_key_candidate(parser, &BLOCK_DIV, owner_start);
+        return recover_wikidot_empty_key_div(parser, owner_start);
     }
     if parser.settings().layout.legacy()
         && flag_score
@@ -219,45 +380,20 @@ fn parse_fn<'r, 't>(
         parser.update(&delimiter);
         return ok!(true; text!(&source[owner_start..literal_end]));
     }
-    if parser.settings().layout.legacy()
-        && parser.settings().mode != WikitextMode::List
-        && !parser.in_wikidot_div_body()
-        && !parser.in_native_blockquote_line()
-        && body_start == BlockBodyStart::Inline
-        && parser.has_body_end_block_on_line(&BLOCK_DIV)
-    {
-        let _ = parser.get_body_text(&BLOCK_DIV)?;
-        let owner_end = parser.current().span.start;
-        return ok!(true; text!(&source[owner_start..owner_end]));
-    }
     let head_started_physical_line =
         wikidot_div_head_started_physical_line(parser, body_start);
     let follows_inline_structural_close =
         wikidot_div_follows_inline_structural_close(parser, body_start);
-    if parser.settings().layout.legacy()
-        && parser.in_wikidot_div_body()
-        && !head_started_physical_line
-        && !follows_inline_structural_close
-    {
-        let source = parser.full_text().inner();
-        let head_end = parser.current().span.start;
-        let literal_end = if body_start == BlockBodyStart::NextPhysicalLine {
-            source[..head_end].trim_end_matches(['\r', '\n']).len()
-        } else {
-            head_end
-        };
-        let line_start = source[..literal_end]
-            .rfind('\n')
-            .map_or(0, |offset| offset + 1);
-        let opener_start = source[line_start..literal_end]
-            .rfind("[[")
-            .map_or(line_start, |offset| line_start + offset);
-        let literal = text!(&source[opener_start..literal_end]);
-        return if body_start == BlockBodyStart::NextPhysicalLine {
-            ok!(Elements::Multiple(vec![literal, Element::LineBreak]))
-        } else {
-            ok!(literal)
-        };
+    if let Some(recovered) = try_recover_wikidot_div_literal(
+        parser,
+        owner_start,
+        arguments.is_empty(),
+        body_start,
+        flag_score,
+        head_started_physical_line,
+        follows_inline_structural_close,
+    )? {
+        return Ok(recovered);
     }
     if parser.settings().layout.legacy()
         && parser.in_wikidot_div_body()

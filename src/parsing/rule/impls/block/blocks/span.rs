@@ -110,7 +110,12 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     if parser.settings().layout.legacy() && arguments.has_empty_key() {
-        return recover_wikidot_empty_key_candidate(parser, &BLOCK_SPAN, owner_start);
+        return recover_wikidot_empty_key_candidate(
+            parser,
+            &BLOCK_SPAN,
+            owner_start,
+            true,
+        );
     }
     if parser.settings().layout.legacy()
         && flag_score

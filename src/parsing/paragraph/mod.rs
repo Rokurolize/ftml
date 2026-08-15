@@ -210,6 +210,10 @@ where
         if let Some(consumed) = consumed {
             let (elements, mut errors, paragraph_safe) = consumed.into();
             let mut elements = elements;
+            let literal_list_item = stack.wikidot_list_break_follows_list()
+                && errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::ListItemOutsideList);
             defer_suppression_seams(&mut stack, &mut elements);
             let active_div = elements_contain_div(&elements);
             let list_has_same_line_residual = explicit_list_opener
@@ -247,6 +251,11 @@ where
             if empty_quote_control && !paragraph_safe && elements.is_empty() {
                 stack.end_paragraph();
             } else {
+                if explicit_list_opener
+                    && matches!(&elements, Elements::Single(Element::LineBreak))
+                {
+                    stack.mark_wikidot_empty_list_break();
+                }
                 push_elements(&mut stack, elements, paragraph_safe);
             }
             if list_has_same_line_residual {
@@ -264,6 +273,9 @@ where
             {
                 stack.push_paragraph_safe_elements(vec![text!(" ")]);
                 parser.step()?;
+            }
+            if literal_list_item {
+                stack.mark_current_unwrapped();
             }
             if literal_iftags_line {
                 stack.mark_wikidot_literal_iftags_line();

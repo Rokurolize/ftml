@@ -77,6 +77,7 @@ pub struct ParagraphStack<'t> {
     wikidot_literal_div_line: bool,
     trim_unwrapped_trailing_line_break: bool,
     suppress_next_line_break: bool,
+    wikidot_empty_list_break: bool,
     // A line-break rule may consume the following block in the same result,
     // so retain that physical boundary until the element reaches this stack.
     next_element_started_line: bool,
@@ -125,6 +126,26 @@ impl<'t> ParagraphStack<'t> {
                         )
                 ) || matches!(element, Element::Code(_) | Element::Collapsible { .. })
             })
+    }
+
+    #[inline]
+    pub(crate) fn wikidot_list_break_follows_list(&self) -> bool {
+        self.wikidot
+            && self.current_empty()
+            && matches!(self.finished.last(), Some(Element::LineBreak))
+            && self
+                .finished
+                .iter()
+                .rev()
+                .nth(1)
+                .is_some_and(|element| matches!(element, Element::List { .. }))
+    }
+
+    #[inline]
+    pub(crate) fn mark_wikidot_empty_list_break(&mut self) {
+        if self.wikidot {
+            self.wikidot_empty_list_break = true;
+        }
     }
 
     #[inline]
@@ -469,7 +490,10 @@ impl<'t> ParagraphStack<'t> {
                 self.current.push(text!("\n"));
             }
             if invisible_block_line {
-                self.pop_line_break();
+                if !self.wikidot_empty_list_break {
+                    self.pop_line_break();
+                }
+                self.wikidot_empty_list_break = false;
             }
             if escaped_note_prefix {
                 self.current_unwrapped = true;

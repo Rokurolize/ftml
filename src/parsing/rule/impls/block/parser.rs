@@ -62,9 +62,23 @@ fn token_is_body_boundary(token: Token) -> bool {
     )
 }
 
-fn block_rule_accepts_name(block_rule: &BlockRule, name: &str) -> bool {
-    block_rule
-        .accepts_names
+fn block_rule_end_names(
+    block_rule: &BlockRule,
+    wikidot: bool,
+) -> &'static [&'static str] {
+    if wikidot && block_rule.name == "block-module" {
+        &block_rule.accepts_names[..1]
+    } else {
+        block_rule.accepts_names
+    }
+}
+
+fn block_rule_accepts_end_name(
+    block_rule: &BlockRule,
+    name: &str,
+    wikidot: bool,
+) -> bool {
+    block_rule_end_names(block_rule, wikidot)
         .iter()
         .any(|accepted| name.eq_ignore_ascii_case(accepted))
 }
@@ -509,7 +523,9 @@ where
             }
 
             // Check if it's valid
-            for end_block_name in block_rule.accepts_names {
+            for end_block_name in
+                block_rule_end_names(block_rule, parser.settings().layout.legacy())
+            {
                 if name.eq_ignore_ascii_case(end_block_name) {
                     if restrict_quote_close {
                         parser.get_optional_space()?;
@@ -737,7 +753,11 @@ where
                     && let Ok(name) = end.get_end_block()
                 {
                     let name = name.strip_suffix('_').unwrap_or(name);
-                    if block_rule_accepts_name(block_rule, name) {
+                    if block_rule_accepts_end_name(
+                        block_rule,
+                        name,
+                        self.settings().layout.legacy(),
+                    ) {
                         if marker_start == content_start {
                             body.truncate(body.len() - trailing_line_break_len);
                         } else {
@@ -786,7 +806,7 @@ where
         let track_boundary = self.discarding_hidden_body();
         if track_boundary {
             self.push_hidden_body_boundary(
-                block_rule.accepts_names,
+                block_rule_end_names(block_rule, self.settings().layout.legacy()),
                 block_rule.accepts_newlines,
             );
         }
@@ -926,7 +946,7 @@ where
         let was_discarding = fork.discarding_hidden_body();
         fork.set_discarding_hidden_body(true);
         fork.push_hidden_body_boundary(
-            block_rule.accepts_names,
+            block_rule_end_names(block_rule, fork.settings().layout.legacy()),
             block_rule.accepts_newlines,
         );
 
@@ -1238,7 +1258,7 @@ where
                     }
                     let scored_close = name.ends_with('_');
                     let base_name = name.strip_suffix('_').unwrap_or(name);
-                    if block_rule_accepts_name(block_rule, base_name) {
+                    if block_rule_accepts_end_name(block_rule, base_name, true) {
                         if scored_close {
                             if owners.last().is_some_and(|(_, scored)| *scored) {
                                 let (resolved_start, _) = owners
@@ -1301,7 +1321,10 @@ where
                             head.get_optional_space().is_ok()
                                 && head.current().token == Token::RightBlock
                         };
-                    if block_rule_accepts_name(block_rule, base_name)
+                    if block_rule
+                        .accepts_names
+                        .iter()
+                        .any(|accepted| base_name.eq_ignore_ascii_case(accepted))
                         && !scored_span_empty_spaced_head
                         && (scored_span_residual_opener
                             || opener.get_optional_space().is_ok()
@@ -1414,11 +1437,11 @@ where
                     let mut end = parser.clone();
                     if let Ok(name) = end.get_end_block() {
                         let name = name.strip_suffix('_').unwrap_or(name);
-                        if block_rule
-                            .accepts_names
-                            .iter()
-                            .any(|accepted| name.eq_ignore_ascii_case(accepted))
-                        {
+                        if block_rule_accepts_end_name(
+                            block_rule,
+                            name,
+                            self.settings().layout.legacy(),
+                        ) {
                             return true;
                         }
                     }
@@ -1488,7 +1511,7 @@ where
             {
                 first_candidate = false;
                 let mut end = parser.clone();
-                let matching_close = end.get_end_block().is_ok_and(|name| block_rule_accepts_name(block_rule, name.strip_suffix('_').unwrap_or(name)));
+                let matching_close = end.get_end_block().is_ok_and(|name| block_rule_accepts_end_name(block_rule, name.strip_suffix('_').unwrap_or(name), self.settings().layout.legacy()));
                 let valid_close = if matching_close
                     && absolute_depth == required_depth
                     && allow_inline_close

@@ -402,6 +402,54 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_module_alias_closers_do_not_cross() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        for opener in ["module", "module654"] {
+            let source = format!(
+                "Before\n[[{opener} CSS]]\n.parity-gap {{ color: red; }}\n[[/module654]]\nAfter\n",
+            );
+            let tokenization = crate::tokenize(&source);
+            let (tree, _errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            assert_eq!(
+                HtmlRender.render(&tree, &page_info, &settings).body,
+                concat!(
+                    "<p>Before</p>",
+                    "<p>.parity-gap { color: red; }<br>\n",
+                    "[[/module654]]<br>\n",
+                    "After</p>",
+                ),
+                "{opener}",
+            );
+        }
+    }
+
+    #[test]
+    fn module654_closer_policy_is_layout_specific() {
+        let page_info = PageInfo::dummy();
+        for (layout, closer) in
+            [(Layout::Wikidot, "module"), (Layout::Wikijump, "module654")]
+        {
+            let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
+            let source = format!(
+                "[[module654 CSS]]\n.parity-gap {{ color: blue; }}\n[[/{closer}]]",
+            );
+            let tokenization = crate::tokenize(&source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+
+            assert!(errors.is_empty(), "{layout:?}: {errors:#?}");
+            assert!(
+                tree.elements
+                    .iter()
+                    .any(|element| matches!(element, Element::Style(_))),
+                "{layout:?}: {tree:#?}",
+            );
+        }
+    }
+
+    #[test]
     fn wikijump_unknown_module_remains_literal() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);

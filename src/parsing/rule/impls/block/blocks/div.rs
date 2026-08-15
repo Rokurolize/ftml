@@ -361,7 +361,7 @@ fn parse_fn<'r, 't>(
         .expect("parsed div name follows its opener");
 
     let head = parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;
-    let (arguments, mut body_start) = head;
+    let (mut arguments, mut body_start) = head;
     if parser.settings().layout.legacy() && arguments.has_empty_key() {
         return recover_wikidot_empty_key_div(parser, owner_start);
     }
@@ -485,6 +485,12 @@ fn parse_fn<'r, 't>(
 
     // Build element and return
     let mut attributes = arguments.to_attribute_map(parser.settings());
+    if parser.settings().layout.legacy()
+        && !attributes.get().contains_key("class")
+        && let Some(class) = arguments.take_normalized_wikidot_class()
+    {
+        attributes.insert("class", class);
+    }
     if parser.settings().layout.legacy()
         && let Some(class) = attributes.remove("class")
     {

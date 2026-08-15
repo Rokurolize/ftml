@@ -12,7 +12,7 @@ impl PageExistenceResolver for MissingPages {
     }
 }
 
-fn render(source: &str) -> String {
+fn render_with_layout(source: &str, layout: Layout) -> String {
     let page_info = PageInfo {
         page: Cow::Borrowed("variable-ownership"),
         category: None,
@@ -23,7 +23,7 @@ fn render(source: &str) -> String {
         tags: Vec::new(),
         language: Cow::Borrowed("en"),
     };
-    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
     let mut source = source.to_owned();
     ftml::preprocess_for_layout(&mut source, settings.layout);
     let tokens = ftml::tokenize(&source);
@@ -32,6 +32,10 @@ fn render(source: &str) -> String {
     HtmlRender
         .render_with_page_existence(&tree, &page_info, &settings, &MissingPages)
         .body
+}
+
+fn render(source: &str) -> String {
+    render_with_layout(source, Layout::Wikidot)
 }
 
 #[test]
@@ -53,4 +57,64 @@ fn wikidot_variables_keep_text_authority_but_not_attribute_authority() {
     assert_eq!(render(r"\{$x}"), r"<p>\{$x}</p>");
     assert_eq!(render("{$foo-bar}"), "<p>{$foo-bar}</p>");
     assert_eq!(render("{$foo_bar}"), "<p>{$foo_bar}</p>");
+}
+
+#[test]
+fn wikidot_div_preserves_literal_variable_class_around_an_explicit_list() {
+    let source = concat!(
+        "[[div id=\"fruit\" class=\"{$class}\"]]\n",
+        "[[ul]]\n",
+        "[[li]] 1 [[/li]]\n",
+        "[[/ul]]\n",
+        "[[/div]]",
+    );
+
+    assert_eq!(
+        render(source),
+        "<div class=\"{$class}\" id=\"u-fruit\"><ul>\n<li>1</li>\n</ul></div>",
+    );
+}
+
+#[test]
+fn wikidot_div_literal_variable_class_normalizes_whitespace() {
+    let source = concat!(
+        "[[div id=\"fruit\" class=\" \t  lead\n{$class}\r\ttrail\u{000B}\u{000C}tail  \"]]\n",
+        "[[ul]]\n",
+        "[[li]] 1 [[/li]]\n",
+        "[[/ul]]\n",
+        "[[/div]]",
+    );
+
+    assert_eq!(
+        render(source),
+        "<div class=\"lead {$class} trailtail\" id=\"u-fruit\"><ul>\n<li>1</li>\n</ul></div>",
+    );
+}
+
+#[test]
+fn wikidot_div_literal_class_recovery_stays_local() {
+    for source in [
+        r#"[[div CLASS="{$class}"]]1[[/div]]"#,
+        r#"[[span class="{$class}"]]1[[/span]]"#,
+        r#"[[ul class="{$class}"]][[li]]1[[/li]][[/ul]]"#,
+        r#"[[a href="some-page" class="{$class}"]]1[[/a]]"#,
+        r#"[[table class="{$class}"]][[row]][[cell]]1[[/cell]][[/row]][[/table]]"#,
+    ] {
+        let html = render(source);
+        assert!(!html.contains(r#"class="{$class}"#), "{source}: {html}");
+    }
+
+    for source in [
+        r#"[[div data-probe="{$class}"]]1[[/div]]"#,
+        r#"[[div onclick="alert(1)"]]1[[/div]]"#,
+    ] {
+        let html = render(source);
+        assert!(!html.contains("<div data-probe="), "{source}: {html}");
+        assert!(!html.contains("<div onclick="), "{source}: {html}");
+    }
+
+    assert!(
+        render_with_layout(r#"[[div class="{$class}"]]1[[/div]]"#, Layout::Wikijump)
+            .contains(r#"class="{$class}"#),
+    );
 }

@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import sys
+import tomllib
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
@@ -284,10 +285,33 @@ def snapshot_ids(cases, root):
     return found
 
 
+def configured_block_names(root):
+    try:
+        with (root / "conf/blocks.toml").open("rb") as file:
+            blocks = tomllib.load(file)
+    except (OSError, tomllib.TOMLDecodeError) as error:
+        fail(f"cannot load configured block names: {error}")
+    names = set()
+    for name, block in blocks.items():
+        if not block.get("exclude-name", False):
+            names.add(name.casefold())
+        names.update(alias.casefold() for alias in block.get("aliases", []))
+    return names
+
+
+def observed_block_names(cases):
+    names = set()
+    for case in cases.values():
+        for match in re.finditer(r"\[\[/?([^\s\]]+)", case["source"]):
+            names.add(match.group(1).rstrip("*_").casefold())
+    return names
+
+
 def print_report(cases, references, bindings, root):
     ids = set(cases)
     preview = preview_case_ids(cases)
     categories = {
+        "missing-block-name": configured_block_names(root) - observed_block_names(cases),
         "mismatch": {case_id for case_id, value in bindings.items() if value["status"] == "mismatch"},
         "runtime": {case_id for case_id, case in cases.items()
                     if case["execution_class"] == "wikijump-runtime"},

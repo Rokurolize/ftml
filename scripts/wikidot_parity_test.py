@@ -5,12 +5,43 @@ import unittest
 from pathlib import Path
 
 
+ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("wikidot_parity", Path(__file__).with_name("wikidot_parity.py"))
 parity = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(parity)
 
 
 class WikidotParityTest(unittest.TestCase):
+    def test_registered_block_names_are_observed_from_stable_sources(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "conf").mkdir()
+            (root / "conf/blocks.toml").write_text(
+                '[alpha]\naliases = ["a"]\n[hidden-name]\nexclude-name = true\naliases = ["visible-alias"]\n'
+            )
+            cases = {
+                "one": {"source": "[[alpha]] [[/a]]"},
+                "two": {"source": "[[visible-alias*]]"},
+            }
+
+            self.assertEqual(
+                parity.configured_block_names(root),
+                {"alpha", "a", "visible-alias"},
+            )
+            self.assertEqual(
+                parity.observed_block_names(cases),
+                {"alpha", "a", "visible-alias"},
+            )
+
+        stable_cases = parity.load_cases(
+            ROOT / "tests/fixtures/wikidot-parity/cases.jsonl"
+        )
+        self.assertEqual(
+            parity.configured_block_names(ROOT)
+            - parity.observed_block_names(stable_cases),
+            set(),
+        )
+
     def test_real_live_case_projection_and_compact_binding(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

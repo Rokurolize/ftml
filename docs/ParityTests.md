@@ -14,7 +14,7 @@ The dated `tests/fixtures/wikidot-parity/references-YYYYMMDD-NN.jsonl` files pre
 
 The current stable inventory has 484 cases: 195 saved-page-batch cases, 257 page-preview-isolated cases, 31 caller-runtime cases, and 1 not-applicable case. The 452 PagePreview-compatible cases have 452 bindings: 434 matches and 18 classified mismatches. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
 
-Three reviewed lexical fixtures override the adjacent inventory generator's conservative runtime regexes: a plain email address uses deterministic Wikidot email obfuscation, a `mailto:` autolink is context-free, and a triple link with an external URL needs no page resolver. Their exact inventory rows use the `reviewed-context-free-email-obfuscation`, `reviewed-context-free-mailto`, and `reviewed-context-free-external-triple-link` reasons and run as isolated PagePreview cases.
+Three reviewed lexical fixtures override the adjacent inventory generator's conservative runtime regexes: a plain email address uses deterministic Wikidot email obfuscation, a `mailto:` autolink is context-free, and a triple link with an external URL needs no page resolver. `tests/fixtures/wikidot-parity/classification-overrides.json` owns these decisions by exact fixture path and source hash. A source change invalidates its override instead of weakening the default runtime classification. Their exact inventory rows use the `reviewed-context-free-email-obfuscation`, `reviewed-context-free-mailto`, and `reviewed-context-free-external-triple-link` reasons and run as isolated PagePreview cases.
 
 Each mismatch has one disposition: `intentional-security-divergence` means a frozen output difference that FTML deliberately preserves to enforce a security property; `caller-runtime` means a frozen output difference whose missing inputs belong to the caller runtime rather than FTML; `comparison-normalization` means a frozen raw-DOM difference with no demonstrated functional behavior difference; and `unresolved` remains allowed only for an active functional investigation. A classified mismatch remains visible as `status: "mismatch"` and does not become a match.
 
@@ -53,6 +53,7 @@ Run capture and comparison from the FTML repository with the adjacent Wikijump r
 PARITY_TMP=$(mktemp -d)
 node ../wikijump/install/local/wikidot-verification/scripts/build-ftml-live-pages.mjs \
   --ftml-root . \
+  --classification-overrides tests/fixtures/wikidot-parity/classification-overrides.json \
   --cases-output "$PARITY_TMP/cases.jsonl" \
   --pages-output "$PARITY_TMP/pages.jsonl" \
   --slug-prefix ftml-parity

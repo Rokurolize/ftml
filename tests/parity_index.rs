@@ -17,8 +17,11 @@ const CASE_SCHEMA: &str = "wikijump_syntax_differential.live_case.v1";
 const REFERENCE_SCHEMA: &str = "wikijump_syntax_differential.wikidot_reference.v1";
 const SYNTAX_CASE_SCHEMA: &str = "wikijump_syntax_differential.syntax_case.v1";
 const BINDINGS_SCHEMA: &str = "ftml.wikidot_parity.bindings.v1";
+const CLASSIFICATION_OVERRIDES_SCHEMA: &str =
+    "ftml.wikidot_parity.classification_overrides.v1";
 const ACTIVE_INVESTIGATION_REASON_PREFIX: &str =
     "Active functional investigation: issue #";
+const REVIEWED_CONTEXT_FREE_REASON_PREFIX: &str = "reviewed-context-free-";
 
 #[derive(Debug, Deserialize)]
 struct LiveCase {
@@ -90,6 +93,23 @@ struct Provenance {
 struct BindingsManifest {
     schema: String,
     bindings: Vec<Binding>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ClassificationOverridesManifest {
+    schema: String,
+    overrides: Vec<ClassificationOverride>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ClassificationOverride {
+    path: String,
+    source_sha256: String,
+    execution_class: ExecutionClass,
+    page_scope: String,
+    reason: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -272,12 +292,24 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
     let artifact_dir = root.join("tests/fixtures/wikidot-parity");
     let cases_path = artifact_dir.join("cases.jsonl");
     let bindings_path = artifact_dir.join("bindings.json");
+    let classification_overrides_path =
+        artifact_dir.join("classification-overrides.json");
     let cases: Vec<LiveCase> = read_jsonl(&cases_path);
     let manifest: BindingsManifest =
         serde_json::from_slice(&fs::read(&bindings_path).expect("read parity bindings"))
             .expect("bindings.json has valid schema fields");
+    let classification_overrides: ClassificationOverridesManifest =
+        serde_json::from_slice(
+            &fs::read(&classification_overrides_path)
+                .expect("read classification overrides"),
+        )
+        .expect("classification-overrides.json has valid schema fields");
 
     assert_eq!(manifest.schema, BINDINGS_SCHEMA);
+    assert_eq!(
+        classification_overrides.schema,
+        CLASSIFICATION_OVERRIDES_SCHEMA
+    );
     assert!(!cases.is_empty(), "parity case population is empty");
     assert!(
         cases
@@ -292,6 +324,69 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
             .all(|pair| pair[0].case_id < pair[1].case_id),
         "bindings must have unique, sorted case IDs"
     );
+    assert!(
+        classification_overrides
+            .overrides
+            .windows(2)
+            .all(|pair| pair[0].path < pair[1].path),
+        "classification overrides must have unique, sorted paths"
+    );
+
+    let cases_by_path: BTreeMap<_, _> = cases
+        .iter()
+        .map(|case| (case.source_origin.path.as_str(), case))
+        .collect();
+    let override_paths: BTreeSet<_> = classification_overrides
+        .overrides
+        .iter()
+        .map(|entry| entry.path.as_str())
+        .collect();
+    for entry in &classification_overrides.overrides {
+        assert!(
+            entry
+                .reason
+                .starts_with(REVIEWED_CONTEXT_FREE_REASON_PREFIX),
+            "{}: classification override reason must be reviewed context-free",
+            entry.path
+        );
+        let case = cases_by_path.get(entry.path.as_str()).unwrap_or_else(|| {
+            panic!("{}: classification override has no case", entry.path)
+        });
+        assert_eq!(
+            entry.source_sha256, case.source_sha256,
+            "{}: source hash",
+            entry.path
+        );
+        assert_eq!(
+            entry.execution_class, case.execution_class,
+            "{}: execution class",
+            entry.path
+        );
+        assert_eq!(
+            entry.page_scope, case.page_scope,
+            "{}: page scope",
+            entry.path
+        );
+        assert_eq!(
+            case.reasons.as_slice(),
+            std::slice::from_ref(&entry.reason),
+            "{}: reason",
+            entry.path
+        );
+    }
+    for case in &cases {
+        if case
+            .reasons
+            .iter()
+            .any(|reason| reason.starts_with(REVIEWED_CONTEXT_FREE_REASON_PREFIX))
+        {
+            assert!(
+                override_paths.contains(case.source_origin.path.as_str()),
+                "{}: reviewed context-free case needs a classification override",
+                case.case_id
+            );
+        }
+    }
     let execution_counts = cases.iter().fold([0; 4], |mut counts, case| {
         counts[match case.execution_class {
             ExecutionClass::SavedPageBatch => 0,

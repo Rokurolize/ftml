@@ -111,7 +111,7 @@ fn parse_with_wikidot_boundary<'r, 't>(
                 }
             }
             Err(error) if error.kind() == ParseErrorKind::EndOfInput => {
-                return ok!(false; ModuleParseOutput::None);
+                return ok!(false; ModuleParseOutput::Element(text!("")));
             }
             Err(_) => {}
         }

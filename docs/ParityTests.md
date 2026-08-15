@@ -12,7 +12,7 @@ The machine-readable stable corpus is `tests/fixtures/wikidot-parity/cases.jsonl
 
 The dated `tests/fixtures/wikidot-parity/references-YYYYMMDD-NN.jsonl` files preserve the raw Wikidot responses and capture provenance. `tests/fixtures/wikidot-parity/bindings.json` binds each preview-compatible case to its reference hashes and comparator result. These files replace the old manual fixture table as the parity authority.
 
-The current stable inventory has 163 cases: 135 PagePreview-compatible cases, 27 caller-runtime cases, and 1 not-applicable case. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
+The current stable inventory has 170 cases: 142 PagePreview-compatible cases, 27 caller-runtime cases, and 1 not-applicable case. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
 
 Each mismatch has one disposition: `intentional-security-divergence` means a frozen output difference that FTML deliberately preserves to enforce a security property; `caller-runtime` means a frozen output difference whose missing inputs belong to the caller runtime rather than FTML; `comparison-normalization` means a frozen raw-DOM difference with no demonstrated functional behavior difference; and `unresolved` remains allowed only for an active functional investigation. A classified mismatch remains visible as `status: "mismatch"` and does not become a match.
 
@@ -61,14 +61,14 @@ Review every inventory and classification change. If it is intentional, update `
 
 ### 2. Capture raw Wikidot references
 
-Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 135-row selection:
+Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 142-row selection:
 
 ```sh
 mkdir "$PARITY_TMP/batches"
 jq -c 'select(.execution_class == "saved-page-batch" or .execution_class == "page-preview-isolated")' \
   tests/fixtures/wikidot-parity/cases.jsonl | \
   split -l 16 -d -a 2 --additional-suffix=.jsonl - "$PARITY_TMP/batches/cases-"
-test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 135
+test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 142
 ```
 
 For each batch, choose a new dated no-replace output name and run:
@@ -144,6 +144,12 @@ Live note probe.<br />
 ```
 
 The response SHA-256 was `363e4f6b6139f479eb0b1fc80b0ccd4e8a2bafbbc681b77e912f94a9ea8c6d98`. The focused `test/note/wikidot-literal` case now compares this response's DOM tree, DOM signature, and visible text successfully. FTML therefore keeps the Wikijump-only `wj-note` feature while leaving the marker literal in `Layout::Wikidot`; issue #500 is resolved by this change.
+
+### Live module alias evidence
+
+On 2026-08-15, reference batches `references-20260815-11.jsonl` and `references-20260815-12.jsonl` captured seven anonymous `edit/PagePreviewModule` observations on `sandbox-for-codex.wikidot.com`. The Wikidot module closer rule refers to the observed behavior in which `module654` may open a module body but only `module` may close it. Wikidot rendered `[[/module654]]` and the remaining CSS body as page text for both `[[module CSS]]` and `[[module654 CSS]]`, while `[[module654 CSS]]` with `[[/module]]` consumed the CSS body normally.
+
+Before the fix, the two alias-closer cases were confirmed parity mismatches across DOM tree, DOM signature, and visible text. Issue #503 records the FTML behavior defect. After the shared close-name fix, all seven observations in the two batches match across all three checks. Their exact source hashes, raw response hashes, timestamps, anonymous acquisition fields, and `wikidot.py` provenance remain frozen in the reference files.
 
 ### 6. Promote matched cases
 

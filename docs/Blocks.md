@@ -795,6 +795,8 @@ Example:
 [[module NameOfModuleHere someArgument="yes"]]
 ```
 
+In `Layout::Wikidot`, `module654` is an opener alias, but module bodies close only with `[[/module]]`; `[[/module654]]` remains page text. `Layout::Wikijump` retains the broader alias closer.
+
 ### Monospace
 
 Output: `Element::Container(ContainerType::Monospace)` / `<tt>`

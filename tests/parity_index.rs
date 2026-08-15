@@ -293,7 +293,7 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
         });
     assert_eq!(
         binding_counts,
-        [122, 12],
+        [123, 11],
         "campaign binding counts changed; evidence and classification need intentional review"
     );
 

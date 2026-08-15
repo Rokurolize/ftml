@@ -441,3 +441,34 @@ fn repeated_malformed_explicit_list_recovery_stays_bounded() {
     assert!(!errors.is_empty());
     assert!(started.elapsed() < Duration::from_secs(2));
 }
+
+/// Fixture: Rokurolize/ftml#485.
+#[test]
+fn issue_485_scored_list_recovery_keeps_literal_markers_in_one_item() {
+    let source = include_str!("../test/list/block-score/input.ftml");
+    let (html, text, errors) = render(source);
+
+    assert_eq!(
+        html,
+        concat!(
+            "<ul>\n",
+            "<li style=\"list-style: none\">[[li_]]<br>\n",
+            "Alpha<br>\n[[/li]]<br>\n",
+            "[[li_]]<br>\nBeta<br>\n[[/li]]</li>\n",
+            "</ul>",
+            "<ol>\n",
+            "<li style=\"list-style: none\">[[li_]]<br>\n",
+            "One<br>\n[[/li]]<br>\n",
+            "[[li_]]<br>\nTwo<br>\n[[/li]]</li>\n",
+            "</ol>",
+        ),
+    );
+    assert_eq!(
+        text,
+        "[[li_]]\nAlpha\n[[/li]]\n[[li_]]\nBeta\n[[/li]]\n[[li_]]\nOne\n[[/li]]\n[[li_]]\nTwo\n[[/li]]",
+    );
+    assert!(
+        !errors.is_empty(),
+        "malformed scored li must remain diagnosed"
+    );
+}

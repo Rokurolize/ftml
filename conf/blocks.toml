@@ -288,9 +288,10 @@ html-output = "html,code,wj-monospace"
 
 [note]
 accepts-newlines = true
-head = "none"
+head = "map"
 body = "elements"
-html-output = "html,div,wiki-note"
+html-attributes = true
+html-output = "html,div,wj-note"
 
 [paragraph]
 aliases = ["p"]

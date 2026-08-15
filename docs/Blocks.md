@@ -812,11 +812,13 @@ Example:
 
 ### Note
 
-Outputs: `Element::Container(ContainerType::Div)` / `<div class="wiki-note">`
+Outputs: `Element::Container(ContainerType::Note)` / `<div class="wj-note">` in `Layout::Wikijump`; `Element::Container(ContainerType::Div)` / `<div class="wiki-note">` in `Layout::Wikidot`.
 
 Body: Elements
 
 Accepts newline separation.
+
+Arguments: All accepted attributes in `Layout::Wikijump`. The legacy output is retained pending the live-parity investigation in [issue #500](https://github.com/Rokurolize/ftml/issues/500).
 
 Example:
 

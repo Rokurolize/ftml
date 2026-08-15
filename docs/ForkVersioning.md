@@ -42,11 +42,11 @@ Do not use upstream-looking tags such as `v1.42.0-alpha.1` for fork snapshots.
 
 1. Fetch `upstream/main` and `origin/main`.
 2. Create a branch from `origin/main`.
-3. Merge `upstream/main` into that branch when upstream has moved.
-4. Resolve conflicts while preserving fork-local policy and CI files.
-5. Set `Cargo.toml` `version` to `<upstream-version>+roku.<yyyymmdd>.<n>`.
-6. Run `scripts/check_fork_version.sh`.
-7. Run the normal local verification for the change.
+3. Record upstream-only commits as a sync candidate; do not merge them by ancestry.
+4. Compare the candidate's observable behavior with `origin/main` and port only missing behavior.
+5. Resolve conflicts while preserving fork-local policy and CI files.
+6. Set `Cargo.toml` `version` to `<upstream-version>+roku.<yyyymmdd>.<n>`.
+7. Run `scripts/check_fork_version.sh` and focused live-backed tests.
 8. Open a PR against `Rokurolize/ftml` `main`.
 9. Merge after CI and review gates pass.
 10. Create an annotated `roku-v<full-cargo-version>` tag on the merged commit.
@@ -55,3 +55,7 @@ Do not use upstream-looking tags such as `v1.42.0-alpha.1` for fork snapshots.
 
 Keep `upstream` fetch-only.
 Do not push to `scpwiki/ftml`.
+
+## Current Sync Candidate (2026-08-15)
+
+`upstream/main` is seven commits ahead of `origin/main`. The candidate is the upstream `[[note]]` feature series (`fe528c1`, `c50a01b`, `8a11b54`, `815210c`, `732ba78`, `72af54e`, and merge `1e659cf`). The fork already had independent Wikidot note behavior, so this sync ports only the missing Wikijump `ContainerType::Note` path and keeps the legacy path unchanged.

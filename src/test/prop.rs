@@ -312,6 +312,7 @@ where
         Just(ContainerType::Div),
         Just(ContainerType::Mark),
         Just(ContainerType::Blockquote),
+        Just(ContainerType::Note),
         Just(ContainerType::Insertion),
         Just(ContainerType::Deletion),
         Just(ContainerType::Hidden),

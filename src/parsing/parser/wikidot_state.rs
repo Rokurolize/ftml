@@ -7,6 +7,7 @@ const PENDING_COLLAPSIBLE_CLOSER: u8 = 1 << 2;
 const COLLAPSIBLE_CLOSED_AT_DEEPER_QUOTE: u8 = 1 << 3;
 const SIMPLE_TABLE_CELL: u8 = 1 << 4;
 const MIXED_PARAGRAPH_OWNERSHIP: u8 = 1 << 5;
+const COLLAPSIBLE_CONTENT_CLOSED: u8 = 1 << 6;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(super) struct WikidotState {
@@ -18,6 +19,7 @@ pub(super) struct WikidotState {
     bibliography_body_depth: u16,
     literal_triple_link_depth: u16,
     simple_table_crossed_closers: u16,
+    center_body_depth: u16,
     flags: u8,
 }
 
@@ -135,6 +137,28 @@ impl Parser<'_, '_> {
 
     pub(crate) fn set_pending_wikidot_collapsible_closer(&mut self, value: bool) {
         set_flag(&mut self.wikidot.flags, PENDING_COLLAPSIBLE_CLOSER, value);
+    }
+
+    pub(crate) fn in_wikidot_center_body(&self) -> bool {
+        self.wikidot.center_body_depth > 0
+    }
+
+    pub(crate) fn enter_wikidot_center_body(&mut self) {
+        self.wikidot.center_body_depth = self.wikidot.center_body_depth.saturating_add(1);
+    }
+
+    pub(crate) fn leave_wikidot_center_body(&mut self) {
+        self.wikidot.center_body_depth = self.wikidot.center_body_depth.saturating_sub(1);
+    }
+
+    pub(crate) fn mark_wikidot_collapsible_content_closed(&mut self) {
+        set_flag(&mut self.wikidot.flags, COLLAPSIBLE_CONTENT_CLOSED, true);
+    }
+
+    pub(crate) fn take_wikidot_collapsible_content_closed(&mut self) -> bool {
+        let closed = self.wikidot.flags & COLLAPSIBLE_CONTENT_CLOSED != 0;
+        set_flag(&mut self.wikidot.flags, COLLAPSIBLE_CONTENT_CLOSED, false);
+        closed
     }
 
     pub(crate) fn set_wikidot_collapsible_closed_at_deeper_quote(&mut self, value: bool) {

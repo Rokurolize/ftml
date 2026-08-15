@@ -45,8 +45,17 @@ pub(crate) struct CollapsibleHead<'t> {
 
 impl<'t> CollapsibleHead<'t> {
     pub(crate) fn into_element(self, elements: Vec<Element<'t>>) -> Element<'t> {
+        self.into_element_with_unfolded_tail(elements, None)
+    }
+
+    fn into_element_with_unfolded_tail(
+        self,
+        elements: Vec<Element<'t>>,
+        unfolded_tail_start: Option<usize>,
+    ) -> Element<'t> {
         Element::Collapsible {
             elements,
+            unfolded_tail_start,
             attributes: self.attributes,
             start_open: self.start_open,
             show_text: self.show_text,
@@ -121,9 +130,36 @@ fn parse_fn<'r, 't>(
         true,
         body_start,
     );
+    let body = match body {
+        Ok(body) => body,
+        Err(error) => {
+            parser.set_in_wikidot_collapsible(previous_collapsible_context);
+            return Err(error);
+        }
+    };
+    let (mut elements, mut errors, _) = body.into();
+    let unfolded_tail_start = if parser.take_wikidot_collapsible_content_closed() {
+        let tail_start = elements.len();
+        let tail = parser.get_body_elements_with_literal_quote_context(
+            &BLOCK_COLLAPSIBLE,
+            true,
+            BlockBodyStart::NextPhysicalLine,
+        );
+        let tail = match tail {
+            Ok(tail) => tail,
+            Err(error) => {
+                parser.set_in_wikidot_collapsible(previous_collapsible_context);
+                return Err(error);
+            }
+        };
+        let (tail, tail_errors, _) = tail.into();
+        errors.extend(tail_errors);
+        elements.extend(prepare_wikidot_unfolded_tail(tail));
+        Some(tail_start)
+    } else {
+        None
+    };
     parser.set_in_wikidot_collapsible(previous_collapsible_context);
-    let body = body?;
-    let (elements, mut errors, _) = body.into();
     if parser.settings().layout.legacy()
         && parser.pending_wikidot_collapsible_closer()
         && parser.current().token == Token::LineBreak
@@ -132,7 +168,7 @@ fn parse_fn<'r, 't>(
     }
 
     // Build element and return
-    let element = head.into_element(elements);
+    let element = head.into_element_with_unfolded_tail(elements, unfolded_tail_start);
 
     let mut output = vec![element];
     if parser.settings().layout.legacy()
@@ -157,6 +193,16 @@ fn parse_fn<'r, 't>(
     }
 
     ok!(false; output, errors)
+}
+
+fn prepare_wikidot_unfolded_tail(mut elements: Vec<Element<'_>>) -> Vec<Element<'_>> {
+    if let [Element::Container(container)] = elements.as_slice()
+        && container.ctype() == crate::tree::ContainerType::Paragraph
+    {
+        elements = container.elements().to_vec();
+    }
+    elements.insert(0, Element::LineBreak);
+    elements
 }
 
 fn parse_hide_location(s: &str, parser: &Parser) -> Result<(bool, bool), ParseError> {

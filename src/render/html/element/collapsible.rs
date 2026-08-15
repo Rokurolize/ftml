@@ -24,6 +24,7 @@ use crate::tree::{AttributeMap, Element};
 #[derive(Debug, Copy, Clone)]
 pub struct Collapsible<'a> {
     elements: &'a [Element<'a>],
+    unfolded_tail_start: Option<usize>,
     attributes: &'a AttributeMap<'a>,
     start_open: bool,
     show_text: Option<&'a str>,
@@ -34,8 +35,10 @@ pub struct Collapsible<'a> {
 
 impl<'a> Collapsible<'a> {
     #[inline]
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         elements: &'a [Element<'a>],
+        unfolded_tail_start: Option<usize>,
         attributes: &'a AttributeMap<'a>,
         start_open: bool,
         show_text: Option<&'a str>,
@@ -45,6 +48,7 @@ impl<'a> Collapsible<'a> {
     ) -> Self {
         Collapsible {
             elements,
+            unfolded_tail_start,
             attributes,
             start_open,
             show_text,
@@ -58,6 +62,7 @@ impl<'a> Collapsible<'a> {
 pub fn render_collapsible(ctx: &mut HtmlContext, collapsible: Collapsible) {
     let Collapsible {
         elements,
+        unfolded_tail_start,
         attributes,
         start_open,
         show_text,
@@ -78,6 +83,9 @@ pub fn render_collapsible(ctx: &mut HtmlContext, collapsible: Collapsible) {
 
     match ctx.layout() {
         Layout::Wikidot => {
+            let (elements, unfolded_tail) = unfolded_tail_start
+                .map(|start| elements.split_at(start.min(elements.len())))
+                .unwrap_or((elements, &[]));
             let show_text = show_text
                 .filter(|text| !text.is_empty() && *text != "0")
                 .unwrap_or("+ show block");
@@ -87,6 +95,7 @@ pub fn render_collapsible(ctx: &mut HtmlContext, collapsible: Collapsible) {
             render_collapsible_wikidot(
                 ctx,
                 elements,
+                unfolded_tail,
                 start_open,
                 show_text,
                 hide_text,
@@ -115,9 +124,11 @@ pub fn render_collapsible(ctx: &mut HtmlContext, collapsible: Collapsible) {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn render_collapsible_wikidot(
     ctx: &mut HtmlContext,
     elements: &[Element],
+    unfolded_tail: &[Element],
     start_open: bool,
     show_text: &str,
     hide_text: &str,
@@ -151,6 +162,8 @@ fn render_collapsible_wikidot(
                         .div()
                         .attr(attr!("class" => "collapsible-block-content"))
                         .contents(elements);
+
+                    render_elements(ctx, unfolded_tail);
 
                     if show_bottom {
                         render_wikidot_hide_link(ctx, hide_text);

@@ -217,6 +217,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         } => render_checkbox(ctx, *checked, attributes),
         Element::Collapsible {
             elements,
+            unfolded_tail_start,
             attributes,
             start_open,
             show_text,
@@ -227,6 +228,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
             ctx,
             Collapsible::new(
                 elements,
+                *unfolded_tail_start,
                 attributes,
                 *start_open,
                 ref_cow!(show_text),

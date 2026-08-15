@@ -110,9 +110,16 @@ pub fn parse_alignment_block<'r, 't>(
     }
 
     // Get body content, with paragraphs
-    let (elements, errors, _) = parser
-        .get_body_elements_with_context(block_rule, true, body_start)?
-        .into();
+    let wikidot_center =
+        parser.settings().layout.legacy() && alignment == Alignment::Center;
+    if wikidot_center {
+        parser.enter_wikidot_center_body();
+    }
+    let body = parser.get_body_elements_with_context(block_rule, true, body_start);
+    if wikidot_center {
+        parser.leave_wikidot_center_body();
+    }
+    let (elements, errors, _) = body?.into();
 
     // Build element
     let element = Element::Container(Container::new(

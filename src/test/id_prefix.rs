@@ -360,6 +360,7 @@ fn isolate_user_ids() {
                 vec![text!("X")],
                 AttributeMap::new(),
             ))],
+            unfolded_tail_start: None,
             attributes: AttributeMap::from(btreemap! {
                 cow!("class") => cow!("apple"),
                 cow!("id") => cow!("u-banana"),
@@ -379,6 +380,7 @@ fn isolate_user_ids() {
                 vec![text!("X")],
                 AttributeMap::new(),
             ))],
+            unfolded_tail_start: None,
             attributes: AttributeMap::from(btreemap! {
                 cow!("class") => cow!("u-apple"),
                 cow!("id") => cow!("u-banana"),

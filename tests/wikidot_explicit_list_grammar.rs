@@ -1,6 +1,6 @@
 use ftml::data::{PageInfo, ScoreValue};
 use ftml::layout::Layout;
-use ftml::parsing::ParseError;
+use ftml::parsing::{ParseError, ParseErrorKind};
 use ftml::render::Render;
 use ftml::render::html::HtmlRender;
 use ftml::render::text::TextRender;
@@ -440,6 +440,40 @@ fn repeated_malformed_explicit_list_recovery_stays_bounded() {
     assert!(text.contains("row-511"));
     assert!(!errors.is_empty());
     assert!(started.elapsed() < Duration::from_secs(2));
+}
+
+/// Fixture: Rokurolize/ftml#484. Frozen parity case: test--list--block-fail.
+#[test]
+fn issue_484_empty_lists_keep_breaks_and_orphan_recovery_unwrapped() {
+    let source = include_str!("../test/list/block-fail/input.ftml");
+    let (html, text, errors) = render(source);
+
+    assert_eq!(
+        html,
+        concat!(
+            "<br>\n<br>\n<br>\n<br>\n<br>\n<br>\n",
+            "<ul>\n<li style=\"list-style: none\">Foo</li>\n</ul><br>\n",
+            "<ol>\n<li style=\"list-style: none\">Bar</li>\n</ol><br>\n",
+            "[[li]]<br>\nBaz<br>\n[[/li]]",
+        ),
+    );
+    assert_eq!(text, "Foo\n\nBar\n\n[[li]]\nBaz\n[[/li]]");
+    assert_eq!(
+        errors
+            .iter()
+            .filter(|error| error.kind() == ParseErrorKind::ListItemOutsideList)
+            .count(),
+        1,
+    );
+}
+
+#[test]
+fn issue_484_isolated_orphan_list_item_stays_in_a_paragraph() {
+    let (html, text, errors) = render("[[li]]\nBaz\n[[/li]]");
+
+    assert_eq!(html, "<p>[[li]]<br>\nBaz<br>\n[[/li]]</p>");
+    assert_eq!(text, "[[li]]\nBaz\n[[/li]]");
+    assert!(!errors.is_empty(), "orphan li must remain diagnosed");
 }
 
 /// Fixture: Rokurolize/ftml#485.

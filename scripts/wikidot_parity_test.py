@@ -58,10 +58,7 @@ class WikidotParityTest(unittest.TestCase):
             parity.missing_block_facets(ROOT, stable_cases),
             {"star-flag": set(), "score-flag": set(), "body-close": set()},
         )
-        missing_pairs = parity.missing_alias_pairs(ROOT, stable_cases)
-        self.assertEqual(len(missing_pairs), 48)
-        self.assertNotIn("anchor:anchor->a", missing_pairs)
-        self.assertNotIn("anchor:a->anchor", missing_pairs)
+        self.assertEqual(parity.missing_alias_pairs(ROOT, stable_cases), set())
 
     def test_real_live_case_projection_and_compact_binding(self):
         with tempfile.TemporaryDirectory() as directory:

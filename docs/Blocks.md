@@ -150,6 +150,8 @@ Body: Elements
 
 Accepts score (`_`): Strips leading and trailing newlines.
 
+In `Layout::Wikidot`, only `a` opens and closes this block; the `anchor` name and cross-name closers remain literal. `Layout::Wikijump` retains both names.
+
 Arguments:
 * All accepted attributes
 

@@ -21,7 +21,7 @@ class WikidotParityTest(unittest.TestCase):
                 '[hidden-name]\nexclude-name = true\naliases = ["visible-alias"]\naccepts-score = true\n'
             )
             cases = {
-                "one": {"source": "[[alpha*]] [[/a]]"},
+                "one": {"source": "[[alpha*]] [[/a]] [[a]][[/alpha]] [[alpha]][[/alpha]] [[a]][[/a]]"},
                 "two": {"source": "[[visible-alias_]]"},
             }
 
@@ -37,6 +37,14 @@ class WikidotParityTest(unittest.TestCase):
                 parity.missing_block_facets(root, cases),
                 {"star-flag": set(), "score-flag": set(), "body-close": set()},
             )
+            self.assertEqual(parity.missing_alias_pairs(root, cases), set())
+            self.assertEqual(
+                parity.missing_alias_pairs(
+                    root,
+                    {"separate": {"source": "[[alpha]][[/alpha]] [[a]][[/a]]"}},
+                ),
+                {"alpha:alpha->a", "alpha:a->alpha"},
+            )
 
         stable_cases = parity.load_cases(
             ROOT / "tests/fixtures/wikidot-parity/cases.jsonl"
@@ -50,6 +58,10 @@ class WikidotParityTest(unittest.TestCase):
             parity.missing_block_facets(ROOT, stable_cases),
             {"star-flag": set(), "score-flag": set(), "body-close": set()},
         )
+        missing_pairs = parity.missing_alias_pairs(ROOT, stable_cases)
+        self.assertEqual(len(missing_pairs), 48)
+        self.assertNotIn("anchor:anchor->a", missing_pairs)
+        self.assertNotIn("anchor:a->anchor", missing_pairs)
 
     def test_real_live_case_projection_and_compact_binding(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -149,6 +149,31 @@ mod tests {
             ),
             r#"<p><a class="wj-anchor" href="/some-page">click</a></p>"#,
         );
+        assert_eq!(
+            render_with_layout(
+                r#"[[a href="some-page"]]click[[/anchor]]"#,
+                Layout::Wikijump,
+            ),
+            r#"<p><a class="wj-anchor" href="/some-page">click</a></p>"#,
+        );
+        assert_eq!(
+            render_with_layout(
+                r#"[[anchor href="some-page"]]click[[/a]]"#,
+                Layout::Wikijump,
+            ),
+            r#"<p><a class="wj-anchor" href="/some-page">click</a></p>"#,
+        );
+    }
+
+    #[test]
+    fn wikidot_canonical_anchor_rejects_alias_closer() {
+        assert_eq!(
+            render(r#"[[a href="https://example.com"]]Canonical opener[[/anchor]]"#),
+            concat!(
+                r#"<p>[[a href=&quot;<a href="https://example.com">https://example.com</a>"#,
+                r#"&quot;]]Canonical opener[[/anchor]]</p>"#,
+            ),
+        );
     }
 
     #[test]

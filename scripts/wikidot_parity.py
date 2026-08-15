@@ -340,6 +340,39 @@ def missing_block_facets(root, cases):
     return missing
 
 
+def missing_alias_pairs(root, cases):
+    observed = set()
+    blocks = {
+        name: set(block_names(name, block))
+        for name, block in configured_blocks(root).items()
+        if block.get("body", "none") != "none"
+    }
+    for case in cases.values():
+        markers = [
+            (bool(match.group(1)), match.group(2).rstrip("*_").casefold())
+            for match in re.finditer(r"\[\[(/?)([^\s\]]+)", case["source"])
+        ]
+        for block_name, names in blocks.items():
+            openers = []
+            for close, marker in markers:
+                if marker not in names:
+                    continue
+                if close:
+                    if openers:
+                        observed.add(f"{block_name}:{openers.pop()}->{marker}")
+                else:
+                    openers.append(marker)
+
+    missing = set()
+    for name, names in blocks.items():
+        for opener in names:
+            for closer in names:
+                pair = f"{name}:{opener}->{closer}"
+                if pair not in observed:
+                    missing.add(pair)
+    return missing
+
+
 def print_report(cases, references, bindings, root):
     ids = set(cases)
     preview = preview_case_ids(cases)
@@ -347,6 +380,7 @@ def print_report(cases, references, bindings, root):
     categories = {
         "missing-block-name": configured_block_names(root) - observed_block_names(cases),
         **{f"missing-{name}": values for name, values in missing_facets.items()},
+        "missing-alias-pair": missing_alias_pairs(root, cases),
         "mismatch": {case_id for case_id, value in bindings.items() if value["status"] == "mismatch"},
         "runtime": {case_id for case_id, case in cases.items()
                     if case["execution_class"] == "wikijump-runtime"},

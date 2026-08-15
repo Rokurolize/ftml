@@ -36,11 +36,9 @@ candidate and the immediately preceding known-good rollback candidate. Once a
 receipt is terminal and no process or lease references the target, remove it
 and retain the receipt rather than the cache.
 
-CI target caches are disposable performance caches, not provenance. The
-library, WebAssembly, and lint jobs use separate cache keys and the cache
-generation is bumped when profile or target policy changes. CI sets
-`CARGO_INCREMENTAL=0` because those builds are one-shot; local development
-does not.
+Candidate target caches are disposable performance caches, not provenance.
+Local development keeps incremental compilation enabled; candidate and
+one-shot verification builds set `CARGO_INCREMENTAL=0`.
 
 Runtime data, browser evidence, generated `pkg/` releases, and published
 artifacts are not Cargo targets and must not be removed by target cleanup.

@@ -6,7 +6,7 @@
 
 This environment is for parser, renderer, fixture, configuration, coverage, and WebAssembly work in `Rokurolize/ftml`. FTML is a Rust library and does not need Wikijump's Node.js applications, Docker Compose stack, PostgreSQL, Redis, MinIO, `libmagic`, or `sqlx-cli`.
 
-The scripts prepare the toolchains and dependency caches used by the repository's GitHub Actions workflows. Runtime integration, database state, browser parity capture, and the Wikijump FTML pin bump canary remain Wikijump responsibilities under [`WikijumpBoundary.md`](WikijumpBoundary.md).
+The scripts prepare the toolchains and dependency caches used for local validation. Runtime integration, database state, browser parity capture, and the Wikijump FTML pin bump canary remain Wikijump responsibilities under [`WikijumpBoundary.md`](WikijumpBoundary.md).
 
 ## Codex environment settings
 
@@ -60,7 +60,7 @@ The setup script performs these operations on the trusted default branch.
 3. It requires Python 3.13 and uses isolated mode so the checkout cannot shadow standard library or pip modules.
 4. It validates the FTML package name and the three Rust pins, then installs the pinned Rust toolchain without updating rustup itself, plus `rustfmt`, Clippy, Rust source, and the `wasm32-unknown-unknown` target.
 5. It accepts only simple package specifiers in `scripts/check_conf-requirements.txt`, copies the reviewed file outside the checkout, and installs binary wheels from that trusted copy.
-6. It installs and verifies the GitHub Actions versions of `cargo-nextest`, `cargo-tarpaulin`, `cargo-machete`, and `wasm-pack`.
+6. It installs and verifies the pinned versions of `cargo-nextest`, `cargo-tarpaulin`, `cargo-machete`, and `wasm-pack`.
 7. It removes an untracked or ignored `Cargo.lock`, resolves the manifest from a trusted working directory, and fetches Cargo dependencies. A future tracked regular lockfile is retained and fetched with `--locked`.
 8. It performs one development WebAssembly build without default features so `wasm-pack` can cache its managed `wasm-bindgen` tooling before agent internet access is disabled. The generated `pkg/` directory is removed afterward.
 
@@ -91,7 +91,7 @@ python3 scripts/check_conf.py
 python3 -m unittest discover -s scripts -p '*_test.py'
 ```
 
-`python3 --version` must report Python 3.13.x. The environment level `RUSTFLAGS` matches the native CI jobs, so individual native commands do not need to repeat it.
+`python3 --version` must report Python 3.13.x. The environment level `RUSTFLAGS` applies the repository warning policy, so individual native commands do not need to repeat it.
 
 Run the exhaustive ignored tests only when the touched behavior or final premerge verification needs them.
 
@@ -137,7 +137,7 @@ Neither WebAssembly build may attempt a managed tool download. Any offline depen
 
 ## Updating the environment
 
-Update both scripts when `rust-toolchain.toml`, the `rust-version` field, the four pinned tool versions in `.github/workflows/build.yaml`, or `scripts/check_conf-requirements.txt` changes. A Python requirements change intentionally makes maintenance stop until the reviewed setup script is pasted again and the cache is reset.
+Update both scripts when `rust-toolchain.toml`, the `rust-version` field, either script's four pinned tool versions, or `scripts/check_conf-requirements.txt` changes. A Python requirements change intentionally makes maintenance stop until the reviewed setup script is pasted again and the cache is reset.
 
 Validate script changes locally before pasting them into the environment.
 
@@ -163,7 +163,7 @@ Use Reset cache when maintenance reports missing trusted state, a system command
 | Cargo reports that a package is unavailable in offline mode | Rerun maintenance or reset the cache so trusted `cargo fetch` runs for the task branch |
 | `wasm-pack` tries to download tooling during the agent phase | Reset the cache; if the branch intentionally changes `wasm-bindgen`, rebuild the environment before validating that branch |
 | A Cargo tool record exists but its binary is missing or has the wrong version | Let maintenance reinstall the fixed version; reset the cache if verification still fails |
-| Tarpaulin fails on a non Linux host | Use the Linux Universal environment or rely on the GitHub Actions coverage job |
+| Tarpaulin fails on a non Linux host | Use the Linux Universal environment |
 
 ## Security boundary
 

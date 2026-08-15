@@ -29,7 +29,9 @@ Parity claims must link to raw provenance-backed Wikidot evidence. A generated `
 
 If a coverage refactor changes parser or renderer behavior, include either a fixture regression check or an explicit non-impact note.
 
-## Validation
+## Local Validation
+
+Run and record the checks below before opening the pull request. GitHub Actions does not repeat them.
 
 - [ ] `cargo test --test integration parity_index`
 - [ ] `cargo fmt --all -- --check`

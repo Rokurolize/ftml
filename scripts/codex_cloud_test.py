@@ -11,7 +11,6 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SETUP = ROOT / "scripts" / "codex-cloud-setup.sh"
 MAINTENANCE = ROOT / "scripts" / "codex-cloud-maintenance.sh"
-WORKFLOW = ROOT / ".github" / "workflows" / "build.yaml"
 DOCUMENTATION = ROOT / "docs" / "CodexCloudEnvironment.md"
 REQUIREMENTS = ROOT / "scripts" / "check_conf-requirements.txt"
 
@@ -36,29 +35,9 @@ def script_tool_versions(path):
     )
 
 
-def workflow_tool_installs(path):
-    aliases = {"nextest": "cargo-nextest"}
-    installs = re.findall(
-        r"^\s*uses: taiki-e/install-action@([^\s#]+)\s*$\n"
-        r"^\s*with:\s*$\n"
-        r"^\s*tool: (nextest|cargo-tarpaulin|cargo-machete|wasm-pack)@([0-9.]+)\s*$",
-        read(path),
-        flags=re.MULTILINE,
-    )
-    return [(aliases.get(tool, tool), version, revision) for revision, tool, version in installs]
-
-
 class CodexCloudScriptTests(unittest.TestCase):
-    def test_tool_versions_match_github_actions(self):
-        installs = workflow_tool_installs(WORKFLOW)
-        expected = {tool: version for tool, version, _ in installs}
-
-        self.assertEqual(len(installs), 3)
-        self.assertTrue(all(re.fullmatch(r"[0-9a-f]{40}", revision) for _, _, revision in installs))
-        for script in (SETUP, MAINTENANCE):
-            versions = script_tool_versions(script)
-            for tool, version in expected.items():
-                self.assertEqual(versions[tool], version)
+    def test_tool_versions_match_between_scripts(self):
+        self.assertEqual(script_tool_versions(SETUP), script_tool_versions(MAINTENANCE))
 
     def test_rust_version_matches_repository_pins(self):
         toolchain_path = ROOT / "rust-toolchain.toml"

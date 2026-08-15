@@ -26,7 +26,7 @@ The bibliography fixture is the one current exception to exact FTML output hashi
 
 ## Discovery Backlog
 
-The stable inventory is the CI authority. To discover additional sources exercised only by Rust tests, record one full run and build a candidate inventory:
+The stable inventory is the local merge authority. To discover additional sources exercised only by Rust tests, record one full run and build a candidate inventory:
 
 ```sh
 DISCOVERY_TMP=$(mktemp -d)

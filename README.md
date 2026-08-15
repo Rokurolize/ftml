@@ -11,11 +11,6 @@
          alt="Ask DeepWiki about Rokurolize/ftml">
   </a>
 
-  <a href="https://github.com/Rokurolize/ftml/actions/workflows/build.yaml?query=branch%3Amain">
-    <img src="https://github.com/Rokurolize/ftml/actions/workflows/build.yaml/badge.svg?branch=main"
-         alt="Rust build status on main">
-  </a>
-
   <a href="https://docs.rs/ftml">
     <img src="https://docs.rs/ftml/badge.svg"
          alt="docs.rs documentation for ftml">

@@ -44,11 +44,11 @@ Do not use upstream-looking tags such as `v1.42.0-alpha.1` for fork snapshots.
 2. Create a branch from `origin/main`.
 3. Record upstream-only commits as a sync candidate; do not merge them by ancestry.
 4. Compare the candidate's observable behavior with `origin/main` and port only missing behavior.
-5. Resolve conflicts while preserving fork-local policy and CI files.
+5. Resolve conflicts while preserving fork-local policy files.
 6. Set `Cargo.toml` `version` to `<upstream-version>+roku.<yyyymmdd>.<n>`.
 7. Run `scripts/check_fork_version.sh` and focused live-backed tests.
 8. Open a PR against `Rokurolize/ftml` `main`.
-9. Merge after CI and review gates pass.
+9. Merge after local validation and review pass.
 10. Create an annotated `roku-v<full-cargo-version>` tag on the merged commit.
 11. In `Rokurolize/wikijump/deepwell`, run `cargo update -p ftml`.
 12. Open and merge the resulting `wikijump` lockfile update after Deepwell CI passes.

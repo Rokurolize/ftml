@@ -20,6 +20,7 @@
 
 use super::prelude::*;
 use crate::delayed::DelayedElement;
+use crate::parsing::inline_scope::WIKIDOT_SCORE_SPAN_UNWRAPPED_ATTRIBUTE;
 use crate::parsing::strip_newlines;
 use crate::tree::{PartialElement, WIKIDOT_GENERATED_EMPTY_CLASS_MARKER};
 use std::borrow::Cow;
@@ -166,7 +167,7 @@ fn parse_fn<'r, 't>(
         if flag_score {
             attributes.insert("data-ftml-score-span", cow!(""));
             if scored_starts_next_physical_line {
-                attributes.insert("data-ftml-score-span-own-line", cow!(""));
+                attributes.insert(WIKIDOT_SCORE_SPAN_UNWRAPPED_ATTRIBUTE, cow!(""));
             }
         }
         let span = Element::Partial(PartialElement::InlineSpanOpen(attributes));

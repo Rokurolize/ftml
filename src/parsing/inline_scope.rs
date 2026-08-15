@@ -6,6 +6,8 @@ use std::mem;
 
 const MAX_ACTIVE_INLINE_SCOPES: usize =
     crate::parsing::parser::DEFAULT_MAX_RECURSION_DEPTH;
+pub(super) const WIKIDOT_SCORE_SPAN_UNWRAPPED_ATTRIBUTE: &str =
+    "data-ftml-score-span-own-line";
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum ScopeKind {
@@ -504,8 +506,9 @@ fn lower_sequence<'t>(
         {
             let at_start = output.is_empty() && run.is_empty();
             let scored = attributes.remove("data-ftml-score-span").is_some();
-            let scored_starts_next_physical_line =
-                attributes.remove("data-ftml-score-span-own-line").is_some();
+            let scored_starts_next_physical_line = attributes
+                .remove(WIKIDOT_SCORE_SPAN_UNWRAPPED_ATTRIBUTE)
+                .is_some();
             if scored {
                 while matches!(
                     run.last(),

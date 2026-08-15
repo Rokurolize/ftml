@@ -141,13 +141,14 @@ fn crossed_center_close_insertion_line(
     Some(insertion_line)
 }
 
-/// Move a prematurely crossed center closer behind its collapsible closer.
-///
-/// Wikidot treats the corpus-backed shape
-/// `[[=]][[collapsible]][[/=]]...[[/collapsible]]` as a centered collapsible,
-/// effectively canonicalizing the close order. FTML's tree parser needs that
-/// nesting made explicit before tokenization.
-pub fn substitute(text: &mut String) {
+/// Make crossed center/collapsible owners parseable without losing Wikidot's
+/// authored early close.
+#[cfg(test)]
+fn substitute(text: &mut String) {
+    substitute_for_layout(text, false);
+}
+
+pub(super) fn substitute_for_layout(text: &mut String, wikidot: bool) {
     let mut lines = text
         .split_inclusive('\n')
         .map(str::to_owned)
@@ -169,7 +170,7 @@ pub fn substitute(text: &mut String) {
     canonicalize_crossed_collapsible_div_closers(&mut lines, &literal_lines);
     canonicalize_crossed_div_center_closers(&mut lines, &literal_lines);
     canonicalize_crossed_center_div_closers(&mut lines, &literal_lines);
-    canonicalize_crossed_center_collapsible_closers(&mut lines, &literal_lines);
+    canonicalize_crossed_center_collapsible_closers(&mut lines, &literal_lines, wikidot);
     canonicalize_crossed_bold_size_closers(&mut lines, &literal_lines);
     remove_tight_quote_lines(&mut lines, &literal_lines);
     canonicalize_root_collapsible_inline_quoted_closers(&mut lines, &literal_lines);
@@ -852,6 +853,7 @@ fn canonicalize_crossed_center_div_closers(lines: &mut [String], literal_lines: 
 fn canonicalize_crossed_center_collapsible_closers(
     lines: &mut [String],
     literal_lines: &[bool],
+    preserve_early_close: bool,
 ) {
     let mut pending: Option<CrossedClose> = None;
     let mut index = 0;
@@ -930,8 +932,10 @@ fn canonicalize_crossed_center_collapsible_closers(
                     let early = candidate
                         .early_center_close
                         .expect("crossed close candidate has an early closer");
-                    let (_, early_ending) = split_line(&lines[early]);
-                    lines[early] = format!("{}{early_ending}", candidate.prefix);
+                    if !preserve_early_close {
+                        let (_, early_ending) = split_line(&lines[early]);
+                        lines[early] = format!("{}{early_ending}", candidate.prefix);
+                    }
 
                     let (insertion_body, insertion_ending) =
                         split_line(&lines[insertion_line]);
@@ -1453,15 +1457,15 @@ mod tests {
     #[test]
     fn quoted_crossed_center_and_collapsible_closers_are_canonicalized() {
         // Corpus provenance: scp-wiki/gears-ground-slowly.
-        let mut source = concat!(
+        let original = concat!(
             "> [[=]]\n",
             "> [[collapsible show=\"poetry\" hide=\"poetry\"]]\n",
             "> [[/=]]\n",
             "> originally written here\n",
             "> [[/collapsible]]\n",
             "outside\n",
-        )
-        .to_owned();
+        );
+        let mut source = original.to_owned();
 
         substitute(&mut source);
         assert_eq!(
@@ -1488,6 +1492,21 @@ mod tests {
         assert!(html.contains("text-align: center"), "{html}");
         assert!(html.contains("collapsible-block"), "{html}");
         assert!(html.contains("outside"), "{html}");
+
+        let mut wikidot = original.to_owned();
+        substitute_for_layout(&mut wikidot, true);
+        assert_eq!(
+            wikidot,
+            concat!(
+                "> [[=]]\n",
+                "> [[collapsible show=\"poetry\" hide=\"poetry\"]]\n",
+                "> [[/=]]\n",
+                "> originally written here\n",
+                "> [[/collapsible]]\n",
+                "> [[/=]]\n",
+                "outside\n",
+            ),
+        );
     }
 
     #[test]

@@ -204,6 +204,9 @@ pub enum Element<'t> {
     #[serde(rename_all = "kebab-case")]
     Collapsible {
         elements: Vec<Element<'t>>,
+        /// First element rendered outside Wikidot's collapsible content div.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        unfolded_tail_start: Option<usize>,
         attributes: AttributeMap<'t>,
         start_open: bool,
         show_text: Option<Cow<'t, str>>,
@@ -681,6 +684,7 @@ impl Element<'_> {
             },
             Element::Collapsible {
                 elements,
+                unfolded_tail_start,
                 attributes,
                 start_open,
                 show_text,
@@ -689,6 +693,7 @@ impl Element<'_> {
                 show_bottom,
             } => Element::Collapsible {
                 elements: elements_to_owned(elements),
+                unfolded_tail_start: *unfolded_tail_start,
                 attributes: attributes.to_owned(),
                 start_open: *start_open,
                 show_text: option_string_to_owned(show_text),

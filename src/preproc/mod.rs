@@ -218,7 +218,7 @@ fn preprocess_internal(text: &mut String, wikidot_compatibility: bool) {
     } else {
         whitespace::substitute(text);
     }
-    compatibility::substitute(text);
+    compatibility::substitute_for_layout(text, wikidot_compatibility);
     if wikidot_compatibility {
         compatibility::substitute_wikidot(text);
         typography::substitute_wikidot(text);

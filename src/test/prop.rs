@@ -354,6 +354,7 @@ where
                 show_bottom,
             )| Element::Collapsible {
                 elements,
+                unfolded_tail_start: None,
                 attributes,
                 start_open,
                 show_text,

@@ -381,6 +381,61 @@ fn wikijump_collapsible_argument_behavior_is_unchanged() {
 }
 
 #[test]
+fn wikidot_quoted_crossed_center_close_leaves_following_text_outside_content() {
+    let source = concat!(
+        "> [[=]]\n",
+        "> [[collapsible show=\"poetry\" hide=\"poetry\"]]\n",
+        "> [[/=]]\n",
+        "> originally written here\n",
+        "> [[/collapsible]]\n",
+        "outside\n",
+    );
+    let (html, _, errors) = render(source, Layout::Wikidot);
+    assert!(errors.is_empty(), "{errors:#?}\nHTML: {html}");
+    assert_eq!(
+        html,
+        concat!(
+            r#"<blockquote><div style="text-align: center;"><div class="collapsible-block">"#,
+            r#"<div class="collapsible-block-folded"><a class="collapsible-block-link" href="javascript:;">poetry</a></div>"#,
+            r#"<div class="collapsible-block-unfolded" style="display:none"><div class="collapsible-block-unfolded-link">"#,
+            r#"<a class="collapsible-block-link" href="javascript:;">poetry</a></div>"#,
+            r#"<div class="collapsible-block-content"></div><br>"#,
+            "\noriginally written here</div></div></div></blockquote><p>outside</p>",
+        ),
+    );
+
+    let ordinary = concat!(
+        "> [[=]]\n",
+        "> [[collapsible show=\"poetry\" hide=\"poetry\"]]\n",
+        "> ordinary body\n",
+        "> [[/collapsible]]\n",
+        "> [[/=]]\n",
+        "outside\n",
+    );
+    let (ordinary_html, _, ordinary_errors) = render(ordinary, Layout::Wikidot);
+    assert!(ordinary_errors.is_empty(), "{ordinary_errors:#?}");
+    assert!(
+        ordinary_html.contains(
+            r#"<div class="collapsible-block-content"><p>ordinary body</p></div>"#,
+        ),
+        "{ordinary_html}",
+    );
+
+    let (wikijump_html, _, wikijump_errors) = render(source, Layout::Wikijump);
+    assert!(wikijump_errors.is_empty(), "{wikijump_errors:#?}");
+    assert!(
+        wikijump_html.contains(r#"<details class="wj-collapsible""#),
+        "{wikijump_html}",
+    );
+    assert!(
+        wikijump_html.contains(
+            r#"<div class="wj-collapsible-content"><p>originally written here</p></div>"#,
+        ),
+        "{wikijump_html}",
+    );
+}
+
+#[test]
 fn wikidot_collapsible_paragraph_boundaries_match_inline_and_empty_bodies() {
     let a = default_collapsible("<p>A</p>");
     let b = default_collapsible("<p>B</p>");

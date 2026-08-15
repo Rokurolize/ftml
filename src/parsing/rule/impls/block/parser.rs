@@ -522,6 +522,24 @@ where
                 return Ok(false);
             }
 
+            if parser.settings().layout.legacy()
+                && !parser.discarding_hidden_body()
+                && block_rule.name == "block-collapsible"
+                && parser.in_wikidot_center_body()
+                && name == "="
+            {
+                if restrict_quote_close {
+                    parser.get_optional_space()?;
+                    if !allow_inline_quote_close
+                        && !token_is_body_boundary(parser.current().token)
+                    {
+                        return Ok(false);
+                    }
+                }
+                parser.mark_wikidot_collapsible_content_closed();
+                return Ok(true);
+            }
+
             // Check if it's valid
             for end_block_name in
                 block_rule_end_names(block_rule, parser.settings().layout.legacy())

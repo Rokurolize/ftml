@@ -38,20 +38,15 @@ fn try_consume_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     let next_token = parser.look_ahead(0);
-    let trailing_ascii_spaces = next_token.is_some_and(|token| {
-        token.token == Token::Whitespace
-            && !token.span.is_empty()
-            && source[token.span.clone()].iter().all(|byte| *byte == b' ')
-    });
-    let next = next_token.map(|token| token.token);
-    if parser.settings().layout.legacy() && trailing_ascii_spaces {
+    let trailing_whitespace =
+        next_token.is_some_and(|token| token.token == Token::Whitespace);
+    if parser.settings().layout.legacy() && trailing_whitespace {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
-    let trailing_space = next == Some(Token::Whitespace);
-    let boundary = if trailing_space {
+    let boundary = if trailing_whitespace {
         parser.look_ahead(1).map(|token| token.token)
     } else {
-        next
+        next_token.map(|token| token.token)
     };
     if !matches!(
         boundary,
@@ -60,7 +55,7 @@ fn try_consume_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     assert_step(parser, Token::TripleDash)?;
-    if trailing_space {
+    if trailing_whitespace {
         parser.step()?;
     }
     parser.get_optional_line_break()?;
@@ -92,8 +87,8 @@ mod tests {
         );
         assert_eq!(render_html("---- tail", Layout::Wikidot), "<p>—— tail</p>",);
         assert_eq!(render_html("----   ", Layout::Wikidot), "<p>——</p>");
-        assert_eq!(render_html("----\t", Layout::Wikidot), "<hr>");
-        assert_eq!(render_html("---- \t", Layout::Wikidot), "<hr>");
+        assert_eq!(render_html("----\t", Layout::Wikidot), "<p>——</p>");
+        assert_eq!(render_html("---- \t", Layout::Wikidot), "<p>——</p>");
         assert_eq!(
             render_html("---- \nnext", Layout::Wikidot),
             "<p>——<br>\nnext</p>",
@@ -106,11 +101,15 @@ mod tests {
     }
 
     #[test]
-    fn wikijump_horizontal_rule_keeps_accepting_trailing_space() {
+    fn wikijump_horizontal_rule_keeps_accepting_trailing_whitespace() {
+        assert_eq!(render_html("----", Layout::Wikijump), "<hr>");
         assert_eq!(render_html("----   ", Layout::Wikijump), "<hr>");
+        assert_eq!(render_html("----\t", Layout::Wikijump), "<hr>");
+        assert_eq!(render_html("---- \t", Layout::Wikijump), "<hr>");
         assert_eq!(
             render_html("---- \nnext", Layout::Wikijump),
             "<hr><p>next</p>",
         );
+        assert_eq!(render_html("---- tail", Layout::Wikijump), "<p>—— tail</p>",);
     }
 }

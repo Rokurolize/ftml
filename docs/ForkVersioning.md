@@ -58,4 +58,4 @@ Do not push to `scpwiki/ftml`.
 
 ## Current Sync Candidate (2026-08-15)
 
-`upstream/main` is seven commits ahead of `origin/main`. The candidate is the upstream `[[note]]` feature series (`fe528c1`, `c50a01b`, `8a11b54`, `815210c`, `732ba78`, `72af54e`, and merge `1e659cf`). The fork already had independent Wikidot note behavior, so this sync ports only the missing Wikijump `ContainerType::Note` path and keeps the legacy path unchanged.
+`upstream/main` is seven commits ahead of `origin/main`. The candidate is the upstream `[[note]]` feature series (`fe528c1`, `c50a01b`, `8a11b54`, `815210c`, `732ba78`, `72af54e`, and merge `1e659cf`). The fork ports the Wikijump `ContainerType::Note` path, while live PagePreview evidence shows that Wikidot treats `[[note]]` as literal text; the legacy parser path is therefore disabled for `Layout::Wikidot`.

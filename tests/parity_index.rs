@@ -17,6 +17,8 @@ const CASE_SCHEMA: &str = "wikijump_syntax_differential.live_case.v1";
 const REFERENCE_SCHEMA: &str = "wikijump_syntax_differential.wikidot_reference.v1";
 const SYNTAX_CASE_SCHEMA: &str = "wikijump_syntax_differential.syntax_case.v1";
 const BINDINGS_SCHEMA: &str = "ftml.wikidot_parity.bindings.v1";
+const ACTIVE_INVESTIGATION_REASON_PREFIX: &str =
+    "Active functional investigation: issue #";
 
 #[derive(Debug, Deserialize)]
 struct LiveCase {
@@ -98,7 +100,7 @@ struct Binding {
     ftml_html_sha256: String,
     status: BindingStatus,
     checks: BindingChecks,
-    disposition: Option<String>,
+    disposition: Option<BindingDisposition>,
     reason: Option<String>,
 }
 
@@ -132,6 +134,15 @@ enum BindingStatus {
     Mismatch,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+enum BindingDisposition {
+    Unresolved,
+    IntentionalSecurityDivergence,
+    CallerRuntime,
+    ComparisonNormalization,
+}
+
 fn sha256(bytes: impl AsRef<[u8]>) -> String {
     use std::fmt::Write;
 
@@ -149,6 +160,20 @@ fn is_lower_hex(value: &str, len: usize) -> bool {
         && value
             .bytes()
             .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+}
+
+fn has_positive_issue_number(reason: &str) -> bool {
+    let Some(number) = reason
+        .strip_prefix(ACTIVE_INVESTIGATION_REASON_PREFIX)
+        .and_then(|number| number.strip_suffix('.'))
+    else {
+        return false;
+    };
+    number
+        .as_bytes()
+        .first()
+        .is_some_and(|first| (b'1'..=b'9').contains(first))
+        && number.bytes().all(|byte| byte.is_ascii_digit())
 }
 
 fn read_jsonl<T: DeserializeOwned>(path: &Path) -> Vec<T> {
@@ -568,10 +593,7 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
                     id
                 );
                 assert!(
-                    binding
-                        .disposition
-                        .as_ref()
-                        .is_some_and(|value| !value.is_empty()),
+                    binding.disposition.is_some(),
                     "{}: mismatch needs a disposition",
                     id
                 );
@@ -583,6 +605,16 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
                     "{}: mismatch needs a reason",
                     id
                 );
+                if binding.disposition == Some(BindingDisposition::Unresolved) {
+                    assert!(
+                        binding
+                            .reason
+                            .as_ref()
+                            .is_some_and(|reason| has_positive_issue_number(reason)),
+                        "{}: unresolved mismatch needs an active functional issue",
+                        id
+                    );
+                }
             }
         }
     }

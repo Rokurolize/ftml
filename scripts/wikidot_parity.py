@@ -21,6 +21,9 @@ PREVIEW_CLASSES = {"saved-page-batch", "page-preview-isolated"}
 EXECUTION_CLASSES = PREVIEW_CLASSES | {"wikijump-runtime", "not-applicable"}
 CHECKS = ("dom_tree", "dom_signature", "visible_text")
 STATUSES = {"match", "mismatch"}
+DISPOSITIONS = {"unresolved", "intentional-security-divergence", "caller-runtime",
+                "comparison-normalization"}
+ACTIVE_INVESTIGATION_REASON = re.compile(r"Active functional investigation: issue #[1-9][0-9]*\.")
 
 
 def fail(message):
@@ -212,8 +215,9 @@ def make_bindings(references, verdicts):
         if comparison["status"] == "mismatch":
             value.update(disposition=comparison.get("disposition", "unresolved"),
                          reason=comparison.get("reason", "Unreviewed mismatch."))
-            if not all(isinstance(value[name], str) and value[name].strip()
-                       for name in ("disposition", "reason")):
+            if (not isinstance(value["disposition"], str) or
+                    value["disposition"] not in DISPOSITIONS or
+                    not isinstance(value["reason"], str) or not value["reason"].strip()):
                 fail(f"mismatch disposition is invalid for {case_id}")
         bindings.append(value)
     return {"schema": BINDINGS_SCHEMA, "bindings": bindings}
@@ -249,10 +253,16 @@ def load_bindings(path, cases, references):
         if reference and (binding["source_sha256"] != reference["source_sha256"] or
                           binding["wikidot_html_sha256"] != reference["raw_html_sha256"]):
             fail(f"binding hashes do not match reference for {case_id}")
-        if binding["status"] == "mismatch" and not all(
-                isinstance(binding.get(name), str) and binding[name].strip()
-                for name in ("disposition", "reason")):
+        if (binding["status"] == "mismatch" and
+                (not isinstance(binding["disposition"], str) or
+                 binding["disposition"] not in DISPOSITIONS or
+                 not isinstance(binding["reason"], str) or
+                 not binding["reason"].strip())):
             fail(f"mismatch disposition is invalid for {case_id}")
+        if (binding["status"] == "mismatch" and
+                binding["disposition"] == "unresolved" and
+                not ACTIVE_INVESTIGATION_REASON.fullmatch(binding["reason"])):
+            fail(f"unresolved mismatch needs an active functional issue for {case_id}")
     return bindings
 
 

@@ -52,12 +52,28 @@ class WikidotParityTest(unittest.TestCase):
             self.assertEqual(bindings["bindings"][0]["checks"], {
                 "dom_tree": "mismatch", "dom_signature": "match", "visible_text": "match"})
             self.assertEqual(bindings["bindings"][0]["disposition"], "unresolved")
+            (root / "bindings.json").write_text(json.dumps(bindings))
+            with self.assertRaisesRegex(ValueError, "active functional issue"):
+                parity.load_bindings(root / "bindings.json", cases, references)
+            bindings["bindings"][0]["reason"] = "Active functional investigation: issue #123."
+            (root / "bindings.json").write_text(json.dumps(bindings))
+            parity.load_bindings(root / "bindings.json", cases, references)
+            malformed = json.loads(json.dumps(bindings))
+            malformed["bindings"][0]["reason"] = "Active functional investigation: issue #1abc"
+            (root / "bindings.json").write_text(json.dumps(malformed))
+            with self.assertRaisesRegex(ValueError, "active functional issue"):
+                parity.load_bindings(root / "bindings.json", cases, references)
             contradictory = json.loads(json.dumps(bindings))
             contradictory["bindings"][0]["status"] = "match"
             del contradictory["bindings"][0]["disposition"]
             del contradictory["bindings"][0]["reason"]
             (root / "bindings.json").write_text(json.dumps(contradictory))
             with self.assertRaisesRegex(ValueError, "status does not match checks"):
+                parity.load_bindings(root / "bindings.json", cases, references)
+            invalid = json.loads(json.dumps(bindings))
+            invalid["bindings"][0]["disposition"] = "arbitrary"
+            (root / "bindings.json").write_text(json.dumps(invalid))
+            with self.assertRaisesRegex(ValueError, "mismatch disposition is invalid"):
                 parity.load_bindings(root / "bindings.json", cases, references)
             (root / "test/bold").mkdir(parents=True)
             (root / "test/bold/wikidot.html").touch()

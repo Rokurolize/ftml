@@ -112,6 +112,14 @@ fn parse_footnote_ref<'r, 't>(
     {
         container.elements_mut().pop();
     }
+    if parser.settings().layout.legacy()
+        && matches!(
+            elements.as_slice(),
+            [.., Element::Code(_), Element::LineBreak]
+        )
+    {
+        elements.pop();
+    }
 
     // Append footnote contents and return.
     let index = parser.push_footnote(elements);

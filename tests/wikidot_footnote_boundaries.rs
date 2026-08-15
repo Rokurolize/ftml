@@ -81,6 +81,37 @@ fn single_footnote(body: &str) -> String {
 }
 
 #[test]
+fn wikidot_footnote_drops_block_owned_trailing_break_after_code() {
+    let source = "A[[footnote]]\n[[code]]\nX\n[[/code]]\n[[/footnote]]\n";
+
+    assert_eq!(
+        render_wikidot("A[[footnote]]X[[/footnote]]").0,
+        format!(
+            "<p>A{REFERENCE_1}</p>{FOOTER_START}<div class=\"footnote-footer\" id=\"footnote-1\"><a href=\"javascript:;\" onclick=\"WIKIDOT.page.utils.scrollToReference(&#39;footnoteref-1&#39;)\">1</a>. X</div></div>"
+        ),
+    );
+    assert_eq!(
+        render_for_layout("[[code]]\nX\n[[/code]]", Layout::Wikidot),
+        "<div class=\"code\"><pre><code>X</code></pre></div>",
+    );
+    let wikijump = render_for_layout(source, Layout::Wikijump);
+    assert!(wikijump.contains("<wj-code "), "{wikijump}");
+    assert!(
+        wikijump.contains("class=\"wj-footnote-list\""),
+        "{wikijump}"
+    );
+
+    let (wikidot, errors) = render_wikidot(source);
+    assert!(errors.is_empty(), "{errors:#?}");
+    assert_eq!(
+        wikidot,
+        format!(
+            "<p>A{REFERENCE_1}</p>{FOOTER_START}<div class=\"footnote-footer\" id=\"footnote-1\"><a href=\"javascript:;\" onclick=\"WIKIDOT.page.utils.scrollToReference(&#39;footnoteref-1&#39;)\">1</a>. <div class=\"code\"><pre><code>X</code></pre></div></div></div>"
+        ),
+    );
+}
+
+#[test]
 fn v7_case_variants_remain_literal_and_do_not_consume_numbering() {
     let source = concat!(
         "[[FOOTNOTE]]v7 body[[/FOOTNOTE]]\n\n",

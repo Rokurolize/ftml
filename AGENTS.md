@@ -16,3 +16,21 @@
 ## Validation and delivery
 
 - Choose validation in proportion to the changed surface. Typical commands are `cargo fmt --check`, focused `cargo test`, the full suite for general parser or renderer changes, and `RUSTFLAGS='-D warnings' cargo clippy --tests --no-deps`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues and use the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the default five triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a single-context repo. See `docs/agents/domain.md`.
+
+### Agent build approval
+
+Every non-controller agent and background process must request controller approval before memory-intensive Rust commands. The controller serializes those commands through one build slot. See `docs/agents/herdr-build-approval.md`.

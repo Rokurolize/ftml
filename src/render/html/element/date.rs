@@ -21,6 +21,8 @@
 use super::prelude::*;
 use crate::tree::{DateItem, date_format_within_limits};
 
+const WIKIDOT_DEFAULT_DATE_FORMAT: &str = "%d %b %Y %H:%M";
+
 pub fn render_date(
     ctx: &mut HtmlContext,
     date: DateItem,
@@ -28,7 +30,12 @@ pub fn render_date(
     hover: bool,
 ) {
     let date_format = date_format.filter(|format| date_format_within_limits(format));
-    let formatted_datetime = date.format_or_default(date_format, ctx.language());
+    let formatted_datetime = match (ctx.layout(), date_format) {
+        (Layout::Wikidot, None) => {
+            date.format_or_default(Some(WIKIDOT_DEFAULT_DATE_FORMAT), "en")
+        }
+        _ => date.format_or_default(date_format, ctx.language()),
+    };
 
     match ctx.layout() {
         Layout::Wikidot => {

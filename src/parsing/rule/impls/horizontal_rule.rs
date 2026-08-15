@@ -37,12 +37,16 @@ fn try_consume_fn<'r, 't>(
     if !physical_line_start && !parser.in_native_blockquote_line() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
-    let next = parser.look_ahead(0).map(|token| token.token);
-    let trailing_space = next == Some(Token::Whitespace);
-    let boundary = if trailing_space {
+    let next_token = parser.look_ahead(0);
+    let trailing_whitespace =
+        next_token.is_some_and(|token| token.token == Token::Whitespace);
+    if parser.settings().layout.legacy() && trailing_whitespace {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    let boundary = if trailing_whitespace {
         parser.look_ahead(1).map(|token| token.token)
     } else {
-        next
+        next_token.map(|token| token.token)
     };
     if !matches!(
         boundary,
@@ -51,7 +55,7 @@ fn try_consume_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     assert_step(parser, Token::TripleDash)?;
-    if trailing_space {
+    if trailing_whitespace {
         parser.step()?;
     }
     parser.get_optional_line_break()?;
@@ -65,9 +69,9 @@ mod tests {
     use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
 
-    fn render_html(input: &str) -> String {
+    fn render_html(input: &str, layout: Layout) -> String {
         let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
         let tokenization = crate::tokenize(input);
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
         assert!(errors.is_empty(), "{input:?}: {errors:?}");
@@ -76,12 +80,36 @@ mod tests {
 
     #[test]
     fn wikidot_horizontal_rule_requires_an_immediate_line_boundary() {
-        assert_eq!(render_html("----"), "<hr>");
-        assert_eq!(render_html("----\nnext"), "<hr><p>next</p>");
-        assert_eq!(render_html("---- tail"), "<p>—— tail</p>");
-        assert_eq!(render_html("----   "), "<hr>");
-        assert_eq!(render_html("---- \nnext"), "<hr><p>next</p>");
-        assert_eq!(render_html(" ----"), "<p>——</p>");
-        assert_eq!(render_html("alpha\n---- tail"), "<p>alpha<br>\n—— tail</p>",);
+        assert_eq!(render_html("----", Layout::Wikidot), "<hr>");
+        assert_eq!(
+            render_html("----\nnext", Layout::Wikidot),
+            "<hr><p>next</p>",
+        );
+        assert_eq!(render_html("---- tail", Layout::Wikidot), "<p>—— tail</p>",);
+        assert_eq!(render_html("----   ", Layout::Wikidot), "<p>——</p>");
+        assert_eq!(render_html("----\t", Layout::Wikidot), "<p>——</p>");
+        assert_eq!(render_html("---- \t", Layout::Wikidot), "<p>——</p>");
+        assert_eq!(
+            render_html("---- \nnext", Layout::Wikidot),
+            "<p>——<br>\nnext</p>",
+        );
+        assert_eq!(render_html(" ----", Layout::Wikidot), "<p>——</p>");
+        assert_eq!(
+            render_html("alpha\n---- tail", Layout::Wikidot),
+            "<p>alpha<br>\n—— tail</p>",
+        );
+    }
+
+    #[test]
+    fn wikijump_horizontal_rule_keeps_accepting_trailing_whitespace() {
+        assert_eq!(render_html("----", Layout::Wikijump), "<hr>");
+        assert_eq!(render_html("----   ", Layout::Wikijump), "<hr>");
+        assert_eq!(render_html("----\t", Layout::Wikijump), "<hr>");
+        assert_eq!(render_html("---- \t", Layout::Wikijump), "<hr>");
+        assert_eq!(
+            render_html("---- \nnext", Layout::Wikijump),
+            "<hr><p>next</p>",
+        );
+        assert_eq!(render_html("---- tail", Layout::Wikijump), "<p>—— tail</p>",);
     }
 }

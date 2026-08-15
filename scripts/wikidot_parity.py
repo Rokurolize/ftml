@@ -285,33 +285,68 @@ def snapshot_ids(cases, root):
     return found
 
 
-def configured_block_names(root):
+def configured_blocks(root):
     try:
         with (root / "conf/blocks.toml").open("rb") as file:
-            blocks = tomllib.load(file)
+            return tomllib.load(file)
     except (OSError, tomllib.TOMLDecodeError) as error:
         fail(f"cannot load configured block names: {error}")
-    names = set()
-    for name, block in blocks.items():
-        if not block.get("exclude-name", False):
-            names.add(name.casefold())
-        names.update(alias.casefold() for alias in block.get("aliases", []))
+
+
+def block_names(name, block):
+    names = set() if block.get("exclude-name", False) else {name.casefold()}
+    names.update(alias.casefold() for alias in block.get("aliases", []))
     return names
+
+
+def configured_block_names(root):
+    names = set()
+    for name, block in configured_blocks(root).items():
+        names.update(block_names(name, block))
+    return names
+
+
+def observed_block_markers(cases):
+    markers = set()
+    for case in cases.values():
+        for match in re.finditer(r"\[\[(/?)([^\s\]]+)", case["source"]):
+            token = match.group(2).casefold()
+            name = token.rstrip("*_")
+            suffix = token[len(name):]
+            markers.add((bool(match.group(1)), name, "*" in suffix, "_" in suffix))
+    return markers
 
 
 def observed_block_names(cases):
-    names = set()
-    for case in cases.values():
-        for match in re.finditer(r"\[\[/?([^\s\]]+)", case["source"]):
-            names.add(match.group(1).rstrip("*_").casefold())
-    return names
+    return {name for _, name, _, _ in observed_block_markers(cases)}
+
+
+def missing_block_facets(root, cases):
+    markers = observed_block_markers(cases)
+    missing = {"star-flag": set(), "score-flag": set(), "body-close": set()}
+    for name, block in configured_blocks(root).items():
+        names = block_names(name, block)
+        if block.get("accepts-star", False) and not any(
+                not close and marker in names and star
+                for close, marker, star, _ in markers):
+            missing["star-flag"].add(name)
+        if block.get("accepts-score", False) and not any(
+                not close and marker in names and score
+                for close, marker, _, score in markers):
+            missing["score-flag"].add(name)
+        if block.get("body", "none") != "none" and not any(
+                close and marker in names for close, marker, _, _ in markers):
+            missing["body-close"].add(name)
+    return missing
 
 
 def print_report(cases, references, bindings, root):
     ids = set(cases)
     preview = preview_case_ids(cases)
+    missing_facets = missing_block_facets(root, cases)
     categories = {
         "missing-block-name": configured_block_names(root) - observed_block_names(cases),
+        **{f"missing-{name}": values for name, values in missing_facets.items()},
         "mismatch": {case_id for case_id, value in bindings.items() if value["status"] == "mismatch"},
         "runtime": {case_id for case_id, case in cases.items()
                     if case["execution_class"] == "wikijump-runtime"},

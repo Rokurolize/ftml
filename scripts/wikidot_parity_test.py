@@ -17,11 +17,12 @@ class WikidotParityTest(unittest.TestCase):
             root = Path(directory)
             (root / "conf").mkdir()
             (root / "conf/blocks.toml").write_text(
-                '[alpha]\naliases = ["a"]\n[hidden-name]\nexclude-name = true\naliases = ["visible-alias"]\n'
+                '[alpha]\naliases = ["a"]\naccepts-star = true\nbody = "elements"\n'
+                '[hidden-name]\nexclude-name = true\naliases = ["visible-alias"]\naccepts-score = true\n'
             )
             cases = {
-                "one": {"source": "[[alpha]] [[/a]]"},
-                "two": {"source": "[[visible-alias*]]"},
+                "one": {"source": "[[alpha*]] [[/a]]"},
+                "two": {"source": "[[visible-alias_]]"},
             }
 
             self.assertEqual(
@@ -32,6 +33,10 @@ class WikidotParityTest(unittest.TestCase):
                 parity.observed_block_names(cases),
                 {"alpha", "a", "visible-alias"},
             )
+            self.assertEqual(
+                parity.missing_block_facets(root, cases),
+                {"star-flag": set(), "score-flag": set(), "body-close": set()},
+            )
 
         stable_cases = parity.load_cases(
             ROOT / "tests/fixtures/wikidot-parity/cases.jsonl"
@@ -40,6 +45,10 @@ class WikidotParityTest(unittest.TestCase):
             parity.configured_block_names(ROOT)
             - parity.observed_block_names(stable_cases),
             set(),
+        )
+        self.assertEqual(
+            parity.missing_block_facets(ROOT, stable_cases),
+            {"star-flag": set(), "score-flag": set(), "body-close": set()},
         )
 
     def test_real_live_case_projection_and_compact_binding(self):

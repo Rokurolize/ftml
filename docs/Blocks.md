@@ -78,6 +78,8 @@ A list of all blocks and their attributes is available at [`conf/blocks.toml`](.
 
 In `Layout::Wikidot`, `bibliography`, `code`, `gallery`, `math`, `module`, and `toc` own a physical line only when their opener starts at column zero. A space, tab, or text prefix keeps the syntax literal. `Layout::Wikijump` retains its whitespace-prefixed behavior.
 
+`Layout::Wikidot` standalone buttons emit Wikidot's action-specific `onclick` handlers and do not receive a generated `id`. Invalid `set-tags` delimiter artifacts produce Wikidot's missing-text error, ASCII whitespace separates tokens, and broad punctuation and Unicode remain accepted. Handler data is still JavaScript-string escaped, including the live-accepted backslash. Wikidot date visible text always uses the deterministic `01 Jan 1970 00:00` shape (`%d %b %Y %H:%M`); an explicit format changes the encoded `format_` class only. `Layout::Wikijump` retains localized defaults and explicit-format rendering. A Wikidot gallery accepts a non-assignment head tail and hands the resulting current-page selection requirement to the caller; page and file resolution remain outside FTML.
+
 Alternatively you may look here for a formatted list: (though it may not be updated as consistently)
 
 | Block Name                                      | Accepted Names                   | Star? | Score? | Newlines? | Argument Type | Body Type |

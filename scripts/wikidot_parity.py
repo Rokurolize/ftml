@@ -340,6 +340,49 @@ def missing_block_facets(root, cases):
     return missing
 
 
+def missing_block_head_facets(root, cases):
+    effective_head_kinds = {"html": "map", "tabview": "value", "raw": "custom"}
+    expected_head_shapes = {
+        "none": {"none", "value"},
+        "value": {"none", "value"},
+        "map": {"none", "map", "value"},
+        "value+map": {"none", "value", "map", "value+map"},
+        "custom": {"none", "custom"},
+    }
+    observed = set()
+    blocks = configured_blocks(root)
+    for case in cases.values():
+        for match in re.finditer(r"\[\[(?!/)([^\s\]]+)([^\]]*)\]\]", case["source"]):
+            marker = match.group(1).rstrip("*_").casefold()
+            tail = match.group(2).strip()
+            for name, block in blocks.items():
+                if marker not in block_names(name, block):
+                    continue
+                kind = effective_head_kinds.get(name, block.get("head", "none"))
+                if not tail:
+                    shape = "none"
+                elif kind == "custom":
+                    shape = "custom"
+                else:
+                    assignment = re.search(r'(?:^|\s)[^\s=]+\s*=\s*"', tail)
+                    if assignment is None:
+                        shape = "value"
+                    elif tail[:assignment.start()].strip():
+                        shape = "value+map"
+                    else:
+                        shape = "map"
+                observed.add(f"{name}:{shape}")
+
+    return {
+        f"{name}:{shape}"
+        for name, block in blocks.items()
+        for shape in expected_head_shapes[
+            effective_head_kinds.get(name, block.get("head", "none"))
+        ]
+        if f"{name}:{shape}" not in observed
+    }
+
+
 def missing_alias_pairs(root, cases):
     observed = set()
     blocks = {
@@ -380,6 +423,7 @@ def print_report(cases, references, bindings, root):
     categories = {
         "missing-block-name": configured_block_names(root) - observed_block_names(cases),
         **{f"missing-{name}": values for name, values in missing_facets.items()},
+        "missing-head-shape": missing_block_head_facets(root, cases),
         "missing-alias-pair": missing_alias_pairs(root, cases),
         "mismatch": {case_id for case_id, value in bindings.items() if value["status"] == "mismatch"},
         "runtime": {case_id for case_id, case in cases.items()

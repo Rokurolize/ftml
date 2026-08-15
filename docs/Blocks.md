@@ -119,7 +119,7 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | [Math (Inline)](#math-inline)                   | (See below)                      | No    | No     | No        | (See below)   | (See below) |
 | [Module](#module)                               | `module`                         | No    | No     | Yes       | (See below)   | (See below) |
 | [Monospace](#monospace)                         | `tt`, `mono`, `monospace`        | No    | No     | No        | Map           | Elements  |
-| [Note](#note)                                   | `note`                           | No    | No     | Yes       | None          | Elements  |
+| [Note](#note)                                   | `note`                           | No    | No     | Yes       | Map           | Elements  |
 | [Paragraph](#paragraph)                         | `p`, `paragraph`                 | No    | No     | Yes       | Map           | Elements  |
 | [Radio](#radio)                                 | `radio`, `radio-button`          | Yes   | No     | No        | Value + Map   | None      |
 | [Raw](#raw)                                     | `raw`                            | No    | No     | Yes       | None          | Raw       |
@@ -812,13 +812,13 @@ Example:
 
 ### Note
 
-Outputs: `Element::Container(ContainerType::Note)` / `<div class="wj-note">` in `Layout::Wikijump`; `Element::Container(ContainerType::Div)` / `<div class="wiki-note">` in `Layout::Wikidot`.
+Output: `Element::Container(ContainerType::Note)` / `<div class="wj-note">` in `Layout::Wikijump`. `Layout::Wikidot` does not recognize `note` as a block, so the source remains escaped literal text, matching anonymous `edit/PagePreviewModule` behavior.
 
 Body: Elements
 
 Accepts newline separation.
 
-Arguments: All accepted attributes in `Layout::Wikijump`. The legacy output is retained pending the live-parity investigation in [issue #500](https://github.com/Rokurolize/ftml/issues/500).
+Arguments: All accepted attributes in `Layout::Wikijump`. No block arguments are parsed in `Layout::Wikidot` because the marker is literal there.
 
 Example:
 

@@ -152,6 +152,7 @@ fn wikidot_supports_block_name(name: &str) -> bool {
         "mono",
         "monospace",
         "newlines",
+        "note",
         "p",
         "paragraph",
         "quote",
@@ -243,6 +244,7 @@ fn wikidot_layout_rejects_ftml_only_block_names() {
     );
     assert!(get_block_rule_with_name_for_layout("char", Layout::Wikidot).is_none());
     assert!(get_block_rule_with_name_for_layout("radio", Layout::Wikidot).is_none());
+    assert!(get_block_rule_with_name_for_layout("note", Layout::Wikidot).is_none());
     assert_eq!(
         get_block_rule_with_name_for_layout("anchor", Layout::Wikijump)
             .map(|rule| rule.name),

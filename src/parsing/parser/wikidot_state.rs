@@ -1,12 +1,11 @@
 use super::Parser;
 use crate::parsing::Token;
 
-const NOTE_BODY: u8 = 1 << 0;
-const COLLAPSIBLE: u8 = 1 << 1;
-const QUOTE_BOUNDARY_CLOSES_BODY: u8 = 1 << 2;
-const PENDING_COLLAPSIBLE_CLOSER: u8 = 1 << 3;
-const COLLAPSIBLE_CLOSED_AT_DEEPER_QUOTE: u8 = 1 << 4;
-const SIMPLE_TABLE_CELL: u8 = 1 << 5;
+const COLLAPSIBLE: u8 = 1 << 0;
+const QUOTE_BOUNDARY_CLOSES_BODY: u8 = 1 << 1;
+const PENDING_COLLAPSIBLE_CLOSER: u8 = 1 << 2;
+const COLLAPSIBLE_CLOSED_AT_DEEPER_QUOTE: u8 = 1 << 3;
+const SIMPLE_TABLE_CELL: u8 = 1 << 4;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(super) struct WikidotState {
@@ -85,23 +84,6 @@ impl Parser<'_, '_> {
     #[inline]
     pub(crate) fn in_wikidot_literal_alias_body(&self) -> bool {
         self.wikidot.scored_div_body_depth > 0 || self.wikidot.scored_span_body_depth > 0
-    }
-
-    #[inline]
-    pub(crate) fn in_wikidot_note_body(&self) -> bool {
-        self.wikidot.flags & NOTE_BODY != 0
-    }
-
-    #[inline]
-    pub(crate) fn enter_wikidot_note_body(&mut self) {
-        debug_assert!(!self.in_wikidot_note_body());
-        self.wikidot.flags |= NOTE_BODY;
-    }
-
-    #[inline]
-    pub(crate) fn leave_wikidot_note_body(&mut self) {
-        debug_assert!(self.in_wikidot_note_body());
-        self.wikidot.flags &= !NOTE_BODY;
     }
 
     #[inline]

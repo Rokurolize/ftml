@@ -12,6 +12,8 @@ The machine-readable stable corpus is `tests/fixtures/wikidot-parity/cases.jsonl
 
 The dated `tests/fixtures/wikidot-parity/references-YYYYMMDD-NN.jsonl` files preserve the raw Wikidot responses and capture provenance. `tests/fixtures/wikidot-parity/bindings.json` binds each preview-compatible case to its reference hashes and comparator result. These files replace the old manual fixture table as the parity authority.
 
+The current stable inventory has 163 cases: 135 PagePreview-compatible cases, 27 caller-runtime cases, and 1 not-applicable case. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
+
 Each mismatch has one disposition: `intentional-security-divergence` means a frozen output difference that FTML deliberately preserves to enforce a security property; `caller-runtime` means a frozen output difference whose missing inputs belong to the caller runtime rather than FTML; `comparison-normalization` means a frozen raw-DOM difference with no demonstrated functional behavior difference; and `unresolved` remains allowed only for an active functional investigation. A classified mismatch remains visible as `status: "mismatch"` and does not become a match.
 
 Ordinary FTML tests are offline. They validate inventory completeness, reference provenance and hashes, binding completeness, stable FTML output hashes, and local snapshot admission:
@@ -59,14 +61,14 @@ Review every inventory and classification change. If it is intentional, update `
 
 ### 2. Capture raw Wikidot references
 
-Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 134-row selection:
+Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 135-row selection:
 
 ```sh
 mkdir "$PARITY_TMP/batches"
 jq -c 'select(.execution_class == "saved-page-batch" or .execution_class == "page-preview-isolated")' \
   tests/fixtures/wikidot-parity/cases.jsonl | \
   split -l 16 -d -a 2 --additional-suffix=.jsonl - "$PARITY_TMP/batches/cases-"
-test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 134
+test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 135
 ```
 
 For each batch, choose a new dated no-replace output name and run:
@@ -141,7 +143,7 @@ Live note probe.<br />
 [[/note]]</p>
 ```
 
-The response SHA-256 was `363e4f6b6139f479eb0b1fc80b0ccd4e8a2bafbbc681b77e912f94a9ea8c6d98`. This is not an oracle for the Wikijump-only `wj-note` feature. It does expose a legacy FTML parity question, which is tracked immediately in [issue #500](https://github.com/Rokurolize/ftml/issues/500); the sync keeps that behavior unchanged until the issue is resolved.
+The response SHA-256 was `363e4f6b6139f479eb0b1fc80b0ccd4e8a2bafbbc681b77e912f94a9ea8c6d98`. The focused `test/note/wikidot-literal` case now compares this response's DOM tree, DOM signature, and visible text successfully. FTML therefore keeps the Wikijump-only `wj-note` feature while leaving the marker literal in `Layout::Wikidot`; issue #500 is resolved by this change.
 
 ### 6. Promote matched cases
 

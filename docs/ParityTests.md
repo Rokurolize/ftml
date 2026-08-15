@@ -12,7 +12,7 @@ The machine-readable stable corpus is `tests/fixtures/wikidot-parity/cases.jsonl
 
 The dated `tests/fixtures/wikidot-parity/references-YYYYMMDD-NN.jsonl` files preserve the raw Wikidot responses and capture provenance. `tests/fixtures/wikidot-parity/bindings.json` binds each preview-compatible case to its reference hashes and comparator result. These files replace the old manual fixture table as the parity authority.
 
-The current stable inventory has 177 cases: 149 PagePreview-compatible cases, 27 caller-runtime cases, and 1 not-applicable case. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
+The current stable inventory has 179 cases: 151 PagePreview-compatible cases, 27 caller-runtime cases, and 1 not-applicable case. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
 
 Each mismatch has one disposition: `intentional-security-divergence` means a frozen output difference that FTML deliberately preserves to enforce a security property; `caller-runtime` means a frozen output difference whose missing inputs belong to the caller runtime rather than FTML; `comparison-normalization` means a frozen raw-DOM difference with no demonstrated functional behavior difference; and `unresolved` remains allowed only for an active functional investigation. A classified mismatch remains visible as `status: "mismatch"` and does not become a match.
 
@@ -61,14 +61,14 @@ Review every inventory and classification change. If it is intentional, update `
 
 ### 2. Capture raw Wikidot references
 
-Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 149-row selection:
+Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 151-row selection:
 
 ```sh
 mkdir "$PARITY_TMP/batches"
 jq -c 'select(.execution_class == "saved-page-batch" or .execution_class == "page-preview-isolated")' \
   tests/fixtures/wikidot-parity/cases.jsonl | \
   split -l 16 -d -a 2 --additional-suffix=.jsonl - "$PARITY_TMP/batches/cases-"
-test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 149
+test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 151
 ```
 
 For each batch, choose a new dated no-replace output name and run:
@@ -158,6 +158,8 @@ Registered block-name coverage refers to the state in which every configured blo
 The other two rows are caller-runtime mismatches and remain visible as mismatches. Wikidot returns a provider no-match error for the inert `embedvideo` payload, while FTML emits a typed placeholder for caller resolution; issue #506 tracks that result. Wikidot gallery selection uses current-page and file-service state and returns a selection error for the empty case, while FTML emits a typed gallery request; issue #507 tracks that result. These rows are not normalized into matches.
 
 Configured block-facet coverage refers to the state in which every configured star, score, and body-close branch appears in the stable parity inventory. Reference batch `references-20260815-14.jsonl` closes the four previously missing star branches for `anchor`, `checkbox`, `radio`, and `user`. Live Wikidot and `Layout::Wikidot` both keep all four starred forms literal, so every DOM tree, DOM signature, and visible text check matches. The parity report now fails locally if a configured name, star branch, score branch, or body-close branch lacks a stable source.
+
+Ordered alias-pair coverage refers to the state in which a configured opener and closer name pair for a body-owning block appears together in a stable source. Batch `references-20260815-15.jsonl` added the two anchor cross-pairs: `anchor -> a` and `a -> anchor`. The second pair exposed issue #510 because FTML consumed an alias closer that Wikidot kept literal. After restricting Wikidot anchor bodies to the canonical `a` closer while preserving Wikijump aliases, both cases match across DOM tree, DOM signature, and visible text. The corrected local report still lists 48 untested ordered pairs; those are explicit future capture work, not covered cases.
 
 ### 6. Promote matched cases
 

@@ -66,7 +66,7 @@ fn block_rule_end_names(
     block_rule: &BlockRule,
     wikidot: bool,
 ) -> &'static [&'static str] {
-    if wikidot && block_rule.name == "block-module" {
+    if wikidot && matches!(block_rule.name, "block-anchor" | "block-module") {
         &block_rule.accepts_names[..1]
     } else {
         block_rule.accepts_names

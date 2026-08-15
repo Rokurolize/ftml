@@ -6,5 +6,12 @@
 test/**/output.txt whitespace=-trailing-space
 test/**/wikidot.html whitespace=-blank-at-eof
 
+# These heading markers intentionally end with a syntax-significant space.
+tests/fixtures/parity-gaps/heading-adjacent-empty-first/input.ftml whitespace=-trailing-space
+tests/fixtures/parity-gaps/heading-adjacent-notoc-empty-last/input.ftml whitespace=-trailing-space
+tests/fixtures/parity-gaps/heading-empty-next-line-footnote/input.ftml whitespace=-trailing-space
+tests/fixtures/parity-gaps/heading-empty-notoc/input.ftml whitespace=-trailing-space
+tests/fixtures/parity-gaps/heading-empty-toc/input.ftml whitespace=-trailing-space
+
 # This parity input intentionally contains one CRLF sequence.
 tests/fixtures/parity-gaps/math-crlf/input.ftml -text

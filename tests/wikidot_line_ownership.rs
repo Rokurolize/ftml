@@ -87,6 +87,42 @@ fn modules_require_an_unprefixed_physical_line() {
     assert!(!html.contains("TODO: module"), "{html}");
 }
 
+// Fixture: Rokurolize/ftml#478. Frozen Wikidot provenance: test--div--basic.
+#[test]
+fn same_line_div_after_heading_stays_outside_a_paragraph() {
+    let (html, text) = render("++ Regular\n\n[[div]]inline[[/div]]");
+    assert_eq!(text, "Regular\n\n[[div]]inline[[/div]]");
+    assert_eq!(
+        html,
+        "<h2 id=\"toc0\"><span>Regular</span></h2>\n[[div]]inline[[/div]]",
+    );
+}
+
+#[test]
+fn same_line_div_literal_controls_follow_physical_line_ownership() {
+    for (source_literal, html_literal) in [
+        ("[[div]]inline[[/div]]", "[[div]]inline[[/div]]"),
+        ("[[div_]]inline[[/div]]", "[[div_]]inline[[/div]]"),
+        (
+            "[[div =\"value\"]]inline[[/div]]",
+            "[[div =&quot;value&quot;]]inline[[/div]]",
+        ),
+    ] {
+        let (html, text) = render(&format!("BEFORE\n{source_literal}"));
+        assert_eq!(html, format!("<p>BEFORE</p>\n{html_literal}"));
+        assert_eq!(text, format!("BEFORE\n\n{source_literal}"));
+
+        let (html, text) = render(source_literal);
+        assert_eq!(html, format!("<p>{html_literal}</p>"));
+        assert_eq!(text, source_literal);
+
+        let source = format!("BEFORE|{source_literal}|AFTER");
+        let (html, text) = render(&source);
+        assert_eq!(html, format!("<p>BEFORE|{html_literal}|AFTER</p>"));
+        assert_eq!(text, source);
+    }
+}
+
 #[test]
 fn css_requires_an_unprefixed_multiline_invocation() {
     for source in [

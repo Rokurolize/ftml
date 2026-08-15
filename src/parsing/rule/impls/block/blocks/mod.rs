@@ -72,7 +72,8 @@ mod prelude {
     pub fn recover_wikidot_empty_key_candidate<'r, 't>(
         parser: &mut Parser<'r, 't>,
         block_rule: &BlockRule,
-        owner_start: usize,
+        literal_start: usize,
+        paragraph_safe: bool,
     ) -> ParseResult<'r, 't, Elements<'t>>
     where
         'r: 't,
@@ -85,19 +86,23 @@ mod prelude {
         let _ = parser.get_body_text(block_rule)?;
         let owner_end = parser.current().span.start;
         let source = parser.full_text().inner();
-        let generated = parser.generated_in_range(owner_start..owner_end);
+        let generated = parser.generated_in_range(literal_start..owner_end);
         let elements = if generated.is_empty() {
-            literal_block_candidate(&source[owner_start..owner_end])
+            if paragraph_safe {
+                literal_block_candidate(&source[literal_start..owner_end])
+            } else {
+                text!(&source[literal_start..owner_end]).into()
+            }
         } else {
             Element::Delayed(DelayedElement::shell(
                 source,
-                owner_start..owner_end,
+                literal_start..owner_end,
                 &generated,
             ))
             .into()
         };
 
-        ok!(true; elements, vec![error])
+        ok!(paragraph_safe; elements, vec![error])
     }
 
     fn literal_block_candidate(source: &str) -> Elements<'_> {

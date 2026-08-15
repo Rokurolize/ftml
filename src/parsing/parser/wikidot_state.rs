@@ -6,6 +6,7 @@ const QUOTE_BOUNDARY_CLOSES_BODY: u8 = 1 << 1;
 const PENDING_COLLAPSIBLE_CLOSER: u8 = 1 << 2;
 const COLLAPSIBLE_CLOSED_AT_DEEPER_QUOTE: u8 = 1 << 3;
 const SIMPLE_TABLE_CELL: u8 = 1 << 4;
+const MIXED_PARAGRAPH_OWNERSHIP: u8 = 1 << 5;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(super) struct WikidotState {
@@ -150,6 +151,16 @@ impl Parser<'_, '_> {
 
     pub(crate) fn set_in_wikidot_simple_table_cell(&mut self, value: bool) {
         set_flag(&mut self.wikidot.flags, SIMPLE_TABLE_CELL, value);
+    }
+
+    pub(crate) fn mark_wikidot_mixed_paragraph_ownership(&mut self) {
+        set_flag(&mut self.wikidot.flags, MIXED_PARAGRAPH_OWNERSHIP, true);
+    }
+
+    pub(crate) fn take_wikidot_mixed_paragraph_ownership(&mut self) -> bool {
+        let marked = self.wikidot.flags & MIXED_PARAGRAPH_OWNERSHIP != 0;
+        set_flag(&mut self.wikidot.flags, MIXED_PARAGRAPH_OWNERSHIP, false);
+        marked
     }
 
     pub(crate) fn mark_wikidot_simple_table_crossed_closer(&mut self, token: Token) {

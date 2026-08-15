@@ -215,6 +215,8 @@ where
         };
 
         if let Some(consumed) = consumed {
+            let mixed_paragraph_ownership =
+                parser.take_wikidot_mixed_paragraph_ownership();
             let (elements, mut errors, paragraph_safe) = consumed.into();
             let mut elements = elements;
             let literal_list_item = stack.wikidot_list_break_follows_list()
@@ -268,7 +270,20 @@ where
                 {
                     stack.mark_wikidot_empty_list_break();
                 }
-                push_elements(&mut stack, elements, paragraph_safe);
+                if mixed_paragraph_ownership {
+                    let Elements::Multiple(mut elements) = elements else {
+                        unreachable!(
+                            "mixed paragraph ownership requires multiple elements"
+                        );
+                    };
+                    let owner = elements.remove(0);
+                    push_element(&mut stack, owner, false);
+                    for element in elements {
+                        push_element(&mut stack, element, true);
+                    }
+                } else {
+                    push_elements(&mut stack, elements, paragraph_safe);
+                }
             }
             if list_has_same_line_residual {
                 stack.mark_next_unwrapped_after_block();

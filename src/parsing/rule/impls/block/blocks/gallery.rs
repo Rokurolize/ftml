@@ -112,7 +112,12 @@ fn parse_fn<'r, 't>(
         GallerySelection::CurrentPageFiles,
     ));
     if residual_opener_bracket {
-        ok!(Elements::Multiple(vec![gallery, text!("]")]))
+        let mut elements = vec![gallery, text!("]")];
+        if matches!(source.as_bytes().get(head_end + 1), Some(b'\r' | b'\n')) {
+            elements.push(Element::LineBreak);
+            parser.mark_wikidot_mixed_paragraph_ownership();
+        }
+        ok!(Elements::Multiple(elements))
     } else {
         success_elements(gallery)
     }

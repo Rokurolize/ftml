@@ -265,11 +265,25 @@ fn opener_only_and_first_closer_recovery_preserve_residual_source() {
         output.body
     );
     assert!(output.body.contains("[[/gallery]]"), "{}", output.body);
+}
 
+#[test]
+fn residual_opener_keeps_gallery_typed_and_owns_the_following_paragraph() {
     let extra_opener = render("[[gallery]]]\nAFTER");
-    assert_eq!(gallery_requirements(&extra_opener).len(), 1);
-    assert!(extra_opener.body.contains("]"), "{}", extra_opener.body);
-    assert!(extra_opener.body.contains("AFTER"), "{}", extra_opener.body);
+    let requirements = gallery_requirements(&extra_opener);
+    let [requirement] = requirements.as_slice() else {
+        panic!("expected one gallery requirement: {}", extra_opener.body);
+    };
+    assert_eq!(requirement.gallery().source(), "[[gallery]]");
+    assert!(matches!(
+        requirement.gallery().selection(),
+        GallerySelection::CurrentPageFiles
+    ));
+    assert!(
+        extra_opener.body.ends_with("</div><p>]<br>\nAFTER</p>"),
+        "{}",
+        extra_opener.body,
+    );
 }
 
 #[test]

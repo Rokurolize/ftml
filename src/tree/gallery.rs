@@ -111,10 +111,10 @@ impl<'de, 't> serde::Deserialize<'de> for Gallery<'t> {
         let Some(head_end) = gallery_head_end(&data.source) else {
             return Err(D::Error::custom("gallery source has no valid opener"));
         };
-        let expected_arguments = parse_gallery_head_arguments(&data.source[..head_end])
-            .ok_or_else(|| {
-            D::Error::custom("gallery source has malformed arguments")
-        })?;
+        let expected_arguments =
+            parse_gallery_head_arguments(&data.source[..head_end], true).ok_or_else(
+                || D::Error::custom("gallery source has malformed arguments"),
+            )?;
         if !argument_data_matches(&expected_arguments, &data.arguments) {
             return Err(D::Error::custom(
                 "gallery arguments do not match their authored source",
@@ -356,6 +356,7 @@ pub(crate) fn gallery_head_end(source: &str) -> Option<usize> {
 
 pub(crate) fn parse_gallery_head_arguments(
     source: &str,
+    recover_non_assignment: bool,
 ) -> Option<Vec<GalleryArgument<'_>>> {
     let head_end = gallery_head_end(source)?;
     if head_end != source.len() {
@@ -367,7 +368,9 @@ pub(crate) fn parse_gallery_head_arguments(
     if !inner[..name_end].eq_ignore_ascii_case("gallery") {
         return None;
     }
-    parse_gallery_arguments(&inner[name_end..])
+    let tail = &inner[name_end..];
+    parse_gallery_arguments(tail)
+        .or_else(|| (recover_non_assignment && !tail.contains('=')).then(Vec::new))
 }
 
 pub(crate) fn parse_explicit_gallery_entries<'t>(

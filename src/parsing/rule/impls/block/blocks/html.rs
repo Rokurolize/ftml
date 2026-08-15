@@ -72,7 +72,11 @@ fn parse_fn<'r, 't>(
             .any(|token| token.token == Token::RuntimeText);
         if generated.is_empty()
             && !has_runtime
-            && authored_gallery_line_offset(&source[owner_start..owner_end]).is_some()
+            && authored_gallery_line_offset(
+                &source[owner_start..owner_end],
+                parser.settings().layout.legacy(),
+            )
+            .is_some()
         {
             return Err(parser.make_err(ParseErrorKind::RuleFailed));
         }

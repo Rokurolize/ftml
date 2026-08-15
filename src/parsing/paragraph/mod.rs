@@ -71,6 +71,9 @@ where
     };
 
     let mut finished = false;
+    // Gallery parsing must fail for literal fallback. Only paragraph gathering
+    // sees its later closer and can restore the authored physical boundary.
+    let mut literal_gallery_pending = false;
     while !finished {
         let quote_line_status = parser.prepare_quote_body_line()?;
         if quote_line_status == QuoteBodyLineStatus::Boundary {
@@ -182,6 +185,10 @@ where
                     finished = true;
                     None
                 } else {
+                    if literal_gallery_pending && wikidot_literal_gallery_close(parser) {
+                        stack.end_paragraph();
+                        literal_gallery_pending = false;
+                    }
                     if parser.current().token == Token::DiscardedControl {
                         stack.mark_discarded_control();
                     }
@@ -240,6 +247,11 @@ where
                     error.kind() == ParseErrorKind::RuleFailed
                         && error.rule() == "block-div"
                 });
+            let literal_gallery_line = parser.settings().layout.legacy()
+                && errors.iter().any(|error| {
+                    error.kind() == ParseErrorKind::RuleFailed
+                        && error.rule() == "block-gallery"
+                });
 
             // Add new elements to the list
             if complete_raw_line_break && elements_begin_with_wikidot_center(&elements) {
@@ -283,6 +295,9 @@ where
             if literal_div_line {
                 stack.mark_wikidot_literal_div_line();
             }
+            if literal_gallery_line {
+                literal_gallery_pending = true;
+            }
             if terminal_backslash && parser.settings().layout.legacy() {
                 if parser.full_text().inner().ends_with("\u{fffd}\\") {
                     stack.pop_line_break();
@@ -309,6 +324,24 @@ where
     }
 
     stack.into_result()
+}
+
+fn wikidot_literal_gallery_close<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    if !parser.start_of_line() || parser.current().token != Token::LeftBlockEnd {
+        return false;
+    }
+
+    let mut close = parser.clone();
+    close
+        .get_end_block()
+        .is_ok_and(|name| name.eq_ignore_ascii_case("gallery"))
+        && matches!(
+            close.current().token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        )
 }
 
 fn wikidot_explicit_list_opener<'r, 't>(parser: &Parser<'r, 't>) -> bool

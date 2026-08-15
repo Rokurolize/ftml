@@ -1,0 +1,13 @@
++ Ownership Heading
+
+LINE
+[[toc class="line-owner"]]
+
+SPACE
+ [[toc class="space-owner"]]
+
+TAB
+	[[toc class="tab-owner"]]
+
+TEXT
+X[[toc class="text-owner"]]

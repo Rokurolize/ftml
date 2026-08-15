@@ -1,0 +1,19 @@
+LINE
+[[module CSS]]
+.line-owner { color: #111; }
+[[/module]]
+
+SPACE
+ [[module CSS]]
+.space-owner { color: #222; }
+[[/module]]
+
+TAB
+	[[module CSS]]
+.tab-owner { color: #333; }
+[[/module]]
+
+TEXT
+X[[module CSS]]
+.text-owner { color: #444; }
+[[/module]]

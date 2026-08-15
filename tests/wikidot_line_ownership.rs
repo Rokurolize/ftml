@@ -18,8 +18,12 @@ fn page_info() -> PageInfo<'static> {
 }
 
 fn render(source: &str) -> (String, String) {
+    render_for_layout(source, Layout::Wikidot)
+}
+
+fn render_for_layout(source: &str, layout: Layout) -> (String, String) {
     let page_info = page_info();
-    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
     let mut source = source.to_owned();
     ftml::preprocess_for_layout(&mut source, settings.layout);
     let tokenization = ftml::tokenize(&source);
@@ -27,6 +31,56 @@ fn render(source: &str) -> (String, String) {
     let html = HtmlRender.render(&tree, &page_info, &settings).body;
     let text = TextRender.render(&tree, &page_info, &settings);
     (html, text)
+}
+
+#[test]
+fn wikidot_physical_line_blocks_require_column_zero() {
+    for (block, active_html) in [
+        ("bibliography", "class=\"bibitems\""),
+        ("code", "class=\"code\""),
+        ("gallery", "wj-gallery"),
+        ("math", "math-equation"),
+        ("toc", "Table of Contents"),
+    ] {
+        for prefix in [" ", "\t"] {
+            let source = if block == "toc" {
+                format!("{prefix}[[toc]]")
+            } else {
+                format!("{prefix}[[{block}]]\nBODY\n[[/{block}]]")
+            };
+            let (html, _) = render(&source);
+            assert!(html.contains(&format!("[[{block}")), "{block}: {html}");
+            assert!(!html.contains(active_html), "{block}: {html}");
+        }
+    }
+}
+
+#[test]
+fn wikidot_literal_gallery_close_preserves_the_next_physical_line() {
+    for (prefix, label, rendered_prefix) in
+        [(" ", "SPACE", ""), ("\t", "TAB", ""), ("X", "TEXT", "X")]
+    {
+        let source =
+            format!("{prefix}[[gallery]]\n{label}_BODY\n[[/gallery]]\n\n{label}_NEXT");
+        let (html, _) = render(&source);
+        assert_eq!(
+            html,
+            format!(
+                "<p>{rendered_prefix}[[gallery]]<br>\n{label}_BODY<br>\n</p>\
+                 <p>[[/gallery]]</p><p>{label}_NEXT</p>"
+            ),
+            "{label}",
+        );
+    }
+
+    let (html, _) = render("[[gallery]]\n: https://example.com/image.png\n[[/gallery]]");
+    assert!(html.contains("class=\"wj-gallery\""), "{html}");
+
+    let (html, _) = render_for_layout(
+        " [[gallery]]\n: https://example.com/image.png\n[[/gallery]]",
+        Layout::Wikijump,
+    );
+    assert!(html.contains("class=\"wj-gallery\""), "{html}");
 }
 
 #[test]
@@ -46,12 +100,24 @@ fn code_and_math_require_a_physical_line_owner() {
         assert!(!html.contains("math-equation"), "{block}: {html}");
     }
 
-    for prefix in ["", " ", "    ", "\t"] {
-        let (html, _) = render(&format!("{prefix}[[code]]\nX\n[[/code]]"));
-        assert!(html.contains("<div class=\"code\">"), "{prefix:?}: {html}");
+    let (html, _) = render("[[code]]\nX\n[[/code]]");
+    assert!(html.contains("<div class=\"code\">"), "{html}");
 
-        let (html, _) = render(&format!("{prefix}[[math]]\nX\n[[/math]]"));
-        assert!(html.contains("math-equation"), "{prefix:?}: {html}");
+    let (html, _) = render("[[math]]\nX\n[[/math]]");
+    assert!(html.contains("math-equation"), "{html}");
+
+    for prefix in [" ", "\t"] {
+        let (html, _) = render_for_layout(
+            &format!("{prefix}[[code]]\nX\n[[/code]]"),
+            Layout::Wikijump,
+        );
+        assert!(html.contains("<wj-code "), "{prefix:?}: {html}");
+
+        let (html, _) = render_for_layout(
+            &format!("{prefix}[[math]]\nX\n[[/math]]"),
+            Layout::Wikijump,
+        );
+        assert!(html.contains("class=\"wj-math "), "{prefix:?}: {html}");
     }
 }
 

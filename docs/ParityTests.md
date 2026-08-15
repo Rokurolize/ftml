@@ -12,7 +12,7 @@ The machine-readable stable corpus is `tests/fixtures/wikidot-parity/cases.jsonl
 
 The dated `tests/fixtures/wikidot-parity/references-YYYYMMDD-NN.jsonl` files preserve the raw Wikidot responses and capture provenance. `tests/fixtures/wikidot-parity/bindings.json` binds each preview-compatible case to its reference hashes and comparator result. These files replace the old manual fixture table as the parity authority.
 
-The current stable inventory has 240 cases: 211 PagePreview-compatible cases, 28 caller-runtime cases, and 1 not-applicable case. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
+The current stable inventory has 246 cases: 217 PagePreview-compatible cases, 28 caller-runtime cases, and 1 not-applicable case. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
 
 Each mismatch has one disposition: `intentional-security-divergence` means a frozen output difference that FTML deliberately preserves to enforce a security property; `caller-runtime` means a frozen output difference whose missing inputs belong to the caller runtime rather than FTML; `comparison-normalization` means a frozen raw-DOM difference with no demonstrated functional behavior difference; and `unresolved` remains allowed only for an active functional investigation. A classified mismatch remains visible as `status: "mismatch"` and does not become a match.
 
@@ -22,7 +22,7 @@ Ordinary FTML tests are offline. They validate inventory completeness, reference
 cargo test --test integration parity_index
 ```
 
-Exact local FTML output hashing is skipped only for the bibliography, `embedvideo`, and `gallery` cases because production rendering generates random IDs. Their frozen Wikidot hashes, source hashes, binding status, and functional DOM and text checks remain enforced. The bibliography comparator canonicalizes only its generated suffix; the two caller-runtime mismatches remain mismatches and receive no snapshot.
+Exact local FTML output hashing is skipped for sources containing `bibliography`, `embedvideo`, or `gallery` blocks because production rendering can generate random IDs. Their frozen Wikidot hashes, source hashes, binding status, and functional DOM and text checks remain enforced. The bibliography comparator canonicalizes only its generated suffix; caller-runtime mismatches remain mismatches and receive no snapshot.
 
 ## Discovery Backlog
 
@@ -61,14 +61,14 @@ Review every inventory and classification change. If it is intentional, update `
 
 ### 2. Capture raw Wikidot references
 
-Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 211-row selection:
+Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 217-row selection:
 
 ```sh
 mkdir "$PARITY_TMP/batches"
 jq -c 'select(.execution_class == "saved-page-batch" or .execution_class == "page-preview-isolated")' \
   tests/fixtures/wikidot-parity/cases.jsonl | \
   split -l 16 -d -a 2 --additional-suffix=.jsonl - "$PARITY_TMP/batches/cases-"
-test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 211
+test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 217
 ```
 
 For each batch, choose a new dated no-replace output name and run:
@@ -162,6 +162,8 @@ Configured block-facet coverage refers to the state in which every configured st
 Ordered alias-pair coverage refers to the state in which a configured opener and closer name pair for a body-owning block appears together in a stable source. Batch `references-20260815-15.jsonl` added the two anchor cross-pairs and exposed issue #510. Batches `references-20260815-16.jsonl` through `references-20260815-18.jsonl` captured the remaining 48 pairs. All 48 match across DOM tree, DOM signature, and visible text, so the local report now lists no missing ordered alias pair.
 
 Reference batch `references-20260815-19.jsonl` freezes the 12 context-free argument-grammar sources asserted by `tests/wikidot_block_argument_grammar.rs` that previously lacked per-source evidence. All 12 match across DOM tree, DOM signature, and visible text. The remaining whitespace-name `user` source is inventoried as caller runtime because reproducing its missing-user result requires the caller-owned user resolver used by that test.
+
+Reference batch `references-20260815-20.jsonl` tests column-zero, space-prefixed, tab-prefixed, and text-prefixed ownership for `bibliography`, `code`, `gallery`, `math`, `module CSS`, and `toc`. It exposed issues #514 and #515: FTML accepted whitespace-prefixed physical-line blocks and joined a rejected gallery closer to the next line. After both fixes, five cases match all three comparison surfaces. Gallery line ownership and visible text also match; its remaining DOM mismatch is the caller-owned page/file rendering tracked by issue #507.
 
 ### 6. Promote matched cases
 

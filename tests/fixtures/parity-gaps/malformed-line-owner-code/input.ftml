@@ -1,0 +1,19 @@
+LINE
+[[code]]
+CODE_LINE
+[[/code]]
+
+SPACE
+ [[code]]
+CODE_SPACE
+[[/code]]
+
+TAB
+	[[code]]
+CODE_TAB
+[[/code]]
+
+TEXT
+X[[code]]
+CODE_TEXT
+[[/code]]

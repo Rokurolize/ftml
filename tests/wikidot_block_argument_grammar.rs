@@ -36,6 +36,38 @@ fn render_wikidot(source: &str) -> String {
     html
 }
 
+#[test]
+fn wikidot_dates_use_the_wikidot_default_format() {
+    assert_eq!(
+        render_wikidot("[[date 0]]"),
+        r#"<p><span class="odate time_0">01 Jan 1970 00:00</span></p>"#,
+    );
+}
+
+#[test]
+fn wikidot_dates_apply_the_default_format_to_nonzero_timestamps() {
+    assert_eq!(
+        render_wikidot("[[date 1234567890]]"),
+        r#"<p><span class="odate time_1234567890">13 Feb 2009 23:31</span></p>"#,
+    );
+}
+
+#[test]
+fn wikidot_date_format_changes_the_class_but_not_server_visible_text() {
+    let source = r#"[[date 0 format="%Y"]]"#;
+    assert_eq!(
+        render_wikidot(source),
+        r#"<p><span class="odate time_0 format_%25Y">01 Jan 1970 00:00</span></p>"#,
+    );
+
+    let (wikijump, errors) = render(source, Layout::Wikijump);
+    assert!(errors.is_empty(), "{errors:#?}");
+    assert!(
+        wikijump.ends_with(">1970</span></p>"),
+        "Wikijump must retain explicit formatting: {wikijump}",
+    );
+}
+
 struct MissingUser;
 
 impl UserInfoResolver for MissingUser {

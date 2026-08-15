@@ -1,0 +1,4 @@
+[[div data-probe="  alpha	 beta
+ gamma  " data-controls="ab"]]
+BODY
+[[/div]]

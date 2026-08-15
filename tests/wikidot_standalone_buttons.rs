@@ -262,6 +262,48 @@ fn wikidot_set_tags_rejects_apostrophe_tag_without_changing_wikijump() {
 }
 
 #[test]
+fn wikidot_set_tags_matches_live_delimiter_and_separator_boundaries() {
+    let error =
+        r#"<div class="error-block">You need to set text for set-tags button.</div>"#;
+    for source in [
+        r#"[[button set-tags +quote" text="Set"]]"#,
+        r#"[[button set-tags +a=b text="Set"]]"#,
+        r#"[[button set-tags +a&b text="Set"]]"#,
+        r#"[[button set-tags +a<b text="Set"]]"#,
+        r#"[[button set-tags +a>b text="Set"]]"#,
+    ] {
+        assert_eq!(render(source, Layout::Wikidot).body, error, "{source:?}");
+    }
+
+    for (source, alterations) in [
+        ("[[button set-tags +a\u{000b}+b text=\"Set\"]]", "+a +b"),
+        ("[[button set-tags +a\u{000c}+b text=\"Set\"]]", "+a +b"),
+        ("[[button set-tags +a\ntext=\"Set\"]]", "+a"),
+        ("[[button set-tags +a\rtext=\"Set\"]]", "+a"),
+        ("[[button set-tags +a\0b text=\"Set\"]]", "+ab"),
+        (
+            "[[button set-tags +a.b:c/d@e#f+g*h +\u{65e5}\u{672c}\u{8a9e} text=\"Set\"]]",
+            "+a.b:c/d@e#f+g*h +\u{65e5}\u{672c}\u{8a9e}",
+        ),
+    ] {
+        let output = render(source, Layout::Wikidot);
+        assert!(
+            output.body.contains(&format!(
+                "updateTagsByButton(event, &#39;{alterations}&#39;)"
+            )),
+            "{source:?}: {}",
+            output.body
+        );
+    }
+
+    assert!(
+        render(r#"[[button set-tags +a=b text="Set"]]"#, Layout::Wikijump)
+            .body
+            .contains(">Set</button>")
+    );
+}
+
+#[test]
 fn malformed_and_unsupported_forms_preserve_exact_residual_text() {
     assert_eq!(
         render("[[button]]", Layout::Wikidot).body,

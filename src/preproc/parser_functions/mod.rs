@@ -754,7 +754,10 @@ fn find_bytes(
 fn simple_condition(condition: &str) -> bool {
     let authored = condition.strip_suffix([' ', '\t']).unwrap_or(condition);
     let semantic = condition.trim_matches([' ', '\t']);
-    !authored.is_empty() && semantic != "0" && !semantic.eq_ignore_ascii_case("false")
+    !authored.is_empty()
+        && semantic != "0"
+        && semantic != "null"
+        && !semantic.eq_ignore_ascii_case("false")
 }
 
 fn find_conditional_parts_indexed(
@@ -994,6 +997,8 @@ mod tests {
             ("0", "false branch"),
             ("false", "false branch"),
             ("FALSE", "false branch"),
+            ("null", "false branch"),
+            ("NULL", "true branch"),
         ] {
             let source = format!("[[#if {condition} | true branch | false branch]]",);
             assert_eq!(

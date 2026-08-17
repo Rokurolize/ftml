@@ -422,6 +422,7 @@ fn independent_discovery_controls_remain_exact_matches() {
         "tests--fixtures--parity-gaps--whitespace-nul-prose",
         "tests--fixtures--parity-gaps--whitespace-crlf-code-body",
         "tests--fixtures--parity-gaps--whitespace-mac-newline",
+        "tests--fixtures--parity-gaps--autourl-double-bracket-prefix",
     ] {
         let binding = bindings
             .get(case_id)

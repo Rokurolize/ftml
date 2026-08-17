@@ -434,6 +434,8 @@ fn independent_discovery_controls_remain_exact_matches() {
         "tests--fixtures--parity-gaps--code-raw-body-markers",
         "tests--fixtures--parity-gaps--raw-alt-url-body",
         "tests--fixtures--parity-gaps--autourl-angle-termination",
+        "tests--fixtures--parity-gaps--typography-ellipsis-run-five",
+        "tests--fixtures--parity-gaps--typography-ellipsis-overlap-mixed",
     ] {
         let binding = bindings
             .get(case_id)

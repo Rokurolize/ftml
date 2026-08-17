@@ -261,7 +261,7 @@ mod tests {
             HtmlRender.render(&tree, &page_info, &settings).body,
             concat!(
                 r#"<div class="error-block">[[module <em>NoSuchModuleWithThisName</em>]] No such module, please "#,
-                r#"<a href="https://www.wikidot.com/doc:modules" target="_blank" rel="noopener noreferrer">check available modules</a>"#,
+                r#"<a href="https://www.wikidot.com/doc:modules" target="_blank">check available modules</a>"#,
                 " and fix this page.</div>",
             ),
         );
@@ -343,11 +343,11 @@ mod tests {
             HtmlRender.render(&tree, &page_info, &settings).body,
             concat!(
                 r#"<div class="error-block">[[module <em>UnknownOracleModule</em>]] No such module, please "#,
-                r#"<a href="https://www.wikidot.com/doc:modules" target="_blank" rel="noopener noreferrer">check available modules</a>"#,
+                r#"<a href="https://www.wikidot.com/doc:modules" target="_blank">check available modules</a>"#,
                 " and fix this page.</div>",
                 "<p>body</p>",
                 r#"<div class="error-block">[[module <em>RandomPage</em>]] No such module, please "#,
-                r#"<a href="https://www.wikidot.com/doc:modules" target="_blank" rel="noopener noreferrer">check available modules</a>"#,
+                r#"<a href="https://www.wikidot.com/doc:modules" target="_blank">check available modules</a>"#,
                 " and fix this page.</div>",
             ),
         );

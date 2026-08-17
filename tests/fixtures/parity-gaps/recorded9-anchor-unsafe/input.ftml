@@ -1,0 +1,1 @@
+[[anchor href="javascript:alert(1)" onclick="alert(2)"]]body[[/anchor]]

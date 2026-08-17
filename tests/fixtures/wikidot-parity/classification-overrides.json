@@ -21,6 +21,125 @@
       "execution_class": "page-preview-isolated",
       "page_scope": "isolated",
       "reason": "reviewed-context-free-external-triple-link"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/comment-autourl-split-mailto-scheme/input.ftml",
+      "source_sha256": "a2759eeaead9e3700ee9e2146b7d22bebbb4ec244962402383070c46a8809ea3",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-comment-elided-mailto"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/comment-delimiter-anchor-block-open/input.ftml",
+      "source_sha256": "510b58926be7e427c54d8cdba5e99407a65ce96b3e9ebabd07be2ad54579eead",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-comment-elided-named-anchor"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/comment-delimiter-block-close-open/input.ftml",
+      "source_sha256": "c28dc744694fff5b6020782f4363e1bb085b746f7d0d7ba0c20943be63e92ba3",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-comment-elided-span-closer"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/comment-delimiter-block-star/input.ftml",
+      "source_sha256": "07282dd9007159eeecc8f725e4277b0c827d412314f16d6caa32dcaed7370cea",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-comment-elided-checkbox-star"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/comment-delimiter-quad-open/input.ftml",
+      "source_sha256": "80a9ea9f805655143e63212798ce2e4dfaac62d68349bb68d3a6aa383b948845",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-comment-elided-external-triple-link"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/comment-delimiter-right-link-four-run/input.ftml",
+      "source_sha256": "95cfc082ae534c0d3f19032b414c2aac61434cc1e0a5464261944b1aca54946b",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-comment-elided-external-triple-link"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/comment-delimiter-starred-triple-close/input.ftml",
+      "source_sha256": "47a702df36062d715cd057bde21de6228529a166e6efbfd26948f0a8b9294c1e",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-comment-elided-external-triple-link"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/comment-delimiter-triple-close/input.ftml",
+      "source_sha256": "4f3cfd5a48da840a476407045e94f0f459d53e7c8d1eea0d76c3bef308cf0ca6",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-comment-elided-external-triple-link"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/comment-delimiter-triple-open/input.ftml",
+      "source_sha256": "fdcf491ee0e4dd57cf72174460a3dcb55d0a63efc9184ce58da8afbb7d0ea85d",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-comment-elided-external-triple-link"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/comment-delimiter-triple-star/input.ftml",
+      "source_sha256": "1d902bb95b837df55e1aa8c58519f032efe9a04414d8f5d5f23db513e1de9b28",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-comment-elided-external-triple-link"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/comment-parserfn-opener-owner/input.ftml",
+      "source_sha256": "dc7394bac7da433e9a9d3ac88a165ac9c7f49790fb034e7c171f422cebf40a1b",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-comment-elided-parser-function-opener"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/comment-triple-close-join/input.ftml",
+      "source_sha256": "9cf7eb3a889ba6fb03b9a59bcbec6fe00255de064a8732a3764fee4793c47829",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-comment-elided-external-triple-link"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/comment-triple-fields-owner/input.ftml",
+      "source_sha256": "1bf887860cc458ebe1542cd6ec74115400691ddce5aff084e77e06e3cd5555f6",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-comment-elided-internal-triple-link"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/comment-triple-safe-scheme/input.ftml",
+      "source_sha256": "d984a3d97b983d28f67d516c60691785963cb50391da84a0281d96ed8e309676",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-comment-elided-external-triple-link"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/comment-variable-name-owner/input.ftml",
+      "source_sha256": "2109fbfbd3d6483f2830f1072cdd900453a97fe6d9fdcb2633ec40acff7cf96a",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-comment-elided-variable-name"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/recorded17-triple-anchor-adjacent-run5/input.ftml",
+      "source_sha256": "06c35e1a8f5e6021325d682324e7e33c47249e1fd495fea7a92e3fbc95717bbf",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-triple-link-rollback"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/recorded17-triple-anchor-separated-control/input.ftml",
+      "source_sha256": "e12d8729a15da4810b3368a5cfa16765685b5859b44ad95acf6f142d417b4949",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-triple-link-rollback"
     }
   ]
 }

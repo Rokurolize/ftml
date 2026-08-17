@@ -670,7 +670,7 @@ mod wikidot_tests {
 
         assert!(
             html.contains(
-                r#"<a href="http://ja.scp-wiki.net/scp-040-jp" target="_blank" rel="noopener noreferrer">ねこでした。</a>"#,
+                r#"<a href="http://ja.scp-wiki.net/scp-040-jp" target="_blank">ねこでした。</a>"#,
             ),
             "{html}",
         );
@@ -696,7 +696,7 @@ mod wikidot_tests {
         );
         assert!(
             html.contains(concat!(
-                r#"<a href="http://sandbox-for-codex.wikidot.com/new-tab" target="_blank" rel="noopener noreferrer">"#,
+                r#"<a href="http://sandbox-for-codex.wikidot.com/new-tab" target="_blank">"#,
                 "http://sandbox-for-codex.wikidot.com/new-tab</a>",
             )),
             "{html}",

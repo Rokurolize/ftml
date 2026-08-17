@@ -49,7 +49,7 @@ fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
                 user_info.user_id,
             );
             let wikidot_karma_style = format!(
-                "background-image:url(https://www.wikidot.com/userkarma.php?u={})",
+                "background-image:url(http://www.wikidot.com/userkarma.php?u={})",
                 user_info.user_id,
             );
 

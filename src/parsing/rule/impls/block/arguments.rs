@@ -303,6 +303,18 @@ impl<'t> Arguments<'t> {
         let mut map =
             self.attribute_map_from_entries(settings, |_, value| !value.is_empty());
         map.remove("title");
+        if let Some(href) = self.inner.get(&self.key("href")).filter(|value| {
+            matches!(
+                crate::url::classify_href(value),
+                crate::url::HrefKind::Invalid
+            ) || (value.contains(':')
+                && matches!(
+                    crate::url::classify_href(value),
+                    crate::url::HrefKind::Relative
+                ))
+        }) {
+            map.insert_wikidot_relative_href(normalize_wikidot_unsafe_anchor_href(href));
+        }
         let href = self.inner.get(&self.key("href")).filter(|value| {
             matches!(
                 crate::url::classify_href(value),
@@ -361,6 +373,43 @@ impl<'t> Arguments<'t> {
 
         attributes
     }
+}
+
+fn normalize_wikidot_unsafe_anchor_href<'t>(value: &Cow<'t, str>) -> Cow<'t, str> {
+    let value = normalize_wikidot_html_attribute_value(value);
+    let mut output = String::with_capacity(value.len());
+    let mut pending_dash = false;
+    for character in value.chars() {
+        if matches!(character, ' ' | '(' | ')' | '.') {
+            pending_dash = !output.is_empty();
+            continue;
+        }
+        if character == '\\' {
+            continue;
+        }
+        if character == ':' {
+            while output.ends_with('-') {
+                output.pop();
+            }
+            output.push(':');
+            pending_dash = false;
+            continue;
+        }
+        if pending_dash && !output.ends_with(':') && !output.ends_with('-') {
+            output.push('-');
+        }
+        pending_dash = false;
+        output.push(character);
+    }
+    while output.ends_with('-') {
+        output.pop();
+    }
+    if let Some((scheme, rest)) = output.split_once(':')
+        && scheme.eq_ignore_ascii_case("javascript")
+    {
+        output = format!("javascript:{rest}");
+    }
+    Cow::Owned(output)
 }
 
 fn contains_unresolved_wikidot_variable(value: &str) -> bool {

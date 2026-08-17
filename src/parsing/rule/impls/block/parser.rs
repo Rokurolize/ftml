@@ -196,10 +196,10 @@ fn parse_wikidot_attribute_field<'t>(field: &CommentElidedText<'t>) -> Arguments
             ),
         };
         let value_range = span.start + value_range.start..span.start + value_range.end;
-        let (value, seams) = field.elide_range_with_seams(value_range);
+        let value = field.elide_range(value_range);
         if key.is_empty() {
             arguments.mark_empty_key_present();
-        } else if key != "style" || !dangerous_scheme_crosses_seam(&value, &seams) {
+        } else {
             arguments.insert(key, wikidot_stripslashes(value));
         }
         key = wikidot_attribute_key(field, &comment_mask, next_key_range);
@@ -209,28 +209,6 @@ fn parse_wikidot_attribute_field<'t>(field: &CommentElidedText<'t>) -> Arguments
     }
 
     arguments
-}
-
-fn dangerous_scheme_crosses_seam(value: &str, seams: &[usize]) -> bool {
-    for (colon, _) in value.match_indices(':') {
-        let scheme_start = value[..colon]
-            .char_indices()
-            .rev()
-            .find(|(_, character)| {
-                !(character.is_ascii_alphanumeric() || matches!(character, '_' | '-'))
-            })
-            .map_or(0, |(position, character)| position + character.len_utf8());
-        let scheme = &value[scheme_start..colon];
-        if (scheme.eq_ignore_ascii_case("javascript")
-            || scheme.eq_ignore_ascii_case("data"))
-            && seams
-                .iter()
-                .any(|seam| *seam > scheme_start && *seam <= colon)
-        {
-            return true;
-        }
-    }
-    false
 }
 
 fn wikidot_attribute_key<'t>(

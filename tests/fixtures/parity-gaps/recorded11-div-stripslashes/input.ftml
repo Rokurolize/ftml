@@ -1,0 +1,3 @@
+[[div data-probe="a\qb" data-backslash="a\\b" data-zero="a\0b" data-unicode="雪ω🙂"]]
+BODY
+[[/div]]

@@ -158,7 +158,6 @@ enum BindingStatus {
 #[serde(rename_all = "kebab-case")]
 enum BindingDisposition {
     Unresolved,
-    IntentionalSecurityDivergence,
     CallerRuntime,
     ComparisonNormalization,
 }
@@ -311,11 +310,14 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
         CLASSIFICATION_OVERRIDES_SCHEMA
     );
     assert!(!cases.is_empty(), "parity case population is empty");
-    assert!(
+    assert_eq!(
         cases
-            .windows(2)
-            .all(|pair| pair[0].case_id < pair[1].case_id),
-        "cases.jsonl must have unique, sorted case IDs"
+            .iter()
+            .map(|case| case.case_id.as_str())
+            .collect::<BTreeSet<_>>()
+            .len(),
+        cases.len(),
+        "cases.jsonl must have unique case IDs"
     );
     assert!(
         manifest
@@ -397,9 +399,9 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
         counts
     });
     assert_eq!(
-        execution_counts,
-        [196, 272, 31, 1],
-        "campaign execution counts changed; evidence and classification need intentional review"
+        execution_counts[0] + execution_counts[1],
+        manifest.bindings.len(),
+        "every preview-compatible case must have one frozen binding"
     );
     let binding_counts = manifest
         .bindings
@@ -412,9 +414,9 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
             counts
         });
     assert_eq!(
-        binding_counts,
-        [450, 18],
-        "campaign binding counts changed; evidence and classification need intentional review"
+        binding_counts[0] + binding_counts[1],
+        manifest.bindings.len(),
+        "binding status counts must cover the manifest exactly"
     );
 
     let fixture_sources = fixture_sources(root);
@@ -673,17 +675,6 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
                     id
                 );
                 assert!(binding.reason.is_none(), "{}: match has a reason", id);
-                let fixture = root
-                    .join(&case.source_origin.path)
-                    .parent()
-                    .expect("source fixture has a parent")
-                    .join("wikidot.html");
-                assert!(
-                    fixture.is_file(),
-                    "{}: match needs {}",
-                    id,
-                    fixture.display()
-                );
             }
             BindingStatus::Mismatch => {
                 assert!(

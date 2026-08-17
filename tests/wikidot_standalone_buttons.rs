@@ -218,7 +218,7 @@ fn wikidot_layout_emits_live_standalone_button_handlers() {
 }
 
 #[test]
-fn wikidot_set_tags_handler_escapes_authored_javascript_string_data() {
+fn wikidot_set_tags_handler_preserves_live_backslash_but_escapes_other_string_data() {
     let page_info = page_info();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let tree = SyntaxTree {
@@ -236,7 +236,7 @@ fn wikidot_set_tags_handler_escapes_authored_javascript_string_data() {
     };
     let output = HtmlRender.render(&tree, &page_info, &settings);
     assert!(output.body.contains(
-        r#"onclick="WIKIDOT.page.listeners.updateTagsByButton(event, &#39;+quote\x27 +slash\\ +line\u2028break&#39;)""#
+        r#"onclick="WIKIDOT.page.listeners.updateTagsByButton(event, &#39;+quote\x27 +slash\ +line\u2028break&#39;)""#
     ));
 }
 

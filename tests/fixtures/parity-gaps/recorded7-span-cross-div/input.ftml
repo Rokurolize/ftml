@@ -1,0 +1,5 @@
+[[span style="color: rgb(1, 2, 3);"]]SPAN_BEFORE
+[[div class="span-scope-block"]]
+SPAN_INSIDE
+[[/div]]
+SPAN_AFTER[[/span]]

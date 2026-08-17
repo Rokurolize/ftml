@@ -205,7 +205,7 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_avatar_karma_image_uses_https() {
+    fn wikidot_avatar_karma_image_preserves_live_http_url() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         let tree = SyntaxTree {
@@ -226,12 +226,11 @@ mod tests {
 
         assert!(
             output.body.contains(
-                "background-image:url(https://www.wikidot.com/userkarma.php?u=42)"
+                "background-image:url(http://www.wikidot.com/userkarma.php?u=42)"
             ),
             "{}",
             output.body,
         );
-        assert!(!output.body.contains("url(http://"), "{}", output.body);
     }
 
     #[test]

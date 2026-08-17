@@ -94,7 +94,7 @@ fn escape_javascript_string(value: &str) -> String {
     let mut escaped = String::with_capacity(value.len());
     for character in value.chars() {
         match character {
-            '\\' => escaped.push_str("\\\\"),
+            '\\' => escaped.push('\\'),
             '\'' => escaped.push_str("\\x27"),
             '\u{2028}' => escaped.push_str("\\u2028"),
             '\u{2029}' => escaped.push_str("\\u2029"),

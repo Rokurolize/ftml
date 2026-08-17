@@ -42,10 +42,7 @@ fn live_backed_anchor_link_matrix_matches_exact_html_and_source_recovery() {
         (
             "star",
             "[*#toc1 Label]",
-            concat!(
-                r##"<p><a href="#toc1" target="_blank" "##,
-                r#"rel="noopener noreferrer">Label</a></p>"#,
-            ),
+            r##"<p><a href="#toc1" target="_blank">Label</a></p>"##,
         ),
         (
             "empty-anchor",

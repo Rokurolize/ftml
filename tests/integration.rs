@@ -180,3 +180,9 @@ mod wikidot_explicit_list_grammar;
 
 #[path = "wikidot_comment_consumers.rs"]
 mod wikidot_comment_consumers;
+
+#[path = "parity_branch_coverage.rs"]
+mod parity_branch_coverage;
+
+#[path = "parity_discovery_regressions.rs"]
+mod parity_discovery_regressions;

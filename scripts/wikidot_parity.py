@@ -22,8 +22,7 @@ PREVIEW_CLASSES = {"saved-page-batch", "page-preview-isolated"}
 EXECUTION_CLASSES = PREVIEW_CLASSES | {"wikijump-runtime", "not-applicable"}
 CHECKS = ("dom_tree", "dom_signature", "visible_text")
 STATUSES = {"match", "mismatch"}
-DISPOSITIONS = {"unresolved", "intentional-security-divergence", "caller-runtime",
-                "comparison-normalization"}
+DISPOSITIONS = {"unresolved", "caller-runtime", "comparison-normalization"}
 ACTIVE_INVESTIGATION_REASON = re.compile(r"Active functional investigation: issue #[1-9][0-9]*\.")
 
 

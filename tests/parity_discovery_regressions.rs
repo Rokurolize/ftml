@@ -328,6 +328,14 @@ fn newly_discovered_root_cause_families_stay_owned_by_their_issues() {
             ["tests--fixtures--parity-gaps--list-depth-21-boundary"]
                 .as_slice(),
         ),
+        (
+            618,
+            [
+                "tests--fixtures--parity-gaps--typography-code-body-number-space",
+                "tests--fixtures--parity-gaps--typography-raw-body-number-space",
+            ]
+            .as_slice(),
+        ),
     ];
 
     for (issue, case_ids) in families {
@@ -380,6 +388,9 @@ fn independent_discovery_controls_remain_exact_matches() {
         "tests--fixtures--parity-gaps--single-link-closer-run-named-anchor-three",
         "tests--fixtures--parity-gaps--typography-getattrs-attribute-owner",
         "tests--fixtures--parity-gaps--typography-single-link-label-angle-quotes",
+        "tests--fixtures--parity-gaps--typography-prose-number-space",
+        "tests--fixtures--parity-gaps--typography-mono-body-number-space",
+        "tests--fixtures--parity-gaps--typography-code-body-ellipsis",
     ] {
         let binding = bindings
             .get(case_id)

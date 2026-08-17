@@ -308,6 +308,7 @@ fn newly_discovered_root_cause_families_stay_owned_by_their_issues() {
             [
                 "tests--fixtures--parity-gaps--typography-generic-attribute-owner",
                 "tests--fixtures--parity-gaps--typography-generic-attribute-unit-space",
+                "tests--fixtures--parity-gaps--typography-single-link-label-number-space",
             ]
             .as_slice(),
         ),
@@ -318,6 +319,7 @@ fn newly_discovered_root_cause_families_stay_owned_by_their_issues() {
                 "tests--fixtures--parity-gaps--typography-generic-attribute-angle-quotes",
                 "tests--fixtures--parity-gaps--typography-getattrs-attribute-ellipsis",
                 "tests--fixtures--parity-gaps--typography-getattrs-attribute-angle-quotes",
+                "tests--fixtures--parity-gaps--typography-single-link-label-ellipsis",
             ]
             .as_slice(),
         ),
@@ -377,6 +379,7 @@ fn independent_discovery_controls_remain_exact_matches() {
         "tests--fixtures--parity-gaps--rollback-naked-cell-bold",
         "tests--fixtures--parity-gaps--single-link-closer-run-named-anchor-three",
         "tests--fixtures--parity-gaps--typography-getattrs-attribute-owner",
+        "tests--fixtures--parity-gaps--typography-single-link-label-angle-quotes",
     ] {
         let binding = bindings
             .get(case_id)

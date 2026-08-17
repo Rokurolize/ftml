@@ -345,6 +345,11 @@ fn newly_discovered_root_cause_families_stay_owned_by_their_issues() {
             ["tests--fixtures--parity-gaps--whitespace-raw-body-tab"]
                 .as_slice(),
         ),
+        (
+            620,
+            ["tests--fixtures--parity-gaps--whitespace-replacement-marker-eof"]
+                .as_slice(),
+        ),
     ];
 
     for (issue, case_ids) in families {
@@ -406,6 +411,10 @@ fn independent_discovery_controls_remain_exact_matches() {
         "tests--fixtures--parity-gaps--whitespace-code-body-tab",
         "tests--fixtures--parity-gaps--whitespace-mono-body-tab",
         "tests--fixtures--parity-gaps--whitespace-code-body-nbsp",
+        "tests--fixtures--parity-gaps--whitespace-replacement-marker-mid",
+        "tests--fixtures--parity-gaps--whitespace-replacement-marker-line",
+        "tests--fixtures--parity-gaps--whitespace-terminal-backslash-eof",
+        "tests--fixtures--parity-gaps--whitespace-terminal-backslash-double-eof",
     ] {
         let binding = bindings
             .get(case_id)

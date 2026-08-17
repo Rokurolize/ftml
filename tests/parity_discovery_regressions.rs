@@ -351,6 +351,11 @@ fn newly_discovered_root_cause_families_stay_owned_by_their_issues() {
             ["tests--fixtures--parity-gaps--whitespace-replacement-marker-eof"]
                 .as_slice(),
         ),
+        (
+            621,
+            ["tests--fixtures--parity-gaps--autourl-angle-at-termination"]
+                .as_slice(),
+        ),
     ];
 
     for (issue, case_ids) in families {
@@ -426,6 +431,7 @@ fn independent_discovery_controls_remain_exact_matches() {
         "tests--fixtures--parity-gaps--module-keyword-uppercase",
         "tests--fixtures--parity-gaps--module-closer-uppercase",
         "tests--fixtures--parity-gaps--code-raw-body-markers",
+        "tests--fixtures--parity-gaps--raw-alt-url-body",
     ] {
         let binding = bindings
             .get(case_id)

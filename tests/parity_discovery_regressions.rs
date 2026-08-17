@@ -340,6 +340,11 @@ fn newly_discovered_root_cause_families_stay_owned_by_their_issues() {
             ]
             .as_slice(),
         ),
+        (
+            619,
+            ["tests--fixtures--parity-gaps--whitespace-raw-body-tab"]
+                .as_slice(),
+        ),
     ];
 
     for (issue, case_ids) in families {
@@ -397,6 +402,10 @@ fn independent_discovery_controls_remain_exact_matches() {
         "tests--fixtures--parity-gaps--typography-code-body-ellipsis",
         "tests--fixtures--parity-gaps--typography-mono-body-angle-quotes",
         "tests--fixtures--parity-gaps--typography-mono-body-ellipsis",
+        "tests--fixtures--parity-gaps--whitespace-prose-tab",
+        "tests--fixtures--parity-gaps--whitespace-code-body-tab",
+        "tests--fixtures--parity-gaps--whitespace-mono-body-tab",
+        "tests--fixtures--parity-gaps--whitespace-code-body-nbsp",
     ] {
         let binding = bindings
             .get(case_id)

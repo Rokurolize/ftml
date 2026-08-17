@@ -333,6 +333,7 @@ fn newly_discovered_root_cause_families_stay_owned_by_their_issues() {
             [
                 "tests--fixtures--parity-gaps--typography-code-body-number-space",
                 "tests--fixtures--parity-gaps--typography-raw-body-number-space",
+                "tests--fixtures--parity-gaps--typography-code-body-unit-space",
             ]
             .as_slice(),
         ),
@@ -391,6 +392,8 @@ fn independent_discovery_controls_remain_exact_matches() {
         "tests--fixtures--parity-gaps--typography-prose-number-space",
         "tests--fixtures--parity-gaps--typography-mono-body-number-space",
         "tests--fixtures--parity-gaps--typography-code-body-ellipsis",
+        "tests--fixtures--parity-gaps--typography-mono-body-angle-quotes",
+        "tests--fixtures--parity-gaps--typography-mono-body-ellipsis",
     ] {
         let binding = bindings
             .get(case_id)

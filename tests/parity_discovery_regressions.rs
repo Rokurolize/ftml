@@ -418,6 +418,10 @@ fn independent_discovery_controls_remain_exact_matches() {
         "tests--fixtures--parity-gaps--whitespace-terminal-backslash-double-eof",
         "tests--fixtures--parity-gaps--whitespace-continuation-joins",
         "tests--fixtures--parity-gaps--whitespace-continued-span-opener",
+        "tests--fixtures--parity-gaps--whitespace-document-leading-indented-quote",
+        "tests--fixtures--parity-gaps--whitespace-nul-prose",
+        "tests--fixtures--parity-gaps--whitespace-crlf-code-body",
+        "tests--fixtures--parity-gaps--whitespace-mac-newline",
     ] {
         let binding = bindings
             .get(case_id)

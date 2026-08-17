@@ -336,6 +336,7 @@ fn newly_discovered_root_cause_families_stay_owned_by_their_issues() {
                 "tests--fixtures--parity-gaps--typography-code-body-number-space",
                 "tests--fixtures--parity-gaps--typography-raw-body-number-space",
                 "tests--fixtures--parity-gaps--typography-code-body-unit-space",
+                "tests--fixtures--parity-gaps--typography-code-body-quotes",
             ]
             .as_slice(),
         ),

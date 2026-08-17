@@ -144,7 +144,8 @@ fn discovery_mismatches_keep_an_explicit_disposition_and_no_snapshot() {
                     || path.contains("/limit-")
                     || path.contains("/list-depth-")
                     || path.contains("/line-owner-nbsp-")
-                    || path.contains("/typography-") =>
+                    || path.contains("/typography-")
+                    || path.contains("/whitespace-") =>
             {
                 path
             }
@@ -415,6 +416,8 @@ fn independent_discovery_controls_remain_exact_matches() {
         "tests--fixtures--parity-gaps--whitespace-replacement-marker-line",
         "tests--fixtures--parity-gaps--whitespace-terminal-backslash-eof",
         "tests--fixtures--parity-gaps--whitespace-terminal-backslash-double-eof",
+        "tests--fixtures--parity-gaps--whitespace-continuation-joins",
+        "tests--fixtures--parity-gaps--whitespace-continued-span-opener",
     ] {
         let binding = bindings
             .get(case_id)

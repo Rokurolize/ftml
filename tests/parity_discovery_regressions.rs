@@ -316,6 +316,8 @@ fn newly_discovered_root_cause_families_stay_owned_by_their_issues() {
             [
                 "tests--fixtures--parity-gaps--typography-generic-attribute-ellipsis",
                 "tests--fixtures--parity-gaps--typography-generic-attribute-angle-quotes",
+                "tests--fixtures--parity-gaps--typography-getattrs-attribute-ellipsis",
+                "tests--fixtures--parity-gaps--typography-getattrs-attribute-angle-quotes",
             ]
             .as_slice(),
         ),

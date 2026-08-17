@@ -145,7 +145,8 @@ fn discovery_mismatches_keep_an_explicit_disposition_and_no_snapshot() {
                     || path.contains("/list-depth-")
                     || path.contains("/line-owner-nbsp-")
                     || path.contains("/typography-")
-                    || path.contains("/whitespace-") =>
+                    || path.contains("/whitespace-")
+                    || path.contains("/triple-link-") =>
             {
                 path
             }

@@ -140,6 +140,20 @@
       "execution_class": "page-preview-isolated",
       "page_scope": "isolated",
       "reason": "reviewed-context-free-triple-link-rollback"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/triple-link-data-scheme/input.ftml",
+      "source_sha256": "778582b1be706d4c6efc424d75c40fe6f45dc66d2df3eea3d8f713cf678868d0",
+      "execution_class": "saved-page-batch",
+      "page_scope": "batch-safe",
+      "reason": "reviewed-context-free-unsafe-triple-link-scheme"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/triple-link-javascript-scheme/input.ftml",
+      "source_sha256": "882ee0a38791d6264773a9208e2924dd07c4da11ba7a37461e9d8056454fb957",
+      "execution_class": "saved-page-batch",
+      "page_scope": "batch-safe",
+      "reason": "reviewed-context-free-unsafe-triple-link-scheme"
     }
   ]
 }

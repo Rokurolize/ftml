@@ -433,6 +433,7 @@ fn independent_discovery_controls_remain_exact_matches() {
         "tests--fixtures--parity-gaps--module-closer-uppercase",
         "tests--fixtures--parity-gaps--code-raw-body-markers",
         "tests--fixtures--parity-gaps--raw-alt-url-body",
+        "tests--fixtures--parity-gaps--autourl-angle-termination",
     ] {
         let binding = bindings
             .get(case_id)

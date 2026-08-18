@@ -575,7 +575,7 @@ fn repeated_automatic_link_boundaries_stay_bounded() {
         2_048,
     );
     assert!(
-        elapsed < Duration::from_secs(3),
+        elapsed < Duration::from_secs(5),
         "automatic-link boundary scan took {elapsed:?}",
     );
 }

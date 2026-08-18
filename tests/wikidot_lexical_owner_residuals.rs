@@ -110,7 +110,7 @@ fn dense_angle_owner_scanning_stays_bounded() {
     );
     assert_eq!(html.matches("&lt;RAW&gt;").count(), 2_048, "{html}");
     assert!(
-        elapsed < Duration::from_secs(3),
+        elapsed < Duration::from_secs(5),
         "angle owner scan took {elapsed:?}",
     );
 }

@@ -1,0 +1,6 @@
+[[math]]
+outer [[bold]]inner
+[[/math]][[/bold]]
+[[math]]
+later
+[[/math]]

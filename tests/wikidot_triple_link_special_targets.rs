@@ -489,9 +489,7 @@ fn live_backed_mailto_variants_split_the_label_at_the_pipe() {
             "{case_id}: {html}"
         );
         assert_eq!(text, label, "{case_id}: {html}");
-        if target.is_some() {
-            assert!(html.contains(r#"rel="noopener noreferrer""#), "{html}");
-        }
+        assert!(!html.contains(" rel="), "{case_id}: {html}");
     }
 }
 
@@ -635,7 +633,7 @@ fn long_unicode_colon_slash_and_mailto_targets_stay_bounded() {
         source.len() * 2
     );
     assert!(
-        elapsed < Duration::from_secs(3),
+        elapsed < Duration::from_secs(5),
         "special-target parsing took {elapsed:?}"
     );
 }

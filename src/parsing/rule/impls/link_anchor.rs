@@ -27,6 +27,7 @@ use super::RULE_COMMENT;
 use super::prelude::*;
 use crate::id_prefix::isolate_ids;
 use crate::parsing::ParseSuccess;
+use crate::parsing::{discard_wikidot_controls, trim_wikidot_ascii_cow};
 use crate::tree::{AnchorTarget, LinkLabel, LinkLocation, LinkType};
 use std::borrow::Cow;
 use wikidot_normalize::normalize;
@@ -130,7 +131,11 @@ where
     };
 
     // Trim label
-    let label = trim_cow(label);
+    let label = if parser.settings().layout.legacy() {
+        trim_wikidot_ascii_cow(discard_wikidot_controls(label))
+    } else {
+        trim_cow(label)
+    };
     if parser.settings().layout.legacy() && label.is_empty() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }

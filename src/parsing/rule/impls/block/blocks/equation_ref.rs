@@ -40,6 +40,9 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Equation reference doesn't allow start flag");
     assert!(!flag_score, "Equation reference doesn't allow score flag");
     assert_block_name(&BLOCK_EQUATION_REF, name);
+    if parser.settings().layout.legacy() && name != "eref" {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     let block = &BLOCK_EQUATION_REF;
     let name = parser.get_head_value(block, in_head, require_trimmed_block_argument)?;

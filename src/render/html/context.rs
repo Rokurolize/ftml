@@ -85,6 +85,7 @@ where
     equation_index: NonZeroUsize,
     named_equations: HashMap<String, NonZeroUsize>,
     bibliography_render_stack: Vec<String>,
+    footnote_render_stack: Vec<usize>,
 }
 
 impl fmt::Debug for HtmlContext<'_, '_, '_, '_> {
@@ -186,6 +187,7 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
             equation_index: NonZeroUsize::new(1).unwrap(),
             named_equations: HashMap::new(),
             bibliography_render_stack: Vec::new(),
+            footnote_render_stack: Vec::new(),
         }
     }
 
@@ -304,6 +306,20 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     pub fn exit_bibliography_ref(&mut self, label: &str) {
         let popped = self.bibliography_render_stack.pop();
         debug_assert_eq!(popped.as_deref(), Some(label));
+    }
+
+    pub fn enter_footnote_ref(&mut self, index: usize) -> bool {
+        if self.footnote_render_stack.contains(&index) {
+            false
+        } else {
+            self.footnote_render_stack.push(index);
+            true
+        }
+    }
+
+    pub fn exit_footnote_ref(&mut self, index: usize) {
+        let popped = self.footnote_render_stack.pop();
+        debug_assert_eq!(popped, Some(index));
     }
 
     pub fn next_code_snippet_index(&mut self) -> NonZeroUsize {

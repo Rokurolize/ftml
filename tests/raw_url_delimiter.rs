@@ -119,7 +119,8 @@ fn adjacent_raw_spans_split_at_their_own_url_closers() {
 
     let (reserved_html, reserved_errors) = render_wikidot("https://example.com/a>@b");
     assert!(reserved_errors.is_empty(), "{reserved_errors:#?}");
-    let reserved_link = "href=\"https://example.com/a\">https://example.com/a</a>&gt;@b";
+    let reserved_link =
+        "href=\"https://example.com/a&gt;@b\">https://example.com/a&gt;@b</a>";
     assert!(reserved_html.contains(reserved_link), "{reserved_html}",);
 }
 

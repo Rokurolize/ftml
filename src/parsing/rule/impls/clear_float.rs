@@ -33,6 +33,18 @@ fn try_consume_fn<'r, 't>(
     let current = parser.current();
     debug!("Consuming token to create a clear float");
 
+    if parser.settings().layout.legacy() {
+        let source = parser.full_text().inner();
+        let starts_line = current.span.start == 0
+            || source.as_bytes().get(current.span.start - 1) == Some(&b'\n');
+        let line_end = source[current.span.end..]
+            .find(['\r', '\n'])
+            .map_or(source.len(), |offset| current.span.end + offset);
+        if !starts_line || current.span.end != line_end {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+    }
+
     let clear_float = match current.token {
         Token::ClearFloatBoth => ClearFloat::Both,
         Token::ClearFloatLeft => ClearFloat::Left,

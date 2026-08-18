@@ -175,8 +175,13 @@ fn same_line_div_literal_controls_follow_physical_line_ownership() {
         ),
     ] {
         let (html, text) = render(&format!("BEFORE\n{source_literal}"));
-        assert_eq!(html, format!("<p>BEFORE</p>\n{html_literal}"));
-        assert_eq!(text, format!("BEFORE\n\n{source_literal}"));
+        if source_literal.starts_with("[[div =") {
+            assert_eq!(html, format!("<p>BEFORE<br>\n{html_literal}</p>"));
+            assert_eq!(text, format!("BEFORE\n{source_literal}"));
+        } else {
+            assert_eq!(html, format!("<p>BEFORE</p>\n{html_literal}"));
+            assert_eq!(text, format!("BEFORE\n\n{source_literal}"));
+        }
 
         let (html, text) = render(source_literal);
         assert_eq!(html, format!("<p>{html_literal}</p>"));
@@ -244,8 +249,8 @@ fn same_line_div_span_marker_controls_stay_clean() {
         (
             "comment",
             "[[div]] [!-- [[span]]x[[/span]] --] [[/div]]",
-            "<p>[[div]] [!-- [[span]]x[[/span]] --] [[/div]]</p>",
-            "[[div]] [!-- [[span]]x[[/span]] --] [[/div]]",
+            "<p>[[div]]  [[/div]]</p>",
+            "[[div]]  [[/div]]",
         ),
         (
             "multiline",

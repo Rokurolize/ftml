@@ -19,8 +19,9 @@
  */
 
 use super::prelude::*;
-use crate::tree::AttributeMap;
-use crate::url::is_url;
+use crate::parsing::discard_wikidot_controls;
+use crate::tree::{AttributeMap, LinkLabel, LinkLocation, LinkType};
+use std::borrow::Cow;
 
 pub const BLOCK_IFRAME: BlockRule = BlockRule {
     name: "block-iframe",
@@ -44,7 +45,30 @@ fn parse_fn<'r, 't>(
     assert_block_name(&BLOCK_IFRAME, name);
 
     let (url, arguments) = parser.get_head_name_map_wikidot(&BLOCK_IFRAME, in_head)?;
-    if !is_url(url) {
+    let url = if parser.settings().layout.legacy() {
+        discard_wikidot_controls(Cow::Borrowed(url))
+    } else {
+        Cow::Borrowed(url)
+    };
+    if !(if parser.settings().layout.legacy() {
+        wikidot_iframe_url(&url)
+    } else {
+        crate::url::is_url(&url)
+    }) {
+        if parser.settings().layout.legacy()
+            && (url.starts_with("git://") || url.starts_with("sftp://"))
+        {
+            return ok!(Elements::Multiple(vec![
+                text!("[[iframe "),
+                Element::Link {
+                    ltype: LinkType::Direct,
+                    link: LinkLocation::Url(url.clone()),
+                    label: LinkLabel::Url,
+                    target: None,
+                },
+                text!("]]"),
+            ]));
+        }
         warn!("Iframe block references non-URL ({} bytes)", url.len());
         return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
     }
@@ -55,12 +79,18 @@ fn parse_fn<'r, 't>(
     } else {
         arguments.to_attribute_map(parser.settings())
     };
-    let element = Element::Iframe {
-        url: std::borrow::Cow::Borrowed(url),
-        attributes,
-    };
+    let element = Element::Iframe { url, attributes };
 
     ok!(parser.settings().layout.legacy(); element)
+}
+
+fn wikidot_iframe_url(url: &str) -> bool {
+    ["http://", "https://", "ftp://", "gopher://", "mailto:"]
+        .iter()
+        .any(|prefix| {
+            url.get(..prefix.len())
+                .is_some_and(|value| value.eq_ignore_ascii_case(prefix))
+        })
 }
 
 #[cfg(test)]

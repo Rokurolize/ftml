@@ -147,9 +147,6 @@ fn parse_footnote_block<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::FootnotesNested));
     }
 
-    let inline_prose = parser.settings().layout.legacy()
-        && wikidot_footnote_block_has_inline_prefix(parser);
-
     if parser.settings().layout.legacy() && parser.has_footnote_block() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
@@ -167,6 +164,12 @@ fn parse_footnote_block<'r, 't>(
         }
         return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
     }
+
+    // Only a valid first footnote block needs the line-prefix ownership scan.
+    // Rejecting duplicates and malformed arguments first avoids repeatedly
+    // rescanning a growing physical-line prefix.
+    let inline_prose = parser.settings().layout.legacy()
+        && wikidot_footnote_block_has_inline_prefix(parser);
 
     // Tell parser that a footnote block was added
     parser.set_footnote_block();

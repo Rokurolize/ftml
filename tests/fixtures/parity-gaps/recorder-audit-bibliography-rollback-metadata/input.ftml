@@ -1,0 +1,9 @@
+[[bibliography]]
+: leaked : outer [[bold]]inner
+[[/bibliography]][[/bold]]
+
+[[bibliography title="<Works & Sources>"]]
+: alpha : A & B
+: beta : B & C
+[[/bibliography]]
+((bibcite alpha))

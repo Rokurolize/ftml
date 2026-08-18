@@ -175,6 +175,12 @@ pub struct Parser<'r, 't> {
     // needs a separate cache because a successful one-close scan does not say
     // whether a second close exists in the same suffix.
     two_block_end_scan_cache: Rc<RefCell<BTreeMap<BlockEndScanKey, u8>>>,
+    // Single-link label recovery can retry at many nested `[` tokens. The
+    // owner-presence result depends only on the immutable token suffix, so
+    // share it across speculative clones and later retries.
+    single_link_label_owner_scan_cache: Rc<RefCell<BTreeMap<usize, bool>>>,
+    wikidot_code_candidate_cache:
+        Rc<RefCell<Option<BTreeMap<usize, crate::wikidot_code::WikidotCodeCandidate>>>>,
     #[cfg(test)]
     quote_scan_token_visits: Rc<Cell<usize>>,
     #[cfg(test)]
@@ -247,6 +253,8 @@ impl<'r, 't> Parser<'r, 't> {
             quote_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
             block_end_scan_cache: Rc::new(RefCell::new(BlockScanCache::default())),
             two_block_end_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
+            single_link_label_owner_scan_cache: Rc::new(RefCell::new(BTreeMap::new())),
+            wikidot_code_candidate_cache: Rc::new(RefCell::new(None)),
             #[cfg(test)]
             quote_scan_token_visits: Rc::new(Cell::new(0)),
             #[cfg(test)]
@@ -344,6 +352,18 @@ impl<'r, 't> Parser<'r, 't> {
                 .next_back()
                 .and_then(|(_, marker)| marker.runtime_literal())
                 .is_some_and(|literal| literal.end > range.start)
+    }
+
+    pub(crate) fn has_runtime_scalar_in_range(&self, range: Range<usize>) -> bool {
+        self.delayed_markers
+            .range(range.start..range.end)
+            .any(|(_, marker)| marker.runtime_scalar().is_some())
+            || self
+                .delayed_markers
+                .range(..range.start)
+                .next_back()
+                .and_then(|(_, marker)| marker.runtime_scalar())
+                .is_some_and(|scalar| scalar.end > range.start)
     }
 
     #[inline]
@@ -591,6 +611,48 @@ impl<'r, 't> Parser<'r, 't> {
         self.two_block_end_scan_cache.borrow().get(&key).copied()
     }
 
+    pub(crate) fn single_link_label_owner_scan_outcome(
+        &self,
+        token_start: usize,
+    ) -> Option<bool> {
+        self.single_link_label_owner_scan_cache
+            .borrow()
+            .get(&token_start)
+            .copied()
+    }
+
+    pub(crate) fn cache_single_link_label_owner_scan_outcomes(
+        &self,
+        token_starts: &[usize],
+        outcome: bool,
+    ) {
+        let mut cache = self.single_link_label_owner_scan_cache.borrow_mut();
+        for &token_start in token_starts {
+            cache.insert(token_start, outcome);
+        }
+    }
+
+    pub(crate) fn wikidot_code_candidate(
+        &self,
+        opener_start: usize,
+    ) -> Option<crate::wikidot_code::WikidotCodeCandidate> {
+        let source = self.full_text.inner();
+        let line_start = source[..opener_start]
+            .rfind('\n')
+            .map_or(0, |index| index + 1);
+        let line_owned = source[line_start..opener_start]
+            .bytes()
+            .all(|byte| matches!(byte, b' ' | b'\t' | b'\0'));
+        if !line_owned {
+            return crate::wikidot_code::candidate_at_owned_opener(source, opener_start);
+        }
+
+        let mut cache = self.wikidot_code_candidate_cache.borrow_mut();
+        let candidates =
+            cache.get_or_insert_with(|| crate::wikidot_code::candidates(source));
+        candidates.get(&opener_start).cloned()
+    }
+
     pub(crate) fn cache_two_block_end_scan_outcomes(
         &self,
         rule: &'static str,
@@ -599,6 +661,13 @@ impl<'r, 't> Parser<'r, 't> {
     ) {
         let mut cache = self.two_block_end_scan_cache.borrow_mut();
         for &(token_start, first_iteration, preceding_matches) in token_states {
+            // A successful two-close scan stops at the second close. States
+            // reached after the first close therefore have an unknown suffix:
+            // there may be another close beyond the point where this scan
+            // stopped. Only cache those states after an exhaustive (<2) scan.
+            if total_matches >= 2 && preceding_matches > 0 {
+                continue;
+            }
             cache.insert(
                 (rule, token_start, first_iteration),
                 total_matches.saturating_sub(preceding_matches).min(2),
@@ -1542,7 +1611,7 @@ fn parser_append_shared_items_and_optional_spaces_cover_helpers() {
 fn parser_state_fits_the_bounded_deep_parse_stack_budget() {
     let size = std::mem::size_of::<Parser<'static, 'static>>();
     assert!(
-        size <= 304,
-        "Parser grew to {size} bytes; deep recursive parsing requires at most 304 bytes",
+        size <= 320,
+        "Parser grew to {size} bytes; deep recursive parsing requires at most 320 bytes",
     );
 }

@@ -54,7 +54,7 @@ sha2 = "0.11"
 str-macro = "1"
 strum = "0.28"
 strum_macros = "0.28"
-time = { version = ">=0.3.47, <0.4", features = ["formatting", "macros", "parsing", "serde", "serde-human-readable"], default-features = false }
+time = { version = ">=0.3.47, <0.4", features = ["formatting", "large-dates", "macros", "parsing", "serde", "serde-human-readable"], default-features = false }
 unicase = "2"
 wikidot-normalize = "0.12"
 writeable = "0.6"

@@ -21,6 +21,7 @@
 use super::prelude::*;
 use super::raw::RULE_RAW;
 use crate::parsing::collect::consume_valid_comment;
+use crate::parsing::{discard_wikidot_controls, trim_wikidot_ascii_cow};
 use std::borrow::Cow;
 
 pub const RULE_MATH: Rule = Rule {
@@ -99,9 +100,11 @@ where
                 let latex_source = match comment_elided {
                     Some(mut formula) => {
                         formula.push_str(&source[segment_start..end]);
-                        Cow::Owned(formula.trim().to_owned())
+                        trim_wikidot_ascii_cow(discard_wikidot_controls(Cow::Owned(
+                            formula,
+                        )))
                     }
-                    None => Cow::Borrowed(source[start..end].trim()),
+                    None => trim_wikidot_ascii_cow(Cow::Borrowed(&source[start..end])),
                 };
                 return Ok(WikidotMathSource {
                     latex_source,
@@ -118,6 +121,15 @@ where
             // no delayed inline-math field that could retain their provenance.
             Token::RuntimeText | Token::GeneratedPageLink | Token::GeneratedTagLinks => {
                 return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
+
+            Token::DiscardedControl => {
+                let control_start = parser.current().span.start;
+                comment_elided
+                    .get_or_insert_with(String::new)
+                    .push_str(&source[segment_start..control_start]);
+                parser.step()?;
+                segment_start = parser.current().span.start;
             }
 
             Token::LeftComment => {
@@ -146,7 +158,11 @@ where
                     let latex_source = if suppress_formula {
                         Cow::Borrowed("")
                     } else {
-                        Cow::Owned(formula.trim().to_owned())
+                        let cleaned =
+                            discard_wikidot_controls(Cow::Borrowed(formula.as_str()));
+                        Cow::Owned(
+                            crate::parsing::trim_wikidot_ascii(&cleaned).to_owned(),
+                        )
                     };
                     return Ok(WikidotMathSource {
                         latex_source,

@@ -66,14 +66,21 @@ fn try_consume_fn<'r, 't>(
         collect_text_keep(parser, RULE_COLOR, color_close, &color_invalid, None)?;
     let mut body_pipe_prefix = (legacy && is_table_column_token(first_terminator.token))
         .then(|| text!(&first_terminator.slice[1..]));
-    let (color, background) = if legacy && first_field.trim().is_empty() {
+    let trim_field = |value: &'t str| {
+        if legacy {
+            value.trim_matches([' ', '\t'])
+        } else {
+            value.trim()
+        }
+    };
+    let (color, background) = if legacy && trim_field(first_field).is_empty() {
         let (background, terminator) =
             collect_text_keep(parser, RULE_COLOR, color_close, &color_invalid, None)?;
         body_pipe_prefix = is_table_column_token(terminator.token)
             .then(|| text!(&terminator.slice[1..]));
-        (background.trim(), true)
+        (trim_field(background), true)
     } else if legacy {
-        (first_field.trim(), false)
+        (trim_field(first_field), false)
     } else {
         (first_field, false)
     };
@@ -300,7 +307,7 @@ fn is_safe_color(color: &str) -> bool {
 }
 
 pub(crate) fn normalize_wikidot_color(color: &str) -> Option<Cow<'_, str>> {
-    let color = color.trim();
+    let color = color.trim_matches([' ', '\t']);
     if color.is_empty() {
         return None;
     }

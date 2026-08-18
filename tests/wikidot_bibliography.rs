@@ -177,7 +177,7 @@ fn complete_v7_bibliography_family_matches_live_page_preview() {
 }
 
 #[test]
-fn rollback_does_not_commit_bibliography_metadata_or_numbering() {
+fn crossed_definition_bibliography_commits_metadata_and_numbering() {
     let source = concat!(
         "[[bibliography]]\n: leaked : outer [[bold]]inner\n",
         "[[/bibliography]][[/bold]]\n\n",
@@ -190,19 +190,18 @@ fn rollback_does_not_commit_bibliography_metadata_or_numbering() {
     let (html, tree) = render(source);
 
     assert_eq!(tree.bibliographies.next_index(), 1, "{tree:#?}");
-    assert!(tree.bibliographies.get_reference("leaked").is_none());
-    assert_eq!(tree.bibliographies.get_reference("alpha").unwrap().0, 1);
-    assert_eq!(tree.bibliographies.get_reference("beta").unwrap().0, 2);
+    assert_eq!(tree.bibliographies.get_reference("leaked").unwrap().0, 1);
+    assert_eq!(tree.bibliographies.get_reference("alpha").unwrap().0, 2);
+    assert_eq!(tree.bibliographies.get_reference("beta").unwrap().0, 3);
     assert_eq!(html.matches("class=\"bibitems\"").count(), 1, "{html}");
-    assert!(
-        html.contains("<div class=\"title\">&lt;Works &amp; Sources&gt;</div>"),
-        "{html}",
-    );
-    assert!(html.contains("<div class=\"bibitem\" id=\"bibitem-1\">1. A &amp; B</div>"));
-    assert!(html.contains("<div class=\"bibitem\" id=\"bibitem-2\">2. B &amp; C</div>"));
+    assert!(html.contains(
+        "<div class=\"bibitem\" id=\"bibitem-1\">1. outer [[bold]]inner</div>"
+    ));
+    assert!(html.contains("<div class=\"bibitem\" id=\"bibitem-2\">2. A &amp; B</div>"));
+    assert!(html.contains("<div class=\"bibitem\" id=\"bibitem-3\">3. B &amp; C</div>"));
     assert!(html.contains("class=\"bibcite\""), "{html}");
     assert!(
-        html.contains("scrollToReference(&#39;bibitem-1&#39;)"),
+        html.contains("scrollToReference(&#39;bibitem-2&#39;)"),
         "{html}"
     );
 }

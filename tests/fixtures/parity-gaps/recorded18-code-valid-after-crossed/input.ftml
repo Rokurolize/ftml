@@ -1,0 +1,7 @@
+[[code]]
+outer [[bold]]inner
+[[/code]][[/bold]]
+
+[[code]]
+later
+[[/code]]

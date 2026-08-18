@@ -230,13 +230,19 @@ where
     let mut key_elements = collected.chain(errors, paragraph_safe);
     let end_token = parser.current();
 
-    strip_whitespace(&mut key_elements);
+    if parser.settings().layout.legacy() {
+        strip_wikidot_ascii_padding(&mut key_elements);
+    } else {
+        strip_whitespace(&mut key_elements);
+    }
     parser.step_n(2)?;
 
-    let key_string = parser
-        .full_text()
-        .slice_partial(start_token, end_token)
-        .trim();
+    let key_source = parser.full_text().slice_partial(start_token, end_token);
+    let key_string = if parser.settings().layout.legacy() {
+        key_source.trim_matches([' ', '\t'])
+    } else {
+        key_source.trim()
+    };
     Ok((key_string, key_elements))
 }
 
@@ -258,8 +264,23 @@ where
     let collected = collect_consume_keep(parser, rule, &close, &[], None)?;
     let (mut value_elements, last) = collected.chain(errors, paragraph_safe);
 
-    strip_whitespace(&mut value_elements);
+    if parser.settings().layout.legacy() {
+        strip_wikidot_ascii_padding(&mut value_elements);
+    } else {
+        strip_whitespace(&mut value_elements);
+    }
     Ok((value_elements, last))
+}
+
+fn strip_wikidot_ascii_padding(elements: &mut Vec<Element<'_>>) {
+    while matches!(elements.first(), Some(Element::Text(text)) if text.chars().all(|ch| matches!(ch, ' ' | '\t')))
+    {
+        elements.remove(0);
+    }
+    while matches!(elements.last(), Some(Element::Text(text)) if text.chars().all(|ch| matches!(ch, ' ' | '\t')))
+    {
+        elements.pop();
+    }
 }
 
 #[test]

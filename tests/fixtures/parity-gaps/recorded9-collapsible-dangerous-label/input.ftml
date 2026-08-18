@@ -1,0 +1,1 @@
+[[collapsible show="<img src=x onerror=alert(1)>" hide="<svg/onload=alert(2)> & ' "]]B[[/collapsible]]

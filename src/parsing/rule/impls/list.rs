@@ -26,7 +26,7 @@ use super::prelude::*;
 use crate::parsing::{DepthItem, DepthList, process_depths};
 use crate::tree::{AttributeMap, ListItem, ListType};
 
-const MAX_LIST_DEPTH: usize = 20;
+const MAX_LIST_DEPTH: usize = 128;
 
 const fn get_list_type(token: Token) -> Option<ListType> {
     match token {

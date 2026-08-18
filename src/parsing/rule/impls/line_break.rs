@@ -85,9 +85,20 @@ fn line_break<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
     let quote_aware = parser.quote_body_cursor().is_some();
     let upcoming_skip = parser.evaluate_fn(|parser| {
         parser.step()?;
+        let padded = parser.current().token == Token::Whitespace;
         parser.get_optional_space()?;
         if quote_aware {
             parser.prepare_quote_body_line()?;
+        }
+
+        if parser.settings().layout.legacy()
+            && padded
+            && parser.current().token == Token::Equals
+        {
+            // Wikidot does not grant content-separator ownership through
+            // leading SP/TAB. Keep the preceding physical line break instead
+            // of treating the padded equals run like an own-line block.
+            return Ok(false);
         }
 
         if quote_aware && !parser.start_of_line() {

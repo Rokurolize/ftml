@@ -110,14 +110,6 @@ fn parse_fn<'r, 't>(
     if scored_empty_spaced_head {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
-    if parser.settings().layout.legacy() && arguments.has_empty_key() {
-        return recover_wikidot_empty_key_candidate(
-            parser,
-            &BLOCK_SPAN,
-            owner_start,
-            true,
-        );
-    }
     if parser.settings().layout.legacy()
         && flag_score
         && !parser.wikidot_alias_has_compatible_close(&BLOCK_SPAN, owner_start)
@@ -166,7 +158,7 @@ fn parse_fn<'r, 't>(
         }
         if flag_score {
             attributes.insert("data-ftml-score-span", cow!(""));
-            if scored_starts_next_physical_line {
+            if scored_starts_next_physical_line || arguments.has_empty_key() {
                 attributes.insert(WIKIDOT_SCORE_SPAN_UNWRAPPED_ATTRIBUTE, cow!(""));
             }
         }

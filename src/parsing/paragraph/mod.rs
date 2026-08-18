@@ -127,6 +127,8 @@ where
         let explicit_list_opener = wikidot_explicit_list_opener(parser);
         let div_score = wikidot_div_score(parser);
         let div_opener = div_score.is_some();
+        let same_line_div_candidate =
+            div_opener && wikidot_div_closes_on_current_line(parser);
         let inline_div_opener = div_opener && !parser.start_of_line();
         stack.record_next_element_line_start(
             parser.start_of_line()
@@ -245,6 +247,7 @@ where
                 });
             let literal_div_line = parser.settings().layout.legacy()
                 && div_score != Some(true)
+                && !same_line_div_candidate
                 && errors.iter().any(|error| {
                     error.kind() == ParseErrorKind::RuleFailed
                         && error.rule() == "block-div"
@@ -394,6 +397,17 @@ where
         .strip_suffix('_')
         .map_or((name, false), |name| (name, true));
     name.eq_ignore_ascii_case("div").then_some(scored)
+}
+
+fn wikidot_div_closes_on_current_line(parser: &Parser<'_, '_>) -> bool {
+    let source = parser.full_text().inner();
+    let start = parser.current().span.start;
+    let line = source[start..]
+        .split_once(['\n', '\r'])
+        .map_or(&source[start..], |(line, _)| line);
+    line.as_bytes()
+        .windows("[[/div]]".len())
+        .any(|window| window.eq_ignore_ascii_case(b"[[/div]]"))
 }
 
 fn elements_contain_div(elements: &Elements<'_>) -> bool {

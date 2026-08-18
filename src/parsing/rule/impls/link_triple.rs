@@ -31,6 +31,7 @@
 use super::prelude::*;
 use crate::data::PageRef;
 use crate::parsing::collect::{collect_comment_elided_keep, consume_valid_comment};
+use crate::parsing::{discard_wikidot_controls, trim_wikidot_ascii_cow};
 use crate::tree::{AnchorTarget, LinkLabel, LinkLocation, LinkType};
 use crate::url::is_url;
 use std::borrow::Cow;
@@ -94,15 +95,19 @@ fn try_consume_link<'r, 't>(
             collect_comment_elided_keep(parser, &url_close, url_invalid, None)?;
         let authored_url_prefix_is_url =
             is_url(url.prefix_before_first_comment().trim_start());
-        (url.into_cow(), last, authored_url_prefix_is_url)
+        (
+            discard_wikidot_controls(url.into_cow()),
+            last,
+            authored_url_prefix_is_url,
+        )
     } else {
         let (url, last) = collect_text_keep(parser, rule, &url_close, url_invalid, None)?;
         (Cow::Borrowed(url), last, is_url(url.trim_start()))
     };
 
     // Trim text
-    let leading_space = url.trim_start().len() != url.len();
-    let url = trim_cow(url);
+    let leading_space = url.trim_start_matches([' ', '\t']).len() != url.len();
+    let url = trim_wikidot_ascii_cow(url);
 
     // If url is an empty string, parsing should fail, there's nothing here
     if url.is_empty()
@@ -250,9 +255,13 @@ fn build_separate<'r, 't>(
     };
 
     // Trim label
-    let label = match label {
-        Cow::Borrowed(label) => Cow::Borrowed(label.trim()),
-        Cow::Owned(label) => Cow::Owned(label.trim().to_owned()),
+    let label = if legacy {
+        trim_wikidot_ascii_cow(discard_wikidot_controls(label))
+    } else {
+        match label {
+            Cow::Borrowed(label) => Cow::Borrowed(label.trim()),
+            Cow::Owned(label) => Cow::Owned(label.trim().to_owned()),
+        }
     };
 
     // Parse out link location
@@ -325,6 +334,8 @@ where
     let mut segment_start = start;
     let mut visible_label = None::<String>;
     let mut preserve_source = false;
+    let mut no_raw_close = false;
+    let mut no_alt_raw_close = false;
 
     loop {
         match parser.current().token {
@@ -383,6 +394,50 @@ where
             // unmatched `@@` and `@<` as literal label text while allowing a
             // valid raw span to render after the outer transaction rolls back.
             Token::Raw | Token::LeftRaw => {
+                let alternate = parser.current().token == Token::LeftRaw;
+                let known_unclosed = if alternate {
+                    no_alt_raw_close
+                } else {
+                    no_raw_close
+                };
+                if known_unclosed {
+                    parser.step()?;
+                    continue;
+                }
+
+                let terminator = if alternate {
+                    Token::RightRaw
+                } else {
+                    Token::Raw
+                };
+                let mut close_probe = parser.clone();
+                close_probe.step()?;
+                let mut has_close = false;
+                loop {
+                    match close_probe.current().token {
+                        token if token == terminator => {
+                            has_close = true;
+                            break;
+                        }
+                        Token::RightLink
+                        | Token::LineBreak
+                        | Token::ParagraphBreak
+                        | Token::InputEnd => break,
+                        _ => {
+                            close_probe.step()?;
+                        }
+                    }
+                }
+                if !has_close {
+                    if alternate {
+                        no_alt_raw_close = true;
+                    } else {
+                        no_raw_close = true;
+                    }
+                    parser.step()?;
+                    continue;
+                }
+
                 let mut raw_parser = parser.clone();
                 if RULE_RAW.try_consume(&mut raw_parser).is_ok() {
                     return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -546,13 +601,6 @@ fn parse_link_location<'r, 't>(
     LinkLocation::parse_with_interwiki(url, parser.settings())
 }
 
-fn trim_cow(value: Cow<'_, str>) -> Cow<'_, str> {
-    match value {
-        Cow::Borrowed(value) => Cow::Borrowed(value.trim()),
-        Cow::Owned(value) => Cow::Owned(value.trim().to_owned()),
-    }
-}
-
 /// Strip off the category for use in URL triple-bracket links.
 ///
 /// The label for a URL link is its URL, but without its category.
@@ -670,7 +718,7 @@ mod wikidot_tests {
 
         assert!(
             html.contains(
-                r#"<a href="http://ja.scp-wiki.net/scp-040-jp" target="_blank" rel="noopener noreferrer">ねこでした。</a>"#,
+                r#"<a href="http://ja.scp-wiki.net/scp-040-jp" target="_blank">ねこでした。</a>"#,
             ),
             "{html}",
         );
@@ -696,7 +744,7 @@ mod wikidot_tests {
         );
         assert!(
             html.contains(concat!(
-                r#"<a href="http://sandbox-for-codex.wikidot.com/new-tab" target="_blank" rel="noopener noreferrer">"#,
+                r#"<a href="http://sandbox-for-codex.wikidot.com/new-tab" target="_blank">"#,
                 "http://sandbox-for-codex.wikidot.com/new-tab</a>",
             )),
             "{html}",

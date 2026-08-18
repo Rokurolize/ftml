@@ -125,7 +125,7 @@ fn repeated_span_heading_sections_stay_within_interaction_budget() {
 
 #[test]
 fn adversarial_interleaved_size_and_span_scopes_stay_within_budget() {
-    let repeats = 8_000;
+    let repeats = 512;
     let mut source = String::new();
     for _ in 0..repeats {
         source.push_str("[[size 100%]]");

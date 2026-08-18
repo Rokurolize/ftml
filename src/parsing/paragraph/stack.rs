@@ -77,6 +77,7 @@ pub struct ParagraphStack<'t> {
     wikidot_literal_div_line: bool,
     trim_unwrapped_trailing_line_break: bool,
     suppress_next_line_break: bool,
+    suppressed_line_break_restarts_paragraph: bool,
     wikidot_empty_list_break: bool,
     // A line-break rule may consume the following block in the same result,
     // so retain that physical boundary until the element reaches this stack.
@@ -344,8 +345,14 @@ impl<'t> ParagraphStack<'t> {
         if self.suppress_next_line_break {
             self.suppress_next_line_break = false;
             if element == Element::LineBreak {
+                if self.suppressed_line_break_restarts_paragraph {
+                    self.current_unwrapped = false;
+                    self.unwrapped_after_block_line = false;
+                    self.suppressed_line_break_restarts_paragraph = false;
+                }
                 return;
             }
+            self.suppressed_line_break_restarts_paragraph = false;
         }
         let aligned_image = matches!(
             element,
@@ -378,6 +385,16 @@ impl<'t> ParagraphStack<'t> {
 
         let wikidot_collapsible =
             self.wikidot && matches!(element, Element::Collapsible { .. });
+        let wikidot_collapsible_ends_with_blockquote = self.wikidot
+            && matches!(
+                &element,
+                Element::Collapsible { elements, .. }
+                    if matches!(
+                        elements.last(),
+                        Some(Element::Container(container))
+                            if container.ctype() == ContainerType::Blockquote
+                    )
+            );
 
         if wikidot_collapsible
             && !self.current.is_empty()
@@ -501,7 +518,12 @@ impl<'t> ParagraphStack<'t> {
             self.end_paragraph();
             self.finished.push(element);
             if wikidot_collapsible {
-                self.unwrapped_after_block_line = true;
+                self.unwrapped_after_block_line =
+                    !wikidot_collapsible_ends_with_blockquote;
+                if wikidot_collapsible_ends_with_blockquote {
+                    self.suppress_next_line_break = true;
+                    self.suppressed_line_break_restarts_paragraph = true;
+                }
             }
             if invisible_block_line {
                 self.current_unwrapped = true;
@@ -697,6 +719,7 @@ impl<'t> ParagraphStack<'t> {
         self.wikidot_literal_div_line = false;
         self.trim_unwrapped_trailing_line_break = false;
         self.suppress_next_line_break = false;
+        self.suppressed_line_break_restarts_paragraph = false;
     }
 
     #[inline]

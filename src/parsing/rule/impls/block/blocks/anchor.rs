@@ -186,18 +186,16 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_anchor_keeps_dangerous_href_sanitized() {
-        for href in [
-            "javascript:alert(1)",
-            "data:text/html,test",
-            "vbscript:msgbox(1)",
+    fn wikidot_anchor_preserves_live_dangerous_href_normalization() {
+        for (href, expected) in [
+            ("javascript:alert(1)", "javascript:alert-1"),
+            ("javascript: alert(1)", "javascript:alert-1"),
+            ("javascript : alert(1)", "javascript:alert-1"),
+            ("java script:alert(1)", "java-script:alert-1"),
         ] {
-            let html = render(&format!(r#"[[a href="{href}"]]click[[/a]]"#));
-            assert!(!html.contains(&format!(r#"href="{href}""#)), "{html}");
-            assert!(
-                html.contains(r##"href="#invalid-url""##)
-                    || html.contains(&format!(r#"href="/{href}""#)),
-                "{html}",
+            assert_eq!(
+                render(&format!(r#"[[a href="{href}"]]click[[/a]]"#)),
+                format!(r#"<p><a href="{expected}">click</a></p>"#),
             );
         }
     }

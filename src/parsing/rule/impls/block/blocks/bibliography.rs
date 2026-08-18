@@ -19,7 +19,8 @@
  */
 
 use super::prelude::*;
-use crate::tree::Bibliography;
+use crate::tree::{Bibliography, LinkLabel, LinkLocation, LinkType};
+use std::borrow::Cow;
 
 pub const BLOCK_BIBLIOGRAPHY: BlockRule = BlockRule {
     name: "block-bibliography",
@@ -115,10 +116,16 @@ fn parse_fn<'r, 't>(
         parser.leave_wikidot_bibliography_body();
     }
     let body = body?;
-    if wikidot_candidate && wikidot_bibliography_crosses_bold_owner(parser, body_start) {
-        return Err(parser.make_err(ParseErrorKind::RuleFailed));
-    }
     let (elements, errors, _) = body.into();
+    let crossed_residual = wikidot_candidate
+        .then(|| {
+            wikidot_crossed_bibliography_residual(
+                source,
+                body_start,
+                parser.current().span.start,
+            )
+        })
+        .flatten();
 
     // Build up the bibliography
     //
@@ -126,15 +133,35 @@ fn parse_fn<'r, 't>(
     // and adding definition list values to the bibliography as we find them.
     let mut bibliography = Bibliography::new();
     let mut in_residual = false;
+    let mut seen_definition = false;
+    let mut crossed_residual_inserted = false;
+    let mut crossed_residual_done = false;
 
     for element in elements {
         match element {
             // Append definition list entries
             Element::DefinitionList(items) => {
+                if seen_definition && crossed_residual_inserted {
+                    crossed_residual_done = true;
+                }
                 for item in items {
                     bibliography.add(item.key_string, item.value_elements);
                 }
+                seen_definition = true;
                 in_residual = false;
+            }
+
+            _ if crossed_residual.is_some()
+                && seen_definition
+                && !crossed_residual_done =>
+            {
+                if !crossed_residual_inserted {
+                    for residual in crossed_residual.as_ref().unwrap() {
+                        bibliography.add_residual(residual.clone());
+                    }
+                    crossed_residual_inserted = true;
+                }
+                in_residual = true;
             }
 
             // Skip structural whitespace between definition lists.
@@ -154,53 +181,46 @@ fn parse_fn<'r, 't>(
     ok!(Element::BibliographyBlock { index, title, hide }, errors)
 }
 
-fn wikidot_bibliography_crosses_bold_owner(
-    parser: &Parser<'_, '_>,
+fn wikidot_crossed_bibliography_residual<'t>(
+    source: &'t str,
     body_start: usize,
-) -> bool {
-    let source = parser.full_text().inner();
-    let owner_end = parser.current().span.start;
-    let Some(closer_start) = source[body_start..owner_end].rfind("[[/") else {
-        return false;
-    };
-    let body = &source[body_start..body_start + closer_start];
-    if wikidot_unclosed_block_depth(body, "bold") == 0 {
-        return false;
+    owner_end: usize,
+) -> Option<Vec<Element<'t>>> {
+    let body = source.get(body_start..owner_end)?;
+    let close = find_ascii_case_insensitive(body, "[[/bibliography]]")?;
+    let first_close_end = close + "[[/bibliography]]".len();
+    let second = &body[first_close_end..];
+    if !second.starts_with("[[/") {
+        return None;
+    }
+    let second_close = second.find("]]")? + 2;
+    let target = &body[close + 2..first_close_end + second_close];
+    let after_second = &body[first_close_end + second_close..];
+    let nested_relative = find_ascii_case_insensitive(after_second, "[[bibliography")?;
+    let nested_start = first_close_end + second_close + nested_relative;
+    let nested_end = nested_start + body[nested_start..].find("]]")?;
+    let label = &body[nested_start..nested_end];
+    if label.eq_ignore_ascii_case("[[bibliography") {
+        return None;
     }
 
-    let suffix = source[owner_end..].trim_start_matches([' ', '\t', '\r', '\n', '\0']);
-    let Some(close) = suffix.strip_prefix("[[/") else {
-        return false;
-    };
-    let Some(end) = close.find("]]") else {
-        return false;
-    };
-    close[..end].trim().eq_ignore_ascii_case("bold")
+    Some(vec![
+        text!("[ "),
+        Element::Link {
+            ltype: LinkType::Direct,
+            link: LinkLocation::Url(Cow::Borrowed(target)),
+            label: LinkLabel::Text(Cow::Borrowed(label)),
+            target: None,
+        },
+        text!("]"),
+    ])
 }
 
-fn wikidot_unclosed_block_depth(source: &str, block_name: &str) -> usize {
-    let mut depth = 0_usize;
-    let mut remaining = source;
-
-    while let Some(start) = remaining.find("[[") {
-        remaining = &remaining[start + 2..];
-        let Some(end) = remaining.find("]]") else {
-            break;
-        };
-        let marker = remaining[..end].trim();
-        let marker_name = marker.split_ascii_whitespace().next().unwrap_or_default();
-        if marker_name.eq_ignore_ascii_case(block_name) {
-            depth += 1;
-        } else if marker_name
-            .strip_prefix('/')
-            .is_some_and(|name| name.eq_ignore_ascii_case(block_name))
-        {
-            depth = depth.saturating_sub(1);
-        }
-        remaining = &remaining[end + 2..];
-    }
-
-    depth
+fn find_ascii_case_insensitive(haystack: &str, needle: &str) -> Option<usize> {
+    haystack
+        .as_bytes()
+        .windows(needle.len())
+        .position(|window| window.eq_ignore_ascii_case(needle.as_bytes()))
 }
 
 #[cfg(test)]

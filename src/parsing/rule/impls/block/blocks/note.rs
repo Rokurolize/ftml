@@ -43,7 +43,7 @@ fn parse_fn<'r, 't>(
     if matches!(body_start, BlockBodyStart::Inline) {
         return Err(parser.make_err(ParseErrorKind::NotSupportedInline));
     }
-    let (elements, errors, paragraph_safe) =
+    let (elements, errors, _paragraph_safe) =
         parser.get_body_elements(&BLOCK_NOTE, false)?.into();
     let element = Element::Container(Container::new(
         ContainerType::Note,
@@ -51,7 +51,7 @@ fn parse_fn<'r, 't>(
         arguments.to_attribute_map(parser.settings()),
     ));
 
-    ok!(paragraph_safe; element, errors)
+    ok!(false; element, errors)
 }
 
 #[cfg(test)]
@@ -94,7 +94,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(
             html,
-            r#"<p><div class="wj-note custom" data-kind="example">Body</div></p>"#,
+            r#"<div class="wj-note custom" data-kind="example">Body</div>"#,
         );
     }
 

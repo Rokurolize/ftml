@@ -218,7 +218,7 @@ fn wikidot_layout_emits_live_standalone_button_handlers() {
 }
 
 #[test]
-fn wikidot_set_tags_handler_escapes_authored_javascript_string_data() {
+fn wikidot_set_tags_handler_preserves_live_backslash_but_escapes_other_string_data() {
     let page_info = page_info();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let tree = SyntaxTree {
@@ -236,7 +236,7 @@ fn wikidot_set_tags_handler_escapes_authored_javascript_string_data() {
     };
     let output = HtmlRender.render(&tree, &page_info, &settings);
     assert!(output.body.contains(
-        r#"onclick="WIKIDOT.page.listeners.updateTagsByButton(event, &#39;+quote\x27 +slash\\ +line\u2028break&#39;)""#
+        r#"onclick="WIKIDOT.page.listeners.updateTagsByButton(event, &#39;+quote\x27 +slash\ +line\u2028break&#39;)""#
     ));
 }
 
@@ -463,11 +463,12 @@ fn runtime_include_and_parser_values_cannot_forge_button_syntax_or_data() {
 }
 
 #[test]
-fn very_long_button_heads_fail_closed_in_bounded_time() {
+fn very_long_button_heads_remain_bounded_without_a_syntax_cliff() {
     let source = format!("[[button edit text=\"{}\"]]", "x".repeat(256 * 1024));
     let started = Instant::now();
     let output = render(&source, Layout::Wikidot);
     assert!(started.elapsed() < Duration::from_secs(5));
-    assert!(output.resource_requirements.is_empty());
-    assert!(output.body.contains("[[button edit"));
+    assert!(!output.resource_requirements.is_empty());
+    assert!(output.body.contains("wiki-standalone-button"));
+    assert!(!output.body.contains("[[button edit"));
 }

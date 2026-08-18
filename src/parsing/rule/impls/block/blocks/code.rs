@@ -68,10 +68,15 @@ fn parse_fn<'r, 't>(
 
     let wikidot_candidate =
         if parser.settings().layout.legacy() && !parser.discarding_hidden_body() {
-            Some(
-                crate::wikidot_code::candidate_at_owned_opener(source, owner_start)
-                    .ok_or_else(|| parser.make_err(ParseErrorKind::RuleFailed))?,
-            )
+            let candidate = parser
+                .wikidot_code_candidate(owner_start)
+                .ok_or_else(|| parser.make_err(ParseErrorKind::RuleFailed))?;
+            if !source[owner_start..candidate.owner_end].contains(['\r', '\n'])
+                && source[owner_start..candidate.body.start].contains("[!--")
+            {
+                return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
+            Some(candidate)
         } else {
             None
         };

@@ -71,8 +71,8 @@ fn render_delayed(source: &str, segments: Vec<InputSegment>) -> String {
 }
 
 #[test]
-fn padded_authored_separator_is_a_hidden_wikidot_boundary() {
-    assert_eq!(render(" \t====\t ").0, SEPARATOR_HTML);
+fn padded_authored_separator_remains_text_in_wikidot() {
+    assert_eq!(render(" \t====\t ").0, "<p>====</p>");
 }
 
 #[test]
@@ -128,7 +128,7 @@ fn live_backed_twenty_seven_case_matrix_matches_the_ftml_seam() {
             "====",
         ),
         ("inline", "A====B", "<p>A====B</p>".to_owned(), "A====B"),
-        ("leading-space", " ====", SEPARATOR_HTML.to_owned(), ""),
+        ("leading-space", " ====", "<p>====</p>".to_owned(), "===="),
         (
             "list",
             "* ====",
@@ -177,7 +177,7 @@ fn live_backed_twenty_seven_case_matrix_matches_the_ftml_seam() {
                 .to_owned(),
             "====",
         ),
-        ("trailing-space", "==== ", SEPARATOR_HTML.to_owned(), ""),
+        ("trailing-space", "==== ", "<p>====</p>".to_owned(), "===="),
         (
             "unicode",
             "＝＝＝＝",
@@ -206,7 +206,7 @@ fn live_backed_twenty_seven_case_matrix_matches_the_ftml_seam() {
 #[test]
 fn horizontal_ascii_whitespace_and_crlf_are_exact() {
     for source in [" ====", "\t====", " \t ====\t ", "A\r\n\t===== \t\r\nB"] {
-        assert!(render(source).0.contains(SEPARATOR_HTML), "{source:?}");
+        assert!(!render(source).0.contains(SEPARATOR_HTML), "{source:?}");
     }
 
     for source in [
@@ -412,7 +412,7 @@ fn dense_separator_parsing_is_linear_and_bounded() {
             .iter()
             .filter(|element| element.is_content_separator())
             .count(),
-        8_193,
+        1,
     );
     assert!(
         elapsed < Duration::from_secs(5),

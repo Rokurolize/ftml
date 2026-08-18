@@ -37,7 +37,8 @@ pub fn render_anchor(
         Some(target) => target.html_attr(),
         None => "",
     };
-    let opens_new_tab = target == Some(AnchorTarget::NewTab);
+    let opens_new_tab =
+        target == Some(AnchorTarget::NewTab) && layout == Layout::Wikijump;
 
     ctx.html()
         .a()
@@ -88,7 +89,8 @@ pub fn render_link(
         Some(target) => target.html_attr(),
         None => "",
     };
-    let opens_new_tab = target == Some(AnchorTarget::NewTab);
+    let opens_new_tab =
+        target == Some(AnchorTarget::NewTab) && layout == Layout::Wikijump;
 
     macro_rules! write_a {
         ($attr:expr) => {{
@@ -217,7 +219,7 @@ mod tests {
     }
 
     #[test]
-    fn new_tab_links_are_isolated_from_the_opening_page() {
+    fn new_tab_link_rel_is_layout_specific() {
         let page_info = PageInfo::dummy();
 
         for layout in [Layout::Wikidot, Layout::Wikijump] {
@@ -237,8 +239,9 @@ mod tests {
                 output.contains(r#"target="_blank""#),
                 "{layout:?}: {output}"
             );
-            assert!(
+            assert_eq!(
                 output.contains(r#"rel="noopener noreferrer""#),
+                layout == Layout::Wikijump,
                 "{layout:?}: {output}",
             );
         }

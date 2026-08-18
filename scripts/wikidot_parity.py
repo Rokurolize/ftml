@@ -22,8 +22,12 @@ PREVIEW_CLASSES = {"saved-page-batch", "page-preview-isolated"}
 EXECUTION_CLASSES = PREVIEW_CLASSES | {"wikijump-runtime", "not-applicable"}
 CHECKS = ("dom_tree", "dom_signature", "visible_text")
 STATUSES = {"match", "mismatch"}
-DISPOSITIONS = {"unresolved", "intentional-security-divergence", "caller-runtime",
-                "comparison-normalization"}
+DISPOSITIONS = {
+    "unresolved",
+    "caller-runtime",
+    "comparison-normalization",
+    "security-boundary",
+}
 ACTIVE_INVESTIGATION_REASON = re.compile(r"Active functional investigation: issue #[1-9][0-9]*\.")
 
 
@@ -72,7 +76,10 @@ def records(path):
         return value if isinstance(value, list) else [value]
     except json.JSONDecodeError:
         try:
-            return [json.loads(line) for line in text.splitlines() if line.strip()]
+            # JSON Lines records are delimited by LF. `str.splitlines()` also
+            # treats authored NEL, U+2028, and U+2029 inside JSON strings as
+            # record boundaries, which corrupts valid parity sources.
+            return [json.loads(line) for line in text.split("\n") if line.strip()]
         except json.JSONDecodeError as error:
             fail(f"{path}: invalid JSON: {error}")
 

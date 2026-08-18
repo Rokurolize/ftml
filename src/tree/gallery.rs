@@ -404,7 +404,14 @@ pub(crate) fn parse_explicit_gallery_entries<'t>(
             if entries.is_empty() {
                 return None;
             }
-            let owner_end = if residual { line_end - 1 } else { line_end };
+            let owner_end = if residual {
+                // `line` has already had a CR stripped. Base the residual
+                // bracket boundary on that normalized physical-line slice so
+                // CRLF excludes the extra `]`, not the carriage return.
+                line_start + line.len() - 1
+            } else {
+                line_end
+            };
             return Some((entries, owner_end, residual));
         }
 

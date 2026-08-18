@@ -312,10 +312,21 @@ fn whitespace_comments_and_malformed_close_runs_stay_transactional() {
         assert_eq!(text, source, "{brackets}");
     }
 
-    for source in ["[[# alpha beta]]]", "[[[start|A[[# alpha B]]]"] {
-        let (html, text, _) = render(source);
-        assert_eq!(html, format!("<p>{source}</p>"), "{source:?}");
-        assert_eq!(text, source, "{source:?}");
+    let source = "[[# alpha beta]]]";
+    let (html, text, _) = render(source);
+    assert_eq!(html, format!("<p>{source}</p>"));
+    assert_eq!(text, source);
+
+    for brackets in 3..=5 {
+        let source = format!("[[[start|A[[# alpha B{}", "]".repeat(brackets));
+        let residual = "]".repeat(brackets - 2);
+        let (html, text, _) = render(&source);
+        assert_eq!(
+            html,
+            format!(r#"<p>[[[start|A[<a href="javascript:;">alpha B</a>]{residual}</p>"#),
+            "{source:?}",
+        );
+        assert_eq!(text, format!("[[[start|A[alpha B]{residual}"), "{source:?}");
     }
 }
 

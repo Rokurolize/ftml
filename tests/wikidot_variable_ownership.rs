@@ -94,7 +94,7 @@ fn wikidot_div_literal_variable_class_normalizes_whitespace() {
 #[test]
 fn wikidot_div_literal_class_recovery_stays_local() {
     for source in [
-        r#"[[div CLASS="{$class}"]]1[[/div]]"#,
+        "[[div CLASS=\"{$class}\"]]\n1\n[[/div]]",
         r#"[[span class="{$class}"]]1[[/span]]"#,
         r#"[[ul class="{$class}"]][[li]]1[[/li]][[/ul]]"#,
         r#"[[a href="some-page" class="{$class}"]]1[[/a]]"#,
@@ -105,8 +105,8 @@ fn wikidot_div_literal_class_recovery_stays_local() {
     }
 
     for source in [
-        r#"[[div data-probe="{$class}"]]1[[/div]]"#,
-        r#"[[div onclick="alert(1)"]]1[[/div]]"#,
+        "[[div data-probe=\"{$class}\"]]\n1\n[[/div]]",
+        "[[div onclick=\"alert(1)\"]]\n1\n[[/div]]",
     ] {
         let html = render(source);
         assert!(!html.contains("<div data-probe="), "{source}: {html}");

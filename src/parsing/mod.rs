@@ -43,6 +43,7 @@ mod rule;
 mod string;
 mod strip;
 mod token;
+mod wikidot_text;
 
 mod prelude {
     pub use crate::parsing::{
@@ -82,6 +83,9 @@ pub use self::result::{
 };
 pub(crate) use self::rule::impls::decode_semicolon_entities;
 pub use self::token::{ExtractedToken, Token};
+pub(crate) use self::wikidot_text::{
+    discard_wikidot_controls, trim_wikidot_ascii, trim_wikidot_ascii_cow,
+};
 
 /// Parse through the given tokens and produce an AST.
 ///
@@ -95,43 +99,46 @@ pub fn parse<'r, 't>(
 where
     'r: 't,
 {
-    let ordinary = parse_on_current_stack(
-        tokenization,
-        page_info,
-        settings,
-        DEFAULT_MAX_RECURSION_DEPTH,
-    );
-    if !ordinary
-        .errors()
-        .iter()
-        .any(|error| error.kind() == ParseErrorKind::RecursionDepthExceeded)
-    {
-        return ordinary;
-    }
-
     // `consume()` intentionally uses direct recursion for parser state. Deep
-    // but valid component trees therefore get one bounded retry on a known
-    // stack budget. Retrying only after the parser's own structured depth
-    // error avoids a second, fallible syntax scanner and keeps ordinary pages
-    // on the caller's thread. The higher explicit limit still bounds the retry.
+    // but valid component trees therefore run on a bounded stack rather than
+    // inheriting the caller's thread stack. The ordinary limit is attempted
+    // first; only its structured recursion error triggers the higher bounded
+    // retry, preserving the established parser semantics.
     std::thread::scope(|scope| {
-        let handle = match std::thread::Builder::new()
-            .name("ftml-deep-parse".to_owned())
-            .stack_size(DEEP_PARSE_STACK_BYTES)
-            .spawn_scoped(scope, || {
-                parse_on_current_stack(
-                    tokenization,
-                    page_info,
-                    settings,
-                    DEEP_MAX_RECURSION_DEPTH,
-                )
-            }) {
-            Ok(handle) => handle,
-            Err(error) => {
-                warn!("Unable to start bounded deep-parser retry: {error}");
-                return ordinary;
-            }
-        };
+        let handle =
+            match std::thread::Builder::new()
+                .name("ftml-parse".to_owned())
+                .stack_size(DEEP_PARSE_STACK_BYTES)
+                .spawn_scoped(scope, || {
+                    let ordinary = parse_on_current_stack(
+                        tokenization,
+                        page_info,
+                        settings,
+                        DEFAULT_MAX_RECURSION_DEPTH,
+                    );
+                    if !ordinary.errors().iter().any(|error| {
+                        error.kind() == ParseErrorKind::RecursionDepthExceeded
+                    }) {
+                        return ordinary;
+                    }
+                    parse_on_current_stack(
+                        tokenization,
+                        page_info,
+                        settings,
+                        DEEP_MAX_RECURSION_DEPTH,
+                    )
+                }) {
+                Ok(handle) => handle,
+                Err(error) => {
+                    warn!("Unable to start bounded parser worker: {error}");
+                    return parse_on_current_stack(
+                        tokenization,
+                        page_info,
+                        settings,
+                        DEFAULT_MAX_RECURSION_DEPTH,
+                    );
+                }
+            };
 
         match handle.join() {
             Ok(outcome) => outcome,
@@ -158,7 +165,7 @@ where
     )
 }
 
-const DEEP_PARSE_STACK_BYTES: usize = 32 * 1024 * 1024;
+const DEEP_PARSE_STACK_BYTES: usize = 64 * 1024 * 1024;
 
 fn parse_on_current_stack<'r, 't>(
     tokenization: &'r Tokenization<'t>,

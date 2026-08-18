@@ -71,6 +71,11 @@ pub fn render_footnote(ctx: &mut HtmlContext, index: usize) {
     }))
     .then(|| TextRender.render_partial(contents, ctx.info(), ctx.settings(), 0));
 
+    if tooltip_text.is_none() && !ctx.enter_footnote_ref(index.get()) {
+        render_missing_footnote(ctx, index.get());
+        return;
+    }
+
     ctx.html()
         .span()
         .attr(attr!("class" => "wj-footnote-ref"))
@@ -113,6 +118,9 @@ pub fn render_footnote(ctx: &mut HtmlContext, index: usize) {
                         });
                 });
         });
+    if tooltip_text.is_none() {
+        ctx.exit_footnote_ref(index.get());
+    }
 }
 
 fn render_missing_footnote(ctx: &mut HtmlContext, index: usize) {

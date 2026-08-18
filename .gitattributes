@@ -15,3 +15,19 @@ tests/fixtures/parity-gaps/heading-empty-toc/input.ftml whitespace=-trailing-spa
 
 # This parity input intentionally contains one CRLF sequence.
 tests/fixtures/parity-gaps/math-crlf/input.ftml -text
+
+# This comment/preprocessor witness intentionally contains a CR byte before a comment and LF.
+tests/fixtures/parity-gaps/comment-crlf-join/input.ftml -text
+
+# These content-separator witnesses intentionally contain syntax-significant trailing ASCII whitespace.
+tests/fixtures/parity-gaps/content-separator-ascii-padding/input.ftml whitespace=-trailing-space
+tests/fixtures/parity-gaps/content-separator-crlf-overlong/input.ftml whitespace=-trailing-space
+tests/fixtures/parity-gaps/content-separator-trailing-space/input.ftml whitespace=-trailing-space
+tests/fixtures/parity-gaps/content-separator-trailing-tab/input.ftml whitespace=-trailing-space
+
+# These whitespace witnesses intentionally contain CRLF or bare CR bytes.
+tests/fixtures/parity-gaps/whitespace-crlf-code-body/input.ftml -text
+tests/fixtures/parity-gaps/whitespace-mac-newline/input.ftml -text
+
+# This whitespace witness intentionally contains a NUL byte.
+tests/fixtures/parity-gaps/whitespace-nul-prose/input.ftml -text

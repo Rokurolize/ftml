@@ -20,9 +20,9 @@
 
 use super::{WikidotParserFunctionOptions, WikidotZeroOperatorPolicy};
 
-const MAX_EXPRESSION_BYTES: usize = 256;
+const MAX_EXPRESSION_BYTES: usize = 16 * 1024;
 const MAX_OPERATIONS: usize = 512;
-const MAX_PARENTHESES: usize = 32;
+const MAX_PARENTHESES: usize = 128;
 
 #[derive(Debug, PartialEq, Eq)]
 pub(super) enum ExpressionError {
@@ -30,6 +30,8 @@ pub(super) enum ExpressionError {
     UndefinedConstant(String),
     UndefinedFunction(String),
     TooFewParameters(&'static str),
+    TooFewArguments(String, usize, usize),
+    TooManyArguments(String, usize, usize),
     MisplacedComma,
     SyntaxNear(String),
     DivisionByZero,
@@ -49,6 +51,12 @@ impl ExpressionError {
             Self::TooFewParameters(operator) => Some(format!(
                 r#"run-time error: too few parameters for operator "{operator}" (2 -> 1)"#,
             )),
+            Self::TooFewArguments(function, expected, actual) => Some(format!(
+                r#"run-time error: too few arguments for function "{function}"({expected} -> {actual})"#,
+            )),
+            Self::TooManyArguments(function, expected, actual) => Some(format!(
+                r#"run-time error: too many arguments for function "{function}"({expected} -> {actual})"#,
+            )),
             Self::MisplacedComma => {
                 Some("parser error: missing token `(` or misplaced token `,`".to_owned())
             }
@@ -61,12 +69,32 @@ impl ExpressionError {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(super) enum Value {
+    Number(f64),
+    Boolean(bool),
+    Null,
+}
+
+impl Value {
+    fn number(self) -> f64 {
+        match self {
+            Self::Number(value) => value,
+            Self::Boolean(value) => f64::from(value),
+            Self::Null => 0.0,
+        }
+    }
+}
+
 pub(super) fn evaluate(
     expression: &str,
     options: WikidotParserFunctionOptions,
-) -> Result<f64, ExpressionError> {
-    if expression.len() > MAX_EXPRESSION_BYTES || !expression.is_ascii() {
+) -> Result<Value, ExpressionError> {
+    if expression.len() > MAX_EXPRESSION_BYTES {
         return Err(ExpressionError::Invalid);
+    }
+    if !expression.is_ascii() {
+        return Err(ExpressionError::SyntaxNear(expression.to_owned()));
     }
 
     let mut parser = ExpressionParser {
@@ -76,22 +104,52 @@ pub(super) fn evaluate(
         parentheses: 0,
         options,
     };
-    let result = parser.parse_or()?;
+    let result = match parser.parse_or() {
+        Ok(value) => value,
+        Err(ExpressionError::Invalid) => {
+            let tail = syntax_tail(expression, parser.offset);
+            if tail.is_empty() {
+                return Err(ExpressionError::Invalid);
+            }
+            return Err(ExpressionError::SyntaxNear(tail));
+        }
+        Err(error) => return Err(error),
+    };
     parser.skip_space();
     if parser.offset != parser.input.len() {
-        let tail = &expression[parser.offset..];
-        if tail.starts_with(',') && is_safe_error_tail(tail) {
+        let tail = syntax_tail(expression, parser.offset);
+        let tail_ref = tail.as_str();
+        if tail_ref.starts_with(',') && is_safe_error_tail(tail_ref) {
             return Err(ExpressionError::MisplacedComma);
         }
-        if tail.starts_with('|') && is_safe_error_tail(tail) {
-            return Err(ExpressionError::SyntaxNear(tail.to_owned()));
+        if let Some(identifier) = leading_identifier(tail_ref) {
+            return Err(ExpressionError::UndefinedConstant(identifier.to_owned()));
         }
-        return Err(ExpressionError::Invalid);
+        return Err(ExpressionError::SyntaxNear(tail));
     }
-    if !result.is_finite() {
+    if matches!(result, Value::Number(value) if !value.is_finite()) {
         return Err(ExpressionError::Invalid);
     }
     Ok(result)
+}
+
+fn syntax_tail(expression: &str, offset: usize) -> String {
+    expression[offset..]
+        .chars()
+        .filter(|character| !character.is_control())
+        .collect()
+}
+
+fn leading_identifier(tail: &str) -> Option<&str> {
+    let tail = tail.trim_start_matches(|character: char| character.is_ascii_whitespace());
+    if !tail.as_bytes().first().is_some_and(u8::is_ascii_alphabetic) {
+        return None;
+    }
+    let end = tail
+        .bytes()
+        .position(|byte| !byte.is_ascii_alphanumeric())
+        .unwrap_or(tail.len());
+    Some(&tail[..end])
 }
 
 fn is_safe_error_tail(tail: &str) -> bool {
@@ -113,101 +171,114 @@ struct ExpressionParser<'a> {
 }
 
 impl ExpressionParser<'_> {
-    fn parse_or(&mut self) -> Result<f64, ExpressionError> {
+    fn parse_or(&mut self) -> Result<Value, ExpressionError> {
         let mut value = self.parse_and()?;
         while self.consume("||") {
             self.operation()?;
             let right = self.parse_and()?;
-            value = f64::from(truthy(value) || truthy(right));
+            value = Value::Boolean(truthy(value) || truthy(right));
         }
         Ok(value)
     }
 
-    fn parse_and(&mut self) -> Result<f64, ExpressionError> {
+    fn parse_and(&mut self) -> Result<Value, ExpressionError> {
         let mut value = self.parse_comparison()?;
         while self.consume("&&") {
             self.operation()?;
             let right = self.parse_comparison()?;
-            value = f64::from(truthy(value) && truthy(right));
+            value = Value::Boolean(truthy(value) && truthy(right));
         }
         Ok(value)
     }
 
-    fn parse_comparison(&mut self) -> Result<f64, ExpressionError> {
+    fn parse_comparison(&mut self) -> Result<Value, ExpressionError> {
         let left = self.parse_additive()?;
-        let operator = [">=", "<=", "==", "!=", "=", ">", "<"]
+        let operator = [">=", "<=", "==", "!=", ">", "<"]
             .into_iter()
             .find(|operator| self.consume(operator));
         let Some(operator) = operator else {
             return Ok(left);
         };
         self.operation()?;
-        let right = self.parse_additive()?;
+        let right = match self.parse_comparison() {
+            Ok(value) => value,
+            Err(ExpressionError::Invalid)
+                if operator == "==" && self.remaining().starts_with('=') =>
+            {
+                return Err(ExpressionError::SyntaxNear(self.remaining().to_owned()));
+            }
+            Err(ExpressionError::Invalid) => {
+                return Err(ExpressionError::TooFewParameters(operator));
+            }
+            Err(error) => return Err(error),
+        };
+        let left = left.number();
+        let right = right.number();
         let result = match operator {
             ">=" => left >= right,
             "<=" => left <= right,
-            "=" | "==" => nearly_equal(left, right),
-            "!=" => !nearly_equal(left, right),
+            "==" => left == right,
+            "!=" => left != right,
             ">" => left > right,
             "<" => left < right,
             _ => unreachable!("comparison operator comes from fixed list"),
         };
-        Ok(f64::from(result))
+        Ok(Value::Boolean(result))
     }
 
-    fn parse_additive(&mut self) -> Result<f64, ExpressionError> {
+    fn parse_additive(&mut self) -> Result<Value, ExpressionError> {
         let mut value = self.parse_multiplicative()?;
         loop {
             if self.consume("+") {
                 self.operation()?;
-                if self.at_end() {
-                    return Err(ExpressionError::TooFewParameters("+"));
-                }
-                value += self.parse_multiplicative()?;
+                let right = self.operator_rhs("+", Self::parse_multiplicative)?;
+                value = Value::Number(value.number() + right.number());
             } else if self.consume("-") {
                 self.operation()?;
-                value -= self.parse_multiplicative()?;
+                let right = self.operator_rhs("-", Self::parse_multiplicative)?;
+                value = Value::Number(value.number() - right.number());
             } else {
                 return Ok(value);
             }
         }
     }
 
-    fn parse_multiplicative(&mut self) -> Result<f64, ExpressionError> {
-        let mut value = self.parse_unary()?;
+    fn parse_multiplicative(&mut self) -> Result<Value, ExpressionError> {
+        let mut value = self.parse_power()?;
         loop {
             if self.consume("*") {
                 self.operation()?;
-                value *= self.parse_unary()?;
+                let right = self.operator_rhs("*", Self::parse_power)?;
+                value = Value::Number(value.number() * right.number());
             } else if self.consume("/") {
                 self.operation()?;
-                let divisor = self.parse_unary()?;
+                let divisor = self.operator_rhs("/", Self::parse_power)?.number();
                 if divisor == 0.0 {
                     match self.options.zero_operator_policy {
                         WikidotZeroOperatorPolicy::RuntimeError => {
                             return Err(ExpressionError::DivisionByZero);
                         }
                         WikidotZeroOperatorPolicy::ReplaceOperationWithZero => {
-                            value = 0.0;
+                            value = Value::Number(0.0);
                         }
                     }
                 } else {
-                    value /= divisor;
+                    value = Value::Number(value.number() / divisor);
                 }
             } else if self.consume("%") {
                 self.operation()?;
-                let divisor = self.parse_unary()?;
+                let divisor = self.operator_rhs("%", Self::parse_power)?.number().trunc();
                 if divisor == 0.0 {
                     match self.options.zero_operator_policy {
                         WikidotZeroOperatorPolicy::RuntimeError => {
                             return Err(ExpressionError::RemainderByZero);
                         }
                         WikidotZeroOperatorPolicy::ReplaceOperationWithZero => {
-                            value = 0.0;
+                            value = Value::Number(0.0);
                         }
                     }
                 } else {
-                    value %= divisor;
+                    value = Value::Number(value.number().trunc() % divisor);
                 }
             } else {
                 return Ok(value);
@@ -215,22 +286,32 @@ impl ExpressionParser<'_> {
         }
     }
 
-    fn parse_unary(&mut self) -> Result<f64, ExpressionError> {
+    fn parse_power(&mut self) -> Result<Value, ExpressionError> {
+        let left = self.parse_unary()?;
+        if !self.consume("^") {
+            return Ok(left);
+        }
+        self.operation()?;
+        let right = self.operator_rhs("^", Self::parse_power)?;
+        Ok(Value::Number(left.number().powf(right.number())))
+    }
+
+    fn parse_unary(&mut self) -> Result<Value, ExpressionError> {
         if self.consume("+") {
             self.operation()?;
-            self.parse_unary()
+            Ok(Value::Number(self.parse_unary()?.number()))
         } else if self.consume("-") {
             self.operation()?;
-            Ok(-self.parse_unary()?)
+            Ok(Value::Number(-self.parse_unary()?.number()))
         } else if self.consume("!") {
             self.operation()?;
-            Ok(f64::from(!truthy(self.parse_unary()?)))
+            Ok(Value::Number(f64::from(!truthy(self.parse_unary()?))))
         } else {
             self.parse_primary()
         }
     }
 
-    fn parse_primary(&mut self) -> Result<f64, ExpressionError> {
+    fn parse_primary(&mut self) -> Result<Value, ExpressionError> {
         if self.consume("(") {
             self.parentheses += 1;
             if self.parentheses > MAX_PARENTHESES {
@@ -255,7 +336,7 @@ impl ExpressionParser<'_> {
         self.parse_number()
     }
 
-    fn parse_function(&mut self) -> Result<f64, ExpressionError> {
+    fn parse_function(&mut self) -> Result<Value, ExpressionError> {
         self.skip_space();
         let start = self.offset;
         while self
@@ -266,11 +347,14 @@ impl ExpressionParser<'_> {
             self.offset += 1;
         }
         let name = &self.input[start..self.offset];
-        if name.eq_ignore_ascii_case(b"true") {
-            return Ok(1.0);
+        if name == b"true" {
+            return Ok(Value::Boolean(true));
         }
-        if name.eq_ignore_ascii_case(b"false") {
-            return Ok(0.0);
+        if name == b"false" {
+            return Ok(Value::Boolean(false));
+        }
+        if name.eq_ignore_ascii_case(b"null") {
+            return Ok(Value::Null);
         }
         if !self.consume("(") {
             return Err(ExpressionError::UndefinedConstant(
@@ -292,28 +376,43 @@ impl ExpressionParser<'_> {
         self.parentheses -= 1;
         self.operation()?;
 
+        let name_string = String::from_utf8_lossy(name).into_owned();
         match name {
-            name if name.eq_ignore_ascii_case(b"abs") && arguments.len() == 1 => {
-                Ok(arguments[0].abs())
+            b"abs" if arguments.len() == 1 => {
+                Ok(Value::Number(arguments[0].number().abs()))
             }
-            name if name.eq_ignore_ascii_case(b"min") => arguments
-                .into_iter()
-                .reduce(f64::min)
-                .ok_or(ExpressionError::Invalid),
-            name if name.eq_ignore_ascii_case(b"max") => arguments
-                .into_iter()
-                .reduce(f64::max)
-                .ok_or(ExpressionError::Invalid),
-            name if matches_ignore_ascii_case(name, &[b"abs", b"min", b"max"]) => {
-                Err(ExpressionError::Invalid)
-            }
-            _ => Err(ExpressionError::UndefinedFunction(
-                String::from_utf8_lossy(name).into_owned(),
+            b"abs" if arguments.is_empty() => Err(ExpressionError::TooFewArguments(
+                name_string,
+                1,
+                arguments.len(),
             )),
+            b"abs" => Err(ExpressionError::TooManyArguments(
+                name_string,
+                1,
+                arguments.len(),
+            )),
+            b"min" | b"max" if arguments.len() < 2 => Err(
+                ExpressionError::TooFewArguments(name_string, 2, arguments.len()),
+            ),
+            b"min" => Ok(Value::Number(
+                arguments
+                    .into_iter()
+                    .map(Value::number)
+                    .reduce(f64::min)
+                    .expect("minimum arity checked"),
+            )),
+            b"max" => Ok(Value::Number(
+                arguments
+                    .into_iter()
+                    .map(Value::number)
+                    .reduce(f64::max)
+                    .expect("minimum arity checked"),
+            )),
+            _ => Err(ExpressionError::UndefinedFunction(name_string)),
         }
     }
 
-    fn parse_number(&mut self) -> Result<f64, ExpressionError> {
+    fn parse_number(&mut self) -> Result<Value, ExpressionError> {
         self.skip_space();
         let start = self.offset;
         let mut decimal = false;
@@ -334,6 +433,7 @@ impl ExpressionParser<'_> {
             .ok()
             .and_then(|value| value.parse::<f64>().ok())
             .filter(|value| value.is_finite())
+            .map(Value::Number)
             .ok_or(ExpressionError::Invalid)
     }
 
@@ -357,9 +457,22 @@ impl ExpressionParser<'_> {
         }
     }
 
-    fn at_end(&mut self) -> bool {
-        self.skip_space();
-        self.offset == self.input.len()
+    fn operator_rhs(
+        &mut self,
+        operator: &'static str,
+        parse: fn(&mut Self) -> Result<Value, ExpressionError>,
+    ) -> Result<Value, ExpressionError> {
+        match parse(self) {
+            Ok(value) => Ok(value),
+            Err(ExpressionError::Invalid) => {
+                Err(ExpressionError::TooFewParameters(operator))
+            }
+            Err(error) => Err(error),
+        }
+    }
+
+    fn remaining(&self) -> &str {
+        std::str::from_utf8(&self.input[self.offset..]).unwrap_or_default()
     }
 
     fn operation(&mut self) -> Result<(), ExpressionError> {
@@ -372,25 +485,39 @@ impl ExpressionParser<'_> {
     }
 }
 
-fn matches_ignore_ascii_case(value: &[u8], choices: &[&[u8]]) -> bool {
-    choices
-        .iter()
-        .any(|choice| value.eq_ignore_ascii_case(choice))
+pub(super) fn truthy(value: Value) -> bool {
+    match value {
+        Value::Number(value) => value != 0.0,
+        Value::Boolean(value) => value,
+        Value::Null => false,
+    }
 }
 
-pub(super) fn truthy(value: f64) -> bool {
-    value != 0.0
+pub(super) fn format_value(value: Value) -> String {
+    match value {
+        Value::Boolean(value) => value.to_string(),
+        Value::Null => String::new(),
+        Value::Number(value) => format_number(value),
+    }
 }
 
-fn nearly_equal(left: f64, right: f64) -> bool {
-    (left - right).abs() <= f64::EPSILON
-}
-
-pub(super) fn format_value(value: f64) -> String {
+fn format_number(value: f64) -> String {
     if value == 0.0 {
         return "0".to_owned();
     }
-    let mut output = format!("{value:.11}");
+    if value.abs() < 1e-11 {
+        let scientific = format!("{value:.1E}");
+        let Some((mantissa, exponent)) = scientific.split_once('E') else {
+            return scientific;
+        };
+        let exponent = exponent
+            .strip_prefix('+')
+            .unwrap_or(exponent)
+            .trim_start_matches('0');
+        let exponent = if exponent.is_empty() { "0" } else { exponent };
+        return format!("{mantissa}E{exponent}");
+    }
+    let mut output = format!("{value:.12}");
     while output.ends_with('0') {
         output.pop();
     }
@@ -404,16 +531,23 @@ pub(super) fn format_value(value: f64) -> String {
 mod tests {
     use super::*;
 
+    fn number(value: f64) -> Result<Value, ExpressionError> {
+        Ok(Value::Number(value))
+    }
+
     #[test]
     fn evaluates_precedence_functions_and_boolean_operators() {
         let options = WikidotParserFunctionOptions::default();
-        assert_eq!(evaluate("2*(2-1)", options), Ok(2.0));
-        assert_eq!(evaluate("abs(-100)", options), Ok(100.0));
-        assert_eq!(evaluate("min(4,1,-4,6,-10)", options), Ok(-10.0));
-        assert_eq!(evaluate("max(4,1,-4,6,-10)", options), Ok(6.0));
-        assert_eq!(evaluate("0 || (1 && !0)", options), Ok(1.0));
-        assert_eq!(evaluate("1 || 0", options), Ok(1.0));
-        assert_eq!(evaluate("0 && 1", options), Ok(0.0));
+        assert_eq!(evaluate("2*(2-1)", options), number(2.0));
+        assert_eq!(evaluate("abs(-100)", options), number(100.0));
+        assert_eq!(evaluate("min(4,1,-4,6,-10)", options), number(-10.0));
+        assert_eq!(evaluate("max(4,1,-4,6,-10)", options), number(6.0));
+        assert_eq!(
+            evaluate("0 || (1 && !0)", options),
+            Ok(Value::Boolean(true))
+        );
+        assert_eq!(evaluate("1 || 0", options), Ok(Value::Boolean(true)));
+        assert_eq!(evaluate("0 && 1", options), Ok(Value::Boolean(false)));
     }
 
     #[test]
@@ -421,16 +555,16 @@ mod tests {
         let options = WikidotParserFunctionOptions::default();
 
         for (expression, expected) in [
-            ("1<2", 1.0),
-            ("8/2", 4.0),
-            ("5%2", 1.0),
-            ("+2", 2.0),
-            ("true + false", 1.0),
-            ("1.5 + .5", 2.0),
+            ("1<2", Value::Boolean(true)),
+            ("8/2", Value::Number(4.0)),
+            ("5%2", Value::Number(1.0)),
+            ("+2", Value::Number(2.0)),
+            ("true + false", Value::Number(1.0)),
+            ("1.5 + .5", Value::Number(2.0)),
         ] {
             assert_eq!(evaluate(expression, options), Ok(expected), "{expression}");
         }
-        assert_eq!(format_value(0.0), "0");
+        assert_eq!(format_value(Value::Number(0.0)), "0");
     }
 
     #[test]
@@ -447,19 +581,19 @@ mod tests {
             ")".repeat(MAX_PARENTHESES + 1),
         );
 
-        for expression in [
-            "1 2",
-            "(1",
-            "abs(1",
-            ".",
-            deep_parentheses.as_str(),
-            deep_functions.as_str(),
-        ] {
+        assert_eq!(
+            evaluate("1 2", options),
+            Err(ExpressionError::SyntaxNear("2".to_owned())),
+        );
+        for expression in ["(1", "abs(1", "."] {
             assert_eq!(
                 evaluate(expression, options),
                 Err(ExpressionError::Invalid),
                 "{expression}",
             );
+        }
+        for expression in [deep_parentheses.as_str(), deep_functions.as_str()] {
+            assert!(evaluate(expression, options).is_err(), "{expression}");
         }
 
         let mut parser = ExpressionParser {
@@ -490,14 +624,17 @@ mod tests {
         let options = WikidotParserFunctionOptions {
             zero_operator_policy: WikidotZeroOperatorPolicy::ReplaceOperationWithZero,
         };
-        assert_eq!(evaluate("1/0+1", options), Ok(1.0));
-        assert_eq!(evaluate("5%0+2", options), Ok(2.0));
+        assert_eq!(evaluate("1/0+1", options), number(1.0));
+        assert_eq!(evaluate("5%0+2", options), number(2.0));
     }
 
     #[test]
     fn invalid_and_bounded_expressions_are_distinct_from_runtime_errors() {
         let options = WikidotParserFunctionOptions::default();
-        assert_eq!(evaluate("abs(1,2)", options), Err(ExpressionError::Invalid));
+        assert_eq!(
+            evaluate("abs(1,2)", options),
+            Err(ExpressionError::TooManyArguments("abs".to_owned(), 1, 2)),
+        );
         assert_eq!(
             evaluate("missing", options),
             Err(ExpressionError::UndefinedConstant("missing".to_owned())),
@@ -520,7 +657,7 @@ mod tests {
         );
         assert_eq!(
             evaluate(&"1+".repeat(129), options),
-            Err(ExpressionError::Invalid),
+            Err(ExpressionError::TooFewParameters("+")),
         );
     }
 }

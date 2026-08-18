@@ -29,21 +29,26 @@ pub fn render_date(
     date_format: Option<&str>,
     hover: bool,
 ) {
-    let date_format = date_format.filter(|format| date_format_within_limits(format));
+    let supported_date_format =
+        date_format.filter(|format| date_format_within_limits(format));
     let formatted_datetime = match ctx.layout() {
         Layout::Wikidot => {
             date.format_or_default(Some(WIKIDOT_DEFAULT_DATE_FORMAT), "en")
         }
-        Layout::Wikijump => date.format_or_default(date_format, ctx.language()),
+        Layout::Wikijump => date.format_or_default(supported_date_format, ctx.language()),
     };
 
     match ctx.layout() {
         Layout::Wikidot => {
             render_date_wikidot(ctx, date, date_format, hover, &formatted_datetime)
         }
-        Layout::Wikijump => {
-            render_date_wikijump(ctx, date, date_format, hover, &formatted_datetime)
-        }
+        Layout::Wikijump => render_date_wikijump(
+            ctx,
+            date,
+            supported_date_format,
+            hover,
+            &formatted_datetime,
+        ),
     }
 }
 

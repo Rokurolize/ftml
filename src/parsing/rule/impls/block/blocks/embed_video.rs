@@ -55,6 +55,12 @@ fn parse_fn<'r, 't>(
     } else {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     };
+    if parser.has_runtime_literal_in_range(opener_start..body_cursor)
+        || parser.has_runtime_scalar_in_range(opener_start..body_cursor)
+        || parser.has_generated_in_range(opener_start..body_cursor)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     let preceding_backslashes = source[..opener_start]
         .bytes()
         .rev()

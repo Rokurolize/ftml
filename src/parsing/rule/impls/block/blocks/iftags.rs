@@ -37,6 +37,7 @@ fn parse_conditions<'r, 't>(
     spec: Option<&'t str>,
 ) -> Result<Vec<ElementCondition<'t>>, ParseError> {
     match spec {
+        Some("-") if parser.settings().layout.legacy() => Ok(Vec::new()),
         Some(spec) => Ok(ElementCondition::parse(spec)),
         None if parser.settings().layout.legacy() => Ok(Vec::new()),
         None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),

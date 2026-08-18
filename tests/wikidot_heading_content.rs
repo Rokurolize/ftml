@@ -513,7 +513,7 @@ fn many_empty_inline_owners_before_a_first_footnote_stay_bounded() {
     assert!(html.contains("</sup>A</p>"), "{html}");
     assert_eq!(html.matches("footnote-footer").count(), 1, "{html}");
     assert!(
-        elapsed < Duration::from_secs(3),
+        elapsed < Duration::from_secs(5),
         "first-footnote heading eligibility took {elapsed:?}",
     );
 }

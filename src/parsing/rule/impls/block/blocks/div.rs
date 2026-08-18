@@ -311,9 +311,10 @@ fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: b
             let redundant_newline_after_nested_div =
                 matches!(&element, Element::Text(text) if text == "\n")
                     && matches!(cleaned.last(), Some(Element::LineBreak | Element::LineBreaks(_)))
-                    && cleaned[..cleaned.len().saturating_sub(1)]
+                    && cleaned
                         .iter()
                         .rev()
+                        .skip(1)
                         .find(|previous| {
                             !matches!(previous, Element::Text(text) if text == "\n")
                         })

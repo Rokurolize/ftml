@@ -98,7 +98,6 @@ where
         let fragment_end =
             wikidot_automatic_url_end(source, token.span.start, token.span.end);
         if fragment_end != token.span.end {
-            debug_assert_eq!(fragment_end, token.span.start);
             break;
         }
         end = token.span.end;
@@ -116,14 +115,14 @@ where
         _ => None,
     };
     if suffix.is_some() {
-        url = without_last_byte(url);
+        url = without_last_character(url);
     }
 
     let split_terminal_period = url.ends_with('.')
         && (matches!(parser.current().token, Token::Whitespace | Token::InputEnd)
             || suffix.is_some());
     if split_terminal_period {
-        url = without_last_byte(url);
+        url = without_last_character(url);
     }
 
     let link = Element::Link {
@@ -147,9 +146,19 @@ where
     })
 }
 
-fn without_last_byte(value: Cow<'_, str>) -> Cow<'_, str> {
+fn without_last_character(value: Cow<'_, str>) -> Cow<'_, str> {
     match value {
-        Cow::Borrowed(value) => Cow::Borrowed(&value[..value.len() - 1]),
+        Cow::Borrowed(value) => {
+            let last = value
+                .chars()
+                .next_back()
+                .expect("automatic URL suffix removal requires a non-empty value");
+            Cow::Borrowed(
+                value
+                    .strip_suffix(last)
+                    .expect("last character must be a suffix"),
+            )
+        }
         Cow::Owned(mut value) => {
             value.pop();
             Cow::Owned(value)
@@ -265,5 +274,23 @@ mod tests {
 
         assert_eq!(actual, link("https://example.com/video").into());
         assert_eq!(parser.current().token, Token::LeftBlockEnd);
+    }
+
+    #[test]
+    fn wikidot_url_rule_stops_before_a_token_that_contains_a_url_delimiter() {
+        let source = "https://example.com/\u{000b}\\\" next";
+        let tokenization = crate::tokenize(source);
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+        parser.step().expect("URL token should follow input start");
+
+        let actual = RULE_URL
+            .try_consume(&mut parser)
+            .expect("URL rule should stop before the escaped quote token")
+            .item;
+
+        assert_eq!(actual, link("https://example.com/").into());
+        assert_eq!(parser.current().token, Token::EscapedDoubleQuote);
     }
 }

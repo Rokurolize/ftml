@@ -1,0 +1,69 @@
+{
+  "schema": "ftml.wikidot_parity.caller_runtime_contracts.v1",
+  "contracts": [
+    {
+      "id": "embedvideo-runtime",
+      "wikijump_test": "services::render::service::tests::typed_embedvideo_markers_must_match_requirements_exactly_once",
+      "cases": [
+        "tests--fixtures--parity-gaps--block-name-case-embedvideo-title",
+        "tests--fixtures--parity-gaps--block-name-case-embedvideo-uppercase",
+        "tests--fixtures--parity-gaps--embedvideo",
+        "tests--fixtures--parity-gaps--interaction-embedvideo-residual-opener",
+        "tests--fixtures--parity-gaps--whitespace-embedvideo-payload-control",
+        "tests--fixtures--parity-gaps--whitespace-embedvideo-payload-nul",
+        "tests--fixtures--parity-gaps--whitespace-embedvideo-payload-vtab"
+      ]
+    },
+    {
+      "id": "gallery-runtime",
+      "wikijump_test": "services::render::compat::wikidot_gallery::tests::gallery_dom_matches_the_frozen_static_thumbnail_shape_without_scripts",
+      "cases": [
+        "tests--fixtures--parity-gaps--block-name-case-gallery-title",
+        "tests--fixtures--parity-gaps--block-name-case-gallery-uppercase",
+        "tests--fixtures--parity-gaps--comment-prefix-gallery",
+        "tests--fixtures--parity-gaps--gallery",
+        "tests--fixtures--parity-gaps--interaction-gallery-residual-opener",
+        "tests--fixtures--parity-gaps--malformed-head-gallery-map",
+        "tests--fixtures--parity-gaps--malformed-head-gallery-value",
+        "tests--fixtures--parity-gaps--malformed-line-owner-gallery"
+      ]
+    },
+    {
+      "id": "html-preview-mode",
+      "wikijump_test": "services::render::service::tests::wikidot_compatibility_fallback_keeps_preview_html_blocks_literal",
+      "cases": [
+        "test--html--basic",
+        "test--html--revert",
+        "tests--fixtures--parity-gaps--comment-html-body-owner",
+        "tests--fixtures--parity-gaps--whitespace-html-body-nul"
+      ]
+    },
+    {
+      "id": "image-file-context",
+      "wikijump_test": "services::render::service::tests::wikidot_compatibility_fallback_renders_tabs_size_and_page_images",
+      "cases": [
+        "test--image--basic",
+        "test--image--fail",
+        "tests--fixtures--parity-gaps--image-source-local-control"
+      ]
+    },
+    {
+      "id": "page-existence",
+      "wikijump_test": "services::render::service::tests::fallback_page_links_mark_only_resolved_missing_targets_as_newpage",
+      "cases": [
+        "tests--fixtures--parity-gaps--comment-triple-fields-owner",
+        "tests--fixtures--parity-gaps--triple-link-data-scheme",
+        "tests--fixtures--parity-gaps--triple-link-javascript-scheme"
+      ]
+    },
+    {
+      "id": "user-resolution",
+      "wikijump_test": "services::render::ftml_user_info::tests::snapshot_resolves_case_and_spacing_to_canonical_user",
+      "cases": [
+        "tests--fixtures--parity-gaps--block-head-extra-close-user",
+        "tests--fixtures--parity-gaps--user-prefix-star-missing",
+        "tests--fixtures--parity-gaps--user-uppercase-missing"
+      ]
+    }
+  ]
+}

@@ -55,9 +55,10 @@ fn parse_fn<'r, 't>(
         let marker_len = name.len() + "[[]]".len();
         if let Some(marker_start) = marker_end.checked_sub(marker_len) {
             let marker = &parser.full_text().inner()[marker_start..marker_end];
-            if marker.starts_with("[[")
-                && marker.ends_with("]]")
-                && marker[2..marker.len() - 2].eq_ignore_ascii_case("include")
+            if marker
+                .strip_prefix("[[")
+                .and_then(|inner| inner.strip_suffix("]]"))
+                .is_some_and(|inner| inner.eq_ignore_ascii_case("include"))
             {
                 debug!("Preserving exact targetless include marker as literal text");
                 return success_elements(text!(marker));

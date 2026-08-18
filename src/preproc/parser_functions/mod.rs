@@ -1217,6 +1217,26 @@ mod tests {
             "{} bytes of repeated crossing source remain after the bounded passes",
             resolved.len(),
         );
+
+        let scan_work = |source: &str| {
+            let mut candidate_budget = CandidateBudget::default();
+            let mut scan_budget = ConditionalScanBudget::new(source.len());
+            let initial = scan_budget.remaining;
+            let _ = resolve_function_pass(
+                source,
+                WikidotParserFunctionOptions::default(),
+                &mut candidate_budget,
+                &mut scan_budget,
+            );
+            initial - scan_budget.remaining
+        };
+        let work_200 = scan_work(&source);
+        let source_400 = unit.repeat(400);
+        let work_400 = scan_work(&source_400);
+        assert!(
+            work_400 <= work_200.saturating_mul(2).saturating_add(unit.len()),
+            "conditional scan work must scale linearly: 200={work_200}, 400={work_400}",
+        );
     }
 
     #[test]

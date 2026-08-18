@@ -19,6 +19,8 @@ const SYNTAX_CASE_SCHEMA: &str = "wikijump_syntax_differential.syntax_case.v1";
 const BINDINGS_SCHEMA: &str = "ftml.wikidot_parity.bindings.v1";
 const CLASSIFICATION_OVERRIDES_SCHEMA: &str =
     "ftml.wikidot_parity.classification_overrides.v1";
+const CALLER_RUNTIME_CONTRACTS_SCHEMA: &str =
+    "ftml.wikidot_parity.caller_runtime_contracts.v1";
 const ACTIVE_INVESTIGATION_REASON_PREFIX: &str =
     "Active functional investigation: issue #";
 const REVIEWED_CONTEXT_FREE_REASON_PREFIX: &str = "reviewed-context-free-";
@@ -110,6 +112,21 @@ struct ClassificationOverride {
     execution_class: ExecutionClass,
     page_scope: String,
     reason: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CallerRuntimeContractsManifest {
+    schema: String,
+    contracts: Vec<CallerRuntimeContract>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CallerRuntimeContract {
+    id: String,
+    wikijump_test: String,
+    cases: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -294,6 +311,8 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
     let bindings_path = artifact_dir.join("bindings.json");
     let classification_overrides_path =
         artifact_dir.join("classification-overrides.json");
+    let caller_runtime_contracts_path =
+        artifact_dir.join("caller-runtime-contracts.json");
     let cases: Vec<LiveCase> = read_jsonl(&cases_path);
     let manifest: BindingsManifest =
         serde_json::from_slice(&fs::read(&bindings_path).expect("read parity bindings"))
@@ -304,11 +323,21 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
                 .expect("read classification overrides"),
         )
         .expect("classification-overrides.json has valid schema fields");
+    let caller_runtime_contracts: CallerRuntimeContractsManifest =
+        serde_json::from_slice(
+            &fs::read(&caller_runtime_contracts_path)
+                .expect("read caller-runtime contracts"),
+        )
+        .expect("caller-runtime-contracts.json has valid schema fields");
 
     assert_eq!(manifest.schema, BINDINGS_SCHEMA);
     assert_eq!(
         classification_overrides.schema,
         CLASSIFICATION_OVERRIDES_SCHEMA
+    );
+    assert_eq!(
+        caller_runtime_contracts.schema,
+        CALLER_RUNTIME_CONTRACTS_SCHEMA
     );
     assert!(!cases.is_empty(), "parity case population is empty");
     assert_eq!(
@@ -418,6 +447,82 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
         binding_counts[0] + binding_counts[1],
         manifest.bindings.len(),
         "binding status counts must cover the manifest exactly"
+    );
+
+    let disposition_counts =
+        manifest
+            .bindings
+            .iter()
+            .fold([0; 4], |mut counts, binding| {
+                if let Some(disposition) = binding.disposition {
+                    counts[match disposition {
+                        BindingDisposition::Unresolved => 0,
+                        BindingDisposition::CallerRuntime => 1,
+                        BindingDisposition::ComparisonNormalization => 2,
+                        BindingDisposition::SecurityBoundary => 3,
+                    }] += 1;
+                }
+                counts
+            });
+    assert_eq!(
+        disposition_counts.iter().sum::<usize>(),
+        binding_counts[1],
+        "every mismatch must have exactly one disposition"
+    );
+
+    assert!(
+        caller_runtime_contracts
+            .contracts
+            .windows(2)
+            .all(|pair| pair[0].id < pair[1].id),
+        "caller-runtime contract IDs must be unique and sorted"
+    );
+    let caller_runtime_cases: BTreeSet<_> = manifest
+        .bindings
+        .iter()
+        .filter(|binding| binding.disposition == Some(BindingDisposition::CallerRuntime))
+        .map(|binding| binding.case_id.as_str())
+        .collect();
+    let mut contracted_cases = BTreeSet::new();
+    for contract in &caller_runtime_contracts.contracts {
+        assert!(
+            contract.wikijump_test.starts_with("services::"),
+            "{}: Wikijump test must name a concrete service test",
+            contract.id
+        );
+        assert!(
+            !contract.cases.is_empty(),
+            "{}: caller-runtime contract must own at least one case",
+            contract.id
+        );
+        assert!(
+            contract.cases.windows(2).all(|pair| pair[0] < pair[1]),
+            "{}: caller-runtime case IDs must be unique and sorted",
+            contract.id
+        );
+        for case_id in &contract.cases {
+            assert!(
+                contracted_cases.insert(case_id.as_str()),
+                "{case_id}: caller-runtime case is mapped by more than one contract"
+            );
+        }
+    }
+    assert_eq!(
+        contracted_cases, caller_runtime_cases,
+        "every caller-runtime binding must map to exactly one concrete Wikijump regression contract"
+    );
+
+    let parity_docs = fs::read_to_string(root.join("docs/ParityTests.md"))
+        .expect("read docs/ParityTests.md");
+    assert!(
+        parity_docs.contains(
+            "The current inventory and binding totals are derived from the committed machine-readable artifacts"
+        ),
+        "ParityTests.md must treat the machine-readable artifacts as the changing denominator authority"
+    );
+    assert!(
+        parity_docs.contains("EXPECTED_PREVIEW=$(jq -c"),
+        "ParityTests.md capture instructions must derive the preview denominator from cases.jsonl"
     );
 
     let fixture_sources = fixture_sources(root);

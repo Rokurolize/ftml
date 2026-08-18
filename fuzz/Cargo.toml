@@ -1,0 +1,19 @@
+[package]
+name = "ftml-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+ftml = { path = ".." }
+libfuzzer-sys = "0.4"
+
+[[bin]]
+name = "public_pipeline"
+path = "fuzz_targets/public_pipeline.rs"
+test = false
+doc = false
+bench = false

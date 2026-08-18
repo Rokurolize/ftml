@@ -1,0 +1,43 @@
+{
+  "schema": "ftml.wikidot_parity.robustness_matrix.v1",
+  "layouts": ["wikidot", "wikijump"],
+  "pipeline_stages": ["preprocess", "tokenize", "parse", "html-render", "text-render"],
+  "unicode_tokens": [
+    "A",
+    "é",
+    "漢",
+    "🦀",
+    "é",
+    " ",
+    " ",
+    " ",
+    "‍",
+    "️",
+    " ",
+    " ",
+    "\u0000"
+  ],
+  "syntax_shapes": [
+    {"id": "plain-text", "source": "before {u} after"},
+    {"id": "blockquote", "source": "> before {u} after\n"},
+    {"id": "native-list", "source": "* before {u} after\n"},
+    {"id": "simple-table", "source": "|| before {u} after ||\n"},
+    {"id": "div-body", "source": "[[div class=\"box\"]]\nbefore {u} after\n[[/div]]\n"},
+    {"id": "span-attribute", "source": "[[span data-x=\"before {u} after\"]]body[[/span]]"},
+    {"id": "malformed-getattrs-delimiter", "source": "[[span data-x=\"{u}==\"]]body[[/span]]"},
+    {"id": "single-link-label", "source": "[https://example.com before {u} after]"},
+    {"id": "triple-link-label", "source": "[[[some-page|before {u} after]]]"},
+    {"id": "inline-math", "source": "[[$ before {u} after $]]"},
+    {"id": "math-block", "source": "[[math]]\nbefore {u} after\n[[/math]]\n"},
+    {"id": "code-block", "source": "[[code]]\nbefore {u} after\n[[/code]]\n"},
+    {"id": "raw-inline", "source": "@@before {u} after@@"},
+    {"id": "comment-adjacency", "source": "before[!-- hidden --]{u}after"},
+    {"id": "parser-function-branch", "source": "[[#if 1 | before {u} after | no ]]"},
+    {"id": "root-collapsible-quoted-middle", "source": "[[collapsible show=\"report\"]]\n> before {u} after\n> End log.[[/collapsible]]\n"},
+    {"id": "root-collapsible-quoted-close", "source": "[[collapsible show=\"report\"]]\n> before\n> End {u} log.[[/collapsible]] \t\n"},
+    {"id": "crossed-inline-owners", "source": "**before {u} __inside** after__"},
+    {"id": "image-label", "source": "[[image https://example.com/a.png alt=\"before {u} after\"]]"},
+    {"id": "bibliography-body", "source": "[[bibliography]]\n: alpha : before {u} after\n[[/bibliography]]\n"}
+  ],
+  "stable_source_mutations": ["unicode-prefix", "unicode-suffix", "unicode-midpoint", "crlf"]
+}

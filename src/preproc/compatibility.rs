@@ -521,7 +521,9 @@ fn remove_tight_quote_lines(lines: &mut [String], literal_lines: &[bool]) {
             continue;
         }
 
-        let indentation = &body[..body.len() - trimmed.len()];
+        let indentation = body
+            .strip_suffix(trimmed)
+            .expect("trimmed quote body must remain a suffix of the source line");
         if active_quote_depth == 0 {
             *line = ending.to_owned();
         } else {
@@ -2044,6 +2046,37 @@ mod tests {
 
         assert!(source.contains("> **Author:** San José Public Library\n"));
         assert!(source.contains("> End log.\n[[/collapsible]]\n"));
+    }
+
+    #[test]
+    fn root_collapsible_scan_ignores_neighboring_center_markers() {
+        let mut source = concat!(
+            "[[collapsible show=\"report\"]]\n",
+            "[[=]]\n",
+            "centered\n",
+            "[[/=]]\n",
+            "> End log.[[/collapsible]]\n",
+        )
+        .to_owned();
+
+        substitute(&mut source);
+
+        assert!(source.contains("[[=]]\ncentered\n[[/=]]\n"));
+        assert!(source.contains("> End log.\n[[/collapsible]]\n"));
+    }
+
+    #[test]
+    fn root_collapsible_scan_does_not_rewrite_unquoted_inline_closers() {
+        let mut source = concat!(
+            "[[collapsible show=\"report\"]]\n",
+            "body[[/collapsible]]\n",
+        )
+        .to_owned();
+        let original = source.clone();
+
+        substitute(&mut source);
+
+        assert_eq!(source, original);
     }
 
     #[test]

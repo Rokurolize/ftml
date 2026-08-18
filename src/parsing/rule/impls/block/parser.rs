@@ -92,10 +92,10 @@ fn wikidot_alias_pair_cache_name(block_rule: &BlockRule) -> &'static str {
 }
 
 fn wikidot_alias_close_is_exact(source: &str, name: &str) -> bool {
-    source.len() == name.len() + 5
-        && source.starts_with("[[/")
-        && source.ends_with("]]")
-        && source[3..source.len() - 2].eq_ignore_ascii_case(name)
+    source
+        .strip_prefix("[[/")
+        .and_then(|inner| inner.strip_suffix("]]"))
+        .is_some_and(|inner| inner.eq_ignore_ascii_case(name))
 }
 
 fn wikidot_requires_next_physical_line(block_rule: &BlockRule) -> bool {
@@ -190,10 +190,15 @@ fn parse_wikidot_attribute_field<'t>(field: &CommentElidedText<'t>) -> Arguments
             .find(|index| bytes[*index] == b'"' && !comment_mask[*index]);
         let (value_range, next_key_range) = match quote {
             Some(quote) => (segment_start..quote, quote + 1..segment_end),
-            None => (
-                segment_start..segment_start,
-                (segment_start + 1).min(segment_end)..segment_end,
-            ),
+            None => {
+                let next_key_start = source
+                    .get(segment_start..segment_end)
+                    .and_then(|segment| segment.chars().next())
+                    .map_or(segment_end, |character| {
+                        segment_start + character.len_utf8()
+                    });
+                (segment_start..segment_start, next_key_start..segment_end)
+            }
         };
         let value_range = span.start + value_range.start..span.start + value_range.end;
         let value = field.elide_range(value_range);
@@ -223,9 +228,11 @@ fn wikidot_attribute_key<'t>(
         .rposition(|masked| *masked)
         .map_or(range.start, |position| range.start + position + 1);
     let span = field.span();
-    wikidot_trim_argument_fragment(
-        &field.source()[fragment_start..range.end.min(span.len())],
-    )
+    let source = field.source();
+    let fragment = source
+        .get(fragment_start..range.end.min(span.len()))
+        .expect("Wikidot attribute key range must stay on UTF-8 boundaries");
+    wikidot_trim_argument_fragment(fragment)
 }
 
 impl<'r, 't> Parser<'r, 't>

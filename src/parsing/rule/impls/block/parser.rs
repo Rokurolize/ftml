@@ -659,10 +659,10 @@ where
 
     fn at_wikidot_crossed_math_close(&self, first_iteration: bool) -> bool {
         let mut close = self.clone();
-        if !first_iteration {
-            if close.current().token != Token::LineBreak || close.step().is_err() {
-                return false;
-            }
+        if !first_iteration
+            && (close.current().token != Token::LineBreak || close.step().is_err())
+        {
+            return false;
         }
         if close.current().token != Token::LeftBlockEnd {
             return false;

@@ -254,7 +254,7 @@ fn line_has_unmatched_wikidot_owner_opener(
                     .is_some_and(|byte| matches!(byte, b']' | b' ' | b'\t' | b'_'))
         })
         .map(|(index, _)| index)
-        .last();
+        .next_back();
     let last_close = prefix
         .as_bytes()
         .windows(close.len())
@@ -267,7 +267,7 @@ fn line_has_unmatched_wikidot_owner_opener(
                     .is_some_and(|byte| matches!(byte, b']' | b' ' | b'\t' | b'_'))
         })
         .map(|(index, _)| index)
-        .last();
+        .next_back();
     last_open.is_some_and(|open| last_close.is_none_or(|close| open > close))
 }
 

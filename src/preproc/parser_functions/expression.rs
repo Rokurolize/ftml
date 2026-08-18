@@ -381,7 +381,7 @@ impl ExpressionParser<'_> {
             b"abs" if arguments.len() == 1 => {
                 Ok(Value::Number(arguments[0].number().abs()))
             }
-            b"abs" if arguments.len() < 1 => Err(ExpressionError::TooFewArguments(
+            b"abs" if arguments.is_empty() => Err(ExpressionError::TooFewArguments(
                 name_string,
                 1,
                 arguments.len(),
@@ -495,9 +495,9 @@ pub(super) fn truthy(value: Value) -> bool {
 
 pub(super) fn format_value(value: Value) -> String {
     match value {
-        Value::Boolean(value) => return value.to_string(),
-        Value::Null => return String::new(),
-        Value::Number(value) => return format_number(value),
+        Value::Boolean(value) => value.to_string(),
+        Value::Null => String::new(),
+        Value::Number(value) => format_number(value),
     }
 }
 

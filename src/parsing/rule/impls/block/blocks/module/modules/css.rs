@@ -127,9 +127,7 @@ fn wikidot_css_closer(source: &str, body_start: usize, owner_end: usize) -> Opti
         let closer_start = cursor + relative_start;
         let tail = &body[closer_start + 3..];
         let tail = tail.trim_start_matches([' ', '\t']);
-        let Some(name) = tail.get(.."module".len()) else {
-            return None;
-        };
+        let name = tail.get(.."module".len())?;
         if name.eq_ignore_ascii_case("module") {
             let after_name = &tail["module".len()..];
             if after_name.starts_with("]]") || after_name.starts_with([' ', '\t']) {

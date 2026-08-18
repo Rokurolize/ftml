@@ -672,10 +672,7 @@ fn url_valid(url: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        MAX_WIKIDOT_SINGLE_LINK_SCHEME_BYTES, WikidotLinkDisposition,
-        valid_bounded_scheme, wikidot_link_disposition,
-    };
+    use super::{WikidotLinkDisposition, valid_bounded_scheme, wikidot_link_disposition};
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::render::Render;
@@ -721,14 +718,10 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_single_link_scheme_scan_has_an_explicit_bound() {
+    fn wikidot_single_link_scheme_scan_accepts_long_valid_schemes() {
         assert!(valid_bounded_scheme("web+demo"));
-        assert!(valid_bounded_scheme(
-            &"a".repeat(MAX_WIKIDOT_SINGLE_LINK_SCHEME_BYTES),
-        ));
-        assert!(!valid_bounded_scheme(
-            &"a".repeat(MAX_WIKIDOT_SINGLE_LINK_SCHEME_BYTES + 1),
-        ));
+        assert!(valid_bounded_scheme(&"a".repeat(65)));
+        assert!(valid_bounded_scheme(&"a".repeat(1_024)));
         assert!(!valid_bounded_scheme("1http"));
         assert!(!valid_bounded_scheme("java_script"));
     }

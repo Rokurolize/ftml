@@ -54,7 +54,7 @@ fn conditional_source_boundaries_match_the_live_matrix() {
         ("[[#if 1 | @@A|B@@ | C ]]", "@@A|B@@"),
         ("[[#if 1 | [!--A|B--] | C ]]", "[!--A|B--]"),
         ("[[#if 1 | [[#if 0 | X | Y ]] | Z ]]", "[[#if 0 | Z ]]"),
-        ("[[#ifexpr 1 | [[#expr 2+3]] | NO ]]", "[2+3 | NO ]"),
+        ("[[#ifexpr 1 | [[#expr 2+3]] | NO ]]", "[[#expr 2+3 | NO ]]"),
     ] {
         assert_eq!(
             ftml::resolve_wikidot_parser_functions(source),

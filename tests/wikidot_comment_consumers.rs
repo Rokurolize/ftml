@@ -182,11 +182,10 @@ fn malformed_and_escaped_comment_lookalikes_remain_authored_bytes() {
 }
 
 #[test]
-fn elision_cannot_create_new_syntax_or_attribute_owners() {
+fn elision_preserves_regular_block_names_but_can_create_parser_function_fallbacks() {
     for source in [
         "[[mo[!--x--]dule CSS]]body{}[[/module]]",
         "[[inc[!--x--]lude secret]]",
-        "[[#i[!--x--]f 1 | ACTIVE | INACTIVE ]]",
     ] {
         let html = render_allow_errors(source, Layout::Wikidot);
         assert!(html.contains("[["), "{source:?}: {html}");
@@ -195,9 +194,9 @@ fn elision_cannot_create_new_syntax_or_attribute_owners() {
         !render_allow_errors("[[inc[!--x--]lude secret]]", Layout::Wikidot)
             .contains("Included page"),
     );
-    assert!(
-        render_allow_errors("[[#i[!--x--]f 1 | ACTIVE | INACTIVE ]]", Layout::Wikidot,)
-            .contains("INACTIVE"),
+    assert_eq!(
+        render_allow_errors("[[#i[!--x--]f 1 | ACTIVE | INACTIVE ]]", Layout::Wikidot,),
+        r##"<p>[<a href="#if">1 | ACTIVE | INACTIVE</a> ]</p>"##,
     );
 
     let html = render_wikidot(

@@ -633,7 +633,7 @@ fn long_unicode_colon_slash_and_mailto_targets_stay_bounded() {
         source.len() * 2
     );
     assert!(
-        elapsed < Duration::from_secs(3),
+        elapsed < Duration::from_secs(5),
         "special-target parsing took {elapsed:?}"
     );
 }

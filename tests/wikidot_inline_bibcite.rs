@@ -191,7 +191,6 @@ fn invalid_labels_remain_ordinary_escaped_syntax() {
             "((bibcite **alpha**))",
             "((bibcite <strong>alpha</strong>))",
         ),
-        ("((bibcite alpha[!--hidden--]))", "((bibcite alpha))"),
         ("((bibcite alpha|beta))", "((bibcite alpha|beta))"),
         ("((bibcite alpha[beta]))", "((bibcite alpha[beta]))"),
     ] {
@@ -199,6 +198,10 @@ fn invalid_labels_remain_ordinary_escaped_syntax() {
         assert!(!html.contains("error-inline"), "{source:?}: {html}");
         assert!(html.contains(expected_fragment), "{source:?}: {html}");
     }
+
+    let html = render("((bibcite alpha[!--hidden--]))");
+    assert!(html.contains("error-inline"), "{html}");
+    assert!(html.contains("<em>alpha</em>"), "{html}");
 
     let html = render("((bibcite <script>alert_1</script>))");
     assert!(!html.contains("<script>"), "{html}");

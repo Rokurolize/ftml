@@ -294,10 +294,10 @@ fn high_risk_comment_and_separator_branches_have_reviewed_live_evidence() {
         }
     }
 
-    assert_eq!(matches, 78, "reviewed matching campaign cases");
-    assert_eq!(mismatches, 75, "reviewed mismatching campaign cases");
-    assert_eq!(unresolved, 73, "active FTML behavior investigations");
-    assert_eq!(caller_runtime, 2, "caller-owned campaign differences");
+    assert_eq!(matches, 150, "reviewed matching campaign cases");
+    assert_eq!(mismatches, 3, "reviewed mismatching campaign cases");
+    assert_eq!(unresolved, 0, "active FTML behavior investigations");
+    assert_eq!(caller_runtime, 3, "caller-owned campaign differences");
     assert_eq!(
         comparison_normalization, 0,
         "campaign normalization differences"

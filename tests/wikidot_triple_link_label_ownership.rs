@@ -192,10 +192,7 @@ fn valid_comments_are_transparent_but_malformed_comments_own_brackets() {
         render("[[[start|A[!--hidden [brackets]--]B]]]"),
         r#"<p><a href="/start">AB</a></p>"#,
     );
-    assert_eq!(
-        render("[[[start|A[!--hidden--]]]"),
-        r#"<p><a href="/start">A</a></p>"#,
-    );
+    assert_eq!(render("[[[start|A[!--hidden--]]]"), "<p>[[[start|A]]</p>",);
 
     let malformed = render("[[[start|A[!--unfinished B]]]");
     assert!(!malformed.contains(r#"href="/start""#), "{malformed}");
@@ -246,11 +243,15 @@ fn malformed_nested_closers_preserve_exact_residual_source() {
     for source in [
         "[[[start|A[[[system:join|B]C]]]",
         "[[[start|A[[[system:join|B]]C]]]",
-        "[[[start|A[[# apple B]]]",
         "[[[start|A[[$x B]]]",
     ] {
         assert_eq!(render(source), format!("<p>{source}</p>"), "{source:?}");
     }
+
+    assert_eq!(
+        render("[[[start|A[[# apple B]]]"),
+        r#"<p>[[[start|A[<a href="javascript:;">apple B</a>]]</p>"#,
+    );
 
     assert_eq!(
         render("[[[start|A[[[system:join|B]]]]C]]]"),

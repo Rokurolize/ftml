@@ -12,11 +12,13 @@ The machine-readable stable corpus is `tests/fixtures/wikidot-parity/cases.jsonl
 
 The dated `tests/fixtures/wikidot-parity/references-YYYYMMDD-NN.jsonl` files preserve the raw Wikidot responses and capture provenance. `tests/fixtures/wikidot-parity/bindings.json` binds each preview-compatible case to its reference hashes and comparator result. These files replace the old manual fixture table as the parity authority.
 
-The current stable inventory has 910 cases: 338 saved-page-batch cases, 540 page-preview-isolated cases, 31 caller-runtime cases, and 1 not-applicable case. The 878 PagePreview-compatible cases have 878 bindings: 729 matches and 149 classified mismatches. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
+The current inventory and binding totals are derived from the committed machine-readable artifacts; do not copy their numeric values into this document. `tests/fixtures/wikidot-parity/cases.jsonl` is the inventory authority and `tests/fixtures/wikidot-parity/bindings.json` is the binding authority. The runtime and not-applicable rows are accounted for with explicit reasons and are not sent to the anonymous PagePreview capture lane.
 
 Four reviewed context-free fixtures override the adjacent inventory generator's conservative runtime regexes: a plain email address uses deterministic Wikidot email obfuscation, a `mailto:` autolink is context-free, a triple link with an external URL needs no page resolver, and the comment-elided internal triple-link witness is suitable for PagePreview because the remaining page-existence class difference is explicitly classified as caller runtime. `tests/fixtures/wikidot-parity/classification-overrides.json` owns these decisions by exact fixture path and source hash. A source change invalidates its override instead of weakening the default runtime classification. Their exact inventory rows use reviewed `reviewed-context-free-*` reasons and run as isolated PagePreview cases.
 
 Each mismatch has one disposition: `caller-runtime` means a frozen output difference whose missing inputs belong to the caller runtime rather than FTML; `comparison-normalization` means a frozen raw-DOM difference with no demonstrated functional behavior difference; `security-boundary` means the live output would cross an explicit FTML safety boundary and is intentionally denied rather than activated; and `unresolved` remains allowed only for an active functional investigation. `security-boundary` is narrow: it requires a concrete security contract and focused regression, not a general compatibility escape hatch. A classified mismatch remains visible as `status: "mismatch"` and does not become a match.
+
+Every `caller-runtime` binding must also appear exactly once in `tests/fixtures/wikidot-parity/caller-runtime-contracts.json`, which names the concrete Wikijump regression responsible for that runtime boundary. `parity_index` rejects unmapped or multiply mapped rows. When the adjacent Wikijump checkout is available, verify and execute all named runtime contracts with `python3 scripts/check_wikijump_runtime_contracts.py --wikijump-root ../wikijump --run-tests`. Omit `--run-tests` when only checking cross-repository test identity.
 
 Ordinary FTML tests are offline. They validate inventory completeness, reference provenance and hashes, binding completeness, stable FTML output hashes, and local snapshot admission:
 
@@ -64,15 +66,56 @@ Review every inventory and classification change. If it is intentional, update `
 
 ### 2. Capture raw Wikidot references
 
-Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and verify the current 873-row selection:
+Split the preview-compatible inventory into fresh JSONL batches of at most 16 cases and derive the expected row count from the inventory:
 
 ```sh
 mkdir "$PARITY_TMP/batches"
 jq -c 'select(.execution_class == "saved-page-batch" or .execution_class == "page-preview-isolated")' \
   tests/fixtures/wikidot-parity/cases.jsonl | \
   split -l 16 -d -a 2 --additional-suffix=.jsonl - "$PARITY_TMP/batches/cases-"
-test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq 873
+EXPECTED_PREVIEW=$(jq -c 'select(.execution_class == "saved-page-batch" or .execution_class == "page-preview-isolated")' \
+  tests/fixtures/wikidot-parity/cases.jsonl | wc -l)
+test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}')" -eq "$EXPECTED_PREVIEW"
 ```
+
+### UTF-8 and panic-safety gate
+
+Wikidot compatibility fixes must remain safe for arbitrary valid UTF-8, not only ASCII witnesses. The ordinary integration suite includes structured Unicode mutation tests that drive both layouts through preprocess, tokenize, parse, HTML render, and text render. It also rejects unchecked Rust slice expressions whose bounds subtract from `str::len()` or use `saturating_sub` inside an index; those forms are easy to make invalid at a multibyte character boundary. Prefer `strip_prefix`, `strip_suffix`, `str::get`, or offsets proved by a character-boundary-producing API.
+
+For longer-running discovery, `fuzz/fuzz_targets/public_pipeline.rs` exercises the same public pipeline. Build a seed corpus from the entire stable parity inventory, optionally including Wikijump's seeded full pages, with:
+
+```sh
+FUZZ_CORPUS=$(mktemp -d)
+python3 scripts/build_ftml_fuzz_corpus.py \
+  --output "$FUZZ_CORPUS" \
+  --wikijump-root ../wikijump
+cargo +nightly fuzz run --fuzz-dir fuzz public_pipeline "$FUZZ_CORPUS"
+```
+
+The fuzz corpus is generated outside the repository and is not compatibility evidence. Any interesting crash or novel parity case must be minimized into a stable regression and, where behavior is observable on Wikidot, captured through the normal provenance-backed reference path.
+
+For branch coverage of the high-risk compatibility paths, run the Unicode robustness suite under nightly LLVM coverage and check the maintained floors:
+
+```sh
+cargo +nightly llvm-cov --branch --json \
+  --output-path /tmp/ftml-robustness-coverage.json \
+  --test integration -- wikidot_unicode_robustness
+python3 scripts/check_robustness_branch_coverage.py \
+  /tmp/ftml-robustness-coverage.json
+```
+
+These floors are deliberately scoped to the parser/preprocessor files exercised by the robustness suite. They prevent coverage from silently collapsing without pretending that targeted branch coverage is a proof of global correctness.
+
+For selective mutation testing of the two high-risk compatibility scanners that previously produced false confidence, run:
+
+```sh
+cargo mutants \
+  --file src/preproc/compatibility.rs \
+  --file src/parsing/rule/impls/block/parser.rs \
+  -F 'canonicalize_root_collapsible_inline_quoted_closers|parse_wikidot_attribute_field|wikidot_attribute_key'
+```
+
+Any surviving mutant is a test-coverage defect until either a focused control kills it or the mutation is documented as semantically equivalent. Do not broaden the command to unrelated renderer code merely to make a global mutation score look better.
 
 For each batch, choose a new dated no-replace output name and run:
 

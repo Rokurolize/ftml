@@ -733,7 +733,10 @@ where
 
         Token::Variable => {
             let slice = parser.current().slice;
-            let variable = &slice[2..slice.len() - 1];
+            let variable = slice
+                .strip_prefix("{$")
+                .and_then(|inner| inner.strip_suffix('}'))
+                .expect("variable token must retain its lexical delimiters");
             Element::Variable(cow!(variable))
         }
 

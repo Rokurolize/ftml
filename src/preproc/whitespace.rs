@@ -201,7 +201,9 @@ pub(super) fn preserve_wikidot_terminal_backslash_run(text: &mut String) {
     if !text.ends_with('\\') {
         return;
     }
-    let prefix = &text[..text.len() - 1];
+    let prefix = text
+        .strip_suffix('\\')
+        .expect("terminal backslash preservation requires a trailing backslash");
     if prefix.ends_with('\r') || prefix.ends_with('\n') {
         text.pop();
         return;

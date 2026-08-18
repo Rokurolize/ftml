@@ -58,6 +58,8 @@ mod wikidot_triple_link_special_targets;
 #[path = "wikidot_lexical_owner_residuals.rs"]
 mod wikidot_lexical_owner_residuals;
 
+#[path = "wikidot_unicode_robustness.rs"]
+mod wikidot_unicode_robustness;
 #[path = "wikidot_variable_ownership.rs"]
 mod wikidot_variable_ownership;
 

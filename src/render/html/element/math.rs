@@ -297,8 +297,8 @@ fn parse_mathml_tag(raw_tag: &str) -> Option<MathmlTag> {
     }
 
     let self_closing = tag.ends_with('/');
-    if self_closing {
-        tag = tag[..tag.len() - 1].trim_end();
+    if let Some(without_close) = tag.strip_suffix('/') {
+        tag = without_close.trim_end();
     }
 
     let name_end = tag.find(|ch: char| ch.is_whitespace()).unwrap_or(tag.len());

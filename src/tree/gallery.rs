@@ -362,7 +362,9 @@ pub(crate) fn parse_gallery_head_arguments(
     if head_end != source.len() {
         return None;
     }
-    let inner = &source[2..source.len() - 2];
+    let inner = source
+        .strip_prefix("[[")
+        .and_then(|inner| inner.strip_suffix("]]"))?;
     let inner = inner.trim_start_matches([' ', '\t']);
     let name_end = inner.find([' ', '\t', '\r', '\n']).unwrap_or(inner.len());
     if !inner[..name_end].eq_ignore_ascii_case("gallery") {

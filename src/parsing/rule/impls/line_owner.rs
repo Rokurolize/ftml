@@ -139,10 +139,9 @@ fn first_matching_close_is_unprefixed(
 }
 
 fn line_matches_close(line: &str, close_name: &str) -> bool {
-    line.len() == close_name.len() + "[[/]]".len()
-        && line.starts_with("[[/")
-        && line.ends_with("]]")
-        && line[3..line.len() - 2].eq_ignore_ascii_case(close_name)
+    line.strip_prefix("[[/")
+        .and_then(|inner| inner.strip_suffix("]]"))
+        .is_some_and(|inner| inner.eq_ignore_ascii_case(close_name))
 }
 
 fn parse_lost_owner_block<'r, 't>(

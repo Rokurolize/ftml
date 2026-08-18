@@ -160,11 +160,16 @@ fn parse_wikidot_image_source<'t>(source: Cow<'t, str>) -> Option<ImageSource<'t
             size: ImageSize::Medium,
         });
     }
-    if source.len() >= 2
-        && matches!(source.as_bytes().first(), Some(b'\'' | b'"'))
-        && source.as_bytes().first() == source.as_bytes().last()
-    {
-        let inner = &source[1..source.len() - 1];
+    let quoted_inner = match source.as_bytes().first() {
+        Some(b'\'') => source
+            .strip_prefix('\'')
+            .and_then(|inner| inner.strip_suffix('\'')),
+        Some(b'"') => source
+            .strip_prefix('"')
+            .and_then(|inner| inner.strip_suffix('"')),
+        _ => None,
+    };
+    if let Some(inner) = quoted_inner {
         if is_url(inner) {
             return Some(ImageSource::Direct(FileSource::Url(source)));
         }

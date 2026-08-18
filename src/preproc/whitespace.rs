@@ -781,12 +781,15 @@ const TEST_CASES: [(&str, &str); 10] = [
         "concat:\napple banana CherryPineapple \\ grape\nblueberry",
     ),
     ("<\n        \n      \n  \n      \n>", "<\n\n>"),
-    ("\u{00a0}\u{00a0}\u{2007} apple", "    apple"),
+    (
+        "\u{00a0}\u{00a0}\u{2007} apple",
+        "\u{00a0}\u{00a0}\u{2007} apple",
+    ),
     ("x\\\\\n\ny", "xy"),
     ("\\\\\n\nX", "X"),
     (
         "\u{00a0}apple\n\u{2007}\u{00a0}banana\ncherry\u{00a0}",
-        " apple\n  banana\ncherry\u{00a0}",
+        "\u{00a0}apple\n\u{2007}\u{00a0}banana\ncherry\u{00a0}",
     ),
 ];
 
@@ -931,7 +934,7 @@ fn wikidot_adjacent_tab_link_separator_keeps_its_visible_spacing() {
             "BEGIN|[http://example.com/path END]\n",
             "[!--BEGIN|[http://example.com/path END]--]\n",
             "[[code]]\nBEGIN|[http://example.com/path    END]\n[[/code]]\n",
-            "@@BEGIN|[http://example.com/path END]@@",
+            "@@BEGIN|[http://example.com/path    END]@@",
         ),
     );
 }

@@ -1072,7 +1072,7 @@ fn literal_conditional_shapes_do_not_defer_existing_quote_typography() {
 
     substitute_wikidot(&mut text);
 
-    assert_eq!(text, "@@“[[iftags]]x[[/iftags]]”@@");
+    assert_eq!(text, "@@``[[iftags]]x[[/iftags]]''@@");
 
     let mut literal_close = "`[[iftags +missing]]@@[[/iftags]]@@'".to_owned();
     substitute_wikidot(&mut literal_close);

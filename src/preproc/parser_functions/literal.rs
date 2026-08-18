@@ -78,7 +78,7 @@ impl LiteralRegionIndex {
 
 fn collect_parser_function_literal_blocks(source: &str, ranges: &mut Vec<Range<usize>>) {
     let mut offset = 0usize;
-    let mut active: Option<(&'static str, usize)> = None;
+    let mut active: Option<ParserFunctionLiteralBlock> = None;
 
     for line in source.split_inclusive('\n') {
         let body = line
@@ -86,18 +86,31 @@ fn collect_parser_function_literal_blocks(source: &str, ranges: &mut Vec<Range<u
             .unwrap_or(line)
             .strip_suffix('\r')
             .unwrap_or_else(|| line.strip_suffix('\n').unwrap_or(line));
-        let lower = body.to_ascii_lowercase();
+        let (_, logical) = quote_depth_and_body(body);
+        let logical_start = offset + body.len() - logical.len();
+        let lower = logical.to_ascii_lowercase();
 
-        if let Some((close, start)) = active {
-            if let Some(close_start) = lower.find(close) {
-                ranges.push(start..offset + close_start + close.len());
-                active = None;
+        if let Some(block) = active.as_mut() {
+            if strict_parser_function_literal_name(&lower) == Some(block.name) {
+                block.depth += 1;
+                offset += line.len();
+                continue;
+            }
+            if let Some(close_start) = lower.find(block.close) {
+                if block.depth > 1 {
+                    block.depth -= 1;
+                } else {
+                    ranges.push(
+                        block.start..logical_start + close_start + block.close.len(),
+                    );
+                    active = None;
+                }
             }
             offset += line.len();
             continue;
         }
 
-        if !body.starts_with("[[") {
+        if !logical.starts_with("[[") {
             offset += line.len();
             continue;
         }
@@ -111,10 +124,10 @@ fn collect_parser_function_literal_blocks(source: &str, ranges: &mut Vec<Range<u
             continue;
         }
         let name = head.split_ascii_whitespace().next().unwrap_or_default();
-        let close = match name {
-            "code" => "[[/code]]",
-            "html" => "[[/html]]",
-            "raw" => "[[/raw]]",
+        let (name, close) = match name {
+            "code" => ("code", "[[/code]]"),
+            "html" => ("html", "[[/html]]"),
+            "raw" => ("raw", "[[/raw]]"),
             _ => {
                 offset += line.len();
                 continue;
@@ -122,16 +135,40 @@ fn collect_parser_function_literal_blocks(source: &str, ranges: &mut Vec<Range<u
         };
         let body_start = head_end + 2;
         if let Some(relative_close) = lower[body_start..].find(close) {
-            ranges.push(offset..offset + body_start + relative_close + close.len());
+            ranges.push(
+                logical_start..logical_start + body_start + relative_close + close.len(),
+            );
         } else {
-            active = Some((close, offset));
+            active = Some(ParserFunctionLiteralBlock {
+                name,
+                close,
+                start: logical_start,
+                depth: 1,
+            });
         }
         offset += line.len();
     }
 
-    if let Some((_, start)) = active {
-        ranges.push(start..source.len());
+    if let Some(block) = active {
+        ranges.push(block.start..source.len());
     }
+}
+
+#[derive(Clone, Copy, Debug)]
+struct ParserFunctionLiteralBlock {
+    name: &'static str,
+    close: &'static str,
+    start: usize,
+    depth: usize,
+}
+
+fn strict_parser_function_literal_name(lower: &str) -> Option<&str> {
+    let marker = lower.strip_prefix("[[")?;
+    if marker.starts_with(|character: char| character.is_ascii_whitespace()) {
+        return None;
+    }
+    let (head, _) = marker.split_once("]]")?;
+    Some(head.split_ascii_whitespace().next().unwrap_or_default())
 }
 
 #[derive(Clone, Copy, Debug)]

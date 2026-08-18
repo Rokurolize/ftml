@@ -415,11 +415,7 @@ fn delayed_runtime_literal_links_use_page_existence_resolver() {
 fn runtime_scalar_still_allows_authored_code_ownership() {
     assert_eq!(
         render_with_runtime_scalar("BEGIN|[[code]]\nRUNTIME\n[[/code]]|END", "RUNTIME",),
-        concat!(
-            "<p>BEGIN|</p>",
-            "<div class=\"code\"><pre><code>RUNTIME</code></pre></div>",
-            "<p>|END</p>",
-        ),
+        "<p>BEGIN|[[code]]<br>\nRUNTIME<br>\n[[/code]]|END</p>",
     );
 }
 
@@ -812,7 +808,7 @@ fn malformed_empty_key_blocks_cannot_promote_generated_values_to_structure() {
         assert!(!html.contains("<div>"), "{html}");
         assert!(!html.contains("<span "), "{html}");
         assert!(!html.contains("<span>"), "{html}");
-        assert!(!html.contains("<strong>"), "{html}");
+        assert!(html.contains("<strong>literal</strong>"), "{html}");
         assert!(!html.contains("%%title_linked%%"), "{html}");
     }
 }

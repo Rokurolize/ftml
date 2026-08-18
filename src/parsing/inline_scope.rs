@@ -4,7 +4,7 @@ use crate::tree::{
 use std::collections::BTreeSet;
 use std::mem;
 
-const MAX_ACTIVE_INLINE_SCOPES: usize = 256;
+const MAX_ACTIVE_INLINE_SCOPES: usize = 101;
 pub(super) const WIKIDOT_SCORE_SPAN_UNWRAPPED_ATTRIBUTE: &str =
     "data-ftml-score-span-own-line";
 

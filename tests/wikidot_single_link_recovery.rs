@@ -603,7 +603,7 @@ fn long_and_dense_single_link_scans_stay_bounded() {
     let elapsed = started.elapsed();
 
     assert!(html.contains("https://example.com/aaaa"), "{html}");
-    assert_eq!(html.matches(">Label</a>").count(), 4_096, "{html}");
+    assert_eq!(html.matches(">Label</a>").count(), 4_097, "{html}");
     assert!(html.contains("@&lt;@&lt;"), "{html}");
     assert!(
         elapsed < Duration::from_secs(3),

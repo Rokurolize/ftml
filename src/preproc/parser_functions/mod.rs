@@ -254,8 +254,15 @@ fn resolve_function_pass(
             {
                 replacements.push((function_start..end, String::new()));
                 search_start = end;
+                continue;
             }
-            continue;
+            let first_close = source[candidate.body_start..]
+                .find("]]")
+                .map(|offset| candidate.body_start + offset)
+                .unwrap_or(source.len());
+            if !source[candidate.body_start..first_close].contains('|') {
+                continue;
+            }
         }
 
         let resolution = match candidate.kind {
@@ -1022,7 +1029,7 @@ mod tests {
         assert_eq!(
             resolve_wikidot_parser_functions(source),
             concat!(
-                "[[span data-value=\"a|b\"shown[| hidden]",
+                "[[span data-value=\"a|b\"shown[[/span]] | hidden]]",
                 "[[#ifexpr 0 | no | outer-hidden]]",
                 "[[a href=\"/target\" | linked ]][[#if 1 | adjacent | no]]",
             ),
@@ -1314,16 +1321,26 @@ mod tests {
     }
 
     #[test]
-    fn unverified_invalid_inputs_fail_closed() {
-        for source in ["[[#expr abs(1,2)]]", "[[#expr 1 + <script>]]"] {
-            assert_eq!(resolve_wikidot_parser_functions(source), source);
+    fn invalid_inputs_emit_the_live_runtime_diagnostics() {
+        for (source, expected) in [
+            (
+                "[[#expr abs(1,2)]]",
+                "run-time error: too many arguments for function \"abs\"(1 -> 2)",
+            ),
+            (
+                "[[#expr 1 + <script>]]",
+                "run-time error: too few parameters for operator \"+\" (2 -> 1)",
+            ),
+        ] {
+            assert_eq!(resolve_wikidot_parser_functions(source), expected);
         }
     }
 
     #[test]
-    fn expression_length_limit_fails_closed() {
-        let overlong = format!("[[#expr {}]]", "1+".repeat(129));
-        assert_eq!(resolve_wikidot_parser_functions(&overlong), overlong);
+    fn expressions_beyond_the_old_256_byte_limit_still_evaluate() {
+        let expression = format!("{}1", "1+".repeat(129));
+        let source = format!("[[#expr {expression}]]");
+        assert_eq!(resolve_wikidot_parser_functions(&source), "130");
     }
 
     #[test]

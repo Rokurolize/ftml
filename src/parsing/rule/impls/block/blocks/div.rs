@@ -786,7 +786,10 @@ mod tests {
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
-        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(
+            !errors.is_empty(),
+            "literal fallback should retain diagnostics"
+        );
         assert_eq!(html, "<p>[[div id=&quot;credit-view&quot;]]X[[/div]]</p>",);
     }
 

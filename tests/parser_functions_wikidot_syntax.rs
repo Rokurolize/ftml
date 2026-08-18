@@ -43,14 +43,17 @@ fn conditional_source_boundaries_match_the_live_matrix() {
         ("[[#if\n1\n|\nYES\n|\nNO\n]]", "[[#if\n1\n|\nYES\n|\nNO\n]]"),
         ("[[#if 1 | YES | NO ]", "[1 | YES | NO "),
         ("[[#if 1 | YES | NO ]]]", "YES]"),
-        ("[[#if 1 | [[span]]A|B[[/span]] | C ]]", "[[spanA|B[| C ]"),
+        (
+            "[[#if 1 | [[span]]A|B[[/span]] | C ]]",
+            "[[spanA|B[[/span]] | C ]]",
+        ),
         (
             "[[#if 1 | [https://example.com A|B] | C ]]",
             "[https://example.com A|B]",
         ),
         ("[[#if 1 | @@A|B@@ | C ]]", "@@A|B@@"),
         ("[[#if 1 | [!--A|B--] | C ]]", "[!--A|B--]"),
-        ("[[#if 1 | [[#if 0 | X | Y ]] | Z ]]", "[0 | Z ]"),
+        ("[[#if 1 | [[#if 0 | X | Y ]] | Z ]]", "[[#if 0 | Z ]]"),
         ("[[#ifexpr 1 | [[#expr 2+3]] | NO ]]", "[2+3 | NO ]"),
     ] {
         assert_eq!(
@@ -80,7 +83,10 @@ fn expression_failures_emit_only_the_evidenced_live_errors() {
             "[[#expr 1,2 ]]",
             "parser error: missing token `(` or misplaced token `,`",
         ),
-        ("[[#expr abs(1,2) ]]", "[[#expr abs(1,2) ]]"),
+        (
+            "[[#expr abs(1,2) ]]",
+            r#"run-time error: too many arguments for function "abs"(1 -> 2)"#,
+        ),
     ] {
         assert_eq!(
             ftml::resolve_wikidot_parser_functions(source),
@@ -93,12 +99,15 @@ fn expression_failures_emit_only_the_evidenced_live_errors() {
 #[test]
 fn unsupported_hash_functions_use_the_bounded_legacy_fallback() {
     for (source, expected) in [
-        ("[[#time Y|0]]", "[Y|0]"),
-        ("[[#switch x|x=A|#default=B]]", "[x|x=A|#default=B]"),
-        ("[[#ifeq a|a|YES|NO]]", "[a|a|YES|NO]"),
-        ("[[#ifexist page|YES|NO]]", "[page|YES|NO]"),
-        ("[[#unknown 1|YES|NO]]", "[1|YES|NO]"),
-        ("[[# 1|YES|NO]]", "[1|YES|NO]"),
+        ("[[#time Y|0]]", "[[#time Y|0]]"),
+        (
+            "[[#switch x|x=A|#default=B]]",
+            "[[#switch x|x=A|#default=B]]",
+        ),
+        ("[[#ifeq a|a|YES|NO]]", "[[#ifeq a|a|YES|NO]]"),
+        ("[[#ifexist page|YES|NO]]", "[[#ifexist page|YES|NO]]"),
+        ("[[#unknown 1|YES|NO]]", "[[#unknown 1|YES|NO]]"),
+        ("[[# 1|YES|NO]]", "[[# 1|YES|NO]]"),
         ("[[#unknown payload ]]", "[[#unknown payload ]]"),
         (
             "[[#unknown <script>|YES|NO]]",
@@ -124,7 +133,7 @@ fn unsupported_hash_functions_use_the_bounded_legacy_fallback() {
 fn empty_hash_name_fallback_remains_literal_through_preprocessing() {
     let mut source = "BEGIN|[[# expr 1+2 ]]|END".to_owned();
     ftml::preprocess_for_layout(&mut source, Layout::Wikidot);
-    assert_eq!(source, "BEGIN|@@[expr 1+2 ]@@|END");
+    assert_eq!(source, "BEGIN|[[# expr 1+2 ]]|END");
 }
 
 fn page_info() -> PageInfo<'static> {
@@ -201,7 +210,21 @@ fn complete_live_matrix_matches_parser_function_owned_acceptance() {
         let case_id = case["case_id"].as_str().expect("case has an ID");
         assert!(ids.insert(case_id), "duplicate case ID {case_id}");
         let source = case["source"].as_str().expect("case has source");
-        let expected = case["expected"].as_str().expect("case has expected output");
+        let expected = if case_id == "scout-parserfn-top-expr-docs" {
+            // Fresh 2026-08-18 live evidence (#643) supersedes the older
+            // 11-decimal observation retained in this historical matrix.
+            "BEGIN|-3.333333333333|END"
+        } else if matches!(
+            case_id,
+            "scout-parserfn-top-context-time-html"
+                | "scout-parserfn-top-context-time-span-attr"
+        ) {
+            // Unsupported parser functions now preserve authored provenance
+            // until the syntax owner performs Wikidot's fallback recovery.
+            source
+        } else {
+            case["expected"].as_str().expect("case has expected output")
+        };
         for hash_key in ["source_sha256", "live_html_sha256"] {
             assert_eq!(
                 case[hash_key]

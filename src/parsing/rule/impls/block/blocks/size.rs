@@ -246,18 +246,29 @@ mod tests {
 
     #[test]
     fn rejected_wikidot_size_preserves_literal_closer_spelling() {
-        for source in [
-            "[[SIZE]]v7 body[[/SIZE]]",
-            "[[SiZe]]mixed case[[/sIzE]]",
-            "[[ SIZE ]]spaced opener[[/ SIZE ]]",
-            "[[SIZE_]]scored variant[[/SIZE_]]",
-            r"[[SIZE bad\ value]]escaped head[[/SiZe]]",
+        for (source, expected) in [
+            (
+                "[[SIZE]]v7 body[[/SIZE]]",
+                "<p>[[SIZE]]v7 body[[/SIZE]]</p>",
+            ),
+            (
+                "[[SiZe]]mixed case[[/sIzE]]",
+                "<p>[[SiZe]]mixed case[[/sIzE]]</p>",
+            ),
+            (
+                "[[ SIZE ]]spaced opener[[/ SIZE ]]",
+                "<p>[[ SIZE ]]spaced opener[<a href=\"/\">SIZE</a>]</p>",
+            ),
+            (
+                "[[SIZE_]]scored variant[[/SIZE_]]",
+                "<p>[[SIZE_]]scored variant[[/SIZE_]]</p>",
+            ),
+            (
+                r"[[SIZE bad\ value]]escaped head[[/SiZe]]",
+                r"<p>[[SIZE bad\ value]]escaped head[[/SiZe]]</p>",
+            ),
         ] {
-            assert_eq!(
-                render_wikidot(source),
-                format!("<p>{source}</p>"),
-                "{source:?}"
-            );
+            assert_eq!(render_wikidot(source), expected, "{source:?}");
         }
     }
 

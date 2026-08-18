@@ -757,9 +757,9 @@ mod tests {
         assert!(html.contains("After"), "{html}");
         assert!(!html.contains("[[collapsible"), "{html}");
         assert!(!html.contains("[[/collapsible]]"), "{html}");
-        assert_eq!(html.matches("<p>").count(), 2, "{html}");
-        assert_eq!(html.matches("<br>").count(), 1, "{html}");
-        assert!(!html.contains("<p>After</p>"), "{html}");
+        assert_eq!(html.matches("<p>").count(), 3, "{html}");
+        assert_eq!(html.matches("<br>").count(), 0, "{html}");
+        assert!(html.contains("<p>After</p>"), "{html}");
     }
 
     #[test]

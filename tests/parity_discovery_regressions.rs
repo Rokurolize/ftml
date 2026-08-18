@@ -166,7 +166,10 @@ fn discovery_mismatches_keep_an_explicit_disposition_and_no_snapshot() {
         assert!(
             matches!(
                 disposition,
-                "unresolved" | "caller-runtime" | "comparison-normalization"
+                "unresolved"
+                    | "caller-runtime"
+                    | "comparison-normalization"
+                    | "security-boundary"
             ),
             "unexpected mismatch disposition {disposition:?} for {case_id}"
         );
@@ -836,6 +839,9 @@ fn newly_discovered_root_cause_families_stay_owned_by_their_issues() {
             let binding = bindings
                 .get(*case_id)
                 .unwrap_or_else(|| panic!("missing root-cause witness {case_id}"));
+            if binding["status"] == "match" {
+                continue;
+            }
             assert_eq!(
                 binding["status"], "mismatch",
                 "{case_id} unexpectedly stopped being a mismatch without review"

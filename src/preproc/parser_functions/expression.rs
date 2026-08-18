@@ -657,7 +657,7 @@ mod tests {
         );
         assert_eq!(
             evaluate(&"1+".repeat(129), options),
-            Err(ExpressionError::Invalid),
+            Err(ExpressionError::TooFewParameters("+")),
         );
     }
 }

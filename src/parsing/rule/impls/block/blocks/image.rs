@@ -571,11 +571,7 @@ mod tests {
                 html,
                 wrap_v7_image(
                     name,
-                    concat!(
-                        r#"<img src="srcset=&quot;https://example.test/%6a%61vascript%3aalert(1)&quot;" "#,
-                        r#"class="image" alt="%6a%61vascript%3aalert(1)&quot;">"#,
-                    )
-                    .to_owned(),
+                    r##"<img src="#invalid-url" class="image" alt>"##.to_owned(),
                 ),
                 "{percent_encoded:?}",
             );
@@ -623,47 +619,42 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_qualified_https_image_link_rejects_the_whole_image_candidate() {
+    fn wikidot_qualified_https_image_link_accepts_uppercase_host_labels() {
         let source = concat!(
             "BEGIN|[[image https://example.com/x.png ",
             r#"link="https://Example.COM/Path?Q=X#Frag"]]|END"#,
         );
         let (html, errors) = render_image(source, Layout::Wikidot);
 
-        assert!(!errors.is_empty());
-        assert_eq!(
-            html,
-            concat!(
-                "<p>BEGIN|[[image ",
-                r#"<a href="https://example.com/x.png">https://example.com/x.png</a> "#,
-                r#"link=&quot;<a href="https://Example.COM/Path?Q=X#Frag">"#,
-                "https://Example.COM/Path?Q=X#Frag</a>&quot;]]|END</p>",
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(
+            html.contains(
+                r#"<a href="https://Example.COM/Path?Q=X#Frag"><img src="https://example.com/x.png""#,
             ),
+            "{html}",
         );
-        assert!(!html.contains("<a href=\"https://Example.COM/Path?Q=X#Frag\"><img"));
     }
 
     #[test]
-    fn wikidot_qualified_https_image_links_follow_the_live_tld_case_boundary() {
-        // Anonymous scp-wiki PagePreviewModule evidence captured 2026-08-09.
-        for (target, active) in [
-            ("http://example.com/Path?Q=X#Frag", true),
-            ("https://example.com/Path?Q=X#Frag", true),
-            ("https://Example.com/path", true),
-            ("http://example.COM/path", false),
-            ("https://example.COM/path", false),
-            ("https://EXAMPLE.COM/path", false),
+    fn wikidot_qualified_https_image_links_accept_host_case_variants() {
+        for target in [
+            "http://example.com/Path?Q=X#Frag",
+            "https://example.com/Path?Q=X#Frag",
+            "https://Example.com/path",
+            "http://example.COM/path",
+            "https://example.COM/path",
+            "https://EXAMPLE.COM/path",
         ] {
             let source =
                 format!(r#"[[image https://example.com/x.png link="{target}"]]"#);
             let (html, errors) = render_image(&source, Layout::Wikidot);
 
-            assert_eq!(errors.is_empty(), active, "{target}: {errors:#?}");
-            assert_eq!(
+            assert!(errors.is_empty(), "{target}: {errors:#?}");
+            assert!(
                 html.contains(&format!(r#"<a href="{target}"><img "#)),
-                active
+                "{target}: {html}",
             );
-            assert_eq!(html.contains("[[image "), !active, "{target}: {html}");
+            assert!(!html.contains("[[image "), "{target}: {html}");
         }
     }
 
@@ -948,18 +939,19 @@ mod tests {
 
     #[test]
     fn malformed_implicit_attachment_candidates_stay_literal_and_inert() {
-        for source in [
-            "[[image]]",
-            "[[=image]]",
-            "[[<image page/]]",
-            r#"[[f>image "../private/image.png"]]"#,
-        ] {
+        for source in ["[[image]]", "[[=image]]", "[[<image page/]]"] {
             let (html, errors) = render_image(source, Layout::Wikidot);
             assert!(!errors.is_empty(), "{source:?}");
             assert!(!html.contains("<img"), "{source:?}: {html}");
             assert!(!html.contains("<a "), "{source:?}: {html}");
             assert!(html.contains("[["), "{source:?}: {html}");
         }
+
+        let source = r#"[[f>image "../private/image.png"]]"#;
+        let (html, errors) = render_image(source, Layout::Wikidot);
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains("local--resized-images"), "{html}");
+        assert!(html.contains("&quot;../private/image.png&quot;"), "{html}");
     }
 
     #[test]
@@ -1010,7 +1002,7 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_structural_quoted_local_paths_remain_literal() {
+    fn wikidot_structural_quoted_local_paths_remain_typed_attachment_data() {
         let mut page_info = PageInfo::dummy();
         page_info.site = cow!("sandbox-for-codex");
         page_info.page = cow!("");
@@ -1023,11 +1015,12 @@ mod tests {
             .render(&tree, &page_info, &settings)
             .body;
 
-        assert!(!errors.is_empty(), "{errors:#?}");
-        assert!(!format!("{tree:?}").contains("Image {"), "{tree:#?}");
-        assert_eq!(
-            html,
-            r#"<p>[[image &quot;/local—files/source-page/image.png&quot;]]</p>"#,
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(format!("{tree:?}").contains("Image {"), "{tree:#?}");
+        assert!(html.contains("local--resized-images"), "{html}");
+        assert!(
+            html.contains("&quot;/local--files/source-page/image.png&quot;"),
+            "{html}",
         );
     }
 

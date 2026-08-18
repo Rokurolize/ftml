@@ -463,7 +463,9 @@ fn canonicalize_root_collapsible_inline_quoted_closers(
             } else if quote_depth > 0 && opener_depths.last() == Some(&0) {
                 let trimmed = quoted_body.trim_end_matches([' ', '\t']);
                 let has_close = trimmed.len() >= CLOSE.len()
-                    && trimmed[trimmed.len() - CLOSE.len()..].eq_ignore_ascii_case(CLOSE);
+                    && trimmed
+                        .get(trimmed.len() - CLOSE.len()..)
+                        .is_some_and(|suffix| suffix.eq_ignore_ascii_case(CLOSE));
                 if !has_close {
                     output.push(line);
                     continue;
@@ -2027,6 +2029,21 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(html.matches("class=\"collapsible-block\"").count(), 128);
         assert_eq!(html.matches("End log.").count(), 128);
+    }
+
+    #[test]
+    fn root_collapsible_scan_handles_multibyte_quoted_lines_without_a_closer() {
+        let mut source = concat!(
+            "[[collapsible show=\"report\"]]\n",
+            "> **Author:** San José Public Library\n",
+            "> End log.[[/collapsible]]\n",
+        )
+        .to_owned();
+
+        substitute(&mut source);
+
+        assert!(source.contains("> **Author:** San José Public Library\n"));
+        assert!(source.contains("> End log.\n[[/collapsible]]\n"));
     }
 
     #[test]

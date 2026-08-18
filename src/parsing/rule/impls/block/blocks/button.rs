@@ -11,6 +11,7 @@
  */
 
 use super::prelude::*;
+use crate::parsing::discard_wikidot_controls;
 use crate::parsing::rule::impls::block::parser::parse_wikidot_attributes;
 use crate::tree::{
     AttributeMap, StandaloneButton, StandaloneButtonAction, TagAlteration,
@@ -18,7 +19,7 @@ use crate::tree::{
 };
 use std::borrow::Cow;
 
-const MAX_BUTTON_HEAD_BYTES: usize = 64 * 1024;
+const MAX_BUTTON_HEAD_BYTES: usize = 1024 * 1024;
 
 pub const BLOCK_BUTTON: BlockRule = BlockRule {
     name: "block-button",
@@ -46,6 +47,8 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Button doesn't allow star flag");
     assert!(!flag_score, "Button doesn't allow score flag");
     assert_block_name(&BLOCK_BUTTON, name);
+
+    parser.check_page_syntax()?;
 
     if !in_head {
         return Err(parser.make_err(ParseErrorKind::BlockMissingArguments));
@@ -119,7 +122,14 @@ fn parse_button_head(head: &str, wikidot: bool) -> Option<ParsedButton<'_>> {
     }
 
     let mut arguments = parse_wikidot_attributes(tail);
-    let label = nonempty(arguments.get("text")).unwrap_or_else(|| {
+    let label = nonempty(arguments.get("text").map(|value| {
+        if wikidot {
+            discard_wikidot_controls(value)
+        } else {
+            value
+        }
+    }))
+    .unwrap_or_else(|| {
         Cow::Borrowed(if action.eq_ignore_ascii_case("source") {
             "view source"
         } else if action.eq_ignore_ascii_case("edit") {
@@ -193,7 +203,13 @@ fn parse_set_tags(mut tail: &str, wikidot: bool) -> ParsedButton<'_> {
     }
 
     let mut arguments = parse_wikidot_attributes(tail);
-    let Some(label) = nonempty(arguments.get("text")) else {
+    let Some(label) = nonempty(arguments.get("text").map(|value| {
+        if wikidot {
+            discard_wikidot_controls(value)
+        } else {
+            value
+        }
+    })) else {
         return ParsedButton::MissingSetTagsText;
     };
     let class = nonempty(arguments.get("class"));
@@ -208,7 +224,10 @@ fn parse_set_tags(mut tail: &str, wikidot: bool) -> ParsedButton<'_> {
 }
 
 fn is_set_tags_head(head: &str) -> bool {
-    let head = trim_wikidot_space(head);
+    // This predicate runs at every line break in an unclosed multiline head.
+    // Inspect only the action prefix rather than repeatedly trimming the
+    // growing suffix.
+    let head = head.trim_start_matches(is_wikidot_set_tags_separator);
     let action_end = head
         .find(is_wikidot_set_tags_separator)
         .unwrap_or(head.len());

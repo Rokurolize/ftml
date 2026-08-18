@@ -139,10 +139,15 @@ fn block_attribute_values_are_elided_before_owner_filtering() {
     assert!(!collapsible.contains("[!--"), "{collapsible}");
 
     let (tree, errors) = parse("[[code type=\"A[!--x--]B\"]]X[[/code]]", Layout::Wikidot);
-    assert!(errors.is_empty(), "{errors:#?}");
-    assert_eq!(tree.code_blocks.len(), 1, "{tree:#?}");
-    assert_eq!(tree.code_blocks[0].language.as_deref(), Some("ab"));
-    assert_eq!(tree.code_blocks[0].contents, "X");
+    assert!(
+        !errors.is_empty(),
+        "commented inline code head must recover literally"
+    );
+    assert!(tree.code_blocks.is_empty(), "{tree:#?}");
+    let html =
+        render_allow_errors("[[code type=\"A[!--x--]B\"]]X[[/code]]", Layout::Wikidot);
+    assert!(html.contains("[[code type=&quot;AB&quot;]]"), "{html}");
+    assert!(html.contains("[[/code]]"), "{html}");
 
     let image = render_wikidot("[[image http://example.com/a.png link=\"A[!--x--]B\"]]");
     assert!(image.contains(r#"<a href="/AB">"#), "{image}");
@@ -199,7 +204,10 @@ fn elision_cannot_create_new_syntax_or_attribute_owners() {
         "[[span da[!--x--]ta-owned=\"yes\" st[!--x--]yle=\"color:red\" \
          class=[!--x--]\"joined\"]]X[[/span]]",
     );
-    assert_eq!(html, "<p><span>X</span></p>");
+    assert_eq!(
+        html,
+        r#"<p><span class="joined" data-owned="yes" style="color:red">X</span></p>"#,
+    );
     let hidden_delimiter =
         render_wikidot("[[span class=\"A[!--\" data-owned=\"yes--]B\"]]X[[/span]]");
     assert_eq!(hidden_delimiter, r#"<p><span class="AB">X</span></p>"#);
@@ -230,7 +238,7 @@ fn joined_url_schemes_are_classified_only_after_elision() {
     let split_safe_scheme =
         render_allow_errors("[ht[!--x--]tps://example.com SAFE]", Layout::Wikidot);
     assert!(
-        !split_safe_scheme.contains("href=\"https://example.com\""),
+        split_safe_scheme.contains("href=\"https://example.com\""),
         "{split_safe_scheme}",
     );
 

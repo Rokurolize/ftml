@@ -57,15 +57,25 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Date doesn't allow star flag");
     assert!(!flag_score, "Date doesn't allow score flag");
     assert_block_name(&BLOCK_DATE, name);
+    if parser.settings().layout.legacy() && name != "date" {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     let (value, mut arguments) =
         parser.get_head_name_map_wikidot(&BLOCK_DATE, in_head)?;
     let (format, ago_hover) = split_ago_hover_format(arguments.get("format"));
-    let format = filter_supported_format(format);
+    let format = if parser.settings().layout.legacy() {
+        format
+    } else {
+        filter_supported_format(format)
+    };
+    let timezone_count = arguments.count_key("tz");
     let arg_timezone = arguments.get("tz");
-    let hover = arguments.get_bool(parser, "hover")?.unwrap_or(false) || ago_hover;
+    let hover = arguments.get("hover").as_deref() == Some("true") || ago_hover;
 
-    if parser.settings().layout.legacy() && value.parse::<i64>().is_err() {
+    if parser.settings().layout.legacy()
+        && (value.starts_with('+') || value.parse::<i64>().is_err())
+    {
         return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
     }
 
@@ -74,15 +84,23 @@ fn parse_fn<'r, 't>(
         .map_err(|_| parser.make_err(ParseErrorKind::BlockMalformedArguments))?;
 
     if let Some(arg) = arg_timezone {
-        // Parse out argument timezone
-        let offset = parse_timezone(&arg)
-            .map_err(|_| parser.make_err(ParseErrorKind::BlockMalformedArguments))?;
-
-        // Add timezone. If None, then conflicting timezones.
-        date = match date.add_timezone(offset) {
-            Some(date) => date,
-            None => return Err(conflicting_timezone_error(parser, arg.as_ref(), offset)),
-        };
+        if parser.settings().layout.legacy() {
+            if timezone_count == 1
+                && let Ok(offset) = parse_wikidot_timezone(&arg)
+                && let Some(with_timezone) = date.add_timezone(offset)
+            {
+                date = with_timezone;
+            }
+        } else {
+            let offset = parse_timezone(&arg)
+                .map_err(|_| parser.make_err(ParseErrorKind::BlockMalformedArguments))?;
+            date = match date.add_timezone(offset) {
+                Some(date) => date,
+                None => {
+                    return Err(conflicting_timezone_error(parser, arg.as_ref(), offset));
+                }
+            };
+        }
     }
 
     // Build and return element
@@ -238,6 +256,23 @@ fn parse_timezone(value: &str) -> Result<UtcOffset, DateParseError> {
 
     // Exhausted all cases, failing
     Err(DateParseError)
+}
+
+fn parse_wikidot_timezone(value: &str) -> Result<UtcOffset, DateParseError> {
+    static TIMEZONE_REGEX: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"^([+-])?([0-9]{1,2})(?::([0-9]{2}))?$").unwrap());
+    let captures = TIMEZONE_REGEX.captures(value).ok_or(DateParseError)?;
+    let negative = captures.get(1).is_some_and(|sign| sign.as_str() == "-");
+    let hour = captures[2].parse::<i32>().map_err(|_| DateParseError)?;
+    let minute = captures
+        .get(3)
+        .map_or(Ok(0), |value| value.as_str().parse::<i32>())
+        .map_err(|_| DateParseError)?;
+    if hour > 23 || minute > 59 || negative && hour == 0 && minute == 0 {
+        return Err(DateParseError);
+    }
+    let seconds = (hour * 3600 + minute * 60) * if negative { -1 } else { 1 };
+    get_offset(seconds)
 }
 
 #[derive(Debug, PartialEq, Eq)]

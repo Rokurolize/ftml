@@ -351,6 +351,24 @@ fn owned_gallery_round_trips_and_rejects_forged_authority() {
     assert!(serde_json::from_value::<SyntaxTree<'_>>(forged_argument).is_err());
 }
 
+#[test]
+fn crlf_residual_gallery_closer_round_trips() {
+    let source = concat!(
+        "[[gallery size=\"thumbnail\"]]\r\n",
+        ": https://example.com/a.png\r\n",
+        "[[/gallery]]]\r\n",
+        "after",
+    );
+    let (tree, errors) = parse(source);
+    assert!(errors.is_empty(), "{errors:#?}");
+
+    let serialized =
+        serde_json::to_string(&tree).expect("serialize CRLF residual gallery");
+    let restored: SyntaxTree<'_> =
+        serde_json::from_str(&serialized).expect("restore CRLF residual gallery");
+    assert_eq!(restored.elements, tree.elements);
+}
+
 fn render_delayed(
     input: &DelayedInput<'_>,
     bindings: &SlotBindings<'_>,

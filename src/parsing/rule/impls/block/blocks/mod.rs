@@ -20,7 +20,6 @@
 
 mod prelude {
     pub use super::super::{Arguments, BlockRule};
-    use crate::delayed::DelayedElement;
     pub use crate::parsing::ParseError;
     pub use crate::parsing::parser::Parser;
     pub use crate::parsing::prelude::*;
@@ -64,62 +63,13 @@ mod prelude {
         parser: &Parser<'r, 't>,
         value: Option<&'t str>,
     ) -> Result<&'t str, ParseError> {
-        require_block_argument(parser, value).map(str::trim)
-    }
-
-    #[cold]
-    #[inline(never)]
-    pub fn recover_wikidot_empty_key_candidate<'r, 't>(
-        parser: &mut Parser<'r, 't>,
-        block_rule: &BlockRule,
-        literal_start: usize,
-        paragraph_safe: bool,
-    ) -> ParseResult<'r, 't, Elements<'t>>
-    where
-        'r: 't,
-    {
-        let error = parser.make_err(ParseErrorKind::BlockMalformedArguments);
-        if !parser.has_body_end_block(block_rule) {
-            return Err(error);
-        }
-
-        let _ = parser.get_body_text(block_rule)?;
-        let owner_end = parser.current().span.start;
-        let source = parser.full_text().inner();
-        let generated = parser.generated_in_range(literal_start..owner_end);
-        let elements = if generated.is_empty() {
-            if paragraph_safe {
-                literal_block_candidate(&source[literal_start..owner_end])
+        require_block_argument(parser, value).map(|value| {
+            if parser.settings().layout.legacy() {
+                value.trim_matches([' ', '\t', '\r', '\n'])
             } else {
-                text!(&source[literal_start..owner_end]).into()
+                value.trim()
             }
-        } else {
-            Element::Delayed(DelayedElement::shell(
-                source,
-                literal_start..owner_end,
-                &generated,
-            ))
-            .into()
-        };
-
-        ok!(paragraph_safe; elements, vec![error])
-    }
-
-    fn literal_block_candidate(source: &str) -> Elements<'_> {
-        let mut elements = Vec::new();
-        for chunk in source.split_inclusive('\n') {
-            let (text, line_break) = match chunk.strip_suffix('\n') {
-                Some(text) => (text, true),
-                None => (chunk, false),
-            };
-            if !text.is_empty() {
-                elements.push(text!(text));
-            }
-            if line_break {
-                elements.push(Element::LineBreak);
-            }
-        }
-        Elements::Multiple(elements)
+        })
     }
 }
 

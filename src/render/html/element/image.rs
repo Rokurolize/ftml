@@ -20,7 +20,7 @@
 
 use super::prelude::*;
 use crate::tree::{AttributeMap, FloatAlignment, ImageSource, LinkLocation};
-use crate::url::normalize_link;
+use crate::url::{dangerous_scheme, normalize_link};
 
 pub fn render_image(
     ctx: &mut HtmlContext,
@@ -124,14 +124,34 @@ fn render_image_element_wikidot(
     alignment: Option<FloatAlignment>,
     attributes: &AttributeMap,
 ) {
+    let encoded_wikidot_prefix = image_url.starts_with('%')
+        && (image_url.contains("http://") || image_url.contains("https://"));
+    let safety_url = image_url
+        .strip_prefix('"')
+        .and_then(|value| value.strip_suffix('"'))
+        .or_else(|| {
+            image_url
+                .strip_prefix('\'')
+                .and_then(|value| value.strip_suffix('\''))
+        })
+        .unwrap_or(image_url);
+    let image_url = if dangerous_scheme(safety_url) && !encoded_wikidot_prefix {
+        "#invalid-url"
+    } else {
+        image_url
+    };
     let get = |name| attributes.get().get(name).map(|value| value.as_ref());
-    let default_alt = image_url
-        .split(['?', '#'])
-        .next()
-        .unwrap_or(image_url)
-        .rsplit('/')
-        .next()
-        .unwrap_or("");
+    let default_alt = if image_url.contains("&#") {
+        image_url.rsplit('/').next().unwrap_or("")
+    } else {
+        image_url
+            .split(['?', '#'])
+            .next()
+            .unwrap_or(image_url)
+            .rsplit('/')
+            .next()
+            .unwrap_or("")
+    };
     let alt = get("alt").or(attachment_alt).unwrap_or(default_alt);
     let class = get("class").unwrap_or("image");
     let width = get("width");

@@ -255,6 +255,13 @@ impl<'t> Arguments<'t> {
         self.empty_key_present
     }
 
+    pub(crate) fn count_key(&self, key: &str) -> usize {
+        self.raw
+            .iter()
+            .filter(|argument| argument.name.eq_ignore_ascii_case(key))
+            .count()
+    }
+
     pub fn mark_spaced_equals(&mut self) {
         self.spaced_equals = true;
     }
@@ -359,6 +366,9 @@ impl<'t> Arguments<'t> {
             }
 
             let key = key.as_str();
+            if settings.layout.legacy() && key.eq_ignore_ascii_case("hidden") {
+                continue;
+            }
             if self.case_sensitive && key.bytes().any(|byte| byte.is_ascii_uppercase()) {
                 continue;
             }
@@ -377,6 +387,12 @@ impl<'t> Arguments<'t> {
 
 fn normalize_wikidot_unsafe_anchor_href<'t>(value: &Cow<'t, str>) -> Cow<'t, str> {
     let value = normalize_wikidot_html_attribute_value(value);
+    let nbsp_padded = value.starts_with('\u{00a0}') || value.ends_with('\u{00a0}');
+    let value = if nbsp_padded {
+        Cow::Owned(value.trim_matches('\u{00a0}').to_owned())
+    } else {
+        value
+    };
     let mut output = String::with_capacity(value.len());
     let mut pending_dash = false;
     for character in value.chars() {
@@ -384,7 +400,7 @@ fn normalize_wikidot_unsafe_anchor_href<'t>(value: &Cow<'t, str>) -> Cow<'t, str
             pending_dash = !output.is_empty();
             continue;
         }
-        if character == '\\' {
+        if character == '\\' || (nbsp_padded && character == '/') {
             continue;
         }
         if character == ':' {

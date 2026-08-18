@@ -23,6 +23,20 @@
       "reason": "reviewed-context-free-external-triple-link"
     },
     {
+      "path": "tests/fixtures/parity-gaps/block-head-extra-close-file/input.ftml",
+      "source_sha256": "ef2cdae44f6787331bd91274d0b93a2af58d8cbbab19ad874c06a57f1bc8bcee",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-file-link-source"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/block-head-extra-close-user/input.ftml",
+      "source_sha256": "a4081c0ecd1bc1026a229dad524274f9a451222a840e01a4bdacfbd8323b9e53",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-missing-user"
+    },
+    {
       "path": "tests/fixtures/parity-gaps/comment-autourl-split-mailto-scheme/input.ftml",
       "source_sha256": "a2759eeaead9e3700ee9e2146b7d22bebbb4ec244962402383070c46a8809ea3",
       "execution_class": "page-preview-isolated",
@@ -128,6 +142,146 @@
       "reason": "reviewed-context-free-comment-elided-variable-name"
     },
     {
+      "path": "tests/fixtures/parity-gaps/file-fields-nbsp/input.ftml",
+      "source_sha256": "1f0e69f073ec0169ae60fbd38901ead846cd6953fa994338931f0e2c3869fe8b",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-file-link-source"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/file-name-edge-nbsp/input.ftml",
+      "source_sha256": "8eeeec3e9c0ecdead413531e3182ee73d4d62dd98ff5c52a3f660bb885cc0198",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-file-link-source"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/file-quoted-fragment/input.ftml",
+      "source_sha256": "de0b0e8871227ed8baf466b46fb6dafa33898e29e18b4b2ff303f1407f0cfd09",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-file-link-source"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/file-quoted-local/input.ftml",
+      "source_sha256": "f0b2ad4c45adbfcf114ad5b557f25695ab3811c81d8aadf1c6d9f07b5b0d4e85",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-file-link-source"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/file-quoted-page/input.ftml",
+      "source_sha256": "e2c0d76a78633c47bd42d558dba60b20f2f3a10917e36731dfb62bc19d8aceb0",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-file-link-source"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/file-single-quoted-local/input.ftml",
+      "source_sha256": "77048c47d39c666221ff7a47c656aca68e4d8bec7b3633e17759197777af3ac7",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-file-link-source"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/ifcategory-bare-minus/input.ftml",
+      "source_sha256": "56075e74e3300843fc77e673be43ff38f869a4c5f30bf7d29b1480b06ed8ced5",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-malformed-ifcategory-condition"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/ifcategory-empty-spaced/input.ftml",
+      "source_sha256": "218afed54e7ee0f7b6d491605ae507402264a4ff3c2346be789c48d2637eb848",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-empty-ifcategory-condition"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/ifcategory-no-arguments/input.ftml",
+      "source_sha256": "6672c61cb2fdeda01dc4f190b38c7ff2aa2e358cbe27592e14cb9809289526e3",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-empty-ifcategory-condition"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/ifcategory-titlecase/input.ftml",
+      "source_sha256": "b3dee2a800c65fc9a533ae4319ba88d29b12cab6f1b71994a4fb5f684a15ac6d",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-rejected-ifcategory-owner-case"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/ifcategory-uppercase/input.ftml",
+      "source_sha256": "6e2b04c4127d57217b58d974d059c7ac1abe648a22343cb52d1546f2eeed47ef",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-rejected-ifcategory-owner-case"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/iframe-mailto-scheme/input.ftml",
+      "source_sha256": "1e7ae5e62886adc4cbe84873e4c30900a0074ee92c48d2d0ba62dcacd0b522d8",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-iframe-scheme-token"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/iframe-uppercase-mailto/input.ftml",
+      "source_sha256": "57af6107ac1d659e3da76df07316e9dbf3ecabaf0db670e72ce8de1e03f8b2a0",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-iframe-scheme-token"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/iftags-bare-minus-context-free/input.ftml",
+      "source_sha256": "2d0ae4213b618d87eb4bf4b96d138eb24312f2f5615384d0a6c8c5e3f38f83b1",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-malformed-iftags-condition"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/iftags-bare-plus-context-free/input.ftml",
+      "source_sha256": "e58638cdda815def023b8e9e0486274903f6a79a93394c1c77b6163de956002c",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-malformed-iftags-condition"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/iftags-empty-spaced-context-free/input.ftml",
+      "source_sha256": "2933eb65d8ef19a29c4121eb67557b0403ffe5466a71ce7d4ae76cc6f51d076c",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-empty-iftags-condition"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/iftags-no-arguments-context-free/input.ftml",
+      "source_sha256": "a8c571d0e98c93886c64135ba0a083b0f9c81e53cf9b9619c0189d788dce9e45",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-empty-iftags-condition"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/iftags-titlecase-empty-context-free/input.ftml",
+      "source_sha256": "d66dfdea7c33a5731719cf9635659920bc797571607712a34df49a84669ae001",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-empty-iftags-condition"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/iftags-uppercase-empty-context-free/input.ftml",
+      "source_sha256": "c81751e8e59bc7e11e06d86b104dd49ed7423472ecfc5eb2f33c228d89a7aee6",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-empty-iftags-condition"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/image-source-mailto/input.ftml",
+      "source_sha256": "c5624be4edd6a6bcaf5900b10bcebc0da76d48f49ece8af6e334b27d661f0706",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-image-source-token"
+    },
+    {
       "path": "tests/fixtures/parity-gaps/recorded17-triple-anchor-adjacent-run5/input.ftml",
       "source_sha256": "06c35e1a8f5e6021325d682324e7e33c47249e1fd495fea7a92e3fbc95717bbf",
       "execution_class": "page-preview-isolated",
@@ -154,6 +308,34 @@
       "execution_class": "saved-page-batch",
       "page_scope": "batch-safe",
       "reason": "reviewed-context-free-unsafe-triple-link-scheme"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/triple-link-label-edge-nbsp/input.ftml",
+      "source_sha256": "3f918c0a2d7b278f1b1a50d3c893d149d69b4e6d50e52e014313f61805f6af22",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-external-triple-link"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/user-uppercase-missing/input.ftml",
+      "source_sha256": "5f4436eabadacb643bc46d1f6b95d9c5af4c55765058c53dc8b5e597eef7b8a1",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-missing-user"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/whitespace-triple-link-label-nul/input.ftml",
+      "source_sha256": "0ff23381ebeb3d2790a536d74b08b15eb9d7cbbba181f80c3f6830f3dcb4594e",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-external-triple-link"
+    },
+    {
+      "path": "tests/fixtures/parity-gaps/whitespace-triple-link-nul/input.ftml",
+      "source_sha256": "b3584250709f5897b6d0bf58a4258e70cbae9dafa2cc73f6aaca08732fe4e440",
+      "execution_class": "page-preview-isolated",
+      "page_scope": "isolated",
+      "reason": "reviewed-context-free-external-triple-link"
     }
   ]
 }

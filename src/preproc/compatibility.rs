@@ -47,8 +47,8 @@ fn marker_line(line: &str) -> Option<(&str, Marker)> {
         return None;
     }
 
-    let marker = &body[marker_start..];
-    let kind = match marker {
+    let marker = body[marker_start..].to_ascii_lowercase();
+    let kind = match marker.as_str() {
         "[[=]]" => Marker::CenterOpen,
         "[[/=]]" => Marker::CenterClose,
         "[[/collapsible]]" => Marker::CollapsibleClose,
@@ -91,15 +91,10 @@ fn centered_collapsible_opener(
     center_index: usize,
     prefix: &str,
 ) -> Option<(usize, usize)> {
-    const MAX_PRELUDE_LINES: usize = 32;
-
     let mut index = center_index + 1;
     let mut wrapper_divs = 0;
     let required_quote_depth = prefix.bytes().filter(|&byte| byte == b'>').count();
-    while index < lines.len()
-        && index - center_index <= MAX_PRELUDE_LINES
-        && !literal_lines[index]
-    {
+    while index < lines.len() && !literal_lines[index] {
         let (body, _) = split_line(&lines[index]);
         let (line_quote_depth, _) = quote_depth_and_body(body);
         if line_quote_depth < required_quote_depth {
@@ -165,7 +160,9 @@ pub(super) fn substitute_for_layout(text: &mut String, wikidot: bool) {
         .map(str::to_owned)
         .collect();
     let literal_lines = literal_line_mask(&lines);
-    canonicalize_unquoted_collapsible_closers(&mut lines, &literal_lines);
+    if !wikidot {
+        canonicalize_unquoted_collapsible_closers(&mut lines, &literal_lines);
+    }
     canonicalize_unmatched_quoted_tab_closers(&mut lines, &literal_lines);
     canonicalize_crossed_collapsible_div_closers(&mut lines, &literal_lines);
     canonicalize_crossed_div_center_closers(&mut lines, &literal_lines);
@@ -185,7 +182,62 @@ pub(super) fn substitute_wikidot(text: &mut String) {
         .collect::<Vec<_>>();
     let literal_lines = literal_line_mask(&lines);
     close_unclosed_div_after_literal_iftags(&mut lines, &literal_lines);
+    canonicalize_extra_block_head_closers(&mut lines, &literal_lines);
     *text = lines.concat();
+}
+
+fn canonicalize_extra_block_head_closers(lines: &mut [String], literal_lines: &[bool]) {
+    const OWNERS: &[&str] = &[
+        "bibliography",
+        "button",
+        "collapsible",
+        "date",
+        "eref",
+        "file",
+        "footnote",
+        "iframe",
+        "image",
+        "size",
+        "toc",
+        "user",
+    ];
+    const BARRIER: &str = "]][!--ftml-residual-bracket--]]";
+
+    for (line, literal) in lines.iter_mut().zip(literal_lines) {
+        if *literal {
+            continue;
+        }
+        let (body, ending) = split_line(line);
+        let Some(open) = body.find("[[") else {
+            continue;
+        };
+        if body[open..].starts_with("[[[") {
+            continue;
+        }
+        let head = &body[open + 2..];
+        let name_end = head
+            .find(|character: char| {
+                character.is_ascii_whitespace() || matches!(character, ']' | '_')
+            })
+            .unwrap_or(head.len());
+        let name = &head[..name_end];
+        if !OWNERS.iter().any(|owner| name.eq_ignore_ascii_case(owner)) {
+            continue;
+        }
+        let Some(close) = head.find("]]") else {
+            continue;
+        };
+        let close = open + 2 + close;
+        if body.as_bytes().get(close + 2) != Some(&b']') {
+            continue;
+        }
+        let mut rewritten = String::with_capacity(line.len() + BARRIER.len());
+        rewritten.push_str(&body[..close]);
+        rewritten.push_str(BARRIER);
+        rewritten.push_str(&body[close + 3..]);
+        rewritten.push_str(ending);
+        *line = rewritten;
+    }
 }
 
 fn close_unclosed_div_after_literal_iftags(
@@ -408,11 +460,16 @@ fn canonicalize_root_collapsible_inline_quoted_closers(
                 .is_some_and(|(_, marker)| marker == Marker::CollapsibleClose)
             {
                 opener_depths.pop();
-            } else if quote_depth > 0
-                && opener_depths.last() == Some(&0)
-                && quoted_body.ends_with(CLOSE)
-            {
-                let close_start = body.len() - CLOSE.len();
+            } else if quote_depth > 0 && opener_depths.last() == Some(&0) {
+                let trimmed = quoted_body.trim_end_matches([' ', '\t']);
+                let has_close = trimmed.len() >= CLOSE.len()
+                    && trimmed[trimmed.len() - CLOSE.len()..].eq_ignore_ascii_case(CLOSE);
+                if !has_close {
+                    output.push(line);
+                    continue;
+                }
+                let trailing = quoted_body.len() - trimmed.len();
+                let close_start = body.len() - trailing - CLOSE.len();
                 output.push(format!("{}{ending}", &body[..close_start]));
                 output.push(format!("{CLOSE}{ending}"));
                 opener_depths.pop();
@@ -623,8 +680,6 @@ fn canonicalize_crossed_collapsible_div_closers(
     lines: &mut [String],
     literal_lines: &[bool],
 ) {
-    const MAX_BODY_LINES: usize = 512;
-
     let mut index = 0;
     while index + 1 < lines.len() {
         if literal_lines[index] {
@@ -644,7 +699,7 @@ fn canonicalize_crossed_collapsible_div_closers(
         }
 
         let required_quote_depth = prefix.bytes().filter(|&byte| byte == b'>').count();
-        let search_end = (index + MAX_BODY_LINES + 1).min(lines.len());
+        let search_end = lines.len();
         let mut collapsible_depth = 1;
         let mut div_depth = 1;
         let mut close = index + 2;
@@ -708,8 +763,6 @@ fn canonicalize_crossed_collapsible_div_closers(
 /// The corpus-backed `div -> center -> /div -> /center` form is equivalent to
 /// closing the center before its containing div on Wikidot.
 fn canonicalize_crossed_div_center_closers(lines: &mut [String], literal_lines: &[bool]) {
-    const MAX_BODY_LINES: usize = 512;
-
     let mut index = 0;
     while index + 1 < lines.len() {
         if literal_lines[index] {
@@ -728,7 +781,7 @@ fn canonicalize_crossed_div_center_closers(lines: &mut [String], literal_lines: 
         }
         let prefix = prefix.to_owned();
         let required_quote_depth = prefix.bytes().filter(|&byte| byte == b'>').count();
-        let search_end = (index + MAX_BODY_LINES + 1).min(lines.len());
+        let search_end = lines.len();
         let mut div_depth = 1;
         let mut center_depth = 1;
         let mut close = index + 2;
@@ -789,8 +842,6 @@ fn canonicalize_crossed_div_center_closers(lines: &mut [String], literal_lines: 
 
 /// Repair a div nested in a center whose final two closers are crossed.
 fn canonicalize_crossed_center_div_closers(lines: &mut [String], literal_lines: &[bool]) {
-    const MAX_BODY_LINES: usize = 128;
-
     let mut index = 0;
     while index + 1 < lines.len() {
         if literal_lines[index] {
@@ -810,7 +861,7 @@ fn canonicalize_crossed_center_div_closers(lines: &mut [String], literal_lines: 
         }
 
         let required_quote_depth = prefix.bytes().filter(|&byte| byte == b'>').count();
-        let search_end = (index + MAX_BODY_LINES + 1).min(lines.len());
+        let search_end = lines.len();
         let mut center_close = index + 2;
         let mut rewritten = false;
         while center_close < search_end {
@@ -1082,8 +1133,7 @@ fn literal_line_mask(lines: &[String]) -> Vec<bool> {
             continue;
         }
 
-        let raw_markers = logical.matches("@@").count();
-        if raw_markers > 0 {
+        if logical.starts_with("@@") && logical.ends_with("@@") && logical.len() >= 4 {
             mask.push(true);
             continue;
         }

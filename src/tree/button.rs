@@ -134,6 +134,7 @@ pub(crate) fn is_safe_standalone_button_style(style: &str) -> bool {
                 .all(|byte| byte.is_ascii_alphabetic() || byte == b'-')
         } else if property.eq_ignore_ascii_case("background-position")
             || property.eq_ignore_ascii_case("padding-right")
+            || property.eq_ignore_ascii_case("width")
         {
             safe_numeric_css(value)
         } else if property.eq_ignore_ascii_case("color") {

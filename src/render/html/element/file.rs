@@ -53,6 +53,19 @@ pub fn render_file_link(ctx: &mut HtmlContext, file: &str, label: &str) {
 }
 
 fn parse_wikidot_file_link_source(file: &str) -> Option<FileSource<'_>> {
+    if (file.starts_with('"') && file.ends_with('"'))
+        || (file.starts_with('\'') && file.ends_with('\''))
+    {
+        if let Some((page, name)) = file.rsplit_once('/') {
+            return Some(FileSource::File2 {
+                page: Cow::Borrowed(page),
+                file: Cow::Borrowed(name),
+            });
+        }
+        return Some(FileSource::File1 {
+            file: Cow::Borrowed(file),
+        });
+    }
     FileSource::parse_wikidot(file)
 }
 

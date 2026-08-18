@@ -20,6 +20,7 @@
 
 use super::prelude::*;
 use crate::delayed::{DelayedElement, GeneratedImageAttribute, GeneratedKind};
+use crate::parsing::discard_wikidot_controls;
 use crate::tree::{FileSource, FloatAlignment, ImageSize, ImageSource, LinkLocation};
 use crate::url::is_url;
 use std::borrow::Cow;
@@ -74,7 +75,11 @@ fn parse_fn<'r, 't>(
             let (source, arguments) =
                 parser.get_head_field_map_wikidot(&BLOCK_IMAGE, in_head)?;
             let source_prefix_is_url = is_url(source.prefix_before_first_comment());
-            (source.into_cow(), source_prefix_is_url, arguments)
+            (
+                discard_wikidot_controls(source.into_cow()),
+                source_prefix_is_url,
+                arguments,
+            )
         } else {
             let (source, arguments) = parser.get_head_name_map(&BLOCK_IMAGE, in_head)?;
             (Cow::Borrowed(source), is_url(source), arguments)
@@ -83,7 +88,7 @@ fn parse_fn<'r, 't>(
         match arguments.get("link") {
             None => None,
             Some(value) => Some(
-                parse_wikidot_image_link_target(value)
+                parse_wikidot_image_link_target(discard_wikidot_controls(value))
                     .ok_or_else(|| parser.make_err(ParseErrorKind::RuleFailed))?,
             ),
         }
@@ -143,6 +148,93 @@ fn parse_fn<'r, 't>(
 }
 
 fn parse_wikidot_image_source<'t>(source: Cow<'t, str>) -> Option<ImageSource<'t>> {
+    if source.starts_with("data:") {
+        let alt = source
+            .rsplit('/')
+            .next()
+            .unwrap_or(source.as_ref())
+            .to_owned();
+        return Some(ImageSource::ImplicitAttachment {
+            file: source,
+            alt: Cow::Owned(alt),
+            size: ImageSize::Medium,
+        });
+    }
+    if source.len() >= 2
+        && matches!(source.as_bytes().first(), Some(b'\'' | b'"'))
+        && source.as_bytes().first() == source.as_bytes().last()
+    {
+        let inner = &source[1..source.len() - 1];
+        if is_url(inner) {
+            return Some(ImageSource::Direct(FileSource::Url(source)));
+        }
+        let alt = source
+            .rsplit('/')
+            .next()
+            .unwrap_or(source.as_ref())
+            .to_owned();
+        return Some(ImageSource::ImplicitAttachment {
+            file: source,
+            alt: Cow::Owned(alt),
+            size: ImageSize::Medium,
+        });
+    }
+    if source.starts_with("mailto:") || source.starts_with("dns:") {
+        let alt = source
+            .rsplit('/')
+            .next()
+            .unwrap_or(source.as_ref())
+            .to_owned();
+        return Some(ImageSource::ImplicitAttachment {
+            file: source,
+            alt: Cow::Owned(alt),
+            size: ImageSize::Medium,
+        });
+    }
+    if source.contains("&#") {
+        return Some(ImageSource::Direct(match source {
+            Cow::Borrowed(source) => match source.rsplit_once('/') {
+                Some((page, file)) => FileSource::File2 {
+                    page: Cow::Borrowed(page),
+                    file: Cow::Borrowed(file),
+                },
+                None => FileSource::File1 {
+                    file: Cow::Borrowed(source),
+                },
+            },
+            Cow::Owned(source) => match source.rsplit_once('/') {
+                Some((page, file)) => FileSource::File2 {
+                    page: Cow::Owned(page.to_owned()),
+                    file: Cow::Owned(file.to_owned()),
+                },
+                None => FileSource::File1 {
+                    file: Cow::Owned(source),
+                },
+            },
+        }));
+    }
+    if source
+        .chars()
+        .next()
+        .is_some_and(|ch| !ch.is_ascii() && ch.is_whitespace())
+    {
+        let trimmed =
+            source.trim_start_matches(|ch: char| !ch.is_ascii() && ch.is_whitespace());
+        if is_url(trimmed) {
+            const HEX: &[u8; 16] = b"0123456789ABCDEF";
+            let mut encoded = String::with_capacity(source.len() + 8);
+            for byte in source.bytes() {
+                if !byte.is_ascii() {
+                    encoded.push('%');
+                    encoded.push(char::from(HEX[usize::from(byte >> 4)]));
+                    encoded.push(char::from(HEX[usize::from(byte & 0x0f)]));
+                } else {
+                    encoded.push(char::from(byte));
+                }
+            }
+            return Some(ImageSource::Direct(FileSource::Url(Cow::Owned(encoded))));
+        }
+    }
     // Wikidot treats an assignment-shaped head token containing a literal URL
     // separator as a direct source. The token itself remains inert because its
     // scheme is not at the start of the rendered src value.
@@ -201,8 +293,7 @@ fn parse_wikidot_image_link_target<'t>(target: Cow<'t, str>) -> Option<LinkLocat
             .strip_prefix('[')
             .and_then(|host| host.split_once(']').map(|(host, _)| host))
             .unwrap_or_else(|| host.split(':').next().unwrap_or_default());
-        let final_label = host.rsplit('.').next().unwrap_or_default();
-        if host.is_empty() || final_label.bytes().any(|byte| byte.is_ascii_uppercase()) {
+        if host.is_empty() {
             return None;
         }
         return Some(LinkLocation::Url(target));
@@ -220,7 +311,10 @@ fn parse_wikidot_image_link_target<'t>(target: Cow<'t, str>) -> Option<LinkLocat
         encoded.push('/');
     }
     for byte in target.bytes() {
-        if byte == b' ' || !byte.is_ascii() {
+        // Browser special-scheme parsing treats an authored backslash after
+        // the leading slash like an authority separator. Percent-encode it so
+        // a legacy internal image-link target cannot navigate off-origin.
+        if matches!(byte, b' ' | b'\\') || !byte.is_ascii() {
             encoded.push('%');
             encoded.push(char::from(HEX[usize::from(byte >> 4)]));
             encoded.push(char::from(HEX[usize::from(byte & 0x0f)]));

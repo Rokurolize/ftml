@@ -31,10 +31,10 @@ fn try_consume_fn<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to consume section marker");
 
-    // Wikidot accepts horizontal ASCII whitespace around the equals run. The
-    // tokenizer intentionally limits this token to SP and TAB; discarded
-    // controls and Unicode whitespace remain syntax barriers.
-    if parser.current().token == Token::Whitespace {
+    // Native FTML accepts horizontal padding; Wikidot requires the authored
+    // equals run to own the complete physical line.
+    let wikidot = parser.settings().layout.legacy();
+    if !wikidot && parser.current().token == Token::Whitespace {
         parser.step()?;
     }
 
@@ -48,7 +48,7 @@ fn try_consume_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    if parser.current().token == Token::Whitespace {
+    if !wikidot && parser.current().token == Token::Whitespace {
         parser.step()?;
     }
 

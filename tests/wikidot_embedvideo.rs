@@ -331,6 +331,7 @@ fn authored_payload_is_inert_across_delayed_provenance_boundaries() {
             "[[embedvideo]]javascript:alert(1)[[/embedvideo]]",
             "javascript:alert(1)",
         ),
+        ("[[embedvideo]]X[[/embedvideo]]", "embedvideo"),
         ("[[embedvideo]]X[[/embedvideo]]", "[[embedvideo]]"),
         ("[[embedvideo]]X[[/embedvideo]]", "[[/embedvideo]]"),
     ] {

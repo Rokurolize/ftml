@@ -122,12 +122,26 @@ fn parse_with_wikidot_boundary<'r, 't>(
 
 fn wikidot_css_closer(source: &str, body_start: usize, owner_end: usize) -> Option<&str> {
     let body = &source[body_start..owner_end];
-    let closer_start = body
-        .as_bytes()
-        .windows("[[/module".len())
-        .position(|window| window.eq_ignore_ascii_case(b"[[/module"))?;
-    let close = body[closer_start..].find("]]")?;
-    source.get(body_start + closer_start..body_start + closer_start + close + 2)
+    let mut cursor = 0;
+    while let Some(relative_start) = body[cursor..].find("[[/") {
+        let closer_start = cursor + relative_start;
+        let tail = &body[closer_start + 3..];
+        let tail = tail.trim_start_matches([' ', '\t']);
+        let Some(name) = tail.get(.."module".len()) else {
+            return None;
+        };
+        if name.eq_ignore_ascii_case("module") {
+            let after_name = &tail["module".len()..];
+            if after_name.starts_with("]]") || after_name.starts_with([' ', '\t']) {
+                let close = body[closer_start..].find("]]")?;
+                return source.get(
+                    body_start + closer_start..body_start + closer_start + close + 2,
+                );
+            }
+        }
+        cursor = closer_start + 3;
+    }
+    None
 }
 
 fn wikidot_css_body_starts_on_new_line(parser: &Parser<'_, '_>) -> bool {

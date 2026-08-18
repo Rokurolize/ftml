@@ -49,7 +49,7 @@ def main() -> int:
 
     existing_hashes = set()
     if args.inventory.exists():
-        for line in args.inventory.read_text().splitlines():
+        for line in args.inventory.read_text().split("\n"):
             if line.strip():
                 existing_hashes.add(json.loads(line)["source_sha256"])
 

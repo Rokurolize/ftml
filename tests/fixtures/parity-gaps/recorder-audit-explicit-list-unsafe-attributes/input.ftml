@@ -1,0 +1,3 @@
+[[ul onclick="alert(1)" data-safe="kept"]]
+[[li onmouseover="alert(2)"]]Body[[/li]]
+[[/ul]]

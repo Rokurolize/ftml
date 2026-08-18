@@ -239,6 +239,26 @@ where
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     if parser.settings().layout.legacy()
+        && spaced_name
+        && matches!(
+            block.name,
+            "block-bibliography"
+                | "block-button"
+                | "block-date"
+                | "block-equation-ref"
+                | "block-file"
+                | "block-footnote"
+                | "block-gallery"
+                | "block-iframe"
+                | "block-image"
+                | "block-math"
+                | "block-size"
+                | "block-toc"
+        )
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    if parser.settings().layout.legacy()
         && block.name == "block-embedvideo"
         && spaced_name
     {
@@ -330,11 +350,6 @@ fn wikidot_block_has_physical_line_ownership(
         return true;
     }
 
-    let source = parser.full_text().inner();
-    let line_start = source[..opener_start]
-        .rfind('\n')
-        .map_or(0, |index| index + 1);
-    let prefix = &source[line_start..opener_start];
-
-    prefix.is_empty()
+    let source = parser.full_text().inner().as_bytes();
+    opener_start == 0 || source.get(opener_start - 1) == Some(&b'\n')
 }

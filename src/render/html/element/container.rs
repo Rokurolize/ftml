@@ -26,6 +26,10 @@ use crate::tree::{
 pub fn render_container(ctx: &mut HtmlContext, container: &Container) {
     debug!("Rendering container '{}'", container.ctype().name());
 
+    if render_plain_div_chain(ctx, container) {
+        return;
+    }
+
     match container.ctype() {
         // We wrap with <rp> around the <rt> contents
         ContainerType::RubyText => {
@@ -37,6 +41,38 @@ pub fn render_container(ctx: &mut HtmlContext, container: &Container) {
         // Render normally
         _ => render_container_internal(ctx, container),
     }
+}
+
+fn render_plain_div_chain(ctx: &mut HtmlContext, container: &Container) -> bool {
+    if container.ctype() != ContainerType::Div || !container.attributes().get().is_empty()
+    {
+        return false;
+    }
+
+    let mut current = container;
+    let mut depth = 0usize;
+    loop {
+        ctx.push_raw_str("<div>");
+        depth += 1;
+
+        match current.elements() {
+            [Element::Container(child)]
+                if child.ctype() == ContainerType::Div
+                    && child.attributes().get().is_empty() =>
+            {
+                current = child;
+            }
+            elements => {
+                render_elements(ctx, elements);
+                break;
+            }
+        }
+    }
+
+    for _ in 0..depth {
+        ctx.push_raw_str("</div>");
+    }
+    true
 }
 
 pub fn render_container_internal(ctx: &mut HtmlContext, container: &Container) {

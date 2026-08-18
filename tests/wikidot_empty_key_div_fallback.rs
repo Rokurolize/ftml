@@ -269,14 +269,17 @@ fn literal_owners_keep_empty_key_candidates_inert() {
 }
 
 #[test]
-fn malformed_empty_keys_create_no_structure_attributes_or_unsafe_html() {
+fn malformed_empty_key_div_releases_nested_safe_syntax_without_unsafe_html() {
     let source = concat!(
         "[[div =\"value\" onclick=\"alert(1)\"]]<script>alert(2)</script>",
         "[[span class=\"trusted\"]]nested[[/span]][[/div]]",
     );
     let (tree, html, text, errors) = parse_render(source, Layout::Wikidot);
     assert_eq!(malformed_errors(&errors).len(), 1, "{errors:#?}");
-    assert_eq!(text, source);
+    assert_eq!(
+        text,
+        "[[div =\"value\" onclick=\"alert(1)\"]]<script>alert(2)</script>nested[[/div]]"
+    );
     assert!(
         html.starts_with("<p>[[div =&quot;value&quot; onclick="),
         "{html}"
@@ -287,8 +290,10 @@ fn malformed_empty_keys_create_no_structure_attributes_or_unsafe_html() {
     );
     assert!(!html.contains("<script>"), "{html}");
     assert!(!html.contains("<div "), "{html}");
-    assert!(!html.contains("<span "), "{html}");
-    assert!(!html.contains("class=\"trusted\""), "{html}");
+    assert!(
+        html.contains("<span class=\"trusted\">nested</span>"),
+        "{html}"
+    );
     assert!(!tree.elements.iter().any(|element| {
         matches!(element, Element::Container(container) if container.ctype() == ContainerType::Div)
     }));

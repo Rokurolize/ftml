@@ -24,6 +24,7 @@
 pub mod typography;
 pub mod whitespace;
 
+mod comments;
 mod compatibility;
 mod parser_functions;
 
@@ -214,6 +215,7 @@ fn preprocess_internal(text: &mut String, wikidot_compatibility: bool) {
     }
     parser_functions::substitute(text);
     if wikidot_compatibility {
+        comments::substitute_wikidot(text);
         whitespace::substitute_wikidot(text);
     } else {
         whitespace::substitute(text);

@@ -12,6 +12,21 @@ SPEC.loader.exec_module(parity)
 
 
 class WikidotParityTest(unittest.TestCase):
+    def test_jsonl_records_preserve_authored_unicode_line_separators(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "records.jsonl"
+            values = [
+                {"case_id": "nel", "source": "A\u0085B"},
+                {"case_id": "line-separator", "source": "A\u2028B"},
+                {"case_id": "paragraph-separator", "source": "A\u2029B"},
+            ]
+            path.write_text(
+                "\n".join(json.dumps(value, ensure_ascii=False) for value in values) + "\n",
+                encoding="utf-8",
+            )
+
+            self.assertEqual(parity.records(path), values)
+
     def test_registered_block_names_are_observed_from_stable_sources(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

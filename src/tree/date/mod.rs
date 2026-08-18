@@ -140,9 +140,39 @@ impl DateItem {
         let locale = cache::locale_from_language(language);
         let mut rendered = String::new();
 
-        append_localized_datetime_full_year(&mut rendered, &datetime, &locale)?;
+        if append_localized_datetime_full_year(&mut rendered, &datetime, &locale).is_err()
+            && datetime.year().unsigned_abs() >= 10_000
+        {
+            rendered = format!(
+                "{:02} {} {} {:02}:{:02}",
+                datetime.day(),
+                wikidot_month_abbreviation(datetime.month()),
+                datetime.year(),
+                datetime.hour(),
+                datetime.minute(),
+            );
+        } else if rendered.is_empty() {
+            append_localized_datetime_full_year(&mut rendered, &datetime, &locale)?;
+        }
 
         Ok(rendered)
+    }
+}
+
+fn wikidot_month_abbreviation(month: time::Month) -> &'static str {
+    match month {
+        time::Month::January => "Jan",
+        time::Month::February => "Feb",
+        time::Month::March => "Mar",
+        time::Month::April => "Apr",
+        time::Month::May => "May",
+        time::Month::June => "Jun",
+        time::Month::July => "Jul",
+        time::Month::August => "Aug",
+        time::Month::September => "Sep",
+        time::Month::October => "Oct",
+        time::Month::November => "Nov",
+        time::Month::December => "Dec",
     }
 }
 

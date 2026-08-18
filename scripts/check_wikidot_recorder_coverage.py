@@ -13,7 +13,7 @@ PAGE_PREVIEW_CLASSES = {"saved-page-batch", "page-preview-isolated"}
 
 
 def read_jsonl(path: Path) -> list[dict]:
-    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+    return [json.loads(line) for line in path.read_text().split("\n") if line.strip()]
 
 
 def main() -> int:

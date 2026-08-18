@@ -185,15 +185,31 @@ impl Handle {
             _ => info.page.to_string(),
         };
         let file = file.replace('\\', "/");
-        let original = format!(
-            "https://{}.wjfiles.com/local--files/{page}/{file}",
-            info.site,
-        );
-        let display = format!(
-            "https://{}.wjfiles.com/local--resized-images/{page}/{file}/{}",
-            info.site,
-            size.file_name(),
-        );
+        let source_owns_path = page.is_empty()
+            && (file.starts_with("data:")
+                || matches!(file.as_bytes().first(), Some(b'\'' | b'"'))
+                    && file.contains('/'));
+        let original = if source_owns_path {
+            format!("https://{}.wjfiles.com/local--files/{file}", info.site)
+        } else {
+            format!(
+                "https://{}.wjfiles.com/local--files/{page}/{file}",
+                info.site
+            )
+        };
+        let display = if source_owns_path {
+            format!(
+                "https://{}.wjfiles.com/local--resized-images/{file}/{}",
+                info.site,
+                size.file_name(),
+            )
+        } else {
+            format!(
+                "https://{}.wjfiles.com/local--resized-images/{page}/{file}/{}",
+                info.site,
+                size.file_name(),
+            )
+        };
         Some((display, original))
     }
 

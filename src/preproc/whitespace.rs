@@ -144,7 +144,10 @@ pub(super) fn expose_wikidot_replacement_markers(text: &mut String) {
             }
             Some('\r' | '\n') => {
                 let first_end = logical_newline_end(&characters, index);
-                if matches!(characters.get(first_end), Some('\r' | '\n')) {
+                if first_end == characters.len() {
+                    output.push('2');
+                    index = first_end;
+                } else if matches!(characters.get(first_end), Some('\r' | '\n')) {
                     output.push_str("23");
                     index = logical_newline_end(&characters, first_end);
                 } else {
@@ -176,7 +179,7 @@ pub(super) fn preserve_wikidot_document_indentation_barrier(text: &mut String) {
         && !centered_line
         && matches!(
             structural,
-            Some(b'>' | b'=' | b'+' | b'|' | b'[' | b'_' | b'*' | b'#')
+            Some(b'>' | b'=' | b'+' | b'|' | b'[' | b'_' | b'*' | b'#' | b'~')
         )
     {
         let replacement = if text.as_bytes().get(leading_len) == Some(&b'_') {
@@ -259,10 +262,9 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
 
     if wikidot_compatibility {
         // NBSP-only lines are not blank lines to Wikidot. Remove ordinary
-        // indentation-only lines before converting leading NBSP characters,
-        // then preserve the latter as paragraph content.
+        // indentation-only lines while preserving non-ASCII leading spaces as
+        // authored syntax barriers.
         replace!(WIKIDOT_WHITESPACE_ONLY_LINE);
-        replace_leading_spaces(text);
     } else {
         // Replace leading non-standard spaces with regular spaces and strip
         // lines with only whitespace for the native parser.
@@ -295,35 +297,74 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
 }
 
 fn normalize_wikidot_code_body_bytes(text: &mut String) {
-    if !text.contains(['\t', '\u{00a0}']) || !text.contains("[[") {
+    let has_discarded_control = text.chars().any(is_wikidot_discarded_control);
+    if !text.contains(['\t', '\u{00a0}']) && !has_discarded_control {
         return;
     }
 
-    let ranges = crate::wikidot_code::active_body_ranges(text);
-    if ranges.is_empty() {
+    let code_ranges = crate::wikidot_code::active_body_ranges(text);
+    let raw_ranges = wikidot_inline_raw_body_ranges(text);
+    if code_ranges.is_empty() && raw_ranges.is_empty() {
         return;
     }
 
     let mut output = String::with_capacity(text.len());
-    let mut range_index = 0usize;
+    let mut code_index = 0usize;
+    let mut raw_index = 0usize;
     for (index, character) in text.char_indices() {
-        while ranges
-            .get(range_index)
+        while code_ranges
+            .get(code_index)
             .is_some_and(|range| range.end <= index)
         {
-            range_index += 1;
+            code_index += 1;
         }
-        let in_code = ranges
-            .get(range_index)
+        while raw_ranges
+            .get(raw_index)
+            .is_some_and(|range| range.end <= index)
+        {
+            raw_index += 1;
+        }
+        let in_code = code_ranges
+            .get(code_index)
+            .is_some_and(|range| range.contains(&index));
+        let in_raw = raw_ranges
+            .get(raw_index)
             .is_some_and(|range| range.contains(&index));
 
-        match (in_code, character) {
-            (true, '\t') => output.push_str("    "),
-            (true, '\u{00a0}') => output.push(' '),
+        match character {
+            '\t' if in_code || in_raw => output.push_str("    "),
+            '\u{00a0}' if in_code => output.push(' '),
+            character
+                if (in_code || in_raw) && is_wikidot_discarded_control(character) => {}
             _ => output.push(character),
         }
     }
     *text = output;
+}
+
+fn wikidot_inline_raw_body_ranges(source: &str) -> Vec<Range<usize>> {
+    let mut ranges = Vec::new();
+    let mut line_offset = 0usize;
+    for line in source.split_inclusive('\n') {
+        let mut cursor = 0usize;
+        while let Some(relative_open) = line[cursor..].find("@@") {
+            let open = cursor + relative_open;
+            let body_start = open + 2;
+            let Some(relative_close) = line[body_start..].find("@@") else {
+                break;
+            };
+            let close = body_start + relative_close;
+            ranges.push(line_offset + body_start..line_offset + close);
+            cursor = close + 2;
+        }
+        line_offset += line.len();
+    }
+    ranges
+}
+
+#[inline]
+fn is_wikidot_discarded_control(character: char) -> bool {
+    matches!(character as u32, 0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
 }
 
 fn expand_wikidot_list_indentation_tabs(text: &mut String) {
@@ -334,7 +375,7 @@ fn expand_wikidot_list_indentation_tabs(text: &mut String) {
     let literal_regions = LiteralRegionIndex::new(text);
     let mut protected_ranges = literal_regions.ranges().to_vec();
     protected_ranges.extend(wikidot_comment_ranges(text));
-    protected_ranges.sort_unstable_by_key(|range| (range.start, range.end));
+    let protected_ranges = merge_protected_ranges(protected_ranges);
 
     let source = std::mem::take(text);
     let mut output = String::with_capacity(source.len());
@@ -375,6 +416,21 @@ fn expand_wikidot_list_indentation_tabs(text: &mut String) {
     *text = output;
 }
 
+fn merge_protected_ranges(mut ranges: Vec<Range<usize>>) -> Vec<Range<usize>> {
+    ranges.sort_unstable_by_key(|range| (range.start, range.end));
+    let mut merged: Vec<Range<usize>> = Vec::with_capacity(ranges.len());
+    for range in ranges {
+        if let Some(previous) = merged.last_mut()
+            && range.start <= previous.end
+        {
+            previous.end = previous.end.max(range.end);
+        } else {
+            merged.push(range);
+        }
+    }
+    merged
+}
+
 fn preserve_adjacent_wikidot_tab_link_spacing(text: &mut String) {
     if !text.contains('\t') || !text.contains('[') {
         return;
@@ -383,17 +439,7 @@ fn preserve_adjacent_wikidot_tab_link_spacing(text: &mut String) {
     let literal_regions = LiteralRegionIndex::new(text);
     let mut protected_ranges = literal_regions.ranges().to_vec();
     protected_ranges.extend(wikidot_comment_ranges(text));
-    protected_ranges.sort_unstable_by_key(|range| (range.start, range.end));
-    let mut merged_ranges: Vec<Range<usize>> = Vec::with_capacity(protected_ranges.len());
-    for range in protected_ranges {
-        if let Some(previous) = merged_ranges.last_mut()
-            && range.start <= previous.end
-        {
-            previous.end = previous.end.max(range.end);
-        } else {
-            merged_ranges.push(range);
-        }
-    }
+    let merged_ranges = merge_protected_ranges(protected_ranges);
 
     let mut insertions = BTreeSet::new();
     let mut cursor = 0;
@@ -771,6 +817,15 @@ fn wikidot_preserves_nbsp_only_lines_inside_a_paragraph() {
 }
 
 #[test]
+fn wikidot_preserves_ascii_padding_on_nonblank_internal_lines() {
+    let mut text = "A\n ====\nB\n".to_owned();
+
+    crate::preprocess_for_layout(&mut text, crate::layout::Layout::Wikidot);
+
+    assert_eq!(text, "A\n ====\nB");
+}
+
+#[test]
 fn wikijump_substitution_keeps_native_tabs_and_null_handling() {
     let mut text = "a\tb\0c".to_owned();
     substitute(&mut text);
@@ -825,6 +880,29 @@ fn wikidot_list_indentation_uses_four_columns_per_tab() {
             "[[code]]\n",
             "    * literal\n",
             "[[/code]]",
+        ),
+    );
+}
+
+#[test]
+fn wikidot_list_indentation_keeps_nested_comment_literal_ranges_merged() {
+    let mut text = concat!(
+        "[[raw]]\n",
+        "[!-- nested comment --]\n",
+        "\t* literal\n",
+        "[[/raw]]",
+    )
+    .to_owned();
+
+    substitute_wikidot(&mut text);
+
+    assert_eq!(
+        text,
+        concat!(
+            "[[raw]]\n",
+            "[!-- nested comment --]\n",
+            " * literal\n",
+            "[[/raw]]",
         ),
     );
 }

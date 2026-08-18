@@ -78,11 +78,10 @@ impl<'t> CommentElidedText<'t> {
         debug_assert!(range.start >= self.span.start && range.end <= self.span.end);
         let first = self
             .comments
-            .iter()
-            .position(|comment| comment.end > range.start);
-        let Some(first) = first else {
+            .partition_point(|comment| comment.end <= range.start);
+        if first == self.comments.len() {
             return (Cow::Borrowed(&self.source[range]), Vec::new());
-        };
+        }
         if self.comments[first].start >= range.end {
             return (Cow::Borrowed(&self.source[range]), Vec::new());
         }

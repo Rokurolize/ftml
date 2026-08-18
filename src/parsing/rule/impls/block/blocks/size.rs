@@ -52,7 +52,7 @@ fn parse_size_argument<'r, 't>(
 }
 
 fn wikidot_size_value(size: &str) -> Option<&str> {
-    let size = size.trim();
+    let size = size.trim_matches([' ', '\t', '\r', '\n']);
     if matches!(
         size,
         "xx-small"
@@ -70,7 +70,11 @@ fn wikidot_size_value(size: &str) -> Option<&str> {
     for suffix in ["%", "px", "em"] {
         if let Some(number) = size.strip_suffix(suffix)
             && !number.is_empty()
-            && number.parse::<f64>().is_ok()
+            && number != "."
+            && number
+                .bytes()
+                .all(|byte| byte.is_ascii_digit() || byte == b'.')
+            && number.bytes().filter(|byte| *byte == b'.').count() <= 1
         {
             return Some(size);
         }

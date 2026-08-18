@@ -1,0 +1,4 @@
+[[module CSS]]
+.x::after { content: "AB"; }
+[[/module]]
+X

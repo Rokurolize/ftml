@@ -29,6 +29,9 @@ pub(super) fn resolve_bound_suppressions(
     apply_typography: bool,
 ) -> Result<(), DelayedError> {
     rewrite_elements(elements, apply_typography, &mut |delayed| {
+        if matches!(delayed.node, DelayedNode::TypographyBoundary) {
+            return Ok(true);
+        }
         let DelayedNode::Suppressed { slots } = &delayed.node else {
             return Ok(false);
         };
@@ -330,5 +333,30 @@ fn emit_source_range<'t>(
             break;
         }
         *piece_index += 1;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bound_typography_boundary_is_consumed_like_static_suppression() {
+        let mut elements = vec![
+            Element::Text(Cow::Borrowed("A")),
+            Element::Delayed(DelayedElement::typography_boundary()),
+            Element::Text(Cow::Borrowed("B")),
+        ];
+        let mut resolved = 0;
+
+        resolve_bound_suppressions(&mut elements, &BTreeMap::new(), &mut resolved, true)
+            .expect("typography boundary is a bound suppression seam");
+
+        assert!(
+            elements
+                .iter()
+                .all(|element| !matches!(element, Element::Delayed(_))),
+            "{elements:#?}",
+        );
     }
 }

@@ -183,10 +183,16 @@ fn render_wikidot_bibliography(
                 .contents(title);
 
             let mut entry_index = 0;
-            for (label, elements) in bibliography.slice() {
+            for (position, (label, elements)) in bibliography.slice().iter().enumerate() {
                 if Bibliography::is_residual(label) {
                     ctx.push_raw('\n');
                     render_elements(ctx, elements);
+                    if bibliography.slice()[position + 1..]
+                        .iter()
+                        .any(|(label, _)| !Bibliography::is_residual(label))
+                    {
+                        ctx.push_raw('\n');
+                    }
                     continue;
                 }
 

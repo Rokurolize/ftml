@@ -20,6 +20,7 @@
 
 use super::prelude::*;
 use crate::parsing::collect::{CommentElidedText, consume_valid_comment};
+use crate::parsing::discard_wikidot_controls;
 use crate::tree::{LinkLabel, LinkLocation, LinkType};
 use std::borrow::Cow;
 
@@ -82,6 +83,13 @@ where
             end = parser.current().span.start;
             continue;
         }
+        if parser.current().token == Token::DiscardedControl
+            && parser.current().span.start == end
+        {
+            end = parser.current().span.end;
+            parser.step()?;
+            continue;
+        }
         if parser.current().token == Token::InputEnd {
             break;
         }
@@ -98,7 +106,7 @@ where
     }
 
     let field = CommentElidedText::new(source, start..end, comments);
-    let mut url = field.into_cow();
+    let mut url = discard_wikidot_controls(field.into_cow());
     let previous = start
         .checked_sub(1)
         .and_then(|index| source.as_bytes().get(index));
@@ -152,18 +160,19 @@ fn without_last_byte(value: Cow<'_, str>) -> Cow<'_, str> {
 fn wikidot_automatic_url_end(source: &str, mut end: usize, limit: usize) -> usize {
     let bytes = source.as_bytes();
     while end < limit {
+        let character = source[end..].chars().next().unwrap();
         if matches!(
             bytes[end],
             b'\n' | b'\r' | b' ' | b'\t' | b'"' | b'\'' | b'['
-        ) || matches!(bytes[end], 0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
-            || source[end..].starts_with(">@")
+        ) || character.is_whitespace()
+            || matches!(bytes[end], 0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
             || source[end..].starts_with("@@")
             || source[end..].starts_with("]]")
             || source[end..].starts_with("||")
         {
             break;
         }
-        end += source[end..].chars().next().unwrap().len_utf8();
+        end += character.len_utf8();
     }
     end
 }

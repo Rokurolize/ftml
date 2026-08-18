@@ -39,6 +39,7 @@ fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create a named anchor");
+    let nested_in_literal_triple_link = parser.in_wikidot_literal_triple_link();
     let source_start = parser.current().span.start;
     assert_step(parser, Token::LeftBlockAnchor)?;
 
@@ -73,7 +74,9 @@ fn try_consume_fn<'r, 't>(
         .chars()
         .all(|character| character.is_ascii_alphanumeric() || "-_".contains(character));
     if residual_closer
-        && (!parser.settings().layout.legacy() || name.is_empty() || !valid_wikidot_name)
+        && (!parser.settings().layout.legacy()
+            || name.is_empty()
+            || !valid_wikidot_name && !nested_in_literal_triple_link)
     {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
@@ -84,7 +87,9 @@ fn try_consume_fn<'r, 't>(
     }
 
     if parser.settings().layout.legacy() && !valid_wikidot_name {
-        let label = name.trim();
+        let without_trailing = name.trim_end_matches([' ', '\t', '\r', '\n']);
+        let label = without_trailing.trim_start_matches([' ', '\t', '\r', '\n']);
+        let trailing = &name[without_trailing.len()..];
         let mut elements = vec![
             text!("["),
             Element::Link {
@@ -93,8 +98,11 @@ fn try_consume_fn<'r, 't>(
                 label: LinkLabel::Text(cow!(label)),
                 target: None,
             },
-            text!("]"),
         ];
+        if !trailing.is_empty() {
+            elements.push(text!(trailing));
+        }
+        elements.push(text!("]"));
         if residual_closer {
             elements.push(text!("]"));
         }

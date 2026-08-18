@@ -160,6 +160,7 @@ enum BindingDisposition {
     Unresolved,
     CallerRuntime,
     ComparisonNormalization,
+    SecurityBoundary,
 }
 
 fn sha256(bytes: impl AsRef<[u8]>) -> String {
@@ -651,9 +652,16 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
         );
         // ponytail: production Random makes these generated IDs volatile; functional DOM and text checks remain bound above.
         let source = case.source.to_ascii_lowercase();
-        if !["[[bibliography", "[[embedvideo", "[[gallery"]
-            .iter()
-            .any(|marker| source.contains(marker))
+        if ![
+            "[[bibliography",
+            "[[ bibliography",
+            "[[embedvideo",
+            "[[ embedvideo",
+            "[[gallery",
+            "[[ gallery",
+        ]
+        .iter()
+        .any(|marker| source.contains(marker))
         {
             assert_eq!(
                 binding.ftml_html_sha256,

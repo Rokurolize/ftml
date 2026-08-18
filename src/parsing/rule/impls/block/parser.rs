@@ -261,7 +261,11 @@ where
         let rule = self.rule();
         let stops = &end_conditions;
         collect_text_keep(self, rule, stops, &[], Some(kind)).map(|(name, last)| {
-            let name = name.trim();
+            let name = if self.settings().layout.legacy() {
+                name.trim_matches([' ', '\t', '\r', '\n'])
+            } else {
+                name.trim()
+            };
             let in_head = !matches!(last.token, Token::RightBlock);
 
             (name, in_head)
@@ -294,7 +298,7 @@ where
             if last.token != Token::RightLink || last.slice != "]]]" {
                 return Err(self.make_err(ParseErrorKind::BlockExpectedEnd));
             }
-            Ok((name.trim(), false))
+            Ok((name.trim_matches([' ', '\t', '\r', '\n']), false))
         })
     }
 
@@ -323,20 +327,15 @@ where
         let residual_close_bracket = match last.token {
             Token::RightLink if last.slice == "]]]" => true,
             Token::RightBlock => false,
-            Token::Whitespace => match self.current().token {
-                Token::RightLink if self.current().slice == "]]]" => {
-                    self.step()?;
-                    true
-                }
-                Token::RightBlock => {
-                    self.step()?;
-                    false
-                }
-                _ => return Err(self.make_err(ParseErrorKind::BlockExpectedEnd)),
-            },
+            Token::Whitespace => {
+                return Err(self.make_err(ParseErrorKind::BlockExpectedEnd));
+            }
             _ => return Err(self.make_err(ParseErrorKind::BlockExpectedEnd)),
         };
-        Ok((name.trim(), residual_close_bracket))
+        Ok((
+            name.trim_matches([' ', '\t', '\r', '\n']),
+            residual_close_bracket,
+        ))
     }
 
     /// Matches an ending block, returning the name present.
@@ -346,6 +345,11 @@ where
 
         let (name, in_head) = self.get_block_name(false)?;
         if in_head {
+            if self.settings().layout.legacy()
+                && self.current().token == Token::Whitespace
+            {
+                return Err(self.make_err(ParseErrorKind::BlockExpectedEnd));
+            }
             self.get_optional_space()?;
             self.get_token(Token::RightBlock, ParseErrorKind::BlockExpectedEnd)?;
         }
@@ -387,7 +391,7 @@ where
             &[],
             Some(ParseErrorKind::BlockMissingName),
         )?;
-        let name = name.trim();
+        let name = name.trim_matches([' ', '\t', '\r', '\n']);
 
         if last.token == Token::RightLink
             && (name.eq_ignore_ascii_case("span") || name.eq_ignore_ascii_case("size"))
@@ -463,6 +467,17 @@ where
             // This will ignore any errors produced,
             // since it's just more text
             let end_start = parser.current().span.start;
+            if parser.settings().layout.legacy()
+                && !parser.discarding_hidden_body()
+                && let Some(close_offset) =
+                    parser.full_text().inner()[end_start..].find("]]")
+            {
+                let raw_close =
+                    &parser.full_text().inner()[end_start..end_start + close_offset];
+                if raw_close.chars().last().is_some_and(char::is_whitespace) {
+                    return Ok(false);
+                }
+            }
             let link_owned_inline_close = parser.settings().layout.legacy()
                 && matches!(block_rule.name, "block-span" | "block-size")
                 && parser.wikidot_link_owned_inline_end_block_ahead();
@@ -523,6 +538,19 @@ where
                 block_rule_end_names(block_rule, parser.settings().layout.legacy())
             {
                 if name.eq_ignore_ascii_case(end_block_name) {
+                    if parser.settings().layout.legacy()
+                        && !parser.discarding_hidden_body()
+                        && matches!(
+                            block_rule.name,
+                            "block-code" | "block-math" | "block-bibliography"
+                        )
+                        && !matches!(
+                            parser.current().token,
+                            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                        )
+                    {
+                        return Ok(false);
+                    }
                     if restrict_quote_close {
                         parser.get_optional_space()?;
                         if !allow_inline_quote_close
@@ -562,10 +590,13 @@ where
             && !self.discarding_hidden_body()
             && block_rule.name == "block-math";
         let mut nested_wikidot_math = 0;
+        let mut suppress_nested_wikidot_math = false;
         let start = self.current();
 
         loop {
             let before_end = self.clone();
+            let crossed_math_close =
+                wikidot_math && self.at_wikidot_crossed_math_close(first);
             let at_end_block = self.verify_end_block(first, block_rule, false, false);
 
             // If there's a match, return the last body token
@@ -576,7 +607,12 @@ where
                 } else {
                     return Ok((start, end));
                 }
-            } else if wikidot_math && self.at_wikidot_nested_math_opener() {
+            } else if crossed_math_close {
+                suppress_nested_wikidot_math = true;
+            } else if wikidot_math
+                && !suppress_nested_wikidot_math
+                && self.at_wikidot_nested_math_opener()
+            {
                 nested_wikidot_math += 1;
             }
 
@@ -619,6 +655,26 @@ where
         }
         let name = parts.next();
         parts.next().is_none() && name.is_none_or(super::blocks::wikidot_math_name)
+    }
+
+    fn at_wikidot_crossed_math_close(&self, first_iteration: bool) -> bool {
+        let mut close = self.clone();
+        if !first_iteration {
+            if close.current().token != Token::LineBreak || close.step().is_err() {
+                return false;
+            }
+        }
+        if close.current().token != Token::LeftBlockEnd {
+            return false;
+        }
+        let Ok(name) = close.get_end_block() else {
+            return false;
+        };
+        name.eq_ignore_ascii_case("math")
+            && !matches!(
+                close.current().token,
+                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+            )
     }
 
     /// Collect a block's body to its end, as string slice.
@@ -1149,7 +1205,13 @@ where
 
             first = false;
             match consume(self) {
-                Ok(consumed) => process(consumed),
+                Ok(consumed) => {
+                    // Mixed paragraph ownership is an instruction for the
+                    // outer paragraph stack. A no-paragraph body has no such
+                    // stack, so consume and discard that local marker here.
+                    self.take_wikidot_mixed_paragraph_ownership();
+                    process(consumed);
+                }
                 Err(_error)
                     if self.discarding_hidden_body()
                         && !self.settings().layout.legacy()

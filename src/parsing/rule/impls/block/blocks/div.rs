@@ -103,38 +103,9 @@ fn wikidot_div_is_inline_scored_line_literal(
     let line_start = source[..owner_start]
         .rfind('\n')
         .map_or(0, |offset| offset + 1);
-    line_start > 0
-        && source[line_start..owner_start]
-            .trim_matches([' ', '\t'])
-            .is_empty()
-}
-
-fn recover_wikidot_empty_key_div<'r, 't>(
-    parser: &mut Parser<'r, 't>,
-    owner_start: usize,
-) -> ParseResult<'r, 't, Elements<'t>>
-where
-    'r: 't,
-{
-    let source = parser.full_text().inner();
-    let line_start = source[..owner_start]
-        .rfind('\n')
-        .map_or(0, |offset| offset + 1);
-    let line_started_after_physical_newline = line_start > 0
-        && source[line_start..owner_start]
-            .trim_matches([' ', '\t'])
-            .is_empty();
-    let literal_start = if line_started_after_physical_newline {
-        line_start - 1
-    } else {
-        owner_start
-    };
-    recover_wikidot_empty_key_candidate(
-        parser,
-        &BLOCK_DIV,
-        literal_start,
-        !line_started_after_physical_newline,
-    )
+    source[line_start..owner_start]
+        .trim_matches([' ', '\t'])
+        .is_empty()
 }
 
 fn try_recover_wikidot_div_literal<'r, 't>(
@@ -175,11 +146,15 @@ where
             && source[line_start..owner_start]
                 .trim_matches([' ', '\t'])
                 .is_empty();
+        let mutable_state = parser.get_mutable_state();
         let mut outer = parser.clone();
         let outer_end = outer
             .get_body_elements(&BLOCK_DIV, false)
             .ok()
             .map(|_| outer.current().span.start);
+        parser.reset_mutable_state(mutable_state);
+
+        let mutable_state = parser.get_mutable_state();
         let mut span = parser.clone();
         let starts_with_bounded_span = if span.get_optional_space().is_ok()
             && span.current().token == Token::LeftBlock
@@ -205,6 +180,7 @@ where
         } else {
             false
         };
+        parser.reset_mutable_state(mutable_state);
         if !flag_score && starts_with_bounded_span {
             let literal_end = parser.current().span.start;
             let literal = text!(&source[owner_start..literal_end]);
@@ -403,9 +379,6 @@ fn parse_fn<'r, 't>(
 
     let head = parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;
     let (mut arguments, mut body_start) = head;
-    if parser.settings().layout.legacy() && arguments.has_empty_key() {
-        return recover_wikidot_empty_key_div(parser, owner_start);
-    }
     if parser.settings().layout.legacy()
         && flag_score
         && !parser.wikidot_alias_has_compatible_close(&BLOCK_DIV, owner_start)
@@ -425,6 +398,21 @@ fn parse_fn<'r, 't>(
         wikidot_div_head_started_physical_line(parser, body_start);
     let follows_inline_structural_close =
         wikidot_div_follows_inline_structural_close(parser, body_start);
+    if parser.settings().layout.legacy()
+        && parser.settings().mode != WikitextMode::List
+        && !parser.in_wikidot_div_body()
+        && !parser.in_native_blockquote_line()
+        && !flag_score
+        && body_start == BlockBodyStart::Inline
+        && (!arguments.is_empty() || arguments.has_empty_key())
+        && parser.has_body_end_block_on_line(&BLOCK_DIV)
+    {
+        // Wikidot rejects a root div that does not own its physical line, but
+        // the failed owner does not make the bytes between its markers opaque.
+        // Roll the block attempt back so ordinary downstream inline grammar
+        // can still own bold/link/footnote/span/math syntax in that residual.
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     if let Some(recovered) = try_recover_wikidot_div_literal(
         parser,
         owner_start,

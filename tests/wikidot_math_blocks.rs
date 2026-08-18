@@ -214,7 +214,7 @@ fn formula_body_preserves_literal_bytes_in_the_math_element() {
 }
 
 #[test]
-fn crossed_owner_rolls_back_before_numbering_and_later_syntax() {
+fn crossed_owner_waits_for_later_standalone_closer() {
     let source = concat!(
         "[[math]]\nouter [[bold]]inner\n[[/math]][[/bold]]\n\n",
         "AFTER\n\n",
@@ -222,12 +222,19 @@ fn crossed_owner_rolls_back_before_numbering_and_later_syntax() {
     );
     let (html, _) = render(source);
 
-    assert!(html.contains("[[math]]<br>\nouter [[bold]]inner"), "{html}");
-    assert!(html.contains("[[/math]][[/bold]]"), "{html}");
-    assert!(html.contains("<p>AFTER</p>"), "{html}");
     assert_eq!(html.matches("math-equation").count(), 1, "{html}");
     assert!(html.contains("id=\"equation-1\""), "{html}");
     assert!(!html.contains("id=\"equation-2\""), "{html}");
+    assert!(
+        html.contains("outer [[bold]]inner [[/math]][[/bold]]"),
+        "{html}"
+    );
+    assert!(
+        html.contains(
+            "AFTER [[math duplicate=&quot;one&quot; duplicate=&quot;two&quot;]] later"
+        ),
+        "{html}"
+    );
 }
 
 #[test]
@@ -244,13 +251,14 @@ fn dense_valid_and_crossed_math_candidates_stay_bounded() {
     let (html, _) = render(&source);
 
     assert!(started.elapsed() < Duration::from_secs(5));
-    assert_eq!(html.matches("math-equation").count(), ROW_COUNT, "{html}");
+    let expected = ROW_COUNT * 2;
+    assert_eq!(html.matches("math-equation").count(), expected, "{html}");
     assert!(
-        html.contains(&format!("id=\"equation-{ROW_COUNT}\"")),
+        html.contains(&format!("id=\"equation-{expected}\"")),
         "{html}"
     );
     assert!(
-        !html.contains(&format!("id=\"equation-{}\"", ROW_COUNT + 1)),
+        !html.contains(&format!("id=\"equation-{}\"", expected + 1)),
         "{html}"
     );
 }

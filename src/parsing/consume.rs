@@ -34,7 +34,242 @@ use super::rule::{
     impls::{RULE_FALLBACK, starts_own_line_rule, url_elements},
 };
 use crate::tree::{LinkLabel, LinkLocation, LinkType, PartialElement};
-use std::mem;
+use std::{borrow::Cow, mem};
+
+fn try_consume_wikidot_parser_function_anchor_fallback<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<Option<Elements<'t>>, ParseError>
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy()
+        || parser.current().token != Token::LeftBlockAnchor
+    {
+        return Ok(None);
+    }
+
+    let source = parser.full_text().inner();
+    let start = parser.current().span.start;
+    let target_start = start + "[[#".len();
+    let bytes = source.as_bytes();
+    let mut target_end = target_start;
+    while bytes.get(target_end).is_some_and(u8::is_ascii_alphanumeric) {
+        target_end += 1;
+    }
+    if target_end == target_start
+        || !bytes
+            .get(target_end)
+            .is_some_and(|byte| matches!(byte, b' ' | b'\t'))
+    {
+        return Ok(None);
+    }
+
+    let mut label_start = target_end;
+    while bytes
+        .get(label_start)
+        .is_some_and(|byte| matches!(byte, b' ' | b'\t'))
+    {
+        label_start += 1;
+    }
+    let line_end = source[label_start..]
+        .find(['\r', '\n'])
+        .map_or(source.len(), |offset| label_start + offset);
+    let Some(relative_close) = source[label_start..line_end].find(']') else {
+        return Ok(None);
+    };
+    let close = label_start + relative_close;
+    let raw_label = &source[label_start..close];
+    let trimmed = raw_label.trim_matches([' ', '\t']);
+    if trimmed.is_empty() {
+        return Ok(None);
+    }
+    let trailing_start = raw_label.trim_end_matches([' ', '\t']).len();
+    let trailing = &raw_label[trailing_start..];
+
+    if std::iter::once(parser.current())
+        .chain(parser.remaining())
+        .take_while(|token| token.span.start <= close)
+        .any(|token| {
+            matches!(
+                token.token,
+                Token::RuntimeText | Token::GeneratedPageLink | Token::GeneratedTagLinks
+            )
+        })
+    {
+        return Ok(None);
+    }
+
+    while parser.current().span.end <= close {
+        parser.step()?;
+    }
+    let closer = parser.current();
+    if closer.span.start != close || !closer.slice.starts_with(']') {
+        return Ok(None);
+    }
+    let residual_closer = &closer.slice[1..];
+    parser.step()?;
+
+    let target = &source[target_start..target_end];
+    let mut elements = vec![
+        text!("["),
+        Element::Link {
+            ltype: LinkType::Anchor,
+            link: LinkLocation::Url(Cow::Owned(format!("#{target}"))),
+            label: LinkLabel::Text(Cow::Borrowed(trimmed)),
+            target: None,
+        },
+    ];
+    if !trailing.is_empty() {
+        elements.push(text!(trailing));
+    }
+    if !residual_closer.is_empty() {
+        elements.push(text!(residual_closer));
+    }
+    Ok(Some(Elements::Multiple(elements)))
+}
+
+fn try_consume_wikidot_unmatched_inline_close_link<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<Option<Elements<'t>>, ParseError>
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlockEnd
+    {
+        return Ok(None);
+    }
+
+    let source = parser.full_text().inner();
+    let start = parser.current().span.start;
+    let Some(relative_marker_end) = source[start..].find("]]") else {
+        return Ok(None);
+    };
+    let marker_end = start + relative_marker_end + 2;
+    let name = source[start + "[[/".len()..start + relative_marker_end]
+        .trim_matches([' ', '\t']);
+    if !matches!(name.to_ascii_lowercase().as_str(), "div" | "span") {
+        return Ok(None);
+    }
+    if line_has_unmatched_wikidot_owner_opener(source, start, name) {
+        return Ok(None);
+    }
+    if (name.eq_ignore_ascii_case("span") && parser.rule().name() == "block-span")
+        || (name.eq_ignore_ascii_case("div") && parser.rule().name() == "block-div")
+    {
+        return Ok(None);
+    }
+    if !source
+        .as_bytes()
+        .get(marker_end)
+        .is_some_and(|byte| matches!(byte, b' ' | b'\t'))
+    {
+        return Ok(None);
+    }
+
+    let mut label_start = marker_end;
+    while source
+        .as_bytes()
+        .get(label_start)
+        .is_some_and(|byte| matches!(byte, b' ' | b'\t'))
+    {
+        label_start += 1;
+    }
+    let line_end = source[label_start..]
+        .find(['\r', '\n'])
+        .map_or(source.len(), |offset| label_start + offset);
+    let Some(relative_close) = source[label_start..line_end].find(']') else {
+        return Ok(None);
+    };
+    let close = label_start + relative_close;
+    let raw_label = &source[label_start..close];
+    let label = raw_label.trim_matches([' ', '\t']);
+    if label.is_empty() {
+        return Ok(None);
+    }
+    let trailing_start = raw_label.trim_end_matches([' ', '\t']).len();
+    let trailing = &raw_label[trailing_start..];
+
+    if std::iter::once(parser.current())
+        .chain(parser.remaining())
+        .take_while(|token| token.span.start <= close)
+        .any(|token| {
+            matches!(
+                token.token,
+                Token::RuntimeText | Token::GeneratedPageLink | Token::GeneratedTagLinks
+            )
+        })
+    {
+        return Ok(None);
+    }
+
+    while parser.current().span.end <= close {
+        parser.step()?;
+    }
+    let closer = parser.current();
+    if closer.span.start != close || !closer.slice.starts_with(']') {
+        return Ok(None);
+    }
+    let residual_closer = &closer.slice[1..];
+    parser.step()?;
+
+    let target = &source[start + 2..marker_end];
+    let mut elements = vec![
+        text!("["),
+        Element::Link {
+            ltype: LinkType::Direct,
+            link: LinkLocation::Url(Cow::Borrowed(target)),
+            label: LinkLabel::Text(Cow::Borrowed(label)),
+            target: None,
+        },
+    ];
+    if !trailing.is_empty() {
+        elements.push(text!(trailing));
+    }
+    if !residual_closer.is_empty() {
+        elements.push(text!(residual_closer));
+    }
+    Ok(Some(Elements::Multiple(elements)))
+}
+
+fn line_has_unmatched_wikidot_owner_opener(
+    source: &str,
+    close_start: usize,
+    name: &str,
+) -> bool {
+    let line_start = source[..close_start]
+        .rfind(['\r', '\n'])
+        .map_or(0, |newline| newline + 1);
+    let prefix = &source[line_start..close_start];
+    let open = format!("[[{name}");
+    let close = format!("[[/{name}");
+    let last_open = prefix
+        .as_bytes()
+        .windows(open.len())
+        .enumerate()
+        .filter(|(index, window)| {
+            window.eq_ignore_ascii_case(open.as_bytes())
+                && prefix
+                    .as_bytes()
+                    .get(index + open.len())
+                    .is_some_and(|byte| matches!(byte, b']' | b' ' | b'\t' | b'_'))
+        })
+        .map(|(index, _)| index)
+        .last();
+    let last_close = prefix
+        .as_bytes()
+        .windows(close.len())
+        .enumerate()
+        .filter(|(index, window)| {
+            window.eq_ignore_ascii_case(close.as_bytes())
+                && prefix
+                    .as_bytes()
+                    .get(index + close.len())
+                    .is_some_and(|byte| matches!(byte, b']' | b' ' | b'\t' | b'_'))
+        })
+        .map(|(index, _)| index)
+        .last();
+    last_open.is_some_and(|open| last_close.is_none_or(|close| open > close))
+}
 
 fn try_consume_structural_close<'r, 't>(
     parser: &mut Parser<'r, 't>,
@@ -146,6 +381,7 @@ where
             };
             match token.token {
                 Token::RightBlock => break token.span.start,
+                Token::LeftBlock | Token::LeftBlockEnd => return Ok(None),
                 Token::LineBreak | Token::ParagraphBreak | Token::InputEnd => {
                     return Ok(None);
                 }
@@ -429,14 +665,15 @@ fn try_consume_line_break<'r, 't>(
                 following == Some(Token::Whitespace)
             }
             Token::Equals => {
-                following == Some(Token::Whitespace)
-                    || parser
-                        .remaining()
-                        .iter()
-                        .skip(next_offset + 1)
-                        .take_while(|next| next.token == Token::Equals)
-                        .count()
-                        >= 3
+                !(parser.settings().layout.legacy() && next_offset == 1)
+                    && (following == Some(Token::Whitespace)
+                        || parser
+                            .remaining()
+                            .iter()
+                            .skip(next_offset + 1)
+                            .take_while(|next| next.token == Token::Equals)
+                            .count()
+                            >= 3)
             }
             Token::TripleDash => matches!(
                 following,
@@ -529,6 +766,10 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
     let pending_unquoted_collapsible_close = parser.settings().layout.legacy()
         && parser.pending_wikidot_collapsible_closer()
         && parser.native_blockquote_depth().is_none();
+    if let Some(elements) = try_consume_wikidot_unmatched_inline_close_link(parser)? {
+        parser.depth_decrement();
+        return ok!(elements);
+    }
     if let Some(elements) = try_consume_structural_close(parser)? {
         parser.depth_decrement();
         if pending_unquoted_collapsible_close {
@@ -539,6 +780,11 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
 
     if let Some(elements) = try_consume_wikidot_adjacent_unmatched_closes_as_link(parser)?
     {
+        parser.depth_decrement();
+        return ok!(elements);
+    }
+
+    if let Some(elements) = try_consume_wikidot_parser_function_anchor_fallback(parser)? {
         parser.depth_decrement();
         return ok!(elements);
     }
@@ -620,7 +866,19 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
         }
     }
 
-    let element = text!(current.slice);
+    let element = if parser.settings().layout.legacy()
+        && current.token == Token::LeftBlock
+        && current.span.start == 0
+        && parser
+            .full_text()
+            .inner()
+            .get(.."[[ bibliography]]".len())
+            .is_some_and(|prefix| prefix.eq_ignore_ascii_case("[[ bibliography]]"))
+    {
+        Element::Text(Cow::Owned(format!("\n\n{}", current.slice)))
+    } else {
+        text!(current.slice)
+    };
     parser.step()?;
 
     // If we've hit the recursion limit, just bail

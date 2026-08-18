@@ -47,6 +47,25 @@ impl LiteralRegionIndex {
         Self { ranges: merged }
     }
 
+    pub(crate) fn for_parser_functions(source: &str) -> Self {
+        let mut ranges = Vec::new();
+        collect_parser_function_literal_blocks(source, &mut ranges);
+        collect_same_line_paired_ranges(source, "@@", "@@", &mut ranges);
+        ranges.sort_unstable_by_key(|range| (range.start, range.end));
+
+        let mut merged: Vec<Range<usize>> = Vec::with_capacity(ranges.len());
+        for range in ranges {
+            if let Some(previous) = merged.last_mut()
+                && range.start <= previous.end
+            {
+                previous.end = previous.end.max(range.end);
+            } else {
+                merged.push(range);
+            }
+        }
+        Self { ranges: merged }
+    }
+
     pub(crate) fn contains(&self, offset: usize) -> bool {
         let insertion = self.ranges.partition_point(|range| range.start <= offset);
         insertion > 0 && offset < self.ranges[insertion - 1].end
@@ -54,6 +73,64 @@ impl LiteralRegionIndex {
 
     pub(crate) fn ranges(&self) -> &[Range<usize>] {
         &self.ranges
+    }
+}
+
+fn collect_parser_function_literal_blocks(source: &str, ranges: &mut Vec<Range<usize>>) {
+    let mut offset = 0usize;
+    let mut active: Option<(&'static str, usize)> = None;
+
+    for line in source.split_inclusive('\n') {
+        let body = line
+            .strip_suffix('\n')
+            .unwrap_or(line)
+            .strip_suffix('\r')
+            .unwrap_or_else(|| line.strip_suffix('\n').unwrap_or(line));
+        let lower = body.to_ascii_lowercase();
+
+        if let Some((close, start)) = active {
+            if let Some(close_start) = lower.find(close) {
+                ranges.push(start..offset + close_start + close.len());
+                active = None;
+            }
+            offset += line.len();
+            continue;
+        }
+
+        if !body.starts_with("[[") {
+            offset += line.len();
+            continue;
+        }
+        let Some(head_end) = lower.find("]]") else {
+            offset += line.len();
+            continue;
+        };
+        let head = &lower[2..head_end];
+        if head.starts_with(|character: char| character.is_ascii_whitespace()) {
+            offset += line.len();
+            continue;
+        }
+        let name = head.split_ascii_whitespace().next().unwrap_or_default();
+        let close = match name {
+            "code" => "[[/code]]",
+            "html" => "[[/html]]",
+            "raw" => "[[/raw]]",
+            _ => {
+                offset += line.len();
+                continue;
+            }
+        };
+        let body_start = head_end + 2;
+        if let Some(relative_close) = lower[body_start..].find(close) {
+            ranges.push(offset..offset + body_start + relative_close + close.len());
+        } else {
+            active = Some((close, offset));
+        }
+        offset += line.len();
+    }
+
+    if let Some((_, start)) = active {
+        ranges.push(start..source.len());
     }
 }
 

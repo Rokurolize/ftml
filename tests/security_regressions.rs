@@ -408,6 +408,129 @@ fn malformed_ast_footnote_reference_renders_error() {
 }
 
 #[test]
+fn recursive_ast_footnote_reference_fails_closed() {
+    let tree = SyntaxTree {
+        elements: vec![Element::Footnote(1)],
+        footnotes: vec![vec![Element::Footnote(1)]],
+        ..SyntaxTree::default()
+    };
+    let output = render_html(&tree, Layout::Wikijump);
+
+    assert!(output.contains("wj-error-inline"), "{output}");
+    assert!(output.contains("Footnote item not found"), "{output}");
+    assert!(output.len() < 20_000, "recursive output grew unexpectedly");
+}
+
+#[test]
+fn residual_gallery_inside_no_paragraph_body_does_not_leak_paragraph_state() {
+    let input = concat!(
+        "[[bibliography]]\n",
+        ": item : before\n",
+        "[[gallery]]]\n",
+        "[[/bibliography]]\n",
+        "after",
+    );
+    let result = std::panic::catch_unwind(|| parse_with_errors(input, Layout::Wikidot));
+
+    assert!(
+        result.is_ok(),
+        "residual gallery must not panic outer paragraph gathering"
+    );
+}
+
+#[test]
+fn spaced_css_module_closer_does_not_panic() {
+    let result = std::panic::catch_unwind(|| {
+        parse_with_errors("[[module CSS]]\n[[/ module]]", Layout::Wikidot)
+    });
+
+    assert!(
+        result.is_ok(),
+        "spaced CSS closer must fail/recover without panic"
+    );
+}
+
+#[test]
+fn standalone_buttons_respect_page_syntax_mode_gate() {
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::ForumPost, Layout::Wikidot);
+    let mut source = "[[button edit text=\"Edit\"]]".to_owned();
+    ftml::preprocess_for_layout(&mut source, settings.layout);
+    let tokens = ftml::tokenize(&source);
+    let (tree, _errors) = ftml::parse(&tokens, &page_info, &settings).into();
+    let output = HtmlRender.render(&tree, &page_info, &settings);
+
+    assert!(
+        !output.body.contains("wiki-standalone-button"),
+        "{}",
+        output.body
+    );
+    assert!(
+        output.resource_requirements.is_empty(),
+        "{:#?}",
+        output.resource_requirements
+    );
+}
+
+#[test]
+fn plain_failed_inline_div_keeps_its_body_literal() {
+    let input = "[[div]][[footnote]]secret[[/footnote]][[/div]]";
+    let (tree, _errors) = parse_with_errors(input, Layout::Wikidot);
+    let html = render_html(&tree, Layout::Wikidot);
+
+    assert!(tree.footnotes.is_empty(), "{tree:#?}");
+    assert!(!html.contains("footnotes-footer"), "{html}");
+    assert!(html.contains("[[div]]"), "{html}");
+    assert!(html.contains("[[footnote]]secret[[/footnote]]"), "{html}");
+    assert!(html.contains("[[/div]]"), "{html}");
+}
+
+#[test]
+fn unsafe_wikidot_image_source_never_reaches_src_attribute() {
+    let tree = parse("[[image javascript://alert(1)]]", Layout::Wikidot);
+    let html = render_html(&tree, Layout::Wikidot);
+
+    assert!(!html.contains("src=\"javascript:"), "{html}");
+    assert!(html.contains("src=\"#invalid-url\""), "{html}");
+}
+
+#[test]
+fn backslash_wikidot_image_link_stays_internal() {
+    let input = r#"[[image https://example.com/a.png link="\\evil.example/path"]]"#;
+    let tree = parse(input, Layout::Wikidot);
+    let html = render_html(&tree, Layout::Wikidot);
+
+    assert!(!html.contains("href=\"/\\evil.example"), "{html}");
+    assert!(html.contains("%5Cevil.example"), "{html}");
+}
+
+#[test]
+fn false_iftags_two_sibling_closes_do_not_poison_close_cache() {
+    let input = concat!(
+        "[[iftags +missing]]\n",
+        "[[iftags -missing]]\nfirst\n[[/iftags]]\n",
+        "[[iftags -missing]]\nsecond\n[[/iftags]]\n",
+        "[[html]]\n<b>secret</b>\n[[/html]]\n",
+        "[[/iftags]]\n",
+        "visible",
+    );
+    let tree = parse(input, Layout::Wikidot);
+
+    assert_eq!(render_text(&tree, Layout::Wikidot), "visible");
+    assert!(tree.html_blocks.is_empty(), "{tree:#?}");
+}
+
+#[test]
+fn scored_inline_div_at_document_start_remains_literal() {
+    let (tree, _errors) = parse_with_errors("[[div_]]inline[[/div]]", Layout::Wikidot);
+    let html = render_html(&tree, Layout::Wikidot);
+
+    assert!(html.contains("[[div_]]"), "{html}");
+    assert!(html.contains("[[/div]]"), "{html}");
+    assert!(!html.contains("<div"), "{html}");
+}
+
+#[test]
 fn malformed_ast_bibliography_block_renders_error() {
     let tree = SyntaxTree {
         elements: vec![Element::BibliographyBlock {
@@ -1011,6 +1134,69 @@ fn wikidot_false_iftags_sparse_closer_scans_scale_linearly() {
             "{nested_count} nested candidates took {elapsed:?}",
         );
     }
+}
+
+#[test]
+fn hostile_wikidot_lookahead_families_remain_bounded() {
+    let parse_cases = [
+        (
+            "multiline set-tags button",
+            format!("[[button set-tags{}", "\n    ".repeat(4_096)),
+        ),
+        ("spaced unmatched closes", "[[/ a ".repeat(4_096)),
+        (
+            "triple-link raw probes",
+            format!("[[[start|{}]]]", "@<a".repeat(4_096)),
+        ),
+        (
+            "repeated malformed footnoteblocks",
+            "[[footnoteblock x=\"bad\"]]".repeat(2_048),
+        ),
+        (
+            "newline malformed single links",
+            "[https://example.com label\n".repeat(2_048),
+        ),
+        (
+            "single-link owner recovery",
+            format!("{}@@x@@]", "[https://example.com ".repeat(1_024)),
+        ),
+        ("same-line line-owned blocks", "x[[toc]]".repeat(4_096)),
+        ("unterminated code candidates", "[[code]]\n".repeat(2_048)),
+    ];
+
+    for (name, input) in parse_cases {
+        let started = Instant::now();
+        let _ = parse_with_errors(&input, Layout::Wikidot);
+        let elapsed = started.elapsed();
+        assert!(elapsed < Duration::from_secs(3), "{name} took {elapsed:?}");
+    }
+}
+
+#[test]
+fn hostile_wikidot_preprocessing_and_tokenization_remain_bounded() {
+    let mut angle_run = format!("x{}", ">".repeat(100_000));
+    let started = Instant::now();
+    ftml::preprocess_for_layout(&mut angle_run, Layout::Wikidot);
+    assert!(
+        started.elapsed() < Duration::from_secs(3),
+        "right-angle quote preprocessing exceeded budget"
+    );
+
+    let mut math_closers = format!("<<x>>\n[[math]]\n{}", "[[/math\n".repeat(4_096));
+    let started = Instant::now();
+    ftml::preprocess_for_layout(&mut math_closers, Layout::Wikidot);
+    assert!(
+        started.elapsed() < Duration::from_secs(3),
+        "malformed math closer preprocessing exceeded budget"
+    );
+
+    let brackets = format!("{}{}", "[".repeat(100_000), "]".repeat(100_000));
+    let started = Instant::now();
+    let _ = ftml::tokenize(&brackets);
+    assert!(
+        started.elapsed() < Duration::from_secs(3),
+        "bracket-run tokenization exceeded budget"
+    );
 }
 
 #[test]

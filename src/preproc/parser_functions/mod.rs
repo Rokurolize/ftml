@@ -27,10 +27,9 @@ use self::expression::{evaluate, format_value, truthy};
 pub(crate) use self::literal::LiteralRegionIndex;
 use std::ops::Range;
 
-const MAX_DOCUMENT_CANDIDATES: usize = 8_192;
-const MAX_PARSER_FUNCTION_NESTING: usize = 256;
+const MAX_DOCUMENT_CANDIDATES: usize = 65_536;
+const MAX_PARSER_FUNCTION_NESTING: usize = 1_024;
 const MAX_UNMATCHED_DELIMITERS: usize = MAX_DOCUMENT_CANDIDATES;
-const MAX_UNSUPPORTED_PAYLOAD_LENGTH: usize = 4_096;
 const MAX_CONDITIONAL_SCAN_MULTIPLIER: usize = 32;
 
 /// Policy for arithmetic division or remainder operations with a zero divisor.
@@ -226,7 +225,7 @@ fn resolve_function_pass(
     budget: &mut CandidateBudget,
     scan_budget: &mut ConditionalScanBudget,
 ) -> String {
-    let literal_regions = LiteralRegionIndex::new(source);
+    let literal_regions = LiteralRegionIndex::for_parser_functions(source);
     let delimiter_index = WikidotDelimiterIndex::new(source);
     let mut replacements = Vec::new();
     let mut search_start = 0usize;
@@ -243,6 +242,19 @@ fn resolve_function_pass(
         };
 
         if literal_regions.contains(function_start) {
+            continue;
+        }
+        if matches!(
+            candidate.kind,
+            ParserFunctionKind::If | ParserFunctionKind::IfExpr
+        ) && delimiter_index.is_unmatched_opener(function_start)
+        {
+            if let Some(end) =
+                recover_unmatched_conditional_prefix(source, function_start)
+            {
+                replacements.push((function_start..end, String::new()));
+                search_start = end;
+            }
             continue;
         }
 
@@ -279,6 +291,27 @@ fn resolve_function_pass(
     }
 
     apply_replacements(source, replacements)
+}
+
+fn recover_unmatched_conditional_prefix(source: &str, start: usize) -> Option<usize> {
+    let mut cursor = start;
+    let mut count = 0usize;
+    loop {
+        let suffix = &source[cursor..];
+        let prefix = if suffix.starts_with("[[#ifexpr ") {
+            "[[#ifexpr "
+        } else if suffix.starts_with("[[#if ") {
+            "[[#if "
+        } else {
+            break;
+        };
+        count += 1;
+        cursor += prefix.len();
+    }
+    if count == 0 || !source[cursor..].starts_with("[[a ") {
+        return None;
+    }
+    source[cursor..].find("]]").map(|close| cursor + close + 2)
 }
 
 fn classify_candidate(source: &str, start: usize) -> Option<ParserFunctionCandidate> {
@@ -475,7 +508,7 @@ fn recover_branch_residual(
         if !is_safe_legacy_payload(suffix) {
             return None;
         }
-        return Some((close_start + 2, format!("[{payload}{suffix}]")));
+        return Some((close_start + 2, format!("{prefix}{payload}{suffix}]]")));
     }
 
     let opener = replacement.strip_prefix("[[")?;
@@ -504,7 +537,7 @@ fn recover_branch_residual(
         .unwrap_or(&source[after_closing..outer_close]);
     Some((
         outer_close + 2,
-        format!("{replacement}{before_closing}[{after_closing}]"),
+        format!("{replacement}{before_closing}{closing} {after_closing}]]"),
     ))
 }
 
@@ -626,54 +659,14 @@ fn resolve_expression_candidate(
 }
 
 fn resolve_unsupported_candidate(
-    source: &str,
-    candidate: ParserFunctionCandidate,
-    scan_budget: &mut ConditionalScanBudget,
+    _source: &str,
+    _candidate: ParserFunctionCandidate,
+    _scan_budget: &mut ConditionalScanBudget,
 ) -> ScanResult<(usize, String)> {
-    let close_start = match find_closer(source, candidate.body_start, scan_budget) {
-        ScanResult::Found(close_start) => close_start,
-        ScanResult::NotFound => return ScanResult::NotFound,
-        ScanResult::Exhausted => return ScanResult::Exhausted,
-    };
-    let payload = &source[candidate.body_start..close_start];
-    let trailing_horizontal_space = payload
-        .as_bytes()
-        .last()
-        .is_some_and(|byte| matches!(byte, b' ' | b'\t'));
-    if payload.len() > MAX_UNSUPPORTED_PAYLOAD_LENGTH
-        || !is_safe_unsupported_payload(payload)
-    {
-        return ScanResult::NotFound;
-    }
-    if candidate.kind == ParserFunctionKind::Unsupported && !payload.contains('|') {
-        return ScanResult::NotFound;
-    }
-    if candidate.kind == ParserFunctionKind::UnsupportedEmptyName
-        && !payload.contains('|')
-        && !trailing_horizontal_space
-    {
-        return ScanResult::NotFound;
-    }
-    // A space after `#` is the live empty-name fallback. Its replacement is
-    // generated literal text, not authored single-bracket syntax. Shield the
-    // evidenced trailing-space shape so the ordinary bracket parser does not
-    // trim the generated payload during the next phase.
-    let replacement = if candidate.kind == ParserFunctionKind::UnsupportedEmptyName
-        && trailing_horizontal_space
-    {
-        format!("@@[{payload}]@@")
-    } else {
-        format!("[{payload}]")
-    };
-    ScanResult::Found((close_start + 2, replacement))
-}
-
-fn is_safe_unsupported_payload(payload: &str) -> bool {
-    payload.bytes().all(|byte| {
-        byte.is_ascii_alphanumeric()
-            || matches!(byte, b' ' | b'\t')
-            || b"|#_=:+-*/%().,?!".contains(&byte)
-    })
+    // Unsupported parser-function names retain their authored bytes until the
+    // ordinary Wikidot parser runs. That parser owns the legacy single-anchor
+    // recovery and, critically, preserves which closing brackets were authored.
+    ScanResult::NotFound
 }
 
 fn resolve_empty_candidate(

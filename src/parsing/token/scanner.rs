@@ -25,9 +25,23 @@ fn extract_all_with_comment_scan_visits(
     // following `]]` run cannot swallow it into a block or link token.
     let mut comment_active = false;
     let mut comment_closer_bracket = None;
+    let mut bracket_run = None::<(u8, usize)>;
     let mut index = 0;
     while index < bytes.len() {
         let start = index;
+        let bracket_run_offset = match bytes[start] {
+            symbol @ (b'[' | b']') => match bracket_run {
+                Some((active, run_start)) if active == symbol => start - run_start,
+                _ => {
+                    bracket_run = Some((symbol, start));
+                    0
+                }
+            },
+            _ => {
+                bracket_run = None;
+                0
+            }
+        };
         let force_right_bracket = comment_closer_bracket == Some(start);
         if force_right_bracket {
             comment_closer_bracket = None;
@@ -46,6 +60,7 @@ fn extract_all_with_comment_scan_visits(
             start,
             valid_comment_opener,
             force_right_bracket,
+            bracket_run_offset,
         );
         if was_comment_active
             && text[start..end].ends_with("--")
@@ -132,6 +147,7 @@ fn next_token(
     start: usize,
     valid_comment_opener: bool,
     force_right_bracket: bool,
+    bracket_run_offset: usize,
 ) -> (Token, usize) {
     let byte = bytes[start];
     if is_discarded_control(byte) {
@@ -163,9 +179,13 @@ fn next_token(
         return (Token::Whitespace, scan_space(bytes, start));
     }
 
-    if let Some((token, end)) =
-        scan_literal(bytes, start, valid_comment_opener, force_right_bracket)
-    {
+    if let Some((token, end)) = scan_literal(
+        bytes,
+        start,
+        valid_comment_opener,
+        force_right_bracket,
+        bracket_run_offset,
+    ) {
         return (token, end);
     }
 
@@ -185,15 +205,14 @@ fn scan_literal(
     start: usize,
     valid_comment_opener: bool,
     force_right_bracket: bool,
+    bracket_run_offset: usize,
 ) -> Option<(Token, usize)> {
     let result = match bytes[start] {
         b'@' if has(bytes, start, b"@@") => (Token::Raw, start + 2),
         b'@' if has(bytes, start, b"@<") => (Token::LeftRaw, start + 2),
         b'>' if has(bytes, start, b">@") => (Token::RightRaw, start + 2),
         b'[' if valid_comment_opener => (Token::LeftComment, start + 4),
-        b'[' if has(bytes, start, b"[[[[")
-            && repeated_symbol_offset(bytes, start, b'[').is_multiple_of(4) =>
-        {
+        b'[' if has(bytes, start, b"[[[[") && bracket_run_offset.is_multiple_of(4) => {
             (Token::LeftBracket, start + 1)
         }
         b'[' if has(bytes, start, b"[[[*") => (Token::LeftLinkStar, start + 4),
@@ -209,13 +228,13 @@ fn scan_literal(
         b'(' if has(bytes, start, b"((") => (Token::LeftParentheses, start + 2),
         b']' if force_right_bracket => (Token::RightBracket, start + 1),
         b']' if has(bytes, start, b"]]]")
-            && !is_right_link_trailing_bracket(bytes, start) =>
+            && !is_right_link_trailing_bracket(bracket_run_offset) =>
         {
             (Token::RightLink, start + 3)
         }
         b'$' if has(bytes, start, b"$]]") => (Token::RightMath, start + 3),
         b']' if has(bytes, start, b"]]")
-            && !is_right_link_trailing_bracket(bytes, start) =>
+            && !is_right_link_trailing_bracket(bracket_run_offset) =>
         {
             (Token::RightBlock, start + 2)
         }
@@ -250,16 +269,8 @@ fn scan_literal(
     Some(result)
 }
 
-fn repeated_symbol_offset(bytes: &[u8], start: usize, symbol: u8) -> usize {
-    let mut run_start = start;
-    while run_start > 0 && bytes[run_start - 1] == symbol {
-        run_start -= 1;
-    }
-    start - run_start
-}
-
-fn is_right_link_trailing_bracket(bytes: &[u8], start: usize) -> bool {
-    repeated_symbol_offset(bytes, start, b']') % 4 == 3
+fn is_right_link_trailing_bracket(bracket_run_offset: usize) -> bool {
+    bracket_run_offset % 4 == 3
 }
 
 fn scan_repeated_symbol(bytes: &[u8], start: usize) -> Option<(Token, usize)> {
@@ -337,16 +348,19 @@ fn scan_url(bytes: &[u8], start: usize) -> Option<usize> {
     // separate token even after a URL scan has started. This intentionally
     // splits an ordinary `https://example.com/a>@b` at the `>@` marker.
     let mut end = body_start;
-    while end < bytes.len()
-        && !matches!(
+    while end < bytes.len() {
+        let character = std::str::from_utf8(&bytes[end..]).ok()?.chars().next()?;
+        if matches!(
             bytes[end],
             b'\n' | b'\r' | b' ' | b'\t' | b'"' | b'\'' | b'|' | b'[' | b']'
-        )
-        && !is_discarded_control(bytes[end])
-        && !has(bytes, end, b">@")
-        && !has(bytes, end, b"@@")
-    {
-        end += 1;
+        ) || character.is_whitespace()
+            || is_discarded_control(bytes[end])
+            || has(bytes, end, b">@")
+            || has(bytes, end, b"@@")
+        {
+            break;
+        }
+        end += character.len_utf8();
     }
 
     (end > body_start).then_some(end)
@@ -612,5 +626,17 @@ mod tests {
                 "{input}: {tokens:#?}",
             );
         }
+    }
+
+    #[test]
+    fn leading_space_before_equals_is_a_separate_token() {
+        let tokens = Token::extract_all("A\n ====\nB");
+        let kinds = tokens.iter().map(|token| token.token).collect::<Vec<_>>();
+        assert!(
+            kinds.windows(3).any(|window| {
+                window == [Token::LineBreak, Token::Whitespace, Token::Equals]
+            }),
+            "{kinds:?}",
+        );
     }
 }

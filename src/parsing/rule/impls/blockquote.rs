@@ -30,7 +30,7 @@ use crate::parsing::parser::QuoteBodyLineStatus;
 use crate::parsing::{DepthItem, DepthList, process_depths};
 use crate::tree::{AttributeMap, Container, ContainerType};
 
-const MAX_BLOCKQUOTE_DEPTH: usize = 31;
+const MAX_BLOCKQUOTE_DEPTH: usize = 128;
 
 #[derive(Debug)]
 struct NativeQuoteRow<'t> {

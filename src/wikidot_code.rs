@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use std::collections::BTreeMap;
 use std::ops::Range;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -31,14 +32,77 @@ pub(crate) fn candidate_at(
     source: &str,
     opener_start: usize,
 ) -> Option<WikidotCodeCandidate> {
-    candidate_at_inner(source, opener_start, true)
+    candidates(source).remove(&opener_start)
 }
 
 pub(crate) fn candidate_at_owned_opener(
     source: &str,
     opener_start: usize,
 ) -> Option<WikidotCodeCandidate> {
+    if has_physical_line_ownership(source, opener_start) {
+        return candidate_at(source, opener_start);
+    }
     candidate_at_inner(source, opener_start, false)
+}
+
+pub(crate) fn candidates(source: &str) -> BTreeMap<usize, WikidotCodeCandidate> {
+    #[derive(Debug)]
+    struct OpenCode {
+        opener_start: usize,
+        body_start: usize,
+        nested_closes: usize,
+        suppress_nested_openers: bool,
+    }
+
+    let mut output = BTreeMap::new();
+    let mut stack = Vec::<OpenCode>::new();
+    let mut cursor = 0usize;
+    while let Some(relative_marker) = source[cursor..].find("[[") {
+        let marker_start = cursor + relative_marker;
+        if let Some(marker_end) = code_closer_marker_end(source, marker_start) {
+            if code_closer_owns_physical_line(source, marker_end) {
+                if let Some(open) = stack.pop() {
+                    let candidate = WikidotCodeCandidate {
+                        body: open.body_start..marker_start,
+                        owner_end: marker_end,
+                        end_blocks_to_skip: open.nested_closes,
+                    };
+                    if !crosses_bold_closer(
+                        &source[candidate.body.clone()],
+                        &source[marker_end..],
+                    ) {
+                        output.insert(open.opener_start, candidate);
+                    }
+                    if let Some(parent) = stack.last_mut() {
+                        parent.nested_closes += 1 + open.nested_closes;
+                    }
+                }
+            } else if let Some(open) = stack.last_mut() {
+                // A crossed/suffixed `[[/code]]` remains body text. Once this
+                // happens, Wikidot also treats later same-family openers as
+                // body text until a standalone closer terminates this owner.
+                open.suppress_nested_openers = true;
+            }
+            cursor = marker_end;
+            continue;
+        }
+
+        if let Some(body_start) = code_opener_end(source, marker_start, true)
+            && (stack.is_empty()
+                || !stack
+                    .last()
+                    .is_some_and(|open| open.suppress_nested_openers))
+        {
+            stack.push(OpenCode {
+                opener_start: marker_start,
+                body_start,
+                nested_closes: 0,
+                suppress_nested_openers: false,
+            });
+        }
+        cursor = marker_start + 2;
+    }
+    output
 }
 
 fn candidate_at_inner(
@@ -83,11 +147,12 @@ fn candidate_at_inner(
 
 pub(crate) fn active_ranges(source: &str) -> Vec<Range<usize>> {
     let mut ranges = Vec::new();
+    let candidates = candidates(source);
     let mut cursor = 0usize;
 
     while let Some(relative_marker) = source[cursor..].find("[[") {
         let opener_start = cursor + relative_marker;
-        if let Some(candidate) = candidate_at(source, opener_start) {
+        if let Some(candidate) = candidates.get(&opener_start) {
             ranges.push(opener_start..candidate.owner_end);
             cursor = candidate.owner_end;
         } else {
@@ -100,12 +165,13 @@ pub(crate) fn active_ranges(source: &str) -> Vec<Range<usize>> {
 
 pub(crate) fn active_body_ranges(source: &str) -> Vec<Range<usize>> {
     let mut ranges = Vec::new();
+    let candidates = candidates(source);
     let mut cursor = 0usize;
 
     while let Some(relative_marker) = source[cursor..].find("[[") {
         let opener_start = cursor + relative_marker;
-        if let Some(candidate) = candidate_at(source, opener_start) {
-            ranges.push(candidate.body);
+        if let Some(candidate) = candidates.get(&opener_start) {
+            ranges.push(candidate.body.clone());
             cursor = candidate.owner_end;
         } else {
             cursor = opener_start + 2;
@@ -140,6 +206,11 @@ fn code_opener_end(
 }
 
 fn code_closer_end(source: &str, closer_start: usize) -> Option<usize> {
+    let closer_end = code_closer_marker_end(source, closer_start)?;
+    code_closer_owns_physical_line(source, closer_end).then_some(closer_end)
+}
+
+fn code_closer_marker_end(source: &str, closer_start: usize) -> Option<usize> {
     let suffix = source.get(closer_start..)?;
     if !suffix.starts_with("[[/") {
         return None;
@@ -150,7 +221,17 @@ fn code_closer_end(source: &str, closer_start: usize) -> Option<usize> {
     let name = source[head_start..head_end]
         .trim_matches(|character: char| character.is_ascii_whitespace());
 
-    name.eq_ignore_ascii_case("code").then_some(head_end + 2)
+    if !name.eq_ignore_ascii_case("code") {
+        return None;
+    }
+    Some(head_end + 2)
+}
+
+fn code_closer_owns_physical_line(source: &str, closer_end: usize) -> bool {
+    let line_end = source[closer_end..]
+        .find(['\r', '\n'])
+        .map_or(source.len(), |offset| closer_end + offset);
+    closer_end == line_end
 }
 
 fn has_physical_line_ownership(source: &str, opener_start: usize) -> bool {

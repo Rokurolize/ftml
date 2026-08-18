@@ -118,8 +118,8 @@ fn parse_evidenced_file_link<'t>(
 
     let (file, label) = match value.split_once('|') {
         Some((file, label)) => {
-            let file = file.trim();
-            let label = label.trim();
+            let file = file.trim_matches([' ', '\t', '\r', '\n']);
+            let label = label.trim_matches([' ', '\t', '\r', '\n']);
             (
                 file,
                 if label.is_empty() {

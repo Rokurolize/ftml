@@ -36,20 +36,28 @@ pub struct Tokenization<'t> {
 pub(crate) enum DelayedMarker {
     Generated(GeneratedInput),
     RuntimeLiteral(Range<usize>),
+    RuntimeScalar(Range<usize>),
 }
 
 impl DelayedMarker {
     pub(crate) fn generated(&self) -> Option<&GeneratedInput> {
         match self {
             Self::Generated(generated) => Some(generated),
-            Self::RuntimeLiteral(_) => None,
+            Self::RuntimeLiteral(_) | Self::RuntimeScalar(_) => None,
         }
     }
 
     pub(crate) fn runtime_literal(&self) -> Option<&Range<usize>> {
         match self {
-            Self::Generated(_) => None,
+            Self::Generated(_) | Self::RuntimeScalar(_) => None,
             Self::RuntimeLiteral(range) => Some(range),
+        }
+    }
+
+    pub(crate) fn runtime_scalar(&self) -> Option<&Range<usize>> {
+        match self {
+            Self::RuntimeScalar(range) => Some(range),
+            Self::Generated(_) | Self::RuntimeLiteral(_) => None,
         }
     }
 }
@@ -180,6 +188,8 @@ pub(crate) fn tokenize_delayed_segments<'t>(
                         );
                     }
                     TextOrigin::RuntimeScalar if !segment_text.is_empty() => {
+                        delayed_markers
+                            .insert(start, DelayedMarker::RuntimeScalar(start..end));
                         tokens.push(ExtractedToken {
                             token: Token::RuntimeText,
                             slice: segment_text,

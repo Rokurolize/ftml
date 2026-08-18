@@ -200,6 +200,9 @@ fn replace_surround_outside_closed_iftags(
     buffer.reserve(text.len());
     for captures in regex.captures_iter(text.as_str()) {
         let full = captures.get(0).unwrap();
+        if literal_regions.contains(source_offset + full.start()) {
+            continue;
+        }
         if contains_closed_conditional(
             full.as_str(),
             &["iftags"],
@@ -261,6 +264,7 @@ fn contains_closed_conditional(
     })
 }
 
+#[allow(dead_code)]
 fn wikidot_uses_getattrs(head: &str) -> bool {
     let name = head
         .strip_prefix("[[")
@@ -276,6 +280,7 @@ fn wikidot_uses_getattrs(head: &str) -> bool {
         .any(|candidate| name.eq_ignore_ascii_case(candidate))
 }
 
+#[allow(dead_code)]
 fn wikidot_getattrs_attribute_ranges(text: &str) -> Vec<Range<usize>> {
     if !text.contains("=\"") {
         return Vec::new();
@@ -358,9 +363,59 @@ fn wikidot_local_link_separator_ranges(text: &str) -> Vec<Range<usize>> {
 }
 
 fn wikidot_typography_protected_ranges(text: &str) -> Vec<Range<usize>> {
-    let mut ranges = wikidot_getattrs_attribute_ranges(text);
+    let mut ranges = wikidot_angle_quote_protected_ranges(text);
+    ranges.extend(wikidot_inline_math_ranges(text));
+    ranges.extend(wikidot_block_attribute_ranges(text));
     ranges.extend(wikidot_local_link_separator_ranges(text));
-    ranges.sort_by_key(|range| range.start);
+    merge_ranges(ranges)
+}
+
+fn wikidot_inline_math_ranges(text: &str) -> Vec<Range<usize>> {
+    let tokenization = crate::tokenize(text);
+    let mut ranges = Vec::new();
+    let mut start = None;
+    for token in tokenization.tokens() {
+        match token.token {
+            Token::LeftMath if start.is_none() => start = Some(token.span.start),
+            Token::RightMath => {
+                if let Some(start) = start.take() {
+                    ranges.push(start..token.span.end);
+                }
+            }
+            Token::ParagraphBreak | Token::InputEnd => start = None,
+            _ => {}
+        }
+    }
+    ranges
+}
+
+fn wikidot_block_attribute_ranges(text: &str) -> Vec<Range<usize>> {
+    if !text.contains("=\"") {
+        return Vec::new();
+    }
+    let mut ranges = Vec::new();
+    let mut cursor = 0usize;
+    while let Some(relative_open) = text[cursor..].find("[[") {
+        let open = cursor + relative_open;
+        let head_end = text[open + 2..]
+            .find("]]")
+            .map_or(text.len(), |relative| open + 2 + relative + 2);
+        let head = &text[open..head_end];
+        let mut value_cursor = 0usize;
+        while let Some(relative_delimiter) = head[value_cursor..].find("=\"") {
+            let value_start = value_cursor + relative_delimiter + 2;
+            let Some(relative_quote) = head[value_start..].find('"') else {
+                break;
+            };
+            let value_end = value_start + relative_quote;
+            ranges.push(open + value_start..open + value_end);
+            value_cursor = value_end + 1;
+        }
+        cursor = head_end.max(open + 2);
+        if cursor >= text.len() {
+            break;
+        }
+    }
     ranges
 }
 
@@ -503,11 +558,7 @@ pub fn substitute_wikidot(text: &mut String) {
     replace_wikidot_angle_quotes_outside_owners(text, &mut buffer);
 
     let digit_spaces = digit_space_positions(text);
-    let mut protected_ranges = if digit_spaces.is_empty() {
-        Vec::new()
-    } else {
-        wikidot_typography_protected_ranges(text)
-    };
+    let mut protected_ranges = wikidot_typography_protected_ranges(text);
     if replace_number_spaces(text, &protected_ranges, &digit_spaces) {
         // Recompute after replacing number spaces because U+00A0 occupies one
         // more UTF-8 byte than the ASCII space it replaces.
@@ -723,17 +774,50 @@ fn replace_angle_quotes_in_segment(
 }
 
 fn replace_right_angle_quotes(text: &mut String, buffer: &mut String) {
-    loop {
-        let before = text.matches(">>").count();
-        RIGHT_ANGLE_QUOTES.replace(text, buffer);
-        if text.matches(">>").count() == before {
-            break;
+    if !text.contains(">>") {
+        return;
+    }
+
+    buffer.clear();
+    buffer.reserve(text.len());
+    let bytes = text.as_bytes();
+    let mut cursor = 0;
+    while cursor < bytes.len() {
+        if bytes[cursor] != b'>' {
+            let end = cursor
+                + text[cursor..]
+                    .chars()
+                    .next()
+                    .expect("cursor remains on a character boundary")
+                    .len_utf8();
+            buffer.push_str(&text[cursor..end]);
+            cursor = end;
+            continue;
+        }
+
+        let start = cursor;
+        while cursor < bytes.len() && bytes[cursor] == b'>' {
+            cursor += 1;
+        }
+        let count = cursor - start;
+        let eligible = start > 0 && bytes[start - 1] != b'\n';
+        if eligible && count >= 2 {
+            for _ in 0..count / 2 {
+                buffer.push('\u{00bb}');
+            }
+            if count % 2 != 0 {
+                buffer.push('>');
+            }
+        } else {
+            buffer.push_str(&text[start..cursor]);
         }
     }
+    std::mem::swap(text, buffer);
 }
 
 fn wikidot_angle_quote_protected_ranges(text: &str) -> Vec<Range<usize>> {
     let mut ranges = LiteralRegionIndex::new(text).ranges().to_vec();
+    ranges.extend(wikidot_block_attribute_ranges(text));
     let tokenization = crate::tokenize(text);
     let tokens = tokenization.tokens();
 
@@ -807,6 +891,15 @@ fn collect_math_ranges(
     existing: &[Range<usize>],
     ranges: &mut Vec<Range<usize>>,
 ) {
+    let mut next_right_block = vec![None; tokens.len() + 1];
+    let mut next = None;
+    for index in (0..tokens.len()).rev() {
+        if tokens[index].token == Token::RightBlock {
+            next = Some(index);
+        }
+        next_right_block[index] = next;
+    }
+
     let mut active = None;
     let mut index = 0;
     while index < tokens.len() {
@@ -822,10 +915,9 @@ fn collect_math_ranges(
             && active.is_some()
             && block_name_after(tokens, index + 1)
                 .is_some_and(|name| name.eq_ignore_ascii_case("math"))
-            && let Some(close) = tokens[index..]
-                .iter()
-                .find(|candidate| candidate.token == Token::RightBlock)
+            && let Some(close_index) = next_right_block[index]
         {
+            let close = &tokens[close_index];
             ranges.push(active.take().unwrap()..close.span.end);
         }
         index += 1;
@@ -847,8 +939,8 @@ fn block_name_after<'t>(
 }
 
 fn replace_wikidot_ellipsis_outside_literals(text: &mut String, buffer: &mut String) {
-    let literal_regions = LiteralRegionIndex::new(text);
-    if literal_regions.ranges().is_empty() {
+    let protected_ranges = wikidot_typography_protected_ranges(text);
+    if protected_ranges.is_empty() {
         HORIZONTAL_ELLIPSIS.replace(text, buffer);
         return;
     }
@@ -856,7 +948,7 @@ fn replace_wikidot_ellipsis_outside_literals(text: &mut String, buffer: &mut Str
     let source = std::mem::take(text);
     let mut output = String::with_capacity(source.len());
     let mut cursor = 0;
-    for range in literal_regions.ranges() {
+    for range in &protected_ranges {
         let mut authored = source[cursor..range.start].to_owned();
         HORIZONTAL_ELLIPSIS.replace(&mut authored, buffer);
         output.push_str(&authored);

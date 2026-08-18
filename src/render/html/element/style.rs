@@ -195,6 +195,17 @@ mod tests {
     }
 
     #[test]
+    fn style_css_recovers_after_invalid_rules() {
+        let input = concat!("h1(>h1) { color: red; }\n", ".survivor { color: blue; }\n",);
+        let output = render_uncached_style_css(input, false)
+            .expect("error recovery should preserve later valid CSS rules");
+
+        assert!(!output.contains("h1(>h1)"), "{output}");
+        assert!(output.contains(".survivor"), "{output}");
+        assert!(output.contains("color: #00f"), "{output}");
+    }
+
+    #[test]
     fn style_css_neutralizes_html_raw_text_terminators() {
         let input =
             r#"#some-data::after { content: "</style><script>alert(2)</script>" }"#;

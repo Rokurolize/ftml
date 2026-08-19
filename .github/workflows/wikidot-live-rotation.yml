@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           corepack enable
-          pnpm --dir wikijump/install/local/wikidot-verification install --frozen-lockfile
+          corepack pnpm --dir wikijump/install/local/wikidot-verification install --frozen-lockfile
 
       - name: Select rotating exact-match cases
         shell: bash

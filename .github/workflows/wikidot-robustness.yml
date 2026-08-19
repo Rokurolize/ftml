@@ -53,6 +53,11 @@ jobs:
             --chrome "$CHROME" \
             --build-renderer
 
+      - name: Install Wikijump candidate system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes libmagic-dev
+
       - name: Verify candidate FTML inside Wikijump
         shell: bash
         run: |

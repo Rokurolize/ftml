@@ -90,6 +90,7 @@ type LostOwnerScanKey = (&'static str, u8, usize, usize, bool);
 #[derive(Debug, Default)]
 struct BlockScanCache {
     body_end_outcomes: BTreeMap<BlockEndScanKey, bool>,
+    underclosed_block_failures: BTreeMap<(&'static str, usize), ()>,
     lost_owner_outcomes: BTreeMap<LostOwnerScanKey, bool>,
     span_alias_close_scores: BTreeMap<usize, bool>,
     literal_ranges: Option<Vec<Range<usize>>>,
@@ -605,6 +606,28 @@ impl<'r, 't> Parser<'r, 't> {
                 .body_end_outcomes
                 .insert((rule, token_start, first_iteration), outcome);
         }
+    }
+
+    pub(crate) fn underclosed_block_failure_cached(
+        &self,
+        rule: &'static str,
+        owner_start: usize,
+    ) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .underclosed_block_failures
+            .contains_key(&(rule, owner_start))
+    }
+
+    pub(crate) fn cache_underclosed_block_failure(
+        &self,
+        rule: &'static str,
+        owner_start: usize,
+    ) {
+        self.block_end_scan_cache
+            .borrow_mut()
+            .underclosed_block_failures
+            .insert((rule, owner_start), ());
     }
 
     pub(crate) fn two_block_end_scan_outcome(&self, key: BlockEndScanKey) -> Option<u8> {

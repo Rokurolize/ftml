@@ -99,6 +99,11 @@ pub(crate) fn candidates(source: &str) -> BTreeMap<usize, WikidotCodeCandidate> 
                 nested_closes: 0,
                 suppress_nested_openers: false,
             });
+            // The opener head is one lexical owner. Do not rescan `[[`
+            // lookalikes inside it as independent block markers; otherwise
+            // a malformed head can observe a closer before its body starts.
+            cursor = body_start;
+            continue;
         }
         cursor = marker_start + 2;
     }
@@ -136,8 +141,10 @@ fn candidate_at_inner(
             });
         }
 
-        if code_opener_end(source, marker_start, true).is_some() {
+        if let Some(nested_body_start) = code_opener_end(source, marker_start, true) {
             nested_depth += 1;
+            cursor = nested_body_start;
+            continue;
         }
         cursor = marker_start + 2;
     }
@@ -197,6 +204,9 @@ fn code_opener_end(
     let relative_end = source[head_start..].find("]]")?;
     let head_end = head_start + relative_end;
     let head = &source[head_start..head_end];
+    if head.contains("[[") {
+        return None;
+    }
     let name_end = head
         .find(|character: char| character.is_ascii_whitespace())
         .unwrap_or(head.len());
@@ -315,5 +325,18 @@ mod tests {
             let opener = source.find("[[code]]").unwrap();
             assert!(candidate_at(source, opener).is_none(), "{source:?}");
         }
+    }
+
+    #[test]
+    fn malformed_head_cannot_create_a_reverse_body_range() {
+        let source = "[[code type=\"cssV][[/code]]\n[[code]][[/code]]";
+
+        let malformed = source.find("[[code type=\"cssV]").unwrap();
+        let later = source.rfind("[[code]]").unwrap();
+        let candidates = candidates(source);
+
+        assert!(!candidates.contains_key(&malformed));
+        let candidate = candidates.get(&later).expect("later valid code candidate");
+        assert!(candidate.body.start <= candidate.body.end);
     }
 }

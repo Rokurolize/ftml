@@ -95,6 +95,19 @@ where
         }
 
         let token = parser.current();
+        if &source[token.span.clone()] == "\u{00a0}" {
+            let next_start = token.span.end;
+            let Some(next_character) = source[next_start..].chars().next() else {
+                break;
+            };
+            let next_end = next_start + next_character.len_utf8();
+            if wikidot_automatic_url_end(source, next_start, next_end) == next_start {
+                break;
+            }
+            end = token.span.end;
+            parser.step()?;
+            continue;
+        }
         let fragment_end =
             wikidot_automatic_url_end(source, token.span.start, token.span.end);
         if fragment_end != token.span.end {
@@ -274,6 +287,25 @@ mod tests {
 
         assert_eq!(actual, link("https://example.com/video").into());
         assert_eq!(parser.current().token, Token::LeftBlockEnd);
+    }
+
+    #[test]
+    fn wikidot_url_rule_keeps_nbsp_inside_the_automatic_url() {
+        assert_url_rule(
+            "https://example.com/a.png\u{00a0}width= next",
+            Layout::Wikidot,
+            link("https://example.com/a.png\u{00a0}width=").into(),
+        );
+        assert_url_rule(
+            "https://example.com/a.png\u{00a0}width= next",
+            Layout::Wikijump,
+            link("https://example.com/a.png").into(),
+        );
+        assert_url_rule(
+            "https://example.com\u{00a0}]]",
+            Layout::Wikidot,
+            link("https://example.com").into(),
+        );
     }
 
     #[test]

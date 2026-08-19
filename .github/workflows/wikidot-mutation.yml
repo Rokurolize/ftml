@@ -20,8 +20,11 @@ jobs:
 
       - name: Exercise high-risk Wikidot parser mutants
         shell: bash
+        env:
+          RUST_TEST_THREADS: "1"
         run: |
           cargo mutants \
+            --jobs 1 \
             --file src/preproc/compatibility.rs \
             --file src/parsing/rule/impls/block/parser.rs \
             -F 'canonicalize_root_collapsible_inline_quoted_closers|parse_wikidot_attribute_field|wikidot_attribute_key'

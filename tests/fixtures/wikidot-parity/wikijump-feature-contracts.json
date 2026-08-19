@@ -1,82 +1,227 @@
 {
-  "schema": "ftml.wikijump_feature_contracts.v1",
+  "schema": "ftml.wikijump_feature_contracts.v2",
   "contracts": [
+    {
+      "id": "attachment",
+      "wikijump_feature_id": "syntax-attachment",
+      "cases": ["test--file--wikidot-attachment"],
+      "property_owners": {"P1":"shared","P2":"ftml","P3":"wikijump","P4":"not-applicable","P5":"wikijump","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
     {
       "id": "bibliography",
       "wikijump_feature_id": "syntax-bibliography",
-      "cases": [
-        "test--misc--bibliography",
-        "tests--fixtures--parity-gaps--block-name-case-bibliography-uppercase"
-      ]
+      "cases": ["test--misc--bibliography","tests--fixtures--parity-gaps--block-name-case-bibliography-uppercase"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
     },
     {
-      "id": "collapsibles",
+      "id": "block-formatting-elements",
+      "wikijump_feature_id": "syntax-block-formatting-elements",
+      "cases": ["test--align--basic","test--div--basic","test--span--basic"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "block-quotes",
+      "wikijump_feature_id": "syntax-block-quotes",
+      "cases": ["test--blockquote--native"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "buttons",
+      "wikijump_feature_id": "syntax-buttons",
+      "cases": ["tests--fixtures--parity-gaps--wikidot-button-source-handler"],
+      "property_owners": {"P1":"shared","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"wikijump","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "code-blocks",
+      "wikijump_feature_id": "syntax-code-blocks",
+      "cases": ["test--code--basic"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "collapsible-blocks",
       "wikijump_feature_id": "syntax-collapsible-blocks",
-      "cases": [
-        "test--collapsible--wikidot-parity",
-        "tests--fixtures--parity-gaps--preproc-root-collapsible-quoted-inline-close-control"
-      ]
+      "cases": ["test--collapsible--wikidot-parity","tests--fixtures--parity-gaps--preproc-root-collapsible-quoted-inline-close-control"],
+      "property_owners": {"P1":"shared","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"wikijump","P7":"ftml","P8":"ftml"}
     },
     {
       "id": "comments",
       "wikijump_feature_id": "syntax-comments",
-      "cases": [
-        "tests--fixtures--parity-gaps--comment-close-exact",
-        "tests--fixtures--parity-gaps--comment-parserfn-name-owner"
-      ]
+      "cases": ["tests--fixtures--parity-gaps--comment-close-exact","tests--fixtures--parity-gaps--comment-parserfn-name-owner"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "date",
+      "wikijump_feature_id": "syntax-date",
+      "cases": ["test--date--matrix"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"wikijump","P7":"ftml","P8":"ftml"}
     },
     {
       "id": "definition-lists",
       "wikijump_feature_id": "syntax-definition-lists",
-      "cases": [
-        "test--definition-list--basic"
-      ]
+      "cases": ["test--definition-list--basic"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
     },
     {
-      "id": "html-runtime",
+      "id": "embedding",
+      "wikijump_feature_id": "syntax-embedding",
+      "cases": ["test--embed--basic","test--iframe--basic"],
+      "property_owners": {"P1":"shared","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"wikijump","P6":"wikijump","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "embedding-code",
+      "wikijump_feature_id": "syntax-embedding-code",
+      "cases": ["tests--fixtures--parity-gaps--embedvideo","test--html--basic"],
+      "property_owners": {"P1":"shared","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"wikijump","P6":"wikijump","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "engine",
+      "wikijump_feature_id": "syntax-engine",
+      "cases": ["tests--fixtures--parity-gaps--pf-expr-caret-power","tests--fixtures--parity-gaps--comment-parserfn-name-owner"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "foldable-list",
+      "wikijump_feature_id": "syntax-foldable-list",
+      "cases": ["test--list--native-wikidot-structure","test--div--basic"],
+      "property_owners": {"P1":"shared","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"wikijump","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "footnotes",
+      "wikijump_feature_id": "syntax-footnotes",
+      "cases": ["test--footnote--basic"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"wikijump","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "headings",
+      "wikijump_feature_id": "syntax-headings",
+      "cases": ["test--heading--basic"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "horizontal-rules",
+      "wikijump_feature_id": "syntax-horizontal-rules",
+      "cases": ["test--misc--hr"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "html-blocks",
       "wikijump_feature_id": "syntax-html-blocks",
-      "cases": [
-        "test--html--basic"
-      ]
+      "cases": ["test--html--basic","test--html--revert"],
+      "property_owners": {"P1":"shared","P2":"ftml","P3":"wikijump","P4":"not-applicable","P5":"not-applicable","P6":"wikijump","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "iftags",
+      "wikijump_feature_id": "syntax-iftags",
+      "cases": ["test--iftags--basic"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
     },
     {
       "id": "images",
       "wikijump_feature_id": "syntax-images",
-      "cases": [
-        "test--image--basic",
-        "tests--fixtures--parity-gaps--image-source-javascript-double-slash"
-      ]
+      "cases": ["test--image--basic","tests--fixtures--parity-gaps--image-source-javascript-double-slash"],
+      "property_owners": {"P1":"shared","P2":"ftml","P3":"wikijump","P4":"not-applicable","P5":"wikijump","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "include",
+      "wikijump_feature_id": "syntax-include",
+      "cases": ["test--include--wikidot"],
+      "property_owners": {"P1":"shared","P2":"ftml","P3":"wikijump","P4":"wikijump","P5":"wikijump","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "inline-formatting",
+      "wikijump_feature_id": "syntax-inline-formatting",
+      "cases": ["test--bold--native","test--underline--native","test--strikethrough--basic"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "layout",
+      "wikijump_feature_id": "syntax-layout",
+      "cases": ["test--tabview--basic"],
+      "property_owners": {"P1":"shared","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"wikijump","P7":"ftml","P8":"ftml"}
     },
     {
       "id": "links",
       "wikijump_feature_id": "syntax-links",
-      "cases": [
-        "tests--fixtures--parity-gaps--autolink-unicode",
-        "tests--fixtures--parity-gaps--triple-link-javascript-scheme"
-      ]
+      "cases": ["test--link--single","tests--fixtures--parity-gaps--triple-link-javascript-scheme"],
+      "property_owners": {"P1":"shared","P2":"ftml","P3":"wikijump","P4":"not-applicable","P5":"wikijump","P6":"wikijump","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "lists",
+      "wikijump_feature_id": "syntax-lists",
+      "cases": ["test--list--native","test--list--native-wikidot-structure"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "literal-text",
+      "wikijump_feature_id": "syntax-literal-text",
+      "cases": ["test--raw--basic"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
     },
     {
       "id": "math",
       "wikijump_feature_id": "syntax-math",
-      "cases": [
-        "test--math--inline",
-        "test--math--block"
-      ]
+      "cases": ["test--math--inline","test--math--block"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"wikijump","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "notes",
+      "wikijump_feature_id": "syntax-notes",
+      "cases": ["test--note--wikidot-literal"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "paragraphs-and-newline",
+      "wikijump_feature_id": "syntax-paragraphs-and-newline",
+      "cases": ["test--paragraph--basic","test--line-breaks--basic"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "social-bookmarking",
+      "wikijump_feature_id": "syntax-social-bookmarking",
+      "cases": ["tests--fixtures--parity-gaps--social-default","tests--fixtures--parity-gaps--social-invalid-case","tests--fixtures--parity-gaps--social-selected"],
+      "property_owners": {"P1":"shared","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"wikijump","P6":"wikijump","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "table-of-contents",
+      "wikijump_feature_id": "syntax-table-of-contents",
+      "cases": ["test--toc--basic"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"wikijump","P7":"ftml","P8":"ftml"}
     },
     {
       "id": "tables",
       "wikijump_feature_id": "syntax-tables",
-      "cases": [
-        "test--table--simple",
-        "tests--fixtures--parity-gaps--table-residual-hcell-closer"
-      ]
+      "cases": ["test--table--simple","tests--fixtures--parity-gaps--table-residual-hcell-closer"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
     },
     {
-      "id": "users-runtime",
+      "id": "tag-buttons",
+      "wikijump_feature_id": "syntax-tag-buttons",
+      "cases": ["tests--fixtures--parity-gaps--wikidot-button-set-tags-handler","tests--fixtures--parity-gaps--wikidot-button-set-tags-unicode"],
+      "property_owners": {"P1":"shared","P2":"ftml","P3":"wikijump","P4":"wikijump","P5":"wikijump","P6":"wikijump","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "text-size",
+      "wikijump_feature_id": "syntax-text-size",
+      "cases": ["test--size--basic"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "typography",
+      "wikijump_feature_id": "syntax-typography",
+      "cases": ["test--misc--em-dash","test--misc--guillemet"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "universal-escaping",
+      "wikijump_feature_id": "syntax-universal-escaping",
+      "cases": ["tests--fixtures--parity-gaps--whitespace-replacement-marker-line","test--raw--basic"],
+      "property_owners": {"P1":"ftml","P2":"ftml","P3":"not-applicable","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
+    },
+    {
+      "id": "users",
       "wikijump_feature_id": "syntax-users",
-      "cases": [
-        "tests--fixtures--parity-gaps--user-uppercase-missing"
-      ]
+      "cases": ["test--user--basic","tests--fixtures--parity-gaps--user-uppercase-missing"],
+      "property_owners": {"P1":"shared","P2":"ftml","P3":"wikijump","P4":"not-applicable","P5":"not-applicable","P6":"not-applicable","P7":"ftml","P8":"ftml"}
     }
   ]
 }

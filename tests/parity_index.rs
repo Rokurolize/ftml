@@ -23,7 +23,7 @@ const CALLER_RUNTIME_CONTRACTS_SCHEMA: &str =
     "ftml.wikidot_parity.caller_runtime_contracts.v1";
 const COMPARISON_NORMALIZATION_CONTRACTS_SCHEMA: &str =
     "ftml.wikidot_parity.comparison_normalization_contracts.v1";
-const WIKIJUMP_FEATURE_CONTRACTS_SCHEMA: &str = "ftml.wikijump_feature_contracts.v1";
+const WIKIJUMP_FEATURE_CONTRACTS_SCHEMA: &str = "ftml.wikijump_feature_contracts.v2";
 const DOWNSTREAM_PAGES_SCHEMA: &str = "ftml.wikijump_downstream_pages.v1";
 const ACTIVE_INVESTIGATION_REASON_PREFIX: &str =
     "Active functional investigation: issue #";
@@ -162,6 +162,7 @@ struct WikijumpFeatureContract {
     id: String,
     wikijump_feature_id: String,
     cases: Vec<String>,
+    property_owners: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -650,11 +651,22 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
             .all(|pair| pair[0].id < pair[1].id),
         "Wikijump feature contract IDs must be unique and sorted"
     );
+    assert_eq!(
+        wikijump_feature_contracts.contracts.len(),
+        37,
+        "every Wikijump syntax-* feature must have one FTML ownership contract"
+    );
+    let mut contracted_features = BTreeSet::new();
     for contract in &wikijump_feature_contracts.contracts {
         assert!(
             contract.wikijump_feature_id.starts_with("syntax-"),
             "{}: Wikijump feature contract must name a syntax feature",
             contract.id
+        );
+        assert!(
+            contracted_features.insert(contract.wikijump_feature_id.as_str()),
+            "{}: duplicate Wikijump syntax feature ownership",
+            contract.wikijump_feature_id
         );
         assert!(
             !contract.cases.is_empty(),
@@ -665,6 +677,29 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
             assert!(
                 case_ids.contains(case_id.as_str()),
                 "{}: Wikijump feature contract references missing case {case_id}",
+                contract.id
+            );
+        }
+        let expected_axes = (1..=8)
+            .map(|index| format!("P{index}"))
+            .collect::<BTreeSet<_>>();
+        assert_eq!(
+            contract
+                .property_owners
+                .keys()
+                .cloned()
+                .collect::<BTreeSet<_>>(),
+            expected_axes,
+            "{}: property ownership must cover exactly P1-P8",
+            contract.id
+        );
+        for owner in contract.property_owners.values() {
+            assert!(
+                matches!(
+                    owner.as_str(),
+                    "ftml" | "wikijump" | "shared" | "not-applicable"
+                ),
+                "{}: invalid property owner {owner}",
                 contract.id
             );
         }
@@ -954,6 +989,8 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
             "[[ embedvideo",
             "[[gallery",
             "[[ gallery",
+            "[[social",
+            "[[ social",
         ]
         .iter()
         .any(|marker| source.contains(marker))

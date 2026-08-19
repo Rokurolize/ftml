@@ -94,7 +94,7 @@ cargo +nightly fuzz run --fuzz-dir fuzz public_pipeline "$FUZZ_CORPUS"
 
 The fuzz corpus is generated outside the repository and is not compatibility evidence. Any interesting crash or novel parity case must be minimized into a stable regression and, where behavior is observable on Wikidot, captured through the normal provenance-backed reference path.
 
-The scheduled robustness workflow keeps libFuzzer's `fuzz/artifacts/public_pipeline/` directory as a CI artifact when the job fails. Reproduce a saved artifact locally with the exact target rather than relying on the original wall-clock timeout:
+The scheduled robustness workflow keeps libFuzzer's `fuzz/artifacts/public_pipeline/` directory as a CI artifact and writes `fuzz-artifact-manifest.json` with the FTML commit, artifact SHA-256, byte length, UTF-8 validity, and exact one-input reproduction command. Reproduce a saved artifact locally with the exact target rather than relying on the original wall-clock timeout:
 
 ```sh
 cargo +nightly fuzz run --fuzz-dir fuzz public_pipeline -- \
@@ -154,15 +154,19 @@ python3 scripts/check_comparison_normalization_browser.py \
 
 `page-preview-root-whitespace` and `html-serialization` cases must become the exact same parsed DOM after trimming only ASCII whitespace at the fragment boundaries. `browser-rendering-whitespace` cases may retain formatting whitespace text nodes only when Chrome reports identical element/attribute topology, per-element direct text after normal HTML whitespace collapsing, rendered `innerText`, and exact preformatted/textarea text. The current inventory has five strict root-equivalent cases and three browser-render-equivalent formatting-whitespace cases. Any future case that fails those checks is not eligible for normalization.
 
+### Standing live differential rotation
+
+Committed references remain the merge authority, but they cannot by themselves detect a later Wikidot behavior change or an FTML regression outside a touched fixture. `.github/workflows/wikidot-live-rotation.yml` therefore selects eight currently exact-match, preview-compatible cases per run with `scripts/select_live_parity_rotation.py`, captures fresh anonymous read-only `edit/PagePreviewModule` observations, and compares the current FTML renderer against them. The deterministic rotation advances through the exact-match population instead of repeatedly sampling the same popular features. Fresh cases, references, and verdicts are uploaded as temporary CI evidence only; they never rewrite committed references automatically.
+
 ### Wikijump feature-ledger linkage
 
-`tests/fixtures/wikidot-parity/wikijump-feature-contracts.json` ties representative FTML parity families to the canonical feature IDs in Wikijump's `docs/wikidot-specifications/implementation-ledger.json`. Verify the adjacent ledger with:
+`tests/fixtures/wikidot-parity/wikijump-feature-contracts.json` accounts for every canonical `syntax-*` feature in Wikijump's `docs/wikidot-specifications/implementation-ledger.json`. Each feature names representative stable FTML cases and assigns every compatibility property axis P1-P8 to `ftml`, `wikijump`, `shared`, or `not-applicable`. Verify the adjacent ledger with:
 
 ```sh
 python3 scripts/check_wikijump_feature_contracts.py --wikijump-root ../wikijump
 ```
 
-The linkage is intentionally representative rather than a claim that a small example set exhausts a feature. It prevents FTML and Wikijump from silently using unrelated names or losing ownership of a parity family while the larger feature/property ledger continues to evolve.
+The checker fails on any missing or extra `syntax-*` feature, missing P1-P8 owner, invalid owner, or stale case ID. The cited cases are still representative rather than a claim that a small example set exhausts a feature; the contract prevents an unowned feature/property from hiding behind an aggregate passing case count.
 
 For selective mutation testing of the two high-risk compatibility scanners that previously produced false confidence, run:
 
@@ -174,6 +178,8 @@ cargo mutants \
 ```
 
 Any surviving mutant is a test-coverage defect until either a focused control kills it or the mutation is documented as semantically equivalent. Do not broaden the command to unrelated renderer code merely to make a global mutation score look better.
+
+The same targeted command runs weekly in `.github/workflows/wikidot-mutation.yml`, with `mutants.out/` retained as a CI artifact. Mutation testing is therefore a standing ratchet rather than a documentation-only review step.
 
 For each batch, choose a new dated no-replace output name and run:
 

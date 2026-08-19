@@ -1,0 +1,36 @@
+name: Wikidot mutation ratchet
+
+on:
+  schedule:
+    - cron: "17 19 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  targeted-mutants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cargo-mutants
+        run: cargo install cargo-mutants --locked
+
+      - name: Exercise high-risk Wikidot parser mutants
+        shell: bash
+        run: |
+          cargo mutants \
+            --file src/preproc/compatibility.rs \
+            --file src/parsing/rule/impls/block/parser.rs \
+            -F 'canonicalize_root_collapsible_inline_quoted_closers|parse_wikidot_attribute_field|wikidot_attribute_key'
+
+      - name: Upload mutation outcomes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wikidot-targeted-mutants
+          path: mutants.out/
+          if-no-files-found: ignore
+          retention-days: 14

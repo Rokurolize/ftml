@@ -96,6 +96,15 @@ impl Random {
         }
         id
     }
+
+    pub fn generate_social_id(&mut self) -> String {
+        let mut id = String::from("wj-social-");
+        for _ in 0..32 {
+            let digit = self.rng.random_range(0..16);
+            id.push(char::from_digit(digit, 16).expect("hex digit is in range"));
+        }
+        id
+    }
 }
 
 #[test]

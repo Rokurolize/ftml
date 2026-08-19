@@ -57,6 +57,17 @@
       ]
     },
     {
+      "id": "social-runtime",
+      "wikijump_test": "services::render::compat::wikidot_social::tests::typed_social_requirement_renders_live_provider_shape_for_page_preview",
+      "cases": [
+        "tests--fixtures--parity-gaps--social-default",
+        "tests--fixtures--parity-gaps--social-invalid-case",
+        "tests--fixtures--parity-gaps--social-mixed-known-unknown",
+        "tests--fixtures--parity-gaps--social-selected",
+        "tests--fixtures--parity-gaps--social-unknown-default"
+      ]
+    },
+    {
       "id": "user-resolution",
       "wikijump_test": "services::render::ftml_user_info::tests::snapshot_resolves_case_and_spacing_to_canonical_user",
       "cases": [

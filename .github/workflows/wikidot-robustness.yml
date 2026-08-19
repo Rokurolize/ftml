@@ -83,11 +83,22 @@ jobs:
             -max_total_time=900 \
             -timeout=10
 
+      - name: Describe fuzz artifacts
+        if: always()
+        shell: bash
+        run: |
+          python3 scripts/fuzz_artifact_manifest.py \
+            --artifact-dir fuzz/artifacts/public_pipeline \
+            --commit "$GITHUB_SHA" \
+            --output "$RUNNER_TEMP/fuzz-artifact-manifest.json"
+
       - name: Upload fuzz failure artifacts
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: wikidot-public-pipeline-fuzz-artifacts
-          path: fuzz/artifacts/public_pipeline/
-          if-no-files-found: ignore
+          path: |
+            fuzz/artifacts/public_pipeline/
+            ${{ runner.temp }}/fuzz-artifact-manifest.json
+          if-no-files-found: warn
           retention-days: 14

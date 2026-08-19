@@ -20,7 +20,7 @@
 
 use super::meta::HtmlMeta;
 use crate::data::Backlinks;
-use crate::tree::{EmbedVideo, Gallery, StandaloneButtonAction};
+use crate::tree::{EmbedVideo, Gallery, SocialButtons, StandaloneButtonAction};
 
 #[derive(Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GalleryRequirement {
@@ -82,11 +82,28 @@ impl WikidotTabViewRequirement {
 }
 
 #[derive(Serialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct SocialRequirement {
+    id: String,
+    social: SocialButtons,
+}
+
+impl SocialRequirement {
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn social(&self) -> &SocialButtons {
+        &self.social
+    }
+}
+
+#[derive(Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 #[serde(tag = "type", content = "requirement", rename_all = "kebab-case")]
 #[non_exhaustive]
 pub enum HtmlResourceRequirement {
     EmbedVideo(EmbedVideoRequirement),
     Gallery(GalleryRequirement),
+    Social(SocialRequirement),
     StandaloneButton(StandaloneButtonRequirement),
     WikidotTabView(WikidotTabViewRequirement),
 }
@@ -111,6 +128,17 @@ impl HtmlResourceRequirement {
         Self::Gallery(GalleryRequirement {
             id,
             gallery: gallery.to_owned(),
+        })
+    }
+
+    pub(crate) fn social(id: String, social: &SocialButtons) -> Self {
+        assert!(
+            valid_social_id(&id),
+            "social requirement id must be renderer-generated",
+        );
+        Self::Social(SocialRequirement {
+            id,
+            social: social.clone(),
         })
     }
 
@@ -141,6 +169,7 @@ impl HtmlResourceRequirement {
             Self::WikidotTabView(requirement) => Some(requirement),
             Self::EmbedVideo(_) => None,
             Self::Gallery(_) => None,
+            Self::Social(_) => None,
             Self::StandaloneButton(_) => None,
         }
     }
@@ -150,6 +179,7 @@ impl HtmlResourceRequirement {
             Self::StandaloneButton(requirement) => Some(requirement),
             Self::EmbedVideo(_) => None,
             Self::Gallery(_) => None,
+            Self::Social(_) => None,
             Self::WikidotTabView(_) => None,
         }
     }
@@ -157,24 +187,46 @@ impl HtmlResourceRequirement {
     pub fn embed_video_requirement(&self) -> Option<&EmbedVideoRequirement> {
         match self {
             Self::EmbedVideo(requirement) => Some(requirement),
-            Self::Gallery(_) | Self::StandaloneButton(_) | Self::WikidotTabView(_) => {
-                None
-            }
+            Self::Gallery(_)
+            | Self::Social(_)
+            | Self::StandaloneButton(_)
+            | Self::WikidotTabView(_) => None,
         }
     }
 
     pub fn gallery_requirement(&self) -> Option<&GalleryRequirement> {
         match self {
             Self::Gallery(requirement) => Some(requirement),
-            Self::EmbedVideo(_) | Self::StandaloneButton(_) | Self::WikidotTabView(_) => {
-                None
-            }
+            Self::EmbedVideo(_)
+            | Self::Social(_)
+            | Self::StandaloneButton(_)
+            | Self::WikidotTabView(_) => None,
+        }
+    }
+
+    pub fn social_requirement(&self) -> Option<&SocialRequirement> {
+        match self {
+            Self::Social(requirement) => Some(requirement),
+            Self::EmbedVideo(_)
+            | Self::Gallery(_)
+            | Self::StandaloneButton(_)
+            | Self::WikidotTabView(_) => None,
         }
     }
 }
 
 fn valid_gallery_id(id: &str) -> bool {
     let Some(suffix) = id.strip_prefix("wj-gallery-") else {
+        return false;
+    };
+    suffix.len() == 32
+        && suffix
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
+}
+
+fn valid_social_id(id: &str) -> bool {
+    let Some(suffix) = id.strip_prefix("wj-social-") else {
         return false;
     };
     suffix.len() == 32
@@ -219,6 +271,53 @@ pub struct HtmlOutput {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn social_requirement_serializes_only_typed_services_and_generated_id() {
+        let id = "wj-social-0123456789abcdef0123456789abcdef";
+        let social = SocialButtons::parse("reddit,not-a-service,facebook");
+        let requirement = HtmlResourceRequirement::social(id.to_owned(), &social);
+
+        assert_eq!(
+            serde_json::to_value(&requirement).unwrap(),
+            serde_json::json!({
+                "type": "social",
+                "requirement": {
+                    "id": id,
+                    "social": {
+                        "selection": [
+                            { "type": "service", "service": "reddit" },
+                            { "type": "service", "service": "facebook" },
+                        ],
+                    },
+                },
+            }),
+        );
+        let typed = requirement.social_requirement().unwrap();
+        assert_eq!(typed.id(), id);
+        assert_eq!(
+            typed.social().selection(),
+            Some(
+                &[
+                    crate::tree::SocialSelection::Service(
+                        crate::tree::SocialService::Reddit,
+                    ),
+                    crate::tree::SocialSelection::Service(
+                        crate::tree::SocialService::Facebook,
+                    ),
+                ][..]
+            )
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "social requirement id must be renderer-generated")]
+    fn social_requirement_rejects_authored_script_data() {
+        HtmlResourceRequirement::social(
+            "wj-social-x');alert(1)//".to_owned(),
+            &SocialButtons::parse("reddit"),
+        );
+    }
 
     #[test]
     fn gallery_requirement_serializes_typed_source_and_generated_id() {

@@ -86,11 +86,17 @@ pub(crate) enum QuoteScanOutcome {
 type QuoteScanKey = (&'static str, usize, bool, usize);
 type BlockEndScanKey = (&'static str, usize, bool);
 type LostOwnerScanKey = (&'static str, u8, usize, usize, bool);
+type PartialRejectionKey = (&'static str, &'static str, usize, u8);
 
 #[derive(Debug, Default)]
 struct BlockScanCache {
     body_end_outcomes: BTreeMap<BlockEndScanKey, bool>,
     underclosed_block_failures: BTreeMap<(&'static str, usize), ()>,
+    deterministic_block_failures: BTreeMap<(&'static str, usize), ParseError>,
+    partial_rejections: BTreeMap<PartialRejectionKey, ParseError>,
+    wikidot_tabview_failures: BTreeMap<(usize, bool), ParseError>,
+    wikidot_collapsible_failures: BTreeMap<usize, ParseError>,
+    wikidot_div_bounded_span: BTreeMap<usize, bool>,
     lost_owner_outcomes: BTreeMap<LostOwnerScanKey, bool>,
     span_alias_close_scores: BTreeMap<usize, bool>,
     literal_ranges: Option<Vec<Range<usize>>>,
@@ -628,6 +634,135 @@ impl<'r, 't> Parser<'r, 't> {
             .borrow_mut()
             .underclosed_block_failures
             .insert((rule, owner_start), ());
+    }
+
+    pub(crate) fn partial_rejection(
+        &self,
+        attempted_rule: &'static str,
+        parent_rule: &'static str,
+        token_start: usize,
+    ) -> Option<ParseError> {
+        self.block_end_scan_cache
+            .borrow()
+            .partial_rejections
+            .get(&(
+                attempted_rule,
+                parent_rule,
+                token_start,
+                self.accepts_partial as u8,
+            ))
+            .cloned()
+    }
+
+    pub(crate) fn cache_partial_rejection(
+        &self,
+        attempted_rule: &'static str,
+        parent_rule: &'static str,
+        token_start: usize,
+        error: &ParseError,
+    ) {
+        self.block_end_scan_cache
+            .borrow_mut()
+            .partial_rejections
+            .insert(
+                (
+                    attempted_rule,
+                    parent_rule,
+                    token_start,
+                    self.accepts_partial as u8,
+                ),
+                error.clone(),
+            );
+    }
+
+    pub(crate) fn deterministic_block_failure(
+        &self,
+        rule: &'static str,
+        owner_start: usize,
+    ) -> Option<ParseError> {
+        self.block_end_scan_cache
+            .borrow()
+            .deterministic_block_failures
+            .get(&(rule, owner_start))
+            .cloned()
+    }
+
+    pub(crate) fn cache_deterministic_block_failure(
+        &self,
+        rule: &'static str,
+        owner_start: usize,
+        error: &ParseError,
+    ) {
+        self.block_end_scan_cache
+            .borrow_mut()
+            .deterministic_block_failures
+            .insert((rule, owner_start), error.clone());
+    }
+
+    pub(crate) fn wikidot_tabview_failure(
+        &self,
+        owner_start: usize,
+    ) -> Option<ParseError> {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_tabview_failures
+            .get(&(owner_start, self.in_wikidot_collapsible()))
+            .cloned()
+    }
+
+    pub(crate) fn cache_wikidot_tabview_failure(
+        &self,
+        owner_start: usize,
+        error: &ParseError,
+    ) {
+        self.block_end_scan_cache
+            .borrow_mut()
+            .wikidot_tabview_failures
+            .insert((owner_start, self.in_wikidot_collapsible()), error.clone());
+    }
+
+    pub(crate) fn wikidot_collapsible_failure(
+        &self,
+        owner_start: usize,
+    ) -> Option<ParseError> {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_collapsible_failures
+            .get(&owner_start)
+            .cloned()
+    }
+
+    pub(crate) fn cache_wikidot_collapsible_failure(
+        &self,
+        owner_start: usize,
+        error: &ParseError,
+    ) {
+        self.block_end_scan_cache
+            .borrow_mut()
+            .wikidot_collapsible_failures
+            .insert(owner_start, error.clone());
+    }
+
+    pub(crate) fn wikidot_div_bounded_span_outcome(
+        &self,
+        owner_start: usize,
+    ) -> Option<bool> {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_div_bounded_span
+            .get(&owner_start)
+            .copied()
+    }
+
+    pub(crate) fn cache_wikidot_div_bounded_span(
+        &self,
+        owner_start: usize,
+        outcome: bool,
+    ) {
+        self.block_end_scan_cache
+            .borrow_mut()
+            .wikidot_div_bounded_span
+            .insert(owner_start, outcome);
     }
 
     pub(crate) fn two_block_end_scan_outcome(&self, key: BlockEndScanKey) -> Option<u8> {

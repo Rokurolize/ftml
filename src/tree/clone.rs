@@ -31,6 +31,9 @@
 
 use super::element::Element;
 use super::list::ListItem;
+use super::{
+    elements_require_bounded_tree_stack, on_bounded_tree_stack, run_on_bounded_tree_stack,
+};
 use ref_map::*;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -48,7 +51,23 @@ pub fn string_to_owned(string: &str) -> Cow<'static, str> {
 }
 
 pub fn elements_to_owned(elements: &[Element<'_>]) -> Vec<Element<'static>> {
-    elements.iter().map(|element| element.to_owned()).collect()
+    if on_bounded_tree_stack() {
+        return elements_to_owned_on_current_stack(elements);
+    }
+    if elements_require_bounded_tree_stack(elements) {
+        run_on_bounded_tree_stack("ftml-tree-clone", || {
+            elements_to_owned_on_current_stack(elements)
+        })
+    } else {
+        elements_to_owned_on_current_stack(elements)
+    }
+}
+
+fn elements_to_owned_on_current_stack(elements: &[Element<'_>]) -> Vec<Element<'static>> {
+    elements
+        .iter()
+        .map(Element::to_owned_on_current_stack)
+        .collect()
 }
 
 pub fn elements_lists_to_owned(

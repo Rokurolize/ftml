@@ -22,7 +22,9 @@ use super::super::prelude::*;
 use super::mapping::{get_block_rule_with_name, get_block_rule_with_name_for_layout};
 use super::{
     BlockRule,
-    blocks::{BLOCK_EMBED_VIDEO, BLOCK_HTML, BLOCK_SPAN},
+    blocks::{
+        BLOCK_COLLAPSIBLE, BLOCK_EMBED_VIDEO, BLOCK_HTML, BLOCK_SPAN, BLOCK_TABVIEW,
+    },
 };
 use crate::parsing::inline_scope::WIKIDOT_SCORE_SPAN_UNWRAPPED_ATTRIBUTE;
 use crate::settings::WikitextMode;
@@ -320,12 +322,75 @@ where
     }
 
     parser.get_optional_space()?;
+
+    // A failed Wikijump page-mode block can be retried from the same authored
+    // opener by each enclosing speculative owner. Once that exact block has
+    // reached input end, retrying it cannot discover a closer that was absent
+    // from the immutable token stream. Memoize the failure at the common block
+    // dispatch seam instead of requiring every body-owning block to implement
+    // the same protection independently. Hidden-body and Wikidot compatibility
+    // parsing retain their specialized recovery semantics and are excluded.
+    let cache_wikijump_failure = !parser.settings().layout.legacy()
+        && parser.settings().mode == WikitextMode::Page
+        && !parser.discarding_hidden_body();
+    let cache_wikidot_tabview_failure = parser.settings().layout.legacy()
+        && parser.settings().mode == WikitextMode::Page
+        && block.name == BLOCK_TABVIEW.name
+        && !parser.discarding_hidden_body()
+        && !parser.in_footnote()
+        && parser.native_blockquote_depth().is_none()
+        && !parser.in_wikidot_center_body();
+    let cache_wikidot_collapsible_failure = parser.settings().layout.legacy()
+        && parser.settings().mode == WikitextMode::Page
+        && block.name == BLOCK_COLLAPSIBLE.name
+        && !parser.discarding_hidden_body()
+        && !parser.in_footnote()
+        && parser.native_blockquote_depth().is_none()
+        && !parser.in_wikidot_center_body()
+        && !parser.in_wikidot_collapsible();
+    if cache_wikijump_failure
+        && let Some(error) = parser.deterministic_block_failure(block.name, opener_start)
+    {
+        return Err(error);
+    }
+    if cache_wikidot_tabview_failure
+        && let Some(error) = parser.wikidot_tabview_failure(opener_start)
+    {
+        return Err(error);
+    }
+    if cache_wikidot_collapsible_failure
+        && let Some(error) = parser.wikidot_collapsible_failure(opener_start)
+    {
+        return Err(error);
+    }
+
     // Run the parse function until the end.
     //
     // This is responsible for parsing any arguments,
     // and terminating the block (the ']]' token),
     // then processing the body (if any) and tail block.
-    (block.parse_fn)(parser, name, flag_star, flag_score, in_head)
+    let result = (block.parse_fn)(parser, name, flag_star, flag_score, in_head);
+    if let Err(error) = &result {
+        let deterministic_failure = error.kind() == ParseErrorKind::EndOfInput
+            || block.name == "block-table-row"
+                && error.kind() == ParseErrorKind::TableRowContainsNonCell
+            || block.name == BLOCK_TABVIEW.name
+                && matches!(
+                    error.kind(),
+                    ParseErrorKind::TabViewEmpty | ParseErrorKind::TabViewContainsNonTab
+                );
+        if cache_wikijump_failure && deterministic_failure {
+            parser.cache_deterministic_block_failure(block.name, opener_start, error);
+        }
+        if cache_wikidot_tabview_failure && deterministic_failure {
+            parser.cache_wikidot_tabview_failure(opener_start, error);
+        }
+        if cache_wikidot_collapsible_failure && error.kind() == ParseErrorKind::EndOfInput
+        {
+            parser.cache_wikidot_collapsible_failure(opener_start, error);
+        }
+    }
+    result
 }
 
 fn wikidot_block_has_physical_line_ownership(

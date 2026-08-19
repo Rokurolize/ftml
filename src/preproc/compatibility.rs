@@ -52,6 +52,7 @@ fn marker_line(line: &str) -> Option<(&str, Marker)> {
         "[[=]]" => Marker::CenterOpen,
         "[[/=]]" => Marker::CenterClose,
         "[[/collapsible]]" => Marker::CollapsibleClose,
+        "[[collapsible]]" => Marker::CollapsibleOpen,
         marker if marker.starts_with("[[collapsible ") && marker.ends_with("]]") => {
             Marker::CollapsibleOpen
         }
@@ -987,7 +988,7 @@ fn canonicalize_crossed_center_collapsible_closers(
                     let early = candidate
                         .early_center_close
                         .expect("crossed close candidate has an early closer");
-                    if !preserve_early_close {
+                    if !preserve_early_close || early + 1 == index {
                         let (_, early_ending) = split_line(&lines[early]);
                         lines[early] = format!("{}{early_ending}", candidate.prefix);
                     }
@@ -1796,6 +1797,55 @@ mod tests {
             substitute(&mut source);
             assert_eq!(source, original);
         }
+    }
+
+    #[test]
+    fn empty_head_crossed_center_collapsible_is_canonicalized() {
+        let mut source = concat!(
+            "[[=]]\n",
+            "[[collapsible]]\n",
+            "BODY\n",
+            "[[/=]]\n",
+            "[[/collapsible]]\n",
+        )
+        .to_owned();
+
+        substitute_for_layout(&mut source, true);
+
+        assert_eq!(
+            source,
+            concat!(
+                "[[=]]\n",
+                "[[collapsible]]\n",
+                "BODY\n",
+                "\n",
+                "[[/collapsible]]\n",
+                "[[/=]]\n",
+            ),
+        );
+    }
+
+    #[test]
+    fn repeated_empty_head_crossed_center_collapsibles_stay_bounded() {
+        const COUNT: usize = 128;
+        let mut source =
+            "[[=]]\n[[collapsible]]\nBODY\n[[/=]]\n[[/collapsible]]\n".repeat(COUNT);
+        let started = Instant::now();
+
+        crate::preprocess_for_layout(&mut source, Layout::Wikidot);
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(
+            started.elapsed() < Duration::from_secs(2),
+            "empty-head crossed siblings took {:?}",
+            started.elapsed(),
+        );
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html.matches("class=\"collapsible-block\"").count(), COUNT);
     }
 
     #[test]

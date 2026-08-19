@@ -148,41 +148,50 @@ where
             && source[line_start..owner_start]
                 .trim_matches([' ', '\t'])
                 .is_empty();
-        let mutable_state = parser.get_mutable_state();
-        let mut outer = parser.clone();
-        let outer_end = outer
-            .get_body_elements(&BLOCK_DIV, false)
-            .ok()
-            .map(|_| outer.current().span.start);
-        parser.reset_mutable_state(mutable_state);
-
-        let mutable_state = parser.get_mutable_state();
-        let mut span = parser.clone();
-        let starts_with_bounded_span = if span.get_optional_space().is_ok()
-            && span.current().token == Token::LeftBlock
-        {
-            span.get_block_name(false)
-                .ok()
-                .map(|(name, in_head)| (name.eq_ignore_ascii_case("span"), in_head))
-                .is_some_and(|(is_span, in_head)| {
-                    is_span
-                        && {
-                            span.set_block(&BLOCK_SPAN);
-                            span.get_head_map_with_body_start_wikidot(
-                                &BLOCK_SPAN,
-                                in_head,
-                            )
-                            .and_then(|_| span.get_body_elements(&BLOCK_SPAN, false))
-                            .is_ok()
-                        }
-                        && outer_end.is_some_and(|outer_end| {
-                            span.current().span.start < outer_end
-                        })
-                })
-        } else {
+        let starts_with_bounded_span = if flag_score {
             false
+        } else if let Some(outcome) = parser.wikidot_div_bounded_span_outcome(owner_start)
+        {
+            outcome
+        } else {
+            let mutable_state = parser.get_mutable_state();
+            let mut outer = parser.clone();
+            let outer_end = outer
+                .get_body_elements(&BLOCK_DIV, false)
+                .ok()
+                .map(|_| outer.current().span.start);
+            parser.reset_mutable_state(mutable_state);
+
+            let mutable_state = parser.get_mutable_state();
+            let mut span = parser.clone();
+            let outcome = if span.get_optional_space().is_ok()
+                && span.current().token == Token::LeftBlock
+            {
+                span.get_block_name(false)
+                    .ok()
+                    .map(|(name, in_head)| (name.eq_ignore_ascii_case("span"), in_head))
+                    .is_some_and(|(is_span, in_head)| {
+                        is_span
+                            && {
+                                span.set_block(&BLOCK_SPAN);
+                                span.get_head_map_with_body_start_wikidot(
+                                    &BLOCK_SPAN,
+                                    in_head,
+                                )
+                                .and_then(|_| span.get_body_elements(&BLOCK_SPAN, false))
+                                .is_ok()
+                            }
+                            && outer_end.is_some_and(|outer_end| {
+                                span.current().span.start < outer_end
+                            })
+                    })
+            } else {
+                false
+            };
+            parser.reset_mutable_state(mutable_state);
+            parser.cache_wikidot_div_bounded_span(owner_start, outcome);
+            outcome
         };
-        parser.reset_mutable_state(mutable_state);
         if !flag_score && starts_with_bounded_span {
             let literal_end = parser.current().span.start;
             let literal = text!(&source[owner_start..literal_end]);

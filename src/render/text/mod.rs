@@ -26,7 +26,10 @@ use self::elements::render_elements;
 use crate::data::PageInfo;
 use crate::render::{Handle, Render};
 use crate::settings::WikitextSettings;
-use crate::tree::{BibliographyList, Element, SyntaxTree};
+use crate::tree::{
+    BibliographyList, Element, SyntaxTree, elements_require_bounded_tree_stack,
+    run_on_bounded_tree_stack, tree_requires_bounded_tree_stack,
+};
 
 #[derive(Debug)]
 pub struct TextRender;
@@ -39,15 +42,23 @@ impl TextRender {
         settings: &WikitextSettings,
         wikitext_len: usize,
     ) -> String {
-        self.render_partial_direct(RenderPartial {
+        let bibliographies = BibliographyList::new();
+        let partial = RenderPartial {
             elements,
             page_info,
             settings,
             table_of_contents: &[],
             footnotes: &[],
-            bibliographies: &BibliographyList::new(),
+            bibliographies: &bibliographies,
             wikitext_len,
-        })
+        };
+        if elements_require_bounded_tree_stack(elements) {
+            run_on_bounded_tree_stack("ftml-text-render", || {
+                self.render_partial_direct(partial)
+            })
+        } else {
+            self.render_partial_direct(partial)
+        }
     }
 
     fn render_partial_direct(&self, partial: RenderPartial) -> String {
@@ -101,7 +112,13 @@ impl Render for TextRender {
         debug!("Rendering text (site {site}, page {page}, category {category})");
 
         let partial = RenderPartial::tree(tree, page_info, settings);
-        self.render_partial_direct(partial)
+        if tree_requires_bounded_tree_stack(tree) {
+            run_on_bounded_tree_stack("ftml-text-render", || {
+                self.render_partial_direct(partial)
+            })
+        } else {
+            self.render_partial_direct(partial)
+        }
     }
 }
 

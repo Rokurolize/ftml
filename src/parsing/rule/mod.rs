@@ -60,6 +60,13 @@ impl Rule {
             return Err(parser.make_err(ParseErrorKind::NotStartOfLine));
         }
 
+        let rule_start = parser.current().span.start;
+        let parent_rule = parser.rule().name();
+        if let Some(error) = parser.partial_rejection(self.name, parent_rule, rule_start)
+        {
+            return Err(error);
+        }
+
         // Fork parser and try running the rule.
         let parser_state = parser.get_mutable_state();
         let mut sub_parser = parser.clone_with_rule(self);
@@ -69,7 +76,25 @@ impl Rule {
             // Rule succeeded, ensure that changes from the subparser are persisted.
             Ok(ref output) => {
                 // First, ensure there aren't any partial elements in the result.
-                output.check_partials(parser)?;
+                if let Err(error) = output.check_partials(parser) {
+                    if matches!(
+                        error.kind(),
+                        ParseErrorKind::ListItemOutsideList
+                            | ParseErrorKind::TableRowOutsideTable
+                            | ParseErrorKind::TableCellOutsideTable
+                            | ParseErrorKind::TabOutsideTabView
+                            | ParseErrorKind::RubyTextOutsideRuby
+                    ) {
+                        parser.cache_partial_rejection(
+                            self.name,
+                            parent_rule,
+                            rule_start,
+                            &error,
+                        );
+                    }
+                    parser.reset_mutable_state(parser_state);
+                    return Err(error);
+                }
 
                 // Now, finally save the parser state since it succeeded.
                 parser.update(&sub_parser);

@@ -27,6 +27,9 @@ use crate::tree::{
     ImageSource, LinkLabel, LinkLocation, LinkType, ListItem, ListType, Module,
     PartialElement, SocialButtons, StandaloneButton, Tab, Table, VariableMap,
 };
+use crate::tree::{
+    element_requires_bounded_tree_stack, on_bounded_tree_stack, run_on_bounded_tree_stack,
+};
 use ref_map::*;
 use std::borrow::Cow;
 use std::num::NonZeroU32;
@@ -586,6 +589,19 @@ impl Element<'_> {
     /// it doesn't make an `Cow::Owned(_)` version like its name
     /// suggests.
     pub fn to_owned(&self) -> Element<'static> {
+        if on_bounded_tree_stack() {
+            return self.to_owned_on_current_stack();
+        }
+        if element_requires_bounded_tree_stack(self) {
+            run_on_bounded_tree_stack("ftml-element-clone", || {
+                self.to_owned_on_current_stack()
+            })
+        } else {
+            self.to_owned_on_current_stack()
+        }
+    }
+
+    pub(crate) fn to_owned_on_current_stack(&self) -> Element<'static> {
         match self {
             Element::Container(container) => Element::Container(container.to_owned()),
             Element::Module(module) => Element::Module(module.to_owned()),

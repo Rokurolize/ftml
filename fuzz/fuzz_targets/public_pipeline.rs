@@ -30,6 +30,11 @@ fn exercise(source: &str, layout: Layout) {
     ftml::preprocess_for_layout(&mut preprocessed, layout);
     let tokenization = ftml::tokenize(&preprocessed);
     let (tree, _errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+    std::hint::black_box(tree.page_references());
+    std::hint::black_box(tree.user_references());
+    std::hint::black_box(tree.to_owned());
+    std::hint::black_box(tree.clone());
+    let _ = std::hint::black_box(serde_json::to_vec(&tree));
     let _html = HtmlRender.render(&tree, &page_info, &settings);
     let _text = TextRender.render(&tree, &page_info, &settings);
 }

@@ -62,6 +62,8 @@ mod wikidot_lexical_owner_residuals;
 mod wikidot_unicode_robustness;
 #[path = "wikidot_variable_ownership.rs"]
 mod wikidot_variable_ownership;
+#[path = "wikijump_underclosed_owners.rs"]
+mod wikijump_underclosed_owners;
 
 #[path = "parser_functions_wikidot_syntax.rs"]
 mod parser_functions_wikidot_syntax;

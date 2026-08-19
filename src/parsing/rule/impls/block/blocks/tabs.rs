@@ -160,4 +160,55 @@ mod tests {
         assert!(!html.contains("<p>NAME:"), "{html}");
         assert!(!html.contains("<script"), "{html}");
     }
+
+    #[test]
+    fn underclosed_wikidot_tabviews_reuse_semantic_failure_cache() {
+        use std::time::{Duration, Instant};
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = format!(
+            "{}X{}",
+            "[[tabview]]".repeat(128),
+            "[[/tabview]]".repeat(64),
+        );
+        let tokenization = crate::tokenize(&source);
+        let started = Instant::now();
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(
+            started.elapsed() < Duration::from_secs(1),
+            "underclosed Wikidot tabviews took {:?}",
+            started.elapsed(),
+        );
+        assert_eq!(errors.len(), 512);
+        assert!(html.contains("[[tabview]]"), "{html}");
+    }
+
+    #[test]
+    fn tabviews_reuse_unclosed_collapsible_failures() {
+        use std::time::{Duration, Instant};
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = format!(
+            "{}{}{}",
+            "[[tabview]]".repeat(64),
+            "[[collapsible]]".repeat(64),
+            "[[/tabview]]".repeat(128),
+        );
+        let tokenization = crate::tokenize(&source);
+        let started = Instant::now();
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(
+            started.elapsed() < Duration::from_secs(1),
+            "tabview/collapsible recovery took {:?}",
+            started.elapsed(),
+        );
+        assert!(!errors.is_empty());
+        assert!(html.contains("[[tabview]]"), "{html}");
+    }
 }

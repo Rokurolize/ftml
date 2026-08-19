@@ -69,3 +69,50 @@ pub trait Render {
         settings: &WikitextSettings,
     ) -> Self::Output;
 }
+
+#[cfg(all(test, not(target_arch = "wasm32")))]
+mod stack_tests {
+    use super::Render;
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::{html::HtmlRender, text::TextRender};
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use crate::tree::{AttributeMap, Container, ContainerType, Element, SyntaxTree};
+    use std::borrow::Cow;
+
+    #[test]
+    fn deep_rendering_does_not_inherit_the_callers_small_stack() {
+        const DEPTH: usize = 768;
+        let mut element = Element::Text(Cow::Borrowed("X"));
+        for _ in 0..DEPTH {
+            element = Element::Container(Container::new(
+                ContainerType::Div,
+                vec![element],
+                AttributeMap::new(),
+            ));
+        }
+        let tree = SyntaxTree {
+            elements: vec![element],
+            wikitext_len: DEPTH * 7 + 1,
+            ..SyntaxTree::default()
+        };
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+
+        std::thread::scope(|scope| {
+            std::thread::Builder::new()
+                .name("ftml-small-render-caller".to_owned())
+                .stack_size(256 * 1024)
+                .spawn_scoped(scope, || {
+                    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+                    let text = TextRender.render(&tree, &page_info, &settings);
+                    assert_eq!(html.matches("<div>").count(), DEPTH);
+                    assert!(html.ends_with(&"</div>".repeat(DEPTH)), "{html}");
+                    assert_eq!(text, "X");
+                })
+                .expect("start small caller stack")
+                .join()
+                .expect("deep renderer must not overflow the caller stack");
+        });
+    }
+}

@@ -325,3 +325,22 @@ fn unquoted_structural_lines_end_native_blockquotes() {
         );
     }
 }
+
+#[test]
+fn same_line_div_span_crossings_reuse_exact_recovery_decisions() {
+    use std::time::{Duration, Instant};
+
+    for close_pair in ["[[/div]][[/span]]", "[[/span]][[/div]]"] {
+        let source =
+            format!("{}X{}", "[[div]][[span]]".repeat(96), close_pair.repeat(96));
+        let started = Instant::now();
+        let (html, _text) = render(&source);
+
+        assert!(
+            started.elapsed() < Duration::from_secs(2),
+            "crossed same-line div/span recovery took {:?}",
+            started.elapsed(),
+        );
+        assert!(!html.is_empty());
+    }
+}

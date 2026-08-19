@@ -42,7 +42,9 @@ use self::element::{render_element, render_elements};
 use crate::data::PageInfo;
 use crate::render::{Handle, PageExistenceResolver, Render, UserInfoResolver};
 use crate::settings::WikitextSettings;
-use crate::tree::{Element, SyntaxTree};
+use crate::tree::{
+    Element, SyntaxTree, run_on_bounded_tree_stack, tree_requires_bounded_tree_stack,
+};
 
 #[derive(Debug)]
 pub struct HtmlRender;
@@ -69,6 +71,35 @@ impl HtmlRender {
     }
 
     pub fn render_with_resolvers(
+        &self,
+        tree: &SyntaxTree,
+        page_info: &PageInfo,
+        settings: &WikitextSettings,
+        page_existence: &dyn PageExistenceResolver,
+        user_info: &dyn UserInfoResolver,
+    ) -> HtmlOutput {
+        if tree_requires_bounded_tree_stack(tree) {
+            run_on_bounded_tree_stack("ftml-html-render", || {
+                self.render_with_resolvers_on_current_stack(
+                    tree,
+                    page_info,
+                    settings,
+                    page_existence,
+                    user_info,
+                )
+            })
+        } else {
+            self.render_with_resolvers_on_current_stack(
+                tree,
+                page_info,
+                settings,
+                page_existence,
+                user_info,
+            )
+        }
+    }
+
+    fn render_with_resolvers_on_current_stack(
         &self,
         tree: &SyntaxTree,
         page_info: &PageInfo,

@@ -22,6 +22,7 @@ use super::prelude::*;
 use crate::delayed::DelayedElement;
 use crate::parsing::inline_scope::WIKIDOT_SCORE_SPAN_UNWRAPPED_ATTRIBUTE;
 use crate::parsing::strip_newlines;
+use crate::settings::WikitextMode;
 use crate::tree::{PartialElement, WIKIDOT_GENERATED_EMPTY_CLASS_MARKER};
 use std::borrow::Cow;
 
@@ -95,6 +96,13 @@ fn parse_fn<'r, 't>(
     let owner_start = source[..name_start]
         .rfind("[[")
         .expect("parsed span name follows its opener");
+    let cacheable_wikijump_failure = !parser.settings().layout.legacy()
+        && parser.settings().mode == WikitextMode::Page;
+    if cacheable_wikijump_failure
+        && parser.underclosed_block_failure_cached(BLOCK_SPAN.name, owner_start)
+    {
+        return Err(parser.make_end_of_input_err());
+    }
     let scored_empty_spaced_head =
         parser.settings().layout.legacy() && flag_score && in_head && {
             let mut head = parser.clone();
@@ -174,9 +182,20 @@ fn parse_fn<'r, 't>(
         };
     }
 
-    // Get body content, without paragraphs
-    let body = parser.get_body_elements(&BLOCK_SPAN, false)?;
-    let (mut elements, errors, paragraph_safe) = body.into();
+    // Get body content, without paragraphs. Underclosed nested spans can be
+    // retried from every opener during outer fallback. Cache each owner that
+    // reaches input end so later speculative parses fail immediately instead
+    // of reparsing the same suffix.
+    let body = parser.get_body_elements(&BLOCK_SPAN, false);
+    let (mut elements, errors, paragraph_safe) = match body {
+        Ok(body) => body.into(),
+        Err(error) => {
+            if cacheable_wikijump_failure && error.kind() == ParseErrorKind::EndOfInput {
+                parser.cache_underclosed_block_failure(BLOCK_SPAN.name, owner_start);
+            }
+            return Err(error);
+        }
+    };
 
     if flag_score {
         strip_newlines(&mut elements);
@@ -371,6 +390,54 @@ mod tests {
             html,
             "<p>[[b]]Nested <span>blocks [[bold]]<span>even[[strong]]more[[/strong]]</span>[[/bold]]</span>[[/b]]</p>",
         );
+    }
+
+    #[test]
+    fn wikijump_underclosed_nested_spans_reuse_failure_cache() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+
+        let semantic_control = "[[span]][[span]]X[[/span]]";
+        let tokenization = crate::tokenize(semantic_control);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert_eq!(html, "<p>[[span]]<span>X</span></p>");
+        assert_eq!(
+            errors
+                .iter()
+                .map(|error| (error.rule(), error.kind()))
+                .collect::<Vec<_>>(),
+            vec![
+                ("block-span", ParseErrorKind::EndOfInput),
+                ("fallback", ParseErrorKind::NoRulesMatch),
+                ("fallback", ParseErrorKind::NoRulesMatch),
+            ],
+        );
+
+        for (openers, closers) in [(32, 0), (64, 32), (128, 64)] {
+            let source = format!(
+                "{}X{}",
+                "[[span]]".repeat(openers),
+                "[[/span]]".repeat(closers),
+            );
+            let tokenization = crate::tokenize(&source);
+            let started = std::time::Instant::now();
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+
+            assert!(
+                started.elapsed() < std::time::Duration::from_secs(2),
+                "{openers} openers / {closers} closers took {:?}",
+                started.elapsed(),
+            );
+            assert!(!tree.elements.is_empty());
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::EndOfInput),
+                "{errors:#?}",
+            );
+        }
     }
 
     #[test]

@@ -21,6 +21,7 @@
 use super::prelude::*;
 use crate::parsing::ParserWrap;
 use crate::parsing::rule::impls::block::RULE_BLOCK;
+use crate::settings::WikitextMode;
 use crate::tree::{
     AcceptsPartial, AttributeMap, ContainerType, PartialElement, Table, TableCell,
     TableRow, TableType,
@@ -255,6 +256,51 @@ fn has_explicit_closer(source: &str, accepted: &[&str]) -> bool {
     })
 }
 
+fn table_opener_start(parser: &Parser<'_, '_>, name: &str) -> Option<usize> {
+    if parser.discarding_hidden_body() {
+        return None;
+    }
+
+    let source = parser.full_text().inner();
+    let name_start = (name.as_ptr() as usize).checked_sub(source.as_ptr() as usize)?;
+    source[..name_start].rfind("[[")
+}
+
+fn cached_underclosed_table_error(
+    parser: &Parser<'_, '_>,
+    rule: &'static str,
+    owner_start: Option<usize>,
+) -> Option<ParseError> {
+    let owner_start = owner_start?;
+    if !parser.settings().layout.legacy() && parser.settings().mode != WikitextMode::Page
+    {
+        return None;
+    }
+    if !parser.underclosed_block_failure_cached(rule, owner_start) {
+        return None;
+    }
+    Some(if parser.settings().layout.legacy() {
+        parser.make_err(ParseErrorKind::RuleFailed)
+    } else {
+        parser.make_end_of_input_err()
+    })
+}
+
+fn cache_wikijump_underclosed_table_error(
+    parser: &Parser<'_, '_>,
+    rule: &'static str,
+    owner_start: Option<usize>,
+    error: &ParseError,
+) {
+    if !parser.settings().layout.legacy()
+        && parser.settings().mode == WikitextMode::Page
+        && error.kind() == ParseErrorKind::EndOfInput
+        && let Some(owner_start) = owner_start
+    {
+        parser.cache_underclosed_block_failure(rule, owner_start);
+    }
+}
+
 fn legacy_opener_start(parser: &Parser<'_, '_>) -> Option<usize> {
     if !parser.settings().layout.legacy() || parser.discarding_hidden_body() {
         return None;
@@ -355,11 +401,11 @@ fn parse_table<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    let owner_start = legacy_opener_start(parser);
-    if owner_start.is_some_and(|start| {
-        parser.underclosed_block_failure_cached(BLOCK_TABLE.name, start)
-    }) {
-        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    let owner_start = table_opener_start(parser, name);
+    if let Some(error) =
+        cached_underclosed_table_error(parser, BLOCK_TABLE.name, owner_start)
+    {
+        return Err(error);
     }
     if legacy_block_name_is_spaced(parser) || legacy_table_follows_heading_marker(parser)
     {
@@ -374,7 +420,7 @@ fn parse_table<'r, 't>(
     }
 
     // Get block contents.
-    let parsed = parse_block(
+    let parsed = match parse_block(
         parser,
         name,
         flag_star,
@@ -382,7 +428,18 @@ fn parse_table<'r, 't>(
         in_head,
         block,
         AdvancedTableElement::Table,
-    )?;
+    ) {
+        Ok(parsed) => parsed,
+        Err(error) => {
+            cache_wikijump_underclosed_table_error(
+                parser,
+                BLOCK_TABLE.name,
+                owner_start,
+                &error,
+            );
+            return Err(error);
+        }
+    };
     let source_end = parser.current().span.start;
     if legacy
         && !has_explicit_closer(
@@ -456,11 +513,11 @@ fn parse_row<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    let owner_start = legacy_opener_start(parser);
-    if owner_start.is_some_and(|start| {
-        parser.underclosed_block_failure_cached(BLOCK_TABLE_ROW.name, start)
-    }) {
-        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    let owner_start = table_opener_start(parser, name);
+    if let Some(error) =
+        cached_underclosed_table_error(parser, BLOCK_TABLE_ROW.name, owner_start)
+    {
+        return Err(error);
     }
     if legacy_block_name_is_spaced(parser) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -474,7 +531,7 @@ fn parse_row<'r, 't>(
     }
 
     // Get block contents.
-    let parsed = parse_block(
+    let parsed = match parse_block(
         parser,
         name,
         flag_star,
@@ -482,7 +539,18 @@ fn parse_row<'r, 't>(
         in_head,
         block,
         AdvancedTableElement::Row,
-    )?;
+    ) {
+        Ok(parsed) => parsed,
+        Err(error) => {
+            cache_wikijump_underclosed_table_error(
+                parser,
+                BLOCK_TABLE_ROW.name,
+                owner_start,
+                &error,
+            );
+            return Err(error);
+        }
+    };
     let source_end = parser.current().span.start;
     if legacy
         && !has_explicit_closer(
@@ -524,16 +592,19 @@ fn parse_cell_regular<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    let owner_start = legacy_opener_start(parser);
-    if owner_start.is_some_and(|start| {
-        parser.underclosed_block_failure_cached(BLOCK_TABLE_CELL_BODY.name, start)
-    }) {
-        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    let legacy = parser.settings().layout.legacy();
+    let cache_rule = if legacy {
+        BLOCK_TABLE_CELL_BODY.name
+    } else {
+        BLOCK_TABLE_CELL_REGULAR.name
+    };
+    let owner_start = table_opener_start(parser, name);
+    if let Some(error) = cached_underclosed_table_error(parser, cache_rule, owner_start) {
+        return Err(error);
     }
     if legacy_block_name_is_spaced(parser) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
-    let legacy = parser.settings().layout.legacy();
     let block = if legacy {
         (&BLOCK_TABLE_CELL_BODY, "table cell (regular)")
     } else {
@@ -545,7 +616,7 @@ fn parse_cell_regular<'r, 't>(
     }
 
     // Get block contents.
-    let parsed = parse_block(
+    let parsed = match parse_block(
         parser,
         name,
         flag_star,
@@ -553,7 +624,18 @@ fn parse_cell_regular<'r, 't>(
         in_head,
         block,
         AdvancedTableElement::Cell,
-    )?;
+    ) {
+        Ok(parsed) => parsed,
+        Err(error) => {
+            cache_wikijump_underclosed_table_error(
+                parser,
+                cache_rule,
+                owner_start,
+                &error,
+            );
+            return Err(error);
+        }
+    };
     let source_end = parser.current().span.start;
     let source = &parser.full_text().inner()[source_start..source_end];
     if legacy && !has_explicit_closer(source, &["cell", "hcell"]) {
@@ -584,25 +666,24 @@ fn parse_cell_header<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    let owner_start = legacy_opener_start(parser);
-    if owner_start.is_some_and(|start| {
-        parser.underclosed_block_failure_cached(BLOCK_TABLE_CELL_BODY.name, start)
-    }) {
-        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    let legacy = parser.settings().layout.legacy();
+    let cache_rule = BLOCK_TABLE_CELL_BODY.name;
+    let owner_start = table_opener_start(parser, name);
+    if let Some(error) = cached_underclosed_table_error(parser, cache_rule, owner_start) {
+        return Err(error);
     }
     if legacy_block_name_is_spaced(parser) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     let parser = &mut ParserWrap::new(parser, AcceptsPartial::TableCell);
     let block = (&BLOCK_TABLE_CELL_BODY, "table cell (header)");
-    let legacy = parser.settings().layout.legacy();
     let source_start = parser.current().span.start;
     if legacy && !parser.has_body_end_block(&BLOCK_TABLE_CELL_BODY) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
     // Get block contents.
-    let parsed = parse_block(
+    let parsed = match parse_block(
         parser,
         name,
         flag_star,
@@ -610,7 +691,18 @@ fn parse_cell_header<'r, 't>(
         in_head,
         block,
         AdvancedTableElement::Cell,
-    )?;
+    ) {
+        Ok(parsed) => parsed,
+        Err(error) => {
+            cache_wikijump_underclosed_table_error(
+                parser,
+                cache_rule,
+                owner_start,
+                &error,
+            );
+            return Err(error);
+        }
+    };
     let source_end = parser.current().span.start;
     let source = &parser.full_text().inner()[source_start..source_end];
     if legacy && !has_explicit_closer(source, &["cell", "hcell"]) {

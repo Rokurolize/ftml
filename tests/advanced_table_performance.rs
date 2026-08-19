@@ -161,6 +161,42 @@ fn deeply_unclosed_advanced_table_owners_fail_before_recursive_body_parsing() {
 }
 
 #[test]
+fn underclosed_wikijump_advanced_table_owners_reuse_failure_cache() {
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+
+    let semantic_control = "[[table]][[row]][[cell]]X[[/cell]][[/row]]";
+    let tokenization = ftml::tokenize(semantic_control);
+    let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+    assert_eq!(html, "<p>[[table]][[row]][[cell]]X[[/cell]][[/row]]</p>");
+    assert_eq!(
+        errors.first().map(|error| error.kind()),
+        Some(ftml::parsing::ParseErrorKind::EndOfInput)
+    );
+
+    const NESTING: usize = 24;
+    const CLOSED: usize = NESTING / 2;
+    let mut source = String::new();
+    source.push_str(&"[[table]][[row]][[cell]]".repeat(NESTING));
+    source.push('X');
+    source.push_str(&"[[/cell]][[/row]][[/table]]".repeat(CLOSED));
+    let tokenization = ftml::tokenize(&source);
+    let started = Instant::now();
+    let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+    assert!(
+        started.elapsed() < Duration::from_secs(2),
+        "underclosed Wikijump advanced tables took {:?}",
+        started.elapsed(),
+    );
+    assert!(!errors.is_empty());
+    assert!(!tree.elements.is_empty());
+    assert!(html.contains("[[table]]"), "{html}");
+}
+
+#[test]
 fn many_paragraphs_and_nested_tables_stay_bounded() {
     const PARAGRAPH_COUNT: usize = 2_048;
     const NESTED_INTERVAL: usize = 64;

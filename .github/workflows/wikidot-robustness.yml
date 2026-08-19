@@ -11,7 +11,7 @@ permissions:
 jobs:
   fuzz-and-downstream:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Check out FTML
         uses: actions/checkout@v4
@@ -22,12 +22,6 @@ jobs:
           repository: Rokurolize/wikijump
           ref: develop
           path: wikijump
-
-      - name: Install nightly Rust and cargo-fuzz
-        shell: bash
-        run: |
-          rustup toolchain install nightly --profile minimal
-          cargo install cargo-fuzz --locked
 
       - name: Verify Python quality-gate tests
         run: python3 -m unittest discover -s scripts -p '*_test.py'
@@ -40,6 +34,35 @@ jobs:
             --wikijump-root wikijump \
             --build-renderer \
             --timeout 180
+
+      - name: Verify reviewed normalization cases in Chrome
+        shell: bash
+        run: |
+          CHROME=""
+          for candidate in google-chrome chromium chromium-browser; do
+            if command -v "$candidate" >/dev/null 2>&1; then
+              CHROME="$(command -v "$candidate")"
+              break
+            fi
+          done
+          test -n "$CHROME"
+          python3 scripts/check_comparison_normalization_browser.py \
+            --chrome "$CHROME" \
+            --build-renderer
+
+      - name: Verify candidate FTML inside Wikijump
+        shell: bash
+        run: |
+          python3 scripts/check_wikijump_candidate.py \
+            --wikijump-root wikijump \
+            --ftml-root . \
+            --run-tests
+
+      - name: Install nightly Rust and cargo-fuzz
+        shell: bash
+        run: |
+          rustup toolchain install nightly --profile minimal
+          cargo install cargo-fuzz --locked
 
       - name: Build fuzz seed corpus
         shell: bash
@@ -59,3 +82,12 @@ jobs:
             -- \
             -max_total_time=900 \
             -timeout=10
+
+      - name: Upload fuzz failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wikidot-public-pipeline-fuzz-artifacts
+          path: fuzz/artifacts/public_pipeline/
+          if-no-files-found: ignore
+          retention-days: 14

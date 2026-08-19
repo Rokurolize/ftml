@@ -1248,6 +1248,8 @@ where
                 return outcome;
             }
             traversed_token_states.push((token_start, first));
+            #[cfg(test)]
+            self.increment_block_end_scan_token_visits();
 
             if parser
                 .verify_end_block(first, block_rule, false, false)
@@ -2116,6 +2118,29 @@ mod tests {
                 tokenization.tokens().len(),
             );
         }
+    }
+
+    #[test]
+    fn body_end_scan_operation_count_reuses_unmatched_suffixes() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let input = "[[div]]\n".repeat(512);
+        let tokenization = crate::tokenize(&input);
+        let mut parser = Parser::new(&tokenization, &page_info, &settings);
+
+        while parser.current().token != Token::InputEnd {
+            if parser.current().token == Token::LeftBlock {
+                assert!(!parser.has_body_end_block(&BLOCK_DIV));
+            }
+            parser.step().expect("input end must remain available");
+        }
+
+        assert!(
+            parser.block_end_scan_token_visits() <= tokenization.tokens().len() * 2,
+            "visited {} tokens for {} input tokens",
+            parser.block_end_scan_token_visits(),
+            tokenization.tokens().len(),
+        );
     }
 
     #[test]

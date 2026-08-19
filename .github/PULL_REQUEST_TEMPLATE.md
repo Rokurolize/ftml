@@ -36,6 +36,8 @@ Run and record the checks below before opening the pull request. GitHub Actions 
 - [ ] `cargo test --test integration parity_index`
 - [ ] `python3 scripts/check_wikijump_feature_contracts.py --wikijump-root ../wikijump`
 - [ ] `python3 scripts/check_wikijump_full_pages.py --wikijump-root ../wikijump --build-renderer`
+- [ ] `python3 scripts/check_wikijump_candidate.py --wikijump-root ../wikijump --ftml-root . --run-tests`
+- [ ] `python3 scripts/check_comparison_normalization_browser.py --chrome "$(command -v google-chrome)" --build-renderer`
 - [ ] `cargo fmt --all -- --check`
 - [ ] `cargo test --all-features --lib`
 - [ ] `cargo test --all-features --tests`

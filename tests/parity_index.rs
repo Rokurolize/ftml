@@ -617,9 +617,11 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
             assert!(
                 matches!(
                     contract.difference_class.as_str(),
-                    "page-preview-root-whitespace" | "html-serialization"
+                    "page-preview-root-whitespace"
+                        | "html-serialization"
+                        | "browser-rendering-whitespace"
                 ),
-                "{}: comparison-normalization may only cover browser-equivalent root/HTML serialization differences",
+                "{}: comparison-normalization may only cover browser-verified rendering/serialization whitespace differences",
                 contract.case_id
             );
             assert!(

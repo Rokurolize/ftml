@@ -94,6 +94,13 @@ cargo +nightly fuzz run --fuzz-dir fuzz public_pipeline "$FUZZ_CORPUS"
 
 The fuzz corpus is generated outside the repository and is not compatibility evidence. Any interesting crash or novel parity case must be minimized into a stable regression and, where behavior is observable on Wikidot, captured through the normal provenance-backed reference path.
 
+The scheduled robustness workflow keeps libFuzzer's `fuzz/artifacts/public_pipeline/` directory as a CI artifact when the job fails. Reproduce a saved artifact locally with the exact target rather than relying on the original wall-clock timeout:
+
+```sh
+cargo +nightly fuzz run --fuzz-dir fuzz public_pipeline -- \
+  -runs=1 -timeout=10 fuzz/artifacts/public_pipeline/<artifact>
+```
+
 For branch coverage of the high-risk compatibility paths, run the Unicode robustness suite under nightly LLVM coverage and check the maintained floors:
 
 ```sh
@@ -118,13 +125,34 @@ python3 scripts/check_wikijump_full_pages.py \
 
 The command uses one `render_html_jsonl` worker for all pages, so a panic, abort, timeout, missing output row, or source drift is a gate failure. Parse diagnostics are allowed because some full pages intentionally contain caller-owned or unsupported runtime constructs; the gate protects process safety and whole-page interactions rather than pretending the FTML-only lane owns caller runtime. The nightly robustness workflow repeats this check against Wikijump `develop` and then includes the same full pages in the fuzz seed corpus.
 
+The FTML-only full-page pass is not enough to prove that the same candidate dependency compiles inside Deepwell. Run the candidate-integration lane against a clean Wikijump checkout as well:
+
+```sh
+python3 scripts/check_wikijump_candidate.py \
+  --wikijump-root ../wikijump \
+  --ftml-root . \
+  --run-tests
+```
+
+The checker temporarily replaces only Deepwell's `ftml` dependency with the local checkout, verifies Cargo metadata resolves that path, runs Wikijump's full SCP-9506 canary plus every caller-runtime contract named by `caller-runtime-contracts.json`, then restores both `Cargo.toml` and `Cargo.lock` even on failure. Missing named tests are themselves a gate failure. This is the required downstream lane for parser/preprocessor changes that can affect Wikijump runtime behavior.
+
 ### Operation-count performance gate
 
-High-risk parser scanners expose test-only token-visit counters. Their tests run input-size series rather than relying only on wall-clock thresholds: quote close scans stay within twice the token population, nested block-end scans stay within the token population for the initial scan, lost-owner lookahead stays within the token population, and underline fast-path work has an exact marker-count relation. Wall-clock tests remain outer watchdogs; deterministic operation counts are the regression authority for these scanners.
+High-risk parser scanners expose test-only token-visit counters. Their tests run input-size series rather than relying only on wall-clock thresholds: quote close scans stay within twice the token population, generic body-end suffix scans reuse cached unmatched suffixes within a linear token budget, nested two-close scans stay within the token population for the initial scan, lost-owner lookahead stays within the token population, and underline fast-path work has an exact marker-count relation. Wall-clock tests remain outer watchdogs; deterministic operation counts are the regression authority for these scanners.
 
 ### Comparison-normalization review
 
-`comparison-normalization` is not a general escape hatch. Every such binding must appear exactly once in `tests/fixtures/wikidot-parity/comparison-normalization-contracts.json`, with an explicit difference class, Wikijump feature ID, and review. The parity index permits only browser-equivalent root-whitespace or HTML-serialization classes. Semantic codepoint differences, element/attribute differences, interaction differences, or caller-state differences must be fixed or classified elsewhere. This rule promoted the former `test--math--inline` U+0020/U+00A0 difference back to an ordinary exact match instead of preserving it as normalization.
+`comparison-normalization` is not a general escape hatch. Every such binding must appear exactly once in `tests/fixtures/wikidot-parity/comparison-normalization-contracts.json`, with an explicit difference class, Wikijump feature ID, and review. The parity index permits only browser-reviewed root/serialization/rendering-whitespace classes. Semantic codepoint differences, element/attribute differences, interaction-hook differences, or caller-state differences must be fixed or classified elsewhere. This rule promoted the former `test--math--inline` U+0020/U+00A0 difference back to an ordinary exact match instead of preserving it as normalization.
+
+The eight current normalization cases are also verified by a real Chrome DOM pass:
+
+```sh
+python3 scripts/check_comparison_normalization_browser.py \
+  --chrome "$(command -v google-chrome)" \
+  --build-renderer
+```
+
+`page-preview-root-whitespace` and `html-serialization` cases must become the exact same parsed DOM after trimming only ASCII whitespace at the fragment boundaries. `browser-rendering-whitespace` cases may retain formatting whitespace text nodes only when Chrome reports identical element/attribute topology, per-element direct text after normal HTML whitespace collapsing, rendered `innerText`, and exact preformatted/textarea text. The current inventory has five strict root-equivalent cases and three browser-render-equivalent formatting-whitespace cases. Any future case that fails those checks is not eligible for normalization.
 
 ### Wikijump feature-ledger linkage
 

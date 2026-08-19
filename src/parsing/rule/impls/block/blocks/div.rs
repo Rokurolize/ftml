@@ -383,8 +383,7 @@ fn parse_fn<'r, 't>(
     let head = parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;
     let (mut arguments, mut body_start) = head;
     let cacheable_wikijump_failure = !parser.settings().layout.legacy()
-        && parser.settings().mode == WikitextMode::Page
-        && parser.accepts_partial() == AcceptsPartial::None;
+        && parser.settings().mode == WikitextMode::Page;
     if cacheable_wikijump_failure
         && parser.block_end_scan_outcome((WIKIJUMP_DIV_FAILURE_CACHE, owner_start, false))
             == Some(false)
@@ -890,6 +889,34 @@ mod tests {
             assert!(!errors.is_empty());
             assert!(!tree.elements.is_empty());
         }
+    }
+
+    #[test]
+    fn wikijump_malformed_div_fuzz_shape_reuses_nested_failure_cache() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let mut input = "[[div]]\n".repeat(6);
+        input.push_str("\u{1}\0\0\0\0\0\0\u{2}");
+        input.push_str(&"[[div]]\n".repeat(25));
+        input.push_str("[[div][[tabview]][div]]\n");
+        input.push_str(&"[[div]]\n".repeat(3));
+        input.push_str("[d[iv]]\n");
+        input.push_str(&"[[div]]\n".repeat(15));
+        input.push('\u{13}');
+        input.push_str(&"[[div]]\n".repeat(3));
+        input.push_str("/div]]\n");
+        input.push_str(&"[[/div]]\n".repeat(13));
+
+        let tokenization = crate::tokenize(&input);
+        let started = std::time::Instant::now();
+        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "fuzz-derived malformed div retry took {:?}",
+            started.elapsed(),
+        );
+        assert!(!errors.is_empty());
     }
 
     #[test]

@@ -21,6 +21,10 @@ const CLASSIFICATION_OVERRIDES_SCHEMA: &str =
     "ftml.wikidot_parity.classification_overrides.v1";
 const CALLER_RUNTIME_CONTRACTS_SCHEMA: &str =
     "ftml.wikidot_parity.caller_runtime_contracts.v1";
+const COMPARISON_NORMALIZATION_CONTRACTS_SCHEMA: &str =
+    "ftml.wikidot_parity.comparison_normalization_contracts.v1";
+const WIKIJUMP_FEATURE_CONTRACTS_SCHEMA: &str = "ftml.wikijump_feature_contracts.v1";
+const DOWNSTREAM_PAGES_SCHEMA: &str = "ftml.wikijump_downstream_pages.v1";
 const ACTIVE_INVESTIGATION_REASON_PREFIX: &str =
     "Active functional investigation: issue #";
 const REVIEWED_CONTEXT_FREE_REASON_PREFIX: &str = "reviewed-context-free-";
@@ -127,6 +131,55 @@ struct CallerRuntimeContract {
     id: String,
     wikijump_test: String,
     cases: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ComparisonNormalizationContractsManifest {
+    schema: String,
+    contracts: Vec<ComparisonNormalizationContract>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ComparisonNormalizationContract {
+    case_id: String,
+    difference_class: String,
+    wikijump_feature_id: String,
+    review: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct WikijumpFeatureContractsManifest {
+    schema: String,
+    contracts: Vec<WikijumpFeatureContract>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct WikijumpFeatureContract {
+    id: String,
+    wikijump_feature_id: String,
+    cases: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DownstreamPagesManifest {
+    schema: String,
+    pages: Vec<DownstreamPage>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DownstreamPage {
+    id: String,
+    path: String,
+    sha256: String,
+    site: String,
+    page: String,
+    title: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -313,6 +366,11 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
         artifact_dir.join("classification-overrides.json");
     let caller_runtime_contracts_path =
         artifact_dir.join("caller-runtime-contracts.json");
+    let comparison_normalization_contracts_path =
+        artifact_dir.join("comparison-normalization-contracts.json");
+    let wikijump_feature_contracts_path =
+        artifact_dir.join("wikijump-feature-contracts.json");
+    let downstream_pages_path = artifact_dir.join("downstream-pages.json");
     let cases: Vec<LiveCase> = read_jsonl(&cases_path);
     let manifest: BindingsManifest =
         serde_json::from_slice(&fs::read(&bindings_path).expect("read parity bindings"))
@@ -329,6 +387,22 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
                 .expect("read caller-runtime contracts"),
         )
         .expect("caller-runtime-contracts.json has valid schema fields");
+    let comparison_normalization_contracts: ComparisonNormalizationContractsManifest =
+        serde_json::from_slice(
+            &fs::read(&comparison_normalization_contracts_path)
+                .expect("read comparison-normalization contracts"),
+        )
+        .expect("comparison-normalization-contracts.json has valid schema fields");
+    let wikijump_feature_contracts: WikijumpFeatureContractsManifest =
+        serde_json::from_slice(
+            &fs::read(&wikijump_feature_contracts_path)
+                .expect("read Wikijump feature contracts"),
+        )
+        .expect("wikijump-feature-contracts.json has valid schema fields");
+    let downstream_pages: DownstreamPagesManifest = serde_json::from_slice(
+        &fs::read(&downstream_pages_path).expect("read downstream page contracts"),
+    )
+    .expect("downstream-pages.json has valid schema fields");
 
     assert_eq!(manifest.schema, BINDINGS_SCHEMA);
     assert_eq!(
@@ -339,6 +413,15 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
         caller_runtime_contracts.schema,
         CALLER_RUNTIME_CONTRACTS_SCHEMA
     );
+    assert_eq!(
+        comparison_normalization_contracts.schema,
+        COMPARISON_NORMALIZATION_CONTRACTS_SCHEMA
+    );
+    assert_eq!(
+        wikijump_feature_contracts.schema,
+        WIKIJUMP_FEATURE_CONTRACTS_SCHEMA
+    );
+    assert_eq!(downstream_pages.schema, DOWNSTREAM_PAGES_SCHEMA);
     assert!(!cases.is_empty(), "parity case population is empty");
     assert_eq!(
         cases
@@ -511,6 +594,111 @@ fn frozen_wikidot_parity_artifacts_are_complete_and_current() {
         contracted_cases, caller_runtime_cases,
         "every caller-runtime binding must map to exactly one concrete Wikijump regression contract"
     );
+
+    let comparison_normalization_cases: BTreeSet<_> = manifest
+        .bindings
+        .iter()
+        .filter(|binding| {
+            binding.disposition == Some(BindingDisposition::ComparisonNormalization)
+        })
+        .map(|binding| binding.case_id.as_str())
+        .collect();
+    assert!(
+        comparison_normalization_contracts
+            .contracts
+            .windows(2)
+            .all(|pair| pair[0].case_id < pair[1].case_id),
+        "comparison-normalization contracts must have unique sorted case IDs"
+    );
+    let contracted_normalizations: BTreeSet<_> = comparison_normalization_contracts
+        .contracts
+        .iter()
+        .map(|contract| {
+            assert!(
+                matches!(
+                    contract.difference_class.as_str(),
+                    "page-preview-root-whitespace" | "html-serialization"
+                ),
+                "{}: comparison-normalization may only cover browser-equivalent root/HTML serialization differences",
+                contract.case_id
+            );
+            assert!(
+                contract.wikijump_feature_id.starts_with("syntax-"),
+                "{}: normalization contract must name a syntax feature",
+                contract.case_id
+            );
+            assert!(
+                !contract.review.trim().is_empty(),
+                "{}: normalization contract needs explicit review",
+                contract.case_id
+            );
+            contract.case_id.as_str()
+        })
+        .collect();
+    assert_eq!(
+        contracted_normalizations, comparison_normalization_cases,
+        "every comparison-normalization mismatch needs exactly one explicit review contract"
+    );
+
+    let case_ids: BTreeSet<_> = cases.iter().map(|case| case.case_id.as_str()).collect();
+    assert!(
+        wikijump_feature_contracts
+            .contracts
+            .windows(2)
+            .all(|pair| pair[0].id < pair[1].id),
+        "Wikijump feature contract IDs must be unique and sorted"
+    );
+    for contract in &wikijump_feature_contracts.contracts {
+        assert!(
+            contract.wikijump_feature_id.starts_with("syntax-"),
+            "{}: Wikijump feature contract must name a syntax feature",
+            contract.id
+        );
+        assert!(
+            !contract.cases.is_empty(),
+            "{}: Wikijump feature contract needs representative FTML cases",
+            contract.id
+        );
+        for case_id in &contract.cases {
+            assert!(
+                case_ids.contains(case_id.as_str()),
+                "{}: Wikijump feature contract references missing case {case_id}",
+                contract.id
+            );
+        }
+    }
+
+    assert!(
+        downstream_pages
+            .pages
+            .windows(2)
+            .all(|pair| pair[0].id < pair[1].id),
+        "downstream page IDs must be unique and sorted"
+    );
+    assert!(
+        downstream_pages
+            .pages
+            .iter()
+            .any(|page| page.id == "scp-9506"),
+        "SCP-9506 must remain a downstream canary"
+    );
+    let mut downstream_paths = BTreeSet::new();
+    for page in &downstream_pages.pages {
+        assert!(
+            downstream_paths.insert(page.path.as_str()),
+            "{}: duplicate downstream page path {}",
+            page.id,
+            page.path
+        );
+        assert!(
+            is_lower_hex(&page.sha256, 64),
+            "{}: downstream source hash",
+            page.id
+        );
+        assert!(!page.site.is_empty(), "{}: downstream site", page.id);
+        assert!(!page.page.is_empty(), "{}: downstream page", page.id);
+        assert!(!page.title.is_empty(), "{}: downstream title", page.id);
+    }
 
     let parity_docs = fs::read_to_string(root.join("docs/ParityTests.md"))
         .expect("read docs/ParityTests.md");

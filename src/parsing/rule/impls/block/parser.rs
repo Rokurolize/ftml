@@ -2071,6 +2071,54 @@ mod tests {
     }
 
     #[test]
+    fn quote_scan_operation_count_scales_with_input_tokens() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for line_count in [32, 64, 128, 256, 512] {
+            let input = (0..line_count)
+                .map(|index| format!("> body-{index}\n"))
+                .collect::<String>();
+            let tokenization = crate::tokenize(&input);
+            let mut parser = Parser::new(&tokenization, &page_info, &settings);
+            parser
+                .step()
+                .expect("first quote should follow input start");
+
+            assert!(!parser.has_native_blockquote_body_end(&BLOCK_COLLAPSIBLE, 1));
+            assert!(
+                parser.quote_scan_token_visits() <= tokenization.tokens().len() * 2,
+                "{line_count} lines visited {} tokens for {} input tokens",
+                parser.quote_scan_token_visits(),
+                tokenization.tokens().len(),
+            );
+        }
+    }
+
+    #[test]
+    fn two_block_end_scan_operation_count_scales_with_input_tokens() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for depth in [32, 64, 128, 256, 512] {
+            let input = format!(
+                "{}hidden\n[[/iftags]]",
+                "[[iftags +missing]]\n".repeat(depth),
+            );
+            let tokenization = crate::tokenize(&input);
+            let mut parser = Parser::new(&tokenization, &page_info, &settings);
+            parser.step().expect("the first nested opener should exist");
+            assert!(!parser.has_two_body_end_blocks(&BLOCK_IFTAGS));
+            assert!(
+                parser.block_end_scan_token_visits() <= tokenization.tokens().len(),
+                "{depth} nested openers visited {} tokens for {} input tokens",
+                parser.block_end_scan_token_visits(),
+                tokenization.tokens().len(),
+            );
+        }
+    }
+
+    #[test]
     fn block_end_scan_propagates_cached_suffix_outcomes() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);

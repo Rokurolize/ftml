@@ -34,6 +34,22 @@ use std::io::{self, BufRead, Write};
 const INPUT_SCHEMA: &str = "wikijump_syntax_differential.syntax_case.v1";
 const OUTPUT_SCHEMA: &str = "wikijump_syntax_differential.ftml_render_result.v1";
 
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum InputLayout {
+    Wikidot,
+    Wikijump,
+}
+
+impl InputLayout {
+    fn layout(self) -> Layout {
+        match self {
+            Self::Wikidot => Layout::Wikidot,
+            Self::Wikijump => Layout::Wikijump,
+        }
+    }
+}
+
 #[derive(Debug, Deserialize)]
 struct SyntaxCase {
     schema: String,
@@ -41,6 +57,7 @@ struct SyntaxCase {
     source: String,
     title: String,
     page_context: Option<PageContext>,
+    layout: Option<InputLayout>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -131,7 +148,8 @@ fn render_case(case: SyntaxCase) -> RenderResult {
         );
     }
 
-    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let layout = case.layout.unwrap_or(InputLayout::Wikidot).layout();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
     let page_info = page_info(case.title, case.page_context);
     let mut source = case.source;
     ftml::preprocess_for_layout(&mut source, settings.layout);
@@ -207,6 +225,28 @@ mod tests {
                 .as_str()
                 .expect("HTML string")
                 .contains(r#"<div class="collapsible-block">"#),
+        );
+    }
+
+    #[test]
+    fn optional_layout_selects_wikijump_without_changing_the_default() {
+        let input = concat!(
+            r#"{"schema":"wikijump_syntax_differential.syntax_case.v1","case_id":"default","source":"[[a href=\"/x\"]]X[[/a]]","title":"Default"}"#,
+            "\n",
+            r#"{"schema":"wikijump_syntax_differential.syntax_case.v1","case_id":"wikijump","source":"[[a href=\"/x\"]]X[[/a]]","title":"Wikijump","layout":"wikijump"}"#,
+            "\n",
+        );
+        let mut output = Vec::new();
+        process_lines(Cursor::new(input), &mut output).expect("process syntax cases");
+        let results: Vec<Value> = String::from_utf8(output)
+            .expect("JSONL is UTF-8")
+            .lines()
+            .map(|line| serde_json::from_str(line).expect("result is JSON"))
+            .collect();
+        assert_eq!(results[0]["html"], "<p><a href=\"/x\">X</a></p>");
+        assert_eq!(
+            results[1]["html"],
+            "<p><a class=\"wj-anchor\" href=\"/x\">X</a></p>"
         );
     }
 

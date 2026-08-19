@@ -32,7 +32,7 @@ use crate::render::{Handle, PageExistenceResolver, UserInfoResolver};
 use crate::settings::WikitextSettings;
 use crate::tree::{
     Bibliography, BibliographyList, Element, EmbedVideo, Gallery, LinkLocation,
-    StandaloneButtonAction, VariableScopes,
+    SocialButtons, StandaloneButtonAction, VariableScopes,
 };
 use crate::url::{HrefKind, classify_href, normalize_href};
 use std::collections::HashMap;
@@ -487,6 +487,11 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     pub(super) fn require_gallery(&mut self, id: String, gallery: &Gallery<'_>) {
         self.resource_requirements
             .push(HtmlResourceRequirement::gallery(id, gallery));
+    }
+
+    pub(super) fn require_social(&mut self, id: String, social: &SocialButtons) {
+        self.resource_requirements
+            .push(HtmlResourceRequirement::social(id, social));
     }
 }
 

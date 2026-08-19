@@ -1,8 +1,10 @@
 import tempfile
 import unittest
+import json
 from pathlib import Path
 
 from scripts.check_wikijump_candidate import (
+    CALLER_RUNTIME_MANIFEST,
     FULL_PAGE_TEST,
     candidate_test_ids,
     local_ftml_dependency_line,
@@ -15,8 +17,16 @@ from scripts.check_wikijump_candidate import (
 class WikijumpCandidateTest(unittest.TestCase):
     def test_candidate_suite_includes_full_page_and_runtime_contracts_once(self):
         tests = candidate_test_ids()
+        manifest = json.loads(CALLER_RUNTIME_MANIFEST.read_text(encoding="utf-8"))
+        expected = 1 + len(
+            {
+                contract["wikijump_test"]
+                for contract in manifest["contracts"]
+                if contract["wikijump_test"] != FULL_PAGE_TEST
+            }
+        )
         self.assertEqual(tests[0], FULL_PAGE_TEST)
-        self.assertEqual(len(tests), 7)
+        self.assertEqual(len(tests), expected)
         self.assertEqual(len(tests), len(set(tests)))
 
     def test_local_dependency_preserves_non_source_fields(self):

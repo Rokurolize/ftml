@@ -41,6 +41,7 @@ mod link;
 mod list;
 mod math;
 mod module;
+mod social;
 mod style;
 mod table;
 mod tabs;
@@ -79,6 +80,7 @@ use self::link::{render_anchor, render_anchor_target, render_link};
 use self::list::render_list;
 use self::math::{render_equation_reference, render_math_block, render_math_inline};
 use self::module::render_module;
+use self::social::render_social_buttons;
 use self::style::render_style;
 use self::table::render_table;
 use self::tabs::render_tabview;
@@ -169,6 +171,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         Element::Table(table) => render_table(ctx, table),
         Element::TabView(tabs) => render_tabview(ctx, tabs),
         Element::StandaloneButton(button) => render_standalone_button(ctx, button),
+        Element::SocialButtons(social) => render_social_buttons(ctx, social),
         Element::EmbedVideo(embed_video) => render_embed_video(ctx, embed_video),
         Element::Gallery(gallery) => render_gallery(ctx, gallery),
         Element::Anchor {

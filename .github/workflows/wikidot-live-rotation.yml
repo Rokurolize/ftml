@@ -1,0 +1,73 @@
+name: Wikidot live parity rotation
+
+on:
+  schedule:
+    - cron: "41 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-differential:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out FTML
+        uses: actions/checkout@v4
+
+      - name: Check out Wikijump verification tooling
+        uses: actions/checkout@v4
+        with:
+          repository: Rokurolize/wikijump
+          ref: develop
+          path: wikijump
+
+      - name: Set up pinned Wikidot client
+        shell: bash
+        run: wikijump/install/local/wikidot-verification/scripts/setup-python-env.sh
+
+      - name: Install Wikijump differential dependencies
+        shell: bash
+        run: |
+          corepack enable
+          pnpm --dir wikijump/install/local/wikidot-verification install --frozen-lockfile
+
+      - name: Select rotating exact-match cases
+        shell: bash
+        run: |
+          python3 scripts/select_live_parity_rotation.py \
+            --slot "${GITHUB_RUN_NUMBER}" \
+            --count 8 \
+            --output "$RUNNER_TEMP/live-cases.jsonl"
+
+      - name: Capture anonymous read-only PagePreview references
+        shell: bash
+        run: |
+          wikijump/install/local/wikidot-verification/.venv/bin/python \
+            wikijump/install/local/wikidot-verification/scripts/capture_wikidot_preview_references.py \
+            --cases "$RUNNER_TEMP/live-cases.jsonl" \
+            --output "$RUNNER_TEMP/live-references.jsonl" \
+            --site sandbox-for-codex \
+            --batch-size 4
+
+      - name: Compare current FTML against fresh Wikidot observations
+        shell: bash
+        run: |
+          cargo build --example render_html_jsonl
+          node wikijump/install/local/wikidot-verification/scripts/run-syntax-differential.mjs \
+            --references "$RUNNER_TEMP/live-references.jsonl" \
+            --renderer target/debug/examples/render_html_jsonl \
+            --output "$RUNNER_TEMP/live-verdict.json"
+
+      - name: Upload live differential evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wikidot-live-parity-rotation
+          path: |
+            ${{ runner.temp }}/live-cases.jsonl
+            ${{ runner.temp }}/live-references.jsonl
+            ${{ runner.temp }}/live-verdict.json
+          if-no-files-found: warn
+          retention-days: 14

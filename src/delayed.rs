@@ -937,6 +937,7 @@ fn element_contains_delayed(element: &Element<'_>) -> bool {
         | Element::Audio { .. }
         | Element::Video { .. }
         | Element::StandaloneButton(_)
+        | Element::SocialButtons(_)
         | Element::EmbedVideo(_)
         | Element::Gallery(_)
         | Element::RadioButton { .. }

@@ -25,7 +25,7 @@ use crate::tree::{
     Alignment, AnchorTarget, AttributeMap, ClearFloat, CodeBlock, Container, DateItem,
     DefinitionListItem, Embed, EmbedVideo, FileSource, FloatAlignment, Gallery,
     ImageSource, LinkLabel, LinkLocation, LinkType, ListItem, ListType, Module,
-    PartialElement, StandaloneButton, Tab, Table, VariableMap,
+    PartialElement, SocialButtons, StandaloneButton, Tab, Table, VariableMap,
 };
 use ref_map::*;
 use std::borrow::Cow;
@@ -90,6 +90,9 @@ pub enum Element<'t> {
 
     /// A typed standalone action control with no authored executable behavior.
     StandaloneButton(StandaloneButton<'t>),
+
+    /// A typed Wikidot social-bookmarking request resolved by the caller.
+    SocialButtons(SocialButtons),
 
     /// An opaque authored `[[embedvideo]]` block resolved by the caller.
     EmbedVideo(EmbedVideo<'t>),
@@ -393,6 +396,7 @@ impl Element<'_> {
             Element::Table(_) => "Table",
             Element::TabView(_) => "TabView",
             Element::StandaloneButton(_) => "StandaloneButton",
+            Element::SocialButtons(_) => "SocialButtons",
             Element::EmbedVideo(_) => "EmbedVideo",
             Element::Gallery(_) => "Gallery",
             Element::Anchor { .. } => "Anchor",
@@ -458,6 +462,7 @@ impl Element<'_> {
                 }
             }
             Element::StandaloneButton(_) => {}
+            Element::SocialButtons(_) => {}
             Element::EmbedVideo(_) => {}
             Element::Gallery(_) => {}
             Element::Anchor { elements, .. }
@@ -530,6 +535,7 @@ impl Element<'_> {
             Element::Table(_) => false,
             Element::TabView(_) => false,
             Element::StandaloneButton(_) => true,
+            Element::SocialButtons(_) => true,
             Element::EmbedVideo(_) => false,
             Element::Gallery(_) => false,
             Element::Anchor { .. }
@@ -596,6 +602,7 @@ impl Element<'_> {
             Element::StandaloneButton(button) => {
                 Element::StandaloneButton(button.to_owned())
             }
+            Element::SocialButtons(social) => Element::SocialButtons(social.clone()),
             Element::EmbedVideo(embed_video) => {
                 Element::EmbedVideo(embed_video.to_owned())
             }

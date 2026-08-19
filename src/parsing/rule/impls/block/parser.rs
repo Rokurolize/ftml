@@ -161,8 +161,9 @@ fn parse_wikidot_attribute_field<'t>(field: &CommentElidedText<'t>) -> Arguments
     for index in 0..bytes.len().saturating_sub(1) {
         if bytes[index] == b'='
             && bytes[index + 1] == b'"'
-            && !comment_mask[index]
-            && !comment_mask[index + 1]
+            && comment_mask
+                .get(index..)
+                .is_some_and(|mask| mask.starts_with(&[false, false]))
         {
             delimiters.push(index);
         }
@@ -2006,6 +2007,37 @@ mod tests {
         BLOCK_COLLAPSIBLE, BLOCK_DIV, BLOCK_IFTAGS,
     };
     use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn wikidot_attribute_offsets_preserve_multibyte_malformed_recovery() {
+        // The first value intentionally has no terminating quote before the
+        // next `="` delimiter. Wikidot drops exactly the first UTF-8 scalar of
+        // that malformed segment before recovering the next key.
+        let mut arguments = parse_wikidot_attributes("a=\"éb=\"value\"");
+        assert_eq!(arguments.get("a").as_deref(), Some(""));
+        assert_eq!(arguments.get("b").as_deref(), Some("value"));
+        assert!(
+            arguments.is_empty(),
+            "unexpected recovered keys: {arguments:?}"
+        );
+    }
+
+    #[test]
+    fn wikidot_attribute_key_starts_after_the_last_comment_byte() {
+        let source = "prefix [!--drop--] class=\"日本語\"";
+        let comment_start = source.find("[!--").unwrap();
+        let comment_end = source.find("--]").unwrap() + 3;
+        let comment_ranges: Vec<_> =
+            std::iter::once(comment_start..comment_end).collect();
+        let field = CommentElidedText::new(source, 0..source.len(), comment_ranges);
+        let mut arguments = parse_wikidot_attribute_field(&field);
+
+        assert_eq!(arguments.get("class").as_deref(), Some("日本語"));
+        assert!(
+            arguments.is_empty(),
+            "comment bytes leaked into a key: {arguments:?}"
+        );
+    }
 
     #[test]
     fn wikijump_block_head_rejects_invalid_argument_key_token() {

@@ -158,6 +158,7 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
             }
         }
         Element::StandaloneButton(button) => ctx.push_str(&button.label),
+        Element::SocialButtons(_) => {}
         Element::EmbedVideo(_) => {
             // Provider payloads are intentionally invisible in plain text.
         }

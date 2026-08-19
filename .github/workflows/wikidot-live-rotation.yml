@@ -30,8 +30,9 @@ jobs:
       - name: Install Wikijump differential dependencies
         shell: bash
         run: |
-          corepack enable
-          corepack pnpm --dir wikijump/install/local/wikidot-verification install --frozen-lockfile
+          npx --yes pnpm@11.10.0 \
+            --dir wikijump/install/local/wikidot-verification \
+            install --frozen-lockfile
 
       - name: Select rotating exact-match cases
         shell: bash

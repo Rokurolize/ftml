@@ -355,6 +355,12 @@ fn parse_table<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    let owner_start = legacy_opener_start(parser);
+    if owner_start.is_some_and(|start| {
+        parser.underclosed_block_failure_cached(BLOCK_TABLE.name, start)
+    }) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     if legacy_block_name_is_spaced(parser) || legacy_table_follows_heading_marker(parser)
     {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -363,6 +369,9 @@ fn parse_table<'r, 't>(
     let block = (&BLOCK_TABLE, "table block");
     let legacy = parser.settings().layout.legacy();
     let source_start = parser.current().span.start;
+    if legacy && !parser.has_body_end_block(&BLOCK_TABLE) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     // Get block contents.
     let parsed = parse_block(
@@ -381,10 +390,21 @@ fn parse_table<'r, 't>(
             &["table"],
         )
     {
+        if let Some(owner_start) = owner_start {
+            parser.cache_underclosed_block_failure(BLOCK_TABLE.name, owner_start);
+        }
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    let (mut rows, residuals) = extract_table_rows(parser, parsed.elements)?;
+    let (mut rows, residuals) = match extract_table_rows(parser, parsed.elements) {
+        Ok(value) => value,
+        Err(error) => {
+            if let Some(owner_start) = owner_start {
+                parser.cache_underclosed_block_failure(BLOCK_TABLE.name, owner_start);
+            }
+            return Err(error);
+        }
+    };
     let mut errors = parsed.errors;
     if rows.is_empty()
         && parsed.has_arguments
@@ -396,6 +416,9 @@ fn parse_table<'r, 't>(
         errors.append(&mut recovered_errors);
     }
     if rows.is_empty() && parser.settings().layout.legacy() {
+        if let Some(owner_start) = owner_start {
+            parser.cache_underclosed_block_failure(BLOCK_TABLE.name, owner_start);
+        }
         return Err(parser.make_err(ParseErrorKind::TableContainsNonRow));
     }
     let attributes = parsed.attributes;
@@ -433,6 +456,12 @@ fn parse_row<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    let owner_start = legacy_opener_start(parser);
+    if owner_start.is_some_and(|start| {
+        parser.underclosed_block_failure_cached(BLOCK_TABLE_ROW.name, start)
+    }) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     if legacy_block_name_is_spaced(parser) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
@@ -440,6 +469,9 @@ fn parse_row<'r, 't>(
     let block = (&BLOCK_TABLE_ROW, "table row");
     let legacy = parser.settings().layout.legacy();
     let source_start = parser.current().span.start;
+    if legacy && !parser.has_body_end_block(&BLOCK_TABLE_ROW) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     // Get block contents.
     let parsed = parse_block(
@@ -458,6 +490,9 @@ fn parse_row<'r, 't>(
             &["row"],
         )
     {
+        if let Some(owner_start) = owner_start {
+            parser.cache_underclosed_block_failure(BLOCK_TABLE_ROW.name, owner_start);
+        }
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
@@ -489,6 +524,12 @@ fn parse_cell_regular<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    let owner_start = legacy_opener_start(parser);
+    if owner_start.is_some_and(|start| {
+        parser.underclosed_block_failure_cached(BLOCK_TABLE_CELL_BODY.name, start)
+    }) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     if legacy_block_name_is_spaced(parser) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
@@ -499,6 +540,9 @@ fn parse_cell_regular<'r, 't>(
         (&BLOCK_TABLE_CELL_REGULAR, "table cell (regular)")
     };
     let source_start = parser.current().span.start;
+    if legacy && !parser.has_body_end_block(&BLOCK_TABLE_CELL_BODY) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     // Get block contents.
     let parsed = parse_block(
@@ -513,6 +557,10 @@ fn parse_cell_regular<'r, 't>(
     let source_end = parser.current().span.start;
     let source = &parser.full_text().inner()[source_start..source_end];
     if legacy && !has_explicit_closer(source, &["cell", "hcell"]) {
+        if let Some(owner_start) = owner_start {
+            parser
+                .cache_underclosed_block_failure(BLOCK_TABLE_CELL_BODY.name, owner_start);
+        }
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     let preserve_single_paragraph = legacy && source.contains("\n\n");
@@ -536,6 +584,12 @@ fn parse_cell_header<'r, 't>(
     flag_score: bool,
     in_head: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    let owner_start = legacy_opener_start(parser);
+    if owner_start.is_some_and(|start| {
+        parser.underclosed_block_failure_cached(BLOCK_TABLE_CELL_BODY.name, start)
+    }) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     if legacy_block_name_is_spaced(parser) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
@@ -543,6 +597,9 @@ fn parse_cell_header<'r, 't>(
     let block = (&BLOCK_TABLE_CELL_BODY, "table cell (header)");
     let legacy = parser.settings().layout.legacy();
     let source_start = parser.current().span.start;
+    if legacy && !parser.has_body_end_block(&BLOCK_TABLE_CELL_BODY) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     // Get block contents.
     let parsed = parse_block(
@@ -557,6 +614,10 @@ fn parse_cell_header<'r, 't>(
     let source_end = parser.current().span.start;
     let source = &parser.full_text().inner()[source_start..source_end];
     if legacy && !has_explicit_closer(source, &["cell", "hcell"]) {
+        if let Some(owner_start) = owner_start {
+            parser
+                .cache_underclosed_block_failure(BLOCK_TABLE_CELL_BODY.name, owner_start);
+        }
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     let preserve_single_paragraph = legacy && source.contains("\n\n");

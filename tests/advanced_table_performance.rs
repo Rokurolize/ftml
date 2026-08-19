@@ -136,6 +136,31 @@ fn large_malformed_advanced_table_body_stays_bounded() {
 }
 
 #[test]
+fn deeply_unclosed_advanced_table_owners_fail_before_recursive_body_parsing() {
+    const NESTING: usize = 256;
+
+    let mut input = String::new();
+    for _ in 0..NESTING {
+        input.push_str("[[table]]\n[[row]]\n[[cell]]\n");
+    }
+
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let started = Instant::now();
+    let tokenization = ftml::tokenize(&input);
+    let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+    assert!(
+        started.elapsed() < Duration::from_secs(2),
+        "unclosed nested table owners took {:?}",
+        started.elapsed(),
+    );
+    assert!(!errors.is_empty());
+    assert!(!html.contains("<table>"), "{html}");
+}
+
+#[test]
 fn many_paragraphs_and_nested_tables_stay_bounded() {
     const PARAGRAPH_COUNT: usize = 2_048;
     const NESTED_INTERVAL: usize = 64;

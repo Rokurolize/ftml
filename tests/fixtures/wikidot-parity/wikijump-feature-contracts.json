@@ -1,0 +1,82 @@
+{
+  "schema": "ftml.wikijump_feature_contracts.v1",
+  "contracts": [
+    {
+      "id": "bibliography",
+      "wikijump_feature_id": "syntax-bibliography",
+      "cases": [
+        "test--misc--bibliography",
+        "tests--fixtures--parity-gaps--block-name-case-bibliography-uppercase"
+      ]
+    },
+    {
+      "id": "collapsibles",
+      "wikijump_feature_id": "syntax-collapsible-blocks",
+      "cases": [
+        "test--collapsible--wikidot-parity",
+        "tests--fixtures--parity-gaps--preproc-root-collapsible-quoted-inline-close-control"
+      ]
+    },
+    {
+      "id": "comments",
+      "wikijump_feature_id": "syntax-comments",
+      "cases": [
+        "tests--fixtures--parity-gaps--comment-close-exact",
+        "tests--fixtures--parity-gaps--comment-parserfn-name-owner"
+      ]
+    },
+    {
+      "id": "definition-lists",
+      "wikijump_feature_id": "syntax-definition-lists",
+      "cases": [
+        "test--definition-list--basic"
+      ]
+    },
+    {
+      "id": "html-runtime",
+      "wikijump_feature_id": "syntax-html-blocks",
+      "cases": [
+        "test--html--basic"
+      ]
+    },
+    {
+      "id": "images",
+      "wikijump_feature_id": "syntax-images",
+      "cases": [
+        "test--image--basic",
+        "tests--fixtures--parity-gaps--image-source-javascript-double-slash"
+      ]
+    },
+    {
+      "id": "links",
+      "wikijump_feature_id": "syntax-links",
+      "cases": [
+        "tests--fixtures--parity-gaps--autolink-unicode",
+        "tests--fixtures--parity-gaps--triple-link-javascript-scheme"
+      ]
+    },
+    {
+      "id": "math",
+      "wikijump_feature_id": "syntax-math",
+      "cases": [
+        "test--math--inline",
+        "test--math--block"
+      ]
+    },
+    {
+      "id": "tables",
+      "wikijump_feature_id": "syntax-tables",
+      "cases": [
+        "test--table--simple",
+        "tests--fixtures--parity-gaps--table-residual-hcell-closer"
+      ]
+    },
+    {
+      "id": "users-runtime",
+      "wikijump_feature_id": "syntax-users",
+      "cases": [
+        "tests--fixtures--parity-gaps--user-uppercase-missing"
+      ]
+    }
+  ]
+}

@@ -27,6 +27,8 @@ use crate::settings::WikitextMode;
 use crate::tree::AcceptsPartial;
 use std::borrow::Cow;
 
+const WIKIJUMP_DIV_FAILURE_CACHE: &str = "wikijump-div-parse-failure";
+
 pub const BLOCK_DIV: BlockRule = BlockRule {
     name: "block-div",
     accepts_names: &["div"],
@@ -380,6 +382,15 @@ fn parse_fn<'r, 't>(
 
     let head = parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;
     let (mut arguments, mut body_start) = head;
+    let cacheable_wikijump_failure = !parser.settings().layout.legacy()
+        && parser.settings().mode == WikitextMode::Page
+        && parser.accepts_partial() == AcceptsPartial::None;
+    if cacheable_wikijump_failure
+        && parser.block_end_scan_outcome((WIKIJUMP_DIV_FAILURE_CACHE, owner_start, false))
+            == Some(false)
+    {
+        return Err(parser.make_end_of_input_err());
+    }
     if parser.settings().layout.legacy()
         && flag_score
         && !parser.wikidot_alias_has_compatible_close(&BLOCK_DIV, owner_start)
@@ -504,7 +515,19 @@ fn parse_fn<'r, 't>(
         }
         parser.leave_wikidot_div_body();
     }
-    let (mut elements, errors, _) = body?.into();
+    let (mut elements, errors, _) = match body {
+        Ok(body) => body.into(),
+        Err(error) => {
+            if cacheable_wikijump_failure && error.kind() == ParseErrorKind::EndOfInput {
+                parser.cache_block_end_scan_outcomes(
+                    WIKIJUMP_DIV_FAILURE_CACHE,
+                    &[(owner_start, false)],
+                    false,
+                );
+            }
+            return Err(error);
+        }
+    };
     if parser.settings().layout.legacy() {
         normalize_wikidot_div_elements(&mut elements, flag_score);
     }
@@ -844,6 +867,28 @@ mod tests {
             );
             assert!(!html.contains("[[div"), "{html}");
             assert!(!html.contains("[[/div]]"), "{html}");
+        }
+    }
+
+    #[test]
+    fn wikijump_unclosed_div_runs_fail_before_recursive_body_parsing() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        for closer_count in [0, 1, 2, 4] {
+            let mut input = "[[div]]\n".repeat(256);
+            input.push_str(&"[[/div]]\n".repeat(closer_count));
+            let tokenization = crate::tokenize(&input);
+            let started = std::time::Instant::now();
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+
+            assert!(
+                started.elapsed() < std::time::Duration::from_secs(2),
+                "{closer_count} closers took {:?}",
+                started.elapsed(),
+            );
+            assert!(!errors.is_empty());
+            assert!(!tree.elements.is_empty());
         }
     }
 

@@ -570,6 +570,40 @@ mod tests {
     }
 
     #[test]
+    fn lost_owner_operation_count_scales_with_input_tokens() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for repetitions in [32, 64, 128, 256, 512] {
+            let source = "[[div]]\nbody\n".repeat(repetitions);
+            let tokenization = crate::tokenize(&source);
+            let mut parser = Parser::new(&tokenization, &page_info, &settings);
+            parser.step().unwrap();
+
+            while parser.current().token != Token::InputEnd {
+                if parser.current().token == Token::LeftBlock {
+                    assert!(
+                        try_consume_lost_owner_block(
+                            &mut parser,
+                            LineOwner::Quote { depth: 1 },
+                        )
+                        .unwrap()
+                        .is_none()
+                    );
+                }
+                parser.step().unwrap();
+            }
+
+            assert!(
+                parser.lost_owner_scan_token_visits() <= tokenization.tokens().len(),
+                "{repetitions} repetitions visited {} tokens for {} input tokens",
+                parser.lost_owner_scan_token_visits(),
+                tokenization.tokens().len(),
+            );
+        }
+    }
+
+    #[test]
     fn literal_owner_closes_do_not_satisfy_lost_owner_lookahead() {
         let unit = concat!(
             "[[div]]\n",

@@ -1,0 +1,53 @@
+{
+  "schema": "ftml.wikidot_parity.comparison_normalization_contracts.v1",
+  "contracts": [
+    {
+      "case_id": "test--definition-list--basic",
+      "difference_class": "page-preview-root-whitespace",
+      "wikijump_feature_id": "syntax-definition-lists",
+      "review": "Browser parsing preserves the same element sequence and visible content; only PagePreview-owned root whitespace differs."
+    },
+    {
+      "case_id": "tests--fixtures--parity-gaps--block-name-case-bibliography-title",
+      "difference_class": "page-preview-root-whitespace",
+      "wikijump_feature_id": "syntax-bibliography",
+      "review": "Only PagePreview/root serialization whitespace differs after the same literal bibliography fallback structure."
+    },
+    {
+      "case_id": "tests--fixtures--parity-gaps--block-name-case-bibliography-uppercase",
+      "difference_class": "page-preview-root-whitespace",
+      "wikijump_feature_id": "syntax-bibliography",
+      "review": "Only PagePreview/root serialization whitespace differs after the same literal bibliography fallback structure."
+    },
+    {
+      "case_id": "tests--fixtures--parity-gaps--interaction-footnote-code-owner",
+      "difference_class": "page-preview-root-whitespace",
+      "wikijump_feature_id": "syntax-footnotes",
+      "review": "The functional trailing-break defect is fixed; remaining bytes are root formatting whitespace around the same footnote/code structure."
+    },
+    {
+      "case_id": "tests--fixtures--parity-gaps--recorded2-explicit-list-uppercase",
+      "difference_class": "page-preview-root-whitespace",
+      "wikijump_feature_id": "syntax-lists",
+      "review": "The same literal fallback text is present; only comparison/root formatting structure differs."
+    },
+    {
+      "case_id": "tests--fixtures--parity-gaps--recorded9-collapsible-cross-bold",
+      "difference_class": "page-preview-root-whitespace",
+      "wikijump_feature_id": "syntax-collapsible-blocks",
+      "review": "Collapsible ownership and visible fallback are identical; remaining difference is root formatting serialization."
+    },
+    {
+      "case_id": "tests--fixtures--parity-gaps--table-residual-hcell-closer",
+      "difference_class": "page-preview-root-whitespace",
+      "wikijump_feature_id": "syntax-tables",
+      "review": "PagePreview prepends root whitespace that merges into the residual text node; table structure and visible content match."
+    },
+    {
+      "case_id": "tests--fixtures--parity-gaps--whitespace-continued-div-opener",
+      "difference_class": "page-preview-root-whitespace",
+      "wikijump_feature_id": "syntax-paragraphs-and-newline",
+      "review": "PagePreview prepends root whitespace that merges into the residual text node; rendered div structure and visible content match."
+    }
+  ]
+}

@@ -382,7 +382,11 @@ fn wikidot_inline_math_ranges(text: &str) -> Vec<Range<usize>> {
                     ranges.push(start..token.span.end);
                 }
             }
-            Token::ParagraphBreak | Token::InputEnd => start = None,
+            // Live Wikidot keeps typography inert inside a paired math marker
+            // even when a paragraph break makes that pair invalid for the
+            // parser and the source later falls back to literal text. Keep the
+            // lexical owner until a matching right marker or true EOF.
+            Token::InputEnd => start = None,
             _ => {}
         }
     }
@@ -1097,6 +1101,16 @@ fn wikidot_preprocessing_keeps_literal_dot_runs_outside_authored_prose() {
     assert!(text.contains("SPACED:x…x"), "{text}");
     assert!(text.contains("CODE:x....x"), "{text}");
     assert!(text.contains("ESCAPED:x....x"), "{text}");
+}
+
+#[test]
+fn wikidot_typography_preserves_invalid_multiline_math_literal_bytes() {
+    let mut text = "NEWLINES\n[[$ E =\n\nmc^2 $]]".to_owned();
+
+    substitute_wikidot(&mut text);
+
+    assert!(text.contains("mc^2 $]]"), "{text}");
+    assert!(!text.contains("mc^2\u{00a0}$]]"), "{text}");
 }
 
 #[test]

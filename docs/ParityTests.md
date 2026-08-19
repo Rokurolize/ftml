@@ -106,6 +106,36 @@ python3 scripts/check_robustness_branch_coverage.py \
 
 These floors are deliberately scoped to the parser/preprocessor files exercised by the robustness suite. They prevent coverage from silently collapsing without pretending that targeted branch coverage is a proof of global correctness.
 
+### Wikijump full-page downstream gate
+
+Reduced parity fixtures are not sufficient for integration safety. `tests/fixtures/wikidot-parity/downstream-pages.json` pins six full Wikijump seed sources, including `scp-9506`, the two large `scp-8980` fragments, and the Basalt theme, by exact SHA-256. Run each source through the public FTML pipeline in both layouts before merging parser or preprocessor changes:
+
+```sh
+python3 scripts/check_wikijump_full_pages.py \
+  --wikijump-root ../wikijump \
+  --build-renderer
+```
+
+The command uses one `render_html_jsonl` worker for all pages, so a panic, abort, timeout, missing output row, or source drift is a gate failure. Parse diagnostics are allowed because some full pages intentionally contain caller-owned or unsupported runtime constructs; the gate protects process safety and whole-page interactions rather than pretending the FTML-only lane owns caller runtime. The nightly robustness workflow repeats this check against Wikijump `develop` and then includes the same full pages in the fuzz seed corpus.
+
+### Operation-count performance gate
+
+High-risk parser scanners expose test-only token-visit counters. Their tests run input-size series rather than relying only on wall-clock thresholds: quote close scans stay within twice the token population, nested block-end scans stay within the token population for the initial scan, lost-owner lookahead stays within the token population, and underline fast-path work has an exact marker-count relation. Wall-clock tests remain outer watchdogs; deterministic operation counts are the regression authority for these scanners.
+
+### Comparison-normalization review
+
+`comparison-normalization` is not a general escape hatch. Every such binding must appear exactly once in `tests/fixtures/wikidot-parity/comparison-normalization-contracts.json`, with an explicit difference class, Wikijump feature ID, and review. The parity index permits only browser-equivalent root-whitespace or HTML-serialization classes. Semantic codepoint differences, element/attribute differences, interaction differences, or caller-state differences must be fixed or classified elsewhere. This rule promoted the former `test--math--inline` U+0020/U+00A0 difference back to an ordinary exact match instead of preserving it as normalization.
+
+### Wikijump feature-ledger linkage
+
+`tests/fixtures/wikidot-parity/wikijump-feature-contracts.json` ties representative FTML parity families to the canonical feature IDs in Wikijump's `docs/wikidot-specifications/implementation-ledger.json`. Verify the adjacent ledger with:
+
+```sh
+python3 scripts/check_wikijump_feature_contracts.py --wikijump-root ../wikijump
+```
+
+The linkage is intentionally representative rather than a claim that a small example set exhausts a feature. It prevents FTML and Wikijump from silently using unrelated names or losing ownership of a parity family while the larger feature/property ledger continues to evolve.
+
 For selective mutation testing of the two high-risk compatibility scanners that previously produced false confidence, run:
 
 ```sh

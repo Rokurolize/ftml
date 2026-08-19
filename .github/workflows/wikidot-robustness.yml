@@ -1,0 +1,61 @@
+name: Wikidot robustness
+
+on:
+  schedule:
+    - cron: "23 17 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz-and-downstream:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out FTML
+        uses: actions/checkout@v4
+
+      - name: Check out Wikijump develop corpus
+        uses: actions/checkout@v4
+        with:
+          repository: Rokurolize/wikijump
+          ref: develop
+          path: wikijump
+
+      - name: Install nightly Rust and cargo-fuzz
+        shell: bash
+        run: |
+          rustup toolchain install nightly --profile minimal
+          cargo install cargo-fuzz --locked
+
+      - name: Verify Python quality-gate tests
+        run: python3 -m unittest discover -s scripts -p '*_test.py'
+
+      - name: Verify Wikijump feature and full-page contracts
+        shell: bash
+        run: |
+          python3 scripts/check_wikijump_feature_contracts.py --wikijump-root wikijump
+          python3 scripts/check_wikijump_full_pages.py \
+            --wikijump-root wikijump \
+            --build-renderer \
+            --timeout 180
+
+      - name: Build fuzz seed corpus
+        shell: bash
+        run: |
+          rm -rf "$RUNNER_TEMP/ftml-fuzz-corpus"
+          python3 scripts/build_ftml_fuzz_corpus.py \
+            --output "$RUNNER_TEMP/ftml-fuzz-corpus" \
+            --wikijump-root wikijump
+
+      - name: Fuzz public FTML pipeline
+        shell: bash
+        run: |
+          cargo +nightly fuzz run \
+            --fuzz-dir fuzz \
+            public_pipeline \
+            "$RUNNER_TEMP/ftml-fuzz-corpus" \
+            -- \
+            -max_total_time=900 \
+            -timeout=10

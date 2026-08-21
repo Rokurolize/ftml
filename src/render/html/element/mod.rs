@@ -221,6 +221,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         Element::Collapsible {
             elements,
             unfolded_tail_start,
+            wikidot_label_spans,
             attributes,
             start_open,
             show_text,
@@ -232,6 +233,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
             Collapsible::new(
                 elements,
                 *unfolded_tail_start,
+                wikidot_label_spans,
                 attributes,
                 *start_open,
                 ref_cow!(show_text),

@@ -213,6 +213,11 @@ pub enum Element<'t> {
         /// First element rendered outside Wikidot's collapsible content div.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         unfolded_tail_start: Option<usize>,
+        /// Inline span/size scopes that cross this Wikidot collapsible also
+        /// wrap its folded and unfolded handles. These are renderer-owned
+        /// compatibility wrappers, not authored collapsible attributes.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        wikidot_label_spans: Vec<AttributeMap<'t>>,
         attributes: AttributeMap<'t>,
         start_open: bool,
         show_text: Option<Cow<'t, str>>,
@@ -708,6 +713,7 @@ impl Element<'_> {
             Element::Collapsible {
                 elements,
                 unfolded_tail_start,
+                wikidot_label_spans,
                 attributes,
                 start_open,
                 show_text,
@@ -717,6 +723,10 @@ impl Element<'_> {
             } => Element::Collapsible {
                 elements: elements_to_owned(elements),
                 unfolded_tail_start: *unfolded_tail_start,
+                wikidot_label_spans: wikidot_label_spans
+                    .iter()
+                    .map(AttributeMap::to_owned)
+                    .collect(),
                 attributes: attributes.to_owned(),
                 start_open: *start_open,
                 show_text: option_string_to_owned(show_text),

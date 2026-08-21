@@ -361,6 +361,7 @@ fn isolate_user_ids() {
                 AttributeMap::new(),
             ))],
             unfolded_tail_start: None,
+            wikidot_label_spans: Vec::new(),
             attributes: AttributeMap::from(btreemap! {
                 cow!("class") => cow!("apple"),
                 cow!("id") => cow!("u-banana"),
@@ -381,6 +382,7 @@ fn isolate_user_ids() {
                 AttributeMap::new(),
             ))],
             unfolded_tail_start: None,
+            wikidot_label_spans: Vec::new(),
             attributes: AttributeMap::from(btreemap! {
                 cow!("class") => cow!("u-apple"),
                 cow!("id") => cow!("u-banana"),

@@ -22,7 +22,7 @@ use super::prelude::*;
 use crate::parsing::consume::consume;
 use crate::parsing::rule::impls::block::parser::BlockBodyStart;
 use crate::parsing::{ParseError, ParseErrorKind};
-use crate::tree::AttributeMap;
+use crate::tree::{AttributeMap, ListItem, ListType};
 use std::borrow::Cow;
 
 pub const BLOCK_COLLAPSIBLE: BlockRule = BlockRule {
@@ -56,6 +56,7 @@ impl<'t> CollapsibleHead<'t> {
         Element::Collapsible {
             elements,
             unfolded_tail_start,
+            wikidot_label_spans: Vec::new(),
             attributes: self.attributes,
             start_open: self.start_open,
             show_text: self.show_text,
@@ -171,6 +172,14 @@ fn parse_fn<'r, 't>(
     let element = head.into_element_with_unfolded_tail(elements, unfolded_tail_start);
 
     let mut output = vec![element];
+    if parser.take_wikidot_crossed_ol_tail_sentinel()? {
+        output.push(wikidot_crossed_ol_tail());
+        return ok!(false; output, errors);
+    }
+    if parser.take_wikidot_crossed_list_break_sentinel()? {
+        output.push(Element::LineBreak);
+        return ok!(false; output, errors);
+    }
     if parser.settings().layout.legacy()
         && parser.native_blockquote_depth().is_some()
         && !parser.start_of_line()
@@ -193,6 +202,19 @@ fn parse_fn<'r, 't>(
     }
 
     ok!(false; output, errors)
+}
+
+fn wikidot_crossed_ol_tail<'t>() -> Element<'t> {
+    let mut item_attributes = AttributeMap::new();
+    item_attributes.insert("style", cow!("list-style: none"));
+    Element::List {
+        ltype: ListType::Bullet,
+        items: vec![ListItem::Elements {
+            elements: vec![Element::LineBreak],
+            attributes: item_attributes,
+        }],
+        attributes: AttributeMap::new(),
+    }
 }
 
 fn prepare_wikidot_unfolded_tail(mut elements: Vec<Element<'_>>) -> Vec<Element<'_>> {

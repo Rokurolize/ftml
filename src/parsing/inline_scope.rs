@@ -138,6 +138,25 @@ impl<'t> ActiveScopes<'t> {
         self.iter_active_rev().any(|scope| scope.scored)
     }
 
+    fn wikidot_label_spans(&self) -> Vec<AttributeMap<'t>> {
+        let mut spans = self
+            .iter_active_rev()
+            .map(|scope| scope.attributes.clone())
+            .collect::<Vec<_>>();
+        spans.reverse();
+        spans
+    }
+
+    fn scope_wrappers(&self) -> Vec<(ContainerType, AttributeMap<'t>)> {
+        self.iter_active_rev()
+            .map(|scope| (scope.ctype, scope.attributes.clone()))
+            .collect()
+    }
+
+    fn active_scope_count(&self) -> usize {
+        self.iter_active_rev().count()
+    }
+
     fn top(&self, kind: ScopeKind) -> &Option<usize> {
         match kind {
             ScopeKind::Size => &self.top_size,
@@ -186,6 +205,7 @@ pub(crate) fn lower_wikidot_inline_size_scopes_inline<'t>(
         &mut ordinal,
         &mut active,
         &mut trim_next_break,
+        false,
     );
 }
 
@@ -252,6 +272,7 @@ fn lower_root_sequence<'t>(
                 ordinal,
                 active,
                 trim_next_break,
+                false,
             );
             let joins_previous =
                 previous_scored_close || effects.scored_span_opened_at_start;
@@ -277,7 +298,7 @@ fn lower_root_sequence<'t>(
         flush_paragraph_group(&mut output, &mut paragraph_group);
         let scope_before = active.outer_active_position();
         let mut sequence = vec![element];
-        lower_sequence(&mut sequence, valid, ordinal, active, trim_next_break);
+        lower_sequence(&mut sequence, valid, ordinal, active, trim_next_break, true);
         let scope_continues =
             scope_before.is_some() && scope_before == active.outer_active_position();
         append_root_sequence(&mut output, &mut sequence, scope_continues);
@@ -413,6 +434,7 @@ fn lower_sequence<'t>(
     ordinal: &mut usize,
     active: &mut ActiveScopes<'t>,
     trim_next_break: &mut bool,
+    root_structural_boundary: bool,
 ) -> SequenceEffects {
     let mut output = Vec::with_capacity(elements.len());
     let mut run = Vec::new();
@@ -501,6 +523,14 @@ fn lower_sequence<'t>(
                 trim_one_trailing_text_space(&mut run);
             }
         }
+        if active.has_active_scope()
+            && let Element::Collapsible {
+                wikidot_label_spans,
+                ..
+            } = &mut element
+        {
+            *wikidot_label_spans = active.wikidot_label_spans();
+        }
         if let Element::Partial(PartialElement::InlineSpanOpen(mut attributes)) = element
         {
             let at_start = output.is_empty() && run.is_empty();
@@ -581,6 +611,14 @@ fn lower_sequence<'t>(
             }
             continue;
         }
+        let list_scope_wrappers = if root_structural_boundary
+            && active.has_active_scope()
+            && matches!(&element, Element::List { .. })
+        {
+            Some(active.scope_wrappers())
+        } else {
+            None
+        };
         if active.has_active_scope()
             && element.paragraph_safe()
             && contains_inline_scope_control(&element)
@@ -613,6 +651,27 @@ fn lower_sequence<'t>(
             run.push(element);
         } else if lower_children(&mut element, valid, ordinal, active, trim_next_break) {
             flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
+            if let Some(scopes) = list_scope_wrappers {
+                let active_after = active.active_scope_count();
+                if active_after == scopes.len() {
+                    let wrapped = wrap_scope_elements(&scopes, vec![Element::LineBreak]);
+                    output.push(Element::Container(Container::new(
+                        ContainerType::Paragraph,
+                        wrapped,
+                        AttributeMap::new(),
+                    )));
+                    // The physical opener-line break is moved before the list
+                    // by Wikidot; do not also retain it after the list.
+                    *trim_next_break = true;
+                    last_run_outer_scope = None;
+                } else if active_after == 0 {
+                    // When the inline owner closes from inside the list, the
+                    // same opener-line break is unwrapped but still belongs to
+                    // the inline scope.
+                    output.extend(wrap_scope_elements(&scopes, vec![Element::LineBreak]));
+                    last_run_outer_scope = None;
+                }
+            }
             if !is_empty_paragraph(&element) {
                 output.push(element);
                 last_run_outer_scope = None;
@@ -626,6 +685,20 @@ fn lower_sequence<'t>(
     flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
     *elements = output;
     effects
+}
+
+fn wrap_scope_elements<'t>(
+    scopes: &[(ContainerType, AttributeMap<'t>)],
+    mut elements: Vec<Element<'t>>,
+) -> Vec<Element<'t>> {
+    for (ctype, attributes) in scopes {
+        elements = vec![Element::Container(Container::new(
+            *ctype,
+            elements,
+            attributes.clone(),
+        ))];
+    }
+    elements
 }
 
 fn flush_run<'t>(
@@ -823,6 +896,7 @@ fn lower_children<'t>(
             ordinal,
             active,
             trim_next_break,
+            false,
         );
         if scope_crosses_heading {
             insert_wikidot_heading_label_span(container.elements_mut());
@@ -834,7 +908,7 @@ fn lower_children<'t>(
     let mut lowered = false;
     let mut visit = |children: &mut Vec<Element<'t>>| {
         lowered = true;
-        lower_sequence(children, valid, ordinal, active, trim_next_break);
+        lower_sequence(children, valid, ordinal, active, trim_next_break, false);
     };
     visit_children_mut(element, &mut visit);
     lowered

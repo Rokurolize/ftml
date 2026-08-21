@@ -166,6 +166,37 @@ fn generated_values_cannot_become_color_authority() {
 }
 
 #[test]
+fn runtime_scalar_cannot_create_social_resource_authority() {
+    let html = render_with_runtime_scalar("[[social reddit]]", "reddit");
+
+    assert!(html.contains("[[social reddit]]"), "{html}");
+    assert!(!html.contains("wj-social"), "{html}");
+}
+
+#[test]
+fn generated_page_link_cannot_become_a_social_provider() {
+    let source = "[[social %%title_linked%%]]";
+    let input = page_link_input(source);
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::List, Layout::Wikidot);
+    let delayed = parse_delayed_list(&input, &page_info, &settings)
+        .expect("generated Social-head fixture parses");
+    let bound = delayed
+        .bind(&page_bindings())
+        .expect("generated Social-head value remains bindable");
+    let sealed = bound.render_html(&page_info, &settings);
+
+    assert!(sealed.body().contains("[[social "), "{}", sealed.body());
+    assert!(
+        sealed.body().contains("Standard Image Block"),
+        "{}",
+        sealed.body()
+    );
+    assert!(sealed.body().contains("]]"), "{}", sealed.body());
+    assert!(sealed.resource_requirements().is_empty());
+}
+
+#[test]
 fn delayed_html_blocks_remain_observable_after_binding() {
     let source = "[[html]]<strong>delayed payload</strong>[[/html]]";
     let input = DelayedInput::new(
@@ -948,6 +979,29 @@ fn nested_line_start_owners_bind_without_retaining_delayed_leaves() {
             "a renderable nested owner must be completely bound: {source}",
         );
     }
+}
+
+#[test]
+fn deep_delayed_binding_does_not_inherit_a_small_caller_stack() {
+    const DEPTH: usize = 384;
+    let mut source = "[[div]]\n".repeat(DEPTH);
+    source.push_str("%%title_linked%%\n");
+    source.push_str(&"[[/div]]\n".repeat(DEPTH));
+
+    let worker = std::thread::Builder::new()
+        .name("delayed-small-stack".to_owned())
+        .stack_size(512 * 1024)
+        .spawn(move || render(&source))
+        .expect("start delayed small-stack worker");
+    let html = worker
+        .join()
+        .expect("deep delayed binding must not overflow the caller stack");
+
+    assert!(
+        html.contains(r#"<a href="/component:image-block">Standard Image Block</a>"#,),
+        "{html}"
+    );
+    assert!(!html.contains("%%title_linked%%"), "{html}");
 }
 
 #[test]

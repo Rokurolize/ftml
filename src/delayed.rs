@@ -18,6 +18,7 @@ use crate::tokenizer::{Tokenization, tokenize_delayed_segments};
 use crate::tree::{
     AttributeMap, Container, Element, FloatAlignment, ImageSource, LinkLabel,
     LinkLocation, LinkType, ListItem, PartialElement, SyntaxTree,
+    run_on_bounded_tree_stack, tree_requires_bounded_tree_stack,
 };
 use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
@@ -518,77 +519,104 @@ impl<'t> DelayedSyntaxTree<'t> {
             }
         }
 
-        let mut tree = self.tree.to_owned();
-        let mut resolved_occurrences = 0usize;
+        let tree = self.tree.to_owned();
+        if tree_requires_bounded_tree_stack(&tree) {
+            return run_on_bounded_tree_stack("ftml-delayed-bind", move || {
+                bind_delayed_tree(
+                    tree,
+                    bindings,
+                    self.expected_occurrences,
+                    self.wikidot_typography,
+                    self.delayed_toc_entries.clone(),
+                )
+            });
+        }
+        bind_delayed_tree(
+            tree,
+            bindings,
+            self.expected_occurrences,
+            self.wikidot_typography,
+            self.delayed_toc_entries.clone(),
+        )
+    }
+}
+
+fn bind_delayed_tree(
+    mut tree: SyntaxTree<'static>,
+    bindings: &SlotBindings<'_>,
+    expected_occurrences: usize,
+    wikidot_typography: bool,
+    delayed_toc_entries: Vec<usize>,
+) -> Result<BoundDelayedSyntaxTree, DelayedError> {
+    let mut resolved_occurrences = 0usize;
+    resolve_bound_suppressions(
+        &mut tree.elements,
+        &bindings.values,
+        &mut resolved_occurrences,
+        wikidot_typography,
+    )?;
+    resolve_bound_suppressions(
+        &mut tree.table_of_contents,
+        &bindings.values,
+        &mut resolved_occurrences,
+        wikidot_typography,
+    )?;
+    for footnote in &mut tree.footnotes {
         resolve_bound_suppressions(
-            &mut tree.elements,
+            footnote,
             &bindings.values,
             &mut resolved_occurrences,
-            self.wikidot_typography,
+            wikidot_typography,
         )?;
-        resolve_bound_suppressions(
-            &mut tree.table_of_contents,
-            &bindings.values,
-            &mut resolved_occurrences,
-            self.wikidot_typography,
-        )?;
-        for footnote in &mut tree.footnotes {
+    }
+    for bibliography in tree.bibliographies.slice_mut() {
+        for (_, elements) in bibliography.slice_mut() {
             resolve_bound_suppressions(
-                footnote,
+                elements,
                 &bindings.values,
                 &mut resolved_occurrences,
-                self.wikidot_typography,
+                wikidot_typography,
             )?;
         }
-        for bibliography in tree.bibliographies.slice_mut() {
-            for (_, elements) in bibliography.slice_mut() {
-                resolve_bound_suppressions(
-                    elements,
-                    &bindings.values,
-                    &mut resolved_occurrences,
-                    self.wikidot_typography,
-                )?;
-            }
-        }
-        resolve_elements(
-            &mut tree.elements,
-            &bindings.values,
-            &mut resolved_occurrences,
-        )?;
-        resolve_elements(
-            &mut tree.table_of_contents,
-            &bindings.values,
-            &mut resolved_occurrences,
-        )?;
-        for footnote in &mut tree.footnotes {
-            resolve_elements(footnote, &bindings.values, &mut resolved_occurrences)?;
-        }
-        for bibliography in tree.bibliographies.slice_mut() {
-            for (_, elements) in bibliography.slice_mut() {
-                resolve_elements(elements, &bindings.values, &mut resolved_occurrences)?;
-            }
-        }
-        if resolved_occurrences != self.expected_occurrences
-            || elements_contain_delayed(&tree.elements)
-            || elements_contain_delayed(&tree.table_of_contents)
-            || tree
-                .footnotes
-                .iter()
-                .any(|footnote| elements_contain_delayed(footnote))
-            || tree.bibliographies.slice().iter().any(|bibliography| {
-                bibliography
-                    .slice()
-                    .iter()
-                    .any(|(_, elements)| elements_contain_delayed(elements))
-            })
-        {
-            return Err(DelayedError::UnresolvedGeneratedOwner);
-        }
-        Ok(BoundDelayedSyntaxTree {
-            tree,
-            delayed_toc_entries: self.delayed_toc_entries.clone(),
-        })
     }
+    resolve_elements(
+        &mut tree.elements,
+        &bindings.values,
+        &mut resolved_occurrences,
+    )?;
+    resolve_elements(
+        &mut tree.table_of_contents,
+        &bindings.values,
+        &mut resolved_occurrences,
+    )?;
+    for footnote in &mut tree.footnotes {
+        resolve_elements(footnote, &bindings.values, &mut resolved_occurrences)?;
+    }
+    for bibliography in tree.bibliographies.slice_mut() {
+        for (_, elements) in bibliography.slice_mut() {
+            resolve_elements(elements, &bindings.values, &mut resolved_occurrences)?;
+        }
+    }
+    if resolved_occurrences != expected_occurrences
+        || elements_contain_delayed(&tree.elements)
+        || elements_contain_delayed(&tree.table_of_contents)
+        || tree
+            .footnotes
+            .iter()
+            .any(|footnote| elements_contain_delayed(footnote))
+        || tree.bibliographies.slice().iter().any(|bibliography| {
+            bibliography
+                .slice()
+                .iter()
+                .any(|(_, elements)| elements_contain_delayed(elements))
+        })
+    {
+        return Err(DelayedError::UnresolvedGeneratedOwner);
+    }
+    Ok(BoundDelayedSyntaxTree {
+        tree,
+        delayed_toc_entries,
+    })
 }
 
 /// Bound delayed syntax. Construction is possible only through schema sealing.

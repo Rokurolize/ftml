@@ -34,6 +34,10 @@ enum IfTagsMarker {
     Close,
 }
 
+pub(crate) const WIKIDOT_CROSSED_LIST_BREAK_SENTINEL: &str =
+    "[!--ftml-crossed-list-break--]";
+pub(crate) const WIKIDOT_CROSSED_OL_TAIL_SENTINEL: &str = "[!--ftml-crossed-ol-tail--]";
+
 fn split_line(line: &str) -> (&str, &str) {
     line.strip_suffix('\n')
         .map_or((line, ""), |body| (body, "\n"))
@@ -166,6 +170,9 @@ pub(super) fn substitute_for_layout(text: &mut String, wikidot: bool) {
     }
     canonicalize_unmatched_quoted_tab_closers(&mut lines, &literal_lines);
     canonicalize_crossed_collapsible_div_closers(&mut lines, &literal_lines);
+    if wikidot {
+        canonicalize_crossed_outer_owner_closers(&mut lines, &literal_lines);
+    }
     canonicalize_crossed_div_center_closers(&mut lines, &literal_lines);
     canonicalize_crossed_center_div_closers(&mut lines, &literal_lines);
     canonicalize_crossed_center_collapsible_closers(&mut lines, &literal_lines, wikidot);
@@ -759,6 +766,132 @@ fn canonicalize_crossed_collapsible_div_closers(
         }
         if !rewritten {
             index += 1;
+        }
+    }
+}
+
+fn standalone_named_block_marker(line: &str, prefix: &str, name: &str) -> Option<bool> {
+    let (body, _) = split_line(line);
+    let marker_start = body.find("[[")?;
+    if &body[..marker_start] != prefix
+        || !prefix.chars().all(|ch| matches!(ch, '>' | ' ' | '\t'))
+    {
+        return None;
+    }
+    let marker = body[marker_start..].to_ascii_lowercase();
+    let opener = format!("[[{name}]]");
+    let opener_with_head = format!("[[{name} ");
+    let closer = format!("[[/{name}]]");
+    if marker == opener || marker.starts_with(&opener_with_head) && marker.ends_with("]]")
+    {
+        Some(true)
+    } else if marker == closer {
+        Some(false)
+    } else {
+        None
+    }
+}
+
+/// Canonicalize live-backed crossed owner pairs that close the outer owner
+/// before a nested block owner. The parser can already reproduce the live DOM
+/// once the two closes are in stack order; explicit-list crossings additionally
+/// retain one physical break after the outer owner.
+fn canonicalize_crossed_outer_owner_closers(
+    lines: &mut [String],
+    literal_lines: &[bool],
+) {
+    const PAIRS: &[(&str, &str, bool)] = &[
+        ("div", "collapsible", false),
+        ("div", "ul", true),
+        ("div", "ol", true),
+        ("collapsible", "ul", true),
+        ("collapsible", "ol", true),
+    ];
+
+    for &(outer, inner, retain_outer_break) in PAIRS {
+        let mut index = 0;
+        while index + 1 < lines.len() {
+            if literal_lines[index] || literal_lines[index + 1] {
+                index += 1;
+                continue;
+            }
+            let (body, _) = split_line(&lines[index]);
+            let Some(marker_start) = body.find("[[") else {
+                index += 1;
+                continue;
+            };
+            let prefix = body[..marker_start].to_owned();
+            if standalone_named_block_marker(&lines[index], &prefix, outer) != Some(true)
+                || standalone_named_block_marker(&lines[index + 1], &prefix, inner)
+                    != Some(true)
+            {
+                index += 1;
+                continue;
+            }
+
+            let mut outer_depth = 1usize;
+            let mut inner_depth = 1usize;
+            let mut cursor = index + 2;
+            let mut rewritten = false;
+            while cursor + 1 < lines.len() {
+                if literal_lines[cursor] {
+                    break;
+                }
+                if let Some(open) =
+                    standalone_named_block_marker(&lines[cursor], &prefix, outer)
+                {
+                    if open {
+                        outer_depth += 1;
+                    } else if outer_depth > 1 {
+                        outer_depth -= 1;
+                    } else if inner_depth == 1
+                        && !literal_lines[cursor + 1]
+                        && standalone_named_block_marker(
+                            &lines[cursor + 1],
+                            &prefix,
+                            inner,
+                        ) == Some(false)
+                    {
+                        let outer_ending = split_line(&lines[cursor]).1.to_owned();
+                        let inner_ending = split_line(&lines[cursor + 1]).1.to_owned();
+                        if retain_outer_break {
+                            let sentinel = if inner == "ol" {
+                                WIKIDOT_CROSSED_OL_TAIL_SENTINEL
+                            } else {
+                                WIKIDOT_CROSSED_LIST_BREAK_SENTINEL
+                            };
+                            lines[cursor] = format!(
+                                "{prefix}[[/{inner}]][[/{outer}]]{sentinel}{inner_ending}"
+                            );
+                            lines[cursor + 1].clear();
+                        } else {
+                            lines[cursor] = format!("{prefix}[[/{inner}]]{outer_ending}");
+                            lines[cursor + 1] =
+                                format!("{prefix}[[/{outer}]]{inner_ending}");
+                        }
+                        rewritten = true;
+                        break;
+                    } else {
+                        break;
+                    }
+                }
+
+                if let Some(open) =
+                    standalone_named_block_marker(&lines[cursor], &prefix, inner)
+                {
+                    if open {
+                        inner_depth += 1;
+                    } else if inner_depth > 1 {
+                        inner_depth -= 1;
+                    }
+                }
+                cursor += 1;
+            }
+            if rewritten {
+                index = cursor + 2;
+            } else {
+                index += 1;
+            }
         }
     }
 }

@@ -68,6 +68,28 @@ fn render_text(tree: &SyntaxTree, layout: Layout) -> String {
     TextRender.render(tree, &page_info, &settings)
 }
 
+#[test]
+fn doubled_block_score_marker_fails_closed_without_panicking() {
+    for source in [
+        "[[div__]]",
+        "[[span__]]",
+        "[[ul__]]",
+        "[[size__ 100%]]",
+        "[[*div__]]",
+    ] {
+        let result = std::panic::catch_unwind(|| {
+            let (tree, _errors) = parse_with_errors(source, Layout::Wikidot);
+            render_html(&tree, Layout::Wikidot)
+        });
+
+        assert!(
+            result.is_ok(),
+            "double-score block syntax must not panic: {source}"
+        );
+        assert_eq!(result.unwrap(), format!("<p>{source}</p>"));
+    }
+}
+
 fn assert_false_iftags_guarded(hidden: &str, layout: Layout) {
     let input = format!(
         "[[iftags +missing]]\n{hidden}\n[[html]]\n<b>guarded</b>\n[[/html]]\n[[/iftags]]\nvisible",

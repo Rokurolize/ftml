@@ -227,6 +227,9 @@ where
         Some(name) => (name, true),
         None => (name, false),
     };
+    if flag_score && name.ends_with('_') {
+        return Err(parser.make_err(ParseErrorKind::NoSuchBlock));
+    }
 
     // Get the block rule for this name
     let block = match if parser.discarding_hidden_body() {

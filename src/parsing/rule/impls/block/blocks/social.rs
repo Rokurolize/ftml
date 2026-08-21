@@ -38,6 +38,17 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
+    if in_head && matches!(parser.current().token, Token::RightBlock | Token::RightLink) {
+        let source = parser.full_text().inner();
+        let name_start = (name.as_ptr() as usize)
+            .checked_sub(source.as_ptr() as usize)
+            .expect("parsed social name belongs to source");
+        let name_end = name_start + name.len();
+        if &source[name_end..parser.current().span.start] == " " {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+    }
+
     if !in_head {
         return success_elements(Element::SocialButtons(SocialButtons::parse("")));
     }
@@ -73,6 +84,8 @@ fn parse_fn<'r, 't>(
 mod tests {
     use crate::data::PageInfo;
     use crate::layout::Layout;
+    use crate::parsing::ParseErrorKind;
+    use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
     use crate::tree::{Element, SocialSelection, SocialService};
 
@@ -127,5 +140,30 @@ mod tests {
             invalid.selection(),
             Some(&[SocialSelection::Empty, SocialSelection::Empty][..])
         );
+    }
+
+    #[test]
+    fn wikidot_social_space_only_head_stays_literal_but_tab_only_head_is_active() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        let tokens = crate::tokenize("[[social ]]");
+        let (tree, errors) = crate::parse(&tokens, &page_info, &settings).into();
+        assert!(
+            errors.iter().any(|error| {
+                error.rule() == "block-social"
+                    && error.kind() == ParseErrorKind::RuleFailed
+            }),
+            "{errors:#?}",
+        );
+        assert_eq!(
+            HtmlRender.render(&tree, &page_info, &settings).body,
+            "<p>[[social ]]</p>"
+        );
+
+        let Element::SocialButtons(tab_only) = parse_social("[[social\t]]") else {
+            panic!("tab-only social head did not stay typed");
+        };
+        assert_eq!(tab_only.selection(), None);
     }
 }

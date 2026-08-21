@@ -2201,6 +2201,62 @@ mod tests {
     }
 
     #[test]
+    fn block_end_scan_cache_keeps_hidden_body_context_separate() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[/div_]]");
+
+        let normal_first = Parser::new(&tokenization, &page_info, &settings);
+        assert!(!normal_first.has_body_end_block(&BLOCK_DIV));
+
+        let mut hidden_after_normal = normal_first.clone();
+        hidden_after_normal.set_discarding_hidden_body(true);
+        assert!(
+            hidden_after_normal.has_body_end_block(&BLOCK_DIV),
+            "normal-body result poisoned hidden-body close recognition"
+        );
+
+        let mut hidden_first = Parser::new(&tokenization, &page_info, &settings);
+        hidden_first.set_discarding_hidden_body(true);
+        assert!(hidden_first.has_body_end_block(&BLOCK_DIV));
+
+        let mut normal_after_hidden = hidden_first.clone();
+        normal_after_hidden.set_discarding_hidden_body(false);
+        assert!(
+            !normal_after_hidden.has_body_end_block(&BLOCK_DIV),
+            "hidden-body result poisoned normal-body close recognition"
+        );
+    }
+
+    #[test]
+    fn block_end_scan_cache_keeps_center_body_context_separate() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[/=]]");
+
+        let normal_first = Parser::new(&tokenization, &page_info, &settings);
+        assert!(!normal_first.has_body_end_block(&BLOCK_COLLAPSIBLE));
+
+        let mut centered_after_normal = normal_first.clone();
+        centered_after_normal.enter_wikidot_center_body();
+        assert!(
+            centered_after_normal.has_body_end_block(&BLOCK_COLLAPSIBLE),
+            "normal-body result poisoned centered collapsible close recognition"
+        );
+
+        let mut centered_first = Parser::new(&tokenization, &page_info, &settings);
+        centered_first.enter_wikidot_center_body();
+        assert!(centered_first.has_body_end_block(&BLOCK_COLLAPSIBLE));
+
+        let mut normal_after_centered = centered_first.clone();
+        normal_after_centered.leave_wikidot_center_body();
+        assert!(
+            !normal_after_centered.has_body_end_block(&BLOCK_COLLAPSIBLE),
+            "center-body result poisoned normal collapsible close recognition"
+        );
+    }
+
+    #[test]
     fn two_block_end_scan_reuses_cached_suffix_outcomes() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);

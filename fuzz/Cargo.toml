@@ -18,3 +18,10 @@ path = "fuzz_targets/public_pipeline.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "delayed_pipeline"
+path = "fuzz_targets/delayed_pipeline.rs"
+test = false
+doc = false
+bench = false

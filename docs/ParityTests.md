@@ -82,7 +82,7 @@ test "$(wc -l "$PARITY_TMP"/batches/cases-*.jsonl | tail -n 1 | awk '{print $1}'
 
 Wikidot compatibility fixes must remain safe for arbitrary valid UTF-8, not only ASCII witnesses. The ordinary integration suite includes structured Unicode mutation tests that drive both layouts through preprocess, tokenize, parse, HTML render, and text render. It also rejects unchecked Rust slice expressions whose bounds subtract from `str::len()` or use `saturating_sub` inside an index; those forms are easy to make invalid at a multibyte character boundary. Prefer `strip_prefix`, `strip_suffix`, `str::get`, or offsets proved by a character-boundary-producing API.
 
-For longer-running discovery, `fuzz/fuzz_targets/public_pipeline.rs` exercises the same public pipeline. Build a seed corpus from the entire stable parity inventory, optionally including Wikijump's seeded full pages, with:
+For longer-running discovery, `fuzz/fuzz_targets/public_pipeline.rs` exercises the same Page-mode public pipeline, while `fuzz/fuzz_targets/delayed_pipeline.rs` drives the List-mode delayed-input constructor, parser, atomic binding, and HTML render path across authored, runtime-scalar, runtime-literal, single-slot, and multi-slot segmentations. Build a seed corpus from the entire stable parity inventory, optionally including Wikijump's seeded full pages, with:
 
 ```sh
 FUZZ_CORPUS=$(mktemp -d)
@@ -90,15 +90,18 @@ python3 scripts/build_ftml_fuzz_corpus.py \
   --output "$FUZZ_CORPUS" \
   --wikijump-root ../wikijump
 cargo +nightly fuzz run --fuzz-dir fuzz public_pipeline "$FUZZ_CORPUS"
+cargo +nightly fuzz run --fuzz-dir fuzz delayed_pipeline "$FUZZ_CORPUS"
 ```
 
 The fuzz corpus is generated outside the repository and is not compatibility evidence. Any interesting crash or novel parity case must be minimized into a stable regression and, where behavior is observable on Wikidot, captured through the normal provenance-backed reference path.
 
-The scheduled robustness workflow keeps libFuzzer's `fuzz/artifacts/public_pipeline/` directory as a CI artifact and writes `fuzz-artifact-manifest.json` with the FTML commit, artifact SHA-256, byte length, UTF-8 validity, and exact one-input reproduction command. Reproduce a saved artifact locally with the exact target rather than relying on the original wall-clock timeout:
+The scheduled robustness workflow keeps both libFuzzer artifact directories and writes target-specific manifests with the FTML commit, artifact SHA-256, byte length, UTF-8 validity, and exact one-input reproduction command. Reproduce a saved artifact locally with the exact target rather than relying on the original wall-clock timeout:
 
 ```sh
 cargo +nightly fuzz run --fuzz-dir fuzz public_pipeline -- \
   -runs=1 -timeout=10 fuzz/artifacts/public_pipeline/<artifact>
+cargo +nightly fuzz run --fuzz-dir fuzz delayed_pipeline -- \
+  -runs=1 -timeout=10 fuzz/artifacts/delayed_pipeline/<artifact>
 ```
 
 For branch coverage of the high-risk compatibility paths, run the Unicode robustness suite under nightly LLVM coverage and check the maintained floors:

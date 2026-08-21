@@ -24,7 +24,7 @@ use crate::delayed::DelayedElement;
 use crate::parsing::collect::consume_valid_comment;
 use crate::parsing::rule::impls::block::parser::BlockBodyStart;
 use crate::settings::WikitextMode;
-use crate::tree::AcceptsPartial;
+use crate::tree::{AcceptsPartial, AttributeMap, ListItem, ListType};
 use std::borrow::Cow;
 
 const WIKIJUMP_DIV_FAILURE_CACHE: &str = "wikijump-div-parse-failure";
@@ -561,7 +561,27 @@ fn parse_fn<'r, 't>(
     let element =
         Element::Container(Container::new(ContainerType::Div, elements, attributes));
 
-    ok!(element, errors)
+    if parser.take_wikidot_crossed_ol_tail_sentinel()? {
+        return ok!(false; vec![element, wikidot_crossed_ol_tail()], errors);
+    }
+    if parser.take_wikidot_crossed_list_break_sentinel()? {
+        ok!(false; vec![element, Element::LineBreak], errors)
+    } else {
+        ok!(element, errors)
+    }
+}
+
+fn wikidot_crossed_ol_tail<'t>() -> Element<'t> {
+    let mut item_attributes = AttributeMap::new();
+    item_attributes.insert("style", cow!("list-style: none"));
+    Element::List {
+        ltype: ListType::Bullet,
+        items: vec![ListItem::Elements {
+            elements: vec![Element::LineBreak],
+            attributes: item_attributes,
+        }],
+        attributes: AttributeMap::new(),
+    }
 }
 
 fn wikidot_inline_div_table_delimiter<'r, 't>(

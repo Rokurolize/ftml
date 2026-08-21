@@ -11,6 +11,7 @@
  */
 
 use super::prelude::*;
+use crate::delayed::DelayedElement;
 use crate::tree::SocialButtons;
 
 pub const BLOCK_SOCIAL: BlockRule = BlockRule {
@@ -38,11 +39,15 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
+    let source = parser.full_text().inner();
+    let name_start = (name.as_ptr() as usize)
+        .checked_sub(source.as_ptr() as usize)
+        .expect("parsed social name belongs to source");
+    let opener_start = source[..name_start]
+        .rfind("[[")
+        .expect("parsed social name follows its opener");
+
     if in_head && matches!(parser.current().token, Token::RightBlock | Token::RightLink) {
-        let source = parser.full_text().inner();
-        let name_start = (name.as_ptr() as usize)
-            .checked_sub(source.as_ptr() as usize)
-            .expect("parsed social name belongs to source");
         let name_end = name_start + name.len();
         if &source[name_end..parser.current().span.start] == " " {
             return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -69,6 +74,20 @@ fn parse_fn<'r, 't>(
             }
         };
 
+        let head_range = start..current.span.start;
+        if parser.has_runtime_scalar_in_range(head_range.clone()) {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+        if parser.has_generated_in_range(head_range) {
+            let owner_end = current.span.end;
+            let generated = parser.generated_in_range(opener_start..owner_end);
+            parser.step()?;
+            return success_elements(Element::Delayed(DelayedElement::shell(
+                source,
+                opener_start..owner_end,
+                &generated,
+            )));
+        }
         let head = &parser.full_text().inner()[start..current.span.start];
         let social = Element::SocialButtons(SocialButtons::parse(head));
         parser.step()?;

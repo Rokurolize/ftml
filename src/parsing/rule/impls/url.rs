@@ -95,7 +95,10 @@ where
         }
 
         let token = parser.current();
-        if &source[token.span.clone()] == "\u{00a0}" {
+        let token_text = &source[token.span.clone()];
+        if token_text.chars().next().is_some_and(|character| {
+            character.is_whitespace() && !character.is_ascii_whitespace()
+        }) {
             let next_start = token.span.end;
             let Some(next_character) = source[next_start..].chars().next() else {
                 break;
@@ -186,8 +189,7 @@ fn wikidot_automatic_url_end(source: &str, mut end: usize, limit: usize) -> usiz
         if matches!(
             bytes[end],
             b'\n' | b'\r' | b' ' | b'\t' | b'"' | b'\'' | b'['
-        ) || character.is_whitespace()
-            || matches!(bytes[end], 0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
+        ) || matches!(bytes[end], 0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
             || source[end..].starts_with("@@")
             || source[end..].starts_with("]]")
             || source[end..].starts_with("||")
@@ -306,6 +308,44 @@ mod tests {
             Layout::Wikidot,
             link("https://example.com").into(),
         );
+    }
+
+    #[test]
+    fn wikidot_url_rule_keeps_live_unicode_spaces_inside_the_automatic_url() {
+        // Anonymous PagePreview observations on 2026-08-21 show that Wikidot
+        // treats these Unicode whitespace scalars as URL data rather than as
+        // automatic-link terminators. ASCII space/tab/newline remain the
+        // actual whitespace boundaries.
+        for whitespace in [
+            '\u{1680}', '\u{2000}', '\u{2001}', '\u{2002}', '\u{2003}', '\u{2004}',
+            '\u{2005}', '\u{2006}', '\u{2007}', '\u{2008}', '\u{2009}', '\u{200a}',
+            '\u{2028}', '\u{2029}', '\u{202f}', '\u{205f}', '\u{3000}',
+        ] {
+            let source = format!("https://example.com/a{whitespace}b next");
+            let expected = format!("https://example.com/a{whitespace}b");
+            let tokenization = crate::tokenize(&source);
+            let page_info = PageInfo::dummy();
+            let settings =
+                WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+            let mut parser = Parser::new(&tokenization, &page_info, &settings);
+            parser.step().expect("URL token should follow input start");
+            let actual = RULE_URL
+                .try_consume(&mut parser)
+                .expect("URL rule should consume live Unicode URL whitespace")
+                .item;
+            assert_eq!(
+                actual,
+                Element::Link {
+                    ltype: LinkType::Direct,
+                    link: LinkLocation::Url(Cow::Owned(expected)),
+                    label: LinkLabel::Url,
+                    target: None,
+                }
+                .into(),
+                "U+{:04X}",
+                whitespace as u32,
+            );
+        }
     }
 
     #[test]

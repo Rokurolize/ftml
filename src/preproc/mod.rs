@@ -28,6 +28,9 @@ mod comments;
 mod compatibility;
 mod parser_functions;
 
+pub(crate) use self::compatibility::{
+    WIKIDOT_CROSSED_LIST_BREAK_SENTINEL, WIKIDOT_CROSSED_OL_TAIL_SENTINEL,
+};
 pub(crate) use self::parser_functions::LiteralRegionIndex;
 pub use self::parser_functions::{
     WikidotParserFunctionOptions, WikidotZeroOperatorPolicy,

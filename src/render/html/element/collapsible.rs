@@ -25,6 +25,7 @@ use crate::tree::{AttributeMap, Element};
 pub struct Collapsible<'a> {
     elements: &'a [Element<'a>],
     unfolded_tail_start: Option<usize>,
+    wikidot_label_spans: &'a [AttributeMap<'a>],
     attributes: &'a AttributeMap<'a>,
     start_open: bool,
     show_text: Option<&'a str>,
@@ -39,6 +40,7 @@ impl<'a> Collapsible<'a> {
     pub fn new(
         elements: &'a [Element<'a>],
         unfolded_tail_start: Option<usize>,
+        wikidot_label_spans: &'a [AttributeMap<'a>],
         attributes: &'a AttributeMap<'a>,
         start_open: bool,
         show_text: Option<&'a str>,
@@ -49,6 +51,7 @@ impl<'a> Collapsible<'a> {
         Collapsible {
             elements,
             unfolded_tail_start,
+            wikidot_label_spans,
             attributes,
             start_open,
             show_text,
@@ -63,6 +66,7 @@ pub fn render_collapsible(ctx: &mut HtmlContext, collapsible: Collapsible) {
     let Collapsible {
         elements,
         unfolded_tail_start,
+        wikidot_label_spans,
         attributes,
         start_open,
         show_text,
@@ -96,6 +100,7 @@ pub fn render_collapsible(ctx: &mut HtmlContext, collapsible: Collapsible) {
                 ctx,
                 elements,
                 unfolded_tail,
+                wikidot_label_spans,
                 start_open,
                 show_text,
                 hide_text,
@@ -129,6 +134,7 @@ fn render_collapsible_wikidot(
     ctx: &mut HtmlContext,
     elements: &[Element],
     unfolded_tail: &[Element],
+    label_spans: &[AttributeMap],
     start_open: bool,
     show_text: &str,
     hide_text: &str,
@@ -145,7 +151,13 @@ fn render_collapsible_wikidot(
                     "class" => "collapsible-block-folded",
                     "style" => "display:none"; if start_open,
                 ))
-                .inner(|ctx| render_wikidot_collapsible_link(ctx, show_text));
+                .inner(|ctx| {
+                    render_wikidot_collapsible_link_with_spans(
+                        ctx,
+                        show_text,
+                        label_spans,
+                    )
+                });
 
             ctx.html()
                 .div()
@@ -155,7 +167,7 @@ fn render_collapsible_wikidot(
                 ))
                 .inner(|ctx| {
                     if show_top {
-                        render_wikidot_hide_link(ctx, hide_text);
+                        render_wikidot_hide_link(ctx, hide_text, label_spans);
                     }
 
                     ctx.html()
@@ -166,17 +178,41 @@ fn render_collapsible_wikidot(
                     render_elements(ctx, unfolded_tail);
 
                     if show_bottom {
-                        render_wikidot_hide_link(ctx, hide_text);
+                        render_wikidot_hide_link(ctx, hide_text, label_spans);
                     }
                 });
         });
 }
 
-fn render_wikidot_hide_link(ctx: &mut HtmlContext, hide_text: &str) {
+fn render_wikidot_hide_link(
+    ctx: &mut HtmlContext,
+    hide_text: &str,
+    label_spans: &[AttributeMap],
+) {
     ctx.html()
         .div()
         .attr(attr!("class" => "collapsible-block-unfolded-link"))
-        .inner(|ctx| render_wikidot_collapsible_link(ctx, hide_text));
+        .inner(|ctx| {
+            render_wikidot_collapsible_link_with_spans(ctx, hide_text, label_spans)
+        });
+}
+
+fn render_wikidot_collapsible_link_with_spans(
+    ctx: &mut HtmlContext,
+    label: &str,
+    label_spans: &[AttributeMap],
+) {
+    fn render_wrapped(ctx: &mut HtmlContext, label: &str, label_spans: &[AttributeMap]) {
+        let Some((attributes, remaining)) = label_spans.split_first() else {
+            render_wikidot_collapsible_link(ctx, label);
+            return;
+        };
+        ctx.html()
+            .span()
+            .attr(attr!(;; attributes))
+            .inner(|ctx| render_wrapped(ctx, label, remaining));
+    }
+    render_wrapped(ctx, label, label_spans);
 }
 
 fn render_wikidot_collapsible_link(ctx: &mut HtmlContext, label: &str) {

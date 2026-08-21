@@ -355,6 +355,7 @@ where
             )| Element::Collapsible {
                 elements,
                 unfolded_tail_start: None,
+                wikidot_label_spans: Vec::new(),
                 attributes,
                 start_open,
                 show_text,

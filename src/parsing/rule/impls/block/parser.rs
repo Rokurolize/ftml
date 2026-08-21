@@ -22,6 +22,7 @@ use super::BlockRule;
 use super::arguments::Arguments;
 use crate::parsing::collect::{
     CommentElidedText, collect_comment_elided_keep, collect_text, collect_text_keep,
+    consume_valid_comment,
 };
 use crate::parsing::condition::ParseCondition;
 use crate::parsing::consume::consume;
@@ -240,6 +241,45 @@ impl<'r, 't> Parser<'r, 't>
 where
     'r: 't,
 {
+    pub(crate) fn take_wikidot_crossed_list_break_sentinel(
+        &mut self,
+    ) -> Result<bool, ParseError> {
+        self.take_wikidot_crossed_tail_sentinel(
+            crate::preproc::WIKIDOT_CROSSED_LIST_BREAK_SENTINEL,
+        )
+    }
+
+    pub(crate) fn take_wikidot_crossed_ol_tail_sentinel(
+        &mut self,
+    ) -> Result<bool, ParseError> {
+        self.take_wikidot_crossed_tail_sentinel(
+            crate::preproc::WIKIDOT_CROSSED_OL_TAIL_SENTINEL,
+        )
+    }
+
+    fn take_wikidot_crossed_tail_sentinel(
+        &mut self,
+        expected: &str,
+    ) -> Result<bool, ParseError> {
+        if !self.settings().layout.legacy() || self.current().token != Token::LeftComment
+        {
+            return Ok(false);
+        }
+        let mut candidate = self.clone();
+        let range = match consume_valid_comment(&mut candidate) {
+            Ok(range) => range,
+            Err(_) => return Ok(false),
+        };
+        if &self.full_text().inner()[range] != expected {
+            return Ok(false);
+        }
+        if candidate.current().token == Token::LineBreak {
+            candidate.step()?;
+        }
+        self.update(&candidate);
+        Ok(true)
+    }
+
     pub fn get_block_name(
         &mut self,
         flag_star: bool,

@@ -19,7 +19,7 @@
  */
 
 use crate::parsing::prelude::*;
-use crate::tree::{AttributeMap, Container, ContainerType, TableType};
+use crate::tree::{AttributeMap, Container, ContainerType, ListItem, TableType};
 use std::mem;
 
 pub(crate) fn collapsible_has_direct_literal_nested_opener(
@@ -494,6 +494,8 @@ impl<'t> ParagraphStack<'t> {
             let escaped_note_prefix = self.wikidot_note_follows_escaped_prefix(&element);
             let nested_literal_collapsible =
                 self.wikidot && collapsible_has_direct_literal_nested_opener(&element);
+            let literal_table_before_explicit_list =
+                self.wikidot_literal_table_opener_before_synthetic_list(&element);
             let literal_table_block_boundary = self.current_unwrapped
                 && self.wikidot_current_line_is_literal_advanced_table_opener();
             if wikidot_section_marker
@@ -505,6 +507,18 @@ impl<'t> ParagraphStack<'t> {
             }
             if literal_table_block_boundary {
                 self.current.push(text!("\n"));
+            }
+            if literal_table_before_explicit_list {
+                if self.finished.is_empty()
+                    && !matches!(
+                        self.current.first(),
+                        Some(Element::Text(text)) if text.starts_with("\n\n")
+                    )
+                {
+                    self.current.insert(0, text!("\n\n"));
+                }
+                self.current.push(Element::LineBreak);
+                self.current_unwrapped = true;
             }
             if invisible_block_line {
                 if !self.wikidot_empty_list_break {
@@ -593,6 +607,39 @@ impl<'t> ParagraphStack<'t> {
             .next()
             .is_some_and(|character| character == ']' || character.is_whitespace())
             && line.ends_with("]]")
+    }
+
+    fn wikidot_literal_table_opener_before_synthetic_list(
+        &self,
+        element: &Element<'_>,
+    ) -> bool {
+        if !self.wikidot || self.current.is_empty() {
+            return false;
+        }
+        let Element::List { items, .. } = element else {
+            return false;
+        };
+        let synthetic_item = items.iter().any(|item| {
+            let ListItem::Elements { attributes, .. } = item else {
+                return false;
+            };
+            attributes
+                .get()
+                .get("style")
+                .is_some_and(|value| value.as_ref() == "list-style: none")
+        });
+        if !synthetic_item {
+            return false;
+        }
+        let line = self
+            .current
+            .iter()
+            .filter_map(|element| match element {
+                Element::Text(text) | Element::Raw(text) => Some(text.as_ref()),
+                _ => None,
+            })
+            .collect::<String>();
+        line == "[[table]]"
     }
 
     pub fn push_paragraph_safe_elements(&mut self, mut elements: Vec<Element<'t>>) {

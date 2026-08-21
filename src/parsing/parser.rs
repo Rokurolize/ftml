@@ -85,12 +85,19 @@ pub(crate) enum QuoteScanOutcome {
 
 type QuoteScanKey = (&'static str, usize, bool, usize);
 type BlockEndScanKey = (&'static str, usize, bool);
+type ContextualBlockEndScanKey = (BlockEndScanKey, BlockEndScanContext);
 type LostOwnerScanKey = (&'static str, u8, usize, usize, bool);
 type PartialRejectionKey = (&'static str, &'static str, usize, u8);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+struct BlockEndScanContext {
+    discarding_hidden_body: bool,
+    in_wikidot_center_body: bool,
+}
+
 #[derive(Debug, Default)]
 struct BlockScanCache {
-    body_end_outcomes: BTreeMap<BlockEndScanKey, bool>,
+    body_end_outcomes: BTreeMap<ContextualBlockEndScanKey, bool>,
     underclosed_block_failures: BTreeMap<(&'static str, usize), ()>,
     deterministic_block_failures: BTreeMap<(&'static str, usize), ParseError>,
     partial_rejections: BTreeMap<PartialRejectionKey, ParseError>,
@@ -171,8 +178,9 @@ pub struct Parser<'r, 't> {
     // overriding later ones.
     bibliographies: Rc<RefCell<BibliographyList<'t>>>,
 
-    // This cache contains only facts from raw immutable token scans, so it is
-    // safe and useful to share them across speculative parser clones.
+    // These caches contain facts from immutable token scans plus the explicit
+    // parser context that can change close recognition, so they remain safe to
+    // share across speculative parser clones.
     quote_scan_cache: Rc<RefCell<BTreeMap<QuoteScanKey, QuoteScanOutcome>>>,
     // Matching block-end scans have the same clone-safe property. The key
     // retains first-iteration semantics because multiline blocks may consume
@@ -181,7 +189,7 @@ pub struct Parser<'r, 't> {
     // Two-close lookahead is used while recovering nested hidden iftags. It
     // needs a separate cache because a successful one-close scan does not say
     // whether a second close exists in the same suffix.
-    two_block_end_scan_cache: Rc<RefCell<BTreeMap<BlockEndScanKey, u8>>>,
+    two_block_end_scan_cache: Rc<RefCell<BTreeMap<ContextualBlockEndScanKey, u8>>>,
     // Single-link label recovery can retry at many nested `[` tokens. The
     // owner-presence result depends only on the immutable token suffix, so
     // share it across speculative clones and later retries.
@@ -592,11 +600,18 @@ impl<'r, 't> Parser<'r, 't> {
         }
     }
 
+    fn block_end_scan_context(&self) -> BlockEndScanContext {
+        BlockEndScanContext {
+            discarding_hidden_body: self.discarding_hidden_body(),
+            in_wikidot_center_body: self.in_wikidot_center_body(),
+        }
+    }
+
     pub(crate) fn block_end_scan_outcome(&self, key: BlockEndScanKey) -> Option<bool> {
         self.block_end_scan_cache
             .borrow()
             .body_end_outcomes
-            .get(&key)
+            .get(&(key, self.block_end_scan_context()))
             .copied()
     }
 
@@ -607,10 +622,11 @@ impl<'r, 't> Parser<'r, 't> {
         outcome: bool,
     ) {
         let mut cache = self.block_end_scan_cache.borrow_mut();
+        let context = self.block_end_scan_context();
         for &(token_start, first_iteration) in token_states {
             cache
                 .body_end_outcomes
-                .insert((rule, token_start, first_iteration), outcome);
+                .insert(((rule, token_start, first_iteration), context), outcome);
         }
     }
 
@@ -766,7 +782,10 @@ impl<'r, 't> Parser<'r, 't> {
     }
 
     pub(crate) fn two_block_end_scan_outcome(&self, key: BlockEndScanKey) -> Option<u8> {
-        self.two_block_end_scan_cache.borrow().get(&key).copied()
+        self.two_block_end_scan_cache
+            .borrow()
+            .get(&(key, self.block_end_scan_context()))
+            .copied()
     }
 
     pub(crate) fn single_link_label_owner_scan_outcome(
@@ -818,6 +837,7 @@ impl<'r, 't> Parser<'r, 't> {
         total_matches: u8,
     ) {
         let mut cache = self.two_block_end_scan_cache.borrow_mut();
+        let context = self.block_end_scan_context();
         for &(token_start, first_iteration, preceding_matches) in token_states {
             // A successful two-close scan stops at the second close. States
             // reached after the first close therefore have an unknown suffix:
@@ -827,7 +847,7 @@ impl<'r, 't> Parser<'r, 't> {
                 continue;
             }
             cache.insert(
-                (rule, token_start, first_iteration),
+                ((rule, token_start, first_iteration), context),
                 total_matches.saturating_sub(preceding_matches).min(2),
             );
         }

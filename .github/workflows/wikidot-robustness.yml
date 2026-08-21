@@ -91,6 +91,17 @@ jobs:
             -max_total_time=900 \
             -timeout=10
 
+      - name: Fuzz delayed List-mode pipeline
+        shell: bash
+        run: |
+          cargo +nightly fuzz run \
+            --fuzz-dir fuzz \
+            delayed_pipeline \
+            "$RUNNER_TEMP/ftml-fuzz-corpus" \
+            -- \
+            -max_total_time=300 \
+            -timeout=10
+
       - name: Describe fuzz artifacts
         if: always()
         shell: bash
@@ -98,7 +109,13 @@ jobs:
           python3 scripts/fuzz_artifact_manifest.py \
             --artifact-dir fuzz/artifacts/public_pipeline \
             --commit "$GITHUB_SHA" \
+            --target public_pipeline \
             --output "$RUNNER_TEMP/fuzz-artifact-manifest.json"
+          python3 scripts/fuzz_artifact_manifest.py \
+            --artifact-dir fuzz/artifacts/delayed_pipeline \
+            --commit "$GITHUB_SHA" \
+            --target delayed_pipeline \
+            --output "$RUNNER_TEMP/delayed-fuzz-artifact-manifest.json"
 
       - name: Upload fuzz failure artifacts
         if: always()
@@ -108,5 +125,16 @@ jobs:
           path: |
             fuzz/artifacts/public_pipeline/
             ${{ runner.temp }}/fuzz-artifact-manifest.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload delayed fuzz failure artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wikidot-delayed-pipeline-fuzz-artifacts
+          path: |
+            fuzz/artifacts/delayed_pipeline/
+            ${{ runner.temp }}/delayed-fuzz-artifact-manifest.json
           if-no-files-found: warn
           retention-days: 14

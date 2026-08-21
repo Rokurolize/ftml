@@ -23,6 +23,16 @@ class FuzzArtifactManifestTest(unittest.TestCase):
             self.assertTrue(first["valid_utf8"])
             self.assertFalse(value["artifacts"][1]["valid_utf8"])
             self.assertIn("-runs=1", first["reproduce"])
+            self.assertIn("public_pipeline", first["reproduce"])
+
+    def test_manifest_uses_requested_fuzz_target_in_reproduction_command(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "crash-a").write_text("[[social reddit]]", encoding="utf-8")
+            value = manifest(root, "abc123", "delayed_pipeline")
+            self.assertEqual(value["target"], "delayed_pipeline")
+            self.assertIn("delayed_pipeline", value["artifacts"][0]["reproduce"])
+            self.assertNotIn("public_pipeline", value["artifacts"][0]["reproduce"])
 
     def test_missing_directory_is_an_empty_manifest(self):
         with tempfile.TemporaryDirectory() as directory:

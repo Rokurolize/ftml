@@ -14,7 +14,7 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def artifact_rows(artifact_dir: Path) -> list[dict]:
+def artifact_rows(artifact_dir: Path, target: str) -> list[dict]:
     rows = []
     if not artifact_dir.is_dir():
         return rows
@@ -32,7 +32,7 @@ def artifact_rows(artifact_dir: Path) -> list[dict]:
                 "size": len(data),
                 "valid_utf8": utf8,
                 "reproduce": (
-                    "cargo +nightly fuzz run --fuzz-dir fuzz public_pipeline -- "
+                    f"cargo +nightly fuzz run --fuzz-dir fuzz {target} -- "
                     f"-runs=1 -timeout=10 {artifact_dir.as_posix()}/{path.name}"
                 ),
             }
@@ -40,24 +40,25 @@ def artifact_rows(artifact_dir: Path) -> list[dict]:
     return rows
 
 
-def manifest(artifact_dir: Path, commit: str) -> dict:
+def manifest(artifact_dir: Path, commit: str, target: str = "public_pipeline") -> dict:
     return {
         "schema": "ftml.fuzz_artifact_manifest.v1",
         "ftml_commit": commit,
-        "target": "public_pipeline",
-        "artifacts": artifact_rows(artifact_dir),
+        "target": target,
+        "artifacts": artifact_rows(artifact_dir, target),
     }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Describe public_pipeline fuzz artifacts with stable identities and reproduction commands."
+        description="Describe FTML fuzz artifacts with stable identities and reproduction commands."
     )
     parser.add_argument("--artifact-dir", required=True, type=Path)
     parser.add_argument("--commit", required=True)
+    parser.add_argument("--target", default="public_pipeline")
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
-    value = manifest(args.artifact_dir, args.commit)
+    value = manifest(args.artifact_dir, args.commit, args.target)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({"artifacts": len(value["artifacts"]), "status": "pass"}, sort_keys=True))

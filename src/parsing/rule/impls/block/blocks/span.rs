@@ -22,7 +22,6 @@ use super::prelude::*;
 use crate::delayed::DelayedElement;
 use crate::parsing::inline_scope::WIKIDOT_SCORE_SPAN_UNWRAPPED_ATTRIBUTE;
 use crate::parsing::strip_newlines;
-use crate::settings::WikitextMode;
 use crate::tree::{PartialElement, WIKIDOT_GENERATED_EMPTY_CLASS_MARKER};
 use std::borrow::Cow;
 
@@ -96,8 +95,7 @@ fn parse_fn<'r, 't>(
     let owner_start = source[..name_start]
         .rfind("[[")
         .expect("parsed span name follows its opener");
-    let cacheable_wikijump_failure = !parser.settings().layout.legacy()
-        && parser.settings().mode == WikitextMode::Page;
+    let cacheable_wikijump_failure = !parser.settings().layout.legacy();
     if cacheable_wikijump_failure
         && parser.underclosed_block_failure_cached(BLOCK_SPAN.name, owner_start)
     {

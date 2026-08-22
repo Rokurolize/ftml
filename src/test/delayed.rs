@@ -1005,6 +1005,53 @@ fn deep_delayed_binding_does_not_inherit_a_small_caller_stack() {
 }
 
 #[test]
+fn delayed_underclosed_div_suffix_parses_within_a_bounded_budget() {
+    let source = concat!(
+        "[[mo }\n[]\n",
+        "[[div]]\n[[div]]\n[[div]]\n[[div]]\n[[div]]\n",
+        "[[[div]]\n",
+        "[[div]]\n[[div]]\n[[div]]\n[[div]]\n[[div]]\n[[div]]\n",
+        "SS]red{color:   odule]]\n",
+    );
+    assert_eq!(source.len(), 131);
+    let input = DelayedInput::new(
+        source,
+        vec![
+            InputSegment::text(0..129, TextOrigin::Authored),
+            InputSegment::generated(GeneratedInput {
+                source_range: 129..130,
+                id: SlotId::new(1),
+                kind: GeneratedKind::TagLinks,
+                occurrence: 0,
+            }),
+            InputSegment::text(130..130, TextOrigin::Authored),
+            InputSegment::generated(GeneratedInput {
+                source_range: 130..131,
+                id: SlotId::new(1),
+                kind: GeneratedKind::TagLinks,
+                occurrence: 1,
+            }),
+            InputSegment::text(131..131, TextOrigin::RuntimeLiteral),
+        ],
+    )
+    .expect("valid delayed timeout regression fixture");
+    let page_info = PageInfo::dummy();
+    let started = Instant::now();
+    for layout in [Layout::Wikidot, Layout::Wikijump] {
+        for inline in [false, true] {
+            let mut settings = WikitextSettings::from_mode(WikitextMode::List, layout);
+            settings.list_pages_inline = inline;
+            let _ = parse_delayed_list(&input, &page_info, &settings);
+        }
+    }
+    assert!(
+        started.elapsed() < Duration::from_secs(1),
+        "delayed underclosed div parsing exceeded budget: {:?}",
+        started.elapsed(),
+    );
+}
+
+#[test]
 fn orphan_tab_fallback_keeps_generated_fragment_provenance() {
     let source = concat!("[[tab]]\n", "%%title_linked%%\n", "[[/tab]]",);
     let html = render(source);

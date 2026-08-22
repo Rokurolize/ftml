@@ -391,8 +391,7 @@ fn parse_fn<'r, 't>(
 
     let head = parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;
     let (mut arguments, mut body_start) = head;
-    let cacheable_wikijump_failure = !parser.settings().layout.legacy()
-        && parser.settings().mode == WikitextMode::Page;
+    let cacheable_wikijump_failure = !parser.settings().layout.legacy();
     if cacheable_wikijump_failure
         && parser.block_end_scan_outcome((WIKIJUMP_DIV_FAILURE_CACHE, owner_start, false))
             == Some(false)

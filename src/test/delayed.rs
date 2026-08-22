@@ -1052,6 +1052,30 @@ fn delayed_underclosed_div_suffix_parses_within_a_bounded_budget() {
 }
 
 #[test]
+fn delayed_underclosed_span_suffix_parses_within_a_bounded_budget() {
+    let source = format!("{}tail", "[[span]]".repeat(40));
+    let input = DelayedInput::new(
+        &source,
+        vec![InputSegment::text(0..source.len(), TextOrigin::Authored)],
+    )
+    .expect("valid delayed underclosed span fixture");
+    let page_info = PageInfo::dummy();
+    let started = Instant::now();
+    for layout in [Layout::Wikidot, Layout::Wikijump] {
+        for inline in [false, true] {
+            let mut settings = WikitextSettings::from_mode(WikitextMode::List, layout);
+            settings.list_pages_inline = inline;
+            let _ = parse_delayed_list(&input, &page_info, &settings);
+        }
+    }
+    assert!(
+        started.elapsed() < Duration::from_secs(1),
+        "delayed underclosed span parsing exceeded budget: {:?}",
+        started.elapsed(),
+    );
+}
+
+#[test]
 fn orphan_tab_fallback_keeps_generated_fragment_provenance() {
     let source = concat!("[[tab]]\n", "%%title_linked%%\n", "[[/tab]]",);
     let html = render(source);

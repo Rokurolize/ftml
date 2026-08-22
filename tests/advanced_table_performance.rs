@@ -161,6 +161,33 @@ fn deeply_unclosed_advanced_table_owners_fail_before_recursive_body_parsing() {
 }
 
 #[test]
+fn partially_closed_wikidot_advanced_table_owners_reuse_failure_cache() {
+    const NESTING: usize = 4;
+    const TAIL_LINES: usize = 700;
+
+    let mut source = String::new();
+    source.push_str(&"[[table]]\n[[row]]\n[[cell]]\n".repeat(NESTING));
+    source.push_str("X\n[[/table]]\n[[/cell]]\n[[/row]]\n[[/table]]\n");
+    source.push_str(&"plain text line\n".repeat(TAIL_LINES));
+
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let started = Instant::now();
+    let tokenization = ftml::tokenize(&source);
+    let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+    assert!(
+        started.elapsed() < Duration::from_secs(2),
+        "partially closed Wikidot advanced tables took {:?}",
+        started.elapsed(),
+    );
+    assert!(!errors.is_empty());
+    assert!(!tree.elements.is_empty());
+    assert!(html.contains("plain text line"));
+}
+
+#[test]
 fn underclosed_wikijump_advanced_table_owners_reuse_failure_cache() {
     let page_info = page_info();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);

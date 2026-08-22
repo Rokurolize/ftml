@@ -272,6 +272,9 @@ fn cached_underclosed_table_error(
     owner_start: Option<usize>,
 ) -> Option<ParseError> {
     let owner_start = owner_start?;
+    if let Some(error) = parser.deterministic_block_failure(rule, owner_start) {
+        return Some(error);
+    }
     if !parser.settings().layout.legacy() && parser.settings().mode != WikitextMode::Page
     {
         return None;
@@ -286,18 +289,16 @@ fn cached_underclosed_table_error(
     })
 }
 
-fn cache_wikijump_underclosed_table_error(
+fn cache_table_end_of_input_error(
     parser: &Parser<'_, '_>,
     rule: &'static str,
     owner_start: Option<usize>,
     error: &ParseError,
 ) {
-    if !parser.settings().layout.legacy()
-        && parser.settings().mode == WikitextMode::Page
-        && error.kind() == ParseErrorKind::EndOfInput
+    if error.kind() == ParseErrorKind::EndOfInput
         && let Some(owner_start) = owner_start
     {
-        parser.cache_underclosed_block_failure(rule, owner_start);
+        parser.cache_deterministic_block_failure(rule, owner_start, error);
     }
 }
 
@@ -431,12 +432,7 @@ fn parse_table<'r, 't>(
     ) {
         Ok(parsed) => parsed,
         Err(error) => {
-            cache_wikijump_underclosed_table_error(
-                parser,
-                BLOCK_TABLE.name,
-                owner_start,
-                &error,
-            );
+            cache_table_end_of_input_error(parser, BLOCK_TABLE.name, owner_start, &error);
             return Err(error);
         }
     };
@@ -542,7 +538,7 @@ fn parse_row<'r, 't>(
     ) {
         Ok(parsed) => parsed,
         Err(error) => {
-            cache_wikijump_underclosed_table_error(
+            cache_table_end_of_input_error(
                 parser,
                 BLOCK_TABLE_ROW.name,
                 owner_start,
@@ -627,12 +623,7 @@ fn parse_cell_regular<'r, 't>(
     ) {
         Ok(parsed) => parsed,
         Err(error) => {
-            cache_wikijump_underclosed_table_error(
-                parser,
-                cache_rule,
-                owner_start,
-                &error,
-            );
+            cache_table_end_of_input_error(parser, cache_rule, owner_start, &error);
             return Err(error);
         }
     };
@@ -694,12 +685,7 @@ fn parse_cell_header<'r, 't>(
     ) {
         Ok(parsed) => parsed,
         Err(error) => {
-            cache_wikijump_underclosed_table_error(
-                parser,
-                cache_rule,
-                owner_start,
-                &error,
-            );
+            cache_table_end_of_input_error(parser, cache_rule, owner_start, &error);
             return Err(error);
         }
     };

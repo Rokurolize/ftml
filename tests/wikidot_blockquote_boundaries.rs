@@ -947,6 +947,26 @@ B"#,
 }
 
 #[test]
+fn consecutive_quoted_native_list_rows_share_one_list() {
+    for (source, expected) in [
+        (
+            "> * A\n> * B",
+            "<blockquote><ul>\n<li>A</li>\n<li>B</li>\n</ul></blockquote>",
+        ),
+        (
+            "> # A\n> # B",
+            "<blockquote><ol>\n<li>A</li>\n<li>B</li>\n</ol></blockquote>",
+        ),
+        (
+            "> * A\n> # B",
+            "<blockquote><ul>\n<li>A</li>\n</ul><ol>\n<li>B</li>\n</ol></blockquote>",
+        ),
+    ] {
+        assert_eq!(render(source), expected, "{source}");
+    }
+}
+
+#[test]
 fn lost_owner_body_keeps_metadata_and_collapsible_arguments() {
     let html = render(concat!(
         "> [[div]]\n",

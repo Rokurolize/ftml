@@ -394,6 +394,11 @@ fn build_blockquote_element(
     list: DepthList<(), NativeQuoteRow>,
     wikidot: bool,
 ) -> Option<Element> {
+    let list = if wikidot {
+        merge_adjacent_native_list_rows(list)
+    } else {
+        list
+    };
     let mut stack = if wikidot {
         ParagraphStack::new_wikidot()
     } else {
@@ -424,6 +429,75 @@ fn build_blockquote_element(
         elements,
         AttributeMap::new(),
     )))
+}
+
+fn merge_adjacent_native_list_rows(
+    list: DepthList<(), NativeQuoteRow>,
+) -> DepthList<(), NativeQuoteRow> {
+    let mut merged = Vec::with_capacity(list.len());
+    for item in list {
+        match item {
+            DepthItem::Item(mut row) => {
+                if let Some(DepthItem::Item(previous)) = merged.last_mut()
+                    && merge_native_list_rows(previous, &mut row)
+                {
+                    continue;
+                }
+                merged.push(DepthItem::Item(row));
+            }
+            DepthItem::List((), nested) => {
+                merged.push(DepthItem::List((), merge_adjacent_native_list_rows(nested)));
+            }
+        }
+    }
+    merged
+}
+
+fn merge_native_list_rows<'t>(
+    previous: &mut NativeQuoteRow<'t>,
+    current: &mut NativeQuoteRow<'t>,
+) -> bool {
+    if previous.empty_spaced || current.empty_spaced {
+        return false;
+    }
+    let Some(previous_list) = native_list_element(previous) else {
+        return false;
+    };
+    let Some(current_list) = native_list_element(current) else {
+        return false;
+    };
+    let Element::List {
+        ltype: previous_type,
+        items: previous_items,
+        ..
+    } = previous_list
+    else {
+        return false;
+    };
+    let Element::List {
+        ltype: current_type,
+        items: current_items,
+        ..
+    } = current_list
+    else {
+        return false;
+    };
+    if previous_type != current_type {
+        return false;
+    }
+    previous_items.append(current_items);
+    true
+}
+
+fn native_list_element<'a, 't>(
+    row: &'a mut NativeQuoteRow<'t>,
+) -> Option<&'a mut Element<'t>> {
+    match row.elements.as_mut_slice() {
+        [Element::List { .. }] | [Element::List { .. }, Element::LineBreak] => {
+            row.elements.first_mut()
+        }
+        _ => None,
+    }
 }
 
 fn build_flattened_quote_rows(

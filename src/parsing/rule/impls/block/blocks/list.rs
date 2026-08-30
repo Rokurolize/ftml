@@ -373,6 +373,7 @@ fn parse_list_item<'r, 't>(
         while matches!(elements.last(), Some(Element::Text(text)) if text == " ") {
             elements.pop();
         }
+        trim_wikidot_block_gaps(&mut elements);
     }
 
     let element = Element::Partial(PartialElement::ListItem(ListItem::Elements {
@@ -381,6 +382,20 @@ fn parse_list_item<'r, 't>(
     }));
 
     success_elements_with_paragraph_safety(false, element, errors)
+}
+
+fn trim_wikidot_block_gaps(elements: &mut Vec<Element<'_>>) {
+    let mut index = 1;
+    while index + 1 < elements.len() {
+        if elements[index] == Element::LineBreak
+            && !elements[index - 1].paragraph_safe()
+            && !elements[index + 1].paragraph_safe()
+        {
+            elements.remove(index);
+        } else {
+            index += 1;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -486,6 +501,52 @@ mod tests {
                 assert_eq!(element_text(elements), "Beta");
             },
         );
+    }
+
+    #[test]
+    fn wikidot_list_item_drops_blank_line_between_adjacent_blocks() {
+        let source = "[[ul]]\n[[li]]\n[[div class=\"a\"]]\nA\n[[/div]]\n\n[[div class=\"b\"]]\nB\n[[/div]]\n[[/li]]\n[[/ul]]";
+        with_parse(source, |tree, errors| {
+            assert!(errors.is_empty(), "{errors:?}");
+            let [Element::List { items, .. }, Element::LineBreak] = tree.as_slice()
+            else {
+                panic!("expected Wikidot list and trailing break, got {tree:?}");
+            };
+            let [ListItem::Elements { elements, .. }] = items.as_slice() else {
+                panic!("expected one list item, got {items:?}");
+            };
+            let [
+                Element::Container(first),
+                Element::Container(second),
+                Element::LineBreak,
+            ] = elements.as_slice()
+            else {
+                panic!(
+                    "expected adjacent block elements and a terminal break, got {elements:?}"
+                );
+            };
+            assert_eq!(first.ctype(), ContainerType::Div);
+            assert_eq!(second.ctype(), ContainerType::Div);
+        });
+
+        with_parse_layout(source, Layout::Wikijump, |tree, errors| {
+            assert!(errors.is_empty(), "{errors:?}");
+            let [Element::List { items, .. }] = tree.as_slice() else {
+                panic!("expected Wikijump list, got {tree:?}");
+            };
+            let [ListItem::Elements { elements, .. }] = items.as_slice() else {
+                panic!("expected one Wikijump list item, got {items:?}");
+            };
+            assert!(matches!(
+                elements.as_slice(),
+                [
+                    Element::Container(_),
+                    Element::LineBreak,
+                    Element::Container(_),
+                    ..
+                ]
+            ));
+        });
     }
 
     #[test]

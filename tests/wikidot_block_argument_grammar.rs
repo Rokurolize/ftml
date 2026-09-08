@@ -114,6 +114,14 @@ fn wikidot_missing_user_suffix_remains_inside_the_error_span() {
 }
 
 #[test]
+fn wikidot_anonymous_user_is_literal() {
+    assert_eq!(
+        render_wikidot_with_missing_user("[[user anonymous]] [[USER Anonymous]]"),
+        "<p>Anonymous Anonymous</p>",
+    );
+}
+
+#[test]
 fn wikidot_malformed_attribute_fragments_keep_blocks_and_resynchronize() {
     assert_eq!(
         render_wikidot("[[span bogus=bare class=\"middle\" id=\"last\"]]BODY[[/span]]",),

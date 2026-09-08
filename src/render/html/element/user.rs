@@ -32,6 +32,11 @@ pub fn render_user(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
 }
 
 fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
+    if name.eq_ignore_ascii_case("anonymous") {
+        ctx.push_escaped("Anonymous");
+        return;
+    }
+
     let handle = ctx.handle();
 
     match ctx.user_info(name) {

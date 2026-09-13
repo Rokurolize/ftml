@@ -45,12 +45,28 @@ pub enum ImageSource<'t> {
 #[derive(Serialize, Deserialize, Debug, Hash, Copy, Clone, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub enum ImageSize {
+    Square,
+    Thumbnail,
+    Small,
     Medium,
 }
 
 impl ImageSize {
+    pub(crate) fn parse_wikidot(value: &str) -> Option<Self> {
+        match value {
+            "square" => Some(ImageSize::Square),
+            "thumbnail" => Some(ImageSize::Thumbnail),
+            "small" => Some(ImageSize::Small),
+            "medium" => Some(ImageSize::Medium),
+            _ => None,
+        }
+    }
+
     pub(crate) const fn file_name(self) -> &'static str {
         match self {
+            ImageSize::Square => "square.jpg",
+            ImageSize::Thumbnail => "thumbnail.jpg",
+            ImageSize::Small => "small.jpg",
             ImageSize::Medium => "medium.jpg",
         }
     }

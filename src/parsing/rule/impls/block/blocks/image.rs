@@ -102,13 +102,22 @@ fn parse_fn<'r, 't>(
         })
     };
     let alignment = FloatAlignment::parse(name);
+    let implicit_attachment_size = if parser.settings().layout.legacy() {
+        match arguments.get("size") {
+            Some(value) => ImageSize::parse_wikidot(&value),
+            None if arguments.has_unquoted_key("size") => None,
+            None => Some(ImageSize::Medium),
+        }
+    } else {
+        None
+    };
 
     // Parse the image source based on format
     if is_url(&source) && !source_prefix_is_url {
         return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
     }
     let source = match if parser.settings().layout.legacy() {
-        parse_wikidot_image_source(source)
+        parse_wikidot_image_source(source, implicit_attachment_size)
     } else {
         parse_direct_image_source(source)
     } {
@@ -147,7 +156,10 @@ fn parse_fn<'r, 't>(
     success_elements(element)
 }
 
-fn parse_wikidot_image_source<'t>(source: Cow<'t, str>) -> Option<ImageSource<'t>> {
+fn parse_wikidot_image_source<'t>(
+    source: Cow<'t, str>,
+    implicit_attachment_size: Option<ImageSize>,
+) -> Option<ImageSource<'t>> {
     if source.starts_with("data:") {
         let alt = source
             .rsplit('/')
@@ -250,11 +262,19 @@ fn parse_wikidot_image_source<'t>(source: Cow<'t, str>) -> Option<ImageSource<'t
     match source {
         Cow::Borrowed(source) => {
             let parsed = FileSource::parse_wikidot(source)?;
-            Some(classify_wikidot_image_source(parsed, Cow::Borrowed(source)))
+            Some(classify_wikidot_image_source(
+                parsed,
+                Cow::Borrowed(source),
+                implicit_attachment_size,
+            ))
         }
         Cow::Owned(source) => {
             let parsed = FileSource::parse_wikidot(&source)?.to_owned();
-            Some(classify_wikidot_image_source(parsed, Cow::Owned(source)))
+            Some(classify_wikidot_image_source(
+                parsed,
+                Cow::Owned(source),
+                implicit_attachment_size,
+            ))
         }
     }
 }
@@ -262,13 +282,13 @@ fn parse_wikidot_image_source<'t>(source: Cow<'t, str>) -> Option<ImageSource<'t
 fn classify_wikidot_image_source<'t>(
     source: FileSource<'t>,
     alt: Cow<'t, str>,
+    implicit_attachment_size: Option<ImageSize>,
 ) -> ImageSource<'t> {
     match source {
         FileSource::File1 { file } if !file.starts_with('/') => {
-            ImageSource::ImplicitAttachment {
-                file,
-                alt,
-                size: ImageSize::Medium,
+            match implicit_attachment_size {
+                Some(size) => ImageSource::ImplicitAttachment { file, alt, size },
+                None => ImageSource::Direct(FileSource::File1 { file }),
             }
         }
         source => ImageSource::Direct(source),
@@ -837,6 +857,192 @@ mod tests {
                 "</a>",
             ),
         );
+    }
+
+    #[test]
+    fn wikidot_local_image_size_variants_match_live_resize_boundary() {
+        // Anonymous PagePreview evidence captured 2026-09-13 proves that a
+        // quoted local-image size selects Wikidot's named resize while the
+        // original attachment remains the implicit link target.
+        let mut page_info = PageInfo::dummy();
+        page_info.site = cow!("sandbox-for-codex");
+        page_info.page = cow!("");
+        page_info.category = None;
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for (size, suffix) in [
+            ("square", "square.jpg"),
+            ("thumbnail", "thumbnail.jpg"),
+            ("small", "small.jpg"),
+            ("medium", "medium.jpg"),
+        ] {
+            for name in ["f=image", "=image"] {
+                let source = format!(r#"[[{name} photo.png size="{size}"]]"#);
+                let tokenization = crate::tokenize(&source);
+                let (tree, errors) =
+                    crate::parse(&tokenization, &page_info, &settings).into();
+                let html = crate::render::html::HtmlRender
+                    .render(&tree, &page_info, &settings)
+                    .body;
+
+                assert!(errors.is_empty(), "{source}: {errors:#?}");
+                assert!(
+                    html.contains(&format!("/local--resized-images//photo.png/{suffix}")),
+                    "{source}: {html}",
+                );
+                assert!(
+                    html.contains("href=\"https://sandbox-for-codex.wjfiles.com/local--files//photo.png\""),
+                    "{source}: {html}",
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn wikidot_invalid_empty_and_unquoted_local_image_size_stay_unresized() {
+        // The matching live controls render the current-page file directly:
+        // no resized URL and no implicit original-file link are synthesized.
+        let mut page_info = PageInfo::dummy();
+        page_info.site = cow!("sandbox-for-codex");
+        page_info.page = cow!("");
+        page_info.category = None;
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for size_argument in [r#"size="bogus""#, r#"size="""#, "size=small"] {
+            for name in ["f=image", "=image"] {
+                let source = format!("[[{name} photo.png {size_argument}]]");
+                let tokenization = crate::tokenize(&source);
+                let (tree, errors) =
+                    crate::parse(&tokenization, &page_info, &settings).into();
+                let html = crate::render::html::HtmlRender
+                    .render(&tree, &page_info, &settings)
+                    .body;
+
+                assert!(errors.is_empty(), "{source}: {errors:#?}");
+                assert!(!html.contains("local--resized-images"), "{source}: {html}");
+                assert!(!html.contains("<a "), "{source}: {html}");
+                assert!(
+                    html.contains("src=\"https://sandbox-for-codex.wjfiles.com/local--files//photo.png\""),
+                    "{source}: {html}",
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn wikidot_size_lookalikes_outside_bare_pairs_keep_implicit_resize() {
+        // Only an authored bare `size=` pair is inert. The same text inside a
+        // quoted value or a comment is not an unquoted argument, so the
+        // default implicit medium resize must survive.
+        let mut page_info = PageInfo::dummy();
+        page_info.site = cow!("sandbox-for-codex");
+        page_info.page = cow!("");
+        page_info.category = None;
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+
+        for source in [
+            r#"[[f=image photo.png alt="a size=b"]]"#,
+            "[[f=image photo.png [!-- size=small --]]]",
+        ] {
+            let tokenization = crate::tokenize(source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            let html = crate::render::html::HtmlRender
+                .render(&tree, &page_info, &settings)
+                .body;
+
+            assert!(errors.is_empty(), "{source}: {errors:#?}");
+            assert!(
+                html.contains("/local--resized-images//photo.png/medium.jpg"),
+                "{source}: {html}",
+            );
+        }
+    }
+
+    #[test]
+    fn wikidot_20260913_image_argument_boundaries_match_live() {
+        // Anonymous PagePreview evidence captured in one 30-case batch on
+        // 2026-09-13. This pins the non-size portions of the same M776/M806
+        // boundary so later parser changes cannot silently widen them.
+        for (source, expected_fragment, forbidden_fragment, expect_errors) in [
+            (
+                r#"[[f=image https://example.com/a.png width="200px"]]"#,
+                r#"width="200px""#,
+                "__never__",
+                false,
+            ),
+            (
+                r#"[[f=image https://example.com/a.png width="200"]]"#,
+                r#"width="200""#,
+                "__never__",
+                false,
+            ),
+            (
+                r#"[[f=image https://example.com/a.png width="50%"]]"#,
+                r#"width="50%""#,
+                "__never__",
+                false,
+            ),
+            (
+                r#"[[f=image https://example.com/a.png width=""]]"#,
+                "<img",
+                "width=\"200",
+                false,
+            ),
+            (
+                "[[f=image https://example.com/a.png width=200px]]",
+                "<img",
+                " width=",
+                false,
+            ),
+            (
+                "[[f=image https://example.com/a.png width=200]]",
+                "<img",
+                " width=",
+                false,
+            ),
+            (
+                "[[f<image https://example.com/a.png]]",
+                "image-container floatleft",
+                "__never__",
+                false,
+            ),
+            (
+                "[[f>image https://example.com/a.png]]",
+                "image-container floatright",
+                "__never__",
+                false,
+            ),
+            (
+                "[[ff<image https://example.com/a.png]]",
+                "[[ff&lt;image ",
+                "<img",
+                true,
+            ),
+            (
+                "[[f >image https://example.com/a.png]]",
+                "[[f &gt;image ",
+                "<img",
+                true,
+            ),
+            (
+                "[[= image https://example.com/a.png]]",
+                "[[= image ",
+                "<img",
+                true,
+            ),
+            (
+                "[[== image https://example.com/a.png]]",
+                "[[== image ",
+                "<img",
+                true,
+            ),
+        ] {
+            let (html, errors) = render_image(source, Layout::Wikidot);
+            assert_eq!(!errors.is_empty(), expect_errors, "{source}: {errors:#?}");
+            assert!(html.contains(expected_fragment), "{source}: {html}");
+            assert!(!html.contains(forbidden_fragment), "{source}: {html}");
+        }
     }
 
     #[test]

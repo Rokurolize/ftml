@@ -124,6 +124,7 @@ pub struct Arguments<'t> {
     empty_key_present: bool,
     source_present: bool,
     spaced_equals: bool,
+    unquoted: HashSet<ArgumentKey<'t>>,
 }
 
 impl<'t> Arguments<'t> {
@@ -237,6 +238,22 @@ impl<'t> Arguments<'t> {
     #[inline]
     pub(crate) fn has_source(&self) -> bool {
         self.source_present
+    }
+
+    #[inline]
+    pub(crate) fn mark_unquoted_key(&mut self, key: &'t str) {
+        let key = self.key(key);
+        self.unquoted.insert(key);
+    }
+
+    /// Whether the head authored a bare `key=value` pair outside of quoted
+    /// values and comments. Wikidot's legacy `getAttrs` grammar does not
+    /// surface these pairs, so callers must consult this explicitly when the
+    /// difference between an inert unquoted pair and an absent argument is
+    /// observable.
+    #[inline]
+    pub(crate) fn has_unquoted_key(&self, key: &'t str) -> bool {
+        self.unquoted.contains(&self.key(key))
     }
 
     #[inline]

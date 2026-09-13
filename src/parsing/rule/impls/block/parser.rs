@@ -181,6 +181,7 @@ fn parse_wikidot_attribute_field<'t>(field: &CommentElidedText<'t>) -> Arguments
 
     let first_delimiter = delimiters.first().copied().unwrap_or(source.len());
     let mut key = wikidot_attribute_key(field, &comment_mask, 0..first_delimiter);
+    mark_wikidot_unquoted_keys(&mut arguments, key);
     for (delimiter_index, delimiter) in delimiters.iter().copied().enumerate() {
         let segment_start = delimiter + 2;
         let segment_end = delimiters
@@ -210,12 +211,26 @@ fn parse_wikidot_attribute_field<'t>(field: &CommentElidedText<'t>) -> Arguments
             arguments.insert(key, wikidot_stripslashes(value));
         }
         key = wikidot_attribute_key(field, &comment_mask, next_key_range);
+        mark_wikidot_unquoted_keys(&mut arguments, key);
     }
     if key.starts_with('=') {
         arguments.mark_empty_key_present();
     }
 
     arguments
+}
+
+/// Records bare `key=value` pairs Wikidot's `getAttrs` leaves inert.
+///
+/// The scan runs on the same comment-elided key fragments used for quoted
+/// values, so quoted values and comments cannot manufacture an unquoted pair.
+fn mark_wikidot_unquoted_keys<'t>(arguments: &mut Arguments<'t>, fragment: &'t str) {
+    for token in fragment.split_ascii_whitespace() {
+        let pair = token.split_once('=').filter(|(name, _)| !name.is_empty());
+        if let Some((name, _)) = pair {
+            arguments.mark_unquoted_key(name);
+        }
+    }
 }
 
 fn wikidot_attribute_key<'t>(

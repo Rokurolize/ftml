@@ -61,19 +61,33 @@ fn parse_fn<'r, 't>(
         None
     };
 
-    // Get body content, without paragraphs
+    // Wikidot preserves one ASCII whitespace separator at the start of an
+    // inline anchor body, although the generic text rule treats it as
+    // line-leading whitespace and drops it while consuming the body.
+    let body_source_start = parser.current().span.start;
+    let anchor_body_start = parser
+        .full_text()
+        .inner()
+        .get(..body_source_start)
+        .and_then(|source| source.rfind("]]"))
+        .map(|close| close + 2);
     let body = parser.get_body_elements(&BLOCK_ANCHOR, false)?;
     let (mut elements, errors, paragraph_safe) = body.into();
-    if parser.settings().layout.legacy()
+    let source_has_leading_separator = parser.settings().layout.legacy()
+        && anchor_body_start
+            .and_then(|start| parser.full_text().inner().get(start..))
+            .and_then(|source| source.chars().next())
+            .is_some_and(|ch| matches!(ch, ' ' | '\t'));
+    let leading_separator = source_has_leading_separator;
+    if source_has_leading_separator
         && let Some(Element::Text(text)) = elements.first_mut()
-        && text.starts_with(' ')
+        && text.starts_with([' ', '\t'])
     {
         text.to_mut().remove(0);
         if text.is_empty() {
             elements.remove(0);
         }
     }
-
     if flag_score {
         strip_newlines(&mut elements);
         if parser.settings().layout.legacy()
@@ -91,10 +105,15 @@ fn parse_fn<'r, 't>(
         attributes,
         target,
     };
+    let output = if leading_separator {
+        Elements::Multiple(vec![text!(" "), element])
+    } else {
+        Elements::Single(element)
+    };
 
     success_elements_with_paragraph_safety(
         paragraph_safe || (flag_score && parser.settings().layout.legacy()),
-        element,
+        output,
         errors,
     )
 }
@@ -125,6 +144,57 @@ mod tests {
             render(r#"[[a href="some-page"]]click[[/a]]"#),
             r#"<p><a href="some-page">click</a></p>"#,
         );
+    }
+
+    #[test]
+    fn wikidot_anchor_preserves_authored_boundary_whitespace() {
+        let cases = [
+            (
+                "leading space inside second anchor",
+                "[[a]]one[[/a]][[a]] two[[/a]]",
+                "<p><a href>one</a> <a href>two</a></p>",
+            ),
+            (
+                "repeated leading spaces collapse once",
+                "[[a]]  two[[/a]]",
+                "<p> <a href>two</a></p>",
+            ),
+            (
+                "trailing space inside first anchor",
+                "[[a]]one [[/a]][[a]]two[[/a]]",
+                "<p><a href>one </a><a href>two</a></p>",
+            ),
+            (
+                "space between anchors",
+                "[[a]]one[[/a]] [[a]]two[[/a]]",
+                "<p><a href>one</a> <a href>two</a></p>",
+            ),
+            (
+                "truly adjacent anchors",
+                "[[a]]one[[/a]][[a]]two[[/a]]",
+                "<p><a href>one</a><a href>two</a></p>",
+            ),
+            (
+                "nested formatting after leading space",
+                "[[a]] **two**[[/a]]",
+                "<p> <a href><strong>two</strong></a></p>",
+            ),
+            (
+                "CJK label after leading space",
+                "[[a]] 日本語[[/a]]",
+                "<p> <a href>日本語</a></p>",
+            ),
+            (
+                "nonbreaking space",
+                "[[a]]\u{a0}two[[/a]]",
+                "<p><a href>\u{a0}two</a></p>",
+            ),
+            ("tab", "[[a]]\ttwo[[/a]]", "<p> <a href>two</a></p>"),
+        ];
+
+        for (case, source, expected) in cases {
+            assert_eq!(render(source), expected, "{case}");
+        }
     }
 
     #[test]

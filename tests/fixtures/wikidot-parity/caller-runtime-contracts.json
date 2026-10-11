@@ -39,15 +39,6 @@
       ]
     },
     {
-      "id": "image-file-context",
-      "wikijump_test": "services::render::service::tests::wikidot_compatibility_fallback_renders_tabs_size_and_page_images",
-      "cases": [
-        "test--image--basic",
-        "test--image--fail",
-        "tests--fixtures--parity-gaps--image-source-local-control"
-      ]
-    },
-    {
       "id": "page-existence",
       "wikijump_test": "services::render::service::tests::fallback_page_links_mark_only_resolved_missing_targets_as_newpage",
       "cases": [

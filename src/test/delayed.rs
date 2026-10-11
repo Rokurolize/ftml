@@ -869,21 +869,43 @@ fn page_slot_recovers_image_owner_while_tag_slot_stays_attribute_text() {
 
 #[test]
 fn generated_image_attributes_preserve_implicit_attachment_disposition() {
+    // The generated attribute must not change the file-type disposition that
+    // anonymous Wikidot PagePreview shows for the same authored attribute
+    // (2026-10-11): `.jpeg` keeps the linked medium resize, `.png` stays the
+    // original attachment.
+    assert_eq!(
+        render_tag(r#"[[=image photo.jpeg alt="%%tags_linked%%"]]"#),
+        concat!(
+            "<div class=\"image-container aligncenter\">",
+            "<a href=\"https://sandbox.wjfiles.com/local--files/some-page/photo.jpeg\">",
+            "<img src=\"https://sandbox.wjfiles.com/local--resized-images/some-page/photo.jpeg/medium.jpg\" ",
+            "class=\"image\" alt=\"[/system:page-tags/tag/component component]\">",
+            "</a></div>",
+        ),
+    );
+    assert_eq!(
+        render_tag(r#"[[image photo.jpeg link="%%tags_linked%%"]]"#),
+        concat!(
+            "<a href=\"/[/system:page-tags/tag/component%20component]\">",
+            "<img src=\"https://sandbox.wjfiles.com/local--resized-images/some-page/photo.jpeg/medium.jpg\" ",
+            "class=\"image\" alt=\"photo.jpeg\">",
+            "</a>",
+        ),
+    );
     assert_eq!(
         render_tag(r#"[[=image photo.png alt="%%tags_linked%%"]]"#),
         concat!(
             "<div class=\"image-container aligncenter\">",
-            "<a href=\"https://sandbox.wjfiles.com/local--files/some-page/photo.png\">",
-            "<img src=\"https://sandbox.wjfiles.com/local--resized-images/some-page/photo.png/medium.jpg\" ",
+            "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/photo.png\" ",
             "class=\"image\" alt=\"[/system:page-tags/tag/component component]\">",
-            "</a></div>",
+            "</div>",
         ),
     );
     assert_eq!(
         render_tag(r#"[[image photo.png link="%%tags_linked%%"]]"#),
         concat!(
             "<a href=\"/[/system:page-tags/tag/component%20component]\">",
-            "<img src=\"https://sandbox.wjfiles.com/local--resized-images/some-page/photo.png/medium.jpg\" ",
+            "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/photo.png\" ",
             "class=\"image\" alt=\"photo.png\">",
             "</a>",
         ),

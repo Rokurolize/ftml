@@ -1,0 +1,375 @@
+{
+  "schema": "ftml.wikidot_image_attachment_default_observations.v1",
+  "observed_at": "2026-10-11",
+  "acquisition": {
+    "module": "edit/PagePreviewModule",
+    "mode": "page",
+    "site": "scp-wiki",
+    "authenticated": false,
+    "mutated": false,
+    "page_context": "none (empty page)"
+  },
+  "corpus_corroboration": "Saved-page HTML (XML-RPC pages.get_one) of the shared EN corpus: 10,635 bare local [[image]] references without size ending in png/jpg/gif (any case) render the plain original; 346 ending in jpeg/webp/svg/pdf/other render the linked medium.jpg resize.",
+  "observations": [
+    {
+      "source": "[[image Hachiro.png]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//Hachiro.png",
+      "alt": "Hachiro.png",
+      "body_sha256": "12de72288e639dc6d594aa0960362e159814a86bea81b284e76428574576db89"
+    },
+    {
+      "source": "[[image Hachiro.PNG]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//Hachiro.PNG",
+      "alt": "Hachiro.PNG",
+      "body_sha256": "6e58634eb80e25aa860e1631e877369bd3b0be728214a232e0c0386a8094e6bf"
+    },
+    {
+      "source": "[[image nope.png]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//nope.png",
+      "alt": "nope.png",
+      "body_sha256": "77fd8033d16534c672fec59b8ec922391cbcceba80136d54ccf59f165d1ff5e9"
+    },
+    {
+      "source": "[[image nope.jpg]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//nope.jpg",
+      "alt": "nope.jpg",
+      "body_sha256": "5dd0b64ba76d921b543421eb456becfbf8627e3ef56d7c29fe3a2abc12d417ba"
+    },
+    {
+      "source": "[[image nope.gif]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//nope.gif",
+      "alt": "nope.gif",
+      "body_sha256": "6dacc04ff08b1bc843d9c60f39930ef8795e40f047c08cda7cf8b8c7969bbc85"
+    },
+    {
+      "source": "[[image nope.jpeg]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//nope.jpeg",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//nope.jpeg/medium.jpg",
+      "alt": "nope.jpeg",
+      "body_sha256": "1e52fbdc53e3351acf624c3c279f853016ef3a161265c0bcae8b85bec0d3da6a"
+    },
+    {
+      "source": "[[image nope.webp]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//nope.webp",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//nope.webp/medium.jpg",
+      "alt": "nope.webp",
+      "body_sha256": "b727d24675adbcda1bd7a33e300c4bd0fed28197bc5a690673488f23aa8cc14e"
+    },
+    {
+      "source": "[[image nope.svg]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//nope.svg",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//nope.svg/medium.jpg",
+      "alt": "nope.svg",
+      "body_sha256": "6c71048e92d9f98249c8103e3d0b591fc91129e3b76a5f112fcb421f84973f89"
+    },
+    {
+      "source": "[[image nope.pdf]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//nope.pdf",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//nope.pdf/medium.jpg",
+      "alt": "nope.pdf",
+      "body_sha256": "10b009e735963e66d0a4008ef35e1f0c95ab16de6591fae18e84e9750059332d"
+    },
+    {
+      "source": "[[image nope.JPG]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//nope.JPG",
+      "alt": "nope.JPG",
+      "body_sha256": "a3ed93f914ba206d56db6e967d963a51c193af9a4f6f020aceceb041731a52c6"
+    },
+    {
+      "source": "[[image scp-9506/x.jpeg]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files/scp-9506/x.jpeg",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images/scp-9506/x.jpeg/medium.jpg",
+      "alt": "x.jpeg",
+      "body_sha256": "62506317f2566c453a5c0cbaada1fa187aa5ed57dd0a2cd9bbe2ab32ceba9e94"
+    },
+    {
+      "source": "[[image scp-9506/x.png]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files/scp-9506/x.png",
+      "alt": "x.png",
+      "body_sha256": "fdd6f0d4d3881bb7074ca82800af90e43061c29efbbf2705f0e7488a9e9dedac"
+    },
+    {
+      "source": "[[image x.png size=\"medium\"]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//x.png",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//x.png/medium.jpg",
+      "alt": "x.png",
+      "body_sha256": "c8bafbc1bd91782669429c801e730286008a14d5adcf25cefa7a9b2de786163d"
+    },
+    {
+      "source": "[[image x.png size=\"original\"]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//x.png",
+      "alt": "x.png",
+      "body_sha256": "ffc006cda8362736f71f335b84494988994a44ddfd486f5f1b5f4ee702fe9218"
+    },
+    {
+      "source": "[[image x.jpeg size=\"original\"]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//x.jpeg",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//x.jpeg/medium.jpg",
+      "alt": "x.jpeg",
+      "body_sha256": "b50614bb5464775a062a26d2eccd4977352b658be62a2be733bfc681fabfad89"
+    },
+    {
+      "source": "[[image x.PnG]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//x.PnG",
+      "alt": "x.PnG",
+      "body_sha256": "acd2867cab033671e3e916b8ee25b5b73d24c89ee99c0bb00ad90c4f9c9e45c4"
+    },
+    {
+      "source": "[[image x.png?v=1]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//x.png?v=1",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//x.png?v=1/medium.jpg",
+      "alt": "x.png?v=1",
+      "body_sha256": "c56dee6730fcb45525fe51173a5003c97e1aed71ab2743320ba89c23168f4177"
+    },
+    {
+      "source": "[[image noext]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//noext",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//noext/medium.jpg",
+      "alt": "noext",
+      "body_sha256": "d150b5acfaa8db3e5c2aa91b11c68890f5d34931ad9839ebb4d34d25140c22fa"
+    },
+    {
+      "source": "[[image x.jpg.jpeg]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//x.jpg.jpeg",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//x.jpg.jpeg/medium.jpg",
+      "alt": "x.jpg.jpeg",
+      "body_sha256": "29ea48c46e7c57e2b73751552c7d44c6473022a7a96952fad2298aa52e72c785"
+    },
+    {
+      "source": "[[image x.jpeg.png]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//x.jpeg.png",
+      "alt": "x.jpeg.png",
+      "body_sha256": "ab246751ffda114206f16cdfee2c944d446fb7234d6f0835c6946fdb7dec0eaa"
+    },
+    {
+      "source": "[[image .png]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//.png",
+      "alt": ".png",
+      "body_sha256": "24a7927a3afd6f9b2b1912030793222d37db07725146ceac7f8f9e22b64a9920"
+    },
+    {
+      "source": "[[image x.bmp]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//x.bmp",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//x.bmp/medium.jpg",
+      "alt": "x.bmp",
+      "body_sha256": "3d12ae2ebf4aadd502a0096fc8e09a79b8b0940b469964c34098c2b1723c3161"
+    },
+    {
+      "source": "[[image x.tiff]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//x.tiff",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//x.tiff/medium.jpg",
+      "alt": "x.tiff",
+      "body_sha256": "dd489fa6d684d5e90f455857a5600b5a62ea8d9bf38f01a94a2911324e9b912b"
+    },
+    {
+      "source": "[[image x.ico]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//x.ico",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//x.ico/medium.jpg",
+      "alt": "x.ico",
+      "body_sha256": "6ec03ce85fede0bebc8025f84013197754d36716dc69ccda294bcb26e3d4b770"
+    },
+    {
+      "source": "[[=image x.webp]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//x.webp",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//x.webp/medium.jpg",
+      "alt": "x.webp",
+      "body_sha256": "dce2f7abf5800f522b3b5ae58c1a1dd63d9ea8c1dc6c29471a6b9edb4aef4727"
+    },
+    {
+      "source": "[[f>image x.gif]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//x.gif",
+      "alt": "x.gif",
+      "body_sha256": "25272042daebb27ad1137984058c057e4cd89ff5ba4fbfd32f15c05a23449045"
+    },
+    {
+      "source": "[[image x.png link=\"scp-173\"]]",
+      "page_context": "none",
+      "anchor_href": "/scp-173",
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//x.png",
+      "alt": "x.png",
+      "body_sha256": "28ace99888b133305fe7b36893788a6975f97917123a5b429c2cd6351f299761"
+    },
+    {
+      "source": "[[image x.jpeg alt=\"a\"]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//x.jpeg",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//x.jpeg/medium.jpg",
+      "alt": "a",
+      "body_sha256": "438220c6af0d41bd269979dd8d94dd4706c4e006afd50f671a0f0c09e9876e91"
+    },
+    {
+      "source": "[[image x.jpg width=\"10\"]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//x.jpg",
+      "alt": "x.jpg",
+      "body_sha256": "c529648265ed7b3a8f72061c541d9d5183acd6785e28dea9cf064ac6057e2d86"
+    },
+    {
+      "source": "[[image x.jpe]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//x.jpe",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//x.jpe/medium.jpg",
+      "alt": "x.jpe",
+      "body_sha256": "f4fbea9d0c1b9285e4ed4e089e670c9d9c6132162bd9d9b62cca268db53c8046"
+    },
+    {
+      "source": "[[image x.apng]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//x.apng",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//x.apng/medium.jpg",
+      "alt": "x.apng",
+      "body_sha256": "fb93eefffe2df8996f09a59295be70fffd7f427a4cf4a77d6eaea2cc9e11a9fc"
+    },
+    {
+      "source": "[[image x.avif]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//x.avif",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//x.avif/medium.jpg",
+      "alt": "x.avif",
+      "body_sha256": "ab4add3cb057ea30b7a6daf565632093337e33a13d4f5039c9b48ba55392d2d3"
+    },
+    {
+      "source": "[[image x.png ]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//x.png",
+      "alt": "x.png",
+      "body_sha256": "ffc006cda8362736f71f335b84494988994a44ddfd486f5f1b5f4ee702fe9218"
+    },
+    {
+      "source": "[[image x.png size=\"\"]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//x.png",
+      "alt": "x.png",
+      "body_sha256": "ffc006cda8362736f71f335b84494988994a44ddfd486f5f1b5f4ee702fe9218"
+    },
+    {
+      "source": "[[f=image photo.png alt=\"a size=b\"]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//photo.png",
+      "alt": "a size=b",
+      "body_sha256": "20281f32cab72c6a7c9a28fa2aa8c1cfdda4fe15a369a8823077f10f0bad025b"
+    },
+    {
+      "source": "[[f=image photo.png [!-- size=small --]]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//photo.png",
+      "alt": "photo.png",
+      "body_sha256": "67e6f0d026bf7b176c89e9f2d2c6afae78b40c7684a3c70b832c5acd4827e288"
+    },
+    {
+      "source": "[[f=image photo.png]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//photo.png",
+      "alt": "photo.png",
+      "body_sha256": "67e6f0d026bf7b176c89e9f2d2c6afae78b40c7684a3c70b832c5acd4827e288"
+    },
+    {
+      "source": "[[=image photo.png]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//photo.png",
+      "alt": "photo.png",
+      "body_sha256": "43e3a73ecc2d5ee1b3cdcc805932c886309acd323a6f2708b529c9cdb3e32e23"
+    },
+    {
+      "source": "[[image photo.png alt=\"a size=b\"]]",
+      "page_context": "none",
+      "anchor_href": null,
+      "img_src": "https://scp-wiki.wdfiles.com/local--files//photo.png",
+      "alt": "a size=b",
+      "body_sha256": "95c74282317c649ad0f0d6f9393cdc7657c9a4f9951e4d74e72cbd936e244d8a"
+    },
+    {
+      "source": "[[f=image photo.jpeg]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//photo.jpeg",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//photo.jpeg/medium.jpg",
+      "alt": "photo.jpeg",
+      "body_sha256": "c30aa03594ee5b4e58e1afd454976d1b29f25b01e47663668a98776e7c833154"
+    },
+    {
+      "source": "[[f=image photo.png size=\"small\"]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//photo.png",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//photo.png/small.jpg",
+      "alt": "photo.png",
+      "body_sha256": "ce848e4c20a89a79bfa3b7e211d9e3cc170af729fddefaf043202f111db72f1e"
+    },
+    {
+      "source": "[[image photo.jpeg size=\"small\"]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//photo.jpeg",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//photo.jpeg/small.jpg",
+      "alt": "photo.jpeg",
+      "body_sha256": "6c8467c08783eb1a6cd7417761b0cdf34887cdbc8ee842c6aa5ecae1a42e7a06"
+    },
+    {
+      "source": "[[image photo.jpeg size=\"bogus\"]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//photo.jpeg",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//photo.jpeg/medium.jpg",
+      "alt": "photo.jpeg",
+      "body_sha256": "ad1cc0d82f41ebcdf1d14e15098579ab199ac8faa22bcb6564eea32d6a88e33c"
+    },
+    {
+      "source": "[[image photo.jpeg size=\"\"]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//photo.jpeg",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//photo.jpeg/medium.jpg",
+      "alt": "photo.jpeg",
+      "body_sha256": "ad1cc0d82f41ebcdf1d14e15098579ab199ac8faa22bcb6564eea32d6a88e33c"
+    },
+    {
+      "source": "[[image photo.jpeg size=small]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files//photo.jpeg",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//photo.jpeg/medium.jpg",
+      "alt": "photo.jpeg",
+      "body_sha256": "ad1cc0d82f41ebcdf1d14e15098579ab199ac8faa22bcb6564eea32d6a88e33c"
+    }
+  ]
+}

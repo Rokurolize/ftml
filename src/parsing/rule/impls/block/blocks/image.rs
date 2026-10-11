@@ -102,12 +102,13 @@ fn parse_fn<'r, 't>(
         })
     };
     let alignment = FloatAlignment::parse(name);
-    let implicit_attachment_size = if parser.settings().layout.legacy() {
-        match arguments.get("size") {
-            Some(value) => ImageSize::parse_wikidot(&value),
-            None if arguments.has_unquoted_key("size") => None,
-            None => Some(ImageSize::Medium),
-        }
+    // Only a quoted, recognized size name selects a resize explicitly. An
+    // absent, unquoted, empty, or unknown size (including "original") falls
+    // back to the file-type default in `classify_wikidot_image_source`.
+    let explicit_attachment_size = if parser.settings().layout.legacy() {
+        arguments
+            .get("size")
+            .and_then(|value| ImageSize::parse_wikidot(&value))
     } else {
         None
     };
@@ -117,7 +118,7 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
     }
     let source = match if parser.settings().layout.legacy() {
-        parse_wikidot_image_source(source, implicit_attachment_size)
+        parse_wikidot_image_source(source, explicit_attachment_size)
     } else {
         parse_direct_image_source(source)
     } {
@@ -158,7 +159,7 @@ fn parse_fn<'r, 't>(
 
 fn parse_wikidot_image_source<'t>(
     source: Cow<'t, str>,
-    implicit_attachment_size: Option<ImageSize>,
+    explicit_attachment_size: Option<ImageSize>,
 ) -> Option<ImageSource<'t>> {
     if source.starts_with("data:") {
         let alt = source
@@ -265,7 +266,7 @@ fn parse_wikidot_image_source<'t>(
             Some(classify_wikidot_image_source(
                 parsed,
                 Cow::Borrowed(source),
-                implicit_attachment_size,
+                explicit_attachment_size,
             ))
         }
         Cow::Owned(source) => {
@@ -273,7 +274,7 @@ fn parse_wikidot_image_source<'t>(
             Some(classify_wikidot_image_source(
                 parsed,
                 Cow::Owned(source),
-                implicit_attachment_size,
+                explicit_attachment_size,
             ))
         }
     }
@@ -282,17 +283,35 @@ fn parse_wikidot_image_source<'t>(
 fn classify_wikidot_image_source<'t>(
     source: FileSource<'t>,
     alt: Cow<'t, str>,
-    implicit_attachment_size: Option<ImageSize>,
+    explicit_attachment_size: Option<ImageSize>,
 ) -> ImageSource<'t> {
     match source {
         FileSource::File1 { file } if !file.starts_with('/') => {
-            match implicit_attachment_size {
+            let size = explicit_attachment_size
+                .or_else(|| default_wikidot_attachment_size(&file));
+            match size {
                 Some(size) => ImageSource::ImplicitAttachment { file, alt, size },
                 None => ImageSource::Direct(FileSource::File1 { file }),
             }
         }
         source => ImageSource::Direct(source),
     }
+}
+
+/// Wikidot shows a current-page attachment without an explicit size directly
+/// only when its name ends in `.png`, `.jpg`, or `.gif` (ASCII
+/// case-insensitive). Every other name renders the medium resize linked to the
+/// original attachment. This holds for previews and saved pages alike, whether
+/// or not the attachment exists.
+fn default_wikidot_attachment_size(file: &str) -> Option<ImageSize> {
+    const ORIGINAL_DISPLAY_EXTENSIONS: [&str; 3] = ["png", "jpg", "gif"];
+
+    let displays_original = file.rsplit_once('.').is_some_and(|(_, extension)| {
+        ORIGINAL_DISPLAY_EXTENSIONS
+            .iter()
+            .any(|original| extension.eq_ignore_ascii_case(original))
+    });
+    (!displays_original).then_some(ImageSize::Medium)
 }
 
 fn parse_direct_image_source<'t>(source: Cow<'t, str>) -> Option<ImageSource<'t>> {
@@ -930,10 +949,10 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_size_lookalikes_outside_bare_pairs_keep_implicit_resize() {
-        // Only an authored bare `size=` pair is inert. The same text inside a
-        // quoted value or a comment is not an unquoted argument, so the
-        // default implicit medium resize must survive.
+    fn wikidot_size_lookalikes_outside_bare_pairs_keep_file_type_default() {
+        // Anonymous Wikidot PagePreview (2026-10-11): `size=` text inside a
+        // quoted value or a comment is not a size argument, so the file-type
+        // default applies. For `.png` that is the original attachment.
         let mut page_info = PageInfo::dummy();
         page_info.site = cow!("sandbox-for-codex");
         page_info.page = cow!("");
@@ -952,8 +971,11 @@ mod tests {
                 .body;
 
             assert!(errors.is_empty(), "{source}: {errors:#?}");
+            assert!(!html.contains("local--resized-images"), "{source}: {html}");
             assert!(
-                html.contains("/local--resized-images//photo.png/medium.jpg"),
+                html.contains(
+                    "src=\"https://sandbox-for-codex.wjfiles.com/local--files//photo.png\""
+                ),
                 "{source}: {html}",
             );
         }
@@ -1112,6 +1134,26 @@ mod tests {
 
     #[test]
     fn wikidot_explicit_image_link_overrides_implicit_attachment_link() {
+        // Anonymous Wikidot PagePreview (2026-10-11): an explicit link wraps
+        // the file-type default display. `.jpeg` keeps the medium resize but
+        // loses the implicit original-file link; `.png` shows the original.
+        let (html, errors) = render_image(
+            r#"[[image photo.jpeg link="Target Page"]]"#,
+            Layout::Wikidot,
+        );
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            concat!(
+                r#"<a href="/Target%20Page">"#,
+                r#"<img src="https://sandbox.wjfiles.com/local--resized-images/some-page/photo.jpeg/medium.jpg" class="image" alt="photo.jpeg">"#,
+                "</a>",
+            ),
+        );
+        assert_eq!(html.matches("<a ").count(), 1);
+        assert!(!html.contains("local--files/some-page/photo.jpeg"));
+
         let (html, errors) =
             render_image(r#"[[image photo.png link="Target Page"]]"#, Layout::Wikidot);
 
@@ -1120,12 +1162,10 @@ mod tests {
             html,
             concat!(
                 r#"<a href="/Target%20Page">"#,
-                r#"<img src="https://sandbox.wjfiles.com/local--resized-images/some-page/photo.png/medium.jpg" class="image" alt="photo.png">"#,
+                r#"<img src="https://sandbox.wjfiles.com/local--files/some-page/photo.png" class="image" alt="photo.png">"#,
                 "</a>",
             ),
         );
-        assert_eq!(html.matches("<a ").count(), 1);
-        assert!(!html.contains("local--files/some-page/photo.png"));
     }
 
     #[test]
@@ -1290,9 +1330,8 @@ mod tests {
         assert_eq!(
             html,
             concat!(
-                "\n\nBASIC <a href=\"https://sandbox.wjfiles.com/local--files/some-page/filename.png\">",
-                "<img src=\"https://sandbox.wjfiles.com/local--resized-images/some-page/filename.png/medium.jpg\" class=\"image\" alt=\"filename.png\">",
-                "</a> <p>LEFT</p>",
+                "\n\nBASIC <img src=\"https://sandbox.wjfiles.com/local--files/some-page/filename.png\" class=\"image\" alt=\"filename.png\">",
+                " <p>LEFT</p>",
             ),
         );
     }
@@ -1364,9 +1403,7 @@ mod tests {
             concat!(
                 "<p>FLOAT CENTER</p>",
                 "<div class=\"image-container\">",
-                "<a href=\"https://sandbox-for-codex.wjfiles.com/local--files/some-page/landscape.jpg\">",
-                "<img src=\"https://sandbox-for-codex.wjfiles.com/local--resized-images/some-page/landscape.jpg/medium.jpg\" class=\"image\" alt=\"landscape.jpg\">",
-                "</a>",
+                "<img src=\"https://sandbox-for-codex.wjfiles.com/local--files/some-page/landscape.jpg\" class=\"image\" alt=\"landscape.jpg\">",
                 "</div>",
             ),
         );

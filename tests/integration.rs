@@ -193,3 +193,6 @@ mod parity_branch_coverage;
 
 #[path = "parity_discovery_regressions.rs"]
 mod parity_discovery_regressions;
+
+#[path = "wikidot_image_attachment_default.rs"]
+mod wikidot_image_attachment_default;

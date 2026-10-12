@@ -542,6 +542,74 @@ fn automatic_links_do_not_steal_structural_or_literal_owners() {
 }
 
 #[test]
+fn wikidot_email_stops_at_its_last_domain_label() {
+    // Expected output follows anonymous Wikidot edit/PagePreviewModule
+    // renders of the same sources (2026-10-13).
+    let email = |local: &str, domain: &str| {
+        let reversed = |part: &str| part.chars().rev().collect::<String>();
+        let obfuscated = format!("{}|{}", reversed(domain), reversed(local));
+        format!("<span class=\"wiki-email\">{obfuscated}#{obfuscated}</span>")
+    };
+    let cases = [
+        (
+            "email a@b.gov.",
+            format!("<p>email {}.</p>", email("a", "b.gov")),
+        ),
+        (
+            "x a@b.gov.. y",
+            format!("<p>x {}.. y</p>", email("a", "b.gov")),
+        ),
+        (
+            "x a@b.gov, y",
+            format!("<p>x {}, y</p>", email("a", "b.gov")),
+        ),
+        (
+            "x (a@b.gov) y",
+            format!("<p>x ({}) y</p>", email("a", "b.gov")),
+        ),
+        (
+            "x a@b.gov/y z",
+            format!("<p>x {}/y z</p>", email("a", "b.gov")),
+        ),
+        (
+            "x a@b.c.gov. y",
+            format!("<p>x {}. y</p>", email("a", "b.c.gov")),
+        ),
+        (
+            "x a@b.gov- y",
+            format!("<p>x {} y</p>", email("a", "b.gov-")),
+        ),
+        (
+            "x a_b@c.gov y",
+            format!("<p>x {} y</p>", email("a_b", "c.gov")),
+        ),
+        (
+            "x a.b@c.gov y",
+            format!("<p>x {} y</p>", email("a.b", "c.gov")),
+        ),
+        (
+            "x a+b@c.gov y",
+            format!("<p>x a+{} y</p>", email("b", "c.gov")),
+        ),
+        (
+            "x a..b@c.gov y",
+            format!("<p>x a..{} y</p>", email("b", "c.gov")),
+        ),
+        (
+            "x a%b@c.gov y",
+            format!("<p>x a%{} y</p>", email("b", "c.gov")),
+        ),
+        ("x a@b_c.gov y", String::from("<p>x a@b_c.gov y</p>")),
+        ("x a@b. y", String::from("<p>x a@b. y</p>")),
+        ("x a@日本.gov y", String::from("<p>x a@日本.gov y</p>")),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(render(source), expected, "{source}");
+    }
+}
+
+#[test]
 fn wikidot_email_and_mailto_have_distinct_authority() {
     assert_eq!(
         render("support@wikidot.com"),

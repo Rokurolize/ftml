@@ -377,88 +377,44 @@ fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
         _ => {}
     }
 
-    // Angle brackets terminate an unquoted email address and also delimit raw
-    // spans. Letting an email candidate cross either one can hide raw markers.
-    let mut at = identifier_end;
-    while at < bytes.len()
-        && !matches!(
-            bytes[at],
-            b' ' | b'\t'
-                | b'%'
-                | b'@'
-                | b'['
-                | b']'
-                | b'{'
-                | b'}'
-                | b'<'
-                | b'>'
-                | b'|'
-                | b'('
-                | b')'
-                | b'"'
-                | b':'
-                | b'\n'
-                | b'\r'
-        )
-        && !is_discarded_control(bytes[at])
-    {
-        at += 1;
+    // Wikidot recognizes `word(.word)*@label(.label)+`, where a local word is
+    // ASCII alphanumeric, `_`, or `-`, and a domain label is ASCII
+    // alphanumeric or `-`. Anything else, including trailing sentence
+    // punctuation such as the period in `a@b.gov.`, stays outside.
+    let local_end = scan_email_dotted(bytes, start, is_email_local_byte);
+    if bytes.get(local_end) != Some(&b'@') {
+        return (Token::Identifier, identifier_end);
     }
-    if at == start || bytes.get(at) != Some(&b'@') {
+    let domain_start = local_end + 1;
+    let domain_end = scan_email_dotted(bytes, domain_start, is_email_label_byte);
+    let has_second_label = bytes[domain_start..domain_end].contains(&b'.');
+    if domain_end == domain_start || !has_second_label {
         return (Token::Identifier, identifier_end);
     }
 
-    let mut dot = at + 1;
-    while dot < bytes.len()
-        && !matches!(
-            bytes[dot],
-            b' ' | b'\t'
-                | b'.'
-                | b'@'
-                | b'['
-                | b']'
-                | b'{'
-                | b'}'
-                | b'<'
-                | b'>'
-                | b'|'
-                | b'\n'
-                | b'\r'
-        )
-        && !is_discarded_control(bytes[dot])
-    {
-        dot += 1;
-    }
-    if dot == at + 1 || bytes.get(dot) != Some(&b'.') {
-        return (Token::Identifier, identifier_end);
-    }
+    (Token::Email, domain_end)
+}
 
-    let mut end = dot + 1;
-    while end < bytes.len()
-        && !matches!(
-            bytes[end],
-            b' ' | b'\t'
-                | b'@'
-                | b'['
-                | b']'
-                | b'{'
-                | b'}'
-                | b'<'
-                | b'>'
-                | b'|'
-                | b'\n'
-                | b'\r'
-        )
-        && !is_discarded_control(bytes[end])
-    {
+fn is_email_local_byte(byte: u8) -> bool {
+    byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-')
+}
+
+fn is_email_label_byte(byte: u8) -> bool {
+    byte.is_ascii_alphanumeric() || byte == b'-'
+}
+
+/// Scans `part(.part)*` from `start`, stopping before a `.` that does not
+/// begin another non-empty part.
+fn scan_email_dotted(bytes: &[u8], start: usize, part: fn(u8) -> bool) -> usize {
+    let mut end = start;
+    while bytes.get(end).copied().is_some_and(part) {
         end += 1;
+        if bytes.get(end) == Some(&b'.') && bytes.get(end + 1).copied().is_some_and(part)
+        {
+            end += 1;
+        }
     }
-
-    if end > dot + 1 {
-        (Token::Email, end)
-    } else {
-        (Token::Identifier, identifier_end)
-    }
+    end
 }
 
 fn scan_identifier(bytes: &[u8], start: usize) -> usize {

@@ -264,6 +264,49 @@ mod tests {
         );
     }
 
+    struct HttpsAvatarUser;
+
+    impl UserInfoResolver for HttpsAvatarUser {
+        fn user_info(&self, name: &str) -> Option<UserInfo<'static>> {
+            CanonicalUser.user_info(name).map(|mut info| {
+                info.user_avatar_data = cow!(
+                    "https://www.wikidot.com/avatar.php?userid=42&amp;size=small&amp;timestamp=1791147832"
+                );
+                info
+            })
+        }
+    }
+
+    #[test]
+    fn wikidot_avatar_karma_image_follows_the_avatar_base() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tree = SyntaxTree {
+            elements: vec![Element::User {
+                name: cow!("SYSTEM"),
+                show_avatar: true,
+            }],
+            ..SyntaxTree::default()
+        };
+
+        let output = HtmlRender.render_with_resolvers(
+            &tree,
+            &page_info,
+            &settings,
+            &Handle,
+            &HttpsAvatarUser,
+        );
+
+        assert!(
+            output.body.contains(concat!(
+                r#"src="https://www.wikidot.com/avatar.php?userid=42&amp;amp;size=small&amp;amp;timestamp=1791147832" "#,
+                r#"alt="system" style="background-image:url(https://www.wikidot.com/userkarma.php?u=42)""#,
+            )),
+            "{}",
+            output.body,
+        );
+    }
+
     #[test]
     fn page_language_localizes_default_footnote_heading() {
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);

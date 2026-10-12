@@ -54,7 +54,9 @@ fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
                 user_info.user_id,
             );
             let wikidot_karma_style = format!(
-                "background-image:url(http://www.wikidot.com/userkarma.php?u={})",
+                "background-image:url({}/userkarma.php?u={})",
+                wikidot_avatar_base(&user_info.user_avatar_data)
+                    .unwrap_or(DEFAULT_WIKIDOT_AVATAR_BASE),
                 user_info.user_id,
             );
 
@@ -191,6 +193,32 @@ fn render_user_wikijump(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
         });
 }
 
+/// The avatar base used when the resolver supplies no Wikidot avatar URL.
+const DEFAULT_WIKIDOT_AVATAR_BASE: &str = "http://www.wikidot.com";
+
+/// Return the `scheme://host` base of a Wikidot `avatar.php` URL.
+///
+/// Wikidot serves the avatar image and the karma badge of one user from the
+/// same avatar base (the `%%%URL_AVATARS%%%` placeholder in its compiled
+/// HTML), so the karma badge follows the scheme and host the resolver chose
+/// for the avatar.
+fn wikidot_avatar_base(avatar_src: &str) -> Option<&str> {
+    let scheme_len = ["https://", "http://"]
+        .iter()
+        .find(|scheme| avatar_src.starts_with(**scheme))?
+        .len();
+    let host_len = avatar_src[scheme_len..]
+        .find('/')
+        .unwrap_or(avatar_src.len() - scheme_len);
+    let host = &avatar_src[scheme_len..scheme_len + host_len];
+    let base = &avatar_src[..scheme_len + host_len];
+    let valid_host = !host.is_empty()
+        && host.bytes().all(|byte| {
+            byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'-' | b':')
+        });
+    (valid_host && avatar_src[base.len()..].starts_with("/avatar.php?")).then_some(base)
+}
+
 fn normalize_user_avatar_src(src: &str) -> Cow<'_, str> {
     if is_safe_image_data_uri(src) {
         Cow::Borrowed(src)
@@ -228,7 +256,7 @@ fn is_safe_image_data_uri(src: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{is_safe_image_data_uri, normalize_user_avatar_src};
+    use super::{is_safe_image_data_uri, normalize_user_avatar_src, wikidot_avatar_base};
     use crate::url::normalize_href;
 
     #[test]
@@ -256,5 +284,29 @@ mod tests {
             "data:image/webp;base64,AAAA\r\nBBBB=="
         ));
         assert!(!is_safe_image_data_uri("data:image/png;base64,<>"));
+    }
+
+    #[test]
+    fn wikidot_avatar_base_requires_a_wikidot_avatar_url() {
+        assert_eq!(
+            wikidot_avatar_base(
+                "https://www.wikidot.com/avatar.php?userid=1&amp;size=small"
+            ),
+            Some("https://www.wikidot.com"),
+        );
+        assert_eq!(
+            wikidot_avatar_base("http://www.wikidot.com/avatar.php?userid=1"),
+            Some("http://www.wikidot.com"),
+        );
+        assert_eq!(wikidot_avatar_base("data:image/png;base64,AAAA"), None);
+        assert_eq!(
+            wikidot_avatar_base("https://www.wikidot.com/userkarma.php?u=1"),
+            None,
+        );
+        assert_eq!(
+            wikidot_avatar_base("https://evil.example)/avatar.php?userid=1"),
+            None,
+        );
+        assert_eq!(wikidot_avatar_base("https:///avatar.php?userid=1"), None);
     }
 }

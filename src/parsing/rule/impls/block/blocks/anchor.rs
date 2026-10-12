@@ -61,32 +61,48 @@ fn parse_fn<'r, 't>(
         None
     };
 
-    // Wikidot preserves one ASCII whitespace separator at the start of an
-    // inline anchor body, although the generic text rule treats it as
-    // line-leading whitespace and drops it while consuming the body.
+    // Wikidot moves ASCII whitespace at either edge of an inline anchor body
+    // outside the link as one separator. A separator is dropped at the start
+    // or end of a line and merges with adjacent authored whitespace, including
+    // a separator already moved out of a preceding inline closer.
+    let legacy = parser.settings().layout.legacy();
+    let source = parser.full_text().inner();
+    let opener_start = (name.as_ptr() as usize)
+        .checked_sub(source.as_ptr() as usize)
+        .and_then(|name_start| source[..name_start].rfind("[["));
     let body_source_start = parser.current().span.start;
-    let anchor_body_start = parser
-        .full_text()
-        .inner()
+    let anchor_body_start = source
         .get(..body_source_start)
         .and_then(|source| source.rfind("]]"))
         .map(|close| close + 2);
     let body = parser.get_body_elements(&BLOCK_ANCHOR, false)?;
     let (mut elements, errors, paragraph_safe) = body.into();
-    let source_has_leading_separator = parser.settings().layout.legacy()
-        && anchor_body_start
-            .and_then(|start| parser.full_text().inner().get(start..))
-            .and_then(|source| source.chars().next())
-            .is_some_and(|ch| matches!(ch, ' ' | '\t'));
-    let leading_separator = source_has_leading_separator;
-    if source_has_leading_separator
-        && let Some(Element::Text(text)) = elements.first_mut()
-        && text.starts_with([' ', '\t'])
-    {
-        text.to_mut().remove(0);
-        if text.is_empty() {
-            elements.remove(0);
-        }
+    let body_source = anchor_body_start.and_then(|start| {
+        let close_end = parser.current().span.start;
+        let close_start = source.get(..close_end)?.rfind("[[/")?;
+        source.get(start..close_start)
+    });
+    let body_has_content =
+        body_source.is_some_and(|body| !body.trim_matches(is_ascii_separator).is_empty());
+    let leading_separator = legacy
+        && body_source.is_some_and(|body| body.starts_with(is_ascii_separator))
+        && opener_start
+            .is_some_and(|start| !follows_separator_or_line_start(&source[..start]));
+    let trailing_separator = legacy
+        && body_has_content
+        && body_source.is_some_and(|body| body.ends_with(is_ascii_separator))
+        && !matches!(
+            parser.current().token,
+            Token::Whitespace
+                | Token::LineBreak
+                | Token::ParagraphBreak
+                | Token::InputEnd
+        );
+    if legacy && body_source.is_some_and(|body| body.starts_with(is_ascii_separator)) {
+        trim_leading_separator(&mut elements);
+    }
+    if legacy && body_source.is_some_and(|body| body.ends_with(is_ascii_separator)) {
+        trim_trailing_separator(&mut elements);
     }
     if flag_score {
         strip_newlines(&mut elements);
@@ -105,10 +121,11 @@ fn parse_fn<'r, 't>(
         attributes,
         target,
     };
-    let output = if leading_separator {
-        Elements::Multiple(vec![text!(" "), element])
-    } else {
-        Elements::Single(element)
+    let output = match (leading_separator, trailing_separator) {
+        (false, false) => Elements::Single(element),
+        (true, false) => Elements::Multiple(vec![text!(" "), element]),
+        (false, true) => Elements::Multiple(vec![element, text!(" ")]),
+        (true, true) => Elements::Multiple(vec![text!(" "), element, text!(" ")]),
     };
 
     success_elements_with_paragraph_safety(
@@ -116,6 +133,57 @@ fn parse_fn<'r, 't>(
         output,
         errors,
     )
+}
+
+fn is_ascii_separator(ch: char) -> bool {
+    matches!(ch, ' ' | '\t')
+}
+
+/// Whether text before an anchor opener already ends a separator: authored
+/// whitespace, a line start, or an inline closer whose body ended in
+/// whitespace that was moved outside it.
+fn follows_separator_or_line_start(before: &str) -> bool {
+    match before.chars().next_back() {
+        None | Some('\n') => true,
+        Some(ch) if is_ascii_separator(ch) => true,
+        Some(']') => before
+            .strip_suffix("]]")
+            .and_then(|head| head.rfind("[[/").map(|start| &head[..start]))
+            .and_then(|body| body.chars().next_back())
+            .is_some_and(is_ascii_separator),
+        Some(_) => false,
+    }
+}
+
+fn trim_leading_separator(elements: &mut Vec<Element<'_>>) {
+    while let Some(Element::Text(text)) = elements.first_mut() {
+        let trimmed = text.trim_start_matches(is_ascii_separator).len();
+        if trimmed == text.len() {
+            return;
+        }
+        if trimmed == 0 {
+            elements.remove(0);
+        } else {
+            let start = text.len() - trimmed;
+            text.to_mut().drain(..start);
+            return;
+        }
+    }
+}
+
+fn trim_trailing_separator(elements: &mut Vec<Element<'_>>) {
+    while let Some(Element::Text(text)) = elements.last_mut() {
+        let trimmed = text.trim_end_matches(is_ascii_separator).len();
+        if trimmed == text.len() {
+            return;
+        }
+        if trimmed == 0 {
+            elements.pop();
+        } else {
+            text.to_mut().truncate(trimmed);
+            return;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -147,7 +215,9 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_anchor_preserves_authored_boundary_whitespace() {
+    fn wikidot_anchor_moves_authored_boundary_whitespace_outside() {
+        // Expected output follows anonymous Wikidot edit/PagePreviewModule
+        // renders of the same sources (2026-10-12).
         let cases = [
             (
                 "leading space inside second anchor",
@@ -155,14 +225,44 @@ mod tests {
                 "<p><a href>one</a> <a href>two</a></p>",
             ),
             (
-                "repeated leading spaces collapse once",
-                "[[a]]  two[[/a]]",
-                "<p> <a href>two</a></p>",
+                "leading space after text",
+                "x[[a]] one[[/a]]y",
+                "<p>x <a href>one</a>y</p>",
             ),
             (
-                "trailing space inside first anchor",
-                "[[a]]one [[/a]][[a]]two[[/a]]",
-                "<p><a href>one </a><a href>two</a></p>",
+                "leading space merges with authored space",
+                "x [[a]]  two[[/a]]",
+                "<p>x <a href>two</a></p>",
+            ),
+            (
+                "leading space at line start is dropped",
+                "[[a]] one [[/a]]",
+                "<p><a href>one</a></p>",
+            ),
+            (
+                "trailing space before text",
+                "x [[a]]one [[/a]]y",
+                "<p>x <a href>one</a> y</p>",
+            ),
+            (
+                "repeated trailing whitespace collapses once",
+                "x [[a]]one \t[[/a]]y",
+                "<p>x <a href>one</a> y</p>",
+            ),
+            (
+                "trailing space merges with authored space",
+                "x [[a]]one [[/a]] y",
+                "<p>x <a href>one</a> y</p>",
+            ),
+            (
+                "trailing space at line end is dropped",
+                "x [[a]]one [[/a]]\ny",
+                "<p>x <a href>one</a><br>\ny</p>",
+            ),
+            (
+                "adjacent anchors share one separator",
+                "[[a]]x[[/a]][[a]] one [[/a]][[a]] two [[/a]]",
+                "<p><a href>x</a> <a href>one</a> <a href>two</a></p>",
             ),
             (
                 "space between anchors",
@@ -175,21 +275,31 @@ mod tests {
                 "<p><a href>one</a><a href>two</a></p>",
             ),
             (
+                "formatting before trailing space",
+                "x [[a]]**one** [[/a]]y",
+                "<p>x <a href><strong>one</strong></a> y</p>",
+            ),
+            (
                 "nested formatting after leading space",
-                "[[a]] **two**[[/a]]",
-                "<p> <a href><strong>two</strong></a></p>",
+                "x[[a]] **two**[[/a]]",
+                "<p>x <a href><strong>two</strong></a></p>",
             ),
             (
                 "CJK label after leading space",
-                "[[a]] 日本語[[/a]]",
-                "<p> <a href>日本語</a></p>",
+                "x[[a]] 日本語[[/a]]",
+                "<p>x <a href>日本語</a></p>",
             ),
             (
-                "nonbreaking space",
-                "[[a]]\u{a0}two[[/a]]",
-                "<p><a href>\u{a0}two</a></p>",
+                "whitespace-only body",
+                "x [[a]] [[/a]]y",
+                "<p>x <a href></a>y</p>",
             ),
-            ("tab", "[[a]]\ttwo[[/a]]", "<p> <a href>two</a></p>"),
+            (
+                "nonbreaking spaces stay inside",
+                "x [[a]]\u{a0}two\u{a0}[[/a]]y",
+                "<p>x <a href>\u{a0}two\u{a0}</a>y</p>",
+            ),
+            ("tab", "x[[a]]\ttwo\t[[/a]]y", "<p>x <a href>two</a> y</p>"),
         ];
 
         for (case, source, expected) in cases {

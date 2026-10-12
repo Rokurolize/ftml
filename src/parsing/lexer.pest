@@ -132,14 +132,12 @@ discarded_control = @{
 }
 
 email = @{
-    // Avoid attempting the scan-to-@ email rule at every punctuation byte.
-    // Once an alphanumeric run is seen, `identifier` consumes it if no email follows.
+    // Wikidot: `word(.word)*@label(.label)+`; local words are ASCII
+    // alphanumeric, `_`, or `-`, and domain labels ASCII alphanumeric or `-`.
     &(ASCII_ALPHANUMERIC) ~
-    (!(" " | "\t" | "%" | "@" | "[" | "]" | "{" | "}" | "<" | ">" | "|" | "(" | ")" | "\"" | ":" | NEWLINE | discarded_control) ~ ANY)+ ~
+    (ASCII_ALPHANUMERIC | "_" | "-")+ ~ ("." ~ (ASCII_ALPHANUMERIC | "_" | "-")+)* ~
     "@" ~
-    (!(" " | "\t" | "." | "@" | "[" | "]" | "{" | "}" | "<" | ">" | "|" | NEWLINE | discarded_control) ~ ANY)+ ~
-    "." ~
-    (!(" " | "\t" | "@" | "[" | "]" | "{" | "}" | "<" | ">" | "|" | NEWLINE | discarded_control) ~ ANY)+
+    (ASCII_ALPHANUMERIC | "-")+ ~ ("." ~ (ASCII_ALPHANUMERIC | "-")+)+
 }
 
 url = @{

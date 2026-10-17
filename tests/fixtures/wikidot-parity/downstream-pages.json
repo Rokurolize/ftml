@@ -44,7 +44,7 @@
     {
       "id": "theme-basalt",
       "path": "deepwell/seeder/theme-basalt.ftml",
-      "sha256": "732c3d5922479d119cc31b834520ef84dfe5f0acb1c48cb497884757e3b1554a",
+      "sha256": "a29d8d0f285f4e291975f0139519ddfb472e7d6f458bb1d7c14189c9a2e922c0",
       "site": "scp-wiki",
       "page": "theme:basalt",
       "title": "Basalt Theme"

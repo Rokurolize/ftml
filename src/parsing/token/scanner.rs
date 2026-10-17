@@ -349,7 +349,7 @@ fn scan_url(bytes: &[u8], start: usize) -> Option<usize> {
     // splits an ordinary `https://example.com/a>@b` at the `>@` marker.
     let mut end = body_start;
     while end < bytes.len() {
-        let character = std::str::from_utf8(&bytes[end..]).ok()?.chars().next()?;
+        let character = char_at(bytes, end)?;
         if matches!(
             bytes[end],
             b'\n' | b'\r' | b' ' | b'\t' | b'"' | b'\'' | b'|' | b'[' | b']'
@@ -364,6 +364,25 @@ fn scan_url(bytes: &[u8], start: usize) -> Option<usize> {
     }
 
     (end > body_start).then_some(end)
+}
+
+/// The character that starts at `index` of the UTF-8 `bytes`.
+///
+/// Only its own bytes are decoded: validating the rest of the input for each
+/// character made every URL scan proportional to the remaining page, and a
+/// long page with many URLs quadratic.
+fn char_at(bytes: &[u8], index: usize) -> Option<char> {
+    let width = match *bytes.get(index)? {
+        0x00..=0x7f => 1,
+        0xc0..=0xdf => 2,
+        0xe0..=0xef => 3,
+        0xf0..=0xf7 => 4,
+        _ => return None,
+    };
+    std::str::from_utf8(bytes.get(index..index + width)?)
+        .ok()?
+        .chars()
+        .next()
 }
 
 fn scan_identifier_or_email(bytes: &[u8], start: usize) -> (Token, usize) {
@@ -582,6 +601,48 @@ mod tests {
                 "{input}: {tokens:#?}",
             );
         }
+    }
+
+    #[test]
+    fn url_scan_decodes_multibyte_characters_and_stops_at_unicode_whitespace() {
+        let url = |input: &str| {
+            extract_all(input)
+                .into_iter()
+                .find(|token| token.token == Token::Url)
+                .map(|token| token.slice.to_owned())
+        };
+
+        assert_eq!(
+            url("see https://example.com/ü日本🎉 then"),
+            Some("https://example.com/ü日本🎉".to_owned()),
+        );
+        assert_eq!(
+            url("https://example.com/日本\u{3000}after"),
+            Some("https://example.com/日本".to_owned()),
+        );
+        assert_eq!(char_at("ü".as_bytes(), 1), None);
+    }
+
+    #[test]
+    fn many_urls_in_a_long_input_tokenize_in_linear_time() {
+        // Each URL character once validated the whole rest of the input, so a
+        // 750 KB page with its includes took 0.6 s to tokenize.
+        let input = "see https://scp-wiki.wikidot.com/scp-173 and more\n".repeat(32_768);
+        let started = std::time::Instant::now();
+        let tokens = extract_all(&input);
+
+        assert_eq!(
+            tokens
+                .iter()
+                .filter(|token| token.token == Token::Url)
+                .count(),
+            32_768,
+        );
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(5),
+            "{:?}",
+            started.elapsed(),
+        );
     }
 
     #[test]

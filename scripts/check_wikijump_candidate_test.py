@@ -66,6 +66,13 @@ class WikijumpCandidateTest(unittest.TestCase):
             ),
             root / "deepwell/src/services/render/compat/wikidot_gallery.rs",
         )
+        self.assertEqual(
+            source_path_for_test(
+                root,
+                "services::render::service::tests::fallback::example",
+            ),
+            root / "deepwell/src/services/render/service/tests/fallback.rs",
+        )
 
     def test_declaration_check_rejects_missing_candidate_tests(self):
         with tempfile.TemporaryDirectory() as directory:

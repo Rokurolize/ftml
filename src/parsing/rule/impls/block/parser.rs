@@ -514,9 +514,12 @@ where
             //
             // This will ignore any errors produced,
             // since it's just more text
+            // Only `[[/` can begin an end block; skip searching the rest of the
+            // page for `]]` from every other token of a body.
             let end_start = parser.current().span.start;
             if parser.settings().layout.legacy()
                 && !parser.discarding_hidden_body()
+                && parser.current().token == Token::LeftBlockEnd
                 && let Some(close_offset) =
                     parser.full_text().inner()[end_start..].find("]]")
             {

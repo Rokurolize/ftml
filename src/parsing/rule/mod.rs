@@ -43,6 +43,9 @@ pub struct Rule {
     try_consume_fn: TryConsumeFn,
 }
 
+/// Failed attempts that read fewer tokens are cheaper to retry than to remember.
+const MEMOIZED_FAILURE_MIN_TOKENS: usize = 16;
+
 impl Rule {
     pub fn name(self) -> &'static str {
         self.name
@@ -67,10 +70,25 @@ impl Rule {
             return Err(error);
         }
 
+        // A failed owner's retry re-runs every attempt inside its body. Those
+        // fail again from the same state, so remember the ones that read far
+        // enough to make the retry expensive.
+        if let Some(error) = parser.rule_attempt_failure(self.name) {
+            return Err(error);
+        }
+
         // Fork parser and try running the rule.
         let parser_state = parser.get_mutable_state();
         let mut sub_parser = parser.clone_with_rule(self);
+        let enclosing_peak = parser.start_rule_attempt();
         let result = (self.try_consume_fn)(&mut sub_parser);
+        let height = parser.finish_rule_attempt(enclosing_peak);
+        if let Err(error) = &result
+            && parser.remaining().len() - sub_parser.remaining().len()
+                >= MEMOIZED_FAILURE_MIN_TOKENS
+        {
+            parser.cache_rule_attempt_failure(self.name, error, height);
+        }
 
         match result {
             // Rule succeeded, ensure that changes from the subparser are persisted.

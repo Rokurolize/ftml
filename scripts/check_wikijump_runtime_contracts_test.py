@@ -22,6 +22,13 @@ class WikijumpRuntimeContractsTest(unittest.TestCase):
             ),
             root / "deepwell/src/services/render/compat/wikidot_gallery.rs",
         )
+        self.assertEqual(
+            source_path_for_test(
+                root,
+                "services::render::service::tests::fallback::example",
+            ),
+            root / "deepwell/src/services/render/service/tests/fallback.rs",
+        )
 
     def test_function_declaration_check_accepts_test_functions_only_by_name(self):
         with tempfile.TemporaryDirectory() as directory:

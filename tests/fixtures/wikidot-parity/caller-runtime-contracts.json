@@ -3,7 +3,7 @@
   "contracts": [
     {
       "id": "embedvideo-runtime",
-      "wikijump_test": "services::render::service::tests::typed_embedvideo_markers_must_match_requirements_exactly_once",
+      "wikijump_test": "services::render::service::tests::fallback::typed_embedvideo_markers_must_match_requirements_exactly_once",
       "cases": [
         "tests--fixtures--parity-gaps--block-name-case-embedvideo-title",
         "tests--fixtures--parity-gaps--block-name-case-embedvideo-uppercase",
@@ -30,7 +30,7 @@
     },
     {
       "id": "html-preview-mode",
-      "wikijump_test": "services::render::service::tests::wikidot_compatibility_fallback_keeps_preview_html_blocks_literal",
+      "wikijump_test": "services::render::service::tests::fallback::wikidot_compatibility_fallback_keeps_preview_html_blocks_literal",
       "cases": [
         "test--html--basic",
         "test--html--revert",
@@ -40,7 +40,7 @@
     },
     {
       "id": "page-existence",
-      "wikijump_test": "services::render::service::tests::fallback_page_links_mark_only_resolved_missing_targets_as_newpage",
+      "wikijump_test": "services::render::service::tests::markup_compat::fallback_page_links_mark_only_resolved_missing_targets_as_newpage",
       "cases": [
         "tests--fixtures--parity-gaps--comment-triple-fields-owner",
         "tests--fixtures--parity-gaps--triple-link-data-scheme",

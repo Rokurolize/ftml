@@ -162,3 +162,79 @@ fn repeated_wikidot_size_scopes_crossing_structural_blocks_stay_bounded() {
     assert_eq!(html.matches("body").count(), ROW_COUNT);
     assert!(!html.contains("font-size: larger;\">body"));
 }
+
+#[test]
+fn crossed_color_monospace_prompts_in_blocks_stay_bounded() {
+    const PROMPT_COUNT: usize = 64;
+
+    // Reduced from EN:scp-6279 (source SHA-256
+    // f14b68009c2f3553109c5cf70baf3a06f0792caeccea4b0f1a3d2bc060af7fa2), a
+    // terminal transcript of right-aligned prompts whose color closes inside
+    // monospace. Each color fails only after reading every block after it,
+    // and each failure retried those blocks: its 24 prompts took minutes.
+    // Wikidot renders every prompt as the color around the monospace.
+    let mut input =
+        "[[>]]\n##63ff54|{{@@ >  @@boot##}}\n[[/>]]\n{{TEXT}}\n".repeat(PROMPT_COUNT);
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let started = Instant::now();
+
+    ftml::preprocess_for_layout(&mut input, settings.layout);
+    let tokenization = ftml::tokenize(&input);
+    let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+    assert!(started.elapsed() < Duration::from_secs(5));
+    assert_eq!(
+        html.matches(concat!(
+            r#"<div style="text-align: right;"><p><span style="color: #63ff54"><tt>"#,
+            r#"<span style="white-space: pre-wrap;"> &gt;  </span>boot</tt></span></p></div>"#,
+        ))
+        .count(),
+        PROMPT_COUNT,
+        "{html}",
+    );
+    assert_eq!(
+        html.matches("<tt>TEXT</tt>").count(),
+        PROMPT_COUNT,
+        "{html}"
+    );
+    assert!(
+        errors
+            .iter()
+            .all(|error| error.kind()
+                != ftml::parsing::ParseErrorKind::RecursionDepthExceeded),
+        "{errors:#?}",
+    );
+}
+
+#[test]
+fn long_block_bodies_without_closers_stay_linear() {
+    const LINE_COUNT: usize = 8_000;
+
+    // Reduced from EN:scp-9659 (source SHA-256
+    // 615a628d51b690b37729b7e09ce3853736635f9354db14e77f3225d83e0cfe52), 185 KB
+    // with 31 `]]`. Looking for each div's closer searched the rest of the page
+    // for `]]` from every token of its body, which took seconds.
+    let mut input = format!(
+        "[[div]]\n{}[[/div]]\n",
+        "plain words on a line\n".repeat(LINE_COUNT),
+    );
+    let page_info = page_info();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let started = Instant::now();
+
+    ftml::preprocess_for_layout(&mut input, settings.layout);
+    let tokenization = ftml::tokenize(&input);
+    let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+    let elapsed = started.elapsed();
+
+    assert!(errors.is_empty(), "{errors:#?}");
+    assert!(
+        html.starts_with("<div><p>plain words on a line<br>"),
+        "{html}"
+    );
+    assert_eq!(html.matches("plain words on a line").count(), LINE_COUNT);
+    assert!(elapsed < Duration::from_secs(5), "{elapsed:?}");
+}

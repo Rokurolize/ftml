@@ -32,10 +32,9 @@ use crate::tree::{
     AcceptsPartial, Bibliography, BibliographyList, CodeBlock, HeadingLevel,
 };
 use std::borrow::Cow;
-#[cfg(test)]
 use std::cell::Cell;
 use std::cell::RefCell;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::ops::Range;
 use std::rc::Rc;
 use std::{mem, ptr};
@@ -95,8 +94,39 @@ struct BlockEndScanContext {
     in_wikidot_center_body: bool,
 }
 
+/// Everything outside the token stream that can steer a rule attempt.
+///
+/// A rule attempt runs on a clone of its parser, so its outcome is a function
+/// of the position, this state and the recursion budget left. Contexts with
+/// boundaries the attempt cannot see from here (hidden bodies, quoted lines)
+/// produce no key.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub(crate) struct RuleAttemptKey {
+    rule: &'static str,
+    remaining: usize,
+    // Set only for attempts that reached the recursion limit.
+    depth: Option<usize>,
+    accepts_partial: AcceptsPartial,
+    accepts_partial_offset: Option<isize>,
+    in_footnote: bool,
+    has_footnote_block: bool,
+    start_of_line: bool,
+    wikidot: WikidotState,
+}
+
+// Lets tests compare parses with and without remembered rule failures.
+#[cfg(test)]
+thread_local! {
+    static RULE_ATTEMPT_MEMO_DISABLED: Cell<bool> = const { Cell::new(false) };
+}
+
 #[derive(Debug, Default)]
 struct BlockScanCache {
+    // Deepest recursion reached by the innermost running rule attempt.
+    peak_depth: Cell<usize>,
+    rule_attempt_failures: HashMap<RuleAttemptKey, (ParseError, usize)>,
+    // Indexed by remaining token count: whether any failure there is recorded.
+    rule_attempt_failure_positions: Vec<bool>,
     body_end_outcomes: BTreeMap<ContextualBlockEndScanKey, bool>,
     underclosed_block_failures: BTreeMap<(&'static str, usize), ()>,
     deterministic_block_failures: BTreeMap<(&'static str, usize), ParseError>,
@@ -691,6 +721,117 @@ impl<'r, 't> Parser<'r, 't> {
             );
     }
 
+    /// Key for memoizing a failed attempt of `rule` here, if this context allows it.
+    fn rule_attempt_key(&self, rule: &'static str) -> Option<RuleAttemptKey> {
+        #[cfg(test)]
+        if RULE_ATTEMPT_MEMO_DISABLED.with(Cell::get) {
+            return None;
+        }
+        if self.discarding_hidden_body
+            || !self.hidden_body_boundaries.is_empty()
+            || self.native_blockquote_depth.is_some()
+            || self.quote_body_cursor.is_some()
+        {
+            return None;
+        }
+
+        // `accepts_partial_here` compares this absolute depth with the current one.
+        let accepts_partial_offset = (self.accepts_partial_depth != 0).then(|| {
+            usize::from(self.accepts_partial_depth) as isize - self.depth as isize
+        });
+        Some(RuleAttemptKey {
+            rule,
+            remaining: self.remaining.len(),
+            depth: None,
+            accepts_partial: self.accepts_partial,
+            accepts_partial_offset,
+            in_footnote: self.in_footnote,
+            has_footnote_block: self.has_footnote_block,
+            start_of_line: self.start_of_line,
+            wikidot: self.wikidot.attempt_key(),
+        })
+    }
+
+    /// Starts measuring the recursion a rule attempt uses.
+    ///
+    /// Returns the enclosing attempt's peak, for `finish_rule_attempt`.
+    pub(crate) fn start_rule_attempt(&self) -> usize {
+        self.block_end_scan_cache
+            .borrow()
+            .peak_depth
+            .replace(self.depth)
+    }
+
+    /// Returns how far below this depth the attempt recursed.
+    pub(crate) fn finish_rule_attempt(&self, enclosing_peak: usize) -> usize {
+        let cache = self.block_end_scan_cache.borrow();
+        let peak = cache.peak_depth.get();
+        cache.peak_depth.set(peak.max(enclosing_peak));
+        peak - self.depth
+    }
+
+    /// A failure recorded for this exact attempt of `rule`.
+    ///
+    /// The enclosing attempt is charged the recursion the skipped one used.
+    pub(crate) fn rule_attempt_failure(&self, rule: &'static str) -> Option<ParseError> {
+        let cache = self.block_end_scan_cache.borrow();
+        if !cache
+            .rule_attempt_failure_positions
+            .get(self.remaining.len())
+            .is_some_and(|&recorded| recorded)
+        {
+            return None;
+        }
+
+        let key = self.rule_attempt_key(rule)?;
+        let (error, height) = cache
+            .rule_attempt_failures
+            .get(&key)
+            .filter(|(_, height)| self.depth + height <= self.max_recursion_depth)
+            .or_else(|| {
+                let at_depth = RuleAttemptKey {
+                    depth: Some(self.depth),
+                    ..key
+                };
+                cache.rule_attempt_failures.get(&at_depth)
+            })?;
+        cache
+            .peak_depth
+            .set(cache.peak_depth.get().max(self.depth + height));
+        Some(error.clone())
+    }
+
+    /// Records a failed attempt of `rule` for retries from the same state.
+    ///
+    /// The attempt's tokens and state are the key, so a retry fails the same
+    /// way. An attempt that stayed within the recursion limit does so from any
+    /// depth that leaves it the same room; one that reached the limit only
+    /// from this depth.
+    pub(crate) fn cache_rule_attempt_failure(
+        &self,
+        rule: &'static str,
+        error: &ParseError,
+        height: usize,
+    ) {
+        let Some(mut key) = self.rule_attempt_key(rule) else {
+            return;
+        };
+        if self.depth + height > self.max_recursion_depth {
+            key.depth = Some(self.depth);
+        }
+
+        let mut cache = self.block_end_scan_cache.borrow_mut();
+        let position = self.remaining.len();
+        let positions = &mut cache.rule_attempt_failure_positions;
+        if positions.len() <= position {
+            positions.resize(position + 1, false);
+        }
+        positions[position] = true;
+        cache
+            .rule_attempt_failures
+            .insert(key, (error.clone(), height));
+    }
+
     pub(crate) fn deterministic_block_failure(
         &self,
         rule: &'static str,
@@ -987,6 +1128,11 @@ impl<'r, 't> Parser<'r, 't> {
     pub fn depth_increment(&mut self) -> Result<(), ParseError> {
         self.depth += 1;
         trace!("Incrementing recursion depth to {}", self.depth);
+        let cache = self.block_end_scan_cache.borrow();
+        if self.depth > cache.peak_depth.get() {
+            cache.peak_depth.set(self.depth);
+        }
+        drop(cache);
 
         if self.depth > self.max_recursion_depth {
             return Err(self.make_err(ParseErrorKind::RecursionDepthExceeded));
@@ -1792,4 +1938,102 @@ fn parser_state_fits_the_bounded_deep_parse_stack_budget() {
         size <= 320,
         "Parser grew to {size} bytes; deep recursive parsing requires at most 320 bytes",
     );
+}
+
+#[cfg(test)]
+fn render_at_recursion_limit(
+    input: &str,
+    max_recursion_depth: usize,
+    remember_failures: bool,
+) -> (String, Vec<ParseError>) {
+    use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    let input = input.to_owned();
+    std::thread::Builder::new()
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            RULE_ATTEMPT_MEMO_DISABLED.with(|disabled| disabled.set(!remember_failures));
+            let page_info = PageInfo::dummy();
+            let settings =
+                WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+            let mut input = input;
+            crate::preprocess(&mut input);
+            let tokenization = crate::tokenize(&input);
+            let (tree, errors) = super::parse_on_current_stack(
+                &tokenization,
+                &page_info,
+                &settings,
+                max_recursion_depth,
+            )
+            .into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+            (html, errors)
+        })
+        .expect("parse thread starts")
+        .join()
+        .expect("parse thread finishes")
+}
+
+#[test]
+fn remembered_rule_failures_leave_every_parse_unchanged() {
+    // Each owner here fails after reading the following blocks, and every
+    // enclosing owner that fails retries them. Small enough to parse without
+    // remembering failures; the low recursion limits make the chains of
+    // retried owners end in recursion-limit failures at different depths.
+    let stanza = |owner: &str, body: &str| {
+        let (open, close) = match owner {
+            "div" => ("[[div]]", "[[/div]]"),
+            _ => ("[[>]]", "[[/>]]"),
+        };
+        format!("{open}\n{body}\n{close}\n{{{{TEXT}}}}\n")
+    };
+    let crossed = "##63ff54|{{@@ >  @@boot##}}";
+    let cases = [
+        stanza("right", crossed).repeat(10),
+        stanza("div", crossed).repeat(10),
+        format!(
+            "{}\nafter **bold** text\n",
+            stanza("right", crossed).repeat(10)
+        ),
+        format!("* {crossed}\n").repeat(8),
+        format!("> {crossed}\n> quoted\n").repeat(6),
+        format!("[[footnote]]{crossed}[[/footnote]] text\n").repeat(6),
+        format!("||{crossed}||cell||\n").repeat(6),
+        "* //**A:**// x //**B**// y\n".repeat(6),
+        // Strikethrough whose nested divs fit the recursion limit only outside
+        // the failed color: inside it, the limit failure falls back to a dash.
+        format!(
+            "{crossed}\n--{}\n{}text\n{}b--\n",
+            "word ".repeat(20),
+            "[[div]]\n".repeat(4),
+            "[[/div]]\n".repeat(4),
+        ),
+        format!(
+            "{crossed}\n--{}\n{}text\n{}b--\n",
+            "word ".repeat(20),
+            "[[div]]\n".repeat(8),
+            "[[/div]]\n".repeat(8),
+        ),
+        concat!(
+            "[[/=]]\n[[<]]\n",
+            "[[size 140%]][[collapsible show=\"+ Show\" hide=\"- Hide\"]][[/size]]\n",
+            "[[/=]]\n\n[[tabview]]\n[[tab A]]\n[[<]]\n\n**Description:** x //y//\n",
+            "[[<]]\n\n**Status:** x\n\n[[/tab]]\n[[tab B]]\n[[<]]\n**Status:** x\n\n",
+            "[[tab C]]\n[[<]]\n\n**Status:** x\n[[/<]]\n[[/tab]]\n",
+        )
+        .to_owned(),
+    ];
+
+    for input in &cases {
+        for max_recursion_depth in [6, 8, 10, 12, 16, 24, 40, DEFAULT_MAX_RECURSION_DEPTH]
+        {
+            assert_eq!(
+                render_at_recursion_limit(input, max_recursion_depth, true),
+                render_at_recursion_limit(input, max_recursion_depth, false),
+                "{input:?} at recursion limit {max_recursion_depth}",
+            );
+        }
+    }
 }

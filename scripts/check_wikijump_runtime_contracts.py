@@ -15,10 +15,13 @@ def source_path_for_test(wikijump_root: Path, test_id: str) -> Path:
     parts = test_id.split("::")
     if parts[:2] != ["services", "render"] or len(parts) < 5:
         raise ValueError(f"unsupported Wikijump render test path: {test_id}")
-    module_parts = [part for part in parts[2:-1] if part != "tests"]
+    modules = parts[2:-1]
     base = wikijump_root / "deepwell/src/services/render"
-    if module_parts == ["service"]:
-        return base / "service/tests.rs"
+    # The render service keeps its tests in `service/tests.rs` and the
+    # submodules under `service/tests/`; other modules keep them inline.
+    if modules[:2] == ["service", "tests"]:
+        return base.joinpath(*modules).with_suffix(".rs")
+    module_parts = [part for part in modules if part != "tests"]
     return base.joinpath(*module_parts).with_suffix(".rs")
 
 

@@ -9,7 +9,7 @@ const SIMPLE_TABLE_CELL: u8 = 1 << 4;
 const MIXED_PARAGRAPH_OWNERSHIP: u8 = 1 << 5;
 const COLLAPSIBLE_CONTENT_CLOSED: u8 = 1 << 6;
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub(super) struct WikidotState {
     // Parser recursion is capped well below `u16::MAX`; compact counters keep
     // this state out of every recursive parser frame's pointer-sized padding.
@@ -21,6 +21,19 @@ pub(super) struct WikidotState {
     simple_table_crossed_closers: u16,
     center_body_depth: u16,
     flags: u8,
+}
+
+impl WikidotState {
+    /// This state as part of a rule attempt key.
+    ///
+    /// Div bodies are entered and left in pairs around the body parse and
+    /// only read as "inside any div", so their depth collapses to that bit.
+    pub(super) fn attempt_key(self) -> Self {
+        Self {
+            div_body_depth: self.div_body_depth.min(1),
+            ..self
+        }
+    }
 }
 
 impl Parser<'_, '_> {

@@ -76,16 +76,20 @@ fn has_ambiguous_crossed_bold_pair(parser: &Parser<'_, '_>) -> bool {
         return false;
     }
 
+    // The first `//` decides: a crossed closer `//**` makes the pair
+    // ambiguous when bold was seen on the way, while a plain `//` closes these
+    // italics normally. Scanning past it would pair this opener with a later
+    // span's `//**`, swallowing everything in between (in a list, the following
+    // items too) and making every such span retry its neighbours.
     let tokens = parser.remaining();
     let mut saw_intermediate_bold = false;
     for (index, token) in tokens.iter().enumerate().skip(1) {
         match token.token {
-            Token::Italics
-                if tokens
-                    .get(index + 1)
-                    .is_some_and(|next| next.token == Token::Bold) =>
-            {
-                return saw_intermediate_bold;
+            Token::Italics => {
+                return saw_intermediate_bold
+                    && tokens
+                        .get(index + 1)
+                        .is_some_and(|next| next.token == Token::Bold);
             }
             Token::Bold => saw_intermediate_bold = true,
             Token::ParagraphBreak | Token::InputEnd => return false,
@@ -182,6 +186,7 @@ mod tests {
     use crate::layout::Layout;
     use crate::render::{Render, html::HtmlRender};
     use crate::settings::{WikitextMode, WikitextSettings};
+    use std::time::{Duration, Instant};
 
     fn render(source: &str) -> (String, Vec<ParseError>) {
         let page_info = PageInfo::dummy();
@@ -211,6 +216,57 @@ mod tests {
         assert!(
             html.contains("<em>before <strong>bold</strong> after</em>"),
             "{html}",
+        );
+    }
+
+    #[test]
+    fn each_italic_bold_span_closes_at_its_own_closer() {
+        // The second case is EN from-120-s-archives-hub (source SHA-256
+        // 4919a9bc9c2eef4434204a694bbd373c282315f0ab1fb671dc0d3ffa11dd4eda), which
+        // Wikidot renders as `<em><strong>Warsaw Reconstruction Office</strong></em><br />
+        // <strong>GENIUS LOCI <em>DEPARTMENT</em></strong>`.
+        for (input, expected) in [
+            (
+                "//**A**// and //**B**//",
+                "<p><em><strong>A</strong></em> and <em><strong>B</strong></em></p>",
+            ),
+            (
+                "//**Warsaw Reconstruction Office**//\n**GENIUS LOCI //DEPARTMENT//**",
+                concat!(
+                    "<p><em><strong>Warsaw Reconstruction Office</strong></em><br>\n",
+                    "<strong>GENIUS LOCI <em>DEPARTMENT</em></strong></p>",
+                ),
+            ),
+        ] {
+            let (html, errors) = render(input);
+            assert!(errors.is_empty(), "{input:?}: {errors:#?}");
+            assert_eq!(html, expected, "{input:?}");
+        }
+    }
+
+    #[test]
+    fn italic_bold_list_items_stay_separate_in_bounded_time() {
+        // Reduced from EN vikander-kneed-technical-media-hub, a list of
+        // `//**Title**//` items. Pairing each opener with the next item's
+        // `//**` swallowed the items in between and took minutes to parse.
+        const ITEM_COUNT: usize = 200;
+        let input = "* //**Title**// by author\n".repeat(ITEM_COUNT);
+
+        let started = Instant::now();
+        let (html, errors) = render(&input);
+        let elapsed = started.elapsed();
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html.matches("<li>").count(), ITEM_COUNT, "{html}");
+        assert_eq!(
+            html.matches("<li><em><strong>Title</strong></em> by author</li>")
+                .count(),
+            ITEM_COUNT,
+            "{html}",
+        );
+        assert!(
+            elapsed < Duration::from_millis(500),
+            "italic bold list parse took {elapsed:?}",
         );
     }
 

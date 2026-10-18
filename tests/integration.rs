@@ -158,6 +158,9 @@ mod wikidot_empty_key_div_fallback;
 #[path = "wikidot_alias_closers.rs"]
 mod wikidot_alias_closers;
 
+#[path = "wikidot_block_head_trailing_whitespace.rs"]
+mod wikidot_block_head_trailing_whitespace;
+
 #[path = "wikidot_collapsible_state.rs"]
 mod wikidot_collapsible_state;
 

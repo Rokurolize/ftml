@@ -371,6 +371,32 @@ fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: b
     }
 }
 
+/// Wikidot ignores spaces and tabs between a div head's closing brackets and
+/// the end of its physical line, so `[[div class="a"]]  \n` opens the same
+/// block as `[[div class="a"]]\n`. Spaces followed by body text stay put.
+fn skip_trailing_head_space<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    body_start: BlockBodyStart,
+) -> Result<BlockBodyStart, ParseError> {
+    if parser.current().token != Token::Whitespace {
+        return Ok(body_start);
+    }
+    let mut lookahead = parser.clone();
+    lookahead.step()?;
+    match lookahead.current().token {
+        Token::LineBreak => {
+            lookahead.step()?;
+            parser.update(&lookahead);
+            Ok(BlockBodyStart::NextPhysicalLine)
+        }
+        Token::ParagraphBreak => {
+            parser.update(&lookahead);
+            Ok(BlockBodyStart::NextPhysicalLine)
+        }
+        _ => Ok(body_start),
+    }
+}
+
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &'t str,
@@ -391,6 +417,9 @@ fn parse_fn<'r, 't>(
 
     let head = parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;
     let (mut arguments, mut body_start) = head;
+    if parser.settings().layout.legacy() && body_start == BlockBodyStart::Inline {
+        body_start = skip_trailing_head_space(parser, body_start)?;
+    }
     let cacheable_wikijump_failure = !parser.settings().layout.legacy();
     if cacheable_wikijump_failure
         && parser.block_end_scan_outcome((WIKIJUMP_DIV_FAILURE_CACHE, owner_start, false))

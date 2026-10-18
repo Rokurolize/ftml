@@ -52,6 +52,22 @@ pub const RULE_LINK_TRIPLE_NEW_TAB: Rule = Rule {
 fn link<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
     let source_start = parser.current().span.start;
     assert_step(parser, Token::LeftLink)?;
+    // Wikidot recognizes an inline span following a literal '[' before it
+    // considers a triple link. Reuse the block parser, including its normal
+    // argument sanitization, closer ownership, and recursion budget.
+    if parser.settings().layout.legacy()
+        && parser.current().token == Token::Identifier
+        && parser.current().slice.eq_ignore_ascii_case("span")
+    {
+        let mut span = parser.clone();
+        if let Ok(mut parsed) = super::block::RULE_BLOCK.try_consume(&mut span) {
+            let mut elements = vec![text!("[")];
+            elements.extend(parsed.item);
+            parsed.item = Elements::Multiple(elements);
+            parser.update(&span);
+            return Ok(parsed);
+        }
+    }
     try_consume_link(parser, RULE_LINK_TRIPLE, None, source_start)
 }
 

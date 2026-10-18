@@ -1,0 +1,49 @@
+{
+  "schema": "ftml.wikidot.saved-corpus-excerpts.v1",
+  "observations": [
+    {
+      "site": "scp-wiki",
+      "page": "brc-cast-24-a-nice-content-farm-upstate",
+      "url": "https://scp-wiki.wikidot.com/brc-cast-24-a-nice-content-farm-upstate",
+      "run_id": "run-20261011-230158",
+      "capture_id": "94a433f165af5ccd86dc1ab7650cc346a7a85f8c31a9f00421203d2552baf421",
+      "source_sha256": "9164fa0e2e441f13456468c19d28264f4696a4eb26f722501d34a6f15c76ab32",
+      "html_sha256": "cde9bb850be9ba0c299e08b0d8651537bb67c9a1ed3e46599806697dab8e04ec",
+      "source_excerpt": "[[[span style=\"font-family: 'Atkinson Hyperlegible'\"]]##422B24|H: Hi all, Future Hana here: we received a few emails asking why I was so hung up on the fact that LYRIS/LORD isn’t a mass driver. Basically, a mass driver in L2 orbit opens up the rest of the solar system to exploration at drastically-reduced delta-V cost. All we need to do is get some payloads up there and we’re several steps closer to fully automated luxury gay space communism. We’ve got a whole plan drawn up and everything. Ask Boss about the Shopping List sometime. I had originally just heard “hey, did you know Games and Whatever have a planet-destroying killsat” through the grapevine and thought “sick, they have a mass driver!” because I could see no reason for it to be anything else. My bad on that. Still disappointing, though.##[[/span]]] ",
+      "html_excerpt": "<p>[<span style=\"font-family: 'Atkinson Hyperlegible'\"><span style=\"color: #422b24\">H: Hi all, Future Hana here: we received a few emails asking why I was so hung up on the fact that LYRIS/LORD isn’t a mass driver. Basically, a mass driver in L2 orbit opens up the rest of the solar system to exploration at drastically-reduced delta-V cost. All we need to do is get some payloads up there and we’re several steps closer to fully automated luxury gay space communism. We’ve got a whole plan drawn up and everything. Ask Boss about the Shopping List sometime. I had originally just heard “hey, did you know Games and Whatever have a planet-destroying killsat” through the grapevine and thought “sick, they have a mass driver!” because I could see no reason for it to be anything else. My bad on that. Still disappointing, though.</span></span>]</p>"
+    },
+    {
+      "site": "scp-wiki",
+      "page": "scp-9270",
+      "url": "https://scp-wiki.wikidot.com/scp-9270",
+      "run_id": "run-20260816-100230",
+      "capture_id": "75bf75e6e0fd1104260e28a302e9a9e5c06c84c737106b50ce607152b5697c86",
+      "source_sha256": "9b21b1bf3461fc5ddab25aa122deffc59224a4e937205d38bb143dae6ef662f9",
+      "html_sha256": "d9281057bfaf2c8b5008203178a216496dd395a44b71f138916f9f6ebac452d4",
+      "source_excerpt": "//[[[span class=\"invis\"]]VISUAL ERROr[[/span]] lays on the ground for several minutes.]//",
+      "html_excerpt": "<p><em>[<span class=\"invis\">VISUAL ERROr</span> lays on the ground for several minutes.]</em></p>"
+    },
+    {
+      "site": "scp-wiki",
+      "page": "scp-8725",
+      "url": "https://scp-wiki.wikidot.com/scp-8725",
+      "run_id": "run-20261011-230158",
+      "capture_id": "71a4bb5b696dd3a8dd83b3c87f38fc1e36d100868d95abdc8fdfe8bf1d971841",
+      "source_sha256": "b4835f73238091d568ade7c7a3bb9282ca93ad4c7a1cfd8d04dcc1e0806ce1c8",
+      "html_sha256": "7c68cf30d33cb1cb66a6a4097b94d1fea8fbd6bf323bc1b1b04a4e24b5142673",
+      "source_excerpt": "//[[[span style=\"filter: blur(8px);\"]]The Presence[[/span]] enters the room, slamming the door shut behind them.]//",
+      "html_excerpt": "<p><em>[<span style=\"filter: blur(8px);\">The Presence</span> enters the room, slamming the door shut behind them.]</em></p>"
+    },
+    {
+      "site": "scp-wiki",
+      "page": "jack-ike-s-proposal-i",
+      "url": "https://scp-wiki.wikidot.com/jack-ike-s-proposal-i",
+      "run_id": "run-20261011-230158",
+      "capture_id": "d26c7e5d5050eaef6b4058541b6ab9ae34e44c81e82eb12c9452ba75cc47abf5",
+      "source_sha256": "c2d81521217ee8258654601f15286495c9573ad9b6eea2708458ab41aa575e42",
+      "html_sha256": "171f4d2f5f8b3c75887917e203313d98405c7f10f4e84372c921aa604e13f641",
+      "source_excerpt": "@@|@@ Running: SystemMain , SystemOriginGenerator [[[span class=\"blinkbar\"]]1[[/span]]], CheckDDriveStatus [[[span class=\"blinkbar\"]]1[[/span]]]",
+      "html_excerpt": "<p><span style=\"white-space: pre-wrap;\">|</span> Assessing status of D:/<br />\n<span style=\"white-space: pre-wrap;\">|</span><br />\n<span style=\"white-space: pre-wrap;\">|</span> Running: SystemMain , SystemOriginGenerator [<span class=\"blinkbar\">1</span>], CheckDDriveStatus [<span class=\"blinkbar\">1</span>]<br />\n<span style=\"white-space: pre-wrap;\">|</span> Displaying Sub-Processes:<br />\n<span style=\"white-space: pre-wrap;\">|</span><br />\n<span style=\"white-space: pre-wrap;\">|</span> SystemOriginGenerator<br />\n<span style=\"white-space: pre-wrap;\">&gt;&#32;**Item&#32;#:**&#32;SCP-0001</span><br />\n<span style=\"white-space: pre-wrap;\">&gt;</span><br />\n<span style=\"white-space: pre-wrap;\">&gt;&#32;**Object&#32;Class:**&#32;Thaumiel/Apollyon</span><br />\n<span style=\"white-space: pre-wrap;\">&gt;</span><br />\n<span style=\"white-space: pre-wrap;\">&gt;&#32;**Special&#32;Containment&#32;Procedures:**&#32;SCP-0001&#32;cannot&#32;and&#32;should&#32;not&#32;be&#32;contained&#32;by&#32;the&#32;Foundation.</span><br />\n<span style=\"white-space: pre-wrap;\">&gt;</span><br />\n<span style=\"white-space: pre-wrap;\">&gt;&#32;**Description:**&#32;SCP-0001&#32;is&#32;an&#32;autonomous&#32;biomechanical&#32;device</span> [&#8230;]<br />\n<span style=\"white-space: pre-wrap;\">|</span><br />\n<span style=\"white-space: pre-wrap;\">|</span> CheckDDriveStatus<br />\n<span style=\"white-space: pre-wrap;\">||</span> Assessing status of D:/<br />\n<span style=\"white-space: pre-wrap;\">||</span><br />\n<span style=\"white-space: pre-wrap;\">||</span> Running: SystemMain , SystemOriginGenerator [<span class=\"blinkbar\">1</span>], CheckDDriveStatus [<span class=\"blinkbar\">1</span>]<br />\n<span style=\"white-space: pre-wrap;\">||</span> Displaying Sub-Processes:<br />\n<span style=\"white-space: pre-wrap;\">||</span><br />\n<span style=\"white-space: pre-wrap;\">||</span> SystemOriginGenerator<br />\n<span style=\"white-space: pre-wrap;\">|&gt;&#32;**Item&#32;#:**&#32;SCP-0001</span><br />\n<span style=\"white-space: pre-wrap;\">|&gt;</span><br />\n<span style=\"white-space: pre-wrap;\">|&gt;&#32;**Object&#32;Class:**&#32;Thaumiel/Apollyon</span><br />\n<span style=\"white-space: pre-wrap;\">|&gt;</span><br />\n<span style=\"white-space: pre-wrap;\">|&gt;&#32;**Special&#32;Containment&#32;Procedures:**&#32;SCP-0001&#32;cannot&#32;and&#32;should&#32;not&#32;be&#32;contained&#32;by&#32;the&#32;Foundation.</span><br />\n<span style=\"white-space: pre-wrap;\">|&gt;</span><br />\n<span style=\"white-space: pre-wrap;\">|&gt;&#32;**Description:**&#32;SCP-0001&#32;is&#32;an&#32;autonomous&#32;biomechanical&#32;device</span> [&#8230;]<br />\n<span style=\"white-space: pre-wrap;\">||</span><br />\n<span style=\"white-space: pre-wrap;\">||</span> CheckDDriveStatus<br />\n<span style=\"white-space: pre-wrap;\">|||</span> Assessing status of D:/<br />\n<span style=\"white-space: pre-wrap;\">|||</span><br />\n<span style=\"white-space: pre-wrap;\">|||</span> Running: SystemMain , SystemOriginGenerator [<span class=\"blinkbar\">1</span>], CheckDDriveStatus [<span class=\"blinkbar\">1</span>]<br />\n<span style=\"white-space: pre-wrap;\">|||</span> Displaying Sub-Processes:<br />\n<span style=\"white-space: pre-wrap;\">|||</span><br />\n<span style=\"white-space: pre-wrap;\">|||</span> SystemOriginGenerator<br />\n<span style=\"white-space: pre-wrap;\">||&gt;&#32;**Item&#32;#:**&#32;SCP-0001</span><br />\n<span style=\"white-space: pre-wrap;\">||&gt;</span><br />\n<span style=\"white-space: pre-wrap;\">||&gt;&#32;**Object&#32;Class:**&#32;Thaumiel/Apollyon</span><br />\n<span style=\"white-space: pre-wrap;\">||&gt;</span><br />\n<span style=\"white-space: pre-wrap;\">||&gt;&#32;**Special&#32;Containment&#32;Procedures:**&#32;SCP-0001&#32;cannot&#32;and&#32;should&#32;not&#32;be&#32;contained&#32;by&#32;the&#32;Foundation.</span><br />\n<span style=\"white-space: pre-wrap;\">||&gt;</span><br />\n<span style=\"white-space: pre-wrap;\">||&gt;&#32;**Description:**&#32;SCP-0001&#32;is&#32;an&#32;autonomous&#32;biomechanical&#32;device</span> [&#8230;]<br />\n<span style=\"white-space: pre-wrap;\">|||</span><br />\n<span style=\"white-space: pre-wrap;\">|||</span> CheckDDriveStatus<br />\n<span style=\"white-space: pre-wrap;\">||||</span> <span class=\"blinkbar\">!</span> <tt>RECURSIVE STACK OVERFLOW: ABORTING PROCESS</tt><br />\n<span style=\"white-space: pre-wrap;\">|||</span> <span class=\"blinkbar\">!</span> <tt>RECURSIVE STACK OVERFLOW: ABORTING PROCESS</tt><br />\n<span style=\"white-space: pre-wrap;\">||</span> <span class=\"blinkbar\">!</span> <tt>RECURSIVE STACK OVERFLOW: ABORTING PROCESS</tt><br />\n<span style=\"white-space: pre-wrap;\">|</span> <span class=\"blinkbar\">!</span> <tt>RECURSIVE STACK OVERFLOW: ABORTING PROCESS</tt><br />\n<span style=\"white-space: pre-wrap;\">|</span> <span class=\"blinkbar\">!</span> <tt>STACK BUFFER OVERFLOW</tt></p>"
+    }
+  ]
+}

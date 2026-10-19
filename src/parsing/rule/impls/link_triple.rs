@@ -301,7 +301,12 @@ fn build_separate<'r, 't>(
             normalized.remove(0);
         }
         normalize(&mut normalized);
-        LinkLabel::Text(Cow::Owned(normalized))
+        // A page target shows its title when the page exists; the renderer
+        // falls back to this normalized text otherwise.
+        match link {
+            LinkLocation::Page(_) => LinkLabel::Title(Cow::Owned(normalized)),
+            LinkLocation::Url(_) => LinkLabel::Text(Cow::Owned(normalized)),
+        }
     } else if label.is_empty() {
         LinkLabel::Page
     } else {

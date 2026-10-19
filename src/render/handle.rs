@@ -36,6 +36,12 @@ pub struct Handle;
 /// in advance and provide a resolver over that snapshot.
 pub trait PageExistenceResolver: Send + Sync {
     fn page_exists(&self, site: &str, page: &str) -> bool;
+
+    /// The display title of an existing page, used for
+    /// [`LinkLabel::Title`](crate::tree::LinkLabel::Title) labels.
+    fn page_title(&self, _site: &str, _page: &str) -> Option<String> {
+        None
+    }
 }
 
 /// Resolves a parsed user name to its canonical account information.
@@ -224,7 +230,9 @@ impl Handle {
     {
         let page_title;
         let label_text = match label {
-            LinkLabel::Text(text) | LinkLabel::Slug(text) => text,
+            LinkLabel::Text(text) | LinkLabel::Slug(text) | LinkLabel::Title(text) => {
+                text
+            }
             LinkLabel::Url => match link {
                 LinkLocation::Url(url) => url.as_ref(),
                 LinkLocation::Page(page_ref) => {

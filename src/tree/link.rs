@@ -224,6 +224,13 @@ pub enum LinkLabel<'a> {
     ///
     /// The label for this link is whatever the page's title is.
     Page,
+
+    /// Wikidot's empty link label (`[[[target|]]]`).
+    ///
+    /// Wikidot shows the target page's title when the page exists
+    /// (`[[[scp-series|]]]` renders "SCP Series 1") and this text, the
+    /// normalized target, when it does not.
+    Title(Cow<'a, str>),
 }
 
 impl LinkLabel<'_> {
@@ -233,6 +240,7 @@ impl LinkLabel<'_> {
             LinkLabel::Slug(text) => LinkLabel::Slug(string_to_owned(text)),
             LinkLabel::Url => LinkLabel::Url,
             LinkLabel::Page => LinkLabel::Page,
+            LinkLabel::Title(text) => LinkLabel::Title(string_to_owned(text)),
         }
     }
 }

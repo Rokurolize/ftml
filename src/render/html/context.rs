@@ -408,6 +408,11 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
         }
     }
 
+    pub fn page_title(&self, page_ref: &PageRef) -> Option<String> {
+        let (site, page, _) = page_ref.fields_or(&self.info.site);
+        self.page_existence.page_title(site, page)
+    }
+
     // TODO
     #[allow(dead_code)]
     #[inline]

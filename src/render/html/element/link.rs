@@ -23,6 +23,7 @@ use crate::tree::{
     AnchorTarget, AttributeMap, Element, LinkLabel, LinkLocation, LinkType,
 };
 use crate::url::{HrefKind, classify_href, normalize_link};
+use std::borrow::Cow;
 
 pub fn render_anchor(
     ctx: &mut HtmlContext,
@@ -91,6 +92,23 @@ pub fn render_link(
     };
     let opens_new_tab =
         target == Some(AnchorTarget::NewTab) && layout == Layout::Wikijump;
+
+    // An empty Wikidot label shows the page title once the page exists.
+    let titled;
+    let label = match (label, link) {
+        (LinkLabel::Title(_), LinkLocation::Page(page))
+            if !page.page().is_empty() && ctx.page_exists(page) =>
+        {
+            match ctx.page_title(page) {
+                Some(title) => {
+                    titled = LinkLabel::Text(Cow::Owned(title));
+                    &titled
+                }
+                None => label,
+            }
+        }
+        _ => label,
+    };
 
     macro_rules! write_a {
         ($attr:expr) => {{

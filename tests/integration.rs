@@ -202,3 +202,6 @@ mod parity_discovery_regressions;
 
 #[path = "wikidot_image_attachment_default.rs"]
 mod wikidot_image_attachment_default;
+
+#[path = "wikidot_empty_link_label_title.rs"]
+mod wikidot_empty_link_label_title;

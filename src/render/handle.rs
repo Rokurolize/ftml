@@ -171,6 +171,7 @@ impl Handle {
     pub fn get_implicit_attachment_image_links(
         &self,
         file: &str,
+        page: Option<&str>,
         size: ImageSize,
         info: &PageInfo,
         settings: &WikitextSettings,
@@ -184,11 +185,16 @@ impl Handle {
             return None;
         }
 
-        let page = match info.category.as_deref() {
-            Some(category) if category != "_default" => {
-                format!("{category}:{}", info.page)
-            }
-            _ => info.page.to_string(),
+        // A page-qualified attachment uses its owning page verbatim; the
+        // current page's category prefix never applies to it.
+        let page = match page {
+            Some(page) => page.to_owned(),
+            None => match info.category.as_deref() {
+                Some(category) if category != "_default" => {
+                    format!("{category}:{}", info.page)
+                }
+                _ => info.page.to_string(),
+            },
         };
         let file = file.replace('\\', "/");
         let source_owns_path = page.is_empty()
@@ -423,6 +429,7 @@ fn handle_fallbacks_cover_rendering_helpers() {
     assert_eq!(
         handle.get_implicit_attachment_image_links(
             r#"folder\image.png"#,
+            None,
             ImageSize::Medium,
             &legacy_info,
             &legacy_settings,
@@ -430,6 +437,21 @@ fn handle_fallbacks_cover_rendering_helpers() {
         Some((
             "https://sandbox.wjfiles.com/local--resized-images/run-owned:some-page/folder/image.png/medium.jpg".to_owned(),
             "https://sandbox.wjfiles.com/local--files/run-owned:some-page/folder/image.png".to_owned(),
+        )),
+    );
+    // A page-qualified attachment resolves against its owning page, not the
+    // current page or its category.
+    assert_eq!(
+        handle.get_implicit_attachment_image_links(
+            "photo.jpeg",
+            Some("other-page"),
+            ImageSize::Medium,
+            &legacy_info,
+            &legacy_settings,
+        ),
+        Some((
+            "https://sandbox.wjfiles.com/local--resized-images/other-page/photo.jpeg/medium.jpg".to_owned(),
+            "https://sandbox.wjfiles.com/local--files/other-page/photo.jpeg".to_owned(),
         )),
     );
 

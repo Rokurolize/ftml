@@ -180,6 +180,15 @@ fn arb_image() -> impl Strategy<Value = Element<'static>> {
         (cow!(".*"), cow!(".*")).prop_map(|(file, alt)| {
             ImageSource::ImplicitAttachment {
                 file,
+                page: None,
+                alt,
+                size: ImageSize::Medium,
+            }
+        }),
+        (cow!(".*"), cow!(".*"), cow!(".*")).prop_map(|(page, file, alt)| {
+            ImageSource::ImplicitAttachment {
+                file,
+                page: Some(page),
                 alt,
                 size: ImageSize::Medium,
             }

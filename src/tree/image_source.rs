@@ -29,13 +29,18 @@ pub enum ImageSource<'t> {
     /// A source that renders directly without an implicit attachment link.
     Direct(FileSource<'t>),
 
-    /// A filename inferred as an attachment on the current page.
+    /// A filename inferred as an attachment on a page.
     ///
     /// `file` retains the exact attachment filename for caller-side lookup and
     /// authorization. `alt` retains authored spelling when URL materialization
-    /// normalizes characters such as backslashes.
+    /// normalizes characters such as backslashes. `page` names the page that
+    /// owns the attachment when the source was page-qualified; `None` means
+    /// the current page, and is omitted from the serialized form so trees
+    /// written before page-qualified attachments were supported stay valid.
     ImplicitAttachment {
         file: Cow<'t, str>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        page: Option<Cow<'t, str>>,
         alt: Cow<'t, str>,
         size: ImageSize,
     },
@@ -84,13 +89,17 @@ impl<'t> ImageSource<'t> {
     pub fn to_owned(&self) -> ImageSource<'static> {
         match self {
             ImageSource::Direct(source) => ImageSource::Direct(source.to_owned()),
-            ImageSource::ImplicitAttachment { file, alt, size } => {
-                ImageSource::ImplicitAttachment {
-                    file: string_to_owned(file),
-                    alt: string_to_owned(alt),
-                    size: *size,
-                }
-            }
+            ImageSource::ImplicitAttachment {
+                file,
+                page,
+                alt,
+                size,
+            } => ImageSource::ImplicitAttachment {
+                file: string_to_owned(file),
+                page: page.as_ref().map(|page| string_to_owned(page)),
+                alt: string_to_owned(alt),
+                size: *size,
+            },
         }
     }
 }

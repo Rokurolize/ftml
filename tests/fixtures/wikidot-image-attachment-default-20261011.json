@@ -370,6 +370,39 @@
       "img_src": "https://scp-wiki.wdfiles.com/local--resized-images//photo.jpeg/medium.jpg",
       "alt": "photo.jpeg",
       "body_sha256": "ad1cc0d82f41ebcdf1d14e15098579ab199ac8faa22bcb6564eea32d6a88e33c"
+    },
+    {
+      "source": "[[image scp-9506/x.webp]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files/scp-9506/x.webp",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images/scp-9506/x.webp/medium.jpg",
+      "alt": "x.webp",
+      "body_sha256": "7b4b3cce599e79f0ecd72a53fb0dbda3e0461b909ae050a77f30326fd848016f",
+      "capture": "supplemental-2026-10-23"
+    },
+    {
+      "source": "[[image scp-9506/x.svg]]",
+      "page_context": "none",
+      "anchor_href": "https://scp-wiki.wdfiles.com/local--files/scp-9506/x.svg",
+      "img_src": "https://scp-wiki.wdfiles.com/local--resized-images/scp-9506/x.svg/medium.jpg",
+      "alt": "x.svg",
+      "body_sha256": "bfd5afd3a2bca9f3632bcc2bc7c22d118018a9a3ad0cf1754948a202bbfcb3b3",
+      "capture": "supplemental-2026-10-23"
+    }
+  ],
+  "supplemental_captures": [
+    {
+      "id": "supplemental-2026-10-23",
+      "observed_at": "2026-10-23",
+      "reason": "Issue #734 requires at least one more page-qualified negative control beyond scp-9506/x.jpeg before implementing.",
+      "module": "edit/PagePreviewModule",
+      "mode": "page",
+      "site": "scp-wiki",
+      "authenticated": false,
+      "mutated": false,
+      "page_context": "none (empty page)",
+      "method": "Direct ajax-module-connector.php replication of the wikidot.py request shape (wikidot 4.4.1, Rokurolize/wikidot.py@501b56c7d04008234216fad2e8c19c5dd9bec6b4).",
+      "validation": "Re-captures of [[image scp-9506/x.jpeg]] and [[image scp-9506/x.png]] on the same day reproduce the frozen 2026-10-11 body_sha256 values exactly (62506317f2566c453a5c0cbaada1fa187aa5ed57dd0a2cd9bbe2ab32ceba9e94 and fdd6f0d4d3881bb7074ca82800af90e43061c29efbbf2705f0e7488a9e9dedac)."
     }
   ]
 }

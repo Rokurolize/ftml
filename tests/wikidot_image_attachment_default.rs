@@ -18,11 +18,6 @@ use std::borrow::Cow;
 const FIXTURE: &str =
     include_str!("fixtures/wikidot-image-attachment-default-20261011.json");
 
-/// Page-qualified attachments without an original-display extension resize on
-/// Wikidot, but `ImageSource::ImplicitAttachment` only addresses the current
-/// page. Tracked by issue #734; the observations stay in the fixture.
-const PAGE_QUALIFIED_RESIZE_GAP: &[&str] = &["[[image scp-9506/x.jpeg]]"];
-
 fn render(source: &str) -> String {
     let page_info = PageInfo {
         page: Cow::Borrowed(""),
@@ -71,9 +66,6 @@ fn implicit_attachment_display_matches_live_file_type_default() {
     let mut compared = 0;
     for observation in observations {
         let source = observation["source"].as_str().expect("source");
-        if PAGE_QUALIFIED_RESIZE_GAP.contains(&source) {
-            continue;
-        }
         let expected = (
             observation["anchor_href"].as_str().map(str::to_owned),
             observation["img_src"].as_str().expect("img_src").to_owned(),
@@ -83,9 +75,42 @@ fn implicit_attachment_display_matches_live_file_type_default() {
         assert_eq!(image_shape(&html), expected, "{source}\n{html}");
         compared += 1;
     }
-    assert_eq!(
-        compared,
-        observations.len() - PAGE_QUALIFIED_RESIZE_GAP.len()
+    assert_eq!(compared, observations.len());
+}
+
+#[test]
+fn page_qualified_attachments_follow_the_same_file_type_default() {
+    // Issue #734: the owning page replaces the (empty) current page in both
+    // the resized-image path and the original-file link.
+    for (source, resized) in [
+        ("[[image some-page/a.png]]", false),
+        ("[[image some-page/a.JPG]]", false),
+        ("[[image some-page/a.gif]]", false),
+        ("[[image some-page/a.jpeg]]", true),
+        ("[[image some-page/a.webp]]", true),
+        ("[[image some-page/a.svg]]", true),
+        ("[[image some-page/noext]]", true),
+    ] {
+        let html = render(source);
+        assert_eq!(
+            html.contains("/local--resized-images/some-page/"),
+            resized,
+            "{source}: {html}"
+        );
+        assert_eq!(html.contains("<a href="), resized, "{source}: {html}");
+        if resized {
+            assert!(
+                html.contains("/local--files/some-page/"),
+                "{source}: {html}"
+            );
+        }
+    }
+
+    // A recognized quoted size resizes a page-qualified attachment too.
+    let html = render(r#"[[image some-page/a.png size="small"]]"#);
+    assert!(
+        html.contains("/local--resized-images/some-page/a.png/small.jpg"),
+        "{html}"
     );
 }
 

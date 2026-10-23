@@ -169,6 +169,7 @@ fn parse_wikidot_image_source<'t>(
             .to_owned();
         return Some(ImageSource::ImplicitAttachment {
             file: source,
+            page: None,
             alt: Cow::Owned(alt),
             size: ImageSize::Medium,
         });
@@ -193,6 +194,7 @@ fn parse_wikidot_image_source<'t>(
             .to_owned();
         return Some(ImageSource::ImplicitAttachment {
             file: source,
+            page: None,
             alt: Cow::Owned(alt),
             size: ImageSize::Medium,
         });
@@ -205,6 +207,7 @@ fn parse_wikidot_image_source<'t>(
             .to_owned();
         return Some(ImageSource::ImplicitAttachment {
             file: source,
+            page: None,
             alt: Cow::Owned(alt),
             size: ImageSize::Medium,
         });
@@ -290,8 +293,30 @@ fn classify_wikidot_image_source<'t>(
             let size = explicit_attachment_size
                 .or_else(|| default_wikidot_attachment_size(&file));
             match size {
-                Some(size) => ImageSource::ImplicitAttachment { file, alt, size },
+                Some(size) => ImageSource::ImplicitAttachment {
+                    file,
+                    page: None,
+                    alt,
+                    size,
+                },
                 None => ImageSource::Direct(FileSource::File1 { file }),
+            }
+        }
+        // A page-qualified attachment follows the same display rule as a
+        // current-page one; Wikidot only distinguishes the owning page.
+        // The `alt` for this arm is the filename alone, not the whole
+        // page-qualified source the caller passes in.
+        FileSource::File2 { page, file } => {
+            let size = explicit_attachment_size
+                .or_else(|| default_wikidot_attachment_size(&file));
+            match size {
+                Some(size) => ImageSource::ImplicitAttachment {
+                    alt: Cow::Owned(file.as_ref().to_owned()),
+                    file,
+                    page: Some(page),
+                    size,
+                },
+                None => ImageSource::Direct(FileSource::File2 { page, file }),
             }
         }
         source => ImageSource::Direct(source),
@@ -1082,6 +1107,7 @@ mod tests {
             source,
             &ImageSource::ImplicitAttachment {
                 file: cow!("fog-green.svg"),
+                page: None,
                 alt: cow!("fog-green.svg"),
                 size: ImageSize::Medium,
             },
@@ -1098,6 +1124,54 @@ mod tests {
                 "<img src=\"https://sandbox.wjfiles.com/local--resized-images/some-page/fog-green.svg/medium.jpg\" class=\"hero\" alt=\"fog-green.svg\">",
                 "</a></div>",
             ),
+        );
+    }
+
+    #[test]
+    fn wikidot_page_qualified_attachment_uses_owning_page_for_resize() {
+        // Issue #734: a page-qualified attachment follows the same file-type
+        // default as a current-page one. Anonymous Wikidot PagePreview
+        // (2026-10-11) renders `scp-9506/x.jpeg` as the linked medium resize
+        // on the owning page while `scp-9506/x.png` shows the original.
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[image other-page/photo.jpeg]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        let [Element::Image { source, .. }] = tree.elements.as_slice() else {
+            panic!("expected direct image element, got {:?}", tree.elements);
+        };
+        assert_eq!(
+            source,
+            &ImageSource::ImplicitAttachment {
+                file: cow!("photo.jpeg"),
+                page: Some(cow!("other-page")),
+                alt: cow!("photo.jpeg"),
+                size: ImageSize::Medium,
+            },
+        );
+
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &page_info, &settings)
+            .body;
+        assert_eq!(
+            html,
+            concat!(
+                "<a href=\"https://sandbox.wjfiles.com/local--files/other-page/photo.jpeg\">",
+                "<img src=\"https://sandbox.wjfiles.com/local--resized-images/other-page/photo.jpeg/medium.jpg\" class=\"image\" alt=\"photo.jpeg\">",
+                "</a>",
+            ),
+        );
+
+        // An original-display extension stays a plain, unlinked original on
+        // the owning page, exactly as before.
+        let (html, errors) =
+            render_image("[[image other-page/photo.png]]", Layout::Wikidot);
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            r#"<img src="https://sandbox.wjfiles.com/local--files/other-page/photo.png" class="image" alt="photo.png">"#,
         );
     }
 

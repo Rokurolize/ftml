@@ -55,9 +55,15 @@ pub fn render_image(
                 None => render_image_missing(ctx),
             }
         }
-        ImageSource::ImplicitAttachment { file, alt, size } => {
+        ImageSource::ImplicitAttachment {
+            file,
+            page,
+            alt,
+            size,
+        } => {
             match ctx.handle().get_implicit_attachment_image_links(
                 file,
+                page.as_deref(),
                 *size,
                 ctx.info(),
                 ctx.settings(),

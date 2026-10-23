@@ -764,6 +764,63 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_aligned_image_paragraph_break_keeps_newline_before_bare_run() {
+        // Issue #733: anonymous Wikidot PagePreview for `test--image--basic`
+        // keeps the source newline between a floated image container and a
+        // following unwrapped run as the run's leading text newline.
+        assert_eq!(
+            render_wikidot(
+                "FLOAT RIGHT [[f>image landscape.jpg]]\n\nEXTERNAL [[image https://example.com/some-image.webp]]",
+            ),
+            concat!(
+                "<p>FLOAT RIGHT</p>",
+                "<div class=\"image-container floatright\">",
+                "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/landscape.jpg\" class=\"image\" alt=\"landscape.jpg\">",
+                "</div>",
+                "\nEXTERNAL ",
+                "<img src=\"https://example.com/some-image.webp\" class=\"image\" alt=\"some-image.webp\">",
+            ),
+        );
+
+        // Negative control: a following wrapped paragraph drops the
+        // speculative separator; there is no bare text node to carry it.
+        assert_eq!(
+            render_wikidot("[[f>image landscape.jpg]]\n\nplain"),
+            concat!(
+                "<div class=\"image-container floatright\">",
+                "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/landscape.jpg\" class=\"image\" alt=\"landscape.jpg\">",
+                "</div>",
+                "<p>plain</p>",
+            ),
+        );
+
+        // Negative control: a single line break is not a paragraph break and
+        // gains no leading newline.
+        assert_eq!(
+            render_wikidot(
+                "[[f>image landscape.jpg]]\nEXTERNAL [[image https://example.com/some-image.webp]]",
+            ),
+            concat!(
+                "<div class=\"image-container floatright\">",
+                "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/landscape.jpg\" class=\"image\" alt=\"landscape.jpg\">",
+                "</div>",
+                "EXTERNAL ",
+                "<img src=\"https://example.com/some-image.webp\" class=\"image\" alt=\"some-image.webp\">",
+            ),
+        );
+
+        // Negative control: no following run, no trailing separator.
+        assert_eq!(
+            render_wikidot("[[f>image landscape.jpg]]\n\n"),
+            concat!(
+                "<div class=\"image-container floatright\">",
+                "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/landscape.jpg\" class=\"image\" alt=\"landscape.jpg\">",
+                "</div>",
+            ),
+        );
+    }
+
+    #[test]
     fn line_after_block_is_unwrapped_only_in_wikidot_layout() {
         let page_info = PageInfo::dummy();
         let input = "[[div]]\nblock\n[[/div]]\nafter";

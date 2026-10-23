@@ -72,6 +72,15 @@ pub struct ParagraphStack<'t> {
     wikidot_complete_raw_run_after_block: bool,
 
     pending_unwrapped_separator: bool,
+
+    /// Index into `finished` of a speculative newline separator emitted at a
+    /// paragraph break that directly followed a standalone aligned image.
+    ///
+    /// Wikidot keeps the source newline after the image container when the
+    /// following run renders without a paragraph wrapper (issue #733), but
+    /// the separator is only speculative until that run is known: it is
+    /// removed if the next run is wrapped, is a block, or never comes.
+    pending_aligned_image_separator: Option<usize>,
     unwrapped_after_block_line: bool,
     wikidot_literal_iftags_line: bool,
     wikidot_literal_div_line: bool,
@@ -368,6 +377,13 @@ impl<'t> ParagraphStack<'t> {
                 ..
             }
         ) || matches!(&element, Element::Delayed(delayed) if delayed.image_alignment() == Some(None));
+        // A block-level element (including another aligned image) is not the
+        // bare run the speculative aligned-image separator precedes.
+        if self.pending_aligned_image_separator.is_some()
+            && (aligned_image || !paragraph_safe)
+        {
+            self.remove_pending_aligned_image_separator();
+        }
         let wikidot_html_block = self.wikidot && matches!(element, Element::Html { .. });
         let wikidot_section_marker =
             self.wikidot && matches!(&element, Element::ContentSeparator);
@@ -733,8 +749,27 @@ impl<'t> ParagraphStack<'t> {
         }
     }
 
+    /// Drop the speculative aligned-image separator, if one is pending.
+    fn remove_pending_aligned_image_separator(&mut self) {
+        if let Some(index) = self.pending_aligned_image_separator.take()
+            && matches!(self.finished.get(index), Some(Element::Text(text)) if text == "\n")
+        {
+            self.finished.remove(index);
+        }
+    }
+
     /// Set the finished field in this struct to the paragraph element.
     pub fn end_paragraph(&mut self) {
+        // Flushing a non-empty run settles the speculative separator left by
+        // an aligned image at the preceding paragraph break: the newline is
+        // part of Wikidot's output only when this run renders unwrapped.
+        if self.pending_aligned_image_separator.is_some() && !self.current.is_empty() {
+            if self.current_unwrapped {
+                self.pending_aligned_image_separator = None;
+            } else {
+                self.remove_pending_aligned_image_separator();
+            }
+        }
         if self.current.is_empty() {
             self.finished.append(&mut self.pending_suppression_seams);
         } else {
@@ -782,6 +817,22 @@ impl<'t> ParagraphStack<'t> {
         let literal_div_line = self.wikidot_literal_div_line;
         let unwrapped_after_block_line = self.unwrapped_after_block_line;
         let complete_raw_run_after_block = self.wikidot_complete_raw_run_after_block;
+        // Issue #733: a paragraph break directly after a standalone aligned
+        // image (which the stack moved into `finished`) otherwise vanishes,
+        // because there is no current run to attach a separator to.
+        let last_is_aligned_image = match self.finished.last() {
+            Some(Element::Image {
+                alignment: Some(_), ..
+            }) => true,
+            Some(Element::Delayed(delayed)) => delayed
+                .image_alignment()
+                .is_some_and(|alignment| alignment.is_some()),
+            _ => false,
+        };
+        let aligned_image_boundary = self.wikidot
+            && self.current.is_empty()
+            && self.pending_aligned_image_separator.is_none()
+            && last_is_aligned_image;
         self.end_paragraph();
         self.wikidot_reopen_for_footnote = self.wikidot
             && matches!(
@@ -797,6 +848,9 @@ impl<'t> ParagraphStack<'t> {
                     text!(" ")
                 });
             self.pending_unwrapped_separator = true;
+        } else if aligned_image_boundary {
+            self.finished.push(text!("\n"));
+            self.pending_aligned_image_separator = Some(self.finished.len() - 1);
         }
     }
 
@@ -807,6 +861,8 @@ impl<'t> ParagraphStack<'t> {
     pub fn into_result<'r>(mut self) -> ParseResult<'r, 't, Vec<Element<'t>>> {
         // Finish current paragraph, if any
         self.end_paragraph();
+        // No following run arrived to claim the speculative separator.
+        self.remove_pending_aligned_image_separator();
 
         // Deconstruct stack
         let elements = self.finished;
@@ -832,6 +888,8 @@ impl<'t> ParagraphStack<'t> {
     pub fn into_elements(mut self) -> Vec<Element<'t>> {
         // Finish current paragraph, if any
         self.end_paragraph();
+        // No following run arrived to claim the speculative separator.
+        self.remove_pending_aligned_image_separator();
 
         // Check that there are no errors
         debug_assert!(self.errors.is_empty(), "ParagraphStack errors");

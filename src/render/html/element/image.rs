@@ -139,6 +139,7 @@ fn render_image_element_wikidot(
         Some(target) => target.html_attr(),
         None => "",
     };
+    let opens_new_tab = matches!(target, Some(AnchorTarget::NewTab));
 
     let encoded_wikidot_prefix = image_url.starts_with('%')
         && (image_url.contains("http://") || image_url.contains("https://"));
@@ -192,7 +193,11 @@ fn render_image_element_wikidot(
             let url = normalize_link(link, ctx.handle());
             ctx.html()
                 .a()
-                .attr(attr!("href" => &url, "target" => target_value; if target.is_some()))
+                .attr(attr!(
+                    "href" => &url,
+                    "target" => target_value; if target.is_some(),
+                    "rel" => "noopener noreferrer"; if opens_new_tab,
+                ))
                 .inner(build_image);
         }
         None => match attachment_link {
@@ -231,6 +236,7 @@ fn render_image_element_wikijump(
         Some(target) => target.html_attr(),
         None => "",
     };
+    let opens_new_tab = matches!(target, Some(AnchorTarget::NewTab));
 
     let (space, align_class) = match alignment {
         Some(align) => (" ", align.wj_html_class()),
@@ -256,7 +262,11 @@ fn render_image_element_wikijump(
                     let url = normalize_link(link, ctx.handle());
                     ctx.html()
                         .a()
-                        .attr(attr!("href" => &url, "target" => target_value; if target.is_some()))
+                        .attr(attr!(
+                            "href" => &url,
+                            "target" => target_value; if target.is_some(),
+                            "rel" => "noopener noreferrer"; if opens_new_tab,
+                        ))
                         .inner(build_image);
                 }
                 None => build_image(ctx),

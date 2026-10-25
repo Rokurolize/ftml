@@ -111,7 +111,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(
             html,
-            r#"<div class="wj-note custom" data-kind="example">Body</div>"#,
+            r#"<p><div class="wj-note custom" data-kind="example">Body</div></p>"#,
         );
     }
 

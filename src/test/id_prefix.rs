@@ -198,6 +198,7 @@ fn isolate_user_ids() {
                 cow!("class") => cow!("apple"),
                 cow!("id") => cow!("u-banana"),
             }),
+            target: None,
         }],
     );
     test!(
@@ -212,6 +213,7 @@ fn isolate_user_ids() {
                 cow!("class") => cow!("u-apple"),
                 cow!("id") => cow!("u-banana"),
             }),
+            target: None,
         }],
     );
 

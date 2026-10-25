@@ -21,7 +21,9 @@
 use super::prelude::*;
 use crate::delayed::{DelayedElement, GeneratedImageAttribute, GeneratedKind};
 use crate::parsing::discard_wikidot_controls;
-use crate::tree::{FileSource, FloatAlignment, ImageSize, ImageSource, LinkLocation};
+use crate::tree::{
+    AnchorTarget, FileSource, FloatAlignment, ImageSize, ImageSource, LinkLocation,
+};
 use crate::url::is_url;
 use std::borrow::Cow;
 
@@ -84,22 +86,29 @@ fn parse_fn<'r, 't>(
             let (source, arguments) = parser.get_head_name_map(&BLOCK_IMAGE, in_head)?;
             (Cow::Borrowed(source), is_url(source), arguments)
         };
-    let link = if parser.settings().layout.legacy() {
+    let (link, target) = if parser.settings().layout.legacy() {
         match arguments.get("link") {
-            None => None,
-            Some(value) => Some(
-                parse_wikidot_image_link_target(discard_wikidot_controls(value))
-                    .ok_or_else(|| parser.make_err(ParseErrorKind::RuleFailed))?,
-            ),
+            None => (None, None),
+            Some(value) => {
+                let (value, target) = split_image_link_target(discard_wikidot_controls(value));
+                let link = parse_wikidot_image_link_target(value)
+                    .ok_or_else(|| parser.make_err(ParseErrorKind::RuleFailed))?;
+                (Some(link), target)
+            }
         }
     } else {
-        arguments.get_with_bare("link").and_then(|(value, bare)| {
-            if bare && value == "#" {
-                None
-            } else {
-                Some(LinkLocation::parse(value))
+        match arguments.get_with_bare("link") {
+            None => (None, None),
+            Some((value, bare)) => {
+                let (value, target) = split_image_link_target(value);
+                let link = if bare && value == "#" {
+                    None
+                } else {
+                    Some(LinkLocation::parse(value))
+                };
+                (link, target)
             }
-        })
+        }
     };
     let alignment = FloatAlignment::parse(name);
     // Only a quoted, recognized size name selects a resize explicitly. An
@@ -138,6 +147,7 @@ fn parse_fn<'r, 't>(
         return success_elements(Element::Delayed(DelayedElement::tag_image(
             source,
             link,
+            target,
             alignment,
             arguments.to_attribute_map(parser.settings()),
             attribute,
@@ -152,6 +162,7 @@ fn parse_fn<'r, 't>(
         link,
         alignment,
         attributes: arguments.to_attribute_map(parser.settings()),
+        target,
     };
 
     success_elements(element)
@@ -345,6 +356,30 @@ fn parse_direct_image_source<'t>(source: Cow<'t, str>) -> Option<ImageSource<'t>
         Cow::Owned(source) => FileSource::parse(&source)
             .map(|source| source.to_owned())
             .map(ImageSource::Direct),
+    }
+}
+
+/// Splits a leading `*` off an image `link` argument, returning the
+/// remaining location text and the anchor target it implies.
+///
+/// In Wikidot syntax, `link="*https://example.com/"` makes the image link
+/// open in a new tab; the `*` is not part of the location.
+fn split_image_link_target(value: Cow<'_, str>) -> (Cow<'_, str>, Option<AnchorTarget>) {
+    match value.strip_prefix('*') {
+        Some(rest) => (
+            Cow::Owned(rest.trim_start().to_owned()),
+            Some(AnchorTarget::NewTab),
+        ),
+        None => {
+            // Leading whitespace in the argument is not part of the
+            // location either (e.g. `link=" https://example.com/"`).
+            let trimmed = value.trim_start();
+            if trimmed.len() == value.len() {
+                (value, None)
+            } else {
+                (Cow::Owned(trimmed.to_owned()), None)
+            }
+        }
     }
 }
 

@@ -16,8 +16,8 @@ use crate::render::{PageExistenceResolver, Render};
 use crate::settings::{WikitextMode, WikitextSettings};
 use crate::tokenizer::{Tokenization, tokenize_delayed_segments};
 use crate::tree::{
-    AttributeMap, Container, Element, FloatAlignment, ImageSource, LinkLabel,
-    LinkLocation, LinkType, ListItem, PartialElement, SyntaxTree,
+    AnchorTarget, AttributeMap, Container, Element, FloatAlignment, ImageSource,
+    LinkLabel, LinkLocation, LinkType, ListItem, PartialElement, SyntaxTree,
     run_on_bounded_tree_stack, tree_requires_bounded_tree_stack,
 };
 use std::borrow::Cow;
@@ -247,6 +247,7 @@ enum DelayedNode<'t> {
 struct DelayedTagImage<'t> {
     source: ImageSource<'t>,
     link: Option<LinkLocation<'t>>,
+    target: Option<AnchorTarget>,
     alignment: Option<FloatAlignment>,
     attributes: AttributeMap<'t>,
     attribute: GeneratedImageAttribute,
@@ -336,6 +337,7 @@ impl<'t> DelayedElement<'t> {
     pub(crate) fn tag_image(
         source: ImageSource<'t>,
         link: Option<LinkLocation<'t>>,
+        target: Option<AnchorTarget>,
         alignment: Option<FloatAlignment>,
         attributes: AttributeMap<'t>,
         attribute: GeneratedImageAttribute,
@@ -346,6 +348,7 @@ impl<'t> DelayedElement<'t> {
             node: DelayedNode::TagImage(Box::new(DelayedTagImage {
                 source,
                 link,
+                target,
                 alignment,
                 attributes,
                 attribute,
@@ -470,6 +473,7 @@ impl<'t> DelayedElement<'t> {
                 DelayedNode::TagImage(Box::new(DelayedTagImage {
                     source: image.source.to_owned(),
                     link: image.link.as_ref().map(LinkLocation::to_owned),
+                    target: image.target,
                     alignment: image.alignment,
                     attributes: image.attributes.to_owned(),
                     attribute: image.attribute,
@@ -1101,6 +1105,7 @@ fn resolve_delayed(
                 link,
                 alignment: image.alignment,
                 attributes,
+                target: image.target,
             }])
         }
     }

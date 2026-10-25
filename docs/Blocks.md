@@ -826,7 +826,7 @@ Body: Elements
 
 Accepts newline separation.
 
-Arguments: All accepted attributes in `Layout::Wikijump`. No block arguments are parsed in `Layout::Wikidot` because the marker is literal there.
+Arguments: All accepted attributes in `Layout::Wikijump`. No block arguments are parsed in `Layout::Wikidot` because the marker is literal there. Inline usage is not supported in `Layout::Wikijump`.
 
 Example:
 

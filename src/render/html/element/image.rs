@@ -19,7 +19,7 @@
  */
 
 use super::prelude::*;
-use crate::tree::{AttributeMap, FloatAlignment, ImageSource, LinkLocation};
+use crate::tree::{AnchorTarget, AttributeMap, FloatAlignment, ImageSource, LinkLocation};
 use crate::url::{dangerous_scheme, normalize_link};
 
 pub fn render_image(
@@ -28,6 +28,7 @@ pub fn render_image(
     link: &Option<LinkLocation>,
     alignment: Option<FloatAlignment>,
     attributes: &AttributeMap,
+    target: Option<AnchorTarget>,
 ) {
     debug!(
         "Rendering image element (source '{}', link {:?}, alignment {}, float {})",
@@ -50,7 +51,7 @@ pub fn render_image(
                 .get_file_link(source, ctx.info(), ctx.settings())
             {
                 Some(url) => render_image_element(
-                    ctx, &url, link, None, None, alignment, attributes,
+                    ctx, &url, link, None, None, alignment, attributes, target,
                 ),
                 None => render_image_missing(ctx),
             }
@@ -76,6 +77,7 @@ pub fn render_image(
                     Some(alt),
                     alignment,
                     attributes,
+                    target,
                 ),
                 None => render_image_missing(ctx),
             }
@@ -91,6 +93,7 @@ fn render_image_element(
     attachment_alt: Option<&str>,
     alignment: Option<FloatAlignment>,
     attributes: &AttributeMap,
+    target: Option<AnchorTarget>,
 ) {
     trace!("Found URL, rendering image (value '{image_url}')");
 
@@ -104,10 +107,11 @@ fn render_image_element(
                 attachment_alt,
                 alignment,
                 attributes,
+                target,
             );
         }
         Layout::Wikijump => {
-            render_image_element_wikijump(ctx, image_url, link, alignment, attributes);
+            render_image_element_wikijump(ctx, image_url, link, alignment, attributes, target);
         }
     }
 }
@@ -129,7 +133,13 @@ fn render_image_element_wikidot(
     attachment_alt: Option<&str>,
     alignment: Option<FloatAlignment>,
     attributes: &AttributeMap,
+    target: Option<AnchorTarget>,
 ) {
+    let target_value = match target {
+        Some(target) => target.html_attr(),
+        None => "",
+    };
+
     let encoded_wikidot_prefix = image_url.starts_with('%')
         && (image_url.contains("http://") || image_url.contains("https://"));
     let safety_url = image_url
@@ -182,7 +192,7 @@ fn render_image_element_wikidot(
             let url = normalize_link(link, ctx.handle());
             ctx.html()
                 .a()
-                .attr(attr!("href" => &url))
+                .attr(attr!("href" => &url, "target" => target_value; if target.is_some()))
                 .inner(build_image);
         }
         None => match attachment_link {
@@ -215,7 +225,13 @@ fn render_image_element_wikijump(
     link: &Option<LinkLocation>,
     alignment: Option<FloatAlignment>,
     attributes: &AttributeMap,
+    target: Option<AnchorTarget>,
 ) {
+    let target_value = match target {
+        Some(target) => target.html_attr(),
+        None => "",
+    };
+
     let (space, align_class) = match alignment {
         Some(align) => (" ", align.wj_html_class()),
         None => ("", ""),
@@ -240,7 +256,7 @@ fn render_image_element_wikijump(
                     let url = normalize_link(link, ctx.handle());
                     ctx.html()
                         .a()
-                        .attr(attr!("href" => &url))
+                        .attr(attr!("href" => &url, "target" => target_value; if target.is_some()))
                         .inner(build_image);
                 }
                 None => build_image(ctx),
@@ -281,6 +297,7 @@ fn image_renders_missing_for_canonical_local_files_when_local_paths_are_disabled
             link: None,
             alignment: None,
             attributes: AttributeMap::new(),
+            target: None,
         }],
         ..SyntaxTree::default()
     };

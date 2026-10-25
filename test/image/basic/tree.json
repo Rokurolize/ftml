@@ -22,7 +22,8 @@
                 },
                 "link": null,
                 "alignment": null,
-                "attributes": {}
+                "attributes": {},
+                "target": null
             }
         },
         {
@@ -59,7 +60,8 @@
                     "align": "left",
                     "float": false
                 },
-                "attributes": {}
+                "attributes": {},
+                "target": null
             }
         },
         {
@@ -92,7 +94,8 @@
                     "align": "right",
                     "float": false
                 },
-                "attributes": {}
+                "attributes": {},
+                "target": null
             }
         },
         {
@@ -125,7 +128,8 @@
                     "align": "center",
                     "float": false
                 },
-                "attributes": {}
+                "attributes": {},
+                "target": null
             }
         },
         {
@@ -166,7 +170,8 @@
                     "align": "left",
                     "float": true
                 },
-                "attributes": {}
+                "attributes": {},
+                "target": null
             }
         },
         {
@@ -207,7 +212,8 @@
                     "align": "right",
                     "float": true
                 },
-                "attributes": {}
+                "attributes": {},
+                "target": null
             }
         },
         {
@@ -230,7 +236,8 @@
                 },
                 "link": null,
                 "alignment": null,
-                "attributes": {}
+                "attributes": {},
+                "target": null
             }
         },
         {
@@ -266,7 +273,8 @@
                 },
                 "link": null,
                 "alignment": null,
-                "attributes": {}
+                "attributes": {},
+                "target": null
             }
         },
         {
@@ -303,7 +311,8 @@
                 },
                 "link": null,
                 "alignment": null,
-                "attributes": {}
+                "attributes": {},
+                "target": null
             }
         },
         {
@@ -340,7 +349,8 @@
                 },
                 "link": null,
                 "alignment": null,
-                "attributes": {}
+                "attributes": {},
+                "target": null
             }
         },
         {
@@ -378,7 +388,8 @@
                 },
                 "link": null,
                 "alignment": null,
-                "attributes": {}
+                "attributes": {},
+                "target": null
             }
         },
         {
@@ -416,7 +427,8 @@
                 },
                 "link": null,
                 "alignment": null,
-                "attributes": {}
+                "attributes": {},
+                "target": null
             }
         },
         {
@@ -447,7 +459,8 @@
                     "data-xyz": "bar",
                     "style": "border: 1em solid",
                     "title": "FOO"
-                }
+                },
+                "target": null
             }
         },
         {
@@ -472,7 +485,8 @@
                 },
                 "link": "#gif-sucks",
                 "alignment": null,
-                "attributes": {}
+                "attributes": {},
+                "target": null
             }
         },
         {
@@ -504,7 +518,8 @@
                     "extra": null
                 },
                 "alignment": null,
-                "attributes": {}
+                "attributes": {},
+                "target": null
             }
         },
         {
@@ -532,7 +547,108 @@
                 },
                 "link": "https://example.com/",
                 "alignment": null,
-                "attributes": {}
+                "attributes": {},
+                "target": null
+            }
+        },
+        {
+            "element": "line-break"
+        },
+        {
+            "element": "text",
+            "data": "LINK"
+        },
+        {
+            "element": "text",
+            "data": " "
+        },
+        {
+            "element": "image",
+            "data": {
+                "source": {
+                    "type": "direct",
+                    "data": {
+                        "type": "file1",
+                        "data": {
+                            "file": "foo.gif"
+                        }
+                    }
+                },
+                "link": "https://example.com/",
+                "alignment": null,
+                "attributes": {},
+                "target": null
+            }
+        },
+        {
+            "element": "text",
+            "data": "NEW"
+        },
+        {
+            "element": "text",
+            "data": "_"
+        },
+        {
+            "element": "text",
+            "data": "LINK"
+        },
+        {
+            "element": "text",
+            "data": " "
+        },
+        {
+            "element": "image",
+            "data": {
+                "source": {
+                    "type": "direct",
+                    "data": {
+                        "type": "file1",
+                        "data": {
+                            "file": "foo.gif"
+                        }
+                    }
+                },
+                "link": "https://example.com/",
+                "alignment": null,
+                "attributes": {},
+                "target": "new-tab"
+            }
+        },
+        {
+            "element": "line-break"
+        },
+        {
+            "element": "text",
+            "data": "NEW"
+        },
+        {
+            "element": "text",
+            "data": "_"
+        },
+        {
+            "element": "text",
+            "data": "LINK"
+        },
+        {
+            "element": "text",
+            "data": " "
+        },
+        {
+            "element": "image",
+            "data": {
+                "source": {
+                    "type": "direct",
+                    "data": {
+                        "type": "file1",
+                        "data": {
+                            "file": "foo.gif"
+                        }
+                    }
+                },
+                "link": "https://example.com/",
+                "alignment": null,
+                "attributes": {},
+                "target": "new-tab"
             }
         }
     ]

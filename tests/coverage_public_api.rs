@@ -265,6 +265,7 @@ fn public_api_html_render_covers_fallback_branches_from_ast() {
                 link: None,
                 alignment: None,
                 attributes: AttributeMap::new(),
+                target: None,
             },
             Element::Audio {
                 source: FileSource::File1 {

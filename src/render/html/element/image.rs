@@ -139,8 +139,6 @@ fn render_image_element_wikidot(
         Some(target) => target.html_attr(),
         None => "",
     };
-    let opens_new_tab = matches!(target, Some(AnchorTarget::NewTab));
-
     let encoded_wikidot_prefix = image_url.starts_with('%')
         && (image_url.contains("http://") || image_url.contains("https://"));
     let safety_url = image_url
@@ -193,11 +191,7 @@ fn render_image_element_wikidot(
             let url = normalize_link(link, ctx.handle());
             ctx.html()
                 .a()
-                .attr(attr!(
-                    "href" => &url,
-                    "target" => target_value; if target.is_some(),
-                    "rel" => "noopener noreferrer"; if opens_new_tab,
-                ))
+                .attr(attr!("href" => &url, "target" => target_value; if target.is_some()))
                 .inner(build_image);
         }
         None => match attachment_link {

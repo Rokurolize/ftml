@@ -322,11 +322,72 @@ pub(crate) fn normalize_wikidot_color(color: &str) -> Option<Cow<'_, str>> {
         return Some(Cow::Owned(format!("#{}", hex.to_ascii_lowercase())));
     }
 
+    // Wikidot passes var() references through as the color value: live
+    // pages (e.g. component:croqstyle's documentation) use
+    // ##var(--custom-property)|...## for syntax highlighting, and the
+    // baseline renders them as colored spans. cssparser's Color::parse
+    // cannot accept var(), so validate the reference shape directly.
+    if is_css_var_reference(color) {
+        return Some(Cow::Borrowed(color));
+    }
+
     let mut input = ParserInput::new(color);
     let mut parser = CssParser::new(&mut input);
     let parsed: Result<_, cssparser::ParseError<'_, ()>> =
         parser.parse_entirely(Color::parse);
     parsed.ok().map(|_| Cow::Borrowed(color))
+}
+
+/// Whether the value is a well-formed CSS `var()` reference:
+/// `var(--custom-property)` or `var(--custom-property, <fallback>)`,
+/// where the fallback may itself contain nested functions.
+///
+/// The accepted value is emitted verbatim into a `style` attribute,
+/// so it must not contain characters that could break out of the
+/// declaration (the same exclusion set as `is_safe_color`), and its
+/// parentheses must balance.
+fn is_css_var_reference(color: &str) -> bool {
+    let Some(inner) = color
+        .strip_prefix("var(")
+        .and_then(|rest| rest.strip_suffix(')'))
+    else {
+        return false;
+    };
+
+    if !inner.chars().all(|ch| {
+        !ch.is_control()
+            && !matches!(ch, ';' | '{' | '}' | '<' | '>' | '"' | '\'' | '\\' | '&')
+    }) {
+        return false;
+    }
+
+    let mut depth = 0usize;
+    for ch in inner.chars() {
+        match ch {
+            '(' => depth += 1,
+            ')' => {
+                let Some(next) = depth.checked_sub(1) else {
+                    return false;
+                };
+                depth = next;
+            }
+            _ => {}
+        }
+    }
+    if depth != 0 {
+        return false;
+    }
+
+    // The first argument must be a custom property name: `--` followed
+    // by a non-empty identifier.
+    let name = inner.split(',').next().unwrap_or_default().trim();
+    let Some(ident) = name.strip_prefix("--") else {
+        return false;
+    };
+    !ident.is_empty()
+        && ident
+            .chars()
+            .all(|ch| ch.is_alphanumeric() || matches!(ch, '-' | '_'))
 }
 
 #[cfg(test)]
@@ -393,6 +454,45 @@ mod tests {
         assert_eq!(
             html,
             "<p><span style=\"color: orange\">before <strong>bold</strong> after</span></p>",
+        );
+    }
+
+    #[test]
+    fn wikidot_color_accepts_css_var_references() {
+        for accepted in [
+            "var(--c-keyword)",
+            "var(--missing, red)",
+            "var(--a, var(--b, blue))",
+            "var(--x)",
+        ] {
+            assert_eq!(
+                normalize_wikidot_color(accepted).as_deref(),
+                Some(accepted),
+                "{accepted:?}",
+            );
+        }
+
+        for rejected in [
+            "var(x)",
+            "var(--)",
+            "var(--x",
+            "var(--x))",
+            "var(--x);background:red",
+            "var(--x\"y)",
+            "var()",
+        ] {
+            assert_eq!(normalize_wikidot_color(rejected), None, "{rejected:?}",);
+        }
+    }
+
+    #[test]
+    fn wikidot_var_color_renders_as_span() {
+        let (html, errors) = render_wikidot("##var(--c-keyword)|text##");
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(
+            html,
+            "<p><span style=\"color: var(--c-keyword)\">text</span></p>",
         );
     }
 }

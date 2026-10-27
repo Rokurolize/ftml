@@ -116,6 +116,44 @@ fn foreground_and_background_admit_only_static_color_values() {
 }
 
 #[test]
+fn css_var_color_values_render_as_spans() {
+    // Live Wikidot passes var() references through as the color value:
+    // component:croqstyle's documentation builds its syntax-highlighted
+    // code samples from ##var(--c-...)|...## spans, and the live page
+    // renders them as colored spans (stafflab run-03 S5 baseline).
+    for (source, expected) in [
+        (
+            "##var(--c-keyword)|A##",
+            "<p><span style=\"color: var(--c-keyword)\">A</span></p>",
+        ),
+        (
+            "##|var(--c-accent)|A##",
+            "<p><span style=\"background-color: var(--c-accent)\">A</span></p>",
+        ),
+        (
+            "##var(--missing, red)|A##",
+            "<p><span style=\"color: var(--missing, red)\">A</span></p>",
+        ),
+        (
+            "##var(--a, var(--b, blue))|A##",
+            "<p><span style=\"color: var(--a, var(--b, blue))\">A</span></p>",
+        ),
+        (
+            "**##var(--c-keyword)|[[/####var(--c-builtin)|div####var(--c-keyword)|]]##**",
+            concat!(
+                "<p><strong>",
+                "<span style=\"color: var(--c-keyword)\">[[/</span>",
+                "<span style=\"color: var(--c-builtin)\">div</span>",
+                "<span style=\"color: var(--c-keyword)\">]]</span>",
+                "</strong></p>",
+            ),
+        ),
+    ] {
+        assert_eq!(render(source), expected, "{source:?}");
+    }
+}
+
+#[test]
 fn unsafe_and_malformed_color_values_remain_literal() {
     for source in [
         "##|red|##",
@@ -126,6 +164,8 @@ fn unsafe_and_malformed_color_values_remain_literal() {
         "##hsl(1, 2, 3)|A##",
         "##not-a-color|A##",
         "##red;background:blue|A##",
+        "##var(x)|A##",
+        "##var()|A##",
     ] {
         assert_eq!(render(source), format!("<p>{source}</p>"), "{source:?}");
     }

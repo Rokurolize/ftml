@@ -218,7 +218,14 @@ fn scan_literal(
         b'[' if has(bytes, start, b"[[[*") => (Token::LeftLinkStar, start + 4),
         b'[' if has(bytes, start, b"[[[") => (Token::LeftLink, start + 3),
         b'[' if has(bytes, start, b"[[$") => (Token::LeftMath, start + 3),
-        b'[' if has(bytes, start, b"[[#") => (Token::LeftBlockAnchor, start + 3),
+        // `[[##` is never an anchor opener: a named anchor requires
+        // whitespace after `[[#` and the delayed conditional requires the
+        // identifier `if`, so a `#` here starts a `##` color token and the
+        // `[[` must tokenize as a plain block opener instead of eating the
+        // color token's first `#`.
+        b'[' if has(bytes, start, b"[[#") && !has(bytes, start, b"[[##") => {
+            (Token::LeftBlockAnchor, start + 3)
+        }
         b'[' if has(bytes, start, b"[[*") => (Token::LeftBlockStar, start + 3),
         b'[' if has(bytes, start, b"[[/") => (Token::LeftBlockEnd, start + 3),
         b'[' if has(bytes, start, b"[[") => (Token::LeftBlock, start + 2),

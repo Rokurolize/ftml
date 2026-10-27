@@ -195,3 +195,40 @@ fn dense_valid_and_malformed_color_runs_remain_bounded() {
     assert!(html.starts_with("<p>##rgb("));
     assert!(html.ends_with("|A##</p>"));
 }
+
+#[test]
+fn color_close_after_double_bracket_is_not_eaten_by_anchor_token() {
+    // Regression (S5 residuals A/B): `[[#` used to tokenize as
+    // LeftBlockAnchor even when the `#` was the first half of a `##`
+    // color close, so a color span whose body ended in `[[` never closed
+    // and the whole span fell back to literal text.
+    for (source, expected) in [
+        (
+            "##darkred|[[##",
+            "<p><span style=\"color: darkred\">[[</span></p>",
+        ),
+        (
+            "**##darkred|[[##**",
+            "<p><strong><span style=\"color: darkred\">[[</span></strong></p>",
+        ),
+        (
+            "**##var(--c-keyword)|[[##**",
+            "<p><strong><span style=\"color: var(--c-keyword)\">[[</span></strong></p>",
+        ),
+        (
+            "##darkred|[[####blue|div##",
+            "<p><span style=\"color: darkred\">[[</span><span style=\"color: blue\">div</span></p>",
+        ),
+        (
+            "**##darkred|[[##**##blue|include##",
+            "<p><strong><span style=\"color: darkred\">[[</span></strong><span style=\"color: blue\">include</span></p>",
+        ),
+        // A real named anchor inside a color body still parses as one.
+        (
+            "##darkred|[[# anchor]]##",
+            "<p><span style=\"color: darkred\"><a name=\"anchor\"></a></span></p>",
+        ),
+    ] {
+        assert_eq!(render(source), expected, "{source:?}");
+    }
+}

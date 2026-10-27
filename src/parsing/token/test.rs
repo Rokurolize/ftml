@@ -596,3 +596,48 @@ fn tokens() {
         ],
     );
 }
+
+#[test]
+fn double_bracket_before_color_is_not_an_anchor_opener() {
+    // `[[##` must tokenize as `[[` + `##`: the `#` right after `[[`
+    // belongs to a color token, never to a named anchor (which requires
+    // whitespace after `[[#`) or the delayed conditional (`[[#if`).
+    // The pest oracle must agree with the fast scanner on all of these.
+    for input in [
+        "##darkred|[[##",
+        "**##darkred|[[##**",
+        "##darkred|[[####blue|div##",
+        "[[# anchor]]",
+        "[[#if true | yes]]",
+        "[[#anchor]]",
+    ] {
+        assert_fast_tokens_match_pest(input);
+    }
+
+    let pairs: Vec<(Token, &str)> = Token::extract_all("##darkred|[[##")
+        .iter()
+        .map(|token| (token.token, token.slice))
+        .collect();
+    assert_eq!(
+        pairs,
+        vec![
+            (Token::InputStart, ""),
+            (Token::Color, "##"),
+            (Token::Identifier, "darkred"),
+            (Token::Pipe, "|"),
+            (Token::LeftBlock, "[["),
+            (Token::Color, "##"),
+            (Token::InputEnd, ""),
+        ],
+    );
+
+    // Real anchor and delayed-conditional openers are unchanged.
+    assert_eq!(
+        Token::extract_all("[[# anchor]]")[1].token,
+        Token::LeftBlockAnchor
+    );
+    assert_eq!(
+        Token::extract_all("[[#if true | yes]]")[1].token,
+        Token::LeftBlockAnchor
+    );
+}

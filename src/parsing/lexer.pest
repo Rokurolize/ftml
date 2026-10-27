@@ -160,7 +160,10 @@ left_bracket_anchor = @{ "[#" }
 left_bracket_star = @{ "[*" }
 left_block = @{ "[[" }
 left_block_end = @{ "[[/" }
-left_block_anchor = @{ "[[#" }
+// `[[##` is not an anchor opener (a named anchor needs whitespace after
+// `[[#`; `[[#if` is the delayed conditional): the second `#` begins a
+// `##` color token, mirroring the fast scanner's guard.
+left_block_anchor = @{ "[[#" ~ !("#") }
 left_block_star = @{ "[[*" }
 left_math = @{ "[[$" }
 left_link = @{ "[[[" }

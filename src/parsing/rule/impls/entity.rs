@@ -18,11 +18,83 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::prelude::*;
 use entities::ENTITIES;
 use std::borrow::Cow;
 use std::char;
 use std::collections::HashMap;
 use std::sync::LazyLock;
+
+/// Decodes a complete `&name;`, `&#ddd;`, or `&#xhhh;` entity in ordinary text.
+///
+/// Only `Layout::Wikijump` decodes these. Live Wikidot escapes entity
+/// spellings in prose (see the `entity-*` and `recorder-unit-entity-omega`
+/// parity fixtures), so `Layout::Wikidot` falls through to plain text.
+///
+/// The result is an ordinary text element, which the renderer escapes like
+/// any other text. An entity which decodes to `<`, `&`, or a quote therefore
+/// produces that character as text, never as markup.
+pub const RULE_ENTITY: Rule = Rule {
+    name: "entity",
+    position: LineRequirement::Any,
+    try_consume_fn,
+};
+
+fn try_consume_fn<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> ParseResult<'r, 't, Elements<'t>> {
+    debug!("Trying to parse an HTML entity in text");
+
+    let ampersand = parser.current();
+    if parser.settings().layout.legacy() || ampersand.slice != "&" {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
+    // Accept exactly "&" ~ "#"? ~ identifier ~ ";", with no gaps between tokens.
+    let remaining = parser.remaining();
+    let body_len = match remaining.first() {
+        Some(token) if token.token == Token::NumberedItem => 2,
+        _ => 1,
+    };
+    let Some(tokens) = remaining.get(..=body_len) else {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    };
+    let (body, semicolon) = (&tokens[..body_len], &tokens[body_len]);
+    let adjacent = std::iter::once(ampersand)
+        .chain(tokens)
+        .zip(tokens)
+        .all(|(left, right)| left.span.end == right.span.start);
+
+    if !adjacent
+        || body[body_len - 1].token != Token::Identifier
+        || semicolon.token != Token::Other
+        || semicolon.slice != ";"
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
+    let entity = parser.full_text().slice_partial(&body[0], semicolon);
+    let Some(decoded) = find_entity(entity).filter(|value| is_text_safe(value)) else {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    };
+
+    // Step over "&", the entity body, and ";".
+    parser.step_n(body_len + 2)?;
+    ok!(Element::Text(decoded))
+}
+
+/// Whether a decoded entity may be emitted as ordinary text.
+///
+/// Control characters (including NUL and C1, which browsers remap rather than
+/// emit) and Unicode noncharacters stay as their literal, escaped spelling.
+fn is_text_safe(decoded: &str) -> bool {
+    decoded.chars().all(|ch| {
+        let codepoint = u32::from(ch);
+        !ch.is_control()
+            && !(0xFDD0..=0xFDEF).contains(&codepoint)
+            && codepoint & 0xFFFE != 0xFFFE
+    })
+}
 
 static ENTITY_MAPPING: LazyLock<HashMap<&'static str, &'static str>> =
     LazyLock::new(|| {

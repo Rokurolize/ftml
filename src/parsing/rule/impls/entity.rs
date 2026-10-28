@@ -308,3 +308,55 @@ fn decode_semicolon_entities_preserves_unknown_and_incomplete_entities() {
         "&copy &not-an-entity; &copy",
     );
 }
+
+#[cfg(test)]
+fn render_entity_html(input: &str, layout: crate::layout::Layout) -> String {
+    use crate::data::PageInfo;
+    use crate::render::{Render, html::HtmlRender};
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
+    let tokenization = crate::tokenize(input);
+    let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+    assert!(errors.is_empty(), "{input:?}: {errors:?}");
+    HtmlRender.render(&tree, &page_info, &settings).body
+}
+
+#[test]
+fn wikijump_text_decodes_complete_entities() {
+    use crate::layout::Layout;
+
+    assert_eq!(
+        render_entity_html(
+            "a&mdash;b &darr; c&nbsp;d &#8212; &#x2014; {{e &copy;}}",
+            Layout::Wikijump,
+        ),
+        "<p>a\u{2014}b \u{2193} c\u{a0}d \u{2014} \u{2014} \
+         <code class=\"wj-monospace\">e \u{a9}</code></p>",
+    );
+}
+
+#[test]
+fn entity_spellings_stay_escaped_unless_decoded_by_wikijump_text() {
+    use crate::layout::Layout;
+
+    // Incomplete, unknown, and control or noncharacter entities stay literal.
+    assert_eq!(
+        render_entity_html(
+            "&mdash &bogus; &#X41; &#0; &#x80; &#xFFFE; &Tab;",
+            Layout::Wikijump,
+        ),
+        "<p>&amp;mdash &amp;bogus; &amp;#X41; &amp;#0; &amp;#x80; &amp;#xFFFE; &amp;Tab;</p>",
+    );
+
+    // Raw text is not decoded, and live Wikidot escapes entities in prose.
+    assert_eq!(
+        render_entity_html("@@&mdash;@@", Layout::Wikijump),
+        "<p><span class=\"wj-raw\">&amp;mdash;</span></p>",
+    );
+    assert_eq!(
+        render_entity_html("a&mdash;b {{&copy;}}", Layout::Wikidot),
+        "<p>a&amp;mdash;b <tt>&amp;copy;</tt></p>",
+    );
+}

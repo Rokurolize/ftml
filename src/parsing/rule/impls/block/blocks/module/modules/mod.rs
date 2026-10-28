@@ -35,6 +35,8 @@ mod join;
 mod list_pages;
 mod page_tree;
 mod rate;
+mod redirect;
+mod tagcloud;
 
 pub use self::backlinks::MODULE_BACKLINKS;
 pub use self::categories::MODULE_CATEGORIES;
@@ -43,3 +45,5 @@ pub use self::join::MODULE_JOIN;
 pub use self::list_pages::MODULE_LIST_PAGES;
 pub use self::page_tree::MODULE_PAGE_TREE;
 pub use self::rate::MODULE_RATE;
+pub use self::redirect::MODULE_REDIRECT;
+pub use self::tagcloud::MODULE_TAGCLOUD;

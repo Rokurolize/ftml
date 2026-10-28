@@ -1,0 +1,58 @@
+{
+    "elements": [
+        {
+            "element": "module",
+            "data": {
+                "module": "redirect",
+                "data": {
+                    "destination": "start"
+                }
+            }
+        },
+        {
+            "element": "module",
+            "data": {
+                "module": "redirect",
+                "data": {
+                    "destination": "http://slashdot.org"
+                }
+            }
+        },
+        {
+            "element": "module",
+            "data": {
+                "module": "redirect",
+                "data": {
+                    "destination": "http://www.example.com/base/"
+                }
+            }
+        },
+        {
+            "element": "module",
+            "data": {
+                "module": "redirect",
+                "data": {
+                    "destination": null
+                }
+            }
+        },
+        {
+            "element": "module",
+            "data": {
+                "module": "redirect",
+                "data": {
+                    "destination": ""
+                }
+            }
+        },
+        {
+            "element": "module",
+            "data": {
+                "module": "redirect",
+                "data": {
+                    "destination": "start"
+                }
+            }
+        }
+    ]
+}

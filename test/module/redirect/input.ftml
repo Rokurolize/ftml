@@ -1,0 +1,7 @@
+[[module Redirect destination="start"]]
+[[module redirect destination="http://slashdot.org"]]
+[[module REDIRECT destination="http://www.example.com/base/"]]
+
+[[module Redirect]]
+[[module Redirect destination=""]]
+[[module Redirect destination="start" invalid="argument"]]

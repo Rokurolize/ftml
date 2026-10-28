@@ -1,0 +1,8 @@
+[[module TagCloud]]
+[[module TagCloud limit="2" category="news"]]
+[[module TagCloud minFontSize="1em" maxFontSize="2em" maxColor="8,8,8" minColor="200,200,228" category="news"]]
+
+[[module TagCloud target="my-target" urlAttrPrefix="lp" skipCategoryFromUrl="true" category="news"]]
+[[module TagCloud mode="3d" width="123" height="77"]]
+[[module TagCloud limit="0" showHidden="" minFontSize="1em"]]
+[[module tagcloud showHidden="false" limit="50"]]

@@ -11,7 +11,7 @@ impl PageExistenceResolver for Pages {
     fn page_exists(&self, _site: &str, page: &str) -> bool {
         matches!(
             page,
-            "scp-series" | "scp-173" | "bigger-than-jesus" | "untitled"
+            "scp-series" | "scp-173" | "bigger-than-jesus" | "untitled" | "blank-title"
         )
     }
 
@@ -20,6 +20,7 @@ impl PageExistenceResolver for Pages {
             "scp-series" => Some("SCP Series 1".to_owned()),
             "scp-173" => Some("SCP-173".to_owned()),
             "bigger-than-jesus" => Some("Bigger Than <Jesus>".to_owned()),
+            "blank-title" => Some(" ".to_owned()),
             _ => None,
         }
     }
@@ -89,6 +90,15 @@ fn empty_labels_fall_back_to_the_normalized_target() {
     assert_eq!(
         render("[[[Bigger Than Jesus|]]]", false),
         r#"<p><a href="/bigger-than-jesus">bigger-than-jesus</a></p>"#,
+    );
+}
+
+#[test]
+fn empty_labels_fall_back_when_the_page_has_a_blank_title() {
+    // Rokurolize/wikijump#2957: a title-less page must not render an empty link.
+    assert_eq!(
+        render("[[[blank-title|]]]", true),
+        r#"<p><a href="/blank-title">blank-title</a></p>"#,
     );
 }
 

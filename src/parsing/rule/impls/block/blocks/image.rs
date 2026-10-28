@@ -90,8 +90,15 @@ fn parse_fn<'r, 't>(
         match arguments.get("link") {
             None => (None, None),
             Some(value) => {
-                let (value, target) =
-                    split_image_link_target(discard_wikidot_controls(value));
+                let value = discard_wikidot_controls(value);
+                // Wikidot does not resolve a link target that starts with
+                // whitespace, with or without a leading `*` marker: the whole
+                // block stays literal.
+                let location = value.strip_prefix('*').unwrap_or(&value);
+                if location.starts_with(char::is_whitespace) {
+                    return Err(parser.make_err(ParseErrorKind::RuleFailed));
+                }
+                let (value, target) = split_image_link_target(value);
                 let link = parse_wikidot_image_link_target(value)
                     .ok_or_else(|| parser.make_err(ParseErrorKind::RuleFailed))?;
                 (Some(link), target)
@@ -761,6 +768,20 @@ mod tests {
             );
             assert!(!html.contains("[[image "), "{target}: {html}");
         }
+    }
+
+    #[test]
+    fn wikidot_image_link_with_leading_whitespace_stays_literal() {
+        // references-20261025-01 `test--image--basic`.
+        for target in [" https://example.com/", "* https://example.com/"] {
+            let (html, _) =
+                render_wikidot_preview(&format!("[[image foo.gif link=\"{target}\"]]"));
+            assert!(html.contains("[[image foo.gif"), "{html}");
+            assert!(!html.contains("<img"), "{html}");
+        }
+        let (html, _) =
+            render_wikidot_preview("[[image foo.gif link=\"*https://example.com/\"]]");
+        assert!(html.contains("target=\"_blank\""), "{html}");
     }
 
     #[test]

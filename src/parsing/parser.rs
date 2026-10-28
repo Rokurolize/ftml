@@ -109,6 +109,7 @@ pub(crate) struct RuleAttemptKey {
     accepts_partial: AcceptsPartial,
     accepts_partial_offset: Option<isize>,
     in_footnote: bool,
+    in_note: bool,
     has_footnote_block: bool,
     start_of_line: bool,
     wikidot: WikidotState,
@@ -241,6 +242,7 @@ pub struct Parser<'r, 't> {
     // footprint.
     accepts_partial_depth: u16,
     in_footnote: bool, // Whether we're currently inside [[footnote]] ... [[/footnote]].
+    in_note: bool, // Whether we're inside a Wikidot-layout [[note]]; notes don't nest.
     has_footnote_block: bool, // Whether a [[footnoteblock]] was created.
     start_of_line: bool,
     native_blockquote_depth: Option<usize>,
@@ -309,6 +311,7 @@ impl<'r, 't> Parser<'r, 't> {
             accepts_partial: AcceptsPartial::None,
             accepts_partial_depth: 0,
             in_footnote: false,
+            in_note: false,
             has_footnote_block: false,
             start_of_line: true,
             native_blockquote_depth: None,
@@ -426,6 +429,16 @@ impl<'r, 't> Parser<'r, 't> {
         self.accepts_partial == value
             && self.accepts_partial_depth != 0
             && usize::from(self.accepts_partial_depth) == self.depth
+    }
+
+    #[inline]
+    pub fn in_note(&self) -> bool {
+        self.in_note
+    }
+
+    #[inline]
+    pub fn set_note_flag(&mut self, value: bool) {
+        self.in_note = value;
     }
 
     #[inline]
@@ -746,6 +759,7 @@ impl<'r, 't> Parser<'r, 't> {
             accepts_partial: self.accepts_partial,
             accepts_partial_offset,
             in_footnote: self.in_footnote,
+            in_note: self.in_note,
             has_footnote_block: self.has_footnote_block,
             start_of_line: self.start_of_line,
             wikidot: self.wikidot.attempt_key(),
@@ -1392,6 +1406,7 @@ impl<'r, 't> Parser<'r, 't> {
         self.accepts_partial = parser.accepts_partial;
         self.accepts_partial_depth = parser.accepts_partial_depth;
         self.in_footnote = parser.in_footnote;
+        self.in_note = parser.in_note;
         self.has_footnote_block = parser.has_footnote_block;
         self.start_of_line = parser.start_of_line;
         self.native_blockquote_depth = parser.native_blockquote_depth;

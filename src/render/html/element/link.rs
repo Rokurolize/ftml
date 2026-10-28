@@ -99,7 +99,12 @@ pub fn render_link(
         (LinkLabel::Title(_), LinkLocation::Page(page))
             if !page.page().is_empty() && ctx.page_exists(page) =>
         {
-            match ctx.page_title(page) {
+            // A page without a title keeps the derived label (the normalized
+            // target), as when no title is known.
+            match ctx
+                .page_title(page)
+                .filter(|title| !title.trim().is_empty())
+            {
                 Some(title) => {
                     titled = LinkLabel::Text(Cow::Owned(title));
                     &titled

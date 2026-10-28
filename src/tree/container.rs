@@ -158,7 +158,10 @@ impl ContainerType {
             ContainerType::Div => HtmlTag::new("div"),
             ContainerType::Mark => HtmlTag::new("mark"),
             ContainerType::Blockquote => HtmlTag::new("blockquote"),
-            ContainerType::Note => HtmlTag::with_class("div", "wj-note"),
+            ContainerType::Note => match layout {
+                Layout::Wikidot => HtmlTag::with_class("div", "wiki-note"),
+                Layout::Wikijump => HtmlTag::with_class("div", "wj-note"),
+            },
             ContainerType::Insertion => HtmlTag::new("ins"),
             ContainerType::Deletion => HtmlTag::new("del"),
             ContainerType::Hidden => HtmlTag::with_class("span", "wj-hidden"),

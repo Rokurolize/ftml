@@ -1274,3 +1274,21 @@ fn html_render_does_not_retain_comment_sized_body_capacity() {
         input.len(),
     );
 }
+
+#[test]
+fn decoded_text_entities_cannot_inject_markup() {
+    let input = "&lt;script&gt;alert(1)&lt;/script&gt; &#60;b&#x3E; &quot;&#39;&amp;lt; \
+                 &#91;&#91;div&#93;&#93; &#42;&#42;x&#42;&#42;";
+    let tree = parse(input, Layout::Wikijump);
+
+    // Decoded characters are text, never markup or wikitext syntax.
+    assert_eq!(
+        render_html(&tree, Layout::Wikijump),
+        "<p>&lt;script&gt;alert(1)&lt;/script&gt; &lt;b&gt; &quot;&#39;&amp;lt; \
+         [[div]] **x**</p>",
+    );
+    assert_eq!(
+        render_text(&tree, Layout::Wikijump),
+        "<script>alert(1)</script> <b> \"'&lt; [[div]] **x**",
+    );
+}

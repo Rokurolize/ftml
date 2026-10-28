@@ -41,14 +41,19 @@ fn parse_note_block<'r, 't>(
     assert!(!flag_score, "Note doesn't allow score flag");
     assert_block_name(&BLOCK_NOTE, name);
 
-    // In the legacy (Wikidot) layout, `[[note]]` is not a block: live
-    // Wikidot PagePreview evidence shows the marker remains literal text.
-    // Only the Wikijump layout gives it native block semantics.
-    if parser.settings().layout.legacy() {
+    // Wikidot does not nest notes: an inner `[[note]]` stays literal text.
+    if parser.in_note() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
     let arguments = parser.get_head_map(&BLOCK_NOTE, in_head)?;
+
+    // Wikidot's note takes no arguments: `[[note class=\"x\"]]` stays literal
+    // (references-20260815-10), while a bare `[[note]]` renders
+    // (references-20261025-01).
+    if parser.settings().layout.legacy() && !arguments.is_empty() {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     // `[[note]]` is a block element and must start on a new line.
     // Legacy `Text_Wiki` parser also rejected inline note blocks, so preserve
@@ -58,8 +63,11 @@ fn parse_note_block<'r, 't>(
     }
 
     // Get body content, without paragraphs
-    let (elements, errors, paragraph_safe) =
-        parser.get_body_elements(&BLOCK_NOTE, false)?.into();
+    let legacy = parser.settings().layout.legacy();
+    parser.set_note_flag(legacy);
+    let body = parser.get_body_elements(&BLOCK_NOTE, legacy);
+    parser.set_note_flag(false);
+    let (elements, errors, paragraph_safe) = body?.into();
 
     // Build and return element
     let element = Element::Container(Container::new(
@@ -68,7 +76,8 @@ fn parse_note_block<'r, 't>(
         arguments.to_attribute_map(parser.settings()),
     ));
 
-    ok!(paragraph_safe; element, errors)
+    // Wikidot's note is always a block, even when its body is empty.
+    ok!(paragraph_safe && !legacy; element, errors)
 }
 
 #[cfg(test)]
@@ -91,14 +100,28 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_note_matches_literal_live_pagepreview() {
-        let (html, _errors) =
-            render("[[note]]\nEvidence-backed note.[[/note]]", Layout::Wikidot);
+    fn wikidot_note_matches_live_pagepreview() {
+        // references-20261025-01 `test--note--basic`.
+        let (html, errors) = render("[[note]]\nBody text.\n[[/note]]", Layout::Wikidot);
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(html, "<div class=\"wiki-note\"><p>Body text.</p></div>");
 
+        // Notes do not nest: the inner opener stays literal.
+        let (html, _) = render(
+            "[[note]]\n[[note]]\nB\n[[/note]]\n[[/note]]",
+            Layout::Wikidot,
+        );
+        assert_eq!(html.matches("wiki-note").count(), 1, "{html}");
         assert!(html.contains("[[note]]"), "{html}");
-        assert!(html.contains("[[/note]]"), "{html}");
-        assert!(!html.contains("class=\"wiki-note\""), "{html}");
-        assert!(!html.contains("class=\"wj-note\""), "{html}");
+
+        // Arguments are not accepted.
+        let (html, _) = render("[[note class=\"x\"]]\nB\n[[/note]]", Layout::Wikidot);
+        assert!(!html.contains("wiki-note"), "{html}");
+
+        // The closing tag is required.
+        let (html, _) = render("[[note]]\nNo close.", Layout::Wikidot);
+        assert!(!html.contains("wiki-note"), "{html}");
+        assert!(html.contains("[[note]]"), "{html}");
     }
 
     #[test]

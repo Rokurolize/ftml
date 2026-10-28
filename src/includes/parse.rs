@@ -87,7 +87,7 @@ pub fn parse_include_block<'t>(
 /// Creates an [`IncludeRef`] out of pest [`Pairs`].
 fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError> {
     let page_raw = pairs.next().ok_or(IncludeParseError)?.as_str();
-    let page_ref = validate_include_page_ref(PageRef::parse(page_raw)?)?;
+    let page_ref = validate_include_page_ref(PageRef::parse_include(page_raw)?)?;
 
     trace!("Got page for include {page_ref:?}");
     let mut raw_arguments = Vec::new();
@@ -456,6 +456,27 @@ mod tests {
             .expect_err("empty include page should reject");
 
         assert_eq!(error, IncludeParseError);
+    }
+
+    #[test]
+    fn parse_include_block_canonicalizes_dotted_host_site() {
+        // Wikidot resolves the host-form site to the bare slug; the dashed
+        // spelling is a different, nonexistent site and must not be touched.
+        let (include, _) =
+            parse_include_block("[[include :scp-jp.wikidot.com:component:jstyles]]", 0)
+                .expect("dotted include should parse");
+        assert_eq!(
+            include.page_ref(),
+            &PageRef::page_and_site("scp-jp", "component:jstyles"),
+        );
+
+        let (include, _) =
+            parse_include_block("[[include :scp-jp-wikidot-com:component:jstyles]]", 0)
+                .expect("dashed include should parse");
+        assert_eq!(
+            include.page_ref(),
+            &PageRef::page_and_site("scp-jp-wikidot-com", "component:jstyles"),
+        );
     }
 
     #[test]

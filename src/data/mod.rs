@@ -30,6 +30,6 @@ mod user_info;
 pub use self::backlinks::Backlinks;
 pub use self::karma::KarmaLevel;
 pub use self::page_info::PageInfo;
-pub use self::page_ref::{PageRef, PageRefParseError};
+pub use self::page_ref::{PageRef, PageRefParseError, canonical_include_site};
 pub use self::score::ScoreValue;
 pub use self::user_info::UserInfo;

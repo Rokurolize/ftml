@@ -18,8 +18,47 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use std::borrow::Cow;
 use std::fmt::{self, Display};
 use wikidot_normalize::normalize;
+
+/// Canonicalizes an `[[include]]` site segment: a host-form
+/// `<slug>.wikidot.com` spelling (ASCII case-insensitive, with an optional
+/// single trailing `.`) becomes `<slug>`, before slug normalization runs.
+///
+/// Wikidot looks an include site segment up as a site *or a host*, so the
+/// full domain spelling names the same site as the bare slug. The strip must
+/// happen here, on the raw segment: after `wikidot_normalize::normalize`
+/// runs, `scp-jp.wikidot.com` has already become `scp-jp-wikidot-com`, a
+/// legal slug that Wikidot treats as a different, nonexistent site.
+///
+/// The prefix is accepted only when it is non-empty and matches
+/// `[A-Za-z0-9-]+` (no further dots). Anything else — including the dashed
+/// spelling, `*.wdfiles.com`, custom domains, and bare `wikidot.com` — is
+/// returned unchanged. Case is preserved; `normalize` case-folds afterwards.
+///
+/// This is include-specific: triple-bracket links keep the dotted spelling in
+/// their local slug, so link parsing must keep using [`PageRef::parse`].
+pub fn canonical_include_site(raw: &str) -> Cow<'_, str> {
+    let trimmed = raw.trim();
+    let trimmed = trimmed.strip_suffix('.').unwrap_or(trimmed);
+    const SUFFIX: &str = ".wikidot.com";
+    if trimmed.len() < SUFFIX.len() {
+        return Cow::Borrowed(raw);
+    }
+    let (prefix, suffix) = trimmed.split_at(trimmed.len() - SUFFIX.len());
+    if !suffix.eq_ignore_ascii_case(SUFFIX) {
+        return Cow::Borrowed(raw);
+    }
+    if prefix.is_empty()
+        || !prefix
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+    {
+        return Cow::Borrowed(raw);
+    }
+    Cow::Borrowed(prefix)
+}
 
 /// Represents a reference to a page on the wiki, as used by include notation.
 ///
@@ -168,6 +207,53 @@ impl PageRef {
 
         Ok(result)
     }
+
+    /// Parses an `[[include]]` target, canonicalizing a host-form
+    /// `<slug>.wikidot.com` site segment to `<slug>` before normalization.
+    ///
+    /// Identical to [`PageRef::parse`] except for the site slice, which goes
+    /// through [`canonical_include_site`]. Both `[[include]]` parsers must
+    /// use this; [`PageRef::parse`] stays untouched for triple-bracket links,
+    /// where Wikidot keeps the dotted spelling in the local slug.
+    pub fn parse_include(s: &str) -> Result<PageRef, PageRefParseError> {
+        let s = s.trim();
+        if s.is_empty() {
+            return Err(PageRefParseError);
+        }
+
+        let result = match s.find(':') {
+            // Off-site page, e.g. ":scp-wiki:something"
+            Some(0) => {
+                // Find the second colon
+                let idx = match s[1..].find(':') {
+                    // Empty site name, e.g. "::something"
+                    // or no second colon, e.g. ":something"
+                    Some(0) | None => return Err(PageRefParseError),
+
+                    // Slice off the rest
+                    Some(idx) => idx + 1,
+                };
+
+                // Get site and page slices
+                let site = s[1..idx].trim();
+                let page = s[idx + 1..].trim();
+                let site = canonical_include_site(site);
+                PageRef::page_and_site(site.into_owned(), page)
+            }
+
+            // On-site page, e.g. "component:thing"
+            Some(_) => PageRef::page_only(s),
+
+            // On-site page, with no category, e.g. "page"
+            None => PageRef::page_only(s),
+        };
+
+        if result.page().is_empty() {
+            return Err(PageRefParseError);
+        }
+
+        Ok(result)
+    }
 }
 
 impl Display for PageRef {
@@ -283,6 +369,85 @@ fn page_ref() {
     test!(
         ":scp-wiki:deleted:secret:fragment:page",
         PageRef::page_and_site("scp-wiki", "deleted:secret:fragment:page"),
+    );
+}
+
+#[test]
+fn canonical_include_site_strips_host_form_before_normalization() {
+    use std::borrow::Cow;
+
+    // These map to a canonical slug (case preserved; normalize folds later).
+    for (input, expected) in [
+        ("scp-jp.wikidot.com", "scp-jp"),
+        ("SCP-JP.WIKIDOT.COM", "SCP-JP"),
+        ("scp-jp.wikidot.com.", "scp-jp"),
+        ("  scp-jp.wikidot.com  ", "scp-jp"),
+        ("scp-wiki.wikidot.com", "scp-wiki"),
+        ("scp-sandbox-3.wikidot.com", "scp-sandbox-3"),
+        ("05command.wikidot.com", "05command"),
+        ("www.wikidot.com", "www"),
+    ] {
+        assert_eq!(
+            canonical_include_site(input),
+            Cow::Borrowed(expected),
+            "host-form site must canonicalize: {input:?}",
+        );
+    }
+
+    // These stay unchanged: bare service host, empty prefix, a further dot,
+    // the dashed spelling (a distinct, legal slug), other hosts, and custom
+    // domains.
+    for input in [
+        "wikidot.com",
+        ".wikidot.com",
+        "a.b.wikidot.com",
+        "scp-jp-wikidot-com",
+        "scp-jp.wdfiles.com",
+        "kontainer.djkakt.us",
+        "scp.avn.sh",
+        "scp-wiki",
+        "",
+    ] {
+        assert_eq!(
+            canonical_include_site(input),
+            Cow::Borrowed(input),
+            "non-host site must pass through: {input:?}",
+        );
+    }
+}
+
+#[test]
+fn parse_include_canonicalizes_dotted_site_segments() {
+    // The known dotted include spells the same reference as the canonical one.
+    assert_eq!(
+        PageRef::parse_include(":scp-jp.wikidot.com:component:jstyles"),
+        PageRef::parse(":scp-jp:component:jstyles"),
+    );
+    assert_eq!(
+        PageRef::parse_include(":SCP-JP.WIKIDOT.COM:component:jstyles"),
+        PageRef::parse(":scp-jp:component:jstyles"),
+    );
+    // Non-dotted spellings, including the karathh / scp-karathh-paper
+    // sandbox sites, behave exactly as before.
+    assert_eq!(
+        PageRef::parse_include(":scp-jp-sandbox3:component:jstyles"),
+        PageRef::parse(":scp-jp-sandbox3:component:jstyles"),
+    );
+    // Malformed targets still fail.
+    assert!(PageRef::parse_include("").is_err());
+    assert!(PageRef::parse_include(":scp-jp.wikidot.com:").is_err());
+}
+
+#[test]
+fn parse_keeps_dotted_site_for_links() {
+    // Triple-bracket links have no cross-site form: Wikidot keeps the dotted
+    // spelling in the local slug, so the general parser must not strip it.
+    let actual = PageRef::parse(":scp-jp.wikidot.com:component:jstyles")
+        .expect("dotted target parses");
+    assert_eq!(actual.site(), Some("scp-jp-wikidot-com"));
+    assert_eq!(
+        actual,
+        PageRef::page_and_site("scp-jp-wikidot-com", "component:jstyles"),
     );
 }
 

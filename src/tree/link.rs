@@ -159,6 +159,12 @@ fn test_link_location() {
         ":scp-wiki:component:theme/edit/true" =>
             Some("scp-wiki"), "component:theme", Some("/edit/true"),
     );
+    // Dotted spellings stay local: Wikidot has no cross-site triple-bracket
+    // link, so the link path must not canonicalize the host form.
+    test!(
+        ":scp-jp.wikidot.com:component:jstyles" =>
+            Some("scp-jp-wikidot-com"), "component:jstyles", None,
+    );
 
     test!("http://blog.wikidot.com/" => "http://blog.wikidot.com/");
     test!("https://example.com" => "https://example.com");

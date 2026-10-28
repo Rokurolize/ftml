@@ -38,6 +38,9 @@ fn parse_conditions<'r, 't>(
 ) -> Result<Vec<ElementCondition<'t>>, ParseError> {
     match spec {
         Some("-") if parser.settings().layout.legacy() => Ok(Vec::new()),
+        Some(spec) if !parser.settings().layout.legacy() && spec.trim().is_empty() => {
+            Err(parser.make_err(ParseErrorKind::BlockMissingArguments))
+        }
         Some(spec) => Ok(ElementCondition::parse(spec)),
         None if parser.settings().layout.legacy() => Ok(Vec::new()),
         None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
@@ -152,10 +155,20 @@ mod tests {
             "{errors:?}",
         );
 
+        // An empty query is an error rather than an always-true condition.
         let tokenization = crate::tokenize("[[iftags   ]]body[[/iftags]]");
+        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(
+            errors
+                .iter()
+                .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments),
+            "{errors:?}",
+        );
+
+        let tokenization = crate::tokenize("[[iftags +alpha]]body[[/iftags]]");
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
         assert!(errors.is_empty(), "{errors:?}");
-        assert!(format!("{tree:?}").contains("body"), "{tree:?}");
+        assert!(!format!("{tree:?}").contains("body"), "{tree:?}");
 
         let info = PageInfo {
             tags: vec![Cow::Borrowed("alpha"), Cow::Borrowed("gamma")],

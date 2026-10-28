@@ -117,6 +117,26 @@ fn try_consume_link<'r, 't>(
     ];
     let url = collect_text(parser, rule, &url_close, &url_invalid, None)?;
 
+    // Old Wikidot interwiki form, `[prefix:Page Label]`. It resolves through the
+    // same prefix table as the modern `[[[!prefix:Page|Label]]]` form. Real URLs
+    // (including `http:`, `https:`, and `mailto:`) always take the ordinary path.
+    if !url_valid(url)
+        && let Some(expanded) = parser.settings().interwiki.build(url)
+    {
+        let label_close = [ParseCondition::current(Token::RightBracket)];
+        let label_invalid = [
+            ParseCondition::current(Token::ParagraphBreak),
+            ParseCondition::current(Token::LineBreak),
+        ];
+        let label = collect_text(parser, rule, &label_close, &label_invalid, None)?;
+        return success_elements(Element::Link {
+            ltype: LinkType::Interwiki,
+            link: LinkLocation::Url(Cow::Owned(expanded)),
+            label: LinkLabel::Text(cow!(label.trim())),
+            target,
+        });
+    }
+
     if !url_valid(url) {
         return Err(parser.make_err(ParseErrorKind::InvalidUrl));
     }
@@ -678,6 +698,38 @@ mod tests {
     use crate::render::Render;
     use crate::render::html::HtmlRender;
     use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn wikijump_legacy_single_bracket_interwiki_resolves_known_prefixes() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        let render = |source: &str| {
+            let tokenization = crate::tokenize(source);
+            let (tree, _) = crate::parse(&tokenization, &page_info, &settings).into();
+            HtmlRender.render(&tree, &page_info, &settings).body
+        };
+
+        let html = render("[wikipedia:Mallard The duck] [https://example.com/ Plain]");
+        assert!(
+            html.contains(r#"href="https://wikipedia.org/wiki/Mallard">The duck</a>"#),
+            "{html}"
+        );
+        assert!(
+            html.contains(r#"href="https://example.com/">Plain</a>"#),
+            "{html}"
+        );
+
+        // Unknown prefixes are not links.
+        let html = render("[nosuchwiki:Mallard The duck]");
+        assert!(!html.contains("<a "), "{html}");
+
+        // The Wikidot layout keeps its evidenced label-only behavior.
+        let wikidot = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[wikipedia:Mallard The duck]");
+        let (tree, _) = crate::parse(&tokenization, &page_info, &wikidot).into();
+        let html = HtmlRender.render(&tree, &page_info, &wikidot).body;
+        assert!(!html.contains("<a "), "{html}");
+    }
 
     #[test]
     fn wikidot_single_link_disposition_separates_compatibility_and_security() {

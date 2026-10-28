@@ -19,7 +19,9 @@
  */
 
 use super::prelude::*;
-use crate::tree::{AnchorTarget, AttributeMap, FloatAlignment, ImageSource, LinkLocation};
+use crate::tree::{
+    AnchorTarget, AttributeMap, FloatAlignment, ImageSource, LinkLocation,
+};
 use crate::url::{dangerous_scheme, normalize_link};
 
 pub fn render_image(
@@ -111,7 +113,9 @@ fn render_image_element(
             );
         }
         Layout::Wikijump => {
-            render_image_element_wikijump(ctx, image_url, link, alignment, attributes, target);
+            render_image_element_wikijump(
+                ctx, image_url, link, alignment, attributes, target,
+            );
         }
     }
 }
@@ -191,7 +195,9 @@ fn render_image_element_wikidot(
             let url = normalize_link(link, ctx.handle());
             ctx.html()
                 .a()
-                .attr(attr!("href" => &url, "target" => target_value; if target.is_some()))
+                .attr(
+                    attr!("href" => &url, "target" => target_value; if target.is_some()),
+                )
                 .inner(build_image);
         }
         None => match attachment_link {

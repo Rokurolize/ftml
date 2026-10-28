@@ -47,6 +47,26 @@ impl LiteralRegionIndex {
         Self { ranges: merged }
     }
 
+    /// Literal regions protected from typography: everything in [`Self::new`]
+    /// plus the bodies of `[[module]]` blocks that accept one.
+    pub(crate) fn for_typography(source: &str) -> Self {
+        let mut ranges = Self::new(source).ranges;
+        collect_module_body_ranges(source, &mut ranges);
+        ranges.sort_unstable_by_key(|range| (range.start, range.end));
+
+        let mut merged: Vec<Range<usize>> = Vec::with_capacity(ranges.len());
+        for range in ranges {
+            if let Some(previous) = merged.last_mut()
+                && range.start <= previous.end
+            {
+                previous.end = previous.end.max(range.end);
+            } else {
+                merged.push(range);
+            }
+        }
+        Self { ranges: merged }
+    }
+
     pub(crate) fn for_parser_functions(source: &str) -> Self {
         let mut ranges = Vec::new();
         collect_parser_function_literal_blocks(source, &mut ranges);
@@ -73,6 +93,43 @@ impl LiteralRegionIndex {
 
     pub(crate) fn ranges(&self) -> &[Range<usize>] {
         &self.ranges
+    }
+}
+
+/// Modules that never take a body, so a later `[[/module]]` is not theirs.
+const BODYLESS_MODULES: [&str; 5] =
+    ["rate", "backlinks", "categories", "join", "pagetree"];
+
+fn collect_module_body_ranges(source: &str, ranges: &mut Vec<Range<usize>>) {
+    let lower = source.to_ascii_lowercase();
+    let mut cursor = 0usize;
+    while let Some(relative) = lower[cursor..].find("[[module") {
+        let open = cursor + relative;
+        let after = open + "[[module".len();
+        cursor = after;
+        let Some(relative_head_end) = lower[after..].find("]]") else {
+            break;
+        };
+        let head_end = after + relative_head_end + 2;
+        let head = &lower[after..head_end - 2];
+        if !head.starts_with(|character: char| character.is_ascii_whitespace()) {
+            continue;
+        }
+        let name = head.split_ascii_whitespace().next().unwrap_or_default();
+        if name.is_empty() || BODYLESS_MODULES.contains(&name) {
+            continue;
+        }
+        let Some(relative_close) = lower[head_end..].find("[[/module") else {
+            continue;
+        };
+        let close = head_end + relative_close;
+        if lower[close + "[[/module".len()..]
+            .trim_start_matches([' ', '\t'])
+            .starts_with("]]")
+        {
+            ranges.push(head_end..close);
+            cursor = close;
+        }
     }
 }
 

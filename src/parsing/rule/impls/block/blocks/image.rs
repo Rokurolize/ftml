@@ -90,8 +90,7 @@ fn parse_fn<'r, 't>(
         match arguments.get("link") {
             None => (None, None),
             Some(value) => {
-                let (value, target) =
-                    split_image_link_target(discard_wikidot_controls(value));
+                let (value, target) = split_image_link_target(discard_wikidot_controls(value));
                 let link = parse_wikidot_image_link_target(value)
                     .ok_or_else(|| parser.make_err(ParseErrorKind::RuleFailed))?;
                 (Some(link), target)

@@ -1,0 +1,149 @@
+{
+    "elements": [
+        {
+            "element": "module",
+            "data": {
+                "module": "tag-cloud",
+                "data": {
+                    "arguments": []
+                }
+            }
+        },
+        {
+            "element": "module",
+            "data": {
+                "module": "tag-cloud",
+                "data": {
+                    "arguments": [
+                        {
+                            "name": "limit",
+                            "value": "2"
+                        },
+                        {
+                            "name": "category",
+                            "value": "news"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "element": "module",
+            "data": {
+                "module": "tag-cloud",
+                "data": {
+                    "arguments": [
+                        {
+                            "name": "minFontSize",
+                            "value": "1em"
+                        },
+                        {
+                            "name": "maxFontSize",
+                            "value": "2em"
+                        },
+                        {
+                            "name": "maxColor",
+                            "value": "8,8,8"
+                        },
+                        {
+                            "name": "minColor",
+                            "value": "200,200,228"
+                        },
+                        {
+                            "name": "category",
+                            "value": "news"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "element": "module",
+            "data": {
+                "module": "tag-cloud",
+                "data": {
+                    "arguments": [
+                        {
+                            "name": "target",
+                            "value": "my-target"
+                        },
+                        {
+                            "name": "urlAttrPrefix",
+                            "value": "lp"
+                        },
+                        {
+                            "name": "skipCategoryFromUrl",
+                            "value": "true"
+                        },
+                        {
+                            "name": "category",
+                            "value": "news"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "element": "module",
+            "data": {
+                "module": "tag-cloud",
+                "data": {
+                    "arguments": [
+                        {
+                            "name": "mode",
+                            "value": "3d"
+                        },
+                        {
+                            "name": "width",
+                            "value": "123"
+                        },
+                        {
+                            "name": "height",
+                            "value": "77"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "element": "module",
+            "data": {
+                "module": "tag-cloud",
+                "data": {
+                    "arguments": [
+                        {
+                            "name": "limit",
+                            "value": "0"
+                        },
+                        {
+                            "name": "showHidden",
+                            "value": ""
+                        },
+                        {
+                            "name": "minFontSize",
+                            "value": "1em"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "element": "module",
+            "data": {
+                "module": "tag-cloud",
+                "data": {
+                    "arguments": [
+                        {
+                            "name": "showHidden",
+                            "value": "false"
+                        },
+                        {
+                            "name": "limit",
+                            "value": "50"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

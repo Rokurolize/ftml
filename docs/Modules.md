@@ -19,6 +19,8 @@ The table below follows essentially the same schema as for blocks in general, wi
 | [ListPages](#listpages)   | Raw  | `Module::ListPages`  | N/A                                       | Delayed evaluation node; execution belongs to application code. |
 | [PageTree](#pagetree)     | None | `Module::PageTree`   | `<div class="pagetree-module-box"> <ul>`  | |
 | [Rate](#rate)             | None | `Module::Rate`       | `<div class="page-rate-widget-box">`      | |
+| [Redirect](#redirect)     | None | `Module::Redirect`   | N/A                                       | Delayed evaluation node; HTTP redirect and notice belong to application code. |
+| [TagCloud](#tagcloud)     | None | `Module::TagCloud`   | N/A                                       | Delayed evaluation node; execution belongs to application code. |
 
 ### Backlinks
 
@@ -132,4 +134,47 @@ Arguments:
 Example:
 ```
 [[module rate]]
+```
+
+### Redirect
+
+Performs a "301 Permanently Moved" redirection to another page or URL.
+
+Body: None
+
+Arguments:
+* `destination` &mdash; (Optional, String) The page name or URL to redirect to. Preserved verbatim; `None` when the attribute is absent.
+
+The HTTP redirect, trailing-slash mapping, and the no-redirect information box all need the request URL and viewer context, so they belong to application code. FTML only preserves the authored destination.
+
+Example:
+
+```
+[[module Redirect destination="start"]]
+```
+
+### TagCloud
+
+Creates a customizable tag cloud for tagged pages, in 2D or 3D mode.
+
+Body: None
+
+Arguments (all preserved verbatim in source order, including duplicate names, empty values, and unknown names):
+* `mode` &mdash; (Optional, String) `3d` turns on 3D mode.
+* `maxFontSize`, `minFontSize` &mdash; (Optional, String) Font sizes for the most/least common tags (units of px, pt, em or %).
+* `maxColor`, `minColor` &mdash; (Optional, String) Colors for the most/least common tags (`RRR,GGG,BBB` each 0-255).
+* `limit` &mdash; (Optional, String) How many tags to display.
+* `target` &mdash; (Optional, String) Target page for tag links.
+* `category` &mdash; (Optional, String) Limits tags to the specified page category.
+* `showHidden` &mdash; (Optional, String) Shows tags starting with underscore.
+* `urlAttrPrefix` &mdash; (Optional, String) Prefix for parameters in generated tag URLs.
+* `skipCategoryFromUrl` &mdash; (Optional, String) Omits the category parameter from generated tag URLs.
+* `width`, `height` &mdash; (Optional, String) Dimensions of the 3D tag cloud.
+
+Tag selection, limits, style interpolation, link building, and the legacy 3D SWF wrapper all need the site's tags, so they belong to application code. FTML only preserves the authored arguments.
+
+Example:
+
+```text
+[[module TagCloud minFontSize="1em" maxFontSize="2em" maxColor="8,8,8" minColor="200,200,228" category="news"]]
 ```

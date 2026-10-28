@@ -93,6 +93,24 @@ pub enum Module<'t> {
 
     /// A rating module, which can be used to vote on the page.
     Rate,
+
+    /// Redirects the browser to another page or URL.
+    ///
+    /// The destination is preserved verbatim. HTTP redirection, trailing-slash
+    /// mapping, and the no-redirect notice belong to the application layer,
+    /// which has the request URL and viewer context.
+    #[serde(rename_all = "kebab-case")]
+    Redirect { destination: Option<Cow<'t, str>> },
+
+    /// A delayed TagCloud module invocation.
+    ///
+    /// FTML preserves the raw arguments in source order, including duplicate
+    /// names, empty values, and unknown names. Tag selection, limits, style
+    /// interpolation, link building, and the legacy 3D wrapper belong to the
+    /// application layer, where the site's tags are available.
+    TagCloud {
+        arguments: Vec<RawModuleArgument<'t>>,
+    },
 }
 
 impl Module<'_> {
@@ -139,6 +157,12 @@ impl Module<'_> {
                 depth: *depth,
             },
             Module::Rate => Module::Rate,
+            Module::Redirect { destination } => Module::Redirect {
+                destination: option_string_to_owned(destination),
+            },
+            Module::TagCloud { arguments } => Module::TagCloud {
+                arguments: arguments.iter().map(RawModuleArgument::to_owned).collect(),
+            },
         }
     }
 }

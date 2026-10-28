@@ -131,6 +131,7 @@ impl<'t> ParagraphStack<'t> {
                         if matches!(
                             container.ctype(),
                             ContainerType::Div
+                                | ContainerType::Note
                                 | ContainerType::Blockquote
                                 | ContainerType::Align(_)
                         )

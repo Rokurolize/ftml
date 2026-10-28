@@ -35,6 +35,7 @@ use crate::parsing::{discard_wikidot_controls, trim_wikidot_ascii_cow};
 use crate::tree::{AnchorTarget, LinkLabel, LinkLocation, LinkType};
 use crate::url::is_url;
 use std::borrow::Cow;
+use unicode_normalization::UnicodeNormalization;
 use wikidot_normalize::normalize;
 
 pub const RULE_LINK_TRIPLE: Rule = Rule {
@@ -532,9 +533,95 @@ fn wikidot_target(
     }
 }
 
+/// Transliterate a non-ASCII triple-link target the way live Wikidot does.
+///
+/// The mechanism is NFKD decomposition with combining marks removed (which
+/// strips diacritics: `café` becomes `cafe`), plus a standard Russian
+/// Cyrillic table (`документ` becomes `dokument`). Precomposed Cyrillic
+/// letters with marks (`ё`, `й`) decompose to their base letters first, so
+/// they need no table entries of their own.
+///
+/// Returns `None` when any character has no transliteration, so the caller
+/// keeps the existing empty-slug fallback. That preserves the live-pinned
+/// CJK behavior (`[[[日本語|Label]]]` links to `/`).
+fn transliterate_triple_target(url: &str) -> Option<String> {
+    let mut transliterated = String::with_capacity(url.len());
+
+    for character in url.nfkd() {
+        if character.is_ascii() {
+            transliterated.push(character);
+        } else if is_transliteration_combining_mark(character) {
+            continue;
+        } else if let Some(latin) = transliterate_cyrillic(character) {
+            transliterated.push_str(latin);
+        } else {
+            return None;
+        }
+    }
+
+    Some(transliterated)
+}
+
+/// Combining marks produced by NFKD decomposition of Latin and Cyrillic text.
+fn is_transliteration_combining_mark(character: char) -> bool {
+    matches!(
+        character,
+        '\u{300}'..='\u{36f}' // Combining Diacritical Marks
+            | '\u{483}'..='\u{489}' // Combining Cyrillic marks
+            | '\u{1ab0}'..='\u{1aff}' // Combining Diacritical Marks Extended
+            | '\u{1dc0}'..='\u{1dff}' // Combining Diacritical Marks Supplement
+            | '\u{20d0}'..='\u{20ff}' // Combining Diacritical Marks for Symbols
+            | '\u{fe20}'..='\u{fe2f}' // Combining Half Marks
+    )
+}
+
+/// Standard Russian Cyrillic transliteration for triple-link targets.
+///
+/// Only the letters pinned by the frozen captures are live-evidenced
+/// (`документ` covers д, о, к, у, м, е, н, т); the remaining letters follow
+/// the standard transliteration of the modern Russian alphabet so the table
+/// is coherent. The hard and soft signs have no Latin form and are dropped.
+/// Non-Russian Cyrillic letters are not covered and keep the empty-slug
+/// fallback.
+fn transliterate_cyrillic(character: char) -> Option<&'static str> {
+    match character {
+        'а' | 'А' => Some("a"),
+        'б' | 'Б' => Some("b"),
+        'в' | 'В' => Some("v"),
+        'г' | 'Г' => Some("g"),
+        'д' | 'Д' => Some("d"),
+        'е' | 'Е' => Some("e"),
+        'ж' | 'Ж' => Some("zh"),
+        'з' | 'З' => Some("z"),
+        'и' | 'И' => Some("i"),
+        'к' | 'К' => Some("k"),
+        'л' | 'Л' => Some("l"),
+        'м' | 'М' => Some("m"),
+        'н' | 'Н' => Some("n"),
+        'о' | 'О' => Some("o"),
+        'п' | 'П' => Some("p"),
+        'р' | 'Р' => Some("r"),
+        'с' | 'С' => Some("s"),
+        'т' | 'Т' => Some("t"),
+        'у' | 'У' => Some("u"),
+        'ф' | 'Ф' => Some("f"),
+        'х' | 'Х' => Some("kh"),
+        'ц' | 'Ц' => Some("ts"),
+        'ч' | 'Ч' => Some("ch"),
+        'ш' | 'Ш' => Some("sh"),
+        'щ' | 'Щ' => Some("shch"),
+        'ъ' | 'Ъ' | 'ь' | 'Ь' => Some(""),
+        'ы' | 'Ы' => Some("y"),
+        'э' | 'Э' => Some("e"),
+        'ю' | 'Ю' => Some("yu"),
+        'я' | 'Я' => Some("ya"),
+        _ => None,
+    }
+}
+
 fn parse_link_location<'r, 't>(
     parser: &Parser<'r, 't>,
-    url: Cow<'t, str>,
+    mut url: Cow<'t, str>,
     leading_space: bool,
     authored_url_prefix_is_url: bool,
 ) -> Option<(LinkLocation<'t>, LinkType)> {
@@ -612,7 +699,22 @@ fn parse_link_location<'r, 't>(
     }
 
     if !url.is_ascii() && !is_url(&url) {
-        return Some((LinkLocation::Page(PageRef::page_only("")), LinkType::Page));
+        // Live Wikidot transliterates non-ASCII page targets instead of
+        // dropping them (wikijump#3295): `[[[документ]]]` links to
+        // `/dokument` and `[[[café]]]` to `/cafe`, while the display label
+        // keeps the original text. Targets with no transliteration (e.g. CJK,
+        // pinned by live evidence to an empty slug) keep the fallback below.
+        match transliterate_triple_target(&url) {
+            Some(transliterated) if !transliterated.is_empty() => {
+                url = Cow::Owned(transliterated);
+            }
+            _ => {
+                return Some((
+                    LinkLocation::Page(PageRef::page_only("")),
+                    LinkType::Page,
+                ));
+            }
+        }
     }
 
     if is_url(&url) && !authored_url_prefix_is_url {
@@ -701,6 +803,39 @@ fn test_strip_category() {
     );
     test!(": snippets : redirect", Some("redirect"));
     test!(":", None);
+}
+
+#[test]
+fn test_transliterate_triple_target() {
+    macro_rules! test {
+        ($input:expr, $expected:expr $(,)?) => {{
+            let actual = transliterate_triple_target($input);
+            let expected: Option<String> = $expected.map(str::to_owned);
+
+            assert_eq!(
+                actual, expected,
+                "Transliterated triple-link target doesn't match expected",
+            );
+        }};
+    }
+
+    // Live-evidenced mappings (wikijump#3295 frozen captures).
+    test!("документ", Some("dokument"));
+    test!("café", Some("cafe"));
+
+    // Uppercase Cyrillic maps to lowercase Latin (slugs are case-folded
+    // downstream); uppercase ASCII passes through untouched.
+    test!("ДОКУМЕНТ", Some("dokument"));
+    test!("CAFÉ", Some("CAFE"));
+
+    // Precomposed Cyrillic letters decompose to their base letters first.
+    test!("й", Some("i"));
+    test!("ё", Some("e"));
+
+    // No transliteration: the caller keeps the empty-slug fallback.
+    test!("日本語", None);
+    test!("документ日本語", None);
+    test!("ß", None);
 }
 
 #[cfg(test)]

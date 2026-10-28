@@ -611,6 +611,65 @@ fn wikijump_layout_keeps_its_existing_special_target_behavior() {
 }
 
 #[test]
+fn live_backed_triple_link_transliteration_targets() {
+    // Frozen W20 live captures for wikijump#3295 (anonymous PagePreviewModule
+    // on sandbox-for-codex, wikidot.py 4.4.1):
+    // * 3295-cyrillic-triple-link.json — `[[[документ]]]` renders
+    //   `<a class="newpage" href="/dokument">документ</a>`: the target is
+    //   transliterated to Latin while the display text keeps the Cyrillic.
+    //   (source SHA-256 c0d6bc8f...01ab5; raw_html SHA-256 4ef332b2...33bb)
+    // * 3295-diacritic-triple-link.json — `[[[café]]]` renders
+    //   `<a class="newpage" href="/cafe">café</a>`: diacritics are stripped
+    //   from the target.
+    //   (source SHA-256 4613edc9...c07b2; raw_html SHA-256 4bb7871f...34b80)
+    // The test harness resolves every non-empty page as existing, so it never
+    // emits the live `class="newpage"` marker (live, neither target page
+    // exists on sandbox-for-codex). The captured behavior — transliterated
+    // href plus unchanged display text — is asserted via anchors and text,
+    // matching this file's established matrix style.
+    for (case_id, source, expected_anchors, expected_text) in [
+        (
+            "cyrillic-same-label",
+            "[[[документ]]]",
+            vec![anchor("/dokument", None, "документ")],
+            "документ",
+        ),
+        (
+            "diacritic-same-label",
+            "[[[café]]]",
+            vec![anchor("/cafe", None, "café")],
+            "café",
+        ),
+        (
+            "cyrillic-separate-label",
+            "[[[документ|Label]]]",
+            vec![anchor("/dokument", None, "Label")],
+            "Label",
+        ),
+        (
+            "diacritic-separate-label",
+            "[[[café|Label]]]",
+            vec![anchor("/cafe", None, "Label")],
+            "Label",
+        ),
+        // Behavior preservation (not a live capture): a target with no
+        // transliteration keeps the existing empty-slug fallback, matching
+        // the pinned `[[[日本語|Label]]]` → `/` live evidence above.
+        (
+            "untransliteratable-same-label",
+            "[[[日本語]]]",
+            vec![anchor("/", None, "日本語")],
+            "日本語",
+        ),
+    ] {
+        let (html, text, errors) = render_wikidot(source);
+        assert_eq!(anchors(&html), expected_anchors, "{case_id}: {html}");
+        assert_eq!(text, expected_text, "{case_id}: {html}");
+        assert!(errors.is_empty(), "{case_id}: {errors:#?}");
+    }
+}
+
+#[test]
 fn long_unicode_colon_slash_and_mailto_targets_stay_bounded() {
     let unicode = "日本語🙂".repeat(4_096);
     let colon = format!(":site:{}", "page:".repeat(4_096));

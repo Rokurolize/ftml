@@ -24,3 +24,12 @@ Site-runtime semantics stay in Wikijump or the caller: page/site/user lookup, pe
 - Wikijump currently regex-rewrites some FTML output (`wj-code`, `wj-tabs`, `wj-footnote`, `wj-math` DOM shapes) into Wikidot DOM as a temporary measure. Those exact shapes are a temporary informal contract: changing them is allowed but is expected to surface in Wikijump's pin-bump canary, so record such changes in the PR body per `AGENTS.md`.
 - Wikijump gates every FTML dependency bump on a marker-contract canary (golden-pair render comparison). Parser-visible behavior changes, especially around canonical Wikidot source markers, should call this out explicitly for the consumer.
 - The first planned boundary migration into FTML is comment-aware include scanning; see the Wikijump contract document for the staged plan.
+
+### Caller-owned module and include rendering (wikijump#2997, #3040, #3073, #2872)
+
+These module and include behaviors need data FTML never receives, so they are not implemented here:
+
+- **Failed-include notice** (wikijump#2997): FTML only calls `Includer::no_such_include` (`src/includes/mod.rs`) and splices the returned wikitext. The notice text, including any "edit component" link, is produced by the caller's `Includer` implementation. FTML's own implementations are `NullIncluder` (empty) and the test/debug includers. The frozen parity corpus holds no Wikidot failed-include markup to match.
+- **`[[module Redirect]]` disabled-state copy** (wikijump#3040): there is no Redirect module rule. In `Layout::Wikidot` a bodiless `[[module Redirect]]` on its own physical line falls through to `wikidot_unknown_module_error` (`src/parsing/rule/impls/block/blocks/module/rule.rs`). Whether a redirect is disabled depends on the viewer's edit rights, which `PageInfo` does not carry.
+- **`[[module Rate]]` "rating disabled"** (wikijump#3073): `Module::Rate` carries no state, and `PageInfo` has only `score`, with no rating-enabled flag. Output comes from `Handle::render_module` (`src/render/handle.rs`), which the caller supplies.
+- **`[[module TagCloud]]` limit** (wikijump#2872): FTML has no TagCloud rule and no default limit of 20, and it never sees the site's tags. The limit and any truncation notice belong to the caller's implementation.

@@ -137,7 +137,7 @@ fn replace_within_paragraphs(
     text: &mut String,
     buffer: &mut String,
 ) {
-    let literal_regions = LiteralRegionIndex::new(text);
+    let literal_regions = LiteralRegionIndex::for_typography(text);
     let mut output = String::with_capacity(text.len());
     let mut paragraph_start = 0;
     for paragraph in text.split_inclusive("\n\n") {
@@ -157,7 +157,7 @@ fn replace_within_paragraphs(
 }
 
 fn replace_low_quotes_within_paragraphs(text: &mut String, buffer: &mut String) {
-    let literal_regions = LiteralRegionIndex::new(text);
+    let literal_regions = LiteralRegionIndex::for_typography(text);
     let mut output = String::with_capacity(text.len());
     let mut paragraph_start = 0;
     for paragraph in text.split_inclusive("\n\n") {
@@ -511,7 +511,11 @@ pub fn substitute(text: &mut String) {
     replace_native_quotes(&NATIVE_DOUBLE_QUOTES, text, &mut buffer);
     replace_native_quotes(&NATIVE_LOW_DOUBLE_QUOTES, text, &mut buffer);
     replace_native_quotes(&NATIVE_SINGLE_QUOTES, text, &mut buffer);
-    HORIZONTAL_ELLIPSIS.replace(text, &mut buffer);
+    replace_ellipsis_outside_ranges(
+        text,
+        &mut buffer,
+        LiteralRegionIndex::for_typography(text).ranges(),
+    );
 }
 
 fn replace_native_quotes(replacer: &Replacer, text: &mut String, buffer: &mut String) {
@@ -519,11 +523,16 @@ fn replace_native_quotes(replacer: &Replacer, text: &mut String, buffer: &mut St
         unreachable!("native quote replacement requires a surround replacer");
     };
     let mut last_copied = 0;
-    let literal_regions = LiteralRegionIndex::new(text);
+    let literal_regions = LiteralRegionIndex::for_typography(text);
     buffer.clear();
     buffer.reserve(text.len());
     for captures in regex.captures_iter(text.as_str()) {
         let full = captures.get(0).unwrap();
+        if literal_regions.contains(full.start())
+            || literal_regions.contains(full.end() - 1)
+        {
+            continue;
+        }
         if contains_closed_conditional(
             full.as_str(),
             &["iftags", "ifcategory"],
@@ -820,7 +829,7 @@ fn replace_right_angle_quotes(text: &mut String, buffer: &mut String) {
 }
 
 fn wikidot_angle_quote_protected_ranges(text: &str) -> Vec<Range<usize>> {
-    let mut ranges = LiteralRegionIndex::new(text).ranges().to_vec();
+    let mut ranges = LiteralRegionIndex::for_typography(text).ranges().to_vec();
     ranges.extend(wikidot_block_attribute_ranges(text));
     let tokenization = crate::tokenize(text);
     let tokens = tokenization.tokens();
@@ -944,6 +953,14 @@ fn block_name_after<'t>(
 
 fn replace_wikidot_ellipsis_outside_literals(text: &mut String, buffer: &mut String) {
     let protected_ranges = wikidot_typography_protected_ranges(text);
+    replace_ellipsis_outside_ranges(text, buffer, &protected_ranges);
+}
+
+fn replace_ellipsis_outside_ranges(
+    text: &mut String,
+    buffer: &mut String,
+    protected_ranges: &[Range<usize>],
+) {
     if protected_ranges.is_empty() {
         HORIZONTAL_ELLIPSIS.replace(text, buffer);
         return;
@@ -952,7 +969,7 @@ fn replace_wikidot_ellipsis_outside_literals(text: &mut String, buffer: &mut Str
     let source = std::mem::take(text);
     let mut output = String::with_capacity(source.len());
     let mut cursor = 0;
-    for range in &protected_ranges {
+    for range in protected_ranges {
         let mut authored = source[cursor..range.start].to_owned();
         HORIZONTAL_ELLIPSIS.replace(&mut authored, buffer);
         output.push_str(&authored);
@@ -1196,4 +1213,37 @@ fn wikidot_angle_quotes_respect_literal_and_link_owners() {
     );
     assert!(text.contains("https://example.com/a>>b"), "{text}");
     assert!(text.contains("@@<<RAW>>@@"), "{text}");
+}
+
+#[test]
+fn typography_preserves_literal_regions_and_module_bodies_in_both_layouts() {
+    use crate::layout::Layout;
+
+    for source in [
+        "[[code]]\na... {...x} `q'\n[[/code]]",
+        "[[html]]\n<script>f({...o})</script>\n[[/html]]",
+        "[[raw]]\n...\n[[/raw]]",
+        "@@ ... @@",
+        "[[module CSS]]\na::after { content: \"...\"; }\n[[/module]]",
+    ] {
+        for layout in [Layout::Wikidot, Layout::Wikijump] {
+            let mut text = source.to_owned();
+            crate::preproc::preprocess_for_layout(&mut text, layout);
+            assert!(!text.contains('\u{2026}'), "{layout:?}: {source:?}");
+            assert!(!text.contains('\u{2018}'), "{layout:?}: {source:?}");
+        }
+    }
+
+    // Outside literal regions the substitution still applies, and a bodyless
+    // module does not shield later prose.
+    for layout in [Layout::Wikidot, Layout::Wikijump] {
+        let mut text =
+            "[[module Rate]]\nWait... [[module CSS]]\n...\n[[/module]]\nend..."
+                .to_owned();
+        crate::preproc::preprocess_for_layout(&mut text, layout);
+        assert_eq!(
+            text, "[[module Rate]]\nWait… [[module CSS]]\n...\n[[/module]]\nend…",
+            "{layout:?}"
+        );
+    }
 }

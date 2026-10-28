@@ -554,7 +554,10 @@ fn lower_sequence<'t>(
                     matches!(source.peek(), Some(Element::Text(text)) if text == " ");
                 if leading_space {
                     source.next();
-                    if !elements_end_with_space(&output) {
+                    // Hoist only when content precedes the span in this
+                    // sequence: paragraph-initial hoisting is unevidenced,
+                    // so a paragraph-leading span keeps the legacy discard.
+                    if !at_start && !elements_end_with_space(&output) {
                         run.push(text!(" "));
                         flush_run(
                             &mut output,

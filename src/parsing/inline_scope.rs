@@ -550,10 +550,24 @@ fn lower_sequence<'t>(
             let current = *ordinal;
             *ordinal += 1;
             if valid.contains(&current) {
-                active.push(ScopeKind::Span, ContainerType::Span, attributes, scored);
-                if matches!(source.peek(), Some(Element::Text(text)) if text == " ") {
+                let leading_space =
+                    matches!(source.peek(), Some(Element::Text(text)) if text == " ");
+                if leading_space {
                     source.next();
+                    // Hoist only when content precedes the span in this
+                    // sequence: paragraph-initial hoisting is unevidenced,
+                    // so a paragraph-leading span keeps the legacy discard.
+                    if !at_start && !elements_end_with_space(&output) {
+                        run.push(text!(" "));
+                        flush_run(
+                            &mut output,
+                            &mut run,
+                            active,
+                            &mut last_run_outer_scope,
+                        );
+                    }
                 }
+                active.push(ScopeKind::Span, ContainerType::Span, attributes, scored);
                 if scored {
                     effects.scored_span_opened_at_start |= at_start;
                     effects.scored_span_opened_unwrapped_at_start |=

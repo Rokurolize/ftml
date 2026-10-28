@@ -48,6 +48,13 @@ fn parse_note_block<'r, 't>(
 
     let arguments = parser.get_head_map(&BLOCK_NOTE, in_head)?;
 
+    // Wikidot's note takes no arguments: `[[note class=\"x\"]]` stays literal
+    // (references-20260815-10), while a bare `[[note]]` renders
+    // (references-20261025-01).
+    if parser.settings().layout.legacy() && !arguments.is_empty() {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     // `[[note]]` is a block element and must start on a new line.
     // Legacy `Text_Wiki` parser also rejected inline note blocks, so preserve
     // that behavior for compatibility.
@@ -69,7 +76,8 @@ fn parse_note_block<'r, 't>(
         arguments.to_attribute_map(parser.settings()),
     ));
 
-    ok!(paragraph_safe; element, errors)
+    // Wikidot's note is always a block, even when its body is empty.
+    ok!(paragraph_safe && !legacy; element, errors)
 }
 
 #[cfg(test)]
@@ -105,6 +113,10 @@ mod tests {
         );
         assert_eq!(html.matches("wiki-note").count(), 1, "{html}");
         assert!(html.contains("[[note]]"), "{html}");
+
+        // Arguments are not accepted.
+        let (html, _) = render("[[note class=\"x\"]]\nB\n[[/note]]", Layout::Wikidot);
+        assert!(!html.contains("wiki-note"), "{html}");
 
         // The closing tag is required.
         let (html, _) = render("[[note]]\nNo close.", Layout::Wikidot);

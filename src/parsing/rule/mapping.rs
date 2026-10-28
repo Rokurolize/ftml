@@ -122,6 +122,7 @@ pub fn get_rules_for_token(current: &ExtractedToken) -> &'static [Rule] {
         Token::LeftComment => &[RULE_COMMENT],
 
         // Fallback
+        Token::Other if current.slice == "&" => &[RULE_ENTITY, RULE_TEXT],
         Token::RuntimeText | Token::Other => &[RULE_TEXT],
     }
 }

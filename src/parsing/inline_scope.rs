@@ -739,6 +739,43 @@ fn flush_run<'t>(
         *last_run_outer_scope = None;
         return;
     };
+    // An inline close re-emits a trailing body space as a lone sibling when
+    // the next element cannot absorb it (e.g. another span open follows).
+    // When that space lands between two runs wrapped in the same outer
+    // inline scope, it must not wedge the runs apart into sibling copies of
+    // the outer container: merge across it, absorbing the space between the
+    // runs so the outer span stays whole.
+    let merge_across_separator = matches!(output.last(), Some(Element::Text(text)) if text == " ")
+        && match output
+            .len()
+            .checked_sub(2)
+            .and_then(|index| output.get(index))
+        {
+            Some(Element::Container(previous)) => {
+                matches!(previous.ctype(), ContainerType::Span | ContainerType::Size)
+                    && outer_scope.is_some()
+                    && outer_scope == *last_run_outer_scope
+                    && previous.ctype() == next.ctype()
+                    && previous.attributes() == next.attributes()
+            }
+            _ => false,
+        };
+    if merge_across_separator {
+        let Some(Element::Text(separator)) = output.pop() else {
+            unreachable!("separator space checked above");
+        };
+        let Some(Element::Container(previous)) = output.last_mut() else {
+            unreachable!("merge-compatible container checked above");
+        };
+        let next = wrapped.pop().expect("wrapped scope container");
+        let Element::Container(next) = next else {
+            unreachable!("checked wrapped scope container");
+        };
+        previous.elements_mut().push(Element::Text(separator));
+        previous.elements_mut().extend(Vec::from(next));
+        *last_run_outer_scope = outer_scope;
+        return;
+    }
     let Some(Element::Container(previous)) = output.last_mut() else {
         output.extend(wrapped);
         *last_run_outer_scope = outer_scope;
@@ -1113,6 +1150,45 @@ mod tests {
             (
                 "[[span]]A\n----\nB[[/span]]",
                 "<p><span>A</span></p><hr><p><span>B</span></p>",
+            ),
+        ] {
+            assert_eq!(render_wikidot(source), expected, "{source:?}");
+        }
+    }
+
+    #[test]
+    fn wikidot_nested_span_edge_spaces_keep_outer_span_whole() {
+        // ListPages set-record pattern: the inner spans' edge spaces must not
+        // split the outer span into sibling copies (ftml #758 follow-up).
+        // The hoisted leading space of a non-initial inner span is preserved
+        // (GAPS #4 behavior); the trailing separator space is absorbed
+        // between the inner spans inside the single outer span.
+        for (source, expected) in [
+            (
+                "[[span class=\"set category\"]][[span class=\"name\"]] category [[/span]][[span class=\"value\"]] _default [[/span]][[/span]]",
+                concat!(
+                    "<p>",
+                    "<span class=\"set category\">",
+                    "<span class=\"name\">category</span>",
+                    " ",
+                    "<span class=\"value\">_default</span>",
+                    "</span>",
+                    "</p>",
+                ),
+            ),
+            (
+                "Record:[[span class=\"set category\"]][[span class=\"name\"]] category [[/span]][[span class=\"value\"]] _default [[/span]][[/span]]",
+                concat!(
+                    "<p>",
+                    "Record:",
+                    "<span class=\"set category\">",
+                    " ",
+                    "<span class=\"name\">category</span>",
+                    " ",
+                    "<span class=\"value\">_default</span>",
+                    "</span>",
+                    "</p>",
+                ),
             ),
         ] {
             assert_eq!(render_wikidot(source), expected, "{source:?}");

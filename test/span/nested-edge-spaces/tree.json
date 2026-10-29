@@ -1,0 +1,74 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "span",
+                            "attributes": {
+                                "class": "set category"
+                            },
+                            "elements": [
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "span",
+                                        "attributes": {
+                                            "class": "name"
+                                        },
+                                        "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": " "
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "category"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": " "
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "span",
+                                        "attributes": {
+                                            "class": "value"
+                                        },
+                                        "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": " "
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "_"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "default"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": " "
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -555,9 +555,17 @@ fn lower_sequence<'t>(
                 if leading_space {
                     source.next();
                     // Hoist only when content precedes the span in this
-                    // sequence: paragraph-initial hoisting is unevidenced,
-                    // so a paragraph-leading span keeps the legacy discard.
-                    if !at_start && !elements_end_with_space(&output) {
+                    // sequence and no inline scope is already open:
+                    // paragraph-initial hoisting is unevidenced, so a
+                    // paragraph-leading span keeps the legacy discard, and
+                    // hoisting into an open outer span lands the space
+                    // between the outer open tag and the inner span, which
+                    // breaks the nested set-record shape — a nested span
+                    // keeps the legacy discard too.
+                    if !at_start
+                        && !active.has_active_scope()
+                        && !elements_end_with_space(&output)
+                    {
                         run.push(text!(" "));
                         flush_run(
                             &mut output,
@@ -1159,10 +1167,11 @@ mod tests {
     #[test]
     fn wikidot_nested_span_edge_spaces_keep_outer_span_whole() {
         // ListPages set-record pattern: the inner spans' edge spaces must not
-        // split the outer span into sibling copies (ftml #758 follow-up).
-        // The hoisted leading space of a non-initial inner span is preserved
-        // (GAPS #4 behavior); the trailing separator space is absorbed
-        // between the inner spans inside the single outer span.
+        // split the outer span into sibling copies (ftml #758 follow-up), and
+        // a nested inner span's leading space is discarded (legacy behavior),
+        // so no space lands between the outer open tag and the inner span
+        // (wikidot.py set-record contract). The trailing separator space is
+        // absorbed between the inner spans inside the single outer span.
         for (source, expected) in [
             (
                 "[[span class=\"set category\"]][[span class=\"name\"]] category [[/span]][[span class=\"value\"]] _default [[/span]][[/span]]",
@@ -1182,10 +1191,22 @@ mod tests {
                     "<p>",
                     "Record:",
                     "<span class=\"set category\">",
-                    " ",
                     "<span class=\"name\">category</span>",
                     " ",
                     "<span class=\"value\">_default</span>",
+                    "</span>",
+                    "</p>",
+                ),
+            ),
+            (
+                "Record:[[span class=\"set comments\"]][[span class=\"name\"]] comments [[/span]][[span class=\"value\"]] 0 [[/span]][[/span]]",
+                concat!(
+                    "<p>",
+                    "Record:",
+                    "<span class=\"set comments\">",
+                    "<span class=\"name\">comments</span>",
+                    " ",
+                    "<span class=\"value\">0</span>",
                     "</span>",
                     "</p>",
                 ),

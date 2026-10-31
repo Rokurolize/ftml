@@ -243,12 +243,12 @@ fn wikidot_closed_quote_prefixed_iftags_evaluate_before_native_quotes() {
         (
             ">[[iftags]]\nOMEGA_TIGHT_NOARG\n>[[/iftags]]\nOMEGA_AFTER",
             "OMEGA_TIGHT_NOARG",
-            false,
+            true,
         ),
         (
             "[[iftags]]\nOMEGA_ROOT_NOARG\n[[/iftags]]\nOMEGA_AFTER",
             "OMEGA_ROOT_NOARG",
-            false,
+            true,
         ),
         (
             ">> [[iftags +codex-never]]\n>> OMEGA_SHALLOW_FALSE\n> [[/iftags]]\nOMEGA_AFTER",
@@ -262,7 +262,7 @@ fn wikidot_closed_quote_prefixed_iftags_evaluate_before_native_quotes() {
         assert!(text.contains("OMEGA_AFTER"), "{input:?}: {text}");
         assert!(!html.contains("[[iftags"), "{input:?}: {html}");
         assert!(!html.contains("[[/iftags"), "{input:?}: {html}");
-        if included && !input.starts_with(">[[") {
+        if included && !input.starts_with(">[[") && input.starts_with('>') {
             assert!(html.contains("<blockquote>"), "{input:?}: {html}");
         }
     }
@@ -690,7 +690,7 @@ fn wikidot_nested_tight_iftags_pair_without_crossing() {
     // Frozen theme sources use adjacent tight gates; pairing must remain LIFO.
     let (text, html) = render_text_and_html(concat!(
         ">[[iftags -codex-never]]\n",
-        ">[[iftags]]\n",
+        ">[[iftags +codex-never]]\n",
         "OMEGA_NESTED_TIGHT_BODY\n",
         ">[[/iftags]]\n",
         ">[[/iftags]]\n",

@@ -78,10 +78,14 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    // A closed no-argument gate is false on Wikidot. Keeping this explicit
-    // avoids changing ElementCondition's general empty-set semantics.
+    // A closed no-argument gate on Wikidot passes exactly when the page
+    // carries at least one tag. The frozen PagePreview parity bindings are
+    // tag-less observations and bind the gate as false; on the saved-page
+    // route every real bare-gate page on record is tagged and renders its
+    // body. Keeping this explicit avoids changing ElementCondition's
+    // general empty-set semantics.
     let include_body = if conditions.is_empty() && parser.settings().layout.legacy() {
-        false
+        !parser.page_info().tags.is_empty()
     } else {
         check_iftags(parser.page_info(), &conditions)
     };
@@ -132,43 +136,74 @@ mod tests {
     use std::borrow::Cow;
 
     #[test]
-    fn iftags_no_arguments_is_false_and_conditions_check_page_tags() {
-        let page_info = PageInfo::dummy();
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize("[[iftags]]body[[/iftags]]");
-        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
-        assert!(errors.is_empty(), "{errors:?}");
-        assert!(!format!("{tree:?}").contains("body"));
+    fn iftags_no_arguments_follows_page_tags_and_conditions_check_page_tags() {
+        let legacy = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tagless = PageInfo {
+            tags: Vec::new(),
+            ..PageInfo::dummy()
+        };
+        // PageInfo::dummy() carries tags, like the saved pages on record.
+        let tagged = PageInfo::dummy();
+        assert!(!tagged.tags.is_empty());
 
-        let tokenization = crate::tokenize("[[iftags   ]]body[[/iftags]]");
-        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
-        assert!(errors.is_empty(), "{errors:?}");
-        assert!(!format!("{tree:?}").contains("body"), "{tree:?}");
+        fn body_rendered(
+            source: &str,
+            info: &PageInfo,
+            settings: &WikitextSettings,
+        ) -> bool {
+            let tokenization = crate::tokenize(source);
+            let (tree, errors) = crate::parse(&tokenization, info, settings).into();
+            assert!(errors.is_empty(), "{errors:?}");
+            format!("{tree:?}").contains("body")
+        }
 
-        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
-        let tokenization = crate::tokenize("[[iftags]]body[[/iftags]]");
-        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
-        assert!(
-            errors
-                .iter()
-                .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments),
-            "{errors:?}",
-        );
+        // A closed no-argument gate hides its body on a tag-less page (the
+        // frozen PagePreview binding context) and renders it on a tagged
+        // page (the saved-route evidence).
+        for source in ["[[iftags]]body[[/iftags]]", "[[iftags   ]]body[[/iftags]]"] {
+            assert!(!body_rendered(source, &tagless, &legacy), "{source}");
+            assert!(body_rendered(source, &tagged, &legacy), "{source}");
+        }
 
-        // An empty query is an error rather than an always-true condition.
-        let tokenization = crate::tokenize("[[iftags   ]]body[[/iftags]]");
-        let (_tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
-        assert!(
-            errors
-                .iter()
-                .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments),
-            "{errors:?}",
-        );
+        // Sign-only specs: "+" parses to a required condition on an empty
+        // tag name, which no page satisfies, so the body stays hidden with
+        // or without tags. "-" normalizes to no conditions in the legacy
+        // layout and follows the no-argument rule above. Both stay hidden
+        // on a tag-less page, as the frozen bindings record.
+        assert!(!body_rendered(
+            "[[iftags +]]body[[/iftags]]",
+            &tagless,
+            &legacy
+        ));
+        assert!(!body_rendered(
+            "[[iftags +]]body[[/iftags]]",
+            &tagged,
+            &legacy
+        ));
+        assert!(!body_rendered(
+            "[[iftags -]]body[[/iftags]]",
+            &tagless,
+            &legacy
+        ));
+        assert!(body_rendered(
+            "[[iftags -]]body[[/iftags]]",
+            &tagged,
+            &legacy
+        ));
 
-        let tokenization = crate::tokenize("[[iftags +alpha]]body[[/iftags]]");
-        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
-        assert!(errors.is_empty(), "{errors:?}");
-        assert!(!format!("{tree:?}").contains("body"), "{tree:?}");
+        // The Wikijump layout is unchanged: a missing or empty spec is
+        // an error rather than an always-true condition.
+        let modern = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
+        for source in ["[[iftags]]body[[/iftags]]", "[[iftags   ]]body[[/iftags]]"] {
+            let tokenization = crate::tokenize(source);
+            let (_tree, errors) = crate::parse(&tokenization, &tagged, &modern).into();
+            assert!(
+                errors
+                    .iter()
+                    .any(|error| error.kind() == ParseErrorKind::BlockMissingArguments),
+                "{source}: {errors:?}",
+            );
+        }
 
         let info = PageInfo {
             tags: vec![Cow::Borrowed("alpha"), Cow::Borrowed("gamma")],

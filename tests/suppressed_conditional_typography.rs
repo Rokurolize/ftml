@@ -21,23 +21,37 @@ fn page_info() -> PageInfo<'static> {
 }
 
 fn parse(source: &str, layout: Layout) -> (usize, SyntaxTree<'static>) {
-    let page_info = page_info();
+    parse_as(source, layout, &page_info())
+}
+
+fn parse_as(
+    source: &str,
+    layout: Layout,
+    page_info: &PageInfo<'static>,
+) -> (usize, SyntaxTree<'static>) {
     let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
     let mut preprocessed = source.to_owned();
     ftml::preprocess_for_layout(&mut preprocessed, layout);
     let tokenization = ftml::tokenize(&preprocessed);
-    let (tree, errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+    let (tree, errors) = ftml::parse(&tokenization, page_info, &settings).into();
     assert!(errors.is_empty(), "{source:?}: {errors:#?}");
     (preprocessed.len(), tree.to_owned())
 }
 
 fn render(source: &str, layout: Layout) -> (String, String) {
-    let (_, tree) = parse(source, layout);
-    let page_info = page_info();
+    render_as(source, layout, &page_info())
+}
+
+fn render_as(
+    source: &str,
+    layout: Layout,
+    page_info: &PageInfo<'static>,
+) -> (String, String) {
+    let (_, tree) = parse_as(source, layout, page_info);
     let settings = WikitextSettings::from_mode(WikitextMode::Page, layout);
     (
-        TextRender.render(&tree, &page_info, &settings),
-        HtmlRender.render(&tree, &page_info, &settings).body,
+        TextRender.render(&tree, page_info, &settings),
+        HtmlRender.render(&tree, page_info, &settings).body,
     )
 }
 
@@ -47,8 +61,14 @@ fn replay_false_iftags_boundary_applies_wikidot_em_dash() {
     // codex-ftml-v7-20260513-170309-case-000435-block-iftags-iftag,
     // source SHA-256 ce49073035167977dc2d865795d3ce68e13fbb5b55e07d74d63760f758cf415b.
     let source = "start-[[iftags]]\nv7 body\n[[/iftags]]-middle";
+    // The captured preview evaluates iftags against an absent tag list,
+    // so the replay renders with a tag-less page.
+    let tagless = PageInfo {
+        tags: Vec::new(),
+        ..page_info()
+    };
     assert_eq!(
-        render(source, Layout::Wikidot),
+        render_as(source, Layout::Wikidot, &tagless),
         ("start—middle".to_owned(), "<p>start—middle</p>".to_owned()),
     );
 }
@@ -63,17 +83,17 @@ fn true_and_false_iftags_apply_only_post_resolution_lexical_edits() {
         ),
         (
             "false-ellipsis",
-            "left.[[iftags]]\nhidden\n[[/iftags]]..right",
+            "left.[[iftags +missing]]\nhidden\n[[/iftags]]..right",
             "left…right",
         ),
         (
             "false-spaced-ellipsis",
-            "left. [[iftags]]\nhidden\n[[/iftags]]. . right",
+            "left. [[iftags +missing]]\nhidden\n[[/iftags]]. . right",
             "left… right",
         ),
         (
             "false-double-quotes",
-            "`[[iftags]]\nhidden\n[[/iftags]]`quoted'[[iftags]]\nhidden\n[[/iftags]]'",
+            "`[[iftags +missing]]\nhidden\n[[/iftags]]`quoted'[[iftags +missing]]\nhidden\n[[/iftags]]'",
             "“quoted”",
         ),
         (
@@ -83,7 +103,7 @@ fn true_and_false_iftags_apply_only_post_resolution_lexical_edits() {
         ),
         (
             "false-angle-quotes",
-            "left<[[iftags]]\nhidden\n[[/iftags]]<quoted>[[iftags]]\nhidden\n[[/iftags]]>right",
+            "left<[[iftags +missing]]\nhidden\n[[/iftags]]<quoted>[[iftags +missing]]\nhidden\n[[/iftags]]>right",
             "left«quoted»right",
         ),
     ] {
@@ -106,7 +126,7 @@ fn true_and_false_iftags_apply_only_post_resolution_lexical_edits() {
 #[test]
 fn url_and_escape_owners_are_hard_typography_boundaries_on_both_sides() {
     let (text, html) = render(
-        "https://example.com/a-[[iftags]]\nhidden\n[[/iftags]]-tail",
+        "https://example.com/a-[[iftags +missing]]\nhidden\n[[/iftags]]-tail",
         Layout::Wikidot,
     );
     assert_eq!(text, "https://example.com/a--tail");
@@ -119,7 +139,7 @@ fn url_and_escape_owners_are_hard_typography_boundaries_on_both_sides() {
     );
 
     let (text, html) = render(
-        "left-[[iftags]]\nhidden\n[[/iftags]]-https://example.com/tail",
+        "left-[[iftags +missing]]\nhidden\n[[/iftags]]-https://example.com/tail",
         Layout::Wikidot,
     );
     assert_eq!(text, "left—https://example.com/tail");
@@ -132,14 +152,14 @@ fn url_and_escape_owners_are_hard_typography_boundaries_on_both_sides() {
     );
 
     let (text, html) = render(
-        "[https://example.com label-][[iftags]]\nhidden\n[[/iftags]]-tail",
+        "[https://example.com label-][[iftags +missing]]\nhidden\n[[/iftags]]-tail",
         Layout::Wikidot,
     );
     assert_eq!(text, "label--tail");
     assert!(!html.contains('—'), "{html}");
 
     let (text, html) = render(
-        "@@left-@@[[iftags]]\nhidden\n[[/iftags]]@@-right@@",
+        "@@left-@@[[iftags +missing]]\nhidden\n[[/iftags]]@@-right@@",
         Layout::Wikidot,
     );
     assert_eq!(text, "left--right");
@@ -173,7 +193,7 @@ fn malformed_and_fail_closed_conditionals_do_not_create_a_seam() {
 #[test]
 fn suppression_rolls_back_hidden_metadata_and_keeps_source_length() {
     let source = concat!(
-        "start-[[iftags]]\n",
+        "start-[[iftags +missing]]\n",
         "[[html]]<b>hidden</b>[[/html]]\n",
         "[[code]]hidden code[[/code]]\n",
         "[[footnote]]hidden footnote[[/footnote]]\n",

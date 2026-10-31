@@ -1735,7 +1735,7 @@ fn delayed_slots_preserve_the_frozen_listpages_owner_boundaries() {
 #[test]
 fn suppressed_delayed_owners_apply_typography_only_across_authored_text() {
     assert_eq!(
-        render("left-[[iftags]]\n%%title_linked%%\n[[/iftags]]-right"),
+        render("left-[[iftags +missing]]\n%%title_linked%%\n[[/iftags]]-right"),
         "<p>left—right</p>",
     );
     assert_eq!(
@@ -1802,7 +1802,7 @@ fn generated_values_do_not_gain_typography_or_general_syntax_authority() {
 #[test]
 fn delayed_suppression_binding_is_atomic_and_rolls_back_hidden_metadata() {
     let source = concat!(
-        "start-[[iftags]]\n",
+        "start-[[iftags +missing]]\n",
         "[[html]]<b>hidden</b>[[/html]]\n",
         "%%title_linked%%\n",
         "[[/iftags]]-middle",

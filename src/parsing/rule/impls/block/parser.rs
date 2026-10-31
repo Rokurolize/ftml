@@ -473,11 +473,18 @@ where
             }
 
             // Check that the end block is on a new line, if required
+            //
+            // The legacy math line-ownership requirements model how Wikidot
+            // merges consecutive top-level equations. Footnote bodies are
+            // gathered as their own element stream, and Wikidot closes a
+            // footnote's math at its first [[/math]] even mid-line (e.g.
+            // scp-7079's table-header footnote), so they do not apply there.
             if block_rule.accepts_newlines {
                 if !first_iteration
                     && parser.settings().layout.legacy()
                     && !parser.discarding_hidden_body()
                     && block_rule.name == "block-math"
+                    && !parser.in_footnote()
                 {
                     parser
                         .get_token(Token::LineBreak, ParseErrorKind::BlockExpectedEnd)?;
@@ -595,6 +602,7 @@ where
                             block_rule.name,
                             "block-code" | "block-math" | "block-bibliography"
                         )
+                        && !(block_rule.name == "block-math" && parser.in_footnote())
                         && !matches!(
                             parser.current().token,
                             Token::LineBreak | Token::ParagraphBreak | Token::InputEnd

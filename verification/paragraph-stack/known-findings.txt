@@ -1,4 +1,3 @@
 # One line per known failure of the operation-order check: <panic message>|<length of the shortest failing order>
 # The check passes only when the failures it finds are exactly these.
 # See the verify-paragraph-stack skill before editing this file.
-internal error: entered unreachable code: footnote reopening requires a preceding paragraph|5

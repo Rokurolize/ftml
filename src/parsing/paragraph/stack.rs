@@ -761,6 +761,7 @@ impl<'t> ParagraphStack<'t> {
 
     /// Set the finished field in this struct to the paragraph element.
     pub fn end_paragraph(&mut self) {
+        let finished_before = self.finished.len();
         // Flushing a non-empty run settles the speculative separator left by
         // an aligned image at the preceding paragraph break: the newline is
         // part of Wikidot's output only when this run renders unwrapped.
@@ -803,6 +804,11 @@ impl<'t> ParagraphStack<'t> {
         self.trim_unwrapped_trailing_line_break = false;
         self.suppress_next_line_break = false;
         self.suppressed_line_break_restarts_paragraph = false;
+        // Footnote reopening assumes the last finished element is still the
+        // paragraph that preceded the break; anything appended here ends that.
+        if self.finished.len() != finished_before {
+            self.wikidot_reopen_for_footnote = false;
+        }
     }
 
     #[inline]
@@ -1079,5 +1085,22 @@ mod tests {
                 Element::DefinitionList(Vec::new()),
             ],
         );
+    }
+
+    #[test]
+    fn footnote_after_seam_flushed_past_a_break_does_not_reopen_the_paragraph() {
+        let mut stack = ParagraphStack::new_wikidot();
+
+        stack.push_element(text!("alpha"), true);
+        stack.end_paragraph_at_break();
+        stack.defer_suppression_seam(Element::Delayed(
+            crate::delayed::DelayedElement::typography_boundary(),
+        ));
+        stack.end_paragraph();
+        stack.push_element(Element::Footnote(0), true);
+
+        let elements = stack.into_elements();
+        assert!(elements.contains(&paragraph(vec![text!("alpha")])));
+        assert!(elements.contains(&paragraph(vec![Element::Footnote(0)])));
     }
 }

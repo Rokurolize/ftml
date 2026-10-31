@@ -26,21 +26,17 @@ Both compile Rust. Under `docs/agents/herdr-build-approval.md` a non-controller 
 
 Exhaustive enumeration on the real type. Every order of up to 5 operations (17 operations, including element pushes of text, line break, block, footnote, simple table, aligned image, plain image, and a suppression seam) is replayed on a fresh `ParagraphStack`, in both `new()` and `new_wikidot()` modes, with `catch_unwind`. Replay stops extending an order once it fails, so every report is a shortest failing order. TLA+ and Kani were not used: the flags are Rust-level facts about real `Element` values, and a hand model of ~15 flags would not be checkable against the code; Kani did not scale on the neighbouring recursive list code (see `verify-process-depths`).
 
-## Current result: one known finding (not fixed, not shown reachable)
+## Current result: no known findings
 
-```
-text, end_paragraph_at_break, defer_suppression_seam, end_paragraph, push_footnote
-=> panic: footnote reopening requires a preceding paragraph   (stack.rs, push_element)
-```
-In plain steps: after a paragraph break the stack arms `wikidot_reopen_for_footnote` because the last finished element is a paragraph. A deferred suppression seam is then flushed into `finished` by `end_paragraph` (not `end_paragraph_at_break`, which would recompute the flag). The next footnote pops the seam, not a paragraph, and hits `unreachable!`. Wikidot layout only.
+`known-findings.txt` is empty, so `run.sh` passes only when no order of up to 5 operations panics (also true at `FTML_STACK_OPS=6`).
 
-I tried 84 real wikitext pages (`iftags`, `ifcategory`, comments, quotes, gallery, div, lists, each followed by a footnote after a break) and none panicked, because the parser rarely calls `end_paragraph` between a break and a footnote. So this is a latent defect in the stack's contract, not a confirmed page crash. It is recorded in `known-findings.txt`; do not weaken the property to hide it. If you fix it (for example clear `wikidot_reopen_for_footnote` whenever `end_paragraph` appends to `finished`), the check will report `-` (known but gone): delete that line from `known-findings.txt` in the same change.
+History: the check found one latent panic, now fixed. Order: `text, end_paragraph_at_break, defer_suppression_seam, end_paragraph, push_footnote` made `push_element` hit `unreachable!("footnote reopening requires a preceding paragraph")` in the Wikidot layout, because `end_paragraph` flushed the seam into `finished` but left `wikidot_reopen_for_footnote` armed. `end_paragraph` now clears that flag whenever it appends to `finished`; the regression test is `footnote_after_seam_flushed_past_a_break_does_not_reopen_the_paragraph` in `stack.rs`. The finding was never reproduced from real wikitext (84 candidate pages), so it was latent.
 
 ## Scope: what a pass covers
 
 - Verified: no panic for any order of up to 5 of the 17 listed operations, from a fresh stack, both modes, with the listed element shapes only.
 - Not covered: orders longer than 5; element shapes not in the list (other blocks, lists, images with links, delayed images, collapsibles); the parser's real call patterns (the check is stronger than reality, which is why a pass or a finding must be read against `gather_paragraphs`); whether the output tree is *right* (only that it exists).
-- A pass means "matches known findings", not "no findings".
+- A pass means "matches known findings" (currently none), within those bounds.
 
 ## Coverage record and sync commit
 
@@ -50,7 +46,7 @@ I tried 84 real wikitext pages (`iftags`, `ifcategory`, comments, quotes, galler
 
 Not called by the check, but able to change the same flags: `mark_next_unwrapped_after_block`, `mark_wikidot_same_line_div_residual`, `mark_wikidot_literal_div_line`, `mark_wikidot_literal_iftags_line`, `mark_wikidot_simple_table_boundary`, `mark_wikidot_tabview_boundary`, `mark_wikidot_continued_block_boundary`, `mark_wikidot_invisible_line_occupancy`, `mark_wikidot_complete_raw_line_occupancy`, `mark_wikidot_empty_list_break`, `record_next_element_line_start`, `push_paragraph_safe_elements`, `push_errors`, `into_result`.
 
-**Sync commit: `3f8be45c1`** (`stack.rs` and `paragraph/mod.rs` are unchanged between it and the commit that adds this check).
+**Sync commit: `4112a90cb`** (the commit that fixed the reopen flag and emptied the known findings; the check was confirmed against `stack.rs` and `paragraph/mod.rs` as of that commit).
 
 Staleness test: `git diff <sync commit> -- src/parsing/paragraph/stack.rs src/parsing/paragraph/mod.rs`. If it shows a new `pub`/`pub(crate)` method, a new flag, a new `finished` mutation, or a changed caller order, add the operation to `OPS` and `apply()` in `stack_orders.rs` (keep the two in step; `apply` ends in `unreachable!` for unknown numbers), rerun both commands, and only then move the sync commit to the new `HEAD`.
 
@@ -64,7 +60,7 @@ Staleness test: `git diff <sync commit> -- src/parsing/paragraph/stack.rs src/pa
 
 ## Mutants: proof that the check can fail
 
-`run.sh mutants` copies the repo (minus `target/` and `.git`) to a temp dir and applies four breaks to `stack.rs`: table merge panics when the last element is not a table; `pop_line_break` removes the wrong index in `current`; footnote reopening armed with no preceding paragraph (a shorter version of the known finding); the same wrong index in `finished`. Each must differ from `known-findings.txt`. An earlier candidate (removing the bounds guard around `pending_aligned_image_separator`) was dropped as an equivalent mutant: no reachable order of the 17 operations makes that index stale.
+`run.sh mutants` copies the repo (minus `target/` and `.git`) to a temp dir and applies four breaks to `stack.rs`: table merge panics when the last element is not a table; `pop_line_break` removes the wrong index in `current`; footnote reopening armed with no preceding paragraph (a shorter version of the known finding); the same wrong index in `finished`. Each must produce a failure absent from `known-findings.txt`. An earlier candidate (removing the bounds guard around `pending_aligned_image_separator`) was dropped as an equivalent mutant: no reachable order of the 17 operations makes that index stale.
 
 ## Prerequisites
 

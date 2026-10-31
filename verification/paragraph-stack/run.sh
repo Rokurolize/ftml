@@ -34,7 +34,7 @@ for msg, n in sorted(best.items()):
 }
 
 compare() { # $1 = actual summary file
-  grep -v '^#' "$here/known-findings.txt" | sort > "$1.known"
+  { grep -v '^#' "$here/known-findings.txt" || true; } | sort > "$1.known"
   sort "$1" > "$1.actual"
   if diff -u "$1.known" "$1.actual" > "$1.diff"; then
     echo "MATCHES known findings ($(wc -l < "$1.known") known)"; return 0

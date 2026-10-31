@@ -232,6 +232,56 @@ fn exact_activation_payload_and_recovery_are_typed() {
 }
 
 #[test]
+fn head_trailing_whitespace_before_line_break_opens_the_block() {
+    // Wikidot ignores spaces and tabs between the embedvideo head's closing
+    // brackets and the end of its physical line, so `[[embedvideo]] \n`
+    // opens the same block as `[[embedvideo]]\n` (the shape used by
+    // art:rookies-episode-three-scp-008). The skipped whitespace stays part
+    // of the payload, like the leading line break in the plain shape.
+    let iframe = "<iframe src=\"https://www.youtube.com/embed/dQw4w9WgXcQ\"></iframe>";
+    for (source, expected_payload) in [
+        (
+            format!("[[embedvideo]] \n{iframe}\n[[/embedvideo]]"),
+            format!(" \n{iframe}\n"),
+        ),
+        (
+            "[[embedvideo]]\t\nX\n[[/embedvideo]]".to_string(),
+            "\t\nX\n".to_string(),
+        ),
+        (
+            "[[embedvideo]]  \nX\n[[/embedvideo]]".to_string(),
+            "  \nX\n".to_string(),
+        ),
+        (
+            "[[embedvideo]]] \nX\n[[/embedvideo]]".to_string(),
+            "] \nX\n".to_string(),
+        ),
+    ] {
+        let output = render(&source, Layout::Wikidot);
+        let requirements = embed_requirements(&output);
+        assert_eq!(requirements.len(), 1, "{source:?}: {}", output.body);
+        assert_eq!(requirements[0].embed_video().source(), source);
+        assert_eq!(requirements[0].embed_video().payload(), expected_payload);
+    }
+
+    // Whitespace followed by body text on the same line is not a head
+    // ending: the block stays literal, matching the div head convention and
+    // the syntax documentation's `[[embedvideo]] ... [[/embedvideo]]`.
+    for source in [
+        "[[embedvideo]] X[[/embedvideo]]".to_string(),
+        "[[embedvideo]] ... [[/embedvideo]]".to_string(),
+        format!("[[embedvideo]] {iframe}[[/embedvideo]]"),
+    ] {
+        let output = render(&source, Layout::Wikidot);
+        assert!(
+            embed_requirements(&output).is_empty(),
+            "{source:?}: {}",
+            output.body
+        );
+    }
+}
+
+#[test]
 fn literal_owners_exclude_embedvideo_syntax() {
     for source in [
         "[[code]]\n[[embedvideo]]X[[/embedvideo]]\n[[/code]]",

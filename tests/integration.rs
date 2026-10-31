@@ -205,3 +205,6 @@ mod wikidot_image_attachment_default;
 
 #[path = "wikidot_empty_link_label_title.rs"]
 mod wikidot_empty_link_label_title;
+
+#[path = "wikidot_collapsible_crossings.rs"]
+mod wikidot_collapsible_crossings;

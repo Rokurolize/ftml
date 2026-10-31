@@ -179,6 +179,13 @@ pub(super) fn substitute_for_layout(text: &mut String, wikidot: bool) {
     canonicalize_crossed_bold_size_closers(&mut lines, &literal_lines);
     remove_tight_quote_lines(&mut lines, &literal_lines);
     canonicalize_root_collapsible_inline_quoted_closers(&mut lines, &literal_lines);
+    if wikidot {
+        split_div_collapsible_div_lines(&mut lines);
+        canonicalize_early_closed_div_wrapped_collapsible(&mut lines);
+        canonicalize_early_closed_align_wrapped_collapsible(&mut lines);
+        canonicalize_collapsible_closers_sharing_lines(&mut lines);
+        close_unclosed_divs_before_collapsible_close(&mut lines);
+    }
 
     *text = lines.concat();
 }
@@ -493,6 +500,386 @@ fn canonicalize_root_collapsible_inline_quoted_closers(
     *lines = output;
 }
 
+/// Whether a line carries a `[[collapsible` head that terminates on the
+/// same line. The head may share the line with other inline markup (for
+/// example a wrapping `[[size]]` or `[[span]]`).
+fn line_opens_collapsible(line: &str) -> bool {
+    let (body, _) = split_line(line);
+    let lower = body.to_ascii_lowercase();
+    let Some(start) = lower.find("[[collapsible") else {
+        return false;
+    };
+    let after = &lower[start + "[[collapsible".len()..];
+    after
+        .chars()
+        .next()
+        .is_some_and(|ch| matches!(ch, ' ' | '\t' | ']' | '_' | '*'))
+        && after.contains("]]")
+}
+
+/// Re-split the working line list into physical lines (earlier passes may
+/// have embedded newlines inside a chunk) and rebuild the literal mask.
+fn resplit_lines(lines: &mut Vec<String>) -> Vec<bool> {
+    *lines = lines
+        .concat()
+        .split_inclusive('\n')
+        .map(str::to_owned)
+        .collect();
+    literal_line_mask(lines)
+}
+
+/// Split a line that consists solely of a div opener, a collapsible head,
+/// and the div's closer into one marker per line, so the line-oriented
+/// crossing repairs can see the shape.
+fn split_div_collapsible_div_lines(lines: &mut Vec<String>) {
+    let literal_lines = resplit_lines(lines);
+    for (line, literal) in lines.iter_mut().zip(literal_lines.iter()) {
+        if *literal {
+            continue;
+        }
+        let (body, ending) = split_line(line);
+        let trimmed = body.trim();
+        let lower = trimmed.to_ascii_lowercase();
+        if !lower.starts_with("[[div") {
+            continue;
+        }
+        let Some(div_head_end) = trimmed.find("]]") else {
+            continue;
+        };
+        let rest = trimmed[div_head_end + 2..].trim_start();
+        let rest_lower = rest.to_ascii_lowercase();
+        if !rest_lower.starts_with("[[collapsible") {
+            continue;
+        }
+        let Some(head_end) = rest.find("]]") else {
+            continue;
+        };
+        if rest[head_end + 2..].trim() != "[[/div]]" {
+            continue;
+        }
+        let div_head = &trimmed[..div_head_end + 2];
+        let collapsible_head = &rest[..head_end + 2];
+        *line = format!("{div_head}\n{collapsible_head}\n[[/div]]{ending}");
+    }
+}
+
+/// Repair a collapsible whose wrapper div closes immediately after the
+/// collapsible opener while a second div wraps the body.
+///
+/// Wikidot renders this as the wrapper div holding a collapsible whose
+/// content closes at the early div close, with the second div as the
+/// unfolded tail. Rewriting the source into the properly nested form
+/// (wrapper div, collapsible, second div, body, then the closers in stack
+/// order) renders the same visible structure.
+fn canonicalize_early_closed_div_wrapped_collapsible(lines: &mut Vec<String>) {
+    let literal_lines = resplit_lines(lines);
+    let lines: &mut [String] = lines;
+    let literal_lines: &[bool] = &literal_lines;
+    let mut index = 0;
+    while index + 3 < lines.len() {
+        if literal_lines[index] {
+            index += 1;
+            continue;
+        }
+        let (body, _) = split_line(&lines[index]);
+        let Some(marker_start) = body.find("[[") else {
+            index += 1;
+            continue;
+        };
+        let prefix = body[..marker_start].to_owned();
+        if standalone_div_marker(&lines[index], &prefix) != Some(true)
+            || literal_lines[index + 1]
+            || standalone_named_block_marker(&lines[index + 1], &prefix, "collapsible")
+                != Some(true)
+            || literal_lines[index + 2]
+            || standalone_div_marker(&lines[index + 2], &prefix) != Some(false)
+            || literal_lines[index + 3]
+            || standalone_div_marker(&lines[index + 3], &prefix) != Some(true)
+        {
+            index += 1;
+            continue;
+        }
+
+        // Find the collapsible close. No other standalone div or
+        // collapsible marker at this prefix may appear inside the body.
+        let mut close = index + 4;
+        let mut collapsible_close = None;
+        while close < lines.len() {
+            if literal_lines[close]
+                || standalone_named_block_marker(&lines[close], &prefix, "collapsible")
+                    == Some(true)
+                || standalone_div_marker(&lines[close], &prefix).is_some()
+            {
+                break;
+            }
+            if standalone_named_block_marker(&lines[close], &prefix, "collapsible")
+                == Some(false)
+            {
+                collapsible_close = Some(close);
+                break;
+            }
+            close += 1;
+        }
+        let Some(collapsible_close) = collapsible_close else {
+            index += 1;
+            continue;
+        };
+
+        // After the collapsible close, only blank lines may precede the
+        // wrapper div's own close.
+        let mut div_close = collapsible_close + 1;
+        while div_close < lines.len()
+            && !literal_lines[div_close]
+            && split_line(&lines[div_close]).0.trim().is_empty()
+        {
+            div_close += 1;
+        }
+        if div_close >= lines.len()
+            || literal_lines[div_close]
+            || standalone_div_marker(&lines[div_close], &prefix) != Some(false)
+        {
+            index += 1;
+            continue;
+        }
+
+        let early_ending = split_line(&lines[index + 2]).1.to_owned();
+        lines[index + 2] = format!("{prefix}{early_ending}");
+        let close_ending = split_line(&lines[collapsible_close]).1.to_owned();
+        lines[collapsible_close] =
+            format!("{prefix}[[/div]]\n{prefix}[[/collapsible]]{close_ending}");
+        index = div_close + 1;
+    }
+}
+
+/// Repair a collapsible inside an alignment block that closes immediately
+/// after the collapsible opener line, when the alignment block is reopened
+/// immediately before the collapsible close and closed again immediately
+/// after it.
+///
+/// Wikidot renders this as the alignment wrapper holding a collapsible
+/// whose content closes at the early alignment close, with the remaining
+/// body (including the reopened, empty alignment block) as the unfolded
+/// tail. Moving the early alignment close to the very end and swapping the
+/// final crossed pair renders the same visible structure from properly
+/// nested source.
+fn canonicalize_early_closed_align_wrapped_collapsible(lines: &mut Vec<String>) {
+    let literal_lines = resplit_lines(lines);
+    let lines: &mut [String] = lines;
+    let literal_lines: &[bool] = &literal_lines;
+    for align in [">", "<"] {
+        let mut index = 0;
+        while index + 2 < lines.len() {
+            if literal_lines[index] {
+                index += 1;
+                continue;
+            }
+            let (body, _) = split_line(&lines[index]);
+            let Some(marker_start) = body.find("[[") else {
+                index += 1;
+                continue;
+            };
+            let prefix = body[..marker_start].to_owned();
+            if standalone_named_block_marker(&lines[index], &prefix, align) != Some(true)
+                || literal_lines[index + 1]
+                || !line_opens_collapsible(&lines[index + 1])
+                || literal_lines[index + 2]
+                || standalone_named_block_marker(&lines[index + 2], &prefix, align)
+                    != Some(false)
+            {
+                index += 1;
+                continue;
+            }
+
+            // Find the collapsible close. A close of the wrapper alignment
+            // inside the body ends the search; other content is the tail.
+            let mut close = index + 3;
+            let mut collapsible_close = None;
+            while close < lines.len() {
+                if literal_lines[close]
+                    || standalone_named_block_marker(&lines[close], &prefix, align)
+                        == Some(false)
+                {
+                    break;
+                }
+                if standalone_named_block_marker(&lines[close], &prefix, "collapsible")
+                    == Some(false)
+                {
+                    collapsible_close = Some(close);
+                    break;
+                }
+                close += 1;
+            }
+            let Some(collapsible_close) = collapsible_close else {
+                index += 1;
+                continue;
+            };
+            if collapsible_close == 0 || collapsible_close + 1 >= lines.len() {
+                index += 1;
+                continue;
+            }
+            let Some(reopened) = [">", "<"].into_iter().find(|name| {
+                !literal_lines[collapsible_close - 1]
+                    && !literal_lines[collapsible_close + 1]
+                    && standalone_named_block_marker(
+                        &lines[collapsible_close - 1],
+                        &prefix,
+                        name,
+                    ) == Some(true)
+                    && standalone_named_block_marker(
+                        &lines[collapsible_close + 1],
+                        &prefix,
+                        name,
+                    ) == Some(false)
+            }) else {
+                index += 1;
+                continue;
+            };
+
+            let early_ending = split_line(&lines[index + 2]).1.to_owned();
+            lines[index + 2] = format!("{prefix}{early_ending}");
+            let close_ending = split_line(&lines[collapsible_close]).1.to_owned();
+            lines[collapsible_close] = format!("{prefix}[[/{reopened}]]{close_ending}");
+            let after_ending = split_line(&lines[collapsible_close + 1]).1.to_owned();
+            lines[collapsible_close + 1] =
+                format!("{prefix}[[/collapsible]]\n{prefix}[[/{align}]]{after_ending}");
+            index = collapsible_close + 2;
+        }
+    }
+}
+
+/// Hoist a root collapsible's closer off lines the block gatherer cannot
+/// split: a closer alone on a blockquote line, or a closer appended to a
+/// list item.
+///
+/// Wikidot closes the root collapsible at such a closer; the quoted or
+/// listed content before it stays inside the body. Left in place, the
+/// native blockquote and list handling swallow the marker and the whole
+/// pair renders literally.
+fn canonicalize_collapsible_closers_sharing_lines(lines: &mut Vec<String>) {
+    let literal_lines = resplit_lines(lines);
+    let mut open_depths: Vec<usize> = Vec::new();
+    let mut output = Vec::with_capacity(lines.len());
+    for (line, literal) in lines.iter().zip(literal_lines.iter()) {
+        let (body, ending) = split_line(line);
+        if *literal {
+            output.push(line.clone());
+            continue;
+        }
+        let (quote_depth, _) = quote_depth_and_body(body);
+        match marker_line(line) {
+            Some((_, Marker::CollapsibleOpen)) => {
+                open_depths.push(quote_depth);
+                output.push(line.clone());
+            }
+            Some((_, Marker::CollapsibleClose)) => {
+                if quote_depth > 0 && open_depths.last() == Some(&0) {
+                    open_depths.pop();
+                    output.push(format!("[[/collapsible]]{ending}"));
+                } else {
+                    open_depths.pop();
+                    output.push(line.clone());
+                }
+            }
+            _ => {
+                if quote_depth == 0
+                    && open_depths.last() == Some(&0)
+                    && split_list_item_collapsible_close(&mut output, body, ending)
+                {
+                    open_depths.pop();
+                    continue;
+                }
+                let lower = body.to_ascii_lowercase();
+                if line_opens_collapsible(line) && !lower.contains("[[/collapsible]]") {
+                    open_depths.push(quote_depth);
+                } else if lower.contains("[[/collapsible]]") {
+                    open_depths.pop();
+                }
+                output.push(line.clone());
+            }
+        }
+    }
+    *lines = output;
+}
+
+/// Split a trailing `[[/collapsible]]` off a list item line onto its own
+/// line. Returns false when the line is not a list item carrying content
+/// before the closer.
+fn split_list_item_collapsible_close(
+    output: &mut Vec<String>,
+    body: &str,
+    ending: &str,
+) -> bool {
+    const CLOSE: &str = "[[/collapsible]]";
+    let trimmed = body.trim_end();
+    if !trimmed.to_ascii_lowercase().ends_with(CLOSE) {
+        return false;
+    }
+    let Some(head_raw) = trimmed.get(..trimmed.len() - CLOSE.len()) else {
+        return false;
+    };
+    let head = head_raw.trim_end();
+    let content = head.trim_start();
+    let Some(marker_end) = content.find(|ch| ch != '*' && ch != '#') else {
+        return false;
+    };
+    if marker_end == 0 {
+        return false;
+    }
+    let item_text = &content[marker_end..];
+    if !item_text.starts_with([' ', '\t']) || item_text.trim().is_empty() {
+        return false;
+    }
+    output.push(format!("{head}{ending}"));
+    output.push(format!("{CLOSE}{ending}"));
+    true
+}
+
+/// Insert the missing standalone `[[/div]]` lines for divs left open when
+/// a collapsible closes.
+///
+/// Wikidot closes elements still open at a collapsible's end implicitly;
+/// the tree parser instead lets the unclosed div swallow the collapsible
+/// closer, and the whole pair renders literally.
+fn close_unclosed_divs_before_collapsible_close(lines: &mut Vec<String>) {
+    let literal_lines = resplit_lines(lines);
+    let mut div_depth = 0usize;
+    let mut baselines: Vec<usize> = Vec::new();
+    let mut output = Vec::with_capacity(lines.len());
+    for (line, literal) in lines.iter().zip(literal_lines.iter()) {
+        if !*literal {
+            // Standalone markers tolerate trailing horizontal whitespace
+            // here; the strict line helpers would miss such divs and the
+            // depth count would drift.
+            let (body, _) = split_line(line);
+            let trimmed = body.trim_end();
+            match marker_line(trimmed) {
+                Some((_, Marker::CollapsibleOpen)) => {
+                    baselines.push(div_depth);
+                }
+                Some((_, Marker::CollapsibleClose)) => {
+                    if let Some(baseline) = baselines.pop() {
+                        while div_depth > baseline {
+                            output.push("[[/div]]\n".to_owned());
+                            div_depth -= 1;
+                        }
+                    }
+                }
+                _ => {
+                    if standalone_div_marker(trimmed, "") == Some(true) {
+                        div_depth += 1;
+                    } else if standalone_div_marker(trimmed, "") == Some(false) {
+                        div_depth = div_depth.saturating_sub(1);
+                    } else if line_opens_collapsible(line) {
+                        baselines.push(div_depth);
+                    }
+                }
+            }
+        }
+        output.push(line.clone());
+    }
+    *lines = output;
+}
+
 /// Remove lines whose contiguous native quote run is not followed by horizontal space.
 ///
 /// Wikidot consumes these lines rather than treating their remainder as quoted
@@ -703,27 +1090,63 @@ fn canonicalize_crossed_collapsible_div_closers(
             continue;
         };
         let prefix = prefix.to_owned();
-        if literal_lines[index + 1]
-            || standalone_div_marker(&lines[index + 1], &prefix) != Some(true)
-        {
+        let required_quote_depth = prefix.bytes().filter(|&byte| byte == b'>').count();
+
+        // The div may open after leading body content, not only on the line
+        // immediately after the collapsible opener. Scan forward through
+        // content lines for the first standalone div opener at this prefix;
+        // any other structural marker at the prefix ends the search.
+        let mut div_open = index + 1;
+        let div_found = loop {
+            if div_open >= lines.len() {
+                break false;
+            }
+            let (body, _) = split_line(&lines[div_open]);
+            let (line_quote_depth, _) = quote_depth_and_body(body);
+            if line_quote_depth < required_quote_depth {
+                break false;
+            }
+            if !literal_lines[div_open] {
+                match marker_line(&lines[div_open]) {
+                    Some((line_prefix, Marker::CollapsibleOpen))
+                    | Some((line_prefix, Marker::CollapsibleClose))
+                    | Some((line_prefix, Marker::CenterOpen))
+                    | Some((line_prefix, Marker::CenterClose))
+                        if line_prefix == prefix =>
+                    {
+                        break false;
+                    }
+                    _ => match standalone_div_marker(&lines[div_open], &prefix) {
+                        Some(true) => break true,
+                        Some(false) => break false,
+                        None => {}
+                    },
+                }
+            }
+            div_open += 1;
+        };
+        if !div_found {
             index += 1;
             continue;
         }
 
-        let required_quote_depth = prefix.bytes().filter(|&byte| byte == b'>').count();
         let search_end = lines.len();
         let mut collapsible_depth = 1;
         let mut div_depth = 1;
-        let mut close = index + 2;
+        let mut close = div_open + 1;
         let mut rewritten = false;
         while close < search_end {
-            if literal_lines[close] {
-                break;
-            }
             let (body, _) = split_line(&lines[close]);
             let (line_quote_depth, _) = quote_depth_and_body(body);
             if line_quote_depth < required_quote_depth {
                 break;
+            }
+            if literal_lines[close] {
+                // Literal lines are body content (code, raw, comments); any
+                // markers on them are text, so they cannot take part in the
+                // crossing, but they do not end the search either.
+                close += 1;
+                continue;
             }
 
             match marker_line(&lines[close]) {
@@ -1082,9 +1505,28 @@ fn canonicalize_crossed_center_collapsible_closers(
                 }
                 Marker::CollapsibleClose if candidate.early_center_close.is_some() => {
                     if let Some(reopened) = candidate.reopened_center {
-                        let final_center_close = index + 1;
-                        if candidate.wrapper_divs == 0
-                            && reopened + 1 == index
+                        // The reopened-center erase also applies when the
+                        // collapsible sits inside wrapper divs: the lines
+                        // between the collapsible close and the final center
+                        // close must then be exactly those divs' closers.
+                        let mut tail_matches = reopened + 1 == index;
+                        if tail_matches {
+                            for offset in 1..=candidate.wrapper_divs {
+                                let div_close = index + offset;
+                                if div_close >= lines.len()
+                                    || literal_lines[div_close]
+                                    || standalone_div_marker(
+                                        &lines[div_close],
+                                        &candidate.prefix,
+                                    ) != Some(false)
+                                {
+                                    tail_matches = false;
+                                    break;
+                                }
+                            }
+                        }
+                        let final_center_close = index + 1 + candidate.wrapper_divs;
+                        if tail_matches
                             && final_center_close < lines.len()
                             && !literal_lines[final_center_close]
                             && marker_line(&lines[final_center_close])
@@ -2486,5 +2928,203 @@ mod tests {
             );
             assert_eq!(source, original);
         }
+    }
+
+    #[test]
+    fn crossed_collapsible_div_closers_after_content_and_raw_lines() {
+        let mut source = concat!(
+            "[[collapsible show=\"Addenda\"]]\n",
+            "intro line\n",
+            " \n",
+            "[[div class=\"chat\"]]\n",
+            "**A** posted:\n",
+            "@@ @@\n",
+            "##white|OO## reply\n",
+            "[[/collapsible]]\n",
+            "[[/div]]\n",
+        )
+        .to_owned();
+
+        substitute_for_layout(&mut source, true);
+
+        assert_eq!(
+            source,
+            concat!(
+                "[[collapsible show=\"Addenda\"]]\n",
+                "intro line\n",
+                " \n",
+                "[[div class=\"chat\"]]\n",
+                "**A** posted:\n",
+                "@@ @@\n",
+                "##white|OO## reply\n",
+                "[[/div]]\n",
+                "[[/collapsible]]\n",
+            ),
+        );
+    }
+
+    #[test]
+    fn reopened_center_erase_with_wrapper_div() {
+        let mut source = concat!(
+            "[[=]]\n",
+            "[[div class=\"licensebox\"]]\n",
+            "[[collapsible show=\"Licensing\"]]\n",
+            "cite text\n",
+            "[[/=]]\n",
+            "[[<]]\n",
+            "middle\n",
+            "[[/<]]\n",
+            "[[=]]\n",
+            "[[/collapsible]]\n",
+            "[[/div]]\n",
+            "[[/=]]",
+        )
+        .to_owned();
+
+        substitute_for_layout(&mut source, true);
+
+        assert_eq!(
+            source,
+            concat!(
+                "[[=]]\n",
+                "[[div class=\"licensebox\"]]\n",
+                "[[collapsible show=\"Licensing\"]]\n",
+                "cite text\n",
+                "\n",
+                "[[<]]\n",
+                "middle\n",
+                "[[/<]]\n",
+                "\n",
+                "[[/collapsible]]\n",
+                "[[/div]]\n",
+                "[[/=]]",
+            ),
+        );
+    }
+
+    #[test]
+    fn collapsible_closer_hoisted_off_quote_and_list_lines() {
+        let mut quoted = concat!(
+            "**Addendum:** [[collapsible show=\"Test Log\"]]\n",
+            "> first quoted line\n",
+            "> [[/collapsible]]\n",
+        )
+        .to_owned();
+        substitute_for_layout(&mut quoted, true);
+        assert_eq!(
+            quoted,
+            concat!(
+                "**Addendum:** [[collapsible show=\"Test Log\"]]\n",
+                "> first quoted line\n",
+                "[[/collapsible]]\n",
+            ),
+        );
+
+        let mut listed = concat!(
+            "[[collapsible show=\"Fiction\"]]\n",
+            "* First Book, Author One\n",
+            "* Second Book, Author Two [[/collapsible]]\n",
+        )
+        .to_owned();
+        substitute_for_layout(&mut listed, true);
+        assert_eq!(
+            listed,
+            concat!(
+                "[[collapsible show=\"Fiction\"]]\n",
+                "* First Book, Author One\n",
+                "* Second Book, Author Two\n",
+                "[[/collapsible]]\n",
+            ),
+        );
+    }
+
+    #[test]
+    fn unclosed_div_closed_before_collapsible_close() {
+        let mut source = concat!(
+            "[[collapsible show=\"Breach\"]]\n",
+            "[[div class=\"blockquote\"]]\n",
+            "body text\n",
+            "[[/collapsible]]\n",
+        )
+        .to_owned();
+
+        substitute_for_layout(&mut source, true);
+
+        assert_eq!(
+            source,
+            concat!(
+                "[[collapsible show=\"Breach\"]]\n",
+                "[[div class=\"blockquote\"]]\n",
+                "body text\n",
+                "[[/div]]\n",
+                "[[/collapsible]]\n",
+            ),
+        );
+    }
+
+    #[test]
+    fn early_closed_div_wrapper_reordered() {
+        let mut source = concat!(
+            "[[div style=\"font-weight: bold;\"]]\n",
+            "[[collapsible show=\"Level 5\" hide=\"Granted\"]]\n",
+            "[[/div]]\n",
+            "[[div style=\"font-weight: normal;\"]]\n",
+            "> body line\n",
+            "[[/collapsible]]\n",
+            "\n",
+            "[[/div]]",
+        )
+        .to_owned();
+
+        substitute_for_layout(&mut source, true);
+
+        assert_eq!(
+            source,
+            concat!(
+                "[[div style=\"font-weight: bold;\"]]\n",
+                "[[collapsible show=\"Level 5\" hide=\"Granted\"]]\n",
+                "\n",
+                "[[div style=\"font-weight: normal;\"]]\n",
+                "> body line\n",
+                "[[/div]]\n",
+                "[[/collapsible]]\n",
+                "\n",
+                "[[/div]]",
+            ),
+        );
+    }
+
+    #[test]
+    fn early_closed_align_wrapper_reordered() {
+        let mut source = concat!(
+            "[[>]]\n",
+            "[[span class=\"blur\"]][[collapsible show=\"V\" hide=\"H\"]][[/span]]\n",
+            "[[/>]]\n",
+            "[[<]]\n",
+            "body text\n",
+            "[[/<]]\n",
+            "[[>]]\n",
+            "[[/collapsible]]\n",
+            "[[/>]]",
+        )
+        .to_owned();
+
+        substitute_for_layout(&mut source, true);
+
+        assert_eq!(
+            source,
+            concat!(
+                "[[>]]\n",
+                "[[span class=\"blur\"]][[collapsible show=\"V\" hide=\"H\"]][[/span]]\n",
+                "\n",
+                "[[<]]\n",
+                "body text\n",
+                "[[/<]]\n",
+                "[[>]]\n",
+                "[[/>]]\n",
+                "[[/collapsible]]\n",
+                "[[/>]]",
+            ),
+        );
     }
 }

@@ -1,0 +1,20 @@
+[package]
+name = "ftml-include-expansion-verification"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+# Standalone crate: tests ftml's public `includes::include` through its real library.
+[workspace]
+
+[dependencies]
+ftml = { path = "../..", default-features = false }
+
+[lib]
+path = "src/lib.rs"
+
+[profile.test]
+opt-level = 3
+
+[profile.dev.package."*"]
+opt-level = 3

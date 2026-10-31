@@ -42,16 +42,33 @@ fn parse_fn<'r, 't>(
     let body_cursor = parser.current().span.start;
     let normal_length = "[[embedvideo]]".len();
     let extra_length = "[[embedvideo]]]".len();
-    let opener_start = if body_cursor >= normal_length
-        && source[body_cursor - normal_length..body_cursor]
+    // Wikidot ignores spaces and tabs between the embedvideo head's closing
+    // brackets and the end of its physical line (the same convention as the
+    // div head): `[[embedvideo]] \n` opens the same block as
+    // `[[embedvideo]]\n`. The head check therefore runs against the end of
+    // the head itself, before any such trailing whitespace. Whitespace
+    // followed by body text on the same line is not a head ending, so
+    // `[[embedvideo]] X[[/embedvideo]]` stays literal.
+    let head_end = source[..body_cursor].trim_end_matches([' ', '\t']).len();
+    if head_end < body_cursor {
+        let line_rest = source[head_end..].lines().next().unwrap_or("");
+        if !line_rest
+            .bytes()
+            .all(|byte| matches!(byte, b' ' | b'\t' | b'\r'))
+        {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+    }
+    let opener_start = if head_end >= normal_length
+        && source[head_end - normal_length..head_end]
             .eq_ignore_ascii_case("[[embedvideo]]")
     {
-        body_cursor - normal_length
-    } else if body_cursor >= extra_length
-        && source[body_cursor - extra_length..body_cursor]
+        head_end - normal_length
+    } else if head_end >= extra_length
+        && source[head_end - extra_length..head_end]
             .eq_ignore_ascii_case("[[embedvideo]]]")
     {
-        body_cursor - extra_length
+        head_end - extra_length
     } else {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     };

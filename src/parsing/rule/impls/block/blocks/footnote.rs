@@ -367,6 +367,61 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_footnote_renders_math_block_in_body() {
+        // Triage shape mx-footnote: the math opener follows body text on the
+        // same line, and text follows [[/math]] on its line. Wikidot closes
+        // the footnote's math at its first [[/math]] regardless.
+        let (html, errors) = render_wikidot(
+            "Text[[footnote]]note [[math]]\nx^2\n[[/math]] end[[/footnote]] done.\n\n[[footnoteblock]]",
+        );
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains("class=\"math-equation\""), "{html}");
+        assert!(
+            html.contains("\\begin{equation} x^2 \\end{equation}"),
+            "{html}"
+        );
+        assert!(html.contains("<p>end</p>"), "{html}");
+        assert!(!html.contains("[[math]]"), "{html}");
+    }
+
+    #[test]
+    fn wikidot_footnote_renders_single_line_math_block() {
+        let (html, errors) = render_wikidot(
+            "Text[[footnote]]See [[math]] x^2 [[/math]] here[[/footnote]]\n\n[[footnoteblock]]",
+        );
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains("class=\"math-equation\""), "{html}");
+        assert!(
+            html.contains("\\begin{equation} x^2 \\end{equation}"),
+            "{html}"
+        );
+        assert!(!html.contains("[[math]]"), "{html}");
+    }
+
+    #[test]
+    fn wikidot_footnote_from_table_header_renders_math_block() {
+        // scp-7079's shape: the footnote opens at the end of a table header
+        // line, its body begins with a math block, and text trails the
+        // [[/math]] closer on the same line. Live Wikidot renders the
+        // equation inside the footnote, with the trailing text after it.
+        let (html, errors) = render_wikidot(
+            "||~ N ||~ x[[footnote]]\n[[math]]\nx^2\n[[/math]] tail\n[[/footnote]]||\n|| a ||\n\n[[footnoteblock]]",
+        );
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains("<th>x<sup class=\"footnoteref\""), "{html}");
+        assert!(html.contains("class=\"math-equation\""), "{html}");
+        assert!(
+            html.contains("\\begin{equation} x^2 \\end{equation}"),
+            "{html}"
+        );
+        assert!(html.contains("<p>tail</p>"), "{html}");
+        assert!(!html.contains("[[math]]"), "{html}");
+    }
+
+    #[test]
     fn wikidot_footnote_block_ignores_hide_true() {
         let (html, errors) = render_wikidot(
             "Apple[[footnote]]Banana[[/footnote]]\n\n[[footnoteblock hide=\"true\"]]",

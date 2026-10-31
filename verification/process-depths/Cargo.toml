@@ -1,0 +1,17 @@
+[package]
+name = "ftml-process-depths-verification"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+# Standalone crate: it compiles FTML's real depth.rs and non_empty_vec.rs
+# by path and is deliberately outside the FTML package.
+[workspace]
+
+[profile.test]
+opt-level = 3
+
+# depth.rs carries its own proptest unit tests; those run in the main FTML
+# package. Here only the library build (without cfg(test)) is used.
+[lib]
+test = false

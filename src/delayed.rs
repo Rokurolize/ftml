@@ -5,6 +5,8 @@
 //! the List-mode stream.
 
 mod seam;
+#[cfg(test)]
+mod seam_equivalence;
 mod toc;
 
 use crate::data::{PageInfo, PageRef};

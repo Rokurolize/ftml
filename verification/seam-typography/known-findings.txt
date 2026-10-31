@@ -1,0 +1,10 @@
+# One line per known failure class of the seam-transparency check:
+#   <class>|<tokens in the shortest failing input>|<number of failing inputs at the default bound of 5 tokens>
+# The check passes only when the classes found (limited to length <= the bound used) are exactly these.
+# Classes found only with a larger bound (6 tokens adds at least one more, a space-related one) are not listed.
+# Every class is unresolved: nobody has compared it with live Wikidot output. See the verify-seam-typography skill.
+text-differs:|3|1176
+text-differs: <+ «-|4|57
+text-differs: >+ »-|4|380
+text-differs: '- ,- ”+ „+|5|6
+text-differs: .+ …-|5|5

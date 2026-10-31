@@ -19,6 +19,8 @@
  */
 
 mod stack;
+#[cfg(test)]
+mod stack_orders;
 
 pub use self::stack::ParagraphStack;
 pub(crate) use self::stack::collapsible_has_direct_literal_nested_opener;

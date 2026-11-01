@@ -948,6 +948,34 @@ fn false_iftags_nested_conditionals_do_not_close_the_outer_body() {
 }
 
 #[test]
+fn false_iftags_split_line_image_head_does_not_close_the_page() {
+    // A block head split across a line break is rejected as a field list,
+    // but the head is complete and terminated: the discard must still end
+    // at the conditional's own closer, and text after it must render.
+    // (Seen in the wild inside theme documentation included by pages
+    // whose theme tag made the enclosing iftags body hidden.)
+    for layout in [Layout::Wikijump, Layout::Wikidot] {
+        assert_false_iftags_guarded(
+            "[[image http://example.com/x.png\n link=#]]",
+            layout,
+        );
+    }
+}
+
+#[test]
+fn false_iftags_nameless_embed_head_does_not_close_the_page() {
+    // A bare embed head has no provider sub-name, so the block fails, but
+    // the construct is just its terminated head: the discard must still
+    // end at the conditional's own closer, and text after it must render.
+    // (This head shape appears in included theme documentation, where the
+    // embed carries a raw iframe body; pages including that documentation
+    // under a failed conditional lost everything after the conditional.)
+    for layout in [Layout::Wikijump, Layout::Wikidot] {
+        assert_false_iftags_guarded("[[embed]]\n[[/embed]]", layout);
+    }
+}
+
+#[test]
 fn false_iftags_malformed_hidden_structures_fail_closed() {
     let malformed = [
         "[[code]]\n[[/iftags]]\nunclosed code",

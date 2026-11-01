@@ -907,17 +907,25 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
 }
 
 fn hidden_failure_must_close_to_eof(kind: ParseErrorKind) -> bool {
+    // The failures that belong here leave the construct's extent
+    // undetermined: the input ended mid-construct, the head never closed,
+    // its argument list could not be scanned to the closing brackets, or
+    // the recursion limit cut the scan short. A missing block or module name
+    // is not in this set: it is also reported for complete, terminated
+    // heads (a bare embed block, a name-map head closed without a
+    // sub-name, a wikidot field list rejected for a stray line break),
+    // where ordinary stepping recovery is safe and matches visible
+    // parsing. Treating those as unclosed poisoned the rest of the page
+    // whenever a discarded conditional body contained such a block.
     matches!(
         kind,
         ParseErrorKind::RecursionDepthExceeded
             | ParseErrorKind::EndOfInput
             | ParseErrorKind::BlockDisallowsStar
             | ParseErrorKind::BlockDisallowsScore
-            | ParseErrorKind::BlockMissingName
             | ParseErrorKind::BlockMissingCloseBrackets
             | ParseErrorKind::BlockMalformedArguments
             | ParseErrorKind::BlockMissingArguments
-            | ParseErrorKind::ModuleMissingName
     )
 }
 

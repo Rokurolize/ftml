@@ -1957,12 +1957,12 @@ where
             ParseCondition::current(Token::LineBreak),
             ParseCondition::current(Token::ParagraphBreak),
         ];
-        let (field, last) = collect_comment_elided_keep(
-            self,
-            &closes,
-            &invalids,
-            Some(ParseErrorKind::ModuleMissingName),
-        )?;
+        // A malformed field (e.g. a line break inside an image source) is a
+        // local failure of this block only, so it must stay recoverable
+        // (RuleFailed, as in every other caller). Classifying it with the
+        // head-shape kinds would make a discarded hidden body containing
+        // such a block keep its conditional closed through end of input.
+        let (field, last) = collect_comment_elided_keep(self, &closes, &invalids, None)?;
         let arguments =
             self.get_head_map_wikidot(block_rule, last.token != Token::RightBlock)?;
         Ok((field, arguments))

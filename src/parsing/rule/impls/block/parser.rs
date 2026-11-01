@@ -450,6 +450,22 @@ where
         }
     }
 
+    /// Whether the current token is trailing whitespace that ends its
+    /// physical line (only spaces/tabs before the line break or input
+    /// end). Wikidot accepts a code closer followed by such a blank line
+    /// remainder (scp-9844's `[[/code]] ` closers render and are hosted).
+    fn at_blank_line_remainder(&self) -> bool {
+        if self.current().token != Token::Whitespace {
+            return false;
+        }
+        let source = &self.full_text().inner()[self.current().span.start..];
+        let line = match source.find(['\r', '\n']) {
+            Some(index) => &source[..index],
+            None => source,
+        };
+        line.bytes().all(|byte| matches!(byte, b' ' | b'\t'))
+    }
+
     /// Consumes an entire block end, validating that the newline and names match.
     ///
     /// Used internally by the body parsing methods.
@@ -607,6 +623,8 @@ where
                             parser.current().token,
                             Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
                         )
+                        && !(block_rule.name == "block-code"
+                            && parser.at_blank_line_remainder())
                     {
                         return Ok(false);
                     }

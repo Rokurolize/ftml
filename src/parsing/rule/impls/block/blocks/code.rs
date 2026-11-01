@@ -146,6 +146,56 @@ mod tests {
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
+    fn code_blocks_with_trailing_space_closers_parse_and_track() {
+        // scp-9844's real shape: both `[[/code]]` closers carry a trailing
+        // space (and the second opener does too). Live Wikidot renders both
+        // blocks and hosts their contents; the legacy candidate scan used to
+        // reject the suffixed closer, degrading the region to literal text
+        // and leaving zero tracked code blocks for hosted persistence.
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = concat!(
+            "[[code]]\n",
+            "public class Program {\n",
+            "    public static main(string args) : void {\n",
+            "        Console.output(\"Hello, world\"); \n",
+            "    }\n",
+            "}\n",
+            "[[/code]] \n",
+            "[[code]] \n",
+            "public class Program { \n",
+            "   public static main(string args) : void { \n",
+            "        person.say(\"Hello\");\n",
+            "   }\n",
+            "}\n",
+            "[[/code]] \n",
+        );
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!(tree.code_blocks.len(), 2, "{:?}", tree.code_blocks);
+        assert!(
+            tree.code_blocks[0]
+                .contents
+                .contains("Console.output(\"Hello, world\");"),
+            "{:?}",
+            tree.code_blocks[0].contents,
+        );
+        assert!(
+            tree.code_blocks[1]
+                .contents
+                .contains("person.say(\"Hello\");"),
+            "{:?}",
+            tree.code_blocks[1].contents,
+        );
+
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert_eq!(html.matches("<div class=\"code\">").count(), 2, "{html}");
+        assert!(!html.contains("[[code]]"), "{html}");
+    }
+
+    #[test]
     fn code_block_tracks_body_language_and_normalized_name() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);

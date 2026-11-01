@@ -241,7 +241,12 @@ fn code_closer_owns_physical_line(source: &str, closer_end: usize) -> bool {
     let line_end = source[closer_end..]
         .find(['\r', '\n'])
         .map_or(source.len(), |offset| closer_end + offset);
-    closer_end == line_end
+    // Wikidot tolerates trailing spaces/tabs after a code closer
+    // (scp-9844's blocks render and are hosted despite `[[/code]] `),
+    // but any other suffix leaves the marker as body text.
+    source[closer_end..line_end]
+        .bytes()
+        .all(|byte| matches!(byte, b' ' | b'\t'))
 }
 
 fn has_physical_line_ownership(source: &str, opener_start: usize) -> bool {
@@ -325,6 +330,37 @@ mod tests {
             let opener = source.find("[[code]]").unwrap();
             assert!(candidate_at(source, opener).is_none(), "{source:?}");
         }
+    }
+
+    #[test]
+    fn candidate_accepts_trailing_line_whitespace_after_closer() {
+        // scp-9844's real shape: both closers carry one trailing space, and
+        // the second opener also carries one. Live Wikidot renders both
+        // blocks and hosts their contents.
+        let source =
+            "[[code]]\nfn one() {}\n[[/code]] \n[[code]] \nfn two() {}\n[[/code]]\t\n";
+        let candidates = candidates(source);
+        let first = source.find("[[code]]").unwrap();
+        let second = source[first + 1..]
+            .find("[[code]]")
+            .map(|index| index + first + 1)
+            .unwrap();
+
+        let first_candidate = candidates.get(&first).expect("first code candidate");
+        assert_eq!(&source[first_candidate.body.clone()], "\nfn one() {}\n");
+        let second_candidate = candidates.get(&second).expect("second code candidate");
+        assert_eq!(&source[second_candidate.body.clone()], " \nfn two() {}\n");
+    }
+
+    #[test]
+    fn candidate_rejects_closer_followed_by_non_whitespace() {
+        // Only blank trailing whitespace is tolerated: a real suffix still
+        // leaves the closer as body text.
+        let source = "[[code]]\nbody\n[[/code]] x\n";
+        assert!(
+            candidates(source).is_empty(),
+            "suffixed closer must not close"
+        );
     }
 
     #[test]

@@ -705,6 +705,99 @@ mod tests {
     }
 
     #[test]
+    fn quoted_collapsible_with_trailing_opener_content_closes_at_its_quoted_closer() {
+        // en/nexus-series (and jp/nexus-series): the table of contents is a
+        // quoted collapsible whose opener line carries more content (`[[/size]]`
+        // after the opener). Live Wikidot closes it at the quoted
+        // `> [[/collapsible]]`: the retained html has three collapsible blocks
+        // and all four code blocks on the full page. Before this change the
+        // quoted closer stayed invisible behind its `> ` prefix, the first
+        // collapsible swallowed the page up to the next unquoted closer, and
+        // the later collapsible and its code blocks degraded to literal text.
+        let source = concat!(
+            "[[# toc]]\n",
+            "> [[size larger]] [[collapsible show=\"Table of Contents\" hide=\"Fold\"]] [[/size]]\n",
+            "> = **Table of Contents**\n",
+            "> @@ @@[#nexus List of Nexuses]\n",
+            "> @@    @@[#esterberg FP-120 | Esterberg]\n",
+            "> [[/collapsible]]\n",
+            "\n",
+            "> Nexus\n",
+            "> /ˈnɛksəs/\n",
+            "\n",
+            "-----\n",
+            "\n",
+            "[[collapsible show=\"Adding a Nexus to the List?\" hide=\"I am a block of cheese in a Nexus\"]]\n",
+            "\n",
+            "**Table of Contents**\n",
+            "\n",
+            "[[code]]\n",
+            "> @@    @@[#name Nx-##| Name]\n",
+            "[[/code]]\n",
+            "-----\n",
+            "\n",
+            "**For Nexuses:**\n",
+            "\n",
+            "[[code]]\n",
+            "\n",
+            "[[# name]]\n",
+            "**Area Class:** Insert Area Class\n",
+            "[[/code]]\n",
+            "\n",
+            "-----\n",
+            "\n",
+            "**For Free Ports:**\n",
+            "\n",
+            "[[code]]\n",
+            "[[# name]]\n",
+            "**Area Class:** ##purple|**Free Port**##\n",
+            "[[/code]]\n",
+            "\n",
+            "[[/collapsible]]\n",
+            "\n",
+            "[[size 200%]]**Documentation of a Nexus**[[/size]]\n",
+        );
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(source);
+        let (tree, _) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert_eq!(
+            html.matches("class=\"collapsible-block\"").count(),
+            2,
+            "{html}"
+        );
+        assert_eq!(tree.code_blocks.len(), 3, "{:?}", tree.code_blocks);
+        assert_eq!(html.matches("<div class=\"code\">").count(), 3, "{html}");
+        assert!(!html.contains("[[collapsible"), "{html}");
+        assert!(!html.contains("[[/collapsible]]"), "{html}");
+        assert!(!html.contains("[[code]]"), "{html}");
+    }
+
+    #[test]
+    fn quoted_collapsible_opener_tails_do_not_hide_the_quoted_closer() {
+        // The closer in front of a following unquoted collapsible must be the
+        // quoted one for any content after the opener on its line.
+        for tail in [" ", "\t", " x", " [[/size]]"] {
+            let source = format!(
+                "> [[collapsible show=\"T\" hide=\"F\"]]{tail}\n> body\n> [[/collapsible]]\n\nB\n\n[[collapsible show=\"A\" hide=\"a\"]]\n[[code]]\nx\n[[/code]]\n[[/collapsible]]\n"
+            );
+            let (html, _, _) = render(&source);
+            assert_eq!(
+                html.matches("class=\"collapsible-block\"").count(),
+                2,
+                "{tail:?}: {html}"
+            );
+            assert_eq!(
+                html.matches("<div class=\"code\">").count(),
+                1,
+                "{tail:?}: {html}"
+            );
+        }
+    }
+
+    #[test]
     fn wikidot_spaced_and_nested_collapsible_openers_remain_literal() {
         let (html, _, errors) = render(concat!(
             "[[ collapsible hideLocation=\"both\" ]]\n",

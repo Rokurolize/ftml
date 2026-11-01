@@ -1007,7 +1007,11 @@ where
         let Some(required_depth) = self.native_blockquote_depth() else {
             return self.get_body_elements(block_rule, as_paragraphs);
         };
-        if body_start != BlockBodyStart::NextPhysicalLine {
+        let inline_quoted_collapsible = body_start == BlockBodyStart::Inline
+            && self.settings().layout.legacy()
+            && !self.discarding_hidden_body()
+            && block_rule.name == "block-collapsible";
+        if body_start != BlockBodyStart::NextPhysicalLine && !inline_quoted_collapsible {
             return self.get_body_elements(block_rule, as_paragraphs);
         }
         let allow_inline_quote_close = self.settings().layout.legacy()

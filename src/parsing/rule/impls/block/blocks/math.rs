@@ -213,6 +213,38 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_math_closer_accepts_trailing_line_blanks() {
+        // scp-099-fr's shape: the closer carries a trailing space and the
+        // prose continues on the next line. Live Wikidot renders the equation
+        // (retained html.xmlrpc.html has a math-equation div and no literal
+        // `[[math]]`). A blank remainder must behave like the bare closer;
+        // text after the closer on the same line still must not close it.
+        for blanks in ["", " ", "\t", "  ", " \t"] {
+            let source = format!("A\n[[math]]\nx + y\n[[/math]]{blanks}\nB");
+            let (html, errors) = render(Layout::Wikidot, &source);
+            assert!(errors.is_empty(), "{blanks:?}: {errors:#?}");
+            assert_eq!(
+                html.matches("math-equation").count(),
+                1,
+                "{blanks:?}: {html}"
+            );
+            assert!(!html.contains("[[math]]"), "{blanks:?}: {html}");
+            assert!(
+                html.contains("\\begin{equation} x + y \\end{equation}"),
+                "{blanks:?}: {html}"
+            );
+        }
+
+        // The blank remainder at the end of the input closes the block too.
+        let (html, _) = render(Layout::Wikidot, "[[math]]\nx\n[[/math]] ");
+        assert_eq!(html.matches("math-equation").count(), 1, "{html}");
+
+        // Text after the closer on the same line keeps the recorded behavior.
+        let (html, _) = render(Layout::Wikidot, "[[math]]\nx\n[[/math]] y\n\nz");
+        assert_eq!(html.matches("math-equation").count(), 0, "{html}");
+    }
+
+    #[test]
     fn wikijump_math_rendering_is_unchanged() {
         let (html, errors) = render(
             Layout::Wikijump,

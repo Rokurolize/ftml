@@ -39,7 +39,7 @@ Available under the terms of the GNU Affero General Public License. See [LICENSE
 
 ### Compilation
 
-This fork pins Rust 1.95.0 through `rust-toolchain.toml` and the manifest's minimum supported Rust version.
+This fork pins Rust 1.99.1 through `rust-toolchain.toml`; the manifest declares a minimum supported Rust version of 1.95.0.
 
 ```sh
 $ cargo build --release

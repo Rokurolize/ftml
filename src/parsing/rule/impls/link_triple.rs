@@ -552,10 +552,9 @@ fn transliterate_triple_target(url: &str) -> Option<String> {
             transliterated.push(character);
         } else if is_transliteration_combining_mark(character) {
             continue;
-        } else if let Some(latin) = transliterate_cyrillic(character) {
-            transliterated.push_str(latin);
         } else {
-            return None;
+            let latin = transliterate_cyrillic(character)?;
+            transliterated.push_str(latin);
         }
     }
 

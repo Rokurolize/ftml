@@ -232,9 +232,20 @@ fn try_consume_fn<'r, 't>(
             continue;
         }
 
+        // The line's collection may instead have stopped at an
+        // enclosing div's closer, which is likewise not quote content:
+        // prune an empty row, and end the quote run either way so the
+        // div can close.
+        let stopped_at_div_close = wikidot_div_close_ahead(parser);
+        if stopped_at_div_close && elements.is_empty() {
+            consumed_pruned_row = true;
+            continue;
+        }
+
         // An unquoted blank line terminates the current native quote run.
         // A following quote at the same depth starts a sibling blockquote.
-        quote_run_active = !ends_quote_run && !stopped_at_footnote_close;
+        quote_run_active =
+            !ends_quote_run && !stopped_at_footnote_close && !stopped_at_div_close;
 
         // A multiline inline child can finish on a later quoted row. Wikidot keeps the next quoted row in the same native blockquote after that child's trailing line break.
         let row_is_empty = elements.is_empty() && errors.len() == errors_before;
@@ -371,7 +382,32 @@ fn wikidot_footnote_close_ahead<'r, 't>(parser: &Parser<'r, 't>) -> bool
 where
     'r: 't,
 {
-    if !parser.settings().layout.legacy() || !parser.in_footnote() {
+    parser.in_footnote() && wikidot_named_close_ahead(parser, "footnote")
+}
+
+/// Whether the parser sits at a `[[/div]]` end block that belongs to an
+/// enclosing div body.
+///
+/// In the Wikidot layout a div body may span quote lines, and its closer
+/// may sit on one of those lines. The quote line's own collection must
+/// stop there so the enclosing div's end-block check can see the closer;
+/// consuming it as quote content loses the div, which then closes only
+/// at the end of the input and pulls everything after the closer into
+/// the div.
+fn wikidot_div_close_ahead<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    parser.in_wikidot_div_body() && wikidot_named_close_ahead(parser, "div")
+}
+
+/// Whether the parser sits at an end block with the given name, in the
+/// Wikidot layout.
+fn wikidot_named_close_ahead<'r, 't>(parser: &Parser<'r, 't>, name: &str) -> bool
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy() {
         return false;
     }
     if parser.current().token != Token::LeftBlockEnd {
@@ -394,7 +430,7 @@ where
     }
 
     let mut probe = (*parser).clone();
-    matches!(probe.get_end_block(), Ok(name) if name.eq_ignore_ascii_case("footnote"))
+    matches!(probe.get_end_block(), Ok(found) if found.eq_ignore_ascii_case(name))
 }
 
 /// Collect exactly one physical native-quote line.
@@ -430,6 +466,12 @@ fn collect_native_blockquote_line<'r, 't>(
         // An enclosing footnote's closer on this line is not quote
         // content; leave it for the footnote's end-block check.
         if wikidot_footnote_close_ahead(parser) {
+            return ok!(paragraph_safe; elements, errors);
+        }
+
+        // An enclosing div's closer on this line is not quote content
+        // either; leave it for the div's end-block check.
+        if wikidot_div_close_ahead(parser) {
             return ok!(paragraph_safe; elements, errors);
         }
 

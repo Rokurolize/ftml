@@ -700,6 +700,29 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_div_closes_at_closer_on_quote_line() {
+        // en/1st-cetres-donation and cn/scp-cn-1513's shape: a [[div]] body
+        // ends with a `> ` quote line whose last token is the [[/div]]
+        // closer. Wikidot keeps the quote line as a blockquote inside the
+        // div and closes the div there. Losing the closer makes the body
+        // gather run to the end of the input, swallowing the closer and
+        // everything after it as literal text inside the div.
+        let source = "[[div]]\nbody text\n> quoted line [[/div]]\nafter text";
+        assert_eq!(
+            render_preprocessed_wikidot(source),
+            "<div><p>body text</p><blockquote><p>quoted line</p></blockquote></div><br>\nafter text",
+        );
+
+        // A quote line carrying only the closer leaves no empty blockquote
+        // behind; the div closes the same way.
+        let source = "[[div]]\nbody text\n> [[/div]]\nafter text";
+        assert_eq!(
+            render_preprocessed_wikidot(source),
+            "<div><p>body text</p></div><br>\nafter text",
+        );
+    }
+
+    #[test]
     fn wikidot_continuation_before_a_div_preserves_its_block_boundary() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);

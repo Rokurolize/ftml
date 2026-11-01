@@ -80,7 +80,8 @@ impl<'de> serde::Deserialize<'de> for SourceSha256 {
         }
 
         let mut digest = [0; 32];
-        for (pair, output) in value.as_bytes().chunks_exact(2).zip(&mut digest) {
+        for (pair, output) in value.as_bytes().as_chunks::<2>().0.iter().zip(&mut digest)
+        {
             let Some(high) = nibble(pair[0]) else {
                 return Err(D::Error::custom("SHA-256 contains a non-hexadecimal digit"));
             };

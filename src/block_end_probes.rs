@@ -94,16 +94,15 @@ fn raw_scan_vs_ftml_code_blocks() {
             "{corpus}/{}",
             path.replace("source.wikidot.txt", "meta.json")
         );
-        if let Ok(meta) = std::fs::read_to_string(meta_path) {
-            if let Ok(meta) = serde_json::from_str::<Value>(&meta) {
-                if let Some(tags) = meta.get("tags").and_then(Value::as_array) {
-                    page_info.tags = tags
-                        .iter()
-                        .filter_map(Value::as_str)
-                        .map(|t| t.to_owned().into())
-                        .collect();
-                }
-            }
+        if let Ok(meta) = std::fs::read_to_string(meta_path)
+            && let Ok(meta) = serde_json::from_str::<Value>(&meta)
+            && let Some(tags) = meta.get("tags").and_then(Value::as_array)
+        {
+            page_info.tags = tags
+                .iter()
+                .filter_map(Value::as_str)
+                .map(|t| t.to_owned().into())
+                .collect();
         }
         let scan = crate::compat_scan_probe::scan_compat_code_blocks(&raw);
         let mut source = raw.clone();
@@ -203,7 +202,7 @@ fn probe_code_minimize() {
             .count();
         let closers = lines
             .iter()
-            .filter(|l| l.trim().to_ascii_lowercase() == "[[/code]]")
+            .filter(|l| l.trim().eq_ignore_ascii_case("[[/code]]"))
             .count();
         if openers == 0 || openers != closers {
             return false;
@@ -223,7 +222,7 @@ fn probe_code_minimize() {
                 .count();
             let mc = lines
                 .iter()
-                .filter(|l| l.trim().to_ascii_lowercase() == "[[/math]]")
+                .filter(|l| l.trim().eq_ignore_ascii_case("[[/math]]"))
                 .count();
             if mo != mc {
                 return false;
@@ -289,16 +288,14 @@ fn wikidot_html_counts() {
         if let Ok(meta) = std::fs::read_to_string(format!(
             "{corpus}/{}",
             path.replace("source.wikidot.txt", "meta.json")
-        )) {
-            if let Ok(meta) = serde_json::from_str::<Value>(&meta) {
-                if let Some(tags) = meta.get("tags").and_then(Value::as_array) {
-                    page_info.tags = tags
-                        .iter()
-                        .filter_map(Value::as_str)
-                        .map(|t| t.to_owned().into())
-                        .collect();
-                }
-            }
+        )) && let Ok(meta) = serde_json::from_str::<Value>(&meta)
+            && let Some(tags) = meta.get("tags").and_then(Value::as_array)
+        {
+            page_info.tags = tags
+                .iter()
+                .filter_map(Value::as_str)
+                .map(|t| t.to_owned().into())
+                .collect();
         }
         let mut source = raw;
         crate::preprocess_for_layout(&mut source, Layout::Wikidot);

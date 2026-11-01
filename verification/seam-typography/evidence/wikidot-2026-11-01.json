@@ -1,0 +1,116 @@
+{
+ "site": "http://sandbox-for-codex.wikidot.com/",
+ "captured": "2026-11-01",
+ "method": "run-owned page created with wikidot.py as the sandbox account, fetched anonymously, page destroyed; FTML via examples/render_html_jsonl (Layout::Wikidot) at the commit named in the PR",
+ "hidden_block_forms": {
+  "comment": "[!-- c --]",
+  "iftags": "[[iftags +zz-no-such-tag]]x[[/iftags]]"
+ },
+ "rows": [
+  {
+   "case_id": "angle>>/without",
+   "source": "\">>>>",
+   "wikidot_rendered": "\"»»",
+   "ftml_rendered": "\"»»",
+   "match": true
+  },
+  {
+   "case_id": "angle>>/comment",
+   "source": "\"[!-- c --]>>>>",
+   "wikidot_rendered": "\"»»",
+   "ftml_rendered": "\"»»",
+   "match": true
+  },
+  {
+   "case_id": "angle>>/iftags",
+   "source": "\"[[iftags +zz-no-such-tag]]x[[/iftags]]>>>>",
+   "wikidot_rendered": "\"»»",
+   "ftml_rendered": "\"»»",
+   "match": true
+  },
+  {
+   "case_id": "angle<</without",
+   "source": "<<<<",
+   "wikidot_rendered": "««",
+   "ftml_rendered": "««",
+   "match": true
+  },
+  {
+   "case_id": "angle<</comment",
+   "source": "<[!-- c --]<<<",
+   "wikidot_rendered": "««",
+   "ftml_rendered": "««",
+   "match": true
+  },
+  {
+   "case_id": "angle<</iftags",
+   "source": "<[[iftags +zz-no-such-tag]]x[[/iftags]]<<<",
+   "wikidot_rendered": "««",
+   "ftml_rendered": "<«<",
+   "match": false
+  },
+  {
+   "case_id": "ellipsis-order/without",
+   "source": "....",
+   "wikidot_rendered": "….",
+   "ftml_rendered": "….",
+   "match": true
+  },
+  {
+   "case_id": "ellipsis-order/comment",
+   "source": ".[!-- c --]...",
+   "wikidot_rendered": "….",
+   "ftml_rendered": "….",
+   "match": true
+  },
+  {
+   "case_id": "ellipsis-order/iftags",
+   "source": ".[[iftags +zz-no-such-tag]]x[[/iftags]]...",
+   "wikidot_rendered": "….",
+   "ftml_rendered": ".…",
+   "match": false
+  },
+  {
+   "case_id": "ellipsis-5/without",
+   "source": "......",
+   "wikidot_rendered": "……",
+   "ftml_rendered": "……",
+   "match": true
+  },
+  {
+   "case_id": "ellipsis-5/comment",
+   "source": ".[!-- c --].....",
+   "wikidot_rendered": "……",
+   "ftml_rendered": "……",
+   "match": true
+  },
+  {
+   "case_id": "ellipsis-5/iftags",
+   "source": ".[[iftags +zz-no-such-tag]]x[[/iftags]].....",
+   "wikidot_rendered": "……",
+   "ftml_rendered": ".…..",
+   "match": false
+  },
+  {
+   "case_id": "lowquote/without",
+   "source": ",,,,''",
+   "wikidot_rendered": "''",
+   "ftml_rendered": "''",
+   "match": true
+  },
+  {
+   "case_id": "lowquote/comment",
+   "source": ",,[!-- c --],,''",
+   "wikidot_rendered": "''",
+   "ftml_rendered": "''",
+   "match": true
+  },
+  {
+   "case_id": "lowquote/iftags",
+   "source": ",,[[iftags +zz-no-such-tag]]x[[/iftags]],,''",
+   "wikidot_rendered": "''",
+   "ftml_rendered": "''",
+   "match": true
+  }
+ ]
+}

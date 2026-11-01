@@ -37,7 +37,7 @@ use std::borrow::Cow;
 /// Text tokens; `None` in a sequence is a seam. Dash runs are excluded: they become
 /// separate dash elements, not text.
 const TOKENS: &[&str] = &[
-    "\"", "'", "a", " ", ".", "...", "<", ">", "<<", ">>", ",,", "\u{e9}",
+    "\"", "'", "a", " ", ".", "...", "<", ">", "<<", ">>", "\u{e9}",
 ];
 
 fn typography(raw: &str) -> String {

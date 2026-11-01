@@ -104,6 +104,15 @@ extern crate str_macro;
 #[cfg(test)]
 mod test;
 
+#[cfg(test)]
+mod block_end_closers;
+
+#[cfg(test)]
+mod block_end_probes;
+
+#[cfg(test)]
+mod compat_scan_probe;
+
 #[macro_use]
 mod macros;
 

@@ -1,0 +1,3 @@
+# One line per known failure of the closer-variant check: <block> in <context> body=<body>: <property>
+# The check passes only when the failures it finds are exactly these.
+# See the verify-block-end skill before editing this file.

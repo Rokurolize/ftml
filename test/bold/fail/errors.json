@@ -36,9 +36,9 @@
         "kind": "no-rules-match"
     },
     {
-        "token": "paragraph-break",
+        "token": "bold",
         "rule": "bold",
-        "span": [60, 62],
+        "span": [44, 46],
         "kind": "rule-failed"
     },
     {

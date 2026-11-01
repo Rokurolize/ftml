@@ -18,7 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use super::inline_delimiter::assert_unpadded_open;
+use super::inline_delimiter::{
+    assert_unpadded_open, block_name_at, is_block_name, link_name_at,
+    validate_reachable_close,
+};
 use super::prelude::*;
 use crate::parsing::ParseSuccess;
 use crate::tree::Container;
@@ -46,6 +49,10 @@ fn try_consume_fn<'r, 't>(
         return collect_crossed_bold_italics(parser);
     }
 
+    // Fail fast when no closing delimiter is reachable before
+    // the enclosing block ends, so an unmatched opener cannot
+    // pair with a later block's delimiter.
+    validate_reachable_close(parser, Token::Italics)?;
     assert_unpadded_open(parser, Token::Italics)?;
     let close = [ParseCondition::current(Token::Italics)];
     let invalid = [
@@ -83,6 +90,7 @@ fn has_ambiguous_crossed_bold_pair(parser: &Parser<'_, '_>) -> bool {
     // items too) and making every such span retry its neighbours.
     let tokens = parser.remaining();
     let mut saw_intermediate_bold = false;
+    let mut open_blocks: Vec<String> = Vec::new();
     for (index, token) in tokens.iter().enumerate().skip(1) {
         match token.token {
             Token::Italics => {
@@ -92,6 +100,28 @@ fn has_ambiguous_crossed_bold_pair(parser: &Parser<'_, '_>) -> bool {
                         .is_some_and(|next| next.token == Token::Bold);
             }
             Token::Bold => saw_intermediate_bold = true,
+            Token::LeftBlock | Token::LeftBlockStar => {
+                let name = block_name_at(tokens, index);
+                if is_block_name(&name) {
+                    open_blocks.push(name);
+                }
+            }
+            Token::LeftLink => {
+                if let Some(name) = link_name_at(tokens, index) {
+                    open_blocks.push(name);
+                }
+            }
+            Token::LeftBlockEnd => {
+                let name = block_name_at(tokens, index);
+                if !is_block_name(&name) {
+                    // Literal text, not a block end.
+                } else if let Some(pos) = open_blocks.iter().rposition(|n| *n == name) {
+                    open_blocks.truncate(pos);
+                } else {
+                    // The enclosing block ends before any crossed closer.
+                    return false;
+                }
+            }
             Token::ParagraphBreak | Token::InputEnd => return false,
             _ => {}
         }
@@ -135,12 +165,35 @@ fn has_crossed_bold_pair(parser: &Parser<'_, '_>) -> bool {
     }
 
     let tokens = parser.remaining();
+    let mut open_blocks: Vec<String> = Vec::new();
     for (index, token) in tokens.iter().enumerate().skip(1) {
         match token.token {
             Token::Italics => {
                 return tokens
                     .get(index + 1)
                     .is_some_and(|next| next.token == Token::Bold);
+            }
+            Token::LeftBlock | Token::LeftBlockStar => {
+                let name = block_name_at(tokens, index);
+                if is_block_name(&name) {
+                    open_blocks.push(name);
+                }
+            }
+            Token::LeftLink => {
+                if let Some(name) = link_name_at(tokens, index) {
+                    open_blocks.push(name);
+                }
+            }
+            Token::LeftBlockEnd => {
+                let name = block_name_at(tokens, index);
+                if !is_block_name(&name) {
+                    // Literal text, not a block end.
+                } else if let Some(pos) = open_blocks.iter().rposition(|n| *n == name) {
+                    open_blocks.truncate(pos);
+                } else {
+                    // The enclosing block ends before any crossed closer.
+                    return false;
+                }
             }
             Token::Bold | Token::ParagraphBreak | Token::InputEnd => return false,
             _ => {}
@@ -276,5 +329,42 @@ mod tests {
 
         assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(html, "<p><em><strong>one **two</strong></em></p>");
+    }
+
+    #[test]
+    fn unmatched_italics_does_not_swallow_the_next_block() {
+        // Real shape from en everhue-art-hub: a collapsible whose body
+        // ends in a lone `//` line, followed by more collapsibles, one
+        // of which contains a paired `//`. The lone delimiter must not
+        // pair across the block boundary; Wikidot renders all three
+        // collapsibles.
+        let (html, _errors) = render(concat!(
+            "[[collapsible show=\"A\" hide=\"A\"]]
+",
+            "[[image https://scp-wiki.wikidot.com/local--files/everhue-art-hub/TZRvldl.webp]]
+",
+            "//
+",
+            "[[/collapsible]]
+",
+            "[[collapsible show=\"B\" hide=\"B\"]]
+",
+            "[[image https://scp-wiki.wikidot.com/local--files/everhue-art-hub/Kuvbcu0.webp]]
+",
+            "[[/collapsible]]
+",
+            "[[collapsible show=\"C\" hide=\"C\"]]
+",
+            "//paired//
+",
+            "[[/collapsible]]
+",
+        ));
+        assert_eq!(
+            html.matches("collapsible-block-folded").count(),
+            3,
+            "{html}"
+        );
+        assert_eq!(html.matches("<em>").count(), 1, "{html}");
     }
 }

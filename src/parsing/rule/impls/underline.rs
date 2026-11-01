@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use super::inline_delimiter::assert_unpadded_open;
+use super::inline_delimiter::{assert_unpadded_open, validate_reachable_close};
 use super::prelude::*;
 
 pub const RULE_UNDERLINE: Rule = Rule {
@@ -31,6 +31,10 @@ fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create underline container");
+    // Fail fast when no closing delimiter is reachable before
+    // the enclosing block ends, so an unmatched opener cannot
+    // pair with a later block's delimiter.
+    validate_reachable_close(parser, Token::Underline)?;
     assert_unpadded_open(parser, Token::Underline)?;
     let close = [ParseCondition::current(Token::Underline)];
     let invalid = [
@@ -114,5 +118,39 @@ mod tests {
                 assert!(errors.is_empty(), "{marker_count}: {errors:#?}");
             }
         }
+    }
+
+    #[test]
+    fn unmatched_underline_does_not_swallow_the_next_block() {
+        // A collapsible whose body ends in an unmatched `__`, followed
+        // by a collapsible whose body underlines a word. The unmatched
+        // delimiter must not pair across the block boundary; Wikidot
+        // renders both collapsibles.
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(concat!(
+            "[[collapsible show=\"A\" hide=\"A\"]]
+",
+            "Some text __unmatched opener\n",
+            "[[/collapsible]]
+",
+            "[[collapsible show=\"B\" hide=\"B\"]]
+",
+            "__paired__ text\n",
+            "[[/collapsible]]
+",
+        ));
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert_eq!(
+            html.matches("collapsible-block-folded").count(),
+            2,
+            "{html}"
+        );
+        assert_eq!(
+            html.matches("text-decoration: underline").count(),
+            1,
+            "{html}"
+        );
     }
 }

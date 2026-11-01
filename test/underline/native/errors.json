@@ -1,8 +1,8 @@
 [
     {
-        "token": "paragraph-break",
+        "token": "underline",
         "rule": "underline",
-        "span": [82, 84],
+        "span": [66, 68],
         "kind": "rule-failed"
     },
     {
@@ -12,9 +12,9 @@
         "kind": "no-rules-match"
     },
     {
-        "token": "input-end",
+        "token": "underline",
         "rule": "underline",
-        "span": [95, 95],
+        "span": [93, 95],
         "kind": "end-of-input"
     },
     {

@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use super::inline_delimiter::assert_unpadded_open;
+use super::inline_delimiter::{assert_unpadded_open, validate_reachable_close};
 use super::prelude::*;
 use crate::tree::PartialElement;
 
@@ -32,6 +32,10 @@ fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create bold (strong) container");
+    // Fail fast when no closing delimiter is reachable before
+    // the enclosing block ends, so an unmatched opener cannot
+    // pair with a later block's delimiter.
+    validate_reachable_close(parser, Token::Bold)?;
     assert_unpadded_open(parser, Token::Bold)?;
     let close = [ParseCondition::current(Token::Bold)];
     let invalid = [
@@ -59,4 +63,44 @@ fn try_consume_fn<'r, 't>(
         };
     }
     ok!(paragraph_safe; elements, errors)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::data::PageInfo;
+    use crate::layout::Layout;
+    use crate::render::{Render, html::HtmlRender};
+    use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn unmatched_bold_does_not_swallow_the_next_block() {
+        // Real shape from cn scp-cn-852-3: dialogue lines pair `**`
+        // around speaker names, and a censorship `***` leaves one
+        // `**` unmatched. It must not pair across the collapsible
+        // boundary; Wikidot renders both collapsibles.
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(concat!(
+            "[[collapsible show=\"A\" hide=\"A\"]]
+",
+            "**C6：**嗯，好的***的不得了。
+",
+            "[[/collapsible]]
+",
+            "[[collapsible show=\"B\" hide=\"B\"]]
+",
+            "**C6：**又是你，我真***的开心。
+",
+            "[[/collapsible]]
+",
+        ));
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert_eq!(
+            html.matches("collapsible-block-folded").count(),
+            2,
+            "{html}"
+        );
+        assert_eq!(html.matches("<strong>").count(), 2, "{html}");
+    }
 }

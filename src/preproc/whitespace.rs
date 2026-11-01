@@ -696,12 +696,38 @@ fn join_continued_lines(
         return;
     }
 
+    // Wikidot takes code and math bodies raw: a `\\` before a line break
+    // inside one is part of the body, not a continuation (a code body keeps
+    // its trailing backslash, and a math body keeps its LaTeX `\\\\` line
+    // breaks, which also decide the environment Wikidot wraps it in).
+    let raw_body_ranges = if wikidot_compatibility {
+        let mut ranges = wikidot_math_body_ranges(text);
+        ranges.extend(crate::wikidot_code::active_body_ranges(text));
+        ranges.sort_by_key(|range| range.start);
+        ranges
+    } else {
+        Vec::new()
+    };
+    let mut raw_body_index = 0usize;
+
     buffer.clear();
     buffer.reserve(text.len());
 
     for (index, character) in text.char_indices() {
         if character == '\n' && buffer.as_bytes().last() == Some(&b'\\') {
-            if wikidot_compatibility && wikidot_continued_div_opener(&text[index + 1..]) {
+            while raw_body_ranges
+                .get(raw_body_index)
+                .is_some_and(|range| range.end <= index)
+            {
+                raw_body_index += 1;
+            }
+            let in_raw_body = raw_body_ranges
+                .get(raw_body_index)
+                .is_some_and(|range| range.contains(&index));
+            if in_raw_body
+                || (wikidot_compatibility
+                    && wikidot_continued_div_opener(&text[index + 1..]))
+            {
                 buffer.push(character);
             } else {
                 let removed = buffer.pop();
@@ -713,6 +739,77 @@ fn join_continued_lines(
     }
 
     std::mem::swap(text, buffer);
+}
+
+/// Byte ranges of line-owned math block bodies: from the line after an opener
+/// that stands alone on its line to the start of the matching `[[/math]]` line
+/// (nested standalone openers are counted, as the block parser counts them).
+/// An opener without a closer owns no range. Code blocks are skipped; their
+/// contents are literal.
+fn wikidot_math_body_ranges(source: &str) -> Vec<Range<usize>> {
+    if !source.contains("[[") {
+        return Vec::new();
+    }
+    let code_ranges = crate::wikidot_code::active_ranges(source);
+    let mut code_index = 0usize;
+    let mut ranges = Vec::new();
+    let mut open: Option<(usize, usize)> = None;
+    let mut line_offset = 0usize;
+
+    for line in source.split_inclusive('\n') {
+        let line_start = line_offset;
+        line_offset += line.len();
+        while code_ranges
+            .get(code_index)
+            .is_some_and(|range| range.end <= line_start)
+        {
+            code_index += 1;
+        }
+        if code_ranges
+            .get(code_index)
+            .is_some_and(|range| range.contains(&line_start))
+        {
+            continue;
+        }
+
+        let marker = line.trim();
+        match &mut open {
+            None if wikidot_standalone_math_opener(marker) => {
+                open = Some((line_offset, 0));
+            }
+            Some((body_start, depth)) => {
+                if marker.eq_ignore_ascii_case("[[/math]]") {
+                    if *depth == 0 {
+                        ranges.push(*body_start..line_start);
+                        open = None;
+                    } else {
+                        *depth -= 1;
+                    }
+                } else if wikidot_standalone_math_opener(marker) {
+                    *depth += 1;
+                }
+            }
+            None => {}
+        }
+    }
+
+    ranges
+}
+
+fn wikidot_standalone_math_opener(marker: &str) -> bool {
+    let Some(head) = marker
+        .strip_prefix("[[")
+        .and_then(|rest| rest.strip_suffix("]]"))
+    else {
+        return false;
+    };
+    if head.contains("[[") || head.contains("]]") {
+        return false;
+    }
+    let mut parts = head.split_whitespace();
+    parts
+        .next()
+        .is_some_and(|name| name.eq_ignore_ascii_case("math"))
 }
 
 fn wikidot_continued_div_opener(text: &str) -> bool {
@@ -1194,4 +1291,34 @@ fn line_continuation_cascade_scales_to_large_inputs() {
     join_continued_lines(&mut text, &mut buffer, false);
 
     assert_eq!(text, "prefixsuffix");
+}
+
+#[test]
+fn wikidot_math_bodies_are_exempt_from_line_continuation() {
+    use crate::layout::Layout;
+
+    let mut wikidot = "a \\\nb\n[[math]]\nx \\\\\ny \\\n[[/math]]\nc \\\nd".to_owned();
+    super::preprocess_for_layout(&mut wikidot, Layout::Wikidot);
+    assert_eq!(wikidot, "a b\n[[math]]\nx \\\\\ny \\\n[[/math]]\nc d");
+
+    // Without a closer there is no math body: the continuation applies.
+    let mut unclosed = "[[math]]\nx \\\ny".to_owned();
+    super::preprocess_for_layout(&mut unclosed, Layout::Wikidot);
+    assert_eq!(unclosed, "[[math]]\nx y");
+
+    // A code body is raw too: it keeps a trailing backslash and its line
+    // break (jp/wiki-syntax:math's `h} \` example), including math markers
+    // written inside it.
+    let mut in_code =
+        "[[code]]\n[[math]]\nx \\\ny\n[[/math]]\n[[/code]]\nu \\\nv".to_owned();
+    super::preprocess_for_layout(&mut in_code, Layout::Wikidot);
+    assert_eq!(
+        in_code,
+        "[[code]]\n[[math]]\nx \\\ny\n[[/math]]\n[[/code]]\nu v"
+    );
+
+    // The native layout keeps joining everywhere.
+    let mut native = "[[math]]\nx \\\ny\n[[/math]]".to_owned();
+    super::preprocess_for_layout(&mut native, Layout::Wikijump);
+    assert!(native.contains("x y"), "{native}");
 }

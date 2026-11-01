@@ -6,5 +6,4 @@
 # segments exactly as if the block were absent, so the oracle is right for these classes.
 text-differs:|3|1014
 text-differs: <+ «-|4|53
-text-differs: >+ »-|4|324
 text-differs: .+ …-|5|5

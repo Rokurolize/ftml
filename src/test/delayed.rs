@@ -1733,6 +1733,19 @@ fn delayed_slots_preserve_the_frozen_listpages_owner_boundaries() {
 }
 
 #[test]
+fn right_angle_run_touching_a_suppressed_seam_converts_every_pair() {
+    // Live Wikidot renders a hidden block as if it were absent, so each of these
+    // must equal the typography of the joined text (evidence:
+    // verification/seam-typography/evidence/wikidot-2026-11-01.json).
+    assert_eq!(render("a[!-- %%title_linked%% --]>>>>"), "<p>a»»</p>");
+    assert_eq!(render("a>[!-- %%title_linked%% --]>>>"), "<p>a»»</p>");
+    assert_eq!(render("a>>[!-- %%title_linked%% --]>>>>"), "<p>a»»»</p>");
+    assert_eq!(render("\"[!-- %%title_linked%% --]>>>>"), "<p>&quot;»»</p>");
+    // An odd run leaves its last `>` literal, as in joined text.
+    assert_eq!(render("a>[!-- %%title_linked%% --]>>>>"), "<p>a»»&gt;</p>");
+}
+
+#[test]
 fn suppressed_delayed_owners_apply_typography_only_across_authored_text() {
     assert_eq!(
         render("left-[[iftags +missing]]\n%%title_linked%%\n[[/iftags]]-right"),

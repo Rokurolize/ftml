@@ -65,8 +65,14 @@ fn try_consume_strikethrough<'r, 't>(
         assert_step(parser, token)?;
     }
     let close = [ParseCondition::current(token)];
+    // A bare end-block token at a collection step is the end of an
+    // enclosing block: nested blocks consume their own end tokens, so
+    // an inline container may never consume this one. Without the
+    // abort, an unmatched delimiter pairs with a later block's
+    // delimiter and swallows the intervening block structure.
     let invalid = [
         ParseCondition::current(Token::ParagraphBreak),
+        ParseCondition::current(Token::LeftBlockEnd),
         ParseCondition::token_pair(token, Token::Whitespace),
         ParseCondition::token_pair(Token::Whitespace, token),
     ];
@@ -97,6 +103,10 @@ fn validate_reachable_close(
             Token::ParagraphBreak => {
                 paragraph_error
                     .get_or_insert_with(|| scan.make_err(ParseErrorKind::RuleFailed));
+            }
+            Token::LeftBlockEnd => {
+                // The enclosing block ends before any closing delimiter.
+                return Err(scan.make_err(ParseErrorKind::RuleFailed));
             }
             current if current == token => {
                 if let Some(error) = paragraph_error {
@@ -157,6 +167,33 @@ mod tests {
             HtmlRender.render(&tree, &page_info, &settings).body,
             "<p>Some ~~struck through~~ text</p>",
         );
+    }
+
+    #[test]
+    fn unmatched_dash_does_not_swallow_the_next_block() {
+        // Real shape from jp/archived:log-of-anomalous-items-jp: a
+        // collapsible whose body ends in an unmatched `--` attribution,
+        // followed by a collapsible whose body strikes a number through.
+        // The unmatched delimiter must not pair across the block
+        // boundary; Wikidot renders both collapsibles.
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(concat!(
+            "[[collapsible show=\"A\" hide=\"A\"]]\n",
+            "//見た目以上の重たさからか、生徒間での負傷事故が起きなかったのは幸いです。//--█研究員\n",
+            "[[/collapsible]]\n",
+            "[[collapsible show=\"B\" hide=\"B\"]]\n",
+            "現状: サイト-81██の低脅威度物品保管庫に--30--25個を保管。管理人の許可を得ればサイト内に限り持ち出し可能。\n",
+            "[[/collapsible]]\n",
+        ));
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert_eq!(
+            html.matches("collapsible-block-folded").count(),
+            2,
+            "{html}"
+        );
+        assert_eq!(html.matches("line-through").count(), 1, "{html}");
     }
 
     #[test]

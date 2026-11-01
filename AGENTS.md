@@ -40,6 +40,4 @@ Use the default five triage labels. See `docs/agents/triage-labels.md`.
 
 This is a single-context repo. See `docs/agents/domain.md`.
 
-### Agent build approval
-
-Every non-controller agent and background process must request controller approval before memory-intensive Rust commands. The controller serializes those commands through one build slot. See `docs/agents/herdr-build-approval.md`.
+Agents run builds and tests autonomously in their own worktrees; no approval is required.

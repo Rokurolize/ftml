@@ -52,8 +52,18 @@ struct Block {
 }
 
 const BLOCKS: &[Block] = &[
-    Block { name: "code", opener: "[[code]]", closer: "[[/code]]", tag: Some("code") },
-    Block { name: "math", opener: "[[math]]", closer: "[[/math]]", tag: Some("math") },
+    Block {
+        name: "code",
+        opener: "[[code]]",
+        closer: "[[/code]]",
+        tag: Some("code"),
+    },
+    Block {
+        name: "math",
+        opener: "[[math]]",
+        closer: "[[/math]]",
+        tag: Some("math"),
+    },
     Block {
         name: "footnote",
         opener: "[[footnote]]",
@@ -78,7 +88,11 @@ const BLOCKS: &[Block] = &[
 const CONTEXTS: &[(&str, &str, &str)] = &[
     ("top", "", ""),
     ("div", "[[div]]\n", "\n[[/div]]"),
-    ("collapsible", "[[collapsible show=\"o\" hide=\"c\"]]\n", "\n[[/collapsible]]"),
+    (
+        "collapsible",
+        "[[collapsible show=\"o\" hide=\"c\"]]\n",
+        "\n[[/collapsible]]",
+    ),
     ("footnote", "[[footnote]]\n", "\n[[/footnote]]"),
 ];
 
@@ -89,7 +103,11 @@ const BODIES: &[&str] = &["", "x", "x\ny", "[[/cod", "**b**", "a ]] b", "x\n\ny"
 const BLANKS: &[&str] = &["", " ", "\t", "  ", " \t", "\t "];
 const LINE_ENDINGS: &[&str] = &["\n", "\r\n", "\n\n"];
 
-fn ancestors_of_sentinel(value: &Value, path: &mut Vec<String>, out: &mut Vec<Vec<String>>) {
+fn ancestors_of_sentinel(
+    value: &Value,
+    path: &mut Vec<String>,
+    out: &mut Vec<Vec<String>>,
+) {
     match value {
         Value::String(text) if text.contains(SENTINEL) => out.push(path.clone()),
         Value::Array(items) => {
@@ -98,7 +116,10 @@ fn ancestors_of_sentinel(value: &Value, path: &mut Vec<String>, out: &mut Vec<Ve
             }
         }
         Value::Object(map) => {
-            let tag = map.get("element").and_then(Value::as_str).map(str::to_owned);
+            let tag = map
+                .get("element")
+                .and_then(Value::as_str)
+                .map(str::to_owned);
             if let Some(tag) = &tag {
                 path.push(tag.clone());
             }
@@ -118,7 +139,8 @@ fn count_tag(value: &Value, tag: &str) -> usize {
     match value {
         Value::Array(items) => items.iter().map(|item| count_tag(item, tag)).sum(),
         Value::Object(map) => {
-            let own = usize::from(map.get("element").and_then(Value::as_str) == Some(tag));
+            let own =
+                usize::from(map.get("element").and_then(Value::as_str) == Some(tag));
             own + map.values().map(|item| count_tag(item, tag)).sum::<usize>()
         }
         _ => 0,
@@ -139,17 +161,36 @@ struct Summary {
 }
 
 fn summarize(block: &Block, source: &str) -> Result<Summary, String> {
+    summarize_text(block, source)
+}
+
+/// Same summary, but the source first goes through the preprocessing
+/// pipeline Deepwell applies (`preprocess_for_layout` with the Wikidot
+/// layout: parser functions, comment elision, the whitespace passes, and
+/// the compatibility rules).
+fn summarize_preprocessed(block: &Block, source: &str) -> Result<Summary, String> {
+    let mut text = source.to_owned();
+    crate::preprocess_for_layout(&mut text, Layout::Wikidot);
+    summarize_text(block, &text)
+}
+
+fn summarize_text(block: &Block, source: &str) -> Result<Summary, String> {
     let page_info = PageInfo::dummy();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let result = catch_unwind(AssertUnwindSafe(|| {
         let tokenization = crate::tokenize(source);
         let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
         let json = serde_json::to_value(&tree.elements).expect("tree serializes");
-        let footnotes = serde_json::to_value(&tree.footnotes).expect("footnotes serialize");
+        let footnotes =
+            serde_json::to_value(&tree.footnotes).expect("footnotes serialize");
         let mut chains = Vec::new();
         ancestors_of_sentinel(&json, &mut Vec::new(), &mut chains);
         let mut footnote_hits = Vec::new();
-        ancestors_of_sentinel(&footnotes, &mut vec!["footnote".to_owned()], &mut footnote_hits);
+        ancestors_of_sentinel(
+            &footnotes,
+            &mut vec!["footnote".to_owned()],
+            &mut footnote_hits,
+        );
         let (recognized, tail_inside_target) = match block.tag {
             Some(tag) => (
                 count_tag(&json, tag),
@@ -162,7 +203,11 @@ fn summarize(block: &Block, source: &str) -> Result<Summary, String> {
         chains.dedup();
         Summary {
             recognized,
-            code_bodies: tree.code_blocks.iter().map(|c| c.contents.to_string()).collect(),
+            code_bodies: tree
+                .code_blocks
+                .iter()
+                .map(|c| c.contents.to_string())
+                .collect(),
             tail_inside_target,
             sentinel_chains: chains,
         }
@@ -192,7 +237,11 @@ fn closer_blanks_recognize_terminate_and_match_bare() {
             if *context_name == block.name {
                 continue; // a footnote or collapsible cannot be tested inside itself
             }
-            let bodies = if block.name == "bibliography" { BIBLIOGRAPHY_BODIES } else { BODIES };
+            let bodies = if block.name == "bibliography" {
+                BIBLIOGRAPHY_BODIES
+            } else {
+                BODIES
+            };
             for body in bodies {
                 for eol in LINE_ENDINGS {
                     let bare_source = build(block, context, body, "", eol);
@@ -205,10 +254,7 @@ fn closer_blanks_recognize_terminate_and_match_bare() {
                         let mut report = |class: &str| {
                             let message = format!(
                                 "{} in {} body={:?}: {}",
-                                block.name,
-                                context_name,
-                                body,
-                                class
+                                block.name, context_name, body, class
                             );
                             let entry = findings
                                 .entry(message)
@@ -222,15 +268,19 @@ fn closer_blanks_recognize_terminate_and_match_bare() {
                             (Err(_), _) | (_, Err(_)) => report("P0 panic"),
                             (Ok(bare), Ok(variant)) => {
                                 if bare.recognized > 0 && variant.recognized == 0 {
-                                    report("P0 block not recognized with trailing blanks");
+                                    report(
+                                        "P0 block not recognized with trailing blanks",
+                                    );
                                 }
-                                if variant.tail_inside_target && !bare.tail_inside_target {
+                                if variant.tail_inside_target && !bare.tail_inside_target
+                                {
                                     report("P1 tail swallowed by the block");
                                 }
                                 if bare.recognized > 0
                                     && (bare.recognized != variant.recognized
                                         || bare.code_bodies != variant.code_bodies
-                                        || bare.sentinel_chains != variant.sentinel_chains)
+                                        || bare.sentinel_chains
+                                            != variant.sentinel_chains)
                                 {
                                     report("P2 summary differs from the bare closer");
                                 }
@@ -241,15 +291,136 @@ fn closer_blanks_recognize_terminate_and_match_bare() {
             }
         }
     }
-    println!("ORDERS-BOUND {parses} parses over {} block types", BLOCKS.len());
+    println!(
+        "ORDERS-BOUND {parses} parses over {} block types",
+        BLOCKS.len()
+    );
     for (message, (source, count)) in &findings {
         println!("MINIMAL-FAILURE message={message} count={count} source={source:?}");
     }
 }
 
+/// Bodies that only mean something once preprocessing runs: comment
+/// markers inside and around the block body.
+const PREPROC_BODIES: &[&str] = &["A[!--kept--]B", "x\n[!-- line --]\ny", "[!--gone--]"];
+
+/// Preprocessing pass over the same enumeration: every source goes through
+/// `preprocess_for_layout(.., Layout::Wikidot)` — the pipeline Deepwell
+/// applies (parser functions, comment elision in `preproc/comments.rs`,
+/// the whitespace passes, and the compatibility rules in
+/// `preproc/compatibility.rs`) — before tokenizing. The properties are the
+/// same P0/P1/P2, against the preprocessed bare closer: no preprocessing
+/// stage may change what a trailing-blank closer does. Findings print in
+/// the same MINIMAL-FAILURE format with a `preproc:` message prefix, so
+/// `verification/block-end/run.sh` gates them against known-findings.txt
+/// together with the unpreprocessed check.
+#[test]
+#[ignore = "exhaustive check; run through verification/block-end/run.sh"]
+fn preproc_closers_survive_preprocessing() {
+    let mut findings: BTreeMap<String, (String, usize)> = BTreeMap::new();
+    let mut parses = 0usize;
+    for block in BLOCKS {
+        for (context, (context_name, _, _)) in CONTEXTS.iter().enumerate() {
+            if *context_name == block.name {
+                continue; // a footnote or collapsible cannot be tested inside itself
+            }
+            let bodies: Vec<&str> = if block.name == "bibliography" {
+                BIBLIOGRAPHY_BODIES.to_vec()
+            } else {
+                BODIES
+                    .iter()
+                    .chain(PREPROC_BODIES.iter())
+                    .copied()
+                    .collect()
+            };
+            for body in bodies {
+                for eol in LINE_ENDINGS {
+                    let bare_source = build(block, context, body, "", eol);
+                    let bare = summarize_preprocessed(block, &bare_source);
+                    parses += 1;
+                    for blanks in BLANKS.iter().filter(|b| !b.is_empty()) {
+                        let source = build(block, context, body, blanks, eol);
+                        let variant = summarize_preprocessed(block, &source);
+                        parses += 1;
+                        let mut report = |class: &str| {
+                            let message = format!(
+                                "preproc: {} in {} body={:?}: {}",
+                                block.name, context_name, body, class
+                            );
+                            let entry = findings
+                                .entry(message)
+                                .or_insert_with(|| (source.clone(), 0));
+                            entry.1 += 1;
+                            if source.len() < entry.0.len() {
+                                entry.0 = source.clone();
+                            }
+                        };
+                        match (&bare, &variant) {
+                            (Err(_), _) | (_, Err(_)) => report("P0 panic"),
+                            (Ok(bare), Ok(variant)) => {
+                                if bare.recognized > 0 && variant.recognized == 0 {
+                                    report(
+                                        "P0 block not recognized with trailing blanks",
+                                    );
+                                }
+                                if variant.tail_inside_target && !bare.tail_inside_target
+                                {
+                                    report("P1 tail swallowed by the block");
+                                }
+                                if bare.recognized > 0
+                                    && (bare.recognized != variant.recognized
+                                        || bare.code_bodies != variant.code_bodies
+                                        || bare.sentinel_chains
+                                            != variant.sentinel_chains)
+                                {
+                                    report("P2 summary differs from the bare closer");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // A comment marker inside a code body is literal text: comment elision
+    // protects canonical literal owners, so it must survive preprocessing
+    // in the bare and the trailing-blank shape alike.
+    let code = &BLOCKS[0];
+    debug_assert_eq!(code.name, "code");
+    for blanks in ["", " "] {
+        let source = build(code, 0, "A[!--kept--]B", blanks, "\n");
+        let kept = matches!(
+            summarize_preprocessed(code, &source),
+            Ok(summary)
+                if summary
+                    .code_bodies
+                    .iter()
+                    .any(|body| body.contains("[!--kept--]"))
+        );
+        if !kept {
+            let message = format!(
+                "preproc: code in top body={:?}: {}",
+                "A[!--kept--]B", "P2 comment stripped from literal code body"
+            );
+            findings.entry(message).or_insert_with(|| (source, 0)).1 += 1;
+        }
+    }
+    println!(
+        "PREPROC-BOUND {parses} parses through preprocess_for_layout over {} block types",
+        BLOCKS.len()
+    );
+    for (message, (source, count)) in &findings {
+        println!("MINIMAL-FAILURE message={message} count={count} source={source:?}");
+    }
+}
 
 /// Element-tag chain above each of the single-letter sentinels A..D.
-fn sentinel_chain(value: &Value, letter: &str, path: &mut Vec<String>, out: &mut Vec<Vec<String>>) {
+fn sentinel_chain(
+    value: &Value,
+    letter: &str,
+    path: &mut Vec<String>,
+    out: &mut Vec<Vec<String>>,
+) {
     match value {
         Value::String(text) if text.split_whitespace().any(|w| w == letter) => {
             out.push(path.clone())
@@ -260,7 +431,10 @@ fn sentinel_chain(value: &Value, letter: &str, path: &mut Vec<String>, out: &mut
             }
         }
         Value::Object(map) => {
-            let tag = map.get("element").and_then(Value::as_str).map(str::to_owned);
+            let tag = map
+                .get("element")
+                .and_then(Value::as_str)
+                .map(str::to_owned);
             if let Some(tag) = &tag {
                 path.push(tag.clone());
             }
@@ -284,7 +458,11 @@ fn sentinel_chain(value: &Value, letter: &str, path: &mut Vec<String>, out: &mut
 #[ignore = "exhaustive check; run through verification/block-end/run.sh"]
 fn nested_same_name_pairing_depths() {
     for block in BLOCKS {
-        let Some(tag) = block.tag else { continue };
+        // Footnotes live outside the element tree and bibliography bodies are item
+        // lists, so neither can carry the letters.
+        let Some(tag) = block.tag.filter(|_| block.name != "bibliography") else {
+            continue;
+        };
         let source = format!(
             "{o}\nA\n{o}\nB\n{c}\nC\n{c}\nD",
             o = block.opener,
@@ -313,149 +491,4 @@ fn nested_same_name_pairing_depths() {
             tree.code_blocks.len()
         );
     }
-}
-
-/// Probe: render the file named by `BLOCK_END_PROBE` and print math/bibliography markers.
-#[test]
-#[ignore = "probe"]
-fn probe_render_file() {
-    use crate::render::{Render, html::HtmlRender};
-    let Ok(path) = std::env::var("BLOCK_END_PROBE") else { return };
-    let mut source = std::fs::read_to_string(path).expect("probe file");
-    crate::preprocess_for_layout(&mut source, Layout::Wikidot);
-    let page_info = PageInfo::dummy();
-    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-    let tokenization = crate::tokenize(&source);
-    let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
-    let html = HtmlRender.render(&tree, &page_info, &settings).body;
-    if std::env::var("BLOCK_END_HTML").is_ok() { println!("PROBE-HTML-BEGIN\n{html}\nPROBE-HTML-END"); }
-    for (i, c) in tree.code_blocks.iter().enumerate() { println!("PROBE-CODE {i} {:?}", c.contents.lines().find(|l| !l.trim().is_empty()).unwrap_or("")); }
-    println!("PROBE code_blocks={} div-code={}", tree.code_blocks.len(), html.matches("<div class=\"code\">").count());
-    println!("PROBE math-equation={} bibitems={} literal-math-open={} literal-bib-open={}",
-        html.matches("math-equation").count(), html.matches("bibitems").count(),
-        html.matches("[[math").count(), html.matches("[[bibliography").count());
-}
-
-
-/// Differential: Deepwell's raw `[[code]]` scan against the blocks FTML recognizes,
-/// over the page list named by `BLOCK_END_PAGES` (one source path per line).
-#[test]
-#[ignore = "probe"]
-fn raw_scan_vs_ftml_code_blocks() {
-    let Ok(list) = std::env::var("BLOCK_END_PAGES") else { return };
-    let corpus = std::env::var("BLOCK_END_CORPUS").expect("corpus root");
-    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-    let (mut agree, mut scan_failed, mut disagree, mut total) = (0, 0, 0, 0);
-    for path in std::fs::read_to_string(list).expect("list").lines() {
-        let Ok(raw) = std::fs::read_to_string(format!("{corpus}/{path}")) else { continue };
-        total += 1;
-        let mut page_info = PageInfo::dummy();
-        let meta_path = format!("{corpus}/{}", path.replace("source.wikidot.txt", "meta.json"));
-        if let Ok(meta) = std::fs::read_to_string(meta_path) {
-            if let Ok(meta) = serde_json::from_str::<Value>(&meta) {
-                if let Some(tags) = meta.get("tags").and_then(Value::as_array) {
-                    page_info.tags = tags
-                        .iter()
-                        .filter_map(Value::as_str)
-                        .map(|t| t.to_owned().into())
-                        .collect();
-                }
-            }
-        }
-        let scan = crate::compat_scan_probe::scan_compat_code_blocks(&raw);
-        let mut source = raw.clone();
-        crate::preprocess_for_layout(&mut source, Layout::Wikidot);
-        let result = catch_unwind(AssertUnwindSafe(|| {
-            let tokenization = crate::tokenize(&source);
-            let (tree, _e) = crate::parse(&tokenization, &page_info, &settings).into();
-            tree.code_blocks.iter().map(|c| c.contents.to_string()).collect::<Vec<_>>()
-        }));
-        let Ok(ftml_blocks) = result else { println!("PANIC {path}"); continue };
-        match scan {
-            Err(_) => scan_failed += 1,
-            Ok(blocks) if blocks.len() == ftml_blocks.len() => agree += 1,
-            Ok(blocks) => {
-                disagree += 1;
-                println!("COUNT-MISMATCH {path} raw={} ftml={}", blocks.len(), ftml_blocks.len());
-            }
-        }
-    }
-    println!("SCAN-DIFF pages={total} agree={agree} scan_failed_closed={scan_failed} disagree={disagree}");
-}
-
-/// Probe: for the file named by `BLOCK_END_PROBE`, find the nearest preceding line whose
-/// presence makes FTML recognize fewer code blocks than the suffix starting after it.
-#[test]
-#[ignore = "probe"]
-fn probe_code_suffix_bisect() {
-    let Ok(path) = std::env::var("BLOCK_END_PROBE") else { return };
-    let raw = std::fs::read_to_string(path).expect("probe file");
-    let lines: Vec<&str> = raw.split('\n').collect();
-    let page_info = PageInfo::dummy();
-    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-    let count = |start: usize| {
-        let mut source = lines[start..].join("\n");
-        crate::preprocess_for_layout(&mut source, Layout::Wikidot);
-        let tokenization = crate::tokenize(&source);
-        let (tree, _e) = crate::parse(&tokenization, &page_info, &settings).into();
-        tree.code_blocks.len()
-    };
-    let first_code = lines.iter().position(|l| l.trim_start().to_ascii_lowercase().starts_with("[[code")).unwrap();
-    let want = count(first_code);
-    let mut k = first_code;
-    while k > 0 {
-        k -= 1;
-        if count(k) < want {
-            println!("BISECT line {} (1-based) breaks the block: {:?}", k + 1, lines[k]);
-            for (i, l) in lines[k.saturating_sub(1)..=(k + 2).min(lines.len() - 1)].iter().enumerate() {
-                println!("   {}: {:?}", k.saturating_sub(1) + i + 1, l);
-            }
-            return;
-        }
-    }
-    println!("BISECT no preceding line breaks it (want {want}, from-start {})", count(0));
-}
-
-/// Probe: greedily delete lines of `BLOCK_END_PROBE` while FTML still recognizes fewer code
-/// blocks than the number of `[[code` line-start openers remaining.
-#[test]
-#[ignore = "probe"]
-fn probe_code_minimize() {
-    let Ok(path) = std::env::var("BLOCK_END_PROBE") else { return };
-    let raw = std::fs::read_to_string(path).expect("probe file");
-    let mut lines: Vec<String> = raw.split('\n').map(str::to_owned).collect();
-    let page_info = PageInfo::dummy();
-    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-    let failing = |lines: &[String]| {
-        let openers = lines.iter().filter(|l| l.trim_start().to_ascii_lowercase().starts_with("[[code")).count();
-        let closers = lines.iter().filter(|l| l.trim().to_ascii_lowercase() == "[[/code]]").count();
-        if openers == 0 || openers != closers { return false; }
-        if std::env::var("BLOCK_END_BALANCE_FOOTNOTE").is_ok() {
-            let text = lines.join("\n").to_ascii_lowercase();
-            if text.matches("[[footnote]]").count() != text.matches("[[/footnote]]").count() { return false; }
-        }
-        if std::env::var("BLOCK_END_BALANCE_MATH").is_ok() {
-            let mo = lines.iter().filter(|l| l.trim_start().to_ascii_lowercase().starts_with("[[math")).count();
-            let mc = lines.iter().filter(|l| l.trim().to_ascii_lowercase() == "[[/math]]").count();
-            if mo != mc { return false; }
-        }
-        let mut source = lines.join("\n");
-        crate::preprocess_for_layout(&mut source, Layout::Wikidot);
-        let tokenization = crate::tokenize(&source);
-        let (tree, _e) = crate::parse(&tokenization, &page_info, &settings).into();
-        tree.code_blocks.len() < openers
-    };
-    if !failing(&lines) { println!("MINIMIZE page does not fail (needs equal opener/closer line counts and fewer recognized)"); return; }
-    let mut chunk = lines.len() / 2;
-    while chunk >= 1 {
-        let mut i = 0;
-        while i < lines.len() {
-            let upto = (i + chunk).min(lines.len());
-            let mut trial = lines.clone();
-            trial.drain(i..upto);
-            if failing(&trial) { lines = trial; } else { i += chunk; }
-        }
-        chunk /= 2;
-    }
-    println!("MINIMIZE-BEGIN\n{}\nMINIMIZE-END", lines.join("\n"));
 }

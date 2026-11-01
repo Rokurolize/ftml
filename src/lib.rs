@@ -108,6 +108,9 @@ mod test;
 mod block_end_closers;
 
 #[cfg(test)]
+mod block_end_probes;
+
+#[cfg(test)]
 mod compat_scan_probe;
 
 #[macro_use]

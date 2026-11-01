@@ -192,4 +192,3 @@ fn parse_code_open_inner(inner: &str) -> Option<CodeMarker> {
     }
     Some(marker)
 }
-

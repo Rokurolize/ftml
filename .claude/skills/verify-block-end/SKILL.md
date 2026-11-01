@@ -53,7 +53,7 @@ All in `src/block_end_probes.rs`, driven by environment variables, run as `cargo
 | `src/wikidot_code.rs`: `candidates`, `code_closer_owns_physical_line` | code rows of the closer-variant test |
 | `src/parsing/rule/impls/block/blocks/{code,math,footnote,collapsible,bibliography}.rs` | via the parser |
 
-Sync commit: set when this branch is merged (see `git log -1 --format=%H -- verification/block-end`).
+**Sync commit: `4898541b1e`** (the squash-merge commit of PR #784, which added this skill; the check was confirmed against the files above at that commit).
 
 Staleness test: `git diff <sync commit> -- src/parsing/rule/impls/block/parser.rs src/wikidot_code.rs src/preproc`. A new end-follower gate, a new block with a line-owned closer, or a new pass that moves text across block boundaries needs a row in `BLOCKS` or a probe run before the sync commit moves.
 

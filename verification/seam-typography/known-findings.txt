@@ -1,0 +1,10 @@
+# One line per known failure class of the seam-transparency check:
+#   <class>|<tokens in the shortest failing input>|<number of failing inputs at the default bound of 5 tokens>
+# The check passes only when the classes found (limited to length <= the bound used) are exactly these.
+# Classes found only with a larger bound are not listed.
+# Live Wikidot evidence (evidence/wikidot-2026-11-01.json): Wikidot renders a hidden block between two
+# segments exactly as if the block were absent, so the oracle is right for these classes.
+text-differs:|3|1014
+text-differs: <+ «-|4|53
+text-differs: >+ »-|4|324
+text-differs: .+ …-|5|5

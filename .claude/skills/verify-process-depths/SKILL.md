@@ -25,7 +25,7 @@ verification/process-depths/run.sh            # the check: expect "PASS", ~5 s a
 verification/process-depths/run.sh mutants    # can-it-fail self-check: expect 5 "caught:" lines, ~25 s
 ```
 
-Both run Cargo, so under `docs/agents/herdr-build-approval.md` a non-controller agent requests build approval first. `run.sh` uses its own target dir (`verification/process-depths/target`, git-ignored) and compiles the real `src/parsing/depth.rs` and `src/non_empty_vec.rs` by path. It is not a model or a copy. Bounds can be raised: `FTML_DEPTH_ROWS=7 FTML_DEPTH_MAX=3 FTML_DEPTH_TYPES=3 verification/process-depths/run.sh` (about 12x the work per extra row).
+Both run Cargo. `run.sh` uses its own target dir (`verification/process-depths/target`, git-ignored) and compiles the real `src/parsing/depth.rs` and `src/non_empty_vec.rs` by path. It is not a model or a copy. Bounds can be raised: `FTML_DEPTH_ROWS=7 FTML_DEPTH_MAX=3 FTML_DEPTH_TYPES=3 verification/process-depths/run.sh` (about 12x the work per extra row).
 
 ## Tool and why
 

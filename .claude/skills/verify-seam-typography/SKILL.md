@@ -20,7 +20,7 @@ verification/seam-typography/run.sh            # the check, ~30 s once built; "M
 verification/seam-typography/run.sh mutants    # can-it-fail self-check, ~6 min; expect 3 "caught:" lines
 ```
 
-Both compile Rust. Under `docs/agents/herdr-build-approval.md` a non-controller agent requests build approval first. The check is the `#[ignore]` test `seams_are_transparent_to_wikidot_typography` in `src/delayed/seam_equivalence.rs` (compiled only under `cfg(test)`). `run.sh` compares the failure classes it finds with `verification/seam-typography/known-findings.txt`. `FTML_SEAM_TOKENS=6` is a 12x larger run (about 10 minutes) and finds at least one more class (a space-related one) that is not in the known list; it is for investigations, not routine use.
+Both compile Rust. The check is the `#[ignore]` test `seams_are_transparent_to_wikidot_typography` in `src/delayed/seam_equivalence.rs` (compiled only under `cfg(test)`). `run.sh` compares the failure classes it finds with `verification/seam-typography/known-findings.txt`. `FTML_SEAM_TOKENS=6` is a 12x larger run (about 10 minutes) and finds at least one more class (a space-related one) that is not in the known list; it is for investigations, not routine use.
 
 ## Tool and why
 

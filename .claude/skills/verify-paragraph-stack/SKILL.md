@@ -20,7 +20,7 @@ verification/paragraph-stack/run.sh            # the check, ~5 s once built
 verification/paragraph-stack/run.sh mutants    # can-it-fail self-check, ~4 min; expect 4 "caught:" lines
 ```
 
-Both compile Rust. Under `docs/agents/herdr-build-approval.md` a non-controller agent requests build approval first. The check is the `#[ignore]` test `no_operation_order_panics_the_paragraph_stack` in `src/parsing/paragraph/stack_orders.rs` (compiled only under `cfg(test)`; plain `cargo test` skips it). `run.sh` runs it and compares what fails with `verification/paragraph-stack/known-findings.txt`. Exit 0 means "the failures are exactly the known ones". To widen the search: `FTML_STACK_OPS=6 verification/paragraph-stack/run.sh` (about 17x longer; the result at 6 was the same single root cause with 143 variants).
+Both compile Rust. The check is the `#[ignore]` test `no_operation_order_panics_the_paragraph_stack` in `src/parsing/paragraph/stack_orders.rs` (compiled only under `cfg(test)`; plain `cargo test` skips it). `run.sh` runs it and compares what fails with `verification/paragraph-stack/known-findings.txt`. Exit 0 means "the failures are exactly the known ones". To widen the search: `FTML_STACK_OPS=6 verification/paragraph-stack/run.sh` (about 17x longer; the result at 6 was the same single root cause with 143 variants).
 
 ## Tool and why
 

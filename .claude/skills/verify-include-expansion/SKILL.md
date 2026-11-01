@@ -28,7 +28,7 @@ verification/include-expansion/run.sh            # expect "PASS", ~2 s after the
 verification/include-expansion/run.sh mutants    # expect 4 "caught:" lines, ~3 min
 ```
 
-Both compile Rust (the first run builds ftml into `verification/include-expansion/target`, git-ignored, several minutes). Under `docs/agents/herdr-build-approval.md` a non-controller agent requests build approval first. Raise the bound with `FTML_INCLUDE_TOKENS=6` (about 18x longer).
+Both compile Rust (the first run builds ftml into `verification/include-expansion/target`, git-ignored, several minutes). Raise the bound with `FTML_INCLUDE_TOKENS=6` (about 18x longer).
 
 ## Tool and why
 

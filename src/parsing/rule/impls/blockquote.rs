@@ -222,9 +222,19 @@ fn try_consume_fn<'r, 't>(
             debug_assert!(removed, "footnote-first classification found no footnote");
         }
 
+        // The line's collection may have stopped at an enclosing
+        // footnote's closer. That closer is not quote content: if the
+        // line had nothing before it the row is pruned, and either way
+        // the quote run ends here so the footnote can close.
+        let stopped_at_footnote_close = wikidot_footnote_close_ahead(parser);
+        if stopped_at_footnote_close && elements.is_empty() {
+            consumed_pruned_row = true;
+            continue;
+        }
+
         // An unquoted blank line terminates the current native quote run.
         // A following quote at the same depth starts a sibling blockquote.
-        quote_run_active = !ends_quote_run;
+        quote_run_active = !ends_quote_run && !stopped_at_footnote_close;
 
         // A multiline inline child can finish on a later quoted row. Wikidot keeps the next quoted row in the same native blockquote after that child's trailing line break.
         let row_is_empty = elements.is_empty() && errors.len() == errors_before;
@@ -349,6 +359,44 @@ fn try_consume_fn<'r, 't>(
     ok!(false; elements, errors)
 }
 
+/// Whether the parser sits at a `[[/footnote]]` end block that belongs to
+/// an enclosing footnote body.
+///
+/// In the Wikidot layout a footnote body may span quote lines, and its
+/// closer may sit on one of those lines. The quote line's own collection
+/// must stop there so the enclosing footnote's end-block check can see
+/// the closer; consuming it as quote content loses the footnote, and the
+/// failed body gather then degrades the rest of the page.
+fn wikidot_footnote_close_ahead<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy() || !parser.in_footnote() {
+        return false;
+    }
+    if parser.current().token != Token::LeftBlockEnd {
+        return false;
+    }
+
+    // Mirror verify_end_block: a closer whose raw text ends in
+    // whitespace before `]]` does not count as an end block.
+    let source = parser.full_text().inner();
+    let start = parser.current().span.start;
+    let Some(close_offset) = source[start..].find("]]") else {
+        return false;
+    };
+    if source[start..start + close_offset]
+        .chars()
+        .last()
+        .is_some_and(char::is_whitespace)
+    {
+        return false;
+    }
+
+    let mut probe = (*parser).clone();
+    matches!(probe.get_end_block(), Ok(name) if name.eq_ignore_ascii_case("footnote"))
+}
+
 /// Collect exactly one physical native-quote line.
 ///
 /// Several start-of-line rules consume their trailing line-break token. The
@@ -376,6 +424,12 @@ fn collect_native_blockquote_line<'r, 't>(
             if parser.current().token != Token::InputEnd {
                 parser.step()?;
             }
+            return ok!(paragraph_safe; elements, errors);
+        }
+
+        // An enclosing footnote's closer on this line is not quote
+        // content; leave it for the footnote's end-block check.
+        if wikidot_footnote_close_ahead(parser) {
             return ok!(paragraph_safe; elements, errors);
         }
 

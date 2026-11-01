@@ -367,6 +367,34 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_footnote_closes_at_closer_on_quote_line() {
+        // jp/user-component-policy's shape: a footnote body starts on one
+        // line and its [[/footnote]] closer sits at the end of a following
+        // `> ` quote line. Wikidot keeps the quote line as a blockquote
+        // inside the footnote and closes the footnote there. Losing the
+        // closer makes the body gather run to the end of the input, which
+        // loses the footnote and degrades everything after it (on the
+        // page, the two [[code]] blocks inside the following [[div]]).
+        let source = "First[[footnote]] excerpt\n> quoted one [[/footnote]] and second[[footnote]] excerpt two\n> quoted two [[/footnote]] done.\n\n[[div]]\n[[code]]\ncode body\n[[/code]]\n[[/div]]\n\n[[footnoteblock]]";
+        let (html, errors) = render_wikidot(source);
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(html.contains("<blockquote>"), "{html}");
+        assert!(html.contains("quoted one"), "{html}");
+        assert!(html.contains("quoted two"), "{html}");
+        assert!(html.contains("<div class=\"code\">"), "{html}");
+        assert!(html.contains("code body"), "{html}");
+        assert!(!html.contains("[[footnote]]"), "{html}");
+        assert!(!html.contains("[[code]]"), "{html}");
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(source);
+        let (tree, _) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert_eq!(tree.footnotes.len(), 2);
+    }
+
+    #[test]
     fn wikidot_footnote_renders_math_block_in_body() {
         // Triage shape mx-footnote: the math opener follows body text on the
         // same line, and text follows [[/math]] on its line. Wikidot closes

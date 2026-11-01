@@ -104,18 +104,6 @@ cargo +nightly fuzz run --fuzz-dir fuzz delayed_pipeline -- \
   -runs=1 -timeout=10 fuzz/artifacts/delayed_pipeline/<artifact>
 ```
 
-For branch coverage of the high-risk compatibility paths, run the Unicode robustness suite under nightly LLVM coverage and check the maintained floors:
-
-```sh
-cargo +nightly llvm-cov --branch --json \
-  --output-path /tmp/ftml-robustness-coverage.json \
-  --test integration -- wikidot_unicode_robustness
-python3 scripts/check_robustness_branch_coverage.py \
-  /tmp/ftml-robustness-coverage.json
-```
-
-These floors are deliberately scoped to the parser/preprocessor files exercised by the robustness suite. They prevent coverage from silently collapsing without pretending that targeted branch coverage is a proof of global correctness.
-
 ### Wikijump full-page downstream gate
 
 Reduced parity fixtures are not sufficient for integration safety. `tests/fixtures/wikidot-parity/downstream-pages.json` pins six full Wikijump seed sources, including `scp-9506`, the two large `scp-8980` fragments, and the Basalt theme, by exact SHA-256. Run each source through the public FTML pipeline in both layouts before merging parser or preprocessor changes:

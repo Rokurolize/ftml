@@ -213,6 +213,136 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_math_closer_accepts_trailing_line_blanks() {
+        // scp-099-fr's shape: the closer carries a trailing space and the
+        // prose continues on the next line. Live Wikidot renders the equation
+        // (retained html.xmlrpc.html has a math-equation div and no literal
+        // `[[math]]`). A blank remainder must behave like the bare closer;
+        // text after the closer on the same line still must not close it.
+        for blanks in ["", " ", "\t", "  ", " \t"] {
+            let source = format!("A\n[[math]]\nx + y\n[[/math]]{blanks}\nB");
+            let (html, errors) = render(Layout::Wikidot, &source);
+            assert!(errors.is_empty(), "{blanks:?}: {errors:#?}");
+            assert_eq!(
+                html.matches("math-equation").count(),
+                1,
+                "{blanks:?}: {html}"
+            );
+            assert!(!html.contains("[[math]]"), "{blanks:?}: {html}");
+            assert!(
+                html.contains("\\begin{equation} x + y \\end{equation}"),
+                "{blanks:?}: {html}"
+            );
+        }
+
+        // The blank remainder at the end of the input closes the block too.
+        let (html, _) = render(Layout::Wikidot, "[[math]]\nx\n[[/math]] ");
+        assert_eq!(html.matches("math-equation").count(), 1, "{html}");
+
+        // Text after the closer on the same line keeps the recorded behavior.
+        let (html, _) = render(Layout::Wikidot, "[[math]]\nx\n[[/math]] y\n\nz");
+        assert_eq!(html.matches("math-equation").count(), 0, "{html}");
+    }
+
+    /// Renders the way Deepwell does for the Wikidot layout: the preprocessor
+    /// runs with the layout's compatibility rules.
+    fn render_wikidot(source: &str) -> (String, Vec<crate::parsing::ParseError>) {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut source = source.to_owned();
+        crate::preprocess_for_layout(&mut source, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        (HtmlRender.render(&tree, &page_info, &settings).body, errors)
+    }
+
+    #[test]
+    fn wikidot_math_body_keeps_backslash_line_breaks() {
+        // scp-2223 (en and jp): a matrix equation whose lines end in `\\`.
+        // Wikidot keeps the `\\` and joins the lines with a space; the
+        // retained html reads `PR(p_1) \\ \vdots \\ PR(p_N)`. The generic
+        // backslash line continuation used to eat one backslash and the
+        // newline, leaving `PR(p_1) \\vdots \PR(p_N)`.
+        let (html, errors) = render_wikidot(concat!(
+            "[[math]]\n",
+            "\\left[ \\begin{array}{cc}\n",
+            "PR(p_1) \\\\\n",
+            "\\vdots \\\\\n",
+            "PR(p_N)\\end{array} \\right]\n",
+            "[[/math]]\n",
+            "Where [[$ \\ell(p_i,p_j) $]] is 0\n",
+        ));
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(
+            html.contains(
+                r"\left[ \begin{array}{cc} PR(p_1) \\ \vdots \\ PR(p_N)\end{array} \right]"
+            ),
+            "{html}"
+        );
+        // Outside a math body the continuation still joins lines.
+        let (html, _) = render_wikidot("joined \\\nline\n");
+        assert!(html.contains("joined line"), "{html}");
+        assert!(!html.contains('\\'), "{html}");
+    }
+
+    #[test]
+    fn wikidot_math_closer_after_a_double_backslash_line_still_closes() {
+        // jp/wiki-syntax:math: an example equation ends its body with `\\`
+        // directly before the closer, and the page documents more
+        // `[[code]]` blocks around further `[[math]]` examples. Wikidot closes
+        // the equation at its own closer and registers all five code blocks
+        // (retained html: 5 code divs, `\lim ... h} \\ \end{align}`). The
+        // join used to fuse `\\` + newline + `[[/math]]`, so the equation
+        // swallowed the next `[[code]]` opener and one code block was lost.
+        let source = concat!(
+            "[[code]]\n",
+            "[[math sample]]\n",
+            "\\lim_{h \\to 0} \\frac{(x+h)^{2}-x^{2}}{h} \\\n",
+            "[[/math]]\n",
+            "[[/code]]\n",
+            "> {{@@[[eref@@ //sample//]]}}\n",
+            "**出力:**\n",
+            "[[math sample]]\n",
+            "\\lim_{h \\to 0} \\frac{(x+h)^{2}-x^{2}}{h} \\\\\n",
+            "[[/math]]\n",
+            "> [[eref sample]]\n",
+            "> ([[eref sample]])\n",
+            "\n",
+            "LaTeXの環境を指定する方法は2通りあります。\n",
+            "\n",
+            "[[code]]\n",
+            "[[math type=\"align\"]]\n",
+            "E = mc^2\n",
+            "[[/math]]\n",
+            "[[/code]]\n",
+            "\n",
+            "[[code]]\n",
+            "[[math]]\n",
+            "\\begin{align}\n",
+            "E = mc^2\n",
+            "\\end{align}\n",
+            "[[/math]]\n",
+            "[[/code]]\n",
+        );
+        let mut text = source.to_owned();
+        crate::preprocess_for_layout(&mut text, Layout::Wikidot);
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(&text);
+        let (tree, _) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert_eq!(tree.code_blocks.len(), 3, "{:?}", tree.code_blocks);
+        assert_eq!(html.matches("<div class=\"code\">").count(), 3, "{html}");
+        assert!(html.contains(r"{h} \\ \end{align}"), "{html}");
+        // The first example keeps its single trailing backslash and line break
+        // inside the code body, as Wikidot's html does (`h} \` + newline).
+        assert!(html.contains("{h} \\\n[[/math]]</code>"), "{html}");
+        assert!(!html.contains("[[code]]"), "{html}");
+    }
+
+    #[test]
     fn wikijump_math_rendering_is_unchanged() {
         let (html, errors) = render(
             Layout::Wikijump,

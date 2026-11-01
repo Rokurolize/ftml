@@ -19,6 +19,7 @@
  */
 
 mod ast;
+pub(crate) mod conf_names;
 mod delayed;
 mod id_prefix;
 mod includer;

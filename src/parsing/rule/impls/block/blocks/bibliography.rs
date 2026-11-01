@@ -232,6 +232,28 @@ mod tests {
     use crate::settings::{WikitextMode, WikitextSettings};
 
     #[test]
+    fn wikidot_bibliography_closer_accepts_trailing_line_blanks() {
+        // scp-7451's shape: `[[/bibliography]]  ` (trailing spaces) then a
+        // blank line. Live Wikidot renders the bibliography (retained
+        // html.xmlrpc.html has a `bibitems` div). The blank remainder must
+        // behave like the bare closer.
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        for blanks in ["", " ", "\t", "  ", " \t"] {
+            let source = format!(
+                "[[bibliography]]\n: alpha : Alpha reference\n[[/bibliography]]{blanks}\n\nafter"
+            );
+            let tokenization = crate::tokenize(&source);
+            let (tree, errors) =
+                crate::parse(&tokenization, &page_info, &settings).into();
+            assert!(errors.is_empty(), "{blanks:?}: {errors:?}");
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+            assert_eq!(html.matches("bibitems").count(), 1, "{blanks:?}: {html}");
+            assert!(!html.contains("[[bibliography"), "{blanks:?}: {html}");
+        }
+    }
+
+    #[test]
     fn bibliography_block_collects_definition_items_and_options() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);

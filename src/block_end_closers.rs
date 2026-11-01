@@ -430,6 +430,10 @@ fn probe_code_minimize() {
         let openers = lines.iter().filter(|l| l.trim_start().to_ascii_lowercase().starts_with("[[code")).count();
         let closers = lines.iter().filter(|l| l.trim().to_ascii_lowercase() == "[[/code]]").count();
         if openers == 0 || openers != closers { return false; }
+        if std::env::var("BLOCK_END_BALANCE_FOOTNOTE").is_ok() {
+            let text = lines.join("\n").to_ascii_lowercase();
+            if text.matches("[[footnote]]").count() != text.matches("[[/footnote]]").count() { return false; }
+        }
         if std::env::var("BLOCK_END_BALANCE_MATH").is_ok() {
             let mo = lines.iter().filter(|l| l.trim_start().to_ascii_lowercase().starts_with("[[math")).count();
             let mc = lines.iter().filter(|l| l.trim().to_ascii_lowercase() == "[[/math]]").count();

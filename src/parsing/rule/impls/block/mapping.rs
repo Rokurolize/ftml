@@ -365,3 +365,25 @@ fn block_rule_map_rejects_duplicate_names() {
 
     build_block_rule_map(&BLOCK_RULES);
 }
+
+#[test]
+fn block_rules_match_conf() {
+    // Accepted by the parser but with no conf entry: the four alignment blocks,
+    // `social` and `later`.
+    crate::test::conf_names::assert_rules_match_conf(
+        "blocks.toml",
+        "block-",
+        false,
+        &[
+            "align-left",
+            "align-center",
+            "align-right",
+            "align-justify",
+            "social",
+            "later",
+        ],
+        BLOCK_RULES
+            .iter()
+            .map(|rule| (rule.name, rule.accepts_names)),
+    );
+}

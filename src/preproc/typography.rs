@@ -637,10 +637,22 @@ pub(crate) fn wikidot_seam_edits(text: &str, seams: &[usize]) -> Vec<WikidotSeam
         let candidate = captures.name("repl").unwrap();
         let full = captures.get(0).unwrap().range();
         if range_crosses_seam(&full, seams) {
-            edits.push(WikidotSeamEdit {
-                range: candidate.range(),
-                replacement: "\u{bb}",
-            });
+            // The regex matches only the first pair of a `>` run, because the
+            // preceding character must not be `>`. Joined text converts every
+            // pair of the run (see `replace_right_angle_quotes`), and a seam can
+            // make the whole run eligible, so convert the remaining pairs too.
+            // Typography never produces `>`, so each `>` here is authored text.
+            let start = candidate.start();
+            let run_len = text.as_bytes()[start..]
+                .iter()
+                .take_while(|byte| **byte == b'>')
+                .count();
+            for pair in 0..run_len / 2 {
+                edits.push(WikidotSeamEdit {
+                    range: start + pair * 2..start + pair * 2 + 2,
+                    replacement: "\u{bb}",
+                });
+            }
         }
     }
     for captures in HORIZONTAL_ELLIPSIS.regex().captures_iter(text) {

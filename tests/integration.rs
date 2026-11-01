@@ -28,9 +28,6 @@ mod wikidot_cross_owner_boundaries;
 #[path = "coverage_public_api.rs"]
 mod coverage_public_api;
 
-#[path = "coverage_trace_fixture_paths.rs"]
-mod coverage_trace_fixture_paths;
-
 #[path = "include_variables.rs"]
 mod include_variables;
 

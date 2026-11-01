@@ -322,13 +322,14 @@ fn probe_render_file() {
     use crate::render::{Render, html::HtmlRender};
     let Ok(path) = std::env::var("BLOCK_END_PROBE") else { return };
     let mut source = std::fs::read_to_string(path).expect("probe file");
-    crate::preprocess(&mut source);
+    crate::preprocess_for_layout(&mut source, Layout::Wikidot);
     let page_info = PageInfo::dummy();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let tokenization = crate::tokenize(&source);
     let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
     let html = HtmlRender.render(&tree, &page_info, &settings).body;
     if std::env::var("BLOCK_END_HTML").is_ok() { println!("PROBE-HTML-BEGIN\n{html}\nPROBE-HTML-END"); }
+    for (i, c) in tree.code_blocks.iter().enumerate() { println!("PROBE-CODE {i} {:?}", c.contents.lines().find(|l| !l.trim().is_empty()).unwrap_or("")); }
     println!("PROBE code_blocks={} div-code={}", tree.code_blocks.len(), html.matches("<div class=\"code\">").count());
     println!("PROBE math-equation={} bibitems={} literal-math-open={} literal-bib-open={}",
         html.matches("math-equation").count(), html.matches("bibitems").count(),
@@ -363,7 +364,7 @@ fn raw_scan_vs_ftml_code_blocks() {
         }
         let scan = crate::compat_scan_probe::scan_compat_code_blocks(&raw);
         let mut source = raw.clone();
-        crate::preprocess(&mut source);
+        crate::preprocess_for_layout(&mut source, Layout::Wikidot);
         let result = catch_unwind(AssertUnwindSafe(|| {
             let tokenization = crate::tokenize(&source);
             let (tree, _e) = crate::parse(&tokenization, &page_info, &settings).into();
@@ -394,7 +395,7 @@ fn probe_code_suffix_bisect() {
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let count = |start: usize| {
         let mut source = lines[start..].join("\n");
-        crate::preprocess(&mut source);
+        crate::preprocess_for_layout(&mut source, Layout::Wikidot);
         let tokenization = crate::tokenize(&source);
         let (tree, _e) = crate::parse(&tokenization, &page_info, &settings).into();
         tree.code_blocks.len()
@@ -429,8 +430,13 @@ fn probe_code_minimize() {
         let openers = lines.iter().filter(|l| l.trim_start().to_ascii_lowercase().starts_with("[[code")).count();
         let closers = lines.iter().filter(|l| l.trim().to_ascii_lowercase() == "[[/code]]").count();
         if openers == 0 || openers != closers { return false; }
+        if std::env::var("BLOCK_END_BALANCE_MATH").is_ok() {
+            let mo = lines.iter().filter(|l| l.trim_start().to_ascii_lowercase().starts_with("[[math")).count();
+            let mc = lines.iter().filter(|l| l.trim().to_ascii_lowercase() == "[[/math]]").count();
+            if mo != mc { return false; }
+        }
         let mut source = lines.join("\n");
-        crate::preprocess(&mut source);
+        crate::preprocess_for_layout(&mut source, Layout::Wikidot);
         let tokenization = crate::tokenize(&source);
         let (tree, _e) = crate::parse(&tokenization, &page_info, &settings).into();
         tree.code_blocks.len() < openers

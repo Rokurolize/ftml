@@ -452,8 +452,10 @@ where
 
     /// Whether the current token is trailing whitespace that ends its
     /// physical line (only spaces/tabs before the line break or input
-    /// end). Wikidot accepts a code closer followed by such a blank line
-    /// remainder (scp-9844's `[[/code]] ` closers render and are hosted).
+    /// end). Wikidot accepts a code, math or bibliography closer followed
+    /// by such a blank line remainder (scp-9844's `[[/code]] ` closers render
+    /// and are hosted; scp-099-fr's `[[/math]] ` renders an equation;
+    /// scp-7451's `[[/bibliography]]  ` renders its bibitems).
     fn at_blank_line_remainder(&self) -> bool {
         if self.current().token != Token::Whitespace {
             return false;
@@ -619,12 +621,10 @@ where
                             "block-code" | "block-math" | "block-bibliography"
                         )
                         && !(block_rule.name == "block-math" && parser.in_footnote())
-                        && !matches!(
+                        && !(matches!(
                             parser.current().token,
                             Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
-                        )
-                        && !(block_rule.name == "block-code"
-                            && parser.at_blank_line_remainder())
+                        ) || parser.at_blank_line_remainder())
                     {
                         return Ok(false);
                     }

@@ -145,6 +145,7 @@ fn try_consume_link<'r, 't>(
             url_invalid,
             None,
             false,
+            false,
         )?;
         let authored = is_url(url.trim_start());
         (url, last, authored)
@@ -297,6 +298,7 @@ fn build_separate<'r, 't>(
             &label_close,
             label_invalid,
             None,
+            false,
             false,
         )?
         .0;

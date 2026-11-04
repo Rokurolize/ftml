@@ -122,8 +122,15 @@ fn try_consume_link<'r, 't>(
         ParseCondition::current(Token::ParagraphBreak),
         ParseCondition::current(Token::LineBreak),
     ];
-    let (url, _) =
-        collect_text_resolved_fused(parser, rule, &url_close, &url_invalid, None, false)?;
+    let (url, _) = collect_text_resolved_fused(
+        parser,
+        rule,
+        &url_close,
+        &url_invalid,
+        None,
+        false,
+        false,
+    )?;
 
     if !url_valid(&url)
         && let Some(expanded) = parser.settings().interwiki.build(&url)
@@ -139,6 +146,7 @@ fn try_consume_link<'r, 't>(
             &label_close,
             &label_invalid,
             None,
+            false,
             false,
         )?;
         return success_elements(Element::Link {
@@ -179,6 +187,7 @@ fn try_consume_link<'r, 't>(
         &label_close,
         &label_invalid,
         None,
+        false,
         false,
     )?;
 

@@ -87,8 +87,15 @@ where
             ParseCondition::current(Token::RuntimeText),
         ]
     };
-    let (name, closer) =
-        collect_text_resolved_fused(parser, RULE_ANCHOR, &close, &invalid, None, false)?;
+    let (name, closer) = collect_text_resolved_fused(
+        parser,
+        RULE_ANCHOR,
+        &close,
+        &invalid,
+        None,
+        false,
+        false,
+    )?;
     let residual_closer = closer.token == Token::RightLink;
     let valid_wikidot_name = name
         .chars()

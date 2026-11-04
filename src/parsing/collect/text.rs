@@ -121,8 +121,19 @@ pub fn collect_text_resolved<'p, 'r, 't>(
 where
     'r: 't,
 {
-    let (text, last, _) =
-        collect_text_resolved_impl(parser, rule, closes, invalids, kind, false, false)?;
+    let (text, last, _) = collect_text_resolved_impl(
+        parser,
+        rule,
+        closes,
+        invalids,
+        kind,
+        FusedClosePolicy {
+            fused_reader: false,
+            name_close: false,
+            asserted: false,
+            stop: false,
+        },
+    )?;
     Ok((text, last))
 }
 
@@ -156,12 +167,15 @@ where
         ParseCondition::current(Token::ParagraphBreak),
         ParseCondition::current(Token::LineBreak),
     ];
+    let fused_name_close = parser.head_had_segment();
     let (text, last) = collect_text_resolved_fused(
         parser,
         rule,
         &end_conditions,
         &reject_conditions,
         Some(ParseErrorKind::BlockMalformedArguments),
+        fused_name_close,
+        false,
     )
     .ok()?;
     (last.span.start == closing_start).then_some(text)
@@ -174,6 +188,7 @@ pub fn collect_text_resolved_fused<'p, 'r, 't>(
     invalids: &[ParseCondition],
     kind: Option<ParseErrorKind>,
     allow_fused_name_close: bool,
+    stop_at_fused_close: bool,
 ) -> Result<(Cow<'t, str>, &'r ExtractedToken<'t>), ParseError>
 where
     'r: 't,
@@ -184,8 +199,12 @@ where
         closes,
         invalids,
         kind,
-        true,
-        allow_fused_name_close,
+        FusedClosePolicy {
+            fused_reader: true,
+            name_close: allow_fused_name_close,
+            asserted: allow_fused_name_close,
+            stop: stop_at_fused_close,
+        },
     )?;
     Ok((text, last))
 }
@@ -205,7 +224,27 @@ pub fn collect_text_resolved_fused_tracked<'p, 'r, 't>(
 where
     'r: 't,
 {
-    collect_text_resolved_impl(parser, rule, closes, invalids, kind, true, true)
+    collect_text_resolved_impl(
+        parser,
+        rule,
+        closes,
+        invalids,
+        kind,
+        FusedClosePolicy {
+            fused_reader: true,
+            name_close: true,
+            asserted: false,
+            stop: false,
+        },
+    )
+}
+
+#[derive(Clone, Copy)]
+struct FusedClosePolicy {
+    fused_reader: bool,
+    name_close: bool,
+    asserted: bool,
+    stop: bool,
 }
 
 fn collect_text_resolved_impl<'p, 'r, 't>(
@@ -214,8 +253,7 @@ fn collect_text_resolved_impl<'p, 'r, 't>(
     closes: &[ParseCondition],
     invalids: &[ParseCondition],
     kind: Option<ParseErrorKind>,
-    allow_fused_closer: bool,
-    allow_fused_name_close: bool,
+    fused: FusedClosePolicy,
 ) -> Result<(Cow<'t, str>, &'r ExtractedToken<'t>, bool), ParseError>
 where
     'r: 't,
@@ -284,10 +322,10 @@ where
             return Err(parser.make_err(kind.unwrap_or(ParseErrorKind::RuleFailed)));
         }
 
-        if allow_fused_name_close
+        if fused.name_close
             && parser.settings().layout.legacy()
             && parser.current().token == Token::RightLink
-            && (segment_consumed || output.is_some())
+            && (segment_consumed || output.is_some() || fused.asserted)
             && closes.iter().any(|close| {
                 matches!(close, ParseCondition::CurrentToken(Token::RightBlock))
             })
@@ -312,6 +350,19 @@ where
             return Ok((text, last, segment_consumed));
         }
 
+        if fused.stop
+            && parser.current().token == Token::RightLink
+            && closes.iter().any(|close| {
+                matches!(close, ParseCondition::CurrentToken(Token::RightBlock))
+            })
+            && !closes.iter().any(|close| {
+                matches!(close, ParseCondition::CurrentToken(Token::RightLink))
+            })
+        {
+            parser.step()?;
+            return Err(parser.make_err(kind.unwrap_or(ParseErrorKind::RuleFailed)));
+        }
+
         if parser.current().token == Token::InputEnd {
             return Err(parser.make_err(ParseErrorKind::EndOfInput));
         }
@@ -325,7 +376,7 @@ where
         }
 
         if parser.current().token == Token::LeftBlock
-            && let Some(segment) = (if allow_fused_closer {
+            && let Some(segment) = (if fused.fused_reader {
                 iftags_segment_fused(parser)
             } else {
                 iftags_segment(parser)
@@ -344,7 +395,7 @@ where
             } else {
                 None
             };
-            let segment = (if allow_fused_closer {
+            let segment = (if fused.fused_reader {
                 consume_iftags_segment_fused(parser)?
             } else {
                 consume_iftags_segment(parser)?

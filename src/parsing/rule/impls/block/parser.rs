@@ -3908,6 +3908,7 @@ where
             &[],
             Some(ParseErrorKind::BlockMissingName),
             fused_name_close,
+            false,
         )?;
         let (arguments, _) = self.get_head_map_with_body_start(
             block_rule,
@@ -3969,6 +3970,7 @@ where
                 &reject_conditions,
                 Some(ParseErrorKind::BlockMalformedArguments),
                 fused_name_close,
+                true,
             )?;
 
             Some(slice)

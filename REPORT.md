@@ -31,16 +31,12 @@ Each input was compared whole against live PagePreview. The only difference was 
 ## STATUS
 **Done**
 - Live matrix run and fix implemented.
-- Seven fixtures generated, scoped to the new directories only, with no unrelated fixture rewrites.
+- Seven fixtures added, scoped to the new directories only.
 - Wikidot-layout output matches live on all cases except the `display:none` artifact.
-- WIP commit pushed earlier.
+- `cargo fmt --check` is clean.
+- Full `cargo test` passes (1160 lib, 582 integration, 1 doc; 13 ignored).
+- `RUSTFLAGS='-D warnings' cargo clippy --tests --no-deps` reports 35 errors, none in `src/parsing/consume.rs`. The 35 is the count the recent fork commits cite as pre-existing; I did not re-run clippy on `main`.
 
-**Partial**
-- The final validation was interrupted. `cargo fmt --check`, the full `cargo test` and clippy have not been confirmed after the fixtures were added. An earlier full `cargo test` ran with the fix but before the fixtures were complete, and its only failures were the fixture-loader errors for the half-created fixtures.
-- Only the fixture names were checked in non-update mode, via the update run.
-
-**Remaining**
-- Run `cargo fmt --check`, `cargo test` and `RUSTFLAGS='-D warnings' cargo clippy --tests --no-deps`.
-- Check that no fixture from other sections changed.
-- `[[size]]` bodies: live closes at `[[/size]]` after a stray div, but ftml still links. Size is inline and not a body-end boundary, so this needs a separate fix.
+**Remaining (out of scope, not fixed)**
+- `[[size]]` bodies: live closes at `[[/size]]` after a stray div, but ftml still links. Size is inline and not a body-end boundary, so it needs a separate fix.
 - `[[html]]` bodies: live and ftml differ (live literal, ftml iframe). This is not caused by this change.

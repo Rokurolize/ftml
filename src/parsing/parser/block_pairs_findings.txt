@@ -158,3 +158,4 @@ corpus-test/div/scored-body-first-line-tabview/input.ftml	TabView@9..54 scan-onl
 corpus-test/div/scored-body-first-line-tabview/input.ftml	Tab@21..41 scan-only
 corpus-test/list/wikidot-li-cross-closeout/input.ftml	Div@15..50 scan-only
 corpus-test/list/wikidot-li-cross-closeout/input.ftml	Div@15..32 descent-only
+corpus-test/footnote/body-first-line-align-literal/input.ftml	AlignCenter@14..28 scan-only

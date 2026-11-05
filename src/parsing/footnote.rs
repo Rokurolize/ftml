@@ -564,8 +564,8 @@ fn hoist_list_footnote_block<'t>(
     }
 
     let mut found = None;
-    for index in 0..items.len() {
-        let ListItem::Elements { elements, .. } = &mut items[index] else {
+    for (index, item) in items.iter_mut().enumerate() {
+        let ListItem::Elements { elements, .. } = item else {
             continue;
         };
         let Some(position) = elements

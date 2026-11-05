@@ -1,0 +1,13 @@
+[package]
+name = "scp-jp-include-expand"
+version = "0.0.0"
+edition = "2024"
+publish = false
+description = "Sweep tool: expand [[include]] with ftml::include over prefetched page sources"
+
+# Standalone: not a member of the ftml package, never built by `cargo test`.
+[workspace]
+
+[dependencies]
+ftml = { path = "../../../..", default-features = false }
+serde_json = "1"

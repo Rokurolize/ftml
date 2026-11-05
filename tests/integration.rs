@@ -40,6 +40,9 @@ mod include_grammar;
 #[path = "inline_delimiter_performance.rs"]
 mod inline_delimiter_performance;
 
+#[path = "super_linear_regressions.rs"]
+mod super_linear_regressions;
+
 #[path = "wikidot_heading_content.rs"]
 mod wikidot_heading_content;
 

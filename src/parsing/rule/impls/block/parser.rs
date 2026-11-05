@@ -38,6 +38,7 @@ use crate::parsing::{
 use crate::tree::{AttributeMap, Container, ContainerType, Element, Elements};
 use regex::Regex;
 use std::borrow::Cow;
+use std::rc::Rc;
 use std::sync::LazyLock;
 
 static ARGUMENT_KEY: LazyLock<Regex> =
@@ -3566,9 +3567,22 @@ where
 
         let source = self.full_text().inner();
         let n = tokens.len();
-        let mut ends: Vec<Vec<usize>> = vec![Vec::new(); n + 1];
+        // `ends[i]` is the ordered, de-duplicated set of iftags end heads that
+        // can close a gate entered at token `i`. Positions that neither start
+        // a gate head nor are an end head just step forward, so their set is
+        // exactly the successor's set: share it instead of copying it (the
+        // copies made repeated closed gates cubic in the gate count).
+        let empty: Rc<Vec<usize>> = Rc::new(Vec::new());
+        let mut ends: Vec<Rc<Vec<usize>>> = vec![Rc::clone(&empty); n + 1];
         let mut seen: Vec<usize> = vec![0; n + 1];
         for i in (0..n).rev() {
+            let step_to = protected_span_end(source, &tokens, i).unwrap_or(i + 1);
+            let end_head = iftags_end_head_end(&tokens, i).is_some();
+            let block_head = iftags_block_head_end(&tokens, i);
+            if !end_head && block_head.is_none() {
+                ends[i] = Rc::clone(&ends[step_to]);
+                continue;
+            }
             let stamp = i + 1;
             let mut out: Vec<usize> = Vec::new();
             let mut push = |out: &mut Vec<usize>, end: usize| {
@@ -3577,23 +3591,22 @@ where
                     out.push(end);
                 }
             };
-            if iftags_end_head_end(&tokens, i).is_some() {
+            if end_head {
                 push(&mut out, i);
             }
-            if let Some(head_end) = iftags_block_head_end(&tokens, i) {
-                for inner in ends[head_end].clone() {
+            if let Some(head_end) = block_head {
+                for &inner in ends[head_end].iter() {
                     let after = iftags_end_head_end(&tokens, inner)
                         .expect("ends entries are iftags end heads");
-                    for end in ends[after].clone() {
+                    for &end in ends[after].iter() {
                         push(&mut out, end);
                     }
                 }
             }
-            let step_to = protected_span_end(source, &tokens, i).unwrap_or(i + 1);
-            for end in ends[step_to].clone() {
+            for &end in ends[step_to].iter() {
                 push(&mut out, end);
             }
-            ends[i] = out;
+            ends[i] = Rc::new(out);
         }
 
         let Some(&closer) = ends[0].first() else {

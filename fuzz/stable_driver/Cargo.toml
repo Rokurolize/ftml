@@ -1,0 +1,19 @@
+[package]
+name = "ftml-fuzzdrv"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[dependencies]
+ftml = { path = "../.." }
+serde_json = "1"
+
+[profile.release]
+debug-assertions = true
+overflow-checks = true
+debug = "line-tables-only"
+lto = false
+codegen-units = 16
+incremental = false
+
+[workspace]

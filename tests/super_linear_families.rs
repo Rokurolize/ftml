@@ -533,3 +533,35 @@ fn triple_links_still_render_as_links() {
         "triple link label lost, got {html:?}",
     );
 }
+
+#[test]
+fn unclosed_anchor_head_walls_keep_the_head_scan_linear() {
+    // Every `[#` head looked up the closing `]` (falling back to
+    // end-of-document) and the whitespace-or-`]` delimiter by rescanning the
+    // document tail, while the scan cursor only moved to the delimiter it had
+    // just found. A wall of `"[# x "` has no `]` at all, so preprocess was
+    // quadratic; the emitted ranges (including the `text.len()` fallback)
+    // must stay identical.
+    for count in [4096usize, 8192, 16384] {
+        let input = "[# x ".repeat(count);
+        let (html, elapsed) = render_timed(&input);
+        assert!(
+            elapsed < Duration::from_secs(5),
+            "{count} unclosed anchor heads took {elapsed:?}",
+        );
+        assert!(
+            !html.is_empty(),
+            "{count} unclosed anchor heads rendered nothing",
+        );
+    }
+
+    // A closed `[#` head also takes the scan; keep that shape bounded too.
+    for count in [2048usize, 4096, 8192] {
+        let input = "[# page 1 2] ".repeat(count);
+        let (_, elapsed) = render_timed(&input);
+        assert!(
+            elapsed < Duration::from_secs(5),
+            "{count} closed anchor heads took {elapsed:?}",
+        );
+    }
+}

@@ -1,51 +1,84 @@
-# ftml real-page divergence sweep: REPORT (INCOMPLETE)
+# ftml real-page divergence sweep: REPORT
 
-**This sweep did not reach the diff or clustering stage. There are no divergence families, no raw diffs, and no minimized repros in this report.** It records the tooling that was built, what was verified, and what remains. No library source was changed.
+Discovery only. No library source was changed. Sweep scripts, raw diffs, and evidence live beside this file.
 
 ## STATUS
 
-### Done
-- **Source retrieval from the public scp-wiki, verified end to end.** Wikidot's `viewsource/ViewSourceModule` is called through `ajax-module-connector.php`, using the page id from the page HTML and a `wikidot_token7` value taken from the page's cookie. No credentials are needed. `fetch.py` decodes the response as follows:
-  - `&nbsp;` becomes a space.
-  - `<br />\n` becomes a newline.
-  - `<a>` wrappers around include targets are stripped.
-  - Other entities are unescaped.
-  - Caveat: a literal tab in a source cannot be distinguished from view-source's own wrapper tab, so tab-bearing sources could decode slightly wrong. This was not checked.
-- **Live HTML extraction.** `fetch.py` takes the inner HTML of `#page-content` by balancing `<div>` depth, because ad scripts follow the content and a fixed end marker was wrong. It was spot-checked on `scp-5133`.
-- **Exclusion of articles already used in the repo.** `candidates.py` builds the candidate list from `scp-series` through `scp-series-7`. It excludes every slug mentioned in any tracked file (31 slugs, listed in `excluded-repo-slugs.txt`). The shuffle uses a fixed seed (20261105), and articles numbered 3000 or below come first.
-- **Selection driver.** `select_and_fetch.py` runs a polite 1 s delay per request and caches results.
-- **`render.py`.** It was written but **never run**. It feeds sources to `target/release/examples/render_html_jsonl` with `layout: wikidot`. The release build of that example did complete earlier in the session.
-- **`normalize.py`.** It was written and smoke-tested on one small string only. Both sides tokenize to one tag or text run per line. Entity forms, attribute quoting, `<br>` forms and whitespace are canonicalized. Prefixed ids (`prw…`), `time_<ts>` classes, bare unix timestamps and long hex ids are masked.
-- **No-include articles fetched**: `scp-1564` and `scp-4699` are in `data/`, with `source.ftml`, `live.html` and `meta.json`. They were neither rendered nor diffed.
+**Done**
+- Fetched 40 public scp-wiki articles that are not used anywhere in the repo. Both the source (view-source route) and the live `#page-content` HTML were fetched. The page list is in `data/`, and the excluded repo slugs are in `excluded-repo-slugs.txt`.
+- Expanded `[[include]]` with ftml's own `ftml::include` through the sweep-side crate `expander/`. The crate fetches the component sources from the live wiki (`components/`, 30+ pages). The stock harness has no Includer, so expansion has to happen first.
+- Rendered all 40 pages with the repo harness (`examples/render_html_jsonl`, Wikidot layout) and diffed them against live after normalization.
+- **Result:** 275 hunks, and no page is hunk-free. Per-page diffs are in `out/diffs/`. All hunks are in `out/hunks.json`, per-page counts in `out/summary.json`, and per-family page lists in `out/family-pages.json`.
+- Clustered the hunks into the families below, with evidence in `evidence/family-evidence.txt` and minimized repros in `repros/`.
 
-### Partial
-- **`expander/`** is a standalone crate with its own `[workspace]` and a path dependency on ftml (`../..`). It runs ftml's own `ftml::include` in a loop (at most 6 rounds) against fetched component sources and reports the pages it could not find. **It was not built or run.** The first build attempt used a wrong path, which I fixed, and the second attempt was interrupted. It is untested, so treat the code as a draft.
+**Partial / caveats**
+- Six cross-site includes (e.g. `:scpsandbox2:clef`) were not resolved, so the pages that use them are inconclusive. They are listed in `unresolved-includes.json`.
+- The sample is 40 pages (target was "40–60"), skewed toward articles numbered ≤3000. Fetches that returned 503 were skipped (`fetch-failures.json`).
+- Minimized repros show the **local** output. They were **not** confirmed on live, because anonymous PagePreview is not available here. The live side of each family is the real page's bytes, not a minimized sample. Per `CLAUDE.md`, F1 to F3 still need a saved-page live probe before they count as pinned divergences.
+- I did not check the families against `tests/fixtures/wikidot-parity` captures or run the repo's test suite.
+- `normalize.py` masks `prw` ids, `time_<ts>` classes, unix timestamps and long hex ids. After normalization no masked-id differences remained in the diffs I reviewed, but I did not audit every hunk.
 
-### Not done
-1. Rendering any page and diffing it against live.
-2. Per-page diffs.
-3. Divergence families with minimized repros, and the per-family evidence (source, live bytes, ftml bytes, page).
+**Remaining**
+- Live-probe F1 and F2 on a saved page, then pin them as corpus fixtures if confirmed.
+- Resolve F3 by diffing `ftml::include` output against Wikidot's expansion for `author-label-source` and `iftags` components.
+- Triage the ~20 low-count one-off hunks in `out/hunks.json`.
+- Extend to 60 or more pages.
 
-## Finding that drove the scope change
+## Families
 
-The first plan was to keep only articles with no `[[include …]]`, because the harness has no Includer. That filter nearly emptied the sample: **about 46 articles were skipped for includes, 2 were kept, and 2 fetches failed with a 503** (the 46 skipped are in `skipped.json`; the 2 kept are `data/scp-1564` and `data/scp-4699`). Almost every article, old ones included, carries `component:image-block` and `license-box` includes, so a no-include sample is unrepresentative.
+Counts are hunks / pages, taken from `out/hunks.json` and `out/family-pages.json`.
 
-The expander was started for this reason. It would expand includes with the library's own code before the stock harness renders the text. Any include-expansion divergence would then show up in the diffs instead of being hidden.
+### F1. `[Word: text]` loses its brackets and the prefix (candidate real divergence)
+- **Page:** scp-1994 (source `however [Note: this must be addressed before testing].`).
+- **Live:** `…however [Note: this must be addressed before testing]. Unusually…` (literal).
+- **ftml:** `…however this must be addressed before testing. Unusually…`.
+- **Minimized:** `a [Note: x] b` → `<p>a x b</p>`. `a [Note:x] b` and `a [foo bar] b` stay literal, so the trigger looks like "word + colon + space inside single brackets".
+- **Existing pins:** `test/link/single-wikidot-schemes` covers only `[scheme://…]`, so no existing pin covers this shape.
+- **Evidence:** `evidence/family-evidence.txt` (F1).
 
-## Expected noise (not yet confirmed)
-`[[module Rate]]`, ListPages and other site-dependent modules should show up as a caller-runtime family. Under `CLAUDE.md`, caller-runtime differences are not FTML divergences.
+### F2. `ftml::include` keeps trailing whitespace in argument values (candidate real divergence, library include path)
+- **F2a, scp-1994:** component text is `[{$authorPage} ▸ More by this Author ◂]` and the argument is `|authorPage=http://www.scp-wiki.net/djkaktus[!-- … --]` on its own line.
+  - **Live:** `<a href="http://www.scp-wiki.net/djkaktus">▸ More by this Author ◂</a>`.
+  - **ftml:** `<p>[<a href="http://www.scp-wiki.net/djkaktus">http://www.scp-wiki.net/djkaktus</a></p><p>▸ More by this Author ◂]</p>`.
+  - **Cause:** the expanded text is `[http://…djkaktus[!-- --]\n ▸ …◂]`, so the value carried its newline.
+- **Minimized:** component `[{$u} label]` with `[[include component:t\n|u=http://x.net/d\n]]` expands to `[http://x.net/d\n label]` (`repros/pages.json`). With blank-line-separated arguments, `|a= EN\n\n|b=x\n\n` gives `EN\n\n` and `x\n\n` (leading space trimmed, trailing whitespace kept).
+- **F2b, scp-1706:** `[[table class="scale [[#if EN\n\n | EN\n\n-base | ]]"]]`.
+  - **Live:** `class="scale EN-base"`.
+  - **ftml:** `class="scale EN -base"`.
+  - **Also seen on this page, same component family (cause not isolated):** `CLASSIFIED` (live) vs `false` (ftml), and `2/1706` vs `2` + `/1706`.
+- **Caveat:** `src/includes/parse.rs` trims trailing blanks in some places, so this may be a deliberate or pinned case. It needs adjudication against `test/include/*` and a live probe before it is called a divergence.
 
-## Remaining work, in order
-1. Build the expander with `cd divergence-sweep/expander && CARGO_TARGET_DIR=../../target cargo build --release`.
-2. Loop: run the expander, fetch the pages it reports missing (component sources via the same view-source route), and re-run until nothing is missing.
-3. Run `select_and_fetch.py` for roughly 40–60 articles, with the include filter dropped once expansion works.
-4. Render with `render.py`, normalize and diff to `diffs/<slug>.diff`, and cluster the hunks by tag-pair signature.
-5. Minimize each family by ddmin over source lines. Before calling anything a divergence, check it against the existing pins and the frozen captures in `tests/fixtures/wikidot-parity`, as `CLAUDE.md` requires.
+### F3. Leftover literals after include expansion (inconclusive)
+- **scp-102:** ftml outputs `<p>[[/div]]<br>[[/div]]<br>[[/div]]</p>`, where live closes the three divs. The source is the `author-label-source` two-part include (`start=--` … `end=--]]`).
+- **scp-039, scp-1305:** a literal `[[iftags -component-backend]]` / `[[/iftags]]` paragraph. scp-1305 expands to 19,404 lines, so it is likely an expansion artifact.
+- **Disposition:** not attributed to the parser. Comment handling of `[!-- … --]` reproduces correctly in isolation (repro tested). Treat as an include-expansion or variable-substitution mismatch to investigate.
 
-## Reproducing what exists
+### F4. `<img>` attribute order and file host (cosmetic or caller)
+- **Hunks / pages:** 40 hunks across the 17 pages with `img` hunks.
+- **Live (scp-201):** `<img src="https://scp-wiki.wdfiles.com/local--files/scp-201/005.jpg" alt="005.jpg" class="image" />`.
+- **ftml:** `<img src="https://scp-wiki.wjfiles.com/local--files/scp-201/005.jpg" class="image" alt="005.jpg">`.
+- **Differences:** attribute order (`alt`,`class` vs `class`,`alt`) and file host (`wdfiles.com` vs `wjfiles.com`).
+- **Disposition:** attribute order matches the repo's `comparison-normalization`. The file host is a file-service concern that belongs to the caller.
+
+### F5. Caller-runtime, not FTML divergences
+- **Rate module:** 39 pages. Live renders the widget, ftml emits `TODO: module Rate`.
+- **ListPages / list-pages-box / backlinks:** 37 pages (e.g. license-box ListPages). ftml emits `TODO: module ListPages`.
+- **`[[user]]` / `[[*user]]`:** 11 pages. Live uses `https://www.wikidot.com/user:info/<slug>`, real user ids, and display-name case. ftml uses `/user:info/<slug>`, `userInfo(0)`, and lowercased text.
+- **Unresolved cross-site includes and `styleFrame` iframes:** 7 pages, including `error-block` where an include was unresolved.
+- These need site, user, or page-database context and match the repo's `caller-runtime` disposition.
+
+## Files
+- `candidates.py`, `fetch.py`, `select_and_fetch.py`: selection and fetch. `pipeline.py`: fetch plus expansion. `expander/`: include expander. `render.py`: harness run. `normalize.py`, `diff_cluster.py`: diff and cluster. `repro.py`: single-case renderer.
+- `data/<slug>/`: `source.ftml`, `expanded.ftml`, `live.html`, `ftml.html`, `*.norm`, `meta.json`.
+- `out/`: `diffs/*.diff`, `hunks.json`, `summary.json`, `family-pages.json`. `evidence/`, `repros/`.
+
+## Reproduce
 ```sh
+cargo build --release --example render_html_jsonl
+(cd divergence-sweep/expander && CARGO_TARGET_DIR=../../target cargo build --release)
 cd divergence-sweep
 python3 candidates.py
-python3 select_and_fetch.py "$PWD/data" 60
+python3 pipeline.py "$PWD/data" "$PWD/components" 40
+python3 render.py "$PWD/data" ../target/release/examples/render_html_jsonl
+mkdir -p out && python3 diff_cluster.py "$PWD/data" "$PWD/out"
 ```
-`data/*/page.raw.html` and `viewsource.json` are gitignored.

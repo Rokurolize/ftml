@@ -427,6 +427,7 @@ struct Scanner<'t> {
     code_candidates: BTreeMap<usize, WikidotCodeCandidate>,
     line_of: Vec<usize>,
     line_first: Vec<usize>,
+    native_list_item_line: Vec<bool>,
     heading_line: Vec<bool>,
     heading_line_end_bytes: Vec<usize>,
     head_dropped: Vec<bool>,
@@ -447,6 +448,16 @@ struct Scanner<'t> {
 }
 
 impl<'t> Scanner<'t> {
+    /// Whether the token begins a native list-item line. Live Wikidot cannot
+    /// start a table block there, so the scanner must not pair one either.
+    fn token_on_native_list_item_line(&self, index: usize) -> bool {
+        self.line_of
+            .get(index)
+            .and_then(|line| self.native_list_item_line.get(*line))
+            .copied()
+            .unwrap_or(false)
+    }
+
     fn new(
         tokens: &'t [ExtractedToken<'t>],
         source: &'t str,
@@ -511,6 +522,14 @@ impl<'t> Scanner<'t> {
             index = cursor;
             line += 1;
         }
+
+        let native_list_item_line: Vec<bool> = source
+            .split('\n')
+            .map(|line| {
+                let line = line.strip_suffix('\r').unwrap_or(line);
+                is_native_list_item_line(line)
+            })
+            .collect();
 
         let mut head_dropped = vec![false; tokens.len()];
         for line_idx in 0..line_first.len() {
@@ -608,6 +627,7 @@ impl<'t> Scanner<'t> {
             code_candidates: crate::wikidot_code::candidates(source),
             line_of,
             line_first,
+            native_list_item_line,
             heading_line,
             heading_line_end_bytes,
             head_dropped,
@@ -1539,6 +1559,9 @@ impl<'t> Scanner<'t> {
         }
         match Self::kind_of(rule_name) {
             Some(WikidotBlockKind::Table) => {
+                if self.token_on_native_list_item_line(i) {
+                    return head.head_end;
+                }
                 if let Some(measure) = self.measure_table(i, &head, end, depth) {
                     let next = measure.end;
                     self.apply_measure(measure, depth, events, true);
@@ -2278,6 +2301,9 @@ impl<'t> Scanner<'t> {
         };
         match Self::kind_of(rule_name) {
             Some(WikidotBlockKind::Table) => {
+                if self.token_on_native_list_item_line(j) {
+                    return Some(head.head_end);
+                }
                 match self.measure_table(j, &head, limit, depth + 1) {
                     Some(measure) => Some(measure.end),
                     None => Some(head.head_end),

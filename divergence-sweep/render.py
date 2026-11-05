@@ -6,9 +6,9 @@ import json, subprocess, sys
 from pathlib import Path
 
 data = Path(sys.argv[1]); bin_ = sys.argv[2]
-slugs = sorted(p.name for p in data.iterdir() if (p / "source.ftml").exists())
+slugs = sorted(p.name for p in data.iterdir() if (p / "expanded.ftml").exists())
 lines = [json.dumps({"schema": "wikijump_syntax_differential.syntax_case.v1", "case_id": s,
-                     "source": (data / s / "source.ftml").read_text(), "title": s, "layout": "wikidot",
+                     "source": (data / s / "expanded.ftml").read_text(), "title": s, "layout": "wikidot",
                      "page_context": {"site": "scp-wiki", "page": s}}) for s in slugs]
 res = subprocess.run([bin_], input="\n".join(lines) + "\n", capture_output=True, text=True, check=True)
 for row in map(json.loads, res.stdout.splitlines()):

@@ -1,3 +1,6 @@
 data/*/page.raw.html
 data/*/viewsource.json
 __pycache__/
+components/*/page.raw.html
+components/*/viewsource.json
+*.log

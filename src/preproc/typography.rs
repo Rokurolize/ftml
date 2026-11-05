@@ -376,6 +376,30 @@ fn wikidot_nested_head_end(text: &str, open: usize) -> Option<usize> {
     None
 }
 
+/// First index at or after `from` whose character satisfies `predicate`, or
+/// `text.len()` when there is none.
+///
+/// Callers pass monotonically increasing `from` positions, so a found index
+/// stays valid until the scan moves past it and a "nothing left" answer stays
+/// valid forever. That turns repeated tail scans into one forward pass.
+fn next_index_at_or_after(
+    text: &str,
+    from: usize,
+    hint: &mut Option<usize>,
+    predicate: impl Fn(char) -> bool,
+) -> usize {
+    match *hint {
+        Some(position) if position >= from => position,
+        _ => {
+            let position = text[from..]
+                .find(&predicate)
+                .map_or(text.len(), |relative| from + relative);
+            *hint = Some(position);
+            position
+        }
+    }
+}
+
 fn wikidot_head_value_ranges(text: &str) -> Vec<Range<usize>> {
     let mut ranges = Vec::new();
     let mut cursor = 0usize;
@@ -412,6 +436,13 @@ fn wikidot_head_value_ranges(text: &str) -> Vec<Range<usize>> {
     }
 
     let mut cursor = 0usize;
+    // Both head-value lookups below start at `name_start`, which only moves
+    // forward (`cursor = name_end.max(open + 2)`). Carry each answer forward
+    // instead of rescanning the tail per candidate; on a document with no `]`
+    // the closing-bracket lookup fell back to end-of-document every time.
+    // `Some(text.len())` is the sentinel for "no such character left".
+    let mut name_delimiter_hint: Option<usize> = None;
+    let mut close_bracket_hint: Option<usize> = None;
     while let Some(relative_open) = text[cursor..].find("[#") {
         let open = cursor + relative_open;
         if open > 0 && text.as_bytes()[open - 1] == b'[' {
@@ -422,17 +453,23 @@ fn wikidot_head_value_ranges(text: &str) -> Vec<Range<usize>> {
         while matches!(text.as_bytes().get(name_start), Some(b' ' | b'\t')) {
             name_start += 1;
         }
-        let name_end = text[name_start..]
-            .find(|character: char| character.is_whitespace() || character == ']')
-            .map_or(text.len(), |relative| name_start + relative);
+        let name_end = next_index_at_or_after(
+            text,
+            name_start,
+            &mut name_delimiter_hint,
+            |character: char| character.is_whitespace() || character == ']',
+        );
         if name_end > name_start
             && text[name_start..name_end].bytes().all(|byte| {
                 byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'%')
             })
         {
-            let span_end = text[name_start..]
-                .find(']')
-                .map_or(text.len(), |relative| name_start + relative);
+            let span_end = next_index_at_or_after(
+                text,
+                name_start,
+                &mut close_bracket_hint,
+                |character: char| character == ']',
+            );
             ranges.push(name_start..span_end);
         }
         cursor = name_end.max(open + 2);
@@ -1849,4 +1886,30 @@ fn typography_preserves_literal_regions_and_module_bodies_in_both_layouts() {
             "{layout:?}"
         );
     }
+}
+#[test]
+fn wikidot_head_value_ranges_keep_their_exact_ranges() {
+    // The close-bracket fallback to end-of-document must not change: an
+    // unclosed `[#` head still protects the rest of the document.
+    assert_eq!(wikidot_head_value_ranges("[# page]"), vec![3..7]);
+    assert_eq!(wikidot_head_value_ranges("[# x "), vec![3..5]);
+    assert!(wikidot_head_value_ranges("[# ").is_empty());
+    // A real anchor head is protected from the marker's own `#` onwards.
+    assert_eq!(wikidot_head_value_ranges("[[# apple 1 2]]"), vec![3..13]);
+}
+
+#[test]
+fn anchor_head_text_stays_out_of_typography() {
+    // Both a `[[# ...]]` anchor head and an unclosed `[#` head protect their
+    // text from typography, while the same text outside a head is typographed.
+    let mut plain = "1 2".to_owned();
+    crate::preproc::preprocess_for_layout(&mut plain, crate::layout::Layout::Wikidot);
+    assert_eq!(plain, "1\u{a0}2");
+
+    // The `[[#` anchor head keeps its range too (asserted directly above);
+    // `[[#` also enters the parser-function pass, so the end-to-end control
+    // uses the single-bracket head only.
+    let mut text = "[# page 1 2]".to_owned();
+    crate::preproc::preprocess_for_layout(&mut text, crate::layout::Layout::Wikidot);
+    assert_eq!(text, "[# page 1 2]");
 }

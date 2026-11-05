@@ -56,8 +56,25 @@ fn main() {
         r"(wiki-tabview-|wj-button-|wj-embed-video-|wj-gallery-|wj-social-)[0-9a-f]{32}",
     ))
     .expect("random ID pattern");
+    // CORPUS_LAYOUT=wikidot|wikijump opts into layout-aware preprocessing
+    // (`preprocess_for_layout`), the production pipeline for that layout.
+    // Unset keeps the historical `preprocess` + Wikidot settings pipeline so
+    // existing digest files stay comparable.
+    let layout = std::env::var("CORPUS_LAYOUT")
+        .ok()
+        .map(|value| match value.as_str() {
+            "wikidot" => Layout::Wikidot,
+            "wikijump" => Layout::Wikijump,
+            other => panic!("unknown CORPUS_LAYOUT {other:?}"),
+        });
+    // CORPUS_STAGE_COLUMNS=1 appends per-page stage microseconds
+    // (preprocess, tokenize, parse, render) to each digest line.
+    let stage_columns = std::env::var_os("CORPUS_STAGE_COLUMNS").is_some();
     let mut digests = BufWriter::new(File::create(output).expect("digest file"));
-    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let settings = WikitextSettings::from_mode(
+        WikitextMode::Page,
+        layout.unwrap_or(Layout::Wikidot),
+    );
     let mut stages = [Duration::ZERO; 4];
     let mut pages = 0;
     let mut bytes = 0;
@@ -88,7 +105,10 @@ fn main() {
         let mut text = page.wikitext;
         bytes += text.len();
         let started = Instant::now();
-        ftml::preprocess(&mut text);
+        match layout {
+            Some(layout) => ftml::preprocess_for_layout(&mut text, layout),
+            None => ftml::preprocess(&mut text),
+        }
         let preprocessed = Instant::now();
         let tokens = ftml::tokenize(&text);
         let tokenized = Instant::now();
@@ -115,7 +135,18 @@ fn main() {
             .map(|byte| format!("{byte:02x}"))
             .collect();
         let micros = (rendered - started).as_micros();
-        writeln!(digests, "{}\t{digest}\t{micros}", page.page_id).expect("digest write");
+        write!(digests, "{}\t{digest}\t{micros}", page.page_id).expect("digest write");
+        if stage_columns {
+            for stage in [
+                preprocessed - started,
+                tokenized - preprocessed,
+                parsed - tokenized,
+                rendered - parsed,
+            ] {
+                write!(digests, "\t{}", stage.as_micros()).expect("digest write");
+            }
+        }
+        writeln!(digests).expect("digest write");
         pages += 1;
     }
 

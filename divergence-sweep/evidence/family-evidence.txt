@@ -1,0 +1,70 @@
+=== F1 scp-1994 [live.html] ===
+strong> Able to infest the human digestive tract and create human teeth, including all basic structures. Usually fatal to the host, however [Note: this must be addressed before testing]. Unusually durable for such a small creature. High pain tolerance. Expires unceremoniously. Autopsy inconclusi
+
+=== F1 scp-1994 [ftml.html] ===
+rties:</strong> Able to infest the human digestive tract and create human teeth, including all basic structures. Usually fatal to the host, however this must be addressed before testing. Unusually durable for such a small creature. High pain tolerance. Expires unceremoniously. Autopsy inconclusiv
+
+=== F2a scp-1994 [live.html] ===
+e="text-align: center;"><strong>SCP-1994</strong> - <em>Rot</em></p>
+</div>
+<hr />
+<div id="u-author_block">
+<p style="text-align: center;"><a href="http://www.scp-wiki.net/djkaktus">▸ More by this Author ◂</a></p>
+</div>
+<hr />
+<div id="u-comments2" style="display: none;">
+<p>{$comments2}</p>
+</div>
+<div class="u-faq">
+<p
+
+=== F2a scp-1994 [ftml.html] ===
+v><div class="collapsible-block-content"><div><p style="text-align: center;"><strong>SCP-1994</strong> - <em>Rot</em></p></div><hr><div id="u-author_block"><p style="text-align: center;">[<a href="http://www.scp-wiki.net/djkaktus">http://www.scp-wiki.net/djkaktus</a></p><p>▸ More by this Autho
+
+=== F2b scp-1706 [live.html] ===
+elVote(event)">x</a></span></div></div>
+</div>
+</div>
+</div>
+</div>
+</li>
+</ul>
+<div style="clear:both; height: 0px; font-size: 1px"></div>
+<table class="scale EN-base">
+<tr>
+<td class="class1">
+<h1><span><span class="base false EN">2/1706</span> LEVEL <span class="base false EN">2/1706</span></spa
+
+=== F2b scp-1706 [ftml.html] ===
+Rate"><div><p>TODO: module Rate</p></div></div></div></div></div><br>
+</li>
+</ul><div style="clear:both; height: 0px; font-size: 1px"></div><table class="scale EN -base">
+<tr>
+<td class="class1"><h1><span><span class="base false EN">2</span></span></h1><p><span class="base false EN">/1706</span></p
+
+=== F4 scp-201 [live.html] ===
+eners.cancelVote(event)">x</a></span></div></div>
+<div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;"><img src="https://scp-wiki.wdfiles.com/local--files/scp-201/005.jpg" alt="005.jpg" class="image" />
+<div class="scp-image-caption">
+<p>SCP-201 at recovery</p>
+</div>
+</div>
+<p><strong>Item #:</strong> SCP-201</p>
+<p><strong>Object Class
+
+=== F4 scp-201 [ftml.html] ===
+text-align: right;"><p>TODO: module Rate</p></div><div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;"><img src="https://scp-wiki.wjfiles.com/local--files/scp-201/005.jpg" class="image" alt="005.jpg"><div class="scp-image-caption"><p>SCP-201 at recovery</p></div></div><p><strong>Item #:</strong> SCP-201</p><p><strong>Object
+
+=== F3 scp-102 [ftml.html] ===
+></a><a href="/user:info/tunedtoadeadchannel" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">tunedtoadeadchannel</a></span></p><p>[[/div]]<br>
+[[/div]]<br>
+[[/div]]</p><div style="text-align: right; margin-top: -1em; margin-right: 2em"><p>⚠️ content warning ↑</p></div><div styl
+
+=== F3 scp-102 [live.html] ===
+y vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">x</a></span></div></div>
+<div class="authorlink-wrapper"><a href="javascript:;">xexnoncores &amp; co.</a>
+<div class="authorbox">
+<div class="authorcontent">
+
+
+<p><strong>This article contains CW

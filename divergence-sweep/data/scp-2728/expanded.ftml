@@ -1,0 +1,854 @@
+[[module CSS]]
+@import url(https://scp-wiki.wdfiles.com/local--code/info:style/1);
+[[/module]]
+
+[[ul class="creditRate"]]
+[[li class="rateBox folded"]]
+[[div_ class="rate-box-with-credit-button"]]
+[[module Rate]]
+[[div class="creditButton foldable-list-container"]]
+[# ]
+[[/div]]
+[[/div]]
+
+[[div id="credit-view"]]
+[[div_ class="fader foldable-list-container"]]
+[# close]
+[[/div]]
+
+[[div class="modalcontainer"]]
+[[div class="modalbox"]]
+[[=]]
+++* Info
+[[/=]]
+------
+[[div_ class="close-credits foldable-list-container"]]
+[# X]
+[[/div]]
+[[div class="credit first"]]
+
+
+
+[[div class="error-block"]]Page to be included :kaktuskontainer:more-by-darkstuff cannot be found![[/div]]
+
+
+
+[[/div]]
+------
+
+[[div class="creditBottomRate"]]
+[[div]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+[[/li]]
+[[/ul]]
+
+~~~~
+
+
+**Item #:** SCP-2728
+
+**Object Class:** Euclid
+
+**Special Containment Procedures:** The section of land from which SCP-2728 can be viewed is to be cordoned off, marked as private property, and designated Research Area 2728[[footnote]]Roughly 5 square kilometers in an ovoid shape. Details can be found on a map of Research Area 2728.[[/footnote]]. Research Area 2728 must be disguised as civilian owned land. All security cameras should be hidden, and subjects who cross into Research Area 2728 must be detained. Detained subjects should be interrogated and given Class C amnestics before being released.
+
+**Description:** SCP-2728 consists of a small area containing an office building in Barcelona, Spain. It can only be viewed from a specific viewpoint 25 km outside of city limits, now designated Research Area 2728. Any and all attempts to reach the office building have failed, with subjects instructed to the point of SCP-2728's existence instead viewing a street corner in a pedestrian neighborhood. While SCP-2728 is visible, the area around it also appears slightly modified to accommodate for its existence. For example, the buildings around it appear smaller and spaced in such a way to allow the office building's position.
+
+SCP-2728 appears to be inhabited, with close viewing showing business hours between 8:00 to 18:00. SCP-2728 is inactive on Sundays, only occasionally being visited by a subject assumed to be the custodian. Extensive observation of SCP-2728 since 19██ has recorded over 14,000 individuals who appear to have interacted with SCP-2728. Where these subjects go when they are not within SCP-2728 is unknown.
+
+Most subjects within SCP-2728, hereby designated SCP-2728-A, appear to have real world counterparts. The SCP-2728-A subject looks exactly like the real world subject, and shares the same name[[footnote]]Names gathered from observation of name tags and desk plaques, among other things. All objects have been viewed via high definition cameras, binoculars, and similar equipment.[[/footnote]]. Similarity of personalities and other factors is hard to determine, due to the nature of SCP-2728. Most counterparts of SCP-2728-A live inside Barcelona, or nearby, but some live as far away as South Africa.
+
+**Addendum-2728-1:** On September █, 20██, a test was conducted involving [*http://www.scp-wiki.net/the-consequences-of-a-deep-dark-disassociation Agent LaFerrier]. A research team, stationed at the SCP-2728 viewpoint, instructed Agent LaFerrier through a cellphone. LaFerrier was given directions to SCP-2728, and informed of its anomalous properties. The goal of the test was to confirm no changes in the behavior of SCP-2728[[footnote]]These regular tests are performed every 4 months.[[/footnote]]. Agent LaFerrier reported no change in the behavior of SCP-2728, stating that he was "still looking at a street corner". However, the research team observed an identical copy of Agent LaFerrier, appearing awestruck, looking up at SCP-2728. Further observation showed the copy attempting to talk into a white cellphone identical to the one given to Agent LaFerrier, appearing confused and frustrated. Agent LaFerrier was instructed to return, and was subsequently detained. No other tests to date have yielded similar results.
+
+The following is an interview with Agent LaFerrier upon his return to the research team. The following interview was conducted by Dr. Hillenburg following detainment. Agent LaFerrier was designated SCP-2728-1 following the incident.
+> **Date:** 9/█/██
+> **Interviewer:** Dr. Hillenburg
+> **Interviewee:** SCP-2728-1
+> 
+> <Begin Log>
+> 
+> **Dr. Hillenburg:** //How are we doing today, LaFerrier?//
+> 
+> **SCP-2728-1:** //Ok, I guess. Still don't know what's going on, but I'm in for the ride.//
+> 
+> **Dr. Hillenburg:** //Please recall your experience while being directed to SCP-2728.//
+> 
+> **SCP-2728-1:** //Well, I followed directions. I don't know what else you want me to say. I took a left here, a right here, all by foot, landed at the site of SCP-2728, saw the street corner like usual, and was told to come back.//
+> 
+> **Dr. Hillenburg:** //Please elaborate on exactly what happened once you reached the site of SCP-2728.//
+> 
+> **SCP-2728-1:** //Well, after I saw the street corner, and reported I saw the street corner, there was a long pause from the research team's end. They didn't say anything for a while. But then, then they did, and I came back. What else do you want me to say?//
+> 
+> **Dr. Hillenburg:** //Absolutely anything you can say about the incident.//
+> 
+> **SCP-2728-1:** //What incident? I was not informed!//
+> 
+> **Dr. Hillenburg:** //Please remain calm, we don't do anything without reason.//
+> 
+> **SCP-2728-1:** (Pauses) //Fine, it's fine. Ok. There's one other thing. When I saw the street corner, I got a headrush. Y'know, vision goes fuzzy, hearing is muffled. You get them all the time when you stand up too fast or something. Is that what you wanted to hear?//
+> 
+> **Dr. Hillenburg:** //That is exactly what I wanted to hear. Thank you for your cooperation.//
+> 
+> <End Log>
+After the log, Agent LaFerrier was informed of the incident, and placed in a normal human containment cell. Agent LaFerrier resisted, but ultimately allowed himself to be contained.
+
+__EDIT:__ //After a week, Agent LaFerrier has been let out of containment, and has taken back his previous position. It is still largely unknown if Agent LaFerrier is anomalous. Agent LaFerrier continues to be heavily monitored.//
+
+**Addendum-2728-2:** On April ██, 20██, a bright flashing light shone through the windows of SCP-2728 at 21:00. After initial observation, it was shortly discovered to be Morse code. The following is a transcription of the Morse code, beginning shortly after the light started flashing.
+
+> <Begin Log>
+> 
+> [...] ND I DONT KNOW IF YOU ARE THERE [pause] I CHECKED THE HILL AND THERE WAS NO FENCE AND NO RESEARCH TEAM I AM BEGINNING TO THINK YOU HAVE LEFT ME [pause] OR THAT I HAVE ENTERED ANOTHER PLACE [pause] POINT IS I HAVE NO IDEA WHATS GOING ON AND YOU NEED TO GET ME OUT OF HERE [pause] I DONT GET IT [pause] EVERYTHING HERE IS NORMAL I CANT FIND ANY ANOMALIES OR FOUNDATION ITS LIKE YOU DONT EXIST [pause] YOU DIDNT TELL ME THIS COULD HAPPEN YOU FUCKS I NOW HAVE A FUCKING OFFICE JOB IN THIS STUPID BUILDING BECAUSE OF YOU [pause] AND YELLING AT PEOPLE IN MORSE CODE IS NOT AS CATHARTIC AS YOUD EXPECT [pause] ITS LIKE THERES NOTHING HERE [pause] ITS TOO NORMAL IM [pause] SCARED [pause] YOU DIDNT TELL ME [long pause] FUCK OFF
+> 
+> <End Log>
+An SCP-2728-A individual, identical to Agent LaFerrier, has been seen working in SCP-2728 since the incident. It is assumed this SCP-2728-A individual is the same seen during the LaFerrier test, and the one that sent Morse code.
+
+**Addendum-2728-3:** On May ██, 20██, a bright flashing light shone through the windows of SCP-2728 at 21:00, similar to the previous event. Staff already at the viewpoint were able to catch the message in its entirety. The following is a transcription.
+
+> NOBODY HERE [pause] THEY ALL WORK AND DO NOTHING [pause] I FEEL THIS ISNT EVEN BARCELONA [pause] NOT EVEN A COPY [pause] NO ONE HERE KNOWS [pause] ITS LIKE THEYRE INSECTS [pause] SKY IS NEVER BLUE [pause] NEVER [pause] BLACK [long pause] THERES NOTHING OUTSIDE CITY LIMITS
+
+[[footnoteblock]]
+
+@@@@
+@@@@
+@@@@
+@@@@
+
+
+[[module CSS]]
+
+:root {
+    --wm-bg: var(--white-monochrome);
+    --wm-accent: var(--bright-accent);
+    --wm-border: var(--black-monochrome);
+}
+
+.collection {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.collection .articlecolumn .list-pages-item,
+.collection .articlecolumn .list-pages-item > div,
+.collection .articlecolumn .list-pages-item > p {
+  display: inline;
+}
+
+.collection .articlecolumn .list-pages-item p {
+    margin: 0;
+}
+.collection .collapsible-block {
+    display: block;
+    text-align: center;
+    padding: 0.15em;
+    background-color: rgb(var(--wm-bg));
+    border: 1px solid rgb(var(--wm-border));
+}
+
+.collection .collapsible-block-unfolded-link a , .collection .collapsible-block-folded a {
+  display: block;
+  color: rgb(var(--wm-accent));
+  font-weight: bold;
+  background-color: rgba(var(--wm-accent), 0.25);
+  margin: auto;
+  border: 2px solid rgb(var(--wm-bg));
+}
+
+.collection > .collapsible-block .collapsible-block-content {
+    text-align: left;
+}
+
+.titlecolumn {
+  width: 15%;
+  border: 1px solid rgb(var(--wm-bg));
+  background-color: rgba(var(--wm-accent), 0.25);
+  text-align: right;
+  padding: 6px;
+}
+
+.articlecolumn {
+  width: 85%;
+  background-color: rgb(var(--wm-bg));
+  padding: 3px;
+  font-weight: normal;
+  font-size: 85%;
+}
+
+.namerow {
+  color: rgb(var(--wm-border));
+  font-weight: bold;
+  background-color: rgba(var(--wm-accent), 0.25);
+  margin: 0 auto;
+  border: 2px solid rgb(var(--wm-bg));
+  text-align: center;
+}
+
+.namerow a {
+  color: rgb(var(--wm-accent));
+}
+
+.namerow p {
+    margin: 0;
+}
+
+.collectiondot {
+  padding: 0 4px;
+}
+
+.articlecolumn .list-pages-item:last-child .collectiondot {
+  display: none;
+}
+[[/module]]
+
+[[iftags +component]]
+[[module CSS]] 
+@import url("https://nu-scptheme.github.io/Black-Highlighter/stable/styles/normalize.min.css");
+@import url("https://nu-scptheme.github.io/Black-Highlighter/stable/styles/black-highlighter.min.css");
+[[/module]]
+[[>]]
+[[module Rate]]
+[[/>]]
+
+Hi, I'm [[*user ROUNDERHOUSE]] and this is a component you can plug in at the bottom of your articles (but above the Wikiwalk footer and Licensebox). It will display 15 SCPs and 15 tales randomly pulled from your body of work, as well as your author page and art pages should you have them. The design of it is modelled after Wikipedia/MediaWiki's collections module, which is [https://en.wikipedia.org/wiki/Wikipedia:Text_of_Creative_Commons_Attribution-ShareAlike_3.0_Unported_License available with the rest of Wikipedia]'s design and layout under CC BY SA 3.0. This component was designed with BHL design philosophies and aesthetics in mind, but it works perfectly fine on base Sigma-9. Double credit to [[*user smlt]] for helping me with troubleshooting some issues!
+----
+++ How to Include:
+Stick the appropriate include onto the bottom of your page, above the licensebox and wikiwalk footers. That's mandatory. I suggest you put it below anything else you may have at the bottom, such as footnote blocks. That's just my advice.
+----
+Clean Version: 
+> @@[[include component:wikimodule |normal= --]]]@@
+[[div class="collection"]]
+[[collapsible show="More From This Author" hide="More From This Author"]]
+[[table style="1px solid black; width: 100%;"]]
+[[row]]
+[[hcell class="namerow" colspan="2"]]
+[[module ListPages range="."]]
+%%created_by%%'s Works
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+SCPs
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="scp" perPage="15" limit="15" order="random" range="others"]]
+%%title_linked%%[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+Tales/GoI Formats
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="tale goi-format" perPage="15" limit="15" order="random" range="others" range="others"]]
+%%title_linked%%[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+Other
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="author artwork" perPage="15" limit="15" order="random" range="others"]]
+%%title_linked%%[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[/table]]
+[[/collapsible]]
+[[/div]]
+
+----
+
+Rating Version: 
+> @@[[include component:wikimodule |ratings= --]]]@@
+[[div class="collection"]]
+[[collapsible show="More From This Author" hide="More From This Author"]]
+[[table style="1px solid black; width: 100%;"]]
+[[row]]
+[[hcell class="namerow" colspan="2"]]
+[[module ListPages range="."]]
+%%created_by%%'s Works
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+SCPs
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="scp" perPage="15" limit="15" order="random" range="others"]]
+%%title_linked%% //(+%%rating%%)//[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+Tales/GoI Formats
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="tale goi-format" perPage="15" limit="15" order="random" range="others" range="others"]]
+%%title_linked%% //(+%%rating%%)//[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+Other
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="author artwork" perPage="15" limit="15" order="random" range="others"]]
+%%title_linked%% //(+%%rating%%)//[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[/table]]
+[[/collapsible]]
+[[/div]]
+----
++ How to Customize for Themes
+This module uses three variables, that you can set to your liking to customize the appearance of the module. Be sure to put the CSS module for these **after** the module include.
+[[code type="css"]]
+
+root: {
+--wm-bg: /* Accepts an RGB value; determines the background color of the module (white by default) */;
+--wm-border: /* Accepts an RGB value; determines the border color of the module (black by default) */;
+--wm-accent: /* Accepts an RGB value; determines the accent color of the module (red by default) */;
+}
+[[/code]]
+
+----
++ FAQ
+
+**Q:** Will it work on collabs?
+
+**A:** No, it will only show the pages for the person who actually //created// the page that it's on.
+
+**Q:** Can it show my ratings? 
+
+**A:** There is both a clean and a rating version. You can use either.
+
+**Q:** Will it work with themes?
+
+**A:** It depends. The colors are variables, so it really just depends on how the creator of the theme decides to color their variables. I haven't tested it any, so go figure. If it's ugly on a theme, you can always restyle it to the best of your abilities.
+
+**Q:** Will it work on other sites?
+
+**A:** This module, and any that uses Listpages to automatically grab articles, will only display pages from the site that the module is on. i.e you can use it on a sandbox, but it will only display your sandbox pages tagged 'scp' and 'tale' - so probably none. Also, to use on other sites, you will have to prepend ':scp-wiki:` `to component:wikimodule`.
+
+**Q:** I just refreshed my page, why are the articles still the same?
+
+**A:** The cache takes 60 seconds between refreshes to reset. Give it a minute.
+
+**Q:** ROUNDERHOUSE, why are you so cool?
+
+**A:** It's genetic.
+
+
+
+[[collapsible show="+ Show Code"]]
+[[code type="css"]]
+[[module CSS]]
+:root {
+    --wm-bg: var(--white-monochrome);
+    --wm-accent: var(--bright-accent);
+    --wm-border: var(--black-monochrome);
+}
+
+.collection {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.collection .articlecolumn .list-pages-item,
+.collection .articlecolumn .list-pages-item > div,
+.collection .articlecolumn .list-pages-item > p {
+  display: inline;
+}
+
+.collection .articlecolumn .list-pages-item p {
+    margin: 0;
+}
+.collection .collapsible-block {
+    display: block;
+    text-align: center;
+    padding: 0.15em;
+    background-color: rgb(var(--wm-bg));
+    border: 1px solid rgb(var(--wm-border));
+}
+
+.collection .collapsible-block-unfolded-link a , .collection .collapsible-block-folded a {
+  display: block;
+  color: rgb(var(--wm-accent));
+  font-weight: bold;
+  background-color: rgba(var(--wm-accent), 0.25);
+  margin: auto;
+  border: 2px solid rgb(var(--wm-bg));
+}
+
+.collection > .collapsible-block .collapsible-block-content {
+    text-align: left;
+}
+
+.titlecolumn {
+  width: 15%;
+  border: 1px solid rgb(var(--wm-bg));
+  background-color: rgba(var(--wm-accent), 0.25);
+  text-align: right;
+  padding: 6px;
+}
+
+.articlecolumn {
+  width: 85%;
+  background-color: rgb(var(--wm-bg));
+  padding: 3px;
+  font-weight: normal;
+  font-size: 85%;
+}
+
+.namerow {
+  color: rgb(var(--wm-border));
+  font-weight: bold;
+  background-color: rgba(var(--wm-accent), 0.25);
+  margin: 0 auto;
+  border: 2px solid rgb(var(--wm-bg));
+  text-align: center;
+}
+
+.namerow a {
+  color: rgb(var(--wm-accent));
+}
+
+.namerow p {
+    margin: 0;
+}
+
+.collectiondot {
+  padding: 0 4px;
+}
+
+.articlecolumn .list-pages-item:last-child .collectiondot {
+  display: none;
+}
+[[/module]]
+
+[!-- {$normal}
+[[div class="collection"]]
+[[collapsible show="More From This Author" hide="More From This Author"]]
+[[table style="1px solid black; width: 100%;"]]
+[[row]]
+[[hcell class="namerow" colspan="2"]]
+[[module ListPages range="."]]
+%%created_by%%'s Works
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+SCPs
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="scp" perPage="15" limit="15" order="random" range="others"]]
+%%title_linked%%[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+Tales/GoI Formats
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="tale goi-format" perPage="15" limit="15" order="random" range="others" range="others"]]
+%%title_linked%%[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+Other
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="author artwork" perPage="15" limit="15" order="random" range="others"]]
+%%title_linked%%[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[/table]]
+[[/collapsible]]
+[[/div]]
+[!----]
+
+[!-- --]
+[[div class="collection"]]
+[[collapsible show="More From This Author" hide="More From This Author"]]
+[[table style="1px solid black; width: 100%;"]]
+[[row]]
+[[hcell class="namerow" colspan="2"]]
+[[module ListPages range="."]]
+%%created_by%%'s Works
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+SCPs
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="scp" perPage="15" limit="15" order="random" range="others"]]
+%%title_linked%% //(+%%rating%%)//[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+Tales/GoI Formats
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="tale goi-format" perPage="15" limit="15" order="random" range="others" range="others"]]
+%%title_linked%% //(+%%rating%%)//[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+Other
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="author artwork" perPage="15" limit="15" order="random" range="others"]]
+%%title_linked%% //(+%%rating%%)//[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[/table]]
+[[/collapsible]]
+[[/div]]
+[!----]
+[[/code]]
+[[/collapsible]]
+[[/iftags]]
+
+
+
+
+
+
+
+
+[!-- {$normal}
+[[div class="collection"]]
+[[collapsible show="More From This Author" hide="More From This Author"]]
+[[table style="1px solid black; width: 100%;"]]
+[[row]]
+[[hcell class="namerow" colspan="2"]]
+[[module ListPages range="."]]
+%%created_by%%'s Works
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+SCPs
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="scp" perPage="15" limit="15" order="random" range="others"]]
+%%title_linked%%[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+Tales/GoI Formats
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="tale goi-format" perPage="15" limit="15" order="random" range="others" range="others"]]
+%%title_linked%%[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+Other
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="author artwork" perPage="15" limit="15" order="random" range="others"]]
+%%title_linked%%[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[/table]]
+[[/collapsible]]
+[[/div]]
+[!----]
+
+[!-- --]
+[[div class="collection"]]
+[[collapsible show="More From This Author" hide="More From This Author"]]
+[[table style="1px solid black; width: 100%;"]]
+[[row]]
+[[hcell class="namerow" colspan="2"]]
+[[module ListPages range="."]]
+%%created_by%%'s Works
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+SCPs
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="scp" perPage="15" limit="15" order="random" range="others"]]
+%%title_linked%% //(+%%rating%%)//[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+Tales/GoI Formats
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="tale goi-format" perPage="15" limit="15" order="random" range="others" range="others"]]
+%%title_linked%% //(+%%rating%%)//[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[row]]
+[[hcell class="titlecolumn"]]
+Other
+[[/hcell]]
+[[hcell class="articlecolumn"]]
+[[module ListPages category="*" created_by="=" tags="author artwork" perPage="15" limit="15" order="random" range="others"]]
+%%title_linked%% //(+%%rating%%)//[[span class="collectiondot"]] •[[/span]]
+[[/module]]
+[[/hcell]]
+[[/row]]
+[[/table]]
+[[/collapsible]]
+[[/div]]
+[!----]
+
+
+[[div class="footer-wikiwalk-nav"]]
+[[=]]
+<< [[[SCP-2727]]] | SCP-2728 | [[[SCP-2729]]] >>
+[[/=]]
+[[/div]]
+
+[[iftags +component]]
++ How To Use
+It is **mandatory** for all articles to have the licensebox citing all images, texts, and excerpts utilized within the piece. 
+
+Add this to the bottom of the page, below the wikiwalk footer:
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** @@
+@@> **Name:** (if different from filename)@@
+@@> **Author:**@@
+@@> **License:**@@
+@@> **Source Link:**@@
+@@> **Additional Notes:** (Optional)@@
+@@> **Derivative Of:** (Situational)@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Let's break down what each of these sections mean.
+
+> @@> **Filename:** @@
+
+Filename is, as the name implies, the name of a file in your article. As per Tech Policy, all files on pages must have a file extension appended after the name. This means that if you upload an image to your article and call it {{mycoolimage-1}}, you are not following the rules. A correct name would be {{mycoolimage-1.png}} or {{mycoolimage-1.jpg}}, or any other similar filetypes. If you are unsure what the file extension of something you intend to upload is, you can check it by right clicking on the file and then pressing 'Properties.'
+
+If you are quoting from a text, write something along the lines of {{Excerpts taken from //Book Title Here//}}. Do not input the entire quote here, just where it comes from.
+
+> @@> **Name:** (if different from filename)@@
+
+This field is where you put the original name of the file. For example, let's say I wanted to use [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg this image in my article]. The name of the image is {{Kievitsbloem}}, as is listed on the page. I would then copy that and paste it onto this field. Do not include its file extension (jpg, png, etc).
+
+If you are quoting from a text, list its title here.
+
+If you are using your own creation, you may title it however you please, or you may exclude this field completely.
+
+> @@> **Author:**@@
+
+This field is where you acknowledge the original creator of the media you are using. Looking at [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg the same previous image], we can see that the author of the file is {{Rasbak}}. This means I would have to put that name in this field. If you are using commissioned work, you must still cite the original creator.
+
+If you are using your own creation, insert your username.
+
+
+> @@> **License:**@@
+
+In this section, you must write the file's attached license. This information is typically accessible on the page you are sourcing the file from. [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg Following the same example as before], we can see that this particular image is CC BY SA 3.0. Keep in mind that all files must be compatible with the site's license (CC BY SA 3.0) and follow the [[[Image Use Policy]]]. 
+
+
+> @@> **Source Link:**@@
+
+This field is typically a direct link to the page where you are taking the file from. Just copy the url from the address bar and paste it here. So for example, using the same image as above, I would put {{@@[https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg Wikimedia Commons]@@}} in this field. You should replace the text of the hyperlink with the name of the webiste you are taking your file from.
+
+If you are utilizing your own work, link to the page you are posting and title it {{SCP Foundation Wiki}}. However, if you are using your own media that you uploaded to a site like, say, Flickr, you must still follow this step.
+
+> @@> **Additional Notes:** (Optional)@@
+
+This is where you enter any additional information about the file. For example, if it is a composite image, you must state that this file is made up of two different images, and cite all images used in its creation. 
+
+
+> @@> **Derivative Of:** (Situational)@@
+
+This field is only applicable if you are using an image or other form of media that was derived from two or more sources. For example, a mashup would have to cite all of its images here. In order to be properly licenseboxed, copy-paste the following syntax underneath the {{Derivative Of:}} line.
+
+[[div class="blockquote"]]
+@@> **Name:**@@
+@@> **Author:**@@
+@@> **License:**@@
+@@> **Source Link:**@@
+[[/div]]
+
+From there, you simply fill in the information as you would any other file.
+-----
+
++ Examples
+
+Here is an example of a licensebox used in [[[SCP-7726]]], which cites an image from Wikimedia Commons.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** gun.png@@
+@@> **Name:** Beretta 90TWO closed.JPG@@
+@@> **Author:** Praiyachat@@
+@@> **License:** CC BY-SA 3.0@@
+@@> **Source Link:** [https://commons.wikimedia.org/wiki/File:Beretta_90TWO_closed.JPG Wikimedia Commons]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-6999]]], which cites an audio clip.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** hymn.mp3@@
+@@> **Name:** Nearer, my God, to Thee@@
+@@> **Author:** Conway's Band@@
+@@> **License:** Public Domain@@
+@@> **Source Link:** [https://www.loc.gov/item/jukebox-14234/ Library of Congress]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[michael-the-kiler|michael the kiler]]], which cites an author using their own creation.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** dakilla.jpg@@
+@@> **Author:** [[*user ratking666]]@@
+@@> **License:** CC BY-SA 3.0@@
+@@> **Source Link:** [https://scp-wiki.wikidot.com/michael-the-kiler SCP Foundation Wiki]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-7000]]], which cites an author using an image derivative of other images.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** WettleBomb.jpg@@
+@@> **License:** CC BY 2.0@@
+
+This image is a composite of:
+
+@@> **Name:** 130320-Z-TK422-652@@
+@@> **Author:** Oregon National Guard@@
+@@> **License:** CC BY 2.0@@
+@@> **Source:** [https://www.flickr.com/photos/32031029@N03/8576628356 flickr]@@
+
+@@> **Name:** High Noon Nap@@
+@@> **Author:** OakleyOriginals@@
+@@> **License:** CC BY 2.0@@
+@@> **Source:** [https://www.flickr.com/photos/47264866@N00/13279780754 flickr]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-173]]], which does not have any images or other citations, but includes an author listing.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=Moto42]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[deesoafs|Doctor Everwood Eats Shit On A Frozen Sidewalk]]], which does not have any images or other citations and does not include an author listing.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+-----
+
++ A Word On Excerpts/Quotes
+
+If you are using excerpts from passages or quotes, you must still cite them. 
+
+Here is an example of a licensebox used in [[[SCP-7010]]], which cites excerpts from a book.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> This article contains an excerpt from //[*https://en.wikisource.org/wiki/Leviathan Leviathan]// (1651) by Thomas Hobbes (Public Domain).@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+-----
+
++ A Note On Co-Authoring
+
+In the event you co-author an article with someone or someones, you can add the following syntax to the top of the licensebox to indicate multiple authors.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=User1, User2, User3]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+----
+
++ A Note On Translations
+
+For translations of works originally written in another language (see our [[[Translations Policy]]] for more information), the licensebox should list the original author (or authors) first, followed by the translator (or translators). 
+
+Within the licensebox, link to the original article, as follows:
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=User1, translated by User2]]@@
+@@> **Original Article:** original-url@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+If you post a translation of your own work then it is unnecessary to list your own name twice. If you post a translation of a translation (e.g. a Japanese article that was translated into Spanish, then into English), link to the original article, but credit the translator whose work you used as a co-translator.
+
+See [[[SCP-280-JP]]] for an example of a translation with multiple images listed in the License Box.
+
+----
+[[size 75%]]This page was originally created by CityToast and was updated on 1/27/2024 by Uncle Nicolini.[[/size]]
+@@ @@
+@@ @@
+@@ @@
+@@ @@
+= Ignore everything beneath this text.
+@@ @@
+@@ @@
+@@ @@
+[[/iftags]]
+
+[[div class="licensebox"]]
+[[collapsible show="‡ Licensing / Citation" hide="‡ Hide Licensing / Citation"]]
+Cite this page as:
+[[module listpages range="."]]
+> "%%title_linked%%" by %%created_by%%
+, from the [https://scpwiki.com SCP Wiki]. Source: https://scpwiki.com/%%fullname%%. Licensed under [https://creativecommons.org/licenses/by-sa/3.0/ CC BY-SA].
+[[/module]]
+For information on how to use this component, see the [[[component:license-box|License Box component]]]. To read about licensing policy, see the [[[Licensing Guide]]].
+
+
+
+[[/collapsible]]
+[[/div]]

@@ -1,0 +1,36 @@
+--- live
++++ ftml
+@@ -1,29 +1,9 @@
+ <div style="text-align: right;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+63"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
++<p>
++T"TODO: module Rate"
++</p>
+ </div>
+ <div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;">
+-<img src="https://scp-wiki.wdfiles.com/local--files/scp-593/measles%20mouth.png" alt="measles%20mouth.png" class="image">
++<img src="https://scp-wiki.wjfiles.com/local--files/scp-593/measles%20mouth.png" class="image" alt="measles%20mouth.png">
+ <div class="scp-image-caption">
+ <p>

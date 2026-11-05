@@ -1,0 +1,17 @@
+[[module CSS]]
+@import url(https://scp-wiki.wdfiles.com/local--code/component:scp-pride/1)
+[[/module]]
+
+[[iftags +component]]
+This component replaces the default version of the SCP Logo with a Pride version.
+
+Use it with the following:
+
+> @@[[include component:scp-pride]]@@
+
+[[code type="css"]]
+#header {
+    background-image: url('https://scp-wiki.wdfiles.com/local--files/component:scp-pride/scp_pride_icon2.svg')
+}
+[[/code]]
+[[/iftags]]

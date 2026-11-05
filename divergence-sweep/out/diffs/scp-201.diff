@@ -1,0 +1,67 @@
+--- live
++++ ftml
+@@ -1,29 +1,9 @@
+ <div style="text-align: right;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+445"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
++<p>
++T"TODO: module Rate"
++</p>
+ </div>
+ <div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;">
+-<img src="https://scp-wiki.wdfiles.com/local--files/scp-201/005.jpg" alt="005.jpg" class="image">
++<img src="https://scp-wiki.wjfiles.com/local--files/scp-201/005.jpg" class="image" alt="005.jpg">
+ <div class="scp-image-caption">
+ <p>
+@@ -140,29 +120,7 @@
+ T"Cite this page as:"
+ </p>
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="2006938" data-lp-route="scp-201" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<blockquote>
+ <p>
+-T"""
+-<a href="/scp-201">
+-T"SCP-201"
+-</a>
+-T"" by Dr Gears, from the "
+-<a href="https://scpwiki.com">
+-T"SCP Wiki"
+-</a>
+-T". Source: "
+-<a href="https://scpwiki.com/scp-201">
+-T"https://scpwiki.com/scp-201"
+-</a>
+-T". Licensed under "
+-<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+-T"CC BY-SA"
+-</a>
+-T"."
++T"TODO: module ListPages"
+ </p>
+-</blockquote>
+-</div>
+-</div>
+ <p>
+ T"For information on how to use this component, see the "

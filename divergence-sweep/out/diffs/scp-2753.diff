@@ -1,0 +1,793 @@
+--- live
++++ ftml
+@@ -2,27 +2,7 @@
+ <li class="rateBox folded">
+ <div class="rate-box-with-credit-button">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+170"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
++<p>
++T"TODO: module Rate"
++</p>
+ <div class="creditButton foldable-list-container">
+ <p>
+@@ -67,9 +47,9 @@
+ T" "
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/the-great-hippo" onclick="WIKIDOT.page.listeners.userInfo(3938622); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=3938622&amp;amp;size=small&amp;amp;timestamp=TS" alt="The Great Hippo" style="background-image:url(https://www.wikidot.com/userkarma.php?u=3938622)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/the-great-hippo" onclick="WIKIDOT.page.listeners.userInfo(3938622); return false;">
+-T"The Great Hippo"
++<a href="/user:info/the-great-hippo" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" alt="the great hippo" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/the-great-hippo" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T"the great hippo"
+ </a>
+ </span>
+@@ -110,694 +90,17 @@
+ </p>
+ <hr>
+-<div style="text-align: center;">
+-<p>
+-<strong>
+-T"More by "
+-<a href="/the-great-hippo">
+-T"The Great Hippo"
+-</a>
+-T":"
+-</strong>
+-</p>
+-<div class="collapsible-block">
+-<div class="collapsible-block-folded">
+-<a class="collapsible-block-link" href="javascript:;">
+-T"SCPs"
+-</a>
+-</div>
+-<div class="collapsible-block-unfolded" style="display:none">
+-<div class="collapsible-block-unfolded-link">
+-<a class="collapsible-block-link" href="javascript:;">
+-T"– hide block"
+-</a>
+-</div>
+-<div class="collapsible-block-content">
+-<table class="wiki-content-table">
+-<tr>
+-<th colspan="2">
+-T"SCPs"
+-</th>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3034">
+-T"SCP-3034"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"The Counting Station"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"DO NOT LET HER FINISH"
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3035">
+-T"SCP-3035"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"Science Bugs"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"case_of_the_mondays.png, case_of_the_mondays (1).png"
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3054">
+-T"SCP-3054"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"Cragstaff Sanitarium"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"You are sick. You are broken. We will fix you."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3045">
+-T"SCP-3045"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"bzzip.exe"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"HAMLET: I am no longer moody."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3043">
+-T"SCP-3043"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"Murphy Law in… Type 3043 — FOR MURDER!"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"Forget it, Fred. It's Chinatown."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3057">
+-T"SCP-3057"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"Fossil Fuels"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"…witnesses provided confirmation that instances of SCP-3057-4 did, in fact, have feathers."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-2639">
+-T"SCP-2639"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"Video Game Violence"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"i need to know how many people i've killed"
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-437">
+-T"SCP-437"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"Summer of '91"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"That was a pretty crazy summer, y'know? Sometimes I really miss that place."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3079">
+-T"SCP-3079"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"300 Tricks: Stage Magic Made Easy"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-<strong>
+-T"NOTE:"
+-</strong>
+-T" No method for accomplishing this trick is provided."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-2753">
+-T"SCP-2753"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"Let's Play Jenga!"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"High art carries high risk!"
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-2679">
+-T"SCP-2679"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"The Many Graves of Jeannette Parslov"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"Whatever it takes, do what you must; whatever the cost, come back to us."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3074">
+-T"SCP-3074"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"Kafka's Parking Garage"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"Thank you for choosing Izatova Parking Center. Have a pleasant day."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-2571">
+-T"SCP-2571"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"Cragglewood Park"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"Mr. Blair, have you always been an only child?"
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-2419">
+-T"SCP-2419"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"The Laughing Men"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"Throw them back into the incinerator where you found them."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3143">
+-T"SCP-3143"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"Murphy Law in… The Foundation Always Rings Twice!"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"When it comes right down to it, me — them — hell, even you — we're all just characters in that trashy dime-store novel called life."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3089">
+-T"SCP-3089"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"That Old Time Religion"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"Remember how we explained that successful people don't actually need any of their toes to walk? Well, that's going to come in handy for Secret Number Six."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3117">
+-T"SCP-3117"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"A Monster-Shaped Hole"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"I'm not talking to you."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3128">
+-T"SCP-3128"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"Let's Play Monopoly!"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"Hey, guys? I'm, uh. I'm using this."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3138">
+-T"SCP-3138"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"A Sepulcher by the Sea"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"Should it prove feasible, all non-canonical corpses are to be extracted, examined, and catalogued."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3241">
+-T"SCP-3241"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"The SS Sommerfeld"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"It makes me wonder what an old monster like myself is even doing here, anymore. And then? Someone special comes along and reminds me."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3219">
+-T"SCP-3219"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"This Sour Earth"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"Notably, no reports describe any attempt to examine the residence's storm cellar."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-4028">
+-T"SCP-4028"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"La Historia de Don Quixote de la Mancha"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"Justine eventually re-unites with her sister, Juliette. Alonso strikes down a lightning bolt intended for them both, then challenges the narrator to a duel."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3546">
+-T"SCP-3546"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"Doggone it, I Fold!"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"Specifically, fan-art of Sonic the Hedgehog, a video-game character produced by Sega in 1991."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-3561">
+-T"SCP-3561"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"An Unfinished Work"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"Despite multiple reports from neighbors who claimed to have witnessed members of his family standing at the windows, no trace of Theodore Holdstock's wife and children could be found."
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"["
+-<a href="/scp-4054">
+-T"SCP-4054"
+-</a>
+-T"]"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-<em>
+-T"The Seventh Door"
+-</em>
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<em>
+-T"SCP-4054 is The Seventh Door, an unlicensed platform adventure game released for the Nintendo Entertainment System in 1988."
+-</em>
+-</td>
+-</tr>
+-</table>
+-</div>
+-</div>
+-</div>
+-</div>
+-<hr>
+-</div>
++<div class="error-block">
++<hr>
+ <hr>
+ <div class="creditBottomRate">
+ <div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+170"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
++<p>
++T"TODO: module Rate"
++</p>
++</div>
++</div>
++<br>
++T" "
++<br>
+ </div>
+ </div>
+@@ -810,5 +113,5 @@
+ </div>
+ <div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;">
+-<img src="https://scp-wiki.wdfiles.com/local--files/scp-2753/jenga.png" alt="jenga.png" class="image">
++<img src="https://scp-wiki.wjfiles.com/local--files/scp-2753/jenga.png" class="image" alt="jenga.png">
+ <div class="scp-image-caption">
+ <p>
+@@ -1222,29 +525,7 @@
+ T"Cite this page as:"
+ </p>
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="54228799" data-lp-route="scp-2753" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<blockquote>
+-<p>
+-T"""
+-<a href="/scp-2753">
+-T"SCP-2753"
+-</a>
+-T"" by The Great Hippo, from the "
+-<a href="https://scpwiki.com">
+-T"SCP Wiki"
+-</a>
+-T". Source: "
+-<a href="https://scpwiki.com/scp-2753">
+-T"https://scpwiki.com/scp-2753"
+-</a>
+-T". Licensed under "
+-<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+-T"CC BY-SA"
+-</a>
+-T"."
+-</p>
+-</blockquote>
+-</div>
+-</div>
++<p>
++T"TODO: module ListPages"
++</p>
+ <p>
+ T"For information on how to use this component, see the "

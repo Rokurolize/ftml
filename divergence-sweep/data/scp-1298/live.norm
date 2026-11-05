@@ -1,0 +1,130 @@
+<div style="text-align: right;">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T"rating: "
+<span class="number prwN">
+T"+44"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+T"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+T"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+T"x"
+</a>
+</span>
+</div>
+</div>
+<p>
+<strong>
+T"Item #:"
+</strong>
+T" SCP-1298"
+</p>
+<p>
+<strong>
+T"Object Class:"
+</strong>
+T" Safe"
+</p>
+<p>
+<strong>
+T"Special Containment Procedures:"
+</strong>
+T" 37 instances of SCP-1298 are contained in plastic drawers of the Level 2 Cold Storage unit of Site-██. Notes are stored in a locked filing cabinet in Site-██ offices. MTF Omega-8 “Babysnatchers” has been charged with recovery of new instances, administration of amnestics, and monitoring at-risk cases, as well as potential interception of the source."
+</p>
+<p>
+T"Following Incident 1298-a, long term experimentation on active instances of SCP-1298 is now strongly discouraged. SCP-1298-5 has been partially disassembled and placed in long-term cold storage pending decommission or reclassification to sapient."
+</p>
+<p>
+<strong>
+T"Description:"
+</strong>
+T" SCP-1298 refers to a group of animate simulacra of human infants, constructed of steel and plastic with rubber skin and glass eyes. Instances exhibit mobility, vocalization, awareness and reactions consistent with human infants of roughly three to six months of age, though they show no reaction to visual stimuli and are presumed to be blind. Disassembly has shown no electronic components, power sources, or complex machinery, though active instances maintain a temperature roughly analogous to human norms. Reduction of ambient temperature slows and eventually halts activity. Though instances will consume milk or soft foods, they do not produce waste and anything ingested will remain inside the predominantly hollow interior."
+</p>
+<p>
+T"Instances of SCP-1298 are delivered by unknown means to the doorsteps of chosen subjects between the hours of 3 and 5am, contained inside a woven basket and wearing a stitched one-piece wool garment and a white blanket. Accompanying each instance is an envelope containing a handwritten note. Each note is unique, containing a collection of common words interspersed with randomly selected letters. No consistent code or pattern has been found in recovered notes."
+</p>
+<p>
+T"Subjects of SCP-1298 appear to be selected on a fairly narrow set of criteria. Most subjects have been upper-middle class Caucasian couples located in the Pacific Northwest of the United States who have recently lost a child, usually their first. A statistically significant number of subjects have been featured on local news regarding this loss, which is hypothesized to be the method by which subjects are selected. Though most instances are recovered following subjects contacting local authorities, several instances had to be forcefully removed from the possession of subjects."
+</p>
+<div class="footer-wikiwalk-nav">
+<div style="text-align: center;">
+<p>
+T"« "
+<a href="/scp-1297">
+T"SCP-1297"
+</a>
+T" | SCP-1298 | "
+<a href="/scp-1299">
+T"SCP-1299"
+</a>
+T" »"
+</p>
+</div>
+</div>
+<div class="licensebox">
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T"‡ Licensing / Citation"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T"‡ Hide Licensing / Citation"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+T"Cite this page as:"
+</p>
+<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="14942744" data-lp-route="scp-1298" data-lp-generation="HEX">
+<div class="list-pages-item">
+<blockquote>
+<p>
+T"""
+<a href="/scp-1298">
+T"SCP-1298"
+</a>
+T"" by Dr Sketch, from the "
+<a href="https://scpwiki.com">
+T"SCP Wiki"
+</a>
+T". Source: "
+<a href="https://scpwiki.com/scp-1298">
+T"https://scpwiki.com/scp-1298"
+</a>
+T". Licensed under "
+<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+T"CC BY-SA"
+</a>
+T"."
+</p>
+</blockquote>
+</div>
+</div>
+<p>
+T"For information on how to use this component, see the "
+<a href="/component:license-box">
+T"License Box component"
+</a>
+T". To read about licensing policy, see the "
+<a href="/licensing-guide">
+T"Licensing Guide"
+</a>
+T"."
+</p>
+</div>
+</div>
+</div>
+</div>

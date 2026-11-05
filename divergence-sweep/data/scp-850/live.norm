@@ -1,0 +1,179 @@
+<div style="text-align: right;">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T"rating: "
+<span class="number prwN">
+T"+108"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+T"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+T"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+T"x"
+</a>
+</span>
+</div>
+</div>
+<p>
+<strong>
+T"Item #:"
+</strong>
+T" SCP-850"
+</p>
+<p>
+<strong>
+T"Object Class:"
+</strong>
+T" Euclid"
+</p>
+<p>
+<strong>
+T"Special Containment Procedures:"
+</strong>
+T" SCP-850 is not dangerous unless threatened. However, as it reacts to containment as a threat, measures must be taken to ensure that it does not know that it is contained. SCP-850 must be kept in a large habitat maintained in [REDACTED] ocean. The boundaries of this habitat are to be marked and enforced by concrete walls several feet in thickness designed to appear as a reef."
+</p>
+<p>
+<strong>
+T"Description:"
+</strong>
+T" SCP-850 is a spatial and biological anomaly. It externally appears to be a school of fish closely resembling, in appearance and genetics, the species "
+<em>
+T"Clupea harengus"
+</em>
+T". Major differences include darker coloration and greater variance in size."
+</p>
+<p>
+T"An area exists within it in which space heavily bends. Internal area is far larger than external area. The exact area of this bent portion of space is unknown, but has proven to have a radius greater than 50 kilometers. Dr. Grangan has postulated that it could be infinite in size. All area that has been observed does contain water."
+</p>
+<p>
+T"It has been observed that in the increasingly deep layers of SCP-850, the fish seem to become increasingly different from "
+<em>
+T"Clupea harengus"
+</em>
+T". This is seemingly to become in part self-dependent. Though the specimens in the outer swarm depend primarily upon external creatures for food, the varied species further in seem to prey on each other. Despite preying upon one another, all fish in the school work together. Due to the sheer size of SCP-850, this typically provides enough force to kill a predator or destroy a barrier."
+</p>
+<p>
+<strong>
+T"Addendum-850-1:"
+</strong>
+</p>
+<p>
+T"The entrance to the bent area of space does not allow for submarines to enter (though this is not a problem for human divers). Thus, for study of life deep within SCP-850, the Bottleship Project has been initiated. The aims of the project are as follows: To build a large submarine inside SCP-850 without disturbing SCP-850, by the method of carrying various parts inside and then assembling them."
+</p>
+<p>
+<strong>
+T"Addendum-850-2:"
+</strong>
+</p>
+<p>
+T"The Bottleship Project has been completed. The resulting ship and its crew have been assigned the designation of Reconnaissance Task Force Omicron-6 (aka "Trilobite"). Observation of internal organisms is to begin."
+</p>
+<p>
+<strong>
+T"Addendum-850-3:"
+</strong>
+</p>
+<p>
+T"Two major results have been thus far observed. The first is that SCP-850 is indeed far larger than the initial guess of 50 kilometers in radius. The second is that the organisms are becoming gradually far different from "
+<em>
+T"Clupea harengus"
+</em>
+T" and are assuming many ecological niches. The size seems to vary from several centimeters to [REDACTED], and are certainly recognizable as different species."
+</p>
+<p>
+<strong>
+T"Addendum-850-4:"
+</strong>
+</p>
+<p>
+T"All signals from the Trilobite were lost. The last radar footage from the submarine seemed to show a [DATA EXPUNGED]. It rapidly moved towards the ship. In the following minute, all communication systems ceased function. Camera footage shows the ship being torn apart by large teeth and flooded with water. Analysis of camera footage indicates [REDACTED]. SCP-850 is pending reclassification to Keter."
+</p>
+<p>
+<strong>
+T"Addendum-850-5:"
+</strong>
+</p>
+<p>
+T"Reclassification to Keter denied."
+</p>
+<div class="footer-wikiwalk-nav">
+<div style="text-align: center;">
+<p>
+T"« "
+<a href="/scp-849">
+T"SCP-849"
+</a>
+T" | SCP-850 | "
+<a href="/scp-851">
+T"SCP-851"
+</a>
+T" »"
+</p>
+</div>
+</div>
+<div class="licensebox">
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T"‡ Licensing / Citation"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T"‡ Hide Licensing / Citation"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+T"Cite this page as:"
+</p>
+<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="3010616" data-lp-route="scp-850" data-lp-generation="HEX">
+<div class="list-pages-item">
+<blockquote>
+<p>
+T"""
+<a href="/scp-850">
+T"SCP-850"
+</a>
+T"" by Dr Grangan, from the "
+<a href="https://scpwiki.com">
+T"SCP Wiki"
+</a>
+T". Source: "
+<a href="https://scpwiki.com/scp-850">
+T"https://scpwiki.com/scp-850"
+</a>
+T". Licensed under "
+<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+T"CC BY-SA"
+</a>
+T"."
+</p>
+</blockquote>
+</div>
+</div>
+<p>
+T"For information on how to use this component, see the "
+<a href="/component:license-box">
+T"License Box component"
+</a>
+T". To read about licensing policy, see the "
+<a href="/licensing-guide">
+T"Licensing Guide"
+</a>
+T"."
+</p>
+</div>
+</div>
+</div>
+</div>

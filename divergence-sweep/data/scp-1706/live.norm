@@ -1,0 +1,442 @@
+<ul class="creditRate">
+<li class="rateBox folded">
+<div class="rate-box-with-credit-button">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T"rating: "
+<span class="number prwN">
+T"+56"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+T"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+T"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+T"x"
+</a>
+</span>
+</div>
+<div class="creditButton foldable-list-container">
+<p>
+<a href="javascript:;">
+T""
+</a>
+</p>
+</div>
+</div>
+<div id="u-credit-view">
+<div class="fader foldable-list-container">
+<a href="javascript:;">
+T"close"
+</a>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div style="text-align: center;">
+<h2>
+<span>
+T"Info"
+</span>
+</h2>
+</div>
+<hr>
+<div class="close-credits foldable-list-container">
+<a href="javascript:;">
+T"X"
+</a>
+</div>
+<div class="credit first">
+<p>
+<strong>
+T"SCP-1706:"
+</strong>
+T" Eater of Dreams"
+</p>
+<p>
+<strong>
+T"Author:"
+</strong>
+T" "
+<span class="printuser avatarhover">
+<a href="https://www.wikidot.com/user:info/andarielhalo" onclick="WIKIDOT.page.listeners.userInfo(1750255); return false;">
+<img class="small" src="https://www.wikidot.com/avatar.php?userid=1750255&amp;amp;size=small&amp;amp;timestamp=TS" alt="AndarielHalo" style="background-image:url(https://www.wikidot.com/userkarma.php?u=1750255)">
+</a>
+<a href="https://www.wikidot.com/user:info/andarielhalo" onclick="WIKIDOT.page.listeners.userInfo(1750255); return false;">
+T"AndarielHalo"
+</a>
+</span>
+</p>
+<p>
+T"Eat more of my SCPs. "
+<a href="http://www.scp-wiki.net/andariel-halo-file" target="_blank">
+T"Eat them all."
+</a>
+</p>
+<p>
+T"Also please eat some of these"
+</p>
+<ul>
+<li>
+<strong>
+<a href="http://www.scp-wiki.net/anabasis-hub">
+T"Anabasis Hub"
+</a>
+</strong>
+T" Probably the greatest story involving a pair of redheaded siblings whose infighting causes the end of the world"
+</li>
+<li>
+<strong>
+<a href="http://www.scp-wiki.net/manna-charitable-foundation-hub">
+T"Manna Charitable Foundation 2000"
+</a>
+</strong>
+T" The sequel to the above, collaborationed with "
+<span class="printuser avatarhover">
+<a href="https://www.wikidot.com/user:info/dr-reach" onclick="WIKIDOT.page.listeners.userInfo(1779895); return false;">
+<img class="small" src="https://www.wikidot.com/avatar.php?userid=1779895&amp;amp;size=small&amp;amp;timestamp=TS" alt="Dr Reach" style="background-image:url(https://www.wikidot.com/userkarma.php?u=1779895)">
+</a>
+<a href="https://www.wikidot.com/user:info/dr-reach" onclick="WIKIDOT.page.listeners.userInfo(1779895); return false;">
+T"Dr Reach"
+</a>
+</span>
+</li>
+<li>
+<strong>
+<a href="http://www.scp-wiki.net/the-stuff-industry-hub">
+T"The Stuff Industry"
+</a>
+</strong>
+T" What happens when everyone around you at work is a complete idiot and so are you, but not only does no one get fired, but you actually turn a profit? I don't know, some stuff."
+</li>
+<li>
+<strong>
+<a href="http://www.scp-wiki.net/week-1-looking-for-stuff">
+T"When MCF and Stuff happen"
+</a>
+</strong>
+T" A fun story of incompetence"
+</li>
+</ul>
+</div>
+<hr>
+<div class="creditBottomRate">
+<div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T"rating: "
+<span class="number prwN">
+T"+56"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+T"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+T"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+T"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</li>
+</ul>
+<div style="clear:both; height: 0px; font-size: 1px">
+</div>
+<table class="scale EN-base">
+<tr>
+<td class="class1">
+<h1>
+<span>
+<span class="base false EN">
+T"2/1706"
+</span>
+T" LEVEL "
+<span class="base false EN">
+T"2/1706"
+</span>
+</span>
+</h1>
+<h1>
+<span>
+T"CLASSIFIED"
+</span>
+</h1>
+</td>
+<td class="class1image" rowspan="2">
+<img src="https://scp-wiki.wdfiles.com/local--files/component%3Aclassified-decoration-base/classified-lv2.png" alt="classified-lv2.png" class="image">
+</td>
+<td class="item1 EN">
+<h1>
+<span>
+T"Item #: SCP-1706"
+</span>
+</h1>
+<h1>
+<span>
+T"Object Class: Euclid"
+</span>
+</h1>
+</td>
+</tr>
+</table>
+<p>
+<strong>
+T"Special Containment Procedures:"
+</strong>
+T" SCP-1706 is to be kept at Site-441 in a storage chamber unless being tested. Site-441 has been specifically constructed to house SCP-1706. On-site staff are to number no fewer than 6 at any time. As on-site personnel have not requested transference and/or leave, there is currently no need to maintain personnel on standby. Class-D personnel are not to be present on-site due to safety concerns."
+</p>
+<p>
+T"Personnel remaining on-site are subject to weekly examinations to ensure consistency in respective fields of study. Any personnel suffering significant discrepancies are to be administered amnestics as necessary and re-assigned for a period of 6 - 22 months. Additionally, the Site-441 cafeteria is to be stocked with nutritional vitamins and supplements and pre-cooked meals to maintain health and regular eating habits for all personnel."
+</p>
+<p>
+<strong>
+T"Description:"
+</strong>
+T" SCP-1706 is a DVD of an unaired pilot episode of a science-fiction show entitled "Eater of Dreams", filmed at an unknown date between 1987 and 1991 and transferred onto DVD from another medium"
+<sup class="footnoteref">
+<a id="footnoteref-1" href="javascript:;" class="footnoteref" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnote-1&#x27;)">
+T"1"
+</a>
+</sup>
+T"."
+</p>
+<p>
+T"The episode follows a group of seven people living in a single apartment complex in New York City in the midst of an unspecified city-wide crisis. The individuals interact with a variety of civilian and government officials and military personnel asking questions regarding a group of individuals called "Eaters", who are described as being "vampiric" and "cannibalistic", leaving others around them apparently confused, "listless and lethargic". It is not specified how this is achieved."
+</p>
+<p>
+T"A major plot point appears to be how the "Eaters" are able to gain access to restricted areas and individuals. Over the course of the episode, several people unrelated to the seven protagonists appear on screen, sometimes in various stages of undress, interacting with others in the background, while never being acknowledged by the individuals they interact with."
+</p>
+<p>
+T"The episode concludes with one of the original seven individuals addressing the camera, delivering a rambling, incoherent monologue directly addressing the viewers. Contents of monologue are logged below."
+</p>
+<p>
+T"SCP-1706 itself causes a series of mental effects"
+<sup class="footnoteref">
+<a id="footnoteref-2" href="javascript:;" class="footnoteref" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnote-2&#x27;)">
+T"2"
+</a>
+</sup>
+T" on all sapient beings within a minimum 2██ m radius, often manifesting in the form of physical alterations to individuals' brain chemistry. In an absence of individuals within its vicinity, SCP-1706's area of effect expands. While the effects have varied from person to person, distinct patterns have emerged in much of the affected individuals. The effects begin to subside following a period of 4 days of non-exposure to SCP-1706."
+</p>
+<ul>
+<li>
+<strong>
+T"A"
+</strong>
+T" 62% of those exposed experience alterations in memory and knowledge of their surroundings, including misunderstanding of previously well-understood slang, incorrect recollection of recent historical events, and selective loss of memory, experiences, and learned skills. In rare cases, these can be partly or completely replaced by previously unknown skills and experiences, along with corresponding memory of the individual having learned, studied, or acquired said skills and/or experiences."
+</li>
+<li>
+<strong>
+T"B"
+</strong>
+T" 11% of those exposed experience sudden mood disorders, often characterized by inappropriate emotions"
+<sup class="footnoteref">
+<a id="footnoteref-3" href="javascript:;" class="footnoteref" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnote-3&#x27;)">
+T"3"
+</a>
+</sup>
+T"."
+</li>
+<li>
+<strong>
+T"C"
+</strong>
+T" 9% of those exposed exhibit symptoms of catatonic schizophrenia, marked largely by a sharp decline in physical activity during off-hours."
+</li>
+<li>
+<strong>
+T"D"
+</strong>
+T" 8% of those exposed report no unusual effects. Despite this, "
+<strong>
+T"D"
+</strong>
+T" affected individuals have been reported by others as having been substantially changed or altered by SCP-1706. Similar reports of unease and "wrongness" with "
+<strong>
+T"D"
+</strong>
+T" individuals have been reported by off-site personnel. This effect subsides following non-exposure."
+</li>
+</ul>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+T"Transcript of monologue delivered by character "Rick""
+</span>
+<br>
+T" (Note: As the character "Rick" speaks, the camera briefly pans over to a group of between 30 and 40 people standing motionless along a sidewalk. The "Eaters" are seen avoiding the camera as it pans across them.)"
+</p>
+<p>
+T""I think… funny, how you 'think'… I think it's pretty obvious who the real dreamers are here. It's pleasure, indeed. Yeah? When you "
+<em>
+T"can"
+</em>
+T" do it, when you "
+<em>
+T"want"
+</em>
+T" to do something. You do it. You "
+<em>
+T"could"
+</em>
+T" do things… but "
+<em>
+T"will"
+</em>
+T" you do them? What's the motivation?"
+</p>
+<p>
+T""Do you want it? Do you need it? Animals need. If animals had free food, no goals, not a care in the world, they'd probably stand around all day twitching. You don't get a party for doing 'just enough'. Needs nothing… wants nothing…"
+</p>
+<p>
+T""I don't like that. 'Achievements are like drugs', what kind of example is that? What you want and what you desire can't always be the same thing. That doesn't stop them, though. Dreams are like drugs. Dreams are tasty, too. I'd have my fill if I could, too. They're delicate, dreams, of course. I'm not hungry either, fella. Not yet. It's gotta go somewhere until then."
+</p>
+<p>
+T""Didn't you ever wanna be a rock star? A fire-naut? A police officer? Hope they live next door to you. Maybe they'll let you be one for a day."
+</p>
+<p>
+T""It smells, it looks and tastes and feels and isn't. Why does it hurt if it's supposed to be good for you? There is no God but God and God is a God of rigidity, structure, routine, religion, pharmaceuticals, poultry, mist, and might. "
+<em>
+T"Necessity"
+</em>
+T"… there's a God you can eat."
+</p>
+<p>
+T""I think it's pretty obvious who the real dreamers are here. How do you eat God? Does it taste good? Does it smell? Does it feel squishy? Is it or isn't it? Dreams… it's not the same without them, but we can get through this together, me and all of you. Tune in for next week.""
+</p>
+</blockquote>
+<p>
+<strong>
+T"Incident-30-A:"
+</strong>
+T" On 11/14/2014, Site-441 failed to respond to routine security check with Site-██. At 03:26, Site-██ security remotely accessed Site-441's surveillance system. Video showed on-site personnel largely immobile or otherwise unresponsive to their surroundings, in some cases engaging in repetitive actions (such as arranging papers, stocking and re-stocking offices, and gesticulating in the cafeteria and restrooms). Additionally, unknown figures were observed entering Site-441, breaching containment. The individuals numbered between 4 and 7, both male and female, and appear to follow set paths through the building, culminating in SCP-1706's containment area before exiting."
+</p>
+<p>
+T"Follow-up interviews indicate personnel were unaware of such occurrences. Security reported no unusual activity during the incident, although they could not account for the failure to respond to the routine check, nor the presence of non-essential personnel awake during off-hours."
+</p>
+<p>
+T"Review of prior security footage indicate this event has repeated itself on a nightly basis, despite routine security checks. On-site security have addressed the issue, and following review and updated security check-ins from Site-██, no further containment breaches have occurred as of ██/██/20██. Information regarding the actions taken is restricted to personnel assigned to SCP-1706. Personnel have not requested medical attention and/or time off due to sleep deprivation."
+</p>
+<p>
+<strong>
+T"Addendum:"
+</strong>
+T" Remote-access of Site-441 surveillance systems confirm the absence of unauthorized individuals, but have seen no change in the behavior of on-site personnel. Personnel have been interviewed on the continuing recurrence and can fully account for the events, indicating no loss of consciousness or awareness during these events. Medical evaluations have shown no signs of insomnia, sleep apnea, and negligible levels of fatigue, stress, and anxiety."
+</p>
+<p>
+T"Contacting Site-441 personnel during these occurrences is successful in ending them, but has not been successful in preventing future occurrences."
+</p>
+<div class="footnotes-footer">
+<div class="title">
+T"Footnotes"
+</div>
+<div class="footnote-footer" id="footnote-1">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnoteref-1&#x27;)">
+T"1"
+</a>
+T". Certain actors appearing in the production have been contacted by Foundation personnel and confirm the veracity of the footage shown to them. However, due to the low budget of the production and disorganized filming schedule, few could account for details regarding the show's plot, nor the identity of much of the crewmembers present during filming."
+</div>
+<div class="footnote-footer" id="footnote-2">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnoteref-2&#x27;)">
+T"2"
+</a>
+T". These effects appear to have been triggered upon initial playback of SCP-1706, between 04/15 and 06/30/20██, prior to containment"
+</div>
+<div class="footnote-footer" id="footnote-3">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnoteref-3&#x27;)">
+T"3"
+</a>
+T". For example, an individual may experience revulsion at the idea of caring for a physically ill loved one, or find humor in descriptions of graphic sexual violence"
+</div>
+</div>
+<div class="footer-wikiwalk-nav">
+<div style="text-align: center;">
+<p>
+T"« "
+<a href="/scp-1705">
+T"SCP-1705"
+</a>
+T" | SCP-1706 | "
+<a href="/scp-1707">
+T"SCP-1707"
+</a>
+T" »"
+</p>
+</div>
+</div>
+<div class="licensebox">
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T"‡ Licensing / Citation"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T"‡ Hide Licensing / Citation"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+T"Cite this page as:"
+</p>
+<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="23745444" data-lp-route="scp-1706" data-lp-generation="HEX">
+<div class="list-pages-item">
+<blockquote>
+<p>
+T"""
+<a href="/scp-1706">
+T"SCP-1706"
+</a>
+T"" by AndarielHalo, from the "
+<a href="https://scpwiki.com">
+T"SCP Wiki"
+</a>
+T". Source: "
+<a href="https://scpwiki.com/scp-1706">
+T"https://scpwiki.com/scp-1706"
+</a>
+T". Licensed under "
+<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+T"CC BY-SA"
+</a>
+T"."
+</p>
+</blockquote>
+</div>
+</div>
+<p>
+T"For information on how to use this component, see the "
+<a href="/component:license-box">
+T"License Box component"
+</a>
+T". To read about licensing policy, see the "
+<a href="/licensing-guide">
+T"Licensing Guide"
+</a>
+T"."
+</p>
+</div>
+</div>
+</div>
+</div>

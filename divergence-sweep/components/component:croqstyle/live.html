@@ -1,0 +1,811 @@
+                        
+
+
+
+
+<div class="warning-top-box">
+<h1><span>NOTICE:</span></h1>
+<p>This is a <em>component</em> page used internally by the SCP Wiki. It is intended to be used and included on other pages.</p>
+</div>
+
+
+
+<div class="croqstyle__documentation">
+<div style="text-align: right;"><div class="page-rate-widget-box"><span class="rate-points">rating:&nbsp;<span class="number prw54353">+35</span></span><span class="rateup btn btn-default"><a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">+</a></span><span class="ratedown btn btn-default"><a title="I don't like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">&#8211;</a></span><span class="cancel btn btn-default"><a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">x</a></span></div></div>
+
+
+
+<div class="croqstyle__description">
+<h1 id="toc0"><span>About Croqstyle</span></h1>
+<p>Croqstyle is a bunch of miscellaneous CSS tweaks and utilities that I, <span class="printuser avatarhover"><a href="https://www.wikidot.com/user:info/croquembouche" onclick="WIKIDOT.page.listeners.userInfo(2893766); return false;"><img class="small" src="https://www.wikidot.com/avatar.php?userid=2893766&amp;amp;size=small&amp;amp;timestamp=1793192452" alt="Croquembouche" style="background-image:url(https://www.wikidot.com/userkarma.php?u=2893766)" /></a><a href="https://www.wikidot.com/user:info/croquembouche" onclick="WIKIDOT.page.listeners.userInfo(2893766); return false;">Croquembouche</a></span>, use a lot and want to share.</p>
+<p>This component:</p>
+<ul>
+<li>Makes a few behind-the-scenes changes that improve the reading or writing experience e.g. monospaced text in the editor</li>
+<li>Adds a few utilities for documenting components and themes e.g. custom styling for code blocks</li>
+<li>Adds a few opt-in features for regular pages e.g. special image blocks</li>
+</ul>
+<p>Croqstyle is basically compatible with any theme as far as I know.</p>
+<h2 id="toc1"><span>Usage</span></h2>
+<p>On any wiki:</p>
+<div class="code terminal">
+<p><strong><span style="color: var(--c-keyword)">[[</span></strong><span style="color: var(--c-operator)">include</span> <span style="color: var(--c-value)">:scp-wiki:component:croqstyle</span><strong><span style="color: var(--c-keyword)">]]</span></strong></p>
+</div>
+<p>For normal pages: Croqstyle should be included before any other component or theme, so that they can override it.</p>
+<p>For components/themes: Croqstyle can be used on other components for their documentation &#8212; include it inside the component's <tt><span style="white-space: pre-wrap;">[[iftags]]</span></tt> block, so that your component's users are not forced to use Croqstyle.</p>
+<p>You don't have to include it like this &#8212; feel free to look through and use my CSS at a starting point for new stuff, or steal just the bits you like.</p>
+</div>
+<table style="margin:0; padding:0">
+<tr>
+<td style="margin:0; padding:0">
+<div id="toc">
+<div id="toc-action-bar"><a href="javascript:;" onclick="WIKIDOT.page.listeners.foldToc(event)">Fold</a><a style="display: none" href="javascript:;" onclick="WIKIDOT.page.listeners.unfoldToc(event)">Unfold</a></div>
+<div class="title">Table of Contents</div>
+<div id="toc-list">
+<div style="margin-left: 1em;"><a href="#toc0">About Croqstyle</a></div>
+<div style="margin-left: 2em;"><a href="#toc1">Usage</a></div>
+<div style="margin-left: 1em;"><a href="#toc2">Source code</a></div>
+<div style="margin-left: 1em;"><a href="#toc3">Little improvements</a></div>
+<div style="margin-left: 2em;"><a href="#toc4">Reasonably-sized footnotes</a></div>
+<div style="margin-left: 2em;"><a href="#toc5">Remove avatar hover</a></div>
+<div style="margin-left: 2em;"><a href="#toc6">Monospace editor + code blocks</a></div>
+<div style="margin-left: 2em;"><a href="#toc7">Better image block positioning</a></div>
+<div style="margin-left: 2em;"><a href="#toc8">Offsite image enforcement</a></div>
+<div style="margin-left: 1em;"><a href="#toc9">Documentation helpers</a></div>
+<div style="margin-left: 2em;"><a href="#toc10">Teletype backgrounds</a></div>
+<div style="margin-left: 2em;"><a href="#toc11">Code colours</a></div>
+<div style="margin-left: 2em;"><a href="#toc12">Debug mode</a></div>
+<div style="margin-left: 1em;"><a href="#toc13">Opt-in features</a></div>
+<div style="margin-left: 2em;"><a href="#toc14">Improved image block</a></div>
+<div style="margin-left: 2em;"><a href="#toc15">Image footnotes</a></div>
+<div style="margin-left: 2em;"><a href="#toc16">Simple responsive div</a></div>
+<div style="margin-left: 2em;"><a href="#toc17">Reset tabview</a></div>
+<div style="margin-left: 2em;"><a href="#toc18">Match iframe CSS</a></div>
+</div>
+</div>
+</td>
+</tr>
+</table>
+<h1 id="toc2"><span>Source code</span></h1>
+<p>Here's the source CSS for Croqstyle:</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded"><a class="collapsible-block-link" href="javascript:;">+&nbsp;show&nbsp;source&nbsp;CSS</a></div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link"><a class="collapsible-block-link" href="javascript:;">-&nbsp;hide&nbsp;source&nbsp;CSS</a></div>
+<div class="collapsible-block-content">
+<div class="code">
+<div class="hl-main">
+<pre><span class="hl-code">/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">CROQSTYLE</span><span class="hl-code"> </span><span class="hl-identifier">CSS</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+/</span><span class="hl-identifier">*</span><span class="hl-code"> Source: </span><span class="hl-identifier">https</span><span class="hl-code">://</span><span class="hl-identifier">scp-wiki.wikidot.com</span><span class="hl-code">/</span><span class="hl-identifier">component</span><span class="hl-special">:croqstyle</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+ 
+</span><span class="hl-var">@import</span><span class="hl-code"> </span><span class="hl-identifier">url</span><span class="hl-code">('</span><span class="hl-identifier">https</span><span class="hl-code">://</span><span class="hl-identifier">fonts.googleapis.com</span><span class="hl-code">/</span><span class="hl-identifier">css2</span><span class="hl-code">?</span><span class="hl-identifier">family</span><span class="hl-code">=</span><span class="hl-identifier">Fira</span><span class="hl-code">+</span><span class="hl-identifier">Code</span><span class="hl-special">:wght</span><span class="hl-var">@400</span><span class="hl-code">;700');
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Little</span><span class="hl-code"> </span><span class="hl-identifier">improvements</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> 1. </span><span class="hl-identifier">Reasonably-sized</span><span class="hl-code"> </span><span class="hl-identifier">footnotes</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">.hovertip</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">max-width:</span><span class="hl-code"> </span><span class="hl-number">400</span><span class="hl-string">px</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> 2. </span><span class="hl-identifier">No</span><span class="hl-code"> </span><span class="hl-identifier">more</span><span class="hl-code"> </span><span class="hl-identifier">big</span><span class="hl-code"> </span><span class="hl-identifier">avatar</span><span class="hl-code"> </span><span class="hl-identifier">hover</span><span class="hl-code"> </span><span class="hl-identifier">thingies</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">.avatar-hover</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">display:</span><span class="hl-code"> </span><span class="hl-string">none</span><span class="hl-code"> !important</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> 3. </span><span class="hl-identifier">Monospace</span><span class="hl-code"> </span><span class="hl-identifier">editor</span><span class="hl-code"> + </span><span class="hl-identifier">code</span><span class="hl-code"> </span><span class="hl-identifier">blocks</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-special">:root</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> --</span><span class="hl-reserved">mono-font:</span><span class="hl-code"> &quot;Fira </span><span class="hl-string">Code</span><span class="hl-code">&quot;, Cousine, </span><span class="hl-string">monospace</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">#edit-page-textarea</span><span class="hl-code">, </span><span class="hl-identifier">.code</span><span class="hl-code"> </span><span class="hl-identifier">pre</span><span class="hl-code">, </span><span class="hl-identifier">.code</span><span class="hl-code"> </span><span class="hl-identifier">p</span><span class="hl-code">, </span><span class="hl-identifier">.code</span><span class="hl-code">, </span><span class="hl-identifier">tt</span><span class="hl-code">, </span><span class="hl-identifier">.page-source</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">font-family:</span><span class="hl-code"> var(--mono-font)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.code</span><span class="hl-code"> </span><span class="hl-identifier">pre</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">white-space:</span><span class="hl-code"> </span><span class="hl-string">pre</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.code</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">, </span><span class="hl-identifier">.pre</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">font-feature-settings:</span><span class="hl-code"> unset</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.change-textarea-size</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">padding-right:</span><span class="hl-code"> </span><span class="hl-number">3</span><span class="hl-string">em</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> 4. </span><span class="hl-identifier">Better</span><span class="hl-code"> </span><span class="hl-identifier">image</span><span class="hl-code"> </span><span class="hl-identifier">block</span><span class="hl-code"> </span><span class="hl-identifier">positioning</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-var">@media</span><span class="hl-code"> (max-width: 550</span><span class="hl-identifier">px</span><span class="hl-code">), (min-width: 768</span><span class="hl-identifier">px</span><span class="hl-code">) </span><span class="hl-identifier">and</span><span class="hl-code"> (max-width: 850</span><span class="hl-identifier">px</span><span class="hl-code">) </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-identifier">.scp-image-block</span><span class="hl-code">:</span><span class="hl-identifier">is</span><span class="hl-code">(</span><span class="hl-identifier">.block-right</span><span class="hl-code">, </span><span class="hl-identifier">.block-left</span><span class="hl-code">) </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">float:</span><span class="hl-code"> </span><span class="hl-string">none</span><span class="hl-code">;
+    </span><span class="hl-reserved">margin-inline:</span><span class="hl-code"> </span><span class="hl-string">auto</span><span class="hl-code">;
+  </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> 5. </span><span class="hl-identifier">Offsite</span><span class="hl-code"> </span><span class="hl-identifier">image</span><span class="hl-code"> </span><span class="hl-identifier">enforcement</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">img</span><span class="hl-brackets">[</span><span class="hl-var">src</span><span class="hl-code">*=</span><span class="hl-quotes">&quot;</span><span class="hl-string">imgur.com</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">]</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">content:</span><span class="hl-code"> url(https://scp-wiki.wdfiles.com/local--files/component%</span><span class="hl-number">3</span><span class="hl-code">Acroqstyle/imgurblock.png)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Documentation</span><span class="hl-code"> </span><span class="hl-identifier">helpers</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> 1. </span><span class="hl-identifier">Teletype</span><span class="hl-code"> </span><span class="hl-identifier">backgrounds</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">tt</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">background-color:</span><span class="hl-code"> var(--swatch-something-bhl-idk-will-fix-later, </span><span class="hl-var">#f4f4f4</span><span class="hl-code">)</span><span class="hl-code">;
+  </span><span class="hl-reserved">font-size:</span><span class="hl-code"> </span><span class="hl-number">85</span><span class="hl-string">%</span><span class="hl-code">;
+  </span><span class="hl-reserved">padding:</span><span class="hl-code"> </span><span class="hl-number">0.2</span><span class="hl-string">em</span><span class="hl-code"> </span><span class="hl-number">0.4</span><span class="hl-string">em</span><span class="hl-code">;
+  </span><span class="hl-reserved">margin:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">;
+  </span><span class="hl-reserved">border-radius:</span><span class="hl-code"> </span><span class="hl-number">6</span><span class="hl-string">px</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> 2. </span><span class="hl-identifier">Code</span><span class="hl-code"> </span><span class="hl-identifier">colours</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-special">:root</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  --</span><span class="hl-reserved">croqstyle-terminal-light-bg:</span><span class="hl-code"> </span><span class="hl-var">#ffffff</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-light-syntax:</span><span class="hl-code"> </span><span class="hl-var">#000000</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-light-comment:</span><span class="hl-code"> </span><span class="hl-var">#008000</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-light-error:</span><span class="hl-code"> </span><span class="hl-var">#e51602</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-light-value:</span><span class="hl-code"> </span><span class="hl-var">#267f99</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-light-symbol:</span><span class="hl-code"> </span><span class="hl-var">#795e26</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-light-string:</span><span class="hl-code"> </span><span class="hl-var">#a31515</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-light-operator:</span><span class="hl-code"> </span><span class="hl-var">#0000ff</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-light-builtin:</span><span class="hl-code"> </span><span class="hl-var">#14238a</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-light-keyword:</span><span class="hl-code"> </span><span class="hl-var">#af00db</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-light-border:</span><span class="hl-code"> </span><span class="hl-number">0.1</span><span class="hl-code">rem </span><span class="hl-string">solid</span><span class="hl-code"> </span><span class="hl-var">#444444</span><span class="hl-code">;
+ 
+  --</span><span class="hl-reserved">croqstyle-terminal-dark-bg:</span><span class="hl-code"> </span><span class="hl-var">#1f1f1f</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-dark-syntax:</span><span class="hl-code"> </span><span class="hl-var">#d4d4d4</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-dark-comment:</span><span class="hl-code"> </span><span class="hl-var">#6a9955</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-dark-error:</span><span class="hl-code"> </span><span class="hl-var">#cd4343</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-dark-value:</span><span class="hl-code"> </span><span class="hl-var">#4dc8af</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-dark-symbol:</span><span class="hl-code"> </span><span class="hl-var">#d9d9a7</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-dark-string:</span><span class="hl-code"> </span><span class="hl-var">#ce9178</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-dark-operator:</span><span class="hl-code"> </span><span class="hl-var">#5294ca</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-dark-builtin:</span><span class="hl-code"> </span><span class="hl-var">#9adafb</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-dark-keyword:</span><span class="hl-code"> </span><span class="hl-var">#c384be</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-dark-border:</span><span class="hl-code"> </span><span class="hl-number">0.3</span><span class="hl-code">rem </span><span class="hl-string">solid</span><span class="hl-code"> </span><span class="hl-var">#bbbbbb</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.code.terminal</span><span class="hl-code">, </span><span class="hl-identifier">.terminal</span><span class="hl-code"> &gt; </span><span class="hl-identifier">.code</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">color:</span><span class="hl-code"> var(--c-syntax)</span><span class="hl-code">;
+  </span><span class="hl-reserved">background-color:</span><span class="hl-code"> var(--c-bg)</span><span class="hl-code">;
+  </span><span class="hl-reserved">border:</span><span class="hl-code"> var(--croqstyle-terminal-border)</span><span class="hl-code">;
+  </span><span class="hl-reserved">border-radius:</span><span class="hl-code"> </span><span class="hl-number">0.3</span><span class="hl-code">rem</span><span class="hl-code">;
+  </span><span class="hl-reserved">margin-inline:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-string">em</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-special">:root</span><span class="hl-code">, </span><span class="hl-identifier">.terminal--light</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  --</span><span class="hl-reserved">c-bg:</span><span class="hl-code"> var(--croqstyle-terminal-light-bg)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-syntax:</span><span class="hl-code"> var(--croqstyle-terminal-light-syntax)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-comment:</span><span class="hl-code"> var(--croqstyle-terminal-light-comment)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-error:</span><span class="hl-code"> var(--croqstyle-terminal-light-error)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-value:</span><span class="hl-code"> var(--croqstyle-terminal-light-value)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-symbol:</span><span class="hl-code"> var(--croqstyle-terminal-light-symbol)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-string:</span><span class="hl-code"> var(--croqstyle-terminal-light-string)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-operator:</span><span class="hl-code"> var(--croqstyle-terminal-light-operator)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-builtin:</span><span class="hl-code"> var(--croqstyle-terminal-light-builtin)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-keyword:</span><span class="hl-code"> var(--croqstyle-terminal-light-keyword)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-border:</span><span class="hl-code"> var(--croqstyle-terminal-light-border)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.terminal--dark</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  --</span><span class="hl-reserved">c-bg:</span><span class="hl-code"> var(--croqstyle-terminal-dark-bg)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-syntax:</span><span class="hl-code"> var(--croqstyle-terminal-dark-syntax)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-comment:</span><span class="hl-code"> var(--croqstyle-terminal-dark-comment)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-error:</span><span class="hl-code"> var(--croqstyle-terminal-dark-error)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-value:</span><span class="hl-code"> var(--croqstyle-terminal-dark-value)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-symbol:</span><span class="hl-code"> var(--croqstyle-terminal-dark-symbol)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-string:</span><span class="hl-code"> var(--croqstyle-terminal-dark-string)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-operator:</span><span class="hl-code"> var(--croqstyle-terminal-dark-operator)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-builtin:</span><span class="hl-code"> var(--croqstyle-terminal-dark-builtin)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">c-keyword:</span><span class="hl-code"> var(--croqstyle-terminal-dark-keyword)</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-terminal-border:</span><span class="hl-code"> var(--croqstyle-terminal-dark-border)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> 3. </span><span class="hl-identifier">Debug</span><span class="hl-code"> </span><span class="hl-identifier">mode</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">.debug-mode</span><span class="hl-code">, </span><span class="hl-identifier">.debug-mode</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">, </span><span class="hl-identifier">.debug-mode</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code">, </span><span class="hl-identifier">.debug-mode</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">:</span><span class="hl-special">:after</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">outline:</span><span class="hl-code"> </span><span class="hl-string">thin</span><span class="hl-code"> </span><span class="hl-string">solid</span><span class="hl-code"> var(--debug-colour, </span><span class="hl-var">red</span><span class="hl-code">)</span><span class="hl-code">;
+  </span><span class="hl-reserved">position:</span><span class="hl-code"> </span><span class="hl-string">relative</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.debug-info</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">position:</span><span class="hl-code"> </span><span class="hl-string">absolute</span><span class="hl-code">;
+  </span><span class="hl-reserved">left:</span><span class="hl-code"> </span><span class="hl-number">50</span><span class="hl-string">%</span><span class="hl-code">;
+  </span><span class="hl-reserved">transform:</span><span class="hl-code"> translateX(-</span><span class="hl-number">50</span><span class="hl-string">%</span><span class="hl-code">)</span><span class="hl-code">;
+  </span><span class="hl-reserved">font-family:</span><span class="hl-code"> 'Fira </span><span class="hl-string">Code</span><span class="hl-code">', </span><span class="hl-string">monospace</span><span class="hl-code">;
+  </span><span class="hl-reserved">font-size:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">rem</span><span class="hl-code">;
+  </span><span class="hl-reserved">white-space:</span><span class="hl-code"> </span><span class="hl-string">nowrap</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.debug-info.over</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">top:</span><span class="hl-code"> -</span><span class="hl-number">2.5</span><span class="hl-code">rem</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.debug-info.under</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">bottom:</span><span class="hl-code"> -</span><span class="hl-number">2.5</span><span class="hl-code">rem</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.debug-info</span><span class="hl-code"> </span><span class="hl-identifier">p</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">margin:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Opt-in</span><span class="hl-code"> </span><span class="hl-identifier">features</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> 1. </span><span class="hl-identifier">Improved</span><span class="hl-code"> </span><span class="hl-identifier">image</span><span class="hl-code"> </span><span class="hl-identifier">block</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Custom</span><span class="hl-code"> </span><span class="hl-identifier">image</span><span class="hl-code"> </span><span class="hl-identifier">block</span><span class="hl-code"> </span><span class="hl-identifier">with</span><span class="hl-code"> </span><span class="hl-identifier">alt</span><span class="hl-code"> </span><span class="hl-identifier">text</span><span class="hl-code">, </span><span class="hl-identifier">hover</span><span class="hl-code"> </span><span class="hl-identifier">zoom</span><span class="hl-code">, </span><span class="hl-identifier">high</span><span class="hl-code"> </span><span class="hl-identifier">res</span><span class="hl-code"> </span><span class="hl-identifier">swap</span><span class="hl-code"> </span><span class="hl-identifier">and</span><span class="hl-code"> </span><span class="hl-identifier">WEBP</span><span class="hl-code"> </span><span class="hl-identifier">support</span><span class="hl-code">
+ </span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Define</span><span class="hl-code"> </span><span class="hl-identifier">low</span><span class="hl-code"> </span><span class="hl-identifier">res</span><span class="hl-code"> (~300</span><span class="hl-identifier">px</span><span class="hl-code"> </span><span class="hl-identifier">wide</span><span class="hl-code">) </span><span class="hl-identifier">image</span><span class="hl-code"> </span><span class="hl-identifier">via</span><span class="hl-code"> --</span><span class="hl-identifier">image-url</span><span class="hl-code"> </span><span class="hl-identifier">CSS</span><span class="hl-code"> </span><span class="hl-identifier">var</span><span class="hl-code">
+ </span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Define</span><span class="hl-code"> </span><span class="hl-identifier">high</span><span class="hl-code"> </span><span class="hl-identifier">res</span><span class="hl-code"> (~1000</span><span class="hl-identifier">px</span><span class="hl-code"> </span><span class="hl-identifier">wide</span><span class="hl-code">) </span><span class="hl-identifier">image</span><span class="hl-code"> </span><span class="hl-identifier">via</span><span class="hl-code"> --</span><span class="hl-identifier">image-large-url</span><span class="hl-code"> </span><span class="hl-identifier">CSS</span><span class="hl-code"> </span><span class="hl-identifier">var</span><span class="hl-code"> (</span><span class="hl-identifier">optional</span><span class="hl-code">)
+ </span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Define</span><span class="hl-code"> </span><span class="hl-identifier">aspect</span><span class="hl-code"> </span><span class="hl-identifier">ratio</span><span class="hl-code"> (</span><span class="hl-identifier">as</span><span class="hl-code"> '</span><span class="hl-identifier">H</span><span class="hl-code"> / </span><span class="hl-identifier">W</span><span class="hl-code">') </span><span class="hl-identifier">via</span><span class="hl-code"> --</span><span class="hl-identifier">aspect-ratio</span><span class="hl-code"> </span><span class="hl-identifier">CSS</span><span class="hl-code"> </span><span class="hl-identifier">var</span><span class="hl-code">
+ </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">.croqstyle-image-block</span><span class="hl-code"> </span><span class="hl-identifier">.scp-image-alt</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">position:</span><span class="hl-code"> </span><span class="hl-string">relative</span><span class="hl-code">;
+  </span><span class="hl-reserved">font-size:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">;
+  </span><span class="hl-reserved">aspect-ratio:</span><span class="hl-code"> var(--aspect-ratio)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.croqstyle-image-block</span><span class="hl-code"> </span><span class="hl-identifier">.scp-image-alt</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">content:</span><span class="hl-code"> &quot;&quot;</span><span class="hl-code">; </span><span class="hl-reserved">position:</span><span class="hl-code"> </span><span class="hl-string">absolute</span><span class="hl-code">; </span><span class="hl-reserved">inset:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">;
+  </span><span class="hl-reserved">pointer-events:</span><span class="hl-code"> </span><span class="hl-string">none</span><span class="hl-code">;
+  </span><span class="hl-reserved">background-image:</span><span class="hl-code"> var(--image-url)</span><span class="hl-code">;
+  </span><span class="hl-reserved">background-size:</span><span class="hl-code"> cover, </span><span class="hl-number">0.6</span><span class="hl-code">rem, cover</span><span class="hl-code">;
+  </span><span class="hl-reserved">background-position:</span><span class="hl-code"> </span><span class="hl-string">center</span><span class="hl-code">, </span><span class="hl-string">left</span><span class="hl-code"> </span><span class="hl-number">0.3</span><span class="hl-code">rem </span><span class="hl-string">bottom</span><span class="hl-code"> </span><span class="hl-number">0.3</span><span class="hl-code">rem, </span><span class="hl-string">center</span><span class="hl-code">;
+  </span><span class="hl-reserved">background-repeat:</span><span class="hl-code"> </span><span class="hl-string">no-repeat</span><span class="hl-code">;
+  </span><span class="hl-reserved">transition:</span><span class="hl-code"> transform </span><span class="hl-number">0.3</span><span class="hl-code">s ease-in-out</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-var">@media</span><span class="hl-code"> (</span><span class="hl-identifier">prefers-reduced-motion</span><span class="hl-code">) </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-identifier">.croqstyle-image-block</span><span class="hl-code"> </span><span class="hl-identifier">.scp-image-alt</span><span class="hl-code">::</span><span class="hl-identifier">before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">transition-duration:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">s</span><span class="hl-code">;
+  </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-var">@media</span><span class="hl-code"> (min-width: 670</span><span class="hl-identifier">px</span><span class="hl-code">) </span><span class="hl-identifier">and</span><span class="hl-code"> (max-width: 767</span><span class="hl-identifier">px</span><span class="hl-code">), (min-width: 940</span><span class="hl-identifier">px</span><span class="hl-code">) </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-identifier">.croqstyle-image-block</span><span class="hl-code">:</span><span class="hl-identifier">not</span><span class="hl-code">(</span><span class="hl-identifier">.croqstyle-image-block--no-hover</span><span class="hl-code">) </span><span class="hl-identifier">.scp-image-alt</span><span class="hl-code">:</span><span class="hl-reserved">hover:</span><span class="hl-code">:before,
+  .croqstyle-image-block--no-hover .scp-image-alt::before {
+    background-image: var(--image-large-url, var(--image-url)), url(https://scp-wiki.wdfiles.com/local--files/component%</span><span class="hl-number">3</span><span class="hl-code">Acroqstyle/loading.gif), var(--image-url)</span><span class="hl-code">;
+  </span><span class="hl-brackets">}</span><span class="hl-code">
+  </span><span class="hl-identifier">.croqstyle-image-block</span><span class="hl-special">:not</span><span class="hl-code">(</span><span class="hl-identifier">.croqstyle-image-block--no-hover</span><span class="hl-code">) </span><span class="hl-identifier">.scp-image-alt</span><span class="hl-special">:hover</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">transform:</span><span class="hl-code"> scale3d(</span><span class="hl-number">1.6</span><span class="hl-code">, </span><span class="hl-number">1.6</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">z-index:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">;
+  </span><span class="hl-brackets">}</span><span class="hl-code">
+}
+</span><span class="hl-identifier">.croqstyle-image-block.block-right</span><span class="hl-code"> </span><span class="hl-identifier">.scp-image-alt</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">transform-origin:</span><span class="hl-code"> </span><span class="hl-number">90</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-string">center</span><span class="hl-code"> </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.croqstyle-image-block.block-left</span><span class="hl-code"> </span><span class="hl-identifier">.scp-image-alt</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">transform-origin:</span><span class="hl-code"> </span><span class="hl-number">10</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-string">center</span><span class="hl-code"> </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.croqstyle-image-block</span><span class="hl-code"> </span><span class="hl-identifier">.scp-image-alt</span><span class="hl-code"> </span><span class="hl-identifier">img</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">width:</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">;
+  </span><span class="hl-reserved">height:</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">;
+  </span><span class="hl-reserved">object-fit:</span><span class="hl-code"> </span><span class="hl-string">center</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> 2. </span><span class="hl-identifier">Image</span><span class="hl-code"> </span><span class="hl-identifier">footnotes</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Custom</span><span class="hl-code"> </span><span class="hl-identifier">footnote</span><span class="hl-code"> </span><span class="hl-identifier">that</span><span class="hl-code"> </span><span class="hl-identifier">uses</span><span class="hl-code"> </span><span class="hl-identifier">the</span><span class="hl-code"> </span><span class="hl-identifier">same</span><span class="hl-code"> </span><span class="hl-identifier">vars</span><span class="hl-code"> </span><span class="hl-identifier">as</span><span class="hl-code"> </span><span class="hl-identifier">the</span><span class="hl-code"> </span><span class="hl-identifier">image</span><span class="hl-code"> </span><span class="hl-identifier">block</span><span class="hl-code"> </span><span class="hl-identifier">above</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">.croqstyle-img-footnote</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">position:</span><span class="hl-code"> </span><span class="hl-string">relative</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-img-footnote-link-color:</span><span class="hl-code"> rgb(var(--link-color, </span><span class="hl-number">187</span><span class="hl-code">,</span><span class="hl-number">0</span><span class="hl-code">,</span><span class="hl-number">17</span><span class="hl-code">))</span><span class="hl-code">;
+  </span><span class="hl-reserved">text-decoration:</span><span class="hl-code"> var(--croqstyle-img-footnote-link-color) </span><span class="hl-string">dashed</span><span class="hl-code"> </span><span class="hl-string">underline</span><span class="hl-code">;
+  </span><span class="hl-reserved">cursor:</span><span class="hl-code"> </span><span class="hl-string">help</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.croqstyle-img-footnote</span><span class="hl-code">:</span><span class="hl-special">:after</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">content:</span><span class="hl-code"> &quot;&quot;</span><span class="hl-code">;
+  </span><span class="hl-reserved">display:</span><span class="hl-code"> </span><span class="hl-string">inline-block</span><span class="hl-code">;
+  /</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-reserved">https:</span><span class="hl-code">//icon-sets.iconify.design/material-symbols/image-outline/ */
+  --croqstyle-img-footnote-icon-url: url(&quot;data:image/svg+xml,%</span><span class="hl-number">3</span><span class="hl-code">Csvg xmlns='http://www.w3.org/</span><span class="hl-number">2000</span><span class="hl-code">/svg' width='</span><span class="hl-number">1</span><span class="hl-string">em</span><span class="hl-code">' height='</span><span class="hl-number">1</span><span class="hl-string">em</span><span class="hl-code">' viewBox='</span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">24</span><span class="hl-code"> </span><span class="hl-number">24</span><span class="hl-code">'%</span><span class="hl-number">3</span><span class="hl-code">E%</span><span class="hl-number">3</span><span class="hl-code">Cpath fill='%</span><span class="hl-number">23000</span><span class="hl-code">' d='M5 </span><span class="hl-number">21</span><span class="hl-code">q-</span><span class="hl-number">.825</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">-</span><span class="hl-number">1.412</span><span class="hl-code">-</span><span class="hl-number">.587</span><span class="hl-code">T3 </span><span class="hl-number">19</span><span class="hl-code">V5q0-</span><span class="hl-number">.825.588</span><span class="hl-code">-</span><span class="hl-number">1.412</span><span class="hl-code">T5 </span><span class="hl-number">3</span><span class="hl-code">h14q</span><span class="hl-number">.825</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">1.413.588</span><span class="hl-code">T21 </span><span class="hl-number">5</span><span class="hl-code">v14q0 </span><span class="hl-number">.825</span><span class="hl-code">-</span><span class="hl-number">.587</span><span class="hl-code"> </span><span class="hl-number">1.413</span><span class="hl-code">T19 </span><span class="hl-number">21</span><span class="hl-code">zm0-2h14V5H5zm1-2h12l-3</span><span class="hl-number">.75</span><span class="hl-code">-</span><span class="hl-number">5</span><span class="hl-code">l-3 </span><span class="hl-number">4</span><span class="hl-code">L9 </span><span class="hl-number">13</span><span class="hl-code">zm-1 </span><span class="hl-number">2</span><span class="hl-code">V5z'/%</span><span class="hl-number">3</span><span class="hl-code">E%</span><span class="hl-number">3</span><span class="hl-code">C/svg%</span><span class="hl-number">3</span><span class="hl-code">E&quot;)</span><span class="hl-code">;
+  -</span><span class="hl-reserved">webkit-mask-image:</span><span class="hl-code"> var(--croqstyle-img-footnote-icon-url)</span><span class="hl-code">;
+          </span><span class="hl-reserved">mask-image:</span><span class="hl-code"> var(--croqstyle-img-footnote-icon-url)</span><span class="hl-code">;
+  -</span><span class="hl-reserved">webkit-mask-size:</span><span class="hl-code"> cover</span><span class="hl-code">;
+          </span><span class="hl-reserved">mask-size:</span><span class="hl-code"> cover</span><span class="hl-code">;
+  -</span><span class="hl-reserved">webkit-mask-position:</span><span class="hl-code"> </span><span class="hl-string">center</span><span class="hl-code">;
+          </span><span class="hl-reserved">mask-position:</span><span class="hl-code"> </span><span class="hl-string">center</span><span class="hl-code">;
+  </span><span class="hl-reserved">background-color:</span><span class="hl-code"> var(--croqstyle-img-footnote-link-color)</span><span class="hl-code">;
+  </span><span class="hl-reserved">width:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-string">em</span><span class="hl-code">; </span><span class="hl-reserved">height:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-string">em</span><span class="hl-code">;
+  </span><span class="hl-reserved">vertical-align:</span><span class="hl-code"> </span><span class="hl-string">super</span><span class="hl-code">;
+  </span><span class="hl-reserved">font-size:</span><span class="hl-code"> </span><span class="hl-string">smaller</span><span class="hl-code">;
+  </span><span class="hl-reserved">line-height:</span><span class="hl-code"> </span><span class="hl-string">normal</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.croqstyle-img-footnote</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">content:</span><span class="hl-code"> &quot;&quot;</span><span class="hl-code">;
+  </span><span class="hl-reserved">display:</span><span class="hl-code"> </span><span class="hl-string">block</span><span class="hl-code">;
+  </span><span class="hl-reserved">position:</span><span class="hl-code"> </span><span class="hl-string">absolute</span><span class="hl-code">;
+  </span><span class="hl-reserved">aspect-ratio:</span><span class="hl-code"> var(--aspect-ratio)</span><span class="hl-code">;
+  </span><span class="hl-reserved">height:</span><span class="hl-code"> </span><span class="hl-number">16</span><span class="hl-code">rem</span><span class="hl-code">;
+  </span><span class="hl-reserved">border:</span><span class="hl-code"> </span><span class="hl-string">thin</span><span class="hl-code"> </span><span class="hl-string">solid</span><span class="hl-code"> grey</span><span class="hl-code">;
+  </span><span class="hl-reserved">background-color:</span><span class="hl-code"> </span><span class="hl-var">white</span><span class="hl-code">;
+  </span><span class="hl-reserved">background-image:</span><span class="hl-code"> var(--image-url)</span><span class="hl-code">;
+  </span><span class="hl-reserved">background-size:</span><span class="hl-code"> </span><span class="hl-number">92.5</span><span class="hl-string">%</span><span class="hl-code">;
+  </span><span class="hl-reserved">background-position:</span><span class="hl-code"> </span><span class="hl-string">center</span><span class="hl-code">;
+  </span><span class="hl-reserved">background-repeat:</span><span class="hl-code"> </span><span class="hl-string">no-repeat</span><span class="hl-code">;
+  </span><span class="hl-reserved">bottom:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-reserved">left:</span><span class="hl-code"> </span><span class="hl-number">50</span><span class="hl-string">%</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-img-footnote-icon-offset:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-string">px</span><span class="hl-code">;
+  </span><span class="hl-reserved">transform:</span><span class="hl-code"> translate(-</span><span class="hl-number">50</span><span class="hl-string">%</span><span class="hl-code">, calc(</span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code"> + var(--croqstyle-img-footnote-icon-offset)))</span><span class="hl-code">;
+  </span><span class="hl-reserved">z-index:</span><span class="hl-code"> </span><span class="hl-number">20</span><span class="hl-code">;
+  </span><span class="hl-reserved">opacity:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">;
+  </span><span class="hl-reserved">pointer-events:</span><span class="hl-code"> </span><span class="hl-string">none</span><span class="hl-code">;
+  </span><span class="hl-reserved">transition:</span><span class="hl-code"> opacity </span><span class="hl-number">0.2</span><span class="hl-code">s ease, transform </span><span class="hl-number">0.2</span><span class="hl-code">s ease</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.croqstyle-img-footnote</span><span class="hl-special">:hover</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> --</span><span class="hl-reserved">croqstyle-img-footnote-link-color:</span><span class="hl-code"> </span><span class="hl-var">purple</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.croqstyle-img-footnote</span><span class="hl-special">:hover</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">opacity:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">;
+  </span><span class="hl-reserved">pointer-events:</span><span class="hl-code"> initial</span><span class="hl-code">;
+  --</span><span class="hl-reserved">croqstyle-img-footnote-icon-offset:</span><span class="hl-code"> </span><span class="hl-number">0.5</span><span class="hl-string">em</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-var">@media</span><span class="hl-code"> (max-width: 1200</span><span class="hl-identifier">px</span><span class="hl-code">) </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-identifier">.croqstyle-img-footnote</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">position:</span><span class="hl-code"> </span><span class="hl-string">static</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+  </span><span class="hl-identifier">.croqstyle-img-footnote</span><span class="hl-code">::</span><span class="hl-identifier">before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">bottom:</span><span class="hl-code"> </span><span class="hl-string">auto</span><span class="hl-code">;
+    </span><span class="hl-reserved">left:</span><span class="hl-code"> </span><span class="hl-number">50</span><span class="hl-string">%</span><span class="hl-code">;
+    </span><span class="hl-reserved">transform:</span><span class="hl-code"> translate(-</span><span class="hl-number">50</span><span class="hl-string">%</span><span class="hl-code">, calc(</span><span class="hl-number">0</span><span class="hl-string">px</span><span class="hl-code"> + var(--croqstyle-img-footnote-icon-offset)))</span><span class="hl-code">;
+  </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> 3. </span><span class="hl-identifier">Simple</span><span class="hl-code"> </span><span class="hl-identifier">responsive</span><span class="hl-code"> </span><span class="hl-identifier">div</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">.croqstyle-responsive-div</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">container-type:</span><span class="hl-code"> inline-size</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.croqstyle-responsive-div</span><span class="hl-code">__</span><span class="hl-identifier">desktop</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">display:</span><span class="hl-code"> </span><span class="hl-string">none</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.croqstyle-responsive-div</span><span class="hl-code">__</span><span class="hl-identifier">mobile</span><span class="hl-code"> </span><span class="hl-identifier">table</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">margin-left:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">; /</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Left</span><span class="hl-code"> </span><span class="hl-identifier">align</span><span class="hl-code"> </span><span class="hl-identifier">for</span><span class="hl-code"> </span><span class="hl-identifier">consistent</span><span class="hl-code"> </span><span class="hl-identifier">header</span><span class="hl-code"> </span><span class="hl-identifier">row</span><span class="hl-code"> </span><span class="hl-identifier">placement</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-var">@container</span><span class="hl-code"> (min-width: 550</span><span class="hl-identifier">px</span><span class="hl-code">) </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-identifier">.croqstyle-responsive-div</span><span class="hl-code">__</span><span class="hl-identifier">desktop</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">display:</span><span class="hl-code"> revert !important </span><span class="hl-brackets">}</span><span class="hl-code">
+  </span><span class="hl-identifier">.croqstyle-responsive-div</span><span class="hl-code">__</span><span class="hl-identifier">mobile</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">display:</span><span class="hl-code"> </span><span class="hl-string">none</span><span class="hl-code"> </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> 4. </span><span class="hl-identifier">Reset</span><span class="hl-code"> </span><span class="hl-identifier">tabview</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Undoes</span><span class="hl-code"> </span><span class="hl-identifier">base</span><span class="hl-code"> </span><span class="hl-identifier">Wikidot</span><span class="hl-code"> </span><span class="hl-identifier">tab</span><span class="hl-code"> </span><span class="hl-identifier">styling</span><span class="hl-code">. </span><span class="hl-identifier">These</span><span class="hl-code"> </span><span class="hl-identifier">reset</span><span class="hl-code"> </span><span class="hl-identifier">styles</span><span class="hl-code"> </span><span class="hl-identifier">are</span><span class="hl-code"> </span><span class="hl-identifier">derived</span><span class="hl-code"> </span><span class="hl-identifier">from</span><span class="hl-code"> </span><span class="hl-identifier">Wikidot</span><span class="hl-code">'</span><span class="hl-identifier">s</span><span class="hl-code"> </span><span class="hl-identifier">base</span><span class="hl-code"> </span><span class="hl-identifier">theme</span><span class="hl-code">. </span><span class="hl-identifier">They</span><span class="hl-code"> </span><span class="hl-identifier">override</span><span class="hl-code"> </span><span class="hl-identifier">and</span><span class="hl-code"> </span><span class="hl-identifier">undo</span><span class="hl-code"> </span><span class="hl-identifier">all</span><span class="hl-code"> </span><span class="hl-identifier">the</span><span class="hl-code"> </span><span class="hl-identifier">tab</span><span class="hl-code"> </span><span class="hl-identifier">styles</span><span class="hl-code"> </span><span class="hl-identifier">in</span><span class="hl-code"> </span><span class="hl-identifier">the</span><span class="hl-code"> </span><span class="hl-identifier">base</span><span class="hl-code"> </span><span class="hl-identifier">theme</span><span class="hl-code">, </span><span class="hl-identifier">matching</span><span class="hl-code"> </span><span class="hl-identifier">the</span><span class="hl-code"> </span><span class="hl-identifier">selectors</span><span class="hl-code"> </span><span class="hl-identifier">exactly</span><span class="hl-code"> </span><span class="hl-identifier">to</span><span class="hl-code"> </span><span class="hl-identifier">cancel</span><span class="hl-code"> </span><span class="hl-identifier">them</span><span class="hl-code"> </span><span class="hl-identifier">out</span><span class="hl-code">.
+</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">It</span><span class="hl-code"> </span><span class="hl-identifier">might</span><span class="hl-code"> </span><span class="hl-identifier">look</span><span class="hl-code"> </span><span class="hl-identifier">like</span><span class="hl-code"> </span><span class="hl-identifier">these</span><span class="hl-code"> </span><span class="hl-identifier">selectors</span><span class="hl-code"> </span><span class="hl-identifier">can</span><span class="hl-code"> </span><span class="hl-identifier">be</span><span class="hl-code"> </span><span class="hl-identifier">simplified</span><span class="hl-code">, </span><span class="hl-identifier">merged</span><span class="hl-code">, </span><span class="hl-identifier">reduced</span><span class="hl-code"> </span><span class="hl-identifier">in</span><span class="hl-code"> </span><span class="hl-identifier">complexity</span><span class="hl-code"> - </span><span class="hl-identifier">they</span><span class="hl-code"> </span><span class="hl-identifier">can</span><span class="hl-code">'</span><span class="hl-identifier">t</span><span class="hl-code">, </span><span class="hl-identifier">because</span><span class="hl-code"> </span><span class="hl-identifier">otherwise</span><span class="hl-code"> </span><span class="hl-identifier">they</span><span class="hl-code"> </span><span class="hl-identifier">wouldn</span><span class="hl-code">'</span><span class="hl-identifier">t</span><span class="hl-code"> </span><span class="hl-identifier">cancel</span><span class="hl-code"> </span><span class="hl-identifier">out</span><span class="hl-code"> </span><span class="hl-identifier">the</span><span class="hl-code"> </span><span class="hl-identifier">base</span><span class="hl-code"> </span><span class="hl-identifier">theme</span><span class="hl-code"> </span><span class="hl-identifier">styling</span><span class="hl-code">.
+</span><span class="hl-identifier">*</span><span class="hl-code">/
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Entire</span><span class="hl-code"> </span><span class="hl-identifier">tabview</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-special">:where</span><span class="hl-code">(</span><span class="hl-identifier">.croqstyle-reset-tabs</span><span class="hl-code">) </span><span class="hl-identifier">.yui-navset</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">padding:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">position:</span><span class="hl-code"> initial </span><span class="hl-brackets">}</span><span class="hl-code">
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">List</span><span class="hl-code"> </span><span class="hl-identifier">of</span><span class="hl-code"> </span><span class="hl-identifier">tabs</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-special">:where</span><span class="hl-code">(</span><span class="hl-identifier">.croqstyle-reset-tabs</span><span class="hl-code">) </span><span class="hl-identifier">.yui-nav</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">margin:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">padding:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">list-style:</span><span class="hl-code"> initial </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-special">:where</span><span class="hl-code">(</span><span class="hl-identifier">.croqstyle-reset-tabs</span><span class="hl-code">) </span><span class="hl-identifier">.yui-navset</span><span class="hl-code"> </span><span class="hl-identifier">.yui-nav</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">width:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">position:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">border:</span><span class="hl-code"> initial </span><span class="hl-brackets">}</span><span class="hl-code">
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Internal</span><span class="hl-code"> </span><span class="hl-identifier">wrapper</span><span class="hl-code"> </span><span class="hl-identifier">for</span><span class="hl-code"> </span><span class="hl-identifier">each</span><span class="hl-code"> </span><span class="hl-identifier">tab</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-special">:where</span><span class="hl-code">(</span><span class="hl-identifier">.croqstyle-reset-tabs</span><span class="hl-code">) </span><span class="hl-identifier">.yui-nav</span><span class="hl-code"> </span><span class="hl-identifier">li</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">margin:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">padding:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">list-style:</span><span class="hl-code"> initial </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-special">:where</span><span class="hl-code">(</span><span class="hl-identifier">.croqstyle-reset-tabs</span><span class="hl-code">) </span><span class="hl-identifier">.yui-navset</span><span class="hl-code"> </span><span class="hl-identifier">.yui-nav</span><span class="hl-code"> </span><span class="hl-identifier">li</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">display:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">vertical-align:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">cursor:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">margin:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">padding:</span><span class="hl-code"> initial </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-special">:where</span><span class="hl-code">(</span><span class="hl-identifier">.croqstyle-reset-tabs</span><span class="hl-code">) </span><span class="hl-identifier">.yui-navset</span><span class="hl-code"> </span><span class="hl-identifier">.yui-nav</span><span class="hl-code"> </span><span class="hl-identifier">.selected</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">margin:</span><span class="hl-code"> initial </span><span class="hl-brackets">}</span><span class="hl-code">
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Each</span><span class="hl-code"> </span><span class="hl-identifier">tab</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-special">:where</span><span class="hl-code">(</span><span class="hl-identifier">.croqstyle-reset-tabs</span><span class="hl-code">) </span><span class="hl-identifier">.yui-navset</span><span class="hl-code"> </span><span class="hl-identifier">.yui-nav</span><span class="hl-code"> </span><span class="hl-identifier">li</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">background:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">border:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">color:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">position:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">text-decoration:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">display:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">vertical-align:</span><span class="hl-code"> initial </span><span class="hl-brackets">}</span><span class="hl-code">
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Selected</span><span class="hl-code"> </span><span class="hl-identifier">tab</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-special">:where</span><span class="hl-code">(</span><span class="hl-identifier">.croqstyle-reset-tabs</span><span class="hl-code">) </span><span class="hl-identifier">.yui-navset</span><span class="hl-code"> </span><span class="hl-identifier">.yui-nav</span><span class="hl-code"> </span><span class="hl-identifier">.selected</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">border-color:</span><span class="hl-code"> initial </span><span class="hl-brackets">}</span><span class="hl-code">
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Hovered</span><span class="hl-code"> </span><span class="hl-identifier">tab</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-special">:where</span><span class="hl-code">(</span><span class="hl-identifier">.croqstyle-reset-tabs</span><span class="hl-code">) </span><span class="hl-identifier">.yui-navset</span><span class="hl-code"> </span><span class="hl-identifier">.yui-nav</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-special">:is</span><span class="hl-code">(</span><span class="hl-special">:hover</span><span class="hl-code">, </span><span class="hl-special">:focus</span><span class="hl-code">) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">background:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">outline:</span><span class="hl-code"> initial </span><span class="hl-brackets">}</span><span class="hl-code">
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Selected</span><span class="hl-code"> + </span><span class="hl-identifier">hovered</span><span class="hl-code"> </span><span class="hl-identifier">tab</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-special">:where</span><span class="hl-code">(</span><span class="hl-identifier">.croqstyle-reset-tabs</span><span class="hl-code">) </span><span class="hl-identifier">.yui-navset</span><span class="hl-code"> </span><span class="hl-identifier">.yui-nav</span><span class="hl-code"> </span><span class="hl-identifier">.selected</span><span class="hl-code"> </span><span class="hl-special">:is</span><span class="hl-code">(</span><span class="hl-identifier">a</span><span class="hl-code">, </span><span class="hl-identifier">a</span><span class="hl-special">:focus</span><span class="hl-code">, </span><span class="hl-identifier">a</span><span class="hl-special">:hover</span><span class="hl-code">) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">background:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">color:</span><span class="hl-code"> initial </span><span class="hl-brackets">}</span><span class="hl-code">
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Text</span><span class="hl-code"> </span><span class="hl-identifier">in</span><span class="hl-code"> </span><span class="hl-identifier">each</span><span class="hl-code"> </span><span class="hl-identifier">tab</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-special">:where</span><span class="hl-code">(</span><span class="hl-identifier">.croqstyle-reset-tabs</span><span class="hl-code">) </span><span class="hl-identifier">.yui-navset</span><span class="hl-code"> </span><span class="hl-identifier">.yui-nav</span><span class="hl-code"> </span><span class="hl-identifier">li</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-code"> </span><span class="hl-identifier">em</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">font-style:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">display:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">border:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">cursor:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">padding:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">left:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">top:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">position:</span><span class="hl-code"> initial </span><span class="hl-brackets">}</span><span class="hl-code">
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Text</span><span class="hl-code"> </span><span class="hl-identifier">in</span><span class="hl-code"> </span><span class="hl-identifier">the</span><span class="hl-code"> </span><span class="hl-identifier">selected</span><span class="hl-code"> </span><span class="hl-identifier">tab</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-special">:where</span><span class="hl-code">(</span><span class="hl-identifier">.croqstyle-reset-tabs</span><span class="hl-code">) </span><span class="hl-identifier">.yui-navset</span><span class="hl-code"> </span><span class="hl-identifier">.yui-nav</span><span class="hl-code"> </span><span class="hl-identifier">.selected</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-code"> </span><span class="hl-identifier">em</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">padding:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">border-color:</span><span class="hl-code"> initial </span><span class="hl-brackets">}</span><span class="hl-code">
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Content</span><span class="hl-code"> </span><span class="hl-identifier">panel</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-special">:where</span><span class="hl-code">(</span><span class="hl-identifier">.croqstyle-reset-tabs</span><span class="hl-code">) </span><span class="hl-identifier">.yui-navset</span><span class="hl-code"> </span><span class="hl-identifier">.yui-content</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">background:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">border:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">padding:</span><span class="hl-code"> initial </span><span class="hl-brackets">}</span></pre></div>
+</div>
+</div>
+</div>
+</div>
+<p><a name="improvements"></a></p>
+<h1 id="toc3"><span>Little improvements</span></h1>
+<p>These are all passive changes that improve™ either the reading or editing experience.</p>
+<p><a name="reasonably-sized-footnotes"></a></p>
+<h2 id="toc4"><span>Reasonably-sized footnotes</span></h2>
+<p>Stops footnotes from being a million miles wide, so that you can actually read them.<sup class="footnoteref"><a id="footnoteref-1" href="javascript:;" class="footnoteref" onclick="WIKIDOT.page.utils.scrollToReference('footnote-1')">1</a></sup></p>
+<p><a name="remove-avatar-hover"></a></p>
+<h2 id="toc5"><span>Remove avatar hover</span></h2>
+<p>Stops big pictures from appearing when you hover over someone's avatar image, because they're stupid and really annoying and you can just click on them if you want to see the big version.</p>
+<p>Hover me and watch nothing happen: <span class="printuser avatarhover"><a href="https://www.wikidot.com/user:info/croquembouche" onclick="WIKIDOT.page.listeners.userInfo(2893766); return false;"><img class="small" src="https://www.wikidot.com/avatar.php?userid=2893766&amp;amp;size=small&amp;amp;timestamp=1793192452" alt="Croquembouche" style="background-image:url(https://www.wikidot.com/userkarma.php?u=2893766)" /></a><a href="https://www.wikidot.com/user:info/croquembouche" onclick="WIKIDOT.page.listeners.userInfo(2893766); return false;">Croquembouche</a></span></p>
+<p><a name="monospace"></a></p>
+<h2 id="toc6"><span>Monospace editor + code blocks</span></h2>
+<p>Makes the edit textbox monospace, and also changes all monospace text to Fira Code, the obviously superior monospace font.</p>
+<p><a name="image-block-position"></a></p>
+<h2 id="toc7"><span>Better image block positioning</span></h2>
+<p>On mobile-sized screens, image blocks can no longer overflow the width of the page.</p>
+<p>On slightly larger screens, image blocks can no longer take up like 80% of the page leaving only a tiny strip of space for text to render one-word-per-line. At those widths, images will be centred and text won't be able to appear next to it.</p>
+<p>Not compatible with BHL.</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded"><a class="collapsible-block-link" href="javascript:;">+&nbsp;show&nbsp;screenshots&nbsp;of&nbsp;what&nbsp;this&nbsp;does</a></div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link"><a class="collapsible-block-link" href="javascript:;">–&nbsp;hide&nbsp;block</a></div>
+<div class="collapsible-block-content">
+<p>Before:</p>
+<table class="wiki-content-table">
+<tr>
+<td><img src="https://scp-wiki.wdfiles.com/local--files/component:croqstyle/old-image-block-at-800px.half.png" style="border: medium solid black; border-radius: 0.25rem" alt="old-image-block-at-800px.half.png" class="image" /></td>
+<td><img src="https://scp-wiki.wdfiles.com/local--files/component:croqstyle/old-image-block-at-510px.half.png" style="border: medium solid black; border-radius: 0.25rem" alt="old-image-block-at-510px.half.png" class="image" /></td>
+<td><img src="https://scp-wiki.wdfiles.com/local--files/component:croqstyle/old-image-block-at-330px.half.png" style="border: medium solid black; border-radius: 0.25rem" alt="old-image-block-at-330px.half.png" class="image" /></td>
+</tr>
+<tr>
+<td>tablet<br />
+<br />
+(squished text)</td>
+<td>large mobile<br />
+<br />
+(squished text)</td>
+<td>small mobile<br />
+<br />
+(the image is cut off on the left side)</td>
+</tr>
+</table>
+<p>After:</p>
+<table class="wiki-content-table">
+<tr>
+<td><img src="https://scp-wiki.wdfiles.com/local--files/component:croqstyle/new-image-block-at-800px.half.png" style="border: medium solid black; border-radius: 0.25rem" alt="new-image-block-at-800px.half.png" class="image" /></td>
+<td><img src="https://scp-wiki.wdfiles.com/local--files/component:croqstyle/new-image-block-at-510px.half.png" style="border: medium solid black; border-radius: 0.25rem" alt="new-image-block-at-510px.half.png" class="image" /></td>
+<td><img src="https://scp-wiki.wdfiles.com/local--files/component:croqstyle/new-image-block-at-330px.half.png" style="border: medium solid black; border-radius: 0.25rem" alt="new-image-block-at-330px.half.png" class="image" /></td>
+</tr>
+<tr>
+<td>tablet</td>
+<td>large mobile</td>
+<td>small mobile</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<p><a name="offsite-image-enforcement"></a></p>
+<h2 id="toc8"><span>Offsite image enforcement</span></h2>
+<p>Some attempt is made to enforce that offsite images aren't used on the wiki. The following rules are applied:</p>
+<ul>
+<li>Imgur-hosted images are replaced with the same placeholder image that users in the UK see, as Imgur does not offer its services to the UK. This is to increase visibility of the issue to non-UK authors so they can fix their articles faster. (Non-English translations of this component may see fit to remove this rule.)</li>
+</ul>
+<h1 id="toc9"><span>Documentation helpers</span></h1>
+<p>These are utilities intended for making it easier to document themes and components.</p>
+<p><a name="tt-bg"></a></p>
+<h2 id="toc10"><span>Teletype backgrounds</span></h2>
+<p>Adds a light grey background to &lt;tt&gt; elements (<tt><span style="white-space: pre-wrap;">{{text}}</span></tt>), so code snippets stand out more.</p>
+<p><a name="code-syntax"></a></p>
+<h2 id="toc11"><span>Code colours</span></h2>
+<p>Adds some syntax highlighting colours as CSS variables. The syntax colours are taken from VSCode's default light and dark themes.</p>
+<p>You can add the <tt>.terminal</tt> class to a fake code block as <tt><span style="white-space: pre-wrap;">[[div&#32;class=&quot;code&#32;terminal&quot;]]</span></tt> to give it a pseudo-terminal look. Doesn't work with <tt><span style="white-space: pre-wrap;">[[code]]</span></tt>, because Wikidot inserts a bunch of syntax highlighting that you can't change yourself without a bunch of CSS. Use it for non-<tt><span style="white-space: pre-wrap;">[[code]]</span></tt> code snippets only. Enable dark mode with <tt>.terminal<span style="white-space: pre-wrap;">--</span>dark</tt>:</p>
+<div style="display: flex; flex-wrap: wrap; align-items: start">
+<div class="code terminal" style="flex: 250px; word-break: break-all">
+<p><strong><span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">div</span> <span style="color: var(--c-symbol)">class</span>=<span style="color: var(--c-string)">&quot;code terminal&quot;</span><span style="color: var(--c-keyword)">]]</span></strong></p>
+<p><span style="white-space: pre-wrap;">**</span><span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-keyword</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>[[<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-builtin</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>div<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span> <span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-symbol</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>class<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span>=<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-string</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>&quot;code terminal&quot;<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-keyword</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>]]<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="white-space: pre-wrap;">**</span><br />
+<span style="white-space: pre-wrap;">**</span><span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-keyword</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>[[/<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-builtin</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>div<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-keyword</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>]]<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="white-space: pre-wrap;">**</span></p>
+<p><strong><span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">div</span><span style="color: var(--c-keyword)">]]</span></strong></p>
+</div>
+<div class="code terminal terminal--dark" style="flex: 250px; word-break: break-all">
+<p><strong><span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">div</span> <span style="color: var(--c-symbol)">class</span>=<span style="color: var(--c-string)">&quot;code terminal terminal<span style="white-space: pre-wrap;">--</span>dark&quot;</span><span style="color: var(--c-keyword)">]]</span></strong></p>
+<p><span style="white-space: pre-wrap;">**</span><span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-keyword</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>[[<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-builtin</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>div<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span> <span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-symbol</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>class<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span>=<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-string</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>&quot;code terminal terminal<span style="white-space: pre-wrap;">--</span>dark&quot;<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-keyword</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>]]<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="white-space: pre-wrap;">**</span><br />
+<span style="white-space: pre-wrap;">**</span><span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-keyword</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>[[/<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-builtin</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>div<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="color: var(--c-builtin)">var</span>(<span style="color: var(--c-symbol)"><span style="white-space: pre-wrap;">--c-keyword</span></span>)<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">|</span></span>]]<span style="color: var(--c-keyword)"><span style="white-space: pre-wrap;">##</span></span><span style="white-space: pre-wrap;">**</span></p>
+<p><strong><span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">div</span><span style="color: var(--c-keyword)">]]</span></strong></p>
+</div>
+</div>
+<p><em>Tools to auto-highlight: <a href="https://rossjrw.com/series-replace/?f=%3D%28%20%2A%29%28%5B0-9%5D%2B%28%3F%3Apx%7Cem%7Crem%29%3F%7Ctrue%7Cfalse%7Cyes%7Cno%29%5Cn%28%5C%7C%7C%5D%5D%29&amp;f=%3D%28%20%2A%29%28%5Ba-z0-9-%5D%2B%29%5Cn%28%5C%7C%7C%5D%5D%29&amp;f=%5C%7C%20%2A%28%5BA-z-%5D%2B%29%28%20%2A%3D%20%2A%29%3C%3C%3C%28value%7Csymbol%29%23%23%23%28.%2A%29%3E%3E%3E&amp;f=%5C%7C%20%2A%28%5BA-z-%5D%2B%29%28%20%2A%3D%20%2A%29%28%28%3F%3A%28%3F%21%5C%7C%7C%5D%5D%29.%29%2A%29&amp;f=%28%3F%3A%40%40%29%3F%5C%5B%5C%5Binclude%20%28.%2A%29%28%3F%3A%40%40%29%3F%28%5Cn%7C%20%29&amp;f=%5D%5D&amp;i=%5B%5Binclude%20%3Ascp-wiki%3Acomponent%3Acroqstyle%0A%7C%20number-arg%20%3D%20100px%0A%7C%20string-arg%20%3D%20Input%20value%0A%5D%5D&amp;r=%3D%241%3C%3C%3Cvalue%23%23%23%242%3E%3E%3E%5Cn%243&amp;r=%3D%241%3C%3C%3Csymbol%23%23%23%242%3E%3E%3E%5Cn%243&amp;r=%23%23var%28--c-keyword%29%7C%7C%23%23%20%23%23var%28--c-builtin%29%7C%241%23%23%23%23var%28--c-keyword%29%7C%242%23%23%23%23var%28--c-%243%29%7C%244%23%23&amp;r=%23%23var%28--c-keyword%29%7C%7C%23%23%20%23%23var%28--c-builtin%29%7C%241%23%23%23%23var%28--c-keyword%29%7C%242%23%23%23%23var%28--c-string%29%7C%243%23%23&amp;r=%23%23var%28--c-keyword%29%7C%5B%5B%23%23%23%23var%28--c-builtin%29%7Cinclude%23%23%20%23%23var%28--c-symbol%29%7C%241%23%23%242&amp;r=%23%23var%28--c-keyword%29%7C%5D%5D%23%23">component includes</a> · <a href="https://rossjrw.com/series-replace/?f=%5C%5B%21--%20.%2A%3F%20--%5D&amp;f=%28%3F%3C%3D%5C%5B%5C%5B%28%3F%3Adiv%7Cspan%29.%2A%29%28%5Ba-z-%5D%2B%29%3D%28%22%5B%5E%22%5D%2A%22%29&amp;f=%28%3F%3C%3D%5C%5B%5C%5B%2F%3F%28%3F%3Adiv%7Cspan%29.%2A%29%5C%5D%5C%5D&amp;f=%28%5C%5B%5C%5B%2F%3F%29%28div%7Cspan%29&amp;i=%5B%5Bdiv%20class%3D%22class-1%20class-2%22%20data-example%3D%22test%22%5D%5D%20%5B%21--%20comment%20--%5D%0ANormal%20text%0A%5B%5Bspan%20class%3D%22eggs%22%5D%5DText%20in%20span%5B%5B%2Fspan%5D%5D%0A%5B%5B%2Fdiv%5D%5D&amp;r=%23%23var%28--c-comment%29%7C%40%40%24%26%40%40%23%23&amp;r=%23%23var%28--c-symbol%29%7C%241%23%23%3D%23%23var%28--c-string%29%7C%40%40%242%40%40%23%23&amp;r=%23%23var%28--c-keyword%29%7C%5D%5D%23%23&amp;r=%23%23var%28--c-keyword%29%7C%241%23%23%23%23var%28--c-builtin%29%7C%242%23%23">divs and spans</a> · <a href="https://rossjrw.com/series-replace/?f=%40%40&amp;f=%5C%5B%5C%5Bmodule%20CSS%5C%5D%5C%5D&amp;f=%5C%5B%5C%5B%2Fmodule%5C%5D%5C%5D&amp;f=%2F%5C%2A%5B%5Cs%5CS%5D%2A%3F%5C%2A%2F&amp;f=%28%3F%3C%3D%23%23var%5C%28--c-comment%5C%29%5C%7C%28%3F%3A%28%3F%21%5C%2A%2F%23%23%29%5B%5Cs%5CS%5D%29%2A%29%5Cn&amp;f=%23%23var%5C%28--c-comment%5C%29%5C%7C%23%23&amp;f=%28%3F%21%28%3F%3A%28%3F%21%23%23%29.%29%2A%23%23%28%3F%21v%29%29%28%22%28%3F%3A%5B%5E%22%5C%5C%5Cn%5D%7C%5C%5C.%29%2A%22%7C%27%28%3F%3A%5B%5E%27%5C%5C%5Cn%5D%7C%5C%5C.%29%2A%27%29&amp;f=%28%3F%3C%3D%5Cburl%5C%28%29%28%3F%21%28%3F%3A%28%3F%21%23%23%29.%29%2A%23%23%28%3F%21v%29%29%28%3F%21%23%23%29%5B%5E%29%22%27%5Cs%5D%2B&amp;f=%28%3F%21%28%3F%3A%28%3F%21%23%23%29.%29%2A%23%23%28%3F%21v%29%29%40%5Ba-zA-Z-%5D%2B&amp;f=%28%3F%3C%3D%40%5B%5E%3B%7B%7D%5D%2A%5C%28%29%28%3F%21%28%3F%3A%28%3F%21%23%23%29.%29%2A%23%23%28%3F%21v%29%29%5Ba-zA-Z-%5D%2B%28%3F%3D%5Cs%2A%3A%29&amp;f=%28%3F%3D%5B%5E%3B%7B%7D%5D%2A%5C%7B%29%28%3F%21%28%3F%3A%28%3F%21%23%23%29.%29%2A%23%23%28%3F%21v%29%29%28%3F%3A%5B.%23%5D%28%3F%21%5Cd%29%28%3F%3A%5C%5C.%7C%5B%5Cw-%5D%29%2B%29%2B&amp;f=%28%3F%3D%5B%5E%3B%7B%7D%5D%2A%5C%7B%29%28%3F%21%28%3F%3A%28%3F%21%23%23%29.%29%2A%23%23%28%3F%21v%29%29%28%3F%3C%21%40%5B%5E%3B%7B%7D%5D%2A%29%3A%3A%3F%5Ba-zA-Z-%5D%2B&amp;f=%28%3F%3D%5B%5E%3B%7B%7D%5D%2A%5C%7B%29%28%3F%21%28%3F%3A%28%3F%21%23%23%29.%29%2A%23%23%28%3F%21v%29%29%5C%5B%28%5B%5Cw-%5D%2B%29&amp;f=%28%3F%21%5B%5E%3B%7B%7D%5D%2A%5C%7B%29%28%3F%21%28%3F%3A%28%3F%21%23%23%29.%29%2A%23%23%28%3F%21v%29%29%28%3F%3C%3D%28%3F%3A%5E%7C%5B%7B%3B%5D%7C%5C%2A%2F%23%23%29%5B%20%5Ct%5D%2A%29%28--%5B%5Cw-%5D%2B%7C-%3F%5Ba-zA-Z%5D%5B%5Cw-%5D%2A%29%28%3F%3D%5B%20%5Ct%5D%2A%3A%29&amp;f=%28%3F%21%28%3F%3A%28%3F%21%23%23%29.%29%2A%23%23%28%3F%21v%29%29%28%3F%3C%21%5B%5Cw-%5D%29--%5B%5Cw-%5D%2B&amp;f=%28%3F%21%5B%5E%3B%7B%7D%5D%2A%5C%7B%29%28%3F%21%28%3F%3A%28%3F%21%23%23%29.%29%2A%23%23%28%3F%21v%29%29%23%28%3F%3A%5B0-9a-fA-F%5D%7B3%2C4%7D%7C%5B0-9a-fA-F%5D%7B6%7D%7C%5B0-9a-fA-F%5D%7B8%7D%29%28%3F%21%5B%5Cw-%5D%29&amp;f=%28%3F%21%28%3F%3A%28%3F%21%23%23%29.%29%2A%23%23%28%3F%21v%29%29%28%3F%3C%21%5B%5Cw-%5D%29%28-%3F%5Ba-zA-Z%5D%5B%5Cw-%5D%2A%29%28%3F%3D%5C%28%29&amp;f=%28%3F%21%28%3F%3A%28%3F%21%23%23%29.%29%2A%23%23%28%3F%21v%29%29%28%3F%3C%21%5B%5Cw.-%5D%29-%3F%28%3F%3A%5Cd%2B%5C.%3F%5Cd%2A%7C%5C.%5Cd%2B%29%28%3F%3A%5Ba-zA-Z%5D%2B%7C%25%29%3F%28%3F%21%5B%5Cw.-%5D%29&amp;f=%28%3F%21%28%3F%3A%28%3F%21%23%23%29.%29%2A%23%23%28%3F%21v%29%29%21%20%2Aimportant&amp;f=%28%3F%21%28%3F%3A%28%3F%21%23%23%29.%29%2A%23%23%28%3F%21v%29%29%28%3F%3C%21%5B%5Cw-%5D%29-%3F%5Ba-zA-Z%5D%5B%5Cw-%5D%2A&amp;f=%28-%7B2%2C%7D%28%3F%21c-%5Ba-z%5D%2B%5C%29%5C%7C%29%7C_%7B2%2C%7D%7C%2F%7B2%2C%7D%7C%5C%2A%7B2%2C%7D%7C%5C%5E%7B2%2C%7D%7C%2C%7B2%2C%7D%7C%5C%5B%5C%5B%7C%5C%5D%5C%5D%7C%5C%7B%5C%7B%7C%5C%7D%5C%7D%29&amp;f=%5E%28%5B%2A%3E%2B%5D%29&amp;f=%5E%28%5B%20%5Ct%5D%2B%29%28%3F%3D%5CS%29&amp;r=&amp;r=%23%23var%28--c-keyword%29%7C%5B%5B%23%23%23%23var%28--c-builtin%29%7Cmodule%23%23%20%23%23var%28--c-symbol%29%7CCSS%23%23%23%23var%28--c-keyword%29%7C%5D%5D%23%23&amp;r=%23%23var%28--c-keyword%29%7C%5B%5B%2F%23%23%23%23var%28--c-builtin%29%7Cmodule%23%23%23%23var%28--c-keyword%29%7C%5D%5D%23%23&amp;r=%23%23var%28--c-comment%29%7C%24%26%23%23&amp;r=%23%23%5Cn%23%23var%28--c-comment%29%7C&amp;r=&amp;r=%23%23var%28--c-string%29%7C%241%23%23&amp;r=%23%23var%28--c-string%29%7C%24%26%23%23&amp;r=%23%23var%28--c-keyword%29%7C%24%26%23%23&amp;r=%23%23var%28--c-builtin%29%7C%24%26%23%23&amp;r=%23%23var%28--c-value%29%7C%24%26%23%23&amp;r=%23%23var%28--c-symbol%29%7C%24%26%23%23&amp;r=%5B%23%23var%28--c-builtin%29%7C%241%23%23&amp;r=%23%23var%28--c-builtin%29%7C%241%23%23&amp;r=%23%23var%28--c-builtin%29%7C%24%26%23%23&amp;r=%23%23var%28--c-value%29%7C%24%26%23%23&amp;r=%23%23var%28--c-symbol%29%7C%241%23%23&amp;r=%23%23var%28--c-value%29%7C%24%26%23%23&amp;r=%23%23var%28--c-keyword%29%7C%24%26%23%23&amp;r=%23%23var%28--c-operator%29%7C%24%26%23%23&amp;r=%40%40%241%40%40&amp;r=%40%40%241%40%40&amp;r=%40%40%241%40%40">CSS</a></em></p>
+<p><a name="debug-mode"></a></p>
+<h2 id="toc12"><span>Debug mode</span></h2>
+<div class="debug-mode" style="margin-bottom: 4rem;">
+<p>Draw lines around anything inside <tt>.debug-mode</tt>. The colour of the lines is red but defers to CSS variable <tt><span style="white-space: pre-wrap;">--</span>debug-colour</tt>.</p>
+<p>You can also add <tt>div.debug-info.over</tt> and <tt>div.debug-info.under</tt> inside an element to annotate the debug boxes &#8212; though you'll need to make sure to leave enough vertical space that the annotation doesn't overlap the thing above or below it.</p>
+<div class="debug-info under">
+<p>&#8230;like this!</p>
+</div>
+</div>
+<p><a name="features"></a></p>
+<h1 id="toc13"><span>Opt-in features</span></h1>
+<p>These are new features and widgets that you can add to your page if you like. All of these opt-in features have CSS classes starting with 'croqstyle', so there's zero risk of contaminating anything on your page if you're not using them.</p>
+<p><a name="improved-image-block"></a></p>
+<h2 id="toc14"><span>Improved image block</span></h2>
+<div class="croqstyle-image-block scp-image-block block-right" style="--aspect-ratio: 1 / 1; --image-url: url(https://scp-wiki.wdfiles.com/local--files/component%3Acroqstyle/lowres.png); --image-large-url: url(http://scp-wiki.wdfiles.com/local--files/component%3Acroqstyle/highres.webp);">
+<div class="scp-image-alt">
+<p>&quot;Low-res image&quot; and the image resolution (300x300) written on a pixelated background. When hovered the image changes to say &quot;High-res image&quot; and the new resolution of (1200x1200).</p>
+</div>
+<div class="scp-image-caption">
+<p>Image caption</p>
+</div>
+</div>
+<p>Provides an improved image block with more features, including:</p>
+<ul>
+<li>Hover zoom is built-in, similar to the 'Hover Enlarge' style provided by <span class="printuser avatarhover"><a href="https://www.wikidot.com/user:info/woedenaz" onclick="WIKIDOT.page.listeners.userInfo(1404096); return false;"><img class="small" src="https://www.wikidot.com/avatar.php?userid=1404096&amp;amp;size=small&amp;amp;timestamp=1793192452" alt="Woedenaz" style="background-image:url(https://www.wikidot.com/userkarma.php?u=1404096)" /></a><a href="https://www.wikidot.com/user:info/woedenaz" onclick="WIKIDOT.page.listeners.userInfo(1404096); return false;">Woedenaz</a></span>' <a href="/component:image-features">Image Features</a> component</li>
+<li>Built-in alt text.</li>
+<li>Supports showing a higher-resolution image when you hover it (unlike <em>Image Features</em>, which shows the same image but bigger), and even shows a loading icon while the larger image is downloaded.</li>
+</ul>
+<p>Please don't make the hover image different to the unhovered image as a jumpscare, that's very cringe. This is an accessibility tool.</p>
+<p>To use, insert the following syntax (which closely matches the source of the <a href="/component:image-block">standard image block</a>):</p>
+<div class="code terminal">
+<p><span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">div</span> <span style="color: var(--c-symbol)">class</span>=<span style="color: var(--c-string)">&quot;<strong>croqstyle-image-block</strong> scp-image-block block-right&quot;</span> <span style="color: var(--c-symbol)">style</span>=<span style="color: var(--c-string)"><span style="white-space: pre-wrap;">&quot;--aspect-ratio:&#32;1&#32;/&#32;1;&#32;--image-url:&#32;url(lowres.png);&#32;--image-large-url:&#32;url(highres.webp);&quot;</span></span><span style="color: var(--c-keyword)">]]</span><br />
+<span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">div</span> <span style="color: var(--c-symbol)">class</span>=<span style="color: var(--c-string)"><span style="white-space: pre-wrap;">&quot;scp-image-alt&quot;</span></span><span style="color: var(--c-keyword)">]]</span><br />
+Alt text goes here, which describes the content of the image for non-sighted users et al - e.g. if the image contains information, write it in plaintext here; or if the image invokes a particular feeling, describe that feeling here.<br />
+<span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">div</span><span style="color: var(--c-keyword)">]]</span><br />
+<span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">div</span> <span style="color: var(--c-symbol)">class</span>=<span style="color: var(--c-string)"><span style="white-space: pre-wrap;">&quot;scp-image-caption&quot;</span></span><span style="color: var(--c-keyword)">]]</span><br />
+Image caption<br />
+<span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">div</span><span style="color: var(--c-keyword)">]]</span><br />
+<span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">div</span><span style="color: var(--c-keyword)">]]</span></p>
+</div>
+<p>Replace <tt>block-right</tt> with <tt>block-left</tt> or <tt>block-center</tt> for left and centre alignment respectively. You can put a fallback image inside <tt>.scp-image-alt</tt> using standard <tt><span style="white-space: pre-wrap;">[[image]]</span></tt> syntax if you like.</p>
+<p>If you don't want to provide a different image for the large version, you can omit the <tt><span style="white-space: pre-wrap;">--</span>image-large-url</tt> CSS variable &#8212; the image in <tt><span style="white-space: pre-wrap;">--</span>image-url</tt> will be used both when zoomed and not zoomed.</p>
+<p>You can also add class <tt>croqstyle-image-block<span style="white-space: pre-wrap;">--</span>no-hover</tt> to disable the hover zoom feature and show the high res image all the time, but that's for a <em>very</em> niche use case &#8212; probably just use the standard image block instead.</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded"><a class="collapsible-block-link" href="javascript:;">+&nbsp;show&nbsp;tips&nbsp;for&nbsp;advanced&nbsp;users</a></div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link"><a class="collapsible-block-link" href="javascript:;">–&nbsp;hide&nbsp;block</a></div>
+<div class="collapsible-block-content">
+<p><strong>For advanced CSS users:</strong></p>
+<p>Note that the aspect ratio and image URLs are set via CSS variables. In this example they're set by the style attribute, but you can set them however you like (e.g. via a class defined in a CSS module).</p>
+<p><strong>For advanced image editors:</strong></p>
+<p>If the larger image is a WEBP, make sure that it has the transparency feature enabled - otherwise, when it starts loading, the rest of the smaller image will get blanked out until it's finished loading.</p>
+<p>To enable the transparency feature, before you convert the image to WEBP, just make sure it has at least one pixel that's at least partially transparent.</p>
+<p>You can do that in image editing software, alternatively here's an ImageMagick command that does it:</p>
+<div class="code terminal">
+<p>convert -alpha on -channel A -fx 'j==h-1 &amp;&amp; i==w-1 ? A*0.99 : A' image_original.png image_original_with_transparency.png</p>
+<p>cwebp -q 80 image_original_with_transparency.png -o image.webp</p>
+</div>
+</div>
+</div>
+</div>
+<p><a name="image-footnotes"></a></p>
+<h2 id="toc15"><span>Image footnotes</span></h2>
+<p>Provides a class that adds <span class="croqstyle-img-footnote" style="--aspect-ratio: 1 /1; --image-url: url(https://scp-wiki.wdfiles.com/local--files/component%3Acroqstyle/lowres.png);">image footnotes</span> to stuff. They're like regular footnotes, but for images.</p>
+<div class="code terminal">
+<p><span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">span</span> <span style="color: var(--c-symbol)">class</span>=<span style="color: var(--c-string)"><span style="white-space: pre-wrap;">&quot;croqstyle-img-footnote&quot;</span></span> <span style="color: var(--c-symbol)">style</span>=<span style="color: var(--c-string)"><span style="white-space: pre-wrap;">&quot;--aspect-ratio:&#32;1&#32;/1;&#32;--image-url:&#32;url(lowres.png);&quot;</span></span><span style="color: var(--c-keyword)">]]</span>Example.<span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">span</span><span style="color: var(--c-keyword)">]]</span></p>
+</div>
+<p>It uses the same CSS variables as the 'improved image block' feature above, so it's handy to define a CSS class per image, and then you can use that for both features.</p>
+<p>You can actually already put images in footnotes using standard Wikidot syntax:</p>
+<div class="code terminal">
+<p><span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">footnote</span><span style="color: var(--c-keyword)">]][[</span><span style="color: var(--c-builtin)">image</span> <span style="color: var(--c-string)">imagegoeshere.png</span><span style="color: var(--c-keyword)">]][[/</span><span style="color: var(--c-builtin)">footnote</span><span style="color: var(--c-keyword)">]]</span></p>
+</div>
+<p>That looks like this.<sup class="footnoteref"><a id="footnoteref-2" href="javascript:;" class="footnoteref" onclick="WIKIDOT.page.utils.scrollToReference('footnote-2')">2</a></sup></p>
+<p>The <tt>croqstyle-img-footnote</tt> class provided by Croqstyle is a little bit different to regular footnotes:</p>
+<ul>
+<li>It highlights a word or phrase as the context, not just a number</li>
+<li>It doesn't add the footnote to the footnote list, giving you the freedom to repeat image footnotes as often as you like without clogging up the bottom of the page.</li>
+</ul>
+<p>They work well as 'reminder footnotes' to help the reader recall what e.g. an SCP looks like, without needing to scroll back up to the original picture.</p>
+<p><a name="simple-responsive-div"></a></p>
+<h2 id="toc16"><span>Simple responsive div</span></h2>
+<p>Provides some classes for a simple responsive div that shows one set of contents for desktop users and another for mobile users.</p>
+<p>Here's the markup:</p>
+<div class="code terminal">
+<p><span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">div</span> <span style="color: var(--c-symbol)">class</span>=<span style="color: var(--c-string)"><span style="white-space: pre-wrap;">&quot;croqstyle-responsive-div&quot;</span></span><span style="color: var(--c-keyword)">]]</span><br />
+<span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">div</span> <span style="color: var(--c-symbol)">class</span>=<span style="color: var(--c-string)"><span style="white-space: pre-wrap;">&quot;croqstyle-responsive-div__desktop&quot;</span></span> <span style="color: var(--c-symbol)">style</span>=<span style="color: var(--c-string)"><span style="white-space: pre-wrap;">&quot;display:&#32;none&quot;</span></span><span style="color: var(--c-keyword)">]]</span><br />
+Desktop content goes here<br />
+<span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">div</span><span style="color: var(--c-keyword)">]]</span><br />
+<span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">div</span> <span style="color: var(--c-symbol)">class</span>=<span style="color: var(--c-string)"><span style="white-space: pre-wrap;">&quot;croqstyle-responsive-div__mobile&quot;</span></span><span style="color: var(--c-keyword)">]]</span><br />
+Mobile content goes here<br />
+<span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">div</span><span style="color: var(--c-keyword)">]]</span><br />
+<span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">div</span><span style="color: var(--c-keyword)">]]</span></p>
+</div>
+<p>(That <tt>display: none</tt> style is there so that if this get copied onto a page without croqstyle, or if croqstyle gets removed from the page, it gracefully falls back to showing the mobile version without breaking anything)</p>
+<p>The 'mobile' style will be activated any time the page content area is less than 550 pixels wide. That takes into account not only the screen width but also themes and <a href="/component:toggle-sidebar">whether or not the sidebar is present</a> (e.g. you know that one breakpoint at about ~800px where the desktop sidebar appears and there's only a bit of space for the content?) so it should be pretty resilient to anything you throw at it.</p>
+<p>Do note that <tt>.croqstyle-responsive-div</tt> must be a div as wide as the full page that wraps any responsive content, and you might even be able to wrap your entire page in it. However, <tt><span style="white-space: pre-wrap;">__</span>desktop</tt> and <tt><span style="white-space: pre-wrap;">__</span>mobile</tt> can be e.g. spans, if you need them to be; and you can include as many of them as you like.</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded"><a class="collapsible-block-link" href="javascript:;">+&nbsp;show&nbsp;use&nbsp;case:&nbsp;simple&nbsp;responsive&nbsp;tables</a></div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link"><a class="collapsible-block-link" href="javascript:;">-&nbsp;hide&nbsp;use&nbsp;case:&nbsp;simple&nbsp;responsive&nbsp;tables</a></div>
+<div class="collapsible-block-content">
+<p>Here's a way you can use <tt>.croqstyle-responsive-div</tt> to make responsive tables.</p>
+<p>Consider a wide table (either with lots of columns, or a few columns with a lot of text). It's impossible to display this on smaller screens because the table is just wider than your average mobile device.</p>
+<p>In this situation, you want to keep that table layout on desktop, but on mobile it would be better to present that data as one smaller table per row of the original table.</p>
+<p>(Sidenote: In <em>theory</em>, this is what <span class="printuser avatarhover"><a href="https://www.wikidot.com/user:info/woedenaz" onclick="WIKIDOT.page.listeners.userInfo(1404096); return false;"><img class="small" src="https://www.wikidot.com/avatar.php?userid=1404096&amp;amp;size=small&amp;amp;timestamp=1793192452" alt="Woedenaz" style="background-image:url(https://www.wikidot.com/userkarma.php?u=1404096)" /></a><a href="https://www.wikidot.com/user:info/woedenaz" onclick="WIKIDOT.page.listeners.userInfo(1404096); return false;">Woedenaz</a></span>' <a href="/component:responsive-tables">Responsive Tables</a> component promises to deliver, but it has a huge number of pitfalls that I wrote an essay about in its comments.)</p>
+<div style="display: flex; gap: 1em">
+<div style="flex: 1">
+<p>The following JavaScript snippet will convert a simple Wikidot table with the headers at the top, e.g. -&gt;</p>
+</div>
+<table class="wiki-content-table">
+<tr>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+</tr>
+<tr>
+<td>a1</td>
+<td>b1</td>
+<td>c1</td>
+</tr>
+<tr>
+<td>a2</td>
+<td>b2</td>
+<td>c2</td>
+</tr>
+</table>
+</div>
+<div style="display: flex; gap: 1em">
+<div style="flex: 1">
+<p>to several smaller tables, one per row of the original table, e.g. -&gt;</p>
+</div>
+<table class="wiki-content-table">
+<tr>
+<th>A</th>
+<td>a1</td>
+</tr>
+<tr>
+<th>B</th>
+<td>b1</td>
+</tr>
+<tr>
+<th>C</th>
+<td>c1</td>
+</tr>
+</table>
+<table class="wiki-content-table">
+<tr>
+<th>A</th>
+<td>a2</td>
+</tr>
+<tr>
+<th>B</th>
+<td>b2</td>
+</tr>
+<tr>
+<th>C</th>
+<td>c2</td>
+</tr>
+</table>
+</div>
+<p>Here's the JavaScript snippet. To convert the desktop table to the mobile tables, copy this, replace <tt>PASTE TABLE HERE</tt> with the table source (leave the backticks in place), paste that into your JS console and hit go; the output will be copied to your clipboard, paste that into your page (replacing the original table).</p>
+<div class="code">
+<div class="hl-main">
+<pre><span class="hl-brackets">(()</span><span class="hl-code"> =&gt; </span><span class="hl-brackets">{</span><span class="hl-code">
+  </span><span class="hl-reserved">const</span><span class="hl-code"> </span><span class="hl-identifier">desktopTable</span><span class="hl-code"> = `</span><span class="hl-identifier">PASTE</span><span class="hl-code"> </span><span class="hl-identifier">TABLE</span><span class="hl-code"> </span><span class="hl-identifier">HERE</span><span class="hl-code">`
+ 
+  </span><span class="hl-reserved">const</span><span class="hl-code"> </span><span class="hl-identifier">rowToCells</span><span class="hl-code"> = </span><span class="hl-identifier">row</span><span class="hl-code"> =&gt; </span><span class="hl-identifier">row</span><span class="hl-code">.</span><span class="hl-identifier">split</span><span class="hl-brackets">(</span><span class="hl-quotes">/</span><span class="hl-string">\s*\|\|~?\s*</span><span class="hl-quotes">/</span><span class="hl-brackets">)</span><span class="hl-code">.</span><span class="hl-identifier">slice</span><span class="hl-brackets">(</span><span class="hl-number">1</span><span class="hl-code">, -</span><span class="hl-number">1</span><span class="hl-brackets">)</span><span class="hl-code">
+ 
+  </span><span class="hl-reserved">const</span><span class="hl-code"> </span><span class="hl-brackets">[</span><span class="hl-identifier">header</span><span class="hl-code">, ...</span><span class="hl-identifier">rows</span><span class="hl-brackets">]</span><span class="hl-code"> = </span><span class="hl-identifier">desktopTable</span><span class="hl-code">
+    .</span><span class="hl-identifier">replace</span><span class="hl-brackets">(</span><span class="hl-quotes">/</span><span class="hl-string"> _\n</span><span class="hl-quotes">/g</span><span class="hl-code">, </span><span class="hl-quotes">&quot;</span><span class="hl-special">\\</span><span class="hl-string">n</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">
+    .</span><span class="hl-identifier">split</span><span class="hl-brackets">(</span><span class="hl-quotes">/</span><span class="hl-string">[\r\n]+</span><span class="hl-quotes">/</span><span class="hl-brackets">)</span><span class="hl-code">
+    .</span><span class="hl-identifier">map</span><span class="hl-brackets">(</span><span class="hl-identifier">rowToCells</span><span class="hl-brackets">)</span><span class="hl-code">
+    .</span><span class="hl-identifier">map</span><span class="hl-brackets">(</span><span class="hl-identifier">row</span><span class="hl-code"> =&gt; </span><span class="hl-identifier">row</span><span class="hl-code">.</span><span class="hl-identifier">map</span><span class="hl-brackets">(</span><span class="hl-identifier">cell</span><span class="hl-code"> =&gt; </span><span class="hl-identifier">cell</span><span class="hl-code">.</span><span class="hl-identifier">replace</span><span class="hl-brackets">(</span><span class="hl-quotes">/</span><span class="hl-string">\\n</span><span class="hl-quotes">/g</span><span class="hl-code">, </span><span class="hl-quotes">&quot;</span><span class="hl-string"> _</span><span class="hl-special">\n</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)))</span><span class="hl-code">
+ 
+  </span><span class="hl-reserved">const</span><span class="hl-code"> </span><span class="hl-identifier">mobileTables</span><span class="hl-code"> = </span><span class="hl-identifier">rows</span><span class="hl-code">.</span><span class="hl-identifier">map</span><span class="hl-brackets">(</span><span class="hl-identifier">row</span><span class="hl-code"> =&gt; </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">row</span><span class="hl-code">.</span><span class="hl-identifier">reduce</span><span class="hl-brackets">((</span><span class="hl-identifier">table</span><span class="hl-code">, </span><span class="hl-identifier">cell</span><span class="hl-code">, </span><span class="hl-identifier">cellIndex</span><span class="hl-brackets">)</span><span class="hl-code"> =&gt; </span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-reserved">return</span><span class="hl-code"> `$</span><span class="hl-brackets">{</span><span class="hl-identifier">table</span><span class="hl-brackets">}</span><span class="hl-code">\</span><span class="hl-identifier">n</span><span class="hl-code">||~ $</span><span class="hl-brackets">{</span><span class="hl-identifier">header</span><span class="hl-brackets">[</span><span class="hl-identifier">cellIndex</span><span class="hl-brackets">]}</span><span class="hl-code"> || $</span><span class="hl-brackets">{</span><span class="hl-identifier">cell</span><span class="hl-brackets">}</span><span class="hl-code"> ||`
+    </span><span class="hl-brackets">}</span><span class="hl-code">, </span><span class="hl-quotes">&quot;&quot;</span><span class="hl-brackets">)</span><span class="hl-code">
+  </span><span class="hl-brackets">})</span><span class="hl-code">
+ 
+  </span><span class="hl-reserved">const</span><span class="hl-code"> </span><span class="hl-identifier">output</span><span class="hl-code"> = </span><span class="hl-brackets">[</span><span class="hl-code">
+    </span><span class="hl-quotes">'</span><span class="hl-string">[[div class=&quot;croqstyle-responsive-div&quot;]]</span><span class="hl-quotes">'</span><span class="hl-code">,
+    </span><span class="hl-quotes">'</span><span class="hl-string">[[div class=&quot;croqstyle-responsive-div__desktop&quot; style=&quot;display: none&quot;]]</span><span class="hl-quotes">'</span><span class="hl-code">,
+    </span><span class="hl-identifier">desktopTable</span><span class="hl-code">,
+    </span><span class="hl-quotes">'</span><span class="hl-string">[[/div]]</span><span class="hl-quotes">'</span><span class="hl-code">,
+    </span><span class="hl-quotes">'</span><span class="hl-string">[[div class=&quot;croqstyle-responsive-div__mobile&quot;]]</span><span class="hl-quotes">'</span><span class="hl-code">,
+    ...</span><span class="hl-identifier">mobileTables</span><span class="hl-code">,
+    </span><span class="hl-quotes">'</span><span class="hl-string">[[/div]]</span><span class="hl-quotes">'</span><span class="hl-code">,
+    </span><span class="hl-quotes">'</span><span class="hl-string">[[/div]]</span><span class="hl-quotes">'</span><span class="hl-code">,
+  </span><span class="hl-brackets">]</span><span class="hl-code">.</span><span class="hl-identifier">join</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-special">\n</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">
+ 
+  </span><span class="hl-identifier">console</span><span class="hl-code">.</span><span class="hl-identifier">log</span><span class="hl-brackets">(</span><span class="hl-identifier">output</span><span class="hl-brackets">)</span><span class="hl-code">
+  </span><span class="hl-identifier">copy</span><span class="hl-brackets">(</span><span class="hl-identifier">output</span><span class="hl-brackets">)</span><span class="hl-code">
+</span><span class="hl-brackets">})()</span></pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="collapsible-block">
+<div class="collapsible-block-folded"><a class="collapsible-block-link" href="javascript:;">+&nbsp;show&nbsp;use&nbsp;case:&nbsp;change&nbsp;one&nbsp;word</a></div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link"><a class="collapsible-block-link" href="javascript:;">-&nbsp;hide&nbsp;use&nbsp;case:&nbsp;change&nbsp;one&nbsp;word</a></div>
+<div class="collapsible-block-content">
+<p>To switch out a single word/phrase on desktop or mobile:</p>
+<div class="code terminal">
+<p><span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">div</span> <span style="color: var(--c-symbol)">class</span>=<span style="color: var(--c-string)"><span style="white-space: pre-wrap;">&quot;croqstyle-responsive-div&quot;</span></span><span style="color: var(--c-keyword)">]]</span><br />
+You are currently browsing on <span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">span</span> <span style="color: var(--c-symbol)">class</span>=<span style="color: var(--c-string)"><span style="white-space: pre-wrap;">&quot;croqstyle-responsive-div__desktop&quot;</span></span> <span style="color: var(--c-symbol)">style</span>=<span style="color: var(--c-string)"><span style="white-space: pre-wrap;">&quot;display:&#32;none&quot;</span></span><span style="color: var(--c-keyword)">]]</span>desktop<span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">span</span><span style="color: var(--c-keyword)">]]</span><span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">span</span> <span style="color: var(--c-symbol)">class</span>=<span style="color: var(--c-string)"><span style="white-space: pre-wrap;">&quot;croqstyle-responsive-div__mobile&quot;</span></span><span style="color: var(--c-keyword)">]]</span>mobile<span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">span</span><span style="color: var(--c-keyword)">]]</span>, probably!<br />
+<span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">div</span><span style="color: var(--c-keyword)">]]</span></p>
+</div>
+<div class="croqstyle-responsive-div">
+<p>You are currently browsing on <span class="croqstyle-responsive-div__desktop" style="display: none">desktop</span><span class="croqstyle-responsive-div__mobile">mobile</span>, probably!</p>
+</div>
+</div>
+</div>
+</div>
+<p><a name="reset-tabview"></a></p>
+<h2 id="toc17"><span>Reset tabview</span></h2>
+<p>This utility CSS-resets a tabview &#8212; i.e., it removes all CSS styling from it. I always find it a pain to dig through the way Wikidot styles tabs and undo bits of it every time I want to style them. Using this, that work is already done.</p>
+<p>To reset a tabview, wrap it in <tt>.croqstyle-reset-tabs</tt>:</p>
+<div class="code terminal">
+<p><span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">div</span> <span style="color: var(--c-symbol)">class</span>=<span style="color: var(--c-string)"><span style="white-space: pre-wrap;">&quot;croqstyle-reset-tabs&quot;</span></span><span style="color: var(--c-keyword)">]]</span><br />
+<span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">tabview</span><span style="color: var(--c-keyword)">]]</span><br />
+<span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">tab</span> <span style="color: var(--c-string)">First tab</span><span style="color: var(--c-keyword)">]]</span><br />
+Content 1<br />
+<span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">tab</span><span style="color: var(--c-keyword)">]]</span><br />
+<span style="color: var(--c-keyword)">[[</span><span style="color: var(--c-builtin)">tab</span> <span style="color: var(--c-string)">Second tab</span><span style="color: var(--c-keyword)">]]</span><br />
+Content 2<br />
+<span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">tab</span><span style="color: var(--c-keyword)">]]</span><br />
+<span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">tabview</span><span style="color: var(--c-keyword)">]]</span><br />
+<span style="color: var(--c-keyword)">[[/</span><span style="color: var(--c-builtin)">div</span><span style="color: var(--c-keyword)">]]</span></p>
+</div>
+<p>This doesn't undo the CSS that hides/shows each the tab contents, but you could reset it yourself if you wanted to replace it with your own animation:</p>
+<div class="code terminal">
+<p>[id^=wiki-tab] { display: initial !important }</p>
+</div>
+<div class="collapsible-block">
+<div class="collapsible-block-folded"><a class="collapsible-block-link" href="javascript:;">+&nbsp;show&nbsp;reference&nbsp;for&nbsp;how&nbsp;to&nbsp;style&nbsp;each&nbsp;tabview&nbsp;part</a></div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link"><a class="collapsible-block-link" href="javascript:;">–&nbsp;hide&nbsp;block</a></div>
+<div class="collapsible-block-content">
+<p>Minimal selectors for each tabview part:</p>
+<table class="wiki-content-table">
+<tr>
+<th>Part</th>
+<th>Selector</th>
+</tr>
+<tr>
+<td>The entire tabview</td>
+<td>.yui-navset</td>
+</tr>
+<tr>
+<td>List of tabs</td>
+<td>.yui-navset .yui-nav</td>
+</tr>
+<tr>
+<td>Tab</td>
+<td>.yui-navset .yui-nav li a</td>
+</tr>
+<tr>
+<td>Tab (selected)</td>
+<td>.yui-navset .yui-nav .selected a</td>
+</tr>
+<tr>
+<td>Tab (hovered)</td>
+<td>.yui-navset .yui-nav a:is(:hover, :focus)</td>
+</tr>
+<tr>
+<td>Tab (selected + hovered)</td>
+<td>.yui-navset .yui-nav .selected :is(a, a:focus, a:hover)</td>
+</tr>
+<tr>
+<td>Text in each tab</td>
+<td>.yui-navset .yui-nav li a em</td>
+</tr>
+<tr>
+<td>Text in the selected tab</td>
+<td>.yui-navset .yui-nav .selected a em</td>
+</tr>
+<tr>
+<td>Tab content display area</td>
+<td>.yui-navset .yui-content</td>
+</tr>
+<tr>
+<td>Content of the selected tab</td>
+<td>[id^=wiki-tab][style*=block]</td>
+</tr>
+<tr>
+<td>Content of unselected tabs</td>
+<td>[id^=wiki-tab][style*=none]</td>
+</tr>
+</table>
+<p>To style only tabviews that have been reset, prepend <tt>:where(.croqstyle-reset-tabs)</tt> to each selector, e.g. <tt>:where(.croqstyle-reset-tabs) .yui-navset</tt></p>
+<p>To style a specific tabview, or if providing a custom opt-in tabview for a theme, do the same thing but with a different class, e.g. <tt>:where(.special-fancy-tabs) .yui-navset</tt></p>
+</div>
+</div>
+</div>
+<div class="collapsible-block">
+<div class="collapsible-block-folded"><a class="collapsible-block-link" href="javascript:;">+&nbsp;Show&nbsp;example&nbsp;reset&nbsp;tabs</a></div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link"><a class="collapsible-block-link" href="javascript:;">–&nbsp;hide&nbsp;block</a></div>
+<div class="collapsible-block-content">
+<p>Here's some tabs:</p>
+<script type="text/javascript" src="https://d3g0gp89917ko0.cloudfront.net/v--1e049c54eb7c/common--javascript/yahooui/tabview-min.js"></script>
+<div id="wiki-tabview-6d251aa1f8a2fbb54b3c2c9160cfa5d9" class="yui-navset">
+<ul class="yui-nav">
+<li class="selected"><a href="javascript:;"><em>First tab</em></a></li>
+<li><a href="javascript:;"><em>Second tab</em></a></li>
+</ul>
+<div class="yui-content">
+<div id="wiki-tab-0-0">
+<p>First tab's content</p>
+</div>
+<div id="wiki-tab-0-1" style="display:none">
+<p>Second tab's content</p>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+//<![CDATA[
+OZONE.dom.onDomReady(function(){
+        var tabView6d251aa1f8a2fbb54b3c2c9160cfa5d9 = new YAHOO.widget.TabView('wiki-tabview-6d251aa1f8a2fbb54b3c2c9160cfa5d9');
+                }, "dummy-ondomready-block");
+        
+//]]>
+</script>
+<p>Here's those same tabs with the reset class applied:</p>
+<div class="croqstyle-reset-tabs">
+<script type="text/javascript" src="https://d3g0gp89917ko0.cloudfront.net/v--1e049c54eb7c/common--javascript/yahooui/tabview-min.js"></script>
+<div id="wiki-tabview-3088909d852a7b79072fdf1dca052219" class="yui-navset">
+<ul class="yui-nav">
+<li class="selected"><a href="javascript:;"><em>First tab</em></a></li>
+<li><a href="javascript:;"><em>Second tab</em></a></li>
+</ul>
+<div class="yui-content">
+<div id="wiki-tab-0-0">
+<p>First tab's content</p>
+</div>
+<div id="wiki-tab-0-1" style="display:none">
+<p>Second tab's content</p>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+//<![CDATA[
+OZONE.dom.onDomReady(function(){
+        var tabView3088909d852a7b79072fdf1dca052219 = new YAHOO.widget.TabView('wiki-tabview-3088909d852a7b79072fdf1dca052219');
+                }, "dummy-ondomready-block");
+        
+//]]>
+</script></div>
+</div>
+</div>
+</div>
+<p><a name="match-iframe-css"></a></p>
+<h2 id="toc18"><span>Match iframe CSS</span></h2>
+<div style="font-family: serif; font-size: 1rem; color: black;">
+<p>Using an iframe and it doesn't look anything like the rest of the page? Wrong font and no Sigma-10 styles?</p>
+</div>
+<p>Just add this script to it:</p>
+<div class="code terminal">
+<p>&lt;script src=&quot;<a href="https://scp-wiki.wdfiles.com/local--files/component%3Acroqstyle/match-styles.js">https://scp-wiki.wdfiles.com/local--files/component%3Acroqstyle/match-styles.js</a>&quot; async&gt;&lt;/script&gt;</p>
+</div>
+<p>That'll import the wiki's CSS into the iframe.</p>
+</div>
+<div style="display: none">
+<div class="footnotes-footer">
+<div class="title">Footnotes</div>
+<div class="footnote-footer" id="footnote-1"><a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('footnoteref-1')">1</a>. They're this wide now, even if the text inside them is really really really really really really really really really really really really really long.</div>
+<div class="footnote-footer" id="footnote-2"><a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('footnoteref-2')">2</a>. <img src="https://scp-wiki.wdfiles.com/local--files/component:croqstyle/lowres.png" alt="lowres.png" class="image" /></div>
+</div>
+</div>
+
+                    

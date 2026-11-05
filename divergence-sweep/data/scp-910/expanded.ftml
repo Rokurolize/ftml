@@ -1,0 +1,377 @@
+[[module css]]
+#page-content .collapsible-block {  
+  max-width: 100%;
+    /* text-align: center; */
+    text-align: center;
+text-color: black;
+    border-color: #000000;
+    border: solid 1px #000000;
+    background-color: #f5f5f5;
+}
+.collapsible-block-content p {
+    text-align: left;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+blockquote {
+   border: 1px double #999;
+   /* padding: 0 1em; */
+   margin-left: 7px; 
+   margin-right: 7px;
+   background-color: #ffffff;
+}
+[[/module]]
+
+
+[[module CSS]]
+@import url(https://scp-wiki.wdfiles.com/local--code/info:style/1);
+[[/module]]
+
+[[ul class="creditRate"]]
+[[li class="rateBox folded"]]
+[[div_ class="rate-box-with-credit-button"]]
+[[module Rate]]
+[[div class="creditButton foldable-list-container"]]
+[# ]
+[[/div]]
+[[/div]]
+
+[[div id="credit-view"]]
+[[div_ class="fader foldable-list-container"]]
+[# close]
+[[/div]]
+
+[[div class="modalcontainer"]]
+[[div class="modalbox"]]
+[[=]]
+++* Info
+[[/=]]
+------
+[[div_ class="close-credits foldable-list-container"]]
+[# X]
+[[/div]]
+[[div class="credit first"]]
+
+**SCP-910:** Dust, Embodied
+**Author:** [[*user Pedantique]]
+**Author Page:** [http://www.scp-wiki.net/pedantique-personnel-file Dr. Dentick's Personnel File]
+
+**[http://www.scp-wiki.net/maim-the-sky-slay-the-sun-hub Heron & Hound Commentary Corner:]**
+> "A question, Egret."
+> 
+> "Yeah, Dhole?"
+> 
+> "Do you not worry over the Houndmaster's secrets?"
+> 
+> "Stop calling her that. Anyway, why would I worry about those? The Overseer trusts me."
+> 
+> "No more than the desert trusts the sun. What value is trust when you do tricks of your own accord? Would she not enlighten you otherwise? Would she not explain instead of demand?"
+> 
+> "Idiot. An overseer's secret isn't something like that. You don't whisper it to your friend to make them giggle. They bunch them up next to their hearts. They lock them there forever. That's what it takes to protect everyone."
+> 
+> "Distrust by a prettier name."
+> 
+> "Sure, but that's the world she distrusts. Not me. Never me."
+> 
+> "And when her secrets are worth more than your blood? When she cannot gird you against the future, or warn you of a fate? A simple exchange, that."
+> 
+> "Sure, I'll die. I'll die and be even more trustworthy. Graves don't leak. 
+
+[[/div]]
+------
+
+[[div class="creditBottomRate"]]
+[[div]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+[[/li]]
+[[/ul]]
+
+~~~~
+
+> **SYSTEM NOTICE: Overseer-6, 5 items require your attention.** 
+
+**Item #:** SCP-910
+
+**Object Class:** Safe
+
+**Special Containment Procedures:** One instance of SCP-910 is to be stored within Site-01's Critical Information Storage Unit. Personnel with Level-4 Clearance and access to Project PEARBLOSSOM-11 may request supervised viewings of the CISU-held copy of SCP-910.
+
+MTF Eta-82 ("Inkhounds") is to monitor rare book auctions and online marketplaces for instances of SCP-910. Sampling surveys of bookstores worldwide are to be conducted by Foundation AI OU-BIBLIOPHAGE, which is to further direct Foundation Internet trawlers in the detection and removal of all information pertaining to SCP-910.
+
+All copies of SCP-910 are to be destroyed following retrieval and processing, except in the event that the Foundation-held archival copy has been damaged. In cases where peaceful acquisition of an instance has been deemed impossible, MTF Eta-82 is to ensure their destruction under 14-ULTRAVIOLET engagement parameters.
+
+> **SYSTEM NOTICE: Overseer-6, 6 items require your attention.**
+
+**Description:** SCP-910 is an 156-page book titled //Organizational Symbology: New Tools for the Oldest Craft//, which describes methods to transform mundane organizations into anomalous entities for use in thaumaturgic rituals. Approximately 20 copies of SCP-910 have been printed yearly since 1955 by the Penn & Brooke Scribeworks (GoI-154). The author is listed as Erin Ahmadi, whose biographical summary describes as a thaumaturgist and amateur botanist living in Hell, Michigan. No other records of this individual have been located.
+
+The body of SCP-910's text details the principle that groups of humans organized according to specific principles can fill roles in thaumaturgic rituals traditionally held by biological or mineral components. For example: An organization may fill the need for a physical circle that would otherwise be drawn in chalk or blood. Such a substitution is argued to greatly increase the efficacy of the augmented ritual. These organizations often exhibit anomalous effects in the course of routine operations, some of which are further documented within SCP-910.
+
+Seven of the book's nine chapters depict different structures of organizations, outlining each through a combination of thaumaturgic jargon and elaborate metaphors. The presentation of ritual construction and execution throughout the book bears similarities to the theories of the Three River School, which emphasizes the need for balance of power across spell systems.
+
+[[collapsible show="SHOW CHAPTER LIST" hide="HIDE CHAPTER LIST"]]
+[[<]]
+* Chapter 1: Introduction to Organizational Symbology
+* Chapter 2: The Populace as Shifting Moon
+* [http://www.scp-wiki.net/scp-3442 Chapter 3: The Firm as Runed Circle]
+* Chapter 4: The Lawkeepers as Burning Candle
+* Chapter 5: The Rebellion as Sacrificial Dagger
+* Chapter 6: The Imperial Edifice as Bound Goat
+* Chapter 7: The Church as Gray Ash
+* Chapter 8: The Learned as Twined Focus
+* Chapter 9: In Conclusion, the Future
+[[/<]]
+[[/collapsible]]
+
+Tests of SCP-910 have produced varied results. Organizations structured in accordance with chapters 3, 7 and 8 generated significant anomalous effects. Organizations structured in accordance with chapters 2 and 6 generated minor and inconsistent anomalous effects. The contents of chapters 4 and 5 produced no discernible results during testing. On average, the organizations generating the strongest anomalous effects produced the largest improvement in the results of related thaumaturgic rituals.
+
+> **SYSTEM NOTICE: Overseer-6, 7 items require your attention.**
+
+**Addendum 910-A (Text Samples):**
+[[collapsible show="VOCALIZE PROJECT PEARBLOSSOM-11 PASSPHRASE" hide=""Corvid. Assailable. Octavian. Aubergine. Penumbra. Retinue. Effigy. Dissymmetry.""]]
+> **Chapter 1: Introduction to Organizational Symbology**
+> @@ @@
+> It is the first impulse of the initiated to deny others a seat at the feast of power. Such is the impetus behind grand initiations, secret passphrases, and hidden libraries. We rightly believe that this knowledge should be kept from the grasp of the greedy and ignorant. However, such thinking lends itself to separation and stagnation. We convince ourselves that what we have is all that we need, and that any change only serves to dilute centuries of study. This is by no means correct.
+> 
+> How many of us take to phone lines instead of casting our voices through the quavering aether? How many of us drive cars every day instead of taking the time to conjure a proper portal? The world has changed, and accepting that is an important step toward a better future. In employing modern technology, we have already allowed for countless changes from the old ways, and prospered as a result. With this in mind, it should not be difficult to look past chalking out ritual circles on damp basement floors and instead move toward the neat lines of organizational charts laid out in boardrooms.
+
+> **Chapter 5: The Rebellion as Sacrificial Dagger**
+> @@ @@
+> ... and the iron of the sea must further be enshrined in a house of barbs, itself built on a foundation of transgression and spite. The iron is to be wrought as a lion, coated with the dust of a generation's graves. Ornamented walls are to be erected around it, clad in old grudges and shared purpose. 
+> 
+> Rites must be observed in the house of the iron omphalos. The blood of the father is to be spilled in equal parts with the blood of the mother. The water of the earth is to be cast into the void of the sky. Emptiness is to be matched with emptiness until naught but void hangs within seven walls. Emptiness within matched by emptiness without, a blade bared against all things.
+> 
+> To understand which ritual practices are most compatible with an organization arranged in this symbol, we turn to the characterization process outlined in...
+
+>  **Chapter 8: The Learned as Twined Focus**
+> @@ @@
+> ... but all flows must end, of course. The flow of water from peak to ocean. The flow of knowledge from book to mind. The flow of power from font to focus. To hold and focus the flow, a proper vessel must be constructed. A cup holds only so much, after all. A cauldron of any size will overflow in time. Seekers of the pinnacle must thus create a bowl with no bottom, following the path of Adeimanthos and accomplishing his feat anew. 
+> 
+> To craft such a bowl, one will need at least two dozen hands for its shaping. 26 will do. To watch it fill, one will need at least two dozen eyes. 26 will do. And to drink from it? A single mouth will do. The focus does not divert, does not divide. Yes, one mouth will suffice to drink from that bottomless bowl, so long as it is lined with teeth of brass and silver.
+
+> **SYSTEM NOTICE: [*https://scp-wiki.wikidot.com/local--files/scp-910/SCP-910.html Overseer-6, 8 items require your immediate attention.]** 
+[[/collapsible]]
+
+[[div class="footer-wikiwalk-nav"]]
+[[=]]
+<< [[[SCP-909]]] | SCP-910 | [[[SCP-911]]] >>
+[[/=]]
+[[/div]]
+
+[[iftags +component]]
++ How To Use
+It is **mandatory** for all articles to have the licensebox citing all images, texts, and excerpts utilized within the piece. 
+
+Add this to the bottom of the page, below the wikiwalk footer:
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** @@
+@@> **Name:** (if different from filename)@@
+@@> **Author:**@@
+@@> **License:**@@
+@@> **Source Link:**@@
+@@> **Additional Notes:** (Optional)@@
+@@> **Derivative Of:** (Situational)@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Let's break down what each of these sections mean.
+
+> @@> **Filename:** @@
+
+Filename is, as the name implies, the name of a file in your article. As per Tech Policy, all files on pages must have a file extension appended after the name. This means that if you upload an image to your article and call it {{mycoolimage-1}}, you are not following the rules. A correct name would be {{mycoolimage-1.png}} or {{mycoolimage-1.jpg}}, or any other similar filetypes. If you are unsure what the file extension of something you intend to upload is, you can check it by right clicking on the file and then pressing 'Properties.'
+
+If you are quoting from a text, write something along the lines of {{Excerpts taken from //Book Title Here//}}. Do not input the entire quote here, just where it comes from.
+
+> @@> **Name:** (if different from filename)@@
+
+This field is where you put the original name of the file. For example, let's say I wanted to use [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg this image in my article]. The name of the image is {{Kievitsbloem}}, as is listed on the page. I would then copy that and paste it onto this field. Do not include its file extension (jpg, png, etc).
+
+If you are quoting from a text, list its title here.
+
+If you are using your own creation, you may title it however you please, or you may exclude this field completely.
+
+> @@> **Author:**@@
+
+This field is where you acknowledge the original creator of the media you are using. Looking at [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg the same previous image], we can see that the author of the file is {{Rasbak}}. This means I would have to put that name in this field. If you are using commissioned work, you must still cite the original creator.
+
+If you are using your own creation, insert your username.
+
+
+> @@> **License:**@@
+
+In this section, you must write the file's attached license. This information is typically accessible on the page you are sourcing the file from. [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg Following the same example as before], we can see that this particular image is CC BY SA 3.0. Keep in mind that all files must be compatible with the site's license (CC BY SA 3.0) and follow the [[[Image Use Policy]]]. 
+
+
+> @@> **Source Link:**@@
+
+This field is typically a direct link to the page where you are taking the file from. Just copy the url from the address bar and paste it here. So for example, using the same image as above, I would put {{@@[https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg Wikimedia Commons]@@}} in this field. You should replace the text of the hyperlink with the name of the webiste you are taking your file from.
+
+If you are utilizing your own work, link to the page you are posting and title it {{SCP Foundation Wiki}}. However, if you are using your own media that you uploaded to a site like, say, Flickr, you must still follow this step.
+
+> @@> **Additional Notes:** (Optional)@@
+
+This is where you enter any additional information about the file. For example, if it is a composite image, you must state that this file is made up of two different images, and cite all images used in its creation. 
+
+
+> @@> **Derivative Of:** (Situational)@@
+
+This field is only applicable if you are using an image or other form of media that was derived from two or more sources. For example, a mashup would have to cite all of its images here. In order to be properly licenseboxed, copy-paste the following syntax underneath the {{Derivative Of:}} line.
+
+[[div class="blockquote"]]
+@@> **Name:**@@
+@@> **Author:**@@
+@@> **License:**@@
+@@> **Source Link:**@@
+[[/div]]
+
+From there, you simply fill in the information as you would any other file.
+-----
+
++ Examples
+
+Here is an example of a licensebox used in [[[SCP-7726]]], which cites an image from Wikimedia Commons.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** gun.png@@
+@@> **Name:** Beretta 90TWO closed.JPG@@
+@@> **Author:** Praiyachat@@
+@@> **License:** CC BY-SA 3.0@@
+@@> **Source Link:** [https://commons.wikimedia.org/wiki/File:Beretta_90TWO_closed.JPG Wikimedia Commons]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-6999]]], which cites an audio clip.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** hymn.mp3@@
+@@> **Name:** Nearer, my God, to Thee@@
+@@> **Author:** Conway's Band@@
+@@> **License:** Public Domain@@
+@@> **Source Link:** [https://www.loc.gov/item/jukebox-14234/ Library of Congress]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[michael-the-kiler|michael the kiler]]], which cites an author using their own creation.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** dakilla.jpg@@
+@@> **Author:** [[*user ratking666]]@@
+@@> **License:** CC BY-SA 3.0@@
+@@> **Source Link:** [https://scp-wiki.wikidot.com/michael-the-kiler SCP Foundation Wiki]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-7000]]], which cites an author using an image derivative of other images.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** WettleBomb.jpg@@
+@@> **License:** CC BY 2.0@@
+
+This image is a composite of:
+
+@@> **Name:** 130320-Z-TK422-652@@
+@@> **Author:** Oregon National Guard@@
+@@> **License:** CC BY 2.0@@
+@@> **Source:** [https://www.flickr.com/photos/32031029@N03/8576628356 flickr]@@
+
+@@> **Name:** High Noon Nap@@
+@@> **Author:** OakleyOriginals@@
+@@> **License:** CC BY 2.0@@
+@@> **Source:** [https://www.flickr.com/photos/47264866@N00/13279780754 flickr]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-173]]], which does not have any images or other citations, but includes an author listing.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=Moto42]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[deesoafs|Doctor Everwood Eats Shit On A Frozen Sidewalk]]], which does not have any images or other citations and does not include an author listing.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+-----
+
++ A Word On Excerpts/Quotes
+
+If you are using excerpts from passages or quotes, you must still cite them. 
+
+Here is an example of a licensebox used in [[[SCP-7010]]], which cites excerpts from a book.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> This article contains an excerpt from //[*https://en.wikisource.org/wiki/Leviathan Leviathan]// (1651) by Thomas Hobbes (Public Domain).@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+-----
+
++ A Note On Co-Authoring
+
+In the event you co-author an article with someone or someones, you can add the following syntax to the top of the licensebox to indicate multiple authors.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=User1, User2, User3]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+----
+
++ A Note On Translations
+
+For translations of works originally written in another language (see our [[[Translations Policy]]] for more information), the licensebox should list the original author (or authors) first, followed by the translator (or translators). 
+
+Within the licensebox, link to the original article, as follows:
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=User1, translated by User2]]@@
+@@> **Original Article:** original-url@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+If you post a translation of your own work then it is unnecessary to list your own name twice. If you post a translation of a translation (e.g. a Japanese article that was translated into Spanish, then into English), link to the original article, but credit the translator whose work you used as a co-translator.
+
+See [[[SCP-280-JP]]] for an example of a translation with multiple images listed in the License Box.
+
+----
+[[size 75%]]This page was originally created by CityToast and was updated on 1/27/2024 by Uncle Nicolini.[[/size]]
+@@ @@
+@@ @@
+@@ @@
+@@ @@
+= Ignore everything beneath this text.
+@@ @@
+@@ @@
+@@ @@
+[[/iftags]]
+
+[[div class="licensebox"]]
+[[collapsible show="‡ Licensing / Citation" hide="‡ Hide Licensing / Citation"]]
+Cite this page as:
+[[module listpages range="."]]
+> "%%title_linked%%" by %%created_by%%
+, from the [https://scpwiki.com SCP Wiki]. Source: https://scpwiki.com/%%fullname%%. Licensed under [https://creativecommons.org/licenses/by-sa/3.0/ CC BY-SA].
+[[/module]]
+For information on how to use this component, see the [[[component:license-box|License Box component]]]. To read about licensing policy, see the [[[Licensing Guide]]].
+
+
+
+[[/collapsible]]
+[[/div]]

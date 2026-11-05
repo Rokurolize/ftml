@@ -1,0 +1,29 @@
+[
+ {
+  "token": "paragraph-break",
+  "rule": "block-image",
+  "span": [
+   2139,
+   2141
+  ],
+  "kind": "rule-failed"
+ },
+ {
+  "token": "left-block",
+  "rule": "fallback",
+  "span": [
+   2036,
+   2038
+  ],
+  "kind": "no-rules-match"
+ },
+ {
+  "token": "right-block",
+  "rule": "fallback",
+  "span": [
+   2152,
+   2154
+  ],
+  "kind": "no-rules-match"
+ }
+]

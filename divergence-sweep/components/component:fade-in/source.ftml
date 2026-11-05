@@ -1,0 +1,66 @@
+[[module CSS]]
+@import url(https://scp-wiki.wdfiles.com/local--code/component%3Afade-in/1);
+[[/module]]
+
+[[iftags +component]]
+[[div style="border: 1px solid #ddd; padding: 1em;"]]
+This component makes everything on the page smoothly fade in, instead of appearing instantly when the page loads.
+
+There's not really any reason to use it and in most cases it makes the page feel a bit pretentious, but if that's what you're looking for, this may be the component for you.
+
+The fade-in effect is applied directly to the contents of the page), the page title, and breadcrumbs. It won't apply to other parts of the page e.g. the sidebar or the header.
+
++ Usage
+
+[[div class="code"]]
+@@[[include :scp-wiki:component:fade-in]]@@
+[[/div]]
+
++ Removing from other themes
+
+Some CSS themes bundle Fade In by default ([[[theme:blankstyle|]]], [[[theme:flopstyle|]]], [[[theme:foxtrot|]]] and [[[theme:queerstyle|]]] at the time of writing). If you'd like to use those themes without Fade In, you can disable it with the following:
+
+[[div class="code"]]
+@@[[module CSS]]@@
+:root {
+@@  --@@fade-in: none;
+}
+@@[[/module]]@@
+[[/div]]
+
+[[/div]]
+
+-----
+
++ Source code
+
+[[code type="css"]]
+/* https://scp-wiki.wikidot.com/component:fade-in */
+
+:where(:root) {
+  --fade-in: fadeIn;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :where(#page-title, #breadcrumbs, #page-content) {
+    animation-name: var(--fade-in);
+    animation-duration: 0.5s;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(0,15px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0,0);
+  }
+}
+[[/code]]
+
+[[/iftags]]

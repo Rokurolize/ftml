@@ -1,0 +1,282 @@
+[[>]]
+[[module Rate]]
+[[/>]]
+
+
+
+[[div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;"]]
+[[image SCP-2816-01-new-tweaked.png {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+An early stage of SCP-2816-1. SCP-2816-2 is visible on the right.
+
+[[/div]]
+[[/div]]
+
+
+
+**Item #:** SCP-2816
+
+**Object Class:** Safe
+
+**Special Containment Procedures:** SCP-2816 is currently located in a storage locker in Site 28. Instances of SCP-2816-1 are to be recovered and placed in Site 28 storage room 5C in front of a CCTV camera.
+
+**Description:** SCP-2816 is a set of paintbrushes of various sizes, estimated to be approximately 8 years old at the time of recovery. The brushes emit minor amounts of ionizing radiation, although not enough to be considered harmful. SCP-2816 may be used as a regular set of paintbrushes when creating original works, but any attempt to copy an existing painting will make the finished result an instance of SCP-2816-1.
+
+Instances of SCP-2816-1 will not initially display anomalous properties, but when left unobserved for a length of time[[footnote]]The longest recorded timespan has been 8 days, and the shortest has been 38 seconds.[[/footnote]] the contents of the painting will begin to change. The first change is always the appearance of SCP-2816-2, which will be seen sitting or standing somewhere within the painting. SCP-2816-2 will remain idle in the painting for up to 24 hours before making additional changes. Changes will only be made when the painting is not being observed; if the painting is observed while changing, it will appear to be frozen mid-change. SCP-2816-2 may be visible, often in the act of changing the painting. Any changes made to the painting while SCP-2816-2 is active will cause SCP-2816-2 to stop appearing in the painting and all progress to halt.
+
+SCP-2816-2 is a humanoid figure wearing a white Level C HAZMAT suit. After SCP-2816-2's first appearance, additional changes will be made to the painting during periods of non-observation. SCP-2816-2 will overhaul all structures within the painting, adding safety equipment and survival gear wherever possible[[footnote]]Items added have included fire extinguishers, gas masks, first aid kits, canned food, sealed water bottles, Geiger counters, educational literature on a variety of topics including hydroponics and food preservation, and maps of arbitrary locales with large sections shaded in and labeled "DANGER."[[/footnote]] and in many cases reinforcing the structure by replacing walls with stronger materials, fixing holes or damage, or boarding up windows. Additionally, SCP-2816-2 will place a sign saying "HAZARD" over every visible exit. Although SCP-2816-2 will not modify any living creatures in the painting, after several modifications have been made their expressions can be seen to be visibly more anxious. If the creatures are not inside an enclosed structure, SCP-2816-2 will place gas masks on their faces.
+
+Within 5 days of SCP-2816-2's first change, the environment of SCP-2816-1 will begin to show significant differences matching an accelerated timescale of a nuclear winter. If SCP-2816-2's preparations were complete, the painting's inhabitants will remain unaffected; however, if SCP-2816-2's preparations were not completed in time, the painting's inhabitants will begin to die. A variety of causes have been recorded, including radiation sickness, hypothermia, starvation, and dehydration. On rare occasions, the cause of death will indicate violence by another inhabitant, such as assault with a blunt object or a bloodied trail leading off to the side of the painting. Inhabitants have also been known to commit suicide if an opportunity is available.
+
+**Addendum-2816-01:** Log of recorded changes in instances of SCP-2816-1
+[[collapsible show="+ Test Results" hide="- Test Results"]]
+**Test 1**
+//Painting:// Leonardo da Vinci's //Mona Lisa//.
+//Changes:// A gas mask was placed on the subject's face and the opening in the background was partially boarded up. Through gaps in the boards, the sky could be seen to have darkened significantly, and snow appeared to have begun falling.
+
+**Test 2**
+//Painting:// Edward Hopper's //Nighthawks//.
+//Changes:// Canned goods, bottled water, and survival manuals were stacked on the counter. The door at the back of diner had a hazard sign placed over it. The inhabitants looked increasingly anxious over the course of the changes. The sky darkened and snow began to fall shortly after SCP-2816-2 finished covering the windows with metal plates.
+
+**Test 3**
+//Painting:// Salvador Dalí's //The Persistence of Memory//.
+//Changes:// SCP-2816-2 reset all clocks to 12 o'clock and constructed a simple shack filled with food and medical supplies in the center. The entire painting turned white for approximately 20 seconds, then displayed only smoke and dust for the next hour before showing a crater.
+
+**Test 4**
+//Painting:// Vincent Willem van Gogh's //Starry Night//. A brush stroke was made in the middle of SCP-2816-2's preparations, halting its progress.
+//Changes:// SCP-2816-2 boarded up approximately half of the town's visible windows and had begun working on a bunker in the foreground. 3 days after SCP-2816-2's last appearance, a large cloud of smoke blotted out most of the sky and snow began falling. Within 24 hours, all of the houses whose windows had not been boarded up displayed signs of forcible entry. Two (presumably dead) bodies could be seen lying on the ground in front of the church, but were soon covered by snow.
+
+**Test 5**
+//Painting:// Pablo Picasso's //Guernica//.
+//Changes:// SCP-2816-2's only apparent actions were to close the eyes of all the inhabitants of the painting and place tall stone posts next to them; however, other actions may have been performed but obscured by the abstract art style. The second effect appeared 2 days after SCP-2816-2's first appearance, and all the inhabitants were quickly covered by snow, leaving only the posts visible.
+[[/collapsible]]
+
+[[footnoteblock]]
+
+[[div class="footer-wikiwalk-nav"]]
+[[=]]
+<< [[[SCP-2815]]] | SCP-2816 | [[[SCP-2817]]] >>
+[[/=]]
+[[/div]]
+
+
+[[iftags +component]]
++ How To Use
+It is **mandatory** for all articles to have the licensebox citing all images, texts, and excerpts utilized within the piece. 
+
+Add this to the bottom of the page, below the wikiwalk footer:
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** @@
+@@> **Name:** (if different from filename)@@
+@@> **Author:**@@
+@@> **License:**@@
+@@> **Source Link:**@@
+@@> **Additional Notes:** (Optional)@@
+@@> **Derivative Of:** (Situational)@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Let's break down what each of these sections mean.
+
+> @@> **Filename:** @@
+
+Filename is, as the name implies, the name of a file in your article. As per Tech Policy, all files on pages must have a file extension appended after the name. This means that if you upload an image to your article and call it {{mycoolimage-1}}, you are not following the rules. A correct name would be {{mycoolimage-1.png}} or {{mycoolimage-1.jpg}}, or any other similar filetypes. If you are unsure what the file extension of something you intend to upload is, you can check it by right clicking on the file and then pressing 'Properties.'
+
+If you are quoting from a text, write something along the lines of {{Excerpts taken from //Book Title Here//}}. Do not input the entire quote here, just where it comes from.
+
+> @@> **Name:** (if different from filename)@@
+
+This field is where you put the original name of the file. For example, let's say I wanted to use [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg this image in my article]. The name of the image is {{Kievitsbloem}}, as is listed on the page. I would then copy that and paste it onto this field. Do not include its file extension (jpg, png, etc).
+
+If you are quoting from a text, list its title here.
+
+If you are using your own creation, you may title it however you please, or you may exclude this field completely.
+
+> @@> **Author:**@@
+
+This field is where you acknowledge the original creator of the media you are using. Looking at [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg the same previous image], we can see that the author of the file is {{Rasbak}}. This means I would have to put that name in this field. If you are using commissioned work, you must still cite the original creator.
+
+If you are using your own creation, insert your username.
+
+
+> @@> **License:**@@
+
+In this section, you must write the file's attached license. This information is typically accessible on the page you are sourcing the file from. [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg Following the same example as before], we can see that this particular image is CC BY SA 3.0. Keep in mind that all files must be compatible with the site's license (CC BY SA 3.0) and follow the [[[Image Use Policy]]]. 
+
+
+> @@> **Source Link:**@@
+
+This field is typically a direct link to the page where you are taking the file from. Just copy the url from the address bar and paste it here. So for example, using the same image as above, I would put {{@@[https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg Wikimedia Commons]@@}} in this field. You should replace the text of the hyperlink with the name of the webiste you are taking your file from.
+
+If you are utilizing your own work, link to the page you are posting and title it {{SCP Foundation Wiki}}. However, if you are using your own media that you uploaded to a site like, say, Flickr, you must still follow this step.
+
+> @@> **Additional Notes:** (Optional)@@
+
+This is where you enter any additional information about the file. For example, if it is a composite image, you must state that this file is made up of two different images, and cite all images used in its creation. 
+
+
+> @@> **Derivative Of:** (Situational)@@
+
+This field is only applicable if you are using an image or other form of media that was derived from two or more sources. For example, a mashup would have to cite all of its images here. In order to be properly licenseboxed, copy-paste the following syntax underneath the {{Derivative Of:}} line.
+
+[[div class="blockquote"]]
+@@> **Name:**@@
+@@> **Author:**@@
+@@> **License:**@@
+@@> **Source Link:**@@
+[[/div]]
+
+From there, you simply fill in the information as you would any other file.
+-----
+
++ Examples
+
+Here is an example of a licensebox used in [[[SCP-7726]]], which cites an image from Wikimedia Commons.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** gun.png@@
+@@> **Name:** Beretta 90TWO closed.JPG@@
+@@> **Author:** Praiyachat@@
+@@> **License:** CC BY-SA 3.0@@
+@@> **Source Link:** [https://commons.wikimedia.org/wiki/File:Beretta_90TWO_closed.JPG Wikimedia Commons]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-6999]]], which cites an audio clip.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** hymn.mp3@@
+@@> **Name:** Nearer, my God, to Thee@@
+@@> **Author:** Conway's Band@@
+@@> **License:** Public Domain@@
+@@> **Source Link:** [https://www.loc.gov/item/jukebox-14234/ Library of Congress]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[michael-the-kiler|michael the kiler]]], which cites an author using their own creation.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** dakilla.jpg@@
+@@> **Author:** [[*user ratking666]]@@
+@@> **License:** CC BY-SA 3.0@@
+@@> **Source Link:** [https://scp-wiki.wikidot.com/michael-the-kiler SCP Foundation Wiki]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-7000]]], which cites an author using an image derivative of other images.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** WettleBomb.jpg@@
+@@> **License:** CC BY 2.0@@
+
+This image is a composite of:
+
+@@> **Name:** 130320-Z-TK422-652@@
+@@> **Author:** Oregon National Guard@@
+@@> **License:** CC BY 2.0@@
+@@> **Source:** [https://www.flickr.com/photos/32031029@N03/8576628356 flickr]@@
+
+@@> **Name:** High Noon Nap@@
+@@> **Author:** OakleyOriginals@@
+@@> **License:** CC BY 2.0@@
+@@> **Source:** [https://www.flickr.com/photos/47264866@N00/13279780754 flickr]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-173]]], which does not have any images or other citations, but includes an author listing.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=Moto42]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[deesoafs|Doctor Everwood Eats Shit On A Frozen Sidewalk]]], which does not have any images or other citations and does not include an author listing.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+-----
+
++ A Word On Excerpts/Quotes
+
+If you are using excerpts from passages or quotes, you must still cite them. 
+
+Here is an example of a licensebox used in [[[SCP-7010]]], which cites excerpts from a book.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> This article contains an excerpt from //[*https://en.wikisource.org/wiki/Leviathan Leviathan]// (1651) by Thomas Hobbes (Public Domain).@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+-----
+
++ A Note On Co-Authoring
+
+In the event you co-author an article with someone or someones, you can add the following syntax to the top of the licensebox to indicate multiple authors.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=User1, User2, User3]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+----
+
++ A Note On Translations
+
+For translations of works originally written in another language (see our [[[Translations Policy]]] for more information), the licensebox should list the original author (or authors) first, followed by the translator (or translators). 
+
+Within the licensebox, link to the original article, as follows:
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=User1, translated by User2]]@@
+@@> **Original Article:** original-url@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+If you post a translation of your own work then it is unnecessary to list your own name twice. If you post a translation of a translation (e.g. a Japanese article that was translated into Spanish, then into English), link to the original article, but credit the translator whose work you used as a co-translator.
+
+See [[[SCP-280-JP]]] for an example of a translation with multiple images listed in the License Box.
+
+----
+[[size 75%]]This page was originally created by CityToast and was updated on 1/27/2024 by Uncle Nicolini.[[/size]]
+@@ @@
+@@ @@
+@@ @@
+@@ @@
+= Ignore everything beneath this text.
+@@ @@
+@@ @@
+@@ @@
+[[/iftags]]
+
+[[div class="licensebox"]]
+[[collapsible show="‡ Licensing / Citation" hide="‡ Hide Licensing / Citation"]]
+Cite this page as:
+[[module listpages range="."]]
+> "%%title_linked%%" by %%created_by%%
+, from the [https://scpwiki.com SCP Wiki]. Source: https://scpwiki.com/%%fullname%%. Licensed under [https://creativecommons.org/licenses/by-sa/3.0/ CC BY-SA].
+[[/module]]
+For information on how to use this component, see the [[[component:license-box|License Box component]]]. To read about licensing policy, see the [[[Licensing Guide]]].
+
+
+=====
+> **Filename:** SCP-2816-01-new-tweaked.png
+> **Name:** Nighthawks
+> **Author:** Edward Hopper, [[*user stephlynch]], [[*user PickYerPoison]]
+> **License:** Public Domain
+> **Source Link:** [https://commons.wikimedia.org/wiki/File:Nighthawks_by_Edward_Hopper_1942.jpg Wikimedia Commons]
+> **Additional Notes:** "Olivia" Mixamo asset added onto image.
+=====
+
+[[/collapsible]]
+[[/div]]

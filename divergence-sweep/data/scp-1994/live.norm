@@ -1,0 +1,1055 @@
+<div class="info-container">
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T" "
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T" "
+</a>
+</div>
+<div class="collapsible-block-content">
+<div>
+<p style="text-align: center;">
+<strong>
+T"SCP-1994"
+</strong>
+T" - "
+<em>
+T"Rot"
+</em>
+</p>
+</div>
+<hr>
+<div id="u-author_block">
+<p style="text-align: center;">
+<a href="http://www.scp-wiki.net/djkaktus">
+T"▸ More by this Author ◂"
+</a>
+</p>
+</div>
+<hr>
+<div id="u-comments2" style="display: none;">
+<p>
+T"{$comments2}"
+</p>
+</div>
+<div class="u-faq">
+<p>
+<span style="white-space: pre-wrap;">
+T" "
+</span>
+</p>
+<p style="text-align: center;">
+<a href="https://scp-wiki.wikidot.com/component:info-ayers">
+T"F.A.Q."
+</a>
+</p>
+</div>
+<div style="display: none;">
+<p>
+T"{$doesthisfixthebug}"
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div style="text-align: right;">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T"rating: "
+<span class="number prwN">
+T"+284"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+T"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+T"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+T"x"
+</a>
+</span>
+</div>
+</div>
+<div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;">
+<img src="https://scp-wiki.wdfiles.com/local--files/scp-1994/toothhand.jpg" alt="toothhand.jpg" class="image">
+<div class="scp-image-caption">
+<p>
+T"An early formation of SCP-1994-2. Image taken from the medical logs of Dr. Yelkov."
+</p>
+</div>
+</div>
+<p>
+<strong>
+T"Item #:"
+</strong>
+T" SCP-1994"
+</p>
+<p>
+<strong>
+T"Object Class:"
+</strong>
+T" Keter"
+</p>
+<p>
+<strong>
+T"Special Containment Procedures:"
+</strong>
+</p>
+<ul>
+<li>
+T"All recovered units of SCP-1994-1 are to be contained in a Maximum Security Containment Locker at Site-93. SCP-1994-1 is currently considered uncontained"
+<sup class="footnoteref">
+<a id="footnoteref-1" href="javascript:;" class="footnoteref" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnote-1&#x27;)">
+T"1"
+</a>
+</sup>
+T"."
+</li>
+<li>
+T"Any recovered instances of SCP-1994-2 are to be contained in a Maximum Security Containment Locker at Site-93. This locker is to be outfitted with a high volume air-scrubbing system, which must be changed out twice weekly. Individuals entering the locker for any reason must wear hazmat gear in order to prevent possible contamination."
+</li>
+<li>
+T"The remains of all recovered instances of SCP-1994-3 are to be maintained in a High Security Humanoid Containment Vault at Site-93. Any discovered instances of SCP-1994-3 are to be moved to Site-93 for containment and observation. Should it be deemed necessary, life support systems are to be prepared to prevent the expiration of any instance of SCP-1994-3. The vault is to be outfitted with a high volume air-scrubbing system, which must be changed out twice weekly. Individuals entering the vault for any reason must wear hazmat gear in order to prevent possible contamination."
+</li>
+<li>
+T"Additionally, Foundation monitoring systems situated in and around Moscow are to search for signs of SCP-1994 outbreaks. Mobile Task Force Tau-13 ("Oral Report") has been commissioned and trained to contain these outbreaks, as well as assist in recovering additional information relating to Dr. Rasmin Yelkov."
+</li>
+</ul>
+<p>
+<strong>
+T"Description:"
+</strong>
+T" SCP-1994 is the general designation for a set of phenomena discovered in the dental laboratory of Dr. Rasmin Yelkov."
+</p>
+<p>
+<em>
+T"Note: The following correspondence was discovered in the laboratory of Dr. Yelkov. All text has been translated from the original Russian."
+</em>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T"+ Access Log"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T"- Close Log"
+</a>
+</div>
+<div class="collapsible-block-content">
+<blockquote>
+<p>
+T"Dr. Yelkov,"
+</p>
+<p>
+T"Greetings to you, comrade. Hopefully you will have already received my previous letters about the work at hand. If you have not, and if you have not yet spoken with Dmitri, allow me to be clear about my intentions."
+</p>
+<p>
+T"My practice caters primarily to only the wealthiest of clients. For the past 15 years, the work I have done has been the prime example of the aesthetic dental standard in Moscow. My clients have been more than satisfied with the quality of work I am able to give them, and are pleased with the metals I use in my crowns, the stability of my bridgework, and the cleanliness of my porcelains. Of this, you must have already been aware."
+</p>
+<p>
+T"However, in recent months a group of clients have become dissatisfied with the appearance of the materials. They say to me, "Dr. Grigori, there is no doubt to the quality of your work. We feel only as if you are being held back by the quality of materials at your disposal. The composites and porcelains are beautiful, yes, but they are not perfect. We demand perfection.""
+</p>
+<p>
+T"As you may understand, I have grown dismayed by this. I pride myself not only on the work itself, but also the high value of the materials I use. Alas, I cannot but agree with my clients. Even if the porcelain is polished until it shines like the sun, it cannot match the natural beauty of God's creation. I decided, then, that I must have what no doctor before me has ever attempted. I must have human teeth."
+</p>
+<p>
+T"The problem I immediately ran into is the availability of such. There are many impoverished in the streets of Moscow who would gladly give their teeth for the soles of my shoes or a bowl of gruel, but their teeth will not do. Often they are extensively decayed, misshapen, or broken in some way. They are human teeth, yes, but they are not what my clients desire."
+</p>
+<p>
+T"So I turn now to you. Dmitri has told me about your endeavors, about the miracles you have been able to create within your laboratory. There is no sum that is not available to me for this, but time is of the essence. I worry that my clients may soon seek out other professionals who claim to do the same as I. Obviously that is impossible, but to the layman, who is to say?"
+</p>
+<p>
+T"I await your return letter. I need teeth, Yelkov. I pray you will be able to deliver them to me."
+</p>
+<p>
+T"All the best,"
+</p>
+<p>
+T"Grigori"
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+<ul>
+<li>
+T"SCP-1994-1 is a serum developed by Dr. Yelkov in 1958. Chemical analysis of SCP-1994-1 has returned conflicting results, with certain samples exhibiting higher levels of sodium monofluorophosphate, and others with higher levels of hexafluorosilicic acid, along with other non-specific chemical structures. Regardless of its chemical makeup, SCP-1994-1 appears to have been designed to stimulate the growth of maxillary and mandibular tooth structures outside of the oral environment (See File 1994-1)."
+</li>
+</ul>
+<ul>
+<li>
+T"SCP-1994-2 are calcified structures resembling human teeth that have grown on the body outside of the oral environment as a result of the application of SCP-1994-1. While SCP-1994-2 visually appear identical to human teeth, they lack many of the base structures of teeth. SCP-1994-2 do not contain a dentin layer, nor do they contain pulp tissue. Instead, SCP-1994-2 instances appear to be a solid piece of enamel. Notably, SCP-1994-2 are highly susceptible to decay (See File 1994-4). As they decay, SCP-1994-2 will release a fine white powder"
+<sup class="footnoteref">
+<a id="footnoteref-2" href="javascript:;" class="footnoteref" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnote-2&#x27;)">
+T"2"
+</a>
+</sup>
+T" capable of infecting those who inhale it."
+</li>
+</ul>
+<div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;">
+<img src="https://scp-wiki.wdfiles.com/local--files/scp-1994/toothhand2.jpg" alt="toothhand2.jpg" class="image">
+<div class="scp-image-caption">
+<p>
+T"SCP-1994-2 manifesting through keratin tissue. Image taken from the medical logs of Dr. Yelkov."
+</p>
+</div>
+</div>
+<ul>
+<li>
+T"SCP-1994-3 are individuals who have been injected with SCP-1994-1, or exposed to the powder by-product of SCP-1994-2. The purpose of these injections were detailed in the private logs of Dr. Yelkov (See File 1994-2). Subjects exposed to SCP-1994-1 will go through five distinct stages of infection:"
+</li>
+</ul>
+<blockquote>
+<p>
+<strong>
+T"1.) Initial Exposure:"
+</strong>
+T" Subject is exposed to SCP-1994-1 through injection, or to the particulate by-product matter of SCP-1994-2. The subject will show no outward signs of infection for a period of roughly 2 weeks, during which the subject (SCP-1994-3) will undergo internal cellular physiological changes. Calcium deposits will begin to appear at various locations throughout the body, and cell structures devoted to immune response and bodily maintenance will slowly begin to "reorganize" into systems capable of assembling the necessary components of enamel."
+</p>
+</blockquote>
+<blockquote>
+<p>
+<strong>
+T"2.) Breakouts:"
+</strong>
+T" After an average of 2 weeks of development below the skin layer, SCP-1994-2 first appears encapsulated in cysts that rupture the skin as they grow. These "breakouts" begin initially on the limbs, before appearing in other regions, such as the head, neck, back, and groin. SCP-1994-3 will find these instances painful to the touch, and will resist any attempts to remove SCP-1994-2 from their bodies"
+<sup class="footnoteref">
+<a id="footnoteref-3" href="javascript:;" class="footnoteref" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnote-3&#x27;)">
+T"3"
+</a>
+</sup>
+T". The growth and spread of breakouts of SCP-1994-2 directly correlate to decreased metabolic functions in SCP-1994-3."
+</p>
+</blockquote>
+<blockquote>
+<p>
+<strong>
+T"3.) Maturation and Encapsulation:"
+</strong>
+T" Approximately 5 weeks from initial exposure, the cysts containing SCP-1994-2 burst open, revealing a mature adult human tooth. Once these teeth are exposed, they will become permanently affixed to the skin tissue of SCP-1994-3, and are removable only through surgery"
+<sup class="footnoteref">
+<a id="footnoteref-4" href="javascript:;" class="footnoteref" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnote-4&#x27;)">
+T"4"
+</a>
+</sup>
+T". Additionally, this phase is identified by a rapid expansion of breakout sites. As more SCP-1994-2 instances mature, breakouts will quickly cover all of the extremities, and begin to appear in the softer tissues of the palate of the mouth, inner ear, anal and vaginal openings, and the ocular tissues."
+</p>
+</blockquote>
+<blockquote>
+<p>
+<strong>
+T"4.) Decay:"
+</strong>
+T" After an average of 8 weeks of encapsulation, the whole of the body of SCP-1994-3 will be covered in a layer of SCP-1994-2. However, shortly after finally maturing"
+<sup class="footnoteref">
+<a id="footnoteref-5" href="javascript:;" class="footnoteref" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnote-5&#x27;)">
+T"5"
+</a>
+</sup>
+T", SCP-1994-2 will begin to develop rapid carious lesions across all surfaces. The means by which the decay progresses is currently unknown, as SCP-1994-2 are not subject to exposure of the acid-producing oral bacteria which commonly create such lesions. The full decay of all instances of SCP-1994-2"
+<sup class="footnoteref">
+<a id="footnoteref-6" href="javascript:;" class="footnoteref" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnote-6&#x27;)">
+T"6"
+</a>
+</sup>
+T" is swift, often taking no longer than 7 days to exhibit signs of gross decay. During this time, SCP-1994-2 will begin to release a fine white powder that lingers in the air, the effects of which have been detailed above. Conventional air-scrubbing techniques have proven effective in eliminating this powder from the air."
+</p>
+</blockquote>
+<blockquote>
+<p>
+<strong>
+T"5.) Expiration:"
+</strong>
+T" Once the processes involved in the creation and maturation of SCP-1994-2 have run their course, and the body of SCP-1994-3 is completely covered in a full rot, the subject will shortly thereafter expire. Because of the high volume of decayed tissue covering the body, the weakened state of the immune system, and the incapacity to ingest any form of nutrition (either through the skin or through the mouth), subjects invariably die after roughly 2 weeks of full decay. The corpse of SCP-1994-3 must be incinerated to remove any lingering particulate matter from SCP-1994-2."
+</p>
+</blockquote>
+<p>
+<strong>
+T"Discovery:"
+</strong>
+T" The whole of SCP-1994 was discovered during a joint effort by Foundation agents and GRU Division "P" operatives in ████████, USSR, in 1959. At the time of recovery, 9 instances of SCP-1994-3 were discovered, with 7 having previously expired due to the effects of their condition, and 2 actively undergoing decay. Dr. Yelkov was not found, although a large portion of his notes and journals were recovered."
+</p>
+<p>
+T"As a result of this raid, 5 Foundation agents and 3 GRU-P operatives were exposed to SCP-1994-2's airborne powder. Once the effects of SCP-1994 became apparent, these personnel were designated SCP-1994-3 and underwent testing at Site-93."
+</p>
+<p>
+T"It became apparent during classification of recovered research materials that many instances of SCP-1994-2 and SCP-1994-1 had been moved to other unknown locations."
+</p>
+<hr>
+<p>
+<strong>
+T"Research Notes and Documentation:"
+</strong>
+T" The following files were recovered by Foundation agents during the raid on Dr. Yelkov's laboratory."
+</p>
+<p>
+<strong>
+T"File 1994-1: The Private Journal of Dr. Rasmin Yelkov"
+</strong>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T"+ Open File"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T"- Close File"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<em>
+T"The following are excerpts from the journal of Dr. Rasmin Yelkov. They have been edited primarily for brevity, and also to remove classified information."
+</em>
+</p>
+<p>
+<strong>
+T"03/15/56"
+</strong>
+<br>
+T" In all of my years as a doctor of dental surgery, I have never come across a task as monumental as the one placed before me today. A comrade, Dr. Grigori, has asked for a method by which to produce perfect specimens of human teeth. Not those from cadavers, or the shined porcelain that is often utilized in such applications, but actual human enamel. I have been able in my time to fashion a number of masterpieces, but none such as this. This journal will serve as a testimony to either my great triumph, or my miserable failure. Either way, I cannot ignore the task ahead."
+</p>
+<p>
+<strong>
+T"05/10/56"
+</strong>
+<br>
+T" I spoke today with a fellow practitioner from Novosibirsk, who consulted with me and mentioned that I might try and find a certain individual without a name who claims to have fraternized with "tooth fayries". My source did not speak to the level of involvement by this unnamed fellow, but a lead is a lead. I will travel east and hope to find this man and consult with him about the matters at hand."
+</p>
+<p>
+<strong>
+T"06/02/56"
+</strong>
+<br>
+T" What an astounding day. Today I discovered that there is magic in the world around us, and that fayries are a reality."
+</p>
+<p>
+T"I met today with the unnamed man whom my fellow doctor led me to, and we sat and talked at length about oral medicines. As it happens to be, the man claimed to have worked a clinic during the war, and when trying to treat those wounded comrades who came into disfigurement, turned to the black arts. He claimed that he met the fayries while traveling along a road, and managed to capture one. This fayrie, who he said called itself "Isabella", assisted the doctor in learning the fayrie language and became his personal assistant. It was through this Isabella that the doctor learned of the nature of the fayrie, how the fayries draw enamel from the bones of men, and how they utilize this as a source of nutrition."
+</p>
+<p>
+T"Understandably, I was incredulous about these claims, and was unaccustomed to a man in my profession making such wild suggestions. I asked him if he had proof of the existence of the fayries, and that is when he took me to his workshop."
+</p>
+<p>
+T"Upon entering I beheld no fewer than fifty of the fayries, cohabiting with the unnamed man. He said that he used their assistance in order to better understand the oral environment, and to further his research into the afflictions of such. 'What a wonder', I thought to myself, 'that this man has delivered to me the means of my ascension into the legends of medicine.' Certainly by utilizing these fayries would I be able to meet Dr. Grigori's request."
+</p>
+<p>
+T"The man has granted me a room for the night, and tomorrow we will learn further of the secrets of these magical creatures."
+</p>
+<p>
+<strong>
+T"06/03/56"
+</strong>
+<br>
+T" I have killed the man. He turned down my offer to purchase some of the fayries for my own research, and resisted my attempt to take them by force. He spoke of the need to preserve the sacredness of mythical creatures. Unfortunately, I have neither the time nor patience for fayrie tales. I drew my weapon and put a bullet through his heart, and collected at least 30 of the specimens. I will include in this journal a study of the fayrie upon my arrival at my own laboratory."
+</p>
+<p>
+<strong>
+T"10/19/56"
+</strong>
+</p>
+<div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;">
+<img src="https://scp-wiki.wdfiles.com/local--files/scp-1994/black_butterfly1.jpg" alt="black_butterfly1.jpg" class="image">
+<div class="scp-image-caption">
+<p>
+T"Image recovered from Dr. Yelkov's files. Shows extensive signs of fire damage."
+</p>
+</div>
+</div>
+<blockquote>
+<p>
+<strong>
+T"Designation:"
+</strong>
+T" 104 -""
+<a href="/scp-478">
+T"Tooth Fayrie"
+</a>
+T"""
+</p>
+<p>
+<strong>
+T"Length:"
+</strong>
+T" 6.35 cm"
+</p>
+<p>
+<strong>
+T"Weight:"
+</strong>
+T" 0.08 g"
+</p>
+<p>
+<strong>
+T"Coloring:"
+</strong>
+T" Black/White"
+</p>
+<p>
+<strong>
+T"Appearance:"
+</strong>
+T" Visually appears to be a common butterfly. Appearance seems to be inconsistent, however, and will only fully stabilize upon neutralization. Much easier to manage in this state. Further inspection reveals humanoid characteristics throughout (arms with hands, legs with feet, a simple face)."
+</p>
+<p>
+<strong>
+T"Magical Properties:"
+</strong>
+T" Able to infest the human digestive tract and create human teeth, including all basic structures. Usually fatal to the host, however [Note: this must be addressed before testing]. Unusually durable for such a small creature. High pain tolerance. Expires unceremoniously. Autopsy inconclusive. Means by which it fashions teeth currently unknown. Presence of sodium fluoride may hold key to this mechanism."
+</p>
+<p>
+<strong>
+T"Conclusion:"
+</strong>
+T" Specimen contains several previously unknown chemicals which react unexpectedly with the oral environment. These have been isolated for further study. Unlike previous 16 specimens, did not immediately expire upon initial incision."
+</p>
+</blockquote>
+<p>
+<strong>
+T"11/20/56"
+</strong>
+<br>
+T" I believe I have done it. By understanding the way by which 104's anomalous physiology interacts with both sodium monofluorophosphate and hexafluorosilicic acid, I have been able to reproduce the effects of the fayrie on a common fungus. This is extraordinary in its own right, but will not do for a final product. The fungus is not capable of producing the calcium needed to form real, human teeth, but is necessary for the overall growth that I require. I believe I will have a serum prepared for human trials before the year's end."
+</p>
+</div>
+</div>
+</div>
+<p>
+<strong>
+T"File 1994-2: Human Trial 001"
+</strong>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T"+ Open File"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T"- Close File"
+</a>
+</div>
+<div class="collapsible-block-content">
+<blockquote>
+<p>
+<strong>
+T"Designation:"
+</strong>
+T" 001"
+</p>
+<p>
+<strong>
+T"Age:"
+</strong>
+T" 8 years"
+</p>
+<p>
+<strong>
+T"Height:"
+</strong>
+T" 131 cm"
+</p>
+<p>
+<strong>
+T"Weight:"
+</strong>
+T" 30 kg"
+</p>
+<p>
+<strong>
+T"Gender:"
+</strong>
+T" Female"
+</p>
+<p>
+<strong>
+T"Pre-Trial Notes:"
+</strong>
+T" Recovered from a destitute camp in Moscow. In moderate health. Signs of common cold should not detract from test results. Patient deemed too fragile for anesthesia."
+</p>
+<p>
+<strong>
+T"TRIAL LOG: Began 01/13/57"
+</strong>
+</p>
+<p>
+<strong>
+T"Serum #:"
+</strong>
+T" 001"
+</p>
+<p>
+<strong>
+T"Day 1:"
+</strong>
+T" Patient secured to testing apparatus and administered 20ml of #001. No noticeable changes."
+</p>
+<p>
+<strong>
+T"Day 2:"
+</strong>
+T" No noticeable changes."
+</p>
+<p>
+<strong>
+T"Day 4:"
+</strong>
+T" No noticeable changes."
+</p>
+<p>
+<strong>
+T"Day 7:"
+</strong>
+T" Patient complains of abdominal pain. No noticeable changes."
+</p>
+<p>
+<strong>
+T"Day 11:"
+</strong>
+T" Patient short of breath and complaining of abdominal pain. Loses consciousness sporadically. X-ray imaging shows large mass beneath left lung."
+</p>
+<p>
+<strong>
+T"Day 13:"
+</strong>
+T" Patient expires."
+</p>
+<p>
+<strong>
+T"Autopsy Notes:"
+</strong>
+T" Extracted a large, calcified mass from lower left abdominal region. Caused massive internal hemorrhaging resulting in death."
+</p>
+<p>
+<strong>
+T"Trial Conclusion Notes:"
+</strong>
+T" Significant data has been acquired from this trial. It is apparent now that the human cellular structures can be manipulated into the production of enamel-like structures; the task now is to shape those structures."
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<strong>
+T"File 1994-3: Human Trial 004"
+</strong>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T"+ Open File"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T"- Close File"
+</a>
+</div>
+<div class="collapsible-block-content">
+<div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;">
+<img src="https://scp-wiki.wdfiles.com/local--files/scp-1994/toothtray.jpg" alt="toothtray.jpg" class="image">
+<div class="scp-image-caption">
+<p>
+T"Image recovered within File 1994-3."
+</p>
+</div>
+</div>
+<blockquote>
+<p>
+<strong>
+T"Designation:"
+</strong>
+T" 004"
+</p>
+<p>
+<strong>
+T"Age:"
+</strong>
+T" 28 years"
+</p>
+<p>
+<strong>
+T"Height:"
+</strong>
+T" 183 cm"
+</p>
+<p>
+<strong>
+T"Weight:"
+</strong>
+T" 108 kg"
+</p>
+<p>
+<strong>
+T"Gender:"
+</strong>
+T" Male"
+</p>
+<p>
+<strong>
+T"Pre-Trial Notes:"
+</strong>
+T" Recovered from army medical ward. Lost most of right arm during the war. In good health. Had to be heavily sedated during transit."
+</p>
+<p>
+<strong>
+T"TRIAL LOG: Began 05/27/57"
+</strong>
+</p>
+<p>
+<strong>
+T"Serum #:"
+</strong>
+T" 012"
+</p>
+<p>
+<strong>
+T"Day 1:"
+</strong>
+T" Patient secured to testing apparatus. Administered 20ml of #012. Became hostile upon regaining consciousness. No noticeable changes."
+</p>
+<p>
+<strong>
+T"Day 3:"
+</strong>
+T" Patient attempted to escape testing apparatus. Was sedated. Will consider lobotomy upon further attempts."
+</p>
+<p>
+<strong>
+T"Day 8:"
+</strong>
+T" Cysts begin to form under skin. Patient complains about pain and itch. Skin samples taken. X-ray imaging shows calcified growths throughout appendages, as predicted."
+</p>
+<p>
+<strong>
+T"Day 15:"
+</strong>
+T" Cysts rupture skin. Bleeding is contained. Patient no longer willing to respond to questioning. Interview transcript is included."
+</p>
+</blockquote>
+<blockquote>
+<p>
+<strong>
+T"Interview Transcript:"
+</strong>
+T" Patient 004"
+</p>
+<p>
+<strong>
+T"Y:"
+</strong>
+T" Can you describe the sensation?"
+</p>
+<p>
+<strong>
+T"P:"
+</strong>
+T" Fuck you."
+</p>
+<p>
+<strong>
+T"Y:"
+</strong>
+T" Can you point to areas of discomfort?"
+</p>
+<p>
+<strong>
+T"P:"
+</strong>
+T" Fuck you."
+</p>
+<p>
+<strong>
+T"Y:"
+</strong>
+T" Do you understand that you are only making this more difficult for yourself?"
+</p>
+<p>
+<strong>
+T"P:"
+</strong>
+T" …"
+</p>
+<p>
+<strong>
+T"Y:"
+</strong>
+T" Excellent. Now, the cyst currently growing within your eyelid, can you tell me when you first began to experience pain there?"
+</p>
+<p>
+<strong>
+T"End Transcript"
+</strong>
+</p>
+</blockquote>
+<blockquote>
+<p>
+<strong>
+T"Day 25:"
+</strong>
+T" Cysts have begun to open, earlier than expected. Becoming difficult to control points of outside infection. Patient immune system severely weakened, testing apparatus moved to a clean room. Patient no longer responds to questioning or examination."
+</p>
+<p>
+<strong>
+T"Day 29:"
+</strong>
+T" Patient expires."
+</p>
+<p>
+<strong>
+T"Autopsy Notes:"
+</strong>
+T" Patient expired due to gross collapse of respiratory system. Certain internal structures show significant signs of decay, likely due to an unrelated condition. Was able to extract several undeveloped tooth samples. As they were not to term, they are not suitable for use in this project. Fortunately, progress has advanced rapidly from earlier trials. More fine tuning of serum is required."
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<strong>
+T"File 1994-4: Human Trial 019"
+</strong>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T"+ Open File"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T"- Close File"
+</a>
+</div>
+<div class="collapsible-block-content">
+<blockquote>
+<p>
+<strong>
+T"Designation:"
+</strong>
+T" 019"
+</p>
+<p>
+<strong>
+T"Age:"
+</strong>
+T" 16 years"
+</p>
+<p>
+<strong>
+T"Height:"
+</strong>
+T" 164 cm"
+</p>
+<p>
+<strong>
+T"Weight:"
+</strong>
+T" 63 kg"
+</p>
+<p>
+<strong>
+T"Gender:"
+</strong>
+T" Female"
+</p>
+<p>
+<strong>
+T"Pre-Trial Notes:"
+</strong>
+T" Daughter of American businessman Kyle Schrader. Required patient with no family history of disease or genetic anomaly. Purchased for a sum of $2.6M USD. Paid for by Dr. Grigori. Patient is in excellent health, shows no signs of illness. Perfect candidate for this trial."
+</p>
+<p>
+<strong>
+T"TRIAL LOG: Began 09/15/58"
+</strong>
+</p>
+<p>
+<strong>
+T"Serum #:"
+</strong>
+T" 113"
+</p>
+<p>
+<strong>
+T"Day 1:"
+</strong>
+T" Patient secured to testing apparatus. Patient remains unresponsive most of the day as sedative wears off."
+</p>
+<p>
+<strong>
+T"Day 9:"
+</strong>
+T" Patient complains of sensation below skin level. X-ray imaging shows expected calcium deposits forming along both arms, both legs, and along spine."
+</p>
+<p>
+<strong>
+T"Day 14:"
+</strong>
+T" Cysts begin to burst through skin. Patient is unwilling to respond to questioning or examination. Due to concerns about the negative effects of the sedative on the serum, sedation is not administered."
+</p>
+<p>
+<strong>
+T"Day 23:"
+</strong>
+T" Long lines of orderly cysts have appeared across the body, extending now up the neck and across the head of the patient. Have observed cysts forming around the softer anal tissues as well."
+</p>
+<p>
+<strong>
+T"Day 24:"
+</strong>
+T" Patient goes into cardiac arrest, but is resuscitated. Due to patient's fragile mental state, lobotomy is performed to reduce chance of additional incidents."
+</p>
+<p>
+<strong>
+T"Day 30:"
+</strong>
+T" Roughly 87% of skin tissue is covered in cysts. None have yet broken, and X-ray imagining has shown that all tooth structures are developing as planned."
+</p>
+<p>
+<strong>
+T"Day 36:"
+</strong>
+T" The day of my great success! The first of the cysts have ruptured, revealing perfect specimens of human enamel. Removal from patient requires surgical extraction, but postop infection control measures have reduced chances of immune compromise. Will begin to administer serum to additional patients as required by Dr. Grigori and his associates."
+</p>
+<p>
+<strong>
+T"Post-Trial Results:"
+</strong>
+T" Patient is stable and in good condition following 6 weeks of #113 trials. Extracted tooth specimens have been sent to Dr. Grigori and 7 other dental practitioners for examination. The full results of this trial will be published upon approval by the financial donors."
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<strong>
+T"File 1994-5: Undated Note"
+</strong>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T"+ Open File"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T"- Close File"
+</a>
+</div>
+<div class="collapsible-block-content">
+<div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;">
+<img src="https://scp-wiki.wdfiles.com/local--files/scp-1994/teeth.jpg" alt="teeth.jpg" class="image">
+<div class="scp-image-caption">
+<p>
+T"Image recovered within File 1994-5."
+</p>
+</div>
+</div>
+<blockquote>
+<p>
+T"It appears as if my inclusion of the fungal elements of early samples has reacted poorly with the anomalous substructures of the fayries physiology that I have included in the most recent serum. While the growth of the teeth across the body has progressed exactly as I had intended, the growths now quickly develop extensive caries across all surfaces and turn to rot. Additionally, it seems as though the rot is inclined to spread, as I have observed a fine white mist emanating from the open decay. While I have been thusfar able to secure myself from this newest property, I have not been able to do the same for 020, 021, 023, and 025. All are now showing signs of cyst growth, despite having not been exposed to serum #113."
+</p>
+<p>
+T"Obviously this is only a minor setback. I will continue my research, albeit at another facility, for this one is compromised. As an aside, I have not yet heard word back from Dr. Grigori, so I must only assume he is satisfied with the specimens he received. I will count this as the primary success of this project thus far."
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+<div class="footnotes-footer">
+<div class="title">
+T"Footnotes"
+</div>
+<div class="footnote-footer" id="footnote-1">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnoteref-1&#x27;)">
+T"1"
+</a>
+T". While Site-93 maintains 15 vials of SCP-1994-1, many more are believed to be uncontained, possibly in the possession of Glavnoye Razvedyvatel'noye Upravleniye, Gruppa Psikhotroniki (GRU-P)"
+</div>
+<div class="footnote-footer" id="footnote-2">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnoteref-2&#x27;)">
+T"2"
+</a>
+T". This powder maintains the same anomalous chemical makeup as SCP-1994-1."
+</div>
+<div class="footnote-footer" id="footnote-3">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnoteref-3&#x27;)">
+T"3"
+</a>
+T". Whether this is a compulsion implemented by SCP-1994-1 to aid in the development of SCP-1994-2, or simply a reaction to the pain caused by any stimulation of SCP-1994-2, is unknown."
+</div>
+<div class="footnote-footer" id="footnote-4">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnoteref-4&#x27;)">
+T"4"
+</a>
+T". Note: This cannot permanently remove SCP-1994-2, as all instances removed from the body will soon be replaced by additional growths of SCP-1994-2."
+</div>
+<div class="footnote-footer" id="footnote-5">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnoteref-5&#x27;)">
+T"5"
+</a>
+T". Between 3-5 days."
+</div>
+<div class="footnote-footer" id="footnote-6">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference(&#x27;footnoteref-6&#x27;)">
+T"6"
+</a>
+T". Now easily numbering in the thousands."
+</div>
+</div>
+<div class="footer-wikiwalk-nav">
+<div style="text-align: center;">
+<p>
+T"« "
+<a href="/scp-1993">
+T"SCP-1993"
+</a>
+T" | SCP-1994 | "
+<a href="/scp-1995">
+T"SCP-1995"
+</a>
+T" »"
+</p>
+</div>
+</div>
+<div class="licensebox">
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T"‡ Licensing / Citation"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T"‡ Hide Licensing / Citation"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+T"Cite this page as:"
+</p>
+<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="23021650" data-lp-route="scp-1994" data-lp-generation="HEX">
+<div class="list-pages-item">
+<blockquote>
+<p>
+T"""
+<a href="/scp-1994">
+T"SCP-1994"
+</a>
+T"" by djkaktus, from the "
+<a href="https://scpwiki.com">
+T"SCP Wiki"
+</a>
+T". Source: "
+<a href="https://scpwiki.com/scp-1994">
+T"https://scpwiki.com/scp-1994"
+</a>
+T". Licensed under "
+<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+T"CC BY-SA"
+</a>
+T"."
+</p>
+</blockquote>
+</div>
+</div>
+<p>
+T"For information on how to use this component, see the "
+<a href="/component:license-box">
+T"License Box component"
+</a>
+T". To read about licensing policy, see the "
+<a href="/licensing-guide">
+T"Licensing Guide"
+</a>
+T"."
+</p>
+<div class="content-separator" style="display: none:">
+</div>
+<blockquote>
+<p>
+<strong>
+T"Filename:"
+</strong>
+T" All files"
+<br>
+T" "
+<strong>
+T"Author:"
+</strong>
+T" "
+<span class="printuser avatarhover">
+<a href="https://www.wikidot.com/user:info/djkaktus" onclick="WIKIDOT.page.listeners.userInfo(1888434); return false;">
+<img class="small" src="https://www.wikidot.com/avatar.php?userid=1888434&amp;amp;size=small&amp;amp;timestamp=TS" alt="djkaktus" style="background-image:url(https://www.wikidot.com/userkarma.php?u=1888434)">
+</a>
+<a href="https://www.wikidot.com/user:info/djkaktus" onclick="WIKIDOT.page.listeners.userInfo(1888434); return false;">
+T"djkaktus"
+</a>
+</span>
+<br>
+T" "
+<strong>
+T"License:"
+</strong>
+T" CC BY-SA 3.0"
+<br>
+T" "
+<strong>
+T"Source Link:"
+</strong>
+T" "
+<a href="https://scp-wiki.wikidot.com/scp-1994">
+T"https://scp-wiki.wikidot.com/scp-1994"
+</a>
+</p>
+</blockquote>
+<div class="content-separator" style="display: none:">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div style="display:none">
+<div style="display: none">
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=1&amp;theme=https://cdn.scpwiki.com/theme/en/black-highlighter/css/min/normalize.min.css&amp;css={$css}" style="display: none">
+</iframe>
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=2&amp;theme=https://cdn.scpwiki.com/theme/en/black-highlighter/css/min/black-highlighter.min.css&amp;css={$css}" style="display: none">
+</iframe>
+</div>
+<p>
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=3&amp;theme=https://scp-wiki.wdfiles.com/local--code/theme%3Apenumbra-bhl/1&amp;css={$css}" style="display: none">
+</iframe>
+</p>
+</div>
+<p>
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=4&amp;theme=https://scp-wiki.wdfiles.com/local--code/component:djk/1&amp;css={$css}" style="display: none">
+</iframe>
+</p>

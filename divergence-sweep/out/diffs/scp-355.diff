@@ -1,0 +1,63 @@
+--- live
++++ ftml
+@@ -1,26 +1,6 @@
+ <div style="text-align: right;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+170"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
++<p>
++T"TODO: module Rate"
++</p>
+ </div>
+ <p>
+@@ -100,29 +80,7 @@
+ T"Cite this page as:"
+ </p>
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="2295371" data-lp-route="scp-355" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<blockquote>
+ <p>
+-T"""
+-<a href="/scp-355">
+-T"SCP-355"
+-</a>
+-T"" by Noaqiyeum, from the "
+-<a href="https://scpwiki.com">
+-T"SCP Wiki"
+-</a>
+-T". Source: "
+-<a href="https://scpwiki.com/scp-355">
+-T"https://scpwiki.com/scp-355"
+-</a>
+-T". Licensed under "
+-<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+-T"CC BY-SA"
+-</a>
+-T"."
++T"TODO: module ListPages"
+ </p>
+-</blockquote>
+-</div>
+-</div>
+ <p>
+ T"For information on how to use this component, see the "

@@ -1,0 +1,3015 @@
+=====
+
+[[div class="preview"]]
+Do you have any idea how much of your short life is wasted fulfilling base biological needs?
+
+[[/div]]
+[[module CSS]]
+div.preview { display: none; }
+[[/module]]
+
+[[iftags +component]]
+To add a preview to your article,  copy the following onto the top of your page and replace "preview" with your own text:
+[[div class="code"]]
+@@=====@@
+@@[[include component:preview@@
+@@text=preview]]@@
+@@=====@@
+[[/div]]
+
+This text can then be queried and shown on other pages. This short blurb may be any text which accurately or usefully describes an article at a glance or in summary. However, there are limitations to ensure standardization and avoid issues with site technical policy. See the [[[Technical Content Policy]]] for a full and up-to-date outline of the requirements. 
+
+* Blurbs must be primarily composed of plain text.
+* Syntax blocks (e.g. {{[[div]]}}), custom CSS (inline or through modules), and use of components are prohibited.
+* Use of inline formatting are restricted to the following:
+ * **bold** (@@**bold**@@)
+ * //italic// (@@//italic//@@)
+ * __underline__ (@@__underline__@@)
+ * --strikethrough-- (@@--strikethrough--@@)
+ * {{teletype}} (@@{{teletype}}@@)
+ * Escaping with @@
+ * Inline center text (= at the start of a new line.)
+* Use of the component is limited to pages in the default category.
+* Blurbs must be at least one sentence or equivalent in length.
+* Blurbs should describe, summarize, or provide a hook for the article they reference. Off-topic or inappropriate blurbs may be subject to edits at the discretion of the Curation Team.
+* Blurbs should not be disruptive, such as containing excessively many paragraphs. This is determined at staff discretion.
+* Blurbs may contain links when appropriate, e.g. to a series it's a part of, or to a sequel/prequel article.
+
+The Tech Team reserves the right to edit blurbs as necessary if deemed too disruptive or deleterious to accessibility and legibility. Determination of violation is subject to the Technical Team's discretion.
+
+++ Images in Previews
+[https://crom.avn.sh/docs/crom-for-authors#thumbnail-image See here for documentation on how to add an image thumbnail to your article's preview].
+
+Note that image thumbnails are a Crom feature, not a Wikidot feature. As such, they will only appear in certain Crom embeds (e.g. Crom discord bot search results or SCP Wiki search results) and will not appear in other contexts (e.g. ListPages previews). You also //do not need// to include the Preview Component in your article for an image thumbnail to appear, or vice-versa -- both features function entirely independently of one another.
+[[/iftags]]
+
+=====
+
+[[>]]
+[[module Rate]]
+[[/>]]
+
+[[div style="text-align: right; margin-right: 2em; margin-top: -20px;"]]
+
+by [[[Koths Korner| Kothardarastrix]]]
+
+[[/div]]
+
+
+[[iftags +component]]
+
+[[div style="border: solid 2px #ededed; padding: 0.5rem; margin: 4px;"]]
+
+This is a component that animates the **[[[anomaly-classification-system-guide|ACS header]]]** upon loading.
+
+++ How to use:
+
+Put this in anywhere in the article:
+
+[[div class="blockquote" style="font-family: monospace; font-size: 120%;"]]
+@@[[include :scp-wiki:component:acs-animation]]@@
+[[/div]]
+
+And you're done!
+
+//Example:// **[[[SCP-5935|]]]**
+
+@@ @@
+-----
+
+++ Note:
+
+- Two variables, //@@--timeScale@@// and //@@--timeDelay@@//, control the timings of the animation. For example:
+
+[[div class="blockquote" style="font-family: monospace; font-size: 120%;"]]
+@@[[module CSS]]@@
+:root {
+@@    --timeScale: 2;@@
+@@    --timeDelay: 0.5s;@@
+}
+@@[[/module]]@@ 
+[[/div]]
+
+//@@--timeScale@@// slows down the entire animation by a factor of 2, and //@@--timeDelay@@// delays the starting point of the animation by half a second. Default values are 1 and 0s, respectively.
+
+To change the default values, put the above after the {{[[include]]}}. //@@--timeDelay@@// is recommended if the ACS isn't the first content element, or you're using it in conjunction with other animation modules (a la **[[[component:fade-in|]]]**.)
+
+@@ @@
+
+- Likely incompatible with other types of ACS headers*.
+
+*To use with [[*user PeppersGhost]]'s [[[component:acs-peppo-lite|ACS Lite]]], add the following patch after the {{[[include]]}}:
+
+[[div class="blockquote" style="font-family: monospace; font-size: 120%;"]]
+@@[[module CSS]]@@
+@@/*-- ACS Lite Animation Compatibility Patch --*/@@
+.anom-bar > .bottom-box::before { display: none; }
+.anom-bar > .bottom-box { box-shadow: none!important; }
+div.diamond-part { clip-path: none; animation: none; box-shadow: none!important; }
+@media (max-width: 480px) {
+    div.top-right-box { clip-path: polygon(0% -30%, 100% -30%, 100% 130%, 0% 130%); }
+}
+@@[[/module]]@@
+[[/div]]
+
+@@ @@
+
+- Inspired by the works of [[*user AnAnomalousWriter]].
+
+[[/div]]
+
+-----
+
+++ Source Code:
+
+[[code type="CSS"]]
+:root {
+    --timeScale: 1;
+    --timeDelay: 0s;
+}
+ 
+/* Converting middle divider from box-shadow to ::before pseudo-element */
+.anom-bar > div.bottom-box { box-shadow: none; position: relative; }
+.anom-bar > div.bottom-box::before {
+    position: absolute;
+    content: " ";
+    width: 100%;
+    height: 0.5rem;
+    bottom: 100%; left: 0;
+    background-color: rgb(var(--swatch-menubg-black-color, 12, 12, 12));
+}
+ 
+/* DIVIDER */
+.anom-bar > .bottom-box::before {
+    animation-name: divider;
+    animation-duration: calc(0.74s * var(--timeScale));
+    animation-delay: calc(0.1s * var(--timeScale) + var(--timeDelay));
+    animation-iteration-count: 1;
+    animation-timing-function: cubic-bezier(.32,.38,.39,.94);
+    animation-fill-mode: backwards;
+}
+ 
+/* CLASSIFIED LEVEL BARS */
+div.top-center-box  > * {
+    animation-name: bar;
+    animation-duration: calc(0.45s * var(--timeScale));
+    animation-iteration-count: 1;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+}
+div.top-center-box > :nth-child(1) { animation-delay: calc(0.2s * var(--timeScale) + var(--timeDelay)); }
+div.top-center-box > :nth-child(2) { animation-delay: calc(0.32s * var(--timeScale) + var(--timeDelay)); }
+div.top-center-box > :nth-child(3) { animation-delay: calc(0.45s * var(--timeScale) + var(--timeDelay)); }
+div.top-center-box > :nth-child(4) { animation-delay: calc(0.61s * var(--timeScale) + var(--timeDelay)); }
+div.top-center-box > :nth-child(5) { animation-delay: calc(0.75s * var(--timeScale) + var(--timeDelay)); }
+div.top-center-box > :nth-child(6) { animation-delay: calc(0.95s * var(--timeScale) + var(--timeDelay)); }
+ 
+/* TOP TEXT */
+div.top-left-box, div.top-right-box {
+    clip-path: polygon( 0% -50%, 150% -50%, 150% 100%, 0% 100%);
+}
+ 
+div.top-left-box > *, div.top-right-box > * {
+    position: relative;
+    animation-name: bottomup;
+    animation-duration: calc(0.65s * var(--timeScale));
+    animation-delay: calc(0.5s * var(--timeScale) + var(--timeDelay));
+    animation-iteration-count: 1;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+}
+ 
+/*-----------------------------------*/
+/*-----------------------------------*/
+ 
+/* CONTAINMENT, DISRUPTION, RISK CLASSES */
+div.text-part > * {
+    clip-path: polygon( 0% 0%, 100% 0%, 100% 100%, 0% 100%);
+    animation-name: expand2;
+    animation-duration: calc(0.5s * var(--timeScale));
+    animation-iteration-count: 1;
+    animation-timing-function: cubic-bezier(.12,.41,.27,.99);
+    animation-fill-mode: backwards;
+}
+div.text-part > :nth-child(1) {
+    animation-name: expand1;
+}
+div.text-part > :nth-child(1) { animation-delay: calc(0.6s * var(--timeScale) + var(--timeDelay)); }
+div.text-part > :nth-child(2) { animation-delay: calc(0.75s * var(--timeScale) + var(--timeDelay)); }
+div.text-part > :nth-child(3) { animation-delay: calc(0.86s * var(--timeScale) + var(--timeDelay)); }
+ 
+div.main-class::before, div.main-class::after {
+    animation-name: iconslide;
+    animation-duration: calc(0.45s * var(--timeScale));
+    animation-delay: calc(0.8s * var(--timeScale) + var(--timeDelay));
+    animation-iteration-count: 1;
+    animation-timing-function: cubic-bezier(.12,.41,.27,.99);
+    animation-fill-mode: backwards;
+}
+ /* BOTTOM TEXT */
+div.main-class > *,  div.disrupt-class > *, div.risk-class > * {
+    white-space: nowrap;
+    animation-name: flowIn;
+    animation-duration: calc(0.42s * var(--timeScale));
+    animation-delay: calc(0.75s * var(--timeScale) + var(--timeDelay));
+    animation-iteration-count: 1;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+}
+ 
+/*-----------------------------------*/
+/*-----------------------------------*/
+ 
+/* DIAMOND */
+div.arrows {
+    animation-name: arrowspin;
+    animation-duration: calc(0.65s * var(--timeScale));
+    animation-delay: calc(0.55s * var(--timeScale) + var(--timeDelay));
+    animation-iteration-count: 1;
+    animation-timing-function: cubic-bezier(.12,.41,.27,.99);
+    animation-fill-mode: backwards;
+}
+ 
+div.quadrants > * {
+    animation-name: fade;
+    animation-duration: calc(0.3s * var(--timeScale));
+    animation-delay: calc(1.4s * var(--timeScale) + var(--timeDelay));
+    animation-iteration-count: 1;
+    animation-timing-function: cubic-bezier(.12,.41,.27,.99);
+    animation-fill-mode: backwards;
+}
+ 
+div.top-icon, div.right-icon, div.left-icon, div.bottom-icon {
+    animation-name: nodegrow;
+    animation-duration: calc(0.4s * var(--timeScale));
+    animation-delay: calc(1.4s * var(--timeScale) + var(--timeDelay));
+    animation-iteration-count: 1;
+    animation-timing-function: cubic-bezier(.12,.41,.27,.99);
+    animation-fill-mode: backwards;
+}
+.bottom-box > div.diamond-part {
+    box-shadow: none;
+}
+.bottom-box > div.diamond-part::before {
+    content: "";
+    position: absolute;
+    width: 0.5rem; height: 100%;
+    top: 0; right: 100%;
+    background-color: rgb(var(--swatch-menubg-black-color, 12, 12, 12));
+    animation-name: diamondBorder;
+    animation-duration: calc(0.475s * var(--timeScale));
+    animation-delay: calc(0.775s * var(--timeScale) + var(--timeDelay));
+    animation-iteration-count: 1;
+    animation-timing-function: cubic-bezier(.28,.72,.55,.91);
+    animation-fill-mode: backwards;
+}
+
+/* MOBILE QUERY */
+@media (max-width: 480px ) {
+    .anom-bar > div.bottom-box { position: initial; }
+    .anom-bar > div.bottom-box::before { bottom: initial; top: 40vw; }
+    div.top-center-box  > * {
+        animation-name: bar-mobile;
+        animation-duration: calc(0.9s * var(--timeScale));
+    }
+    div.top-center-box > :nth-child(1) { animation-delay: calc(0.1s * var(--timeScale) + var(--timeDelay)); }
+    div.top-center-box > :nth-child(2) { animation-delay: calc(0.2s * var(--timeScale) + var(--timeDelay)); }
+    div.top-center-box > :nth-child(3) { animation-delay: calc(0.3s * var(--timeScale) + var(--timeDelay)); }
+    div.top-center-box > :nth-child(4) { animation-delay: calc(0.4s * var(--timeScale) + var(--timeDelay)); }
+    div.top-center-box > :nth-child(5) { animation-delay: calc(0.5s * var(--timeScale) + var(--timeDelay)); }
+    div.top-center-box > :nth-child(6) { animation-delay: calc(0.6s * var(--timeScale) + var(--timeDelay)); }
+ 
+}
+ 
+/*--- Motion Accessibility ---*/
+@media screen and (prefers-reduced-motion: reduce) {
+    div.anom-bar-container { --timeScale: 0!important; }
+}
+ 
+/*-------------------------*/
+ 
+@keyframes divider {
+    from { max-width: 0%;  }
+    to { max-width: 100%; }
+}
+ 
+@keyframes bar {
+    from { max-width: 0%; }
+    to { max-width: 100%; }
+}
+@keyframes bar-mobile {
+    from { max-height: 0%; }
+    to { max-height: 100%; }
+}
+ 
+@keyframes bottomup {
+    from { top: 100px; }
+    to { top: 0; }
+}
+ 
+@keyframes expand1 {
+    from { opacity: 0; clip-path: inset(0 calc(100% - 0.75rem) 0 0); }
+    to { opacity: 1; clip-path: inset(0); }
+}
+@keyframes iconslide {
+    from { opacity: 0; transform: translateX(-5rem); }
+    to { opacity: 1; transform: translateX(0); }
+}
+ 
+@keyframes expand2 {
+    from { opacity: 0; width: 1%; }
+    to { opacity: 1; width: calc(100% - 0.25rem); }
+}
+@keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+ 
+@keyframes flowIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+ 
+@keyframes arrowspin {
+    from { clip-path: circle(0%); transform: rotate(135deg); }
+    to { clip-path: circle(75%); transform: rotate(0deg); }
+}
+@keyframes nodegrow {
+    from { transform: scale(0);}
+    to {  transform: scale(1);}
+}
+@keyframes diamondBorder {
+    from { height: 0; }
+    to { height: 100%; }
+}
+
+[[/code]]
+[[/iftags]]
+
+[[module CSS]]
+@import url('https://scp-wiki.wdfiles.com/local--code/component%3Aacs-animation/1');
+[[/module]]
+
+
+[[iftags -component-backend]]
+[[module css]]
+
+@import url('https://cdn.jsdelivr.net/gh/Nu-SCPTheme/Black-Highlighter@gh-pages/fonts/inter.css');
+
+:root {
+    --five-color: 196,2,51;
+    --four-color: 255,109,0;
+    --three-color: 255,211,0;
+    --two-color: 0,135,189;
+    --one-color: 0,159,107;
+}
+
+#page-title,
+.meta-title {
+    display: none;
+}
+
+.anom-bar-container,
+.anom-bar-container * {
+    -webkit-box-sizing: border-box;
+       -moz-box-sizing: border-box;
+    		box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    font-family: Inter, sans-serif;
+    font-family: var(--title-font, Inter, sans-serif);
+}
+
+.anom-bar-container {
+    width: 100%;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    position: relative;
+}
+
+hr + .anom-bar-container, 
+.anom-bar-container:not(first-child) {
+    padding-top: 1em;
+}
+
+.anom-bar {
+    display: -ms-grid;
+    display: grid;
+    		grid-template-areas:
+    	"top-box"
+    	"bottom-box";
+    width: 100%;
+}
+
+.anom-bar > .top-box {
+    --wght: 600;
+    -ms-grid-row: 1;
+    -ms-grid-column: 1;
+    display: -ms-grid;
+    display: grid;
+    grid-area: top-box;
+    grid-template-areas:
+    	"top-left-box top-center-box top-right-box";
+    width: 100%;
+    	-ms-grid-columns: auto 1fr calc(5vw + 5rem);
+    grid-template-columns: auto 1fr -webkit-calc(5vw + 5rem);
+    grid-template-columns: auto 1fr -moz-calc(5vw + 5rem);
+    grid-template-columns: auto 1fr calc(5vw + 5rem);
+    -ms-grid-rows: 1fr;
+    grid-template-rows: 1fr;
+    font-weight: 600;
+    text-transform: uppercase;
+    justify-items: stretch;
+    padding-bottom: 1rem;
+}
+
+.top-box .top-left-box {
+    -ms-grid-row: 1;
+    -ms-grid-column: 1;
+    grid-area: top-left-box;
+}
+
+.top-left-box > .item {
+    font-size: -webkit-calc(12px + (20 - 12) * ( (100vw - 300px) / ( 1920 - 960) ));
+    font-size: -moz-calc(12px + (20 - 12) * ( (100vw - 300px) / ( 1920 - 960) ));
+    font-size: calc(12px + (20 - 12) * ( (100vw - 300px) / ( 1920 - 960) ));
+}
+
+.top-left-box > .number {
+    font-size: -webkit-calc(25px + (50 - 25) * ( (100vw - 300px) / ( 1920 - 300) ));
+    font-size: -moz-calc(25px + (50 - 25) * ( (100vw - 300px) / ( 1920 - 300) ));
+    font-size: calc(25px + (50 - 25) * ( (100vw - 300px) / ( 1920 - 300) ));
+}
+
+.top-box .top-center-box {
+    -ms-grid-row: 1;
+    -ms-grid-column: 2;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    grid-area: top-center-box;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+       -moz-box-orient: vertical;
+       -moz-box-direction: normal;
+    	-ms-flex-direction: column;
+    		flex-direction: column;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+       -moz-box-align: center;
+    	-ms-flex-align: center;
+    		align-items: center;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+       -moz-box-pack: center;
+    	-ms-flex-pack: center;
+    		justify-content: center;
+    height: 100%;
+    margin: 0 1rem;
+}
+
+.top-center-box > div {
+    background-color: rgb(0,0,0);
+    height: 0.5rem;
+    width: 100%;
+    margin: 0.125rem;
+    display: none;
+}
+
+.anom-bar-container.american .top-center-box > div {
+    background-image: 
+    -webkit-repeating-linear-gradient(65deg, 
+    	rgb(178,34,52),
+    	rgb(252,252,252) 45%,
+    	rgb(252,252,252) 55%,
+    	rgb(60,59,110) 100%);
+    background-image: 
+    -moz-repeating-linear-gradient(65deg, 
+    	rgb(178,34,52),
+    	rgb(252,252,252) 45%,
+    	rgb(252,252,252) 55%,
+    	rgb(60,59,110) 100%);
+    background-image: 
+    -o-repeating-linear-gradient(65deg, 
+    	rgb(178,34,52),
+    	rgb(252,252,252) 45%,
+    	rgb(252,252,252) 55%,
+    	rgb(60,59,110) 100%);
+    background-image: 
+    repeating-linear-gradient(25deg, 
+    	rgb(178,34,52),
+    	rgb(252,252,252) 45%,
+    	rgb(252,252,252) 55%,
+    	rgb(60,59,110) 100%);
+    background-attachment: scroll;
+}
+
+.anom-bar-container.clear-1 .top-center-box > div {
+    background-color: rgb(0,159,107);
+    background-color: rgb(var(--one-color));
+}
+
+.anom-bar-container.clear-2 .top-center-box > div {
+    background-color: rgb(0,135,189);
+    background-color: rgb(var(--two-color));
+}
+
+.anom-bar-container.clear-3 .top-center-box > div {
+    background-color: rgb(255,211,0);
+    background-color: rgb(var(--three-color));
+}
+
+.anom-bar-container.clear-4 .top-center-box > div {
+    background-color: rgb(255,109,0);
+    background-color: rgb(var(--four-color));
+}
+
+.anom-bar-container.clear-5 .top-center-box > div {
+    background-color: rgb(196,2,51);
+    background-color: rgb(var(--five-color));
+}
+
+.anom-bar-container.clear-1 .top-center-box > .bar-one,
+.anom-bar-container.clear-2 .top-center-box > .bar-one,
+.anom-bar-container.clear-3 .top-center-box > .bar-one,
+.anom-bar-container.clear-4 .top-center-box > .bar-one,
+.anom-bar-container.clear-5 .top-center-box > .bar-one,
+.anom-bar-container.clear-6 .top-center-box > .bar-one {
+    display: block;
+}
+
+.anom-bar-container.clear-2 .top-center-box > .bar-two,
+.anom-bar-container.clear-3 .top-center-box > .bar-two,
+.anom-bar-container.clear-4 .top-center-box > .bar-two,
+.anom-bar-container.clear-5 .top-center-box > .bar-two,
+.anom-bar-container.clear-6 .top-center-box > .bar-two {
+    display: block;
+}
+
+.anom-bar-container.clear-3 .top-center-box > .bar-three,
+.anom-bar-container.clear-4 .top-center-box > .bar-three,
+.anom-bar-container.clear-5 .top-center-box > .bar-three,
+.anom-bar-container.clear-6 .top-center-box > .bar-three {
+    display: block;
+}
+
+.anom-bar-container.clear-4 .top-center-box > .bar-four,
+.anom-bar-container.clear-5 .top-center-box > .bar-four,
+.anom-bar-container.clear-6 .top-center-box > .bar-four {
+    display: block;
+}
+
+.anom-bar-container.clear-5 .top-center-box > .bar-five,
+.anom-bar-container.clear-6 .top-center-box > .bar-five {
+    display: block;
+}
+
+.anom-bar-container.clear-6 .top-center-box > .bar-six {
+    display: block;
+}
+
+.anom-bar-container.clear-6 .anom-bar > .top-box {
+    -ms-grid-columns: auto 1fr calc(5vw + 8rem);
+    grid-template-columns: auto 1fr -webkit-calc(5vw + 8rem);
+    grid-template-columns: auto 1fr -moz-calc(5vw + 8rem);
+    grid-template-columns: auto 1fr calc(5vw + 8rem);
+    padding-bottom: 1.15em;
+}
+
+.anom-bar-container.clear-6 .top-center-box > div {
+    background-color: rgb(133, 0, 5);
+    background-color: rgb(var(--swatch-primary, 133, 0, 5));
+    background-image: url("https://scp-wiki.wdfiles.com/local--files/component%3Aanomaly-class-bar/galactic.jpg");
+    background-attachment: fixed;
+    background-size: contain;
+    background-blend-mode: overlay;
+}
+
+.top-box .top-right-box {
+    -ms-grid-row: 1;
+    -ms-grid-column: 3;
+    display: -ms-grid;
+    display: grid;
+    grid-area: top-right-box;
+    		grid-template-areas:
+    	"level"
+    	"clearance";
+    -ms-grid-rows: (1fr)[2];
+    grid-template-rows: repeat(2, 1fr);
+    grid-gap: 0.5em;
+    gap: 0.5em;
+}
+
+.top-right-box > .level {
+    -ms-grid-row: 1;
+    -ms-grid-column: 1;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: end;
+    -webkit-align-items: flex-end;
+       -moz-box-align: end;
+    	-ms-flex-align: end;
+    		align-items: flex-end;
+    grid-area: level;
+    font-size: 2.5em;
+    line-height: 0.5;
+}
+
+.top-right-box > .clearance {
+    -ms-grid-row: 2;
+    -ms-grid-column: 1;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: start;
+    -webkit-align-items: flex-start;
+       -moz-box-align: start;
+    	-ms-flex-align: start;
+    		align-items: flex-start;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    grid-area: clearance;
+    font-size: -webkit-calc(12px + (15 - 12) * ( (100vw - 400px) / ( 1920 - 960) ));
+    font-size: -moz-calc(12px + (15 - 12) * ( (100vw - 400px) / ( 1920 - 960) ));
+    font-size: calc(12px + (15 - 12) * ( (100vw - 400px) / ( 1920 - 960) ));
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.top-right-box > .clearance::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.anom-bar-container.clear-6 .top-right-box > .clearance::before {
+    content: "Cosmic Top-Secret";
+}
+
+.anom-bar-container.clear-5 .top-right-box > .clearance::before {
+    content: "Top-Secret";
+}
+
+.anom-bar-container.clear-4 .top-right-box > .clearance::before {
+    content: "Secret";
+}
+
+.anom-bar-container.clear-3 .top-right-box > .clearance::before {
+    content: "Confidential";
+}
+
+.anom-bar-container.clear-2 .top-right-box > .clearance::before {
+    content: "Restricted";
+}
+
+.anom-bar-container.clear-1 .top-right-box > .clearance::before {
+    content: "Unrestricted";
+}
+
+.anom-bar > .bottom-box {
+    --wght: 600;
+    -ms-grid-row: 2;
+    -ms-grid-column: 1;
+    display: -ms-grid;
+    display: grid;
+    grid-area: bottom-box;
+    		grid-template-areas:
+    	"text-part diamond-part"
+    	"text-part diamond-part";
+    -ms-grid-rows: 1fr 0.5rem 1fr;
+    grid-template-rows: 1fr 1fr;
+    -ms-grid-columns: 1fr 0.5rem 6rem;
+    grid-template-columns: 1fr 6rem;
+    grid-gap: 0.5rem;
+    width: 100%; 
+    height: 6rem;
+    font-weight: 600;
+    -webkit-box-shadow: 0 -0.5rem 0 0 rgb(12, 12, 12);
+       -moz-box-shadow: 0 -0.5rem 0 0 rgb(12, 12, 12);
+    		box-shadow: 0 -0.5rem 0 0 rgb(12, 12, 12);
+    -webkit-box-shadow: 0 -0.5rem 0 0 rgb(var(--swatch-menubg-black-color, 12, 12, 12));
+       -moz-box-shadow: 0 -0.5rem 0 0 rgb(var(--swatch-menubg-black-color, 12, 12, 12));
+    		box-shadow: 0 -0.5rem 0 0 rgb(var(--swatch-menubg-black-color, 12, 12, 12));
+    margin-top: -0.5rem;
+    padding-top: 0.25rem;
+}
+
+.bottom-box > .text-part {
+    -ms-grid-row: 1;
+    -ms-grid-row-span: 3;
+    -ms-grid-column: 1;
+    display: -ms-grid;
+    display: grid;
+    height: 6rem;
+    grid-area: text-part;
+    		grid-template-areas:
+    	"main-class disrupt-class"
+    	"main-class risk-class";
+    -ms-grid-rows: 1fr 0.25rem 1fr;
+    grid-template-rows: 1fr 1fr;
+    -ms-grid-columns: auto 0.25rem 1fr;
+    grid-template-columns: 3fr 2fr;
+    grid-gap: 0.25rem;
+    text-transform: uppercase;
+    -webkit-box-pack: stretch;
+    -webkit-justify-content: stretch;
+       -moz-box-pack: stretch;
+    	-ms-flex-pack: stretch;
+    		justify-content: stretch;
+    -webkit-box-align: stretch;
+    -webkit-align-items: stretch;
+       -moz-box-align: stretch;
+    	-ms-flex-align: stretch;
+    		align-items: stretch;
+}
+
+.text-part div {
+    padding: 0 0.125rem;
+    margin: 0 0 0 0.25rem;
+    position: relative;
+}
+
+.text-part > .main-class {
+    -ms-grid-row: 1;
+    -ms-grid-row-span: 3;
+    -ms-grid-column: 1;
+    position: relative;
+    grid-area: main-class;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+       -moz-box-orient: vertical;
+       -moz-box-direction: normal;
+    	-ms-flex-direction: column;
+    		flex-direction: column;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+       -moz-box-align: center;
+    	-ms-flex-align: center;
+    		align-items: center;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+       -moz-box-pack: center;
+    	-ms-flex-pack: center;
+    		justify-content: center;
+    -webkit-box-shadow: 0.25rem 0 0 0 rgba(0,0,0,0);
+       -moz-box-shadow: 0.25rem 0 0 0 rgba(0,0,0,0);
+    		box-shadow: 0.25rem 0 0 0 rgba(0,0,0,0);
+}
+
+.anom-bar-container:not(.esoteric) .text-part > .main-class {
+    padding-right: 3.5rem;
+}
+
+.anom-bar-container.esoteric .text-part > .main-class {
+    padding-right: 2rem;
+}
+
+.text-part > .main-class::before {
+    content: "";
+    position: absolute;
+    top: -webkit-calc(50% - 2.25rem);
+    top: -moz-calc(50% - 2.25rem);
+    top: calc(50% - 2.25rem);
+    right: 0.5rem;
+    width: 3.53125rem;
+    height: 3.53125rem;
+    -webkit-border-radius: 50%;
+       -moz-border-radius: 50%;
+    		border-radius: 50%;
+    border: 0.25rem solid rgb(12, 12, 12);
+    border: 0.25rem solid rgb(var(--swatch-menutxt-dark-color, 12, 12, 12));
+    background-color: rgb(252, 252, 252);
+    background-color: rgb(var(--swatch-background	, 252, 252, 252));
+    -webkit-background-size: contain;
+       -moz-background-size: contain;
+    	 -o-background-size: contain;
+    		background-size: contain;
+    background-position: center center;
+}
+
+.anom-bar-container.esoteric .text-part > .main-class::before {
+    top: 0.5rem;
+    right: 1.25rem;
+    width: 5rem;
+    -webkit-border-radius: -webkit-calc(3.53125rem / 2);
+       -moz-border-radius: -moz-calc(3.53125rem / 2);
+    		border-radius: calc(3.53125rem / 2);
+    background-color: rgb(252, 252, 252);
+    background-color: rgb(var(--swatch-background, 252, 252, 252));
+    border-color: rgb(var(--swatch-background, 252, 252, 252));
+    -webkit-filter: invert(1);
+    		filter: invert(1);
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/esoteric-icon.svg");
+    -webkit-background-size: 75% 75%;
+       -moz-background-size: 75% 75%;
+    	 -o-background-size: 75% 75%;
+    		background-size: 75% 75%;
+    background-repeat: no-repeat;
+    background-position: left -10px center;
+}
+
+.anom-bar-container.esoteric .text-part > .main-class::after {
+    content: "";
+    position: absolute;
+    top: 0.5rem;
+    right: 0.25rem;
+    width: 3.53125rem;
+    height: 3.53125rem;
+    -webkit-border-radius: 50%;
+       -moz-border-radius: 50%;
+    		border-radius: 50%;
+    border: 0.25rem solid rgb(12, 12, 12);
+    border: 0.25rem solid rgb(var(--swatch-menutxt-dark-color, 12, 12, 12));
+    background-color: rgb(252, 252, 252);
+    background-color: rgb(var(--swatch-background, 252, 252, 252));
+    -webkit-background-size: contain;
+       -moz-background-size: contain;
+    	 -o-background-size: contain;
+    		background-size: contain;
+    background-position: center center;
+}
+
+.anom-bar-container.none
+ .text-part > .main-class::after {
+    background-image: url("{$secondary-icon}");
+}
+
+.anom-bar-container.explained .text-part > .main-class::before,
+.anom-bar-container.pending .text-part > .main-class::before,
+.anom-bar-container.neutralized .text-part > .main-class::before,
+.anom-bar-container.neutralised .text-part > .main-class::before {
+    display:none;
+}
+
+.anom-bar-container.keter .text-part > .main-class::before {
+    background-color: rgb(196,2,51);
+background-color: rgb(var(--five-color));
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/keter-icon.svg");
+}
+
+.anom-bar-container.euclid .text-part > .main-class::before {
+    background-color: rgb(255,211,0);
+background-color: rgb(var(--three-color));
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/euclid-icon.svg");
+}
+
+.anom-bar-container.safe .text-part > .main-class::before {
+    background-color: rgb(0,159,107);
+background-color: rgb(var(--one-color));
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/safe-icon.svg");
+}
+
+.text-part > .main-class > div {
+    width: 100%;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+}
+
+.anom-bar-container.esoteric .text-part > .main-class > .second-class > .class-text {
+    font-size: -webkit-calc( 6px + (11 - 6) * ( (100vw - 400px) / ( 800 - 400) ));
+    font-size: -moz-calc( 6px + (11 - 6) * ( (100vw - 400px) / ( 800 - 400) ));
+    font-size: calc( 6px + (11 - 6) * ( (100vw - 400px) / ( 800 - 400) ));
+    position: relative;
+}
+
+.anom-bar-container:not(.esoteric) .text-part > .main-class > .contain-class > .class-text {
+    font-size: -webkit-calc(10px + (18 - 10) * ( (100vw - 400px) / ( 800 - 400) ));
+    font-size: -moz-calc(10px + (18 - 10) * ( (100vw - 400px) / ( 800 - 400) ));
+    font-size: calc(10px + (18 - 10) * ( (100vw - 400px) / ( 800 - 400) ));
+}
+
+.anom-bar-container:not(.esoteric) .text-part > .main-class > .second-class {
+    display: none;
+}
+
+.text-part > .disrupt-class {
+    -ms-grid-row: 1;
+    -ms-grid-column: 3;
+    grid-area: disrupt-class;
+}
+
+.text-part > .risk-class {
+    -ms-grid-row: 3;
+    -ms-grid-column: 3;
+    grid-area: risk-class;
+}
+
+.text-part > .disrupt-class,
+.text-part > .risk-class {
+    overflow: hidden;
+}
+
+.anom-bar-container.esoteric .text-part .main-class {
+    background-color: rgba(66, 66, 72 ,0.15);
+    background-color: rgba(var(--swatch-menubg-dark-color, 66, 66, 72),0.15);
+    border-left: 0.75rem solid rgba(66, 66, 72 ,1);
+    border-left: 0.75rem solid rgba(var(--swatch-menubg-dark-color, 66, 66, 72),1);
+}
+
+.anom-bar-container.neutralized .text-part .main-class,
+.anom-bar-container.neutralised .text-part .main-class {
+    background-color: rgba(66, 66, 72 ,0.15);
+    background-color: rgba(var(--swatch-menubg-dark-color, 66, 66, 72),0.15);
+    border-left: 0.75rem solid rgba(66, 66, 72 ,1);
+    border-left: 0.75rem solid rgba(var(--swatch-menubg-dark-color, 66, 66, 72),1);
+}
+
+.anom-bar-container.pending .text-part .main-class {
+    background-color: rgba(12, 12, 12 ,0.15);
+    background-color: rgba(var(--swatch-menutxt-dark-color, 12, 12, 12),0.15);
+    border-left: 0.75rem solid rgba(12, 12, 12 ,1);
+    border-left: 0.75rem solid rgba(var(--swatch-menutxt-dark-color, 12, 12, 12),1);
+}
+
+.anom-bar-container.explained .text-part .main-class {
+    background-color: rgba(252, 252, 252 ,0.15);
+    background-color: rgba(var(--swatch-background, 252, 252, 252),0.15);
+    border-left: 0.75rem solid rgba(12, 12, 12 ,1);
+    border-left: 0.75rem solid rgba(var(--swatch-menutxt-dark-color, 12, 12, 12),1);
+}
+
+.anom-bar-container.keter .text-part .main-class,
+.anom-bar-container.amida .text-part .disrupt-class,
+.anom-bar-container.critical .text-part .risk-class {
+    background-color: rgba(196,2,51,0.15);
+    background-color: rgba(var(--five-color),0.15);
+    border-left: 0.5rem solid rgba(196,2,51,1);
+    border-left: 0.5rem solid rgba(var(--five-color),1);
+}
+
+.anom-bar-container.ekhi .text-part .disrupt-class,
+.anom-bar-container.danger .text-part .risk-class {
+    background-color: rgba(255,109,0,0.15);
+    background-color: rgba(var(--four-color),0.15);
+    border-left: 0.5rem solid rgba(255,109,0,1);
+    border-left: 0.5rem solid rgba(var(--four-color),1);
+}
+
+.anom-bar-container.euclid .text-part .main-class,
+.anom-bar-container.keneq .text-part .disrupt-class,
+.anom-bar-container.warning .text-part .risk-class {
+    border-left: 0.5rem solid rgba(255,211,0,1);
+    border-left: 0.5rem solid rgba(var(--three-color),1);
+    background-color: rgba(255,211,0,0.15);
+    background-color: rgba(var(--three-color),0.15);
+}
+
+.anom-bar-container.vlam .text-part .disrupt-class,
+.anom-bar-container.caution .text-part .risk-class {
+    border-left: 0.5rem solid rgba(0,135,189,1);
+    border-left: 0.5rem solid rgba(var(--two-color),1);
+    background-color: rgba(0,135,189,0.15);
+    background-color: rgba(var(--two-color),0.15);
+}
+
+.anom-bar-container.safe .text-part .main-class,
+.anom-bar-container.dark .text-part .disrupt-class,
+.anom-bar-container.notice .text-part .risk-class {
+    background-color: rgba(0,159,107,0.15);
+    background-color: rgba(var(--one-color),0.15);
+    border-left: 0.5rem solid rgba(0,159,107,1);
+    border-left: 0.5rem solid rgba(var(--one-color),1);
+}
+
+.anom-bar-container.neutralized .text-part,
+.anom-bar-container.neutralised .text-part,
+.anom-bar-container.pending .text-part,
+.anom-bar-container.explained .text-part {
+    -ms-grid-columns: 1fr;
+    grid-template-columns: 1fr;
+}
+
+.text-part .disrupt-class::after,
+.text-part .risk-class::after,
+.text-part .disrupt-class::before,
+.text-part .risk-class::before {
+    content: "";
+    position: absolute;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+       -moz-box-align: center;
+    	-ms-flex-align: center;
+    		align-items: center;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+       -moz-box-pack: center;
+    	-ms-flex-pack: center;
+    		justify-content: center;
+    -webkit-border-radius: 50%;
+       -moz-border-radius: 50%;
+    		border-radius: 50%;
+    border: 0.25rem solid rgb(12, 12, 12);
+    border: 0.25rem solid rgb(var(--swatch-menutxt-dark-color, 12, 12, 12));
+    width: 2.5rem;
+    height: 2.5rem;
+    top: -webkit-calc(50% - 1.5rem);
+    top: -moz-calc(50% - 1.5rem);
+    top: calc(50% - 1.5rem);
+    font-size: 2em;
+    background-color: rgb(252, 252, 252);
+    background-color: rgb(var(--swatch-background, 252, 252, 252));
+    -webkit-background-size: contain;
+       -moz-background-size: contain;
+    	 -o-background-size: contain;
+    		background-size: contain;
+    background-position: center center;
+}
+
+.text-part .disrupt-class::after,
+.text-part .risk-class::after {
+    right: 0.15em;
+}
+
+.text-part .disrupt-class::before,
+.text-part .risk-class::before {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-pack: start;
+    -webkit-justify-content: flex-start;
+       -moz-box-pack: start;
+    	-ms-flex-pack: start;
+    		justify-content: flex-start;
+    background-color: rgb(12, 12, 12);
+    background-color: rgb(var(--swatch-menubg-black-color, 12, 12, 12));
+    width: 3rem;
+    height: 3rem;
+    top: -webkit-calc(50% - 1.5rem);
+    top: -moz-calc(50% - 1.5rem);
+    top: calc(50% - 1.5rem);
+    border: 0;
+    right: 1rem;
+    text-align: left;
+    font-size: 1em;
+    padding-left: 0.5rem;
+    color: rgb(252, 252, 252);
+    color: rgb(var(--swatch-text-secondary-color, 252, 252, 252));
+}
+
+.anom-bar-container.amida .text-part .disrupt-class::before,
+.anom-bar-container.critical .text-part .risk-class::before {
+    content: "5";
+}
+
+.anom-bar-container.ekhi .text-part .disrupt-class::before,
+.anom-bar-container.danger .text-part .risk-class::before {
+    content: "4";
+}
+
+.anom-bar-container.keneq .text-part .disrupt-class::before,
+.anom-bar-container.warning .text-part .risk-class::before {
+    content: "3";
+}
+
+.anom-bar-container.vlam .text-part .disrupt-class::before,
+.anom-bar-container.caution .text-part .risk-class::before {
+    content: "2";
+}
+
+.anom-bar-container.dark .text-part .disrupt-class::before,
+.anom-bar-container.notice .text-part .risk-class::before {
+    content: "1";
+}
+
+.anom-bar-container.amida .text-part .disrupt-class::after,
+.anom-bar-container.critical .text-part .risk-class::after {
+    background-color: rgb(196,2,51);
+background-color: rgb(var(--five-color));
+}
+
+.anom-bar-container.amida .text-part .disrupt-class::after {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/amida-icon.svg");
+}
+
+.anom-bar-container.critical .text-part .risk-class::after {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/critical-icon.svg");
+}
+
+.anom-bar-container.ekhi .text-part .disrupt-class::after,
+.anom-bar-container.danger .text-part .risk-class::after {
+    background-color: rgb(255,109,0);
+background-color: rgb(var(--four-color));
+}
+
+.anom-bar-container.ekhi .text-part .disrupt-class::after {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/ekhi-icon.svg");
+}
+
+.anom-bar-container.danger .text-part .risk-class::after {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/danger-icon.svg");
+}
+
+.anom-bar-container.keneq .text-part .disrupt-class::after,
+.anom-bar-container.warning .text-part .risk-class::after {
+    background-color: rgb(255,211,0);
+background-color: rgb(var(--three-color));
+}
+
+.anom-bar-container.keneq .text-part .disrupt-class::after {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/keneq-icon.svg");
+}
+
+.anom-bar-container.warning .text-part .risk-class::after {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/warning-icon.svg");
+}
+
+.anom-bar-container.vlam .text-part .disrupt-class::after,
+.anom-bar-container.caution .text-part .risk-class::after {
+    background-color: rgb(0,135,189);
+background-color: rgb(var(--two-color));
+}
+
+.anom-bar-container.vlam .text-part .disrupt-class::after {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/vlam-icon.svg");
+}
+
+.anom-bar-container.caution .text-part .risk-class::after {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/caution-icon.svg");
+}
+
+.anom-bar-container.dark .text-part .disrupt-class::after,
+.anom-bar-container.notice .text-part .risk-class::after {
+    background-color: rgb(0,159,107);
+background-color: rgb(var(--one-color));
+}
+
+.anom-bar-container.dark .text-part .disrupt-class::after {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/dark-icon.svg");
+}
+
+.anom-bar-container.notice .text-part .risk-class::after {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/notice-icon.svg");
+}
+
+.text-part .main-class {
+    border-width: 1em !important;
+}
+
+.text-part > div .class-category {
+    --wght: 500;
+    position: relative;
+    font-weight: 500;
+    left: 0;
+}
+
+.anom-bar-container.esoteric .contain-class > .class-category {
+    max-width: 55% !important;
+}
+
+.anom-bar-container.explained .second-class,
+.anom-bar-container.explained .disrupt-class,
+.anom-bar-container.explained .risk-class,
+.anom-bar-container.explained .danger-diamond > .quadrants > .left-quad,
+.anom-bar-container.explained .danger-diamond > .quadrants > .right-quad,
+.anom-bar-container.explained .danger-diamond > .left-icon,
+.anom-bar-container.explained .danger-diamond > .right-icon,
+.anom-bar-container.neutralized .second-class,
+.anom-bar-container.neutralized .disrupt-class,
+.anom-bar-container.neutralized .risk-class,
+.anom-bar-container.neutralized .danger-diamond > .quadrants > .left-quad,
+.anom-bar-container.neutralized .danger-diamond > .quadrants > .right-quad,
+.anom-bar-container.neutralized .danger-diamond > .left-icon,
+.anom-bar-container.neutralized .danger-diamond > .right-icon,
+.anom-bar-container.neutralised .second-class,
+.anom-bar-container.neutralised .disrupt-class,
+.anom-bar-container.neutralised .risk-class,
+.anom-bar-container.neutralised .danger-diamond > .quadrants > .left-quad,
+.anom-bar-container.neutralised .danger-diamond > .quadrants > .right-quad,
+.anom-bar-container.neutralised .danger-diamond > .left-icon,
+.anom-bar-container.neutralised .danger-diamond > .right-icon,
+.anom-bar-container.pending .second-class,
+.anom-bar-container.pending .disrupt-class,
+.anom-bar-container.pending .risk-class,
+.anom-bar-container.pending .danger-diamond > .quadrants > .left-quad,
+.anom-bar-container.pending .danger-diamond > .quadrants > .right-quad,
+.anom-bar-container.pending .danger-diamond > .left-icon,
+.anom-bar-container.pending .danger-diamond > .right-icon {
+    display: none;
+}
+
+.text-part .contain-class,
+.text-part .second-class,
+.text-part .disrupt-class,
+.text-part .risk-class {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: row;
+       -moz-box-orient: horizontal;
+       -moz-box-direction: normal;
+    	-ms-flex-direction: row;
+    		flex-direction: row;
+    -webkit-flex-wrap: wrap;
+    	-ms-flex-wrap: wrap;
+    		flex-wrap: wrap;
+    -webkit-align-content: center;
+    	-ms-flex-line-pack: center;
+    		align-content: center;
+    line-height: 1;
+}
+
+.text-part .contain-class > div,
+.text-part .second-class > div,
+.text-part .disrupt-class > div,
+.text-part .risk-class > div {
+    width: 100%;
+}
+
+.text-part > div > .class-category,
+.anom-bar-container.esoteric .text-part > .main-class > .contain-class > .class-category {
+    font-size: 0.75em;
+}
+
+.anom-bar-container.esoteric .text-part > .main-class > .contain-class > .class-text,
+.text-part > .disrupt-class > .class-text,
+.text-part > .risk-class > .class-text {
+    font-size: -webkit-calc( 8px + (12 - 8) * ( (100vw - 400px) / ( 800 - 400) ));
+    font-size: -moz-calc( 8px + (12 - 8) * ( (100vw - 400px) / ( 800 - 400) ));
+    font-size: calc( 8px + (12 - 8) * ( (100vw - 400px) / ( 800 - 400) ));
+}
+
+.bottom-box > .diamond-part {
+    -ms-grid-row: 1;
+    -ms-grid-row-span: 3;
+    -ms-grid-column: 3;
+    width: 100%;
+    padding-top: 100%;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    position: relative;
+    grid-area: diamond-part;
+    padding-left: 1rem;
+    -webkit-box-shadow: -0.5rem 0 0 0 rgb(12, 12, 12);
+       -moz-box-shadow: -0.5rem 0 0 0 rgb(12, 12, 12);
+    		box-shadow: -0.5rem 0 0 0 rgb(12, 12, 12);
+    -webkit-box-shadow: -0.5rem 0 0 0 rgb(var(--swatch-menubg-black-color, 12, 12, 12));
+       -moz-box-shadow: -0.5rem 0 0 0 rgb(var(--swatch-menubg-black-color, 12, 12, 12));
+    		box-shadow: -0.5rem 0 0 0 rgb(var(--swatch-menubg-black-color, 12, 12, 12));
+}
+
+.danger-diamond {
+    position: absolute;
+    width: 95%;
+    height: 95%;
+    top: 2.5%;
+    left: 5%;
+}
+
+.danger-diamond a {
+    color: rgba(0,0,0,0);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    	-ms-flex-align: center;
+    		align-items: center;
+    -webkit-box-pack: center;
+    	-ms-flex-pack: center;
+    		justify-content: center;
+    z-index: 3;
+}
+
+.danger-diamond br {
+    display: none;
+}
+
+.danger-diamond > .arrows {
+    --danger-diamond-arrows: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='utf-8'%3F%3E%3Csvg version='1.2' baseProfile='tiny' id='Layer_1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 160 160' xml:space='preserve'%3E%3Cpath fill='%23010101' d='M136.1,133.3l23.9-23.9V51.2l-24-24l19.1-19.1l4.9,4.9l0-12.9l-12.9,0l4.9,4.9L133,24.2l-24-24H51l-24,24 L8,5.2l4.9-4.9L0,0.2l0,12.9l4.9-4.9L24,27.3l-24,24v58.2l23.9,23.9l-19,19L0,147.3l0,12.9l12.9,0L8,155.3l19-19l23.9,23.9h58.4 l23.9-23.9l19,19l-4.9,4.9l12.9,0l0-12.9l-4.9,4.9L136.1,133.3z M155.7,53v54.6l-22.6,22.6l-50-50L133,30.3L155.7,53z M52.8,4.5 h54.4l22.7,22.7L80,77.2L30.1,27.3L52.8,4.5z M4.3,107.6V53L27,30.3L77,80.2l-50,50L4.3,107.6z M107.4,155.9H52.6L30,133.3l50-50 l50,50L107.4,155.9z'/%3E%3C/svg%3E%0A");
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background-color: rgb(var(--swatch-menubg-black-color, 12, 12, 12));
+    -webkit-mask-image: var(--danger-diamond-arrows);
+            mask-image: var(--danger-diamond-arrows);
+    -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+}
+
+.danger-diamond > .octagon {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    text-align: center;
+    z-index: 0;
+    -webkit-clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+    		clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+}
+
+.danger-diamond > .quadrants {
+    position: absolute;
+    width: 96%;
+    height: 96%;
+    top: 0;
+    left: 0;
+}
+
+.danger-diamond > .quadrants > div {
+    width: 67.5%;
+    padding-bottom: 50%;
+    position: absolute;
+    top: 2.25%;
+    left: 18.5%;
+    background-color: rgb(252, 252, 252);
+background-color: rgb(var(--swatch-background, 252, 252, 252));
+    -webkit-clip-path: polygon(22% 0, 77% 0, 100% 31%, 50% 100%, 0 31%);
+    		clip-path: polygon(22% 0, 77% 0, 100% 31%, 50% 100%, 0 31%);
+    -webkit-transform-origin: bottom center;
+       -moz-transform-origin: bottom center;
+    	-ms-transform-origin: bottom center;
+    	 -o-transform-origin: bottom center;
+    		transform-origin: bottom center;
+}
+
+.danger-diamond > .quadrants > .left-quad {
+    -webkit-transform: rotate(270deg);
+       -moz-transform: rotate(270deg);
+    	-ms-transform: rotate(270deg);
+    	 -o-transform: rotate(270deg);
+    		transform: rotate(270deg);
+}
+
+.danger-diamond > .quadrants > .right-quad {
+    -webkit-transform: rotate(90deg);
+       -moz-transform: rotate(90deg);
+    	-ms-transform: rotate(90deg);
+    	 -o-transform: rotate(90deg);
+    		transform: rotate(90deg);
+}
+
+.danger-diamond > .quadrants > .bottom-quad {
+    background-color: transparent;
+    -webkit-transform: rotate(180deg);
+       -moz-transform: rotate(180deg);
+    	-ms-transform: rotate(180deg);
+    	 -o-transform: rotate(180deg);
+    		transform: rotate(180deg);
+}
+
+.danger-diamond > .quadrants > .bottom-quad.none {
+    background-color: rgb(252, 252, 252 ,0.25);
+    background-color: rgb(var(--swatch-background, 252, 252, 252),0.25);
+}
+
+.danger-diamond > .quadrants > .top-quad.pending {
+    background-color: rgb(12, 12, 12 ,0.25);
+    background-color: rgb(var(--swatch-menubg-black-color, 12, 12, 12),0.25);
+}
+
+.danger-diamond > .quadrants > .top-quad.neutralized,
+.danger-diamond > .quadrants > .top-quad.neutralised {
+    background-color: rgb(66, 66, 72 ,0.25);
+    background-color: rgb(var(--swatch-menubg-medium-dark-color, 66, 66, 72),0.25);
+}
+
+.danger-diamond > .quadrants > .top-quad.explained {
+    background-color: rgb(252, 252, 252 ,0.25);
+    background-color: rgb(var(--swatch-background, 252, 252, 252),0.25);
+}
+
+.anom-bar-container.esoteric .danger-diamond > .quadrants > .top-quad {
+    background-color: rgb(66, 66, 72 ,0.15);
+    background-color: rgb(var(--swatch-menubg-medium-dark-color, 66, 66, 72),0.15);
+}
+
+.anom-bar-container.keter .danger-diamond > .quadrants > .top-quad,
+.anom-bar-container.amida .danger-diamond > .quadrants > .left-quad,
+.anom-bar-container.critical .danger-diamond > .quadrants > .right-quad  {
+    background-color:rgba(196,2,51,0.25);
+    background-color: rgb(var(--five-color),0.25);
+}
+
+.anom-bar-container.ekhi .danger-diamond > .quadrants > .left-quad,
+.anom-bar-container.danger .danger-diamond > .quadrants > .right-quad {
+    background-color:rgba(255,109,0,0.25);
+    background-color: rgb(var(--five-color),0.25);
+}
+
+.anom-bar-container.euclid .danger-diamond > .quadrants > .top-quad,
+.anom-bar-container.keneq .danger-diamond > .quadrants > .left-quad,
+.anom-bar-container.warning .danger-diamond > .quadrants > .right-quad {
+    background-color:rgba(255,211,0,0.25);
+    background-color: rgb(var(--three-color),0.25);
+}
+
+.anom-bar-container.vlam .danger-diamond > .quadrants > .left-quad,
+.anom-bar-container.caution .danger-diamond > .quadrants > .right-quad {
+    background-color:rgba(0,135,189,0.25);
+    background-color: rgb(var(--two-color),0.25);
+}
+
+.anom-bar-container.safe .danger-diamond > .quadrants > .top-quad,
+.anom-bar-container.dark .danger-diamond > .quadrants > .left-quad,
+.anom-bar-container.notice .danger-diamond > .quadrants > .right-quad {
+    background-color:rgba(0,159,107,0.25);
+    background-color: rgb(var(--one-color),0.25);
+}
+
+.anom-bar-container.clear-5 .danger-diamond > .center-circle::before {
+    content: "5";
+}
+
+.anom-bar-container.clear-4 .danger-diamond > .center-circle::before {
+    content: "4";
+}
+
+.anom-bar-container.clear-3 .danger-diamond > .center-circle::before {
+    content: "3";
+}
+
+.anom-bar-container.clear-2 .danger-diamond > .center-circle::before {
+    content: "2";
+}
+
+.anom-bar-container.clear-1 .danger-diamond > .center-circle::before {
+    content: "1";
+}
+
+.danger-diamond > .top-icon,
+.danger-diamond > .right-icon,
+.danger-diamond > .left-icon,
+.danger-diamond > .bottom-icon {
+    position: absolute;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+       -moz-box-align: center;
+    	-ms-flex-align: center;
+    		align-items: center;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+       -moz-box-pack: center;
+    	-ms-flex-pack: center;
+    		justify-content: center;
+    width: 33%;
+    height: 33%;
+    -webkit-border-radius: 50%;
+       -moz-border-radius: 50%;
+    		border-radius: 50%;
+    border: 0.1875rem solid rgb(12, 12, 12);
+    border: 0.1875rem solid rgb(var(--swatch-menubg-black-color, 12, 12, 12));
+    overflow: hidden;
+    z-index: 2;
+}
+
+.danger-diamond > .top-icon {
+    top: 0.25rem;
+    left: 33.5%;
+}
+
+.danger-diamond > .right-icon {
+    right: 0.25rem;
+    top: 33.5%;
+}
+
+.danger-diamond > .left-icon {
+    left: 0.25rem;
+    top: 33.5%;
+}
+
+.danger-diamond > .bottom-icon {
+    bottom: 0.25rem;
+    left: 33.5%;
+}
+
+.anom-bar-container.neutralized .danger-diamond > .top-icon,
+.anom-bar-container.neutralised .danger-diamond > .top-icon,
+.anom-bar-container.pending .danger-diamond > .top-icon,
+.anom-bar-container.explained .danger-diamond > .top-icon {
+    width: 65%;
+    height: 65%;
+    top: 17.5%;
+    left: 17.5%;
+    border-width: 0.3625rem;
+}
+
+.anom-bar-container.pending .danger-diamond > .top-icon {
+    background-color: rgb(var(--swatch-menubg-black-color, 12, 12, 12));
+}
+
+.anom-bar-container:not(.esoteric) .danger-diamond > .bottom-icon {
+    display: none;
+}
+
+.danger-diamond > .top-icon::before,
+.danger-diamond > .right-icon::before,
+.danger-diamond > .left-icon::before,
+.danger-diamond > .bottom-icon::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+       -moz-box-align: center;
+    	-ms-flex-align: center;
+    		align-items: center;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+       -moz-box-pack: center;
+    	-ms-flex-pack: center;
+    		justify-content: center;
+    top: 0;
+    left: 0;
+}
+
+.anom-bar-container.neutralized .danger-diamond > .top-icon,
+.anom-bar-container.neutralised .danger-diamond > .top-icon {
+    background-color: rgb(252, 252, 252);
+    background-color: rgb(var(--swatch-background, 252, 252, 252));
+}
+
+.anom-bar-container.neutralized .danger-diamond > .top-icon::before,
+.anom-bar-container.neutralised .danger-diamond > .top-icon::before {
+    background-color: rgba(66, 66, 72 ,0.15);
+    background-color: rgba(var(--swatch-menubg-medium-dark-color, 66, 66, 72),0.15);
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/neutralized-icon.svg");
+    -webkit-background-size: 110% 110%;
+       -moz-background-size: 110% 110%;
+    	 -o-background-size: 110% 110%;
+    		background-size: 110% 110%;
+    background-position: center center;
+}
+
+.anom-bar-container.pending .danger-diamond > .top-icon::before {
+    background-color: rgb(12, 12, 12);
+    background-color: rgb(var(--swatch-menubg-black-color, 12, 12, 12));
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/pending-icon.svg");
+}
+
+.anom-bar-container.explained .danger-diamond > .top-icon::before {
+    background-color: rgb(252, 252, 252);
+    background-color: rgb(var(--swatch-background, 252, 252, 252));
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/explained-icon.svg");
+}
+
+.anom-bar-container.esoteric .danger-diamond > .top-icon::before {
+    background-color: rgb(252, 252, 252);
+    background-color: rgb(var(--swatch-background, 252, 252, 252));
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/esoteric-icon.svg");
+    -webkit-filter: invert(1);
+    		filter: invert(1);
+}
+
+.anom-bar-container.keter .danger-diamond > .top-icon::before,
+.anom-bar-container.amida .danger-diamond > .left-icon::before,
+.anom-bar-container.critical .danger-diamond > .right-icon::before {
+    background-color: rgb(196,2,51);
+background-color: rgb(var(--five-color));
+}
+
+.anom-bar-container.keter .danger-diamond > .top-icon::before {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/keter-icon.svg");
+}
+
+.anom-bar-container.amida .danger-diamond > .left-icon::before {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/amida-icon.svg");
+}
+
+.anom-bar-container.critical .danger-diamond > .right-icon::before {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/critical-icon.svg");
+}
+
+.anom-bar-container.ekhi .danger-diamond > .left-icon::before,
+.anom-bar-container.danger .danger-diamond > .right-icon::before {
+    background-color: rgb(255,109,0);
+background-color: rgb(var(--four-color));
+}
+
+.anom-bar-container.ekhi .danger-diamond > .left-icon::before {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/ekhi-icon.svg");
+}
+
+.anom-bar-container.danger .danger-diamond > .right-icon::before {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/danger-icon.svg");
+}
+
+.anom-bar-container.euclid .danger-diamond > .top-icon::before,
+.anom-bar-container.keneq .danger-diamond > .left-icon::before,
+.anom-bar-container.warning .danger-diamond > .right-icon::before {
+    background-color: rgb(255,211,0);
+background-color: rgb(var(--three-color));
+}
+
+.anom-bar-container.euclid .danger-diamond > .top-icon::before {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/euclid-icon.svg");
+}
+
+.anom-bar-container.keneq .danger-diamond > .left-icon::before {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/keneq-icon.svg");
+}
+
+.anom-bar-container.warning .danger-diamond > .right-icon::before {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/warning-icon.svg");
+}
+
+.anom-bar-container.vlam .danger-diamond > .left-icon::before,
+.anom-bar-container.caution .danger-diamond > .right-icon::before {
+    background-color: rgb(0,135,189);
+background-color: rgb(var(--two-color));
+}
+
+.anom-bar-container.vlam .danger-diamond > .left-icon::before {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/vlam-icon.svg");
+}
+
+.anom-bar-container.caution .danger-diamond > .right-icon::before {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/caution-icon.svg");
+}
+
+.anom-bar-container.safe .danger-diamond > .top-icon::before,
+.anom-bar-container.dark .danger-diamond > .left-icon::before,
+.anom-bar-container.notice .danger-diamond > .right-icon::before {
+    background-color: rgb(0,159,107);
+background-color: rgb(var(--one-color));
+}
+
+.anom-bar-container.safe .danger-diamond > .top-icon::before {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/safe-icon.svg");
+}
+
+.anom-bar-container.dark .danger-diamond > .left-icon::before {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/dark-icon.svg");
+}
+
+.anom-bar-container.notice .danger-diamond > .right-icon::before {
+    background-image: url("https://scp-wiki.wikidot.com/local--files/component:anomaly-class-bar/notice-icon.svg");
+}
+
+.anom-bar-container.none
+ .danger-diamond > .bottom-icon::before {
+    background-image: url("{$secondary-icon}");
+    background-size: contain;
+}
+
+@media (max-width: 960px ) {
+    .anom-bar > .top-box {
+    	padding-bottom: 1.5em;
+    }
+
+    .anom-bar > .bottom-box {
+    	-ms-grid-columns: 1fr 0.5rem 6rem;
+    	grid-template-columns: 1fr 6rem;
+    	height: 6rem;
+    }
+
+    .anom-bar-container.esoteric .text-part > .main-class > .contain-class > .class-text, .text-part > .disrupt-class > .class-text, .text-part > .risk-class > .class-text {
+    	font-size: -webkit-calc( 18px + (24 - 18) * ( (100vw - 400px) / ( 960 - 300) ));
+    	font-size: -moz-calc( 18px + (24 - 18) * ( (100vw - 400px) / ( 960 - 300) ));
+    	font-size: calc( 18px + (24 - 18) * ( (100vw - 400px) / ( 960 - 300) ));
+    }
+
+    .anom-bar-container.esoteric .text-part > .main-class > .contain-class > .class-text {
+    	font-size: -webkit-calc( 12px + (18 - 12) * ( (100vw - 400px) / ( 960 - 300) ));
+    	font-size: -moz-calc( 12px + (18 - 12) * ( (100vw - 400px) / ( 960 - 300) ));
+    	font-size: calc( 12px + (18 - 12) * ( (100vw - 400px) / ( 960 - 300) ));
+    }
+
+    .anom-bar-container.esoteric .text-part > .main-class > .second-class > .class-text {
+    	font-size: -webkit-calc( 18px + (24 - 18) * ( (100vw - 400px) / ( 960 - 300) ));
+    	font-size: -moz-calc( 18px + (24 - 18) * ( (100vw - 400px) / ( 960 - 300) ));
+    	font-size: calc( 18px + (24 - 18) * ( (100vw - 400px) / ( 960 - 300) ));
+    }
+
+    .anom-bar-container:not(.esoteric) .text-part > .main-class > .contain-class > .class-text {
+    	font-size: -webkit-calc( 20px + (40 - 20) * ( (100vw - 400px) / ( 960 - 300) ));
+    	font-size: -moz-calc( 20px + (40 - 20) * ( (100vw - 400px) / ( 960 - 300) ));
+    	font-size: calc( 20px + (40 - 20) * ( (100vw - 400px) / ( 960 - 300) ));
+    }
+
+    .text-part > .main-class {
+    	-ms-grid-row: 1;
+    	-ms-grid-row-span: 1;
+    	-ms-grid-column: 1;
+    }
+
+    .text-part > .disrupt-class {
+    	-ms-grid-row: 3;
+    	-ms-grid-column: 1;
+    }
+
+    .text-part > .risk-class {
+    	-ms-grid-row: 5;
+    	-ms-grid-column: 1;
+    }
+}
+
+@media (max-width: 875px ) {
+    .text-part > div {
+    	padding: 0.25rem 0;
+    }
+
+    .anom-bar-container.pending .bottom-box > .text-part,
+    .anom-bar-container.neutralized .bottom-box > .text-part,
+    .anom-bar-container.neutralised .bottom-box > .text-part,
+    .anom-bar-container.explained .bottom-box > .text-part {
+    	height: 6rem;
+    }
+
+    .bottom-box > .text-part {
+    	grid-template-areas: 
+    		"main-class" 
+    		"disrupt-class"
+    		"risk-class";
+    	-ms-grid-rows: 2fr 0.25rem 1fr 0.25rem 1fr;
+    	grid-template-rows: 3fr 2fr 2fr;
+    	-ms-grid-columns: 1fr;
+    	grid-template-columns: 1fr;
+    	height: 8rem;
+    }
+
+    .anom-bar > .bottom-box {
+    	-ms-grid-columns: 1fr 0.5rem 8rem;
+    	grid-template-columns: 1fr 8rem;
+    	height: 8rem;
+    }
+
+    .anom-bar-container.esoteric .text-part > .main-class::after,
+    .text-part > .main-class::after {
+    	height: 3rem;
+    	width: 3rem;
+    }
+
+    .text-part .disrupt-class::after, 
+    .text-part .risk-class::after {
+    	height: 1.75rem;
+    	width: 1.75rem;
+    }
+
+    .anom-bar-container.esoteric .text-part > .main-class::after,
+    .text-part > .main-class::after,
+    .text-part .disrupt-class::after, 
+    .text-part .risk-class::after {
+    	top: -webkit-calc(50% - 1.125rem);
+    	top: -moz-calc(50% - 1.125rem);
+    	top: calc(50% - 1.125rem);
+    	border-width: 0.25rem;
+    }
+
+    .text-part > .main-class::before {
+    	height: 2.5rem;
+    	width: 2.5rem;
+    	border-width: 0.25rem;
+    	top: -webkit-calc(50% - 1.45rem);
+    	top: -moz-calc(50% - 1.45rem);
+    	top: calc(50% - 1.45rem);
+    }
+
+    .text-part .disrupt-class::before, 
+    .text-part .risk-class::before {
+    	height: 2.25rem;
+    	width: 2.25rem;
+    	top: -webkit-calc(50% - 1.125rem);
+    	top: -moz-calc(50% - 1.125rem);
+    	top: calc(50% - 1.125rem);
+    	right: 0.75rem;
+    }
+
+    .anom-bar-container.esoteric .text-part > .main-class::after {
+    	top: 0.15rem;
+    }
+
+    .anom-bar-container.esoteric .text-part > .main-class::before {
+    	top: 0.15rem;
+    	width: 5.75rem;
+    	height: 3rem;
+    	right: 1.25rem;
+    	-webkit-background-size: 100% 100%;
+    	   -moz-background-size: 100% 100%;
+    		 -o-background-size: 100% 100%;
+    			background-size: 100% 100%;
+    	background-position: left -20px center;
+    }
+
+    .anom-bar-container.esoteric .contain-class > .class-category {
+    	max-width: 100% !important;
+    }
+
+    .anom-bar-container.pending .bottom-box > .text-part,
+    .anom-bar-container.neutralized .bottom-box > .text-part,
+    .anom-bar-container.neutralised .bottom-box > .text-part,
+    .anom-bar-container.explained .bottom-box > .text-part {
+    	-ms-grid-rows: 1fr;
+    	grid-template-rows: 1fr;
+    		grid-template-areas: "main-class";
+    }
+
+    .text-part .disrupt-class,
+    .text-part .risk-class {
+    	padding-left: 0.25rem;
+    	display: -ms-grid;
+    	display: grid;
+    	-ms-grid-columns: auto 1fr;
+    	grid-template-columns: auto 1fr;
+    }
+
+    .text-part .disrupt-class *,
+    .text-part .risk-class * {
+    	display: -webkit-box;
+    	display: -ms-flexbox;
+    	display: flex;
+    	-webkit-box-align: center;
+    		-ms-flex-align: center;
+    			align-items: center;
+    }
+}
+
+@media (max-width: 875px ) and (min-width: 480px ) {
+    .anom-bar-container.pending .anom-bar > .bottom-box,
+    .anom-bar-container.neutralized .anom-bar > .bottom-box,
+    .anom-bar-container.neutralised .anom-bar > .bottom-box,
+    .anom-bar-container.explained .anom-bar > .bottom-box {
+    	-ms-grid-columns: 1fr 6rem;
+    	grid-template-columns: 1fr 6rem;
+    	height: 6rem;
+    }
+}
+
+@media (max-width: 480px ) {
+    .anom-bar {
+    	position: relative;
+    }
+
+    .anom-bar > .top-box {
+    	height: 40vw;
+    	max-height: 40vw;
+    			grid-template-areas: 
+    		"."
+    		"top-left-box"
+    		"top-center-box"
+    		"top-right-box"
+    		".";
+    	-ms-grid-rows: 1fr 1fr 1fr 1fr 1fr;
+    	grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
+    	font-size: -webkit-calc(5px + (10 - 5) * ( (100vw - 300px) / ( 480 - 300) ));
+    	font-size: -moz-calc(5px + (10 - 5) * ( (100vw - 300px) / ( 480 - 300) ));
+    	font-size: calc(5px + (10 - 5) * ( (100vw - 300px) / ( 480 - 300) ));
+    	margin: 0 0 1rem 0;
+    	padding-left: 1em;
+    }
+
+    .top-box .top-left-box {
+    	display: -webkit-box;
+    	display: -webkit-flex;
+    	display: -moz-box;
+    	display: -ms-flexbox;
+    	display: flex;
+    	-webkit-box-orient: vertical;
+    	-webkit-box-direction: normal;
+    	-webkit-flex-direction: column;
+    	   -moz-box-orient: vertical;
+    	   -moz-box-direction: normal;
+    		-ms-flex-direction: column;
+    			flex-direction: column;
+    	-webkit-box-align: center;
+    	-webkit-align-items: center;
+    	   -moz-box-align: center;
+    		-ms-flex-align: center;
+    			align-items: center;
+    	-webkit-box-pack: center;
+    	-webkit-justify-content: center;
+    	   -moz-box-pack: center;
+    		-ms-flex-pack: center;
+    			justify-content: center;
+    	-webkit-flex-wrap: wrap;
+    		-ms-flex-wrap: wrap;
+    			flex-wrap: wrap;
+    	line-height: 1;
+    }
+
+    .top-left-box > .item {
+    	font-size: 3em;
+    }
+
+    .top-box .top-left-box > span {
+    	width: 100%;
+    }
+
+    .top-box .top-center-box {
+    	-webkit-box-orient: horizontal;
+    	-webkit-box-direction: normal;
+    	-webkit-flex-direction: row;
+    	   -moz-box-orient: horizontal;
+    	   -moz-box-direction: normal;
+    		-ms-flex-direction: row;
+    			flex-direction: row;
+    width: 100%;
+    	max-width: 48vw;
+    	margin: 0 0 0 -0.15rem;
+    height: 2rem;
+    }
+
+    .top-center-box > div {
+    	height: 25%;
+    	margin: 0.15rem 0.15rem 0 0.15rem;
+    }
+
+    .top-box .top-right-box {
+    	display: -webkit-box;
+    	display: -webkit-flex;
+    	display: -moz-box;
+    	display: -ms-flexbox;
+    	display: flex;
+    	-webkit-box-orient: vertical;
+    	-webkit-box-direction: normal;
+    	-webkit-flex-direction: column;
+    	   -moz-box-orient: vertical;
+    	   -moz-box-direction: normal;
+    		-ms-flex-direction: column;
+    			flex-direction: column;
+    width: 100%;
+    	max-width: 48vw;
+    	margin: 0 0 0 -0.15rem;
+    height: 3rem;
+    }
+
+    .top-right-box > div {
+    	line-height: 1;
+    }
+
+    .top-right-box > .level {
+    	font-size: 4em;
+    }
+
+    .top-right-box > .clearance {
+    	line-height: 1.5;
+    	-webkit-box-align: center;
+    	-webkit-align-items: center;
+    	   -moz-box-align: center;
+    		-ms-flex-align: center;
+    			align-items: center;
+    	font-size: -webkit-calc(14px + (14 - 10) * ( (100vw - 400px) / ( 480 - 300) ));
+    	font-size: -moz-calc(14px + (14 - 10) * ( (100vw - 400px) / ( 480 - 300) ));
+    	font-size: calc(14px + (14 - 10) * ( (100vw - 400px) / ( 480 - 300) ));
+    	width: initial;
+    	height: 1.5rem;
+    }
+
+    .top-right-box > .clearance::before {
+    	line-height: 0.5;
+    	-webkit-box-align: center;
+    	-webkit-align-items: center;
+    	   -moz-box-align: center;
+    		-ms-flex-align: center;
+    			align-items: center;
+    	width: initial;
+    	height: initial;
+    	position: initial;
+    }
+
+    .anom-bar > .bottom-box {
+    	position: initial;
+    	-ms-grid-columns: 1fr;
+    	grid-template-columns: 1fr;
+    	height: 8rem;
+    }
+
+    .anom-bar-container:not(.esoteric) .text-part > .main-class::before {
+    	width: 2.5rem;
+    	height: 2.5rem;
+    	top: -webkit-calc(50% - 1.475rem);
+    	top: -moz-calc(50% - 1.475rem);
+    	top: calc(50% - 1.475rem);
+    	right: 0.5rem;
+    }
+
+    .text-part > div > .class-category, 
+    .anom-bar-container.esoteric .text-part > .main-class > .contain-class > .class-category {
+    	font-size: 1em;
+    }
+
+    .text-part .disrupt-class,
+    .text-part .risk-class {
+    	font-size: 0.9em;
+    }
+
+    .text-part > .main-class::after,
+    .text-part .disrupt-class::after,
+    .text-part .risk-class::after {
+    	height: 2rem;
+    	width: 2rem;
+    	top: -webkit-calc(50% - 1.25rem);
+    	top: -moz-calc(50% - 1.25rem);
+    	top: calc(50% - 1.25rem);
+    }
+
+    .text-part > .main-class::before,
+    .text-part .disrupt-class::before,
+    .text-part .risk-class::before {
+    	height: 2.5rem;
+    	width: 2.5rem;
+    	font-size: 1rem;
+    	top: -webkit-calc(50% - 1.25rem);
+    	top: -moz-calc(50% - 1.25rem);
+    	top: calc(50% - 1.25rem);
+    	right: 1.5rem;
+    }
+
+    .anom-bar-container.esoteric .text-part > .main-class::before {
+    	top: 0.15rem;
+    	width: 4.5rem;
+    	height: 2.5rem;
+    	right: 1rem;
+    	-webkit-background-size: 100% 100%;
+    	   -moz-background-size: 100% 100%;
+    		 -o-background-size: 100% 100%;
+    			background-size: 100% 100%;
+    	background-position: left -10px center;
+    }
+
+    .anom-bar-container.esoteric .text-part > .main-class::after {
+    	height: 2.5rem;
+    	width: 2.5rem;
+    }
+
+    .bottom-box > .diamond-part {
+    	position: absolute;
+    	top: 0;
+    	right: 0;
+    	width: 40vw;
+    	height: 40vw;
+    	padding: 0;
+    }
+
+    .diamond-part * {
+    	background-repeat: no-repeat;
+    }
+
+    .top-box .top-left-box {
+    	-ms-grid-row: 2;
+    	-ms-grid-column: 1;
+    }
+
+    .top-box .top-center-box {
+    	-ms-grid-row: 3;
+    	-ms-grid-column: 1;
+    }
+
+    .top-box .top-right-box {
+    	-ms-grid-row: 4;
+    	-ms-grid-column: 1;
+    }
+
+    .anom-bar-container.pending .anom-bar > .bottom-box,
+    .anom-bar-container.neutralized .anom-bar > .bottom-box,
+    .anom-bar-container.neutralised .anom-bar > .bottom-box,
+    .anom-bar-container.explained .anom-bar > .bottom-box {
+    	height: 6rem;
+    }
+
+    .danger-diamond > .top-icon {
+    	top: 0.375rem;
+    }
+
+    .danger-diamond > .right-icon {
+    	right: 0.375rem;
+    }
+
+    .danger-diamond > .left-icon {
+    	left: 0.375rem;
+    }
+
+    .danger-diamond > .bottom-icon {
+    	bottom: 0.375rem;
+    }
+}
+
+@supports not (--css: variables) {
+
+    .anom-bar {
+    	display: -webkit-box;
+    	display: -webkit-flex;
+    	display: -moz-box;
+    	display: -ms-flexbox;
+    	display: flex;
+    	-webkit-box-orient: vertical;
+    	-webkit-box-direction: normal;
+    	-webkit-flex-flow: column nowrap;
+    	   -moz-box-orient: vertical;
+    	   -moz-box-direction: normal;
+    		-ms-flex-flow: column nowrap;
+    			flex-flow: column nowrap;
+    }
+
+    .anom-bar > .top-box { 
+    	display: -webkit-box; 
+    	display: -webkit-flex; 
+    	display: -moz-box; 
+    	display: -ms-flexbox; 
+    	display: flex;
+    	-webkit-box-orient: horizontal;
+    	-webkit-box-direction: normal;
+    	-webkit-flex-direction: row;
+    	   -moz-box-orient: horizontal;
+    	   -moz-box-direction: normal;
+    		-ms-flex-direction: row;
+    			flex-direction: row;
+    	-webkit-flex-wrap: nowrap;
+    		-ms-flex-wrap: nowrap;
+    			flex-wrap: nowrap;
+    }
+
+    .top-box .top-center-box {
+    	-webkit-box-flex: 2;
+    	-webkit-flex-grow: 2;
+    	   -moz-box-flex: 2;
+    		-ms-flex-positive: 2;
+    			flex-grow: 2;
+    }
+
+    .anom-bar > .bottom-box {
+    	display: -webkit-box;
+    	display: -webkit-flex;
+    	display: -moz-box;
+    	display: -ms-flexbox;
+    	display: flex;
+    }
+
+    .bottom-box > .text-part {
+    	-webkit-box-flex: 1;
+    	-webkit-flex-grow: 1;
+    	   -moz-box-flex: 1;
+    		-ms-flex-positive: 1;
+    			flex-grow: 1;
+    	width: 100%;
+    }
+
+    .anom-bar-container .text-part .main-class {
+    	overflow: hidden;
+    }
+
+    .anom-bar-container .text-part .disrupt-class,
+    .anom-bar-container .text-part .risk-class {
+    	display: -webkit-box;
+    	display: -webkit-flex;
+    	display: -moz-box;
+    	display: -ms-flexbox;
+    	display: flex;
+    	-webkit-box-orient: horizontal;
+    	-webkit-box-direction: normal;
+    	-webkit-flex-direction: row;
+    	   -moz-box-orient: horizontal;
+    	   -moz-box-direction: normal;
+    		-ms-flex-direction: row;
+    			flex-direction: row;
+    	-webkit-flex-wrap: nowrap;
+    		-ms-flex-wrap: nowrap;
+    			flex-wrap: nowrap; 
+    	-webkit-box-align: center; 
+    	-webkit-align-items: center; 
+    	   -moz-box-align: center; 
+    		-ms-flex-align: center; 
+    			align-items: center;
+    	-webkit-box-pack: start;
+    	-webkit-justify-content: flex-start;
+    	   -moz-box-pack: start;
+    		-ms-flex-pack: start;
+    			justify-content: flex-start;
+    }
+
+    .anom-bar-container .text-part .disrupt-class .class-category,
+    .anom-bar-container .text-part .risk-class  .class-category {
+    	-webkit-flex-shrink: 4;
+    		-ms-flex-negative: 4;
+    			flex-shrink: 4;
+    }
+
+    .bottom-box > .diamond-part {
+    	width: 6rem;
+    	height: 6rem;
+    	-webkit-box-flex: 0;
+    	-webkit-flex-grow: 0;
+    	   -moz-box-flex: 0;
+    		-ms-flex-positive: 0;
+    			flex-grow: 0;
+    	-webkit-flex-shrink: 0;
+    		-ms-flex-negative: 0;
+    			flex-shrink: 0;
+    	display: -webkit-box;
+    	display: -webkit-flex;
+    	display: -moz-box;
+    	display: -ms-flexbox;
+    	display: flex;
+    }
+
+@media (max-width: 480px ) {
+    	.anom-bar > .top-box {
+    		height: 6rem;
+    		display: -webkit-box;
+    		display: -webkit-flex;
+    		display: -moz-box;
+    		display: -ms-flexbox;
+    		display: flex;
+    		-webkit-box-orient: vertical;
+    		-webkit-box-direction: normal;
+    		-webkit-flex-direction: column;
+    		   -moz-box-orient: vertical;
+    		   -moz-box-direction: normal;
+    			-ms-flex-direction: column;
+    				flex-direction: column;
+    		-webkit-flex-wrap: nowrap;
+    			-ms-flex-wrap: nowrap;
+    				flex-wrap: nowrap;
+    		width: -webkit-calc(100% - 40vw);
+    		width: -moz-calc(100% - 40vw);
+    		width: calc(100% - 40vw);
+    	}
+    	
+    	.top-box .top-left-box {
+    		display: initial;
+    	}
+    	
+    	.top-box > * {
+    		width: 100%;
+    		height: auto;
+    	}
+    	
+    	.top-box .top-center-box {
+    			-webkit-box-flex: 0;
+    			-webkit-flex-grow: 0;
+    			   -moz-box-flex: 0;
+    				-ms-flex-positive: 0;
+    					flex-grow: 0;
+    	}
+    	
+    }
+}
+
+[[/module]]
+
+[[div_ class="anom-bar-container item-039
+ clear-2
+ euclid
+ none
+ vlam
+ caution
+ {$american}"]]
+    [[div_ class="anom-bar"]]
+    	[[div_ class="top-box"]]
+    		[[div_ class="top-left-box"]]
+    			[[span class="item"]]Item#:[[/span]] [[span class="number"]]039
+[[/span]]
+    		[[/div]]
+    		[[div_ class="top-center-box"]]
+    			[[div_ class="bar-one"]]
+    			[[/div]]
+    			[[div_ class="bar-two"]]
+    			[[/div]]
+    			[[div_ class="bar-three"]]
+    			[[/div]]
+    			[[div_ class="bar-four"]]
+    			[[/div]]
+    			[[div_ class="bar-five"]]
+    			[[/div]]
+    			[[div_ class="bar-six"]]
+    			[[/div]]
+    		[[/div]]
+    		[[div_ class="top-right-box"]]
+    			[[div_ class="level"]]
+    				Level2
+
+    			[[/div]]
+    			[[div_ class="clearance"]]
+    			[[/div]]
+    		[[/div]]
+    	[[/div]]
+    	[[div_ class="bottom-box"]]
+    		[[div_ class="text-part"]]
+    			[[div_ class="main-class"]]
+    				[[div_ class="contain-class"]]
+    					[[div_ class="class-category"]]
+    						Containment Class:
+    					[[/div]]
+    					[[div_ class="class-text"]]
+    						euclid
+
+    					[[/div]]
+    				[[/div]]
+    				[[div_ class="second-class"]]
+    					[[div_ class="class-category"]]
+    						Secondary Class:
+    					[[/div]]
+    					[[div_ class="class-text"]]
+    						none
+
+    					[[/div]]
+    				[[/div]]
+    			[[/div]]
+    			[[div_ class="disrupt-class"]]
+    				[[div_ class="class-category"]]
+    					Disruption Class:
+    				[[/div]]
+    				[[div_ class="class-text"]]
+    					vlam
+
+    				[[/div]]
+    			[[/div]]
+    			[[div_ class="risk-class"]]
+    				[[div_ class="class-category"]]
+    					Risk Class:
+    				[[/div]]
+    				[[div_ class="class-text"]]
+    					caution
+
+    				[[/div]]
+    			[[/div]]
+    		[[/div]]
+    		[[div_ class="diamond-part"]]
+    			[[div_ class="danger-diamond"]]
+[[[Classification Committee Memo|link to memo]]]
+    				[[div_ class="arrows"]]
+    				[[/div]]
+    				[[div_ class="octagon"]]
+    				[[/div]]
+    				[[div_ class="quadrants"]]
+    					[[div_ class="top-quad"]]
+
+    					[[/div]]
+    					[[div_ class="right-quad"]]
+    						
+    					[[/div]]
+    					[[div_ class="left-quad"]]
+    						
+    					[[/div]]
+    					[[div_ class="bottom-quad"]]
+    						
+    					[[/div]]
+    				[[/div]] 		
+    				[[div_ class="top-icon"]]
+
+    				[[/div]]	  
+    				[[div_ class="right-icon"]]
+
+    				[[/div]]
+    				[[div_ class="left-icon"]]
+    					
+    				[[/div]]
+    				[[div_ class="bottom-icon"]]
+    					
+    				[[/div]]	   
+    			[[/div]]
+    		[[/div]]
+    	[[/div]]
+    [[/div]]
+[[/div]]
+[[/iftags]]
+
+[[iftags +component-backend]]
++ Check Page Source for Code
+[[/iftags]]
+
+
+**Special Containment Procedures:** Living SCP-039 instances are to be contained in [[[*http://www.scp-wiki.net/secure-facility-dossier-site-77|Site-77]]]'s Wilderness Observation Chamber-2B. The interior and exterior of WOC-2B must be monitored by 2 security guards at all times. WOC-2 is to be inspected weekly for [[[secure-facility-dossier-site-77#039-incident | sabotage and contraband]]].
+
+Deceased instances are in refrigerated storage and may be accessed for study upon request.
+
+SCP-039-A is [DATA EXPUNGED].
+
+
+
+[[div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;"]]
+[[image monkey-new.jpg {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+A male SCP-039 instance.
+[[/div]]
+[[/div]]
+
+
+
+**Description:**  SCP-039 consists of twenty-three proboscis monkeys (//Nasalis larvatus//) which have been subject to radical anatomical changes.  These alterations are summarized below:
+* Eyes have been removed.  New bone growth has filled eye sockets.  No remnants of eyelids or eyebrows remain, only smooth skin.
+* Extreme alterations to the mouth.  Oral opening is no longer present; no remnants of lips remain, only smooth skin.  Jawbone has been fused in place by new bone growth along the joints.  Teeth, tongue, gums, and palate are absent, having been replaced by a large deposit of adipose tissue.
+* Removal of digestive system.  Esophagus, stomach, gallbladder, intestines, and bladder have all been replaced with adipose tissue formations of similar shape and volume.  Anal orifice has been sealed by new skin growth, leaving no remnants of the anus.  It is not clear how SCP-039 instances obtain nutrition and dispose of waste, or survive without doing so.
+* Enhancements of auditory, tactile, and olfactory senses.  Both absolute and difference thresholds are significantly lower than those of the baseline species.  These enhancements allow SCP-039 to effectively navigate their environment despite lack of sight.  Instances have been observed tapping on objects when navigating unfamiliar surroundings; this behavior has been theorized to be a form of rudimentary echolocation, but this is yet to be proven.
+* Intelligence enhancements.  SCP-039 score consistently higher on all provided cognitive tests than their non-anomalous equivalents.
+
+SCP-039 are capable of reproduction; at time of writing, five instances of SCP-039 have been born since containment. SCP-039 show a very close bond among their species, with newborns often being cared for by all capable adults.  New instances are born with the same anatomic anomalies as their parents.  Despite this, testing has not identified any genetic divergence from baseline species in SCP-039 instances.
+
+SCP-039 communicate via touch and a complex series of nasal vocalizations, many of which have not been observed in non-anomalous //Nasalis larvatus//.  Original instances also possess a rudimentary understanding of spoken English.  This knowledge is not passed on to newborns, but they do naturally learn some English from exposure to Foundation personnel.
+
+Instances of SCP-039 have demonstrated the ability to operate mechanical tools, and to perform various complex tasks primarily related to automobile construction and maintenance.  This knowledge does not appear to be innate, as newborn instances do not possess it.
+
+**Addendum SCP-039-1:**  Recovery Log
+
+SCP-039 were recovered in 1998, when Foundation forces raided a [[[prometheus-labs-hub |Prometheus Labs]]] facility approximately twenty-five kilometers north-northwest of ███████, Nevada.  The facility was found to have been abandoned an unknown amount of time prior to Prometheus Labs's collapse.  Recovered objects of note included:
+* Two automobiles, abandoned in the parking lot outside.
+* A third automobile, partially disassembled in a cargo bay.
+* An assortment of power tools, spare parts, paints, and other auto maintenance implements.
+* An assortment of veterinary anesthetics, surgical implements, and [DATA EXPUNGED], located in an operating room.
+* Twenty small cages, presumably for the purpose of containing SCP-039.  All cages were empty and partially dismantled, with the doors removed.
+* Two larger cages, likewise empty and dismantled, containing chimpanzee hair and feces.
+* The frozen remains of a dissected SCP-039 instance, which lacked a nose or nasal passages in addition to the typical anomalies.
+* The remains of three adult males, identified via dental analysis as Alan ██████, Damien ██████, and Cole ████.  All three individuals had been killed by severe blunt trauma, and remains bore pre- and postmortem bite marks corresponding to chimpanzee dentition.
+* The personal journal of Cole ████ (see Addendum 2).
+* Eighteen instances of SCP-039.
+* SCP-039-A.
+
+**Addendum SCP-039-2:** Personal Journal of Cole ████
+
+Some entries appear to notate the early prototyping stage of SCP-039's development. These entries are reproduced below, with portions irrelevant to SCP-039 excised for brevity.
+
+[[collapsible show="Open Document-039"]]
+
+> This is probably unnecessary, since Damien's keeping track of all the sciency stuff, but I need something to do.  "Dear Diary," I should've brought more books to read.
+
+No scientific notes were recovered from the facility.
+
+> Well, we got the monkeys today.  Not the monkeys we wanted, mind you - these are freakin "proboscis monkeys".  I asked that Wehrner guy what he was thinking when he got these things and he just shrugged, said we didn't specify what KIND of monkey we wanted.  What kind of weirdo hears "monkey" and thinks "yeah, I'll get the fat ones with big noses"?  We wanted rhesus macaques, just like literally every other research facility on the planet.  Now we have to refit everything for twenty monkeys that are twice as big as we expected, or else stick them in cages that are too small.
+> 
+> I wonder how he got these things, but I'm kind of afraid to ask.  Dude says he's an actor, but I never heard of him.  Maybe he's in German movies or something, with a name like that.  Imagine having exotic animal smugling [sic] as your side job.  What a weirdo.
+
+Including the deceased instance, only nineteen instances of SCP-039 were recovered from the facility.  --The whereabouts of the missing twentieth instance are unknown.--  In 1999, the twentieth instance was discovered in [[[SCP-1328]]], living in an otherwise abandoned house belonging to the "[[[setting-the-stage | Red Actors Troupe]]]".
+
+> The monkeys are doing fine, passing all the tests way better than they did when they could see.  Damien says it's probably because they can remember it better, but I still think at least some of it has to do with not being distracted.  I know I think better with my eyes closed.
+
+> Took the nose off one of the monkeys today, to see what would happen.  I just figured it would suffocate, but it didn't.  Guess it gets its air from the same place as its food now.  Makes me wonder just how much we could take out.  If it's not breathing, does it really need a heart?  That's about the only internal organ it's got left at this point.  Pulling the heart won't improve the intelligence any, though, so there'd be no point.  Just curious.
+
+> The one with no nose isn't moving anymore.  We thought he was dead at first, til we checked for a pulse.  Poor guy must be depressed.  I'd be pretty unhappy too, I guess, if I couldn't see or talk any of my friends but I could still hear them around me.  If he doesn't shape up soon, we'll have to dissect him, see if we can figure out what happened.  We're gonna leave the noses on the rest of them so this doesn't happen again.
+
+> Called Wehrner, ordered some chimps.  I made sure he knew exactly what animal I was talking about, so he won't show up with a fucking baboon or something.
+
+> Dissected the noseless one today.  Couldn't find anything obviously weird, brain was still intact and everything.  Oh well.  Damien said that the problem might be specific to this species, since the nose is so important to their social structure.  I don't know about that, since I figure the eyes and mouth were pretty damn important too, but we won't know for sure until we try it on a different species.
+
+> Wehrner brought us two chimps, both males.  They're bigger than I expected.
+> 
+> Now that we're done with the monkeys, we're handing them over to Alan.  He's gonna try to teach them some tricks to impress potential donors.
+
+> Alan says the monkeys are learning quick.  I question the wisdom of teaching monkeys to use power tools, but Alan says they don't seem interested in getting up to mischief - "monkey business", ha - anymore.  Must be the procedure.
+
+> Decided to start with the nose instead this time, to see if that monkey really freaked out because it couldn't communicate or because sanity is somehow dependent on the nose or some shit.  Probably should've tested that on the monkeys, but we were too busy trying to get out of feeding them to be properly scientific about it.  I wish our grant request hadn't been denied.  Then we'd have enough money for some trial and error and we wouldn't have to rely on some actor for our test subjects.
+
+> I don't like the chimps.  The monkeys were alright because they're so funny-looking, but the chimps are a little too much like hairy people for me.  It feels like they're actually //seeing// me when they look, if that makes any sense.  Doesn't help that I know they'e [sic] smarter now.  I don't think they like me either.  Can't wait til we take their eyes tomorrow.
+> 
+> In other news, Alan actually got the monkeys to change the tires on his car.  They looked funny doing it, like a furry little pit crew.  These must be the smartest monkeys on the planet by now, and Alan says they're still learning.
+
+> The monkeys are basically geniuses at this point.  Alan had them wax his car, do an oil change, and some other car stuff that I don't understand.  Hopefully that'll convince the guys upstairs to reconsider our grant, maybe give us what we need to move on to human experimentation.  If that doesn't work, we might at least be able to sell these monkeys to MC&D or somebody as a cheaper, cuter alternative to real auto mechanics.
+
+> One of the chimps tried to fucking bite me today.  I'm not going back in there until we take the mouths, those bastards can starve for all I care.  Damien can handle it.  He still doesn't want to take the mouths yet, since those are their last facial features and he's afraid the same thing that happened to the monkey without a nose will happen to them.
+
+> Got a call from Wehrner today.  Said he had one more ape for us.  I asked him what he was talking about, but he just laughed.  Said he'd be here tomorrow and hung up.  Doesn't he know we're already struggling?  We don't have space for another damn monkey, much less food.
+
+Further information regarding SCP-039-A is restricted to personnel Level 3 and higher.
+
+[[/collapsible]]
+
+**Addendum 039-3:**  Information pertaining to SCP-039-A
+
+[[collapsible show="Input Level 3 Clearance" hide="Access Granted"]]
+
+**Special Containment Procedures:**  SCP-039-A is held in a standard human containment chamber, adjusted to accommodate its blindness.
+
+**Description:**  SCP-039-A is an adult human male named Jacob ██████████.  Via the same process that created SCP-039, SCP-039-A's eyes, nose, mouth, and associated organ systems have all been removed.  It has experienced similar enhancements to its intelligence and remaining senses, as well as other psychological alterations.
+
+The following excerpts from Cole ████'s journal relate to SCP-039-A.
+
+> It's a human.  The "ape" Wehrner was talking about?  It's a fucking person, a guy named Jake.  Some crackhead he scraped up off the street, probably just promised him a bunch of drugs to lure him into that creepy red van Wehrner drives and then dumped him on us.
+> 
+> I know our eventual goal here is to boost human intelligence, but we're not ready for human experimentation at this stage.  Damien disagrees, says this is a big opportunity.  If we can pull off a sucessful [sic] human prototype, then we're bound to get our grant approved, right?  He's right, but that doesn't change the fact that this is a whole new level of illegal, not to mention dangerous.  Not sure I want to do it just yet, not without approval from upstairs.
+
+> FUCKING DAMIEN
+> 
+> Last night that asshole went behind my back and operated on Jake.  Took his whole damn face off, all at once.  Jake's lucky he didn't drop dead right there from the shock.  He still hasn't woken up yet, so it might still happen.  I told Damien I'll feed him to the fucking chimps if he does this again.  I am not prepared to dispose of a body!  Shouldn't be hard out here in the middle of this damn desert, but still.
+
+> Jake woke up today.  Already moving around and everything.  It's kind of creepy, how fast he recovered, and how calm he is about the whole thing.  I guess he knew what he signed up for, but you'd think a guy would be at least a little weirded out when he wakes up without a face.
+
+> Here's someting [sic] weird:  Jake says he isn't craving drugs anymore.  He still had some on him when he got here, crack or meth or I don't know what, but he wants us to get rid of it.  According to him, he'd normally be wanting a fix right now, but he hasn't felt the urge since the operation.  I don't know how taking his face off cured his addiction - it enhances intelligence, yeah, but it shouldn't alter your brain chemistry like that.  Damien's as stumped as me; he's been knee-deep in that old-ass book that gave him this crazy idea in the first place trying to figure it out.  I would offer to take a look at it, but I don't speak Latin.
+
+No books matching this description were recovered from the facility.
+
+> Jake wanted to see the monkeys today, so (despite my better judgement) we took him to Alan.  He was training them to build a car engine - and they were doing a great job, believe it or not - but they could tell somebody new was in the room.  I guess they smelled him.  A couple of them came over and he squatted down to pet them.  Damien warned him that the monkeys aren't usually very friendly, but they didn't seem to mind.  Reached up to touch his face, starting snorting a whole lot.  Seemed kind of excited, I guess because they found a human who's like them.  The whole thing was really weird.
+> 
+> Now he wants to see the chimps, but I said no.  We can't afford to let our only human test subject get mauled to death.  Damien does think we can probably take their mouths off, though, since Jake didn't go nuts like the monkey.  I guess we'll do that tomorrow, unless something weird happens with Jake.
+
+> Damien doesn't want to do the chimps until after they meet Jake, says he wants to see if they make any unusual vocalizations.  I don't know what he expects to see, but he says that after the way the monkeys acted yesterday it might be worth checking out.  I said it's still too dangerous, but Damien got kind of shitty about it and said the chimps only act aggressive around me because I don't like them.  Said I didn't have to come if I didn't want to, so I won't.  I hope they throw shit at him.
+> 
+> Well, this is creepy.  Damien swears that Jake and the chimps actually COMMUNICATED.  They did that same face-touching thing as the monkeys, and then they were hooting and stuff and he was nodding his head like he understood.  Jake says he doesn't know what Damien's talking about, and I'm not sure what to think - it sounds crazy, but then again so does trusting a guy with no face.  I'm starting to think we're in over our heads here.  Knew we should've waited for that grant to start human testing.  I wish fucking Wehrner hadn't brought us this guy.
+> 
+> Oh, one more thing.  Alan was having the monkeys repaint his car (starting to think he just did this as an excuse to get his car souped up for free) and one of them snuck off with a couple of tools.  Took a while to notice he was gone, but me and Alan tracked the little guy down pretty easily, hanging around outside the chimp pen.  Not sure where he left the tools, but we can look for them tomorrow.
+
+When MTF Epsilon-6 entered the facility, they discovered SCP-039-A living in what was presumably its quarters, sharing living space with several instances of SCP-039.  Initial interactions were complicated by SCP-039-A's inability to speak, but once communication in writing was established, it willingly entered custody.
+
+[[/collapsible]]
+
+**Addendum 039-4:**  Interviews
+
+[[collapsible show="Re-Enter Level 3 Clearance" hide="Access Granted"]]
+
+The following is an interview of SCP-039-A conducted by Researcher Lee Roy Carlson.  It communicated its answers by typing on a text-to-speech device.
+
+> **<begin log>**
+> 
+> **Researcher Carlson:**  Good morning, SCP-039-A.
+> 
+> [SCP-039-A waves at Researcher Carlson.]
+> 
+> **Researcher Carlson:**  I'm Researcher Lee Roy Carlson.
+> 
+> [SCP-039-A offers Researcher Carlson a handshake, which he accepts.]
+> 
+> **Researcher Carlson:**  I'd like to ask you a few questions about what happened at the Prometheus Labs facility.
+> 
+> [SCP-039-A nods.]
+> 
+> **Researcher Carlson:**  First, how do you know Wehrner Gillespie?
+> 
+> **SCP-039-A:**  [shrugs]  {{He picked me up in Reno, pulled up beside me on the street in a red van, asked me if I wanted to become human.  I asked him what the Hell he was talking about, and he told me there were some guys out in the desert somewhere who could fix me, make it so I never needed food or water ever again, make me smarter, too.  Sounded too good to be true, but I figured I didn't have much to lose.  Besides, he had drugs.  So I got in that creepy-ass van with him and he took me out to that place in the desert.}}
+> 
+> **Researcher Carlson:**  Do you know anything else about him?
+> 
+> [SCP-039-A shakes its head.]
+> 
+> **SCP-039-A:**  {{We didn't exactly have a heart-to-heart.}}
+> 
+> **Researcher Carlson:**  Did he say why he was interested in this project?
+> 
+> **SCP-039-A:**  {{Nope.  Just said he was helping those guys at the lab find test subjects.}}
+> 
+> **Researcher Carlson:**  I see.  Is there anything else you know about him?
+> 
+> **SCP-039-A:**  {{He said he was an actor.  Oh, and the van had [[[SCP-1513 | Florida]]] plates.}}
+> 
+> **Researcher Carlson:**  Have you had any contact with Gillespie since he brought you to the facility?
+> 
+> **SCP-039-A:**  {{Nope.}}
+> 
+> **Researcher Carlson:**  Are you sure?  There seemed to be some objects missing from the laboratory.  And two chimpanzees.
+> 
+> **SCP-039-A:**  {{I'm sure.  The chimps left on their own, after they killed those guys.  Figured out how to open a door, ran off into the desert.  Probably died out there, since they still needed food and water.}}
+> 
+> **Researcher Carlson:**  Then why didn't //you// leave the facility?
+> 
+> **SCP-039-A:**  {{Hey, just because I don't need water doesn't mean I can't have a heatstroke.  Didn't need to worry about finding food or anything, so I decided to stick around.  I figured somebody would find me eventually.  Too bad it was you guys.}}
+> 
+> **Researcher Carlson:**  Hmm.  Do you know anything about any books or research notes that the scientists who operated on you may have had?
+> 
+> **SCP-039-A:**  [shakes its head]  {{Nope.  Like I said, I was just a test subject.}}
+> 
+> **Researcher Carlson:**  Interesting.  While we're on the subject, how exactly //did// the chimpanzees escape their cages?
+> 
+> **SCP-039-A:**  [shrugs]  {{Beats me.  Cole probably forgot to lock the cages or something.}}
+> 
+> **Researcher Carlson:**  Hmm.
+> 
+> **SCP-039-A:**  {{Even smart people make mistakes.}}
+> 
+> **Researcher Carlson:**  I suppose.
+> 
+> //Note:  He's lying.  I'm requesting the use of enhanced chemical interrogation techniques.//  -Researcher Carlson
+> 
+> **SCP-039-A:**  {{You don't believe me, do you?}}
+> 
+> **Researcher Carlson:**  I'll ask the questions, thanks.
+> 
+> **SCP-039-A:**  {{Will you?  Or are you just going to sit there and write?}}
+> 
+> **Researcher Carlson:**  I'll write as long as I want.
+> 
+> **SCP-039-A:**  {{Fine then, take your time.  It's not like I have anywhere else to be anyway.  You're just going to put me back in my cell when we're done, right?}}
+> 
+> **Researcher Carlson:**  Right.
+> 
+> [SCP-039-A removes its hands from the keyboard and leans back with them behind its head.  Researcher Carlson finishes writing.]
+> 
+> **Researcher Carlson:**  Okay, SCP-039-A.  Just one more question.
+> 
+> **SCP-039-A:**  {{You really enjoy calling me that, don't you?  Makes it easier to forget I'm a person.}}
+> 
+> **Researcher Carlson:**  [[[scp-978-extended-test-logs#039 | Are you able to communicate with the monkeys?]]] 
+> 
+> **SCP-039-A:**  {{What?}}
+> 
+> **Researcher Carlson:**  The journal we recovered indicates that you may have been able to communicate with them, and the altered chimpanzees, in some way.
+> 
+> **SCP-039-A:**  {{That must be Cole's journal.  You know he's an idiot, right?  Not to mention a dick.  He didn't like me, or the chimps.}}
+> 
+> **Researcher Carlson:**  Are you saying that you can't communicate with other SCP-039 instances?
+> 
+> **SCP-039-A:**  {{I mean, can you communicate with your dog?  They're smart animals.}}
+> 
+> **Researcher Carlson:**  Yes, but I can talk to my dog, and he can see me.  You and the monkeys can't do either of those things.
+> 
+> [SCP-039-A hesitates.]
+> 
+> **SCP-039-A:**  {{I'd like to go back to my cell now.}}
+> 
+> [SCP-039-A crosses its arms.]
+> 
+> **Researcher Carlson:**  This interview is not over.
+> 
+> [SCP-039-A does not respond.]
+> 
+> **Researcher Carlson:**  You're not going to cooperate, are you?
+> 
+> [SCP-039-A shakes its head.]
+> 
+> **Researcher Carlson:**  Fine.  But this isn't over.
+> 
+> **<end log>**
+
+Researcher Carlson's request for chemical interrogation is pending Ethics Committee approval, as SCP-039-A's altered physiology, metabolism, and psychology make the effects of mnestics and similar drugs on it difficult to predict.
+
+Below is the transcript of Researcher Carlson's second interview with SCP-039-A, conducted the following day.
+
+> **<begin log>**
+> 
+> **Researcher Carlson:**  Hello again, SCP-039-A.
+> 
+> [SCP-039-A does not respond.]
+> 
+> **Researcher Carlson:**  I'd like to ask you some questions about the procedure that removed your face.
+> 
+> [SCP-039-A nods, slowly.]
+> 
+> **Researcher Carlson:**  First, how was it performed?
+> 
+> **SCP-039-A:**  {{What do you mean?}}
+> 
+> **Researcher Carlson:**  Was it a surgical operation?  A thaum- er, magical ritual?  Were you genetically modified?
+> 
+> **SCP-039-A:**  [shrugs]  {{They didn't tell me the specifics, and I was out during the operation.}}
+> 
+> **Researcher Carlson:**  You didn't ask?
+> 
+> **SCP-039-A:**  [shakes head]  {{It's not like I would've understood the science anyway.  They just told me it would make me smarter and I wouldn't have to eat anymore.  And that I'd go blind, but my hearing would get better so it wouldn't be so bad.}}
+> 
+> **Researcher Carlson:**  And you agreed to this?
+> 
+> **SCP-039-A:**  [nods]  {{[[[scp-978-extended-test-logs#039-A | You would have too.]]]}}
+> 
+> **Researcher Carlson:**  What makes you say that?
+> 
+> [SCP-039-A thinks briefly.]
+> 
+> **SCP-039-A:**  {{Rough estimate, how much money do you spend on food every month?  Groceries, restaurants, everything.}}
+> 
+> **Researcher Carlson:**  Uh, a couple hundred bucks?  It varies.
+> 
+> **SCP-039-A:**  {{Now, imagine that you still had those hundred bucks every month.  That's more than a thousand a year.  What would you buy with that?  Something that you want but don't have right now, because of your budget.}}
+> 
+> **Researcher Carlson:**  ...uh, well, I've been saving up for some Metallica tickets.
+> 
+> **SCP-039-A:**  {{Cool.  So just think, if you didn't have to eat, you'd get to see Metallica.}}
+> 
+> **Researcher Carlson:**  Well, yeah, but I //like// eating.
+> 
+> **SCP-039-A:**  {{Do you?  Or is that just your biological need to eat tricking your brain into enjoying something it doesn't really have a choice about?}}
+> 
+> **Researcher Carlson:**  Of course I like eating!  I mean, maybe not always, but when I go to a fancy restaurant or something I do.
+> 
+> **SCP-039-A:**  {{Okay, fine.  Let me put it like this.  You want to lose some weight, right?}}
+> 
+> **Researcher Carlson:**  What?  [Researcher Carlson looks down at his body.]
+> 
+> **SCP-039-A:**  {{Just guessing.  Most of you people do.}}
+> 
+> **Researcher Carlson:**  Us people?
+> 
+> **SCP-039-A:**  {{People who can afford to eat.  Before I got my face off, I only got to eat if I went to a homeless shelter or fished something out of the trash.  But you have the opposite problem, don't you?  Eating too much.}}
+> 
+> **Researcher Carlson:**  Well, I suppose so.
+> 
+> **SCP-039-A:**  {{Now, imagine if you never had to worry about that.  If you didn't have to try and fail to exercise self-control when you reach for one more piece of cake, or one more deep-fried whatever.  Because you can't eat, but that doesn't bother you because you don't want to anyway, and your body will just naturally have a normal weight now.  Heck, I was skinny as a post before I got rid of my face.  Now look at me!}}
+> 
+> **Researcher Carlson:**  Uh, I think I'll stick with my diet.
+> 
+> **SCP-039-A:**  {{How about this, then?  How much time do you spend eating every day?}}
+> 
+> **Researcher Carlson:**  Look, I just want to know more about the procedure.  This isn't necessary.
+> 
+> **SCP-039-A:**  {{You wanted to know why I volunteered, didn't you?  I'm trying to explain it to you.  Or do you not really want to know?}}
+> 
+> **Researcher Carlson:**  [sighs]  Fine, carry on.
+> 
+> **SCP-039-A:**  {{So how much time do you spend eating?}}
+> 
+> **Researcher Carlson:**  I don't know, maybe an hour total?
+> 
+> **SCP-039-A:**  {{And how much time do you spend cooking?  Shopping for food?  Driving back and forth to the place where you shop, bringing in the groceries, putting them away?  Or when you go to a restaurant, how much time do you waste deciding where to go, driving out there, waiting for your table, waiting to order, waiting for the food, waiting for the check.  Then, after you eat, how much time do you spend shitting every day?  How much of your life is wasted sitting on a toilet, wiping your own ass, smelling your own shit like an animal?  Do you have any idea how much of your short life is wasted fulfilling base biological needs?  How much of the stuff you WANT to do with your life never gets done, because you're too busy doing what you HAVE to?}}
+> 
+> **Researcher Carlson:**  [sighs]  I understand that, but I like my face where it is.
+> 
+> [SCP-039-A shakes its head slowly]
+> 
+> **SCP-039-A:**  {{Well, maybe if you were in the shoes that I was in you'd think differently.  From where I was, a face was a small price to pay.  I don't guess it matters now, though, since I'm in a box.}}
+> 
+> **Researcher Carlson:**  I'm sorry about that, but surely you can understand the kind of uproar that a man with no face would cause if we just let you wander around in public.
+> 
+> [SCP-039-A hesitates for several seconds, fingers hovering above the keyboard.]
+> 
+> **SCP-039-A:**  {{Did you have any other questions?}}
+> 
+> **Researcher Carlson:**  Well, we're wondering if you've experienced any other psychological changes.  The monkeys show much higher cognitive performance than unaltered ones, and we want to know if you've experienced anything similar.
+> 
+> **SCP-039-A:**  {{Definitely!  It's a little more complicated than just being smarter, though.}}
+> 
+> **Researcher Carlson:**  How so?
+> 
+> **SCP-039-A:**  {{Well, it's all about attention.  I can hear better now, what with the}} [SCP-039-A gestures at the upper half of its "face".]  {{But I also listen better, if that makes any sense, because I'm not distracted any more.  I never realized it before, and you probably don't either, I'm not sure anybody can if they still have a face, but people are always distracted.  Thinking about a thousand different things, worrying about your job, trying to figure out what you're gonna have for dinner, where you're gonna sleep, how you're gonna get your next fix, whatever that is for you.  But I don't have to deal with all that anymore, so I can pay attention, REALLY pay attention, when I'm listening, and remember all of it.  And when I'm thinking, trying to solve a math problem or something, I can concentrate, REALLY concentrate.  It's like the difference between being sober and being drunk.}}
+> 
+> **Researcher Carlson:**  Speaking of which:  the documents we found indicate that you were addicted to drugs before the operation.
+> 
+> **SCP-039-A:**  {{Yeah, I was a crackhead before they took my face off.  But I haven't craved it even a little bit since the operation.  Didn't even withdraw.  That's interesting to you, I imagine?}}
+> 
+> **Researcher Carlson:**  Yes, it is.  Do you know why this is the case?
+> 
+> **SCP-039-A:**  {{Not scientifically.  Seemed like Damien and the other guys didn't expect that.  But I do know}}
+> 
+> [SCP-039-A pauses briefly.]
+> 
+> **SCP-039-A:**  {{intrinsically?  Spiritually?  I can feel it.  If that makes any sense.}}
+> 
+> **Researcher Carlson:**  Can you explain this feeling?
+> 
+> **SCP-039-A:**  {{It's simple really.  It's like what I was talking about with the food.  Now that my face is gone, and a whole bunch of my organs too, I don't know which ones, exactly, but most of them, I'm cut off from that.}}
+> 
+> **Researcher Carlson:**  From what?
+> 
+> **SCP-039-A:**  {{Urges.  Base instincts.  The monkey brain.  Before, my body craved things.  Food, water, sex, drugs, booze.  I could barely think.  REALLY think, the way I do now.  But not anymore.  When they removed my face, they removed the monkey.  Now it's just me in here.}}
+> 
+> [SCP-039-A taps its forehead.]
+> 
+> **SCP-039-A:**  {{Just a rational human being in complete control of himself.}}
+> 
+> **<end log>**
+
+[[/collapsible]]
+
+[[footnoteblock]]
+
+[[div class="footer-wikiwalk-nav"]]
+[[=]]
+<< [[[SCP-038]]] | SCP-039 | [[[SCP-040]]] >>
+[[/=]]
+[[/div]]
+
+
+[[iftags +component]]
++ How To Use
+It is **mandatory** for all articles to have the licensebox citing all images, texts, and excerpts utilized within the piece. 
+
+Add this to the bottom of the page, below the wikiwalk footer:
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** @@
+@@> **Name:** (if different from filename)@@
+@@> **Author:**@@
+@@> **License:**@@
+@@> **Source Link:**@@
+@@> **Additional Notes:** (Optional)@@
+@@> **Derivative Of:** (Situational)@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Let's break down what each of these sections mean.
+
+> @@> **Filename:** @@
+
+Filename is, as the name implies, the name of a file in your article. As per Tech Policy, all files on pages must have a file extension appended after the name. This means that if you upload an image to your article and call it {{mycoolimage-1}}, you are not following the rules. A correct name would be {{mycoolimage-1.png}} or {{mycoolimage-1.jpg}}, or any other similar filetypes. If you are unsure what the file extension of something you intend to upload is, you can check it by right clicking on the file and then pressing 'Properties.'
+
+If you are quoting from a text, write something along the lines of {{Excerpts taken from //Book Title Here//}}. Do not input the entire quote here, just where it comes from.
+
+> @@> **Name:** (if different from filename)@@
+
+This field is where you put the original name of the file. For example, let's say I wanted to use [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg this image in my article]. The name of the image is {{Kievitsbloem}}, as is listed on the page. I would then copy that and paste it onto this field. Do not include its file extension (jpg, png, etc).
+
+If you are quoting from a text, list its title here.
+
+If you are using your own creation, you may title it however you please, or you may exclude this field completely.
+
+> @@> **Author:**@@
+
+This field is where you acknowledge the original creator of the media you are using. Looking at [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg the same previous image], we can see that the author of the file is {{Rasbak}}. This means I would have to put that name in this field. If you are using commissioned work, you must still cite the original creator.
+
+If you are using your own creation, insert your username.
+
+
+> @@> **License:**@@
+
+In this section, you must write the file's attached license. This information is typically accessible on the page you are sourcing the file from. [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg Following the same example as before], we can see that this particular image is CC BY SA 3.0. Keep in mind that all files must be compatible with the site's license (CC BY SA 3.0) and follow the [[[Image Use Policy]]]. 
+
+
+> @@> **Source Link:**@@
+
+This field is typically a direct link to the page where you are taking the file from. Just copy the url from the address bar and paste it here. So for example, using the same image as above, I would put {{@@[https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg Wikimedia Commons]@@}} in this field. You should replace the text of the hyperlink with the name of the webiste you are taking your file from.
+
+If you are utilizing your own work, link to the page you are posting and title it {{SCP Foundation Wiki}}. However, if you are using your own media that you uploaded to a site like, say, Flickr, you must still follow this step.
+
+> @@> **Additional Notes:** (Optional)@@
+
+This is where you enter any additional information about the file. For example, if it is a composite image, you must state that this file is made up of two different images, and cite all images used in its creation. 
+
+
+> @@> **Derivative Of:** (Situational)@@
+
+This field is only applicable if you are using an image or other form of media that was derived from two or more sources. For example, a mashup would have to cite all of its images here. In order to be properly licenseboxed, copy-paste the following syntax underneath the {{Derivative Of:}} line.
+
+[[div class="blockquote"]]
+@@> **Name:**@@
+@@> **Author:**@@
+@@> **License:**@@
+@@> **Source Link:**@@
+[[/div]]
+
+From there, you simply fill in the information as you would any other file.
+-----
+
++ Examples
+
+Here is an example of a licensebox used in [[[SCP-7726]]], which cites an image from Wikimedia Commons.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** gun.png@@
+@@> **Name:** Beretta 90TWO closed.JPG@@
+@@> **Author:** Praiyachat@@
+@@> **License:** CC BY-SA 3.0@@
+@@> **Source Link:** [https://commons.wikimedia.org/wiki/File:Beretta_90TWO_closed.JPG Wikimedia Commons]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-6999]]], which cites an audio clip.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** hymn.mp3@@
+@@> **Name:** Nearer, my God, to Thee@@
+@@> **Author:** Conway's Band@@
+@@> **License:** Public Domain@@
+@@> **Source Link:** [https://www.loc.gov/item/jukebox-14234/ Library of Congress]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[michael-the-kiler|michael the kiler]]], which cites an author using their own creation.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** dakilla.jpg@@
+@@> **Author:** [[*user ratking666]]@@
+@@> **License:** CC BY-SA 3.0@@
+@@> **Source Link:** [https://scp-wiki.wikidot.com/michael-the-kiler SCP Foundation Wiki]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-7000]]], which cites an author using an image derivative of other images.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** WettleBomb.jpg@@
+@@> **License:** CC BY 2.0@@
+
+This image is a composite of:
+
+@@> **Name:** 130320-Z-TK422-652@@
+@@> **Author:** Oregon National Guard@@
+@@> **License:** CC BY 2.0@@
+@@> **Source:** [https://www.flickr.com/photos/32031029@N03/8576628356 flickr]@@
+
+@@> **Name:** High Noon Nap@@
+@@> **Author:** OakleyOriginals@@
+@@> **License:** CC BY 2.0@@
+@@> **Source:** [https://www.flickr.com/photos/47264866@N00/13279780754 flickr]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-173]]], which does not have any images or other citations, but includes an author listing.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=Moto42]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[deesoafs|Doctor Everwood Eats Shit On A Frozen Sidewalk]]], which does not have any images or other citations and does not include an author listing.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+-----
+
++ A Word On Excerpts/Quotes
+
+If you are using excerpts from passages or quotes, you must still cite them. 
+
+Here is an example of a licensebox used in [[[SCP-7010]]], which cites excerpts from a book.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> This article contains an excerpt from //[*https://en.wikisource.org/wiki/Leviathan Leviathan]// (1651) by Thomas Hobbes (Public Domain).@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+-----
+
++ A Note On Co-Authoring
+
+In the event you co-author an article with someone or someones, you can add the following syntax to the top of the licensebox to indicate multiple authors.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=User1, User2, User3]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+----
+
++ A Note On Translations
+
+For translations of works originally written in another language (see our [[[Translations Policy]]] for more information), the licensebox should list the original author (or authors) first, followed by the translator (or translators). 
+
+Within the licensebox, link to the original article, as follows:
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=User1, translated by User2]]@@
+@@> **Original Article:** original-url@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+If you post a translation of your own work then it is unnecessary to list your own name twice. If you post a translation of a translation (e.g. a Japanese article that was translated into Spanish, then into English), link to the original article, but credit the translator whose work you used as a co-translator.
+
+See [[[SCP-280-JP]]] for an example of a translation with multiple images listed in the License Box.
+
+----
+[[size 75%]]This page was originally created by CityToast and was updated on 1/27/2024 by Uncle Nicolini.[[/size]]
+@@ @@
+@@ @@
+@@ @@
+@@ @@
+= Ignore everything beneath this text.
+@@ @@
+@@ @@
+@@ @@
+[[/iftags]]
+
+[[div class="licensebox"]]
+[[collapsible show="‡ Licensing / Citation" hide="‡ Hide Licensing / Citation"]]
+Cite this page as:
+[[module listpages range="."]]
+> "%%title_linked%%" by Anonymous and Wilt, rewritten by Kothardarastrix
+, from the [https://scpwiki.com SCP Wiki]. Source: https://scpwiki.com/%%fullname%%. Licensed under [https://creativecommons.org/licenses/by-sa/3.0/ CC BY-SA].
+[[/module]]
+For information on how to use this component, see the [[[component:license-box|License Box component]]]. To read about licensing policy, see the [[[Licensing Guide]]].
+
+
+=====
+> **Filename:** monkey-new.jpg
+> **Name:** Proboscis monkey (Nasalis larvatus) male Labuk Bay 2
+> **Author:** [[*user Morbid Memories]]
+> **License:** CC BY-SA 4.0
+> **Source Link:** [[[https://commons.wikimedia.org/wiki/File:Proboscis_monkey_(Nasalis_larvatus)_male_Labuk_Bay_2.jpg|Wikimedia]]]
+=====
+
+[[/collapsible]]
+[[/div]]

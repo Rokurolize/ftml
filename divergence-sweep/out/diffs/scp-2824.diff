@@ -1,0 +1,75 @@
+--- live
++++ ftml
+@@ -1,26 +1,6 @@
+ <div style="text-align: right;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+95"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
++<p>
++T"TODO: module Rate"
++</p>
+ </div>
+ <br>
+@@ -604,6 +584,7 @@
+ </div>
+ </div>
+-<br>
+-T" On 2/28/2017, SCP-████ underwent containment breach, creating one major and eight minor temporal anomalies within Site-76. After containment of SCP-████ was reestablished, an inventory of anomalous artifacts was unable to account for SCP-2824-2F. Efforts to relocate Mr. Rountree have failed. Request submitted by Dr. Richard Garfield to review containment and research procedures regarding SCP-2824."
++<p>
++T"On 2/28/2017, SCP-████ underwent containment breach, creating one major and eight minor temporal anomalies within Site-76. After containment of SCP-████ was reestablished, an inventory of anomalous artifacts was unable to account for SCP-2824-2F. Efforts to relocate Mr. Rountree have failed. Request submitted by Dr. Richard Garfield to review containment and research procedures regarding SCP-2824."
++</p>
+ <p>
+ <strong>
+@@ -765,29 +746,7 @@
+ T"Cite this page as:"
+ </p>
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="38553569" data-lp-route="scp-2824" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<blockquote>
+-<p>
+-T"""
+-<a href="/scp-2824">
+-T"SCP-2824"
+-</a>
+-T"" by ignorant_genius, from the "
+-<a href="https://scpwiki.com">
+-T"SCP Wiki"
+-</a>
+-T". Source: "
+-<a href="https://scpwiki.com/scp-2824">
+-T"https://scpwiki.com/scp-2824"
+-</a>
+-T". Licensed under "
+-<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+-T"CC BY-SA"
+-</a>
+-T"."
+-</p>
+-</blockquote>
+-</div>
+-</div>
++<p>
++T"TODO: module ListPages"
++</p>
+ <p>
+ T"For information on how to use this component, see the "

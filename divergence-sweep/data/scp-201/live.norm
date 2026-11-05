@@ -1,0 +1,214 @@
+<div style="text-align: right;">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T"rating: "
+<span class="number prwN">
+T"+445"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+T"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+T"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+T"x"
+</a>
+</span>
+</div>
+</div>
+<div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;">
+<img src="https://scp-wiki.wdfiles.com/local--files/scp-201/005.jpg" alt="005.jpg" class="image">
+<div class="scp-image-caption">
+<p>
+T"SCP-201 at recovery"
+</p>
+</div>
+</div>
+<p>
+<strong>
+T"Item #:"
+</strong>
+T" SCP-201"
+</p>
+<p>
+<strong>
+T"Object Class:"
+</strong>
+T" Euclid"
+</p>
+<p>
+<strong>
+T"Special Containment Procedures:"
+</strong>
+T" No personnel are to come within forty meters of SCP-201 at any time. Any and all work done with SCP-201 is to be performed via remotely controlled drone. Any personnel entering the containment area must be accompanied by two members of security. All personnel in containment area must wear a restraint harness with safety rope attached to the wall. Rope will allow access to within three meters of the minimum safe area. Exceeding this distance will result in physical removal from containment area and formal discipline."
+</p>
+<p>
+T"Those affected by SCP-201 are to have time and date of exposure, disappearance, and return, along with any and all personal information, recorded in Log ███████. Subjects who reappear are to be recovered as soon as possible by Agents and debriefed immediately."
+</p>
+<p>
+<strong>
+T"Description:"
+</strong>
+T" SCP-201 appears to be a very old piece of medical equipment, superficially resembling an IV stand, but with many other glass and metal items attached to it. SCP-201 stands 1.8 m (6 ft) tall and has a mass of 36.5 kg (80 lbs). The metal portions are made of steel and brass, and various parts are connected with rubber tubing. The two “IV bags” are porcelain and are open at the top. SCP-201 was recovered in ████████████████ Hospital, in a long-unused storage area. No record of SCP-201 appears anywhere in hospital records."
+</p>
+<p>
+T"Entering within thirty meters of SCP-201 can result in the subject being displaced into an alternate reality. This effect is apparently random, with some subjects remaining totally unaffected after exposure to SCP-201. Those affected will cease to exist in our reality between one and forty-eight hours after initial exposure. Durations of displacement vary between a few hours and upwards of eight years. Time spent in this alternate reality can vary greatly from actual time elapsed in our reality."
+</p>
+<p>
+T"This alternate world appears identical to our own, with these exceptions:"
+</p>
+<ul>
+<li>
+T"It is apparently in a state of constant twilight, with no sun or moon visible at any time."
+</li>
+<li>
+T"Large banks of very dense grey fog travel very low to the ground. These fog banks are unaffected by wind, and can make exposed skin feel very sticky and dirty."
+</li>
+<li>
+T"There is no plant or animal life anywhere. All places of human habitation, including major cities, appear as if all life suddenly vanished in the same instant."
+</li>
+<li>
+T"Most, if not all, electrical systems appear to be broken or without power."
+</li>
+<li>
+T"The air will randomly take on a grey-brown tint, accompanied by strong wind."
+</li>
+</ul>
+<p>
+T"Subjects displaced to this “alternate world” report initial surprise and curiosity, which are shortly replaced with very strong feelings of loneliness and fear. The severity varies widely with individual subjects and with time of displacement. Upon the end of displacement, subject will re-integrate from this “alternate world” to our own, which can cause a great deal of shock, especially in urban settings. Most subjects who remain displaced for more than three months suffer lasting psychological damage consistent with being sequestered within solitary confinement."
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T"Submit Level 4/201 Login Credentials"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T"Credentials accepted"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+T"In addition, reports of intermittent, fragmentary broadcasts have been returned by subjects attempting to repair power to media devices such as televisions and radios. It is unclear if these are real or the product of the degraded mental states of those remaining long enough to complete said projects, but reports consistently resemble "
+<a href="/scp-2935">
+T"automated messages prepared by the Foundation in contingency for XK-Class Scenarios"
+</a>
+T". Testing will commence if viable samples can be recovered."
+</p>
+</div>
+</div>
+</div>
+<div class="footer-wikiwalk-nav">
+<div style="text-align: center;">
+<p>
+T"« "
+<a href="/scp-200">
+T"SCP-200"
+</a>
+T" | SCP-201 | "
+<a href="/scp-202">
+T"SCP-202"
+</a>
+T" »"
+</p>
+</div>
+</div>
+<div class="licensebox">
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T"‡ Licensing / Citation"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T"‡ Hide Licensing / Citation"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+T"Cite this page as:"
+</p>
+<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="2006938" data-lp-route="scp-201" data-lp-generation="HEX">
+<div class="list-pages-item">
+<blockquote>
+<p>
+T"""
+<a href="/scp-201">
+T"SCP-201"
+</a>
+T"" by Dr Gears, from the "
+<a href="https://scpwiki.com">
+T"SCP Wiki"
+</a>
+T". Source: "
+<a href="https://scpwiki.com/scp-201">
+T"https://scpwiki.com/scp-201"
+</a>
+T". Licensed under "
+<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+T"CC BY-SA"
+</a>
+T"."
+</p>
+</blockquote>
+</div>
+</div>
+<p>
+T"For information on how to use this component, see the "
+<a href="/component:license-box">
+T"License Box component"
+</a>
+T". To read about licensing policy, see the "
+<a href="/licensing-guide">
+T"Licensing Guide"
+</a>
+T"."
+</p>
+<div class="content-separator" style="display: none:">
+</div>
+<blockquote>
+<p>
+<strong>
+T"Filename:"
+</strong>
+T" 005.jpg"
+<br>
+T" "
+<strong>
+T"Author:"
+</strong>
+T" Skorj"
+<br>
+T" "
+<strong>
+T"License:"
+</strong>
+T" CC BY-SA 3.0"
+<br>
+T" "
+<strong>
+T"Source Link:"
+</strong>
+T" "
+<a href="http://www.filmwasters.com/portfolios/v/skorj/small_P-596z.jpg.html">
+T"Link"
+</a>
+</p>
+</blockquote>
+<div class="content-separator" style="display: none:">
+</div>
+</div>
+</div>
+</div>
+</div>

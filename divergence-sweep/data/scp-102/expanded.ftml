@@ -1,0 +1,2474 @@
+[[module CSS]]
+@import url("https://cdn.scpwiki.com/theme/en/black-highlighter/css/min/normalize.min.css");
+@import url("https://cdn.scpwiki.com/theme/en/black-highlighter/css/min/black-highlighter.min.css");
+
+a[rel="license"]::after {
+    content: ".";
+}
+[[/module]]
+
+[[div_ style="display: none"]]
+
+[!--
+Styling component for the EN Interwiki, based on the CN Interwiki by 7happy7 and Sekai-s.
+
+Interwiki: https://scpwiki.com/interwiki
+Source: https://github.com/scpwiki/interwiki
+
+See also: https://scpwiki.com/how-to-create-a-branch-of-the-scp-foundation
+
+Usage:
+
+On the page that intends to restyle the Interwiki:
+
+ [[include :scp-wiki:component:interwiki-style
+| priority=X
+| theme=<link to CSS stylesheet>
+| css=<URI-encoded CSS>
+]]
+
+The `priority` value must be set to a number that is 1 greater than the priority of the theme that this theme is extending.
+
+Examples:
+- The base theme of the site (for the SCP Wiki, this is Sigma-9) has a priority of 0.
+- A CSS theme designed to be used on pages that are already styled with Sigma-9 (i.e. a theme that extends Sigma-9) would have a priority of 1.
+- The Black Market theme extends the Black Highlighter theme, which has a priority of 2; therefore the Black Market theme would have a priority of 3.
+
+The `theme` value is optional, and can be a URL to a CSS stylesheet e.g. a CSS theme.
+
+The `css` value is optional, and can be URI-encoded CSS to apply directly to the Interwiki. To URI-encode CSS, see https://meyerweb.com/eric/tools/dencoder
+--]
+
+[[embed]]
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=1
+&theme=https://cdn.scpwiki.com/theme/en/black-highlighter/css/min/normalize.min.css
+&css={$css}" style="display: none"></iframe>
+[[/embed]]
+
+
+
+[!--
+Styling component for the EN Interwiki, based on the CN Interwiki by 7happy7 and Sekai-s.
+
+Interwiki: https://scpwiki.com/interwiki
+Source: https://github.com/scpwiki/interwiki
+
+See also: https://scpwiki.com/how-to-create-a-branch-of-the-scp-foundation
+
+Usage:
+
+On the page that intends to restyle the Interwiki:
+
+ [[include :scp-wiki:component:interwiki-style
+| priority=X
+| theme=<link to CSS stylesheet>
+| css=<URI-encoded CSS>
+]]
+
+The `priority` value must be set to a number that is 1 greater than the priority of the theme that this theme is extending.
+
+Examples:
+- The base theme of the site (for the SCP Wiki, this is Sigma-9) has a priority of 0.
+- A CSS theme designed to be used on pages that are already styled with Sigma-9 (i.e. a theme that extends Sigma-9) would have a priority of 1.
+- The Black Market theme extends the Black Highlighter theme, which has a priority of 2; therefore the Black Market theme would have a priority of 3.
+
+The `theme` value is optional, and can be a URL to a CSS stylesheet e.g. a CSS theme.
+
+The `css` value is optional, and can be URI-encoded CSS to apply directly to the Interwiki. To URI-encode CSS, see https://meyerweb.com/eric/tools/dencoder
+--]
+
+[[embed]]
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=2
+&theme=https://cdn.scpwiki.com/theme/en/black-highlighter/css/min/black-highlighter.min.css
+&css={$css}" style="display: none"></iframe>
+[[/embed]]
+
+[[/div]]
+
+[[iftags +theme -nobhl]]
+[[module css]]
+#page-title { display: none }
+
+.scp-image-block.block-right img {
+    background: var(--gradient-header);
+    box-sizing: border-box;
+    padding: 1em;
+}
+
+.fonts-display {
+    font-size: 1.25em;
+}
+
+.title-font {
+    font-family: var(--title-font);
+    font-weight: 700;
+}
+.header-font {
+    font-family: var(--title-font);
+    font-weight: 900;
+}
+.UI-font {
+    font-family: var(--UI-font);
+}
+.mono-font {
+    --MONO: 1;
+    --CASL: 0;
+    --CRSV: 0;
+    font-family: var(--mono-font);
+}
+[[/module]]
+
+[[image https://scp-wiki.wdfiles.com/local--files/component%3Ablack-highlighter-theme-dev/black-highlighter-logo.svg alt="Black Highlighter"]]
+
+[[>]]
+[[module Rate]]
+[[/>]]
+
+This is the Black Highlighter theme, a new base theme that aims to be better than the SCP Wiki's default base theme, [[[theme:site | Sigma-10]]]. You've already seen it in action.
+
+ _
+
++ Usage
+
+On any wiki:
+
+[[div class="code" style="text-align: center;"]]
+@@[[include :scp-wiki:theme:black-highlighter-theme]]@@
+[[/div]]
+
+ _
+
++ Reporting problems
+
+If you've got a Github account, [https://github.com/Nu-SCPTheme/Black-Highlighter/issues create an Issue] detailing your problem (whether it's technical, or aesthetic, or whatever).
+
+If you don't have a Github account, or if you'd prefer to discuss your issues with someone directly, send a Wikidot PM to [[*user Woedenaz]]. If he doesn't respond, send it to [[*user Croquembouche]].
+
+ _
+
++ Addons
+
+As a base theme, it's easy to extend Black Highlighter to be whatever you want. You can see all Black Highlighter-derived themes here: [[[black-highlighter-themes | ]]]
+
+For functional changes, try these:
+
+* **[[[component:bhl-dark-sidebar|]]]:** {{@@[[include :scp-wiki:component:bhl-dark-sidebar]]@@}}
+* **[[[component:collapsible-sidebar|]]]:** {{@@[[include :scp-wiki:component:collapsible-sidebar]]@@}}
+* **[[[component:toggle-sidebar-bhl|]]]:** {{@@[[include :scp-wiki:component:toggle-sidebar-bhl]]@@}}
+* **[[[component:centered-header-bhl|]]]:** {{@@[[include :scp-wiki:component:centered-header-bhl]]@@}}
+
+ _
+
+-----
+
+ _
+
++ Theme Colors
+
+
+>[!--
+
+
+[[module CSS]]
+td { vertical-align: top; }
+td strong { white-space: nowrap; }
+.options table.wiki-content-table td { border: none; padding: 0.7em 1em; }
+[[/module]]
+
+[[div style="border: 1px solid #ddd; padding: 1em;"]]
++ What this is
+
+A component that displays a bunch of colored squares to show off a CSS theme's flair.
+
+Designed by [[*user Woedenaz]] and componentised by [[*user Croquembouche]].
+
+This component is designed to be used for CSS themes, but it can be used on almost any page, if you really want.
+
++ Usage
+
+On any wiki:
+
+[[div class="code"]]
+##blue|**[[include :scp-wiki:component:theme-squares -=-**##
+##blue|**|**## ##green|color1-name####blue|**=**##My Favourite Colour
+##blue|**|**## ##green|color1-variable####blue|**=**##@@--@@fav-color
+##blue|**|**## ##green|color1-info####blue|**=**##(191, 144, 0)
+##blue|**]]**##
+[[/div]]
+
+Note the "{{-=-}}" after the component name. You **//do//** need to include that -- otherwise all this text explaining how to use the component will appear on your page.
+
+For this component, there are three parameters per color. Replace N with the number of the color.
+
+[[div class="options"]]
+|| **colorN-name** || The name of the color. Pick whatever you want! ||
+|| **colorN-variable** || The name of the [https://developer.mozilla.org/en-US/docs/Web/CSS/--* CSS variable] that contains this color. _
+The variable should hold three comma-separated numbers representing the RGB values of the color. This is consistent with BHL-style variables. _
+If your variables hold something else (e.g. a full RGB/RGBA or hex color), you will need to override the background color of each theme square manually with CSS. ||
+|| **colorN-info** || Some info about the colour. Displaying the RGB values is typical. Keep it short. _
+If you don't want any text, add {{@<@@ @@>@}} instead.||
+|| **//colorN-has-light-text//** _
+//Optional. Default: 0// || Either 0 or 1. Determines the font color on the square. Useful to make sure there is enough contrast between the background color and the text color. _
+If 1, the value of {{@@--swatch-text-light@@}} is used, or white (255, 255, 255) if it is not defined. Otherwise {{@@--swatch-text-dark@@}}, or black (0, 0, 0). Like all BHL-style CSS color variables, three numbers representing RGB values are expected. ||
+[[/div]]
+
+A color can only be used if it's exposed as a [https://developer.mozilla.org/en-US/docs/Web/CSS/--* CSS variable]. All colors in a Black Highlighter theme have a corresponding CSS variable by default, so for BHL themes, this component should work out of the box. However, sigma9 does not use CSS variables, so the only CSS variables that are available will be any that you have defined in your theme.
+
+This component can hold a maximum of 6 primary colors and 12 secondary colors. I recommend two primary colors and no more than six secondary colors.
+
+To add a primary color, just add the top three of the above parameters to the include, as shown in the example.
+
+To add a secondary color, it's the same, but replace 'color' with 'subcolor'.
+
++ Example
+
+Here's a longer example, taken from the Black Highlighter theme:
+
+[[div class="code"]]
+##blue|**[[include :scp-wiki:component:theme-squares -=-**##
+##blue|**|**## ##green|color1-name####blue|**=**##Payne's Grey 
+##blue|**|**## ##green|color1-variable####blue|**=**##@@--@@gray-monochrome
+##blue|**|**## ##green|color1-info####blue|**=**##(66, 66, 72)
+##blue|**|**## ##green|color1-has-light-text####blue|**=**##1
+##blue|**|**## ##green|color2-name####blue|**=**##Rosewood 
+##blue|**|**## ##green|color2-variable####blue|**=**##@@--@@bright-accent
+##blue|**|**## ##green|color2-info####blue|**=**##(133, 0, 5)
+##blue|**|**## ##green|color2-has-light-text####blue|**=**##1
+##blue|**|**## ##green|subcolor1-name####blue|**=**##Alto 
+##blue|**|**## ##green|subcolor1-variable####blue|**=**##@@--@@very-light-gray-monochrome
+##blue|**|**## ##green|subcolor1-info####blue|**=**##(215, 215, 215)
+##blue|**|**## ##green|subcolor2-name####blue|**=**##White Smoke 
+##blue|**|**## ##green|subcolor2-variable####blue|**=**##@@--@@pale-gray-monochrome
+##blue|**|**## ##green|subcolor2-info####blue|**=**##(244, 244, 244)
+##blue|**|**## ##green|subcolor3-name####blue|**=**##Bastille 
+##blue|**|**## ##green|subcolor3-variable####blue|**=**##@@--@@dark-gray-monochrome
+##blue|**|**## ##green|subcolor3-info####blue|**=**##(48, 48, 52)
+##blue|**|**## ##green|subcolor3-has-light-text####blue|**=**##1
+##blue|**|**## ##green|subcolor4-name####blue|**=**##Buccaneer 
+##blue|**|**## ##green|subcolor4-variable####blue|**=**##@@--@@medium-accent
+##blue|**|**## ##green|subcolor4-info####blue|**=**##(100, 46, 44)
+##blue|**|**## ##green|subcolor4-has-light-text####blue|**=**##1
+##blue|**|**## ##green|subcolor5-name####blue|**=**##Maroon 
+##blue|**|**## ##green|subcolor5-variable####blue|**=**##@@--@@dark-accent
+##blue|**|**## ##green|subcolor5-info####blue|**=**##(100, 3, 15)
+##blue|**|**## ##green|subcolor5-has-light-text####blue|**=**##1
+##blue|**|**## ##green|subcolor6-name####blue|**=**##Mango Tango 
+##blue|**|**## ##green|subcolor6-variable####blue|**=**##@@--@@newpage-color
+##blue|**|**## ##green|subcolor6-info####blue|**=**##(221, 102, 17)
+##blue|**]]**##
+[[/div]]
+
+This produces the following colored squares:
+
+[[=]]
+[[image bhl-squares.png]]
+[[/=]]
+
++ Tweaking
+
+You can adjust the appearance of the component with CSS.
+
+The whole component has the {{.colors-container}} class, and any CSS that targets it should included that class to ensure that nothing else on the page is affected. Every colored square has class {{.color}}. The primary colors have a {{.colors}} parent and the secondary colors have a {{.subcolors}} parent.
+
+You'll need to use {{!important}} to override a square's background.
+
+For example, the [[[theme:laughter-and-knives-theme | Laughter and Knives theme]]] adds a gradient background to the 9th secondary color like so:
+
+[[code type="css"]]
+.colors-container .subcolors .color:nth-of-type(9) {
+    background: var(--pastel-rainbow) !important;
+}
+[[/code]]
+
+-----
+
+[https://rossjrw.com/series-replace/?f=%5Cn&f=%5E&f=%24&f=%3C%3C%3E%3E&f=%28%3F%3C%3Dsubcolors.%2A%29%28%5B%5E%5C%5B%5C%5D%5D%2B%29%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5Ba-z-%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5B%5E%40%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D&f=%28%5B%5E%5C%5B%5C%5D%5D%2B%29%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5Ba-z-%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5B%5E%40%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D&f=%5C%7C&f=%5E%5C%5B%5C%5B%5B%5Ei%5D.%2A%7C%5E%5C%7C%5B%5E%20%5D.%2A&f=%5Cn%24&r=&r=%5B%5Binclude%20%3Ascp-wiki%3Acomponent%3Atheme-squares%20-%3D-%3C%3C%3E%3E%7C%20color%24-has-light-text%3D1%3C%3C%3E%3E%7C%20subcolor%24-has-light-text%3D1%3C%3C%3E%3E&r=%5Cn%5D%5D&r=%5Cn&r=%7C%20subcolor%24%24-name%3D%241%7C%20subcolor%24%24-variable%3D%242%7C%20subcolor%24%24-info%3D%243%7C&r=%7C%20color%24%24-name%3D%241%7C%20color%24%24-variable%3D%242%7C%20color%24%24-info%3D%243%7C&r=%5Cn%7C&r=&r= Tool to convert existing syntax to arguments for this component]
+
+[[/div]]
+
+[!-- --]
+
+[[module CSS]]
+.colors-container {
+  width: 98%;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  font-weight: 700;
+  font-family: var(--title-font, Verdana), sans-serif;
+  color: black;
+}
+
+.colors-container .colors, .colors-container .subcolors {
+  width: 100%;
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.colors-container .color {
+  flex-grow: 2;
+  padding: 0.5rem;
+  margin: 0.5rem;
+  color: rgb(var(--swatch-text-dark, 0, 0, 0));
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.colors-container .colors .color {
+  height: 7rem;
+  min-width: 4rem;
+  flex-basis: calc((100% / 2) - 2rem - 1px);
+}
+
+.colors-container .subcolors .color {
+  height: 4rem;
+  min-width: 4rem;
+  font-size: 75%;
+  text-align: center;
+  flex-basis: calc((100% / 6) - 2rem - 1px);
+}
+
+.colors-container .css-variable {
+  font-size: 75%;
+  letter-spacing: 0.1em;
+  font-family: var(--body-font, Verdana), sans-serif;
+}
+
+/* Hide a colour that's not been provided by seeing if the variable starts with "{$" */
+.colors-container [data-variable^=\{\$] {
+  display: none;
+}
+
+.colors-container [data-has-light-text="1"] {
+  color: white;
+  color: rgb(var(--swatch-text-light, 255, 255, 255));
+}
+[[/module]]
+
+[[div_ class="colors-container"]]
+
+[!-- Unfortunately I can only support a limited number of colours, because each possible slot needs to be hardcoded --]
+[!-- I can use the CSS variable name to reliably determine whether or not a colour has been provided, because it shouldn't contain any fancy formatting that would preclude it from being used in a CSS attribute --]
+[!-- If a colour is not provided, it should not take up any space --]
+
+[!-- Support up to six primary colours --]
+[[div_ class="colors"]]
+
+[[div_ class="color" style="background-color: rgb(var(--gray-monochrome
+));" data-variable="--gray-monochrome
+" data-has-light-text="1
+"]]
+Payne's Grey
+[[span class="css-variable"]]@@--gray-monochrome
+@@[[/span]][[span class="css-variable"]](66, 66, 72)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--bright-accent
+));" data-variable="--bright-accent
+" data-has-light-text="1
+"]]
+Rosewood
+[[span class="css-variable"]]@@--bright-accent
+@@[[/span]][[span class="css-variable"]](133, 0, 5)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$color3-variable}));" data-variable="{$color3-variable}" data-has-light-text="{$color3-has-light-text}"]]
+{$color3-name}[[span class="css-variable"]]@@{$color3-variable}@@[[/span]][[span class="css-variable"]]{$color3-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$color4-variable}));" data-variable="{$color4-variable}" data-has-light-text="{$color4-has-light-text}"]]
+{$color4-name}[[span class="css-variable"]]@@{$color4-variable}@@[[/span]][[span class="css-variable"]]{$color4-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$color5-variable}));" data-variable="{$color5-variable}" data-has-light-text="{$color5-has-light-text}"]]
+{$color5-name}[[span class="css-variable"]]@@{$color5-variable}@@[[/span]][[span class="css-variable"]]{$color5-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$color6-variable}));" data-variable="{$color6-variable}" data-has-light-text="{$color6-has-light-text}"]]
+{$color6-name}[[span class="css-variable"]]@@{$color6-variable}@@[[/span]][[span class="css-variable"]]{$color6-info}[[/span]]
+[[/div]]
+
+[[/div]]
+
+[!-- Support up to twelve subcolours --]
+[[div_ class="subcolors"]]
+
+[[div_ class="color" style="background-color: rgb(var(--very-light-gray-monochrome
+));" data-variable="--very-light-gray-monochrome
+" data-has-light-text="{$subcolor1-has-light-text}"]]
+Alto
+[[span class="css-variable"]]@@--very-light-gray-monochrome
+@@[[/span]][[span class="css-variable"]](215, 215, 215)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--pale-gray-monochrome
+));" data-variable="--pale-gray-monochrome
+" data-has-light-text="{$subcolor2-has-light-text}"]]
+White Smoke
+[[span class="css-variable"]]@@--pale-gray-monochrome
+@@[[/span]][[span class="css-variable"]](244, 244, 244)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--dark-gray-monochrome
+));" data-variable="--dark-gray-monochrome
+" data-has-light-text="1
+"]]
+Bastille
+[[span class="css-variable"]]@@--dark-gray-monochrome
+@@[[/span]][[span class="css-variable"]](48, 48, 52)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--medium-accent
+));" data-variable="--medium-accent
+" data-has-light-text="1
+"]]
+Buccaneer
+[[span class="css-variable"]]@@--medium-accent
+@@[[/span]][[span class="css-variable"]](100, 46, 44)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--dark-accent
+));" data-variable="--dark-accent
+" data-has-light-text="1
+"]]
+Maroon
+[[span class="css-variable"]]@@--dark-accent
+@@[[/span]][[span class="css-variable"]](100, 3, 15)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--newpage-color
+));" data-variable="--newpage-color
+" data-has-light-text="{$subcolor6-has-light-text}"]]
+Mango Tango
+[[span class="css-variable"]]@@--newpage-color
+@@[[/span]][[span class="css-variable"]](221, 102, 17)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor7-variable}));" data-variable="{$subcolor7-variable}" data-has-light-text="{$subcolor7-has-light-text}"]]
+{$subcolor7-name}[[span class="css-variable"]]@@{$subcolor7-variable}@@[[/span]][[span class="css-variable"]]{$subcolor7-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor8-variable}));" data-variable="{$subcolor8-variable}" data-has-light-text="{$subcolor8-has-light-text}"]]
+{$subcolor8-name}[[span class="css-variable"]]@@{$subcolor8-variable}@@[[/span]][[span class="css-variable"]]{$subcolor8-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor9-variable}));" data-variable="{$subcolor9-variable}" data-has-light-text="{$subcolor9-has-light-text}"]]
+{$subcolor9-name}[[span class="css-variable"]]@@{$subcolor9-variable}@@[[/span]][[span class="css-variable"]]{$subcolor9-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor10-variable}));" data-variable="{$subcolor10-variable}" data-has-light-text="{$subcolor10-has-light-text}"]]
+{$subcolor10-name}[[span class="css-variable"]]@@{$subcolor10-variable}@@[[/span]][[span class="css-variable"]]{$subcolor10-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor11-variable}));" data-variable="{$subcolor11-variable}" data-has-light-text="{$subcolor11-has-light-text}"]]
+{$subcolor11-name}[[span class="css-variable"]]@@{$subcolor11-variable}@@[[/span]][[span class="css-variable"]]{$subcolor11-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor12-variable}));" data-variable="{$subcolor12-variable}" data-has-light-text="{$subcolor12-has-light-text}"]]
+{$subcolor12-name}[[span class="css-variable"]]@@{$subcolor12-variable}@@[[/span]][[span class="css-variable"]]{$subcolor12-info}[[/span]]
+[[/div]]
+
+[[/div]]
+
+[[/div]]
+
+
+ _
+
++ Syntax Examples
+
+
+
+[[div class="scp-image-block block-right" style="width:200px
+; --_image-block-width:200px
+;"]]
+[[image https://cdn.scpwiki.com/theme/en/black-highlighter/img/logo.svg
+ {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+SCP Foundation Logo
+
+[[/div]]
+[[/div]]
+
+
+
+Titles can be created by putting between one and six plus "+" at the start of the line
+
+[[collapsible show="+ Titles" hide="- Titles"]]
++ First Title
+
+++ Second Title
+
++++ Third Title
+
+++++ Fourth Title
+
++++++ Fifth Title
+
+++++++ Sixth Title
+[[/collapsible]]
+
+A horizontal rule can be created with 5 hyphens "@@-----@@" and extends across the whole page if it's not placed inside anything (e.g. a blockquote). The lines separating sections of this document are horizontal rules.
+
+-----
+
+ _
+
+[[tabview]]
+[[tab Tabulator]]
+This is a tab view.
+[[/tab]]
+[[tab Tabulation]]
+Hey look, more text here.
+
+How quaint.
+[[/tab]]
+[[tab Long Tab]]
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+[[/tab]]
+[[tab This empty tab has a really long name for some odd reason. I wonder why? It is very strange.]]
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[/tabview]]
+
+[[div class="blockquote"]]
+This is a blockquote, created by enclosing its contents with {{[[div class="blockquote"]]}} on the line before and {{[[/div]]}} on the line after.
+
+-----
+
+[[div class="blockquote"]]
+Blockquotes, and all divs, can be nested.
+[[/div]]
+[[/div]]
+
+||~ Here's an ||~ example ||
+|| of a || table ||
+
+ _
+
+[[=]]
+[[div_ class="fonts-display"]]
+The body, [[span class="title-font"]]title,[[/span]] and [[span class="header-font"]]header[[/span]] font is [https://rsms.me/inter/ Inter].
+[[span class="UI-font"]]The UI font is [https://www.paratype.com/fonts/pt/pt-root-ui PT Root UI].[[/span]] 
+[[span class="mono-font"]]The monospaced font is [https://www.recursive.design/ Recursive].[[/span]]
+[[/div]]
+
+All fonts are licensed under the [http://scripts.sil.org/OFL SIL Open Font License, Version 1.1]
+[[/=]]
+
+-----
+[[/iftags]]
+
+
+[[iftags +theme]]
+[[module CSS]]
+@import url("https://nu-scptheme.github.io/Black-Highlighter/css/min/normalize.min.css");
+@import url("https://nu-scptheme.github.io/Black-Highlighter/css/min/black-highlighter.min.css");
+@import url("https://scp-wiki.wdfiles.com/local--files/svg-animation/mcdLogo.css");
+
+.animSVG {
+    width: 100%;
+    height: 0px;
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+[[/module]]
+
+
+[!--
+Styling component for the EN Interwiki, based on the CN Interwiki by 7happy7 and Sekai-s.
+
+Interwiki: https://scpwiki.com/interwiki
+Source: https://github.com/scpwiki/interwiki
+
+See also: https://scpwiki.com/how-to-create-a-branch-of-the-scp-foundation
+
+Usage:
+
+On the page that intends to restyle the Interwiki:
+
+ [[include :scp-wiki:component:interwiki-style
+| priority=X
+| theme=<link to CSS stylesheet>
+| css=<URI-encoded CSS>
+]]
+
+The `priority` value must be set to a number that is 1 greater than the priority of the theme that this theme is extending.
+
+Examples:
+- The base theme of the site (for the SCP Wiki, this is Sigma-9) has a priority of 0.
+- A CSS theme designed to be used on pages that are already styled with Sigma-9 (i.e. a theme that extends Sigma-9) would have a priority of 1.
+- The Black Market theme extends the Black Highlighter theme, which has a priority of 2; therefore the Black Market theme would have a priority of 3.
+
+The `theme` value is optional, and can be a URL to a CSS stylesheet e.g. a CSS theme.
+
+The `css` value is optional, and can be URI-encoded CSS to apply directly to the Interwiki. To URI-encode CSS, see https://meyerweb.com/eric/tools/dencoder
+--]
+
+[[embed]]
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=1
+&theme=https://nu-scptheme.github.io/Black-Highlighter/css/min/normalize.min.css
+&css={$css}" style="display: none"></iframe>
+[[/embed]]
+
+
+
+[!--
+Styling component for the EN Interwiki, based on the CN Interwiki by 7happy7 and Sekai-s.
+
+Interwiki: https://scpwiki.com/interwiki
+Source: https://github.com/scpwiki/interwiki
+
+See also: https://scpwiki.com/how-to-create-a-branch-of-the-scp-foundation
+
+Usage:
+
+On the page that intends to restyle the Interwiki:
+
+ [[include :scp-wiki:component:interwiki-style
+| priority=X
+| theme=<link to CSS stylesheet>
+| css=<URI-encoded CSS>
+]]
+
+The `priority` value must be set to a number that is 1 greater than the priority of the theme that this theme is extending.
+
+Examples:
+- The base theme of the site (for the SCP Wiki, this is Sigma-9) has a priority of 0.
+- A CSS theme designed to be used on pages that are already styled with Sigma-9 (i.e. a theme that extends Sigma-9) would have a priority of 1.
+- The Black Market theme extends the Black Highlighter theme, which has a priority of 2; therefore the Black Market theme would have a priority of 3.
+
+The `theme` value is optional, and can be a URL to a CSS stylesheet e.g. a CSS theme.
+
+The `css` value is optional, and can be URI-encoded CSS to apply directly to the Interwiki. To URI-encode CSS, see https://meyerweb.com/eric/tools/dencoder
+--]
+
+[[embed]]
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=2
+&theme=https://nu-scptheme.github.io/Black-Highlighter/css/min/black-highlighter.min.css
+&css={$css}" style="display: none"></iframe>
+[[/embed]]
+
+
+[[div class="mcdLogo animSVG" style="width: 100%; padding-bottom: calc(100% / 64 * 31); background-image: var(--mcdLogo);"]]
+[[/div]]
+
+----
+
+[[>]]
+[[module Rate]]
+[[/>]]
+
++ Usage
+
+++ Note: This is a Black Highlighter based theme. You will need to import the Black Highlighter theme as well in order to use this theme. [[[theme:black-highlighter-theme|To learn more go here]]].
+
+To import this theme, add this to your page:
+
+> @@[[include :scp-wiki:theme:black-highlighter-theme]]@@
+> @@[[include :scp-wiki:theme:black-market]]@@
+
+@@ @@
+
+||~ Table Demo||
+||~ XXXXX/XXXXX/XXXXX ||
+||Header cells on the tables used in the MC&D format are recolored to be a light purple-grey color, as shown above and below.||
+||~ Marshall, Carter and Dark, LLP||
+
+[[=]]
++ Theme Colors
+[[/=]]
+
+
+>[!--
+
+
+[[module CSS]]
+td { vertical-align: top; }
+td strong { white-space: nowrap; }
+.options table.wiki-content-table td { border: none; padding: 0.7em 1em; }
+[[/module]]
+
+[[div style="border: 1px solid #ddd; padding: 1em;"]]
++ What this is
+
+A component that displays a bunch of colored squares to show off a CSS theme's flair.
+
+Designed by [[*user Woedenaz]] and componentised by [[*user Croquembouche]].
+
+This component is designed to be used for CSS themes, but it can be used on almost any page, if you really want.
+
++ Usage
+
+On any wiki:
+
+[[div class="code"]]
+##blue|**[[include :scp-wiki:component:theme-squares -=-**##
+##blue|**|**## ##green|color1-name####blue|**=**##My Favourite Colour
+##blue|**|**## ##green|color1-variable####blue|**=**##@@--@@fav-color
+##blue|**|**## ##green|color1-info####blue|**=**##(191, 144, 0)
+##blue|**]]**##
+[[/div]]
+
+Note the "{{-=-}}" after the component name. You **//do//** need to include that -- otherwise all this text explaining how to use the component will appear on your page.
+
+For this component, there are three parameters per color. Replace N with the number of the color.
+
+[[div class="options"]]
+|| **colorN-name** || The name of the color. Pick whatever you want! ||
+|| **colorN-variable** || The name of the [https://developer.mozilla.org/en-US/docs/Web/CSS/--* CSS variable] that contains this color. _
+The variable should hold three comma-separated numbers representing the RGB values of the color. This is consistent with BHL-style variables. _
+If your variables hold something else (e.g. a full RGB/RGBA or hex color), you will need to override the background color of each theme square manually with CSS. ||
+|| **colorN-info** || Some info about the colour. Displaying the RGB values is typical. Keep it short. _
+If you don't want any text, add {{@<@@ @@>@}} instead.||
+|| **//colorN-has-light-text//** _
+//Optional. Default: 0// || Either 0 or 1. Determines the font color on the square. Useful to make sure there is enough contrast between the background color and the text color. _
+If 1, the value of {{@@--swatch-text-light@@}} is used, or white (255, 255, 255) if it is not defined. Otherwise {{@@--swatch-text-dark@@}}, or black (0, 0, 0). Like all BHL-style CSS color variables, three numbers representing RGB values are expected. ||
+[[/div]]
+
+A color can only be used if it's exposed as a [https://developer.mozilla.org/en-US/docs/Web/CSS/--* CSS variable]. All colors in a Black Highlighter theme have a corresponding CSS variable by default, so for BHL themes, this component should work out of the box. However, sigma9 does not use CSS variables, so the only CSS variables that are available will be any that you have defined in your theme.
+
+This component can hold a maximum of 6 primary colors and 12 secondary colors. I recommend two primary colors and no more than six secondary colors.
+
+To add a primary color, just add the top three of the above parameters to the include, as shown in the example.
+
+To add a secondary color, it's the same, but replace 'color' with 'subcolor'.
+
++ Example
+
+Here's a longer example, taken from the Black Highlighter theme:
+
+[[div class="code"]]
+##blue|**[[include :scp-wiki:component:theme-squares -=-**##
+##blue|**|**## ##green|color1-name####blue|**=**##Payne's Grey 
+##blue|**|**## ##green|color1-variable####blue|**=**##@@--@@gray-monochrome
+##blue|**|**## ##green|color1-info####blue|**=**##(66, 66, 72)
+##blue|**|**## ##green|color1-has-light-text####blue|**=**##1
+##blue|**|**## ##green|color2-name####blue|**=**##Rosewood 
+##blue|**|**## ##green|color2-variable####blue|**=**##@@--@@bright-accent
+##blue|**|**## ##green|color2-info####blue|**=**##(133, 0, 5)
+##blue|**|**## ##green|color2-has-light-text####blue|**=**##1
+##blue|**|**## ##green|subcolor1-name####blue|**=**##Alto 
+##blue|**|**## ##green|subcolor1-variable####blue|**=**##@@--@@very-light-gray-monochrome
+##blue|**|**## ##green|subcolor1-info####blue|**=**##(215, 215, 215)
+##blue|**|**## ##green|subcolor2-name####blue|**=**##White Smoke 
+##blue|**|**## ##green|subcolor2-variable####blue|**=**##@@--@@pale-gray-monochrome
+##blue|**|**## ##green|subcolor2-info####blue|**=**##(244, 244, 244)
+##blue|**|**## ##green|subcolor3-name####blue|**=**##Bastille 
+##blue|**|**## ##green|subcolor3-variable####blue|**=**##@@--@@dark-gray-monochrome
+##blue|**|**## ##green|subcolor3-info####blue|**=**##(48, 48, 52)
+##blue|**|**## ##green|subcolor3-has-light-text####blue|**=**##1
+##blue|**|**## ##green|subcolor4-name####blue|**=**##Buccaneer 
+##blue|**|**## ##green|subcolor4-variable####blue|**=**##@@--@@medium-accent
+##blue|**|**## ##green|subcolor4-info####blue|**=**##(100, 46, 44)
+##blue|**|**## ##green|subcolor4-has-light-text####blue|**=**##1
+##blue|**|**## ##green|subcolor5-name####blue|**=**##Maroon 
+##blue|**|**## ##green|subcolor5-variable####blue|**=**##@@--@@dark-accent
+##blue|**|**## ##green|subcolor5-info####blue|**=**##(100, 3, 15)
+##blue|**|**## ##green|subcolor5-has-light-text####blue|**=**##1
+##blue|**|**## ##green|subcolor6-name####blue|**=**##Mango Tango 
+##blue|**|**## ##green|subcolor6-variable####blue|**=**##@@--@@newpage-color
+##blue|**|**## ##green|subcolor6-info####blue|**=**##(221, 102, 17)
+##blue|**]]**##
+[[/div]]
+
+This produces the following colored squares:
+
+[[=]]
+[[image bhl-squares.png]]
+[[/=]]
+
++ Tweaking
+
+You can adjust the appearance of the component with CSS.
+
+The whole component has the {{.colors-container}} class, and any CSS that targets it should included that class to ensure that nothing else on the page is affected. Every colored square has class {{.color}}. The primary colors have a {{.colors}} parent and the secondary colors have a {{.subcolors}} parent.
+
+You'll need to use {{!important}} to override a square's background.
+
+For example, the [[[theme:laughter-and-knives-theme | Laughter and Knives theme]]] adds a gradient background to the 9th secondary color like so:
+
+[[code type="css"]]
+.colors-container .subcolors .color:nth-of-type(9) {
+    background: var(--pastel-rainbow) !important;
+}
+[[/code]]
+
+-----
+
+[https://rossjrw.com/series-replace/?f=%5Cn&f=%5E&f=%24&f=%3C%3C%3E%3E&f=%28%3F%3C%3Dsubcolors.%2A%29%28%5B%5E%5C%5B%5C%5D%5D%2B%29%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5Ba-z-%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5B%5E%40%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D&f=%28%5B%5E%5C%5B%5C%5D%5D%2B%29%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5Ba-z-%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5B%5E%40%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D&f=%5C%7C&f=%5E%5C%5B%5C%5B%5B%5Ei%5D.%2A%7C%5E%5C%7C%5B%5E%20%5D.%2A&f=%5Cn%24&r=&r=%5B%5Binclude%20%3Ascp-wiki%3Acomponent%3Atheme-squares%20-%3D-%3C%3C%3E%3E%7C%20color%24-has-light-text%3D1%3C%3C%3E%3E%7C%20subcolor%24-has-light-text%3D1%3C%3C%3E%3E&r=%5Cn%5D%5D&r=%5Cn&r=%7C%20subcolor%24%24-name%3D%241%7C%20subcolor%24%24-variable%3D%242%7C%20subcolor%24%24-info%3D%243%7C&r=%7C%20color%24%24-name%3D%241%7C%20color%24%24-variable%3D%242%7C%20color%24%24-info%3D%243%7C&r=%5Cn%7C&r=&r= Tool to convert existing syntax to arguments for this component]
+
+[[/div]]
+
+[!-- --]
+
+[[module CSS]]
+.colors-container {
+  width: 98%;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  font-weight: 700;
+  font-family: var(--title-font, Verdana), sans-serif;
+  color: black;
+}
+
+.colors-container .colors, .colors-container .subcolors {
+  width: 100%;
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.colors-container .color {
+  flex-grow: 2;
+  padding: 0.5rem;
+  margin: 0.5rem;
+  color: rgb(var(--swatch-text-dark, 0, 0, 0));
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.colors-container .colors .color {
+  height: 7rem;
+  min-width: 4rem;
+  flex-basis: calc((100% / 2) - 2rem - 1px);
+}
+
+.colors-container .subcolors .color {
+  height: 4rem;
+  min-width: 4rem;
+  font-size: 75%;
+  text-align: center;
+  flex-basis: calc((100% / 6) - 2rem - 1px);
+}
+
+.colors-container .css-variable {
+  font-size: 75%;
+  letter-spacing: 0.1em;
+  font-family: var(--body-font, Verdana), sans-serif;
+}
+
+/* Hide a colour that's not been provided by seeing if the variable starts with "{$" */
+.colors-container [data-variable^=\{\$] {
+  display: none;
+}
+
+.colors-container [data-has-light-text="1"] {
+  color: white;
+  color: rgb(var(--swatch-text-light, 255, 255, 255));
+}
+[[/module]]
+
+[[div_ class="colors-container"]]
+
+[!-- Unfortunately I can only support a limited number of colours, because each possible slot needs to be hardcoded --]
+[!-- I can use the CSS variable name to reliably determine whether or not a colour has been provided, because it shouldn't contain any fancy formatting that would preclude it from being used in a CSS attribute --]
+[!-- If a colour is not provided, it should not take up any space --]
+
+[!-- Support up to six primary colours --]
+[[div_ class="colors"]]
+
+[[div_ class="color" style="background-color: rgb(var(--pale-gray-monochrome
+));" data-variable="--pale-gray-monochrome
+" data-has-light-text="{$color1-has-light-text}"]]
+Isabelline
+[[span class="css-variable"]]@@--pale-gray-monochrome
+@@[[/span]][[span class="css-variable"]](248, 230, 238)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--gray-monochrome
+));" data-variable="--gray-monochrome
+" data-has-light-text="1
+"]]
+Black Coffee
+[[span class="css-variable"]]@@--gray-monochrome
+@@[[/span]][[span class="css-variable"]](61, 43, 61)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$color3-variable}));" data-variable="{$color3-variable}" data-has-light-text="{$color3-has-light-text}"]]
+{$color3-name}[[span class="css-variable"]]@@{$color3-variable}@@[[/span]][[span class="css-variable"]]{$color3-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$color4-variable}));" data-variable="{$color4-variable}" data-has-light-text="{$color4-has-light-text}"]]
+{$color4-name}[[span class="css-variable"]]@@{$color4-variable}@@[[/span]][[span class="css-variable"]]{$color4-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$color5-variable}));" data-variable="{$color5-variable}" data-has-light-text="{$color5-has-light-text}"]]
+{$color5-name}[[span class="css-variable"]]@@{$color5-variable}@@[[/span]][[span class="css-variable"]]{$color5-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$color6-variable}));" data-variable="{$color6-variable}" data-has-light-text="{$color6-has-light-text}"]]
+{$color6-name}[[span class="css-variable"]]@@{$color6-variable}@@[[/span]][[span class="css-variable"]]{$color6-info}[[/span]]
+[[/div]]
+
+[[/div]]
+
+[!-- Support up to twelve subcolours --]
+[[div_ class="subcolors"]]
+
+[[div_ class="color" style="background-color: rgb(var(--pale-accent
+));" data-variable="--pale-accent
+" data-has-light-text="1
+"]]
+Orchid
+[[span class="css-variable"]]@@--pale-accent
+@@[[/span]][[span class="css-variable"]](216, 39, 216)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--bright-accent
+));" data-variable="--bright-accent
+" data-has-light-text="1
+"]]
+Byzantine
+[[span class="css-variable"]]@@--bright-accent
+@@[[/span]][[span class="css-variable"]](180, 35, 180)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--medium-accent
+));" data-variable="--medium-accent
+" data-has-light-text="1
+"]]
+Royal
+[[span class="css-variable"]]@@--medium-accent
+@@[[/span]][[span class="css-variable"]](140, 20, 140)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--dark-accent
+));" data-variable="--dark-accent
+" data-has-light-text="1
+"]]
+Tyrian
+[[span class="css-variable"]]@@--dark-accent
+@@[[/span]][[span class="css-variable"]](100, 3, 100)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor5-variable}));" data-variable="{$subcolor5-variable}" data-has-light-text="{$subcolor5-has-light-text}"]]
+{$subcolor5-name}[[span class="css-variable"]]@@{$subcolor5-variable}@@[[/span]][[span class="css-variable"]]{$subcolor5-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor6-variable}));" data-variable="{$subcolor6-variable}" data-has-light-text="{$subcolor6-has-light-text}"]]
+{$subcolor6-name}[[span class="css-variable"]]@@{$subcolor6-variable}@@[[/span]][[span class="css-variable"]]{$subcolor6-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor7-variable}));" data-variable="{$subcolor7-variable}" data-has-light-text="{$subcolor7-has-light-text}"]]
+{$subcolor7-name}[[span class="css-variable"]]@@{$subcolor7-variable}@@[[/span]][[span class="css-variable"]]{$subcolor7-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor8-variable}));" data-variable="{$subcolor8-variable}" data-has-light-text="{$subcolor8-has-light-text}"]]
+{$subcolor8-name}[[span class="css-variable"]]@@{$subcolor8-variable}@@[[/span]][[span class="css-variable"]]{$subcolor8-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor9-variable}));" data-variable="{$subcolor9-variable}" data-has-light-text="{$subcolor9-has-light-text}"]]
+{$subcolor9-name}[[span class="css-variable"]]@@{$subcolor9-variable}@@[[/span]][[span class="css-variable"]]{$subcolor9-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor10-variable}));" data-variable="{$subcolor10-variable}" data-has-light-text="{$subcolor10-has-light-text}"]]
+{$subcolor10-name}[[span class="css-variable"]]@@{$subcolor10-variable}@@[[/span]][[span class="css-variable"]]{$subcolor10-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor11-variable}));" data-variable="{$subcolor11-variable}" data-has-light-text="{$subcolor11-has-light-text}"]]
+{$subcolor11-name}[[span class="css-variable"]]@@{$subcolor11-variable}@@[[/span]][[span class="css-variable"]]{$subcolor11-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor12-variable}));" data-variable="{$subcolor12-variable}" data-has-light-text="{$subcolor12-has-light-text}"]]
+{$subcolor12-name}[[span class="css-variable"]]@@{$subcolor12-variable}@@[[/span]][[span class="css-variable"]]{$subcolor12-info}[[/span]]
+[[/div]]
+
+[[/div]]
+
+[[/div]]
+
+
+[[collapsible show="+ Show theme code" hide="- Hide theme code"]]
+[[code type="css"]]
+/*
+    Marshall, Carter & Dark
+    [2014 Wikidot Theme, 2019 Update]
+    Originally created for the SCP Foundation GoI Contest of 2014 (MC&D team and Group of Interest) by Randomini.
+     Originally based on Sigma-9 by Aelanna, Reach and Crayne.
+     Theme updated later by stormbreath.
+     All images created by Randomini.
+*/
+
+/* ROOT - Header & General Recoloring */
+:root {
+    /* Intro */
+    --theme-base: "nuscp"
+    	--theme-id: "black-market-theme"
+    	--theme-name: "Black Market Theme";
+
+    /* Header Images */
+    --logo-image: url("https://scp-wiki.wdfiles.com/local--files/theme%3Ablack-market/mcdpride.png");
+    --gradient-header: url("https://scp-wiki.wdfiles.com/local--files/theme%3Ablack-market/mcd.png");
+    --header-background-image-size: 290px 9rem;
+    --header-height-on-desktop: 9rem;
+    --header-height-on-mobile: 9rem;
+    --diagonal-stripes: none;
+
+    /* Colors */
+    --pale-gray-monochrome: 248, 230, 238;
+    /* light purple for quoteblocks and such */
+    --light-gray-monochrome: 160, 140, 160;
+    /* light purple-gray */
+    --gray-monochrome: 61, 43, 61;
+    /* dark purple-gray */
+    --dark-gray-monochrome: 52, 31, 52;
+    /* darker purple-gray */
+
+    --pale-accent: 216, 39, 216;
+    /* light purple */
+    --bright-accent: 180, 35, 180;
+    /* bright purple*/
+    --medium-accent: 140, 20, 140;
+    /* medium purple*/
+    --dark-accent: 100, 3, 100;
+    /* dark purple*/
+    --newpage-color: 221, 102, 221;
+    /* pale purple*/
+
+    --light-pale-gray-monochrome: var(--pale-gray-monochrome);
+    --rating-module-button-color: var(--pale-gray-monochrome);
+    --rating-module-text-color: var(--pale-gray-monochrome);
+    --barColour: rgb(100, 3, 100);
+}
+
+#side-bar,
+#interwiki {
+    --sidebar-links-text: var(--pale-gray-monochrome);
+}
+
+/* Final Bits of Header */
+#header h1 a,
+#header h1 a::before,
+#header h2 span,
+#header h2 span::before {
+    color: transparent;
+    text-shadow: none;
+}
+
+/* Undo the mobile Image Resize */
+@media only screen and (max-width: 768px) {
+    #header {
+    	background-size: 0.625rem 2.500rem;
+    	background-repeat: no-repeat;
+    	background-position: left 0.75rem top 1.1875rem;
+    	background-clip: border-box;
+    	background-size: auto 5.375rem;
+    }
+}
+
+/* LOG-IN INFO */
+#login-status #account-options {
+    background-image: none;
+}
+
+/* PAGE-TITLE */
+#page-title,
+.meta-title {
+    color: rgb(var(--dark-accent));
+}
+
+#page-title::after,
+.meta-title::after {
+    background-color: rgb(var(--dark-accent));
+}
+
+/* SEXY BOX */
+div.sexy-box {
+    background: rgb(var(--pale-gray-monochrome));
+    border: 1px solid rgb(var(--gray-monochrome));
+}
+
+div.sexy-box div.image-container img {
+    border: 1px solid #9f8170;
+}
+
+/* CODE */
+.code {
+    border: none;
+    background-color: rgba(var(--blockquote-bg-color));
+    box-shadow: inset 0 0 0 .0625rem rgba(var(--blockquote-border-color), .5), inset .0625rem 0 0 0 rgba(var(--blockquote-border-color), .5), inset 0 -.0625rem 0 0 rgba(var(--blockquote-border-color), .75);
+}
+
+/* RATING AND INFO MODULES */
+.page-rate-widget-box,
+#page-content .rate-box-with-credit-button {
+    background: linear-gradient(to top,
+    		rgba(var(--dark-accent), 1) 0%,
+    		rgba(var(--dark-accent), 1) 100%);
+    border-color: rgb(var(--gray-monochrome));
+    border-bottom-width: 0.0625rem;
+    box-shadow: none;
+}
+
+#page-content .rate-box-with-credit-button>.creditButton>p>a::before {
+    background-color: rgb(var(--pale-gray-monochrome));
+}
+
+#page-content .rate-box-with-credit-button>.creditButton:hover {
+    background: rgba(var(--bright-accent), 0.8);
+}
+
+#page-content .modalbox {
+    border-radius: 0;
+    box-shadow: 0 2px 6px rgba(var(--bright-accent), 0.5);
+}
+[[/code]]
+[[/collapsible]]
+[[/iftags]]
+
+[[iftags +component]]
+[[module css]]
+@import url("https://nu-scptheme.github.io/Black-Highlighter/css/min/normalize.min.css");
+@import url("https://nu-scptheme.github.io/Black-Highlighter/css/min/black-highlighter.min.css");
+div.blockquote {
+    padding-top: 0.5em;
+}
+div.blockquote tt {
+    margin: 0.5em 1em 1em 1em;
+    display: block;
+    background-color: rgb(var(--dark-gray-monochrome));
+    color: rgb(var(--white-monochrome));
+    padding: 0.5em;
+}
+[[/module]]
+
+
+[!--
+Styling component for the EN Interwiki, based on the CN Interwiki by 7happy7 and Sekai-s.
+
+Interwiki: https://scpwiki.com/interwiki
+Source: https://github.com/scpwiki/interwiki
+
+See also: https://scpwiki.com/how-to-create-a-branch-of-the-scp-foundation
+
+Usage:
+
+On the page that intends to restyle the Interwiki:
+
+ [[include :scp-wiki:component:interwiki-style
+| priority=X
+| theme=<link to CSS stylesheet>
+| css=<URI-encoded CSS>
+]]
+
+The `priority` value must be set to a number that is 1 greater than the priority of the theme that this theme is extending.
+
+Examples:
+- The base theme of the site (for the SCP Wiki, this is Sigma-9) has a priority of 0.
+- A CSS theme designed to be used on pages that are already styled with Sigma-9 (i.e. a theme that extends Sigma-9) would have a priority of 1.
+- The Black Market theme extends the Black Highlighter theme, which has a priority of 2; therefore the Black Market theme would have a priority of 3.
+
+The `theme` value is optional, and can be a URL to a CSS stylesheet e.g. a CSS theme.
+
+The `css` value is optional, and can be URI-encoded CSS to apply directly to the Interwiki. To URI-encode CSS, see https://meyerweb.com/eric/tools/dencoder
+--]
+
+[[embed]]
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=1
+&theme=https://nu-scptheme.github.io/Black-Highlighter/css/min/normalize.min.css
+&css={$css}" style="display: none"></iframe>
+[[/embed]]
+
+
+
+[!--
+Styling component for the EN Interwiki, based on the CN Interwiki by 7happy7 and Sekai-s.
+
+Interwiki: https://scpwiki.com/interwiki
+Source: https://github.com/scpwiki/interwiki
+
+See also: https://scpwiki.com/how-to-create-a-branch-of-the-scp-foundation
+
+Usage:
+
+On the page that intends to restyle the Interwiki:
+
+ [[include :scp-wiki:component:interwiki-style
+| priority=X
+| theme=<link to CSS stylesheet>
+| css=<URI-encoded CSS>
+]]
+
+The `priority` value must be set to a number that is 1 greater than the priority of the theme that this theme is extending.
+
+Examples:
+- The base theme of the site (for the SCP Wiki, this is Sigma-9) has a priority of 0.
+- A CSS theme designed to be used on pages that are already styled with Sigma-9 (i.e. a theme that extends Sigma-9) would have a priority of 1.
+- The Black Market theme extends the Black Highlighter theme, which has a priority of 2; therefore the Black Market theme would have a priority of 3.
+
+The `theme` value is optional, and can be a URL to a CSS stylesheet e.g. a CSS theme.
+
+The `css` value is optional, and can be URI-encoded CSS to apply directly to the Interwiki. To URI-encode CSS, see https://meyerweb.com/eric/tools/dencoder
+--]
+
+[[embed]]
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=2
+&theme=https://nu-scptheme.github.io/Black-Highlighter/css/min/black-highlighter.min.css
+&css={$css}" style="display: none"></iframe>
+[[/embed]]
+
+
+[[=]]
+[[module Rate]]
+[[div_ class="blockquote"]]
+
+Pretty self explanatory.
+For anyone who //really// wants the dark sidebar from the O.G. BHL on their articles.
+Just add this include **AFTER** the BHL include:
+{{[[include :scp-wiki:component:bhl-dark-sidebar]]}}
+[[/div]]
+[[/=]]
+-----
+[[collapsible show="+ Show component code" hide="- Hide component code"]]
+
+[[code type="css"]]
+#interwiki, 
+#side-bar {
+    /* ===SECONDARY & TERTIARY COLORS=== */
+    /* Editing these will edit a vast majority of theme elements. Useful for making dark themes */
+
+    /* Colors for Secondary & Tertiary items like Blockquote and YUI Tabs */
+    --swatch-secondary-color: var(--swatch-menubg-dark-color);
+    --swatch-tertiary-color: var(--swatch-menubg-medium-color);
+    --swatch-alternate-color: var(--swatch-menubg-light-color);
+
+    /* Text Colors for Secondary & Tertiary items like Sidebar Headers and Top-Bar Menu Text */
+    --swatch-text-secondary-color: var(--swatch-menutxt-dark-color);
+    --swatch-text-tertiary-color: var(--swatch-menutxt-light-color);
+
+    /* ===SIDE-BAR ELEMENTS=== */
+
+    /* ===SIDE-BAR GENERAL=== */
+    --sidebar-bg-color: var(--swatch-menubg-dark-color);
+    --sidebar-resources-bg-color: 0, 0, 0, 0;
+    --sidebar-media-bg-color: 0, 0, 0, 0;
+
+    /* ===SIDEBLOCK MENU=== */
+    --sideblock-heading-border-color: var(--bright-accent);
+    --sideblock-heading-bg-color: 0, 0, 0, 0;
+    /* Transparent */
+    --sideblock-heading-text-color: var(--swatch-text-tertiary-color);
+
+    /* ===MENU-ITEMS=== */
+    --sidebar-border-color: var(--swatch-primary), 0.08;
+    --sidebar-subtext-color: var(--swatch-text-tertiary-color);
+
+    --sidebar-links-text: var(--swatch-text-tertiary-color);
+    --sidebar-links-hover-bg-color: var(--bright-accent);
+    --sidebar-links-hover-text-color: var(--swatch-text-tertiary-color);
+
+    /* ===SIDEBAR COLLAPSIBLES=== */
+    /*Folded Colors */
+    --sidebar-collapsible-fld-link-bg: var(--swatch-primary), 0.25;
+    --sidebar-collapsible-fld-link-color: var(--swatch-text-tertiary-color);
+    --sidebar-collapsible-fld-link-hover-color: var(--swatch-text-tertiary-color);
+    --sidebar-collapsible-fld-arrow-hover-color: var(--swatch-text-tertiary-color);
+
+    /*Unfolded Colors */
+    --sidebar-collapsible-ufld-link-bg: var(--swatch-primary-darker), 0.25;
+    --sidebar-collapsible-ufld-link-color: var(--swatch-text-tertiary-color);
+    --sidebar-collapsible-ufld-link-hover-color: var(--swatch-text-tertiary-color);
+    --sidebar-collapsible-ufld-arrow-hover-color: var(--swatch-text-tertiary-color);
+
+    /* Unfolded Body Colors */
+    --sidebar-collapsible-link-color: var(--swatch-text-tertiary-color);
+    --sidebar-collapsible-link-hover-color: var(--swatch-text-tertiary-color);
+
+    scrollbar-color:
+    	rgba(var(--swatch-primary-darker), 0.1)
+    	/* Thumb */
+    	rgba(var(--swatch-secondary-color), 0.05);
+    /* Track */
+
+    border-color: rgba(var(--swatch-secondary-color), 0.4);
+}
+
+/* Hover Scrollbar Behavior */
+#side-bar:hover,
+#side-bar:active {
+    scrollbar-color:
+    	rgb(var(--swatch-primary-darker), 1)
+    	/* Thumb */
+    	rgb(var(--swatch-menubg-dark-color), 1);
+    /* Track */
+}
+
+#side-bar:focus-within {
+    scrollbar-color:
+    	rgb(var(--swatch-primary-darker), 1)
+    	/* Thumb */
+    	rgb(var(--swatch-menubg-dark-color), 1);
+    /* Track */
+}
+
+#side-bar::-webkit-scrollbar-track {
+    background-color: rgba(var(--swatch-tertiary-color), 0.8);
+}
+
+#side-bar::-webkit-scrollbar,
+#side-bar::-webkit-scrollbar-thumb,
+#side-bar::-webkit-scrollbar-corner {
+    background-color: rgba(var(--swatch-menubg-dark-color), 0);
+}
+
+#side-bar .side-block.media a:-webkit-any-link {
+    background: rgba(var(--swatch-menubg-light-color), 0.75) !important;
+}
+
+#side-bar .side-block.media a:-moz-any-link {
+    background: rgba(var(--swatch-menubg-light-color), 0.75) !important;
+}
+
+#side-bar .side-block.media a:any-link {
+    background: rgba(var(--swatch-menubg-light-color), 0.75) !important;
+}
+
+#side-bar .side-block.media a::before {
+    background: rgb(var(--social-color));
+}
+
+#side-bar .side-block.media a[href*="tiktok"]::before,
+#side-bar .side-block.media a[href*="tiktok"]::after {
+    transition:
+    	background 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background-image 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	-webkit-clip-path 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+    	clip-path 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background-image 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+    	clip-path 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background-image 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	-webkit-clip-path 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#side-bar .side-block.media a[href*="tiktok"]:hover::before {
+    --clip-path:
+    	polygon(-15% 0,
+    		115% 0,
+    		100% 100%,
+    		0 100%
+    	);
+}
+
+#side-bar .side-block.media a[href*="tiktok"]:hover::before,
+#side-bar .side-block.media a[href*="tiktok"]:active::before {
+    --clip-path:
+    	polygon(-15% 0,
+    		115% 0,
+    		100% 100%,
+    		0 100%
+    	);
+    background-image: var(--tiktok-icon-gradient);
+    background-size: contain;
+}
+
+#side-bar .side-block.media a[href*="tiktok"]:focus-within::before {
+    --clip-path:
+    	polygon(-15% 0,
+    		115% 0,
+    		100% 100%,
+    		0 100%
+    	);
+    background-image: var(--tiktok-icon-gradient);
+    background-size: contain;
+}
+
+#side-bar .side-block.media a[href*="tiktok"]::after {
+    --clip-path:
+    	polygon(0 0,
+    		0 0,
+    		0 100%,
+    		0 100%
+    	);
+    background: rgba(var(--swatch-menubg-light-color), 0.75) !important;
+}
+
+#side-bar .side-block.media a[href*="tiktok"]:hover::after,
+#side-bar .side-block.media a[href*="tiktok"]:active::after {
+    --clip-path:
+    	polygon(-15% 0,
+    		115% 0,
+    		100% 100%,
+    		0 100%
+    	);
+    background: rgba(var(--swatch-menubg-light-color), 0.75) !important;
+}
+
+#side-bar .side-block.media a[href*="tiktok"]:focus-within::after {
+    --clip-path:
+    	polygon(-15% 0,
+    		115% 0,
+    		100% 100%,
+    		0 100%
+    	);
+    background: rgba(var(--swatch-menubg-light-color), 0.75) !important;
+}
+
+#side-bar .side-block.media a img {
+    -webkit-filter: drop-shadow(0 0 0 rgba(var(--swatch-alternate-color), 0));
+            filter: drop-shadow(0 0 0 rgba(var(--swatch-alternate-color), 0));
+    transition: -webkit-filter 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: filter 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: filter 200ms cubic-bezier(0.4, 0, 0.2, 1), -webkit-filter 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#side-bar .side-block.media a:hover img,
+#side-bar .side-block.media a:active img {
+    -webkit-filter: drop-shadow(0.1875rem 0.1875rem 0 rgb(var(--swatch-alternate-color)));
+            filter: drop-shadow(0.1875rem 0.1875rem 0 rgb(var(--swatch-alternate-color)));
+}
+
+#side-bar .side-block.media a:focus-within img {
+    -webkit-filter: drop-shadow(0.1875rem 0.1875rem 0 rgb(var(--swatch-alternate-color)));
+            filter: drop-shadow(0.1875rem 0.1875rem 0 rgb(var(--swatch-alternate-color)));
+}
+
+html:not(:lang(cn)) div.scpnet-interwiki-wrapper p::before {
+    box-shadow: inherit;
+}
+
+#side-bar .scpnet-interwiki-wrapper:not(:lang(cn))::before,
+#side-bar .scpnet-interwiki-wrapper:not(:lang(cn)) p::before,
+#side-bar .scpnet-interwiki-wrapper:not(:lang(cn)) p::after {
+    background-color: rgb(var(--swatch-menubg-dark-color));
+}
+
+[[/code]]
+[[/collapsible]]
+[[/iftags]]
+[[module CSS]]
+@import url("https://scp-wiki.wdfiles.com/local--code/component%3Abhl-dark-sidebar/1");
+[[/module]]
+
+
+[!--
+Styling component for the EN Interwiki, based on the CN Interwiki by 7happy7 and Sekai-s.
+
+Interwiki: https://scpwiki.com/interwiki
+Source: https://github.com/scpwiki/interwiki
+
+See also: https://scpwiki.com/how-to-create-a-branch-of-the-scp-foundation
+
+Usage:
+
+On the page that intends to restyle the Interwiki:
+
+ [[include :scp-wiki:component:interwiki-style
+| priority=X
+| theme=<link to CSS stylesheet>
+| css=<URI-encoded CSS>
+]]
+
+The `priority` value must be set to a number that is 1 greater than the priority of the theme that this theme is extending.
+
+Examples:
+- The base theme of the site (for the SCP Wiki, this is Sigma-9) has a priority of 0.
+- A CSS theme designed to be used on pages that are already styled with Sigma-9 (i.e. a theme that extends Sigma-9) would have a priority of 1.
+- The Black Market theme extends the Black Highlighter theme, which has a priority of 2; therefore the Black Market theme would have a priority of 3.
+
+The `theme` value is optional, and can be a URL to a CSS stylesheet e.g. a CSS theme.
+
+The `css` value is optional, and can be URI-encoded CSS to apply directly to the Interwiki. To URI-encode CSS, see https://meyerweb.com/eric/tools/dencoder
+--]
+
+[[embed]]
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=4
+&theme=https://scp-wiki.wdfiles.com/local--code/component%3Abhl-dark-sidebar/1
+&css={$css}" style="display: none"></iframe>
+[[/embed]]
+
+
+[[module css]]
+@import url("https://scp-wiki.wdfiles.com/local--code/theme%3Ablack-market/1")
+[[/module]]
+
+[!--
+Styling component for the EN Interwiki, based on the CN Interwiki by 7happy7 and Sekai-s.
+
+Interwiki: https://scpwiki.com/interwiki
+Source: https://github.com/scpwiki/interwiki
+
+See also: https://scpwiki.com/how-to-create-a-branch-of-the-scp-foundation
+
+Usage:
+
+On the page that intends to restyle the Interwiki:
+
+ [[include :scp-wiki:component:interwiki-style
+| priority=X
+| theme=<link to CSS stylesheet>
+| css=<URI-encoded CSS>
+]]
+
+The `priority` value must be set to a number that is 1 greater than the priority of the theme that this theme is extending.
+
+Examples:
+- The base theme of the site (for the SCP Wiki, this is Sigma-9) has a priority of 0.
+- A CSS theme designed to be used on pages that are already styled with Sigma-9 (i.e. a theme that extends Sigma-9) would have a priority of 1.
+- The Black Market theme extends the Black Highlighter theme, which has a priority of 2; therefore the Black Market theme would have a priority of 3.
+
+The `theme` value is optional, and can be a URL to a CSS stylesheet e.g. a CSS theme.
+
+The `css` value is optional, and can be URI-encoded CSS to apply directly to the Interwiki. To URI-encode CSS, see https://meyerweb.com/eric/tools/dencoder
+--]
+
+[[embed]]
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=3
+&theme=https://scp-wiki.wdfiles.com/local--code/theme%3Ablack-market/1
+&css={$css}" style="display: none"></iframe>
+[[/embed]]
+
+
+
+====
+
+[[div class="preview"]]
+There is a darkness inside of this house. And you. Here, come and see it.
+
+[[/div]]
+[[module CSS]]
+div.preview { display: none; }
+[[/module]]
+
+[[iftags +component]]
+To add a preview to your article,  copy the following onto the top of your page and replace "preview" with your own text:
+[[div class="code"]]
+@@=====@@
+@@[[include component:preview@@
+@@text=preview]]@@
+@@=====@@
+[[/div]]
+
+This text can then be queried and shown on other pages. This short blurb may be any text which accurately or usefully describes an article at a glance or in summary. However, there are limitations to ensure standardization and avoid issues with site technical policy. See the [[[Technical Content Policy]]] for a full and up-to-date outline of the requirements. 
+
+* Blurbs must be primarily composed of plain text.
+* Syntax blocks (e.g. {{[[div]]}}), custom CSS (inline or through modules), and use of components are prohibited.
+* Use of inline formatting are restricted to the following:
+ * **bold** (@@**bold**@@)
+ * //italic// (@@//italic//@@)
+ * __underline__ (@@__underline__@@)
+ * --strikethrough-- (@@--strikethrough--@@)
+ * {{teletype}} (@@{{teletype}}@@)
+ * Escaping with @@
+ * Inline center text (= at the start of a new line.)
+* Use of the component is limited to pages in the default category.
+* Blurbs must be at least one sentence or equivalent in length.
+* Blurbs should describe, summarize, or provide a hook for the article they reference. Off-topic or inappropriate blurbs may be subject to edits at the discretion of the Curation Team.
+* Blurbs should not be disruptive, such as containing excessively many paragraphs. This is determined at staff discretion.
+* Blurbs may contain links when appropriate, e.g. to a series it's a part of, or to a sequel/prequel article.
+
+The Tech Team reserves the right to edit blurbs as necessary if deemed too disruptive or deleterious to accessibility and legibility. Determination of violation is subject to the Technical Team's discretion.
+
+++ Images in Previews
+[https://crom.avn.sh/docs/crom-for-authors#thumbnail-image See here for documentation on how to add an image thumbnail to your article's preview].
+
+Note that image thumbnails are a Crom feature, not a Wikidot feature. As such, they will only appear in certain Crom embeds (e.g. Crom discord bot search results or SCP Wiki search results) and will not appear in other contexts (e.g. ListPages previews). You also //do not need// to include the Preview Component in your article for an image thumbnail to appear, or vice-versa -- both features function entirely independently of one another.
+[[/iftags]]
+
+=====
+
+
+[[>]]
+[[module rate]]
+[[/>]]
+
+[!-- --
+]
+[[div_ class="authorlink-wrapper"]]
+[# xexnoncores & co.]
+[[div class="authorbox"]]
+[[div class="authorcontent"]]
+
+[[module CSS]]
+
+.authorlink-wrapper {
+    display: block;
+    margin-top:  var(--author-top-adjust, -0.5rem);
+    margin-bottom: var(--author-bottom-adjust, -0.35rem);
+    margin-right: var(--author-right-adjust, 0rem);
+    padding: 0;
+    position: relative;
+}
+
+.authorlink-wrapper > a {
+    display: block;
+    width: max-content;
+    margin-left: auto; margin-right: 0;
+    margin-bottom: 0.65rem;
+    font-size: 87.5%;
+    text-align: right;
+    align-items: center;
+}
+.authorlink-wrapper > a::before {
+    content: "by";
+    color: rgb(var(--swatch-tertiary-color, 187,187,187));
+    display: inline-block;
+    margin-right: 0.25em;
+}
+.authorlink-wrapper > a::after {
+    content: "";
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    background: currentColor;
+    -webkit-mask-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' stroke-miterlimit='10' font-size='12' width='99.961731' height='99.900673' font-family='Dialog' color-interpolation='auto' stroke='%23000' stroke-linecap='square'%3E%3Cpath d='M99.961733 49.980868q0 20.81009-14.585386 35.368356-14.585389 14.551452-35.395479 14.551452-20.81009 0-35.395479-14.551452Q0 70.790958 0 49.980868T14.585389 14.58539Q29.170778 0 49.980868 0q20.81009 0 35.395479 14.58539 14.585386 14.585388 14.585386 35.395478zm-8.177595 0q0-17.453655-12.178214-29.658992Q67.434523 8.1165383 49.980868 8.1165383T20.321876 20.321876Q8.1165386 32.527213 8.1165386 49.980868T20.321876 79.612694q12.205337 12.171444 29.658992 12.171444t29.625056-12.171444q12.178214-12.178171 12.178214-29.631826zM60.233352 24.227584q0 4.088799-3.051313 6.834989-3.051356 2.746234-7.201171 2.746234-4.149814 0-7.201171-2.746234-3.051314-2.74619-3.051314-6.834989 0-4.088756 3.051314-6.834989 3.051357-2.74619 7.201171-2.74619 4.149815 0 7.201171 2.74619 3.051313 2.746233 3.051313 6.834989zM58.341514 87.3292H41.559206V39.728384h16.782308z' stroke='none'/%3E%3C/svg%3E");
+                mask-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' stroke-miterlimit='10' font-size='12' width='99.961731' height='99.900673' font-family='Dialog' color-interpolation='auto' stroke='%23000' stroke-linecap='square'%3E%3Cpath d='M99.961733 49.980868q0 20.81009-14.585386 35.368356-14.585389 14.551452-35.395479 14.551452-20.81009 0-35.395479-14.551452Q0 70.790958 0 49.980868T14.585389 14.58539Q29.170778 0 49.980868 0q20.81009 0 35.395479 14.58539 14.585386 14.585388 14.585386 35.395478zm-8.177595 0q0-17.453655-12.178214-29.658992Q67.434523 8.1165383 49.980868 8.1165383T20.321876 20.321876Q8.1165386 32.527213 8.1165386 49.980868T20.321876 79.612694q12.205337 12.171444 29.658992 12.171444t29.625056-12.171444q12.178214-12.178171 12.178214-29.631826zM60.233352 24.227584q0 4.088799-3.051313 6.834989-3.051356 2.746234-7.201171 2.746234-4.149814 0-7.201171-2.746234-3.051314-2.74619-3.051314-6.834989 0-4.088756 3.051314-6.834989 3.051357-2.74619 7.201171-2.74619 4.149815 0 7.201171 2.74619 3.051313 2.746233 3.051313 6.834989zM58.341514 87.3292H41.559206V39.728384h16.782308z' stroke='none'/%3E%3C/svg%3E");
+    -webkit-mask-position: center center;
+                mask-position: center center;
+    -webkit-mask-size: 100%;
+                mask-size: 100%;
+    -webkit-mask-repeat: no-repeat;
+                mask-repeat: no-repeat;
+    margin-left: 0.2em;
+    transform: translateY(0.1em);
+
+}
+.authorlink-wrapper > a:hover::before,
+.authorlink-wrapper > a:hover::after {
+    text-decoration: none;
+}
+
+.authorlink-wrapper .authorbox {
+    display: block;
+    width: 35em;
+    max-width: 70vw;
+    color: rgb(var(--swatch-text-general, 51,51,51));
+    background-color: rgb(var(--swatch-background, 252,252,252));
+    filter: drop-shadow(0 0 3px rgba(0,0,0,0.26));
+
+    position: absolute;
+    right: 0;
+    z-index: 6;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+}
+/* safari-specific fix */
+@media not all and (min-resolution:.001dpcm)
+{ @supports (-webkit-appearance:none) and (stroke-color:transparent) {
+.authorlink-wrapper .authorbox {
+    will-change: filter;
+}
+}}
+.authorlink-wrapper .authorbox::before {
+    content: "";
+    position: absolute;
+    display: block;
+    bottom: 100%;
+    right: 3%;
+    margin-left: -10px;
+    border-width: 10px;
+    border-style: solid;
+    border-color: transparent transparent rgb(var(--swatch-background, 252,252,252)) transparent;
+}
+.authorlink-wrapper .authorbox::after {
+    content: "";
+    position: absolute;
+    display: block;
+    bottom: 100%;
+    right: 0;
+    width: 100%;
+    height: 2em;
+}
+.authorcontent {
+    width: 100%;
+    padding: 0.25rem 0.95rem;
+    max-height: 50vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+    font-size: 97.5%;
+    scrollbar-width: thin;
+}
+.authorcontent::-webkit-scrollbar {
+    width: 8px;
+}
+
+
+#page-content .authorlink-wrapper > a:focus + .authorbox,
+#page-content .authorlink-wrapper > a:active + .authorbox,
+#page-content .authorbox:hover  {
+    opacity: 1;
+    pointer-events: all;
+}
+#page-content .authorlink-wrapper > .authorbox:focus-within {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Without this, touchscreen doesn't work */
+@media (pointer: coarse) {
+    #page-content .authorlink-wrapper > a:hover + .authorbox,
+    #page-content .authorbox:hover {
+        opacity: 1;
+        pointer-events: all;
+    }
+}
+
+/*--  --{$center}/
+:root {
+    --author-right-adjust: 0rem;
+}
+.authorlink-wrapper > a {
+    margin-right: auto;
+}
+#page-content .authorbox {
+    right: 50%;
+    transform: translateX(50%);
+}
+#page-content .authorbox::before {
+    right: calc(50% - 10px);
+}
+/*-- --*/
+
+[[/module]]
+[!-- --]
+
+
+[!-- {$end}]
+[[/div]]
+[[/div]]
+[[/div]]
+[!-- --]
+
+**This article contains CWs for:** drug use, suicide, and homophobic slurs.
+
+SCP-102: Property of Marshall, Carter, and Dark Ltd. by [[*user xexnoncores]], [[*user tyrastafr]] and [[*user tunedtoadeadchannel]]
+
+[!-- {$start}]
+[[div_ class="authorlink-wrapper"]]
+[# {$name}]
+[[div class="authorbox"]]
+[[div class="authorcontent"]]
+
+[[module CSS]]
+
+.authorlink-wrapper {
+    display: block;
+    margin-top:  var(--author-top-adjust, -0.5rem);
+    margin-bottom: var(--author-bottom-adjust, -0.35rem);
+    margin-right: var(--author-right-adjust, 0rem);
+    padding: 0;
+    position: relative;
+}
+
+.authorlink-wrapper > a {
+    display: block;
+    width: max-content;
+    margin-left: auto; margin-right: 0;
+    margin-bottom: 0.65rem;
+    font-size: 87.5%;
+    text-align: right;
+    align-items: center;
+}
+.authorlink-wrapper > a::before {
+    content: "by";
+    color: rgb(var(--swatch-tertiary-color, 187,187,187));
+    display: inline-block;
+    margin-right: 0.25em;
+}
+.authorlink-wrapper > a::after {
+    content: "";
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    background: currentColor;
+    -webkit-mask-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' stroke-miterlimit='10' font-size='12' width='99.961731' height='99.900673' font-family='Dialog' color-interpolation='auto' stroke='%23000' stroke-linecap='square'%3E%3Cpath d='M99.961733 49.980868q0 20.81009-14.585386 35.368356-14.585389 14.551452-35.395479 14.551452-20.81009 0-35.395479-14.551452Q0 70.790958 0 49.980868T14.585389 14.58539Q29.170778 0 49.980868 0q20.81009 0 35.395479 14.58539 14.585386 14.585388 14.585386 35.395478zm-8.177595 0q0-17.453655-12.178214-29.658992Q67.434523 8.1165383 49.980868 8.1165383T20.321876 20.321876Q8.1165386 32.527213 8.1165386 49.980868T20.321876 79.612694q12.205337 12.171444 29.658992 12.171444t29.625056-12.171444q12.178214-12.178171 12.178214-29.631826zM60.233352 24.227584q0 4.088799-3.051313 6.834989-3.051356 2.746234-7.201171 2.746234-4.149814 0-7.201171-2.746234-3.051314-2.74619-3.051314-6.834989 0-4.088756 3.051314-6.834989 3.051357-2.74619 7.201171-2.74619 4.149815 0 7.201171 2.74619 3.051313 2.746233 3.051313 6.834989zM58.341514 87.3292H41.559206V39.728384h16.782308z' stroke='none'/%3E%3C/svg%3E");
+                mask-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' stroke-miterlimit='10' font-size='12' width='99.961731' height='99.900673' font-family='Dialog' color-interpolation='auto' stroke='%23000' stroke-linecap='square'%3E%3Cpath d='M99.961733 49.980868q0 20.81009-14.585386 35.368356-14.585389 14.551452-35.395479 14.551452-20.81009 0-35.395479-14.551452Q0 70.790958 0 49.980868T14.585389 14.58539Q29.170778 0 49.980868 0q20.81009 0 35.395479 14.58539 14.585386 14.585388 14.585386 35.395478zm-8.177595 0q0-17.453655-12.178214-29.658992Q67.434523 8.1165383 49.980868 8.1165383T20.321876 20.321876Q8.1165386 32.527213 8.1165386 49.980868T20.321876 79.612694q12.205337 12.171444 29.658992 12.171444t29.625056-12.171444q12.178214-12.178171 12.178214-29.631826zM60.233352 24.227584q0 4.088799-3.051313 6.834989-3.051356 2.746234-7.201171 2.746234-4.149814 0-7.201171-2.746234-3.051314-2.74619-3.051314-6.834989 0-4.088756 3.051314-6.834989 3.051357-2.74619 7.201171-2.74619 4.149815 0 7.201171 2.74619 3.051313 2.746233 3.051313 6.834989zM58.341514 87.3292H41.559206V39.728384h16.782308z' stroke='none'/%3E%3C/svg%3E");
+    -webkit-mask-position: center center;
+                mask-position: center center;
+    -webkit-mask-size: 100%;
+                mask-size: 100%;
+    -webkit-mask-repeat: no-repeat;
+                mask-repeat: no-repeat;
+    margin-left: 0.2em;
+    transform: translateY(0.1em);
+
+}
+.authorlink-wrapper > a:hover::before,
+.authorlink-wrapper > a:hover::after {
+    text-decoration: none;
+}
+
+.authorlink-wrapper .authorbox {
+    display: block;
+    width: 35em;
+    max-width: 70vw;
+    color: rgb(var(--swatch-text-general, 51,51,51));
+    background-color: rgb(var(--swatch-background, 252,252,252));
+    filter: drop-shadow(0 0 3px rgba(0,0,0,0.26));
+
+    position: absolute;
+    right: 0;
+    z-index: 6;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+}
+/* safari-specific fix */
+@media not all and (min-resolution:.001dpcm)
+{ @supports (-webkit-appearance:none) and (stroke-color:transparent) {
+.authorlink-wrapper .authorbox {
+    will-change: filter;
+}
+}}
+.authorlink-wrapper .authorbox::before {
+    content: "";
+    position: absolute;
+    display: block;
+    bottom: 100%;
+    right: 3%;
+    margin-left: -10px;
+    border-width: 10px;
+    border-style: solid;
+    border-color: transparent transparent rgb(var(--swatch-background, 252,252,252)) transparent;
+}
+.authorlink-wrapper .authorbox::after {
+    content: "";
+    position: absolute;
+    display: block;
+    bottom: 100%;
+    right: 0;
+    width: 100%;
+    height: 2em;
+}
+.authorcontent {
+    width: 100%;
+    padding: 0.25rem 0.95rem;
+    max-height: 50vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+    font-size: 97.5%;
+    scrollbar-width: thin;
+}
+.authorcontent::-webkit-scrollbar {
+    width: 8px;
+}
+
+
+#page-content .authorlink-wrapper > a:focus + .authorbox,
+#page-content .authorlink-wrapper > a:active + .authorbox,
+#page-content .authorbox:hover  {
+    opacity: 1;
+    pointer-events: all;
+}
+#page-content .authorlink-wrapper > .authorbox:focus-within {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Without this, touchscreen doesn't work */
+@media (pointer: coarse) {
+    #page-content .authorlink-wrapper > a:hover + .authorbox,
+    #page-content .authorbox:hover {
+        opacity: 1;
+        pointer-events: all;
+    }
+}
+
+/*--  --{$center}/
+:root {
+    --author-right-adjust: 0rem;
+}
+.authorlink-wrapper > a {
+    margin-right: auto;
+}
+#page-content .authorbox {
+    right: 50%;
+    transform: translateX(50%);
+}
+#page-content .authorbox::before {
+    right: calc(50% - 10px);
+}
+/*-- --*/
+
+[[/module]]
+[!-- --]
+
+
+[!-- --]
+[[/div]]
+[[/div]]
+[[/div]]
+[!-- --]
+
+[[div style="text-align: right; margin-top: -1em; margin-right: 2em"]]
+⚠️ content warning ↑
+[[/div]]
+
+[[module CSS]]
+
+#header {
+    background-image: url(https://scp-wiki.wdfiles.com/local--files/theme%3Amcd/MCDLogo2-small.png);
+}
+
+.authorlink-wrapper,
+.authorlink-wrapper + div {
+  margin-right: 0 !important; /* needed to override inline styles */
+}
+
+[[/module]]
+
+[[=]]
+
+
+[[div class="scp-image-block block-center" style="width:600px; --_image-block-width:600px;"]]
+[[image exterior.jpeg  {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+The exterior of SCP-102.
+[[/div]]
+[[/div]]
+
+
+[[/=]]
+@@ @@
+[[=]]
+
+
+[[div class="scp-image-block block-center" style="width:600px; --_image-block-width:600px;"]]
+[[image interior.jpeg  {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+The interior of SCP-102 when not in use.
+[[/div]]
+[[/div]]
+
+
+[[/=]]
+
+**Item #:** SCP-102
+
+**Object Class:** Argus[[footnote]]Item's containment is currently under the purview of a third party.[[/footnote]]
+
+**Special Containment Procedures:** Because SCP-102 is currently owned by GoI-012[[footnote]]Marshall, Carter, and Dark Ltd., an anomalous goods and services broker.[[/footnote]] through a deed independent of eminent domain, containment efforts are to be focused towards minimizing public knowledge of it to reduce its profitability.
+
+**Description:** SCP-102 is a mansion located at ██ █████ ████ ██████████, currently maintained by the shell corporation known as Ghieser Housing Associates. It is marketed as a "weeklong stay for those with tastes in the invisible adventures of privileged life", primarily through the use of online advertisements targeting impulsive high net-worth spenders.
+
+Booking a stay at SCP-102 will cause a key to manifest in the pocket of the payor. When a person who is not the keyholder enters SCP-102, its interior appears as that of a severely dilapidated home damaged by rust, dry rot, and termites. However, when the keyholder enters via unlocking the front door, they will find themselves in a tidy, well-kept interior, decorated following suburban design trends from the 1960s.
+
+[[=]]
+
+
+[[div class="scp-image-block block-center" style="width:600px; --_image-block-width:600px;"]]
+[[image girl.jpeg  {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+One of the paintings perceptible to keyholders inside of SCP-102, //Vacation's Over (Girl Returning from Summer Trip)// by Norman Rockwell.
+[[/div]]
+[[/div]]
+
+
+[[/=]]
+
+Remaining in SCP-102 as the keyholder for more than one hour causes said keyholder to become capable of at-will invisibility and intangibility, allowing them to move through objects unimpeded. This effect lasts for the duration of their stay or until they leave SCP-102 for more than a day, whether by their own choice or through being forcibly removed. Staying invisible for longer than the duration of their stay removes the effect of intangibility, an event detectable by the ██ thaumic sensors installed inside of SCP-102 by GoI-012.[[footnote]]These sensors have not yet detected the Foundation’s presence and are not to be disturbed under any circumstances.[[/footnote]]
+
+**Addendum.102.01:** On August 12th, 1989, an unusual radio signal was detected emanating from SCP-102. Upon analysis, the signal was determined to originate from SCP-102’s current resident, undetectable by the wider population due to being tuned to an impossible radio station.[[footnote]] ██.█ FM[[/footnote]] The signal transcripts have been provided below, as they give context into how a keyholder could interact with and utilize SCP-102’s capabilities.
+
+[[div class="blockquote"]]
+**TIMESTAMP: August 12th, 1989 10:38PM**
+------
+Is this thing on? God, it's happening again. Losing my mind or whatever one wants to call it—and I shouldn’t be, not like this, not when the new Marshall and Carter heirs are coming into their own.
+
+Where have my years gone? Coming here to get away from it all—what does that make me in their eyes? What will they think of when they hear my name, my position? Why can’t they understand my importance to this company? Will they see me the way Darke does, as some—some //asset//, accountant, a tool to be used, all with a few //annoying// drawbacks? I, I—
+
+//<Silence for seven seconds.>// 
+
+…This house is far too empty, but it’s the only place where I can think. I know it’s all illusion, but I don’t care. I just need my head to be quiet, I need my thoughts to wear like my old clothes again. The clothes I had from way back then, under Chappell, under [[[chicago-spirit|the Spirit]]], under…under…
+
+//<A deep and heavy sigh.>//
+
+I miss that bastard. I miss that enigmatic look in his eye, the devious ambition on his face when we had to get down to work. There was something about him. We brow-beat Capone back so many times and for what? For what? For us to go out with a whimper? A waffling sniffle? For our whole gang to fall apart, for me to end up a fucking—fucking—
+
+Hogarth. Why do you stutter like you’re a kid? Get it together, you're not some...vermin. Not like the people who live in houses like this.
+
+I think I’ll have my driver take me out to ██████████[[footnote]]Redacted per request of Site Director Araya Tate.[[/footnote]] tomorrow. Perhaps I can find something interesting there.
+[[/div]]
+@@ @@
+[[div class="blockquote"]]
+
+**TIMESTAMP: August 13th, 1989 11:57PM**
+------
+Slipping through walls makes me...think. About the house, about...it feels like being unreal. Sends chills through me, being //nothing// like that—I wonder if that’s included in the disclaimer people sign for the key. It wouldn’t surprise me if there’s more side-effects the paperwork doesn’t mention.
+
+██████████ is about as I expected. I stood there in the living rooms of rich HOA types, the sort of places with no life, only whitewashed surfaces and smooth polish. Places of scandal hidden behind exotic furniture that’s just there to brag about how much dough you got, no quality. It’s all overblown value and no craftsmanship. The sixties were better than this, I tell you.
+
+These types have existed for as long as wealth has been a thing. I certainly haven't seen them change in the... over a century I've been around. And I’m one of them, but I didn’t //ask// to be here. I didn’t //ask// Darke for employment, he took me, took me when I—when I was at my—
+
+//<A long, shaky sigh, followed by the sound of something being chopped into powder.>//
+
+What’s //more// dishonest than these homes and appearances, is them thinking they’re //good.// Holy. Good Christian men and women. I saw a family today, a stay at home wife, couple of kids...the husband wasn’t away at work, though. He was away at the hospital. At least, that’s what makes most sense, based on the letters of condolences and good wishes on the living room table, and the wife leading her kids in prayer for dear old dad.
+
+I’m not gonna speculate on what’s ailing him. Probably something bad, probably something the company could cure. It’s the prayer that’s getting to me, crawling into my head like mice in a rotting wall.
+
+//<A short, bitter laugh.>//
+
+To think that God //cares.// Fucking foolish idea. God doesn’t give a fuck, if he exists at all. I wish I knew whether he was somewhere up there, or maybe down here in this pigsty with us, or whether he ever existed at all. Maybe we killed him. Maybe Percival killed and ate him long before I was born. Either way, God abandons everyone when things get bad.
+
+The God I prayed to in the trenches never did a thing about the Great War. Not the starvation, the famines, not the endless hours of waiting for Hell to come, not the gas that clung to your uniform and burned you long after you’d fled. Nor did he step in when the politicians decided they hadn't had enough and the second war came around. He hasn’t taken me or any of my ilk down from the top of the ladder, either. That mistake's probably going to cause some other war, isn't it? Europe has supposedly made peace with itself, but I don’t believe in those idiots for a second, personally.
+
+To think I almost took vows for Him. I get he's not one to intervene much, past the Old Testament, but as time goes on, it feels more and more like it's just His faithful covering for him. If //I// was covering for him.
+
+And yet for all of the thorns in my heart…I…
+
+…The kids…
+
+//<Nine seconds of silence. Soon, the sounds of soft crying begin.>//
+
+…Why am I…? 
+
+Stop. Just...stop. A stained suit is the last thing I need.
+
+Why won’t this—this—
+
+//<Silence for ten seconds.>//
+
+…Fuck it.
+
+//<Loud inhaling and snorting sounds.>//
+
+I always come back to you, don't I? And to think some powder is the only one who cares...
+[[/div]]
+
+@@ @@ 
+[[div class="blockquote"]]
+
+**TIMESTAMP: August 14th, 1989 09:17AM**
+------
+
+This house feels like it’s watching me. Every window into my soul, every closet into my heart. I haven’t touched most of it yet—do I deserve to?
+
+In, and out, in, and out. They don’t know I’m in their living room, a ghost in the walls like their machines’ circuitry snaking through their house. 
+
+It should amuse me, make me feel //more//, but it doesn’t. And this sort of thing used to, it used to back when Chappell was installing refrigerators in his home, when the dock boys were experimenting with new ways to keep their catch fresher longer for restaurants. I watched every new home-machine pop up and excite the masses, excite even rugged old men like us. Finally, we could keep ice without needing a cantrip on our person or a spell glad to freeze your hand off if the ink rubbed you the wrong way—
+
+I’ve lived too long. I shouldn’t be here. I don’t know if I can wish myself dead—but this contract, Darke’s contract—it bleeds me into myself, into the cracks and corners of my brain. Where death should have come but hasn't. The years are beginning to slur silently as silt does on a sandbed, and it just…makes me wonder. It makes me wonder if I’ll be a person by the time my extra time is up, by the time the spell has come and gone…
+
+Why did I say yes? Darke, tell me. Why did I say yes to you? You remember better than I do; unlike me, you were sober. My work is all that keeps me together, now, but the employees view me as one does a mangy coyote. A squirrel electrocuting itself on a power line—I can’t help but wonder if they’re waiting on me to encounter the same fate. If they see my body as naught but dust, trickling down over account receivables and margin equity. 
+
+How much time do I have left? You gave me the exact number, but how much longer can my soul keep up?
+
+Will you mourn me when I am gone?
+
+Will anyone?
+
+[[/div]]
+
+@@ @@
+[[div class="blockquote"]]
+
+**TIMESTAMP: August 15th, 1989 12:35PM**
+------
+
+Your dirty little habits you think when nobody is watching…
+
+It’s funny, isn't it? People get messy when the eyes leave, at least in their mind—it entertained me when I was younger, but now, it only reminds me of how empty the world is. Has become. Reality isn't much better. This house I'm in looks like any other in a neighborhood, lets me do something others already do halfway with ephemeral gossip and proper positioning. Something I used to do, better than I do now.
+
+This man I watched today—he lives about fifteen miles from here—he’s keeping this //awful// little thing from his wife. Doing coke because his performance in bed and at work is lacking. He takes his boss yelling at him and then comes home to the most //ungrateful// ingrate of a house—
+
+//<Snorting noises.>//
+
+Nghh… If only he’d stop and think. Realize that’s only going to make things worse, going send you spiralling down a drain you’ll never crawl out of. Heroin or //anything// else would be better than cocaine. The shivers, the shakes, the way the mind races—“salaryman’s drug” my ass. Were we created to work, work, work all the time?
+
+//<Deep breaths.>//
+
+Whatever. The bill will come for him eventually. It’ll cut him on the money he burns, against the house equity he’s borrowing to fuel that lifestyle. Everyone's got something fucked up in them, that we've got to live with; I wonder what it'll look like when his implodes on him.
+
+Better to be alone. Better to be alone, rely on no one, because what good is family if it’s destined to fall apart?
+
+No lovers, no God, no nothing.
+
+[[/div]]
+@@ @@
+[[div class="blockquote"]]
+
+**TIMESTAMP: August 16th, 1989 03:54AM**
+------
+
+I know I shouldn’t. Every addict knows it’s a bad thing. Those that don’t won’t stay like that for long, or if they do, they end up dead.
+
+All that progress…I was clean for eleven months, no heroin, no other opiates, nothing. But this house’s emptiness just…makes my head spin. Teetering over, at the edge of the cliff I've been on for Lord knows how long. There's a sick, sticky foam on the sand below me. I hope it won't affect the fall—the landing, I suppose.
+
+But I can’t help myself. I just //had// to be here. I needed to be here…I needed to grasp…//something// to get away from the ghosts in my head. Nothing else has worked, not even the new things Percival has me on; the medications, the therapists, the doctors.
+
+That’s the part they don't tell you. Nothing works to get rid of that hollow nothing in you. You can get clean, tidy up your suit, slick back your hair, but in the end it all won’t matter. You’ll just ache to be out like a light every day, yearning for the high where you can’t give a shit about anything and who you are doesn’t really matter.
+
+//<Deep, contemplative sigh.>//
+
+So why do I even try?
+
+Who am I doing this for?
+
+Chappell? A bunch of dead gang members? These therapists have done nothing like they did for me. I was //clean.// I was clean, for more than just a couple months at a time, I'd been so for years by the time Percival got to us, got to me. And that's despite all the opium dens we had—it feels ironic to say aloud, but Chappell gave me things to do. People to talk to. //Meaningful// work to keep up with, not the useless numbers game Darke cares about. Always numbers going up, and up, and up, that's all he makes me do, all he wants me to care about. I've seen gamblers healthier than the heads of this company.
+
+…I’m reminded of something else now, looking at how high and clean this house’s ceiling is. 
+
+Rat Park. Experiment from the 70s. A lot of fear going around at that time of what drugs would do to people, so when that experiment came around, word spread.
+
+Scientists at the time were testing the addictive effects of drugs by shoving rats, alone, into cages with nothing but themselves and two water bottles; one clean, and another laced with a drug. Almost always, the rats would favour the drugged water, drinking themselves to overdose.
+
+But, if you've ever had rats in your walls, you'd know they're social animals. They need other rats, it's how they live in the wild. So this other scientist makes an alternate version of the old experiment, putting rats in a larger enclosure. Chew toys, hiding places, tunnels to scamper around in, other rats to socialise with, fight with, fuck. And the same two bottles of water.
+
+And almost no rat drinks from the drugged water, this time around. Some take a taste, and decide they prefer clean water. Even when the drugged water got sweetened to mask the bitterness, the rats avoided it in favour of the clean.
+
+//<A moment of silence, followed by a bitter laugh.>//
+
+The office parties. They always remind me of how little I have, like those empty cars in the concrete driveways. And they call this excess, they call this living the life? Exchanging formalities and polite smiles. Even the vice doesn't feel real here. Money can't buy what I once knew, what I once had—it can't buy me anything but a box with a drug-laced water bottle.
+
+Darke. Please. Let me leave. Let this house rest; it whispers, it seethes, we both know what we see in here is not what really //is.// Let my contract lapse, I'm through. I need to find the rats again, I need vice that's real, I need what your money can't get me. These walls are meant to fall, so let them. Time has a job to do.
+
+[[/div]]
+@@ @@
+[[div class="blockquote"]]
+
+**TIMESTAMP: August 17th, 1989 11:59PM**
+------
+
+//<Angry mutterings and the sounds of a bag rustling. Items being laid out on a table.>//
+
+There was—it was a quiet home. Curtains drawn, lights dim, everything understated. I figured there might be an interesting secret or two hidden there, maybe an unfaithful spouse or something, right? Maybe even a filthy threesome?
+
+Fuck me, did I find something. I found—I found—
+
+//<A bitter, scornful laugh.>//
+
+Mayor of the town. Handsome, upstanding, black hair, clean-cut. Father of three, gives half of his disposable income to food banks and charity, loving relationship with his high-school sweetheart of ten years. 
+
+I found him fucking his boyfriend while she was off at the country club.
+
+//His// boyfriend. Pretty lithe thing, with a head of red curls. Meeting in the secrecy of the other’s home, with black and white silks on, garterbelts... God, I wondered for a second if they were going to go all the way, bring out the leather and whips. Would have been fitting. Perhaps more honest, and a better show.
+
+So what did they do instead? Just murmured sweet nothings to each other hoping nobody would hear. Call me 'nobody' then, because I’m sure the company would agree with you the moment they don’t have to work with me. Sickly fucking sweet, the way they talked, the way those hands touched and touched and //touched.//
+
+That look in the eyes of his—the mayor. God. Absolutely smitten, so much so he wouldn’t have seen me even if they could. Too enraptured to see anything else but him, weren’t you? Must think you’re the luckiest man in the world. Must think this’ll last forever. Must think your God can’t see you.
+
+//<The slam of a hand hitting the table. Some glass rolls and shatters.>//
+
+What are you going to //do?// When he leaves you, when he’s gone, when the neighbours see you and rat to the cops? When they take him away? You’ll be alone. Best hope your family doesn’t hear, or you won’t have a shoulder to lean on. Best hope your kids don’t see, or else they’ll shun you when you’re old for being a faggot. What’ll you do when you’re humiliated, not a soul out there who gives a fuck about you?
+
+I—
+
+What will—you do without him?
+
+//<Silence for five seconds.>//
+
+You look like you love him, a lot. The way you cradled his face in your hands, spoke to him soft, toyed with his curls to make him laugh.
+
+//<A trembling breath, and a sound indiscernible between a laugh or a sob.>//
+
+Why couldn’t I do that, Charles?[[footnote]]Likely referring to PoI-032, Charles Ferris Derringer, one of the sub-bosses of the Chicago Spirit.[[/footnote]] Was there something wrong with me? [[[and-his-name-was|You just wanted to be a man]]], didn’t want to carry another secret alongside that, but... I could have helped. My //job// was to keep your secrets. Keep the damn secrets of everyone in the Spirit. Make sure that nothing but dust found you, that our enemies were blind to the big surprise. You wouldn’t be hiding us—what we were—on your own. If you’d just— If you’d just—
+
+If only I’d—
+
+//<Silence for seven seconds, broken by the sounds of crying.>//
+
+Would we have become something, if you’d gotten to live a bit longer? Would you have dared love a man? We'd have had to hide, but I could help—
+
+If only I’d died with you. In the Spirit, before Darke got to sink his claws into me. You’d hate me for betraying you but I—I was terrified in the moment, high off my ass, I didn't want to feel death again. But I’d gladly take that despair of that now over—over //this.//
+
+//<A shaky sob forces him to pause.>//
+
+Fuck— I... What am I meant to do, Charles?
+
+What am I meant to do without you? You’ve been gone for decades.
+
+I’m talking to a ghost of you. 
+
+No, do I even get that? 
+
+I…I…
+
+//<The crying quiets, but persists for the rest of the recording, interrupted by indiscernible murmurs.>//
+
+Please.
+
+Just come back, please.
+
+Come back, even if it’s to kill me.
+
+[[/div]]
+@@ @@ 
+
+[[div class="blockquote"]]
+
+**TIMESTAMP: August 18th, 1989 07:37AM**
+------
+
+//<A loud crashing of glass. Indiscernible cursing follows, echoed by sobbing and the repetition of the word “Charles”.>//
+
+//<Everything quiets after twenty-seven seconds of altercation. A small plastic bag rustles as something soft hits a flat surface. Something is crushed into powder, and the sounds of inhaling follow. A long sigh.>//
+
+Come find me if you can, Darke. Last chance, like old times.
+
+//<The rest of the eleven minute and twenty-seven second broadcast is punctuated by snorting, faint laughter, and coughing until something falls off a chair and breaks more glass, triggering the thaumic sensors inside.>//
+
+[[/div]]
+
+Ten minutes after the final radio signal ended, ██ armored cars appeared at the scene identified as belonging to GoI-012. PoI-012-01[[footnote]] Percival Atherolis Darke, CEO of GoI-012[[/footnote]] stepped out of the frontmost vehicle, proceeding inside SCP-102 while recorded by onsite surveillance saying only a single sentence.
+[[div class="blockquote"]]
+Troublesome little thing, aren’t you Mr. Cartwright?
+[[/div]]
+
+[[footnoteblock]]
+
+[[div class="footer-wikiwalk-nav"]]
+[[=]]
+<< [[[SCP-101]]] | SCP-102 | [[[SCP-103]]] >>
+[[/=]]
+[[/div]]
+
+
+[[iftags +component]]
++ How To Use
+It is **mandatory** for all articles to have the licensebox citing all images, texts, and excerpts utilized within the piece. 
+
+Add this to the bottom of the page, below the wikiwalk footer:
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** @@
+@@> **Name:** (if different from filename)@@
+@@> **Author:**@@
+@@> **License:**@@
+@@> **Source Link:**@@
+@@> **Additional Notes:** (Optional)@@
+@@> **Derivative Of:** (Situational)@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Let's break down what each of these sections mean.
+
+> @@> **Filename:** @@
+
+Filename is, as the name implies, the name of a file in your article. As per Tech Policy, all files on pages must have a file extension appended after the name. This means that if you upload an image to your article and call it {{mycoolimage-1}}, you are not following the rules. A correct name would be {{mycoolimage-1.png}} or {{mycoolimage-1.jpg}}, or any other similar filetypes. If you are unsure what the file extension of something you intend to upload is, you can check it by right clicking on the file and then pressing 'Properties.'
+
+If you are quoting from a text, write something along the lines of {{Excerpts taken from //Book Title Here//}}. Do not input the entire quote here, just where it comes from.
+
+> @@> **Name:** (if different from filename)@@
+
+This field is where you put the original name of the file. For example, let's say I wanted to use [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg this image in my article]. The name of the image is {{Kievitsbloem}}, as is listed on the page. I would then copy that and paste it onto this field. Do not include its file extension (jpg, png, etc).
+
+If you are quoting from a text, list its title here.
+
+If you are using your own creation, you may title it however you please, or you may exclude this field completely.
+
+> @@> **Author:**@@
+
+This field is where you acknowledge the original creator of the media you are using. Looking at [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg the same previous image], we can see that the author of the file is {{Rasbak}}. This means I would have to put that name in this field. If you are using commissioned work, you must still cite the original creator.
+
+If you are using your own creation, insert your username.
+
+
+> @@> **License:**@@
+
+In this section, you must write the file's attached license. This information is typically accessible on the page you are sourcing the file from. [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg Following the same example as before], we can see that this particular image is CC BY SA 3.0. Keep in mind that all files must be compatible with the site's license (CC BY SA 3.0) and follow the [[[Image Use Policy]]]. 
+
+
+> @@> **Source Link:**@@
+
+This field is typically a direct link to the page where you are taking the file from. Just copy the url from the address bar and paste it here. So for example, using the same image as above, I would put {{@@[https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg Wikimedia Commons]@@}} in this field. You should replace the text of the hyperlink with the name of the webiste you are taking your file from.
+
+If you are utilizing your own work, link to the page you are posting and title it {{SCP Foundation Wiki}}. However, if you are using your own media that you uploaded to a site like, say, Flickr, you must still follow this step.
+
+> @@> **Additional Notes:** (Optional)@@
+
+This is where you enter any additional information about the file. For example, if it is a composite image, you must state that this file is made up of two different images, and cite all images used in its creation. 
+
+
+> @@> **Derivative Of:** (Situational)@@
+
+This field is only applicable if you are using an image or other form of media that was derived from two or more sources. For example, a mashup would have to cite all of its images here. In order to be properly licenseboxed, copy-paste the following syntax underneath the {{Derivative Of:}} line.
+
+[[div class="blockquote"]]
+@@> **Name:**@@
+@@> **Author:**@@
+@@> **License:**@@
+@@> **Source Link:**@@
+[[/div]]
+
+From there, you simply fill in the information as you would any other file.
+-----
+
++ Examples
+
+Here is an example of a licensebox used in [[[SCP-7726]]], which cites an image from Wikimedia Commons.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** gun.png@@
+@@> **Name:** Beretta 90TWO closed.JPG@@
+@@> **Author:** Praiyachat@@
+@@> **License:** CC BY-SA 3.0@@
+@@> **Source Link:** [https://commons.wikimedia.org/wiki/File:Beretta_90TWO_closed.JPG Wikimedia Commons]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-6999]]], which cites an audio clip.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** hymn.mp3@@
+@@> **Name:** Nearer, my God, to Thee@@
+@@> **Author:** Conway's Band@@
+@@> **License:** Public Domain@@
+@@> **Source Link:** [https://www.loc.gov/item/jukebox-14234/ Library of Congress]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[michael-the-kiler|michael the kiler]]], which cites an author using their own creation.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** dakilla.jpg@@
+@@> **Author:** [[*user ratking666]]@@
+@@> **License:** CC BY-SA 3.0@@
+@@> **Source Link:** [https://scp-wiki.wikidot.com/michael-the-kiler SCP Foundation Wiki]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-7000]]], which cites an author using an image derivative of other images.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** WettleBomb.jpg@@
+@@> **License:** CC BY 2.0@@
+
+This image is a composite of:
+
+@@> **Name:** 130320-Z-TK422-652@@
+@@> **Author:** Oregon National Guard@@
+@@> **License:** CC BY 2.0@@
+@@> **Source:** [https://www.flickr.com/photos/32031029@N03/8576628356 flickr]@@
+
+@@> **Name:** High Noon Nap@@
+@@> **Author:** OakleyOriginals@@
+@@> **License:** CC BY 2.0@@
+@@> **Source:** [https://www.flickr.com/photos/47264866@N00/13279780754 flickr]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-173]]], which does not have any images or other citations, but includes an author listing.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=Moto42]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[deesoafs|Doctor Everwood Eats Shit On A Frozen Sidewalk]]], which does not have any images or other citations and does not include an author listing.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+-----
+
++ A Word On Excerpts/Quotes
+
+If you are using excerpts from passages or quotes, you must still cite them. 
+
+Here is an example of a licensebox used in [[[SCP-7010]]], which cites excerpts from a book.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> This article contains an excerpt from //[*https://en.wikisource.org/wiki/Leviathan Leviathan]// (1651) by Thomas Hobbes (Public Domain).@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+-----
+
++ A Note On Co-Authoring
+
+In the event you co-author an article with someone or someones, you can add the following syntax to the top of the licensebox to indicate multiple authors.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=User1, User2, User3]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+----
+
++ A Note On Translations
+
+For translations of works originally written in another language (see our [[[Translations Policy]]] for more information), the licensebox should list the original author (or authors) first, followed by the translator (or translators). 
+
+Within the licensebox, link to the original article, as follows:
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=User1, translated by User2]]@@
+@@> **Original Article:** original-url@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+If you post a translation of your own work then it is unnecessary to list your own name twice. If you post a translation of a translation (e.g. a Japanese article that was translated into Spanish, then into English), link to the original article, but credit the translator whose work you used as a co-translator.
+
+See [[[SCP-280-JP]]] for an example of a translation with multiple images listed in the License Box.
+
+----
+[[size 75%]]This page was originally created by CityToast and was updated on 1/27/2024 by Uncle Nicolini.[[/size]]
+@@ @@
+@@ @@
+@@ @@
+@@ @@
+= Ignore everything beneath this text.
+@@ @@
+@@ @@
+@@ @@
+[[/iftags]]
+
+[[div class="licensebox"]]
+[[collapsible show="‡ Licensing / Citation" hide="‡ Hide Licensing / Citation"]]
+Cite this page as:
+[[module listpages range="."]]
+> "%%title_linked%%" by xexnoncores, Tyrastafr, and tunedtoadeadchannel
+, from the [https://scpwiki.com SCP Wiki]. Source: https://scpwiki.com/%%fullname%%. Licensed under [https://creativecommons.org/licenses/by-sa/3.0/ CC BY-SA].
+[[/module]]
+For information on how to use this component, see the [[[component:license-box|License Box component]]]. To read about licensing policy, see the [[[Licensing Guide]]].
+
+
+
+> **Filename:** exterior.jpeg
+> **Name:** Unfinished_mansion
+> **Author:** Talking Walls Photography
+> **License:** Creative Commons Attribution-Share Alike 4.0 International
+> **Source Link:** [https://commons.wikimedia.org/wiki/File:Unfinished_mansion.jpg Wikimedia Commons]
+
+> **Filename:** interior.jpeg
+> **Name:** An_abandoned_mansion_(24275053885)
+> **Author:** Pavel Kirillov
+> **License:** Creative Commons Attribution-Share Alike 2.0 Generic
+> **Source Link:** [https://commons.wikimedia.org/wiki/File:An_abandoned_mansion_(24275053885).jpg Wikimedia Commons]
+
+> **Filename:** girl.jpeg
+> **Name:** Vacation's Over (Girl Returning from Summer Trip )
+> **Author:** Norman Rockwell
+> **License:** Public Domain
+> **Source Link:** [https://commons.wikimedia.org/wiki/File:Norman_Rockwell_-_Vacation's_Over_(Girl_Returning_from_Summer_Trip_)_-_Google_Art_Project.jpg Wikimedia Commons]
+
+
+[[/collapsible]]
+[[/div]]

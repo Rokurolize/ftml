@@ -1,0 +1,1493 @@
+--- live
++++ ftml
+@@ -2,27 +2,7 @@
+ <li class="rateBox folded">
+ <div class="rate-box-with-credit-button">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+256"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
++<p>
++T"TODO: module Rate"
++</p>
+ <div class="creditButton foldable-list-container">
+ <p>
+@@ -55,907 +35,16 @@
+ </div>
+ <div class="credit first">
+-<div style="text-align: center;">
+-<p>
+-<span style="font-size:150%;">
+-<strong>
+-<span style="color: #665731">
+-T"More by "
+-<a href="/dr-k-stuff-s-personnel-file">
+-T"DarkStuff"
+-</a>
+-T"~!"
+-</span>
+-</strong>
+-</span>
+-</p>
+-<div class="footer-wikiwalk-nav">
+-<hr>
+-<table class="wiki-content-table">
+-<tr>
+-<th colspan="3">
+-T"Independent SCPs"
+-</th>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<strong>
+-T"SCP"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-T"Title"
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<a href="/scp-445-ex">
+-T"SCP-445-EX"
+-</a>
+-</td>
+-<td>
+-T"The Word of the Day is Hope"
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<a href="/scp-2728">
+-T"SCP-2728"
+-</a>
+-</td>
+-<td>
+-T"On the Barcelona Skyline"
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<a href="/scp-2729">
+-T"SCP-2729"
+-</a>
+-</td>
+-<td>
+-T"What is it Good For?"
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<a href="/scp-3018">
+-T"SCP-3018"
+-</a>
+-</td>
+-<td>
+-T"France &amp; the Tale of the Well-Intentioned Understudies"
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<a href="/scp-3465">
+-T"SCP-3465"
+-</a>
+-</td>
+-<td>
+-T"Better Safe Than Sorry"
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<a href="/scp-3466">
+-T"SCP-3466"
+-</a>
+-</td>
+-<td>
+-T"Only Birdbrains Live the American Dream"
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<a href="/scp-4006">
+-T"SCP-4006"
+-</a>
+-</td>
+-<td>
+-T"#MassaTruthetts"
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<a href="/scp-4455">
+-T"SCP-4455"
+-</a>
+-</td>
+-<td>
+-T"In Short…"
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<a href="/scp-4465">
+-T"SCP-4465"
+-</a>
+-</td>
+-<td>
+-T"No Man is an Island"
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<a href="/scp-4466">
+-T"SCP-4466"
+-</a>
+-</td>
+-<td>
+-T"Why the Long Face?"
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<a href="/scp-4467">
+-T"SCP-4467"
+-</a>
+-</td>
+-<td>
+-T"Oh, I Get It Now"
+-</td>
+-</tr>
+-<tr>
+-<th colspan="3">
+-T"Co-Authored SCPs"
+-</th>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"SCP"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-T"Title"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-T"Co-Author"
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-1549">
+-T"SCP-1549"
+-</a>
+-</td>
+-<td>
+-T"In Absence of a Perfect Medium"
+-</td>
+-<td>
+-<span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/billith" onclick="WIKIDOT.page.listeners.userInfo(3042342); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=3042342&amp;amp;size=small&amp;amp;timestamp=TS" alt="Billith" style="background-image:url(https://www.wikidot.com/userkarma.php?u=3042342)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/billith" onclick="WIKIDOT.page.listeners.userInfo(3042342); return false;">
+-T"Billith"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2983">
+-T"SCP-2983"
+-</a>
+-</td>
+-<td>
+-T"Choco-Wonder Explosion Marshmallow Bites!™ by Dr. Wondertainment"
+-</td>
+-<td>
+-<span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/uncle-nicolini" onclick="WIKIDOT.page.listeners.userInfo(3487700); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=3487700&amp;amp;size=small&amp;amp;timestamp=TS" alt="Uncle Nicolini" style="background-image:url(https://www.wikidot.com/userkarma.php?u=3487700)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/uncle-nicolini" onclick="WIKIDOT.page.listeners.userInfo(3487700); return false;">
+-T"Uncle Nicolini"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-3379">
+-T"SCP-3379"
+-</a>
+-</td>
+-<td>
+-T"D-11424 &amp; the Arctic Meat Hole of Infinite Wonders"
+-</td>
+-<td>
+-<span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/weryllium" onclick="WIKIDOT.page.listeners.userInfo(2727655); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=2727655&amp;amp;size=small&amp;amp;timestamp=TS" alt="Weryllium" style="background-image:url(https://www.wikidot.com/userkarma.php?u=2727655)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/weryllium" onclick="WIKIDOT.page.listeners.userInfo(2727655); return false;">
+-T"Weryllium"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-3482">
+-T"SCP-3482"
+-</a>
+-</td>
+-<td>
+-T"Nature Versus Naturalization"
+-</td>
+-<td>
+-<span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/roget" onclick="WIKIDOT.page.listeners.userInfo(7061118); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=7061118&amp;amp;size=small&amp;amp;timestamp=TS" alt="Roget" style="background-image:url(https://www.wikidot.com/userkarma.php?u=7061118)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/roget" onclick="WIKIDOT.page.listeners.userInfo(7061118); return false;">
+-T"Roget"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-3633">
+-T"SCP-3633"
+-</a>
+-</td>
+-<td>
+-T"I'm Right Behind Me"
+-</td>
+-<td>
+-<span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/captain-kirby" onclick="WIKIDOT.page.listeners.userInfo(3440103); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=3440103&amp;amp;size=small&amp;amp;timestamp=TS" alt="Captain Kirby" style="background-image:url(https://www.wikidot.com/userkarma.php?u=3440103)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/captain-kirby" onclick="WIKIDOT.page.listeners.userInfo(3440103); return false;">
+-T"Captain Kirby"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-3713">
+-T"SCP-3713"
+-</a>
+-</td>
+-<td>
+-T"All the World's a Stage"
+-</td>
+-<td>
+-<span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/varaxous" onclick="WIKIDOT.page.listeners.userInfo(2433554); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=2433554&amp;amp;size=small&amp;amp;timestamp=TS" alt="Varaxous" style="background-image:url(https://www.wikidot.com/userkarma.php?u=2433554)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/varaxous" onclick="WIKIDOT.page.listeners.userInfo(2433554); return false;">
+-T"Varaxous"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-4029">
+-T"SCP-4029"
+-</a>
+-</td>
+-<td>
+-T"Too Many Legs to be Going Nowhere"
+-</td>
+-<td>
+-<span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/maliceaforethought" onclick="WIKIDOT.page.listeners.userInfo(2902864); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=2902864&amp;amp;size=small&amp;amp;timestamp=TS" alt="MaliceAforethought" style="background-image:url(https://www.wikidot.com/userkarma.php?u=2902864)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/maliceaforethought" onclick="WIKIDOT.page.listeners.userInfo(2902864); return false;">
+-T"MaliceAforethought"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<th colspan="3">
+-<a href="/vend-a-friend">
+-T"Vend-a-Friend"
+-</a>
+-</th>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<strong>
+-T"Chapter"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-T"Title"
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="3">
+-<strong>
+-T"Act I"
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 1"
+-</span>
+-</td>
+-<td>
+-<a href="/we-just-make-toys">
+-T"We Just Make Toys"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 2"
+-</span>
+-</td>
+-<td>
+-<a href="/to-think-i-ve-spent-my-whole-life-waiting">
+-T"To Think I've Spent My Whole Life Waiting"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 3"
+-</span>
+-</td>
+-<td>
+-<a href="/i-don-t-get-it-i-functioned-before">
+-T"I Don't Get It, I Functioned Before"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 4"
+-</span>
+-</td>
+-<td>
+-<a href="/you-can-t-win-them-all">
+-T"You Can't Win Them All"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 5"
+-</span>
+-</td>
+-<td>
+-<a href="/be-strange-or-be-forgotten">
+-T"Be Strange or Be Forgotten"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="3">
+-<strong>
+-T"Act II"
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 6"
+-</span>
+-</td>
+-<td>
+-<a href="/sometimes-the-best-intentions-need-redemption">
+-T"Sometimes the Best Intentions are in Need of Redemption"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 7"
+-</span>
+-</td>
+-<td>
+-<a href="/life-s-a-show">
+-T"Life's a Show"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 8"
+-</span>
+-</td>
+-<td>
+-<a href="/and-i-m-the-star">
+-T"...And I'm the Star!"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 9"
+-</span>
+-</td>
+-<td>
+-<a href="/back-in-habit">
+-T"Back in Habit"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 10"
+-</span>
+-</td>
+-<td>
+-<a href="/pepper-s-lament">
+-T"Pepper's Lament"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 11"
+-</span>
+-</td>
+-<td>
+-<a href="/souls-somas">
+-T"Souls &amp; Somas"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 12"
+-</span>
+-</td>
+-<td>
+-<a href="/deceptive-cadence">
+-T"Deceptive Cadence"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="3">
+-<strong>
+-T"Act III"
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 13"
+-</span>
+-</td>
+-<td>
+-<a href="/what-a-wonderful-world">
+-T"And I Think To Myself..."
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 14"
+-</span>
+-</td>
+-<td>
+-<a href="/everything-will-be-okay">
+-T"Everything Will Be Okay"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 15"
+-</span>
+-</td>
+-<td>
+-<a href="/holding-an-umbrella">
+-T"Holding an Umbrella but the Sun's Still Shining"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<th colspan="3">
+-<a href="/ascension-hub">
+-T"Ascension"
+-</a>
+-</th>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<strong>
+-T"Chapter"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-T"Title"
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 1"
+-</span>
+-</td>
+-<td>
+-<a href="/sometimes-i-wish-this-moment-could-last-forever">
+-T"Sometimes I Wish This Moment Could Last Forever"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 2"
+-</span>
+-</td>
+-<td>
+-<a href="/waiting-on-the-good-times">
+-T"Waiting on the Good Times"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 3"
+-</span>
+-</td>
+-<td>
+-<a href="/forever-young">
+-T"Forever Young"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 4"
+-</span>
+-</td>
+-<td>
+-<a href="/we-didn-t-do-this-for-nothing">
+-T"We Didn't Do This For Nothing"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 5"
+-</span>
+-</td>
+-<td>
+-<a href="/ura-1902">
+-T"URA-1902"
+-</a>
+-T" "
+-<em>
+-T"aka The Missing Link"
+-</em>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 6"
+-</span>
+-</td>
+-<td>
+-<a href="/the-consequences-of-a-deep-dark-disassociation">
+-T"The Consequences of a Deep, Dark Disassociation"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 7"
+-</span>
+-</td>
+-<td>
+-<a href="/the-call-to-action">
+-T"The Call to Action (for a Modern Audience)"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 8"
+-</span>
+-</td>
+-<td>
+-<a href="/we-meet-again">
+-T"The Elusive Mx. LaFerrier"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 9"
+-</span>
+-</td>
+-<td>
+-<a href="/it-feels-like-i-only-go-backwards">
+-T"It Feels Like I Only Go Backwards"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 10"
+-</span>
+-</td>
+-<td>
+-<a href="/along-for-the-ride">
+-T"Along for the Ride"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 11"
+-</span>
+-</td>
+-<td>
+-<a href="/a-hole-in-the-tapestry">
+-T"A Hole in the Tapestry"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 12"
+-</span>
+-</td>
+-<td>
+-<a href="/xxxxx">
+-T"XXXXX"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 13"
+-</span>
+-</td>
+-<td>
+-<a href="/industrial">
+-T"Industrial"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 14"
+-</span>
+-</td>
+-<td>
+-<a href="/dorer-dances">
+-T"Dancing with Rachael"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Chapter 15"
+-</span>
+-</td>
+-<td>
+-<a href="/ascension">
+-T"Ascension"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<span style="text-decoration: underline;">
+-T"Epilogue"
+-</span>
+-</td>
+-<td>
+-<a href="/a-world-unto-yourself">
+-T"A World Unto Yourself"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<th colspan="3">
+-<a href="/collaboration-contest">
+-T"Collaboration Contest"
+-</a>
+-T" Entries w/ Ellie"
+-</th>
+-</tr>
+-<tr>
+-<td colspan="3">
+-<a href="/make-america-normaler">
+-T"Make America Normaler"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="3">
+-<a href="/off-the-hook">
+-T"Off the Hook"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<th colspan="3">
+-T"Misc. Tales"
+-</th>
+-</tr>
+-<tr>
+-<td colspan="3">
+-<a href="/mr-collector">
+-T"Cornelius the Collector"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="3">
+-<a href="/curtain-call">
+-T"Curtain Call"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="3">
+-<a href="/the-really-really-real-adventures-in-capitalism">
+-T"The Really Really Real Adventures in Capitalism"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="3">
+-<a href="/horse-with-no-name">
+-T"I've Been Through the Desert on a Horse with No Name"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="3">
+-<a href="/on-the-radar">
+-T"On the Radar"
+-</a>
+-T" "
+-<em>
+-T"for the miniseries"
+-</em>
+-T" "
+-<a href="/the-ursus-maritimus-incident">
+-T"The Ursus Maritimus Incident"
+-</a>
+-</td>
+-</tr>
+-<tr>
+-<th colspan="3">
+-T"Group of Interest / Canon Hubs"
+-</th>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<strong>
+-T"Hub"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-T"Notes"
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<a href="/dr-wondertainment-hub">
+-T"Dr. Wondertainment Hub"
+-</a>
+-</td>
+-<td>
+-T"Made w/ "
+-<span class="error-inline">
+-<em>
+-T"taylor_itkin"
+-</em>
+-T" does not match any existing user name"
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<a href="/wonder-world">
+-T"What a Wonderful World Hub"
+-</a>
+-</td>
+-<td>
+-T"Made w/ help from "
+-<span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/uncle-nicolini" onclick="WIKIDOT.page.listeners.userInfo(3487700); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=3487700&amp;amp;size=small&amp;amp;timestamp=TS" alt="Uncle Nicolini" style="background-image:url(https://www.wikidot.com/userkarma.php?u=3487700)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/uncle-nicolini" onclick="WIKIDOT.page.listeners.userInfo(3487700); return false;">
+-T"Uncle Nicolini"
+-</a>
+-</span>
+-T", a canon sprouted from Vend-a-Friend!"
+-</td>
+-</tr>
+-<tr>
+-<td colspan="2">
+-<a href="/wilson-s-wildlife-solutions-hub">
+-T"Wilson's Wildlife Solutions Hub"
+-</a>
+-</td>
+-<td>
+-T"My pride and joy, my very own Group of Interest"
+-</td>
+-</tr>
+-</table>
+-</div>
+-</div>
+-</div>
++<div class="error-block">
+ <hr>
+ <div class="creditBottomRate">
+ <div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+256"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
++<p>
++T"TODO: module Rate"
++</p>
++</div>
++</div>
++<br>
++T" "
++<br>
+ </div>
+ </div>
+@@ -1243,11 +332,7 @@
+ <tr>
+ <th class="namerow" colspan="2">
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="44735261" data-lp-route="scp-2728" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<p>
+-T"DarkStuff's Works"
+-</p>
+-</div>
+-</div>
++<p>
++T"TODO: module ListPages"
++</p>
+ </th>
+ </tr>
+@@ -1257,231 +342,7 @@
+ </th>
+ <th class="articlecolumn">
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="44735261" data-lp-route="scp-2728" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<p>
+-<a href="/scp-3465">
+-T"SCP-3465"
+-</a>
+-T" "
+-<em>
+-T"(+233)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/scp-2729">
+-T"SCP-2729"
+-</a>
+-T" "
+-<em>
+-T"(+180)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/scp-4465">
+-T"SCP-4465"
+-</a>
+-T" "
+-<em>
+-T"(+456)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/scp-629">
+-T"SCP-629"
+-</a>
+-T" "
+-<em>
+-T"(+195)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/scp-3713">
+-T"SCP-3713"
+-</a>
+-T" "
+-<em>
+-T"(+230)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/scp-1549">
+-T"SCP-1549"
+-</a>
+-T" "
+-<em>
+-T"(+263)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/scp-3466">
+-T"SCP-3466"
+-</a>
+-T" "
+-<em>
+-T"(+341)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/scp-4455">
+-T"SCP-4455"
+-</a>
+-T" "
+-<em>
+-T"(+358)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/scp-4006">
+-T"SCP-4006"
+-</a>
+-T" "
+-<em>
+-T"(+847)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/scp-4029">
+-T"SCP-4029"
+-</a>
+-T" "
+-<em>
+-T"(+192)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/scp-3018">
+-T"SCP-3018"
+-</a>
+-T" "
+-<em>
+-T"(+152)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/scp-4466">
+-T"SCP-4466"
+-</a>
+-T" "
+-<em>
+-T"(+271)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/scp-4468">
+-T"SCP-4468"
+-</a>
+-T" "
+-<em>
+-T"(+147)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/scp-445-ex">
+-T"SCP-445-EX"
+-</a>
+-T" "
+-<em>
+-T"(+216)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/scp-5686">
+-T"SCP-5686"
+-</a>
+-T" "
+-<em>
+-T"(+131)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-</div>
++<p>
++T"TODO: module ListPages"
++</p>
+ </th>
+ </tr>
+@@ -1491,231 +352,7 @@
+ </th>
+ <th class="articlecolumn">
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="44735261" data-lp-route="scp-2728" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<p>
+-<a href="/escapism-v">
+-T"Escapism V"
+-</a>
+-T" "
+-<em>
+-T"(+15)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/escapism-iii">
+-T"Escapism III"
+-</a>
+-T" "
+-<em>
+-T"(+14)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/go-big-or-go-home">
+-T"Go Big or Go Home"
+-</a>
+-T" "
+-<em>
+-T"(+38)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/the-really-really-real-adventures-in-capitalism">
+-T"The Really Really Real Adventures in Capitalism"
+-</a>
+-T" "
+-<em>
+-T"(+42)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/everything-will-be-okay">
+-T"Everything Will Be Okay"
+-</a>
+-T" "
+-<em>
+-T"(+55)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/austin-aggy-genadew">
+-T"Austin “Aggy” Genadew"
+-</a>
+-T" "
+-<em>
+-T"(+20)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/6-66">
+-T"6:66"
+-</a>
+-T" "
+-<em>
+-T"(+61)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/hurting-people">
+-T"What If My Love Language is Hurting People?"
+-</a>
+-T" "
+-<em>
+-T"(+48)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/i-get-it">
+-T"I Get It"
+-</a>
+-T" "
+-<em>
+-T"(+68)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/we-just-make-toys">
+-T"We Just Make Toys"
+-</a>
+-T" "
+-<em>
+-T"(+142)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/life-s-a-show">
+-T"Life's a Show"
+-</a>
+-T" "
+-<em>
+-T"(+64)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/back-in-habit">
+-T"Back in Habit"
+-</a>
+-T" "
+-<em>
+-T"(+54)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/to-think-i-ve-spent-my-whole-life-waiting">
+-T"To Think I've Spent My Whole Life Waiting"
+-</a>
+-T" "
+-<em>
+-T"(+88)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/waiting-on-the-good-times">
+-T"Waiting on the Good Times"
+-</a>
+-T" "
+-<em>
+-T"(+47)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-<div class="list-pages-item">
+-<p>
+-<a href="/baby-don-t-hurt-me">
+-T"Get a Room"
+-</a>
+-T" "
+-<em>
+-T"(+25)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-</div>
++<p>
++T"TODO: module ListPages"
++</p>
+ </th>
+ </tr>
+@@ -1725,21 +362,7 @@
+ </th>
+ <th class="articlecolumn">
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="44735261" data-lp-route="scp-2728" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<p>
+-<a href="/dr-k-stuff-s-personnel-file">
+-T"Jasper Langdon Waters"
+-</a>
+-T" "
+-<em>
+-T"(+108)"
+-</em>
+-T" "
+-<span class="collectiondot">
+-T"•"
+-</span>
+-</p>
+-</div>
+-</div>
++<p>
++T"TODO: module ListPages"
++</p>
+ </th>
+ </tr>
+@@ -1781,29 +404,7 @@
+ T"Cite this page as:"
+ </p>
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="44735261" data-lp-route="scp-2728" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<blockquote>
+-<p>
+-T"""
+-<a href="/scp-2728">
+-T"SCP-2728"
+-</a>
+-T"" by DarkStuff, from the "
+-<a href="https://scpwiki.com">
+-T"SCP Wiki"
+-</a>
+-T". Source: "
+-<a href="https://scpwiki.com/scp-2728">
+-T"https://scpwiki.com/scp-2728"
+-</a>
+-T". Licensed under "
+-<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+-T"CC BY-SA"
+-</a>
+-T"."
+-</p>
+-</blockquote>
+-</div>
+-</div>
++<p>
++T"TODO: module ListPages"
++</p>
+ <p>
+ T"For information on how to use this component, see the "

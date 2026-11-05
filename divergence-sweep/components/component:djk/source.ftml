@@ -1,0 +1,221 @@
+[[iftags +component]]
+
+[[=]]
+[[module Rate]]
+On any wiki:
+[[/=]]
+> {{@@[[include :scp-wiki:component:djk]]@@}}
+
+[[div class="blockquote"]]
+Hello everyone, I'm djkaktus. This is a personal component I am using to alleviate the suffering of one [[*user Elenee Fishtruck]] who has, until this day, worked tirelessly to update all 140+ of my pages every time I update my standard formatting to something I really like. This way, I can just edit them all from a single place.
+
+Some things this does:
+
+1) Adds Black Highlighter to the page (Hallowed be our Woed)
+2) Modifies Black Highlighter using the BHL Penumbra Theme (shoutout to Estrella)
+3) Modifies BHL Penumbra with a bunch of color changes into this sort of retro variant I'm really into
+4) Adds an ACS customization to fit the Penumbra changes
+5) Adds the Fade In, Collapsible Sidebar, and ACS Animation components
+6) Allows me to change any of this on a whim
+
+I'm constantly striving to find the most representative theming possible for the majority of my articles. This effectively allows me to inch closer towards that ideal without having to update a hundred pages every time I change something.
+[[/div]]
+
+[[code type="css"]]
+:root {
+    --header-title: "THE FOUNDATION";
+    --header-subtitle: "DEPARTMENT OF CONTAINMENT";
+    --lgurl: url(https://scp-wiki.wdfiles.com/local--files/component%3Adjk/scpnewlogo.png);
+    --white-monochrome: 15, 15, 15;
+    --pale-gray-monochrome: 35, 35, 35;
+    --light-pale-gray-monochrome: 35, 35, 35;
+    --very-light-gray-monochrome: 50, 50, 52;
+    --light-gray-monochrome: 220, 212, 208;
+    --gray-monochrome: 229, 223, 220;
+    --dark-gray-monochrome: 239, 235, 230;
+    --black-monochrome: 248, 246, 244;
+
+    --accentColor: 134, 24, 9;
+    --background-gradient-color: var(--light-gray-monochrome);
+    --swatch-menubg-dark-color: var(--very-light-gray-monochrome);
+    --swatch-text-tertiary-color: var(--accentColor);
+    --ui-button-hover-txt: var(--black-monochrome);
+
+    --body-font: Inter, Verdana, Geneva, "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+    /*-- modal --*/
+    --modal-header-txt: var(--black-monochrome);
+    --modal-header-bg: var(--white-monochrome);
+
+    /*-- footnote --*/
+    --hoverblock-header-txt: var(--black-monochrome);
+    --hoverblock-bg: var(--black-monochrome);
+}
+
+#header {
+    --search-icon-hover-color: var(--black-monochrome);
+    --search-icon-hover-bg-color: var(--swatch-primary-darkest);
+    --login-myaccount-hover-color: var(--black-monochrome);
+    --login-dropdown-text-hover-color: var(--black-monochrome);
+}
+#header h1 a::before,
+#header h2 span::before {
+    content: none;
+}
+
+#top-bar {
+    --dropdown-bg-color: var(--dark-gray-monochrome), 0.9;
+}
+
+#side-bar, #interwiki {
+    --sidebar-links-hover-text-color: var(--black-monochrome);
+    --sidebar-collapsible-fld-link-hover-color: var(--black-monochrome);
+    --sidebar-collapsible-fld-arrow-hover-color: var(--sidebar-collapsible-fld-link-hover-color);
+}
+
+#main-content {
+    --tables-header-txt: var(--black-monochrome);
+    --footnotes-footer-title-text-color: var(--black-monochrome);
+}
+
+:is(#breadcrumbs,.pseudocrumbs) a:is(:hover,:active,:focus,:focus-within) {
+    color: rgb(var(--black-monochrome));
+}
+
+#page-content div.warning-top-box>h1 {
+    color: rgb(var(--black-monochrome));
+}
+
+.top-right-box>.level {
+    line-height: 0;
+}
+
+.scp-image-block {
+    border: solid 0.5rem rgb(var(--pale-gray-monochrome));
+    border-bottom: solid 0rem rgb(var(--pale-gray-monochrome));
+    box-shadow: 0rem 0.26rem 0rem 0rem rgb(var(--accentColor));
+    box-sizing: border-box;
+}
+
+.scp-image-block .scp-image-caption {
+    background-color: rgb(var(--pale-gray-monochrome));
+    border: solid 0.25rem rgb(var(--pale-gray-monochrome));
+    color: rgb(var(--black-monochrome));
+    font-size: 0.875em;
+}
+
+.anchor {
+  z-index: 1;
+}
+
+#page-content .collapsible-block-folded,
+#page-content .collapsible-block-unfolded-link {
+    margin: 0;
+    background: transparent;
+}
+
+sup {
+    vertical-align: top;
+    position: relative;
+    top: -0.5em;
+}
+
+.anom-bar-container {
+    --five-color: var(--accentColor);
+    --four-color: var(--accentColor);
+    --three-color: var(--accentColor);
+    --two-color: var(--accentColor);
+    --one-color: var(--accentColor);
+}
+
+.page-tags {
+    --pagetags-title-text: var(--black-monochrome);
+}
+
+div[id*=page-options-bottom]>a {
+    --ui-icon-color: var(--black-monochrome);
+    --ui-icon-hover-color: var(--black-monochrome);
+}
+
+#action-area {
+    --swatch-text-secondary-color: var(--black-monochrome);
+}
+
+#revision-list span {
+    --pager-selected-link: var(--swatch-text-secondary-color);
+    --pager-link-hover: var(--pager-selected-link);
+}
+
+#footer,
+#license-area {
+    --hover-link-color: var(--link-color);
+    --swatch-text-secondary-color: var(--black-monochrome);
+    --white-monochrome: var(--black-monochrome);
+}
+
+.code pre, .code p, .code {
+    background-color: rgb(var(--pale-gray-monochrome));
+    color: rgb(var(--black-monochrome));
+}
+
+
+/*---- AYERS INFO BAR MOD ----*/
+#page-content .info-container .translation_block {
+    display: none;
+}
+#page-content .info-container .collapsible-block-link,
+#page-content .info-container:hover .collapsible-block-link {
+    line-height: 1.6em;
+}
+#page-content .info-container .collapsible-block-folded,
+#page-content .info-container .collapsible-block-unfolded-link {
+    display: grid;
+    background: rgb(var(--bright-accent));
+}
+#page-content .info-container .collapsible-block-folded .collapsible-block-link,
+#page-content .info-container .collapsible-block-link {
+    -webkit-mask: unset;
+    mask: unset;
+    background: transparent;
+    grid-column: 1;
+    grid-row: 1;
+    opacity: 0;
+}
+#page-content .info-container .collapsible-block-folded::before,
+#page-content .info-container .collapsible-block-unfolded-link::before {
+    --wght: 800;
+    content: "DJK";
+    color: #fff;
+    font-family: var(--body-font);
+    display: block;
+    pointer-events: none;
+    grid-column: 1;
+    grid-row: 1;
+}
+
+/* CODE BLOCK */
+.hl-default, .hl-code, .hl-brackets {
+    color: rgb(var(--swatch-text-dark));
+}
+[[/code]]
+[[/iftags]]
+
+[[div style="display:none"]]
+[[include :scp-wiki:theme:black-highlighter-theme]]
+[[include :scp-wiki:theme:penumbra-bhl]]
+
+[[include :scp-wiki:component:acs-animation]]
+[[include :scp-wiki:component:customizable-acs
+|accent-one= 15, 15, 15
+|accent-two= 15, 15, 15
+|class-number-color= 245, 245, 245
+|inc-color-accent = --]]]
+[[/div]]
+
+[[module css]]
+@import url(https://scp-wiki.wdfiles.com/local--code/component:djk/1);
+[[/module]]
+[[include :scp-wiki:component:interwiki-style
+| priority=4
+| theme=https://scp-wiki.wdfiles.com/local--code/component:djk/1
+]]

@@ -1,0 +1,908 @@
+--- live
++++ ftml
+@@ -1,26 +1,6 @@
+ <div style="text-align: right;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+433"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
++<p>
++T"TODO: module Rate"
++</p>
+ </div>
+ <p>
+@@ -69,835 +49,7 @@
+ <div class="footer-wikiwalk-nav">
+ <div style="text-align: center;">
+-<div class="collapsible-block">
+-<div class="collapsible-block-folded">
+-<a class="collapsible-block-link" href="javascript:;">
+-T"Other popular works by this author"
+-</a>
+-</div>
+-<div class="collapsible-block-unfolded" style="display:none">
+-<div class="collapsible-block-unfolded-link">
+-<a class="collapsible-block-link" href="javascript:;">
+-T"Hide list"
+-</a>
+-</div>
+-<div class="collapsible-block-content">
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="2549021" data-lp-route="scp-297" data-lp-generation="HEX">
+-<table class="wiki-content-table">
+-<tr>
+-<th colspan="2">
+-T"SCPs"
+-</th>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2317">
+-T"SCP-2317"
+-</a>
+-</td>
+-<td>
+-T"Rating: 3075"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-231">
+-T"SCP-231"
+-</a>
+-</td>
+-<td>
+-T"Rating: 2733"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/dr-clef-s-proposal">
+-T"Dr Clef's Proposal"
+-</a>
+-</td>
+-<td>
+-T"Rating: 2712"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-048">
+-T"SCP-048"
+-</a>
+-</td>
+-<td>
+-T"Rating: 1884"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-447">
+-T"SCP-447"
+-</a>
+-</td>
+-<td>
+-T"Rating: 1019"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-016">
+-T"SCP-016"
+-</a>
+-</td>
+-<td>
+-T"Rating: 958"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-4960">
+-T"SCP-4960"
+-</a>
+-</td>
+-<td>
+-T"Rating: 742"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-953">
+-T"SCP-953"
+-</a>
+-</td>
+-<td>
+-T"Rating: 723"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-823">
+-T"SCP-823"
+-</a>
+-</td>
+-<td>
+-T"Rating: 703"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-572">
+-T"SCP-572"
+-</a>
+-</td>
+-<td>
+-T"Rating: 623"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-450">
+-T"SCP-450"
+-</a>
+-</td>
+-<td>
+-T"Rating: 563"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-1764">
+-T"SPC-1764"
+-</a>
+-</td>
+-<td>
+-T"Rating: 513"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-668">
+-T"SCP-668"
+-</a>
+-</td>
+-<td>
+-T"Rating: 506"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-297">
+-T"SCP-297"
+-</a>
+-</td>
+-<td>
+-T"Rating: 433"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-807">
+-T"SCP-807"
+-</a>
+-</td>
+-<td>
+-T"Rating: 356"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-1949">
+-T"SCP-1949"
+-</a>
+-</td>
+-<td>
+-T"Rating: 317"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-8009">
+-T"SCP-8009"
+-</a>
+-</td>
+-<td>
+-T"Rating: 245"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-031">
+-T"SCP-031"
+-</a>
+-</td>
+-<td>
+-T"Rating: 236"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-233">
+-T"SCP-233"
+-</a>
+-</td>
+-<td>
+-T"Rating: 229"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-8109">
+-T"SCP-8109"
+-</a>
+-</td>
+-<td>
+-T"Rating: 187"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2461">
+-T"SCP-2461"
+-</a>
+-</td>
+-<td>
+-T"Rating: 187"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-784-arc">
+-T"SCP-784-ARC"
+-</a>
+-</td>
+-<td>
+-T"Rating: 147"
+-</td>
+-</tr>
+-</table>
+-</div>
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="2549021" data-lp-route="scp-297" data-lp-generation="HEX">
+-<table class="wiki-content-table">
+-<tr>
+-<th colspan="2">
+-T"Tales, Canons, and Hubs"
+-</th>
+-</tr>
+-<tr>
+-<td>
+-<a href="/clef101">
+-T"Transcript of Dr. Clef's seminar, "Reality Benders and You: How to Survive When Existence Doesn't.""
+-</a>
+-</td>
+-<td>
+-T"Rating: 1750"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/dandelions">
+-T"Of Multiverses and Dandelion Wine"
+-</a>
+-</td>
+-<td>
+-T"Rating: 527"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/da-capo-al-fine">
+-T"Da Capo al Fine"
+-</a>
+-</td>
+-<td>
+-T"Rating: 474"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/termination-order">
+-T"Termination_Order"
+-</a>
+-</td>
+-<td>
+-T"Rating: 467"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/hellomuddah">
+-T"Operation "Camp Granada""
+-</a>
+-</td>
+-<td>
+-T"Rating: 404"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-supplemental-thaumatology">
+-T"Transcript of a lecture given by Professor ████████████ on Applied Thaumatology."
+-</a>
+-</td>
+-<td>
+-T"Rating: 351"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/chowderclef">
+-T"Chowderclef"
+-</a>
+-</td>
+-<td>
+-T"Rating: 347"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-supplemental-humanoid-guide">
+-T"Excerpts from PHYSICS Division Field Manual 13: Special Circumstances, Humanoid Threat Entities"
+-</a>
+-</td>
+-<td>
+-T"Rating: 340"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/what-s-in-a-name">
+-T"What's In A Name?"
+-</a>
+-</td>
+-<td>
+-T"Rating: 327"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-supplemental-arad">
+-T"Transcript of a lecture given by Professor ████████████ on Aetheric Energy and Aspect Radiation."
+-</a>
+-</td>
+-<td>
+-T"Rating: 327"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/contingency">
+-T"Contingency"
+-</a>
+-</td>
+-<td>
+-T"Rating: 312"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/rascal-one-actual">
+-T"Rascal One Actual"
+-</a>
+-</td>
+-<td>
+-T"Rating: 306"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/private-hell">
+-T"Private Hell"
+-</a>
+-</td>
+-<td>
+-T"Rating: 300"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/supplemental-report-239-b-192">
+-T"Supplemental Report 239-B-192"
+-</a>
+-</td>
+-<td>
+-T"Rating: 293"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-supplemental-equipment">
+-T"Excerpts from PHYSICS Division Field Manual 2: Equipment and Gear"
+-</a>
+-</td>
+-<td>
+-T"Rating: 286"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/incident-zero-part-1">
+-T"Incident Zero - Part 1"
+-</a>
+-</td>
+-<td>
+-T"Rating: 283"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/the-flesh-that-mates">
+-T"The Flesh That Mates"
+-</a>
+-</td>
+-<td>
+-T"Rating: 281"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/just-fuck-it-up-irl">
+-T"Third Date"
+-</a>
+-</td>
+-<td>
+-T"Rating: 279"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-tale-sequence-uhec">
+-T""UHEC""
+-</a>
+-</td>
+-<td>
+-T"Rating: 239"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-supplemental-qandq">
+-T"Transcript of a lecture given by Professor ████████████: Conclusion, Q and A"
+-</a>
+-</td>
+-<td>
+-T"Rating: 231"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/incident-zero-part-5">
+-T"Incident Zero - Part 5"
+-</a>
+-</td>
+-<td>
+-T"Rating: 226"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/taken-from-a-global-occult-coalition-casefile">
+-T"Items from a Global Occult Coalition Document Bag"
+-</a>
+-</td>
+-<td>
+-T"Rating: 223"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/085-romance-adult">
+-T"085-Romance-Adult"
+-</a>
+-</td>
+-<td>
+-T"Rating: 222"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/dressing-up">
+-T"Girls' Night Out: Dressing Up"
+-</a>
+-</td>
+-<td>
+-T"Rating: 220"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-supplemental-thaumworkings">
+-T"Transcript of a lecture given by Professor ████████████ on Thaumatic Workings."
+-</a>
+-</td>
+-<td>
+-T"Rating: 219"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/raising-hell">
+-T"Girls' Night Out: Raising Hell"
+-</a>
+-</td>
+-<td>
+-T"Rating: 204"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/name-rank-serial-number">
+-T"Name, Rank, Serial Number"
+-</a>
+-</td>
+-<td>
+-T"Rating: 204"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-tale-comeintomyparlor">
+-T""Come into my Parlor""
+-</a>
+-</td>
+-<td>
+-T"Rating: 203"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/incident-zero-part-3">
+-T"Incident Zero - Part 3"
+-</a>
+-</td>
+-<td>
+-T"Rating: 199"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/we-got-a-good-thing-here">
+-T"We Got A Good Thing Here"
+-</a>
+-</td>
+-<td>
+-T"Rating: 194"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/agent-ukelele">
+-T"Agent Ukulele"
+-</a>
+-</td>
+-<td>
+-T"Rating: 193"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/mementos">
+-T"Mementos"
+-</a>
+-</td>
+-<td>
+-T"Rating: 192"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/special-assets">
+-T"Special Assets"
+-</a>
+-</td>
+-<td>
+-T"Rating: 189"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/incident-zero-part-2">
+-T"Incident Zero - Part 2"
+-</a>
+-</td>
+-<td>
+-T"Rating: 188"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/log-of-agent-aa">
+-T"Personal Log of Agent AA"
+-</a>
+-</td>
+-<td>
+-T"Rating: 187"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-tale-sequence-assessment">
+-T""Assessment""
+-</a>
+-</td>
+-<td>
+-T"Rating: 180"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/text-of-a-condolence-letter-federal-bureau-of-investigation">
+-T"Text of a Condolence Letter - Federal Bureau of Investigation, Unusual Incidents Unit"
+-</a>
+-</td>
+-<td>
+-T"Rating: 180"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/interlude-excerpt-from-an-auction-catalog-marshall-carter-an">
+-T"Interlude - Excerpt From An Auction Catalog - Marshall Carter And Dark, 2012"
+-</a>
+-</td>
+-<td>
+-T"Rating: 180"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/incident-zero-part-4">
+-T"Incident Zero - Part 4"
+-</a>
+-</td>
+-<td>
+-T"Rating: 176"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-supplemental-basic-guide">
+-T"Excerpts from PHYSICS Division Field Manual 1: Operative's Handbook"
+-</a>
+-</td>
+-<td>
+-T"Rating: 175"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/number-one-with-a-bullet">
+-T"Number One With A Bullet"
+-</a>
+-</td>
+-<td>
+-T"Rating: 172"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/getting-drunk">
+-T"Girls' Night Out: Getting Drunk"
+-</a>
+-</td>
+-<td>
+-T"Rating: 171"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-tale-sequence-strike">
+-T""Strike""
+-</a>
+-</td>
+-<td>
+-T"Rating: 168"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-tale-sequence-trauma">
+-T""Trauma""
+-</a>
+-</td>
+-<td>
+-T"Rating: 156"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/784incident7">
+-T"The 784 Incident: Part 7: Conclusion"
+-</a>
+-</td>
+-<td>
+-T"Rating: 152"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-tale-sequence-farpoint">
+-T""Farpoint""
+-</a>
+-</td>
+-<td>
+-T"Rating: 145"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-tale-sequence-awtok">
+-T""AWTOK""
+-</a>
+-</td>
+-<td>
+-T"Rating: 132"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/clean-sweep">
+-T"Clean Sweep"
+-</a>
+-</td>
+-<td>
+-T"Rating: 128"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-tale-sequence-joint-venture">
+-T""Joint Venture""
+-</a>
+-</td>
+-<td>
+-T"Rating: 112"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/784incident1">
+-T"The 784 Incident: Part 1: Contact"
+-</a>
+-</td>
+-<td>
+-T"Rating: 111"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-tale-sequence-scrambleorder">
+-T""Scramble Order""
+-</a>
+-</td>
+-<td>
+-T"Rating: 107"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/goc-tale-sequence-diplomacy">
+-T""Diplomacy""
+-</a>
+-</td>
+-<td>
+-T"Rating: 105"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/passing-notes-in-class">
+-T"Passing Notes In Class"
+-</a>
+-</td>
+-<td>
+-T"Rating: 101"
+-</td>
+-</tr>
+-</table>
+-</div>
+-<table class="wiki-content-table">
+-<tr>
+-<th colspan="2">
+-T"Collaborations with other authors"
+-</th>
+-</tr>
+-<tr>
+-<td>
+-<strong>
+-T"Page"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-T"Author"
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-166">
+-T"SCP-166"
+-</a>
+-</td>
+-<td>
+-T"Dr. Dantesen"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-342">
+-T"SCP-342"
+-</a>
+-</td>
+-<td>
+-<span class="printuser">
+-<a href="http://www.wikidot.com/user:info/name" onclick="WIKIDOT.page.listeners.userInfo(254716); return false;">
+-T"name"
+-</a>
+-</span>
+-</td>
+-</tr>
+-</table>
+ <p>
+-<a href="http://www.scp-wiki.net/drclef-member-page">
+-T"For a list of all works by this author, click here."
+-</a>
++T"[[div class="error-block"]]Page to be included :scpsandbox2:clef cannot be found!"
+ </p>
+-</div>
+-</div>
+ </div>
+ <p>
+@@ -913,5 +65,6 @@
+ </p>
+ </div>
+-</div>
++<br>
++T" [[/div]]"
+ <div class="licensebox">
+ <div class="collapsible-block">
+@@ -931,29 +84,7 @@
+ T"Cite this page as:"
+ </p>
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="2549021" data-lp-route="scp-297" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<blockquote>
+ <p>
+-T"""
+-<a href="/scp-297">
+-T"SCP-297"
+-</a>
+-T"" by DrClef, from the "
+-<a href="https://scpwiki.com">
+-T"SCP Wiki"
+-</a>
+-T". Source: "
+-<a href="https://scpwiki.com/scp-297">
+-T"https://scpwiki.com/scp-297"
+-</a>
+-T". Licensed under "
+-<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+-T"CC BY-SA"
+-</a>
+-T"."
++T"TODO: module ListPages"
+ </p>
+-</blockquote>
+-</div>
+-</div>
+ <p>
+ T"For information on how to use this component, see the "

@@ -1,0 +1,88 @@
+[[iftags +component]]
+[[note]]
+**Author:**
+[[*user Ayers]]
+----
+**With a great deal of help from:**
+[[*user Woedenaz]]
+----
+**With input from:**
+[[*user Rounderhouse]], [[*user djkaktus]] and [[*user Uncle-Nicolini]]
+----
+**How To Use:**
+https://scp-wiki.wikidot.com/component:info-ayers#toc4
+[[/note]]
+-----
+
+
+++ __Example__
+
+[[include :scp-wiki:component:info-ayers-source
+|lang=en[!-- EN/RU/KO/CN/FR/PL/ES/TH/JP/DE/IT/UA/PTBR --]
+|page=component:info-ayers[!-- url of your page on the scp wiki --]
+|authorPage=https://scp-wiki.wikidot.com/ayers-array[!-- link to your author page --]
+|comments=Look at me! I'm an info module! Yay!
+]]
+[[collapsible show="[+] Example code" hide ="[-] Example code"]]
+> [[include :scp-wiki:component:info-ayers
+> |lang=en[!-- EN/RU/KO/CN/FR/PL/ES/TH/JP/DE/IT/UA/PTBR --]
+> |page=component:info-ayers[!-- url of your page on the scp wiki --]
+> |authorPage=https://scp-wiki.wikidot.com/ayers-array[!-- link to your author page --]
+> |comments=Look at me! I'm an info module! Yay!
+> ]]
+[[/collapsible]]
+
+@@ @@
+@@ @@
+
+++ __What Is This For?__
+
+This is a tool for showing meta information about an article at the top of that very same article. Usually, this would be impossible without breaking the flow of the article, but this acts as a way to show out-of-universe information (e.g. crit credits, author commentary, etc.) without disrupting the user experience or requiring the author to make an author post.
+
+Some authors may choose to place content warnings within this area, but be warned that this is not a common practice, and will not always be the case -- seeing an article without content warnings just means there are no content warnings.
+@@ @@
+@@ @@
+
+++ __Is This Part of the Black Highlighter (nuSCP) Theme?__
+
+No. While the two look absolutely amazing together, these are separate modules that can be used independently. The two are usually seen together because //they look so dang good//.
+@@ @@
+@@ @@
+++ __How Does It Work, and How Do I Use It?__
+It's a collapsible. That's the long and short of it. A very stylish collapsible. 
+
+Here's the code to add to the **very top** of your article:
+> [[include :scp-wiki:component:info-ayers
+> |lang=en@@[!-- EN/RU/KO/CN/FR/PL/ES/TH/JP/DE/IT/UA/PTBR --]@@
+> |page=scp-XXXX@@[!-- url of your page on the scp wiki --]@@
+> |authorPage=https://scp-wiki.wikidot.com/yourAuthorPage@@[!-- link to your author page --]@@
+> |comments=Any additional comments (image sources, crit credits, whatever)
+> ]]
+**IMPORTANT:** If your comments section spans multiple paragraphs, you must have a space at the end of each paragraph or the text will not display! Also, if the final line of your comment section ends in "]]" (e.g. ending a div block) then you must add "@@@@@@ @@" after the end of it.
+
+2022/05/25 UPDATE: This bug may have been fixed for most users? There still may be scenarios (like messing with div blocks) where this applies so I'll leave the advice here.
+
+-----
+The template has multiple divs that can be configured in your CSS modules. You may hide the divs to remove that section of the module:
+* #u-author_block -- for the big "More by this Author" button
+* #u-comments2 -- for more writing space below the "More by this Author" button. Must also include the line "div#u-comments2{display:block !important;}" in CSS module, and include |comments2="content" into the module block.
+
+You can also change the colour of the bar by editing two local variables like so:
+> @@[[module CSS]]@@
+> .info-container{
+> @@--barColour: #633;@@ -- this is the colour of the bar and the author button
+> @@--linkColour: #FFF;@@ -- this is the colour of the "i" and the text within the author button
+> }
+> @@[[/module]]@@
+[[/iftags]]
+
+[[iftags -component]]
+[[include :scp-wiki:component:info-ayers-source
+|comments={$comments}
+|lang={$lang}
+|page={$page}
+|authorPage={$authorPage}
+|comments={$comments}
+|comments2={$comments2}
+]]
+[[/iftags]]

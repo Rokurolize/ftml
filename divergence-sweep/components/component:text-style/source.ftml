@@ -1,0 +1,336 @@
+[[module css]]
+/* Basic message code */
+.text-container .text {
+  border-radius: 18px;
+  text-align: left;
+  display:inline-block;
+  padding:8px 12px;
+  font-weight:500;
+  margin:1.5px 10px;
+  max-width: 300px;
+}
+ 
+/* Container for "received" messages */
+.recv {
+  text-align: left;
+  margin-right:20px;
+}
+ 
+/* Container for "sent" messages */
+.sent {
+  text-align: right;
+  margin-left:20px;
+}
+.sent .text {
+  border-bottom-right-radius: 3px;
+  background-color: #267AE9;
+  color: white;
+}
+.recv .text {
+  border-bottom-left-radius: 3px;
+  background-color: #dadada;
+  color: black;
+}
+ 
+/* Fancy stuff on the corners of messages with another message from same person above them */
+.sent .text:not(:first-child) {
+  border-top-right-radius: 4px;
+}
+.recv .text:not(:first-child) {
+  border-top-left-radius: 4px;
+}
+ 
+.text-container p {
+  margin:0 0 15px;
+}
+/* Message area stuff */
+/* Header styling */
+.text-container-wrap h1, .text-container-wrap h2, .text-container-wrap h3, .text-container-wrap h4, .text-container-wrap h5, .text-container-wrap h6 {
+  color: black;
+  font-weight: bold;
+  margin:0 auto 10px;
+  position:relative;
+  top:-8px;
+}
+ 
+/* External box */
+.text-container-wrap {
+  text-align:center;
+  margin:auto;
+  display:block;
+  margin-top: 25px;
+  width:400px;
+  padding-top: 25px;
+  border-radius:10px;
+  border:3px solid #666;
+  background-color:#fff;
+  overflow:none;
+  box-sizing:border-box;
+  position:relative;
+}
+
+/* Internal box */
+.text-container {
+  box-shadow:1px 1px 7px #aaa inset;
+  margin:0px auto 25px;
+  width:350px;
+  display:block;
+  padding:25px 0px 6px;
+  background-color:#f7f7f7;
+}
+[[/module]]
+
+[[iftags +component]]
+[[>]]
+[[module Rate]]
+[[/>]]
+
+[[=]]
+> [[size 125%]]**Made by [[*user JaonHax]]**[[/size]]
+[[/=]]
+
+[[size 125%]]
++ Example of usage
+[[/size]]
+[[div class="text-container-wrap"]]
++++ John Jacob Jingleheimer Schmidt
+[[div class="text-container"]]
+[[div class="sent"]]
+[[span class="text"]]Now testing messages.[[/span]]
+[[/div]]
+[[div class="recv"]]
+[[span class="text"]]Wow, really?[[/span]]
+[[span class="text"]]That's so cool! _
+And is this a multiline message?[[/span]]
+[[/div]]
+[[div class="sent"]]
+[[span class="text"]]You really think so?[[/span]]
+[[span class="text"]]That's great![[/span]]
+[[span class="text"]]Yup, that has multiple lines![[/span]]
+[[/div]]
+[[div class="recv"]]
+[[span class="text"]]Yeah![[/span]]
+[[span class="text"]]Thanks, JaonHax! _
+Wait, did I break its scrolling ability somehow?[[/span]]
+[[/div]]
+[[div class="sent"]]
+[[span class="text"]]Yup.[[/span]]
+[[span class="text"]]I think you did.[[/span]]
+[[/div]]
+[[div class="recv"]]
+[[span class="text"]]Ah, well.[[/span]]
+[[span class="text"]]I guess JaonHax will just have to make sure that this thing has an infinite maximum height, huh?[[/span]]
+[[/div]]
+[[div class="sent"]]
+[[span class="text"]]Yeah, I guess so.[[/span]]
+[[span class="text"]]Anyway, we should probably let the awesome individual who's reading this move on with their day.[[/span]]
+[[/div]]
+[[div class="recv"]]
+[[span class="text"]]Bye, Awesome Person![[/span]]
+[[/div]]
+[[div class="sent"]]
+[[span class="text"]]Yeah, bye![[/span]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+[[size 125%]]
++ **How to use this**
+[[/size]]
+
+[[collapsible show="+ CSS code for the experts who want to mess with this thing" hide="- Woah, that's a lot, man. I don't know if I can handle all that.]]
+[[code type="CSS"]]
+/* Basic message code */
+.text-container .text {
+  border-radius: 18px;
+  text-align: left;
+  display:inline-block;
+  padding:8px 12px;
+  font-weight:500;
+  margin:1.5px 10px;
+  max-width: 300px;
+}
+ 
+/* Container for "received" messages */
+.recv {
+  text-align: left;
+  margin-right:20px;
+}
+ 
+/* Container for "sent" messages */
+.sent {
+  text-align: right;
+  margin-left:20px;
+}
+.sent .text {
+  border-bottom-right-radius: 3px;
+  background-color: #267AE9;
+  color: white;
+}
+.recv .text {
+  border-bottom-left-radius: 3px;
+  background-color: #dadada;
+  color: black;
+}
+ 
+/* Fancy stuff on the corners of messages with another message from same person above them */
+.sent .text:not(:first-child) {
+  border-top-right-radius: 4px;
+}
+.recv .text:not(:first-child) {
+  border-top-left-radius: 4px;
+}
+ 
+.text-container p {
+  margin:0 0 15px;
+}
+/* Message area stuff */
+/* Header styling */
+.text-container-wrap h1, .text-container-wrap h2, .text-container-wrap h3, .text-container-wrap h4, .text-container-wrap h5, .text-container-wrap h6 {
+  color: black;
+  font-weight: bold;
+  margin:0 auto 10px;
+  position:relative;
+  top:-8px;
+}
+ 
+/* External box */
+.text-container-wrap {
+  text-align:center;
+  margin:auto;
+  display:block;
+  margin-top: 25px;
+  width:400px;
+  padding-top: 25px;
+  border-radius:10px;
+  border:3px solid #666;
+  background-color:#fff;
+  overflow:none;
+  box-sizing:border-box;
+  position:relative;
+}
+
+/* Internal box */
+.text-container {
+  box-shadow:1px 1px 7px #aaa inset;
+  margin:0px auto 25px;
+  width:350px;
+  display:block;
+  padding:25px 0px 6px;
+  background-color:#f7f7f7;
+}
+[[/code]]
+[[/collapsible]]
+
+So, you want to use my stuff, huh? Well first off, you'll want to include this component right at the top of your page after any themes you have (works on any wiki):
+> {{@@[[include :scp-wiki:component:text-style]]@@}}
+
+Then, you'll want to put this in where you want this text. This can even be done multiple times in a single page:
+
+[[code]]
+[[div class="text-container-wrap"]]
++++ Your Sender's Name Here
+[[div class="text-container"]]
+
+[!-- Remember this spot --]
+
+[[/div]]
+[[/div]]
+[[/code]]
+
+Make sure to replace "Your Sender's Name Here" with the name you want at the top—or none at all! If you don't include the name in your code, the text message box will automatically adjust to it not being there! It will also automatically adjust in height no matter what size header you put there!
+
+[[collapsible show="+ See an example of that happening" hide="- Nice, that's cool!"]]
+
+[[div class="text-container-wrap"]]
++++ With the Header at Normal Size
+[[div class="text-container"]]
+[[div class="sent"]]
+[[span class="text"]]This is a placeholder text container...[[/span]]
+[[/div]]
+[[div class="recv"]]
+[[span class="text"]]So you can see what I mean![[/span]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[div class="text-container-wrap"]]
+[[div class="text-container"]]
+[[div class="sent"]]
+[[span class="text"]]This is a placeholder text container...[[/span]]
+[[span class="text"]]That has no header...[[/span]]
+[[/div]]
+[[div class="recv"]]
+[[span class="text"]]So you can see what I mean![[/span]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[div class="text-container-wrap"]]
++ With a Bigger Header
+[[div class="text-container"]]
+[[div class="sent"]]
+[[span class="text"]]This is a placeholder text container...[[/span]]
+[[/div]]
+[[div class="recv"]]
+[[span class="text"]]So you can see what I mean![[/span]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[div class="text-container-wrap"]]
+++++++ With a Super Duper Uber Small Header
+[[div class="text-container"]]
+[[div class="sent"]]
+[[span class="text"]]This is a placeholder text container...[[/span]]
+[[/div]]
+[[div class="recv"]]
+[[span class="text"]]So you can see what I mean![[/span]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/collapsible]]
+
+Now, that spot I told you to remember not even 5 seconds ago? You're going to put all the texts you want there. Here's how to do that (replace "{{sent/recv}}" with "{{sent}}" or "{{recv}}" based on whether or not you want the texts to be sent or received texts):
+
+For a single text:
+[[code]]
+[[div class="sent/recv"]]
+[[span class="text"]]I'm all alone...[[/span]]
+[[/div]]
+[[/code]]
+
+For a multi-line text:
+[[code]]
+[[div class="sent/recv"]]
+[[span class="text"]]I am _
+a multi-line _
+text!![[/span]]
+[[/div]]
+[[/code]]
+
+For a set of attached texts:
+[[code]]
+[[div class="sent/recv"]]
+[[span class="text"]]This is a set[[/span]]
+[[span class="text"]]Of attached texts![[/span]]
+[[/div]]
+[[/code]]
+
+For a set of texts that aren't attached (but from the same person):
+[[code]]
+[[div class="sent/recv"]]
+[[span class="text"]]This is a set[[/span]]
+[[/div]]
+[[div class="sent/recv"]]
+[[span class="text"]]Of unattached texts![[/span]]
+[[/div]]
+[[/code]]
+For this one, you just kinda have to make sure you change both {{sent/recv}}s to the same value so they're from the same person.
+
+And there you go! You now know how to use this! Now go out and make cool things with it!
+
+[[collapsible show="+ Planned Updates" hide="- Fine, shows how much you care about the development process 😢"]]
+* Add image/file attachment support
+* Add the ability to mark messages with timestamps
+* Add the ability to insert date/time dividers (horizontal lines stating date/time above it, thereby signaling progression of time)
+* Literally anything else I can think of in the near future.
+[[/collapsible]]
+[[/iftags]]

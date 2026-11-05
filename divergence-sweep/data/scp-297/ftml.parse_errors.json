@@ -1,0 +1,47 @@
+[
+ {
+  "token": "identifier",
+  "rule": "block-div",
+  "span": [
+   2869,
+   2873
+  ],
+  "kind": "rule-failed"
+ },
+ {
+  "token": "left-block",
+  "rule": "fallback",
+  "span": [
+   2842,
+   2844
+  ],
+  "kind": "no-rules-match"
+ },
+ {
+  "token": "right-block",
+  "rule": "fallback",
+  "span": [
+   2867,
+   2869
+  ],
+  "kind": "no-rules-match"
+ },
+ {
+  "token": "left-block-end",
+  "rule": "fallback",
+  "span": [
+   2986,
+   2989
+  ],
+  "kind": "no-rules-match"
+ },
+ {
+  "token": "right-block",
+  "rule": "fallback",
+  "span": [
+   2992,
+   2994
+  ],
+  "kind": "no-rules-match"
+ }
+]

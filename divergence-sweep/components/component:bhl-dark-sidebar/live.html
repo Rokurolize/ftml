@@ -1,0 +1,254 @@
+                        
+
+
+
+
+<div class="warning-top-box">
+<h1><span>NOTICE:</span></h1>
+<p>This is a <em>component</em> page used internally by the SCP Wiki. It is intended to be used and included on other pages.</p>
+</div>
+
+
+
+<p><iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=1&theme=https://nu-scptheme.github.io/Black-Highlighter/css/min/normalize.min.css&css={$css}" style="display: none"></iframe></p>
+<p><iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=2&theme=https://nu-scptheme.github.io/Black-Highlighter/css/min/black-highlighter.min.css&css={$css}" style="display: none"></iframe></p>
+<div style="text-align: center;"><div class="page-rate-widget-box"><span class="rate-points">rating:&nbsp;<span class="number prw54353">+42</span></span><span class="rateup btn btn-default"><a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">+</a></span><span class="ratedown btn btn-default"><a title="I don't like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">&#8211;</a></span><span class="cancel btn btn-default"><a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">x</a></span></div>
+<div class="blockquote">Pretty self explanatory.<br />
+For anyone who <em>really</em> wants the dark sidebar from the O.G. BHL on their articles.<br />
+Just add this include <strong>AFTER</strong> the BHL include:<br />
+<tt>[[include :scp-wiki:component:bhl-dark-sidebar]]</tt></div>
+</div>
+<hr />
+<div class="collapsible-block">
+<div class="collapsible-block-folded"><a class="collapsible-block-link" href="javascript:;">+&nbsp;Show&nbsp;component&nbsp;code</a></div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link"><a class="collapsible-block-link" href="javascript:;">-&nbsp;Hide&nbsp;component&nbsp;code</a></div>
+<div class="collapsible-block-content">
+<div class="code">
+<div class="hl-main">
+<pre><span class="hl-identifier">#interwiki</span><span class="hl-code">, 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    /</span><span class="hl-identifier">*</span><span class="hl-code"> ===</span><span class="hl-identifier">SECONDARY</span><span class="hl-code"> &amp; </span><span class="hl-identifier">TERTIARY</span><span class="hl-code"> </span><span class="hl-identifier">COLORS</span><span class="hl-code">=== </span><span class="hl-identifier">*</span><span class="hl-code">/
+    /</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Editing</span><span class="hl-code"> </span><span class="hl-identifier">these</span><span class="hl-code"> </span><span class="hl-identifier">will</span><span class="hl-code"> </span><span class="hl-identifier">edit</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-code"> </span><span class="hl-identifier">vast</span><span class="hl-code"> </span><span class="hl-identifier">majority</span><span class="hl-code"> </span><span class="hl-identifier">of</span><span class="hl-code"> </span><span class="hl-identifier">theme</span><span class="hl-code"> </span><span class="hl-identifier">elements</span><span class="hl-code">. </span><span class="hl-identifier">Useful</span><span class="hl-code"> </span><span class="hl-identifier">for</span><span class="hl-code"> </span><span class="hl-identifier">making</span><span class="hl-code"> </span><span class="hl-identifier">dark</span><span class="hl-code"> </span><span class="hl-identifier">themes</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+ 
+    /</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Colors</span><span class="hl-code"> </span><span class="hl-identifier">for</span><span class="hl-code"> </span><span class="hl-identifier">Secondary</span><span class="hl-code"> &amp; </span><span class="hl-identifier">Tertiary</span><span class="hl-code"> </span><span class="hl-identifier">items</span><span class="hl-code"> </span><span class="hl-identifier">like</span><span class="hl-code"> </span><span class="hl-identifier">Blockquote</span><span class="hl-code"> </span><span class="hl-identifier">and</span><span class="hl-code"> </span><span class="hl-identifier">YUI</span><span class="hl-code"> </span><span class="hl-identifier">Tabs</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+    --</span><span class="hl-reserved">swatch-secondary-color:</span><span class="hl-code"> var(--swatch-menubg-dark-color)</span><span class="hl-code">;
+    --</span><span class="hl-reserved">swatch-tertiary-color:</span><span class="hl-code"> var(--swatch-menubg-medium-color)</span><span class="hl-code">;
+    --</span><span class="hl-reserved">swatch-alternate-color:</span><span class="hl-code"> var(--swatch-menubg-light-color)</span><span class="hl-code">;
+ 
+    /</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Text</span><span class="hl-code"> </span><span class="hl-identifier">Colors</span><span class="hl-code"> </span><span class="hl-identifier">for</span><span class="hl-code"> </span><span class="hl-identifier">Secondary</span><span class="hl-code"> &amp; </span><span class="hl-identifier">Tertiary</span><span class="hl-code"> </span><span class="hl-identifier">items</span><span class="hl-code"> </span><span class="hl-identifier">like</span><span class="hl-code"> </span><span class="hl-identifier">Sidebar</span><span class="hl-code"> </span><span class="hl-identifier">Headers</span><span class="hl-code"> </span><span class="hl-identifier">and</span><span class="hl-code"> </span><span class="hl-identifier">Top-Bar</span><span class="hl-code"> </span><span class="hl-identifier">Menu</span><span class="hl-code"> </span><span class="hl-identifier">Text</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+    --</span><span class="hl-reserved">swatch-text-secondary-color:</span><span class="hl-code"> var(--swatch-menutxt-dark-color)</span><span class="hl-code">;
+    --</span><span class="hl-reserved">swatch-text-tertiary-color:</span><span class="hl-code"> var(--swatch-menutxt-light-color)</span><span class="hl-code">;
+ 
+    /</span><span class="hl-identifier">*</span><span class="hl-code"> ===</span><span class="hl-identifier">SIDE-BAR</span><span class="hl-code"> </span><span class="hl-identifier">ELEMENTS</span><span class="hl-code">=== </span><span class="hl-identifier">*</span><span class="hl-code">/
+ 
+    /</span><span class="hl-identifier">*</span><span class="hl-code"> ===</span><span class="hl-identifier">SIDE-BAR</span><span class="hl-code"> </span><span class="hl-identifier">GENERAL</span><span class="hl-code">=== </span><span class="hl-identifier">*</span><span class="hl-code">/
+    --</span><span class="hl-reserved">sidebar-bg-color:</span><span class="hl-code"> var(--swatch-menubg-dark-color)</span><span class="hl-code">;
+    --</span><span class="hl-reserved">sidebar-resources-bg-color:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">;
+    --</span><span class="hl-reserved">sidebar-media-bg-color:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">;
+ 
+    /</span><span class="hl-identifier">*</span><span class="hl-code"> ===</span><span class="hl-identifier">SIDEBLOCK</span><span class="hl-code"> </span><span class="hl-identifier">MENU</span><span class="hl-code">=== </span><span class="hl-identifier">*</span><span class="hl-code">/
+    --</span><span class="hl-reserved">sideblock-heading-border-color:</span><span class="hl-code"> var(--bright-accent)</span><span class="hl-code">;
+    --</span><span class="hl-reserved">sideblock-heading-bg-color:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">;
+    /</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Transparent</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+    --</span><span class="hl-reserved">sideblock-heading-text-color:</span><span class="hl-code"> var(--swatch-text-tertiary-color)</span><span class="hl-code">;
+ 
+    /</span><span class="hl-identifier">*</span><span class="hl-code"> ===</span><span class="hl-identifier">MENU-ITEMS</span><span class="hl-code">=== </span><span class="hl-identifier">*</span><span class="hl-code">/
+    --</span><span class="hl-reserved">sidebar-border-color:</span><span class="hl-code"> var(--swatch-primary), </span><span class="hl-number">0.08</span><span class="hl-code">;
+    --</span><span class="hl-reserved">sidebar-subtext-color:</span><span class="hl-code"> var(--swatch-text-tertiary-color)</span><span class="hl-code">;
+ 
+    --</span><span class="hl-reserved">sidebar-links-text:</span><span class="hl-code"> var(--swatch-text-tertiary-color)</span><span class="hl-code">;
+    --</span><span class="hl-reserved">sidebar-links-hover-bg-color:</span><span class="hl-code"> var(--bright-accent)</span><span class="hl-code">;
+    --</span><span class="hl-reserved">sidebar-links-hover-text-color:</span><span class="hl-code"> var(--swatch-text-tertiary-color)</span><span class="hl-code">;
+ 
+    /</span><span class="hl-identifier">*</span><span class="hl-code"> ===</span><span class="hl-identifier">SIDEBAR</span><span class="hl-code"> </span><span class="hl-identifier">COLLAPSIBLES</span><span class="hl-code">=== </span><span class="hl-identifier">*</span><span class="hl-code">/
+    /</span><span class="hl-identifier">*Folded</span><span class="hl-code"> </span><span class="hl-identifier">Colors</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+    --</span><span class="hl-reserved">sidebar-collapsible-fld-link-bg:</span><span class="hl-code"> var(--swatch-primary), </span><span class="hl-number">0.25</span><span class="hl-code">;
+    --</span><span class="hl-reserved">sidebar-collapsible-fld-link-color:</span><span class="hl-code"> var(--swatch-text-tertiary-color)</span><span class="hl-code">;
+    --</span><span class="hl-reserved">sidebar-collapsible-fld-link-hover-color:</span><span class="hl-code"> var(--swatch-text-tertiary-color)</span><span class="hl-code">;
+    --</span><span class="hl-reserved">sidebar-collapsible-fld-arrow-hover-color:</span><span class="hl-code"> var(--swatch-text-tertiary-color)</span><span class="hl-code">;
+ 
+    /</span><span class="hl-identifier">*Unfolded</span><span class="hl-code"> </span><span class="hl-identifier">Colors</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+    --</span><span class="hl-reserved">sidebar-collapsible-ufld-link-bg:</span><span class="hl-code"> var(--swatch-primary-darker), </span><span class="hl-number">0.25</span><span class="hl-code">;
+    --</span><span class="hl-reserved">sidebar-collapsible-ufld-link-color:</span><span class="hl-code"> var(--swatch-text-tertiary-color)</span><span class="hl-code">;
+    --</span><span class="hl-reserved">sidebar-collapsible-ufld-link-hover-color:</span><span class="hl-code"> var(--swatch-text-tertiary-color)</span><span class="hl-code">;
+    --</span><span class="hl-reserved">sidebar-collapsible-ufld-arrow-hover-color:</span><span class="hl-code"> var(--swatch-text-tertiary-color)</span><span class="hl-code">;
+ 
+    /</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Unfolded</span><span class="hl-code"> </span><span class="hl-identifier">Body</span><span class="hl-code"> </span><span class="hl-identifier">Colors</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+    --</span><span class="hl-reserved">sidebar-collapsible-link-color:</span><span class="hl-code"> var(--swatch-text-tertiary-color)</span><span class="hl-code">;
+    --</span><span class="hl-reserved">sidebar-collapsible-link-hover-color:</span><span class="hl-code"> var(--swatch-text-tertiary-color)</span><span class="hl-code">;
+ 
+    </span><span class="hl-reserved">scrollbar-color:</span><span class="hl-code">
+        rgba(var(--swatch-primary-darker), </span><span class="hl-number">0.1</span><span class="hl-code">)
+        /* Thumb */
+        rgba(var(--swatch-secondary-color), </span><span class="hl-number">0.05</span><span class="hl-code">)</span><span class="hl-code">;
+    /</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Track</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+ 
+    </span><span class="hl-reserved">border-color:</span><span class="hl-code"> rgba(var(--swatch-secondary-color), </span><span class="hl-number">0.4</span><span class="hl-code">)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Hover</span><span class="hl-code"> </span><span class="hl-identifier">Scrollbar</span><span class="hl-code"> </span><span class="hl-identifier">Behavior</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">#side-bar</span><span class="hl-special">:hover</span><span class="hl-code">,
+</span><span class="hl-identifier">#side-bar</span><span class="hl-special">:active</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">scrollbar-color:</span><span class="hl-code">
+        rgb(var(--swatch-primary-darker), </span><span class="hl-number">1</span><span class="hl-code">)
+        /* Thumb */
+        rgb(var(--swatch-menubg-dark-color), </span><span class="hl-number">1</span><span class="hl-code">)</span><span class="hl-code">;
+    /</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Track</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-special">:focus-within</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">scrollbar-color:</span><span class="hl-code">
+        rgb(var(--swatch-primary-darker), </span><span class="hl-number">1</span><span class="hl-code">)
+        /* Thumb */
+        rgb(var(--swatch-menubg-dark-color), </span><span class="hl-number">1</span><span class="hl-code">)</span><span class="hl-code">;
+    /</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Track</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code">::-</span><span class="hl-identifier">webkit-scrollbar-track</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">background-color:</span><span class="hl-code"> rgba(var(--swatch-tertiary-color), </span><span class="hl-number">0.8</span><span class="hl-code">)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code">::-</span><span class="hl-identifier">webkit-scrollbar</span><span class="hl-code">,
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code">::-</span><span class="hl-identifier">webkit-scrollbar-thumb</span><span class="hl-code">,
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code">::-</span><span class="hl-identifier">webkit-scrollbar-corner</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">background-color:</span><span class="hl-code"> rgba(var(--swatch-menubg-dark-color), </span><span class="hl-number">0</span><span class="hl-code">)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-code">:-</span><span class="hl-identifier">webkit-any-link</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">background:</span><span class="hl-code"> rgba(var(--swatch-menubg-light-color), </span><span class="hl-number">0.75</span><span class="hl-code">) !important</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-code">:-</span><span class="hl-identifier">moz-any-link</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">background:</span><span class="hl-code"> rgba(var(--swatch-menubg-light-color), </span><span class="hl-number">0.75</span><span class="hl-code">) !important</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-special">:any-link</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">background:</span><span class="hl-code"> rgba(var(--swatch-menubg-light-color), </span><span class="hl-number">0.75</span><span class="hl-code">) !important</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">background:</span><span class="hl-code"> rgb(var(--social-color))</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-brackets">[</span><span class="hl-var">href</span><span class="hl-code">*=</span><span class="hl-quotes">&quot;</span><span class="hl-string">tiktok</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">]</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code">,
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-brackets">[</span><span class="hl-var">href</span><span class="hl-code">*=</span><span class="hl-quotes">&quot;</span><span class="hl-string">tiktok</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">]</span><span class="hl-code">:</span><span class="hl-special">:after</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">transition:</span><span class="hl-code">
+        </span><span class="hl-var">background</span><span class="hl-code"> </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">),
+        background-color </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">),
+        background-image </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">),
+        -webkit-clip-path </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">transition:</span><span class="hl-code">
+        clip-path </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">),
+        </span><span class="hl-var">background</span><span class="hl-code"> </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">),
+        background-color </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">),
+        background-image </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">transition:</span><span class="hl-code">
+        clip-path </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">),
+        </span><span class="hl-var">background</span><span class="hl-code"> </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">),
+        background-color </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">),
+        background-image </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">),
+        -webkit-clip-path </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-brackets">[</span><span class="hl-var">href</span><span class="hl-code">*=</span><span class="hl-quotes">&quot;</span><span class="hl-string">tiktok</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">]</span><span class="hl-special">:hover</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    --</span><span class="hl-reserved">clip-path:</span><span class="hl-code">
+        polygon(-</span><span class="hl-number">15</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">,
+            </span><span class="hl-number">115</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">,
+            </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">,
+            </span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">
+        )</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-brackets">[</span><span class="hl-var">href</span><span class="hl-code">*=</span><span class="hl-quotes">&quot;</span><span class="hl-string">tiktok</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">]</span><span class="hl-special">:hover</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code">,
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-brackets">[</span><span class="hl-var">href</span><span class="hl-code">*=</span><span class="hl-quotes">&quot;</span><span class="hl-string">tiktok</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">]</span><span class="hl-special">:active</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    --</span><span class="hl-reserved">clip-path:</span><span class="hl-code">
+        polygon(-</span><span class="hl-number">15</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">,
+            </span><span class="hl-number">115</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">,
+            </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">,
+            </span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">
+        )</span><span class="hl-code">;
+    </span><span class="hl-reserved">background-image:</span><span class="hl-code"> var(--tiktok-icon-gradient)</span><span class="hl-code">;
+    </span><span class="hl-reserved">background-size:</span><span class="hl-code"> contain</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-brackets">[</span><span class="hl-var">href</span><span class="hl-code">*=</span><span class="hl-quotes">&quot;</span><span class="hl-string">tiktok</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">]</span><span class="hl-special">:focus-within</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    --</span><span class="hl-reserved">clip-path:</span><span class="hl-code">
+        polygon(-</span><span class="hl-number">15</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">,
+            </span><span class="hl-number">115</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">,
+            </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">,
+            </span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">
+        )</span><span class="hl-code">;
+    </span><span class="hl-reserved">background-image:</span><span class="hl-code"> var(--tiktok-icon-gradient)</span><span class="hl-code">;
+    </span><span class="hl-reserved">background-size:</span><span class="hl-code"> contain</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-brackets">[</span><span class="hl-var">href</span><span class="hl-code">*=</span><span class="hl-quotes">&quot;</span><span class="hl-string">tiktok</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">]</span><span class="hl-code">:</span><span class="hl-special">:after</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    --</span><span class="hl-reserved">clip-path:</span><span class="hl-code">
+        polygon(</span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">,
+            </span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">,
+            </span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">,
+            </span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">
+        )</span><span class="hl-code">;
+    </span><span class="hl-reserved">background:</span><span class="hl-code"> rgba(var(--swatch-menubg-light-color), </span><span class="hl-number">0.75</span><span class="hl-code">) !important</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-brackets">[</span><span class="hl-var">href</span><span class="hl-code">*=</span><span class="hl-quotes">&quot;</span><span class="hl-string">tiktok</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">]</span><span class="hl-special">:hover</span><span class="hl-code">:</span><span class="hl-special">:after</span><span class="hl-code">,
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-brackets">[</span><span class="hl-var">href</span><span class="hl-code">*=</span><span class="hl-quotes">&quot;</span><span class="hl-string">tiktok</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">]</span><span class="hl-special">:active</span><span class="hl-code">:</span><span class="hl-special">:after</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    --</span><span class="hl-reserved">clip-path:</span><span class="hl-code">
+        polygon(-</span><span class="hl-number">15</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">,
+            </span><span class="hl-number">115</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">,
+            </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">,
+            </span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">
+        )</span><span class="hl-code">;
+    </span><span class="hl-reserved">background:</span><span class="hl-code"> rgba(var(--swatch-menubg-light-color), </span><span class="hl-number">0.75</span><span class="hl-code">) !important</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-brackets">[</span><span class="hl-var">href</span><span class="hl-code">*=</span><span class="hl-quotes">&quot;</span><span class="hl-string">tiktok</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">]</span><span class="hl-special">:focus-within</span><span class="hl-code">:</span><span class="hl-special">:after</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    --</span><span class="hl-reserved">clip-path:</span><span class="hl-code">
+        polygon(-</span><span class="hl-number">15</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">,
+            </span><span class="hl-number">115</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">,
+            </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">,
+            </span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">
+        )</span><span class="hl-code">;
+    </span><span class="hl-reserved">background:</span><span class="hl-code"> rgba(var(--swatch-menubg-light-color), </span><span class="hl-number">0.75</span><span class="hl-code">) !important</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-code"> </span><span class="hl-identifier">img</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    -</span><span class="hl-reserved">webkit-filter:</span><span class="hl-code"> drop-shadow(</span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code"> rgba(var(--swatch-alternate-color), </span><span class="hl-number">0</span><span class="hl-code">))</span><span class="hl-code">;
+            </span><span class="hl-reserved">filter:</span><span class="hl-code"> drop-shadow(</span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code"> rgba(var(--swatch-alternate-color), </span><span class="hl-number">0</span><span class="hl-code">))</span><span class="hl-code">;
+    </span><span class="hl-reserved">transition:</span><span class="hl-code"> -webkit-filter </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">transition:</span><span class="hl-code"> filter </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">transition:</span><span class="hl-code"> filter </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">), -webkit-filter </span><span class="hl-number">200</span><span class="hl-code">ms cubic-bezier(</span><span class="hl-number">0.4</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0.2</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code">)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-special">:hover</span><span class="hl-code"> </span><span class="hl-identifier">img</span><span class="hl-code">,
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-special">:active</span><span class="hl-code"> </span><span class="hl-identifier">img</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    -</span><span class="hl-reserved">webkit-filter:</span><span class="hl-code"> drop-shadow(</span><span class="hl-number">0.1875</span><span class="hl-code">rem </span><span class="hl-number">0.1875</span><span class="hl-code">rem </span><span class="hl-number">0</span><span class="hl-code"> rgb(var(--swatch-alternate-color)))</span><span class="hl-code">;
+            </span><span class="hl-reserved">filter:</span><span class="hl-code"> drop-shadow(</span><span class="hl-number">0.1875</span><span class="hl-code">rem </span><span class="hl-number">0.1875</span><span class="hl-code">rem </span><span class="hl-number">0</span><span class="hl-code"> rgb(var(--swatch-alternate-color)))</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.side-block.media</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-special">:focus-within</span><span class="hl-code"> </span><span class="hl-identifier">img</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    -</span><span class="hl-reserved">webkit-filter:</span><span class="hl-code"> drop-shadow(</span><span class="hl-number">0.1875</span><span class="hl-code">rem </span><span class="hl-number">0.1875</span><span class="hl-code">rem </span><span class="hl-number">0</span><span class="hl-code"> rgb(var(--swatch-alternate-color)))</span><span class="hl-code">;
+            </span><span class="hl-reserved">filter:</span><span class="hl-code"> drop-shadow(</span><span class="hl-number">0.1875</span><span class="hl-code">rem </span><span class="hl-number">0.1875</span><span class="hl-code">rem </span><span class="hl-number">0</span><span class="hl-code"> rgb(var(--swatch-alternate-color)))</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">html</span><span class="hl-special">:not</span><span class="hl-code">(</span><span class="hl-special">:lang</span><span class="hl-code">(</span><span class="hl-identifier">cn</span><span class="hl-code">)) </span><span class="hl-identifier">div.scpnet-interwiki-wrapper</span><span class="hl-code"> </span><span class="hl-identifier">p</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">box-shadow:</span><span class="hl-code"> </span><span class="hl-string">inherit</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.scpnet-interwiki-wrapper</span><span class="hl-special">:not</span><span class="hl-code">(</span><span class="hl-special">:lang</span><span class="hl-code">(</span><span class="hl-identifier">cn</span><span class="hl-code">)):</span><span class="hl-special">:before</span><span class="hl-code">,
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.scpnet-interwiki-wrapper</span><span class="hl-special">:not</span><span class="hl-code">(</span><span class="hl-special">:lang</span><span class="hl-code">(</span><span class="hl-identifier">cn</span><span class="hl-code">)) </span><span class="hl-identifier">p</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code">,
+</span><span class="hl-identifier">#side-bar</span><span class="hl-code"> </span><span class="hl-identifier">.scpnet-interwiki-wrapper</span><span class="hl-special">:not</span><span class="hl-code">(</span><span class="hl-special">:lang</span><span class="hl-code">(</span><span class="hl-identifier">cn</span><span class="hl-code">)) </span><span class="hl-identifier">p</span><span class="hl-code">:</span><span class="hl-special">:after</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">background-color:</span><span class="hl-code"> rgb(var(--swatch-menubg-dark-color))</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span></pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+
+<p><iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=4&theme=https://scp-wiki.wdfiles.com/local--code/component%3Abhl-dark-sidebar/1&css={$css}" style="display: none"></iframe></p>
+
+                    

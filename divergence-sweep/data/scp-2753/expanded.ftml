@@ -1,0 +1,402 @@
+[[module CSS]]
+@import url(https://scp-wiki.wdfiles.com/local--code/info:style/1);
+[[/module]]
+
+[[ul class="creditRate"]]
+[[li class="rateBox folded"]]
+[[div_ class="rate-box-with-credit-button"]]
+[[module Rate]]
+[[div class="creditButton foldable-list-container"]]
+[# ]
+[[/div]]
+[[/div]]
+
+[[div id="credit-view"]]
+[[div_ class="fader foldable-list-container"]]
+[# close]
+[[/div]]
+
+[[div class="modalcontainer"]]
+[[div class="modalbox"]]
+[[=]]
+++* Info
+[[/=]]
+------
+[[div_ class="close-credits foldable-list-container"]]
+[# X]
+[[/div]]
+[[div class="credit first"]]
+
+**SCP-2753:** Let's Play Jenga!
+**Author:** [[*user the great hippo]]
+**Images:** [https://commons.wikimedia.org/wiki/File:2016_Election_Watch_(30262247153).jpg Link].
+
+**Music:** [https://youtu.be/I7H6wGy5zf4 Jenga Commercial Jingle] (???)
+
+[[size 80%]]
+= **Next: [[[[SCP-2679]]]]: //The Many Graves of Jeannette Parslov//**
+[[/size]]
+----
+
+[[div class="error-block"]]Page to be included :scpsandbox2:hippo cannot be found![[/div]]
+
+
+------
+
+
+[[/div]]
+------
+
+[[div class="creditBottomRate"]]
+[[div]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+[[/li]]
+[[/ul]]
+
+~~~~
+
+
+
+
+[[module CSS]]
+@import url(https://scp-wiki.wdfiles.com/local--code/component:scp-pride/1)
+[[/module]]
+
+[[iftags +component]]
+This component replaces the default version of the SCP Logo with a Pride version.
+
+Use it with the following:
+
+> @@[[include component:scp-pride]]@@
+
+[[code type="css"]]
+#header {
+    background-image: url('https://scp-wiki.wdfiles.com/local--files/component:scp-pride/scp_pride_icon2.svg')
+}
+[[/code]]
+[[/iftags]]
+
+
+
+
+[[div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;"]]
+[[image jenga.png {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+Photo of SCP-2753-A instance taken during Boston Anomalous Art Expo (BAAE) prior to collapse.
+[[/div]]
+[[/div]]
+
+
+
+**Item #:** SCP-2753
+
+**Object Class:** Keter
+
+**Special Containment Procedures:** A Foundation-operated bot ([[[SCP-3089|I/O-SILVER]]]) is to monitor internet traffic for SCP-2753. Upon discovery, all data containing SCP-2753 is to be destroyed. Anyone outside of Foundation personnel aware of SCP-2753 is to be apprehended, interrogated, and amnesticized.
+
+Instances of SCP-2753-A are to be kept disassembled in a secure locker on-site. Instances of SCP-2753-B and SCP-2753-C are to be handled on a case-by-case basis. Tests are prohibited at this time.
+
+**Description:** SCP-2753 is a 3 dimensional ratio that can be used to describe the relationship between the sides of a block.
+
+Instances of SCP-2753-A are blocks which match SCP-2753's projection within a certain threshold; they can otherwise be of any size and material. They exhibit their anomalous property only when 42 instances of similar size and material are assembled into a standard Jenga[[footnote]]Jenga is a game wherein blocks are assembled into a tower; players then take turns removing blocks and placing them on top while trying to avoid a collapse.[[/footnote]] tower: If this tower collapses, any structure containing it will immediately collapse with it. 
+
+Since 2009, the growing popularity and accuracy of 3D printing combined with SCP-2753's presentation within OBJ files[[footnote]]OBJ is a geometry definition file format used as instructions for many commercially available 3D printers.[[/footnote]] as a printable Jenga set has led to 21 structural collapses, 35 injuries, and 14 deaths.
+
+**Addendum 2753.1:** Incidents
+
+[[collapsible show="► ACCESS SCP:/2753/incidents/007.log" hide="▼ Close File"]]
+> = **INCIDENT LOG**
+> ----
+> **DATE:** 1988/07/07
+> **SUBJECT:** SCP-2753-A
+> ----
+> The collapse of a warehouse used to host the Boston Anomalous Art Expo[[footnote]]The Boston Anomalous Art Expo (BAAE) is an underground art exposition dedicated to sharing works from various anartists.[[/footnote]] was linked to an instance of SCP-2753-A. 14 additional anomalous objects (including [[[SCP-1433]]], an instance of [[[SCP-1617]]], and [[[project-proposal-1994-103|SCP-████]]]) were also recovered amidst the wreckage. The collapse left over 49 participants injured and 21 dead. The following note was discovered nearby:
+> 
+>> How High Can High Art Get? Let's Find Out!
+>> 
+>> This tower is to be assembled at the start of the exposition; audience members are encouraged to take turns trying to take art higher and higher!
+>> 
+>> But be warned: High art carries high risk! Reach too high, and you might just find your paradigm comes crashing down right on top of your head!
+>> 
+>> - [[[are-we-cool-yet-hub|AWCY]]]
+> 
+[[/collapsible]]
+
+[[collapsible show="► ACCESS SCP:/2753/incidents/021.log" hide="▼ Close File"]]
+> = **INCIDENT LOG**
+> ----
+> **DATE:** 1995/07/14
+> **SUBJECT:** SCP-2753-B
+> ----
+> Based on information provided by an undisclosed source, the Foundation-operated bot (I/O-SILVER) was used to search for SCP-2753 projections in financial market data. The collapse of several investment firms and multi-level marketing[[footnote]]Multi-Level Marketing (MLM) is a business strategy relying primarily on pyramid-shaped commission systems to produce profits.[[/footnote]] companies were unexpectedly linked to SCP-2753. 
+> 
+> Further investigation has demonstrated the existence of SCP-2753-B instances. Instances are financial assets that match SCP-2753's projection within a certain threshold; they can otherwise be of any value and type. They exhibit their anomalous property only when 42 instances of similar value and type are assembled into an interdependent network: If this network loses solvency, any corporate entity linked to it will experience an immediate catastrophic financial collapse.
+> 
+> Foundation efforts are currently underway to discover all such networks and safely disassemble them.
+[[/collapsible]]
+
+[[collapsible show="► ACCESS SCP:/2753/incidents/035.log" hide="▼ Close File"]]
+> = **INCIDENT LOG**
+> ----
+> **DATE:** 2016/07/21
+> **SUBJECT:** SCP-2753-C
+> ----
+> Based on information provided by an undisclosed source, the Foundation-operated bot (I/O-SILVER) was used to search for SCP-2753 projections in various popular code repositories and file-sharing networks. Several significant server crashes along with losses of critical data were linked to SCP-2753.
+> 
+> Further investigation has demonstrated the existence of SCP-2753-C instances. Instances are files with specific attributes matching SCP-2753's projection within a certain threshold; they can otherwise be of any size and type. They exhibit their anomalous property only when 42 instances of similar size and type are accessed simultaneously by a single program. If this program crashes unexpectedly, any network running this program will experience an immediate catastrophic failure. 
+> 
+> Foundation efforts are currently underway to discover all such programs and destroy them.[[/collapsible]]
+
+[[collapsible show="► ACCESS SCP:/2753/incidents/042.log" hide="%%$ ERROR:FileNotFound()"]]
+++ 035 Internal Server Error
+The server encountered an unexpected condition which prevented it from fulfilling the request (REQUEST_PROTOCOL 028): 
+[[div style="display: inline-block; background:#000000; float:top; padding:5px; width:100%"]]
+##red|{{Traceback (most recent call last):}}
+{{@@  File "/SCP/2753/files/_display.py", line 21, in respond@@}}
+{{@@    table.open.body = self.handler()@@}}
+{{@@  File "/SCP/2753/files/_display.py", line 14, in __call__@@ }}
+{{@@    return self.callable(*self.args, **self.kwargs)@@}}
+{{@@  File "error_classic.py", line 7 in index@@}}
+{{@@    raise NotImplementedError(msg)@@}}
+{{@@NotImplementedError:@@ [[[[scp-2747|DATA LOST]]]]}}##
+[[/div]]
+> **NOTE:** The IntSCPFN network has experienced a critical error. If you are seeing this message, please immediately notify your Site-Director via phone, radio, or in person.
+
+//##white|WE ALL##//
+
+//##white|FALL##//
+
+//##white|DOWN##//
+[[/collapsible]]
+
+[[footnoteblock]]
+
+[[div class="footer-wikiwalk-nav"]]
+[[=]]
+<< [[[SCP-2752]]] | SCP-2753 | [[[SCP-2754]]] >>
+[[/=]]
+[[/div]]
+
+
+[[iftags +component]]
++ How To Use
+It is **mandatory** for all articles to have the licensebox citing all images, texts, and excerpts utilized within the piece. 
+
+Add this to the bottom of the page, below the wikiwalk footer:
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** @@
+@@> **Name:** (if different from filename)@@
+@@> **Author:**@@
+@@> **License:**@@
+@@> **Source Link:**@@
+@@> **Additional Notes:** (Optional)@@
+@@> **Derivative Of:** (Situational)@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Let's break down what each of these sections mean.
+
+> @@> **Filename:** @@
+
+Filename is, as the name implies, the name of a file in your article. As per Tech Policy, all files on pages must have a file extension appended after the name. This means that if you upload an image to your article and call it {{mycoolimage-1}}, you are not following the rules. A correct name would be {{mycoolimage-1.png}} or {{mycoolimage-1.jpg}}, or any other similar filetypes. If you are unsure what the file extension of something you intend to upload is, you can check it by right clicking on the file and then pressing 'Properties.'
+
+If you are quoting from a text, write something along the lines of {{Excerpts taken from //Book Title Here//}}. Do not input the entire quote here, just where it comes from.
+
+> @@> **Name:** (if different from filename)@@
+
+This field is where you put the original name of the file. For example, let's say I wanted to use [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg this image in my article]. The name of the image is {{Kievitsbloem}}, as is listed on the page. I would then copy that and paste it onto this field. Do not include its file extension (jpg, png, etc).
+
+If you are quoting from a text, list its title here.
+
+If you are using your own creation, you may title it however you please, or you may exclude this field completely.
+
+> @@> **Author:**@@
+
+This field is where you acknowledge the original creator of the media you are using. Looking at [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg the same previous image], we can see that the author of the file is {{Rasbak}}. This means I would have to put that name in this field. If you are using commissioned work, you must still cite the original creator.
+
+If you are using your own creation, insert your username.
+
+
+> @@> **License:**@@
+
+In this section, you must write the file's attached license. This information is typically accessible on the page you are sourcing the file from. [https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg Following the same example as before], we can see that this particular image is CC BY SA 3.0. Keep in mind that all files must be compatible with the site's license (CC BY SA 3.0) and follow the [[[Image Use Policy]]]. 
+
+
+> @@> **Source Link:**@@
+
+This field is typically a direct link to the page where you are taking the file from. Just copy the url from the address bar and paste it here. So for example, using the same image as above, I would put {{@@[https://commons.wikimedia.org/wiki/File:Kievitsbloem.jpg Wikimedia Commons]@@}} in this field. You should replace the text of the hyperlink with the name of the webiste you are taking your file from.
+
+If you are utilizing your own work, link to the page you are posting and title it {{SCP Foundation Wiki}}. However, if you are using your own media that you uploaded to a site like, say, Flickr, you must still follow this step.
+
+> @@> **Additional Notes:** (Optional)@@
+
+This is where you enter any additional information about the file. For example, if it is a composite image, you must state that this file is made up of two different images, and cite all images used in its creation. 
+
+
+> @@> **Derivative Of:** (Situational)@@
+
+This field is only applicable if you are using an image or other form of media that was derived from two or more sources. For example, a mashup would have to cite all of its images here. In order to be properly licenseboxed, copy-paste the following syntax underneath the {{Derivative Of:}} line.
+
+[[div class="blockquote"]]
+@@> **Name:**@@
+@@> **Author:**@@
+@@> **License:**@@
+@@> **Source Link:**@@
+[[/div]]
+
+From there, you simply fill in the information as you would any other file.
+-----
+
++ Examples
+
+Here is an example of a licensebox used in [[[SCP-7726]]], which cites an image from Wikimedia Commons.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** gun.png@@
+@@> **Name:** Beretta 90TWO closed.JPG@@
+@@> **Author:** Praiyachat@@
+@@> **License:** CC BY-SA 3.0@@
+@@> **Source Link:** [https://commons.wikimedia.org/wiki/File:Beretta_90TWO_closed.JPG Wikimedia Commons]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-6999]]], which cites an audio clip.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** hymn.mp3@@
+@@> **Name:** Nearer, my God, to Thee@@
+@@> **Author:** Conway's Band@@
+@@> **License:** Public Domain@@
+@@> **Source Link:** [https://www.loc.gov/item/jukebox-14234/ Library of Congress]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[michael-the-kiler|michael the kiler]]], which cites an author using their own creation.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** dakilla.jpg@@
+@@> **Author:** [[*user ratking666]]@@
+@@> **License:** CC BY-SA 3.0@@
+@@> **Source Link:** [https://scp-wiki.wikidot.com/michael-the-kiler SCP Foundation Wiki]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-7000]]], which cites an author using an image derivative of other images.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> **Filename:** WettleBomb.jpg@@
+@@> **License:** CC BY 2.0@@
+
+This image is a composite of:
+
+@@> **Name:** 130320-Z-TK422-652@@
+@@> **Author:** Oregon National Guard@@
+@@> **License:** CC BY 2.0@@
+@@> **Source:** [https://www.flickr.com/photos/32031029@N03/8576628356 flickr]@@
+
+@@> **Name:** High Noon Nap@@
+@@> **Author:** OakleyOriginals@@
+@@> **License:** CC BY 2.0@@
+@@> **Source:** [https://www.flickr.com/photos/47264866@N00/13279780754 flickr]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[SCP-173]]], which does not have any images or other citations, but includes an author listing.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=Moto42]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+Here is an example of a licensebox used in [[[deesoafs|Doctor Everwood Eats Shit On A Frozen Sidewalk]]], which does not have any images or other citations and does not include an author listing.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+-----
+
++ A Word On Excerpts/Quotes
+
+If you are using excerpts from passages or quotes, you must still cite them. 
+
+Here is an example of a licensebox used in [[[SCP-7010]]], which cites excerpts from a book.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box]]@@
+@@> This article contains an excerpt from //[*https://en.wikisource.org/wiki/Leviathan Leviathan]// (1651) by Thomas Hobbes (Public Domain).@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+-----
+
++ A Note On Co-Authoring
+
+In the event you co-author an article with someone or someones, you can add the following syntax to the top of the licensebox to indicate multiple authors.
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=User1, User2, User3]]@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+----
+
++ A Note On Translations
+
+For translations of works originally written in another language (see our [[[Translations Policy]]] for more information), the licensebox should list the original author (or authors) first, followed by the translator (or translators). 
+
+Within the licensebox, link to the original article, as follows:
+
+[[div class="blockquote"]]
+@@[[include :scp-wiki:component:license-box@@
+@@|author=User1, translated by User2]]@@
+@@> **Original Article:** original-url@@
+@@[[include :scp-wiki:component:license-box-end]]@@
+[[/div]]
+
+If you post a translation of your own work then it is unnecessary to list your own name twice. If you post a translation of a translation (e.g. a Japanese article that was translated into Spanish, then into English), link to the original article, but credit the translator whose work you used as a co-translator.
+
+See [[[SCP-280-JP]]] for an example of a translation with multiple images listed in the License Box.
+
+----
+[[size 75%]]This page was originally created by CityToast and was updated on 1/27/2024 by Uncle Nicolini.[[/size]]
+@@ @@
+@@ @@
+@@ @@
+@@ @@
+= Ignore everything beneath this text.
+@@ @@
+@@ @@
+@@ @@
+[[/iftags]]
+
+[[div class="licensebox"]]
+[[collapsible show="‡ Licensing / Citation" hide="‡ Hide Licensing / Citation"]]
+Cite this page as:
+[[module listpages range="."]]
+> "%%title_linked%%" by The Great Hippo
+, from the [https://scpwiki.com SCP Wiki]. Source: https://scpwiki.com/%%fullname%%. Licensed under [https://creativecommons.org/licenses/by-sa/3.0/ CC BY-SA].
+[[/module]]
+For information on how to use this component, see the [[[component:license-box|License Box component]]]. To read about licensing policy, see the [[[Licensing Guide]]].
+
+
+> **Filename:** jenga.png
+> **Author:** US Embassy Canada
+> **License:** CC BY 2.0
+> **Source Link:** [https://commons.wikimedia.org/wiki/File:2016_Election_Watch_(30262247153).jpg Wikimedia Commons]
+
+[[/collapsible]]
+[[/div]]

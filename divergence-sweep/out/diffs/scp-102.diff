@@ -1,0 +1,184 @@
+--- live
++++ ftml
+@@ -1,56 +1,17 @@
+ <div style="display: none">
+-<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=1&amp;theme=https://cdn.scpwiki.com/theme/en/black-highlighter/css/min/normalize.min.css&amp;css={$css}" style="display: none">
+-</iframe>
+-<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=2&amp;theme=https://cdn.scpwiki.com/theme/en/black-highlighter/css/min/black-highlighter.min.css&amp;css={$css}" style="display: none">
+-</iframe>
+-</div>
+-<p>
+-<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=4&amp;theme=https://scp-wiki.wdfiles.com/local--code/component%3Abhl-dark-sidebar/1&amp;css={$css}" style="display: none">
+-</iframe>
+-</p>
+-<p>
+-<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=3&amp;theme=https://scp-wiki.wdfiles.com/local--code/theme%3Ablack-market/1&amp;css={$css}" style="display: none">
+-</iframe>
+-</p>
++<div class="error-block">
++T"Sorry, no match for the embedded content."
++</div>
++<div class="error-block">
++T"Sorry, no match for the embedded content."
++</div>
++</div>
+ <div class="content-separator" style="display: none:">
+ </div>
+-<div class="preview">
+-<p>
+-T"There is a darkness inside of this house. And you. Here, come and see it."
+-</p>
+-</div>
+-<div class="content-separator" style="display: none:">
+-</div>
+ <div style="text-align: right;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+108"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-<div class="authorlink-wrapper">
+-<a href="javascript:;">
+-T"xexnoncores &amp; co."
+-</a>
+-<div class="authorbox">
+-<div class="authorcontent">
++<p>
++T"TODO: module Rate"
++</p>
++</div>
+ <p>
+ <strong>
+@@ -62,8 +23,8 @@
+ T"SCP-102: Property of Marshall, Carter, and Dark Ltd. by "
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/xexnoncores" onclick="WIKIDOT.page.listeners.userInfo(9159226); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=9159226&amp;amp;size=small&amp;amp;timestamp=TS" alt="xexnoncores" style="background-image:url(https://www.wikidot.com/userkarma.php?u=9159226)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/xexnoncores" onclick="WIKIDOT.page.listeners.userInfo(9159226); return false;">
++<a href="/user:info/xexnoncores" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" alt="xexnoncores" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/xexnoncores" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T"xexnoncores"
+ </a>
+@@ -71,24 +32,28 @@
+ T", "
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/tyrastafr" onclick="WIKIDOT.page.listeners.userInfo(7970724); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=7970724&amp;amp;size=small&amp;amp;timestamp=TS" alt="Tyrastafr" style="background-image:url(https://www.wikidot.com/userkarma.php?u=7970724)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/tyrastafr" onclick="WIKIDOT.page.listeners.userInfo(7970724); return false;">
+-T"Tyrastafr"
++<a href="/user:info/tyrastafr" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" alt="tyrastafr" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/tyrastafr" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T"tyrastafr"
+ </a>
+ </span>
+ T" and "
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/tunedtoadeadchannel" onclick="WIKIDOT.page.listeners.userInfo(304457); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=304457&amp;amp;size=small&amp;amp;timestamp=TS" alt="tunedtoadeadchannel" style="background-image:url(https://www.wikidot.com/userkarma.php?u=304457)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/tunedtoadeadchannel" onclick="WIKIDOT.page.listeners.userInfo(304457); return false;">
++<a href="/user:info/tunedtoadeadchannel" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" alt="tunedtoadeadchannel" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/tunedtoadeadchannel" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T"tunedtoadeadchannel"
+ </a>
+ </span>
+ </p>
+-</div>
+-</div>
+-</div>
++<p>
++T"[[/div]]"
++<br>
++T" [[/div]]"
++<br>
++T" [[/div]]"
++</p>
+ <div style="text-align: right; margin-top: -1em; margin-right: 2em">
+ <p>
+@@ -98,6 +63,6 @@
+ <div style="text-align: center;">
+ <div class="scp-image-block block-center" style="width:600px; --_image-block-width:600px;">
+-<a href="https://scp-wiki.wdfiles.com/local--files/scp-102/exterior.jpeg">
+-<img src="https://scp-wiki.wdfiles.com/local--resized-images/scp-102/exterior.jpeg/medium.jpg" alt="exterior.jpeg" class="image">
++<a href="https://scp-wiki.wjfiles.com/local--files/scp-102/exterior.jpeg">
++<img src="https://scp-wiki.wjfiles.com/local--resized-images/scp-102/exterior.jpeg/medium.jpg" class="image" alt="exterior.jpeg">
+ </a>
+ <div class="scp-image-caption">
+@@ -116,6 +81,6 @@
+ <div style="text-align: center;">
+ <div class="scp-image-block block-center" style="width:600px; --_image-block-width:600px;">
+-<a href="https://scp-wiki.wdfiles.com/local--files/scp-102/interior.jpeg">
+-<img src="https://scp-wiki.wdfiles.com/local--resized-images/scp-102/interior.jpeg/medium.jpg" alt="interior.jpeg" class="image">
++<a href="https://scp-wiki.wjfiles.com/local--files/scp-102/interior.jpeg">
++<img src="https://scp-wiki.wjfiles.com/local--resized-images/scp-102/interior.jpeg/medium.jpg" class="image" alt="interior.jpeg">
+ </a>
+ <div class="scp-image-caption">
+@@ -166,6 +131,6 @@
+ <div style="text-align: center;">
+ <div class="scp-image-block block-center" style="width:600px; --_image-block-width:600px;">
+-<a href="https://scp-wiki.wdfiles.com/local--files/scp-102/girl.jpeg">
+-<img src="https://scp-wiki.wdfiles.com/local--resized-images/scp-102/girl.jpeg/medium.jpg" alt="girl.jpeg" class="image">
++<a href="https://scp-wiki.wjfiles.com/local--files/scp-102/girl.jpeg">
++<img src="https://scp-wiki.wjfiles.com/local--resized-images/scp-102/girl.jpeg/medium.jpg" class="image" alt="girl.jpeg">
+ </a>
+ <div class="scp-image-caption">
+@@ -820,29 +785,7 @@
+ T"Cite this page as:"
+ </p>
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="1467191475" data-lp-route="scp-102" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<blockquote>
+-<p>
+-T"""
+-<a href="/scp-102">
+-T"SCP-102"
+-</a>
+-T"" by xexnoncores, Tyrastafr, and tunedtoadeadchannel, from the "
+-<a href="https://scpwiki.com">
+-T"SCP Wiki"
+-</a>
+-T". Source: "
+-<a href="https://scpwiki.com/scp-102">
+-T"https://scpwiki.com/scp-102"
+-</a>
+-T". Licensed under "
+-<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+-T"CC BY-SA"
+-</a>
+-T"."
+-</p>
+-</blockquote>
+-</div>
+-</div>
++<p>
++T"TODO: module ListPages"
++</p>
+ <p>
+ T"For information on how to use this component, see the "

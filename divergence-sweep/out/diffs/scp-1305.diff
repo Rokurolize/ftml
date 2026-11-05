@@ -1,0 +1,282 @@
+--- live
++++ ftml
+@@ -12,156 +12,17 @@
+ <div class="anchor">
+ <div class="authorbox tableb">
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="1454335439" data-lp-route="scp-1305" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<table class="wiki-content-table">
+-<tr>
+-<th>
+-T"SCP-1305"
+-</th>
+-</tr>
+-<tr>
+-<td style="text-align: center;">
+-<span class="bt bb">
+-T"Byㅤ"
+-</span>
+-T" "
+-<span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/troutmaskreplica" onclick="WIKIDOT.page.listeners.userInfo(5346544); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=5346544&amp;amp;size=small&amp;amp;timestamp=TS" alt="TroutMaskReplica" style="background-image:url(https://www.wikidot.com/userkarma.php?u=5346544)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/troutmaskreplica" onclick="WIKIDOT.page.listeners.userInfo(5346544); return false;">
+-T"TroutMaskReplica"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<th>
+-T"Published on "
+-<span class="odate time_TS format_%25d%20%25b%20%25Y">
+-T"28 Jun 2024 21:35"
+-</span>
+-</th>
+-</tr>
+-</table>
+-</div>
+-</div>
+-</div>
+-<br>
+-</div>
+-</div>
+-<p>
+-<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=2&amp;theme=https://scp-wiki.wdfiles.com/local--code/theme%3Aflopstyle-dark/2&amp;css={$css}" style="display: none">
+-</iframe>
+-</p>
+-</div>
+-<div class="meta-title">
+-<p>
+-T"SCP-1305"
+-</p>
+-</div>
+-<div class="pseudocrumbs">
+-<p>
+-<a href="/scp-series-2">
+-T"Series 2"
+-</a>
+-T" » SCP-1305"
+-</p>
+-</div>
+-<div class="anchor">
+-<div class="authorbox tableb">
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="1454335439" data-lp-route="scp-1305" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<table class="wiki-content-table">
+-<tr>
+-<th>
+-T"SCP-1305"
+-</th>
+-</tr>
+-<tr>
+-<td style="text-align: center;">
+-<span class="bt bb">
+-T"By"
+-</span>
+-T" "
+-<span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/troutmaskreplica" onclick="WIKIDOT.page.listeners.userInfo(5346544); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=5346544&amp;amp;size=small&amp;amp;timestamp=TS" alt="TroutMaskReplica" style="background-image:url(https://www.wikidot.com/userkarma.php?u=5346544)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/troutmaskreplica" onclick="WIKIDOT.page.listeners.userInfo(5346544); return false;">
+-T"TroutMaskReplica"
+-</a>
+-</span>
+-T", "
+-<span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/dino-draws" onclick="WIKIDOT.page.listeners.userInfo(8229577); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=8229577&amp;amp;size=small&amp;amp;timestamp=TS" alt="Dino--Draws" style="background-image:url(https://www.wikidot.com/userkarma.php?u=8229577)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/dino-draws" onclick="WIKIDOT.page.listeners.userInfo(8229577); return false;">
+-T"Dino--Draws"
+-</a>
+-</span>
+-T" and "
+-<span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/vapidpoem" onclick="WIKIDOT.page.listeners.userInfo(8631823); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=8631823&amp;amp;size=small&amp;amp;timestamp=TS" alt="VapidPoem" style="background-image:url(https://www.wikidot.com/userkarma.php?u=8631823)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/vapidpoem" onclick="WIKIDOT.page.listeners.userInfo(8631823); return false;">
+-T"VapidPoem"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<th>
+-T"Published on "
+-<span class="odate time_TS format_%25d%20%25b%20%25Y">
+-T"28 Jun 2024 21:35"
+-</span>
+-</th>
+-</tr>
+-</table>
+-</div>
+-</div>
+-</div>
+-</div>
+-<div style="text-align: center;">
+-<p>
+-T"🕰️ "
+-<strong>
+-T"Word Count: 2.5k Words"
+-</strong>
+-T" 🕰️"
+-</p>
+-</div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+124"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
+-<div class="meta-title">
+-<p>
+-T"SCP-1305"
+-</p>
+-</div>
++<p>
++T"TODO: module ListPages"
++</p>
++</div>
++</div>
++</div>
++<p>
++T"—]"
++</p>
+ <div>
++<p>
++T"[[iftags -component-backend]]"
++</p>
+ <div class="anom-bar-container item-Item#: 1305 clear-3 drygioni none none none {$american}">
+ <div class="anom-bar">
+@@ -174,4 +35,6 @@
+ <span class="number">
+ T"Item#: 1305"
++<br>
++T" "
+ </span>
+ </div>
+@@ -240,4 +103,5 @@
+ T"link to memo"
+ </a>
++T" "
+ <br>
+ <div class="arrows">
+@@ -268,4 +132,6 @@
+ </div>
+ </div>
++<br>
++T" [[/iftags]]"
+ </div>
+ <p>
+@@ -276,15 +142,16 @@
+ </p>
+ <div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;">
+-<img src="http://scp-wiki.wikidot.com/local--files/scp-1305/SCP-1305.png" alt="SCP-1305.png" class="image">
+-<div class="scp-image-caption">
+-<p>
+-T"From recovered footage. "
++<img src="http://scp-wiki.wikidot.com/local--files/scp-1305/SCP-1305.png" class="image" alt="SCP-1305.png">
++<br>
++T" [[div class="scp-image-caption"]]"
++<br>
++T" From recovered footage. "
+ <em>
+ T"Dated 28/AUG/2003"
+ </em>
+ T"."
+-</p>
+-</div>
+-</div>
++</div>
++<br>
++T" [[/div]]"
+ <p>
+ <strong>
+@@ -762,33 +629,7 @@
+ T"Cite this page as:"
+ </p>
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="1454335439" data-lp-route="scp-1305" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<blockquote>
+-<p>
+-T"""
+-<a href="/scp-1305">
+-T"SCP-1305"
+-</a>
+-T"" by Anonymous, rewrite by TroutMaskReplica, Dino"
+-<span style="white-space: pre-wrap;">
+-T"--"
+-</span>
+-T"Draws, and VapidPoem, from the "
+-<a href="https://scpwiki.com">
+-T"SCP Wiki"
+-</a>
+-T". Source: "
+-<a href="https://scpwiki.com/scp-1305">
+-T"https://scpwiki.com/scp-1305"
+-</a>
+-T". Licensed under "
+-<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+-T"CC BY-SA"
+-</a>
+-T"."
+-</p>
+-</blockquote>
+-</div>
+-</div>
++<p>
++T"TODO: module ListPages"
++</p>
+ <p>
+ T"For information on how to use this component, see the "
+@@ -817,9 +658,9 @@
+ T" Anonymous, "
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/elenee-fishtruck" onclick="WIKIDOT.page.listeners.userInfo(4037075); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=4037075&amp;amp;size=small&amp;amp;timestamp=TS" alt="Elenee FishTruck" style="background-image:url(https://www.wikidot.com/userkarma.php?u=4037075)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/elenee-fishtruck" onclick="WIKIDOT.page.listeners.userInfo(4037075); return false;">
+-T"Elenee FishTruck"
++<a href="/user:info/elenee-fishtruck" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" alt="elenee fishtruck" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/elenee-fishtruck" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T"elenee fishtruck"
+ </a>
+ </span>
+@@ -837,9 +678,9 @@
+ T" Created by "
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/elenee-fishtruck" onclick="WIKIDOT.page.listeners.userInfo(4037075); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=4037075&amp;amp;size=small&amp;amp;timestamp=TS" alt="Elenee FishTruck" style="background-image:url(https://www.wikidot.com/userkarma.php?u=4037075)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/elenee-fishtruck" onclick="WIKIDOT.page.listeners.userInfo(4037075); return false;">
+-T"Elenee FishTruck"
++<a href="/user:info/elenee-fishtruck" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" alt="elenee fishtruck" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/elenee-fishtruck" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T"elenee fishtruck"
+ </a>
+ </span>

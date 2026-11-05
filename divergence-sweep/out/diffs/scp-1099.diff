@@ -1,0 +1,76 @@
+--- live
++++ ftml
+@@ -1,40 +1,21 @@
+ <div style="text-align: right;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+187"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
++<p>
++T"TODO: module Rate"
++</p>
+ </div>
+ <div style="display: none">
+-<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=1&amp;theme=https://cdn.scpwiki.com/theme/en/black-highlighter/css/min/normalize.min.css&amp;css={$css}" style="display: none">
+-</iframe>
+-<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=2&amp;theme=https://cdn.scpwiki.com/theme/en/black-highlighter/css/min/black-highlighter.min.css&amp;css={$css}" style="display: none">
+-</iframe>
+-</div>
+-<p>
+-<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=4&amp;theme=https://scp-wiki.wdfiles.com/local--code/component%3Abhl-dark-sidebar/1&amp;css={$css}" style="display: none">
+-</iframe>
+-</p>
++<div class="error-block">
++T"Sorry, no match for the embedded content."
++</div>
++<div class="error-block">
++T"Sorry, no match for the embedded content."
++</div>
++</div>
++<div class="error-block">
++T"Sorry, no match for the embedded content."
++</div>
+ <div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;">
+-<a href="https://scp-wiki.wdfiles.com/local--files/scp-1099/Marshlands">
+-<img src="https://scp-wiki.wdfiles.com/local--resized-images/scp-1099/Marshlands/medium.jpg" alt="Marshlands" class="image">
++<a href="https://scp-wiki.wjfiles.com/local--files/scp-1099/Marshlands">
++<img src="https://scp-wiki.wjfiles.com/local--resized-images/scp-1099/Marshlands/medium.jpg" class="image" alt="Marshlands">
+ </a>
+ <div class="scp-image-caption">
+@@ -73,6 +54,6 @@
+ </p>
+ <div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;">
+-<a href="https://scp-wiki.wdfiles.com/local--files/scp-1099/Liquid">
+-<img src="https://scp-wiki.wdfiles.com/local--resized-images/scp-1099/Liquid/medium.jpg" alt="Liquid" class="image">
++<a href="https://scp-wiki.wjfiles.com/local--files/scp-1099/Liquid">
++<img src="https://scp-wiki.wjfiles.com/local--resized-images/scp-1099/Liquid/medium.jpg" class="image" alt="Liquid">
+ </a>
+ <div class="scp-image-caption">
+@@ -206,6 +187,6 @@
+ </p>
+ <div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;">
+-<a href="https://scp-wiki.wdfiles.com/local--files/scp-1099/Worm">
+-<img src="https://scp-wiki.wdfiles.com/local--resized-images/scp-1099/Worm/medium.jpg" alt="Worm" class="image">
++<a href="https://scp-wiki.wjfiles.com/local--files/scp-1099/Worm">
++<img src="https://scp-wiki.wjfiles.com/local--resized-images/scp-1099/Worm/medium.jpg" class="image" alt="Worm">
+ </a>
+ <div class="scp-image-caption">

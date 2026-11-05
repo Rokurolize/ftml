@@ -1,0 +1,1082 @@
+[[>]]
+[[module Rate]]
+[[/>]]
+
+
+[[module CSS]]
+@import url("https://cdn.scpwiki.com/theme/en/black-highlighter/css/min/normalize.min.css");
+@import url("https://cdn.scpwiki.com/theme/en/black-highlighter/css/min/black-highlighter.min.css");
+
+a[rel="license"]::after {
+    content: ".";
+}
+[[/module]]
+
+[[div_ style="display: none"]]
+
+[!--
+Styling component for the EN Interwiki, based on the CN Interwiki by 7happy7 and Sekai-s.
+
+Interwiki: https://scpwiki.com/interwiki
+Source: https://github.com/scpwiki/interwiki
+
+See also: https://scpwiki.com/how-to-create-a-branch-of-the-scp-foundation
+
+Usage:
+
+On the page that intends to restyle the Interwiki:
+
+ [[include :scp-wiki:component:interwiki-style
+| priority=X
+| theme=<link to CSS stylesheet>
+| css=<URI-encoded CSS>
+]]
+
+The `priority` value must be set to a number that is 1 greater than the priority of the theme that this theme is extending.
+
+Examples:
+- The base theme of the site (for the SCP Wiki, this is Sigma-9) has a priority of 0.
+- A CSS theme designed to be used on pages that are already styled with Sigma-9 (i.e. a theme that extends Sigma-9) would have a priority of 1.
+- The Black Market theme extends the Black Highlighter theme, which has a priority of 2; therefore the Black Market theme would have a priority of 3.
+
+The `theme` value is optional, and can be a URL to a CSS stylesheet e.g. a CSS theme.
+
+The `css` value is optional, and can be URI-encoded CSS to apply directly to the Interwiki. To URI-encode CSS, see https://meyerweb.com/eric/tools/dencoder
+--]
+
+[[embed]]
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=1
+&theme=https://cdn.scpwiki.com/theme/en/black-highlighter/css/min/normalize.min.css
+&css={$css}" style="display: none"></iframe>
+[[/embed]]
+
+
+
+[!--
+Styling component for the EN Interwiki, based on the CN Interwiki by 7happy7 and Sekai-s.
+
+Interwiki: https://scpwiki.com/interwiki
+Source: https://github.com/scpwiki/interwiki
+
+See also: https://scpwiki.com/how-to-create-a-branch-of-the-scp-foundation
+
+Usage:
+
+On the page that intends to restyle the Interwiki:
+
+ [[include :scp-wiki:component:interwiki-style
+| priority=X
+| theme=<link to CSS stylesheet>
+| css=<URI-encoded CSS>
+]]
+
+The `priority` value must be set to a number that is 1 greater than the priority of the theme that this theme is extending.
+
+Examples:
+- The base theme of the site (for the SCP Wiki, this is Sigma-9) has a priority of 0.
+- A CSS theme designed to be used on pages that are already styled with Sigma-9 (i.e. a theme that extends Sigma-9) would have a priority of 1.
+- The Black Market theme extends the Black Highlighter theme, which has a priority of 2; therefore the Black Market theme would have a priority of 3.
+
+The `theme` value is optional, and can be a URL to a CSS stylesheet e.g. a CSS theme.
+
+The `css` value is optional, and can be URI-encoded CSS to apply directly to the Interwiki. To URI-encode CSS, see https://meyerweb.com/eric/tools/dencoder
+--]
+
+[[embed]]
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=2
+&theme=https://cdn.scpwiki.com/theme/en/black-highlighter/css/min/black-highlighter.min.css
+&css={$css}" style="display: none"></iframe>
+[[/embed]]
+
+[[/div]]
+
+[[iftags +theme -nobhl]]
+[[module css]]
+#page-title { display: none }
+
+.scp-image-block.block-right img {
+    background: var(--gradient-header);
+    box-sizing: border-box;
+    padding: 1em;
+}
+
+.fonts-display {
+    font-size: 1.25em;
+}
+
+.title-font {
+    font-family: var(--title-font);
+    font-weight: 700;
+}
+.header-font {
+    font-family: var(--title-font);
+    font-weight: 900;
+}
+.UI-font {
+    font-family: var(--UI-font);
+}
+.mono-font {
+    --MONO: 1;
+    --CASL: 0;
+    --CRSV: 0;
+    font-family: var(--mono-font);
+}
+[[/module]]
+
+[[image https://scp-wiki.wdfiles.com/local--files/component%3Ablack-highlighter-theme-dev/black-highlighter-logo.svg alt="Black Highlighter"]]
+
+[[>]]
+[[module Rate]]
+[[/>]]
+
+This is the Black Highlighter theme, a new base theme that aims to be better than the SCP Wiki's default base theme, [[[theme:site | Sigma-10]]]. You've already seen it in action.
+
+ _
+
++ Usage
+
+On any wiki:
+
+[[div class="code" style="text-align: center;"]]
+@@[[include :scp-wiki:theme:black-highlighter-theme]]@@
+[[/div]]
+
+ _
+
++ Reporting problems
+
+If you've got a Github account, [https://github.com/Nu-SCPTheme/Black-Highlighter/issues create an Issue] detailing your problem (whether it's technical, or aesthetic, or whatever).
+
+If you don't have a Github account, or if you'd prefer to discuss your issues with someone directly, send a Wikidot PM to [[*user Woedenaz]]. If he doesn't respond, send it to [[*user Croquembouche]].
+
+ _
+
++ Addons
+
+As a base theme, it's easy to extend Black Highlighter to be whatever you want. You can see all Black Highlighter-derived themes here: [[[black-highlighter-themes | ]]]
+
+For functional changes, try these:
+
+* **[[[component:bhl-dark-sidebar|]]]:** {{@@[[include :scp-wiki:component:bhl-dark-sidebar]]@@}}
+* **[[[component:collapsible-sidebar|]]]:** {{@@[[include :scp-wiki:component:collapsible-sidebar]]@@}}
+* **[[[component:toggle-sidebar-bhl|]]]:** {{@@[[include :scp-wiki:component:toggle-sidebar-bhl]]@@}}
+* **[[[component:centered-header-bhl|]]]:** {{@@[[include :scp-wiki:component:centered-header-bhl]]@@}}
+
+ _
+
+-----
+
+ _
+
++ Theme Colors
+
+
+>[!--
+
+
+[[module CSS]]
+td { vertical-align: top; }
+td strong { white-space: nowrap; }
+.options table.wiki-content-table td { border: none; padding: 0.7em 1em; }
+[[/module]]
+
+[[div style="border: 1px solid #ddd; padding: 1em;"]]
++ What this is
+
+A component that displays a bunch of colored squares to show off a CSS theme's flair.
+
+Designed by [[*user Woedenaz]] and componentised by [[*user Croquembouche]].
+
+This component is designed to be used for CSS themes, but it can be used on almost any page, if you really want.
+
++ Usage
+
+On any wiki:
+
+[[div class="code"]]
+##blue|**[[include :scp-wiki:component:theme-squares -=-**##
+##blue|**|**## ##green|color1-name####blue|**=**##My Favourite Colour
+##blue|**|**## ##green|color1-variable####blue|**=**##@@--@@fav-color
+##blue|**|**## ##green|color1-info####blue|**=**##(191, 144, 0)
+##blue|**]]**##
+[[/div]]
+
+Note the "{{-=-}}" after the component name. You **//do//** need to include that -- otherwise all this text explaining how to use the component will appear on your page.
+
+For this component, there are three parameters per color. Replace N with the number of the color.
+
+[[div class="options"]]
+|| **colorN-name** || The name of the color. Pick whatever you want! ||
+|| **colorN-variable** || The name of the [https://developer.mozilla.org/en-US/docs/Web/CSS/--* CSS variable] that contains this color. _
+The variable should hold three comma-separated numbers representing the RGB values of the color. This is consistent with BHL-style variables. _
+If your variables hold something else (e.g. a full RGB/RGBA or hex color), you will need to override the background color of each theme square manually with CSS. ||
+|| **colorN-info** || Some info about the colour. Displaying the RGB values is typical. Keep it short. _
+If you don't want any text, add {{@<@@ @@>@}} instead.||
+|| **//colorN-has-light-text//** _
+//Optional. Default: 0// || Either 0 or 1. Determines the font color on the square. Useful to make sure there is enough contrast between the background color and the text color. _
+If 1, the value of {{@@--swatch-text-light@@}} is used, or white (255, 255, 255) if it is not defined. Otherwise {{@@--swatch-text-dark@@}}, or black (0, 0, 0). Like all BHL-style CSS color variables, three numbers representing RGB values are expected. ||
+[[/div]]
+
+A color can only be used if it's exposed as a [https://developer.mozilla.org/en-US/docs/Web/CSS/--* CSS variable]. All colors in a Black Highlighter theme have a corresponding CSS variable by default, so for BHL themes, this component should work out of the box. However, sigma9 does not use CSS variables, so the only CSS variables that are available will be any that you have defined in your theme.
+
+This component can hold a maximum of 6 primary colors and 12 secondary colors. I recommend two primary colors and no more than six secondary colors.
+
+To add a primary color, just add the top three of the above parameters to the include, as shown in the example.
+
+To add a secondary color, it's the same, but replace 'color' with 'subcolor'.
+
++ Example
+
+Here's a longer example, taken from the Black Highlighter theme:
+
+[[div class="code"]]
+##blue|**[[include :scp-wiki:component:theme-squares -=-**##
+##blue|**|**## ##green|color1-name####blue|**=**##Payne's Grey 
+##blue|**|**## ##green|color1-variable####blue|**=**##@@--@@gray-monochrome
+##blue|**|**## ##green|color1-info####blue|**=**##(66, 66, 72)
+##blue|**|**## ##green|color1-has-light-text####blue|**=**##1
+##blue|**|**## ##green|color2-name####blue|**=**##Rosewood 
+##blue|**|**## ##green|color2-variable####blue|**=**##@@--@@bright-accent
+##blue|**|**## ##green|color2-info####blue|**=**##(133, 0, 5)
+##blue|**|**## ##green|color2-has-light-text####blue|**=**##1
+##blue|**|**## ##green|subcolor1-name####blue|**=**##Alto 
+##blue|**|**## ##green|subcolor1-variable####blue|**=**##@@--@@very-light-gray-monochrome
+##blue|**|**## ##green|subcolor1-info####blue|**=**##(215, 215, 215)
+##blue|**|**## ##green|subcolor2-name####blue|**=**##White Smoke 
+##blue|**|**## ##green|subcolor2-variable####blue|**=**##@@--@@pale-gray-monochrome
+##blue|**|**## ##green|subcolor2-info####blue|**=**##(244, 244, 244)
+##blue|**|**## ##green|subcolor3-name####blue|**=**##Bastille 
+##blue|**|**## ##green|subcolor3-variable####blue|**=**##@@--@@dark-gray-monochrome
+##blue|**|**## ##green|subcolor3-info####blue|**=**##(48, 48, 52)
+##blue|**|**## ##green|subcolor3-has-light-text####blue|**=**##1
+##blue|**|**## ##green|subcolor4-name####blue|**=**##Buccaneer 
+##blue|**|**## ##green|subcolor4-variable####blue|**=**##@@--@@medium-accent
+##blue|**|**## ##green|subcolor4-info####blue|**=**##(100, 46, 44)
+##blue|**|**## ##green|subcolor4-has-light-text####blue|**=**##1
+##blue|**|**## ##green|subcolor5-name####blue|**=**##Maroon 
+##blue|**|**## ##green|subcolor5-variable####blue|**=**##@@--@@dark-accent
+##blue|**|**## ##green|subcolor5-info####blue|**=**##(100, 3, 15)
+##blue|**|**## ##green|subcolor5-has-light-text####blue|**=**##1
+##blue|**|**## ##green|subcolor6-name####blue|**=**##Mango Tango 
+##blue|**|**## ##green|subcolor6-variable####blue|**=**##@@--@@newpage-color
+##blue|**|**## ##green|subcolor6-info####blue|**=**##(221, 102, 17)
+##blue|**]]**##
+[[/div]]
+
+This produces the following colored squares:
+
+[[=]]
+[[image bhl-squares.png]]
+[[/=]]
+
++ Tweaking
+
+You can adjust the appearance of the component with CSS.
+
+The whole component has the {{.colors-container}} class, and any CSS that targets it should included that class to ensure that nothing else on the page is affected. Every colored square has class {{.color}}. The primary colors have a {{.colors}} parent and the secondary colors have a {{.subcolors}} parent.
+
+You'll need to use {{!important}} to override a square's background.
+
+For example, the [[[theme:laughter-and-knives-theme | Laughter and Knives theme]]] adds a gradient background to the 9th secondary color like so:
+
+[[code type="css"]]
+.colors-container .subcolors .color:nth-of-type(9) {
+    background: var(--pastel-rainbow) !important;
+}
+[[/code]]
+
+-----
+
+[https://rossjrw.com/series-replace/?f=%5Cn&f=%5E&f=%24&f=%3C%3C%3E%3E&f=%28%3F%3C%3Dsubcolors.%2A%29%28%5B%5E%5C%5B%5C%5D%5D%2B%29%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5Ba-z-%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5B%5E%40%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D&f=%28%5B%5E%5C%5B%5C%5D%5D%2B%29%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5Ba-z-%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5B%5E%40%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D&f=%5C%7C&f=%5E%5C%5B%5C%5B%5B%5Ei%5D.%2A%7C%5E%5C%7C%5B%5E%20%5D.%2A&f=%5Cn%24&r=&r=%5B%5Binclude%20%3Ascp-wiki%3Acomponent%3Atheme-squares%20-%3D-%3C%3C%3E%3E%7C%20color%24-has-light-text%3D1%3C%3C%3E%3E%7C%20subcolor%24-has-light-text%3D1%3C%3C%3E%3E&r=%5Cn%5D%5D&r=%5Cn&r=%7C%20subcolor%24%24-name%3D%241%7C%20subcolor%24%24-variable%3D%242%7C%20subcolor%24%24-info%3D%243%7C&r=%7C%20color%24%24-name%3D%241%7C%20color%24%24-variable%3D%242%7C%20color%24%24-info%3D%243%7C&r=%5Cn%7C&r=&r= Tool to convert existing syntax to arguments for this component]
+
+[[/div]]
+
+[!-- --]
+
+[[module CSS]]
+.colors-container {
+  width: 98%;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  font-weight: 700;
+  font-family: var(--title-font, Verdana), sans-serif;
+  color: black;
+}
+
+.colors-container .colors, .colors-container .subcolors {
+  width: 100%;
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.colors-container .color {
+  flex-grow: 2;
+  padding: 0.5rem;
+  margin: 0.5rem;
+  color: rgb(var(--swatch-text-dark, 0, 0, 0));
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.colors-container .colors .color {
+  height: 7rem;
+  min-width: 4rem;
+  flex-basis: calc((100% / 2) - 2rem - 1px);
+}
+
+.colors-container .subcolors .color {
+  height: 4rem;
+  min-width: 4rem;
+  font-size: 75%;
+  text-align: center;
+  flex-basis: calc((100% / 6) - 2rem - 1px);
+}
+
+.colors-container .css-variable {
+  font-size: 75%;
+  letter-spacing: 0.1em;
+  font-family: var(--body-font, Verdana), sans-serif;
+}
+
+/* Hide a colour that's not been provided by seeing if the variable starts with "{$" */
+.colors-container [data-variable^=\{\$] {
+  display: none;
+}
+
+.colors-container [data-has-light-text="1"] {
+  color: white;
+  color: rgb(var(--swatch-text-light, 255, 255, 255));
+}
+[[/module]]
+
+[[div_ class="colors-container"]]
+
+[!-- Unfortunately I can only support a limited number of colours, because each possible slot needs to be hardcoded --]
+[!-- I can use the CSS variable name to reliably determine whether or not a colour has been provided, because it shouldn't contain any fancy formatting that would preclude it from being used in a CSS attribute --]
+[!-- If a colour is not provided, it should not take up any space --]
+
+[!-- Support up to six primary colours --]
+[[div_ class="colors"]]
+
+[[div_ class="color" style="background-color: rgb(var(--gray-monochrome
+));" data-variable="--gray-monochrome
+" data-has-light-text="1
+"]]
+Payne's Grey
+[[span class="css-variable"]]@@--gray-monochrome
+@@[[/span]][[span class="css-variable"]](66, 66, 72)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--bright-accent
+));" data-variable="--bright-accent
+" data-has-light-text="1
+"]]
+Rosewood
+[[span class="css-variable"]]@@--bright-accent
+@@[[/span]][[span class="css-variable"]](133, 0, 5)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$color3-variable}));" data-variable="{$color3-variable}" data-has-light-text="{$color3-has-light-text}"]]
+{$color3-name}[[span class="css-variable"]]@@{$color3-variable}@@[[/span]][[span class="css-variable"]]{$color3-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$color4-variable}));" data-variable="{$color4-variable}" data-has-light-text="{$color4-has-light-text}"]]
+{$color4-name}[[span class="css-variable"]]@@{$color4-variable}@@[[/span]][[span class="css-variable"]]{$color4-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$color5-variable}));" data-variable="{$color5-variable}" data-has-light-text="{$color5-has-light-text}"]]
+{$color5-name}[[span class="css-variable"]]@@{$color5-variable}@@[[/span]][[span class="css-variable"]]{$color5-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$color6-variable}));" data-variable="{$color6-variable}" data-has-light-text="{$color6-has-light-text}"]]
+{$color6-name}[[span class="css-variable"]]@@{$color6-variable}@@[[/span]][[span class="css-variable"]]{$color6-info}[[/span]]
+[[/div]]
+
+[[/div]]
+
+[!-- Support up to twelve subcolours --]
+[[div_ class="subcolors"]]
+
+[[div_ class="color" style="background-color: rgb(var(--very-light-gray-monochrome
+));" data-variable="--very-light-gray-monochrome
+" data-has-light-text="{$subcolor1-has-light-text}"]]
+Alto
+[[span class="css-variable"]]@@--very-light-gray-monochrome
+@@[[/span]][[span class="css-variable"]](215, 215, 215)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--pale-gray-monochrome
+));" data-variable="--pale-gray-monochrome
+" data-has-light-text="{$subcolor2-has-light-text}"]]
+White Smoke
+[[span class="css-variable"]]@@--pale-gray-monochrome
+@@[[/span]][[span class="css-variable"]](244, 244, 244)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--dark-gray-monochrome
+));" data-variable="--dark-gray-monochrome
+" data-has-light-text="1
+"]]
+Bastille
+[[span class="css-variable"]]@@--dark-gray-monochrome
+@@[[/span]][[span class="css-variable"]](48, 48, 52)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--medium-accent
+));" data-variable="--medium-accent
+" data-has-light-text="1
+"]]
+Buccaneer
+[[span class="css-variable"]]@@--medium-accent
+@@[[/span]][[span class="css-variable"]](100, 46, 44)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--dark-accent
+));" data-variable="--dark-accent
+" data-has-light-text="1
+"]]
+Maroon
+[[span class="css-variable"]]@@--dark-accent
+@@[[/span]][[span class="css-variable"]](100, 3, 15)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var(--newpage-color
+));" data-variable="--newpage-color
+" data-has-light-text="{$subcolor6-has-light-text}"]]
+Mango Tango
+[[span class="css-variable"]]@@--newpage-color
+@@[[/span]][[span class="css-variable"]](221, 102, 17)
+[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor7-variable}));" data-variable="{$subcolor7-variable}" data-has-light-text="{$subcolor7-has-light-text}"]]
+{$subcolor7-name}[[span class="css-variable"]]@@{$subcolor7-variable}@@[[/span]][[span class="css-variable"]]{$subcolor7-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor8-variable}));" data-variable="{$subcolor8-variable}" data-has-light-text="{$subcolor8-has-light-text}"]]
+{$subcolor8-name}[[span class="css-variable"]]@@{$subcolor8-variable}@@[[/span]][[span class="css-variable"]]{$subcolor8-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor9-variable}));" data-variable="{$subcolor9-variable}" data-has-light-text="{$subcolor9-has-light-text}"]]
+{$subcolor9-name}[[span class="css-variable"]]@@{$subcolor9-variable}@@[[/span]][[span class="css-variable"]]{$subcolor9-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor10-variable}));" data-variable="{$subcolor10-variable}" data-has-light-text="{$subcolor10-has-light-text}"]]
+{$subcolor10-name}[[span class="css-variable"]]@@{$subcolor10-variable}@@[[/span]][[span class="css-variable"]]{$subcolor10-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor11-variable}));" data-variable="{$subcolor11-variable}" data-has-light-text="{$subcolor11-has-light-text}"]]
+{$subcolor11-name}[[span class="css-variable"]]@@{$subcolor11-variable}@@[[/span]][[span class="css-variable"]]{$subcolor11-info}[[/span]]
+[[/div]]
+[[div_ class="color" style="background-color: rgb(var({$subcolor12-variable}));" data-variable="{$subcolor12-variable}" data-has-light-text="{$subcolor12-has-light-text}"]]
+{$subcolor12-name}[[span class="css-variable"]]@@{$subcolor12-variable}@@[[/span]][[span class="css-variable"]]{$subcolor12-info}[[/span]]
+[[/div]]
+
+[[/div]]
+
+[[/div]]
+
+
+ _
+
++ Syntax Examples
+
+
+
+[[div class="scp-image-block block-right" style="width:200px
+; --_image-block-width:200px
+;"]]
+[[image https://cdn.scpwiki.com/theme/en/black-highlighter/img/logo.svg
+ {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+SCP Foundation Logo
+
+[[/div]]
+[[/div]]
+
+
+
+Titles can be created by putting between one and six plus "+" at the start of the line
+
+[[collapsible show="+ Titles" hide="- Titles"]]
++ First Title
+
+++ Second Title
+
++++ Third Title
+
+++++ Fourth Title
+
++++++ Fifth Title
+
+++++++ Sixth Title
+[[/collapsible]]
+
+A horizontal rule can be created with 5 hyphens "@@-----@@" and extends across the whole page if it's not placed inside anything (e.g. a blockquote). The lines separating sections of this document are horizontal rules.
+
+-----
+
+ _
+
+[[tabview]]
+[[tab Tabulator]]
+This is a tab view.
+[[/tab]]
+[[tab Tabulation]]
+Hey look, more text here.
+
+How quaint.
+[[/tab]]
+[[tab Long Tab]]
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+[[/tab]]
+[[tab This empty tab has a really long name for some odd reason. I wonder why? It is very strange.]]
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[/tabview]]
+
+[[div class="blockquote"]]
+This is a blockquote, created by enclosing its contents with {{[[div class="blockquote"]]}} on the line before and {{[[/div]]}} on the line after.
+
+-----
+
+[[div class="blockquote"]]
+Blockquotes, and all divs, can be nested.
+[[/div]]
+[[/div]]
+
+||~ Here's an ||~ example ||
+|| of a || table ||
+
+ _
+
+[[=]]
+[[div_ class="fonts-display"]]
+The body, [[span class="title-font"]]title,[[/span]] and [[span class="header-font"]]header[[/span]] font is [https://rsms.me/inter/ Inter].
+[[span class="UI-font"]]The UI font is [https://www.paratype.com/fonts/pt/pt-root-ui PT Root UI].[[/span]] 
+[[span class="mono-font"]]The monospaced font is [https://www.recursive.design/ Recursive].[[/span]]
+[[/div]]
+
+All fonts are licensed under the [http://scripts.sil.org/OFL SIL Open Font License, Version 1.1]
+[[/=]]
+
+-----
+[[/iftags]]
+
+
+
+[[iftags +component]]
+[[module css]]
+@import url("https://nu-scptheme.github.io/Black-Highlighter/css/min/normalize.min.css");
+@import url("https://nu-scptheme.github.io/Black-Highlighter/css/min/black-highlighter.min.css");
+div.blockquote {
+    padding-top: 0.5em;
+}
+div.blockquote tt {
+    margin: 0.5em 1em 1em 1em;
+    display: block;
+    background-color: rgb(var(--dark-gray-monochrome));
+    color: rgb(var(--white-monochrome));
+    padding: 0.5em;
+}
+[[/module]]
+
+
+[!--
+Styling component for the EN Interwiki, based on the CN Interwiki by 7happy7 and Sekai-s.
+
+Interwiki: https://scpwiki.com/interwiki
+Source: https://github.com/scpwiki/interwiki
+
+See also: https://scpwiki.com/how-to-create-a-branch-of-the-scp-foundation
+
+Usage:
+
+On the page that intends to restyle the Interwiki:
+
+ [[include :scp-wiki:component:interwiki-style
+| priority=X
+| theme=<link to CSS stylesheet>
+| css=<URI-encoded CSS>
+]]
+
+The `priority` value must be set to a number that is 1 greater than the priority of the theme that this theme is extending.
+
+Examples:
+- The base theme of the site (for the SCP Wiki, this is Sigma-9) has a priority of 0.
+- A CSS theme designed to be used on pages that are already styled with Sigma-9 (i.e. a theme that extends Sigma-9) would have a priority of 1.
+- The Black Market theme extends the Black Highlighter theme, which has a priority of 2; therefore the Black Market theme would have a priority of 3.
+
+The `theme` value is optional, and can be a URL to a CSS stylesheet e.g. a CSS theme.
+
+The `css` value is optional, and can be URI-encoded CSS to apply directly to the Interwiki. To URI-encode CSS, see https://meyerweb.com/eric/tools/dencoder
+--]
+
+[[embed]]
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=1
+&theme=https://nu-scptheme.github.io/Black-Highlighter/css/min/normalize.min.css
+&css={$css}" style="display: none"></iframe>
+[[/embed]]
+
+
+
+[!--
+Styling component for the EN Interwiki, based on the CN Interwiki by 7happy7 and Sekai-s.
+
+Interwiki: https://scpwiki.com/interwiki
+Source: https://github.com/scpwiki/interwiki
+
+See also: https://scpwiki.com/how-to-create-a-branch-of-the-scp-foundation
+
+Usage:
+
+On the page that intends to restyle the Interwiki:
+
+ [[include :scp-wiki:component:interwiki-style
+| priority=X
+| theme=<link to CSS stylesheet>
+| css=<URI-encoded CSS>
+]]
+
+The `priority` value must be set to a number that is 1 greater than the priority of the theme that this theme is extending.
+
+Examples:
+- The base theme of the site (for the SCP Wiki, this is Sigma-9) has a priority of 0.
+- A CSS theme designed to be used on pages that are already styled with Sigma-9 (i.e. a theme that extends Sigma-9) would have a priority of 1.
+- The Black Market theme extends the Black Highlighter theme, which has a priority of 2; therefore the Black Market theme would have a priority of 3.
+
+The `theme` value is optional, and can be a URL to a CSS stylesheet e.g. a CSS theme.
+
+The `css` value is optional, and can be URI-encoded CSS to apply directly to the Interwiki. To URI-encode CSS, see https://meyerweb.com/eric/tools/dencoder
+--]
+
+[[embed]]
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=2
+&theme=https://nu-scptheme.github.io/Black-Highlighter/css/min/black-highlighter.min.css
+&css={$css}" style="display: none"></iframe>
+[[/embed]]
+
+
+[[=]]
+[[module Rate]]
+[[div_ class="blockquote"]]
+
+Pretty self explanatory.
+For anyone who //really// wants the dark sidebar from the O.G. BHL on their articles.
+Just add this include **AFTER** the BHL include:
+{{[[include :scp-wiki:component:bhl-dark-sidebar]]}}
+[[/div]]
+[[/=]]
+-----
+[[collapsible show="+ Show component code" hide="- Hide component code"]]
+
+[[code type="css"]]
+#interwiki, 
+#side-bar {
+    /* ===SECONDARY & TERTIARY COLORS=== */
+    /* Editing these will edit a vast majority of theme elements. Useful for making dark themes */
+
+    /* Colors for Secondary & Tertiary items like Blockquote and YUI Tabs */
+    --swatch-secondary-color: var(--swatch-menubg-dark-color);
+    --swatch-tertiary-color: var(--swatch-menubg-medium-color);
+    --swatch-alternate-color: var(--swatch-menubg-light-color);
+
+    /* Text Colors for Secondary & Tertiary items like Sidebar Headers and Top-Bar Menu Text */
+    --swatch-text-secondary-color: var(--swatch-menutxt-dark-color);
+    --swatch-text-tertiary-color: var(--swatch-menutxt-light-color);
+
+    /* ===SIDE-BAR ELEMENTS=== */
+
+    /* ===SIDE-BAR GENERAL=== */
+    --sidebar-bg-color: var(--swatch-menubg-dark-color);
+    --sidebar-resources-bg-color: 0, 0, 0, 0;
+    --sidebar-media-bg-color: 0, 0, 0, 0;
+
+    /* ===SIDEBLOCK MENU=== */
+    --sideblock-heading-border-color: var(--bright-accent);
+    --sideblock-heading-bg-color: 0, 0, 0, 0;
+    /* Transparent */
+    --sideblock-heading-text-color: var(--swatch-text-tertiary-color);
+
+    /* ===MENU-ITEMS=== */
+    --sidebar-border-color: var(--swatch-primary), 0.08;
+    --sidebar-subtext-color: var(--swatch-text-tertiary-color);
+
+    --sidebar-links-text: var(--swatch-text-tertiary-color);
+    --sidebar-links-hover-bg-color: var(--bright-accent);
+    --sidebar-links-hover-text-color: var(--swatch-text-tertiary-color);
+
+    /* ===SIDEBAR COLLAPSIBLES=== */
+    /*Folded Colors */
+    --sidebar-collapsible-fld-link-bg: var(--swatch-primary), 0.25;
+    --sidebar-collapsible-fld-link-color: var(--swatch-text-tertiary-color);
+    --sidebar-collapsible-fld-link-hover-color: var(--swatch-text-tertiary-color);
+    --sidebar-collapsible-fld-arrow-hover-color: var(--swatch-text-tertiary-color);
+
+    /*Unfolded Colors */
+    --sidebar-collapsible-ufld-link-bg: var(--swatch-primary-darker), 0.25;
+    --sidebar-collapsible-ufld-link-color: var(--swatch-text-tertiary-color);
+    --sidebar-collapsible-ufld-link-hover-color: var(--swatch-text-tertiary-color);
+    --sidebar-collapsible-ufld-arrow-hover-color: var(--swatch-text-tertiary-color);
+
+    /* Unfolded Body Colors */
+    --sidebar-collapsible-link-color: var(--swatch-text-tertiary-color);
+    --sidebar-collapsible-link-hover-color: var(--swatch-text-tertiary-color);
+
+    scrollbar-color:
+    	rgba(var(--swatch-primary-darker), 0.1)
+    	/* Thumb */
+    	rgba(var(--swatch-secondary-color), 0.05);
+    /* Track */
+
+    border-color: rgba(var(--swatch-secondary-color), 0.4);
+}
+
+/* Hover Scrollbar Behavior */
+#side-bar:hover,
+#side-bar:active {
+    scrollbar-color:
+    	rgb(var(--swatch-primary-darker), 1)
+    	/* Thumb */
+    	rgb(var(--swatch-menubg-dark-color), 1);
+    /* Track */
+}
+
+#side-bar:focus-within {
+    scrollbar-color:
+    	rgb(var(--swatch-primary-darker), 1)
+    	/* Thumb */
+    	rgb(var(--swatch-menubg-dark-color), 1);
+    /* Track */
+}
+
+#side-bar::-webkit-scrollbar-track {
+    background-color: rgba(var(--swatch-tertiary-color), 0.8);
+}
+
+#side-bar::-webkit-scrollbar,
+#side-bar::-webkit-scrollbar-thumb,
+#side-bar::-webkit-scrollbar-corner {
+    background-color: rgba(var(--swatch-menubg-dark-color), 0);
+}
+
+#side-bar .side-block.media a:-webkit-any-link {
+    background: rgba(var(--swatch-menubg-light-color), 0.75) !important;
+}
+
+#side-bar .side-block.media a:-moz-any-link {
+    background: rgba(var(--swatch-menubg-light-color), 0.75) !important;
+}
+
+#side-bar .side-block.media a:any-link {
+    background: rgba(var(--swatch-menubg-light-color), 0.75) !important;
+}
+
+#side-bar .side-block.media a::before {
+    background: rgb(var(--social-color));
+}
+
+#side-bar .side-block.media a[href*="tiktok"]::before,
+#side-bar .side-block.media a[href*="tiktok"]::after {
+    transition:
+    	background 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background-image 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	-webkit-clip-path 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+    	clip-path 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background-image 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+    	clip-path 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	background-image 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    	-webkit-clip-path 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#side-bar .side-block.media a[href*="tiktok"]:hover::before {
+    --clip-path:
+    	polygon(-15% 0,
+    		115% 0,
+    		100% 100%,
+    		0 100%
+    	);
+}
+
+#side-bar .side-block.media a[href*="tiktok"]:hover::before,
+#side-bar .side-block.media a[href*="tiktok"]:active::before {
+    --clip-path:
+    	polygon(-15% 0,
+    		115% 0,
+    		100% 100%,
+    		0 100%
+    	);
+    background-image: var(--tiktok-icon-gradient);
+    background-size: contain;
+}
+
+#side-bar .side-block.media a[href*="tiktok"]:focus-within::before {
+    --clip-path:
+    	polygon(-15% 0,
+    		115% 0,
+    		100% 100%,
+    		0 100%
+    	);
+    background-image: var(--tiktok-icon-gradient);
+    background-size: contain;
+}
+
+#side-bar .side-block.media a[href*="tiktok"]::after {
+    --clip-path:
+    	polygon(0 0,
+    		0 0,
+    		0 100%,
+    		0 100%
+    	);
+    background: rgba(var(--swatch-menubg-light-color), 0.75) !important;
+}
+
+#side-bar .side-block.media a[href*="tiktok"]:hover::after,
+#side-bar .side-block.media a[href*="tiktok"]:active::after {
+    --clip-path:
+    	polygon(-15% 0,
+    		115% 0,
+    		100% 100%,
+    		0 100%
+    	);
+    background: rgba(var(--swatch-menubg-light-color), 0.75) !important;
+}
+
+#side-bar .side-block.media a[href*="tiktok"]:focus-within::after {
+    --clip-path:
+    	polygon(-15% 0,
+    		115% 0,
+    		100% 100%,
+    		0 100%
+    	);
+    background: rgba(var(--swatch-menubg-light-color), 0.75) !important;
+}
+
+#side-bar .side-block.media a img {
+    -webkit-filter: drop-shadow(0 0 0 rgba(var(--swatch-alternate-color), 0));
+            filter: drop-shadow(0 0 0 rgba(var(--swatch-alternate-color), 0));
+    transition: -webkit-filter 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: filter 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: filter 200ms cubic-bezier(0.4, 0, 0.2, 1), -webkit-filter 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#side-bar .side-block.media a:hover img,
+#side-bar .side-block.media a:active img {
+    -webkit-filter: drop-shadow(0.1875rem 0.1875rem 0 rgb(var(--swatch-alternate-color)));
+            filter: drop-shadow(0.1875rem 0.1875rem 0 rgb(var(--swatch-alternate-color)));
+}
+
+#side-bar .side-block.media a:focus-within img {
+    -webkit-filter: drop-shadow(0.1875rem 0.1875rem 0 rgb(var(--swatch-alternate-color)));
+            filter: drop-shadow(0.1875rem 0.1875rem 0 rgb(var(--swatch-alternate-color)));
+}
+
+html:not(:lang(cn)) div.scpnet-interwiki-wrapper p::before {
+    box-shadow: inherit;
+}
+
+#side-bar .scpnet-interwiki-wrapper:not(:lang(cn))::before,
+#side-bar .scpnet-interwiki-wrapper:not(:lang(cn)) p::before,
+#side-bar .scpnet-interwiki-wrapper:not(:lang(cn)) p::after {
+    background-color: rgb(var(--swatch-menubg-dark-color));
+}
+
+[[/code]]
+[[/collapsible]]
+[[/iftags]]
+[[module CSS]]
+@import url("https://scp-wiki.wdfiles.com/local--code/component%3Abhl-dark-sidebar/1");
+[[/module]]
+
+
+[!--
+Styling component for the EN Interwiki, based on the CN Interwiki by 7happy7 and Sekai-s.
+
+Interwiki: https://scpwiki.com/interwiki
+Source: https://github.com/scpwiki/interwiki
+
+See also: https://scpwiki.com/how-to-create-a-branch-of-the-scp-foundation
+
+Usage:
+
+On the page that intends to restyle the Interwiki:
+
+ [[include :scp-wiki:component:interwiki-style
+| priority=X
+| theme=<link to CSS stylesheet>
+| css=<URI-encoded CSS>
+]]
+
+The `priority` value must be set to a number that is 1 greater than the priority of the theme that this theme is extending.
+
+Examples:
+- The base theme of the site (for the SCP Wiki, this is Sigma-9) has a priority of 0.
+- A CSS theme designed to be used on pages that are already styled with Sigma-9 (i.e. a theme that extends Sigma-9) would have a priority of 1.
+- The Black Market theme extends the Black Highlighter theme, which has a priority of 2; therefore the Black Market theme would have a priority of 3.
+
+The `theme` value is optional, and can be a URL to a CSS stylesheet e.g. a CSS theme.
+
+The `css` value is optional, and can be URI-encoded CSS to apply directly to the Interwiki. To URI-encode CSS, see https://meyerweb.com/eric/tools/dencoder
+--]
+
+[[embed]]
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=4
+&theme=https://scp-wiki.wdfiles.com/local--code/component%3Abhl-dark-sidebar/1
+&css={$css}" style="display: none"></iframe>
+[[/embed]]
+
+
+
+
+
+[[div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;"]]
+[[image Marshlands {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+SCP-1099; initial discovery site, central South America
+[[/div]]
+[[/div]]
+
+
+
+**Item #:** SCP-1099
+
+**Object Class:** Euclid
+
+**Special Containment Procedures:** SCP-1099-A is held at Biological Research Area-25 in a secure 300 gallon double walled polymer storage tank. All experimentation must be overseen by at least one (1) level 3 or higher researcher and one (1) hazmat response specialist. All personnel (excluding D-Class) entering the containment area require class 8 hazmat protection. Any volume of SCP-1099-A exceeding 300 gallons is to be rendered inert and disposed of at the end of each experimentation session; All SCP-1099–B and SCP-1099-C specimens are to be destroyed at the conclusion of each experimental session. Any and all equipment and/or personnel leaving the containment area are to be decontaminated using a sodium chloride solution of 22% or higher salinity.
+
+**Description:** SCP-1099-A is chemically a type of water (H,,2,,O) which exists in a liquid crystal form, approximating an atomic arrangement found in ice XVI. SCP-1099-A retains this arrangement well outside laboratory conditions. SCP-1099-A is a near-perfect thermal and electromagnetic insulator, maintaining a temperature between 20.4-20.6 °C despite attempts to apply or remove heat.
+
+
+
+[[div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;"]]
+[[image Liquid {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+SCP-1099-A; refraction index testing
+[[/div]]
+[[/div]]
+
+
+
+SCP-1099-A is almost entirely chemically inert. All tested samples of SCP-1099-A have shown zero dissolved solids and no chemical impurities. When introduced to fresh water, SCP-1099-A will form a nearly invisible cohesive layer on the surface. SCP-1099-A is able to slowly propagate it’s structure through standing water, adding molecules to its structure while eschewing contaminants. Thus far, the sole exception to the chemical stability of SCP-1099-A is notable reaction with Sodium Chloride. A sample of SCP-1099-A raised beyond a threshold salinity of 19.75% will lose both its atomic integrity and anomalous traits, becoming indistinguishable from mundane water. Samples desalinated after this process display no anomalous traits. 
+
+-----
+
+[[Collapsible show="+ Access Recovery Details" hide="- Recovery Details"]]
+
+> SCP-1099-A was discovered while investigating reports of an 'acid spring' in the marshlands of ████████. Several dozen specimens of SCP-1099-C were recovered from the area. Accidental exposure on the part of researcher ████ revealed the presence of SCP-1099-A. Biological Containment Mobile Task Force Sigma-1 ("Montezuma") remains in the area in the guise of an environmental protection organization. 47% of the ████████ marshlands have been deemed secured by Task Force Sigma-1.
+
+[[/collapsible]]
+
+-----
+
+SCP-1099-A is possessed of a transdermal quality specific to living human tissue. Plants watered with SCP-1099-A show no anomalous traits. Marine life introduced to pure SCP-1099-A live only for a short time, displaying symptoms and cause of death consistent with hyperoxia. Living non-human mammals exposed experience discomfort and hair loss at the exposure site with no further effects. Non-living tissues tested thus far have been unaffected. Upon contact with and absorption by living human tissue, SCP-1099-A causes a consistent exposure syndrome by means yet to be determined by Foundation scientists. In most cases, swift application of salinated water halts symptoms. Treated exposure areas may still experience infection, scarring, and necrosis of the exposed area.
+
+> {{**Progression record of SCP-1099-A exposure syndrome**}} 
+> {{**Experiment:** D-1099-003}}
+> {{**Observed by:** Dr. M. Gomez, Area-25 medical director}}
+> 
+> {{**[00:00.00]:**}} Controlled exposure applied
+> 
+> {{**[00:00.15]:**}} Immediate exposure area experiences skin inflammation and swelling externally similar to blunt force trauma. Pain.
+> 
+> {{**[00:01.25]:**}} Localized muscle spasms. Increased swelling and discoloration. Deeper pain.
+> 
+> {{**[00:02.11]**}} Edges of exposed area begin showing signs of tissue deterioration. Pain. Sweating. 
+> 
+> {{**[00:06.45]**}} Increased spasming. Increased necrosis at edges of exposure area. Epidermal splitting. Blackout.
+> 
+> {{**[00:07.35]**}} Spasms in exposure area become organized. edges of exposure area now distinct from body. Bleeding. Further necrosis.
+> 
+> {{**[00:09.12]**}} Exposure area works it’s way free of the body. Deep and necrotic avulsion injuries exposing bone and tendon. Severe hemorrhage.
+> 
+> {{**Exposure areas which successfully separate themselves from the exposed are designated SCP-1099-B**}}
+
+
+SCP-1099-B is a self-directed amount of human tissue. When free, the tissue will begin crawling (not unlike an earthworm or maggot) directly in the direction of the nearest source of fresh water. Specimens have thus far shown no ability to sense their surroundings or defend themselves. Specimens contained in a sealed chamber with no access to fresh water will crawl in circles and eventually cease activity, being overtaken by necrosis. These specimens show no difference from normally decomposing human flesh. Specimens exposed to salt or high-concentration saline experience spasms and cease activity, and do not reanimate upon rehydration. 
+
+When a SCP-1099-B specimen encounters fresh water, it will begin bloating by wicking fresh water from its surroundings using rhythmic rolling and thrashing motions to facilitate this process. After adding a mean 50% mass, SCP-1099-B will rupture. Ruptures eject a volume of substance SCP-1099-A, followed by the emergence of one or more specimens of a unique aquatic fauna. Emergent fauna are designated SCP-1099-C.
+
+
+
+[[div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;"]]
+[[image Worm {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+SCP-1099-C specimen in containment
+[[/div]]
+[[/div]]
+
+
+
+SCP-1099-C are keratin scaled water-dwelling scavengers that share superficial traits with scale worms. These worms have rudimentary mouths parts used to eat small bits of rotted meat and flotsam, beginning with the remains of the flesh they emerged from. Specimens dissected show an internal structure resembling a nudibranch, and no reproductive organs.
+SCP-1099-C specimens breathe through their skin, outputting SCP-1099-A as a waste product. Genetic testing displays human DNA matching the initial donor of SCP-1099-B. The largest SCP-1099-C specimen on record is 6m long and approximately 8cm in circumference (LOG-1099-D-005). The smallest specimen on record is approximately 3 cm long (LOG-1099-D-002).
+
+[[collapsible show="ACCESS SCP-1099-A EXPOSURE TEST LOG" hide="Controlled exposures to SCP-1099-A"]]
+
+> __D-001__: D-class personnel exposed to SCP-1099-A applied via hand-pump mister to the subject's chest. Subject indicates 3 when presented with a universal pain scale.
+>> **RESULTS:** Light necrotic damage to skin over course of 1 hour; subject sloughs first three layers of epidermis from exposed area.
+
+
+> __D-002__: D-class personnel exposed to SCP-1099-A applied via light splash from a wet brush to the subject's upper back. Subject indicates 4 when presented with a universal pain scale, as well as itching and heat.
+>> **RESULTS:** Single flat specimen of SCP-1099-B; introduced to 1 liter of fresh water, one 3cm specimen of SCP-1099-C produced. 1ml of SCP-1099-A collected over 1 hour. Sample contained, all specimens safely terminated.
+
+
+> __D-003__: D-class personnel exposed to SCP-1099-A applied via wet sponge to the subject's foot. Subject indicated an 8 when presented with a universal pain scale.
+>> **RESULTS:** 11 cm long triangular specimen of SCP-1099-B; emergence resultant in severe subject injury. specimen introduced to 4 liters of fresh water; one 9 cm specimen of  SCP-1099-C produced. 25ml of SCP-1099-A collected over 1 hour. Sample contained; all specimens safely terminated.
+
+
+> __D-004__: D class personnel exposed to SCP-1099-A applied via drinking glass to the subject's digestive system. Subject refused to indicate when presented with a universal pain scale.
+>> **RESULTS:** 1m long tubular iteration of SCP-1099-B; emergence resultant in subject casualty. Iteration introduced to 100L of fresh water, produced just under 1m specimen of SCP-1099-C. 500ml of SCP-1099-A collected over 1 hour. Sample contained; all specimens safely terminated.
+
+
+> __D-005__: [DATA EXPUNGED]. All specimens safely terminated.
+
+
+> __D-006__: D class personnel exposed to SCP-1099-A applied via submersion of subject's arm. Subject lost consciousness before being presented with a universal pain scale.
+>> **RESULTS:** Full-thickness de-gloving of subject’s arm. .5m arm-shaped iteration of SCP-1099-B. Iteration introduced to 250L of fresh water; 6 specimens of SCP-1099-C produced. 10L of SCP-1099-A collected over 1 hour. Sample contained; all specimens safely terminated.
+
+> __D-007__: D class personnel exposed to SCP-1099-A via submersion. Subject not presented with a universal pain scale.
+>> **RESULTS:** Single iteration of SCP-1099-B. Emergency containment procedures enacted due to high-pressure rupture of specimen. No accidental exposures recorded. Standard Foundation security feed footage revealed an extremely high number of SCP-1099-C specimens in a range of sizes. Containment chamber secured; all specimens safely terminated. Skeleton of D-1099-007 recovered; found to be free of all soft tissue but otherwise unremarkable.
+
+[[/collapsible]]
+
+**//Exposure testing of SCP-1099-A temporarily suspended pending completion of internal applications testing. -Sc.D Gellman, Area-25 lead researcher//**
+
+[[div class="footer-wikiwalk-nav"]]
+[[=]]
+<< [[[SCP-1098]]] | SCP-1099 | [[[SCP-1100]]] >>
+[[/=]]
+[[/div]]

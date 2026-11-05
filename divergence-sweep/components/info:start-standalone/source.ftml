@@ -1,0 +1,26 @@
+[[module CSS]]
+@import url(https://scp-wiki.wdfiles.com/local--code/info%3Astyle/1);
+[[/module]]
+
+[[ul class="creditRate"]]
+[[li class="folded"]]
+[[div class="creditButtonStandalone foldable-list-container"]]
+[# ]
+[[/div]]
+
+[[div id="credit-view"]]
+[[div_ class="fader foldable-list-container"]]
+[# close]
+[[/div]]
+
+[[div class="modalcontainer"]]
+[[div class="modalbox"]]
+[[=]]
+++* Info
+[[/=]]
+------
+[[div_ class="close-credits foldable-list-container"]]
+[# X]
+[[/div]]
+
+[[div class="credit"]]

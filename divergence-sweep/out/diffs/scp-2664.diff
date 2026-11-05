@@ -1,0 +1,1369 @@
+--- live
++++ ftml
+@@ -8,27 +8,7 @@
+ <li class="rateBox folded">
+ <div class="rate-box-with-credit-button">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+481"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
++<p>
++T"TODO: module Rate"
++</p>
+ <div class="creditButton foldable-list-container">
+ <p>
+@@ -73,1288 +53,24 @@
+ T" "
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/a-random-day" onclick="WIKIDOT.page.listeners.userInfo(1841781); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=1841781&amp;amp;size=small&amp;amp;timestamp=TS" alt="A Random Day" style="background-image:url(https://www.wikidot.com/userkarma.php?u=1841781)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/a-random-day" onclick="WIKIDOT.page.listeners.userInfo(1841781); return false;">
+-T"A Random Day"
++<a href="/user:info/a-random-day" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" alt="a random day" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/a-random-day" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T"a random day"
+ </a>
+ </span>
+ </p>
+-<div class="collapsible-block">
+-<div class="collapsible-block-folded">
+-<a class="collapsible-block-link" href="javascript:;">
+-T"+ More SCPs by A Random Day"
+-</a>
+-</div>
+-<div class="collapsible-block-unfolded" style="display:none">
+-<div class="collapsible-block-unfolded-link">
+-<a class="collapsible-block-link" href="javascript:;">
+-T"- Hide list"
+-</a>
+-</div>
+-<div class="collapsible-block-content">
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="46954273" data-lp-route="scp-2664" data-lp-generation="HEX">
+-<table class="wiki-content-table">
+-<tr>
+-<th colspan="2">
+-T"SCPs"
+-</th>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-3220">
+-T"SCP-3220"
+-</a>
+-</td>
+-<td>
+-T"Rating: 619"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-4780">
+-T"SCP-4780"
+-</a>
+-</td>
+-<td>
+-T"Rating: 559"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2790">
+-T"SCP-2790"
+-</a>
+-</td>
+-<td>
+-T"Rating: 546"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2820">
+-T"SCP-2820"
+-</a>
+-</td>
+-<td>
+-T"Rating: 530"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-3780">
+-T"SCP-3780"
+-</a>
+-</td>
+-<td>
+-T"Rating: 496"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2664">
+-T"SCP-2664"
+-</a>
+-</td>
+-<td>
+-T"Rating: 481"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-4950">
+-T"SCP-4950"
+-</a>
+-</td>
+-<td>
+-T"Rating: 417"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-947">
+-T"SCP-947"
+-</a>
+-</td>
+-<td>
+-T"Rating: 324"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2730">
+-T"SCP-2730"
+-</a>
+-</td>
+-<td>
+-T"Rating: 320"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2350">
+-T"SCP-2350"
+-</a>
+-</td>
+-<td>
+-T"Rating: 308"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2810">
+-T"SCP-2810"
+-</a>
+-</td>
+-<td>
+-T"Rating: 303"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-3640">
+-T"SCP-3640"
+-</a>
+-</td>
+-<td>
+-T"Rating: 287"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2490">
+-T"SCP-2490"
+-</a>
+-</td>
+-<td>
+-T"Rating: 287"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-4670">
+-T"SCP-4670"
+-</a>
+-</td>
+-<td>
+-T"Rating: 285"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-3470">
+-T"SCP-3470"
+-</a>
+-</td>
+-<td>
+-T"Rating: 272"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2680">
+-T"SCP-2680"
+-</a>
+-</td>
+-<td>
+-T"Rating: 264"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-5430">
+-T"SCP-5430"
+-</a>
+-</td>
+-<td>
+-T"Rating: 235"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-5940">
+-T"SCP-5940"
+-</a>
+-</td>
+-<td>
+-T"Rating: 212"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2210">
+-T"SCP-2210"
+-</a>
+-</td>
+-<td>
+-T"Rating: 212"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-4710">
+-T"SCP-4710"
+-</a>
+-</td>
+-<td>
+-T"Rating: 189"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-7660">
+-T"SCP-7660"
+-</a>
+-</td>
+-<td>
+-T"Rating: 179"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-3850">
+-T"SCP-3850"
+-</a>
+-</td>
+-<td>
+-T"Rating: 170"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-3360">
+-T"SCP-3360"
+-</a>
+-</td>
+-<td>
+-T"Rating: 161"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2910">
+-T"SCP-2910"
+-</a>
+-</td>
+-<td>
+-T"Rating: 141"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2060">
+-T"SCP-2060"
+-</a>
+-</td>
+-<td>
+-T"Rating: 129"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-1750">
+-T"SCP-1750"
+-</a>
+-</td>
+-<td>
+-T"Rating: 115"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2650">
+-T"SCP-2650"
+-</a>
+-</td>
+-<td>
+-T"Rating: 103"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2570">
+-T"SCP-2570"
+-</a>
+-</td>
+-<td>
+-T"Rating: 102"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-6190">
+-T"SCP-6190"
+-</a>
+-</td>
+-<td>
+-T"Rating: 99"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-2143">
+-T"SCP-2143"
+-</a>
+-</td>
+-<td>
+-T"Rating: 91"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-6880">
+-T"SCP-6880"
+-</a>
+-</td>
+-<td>
+-T"Rating: 90"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-7780">
+-T"SCP-7780"
+-</a>
+-</td>
+-<td>
+-T"Rating: 89"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-9510">
+-T"SCP-9510"
+-</a>
+-</td>
+-<td>
+-T"Rating: 69"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-9660">
+-T"SCP-9660"
+-</a>
+-</td>
+-<td>
+-T"Rating: 67"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-8340">
+-T"SCP-8340"
+-</a>
+-</td>
+-<td>
+-T"Rating: 54"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-8620">
+-T"SCP-8620"
+-</a>
+-</td>
+-<td>
+-T"Rating: 36"
+-</td>
+-</tr>
+-</table>
+-</div>
+-</div>
+-</div>
+-</div>
+-<div class="collapsible-block">
+-<div class="collapsible-block-folded">
+-<a class="collapsible-block-link" href="javascript:;">
+-T"+ All Tales by A Random Day"
+-</a>
+-</div>
+-<div class="collapsible-block-unfolded" style="display:none">
+-<div class="collapsible-block-unfolded-link">
+-<a class="collapsible-block-link" href="javascript:;">
+-T"- Hide list"
+-</a>
+-</div>
+-<div class="collapsible-block-content">
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="46954273" data-lp-route="scp-2664" data-lp-generation="HEX">
+-<table class="wiki-content-table">
+-<tr>
+-<th colspan="2">
+-T"Tales"
+-</th>
+-</tr>
+-<tr>
+-<td>
+-<a href="/avatara">
+-T"Avatara"
+-</a>
+-</td>
+-<td>
+-T"Rating: 282"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/hypervelocity">
+-T"Hypervelocity"
+-</a>
+-</td>
+-<td>
+-T"Rating: 261"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/i-thought-you-died-alone">
+-T"I Thought You Died Alone"
+-</a>
+-</td>
+-<td>
+-T"Rating: 211"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/moonlighting">
+-T"Moonlighting"
+-</a>
+-</td>
+-<td>
+-T"Rating: 201"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/zeitgeist">
+-T"Zeitgeist"
+-</a>
+-</td>
+-<td>
+-T"Rating: 151"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/t-minus">
+-T"T Minus"
+-</a>
+-</td>
+-<td>
+-T"Rating: 137"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/autoerotic-assassination">
+-T"Autoerotic Assassination"
+-</a>
+-</td>
+-<td>
+-T"Rating: 134"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/fathomless">
+-T"Fathomless Panthalassic Avarice"
+-</a>
+-</td>
+-<td>
+-T"Rating: 130"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/terminal-velocity">
+-T"Terminal Velocity"
+-</a>
+-</td>
+-<td>
+-T"Rating: 128"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/the-chosen-few">
+-T"The Chosen Few"
+-</a>
+-</td>
+-<td>
+-T"Rating: 104"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/reboot-or-how-i-learned-to-stop-worrying-and-love-the-apocal">
+-T"Reboot or: How I Learned to Stop Worrying and Love the Apocalypses"
+-</a>
+-</td>
+-<td>
+-T"Rating: 101"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/deus-vulture">
+-T"Deus Vulture"
+-</a>
+-</td>
+-<td>
+-T"Rating: 99"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/loud-lawless-and-lost">
+-T"Loud, Lawless, and Lost"
+-</a>
+-</td>
+-<td>
+-T"Rating: 93"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/hard-machine">
+-T"Hard Machine"
+-</a>
+-</td>
+-<td>
+-T"Rating: 92"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/the-vice-girls">
+-T"The Vice Girls"
+-</a>
+-</td>
+-<td>
+-T"Rating: 92"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/morphine-machine">
+-T"Morphine Machine"
+-</a>
+-</td>
+-<td>
+-T"Rating: 89"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/ecstasy-and-exorcism">
+-T"Ecstasy and Exorcism"
+-</a>
+-</td>
+-<td>
+-T"Rating: 88"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/truth-is-sin">
+-T"Truth Is Sin"
+-</a>
+-</td>
+-<td>
+-T"Rating: 87"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/the-revelation">
+-T"The Revelation"
+-</a>
+-</td>
+-<td>
+-T"Rating: 84"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/nonpareil">
+-T"Nonpareil"
+-</a>
+-</td>
+-<td>
+-T"Rating: 83"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/rise-and-repent">
+-T"Rise and Repent"
+-</a>
+-</td>
+-<td>
+-T"Rating: 82"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/t-plus">
+-T"T Plus"
+-</a>
+-</td>
+-<td>
+-T"Rating: 81"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/prey-and-obey">
+-T"Prey and Obey"
+-</a>
+-</td>
+-<td>
+-T"Rating: 57"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/escape-velocity">
+-T"Escape Velocity"
+-</a>
+-</td>
+-<td>
+-T"Rating: 54"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/jump-the-gun">
+-T"Jump the Gun"
+-</a>
+-</td>
+-<td>
+-T"Rating: 53"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/leather-pig">
+-T"Leather Pig"
+-</a>
+-</td>
+-<td>
+-T"Rating: 52"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/no-one-gets-out-of-her-alive">
+-T"No One Gets Out of Her Alive"
+-</a>
+-</td>
+-<td>
+-T"Rating: 51"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/the-ballad-of-santa-troy">
+-T"The Ballad of Santa Troy"
+-</a>
+-</td>
+-<td>
+-T"Rating: 48"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/contempt">
+-T"Contempt"
+-</a>
+-</td>
+-<td>
+-T"Rating: 45"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/the-man-machine">
+-T"The Man-Machine"
+-</a>
+-</td>
+-<td>
+-T"Rating: 38"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/domo-arigato">
+-T"Domo Arigato"
+-</a>
+-</td>
+-<td>
+-T"Rating: 38"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/mile-high-club">
+-T"Mile High Club"
+-</a>
+-</td>
+-<td>
+-T"Rating: 33"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/industrial-espionage">
+-T"Industrial Espionage"
+-</a>
+-</td>
+-<td>
+-T"Rating: 29"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/strung-out-in-heavens-high">
+-T"Strung Out in Heavens High"
+-</a>
+-</td>
+-<td>
+-T"Rating: 28"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/nothing-remotely-human">
+-T"Nothing Human"
+-</a>
+-</td>
+-<td>
+-T"Rating: 28"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/hands">
+-T"Hands"
+-</a>
+-</td>
+-<td>
+-T"Rating: 27"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/fullmusic-astrobiologist">
+-T"Fullmusic Astrobiologist"
+-</a>
+-</td>
+-<td>
+-T"Rating: 25"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/eight-hours-in-the-ecrg">
+-T"Eight Hours in the ECRG"
+-</a>
+-</td>
+-<td>
+-T"Rating: 19"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/enansi-si-gnihtyreve">
+-T"Enasni Si Gnihtyreve"
+-</a>
+-</td>
+-<td>
+-T"Rating: 17"
+-</td>
+-</tr>
+-</table>
+-</div>
+-</div>
+-</div>
+-</div>
+-<div class="collapsible-block">
+-<div class="collapsible-block-folded">
+-<a class="collapsible-block-link" href="javascript:;">
+-T"+ All Hubs by A Random Day"
+-</a>
+-</div>
+-<div class="collapsible-block-unfolded" style="display:none">
+-<div class="collapsible-block-unfolded-link">
+-<a class="collapsible-block-link" href="javascript:;">
+-T"- Hide list"
+-</a>
+-</div>
+-<div class="collapsible-block-content">
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="46954273" data-lp-route="scp-2664" data-lp-generation="HEX">
+-<table class="wiki-content-table">
+-<tr>
+-<th colspan="2">
+-T"Hubs"
+-</th>
+-</tr>
+-<tr>
+-<td>
+-<a href="/prometheus-labs-hub">
+-T"Prometheus Labs Hub"
+-</a>
+-</td>
+-<td>
+-T"Rating: 177"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/speed-demon-hub">
+-T"Speed Demon"
+-</a>
+-</td>
+-<td>
+-T"Rating: 144"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/guns-pointed-hub">
+-T"Guns Pointed at the Head of God"
+-</a>
+-</td>
+-<td>
+-T"Rating: 82"
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/archival-division-hub">
+-T"Archival Division Hub"
+-</a>
+-</td>
+-<td>
+-T"Rating: 70"
+-</td>
+-</tr>
+-</table>
+-</div>
+-</div>
+-</div>
+-</div>
+-<div class="collapsible-block">
+-<div class="collapsible-block-folded">
+-<a class="collapsible-block-link" href="javascript:;">
+-T"+ All coauthored articles featuring A Random Day"
+-</a>
+-</div>
+-<div class="collapsible-block-unfolded" style="display:none">
+-<div class="collapsible-block-unfolded-link">
+-<a class="collapsible-block-link" href="javascript:;">
+-T"- Hide list"
+-</a>
+-</div>
+-<div class="collapsible-block-content">
+-<table class="wiki-content-table">
+-<tr>
+-<td>
+-<strong>
+-T"Page"
+-</strong>
+-</td>
+-<td>
+-<strong>
+-T"Authors"
+-</strong>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/the-seltzorcism">
+-T"Overheard at Deer"
+-</a>
+-</td>
+-<td>
+-<span class="printuser">
+-<a href="https://www.wikidot.com/user:info/ch00bakka" onclick="WIKIDOT.page.listeners.userInfo(1238719); return false;">
+-T"ch00bakka"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-150">
+-T"SCP-150"
+-</a>
+-</td>
+-<td>
+-<span class="printuser">
+-<a href="https://www.wikidot.com/user:info/decibelles" onclick="WIKIDOT.page.listeners.userInfo(2005044); return false;">
+-T"Decibelles"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-3000">
+-T"SCP-3000"
+-</a>
+-</td>
+-<td>
+-<span class="printuser">
+-<a href="https://www.wikidot.com/user:info/djkaktus" onclick="WIKIDOT.page.listeners.userInfo(1888434); return false;">
+-T"djkaktus"
+-</a>
+-</span>
+-T", "
+-<span class="printuser">
+-<a href="https://www.wikidot.com/user:info/joreth" onclick="WIKIDOT.page.listeners.userInfo(1370009); return false;">
+-T"Joreth"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-4220">
+-T"SCP-4220"
+-</a>
+-</td>
+-<td>
+-<span class="printuser">
+-<a href="https://www.wikidot.com/user:info/the-great-hippo" onclick="WIKIDOT.page.listeners.userInfo(3938622); return false;">
+-T"The Great Hippo"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-4310">
+-T"SCP-4310"
+-</a>
+-</td>
+-<td>
+-<span class="printuser">
+-<a href="https://www.wikidot.com/user:info/the-great-hippo" onclick="WIKIDOT.page.listeners.userInfo(3938622); return false;">
+-T"The Great Hippo"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/chicago-spirit">
+-T"Chicago Spirit Hub"
+-</a>
+-</td>
+-<td>
+-<span class="printuser">
+-<a href="https://www.wikidot.com/user:info/peppersghost" onclick="WIKIDOT.page.listeners.userInfo(1553042); return false;">
+-T"PeppersGhost"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/scp-5555">
+-T"SCP-5555"
+-</a>
+-</td>
+-<td>
+-<span class="printuser">
+-<a href="https://www.wikidot.com/user:info/rounderhouse" onclick="WIKIDOT.page.listeners.userInfo(4187885); return false;">
+-T"Rounderhouse"
+-</a>
+-</span>
+-T", "
+-<span class="printuser">
+-<a href="https://www.wikidot.com/user:info/uncle-nicolini" onclick="WIKIDOT.page.listeners.userInfo(3487700); return false;">
+-T"Uncle Nicolini"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/visions-of-bodies-being-burned">
+-T"Visions of Bodies Being Burned"
+-</a>
+-</td>
+-<td>
+-<span class="printuser">
+-<a href="https://www.wikidot.com/user:info/taffeta" onclick="WIKIDOT.page.listeners.userInfo(2221240); return false;">
+-T"Taffeta"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/samsara">
+-T"Samsara"
+-</a>
+-</td>
+-<td>
+-<span class="printuser">
+-<a href="https://www.wikidot.com/user:info/tygently" onclick="WIKIDOT.page.listeners.userInfo(2038009); return false;">
+-T"TyGently"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/death-perception">
+-T"Death Perception"
+-</a>
+-</td>
+-<td>
+-<span class="printuser">
+-<a href="https://www.wikidot.com/user:info/tygently" onclick="WIKIDOT.page.listeners.userInfo(2038009); return false;">
+-T"TyGently"
+-</a>
+-</span>
+-</td>
+-</tr>
+-<tr>
+-<td>
+-<a href="/the-powers-that-bark">
+-T"The Powers that Bark"
+-</a>
+-</td>
+-<td>
+-<span class="printuser">
+-<a href="https://www.wikidot.com/user:info/tygently" onclick="WIKIDOT.page.listeners.userInfo(2038009); return false;">
+-T"TyGently"
+-</a>
+-</span>
+-</td>
+-</tr>
+-</table>
+-</div>
+-</div>
+-</div>
+-<br>
+-T" "
+-<span style="font-size:0%;">
+-<div class="backlinks-module-box">
+-<ul>
+-<li>
+-<a href="/k-class-complete-list">
+-T"A Comprehensive List of K-Class Scenarios"
+-</a>
+-</li>
+-<li>
+-<a href="/algorithm-curated-recommendations">
+-T"Algorithm Curated Recommendations"
+-</a>
+-</li>
+-<li>
+-<a href="/departments-complete-list">
+-T"A Semi-Comprehensive List of Foundation Departments"
+-</a>
+-</li>
+-<li>
+-<a href="/a-semi-comprehensive-list-of-foundation-technology">
+-T"A Semi-Comprehensive List of Foundation Technology"
+-</a>
+-</li>
+-<li>
+-<a href="/dr-arvind-desais-personnel-file">
+-T"Dr. Desai's Personnel File"
+-</a>
+-</li>
+-<li>
+-<a href="/the-big-goi-essay">
+-T"GoI Field Guide"
+-</a>
+-</li>
+-<li>
+-<a href="/guns-pointed-hub">
+-T"Guns Pointed at the Head of God"
+-</a>
+-</li>
+-<li>
+-<a href="/interviewing-icons-a-random-day">
+-T"Interviewing Icons - A Random Day"
+-</a>
+-</li>
+-<li>
+-<a href="/task-forces">
+-T"Mobile Task Forces"
+-</a>
+-</li>
+-<li>
+-<a href="/news-09-10-2016">
+-T"News for September/October 2016"
+-</a>
+-</li>
+-<li>
+-<a href="/personnel-and-character-dossier">
+-T"Personnel And Character Dossier"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-1730">
+-T"SCP-1730"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-2177">
+-T"SCP-2177"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-2663">
+-T"SCP-2663"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-2665">
+-T"SCP-2665"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-3034">
+-T"SCP-3034"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-4220">
+-T"SCP-4220"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-4800">
+-T"SCP-4800"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-5080">
+-T"SCP-5080"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-5940">
+-T"SCP-5940"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-6672">
+-T"SCP-6672"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-8512">
+-T"SCP-8512"
+-</a>
+-</li>
+-<li>
+-<a href="/scpfmmdbc-hub">
+-T"SCP Foundation March Madness Hub"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-series-3">
+-T"SCP Series 3"
+-</a>
+-</li>
+-<li>
+-<a href="/the-coldest-war-hub">
+-T"The Coldest War"
+-</a>
+-</li>
+-<li>
+-<a href="/fragment:third-law-hub-hub-4">
+-T"Third Law Hub - Best Of"
+-</a>
+-</li>
+-<li>
+-<a href="/fragment:third-law-hub-hub-5">
+-T"Third Law Hub - Chronological"
+-</a>
+-</li>
+-<li>
+-<a href="/fragment:third-law-hub-hub-7">
+-T"Third Law Hub - Collections"
+-</a>
+-</li>
+-<li>
+-<a href="/fragment:third-law-hub-hub-1">
+-T"Third Law Hub - New Readers"
+-</a>
+-</li>
+-<li>
+-<a href="/fragment:third-law-hub-info-h">
+-T"Third Law Hub - People"
+-</a>
+-</li>
+-<li>
+-<a href="/fragment:third-law-hub-hub-6">
+-T"Third Law Hub - Published"
+-</a>
+-</li>
+-<li>
+-<a href="/fragment:third-law-hub-series-5">
+-T"Third Law Hub Series - Guns Pointed"
+-</a>
+-</li>
+-<li>
+-<a href="/fragment:third-law-hub-hub-3">
+-T"Third Law Hub - Standalone"
+-</a>
+-</li>
+-<li>
+-<a href="/fragment:third-law-hub-info-d">
+-T"Third Law Hub - Timeline"
+-</a>
+-</li>
+-<li>
+-<a href="/t-minus">
+-T"T Minus"
+-</a>
+-</li>
+-<li>
+-<a href="/user-curated-lists">
+-T"User-Curated Lists"
+-</a>
+-</li>
+-</ul>
+-</div>
+-</span>
+-</div>
++<div class="error-block">
+ <hr>
+ <div class="creditBottomRate">
+ <div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+481"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
++<p>
++T"TODO: module Rate"
++</p>
++</div>
++</div>
++<br>
++T" "
++<br>
+ </div>
+ </div>
+@@ -2770,29 +1486,7 @@
+ T"Cite this page as:"
+ </p>
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="46954273" data-lp-route="scp-2664" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<blockquote>
+-<p>
+-T"""
+-<a href="/scp-2664">
+-T"SCP-2664"
+-</a>
+-T"" by A Random Day, from the "
+-<a href="https://scpwiki.com">
+-T"SCP Wiki"
+-</a>
+-T". Source: "
+-<a href="https://scpwiki.com/scp-2664">
+-T"https://scpwiki.com/scp-2664"
+-</a>
+-T". Licensed under "
+-<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+-T"CC BY-SA"
+-</a>
+-T"."
+-</p>
+-</blockquote>
+-</div>
+-</div>
++<p>
++T"TODO: module ListPages"
++</p>
+ <p>
+ T"For information on how to use this component, see the "

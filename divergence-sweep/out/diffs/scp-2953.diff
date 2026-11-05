@@ -1,0 +1,80 @@
+--- live
++++ ftml
+@@ -1,26 +1,6 @@
+ <div style="text-align: right;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+120"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
++<p>
++T"TODO: module Rate"
++</p>
+ </div>
+ <p>
+@@ -288,6 +268,4 @@
+ <hr>
+ <hr>
+-<script type="text/javascript" src="https://d3g0gp89917ko0.cloudfront.net/v--1e049c54eb7c/common--javascript/yahooui/tabview-min.js">
+-</script>
+ <div id="wiki-tabview-HEX" class="yui-navset">
+ <ul class="yui-nav">
+@@ -423,7 +401,4 @@
+ </div>
+ </div>
+-<script type="text/javascript">
+-T"//&lt;![CDATA[ OZONE.dom.onDomReady(function(){ var tabViewb435f907c0fbe82b2409526938369892 = new YAHOO.widget.TabView('wiki-tabview-HEX'); }, "dummy-ondomready-block"); //]]&gt;"
+-</script>
+ <div class="footnotes-footer">
+ <div class="title">
+@@ -518,29 +493,7 @@
+ T"Cite this page as:"
+ </p>
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="44027962" data-lp-route="scp-2953" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<blockquote>
+-<p>
+-T"""
+-<a href="/scp-2953">
+-T"SCP-2953"
+-</a>
+-T"" by MrWrong, from the "
+-<a href="https://scpwiki.com">
+-T"SCP Wiki"
+-</a>
+-T". Source: "
+-<a href="https://scpwiki.com/scp-2953">
+-T"https://scpwiki.com/scp-2953"
+-</a>
+-T". Licensed under "
+-<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+-T"CC BY-SA"
+-</a>
+-T"."
+-</p>
+-</blockquote>
+-</div>
+-</div>
++<p>
++T"TODO: module ListPages"
++</p>
+ <p>
+ T"For information on how to use this component, see the "

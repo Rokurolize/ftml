@@ -1,0 +1,202 @@
+{
+ "scp-039": {
+  "live_tokens": 1434,
+  "ftml_tokens": 1400,
+  "hunks": 12
+ },
+ "scp-102": {
+  "live_tokens": 966,
+  "ftml_tokens": 909,
+  "hunks": 18
+ },
+ "scp-1099": {
+  "live_tokens": 363,
+  "ftml_tokens": 344,
+  "hunks": 6
+ },
+ "scp-1219": {
+  "live_tokens": 394,
+  "ftml_tokens": 352,
+  "hunks": 4
+ },
+ "scp-1276": {
+  "live_tokens": 148,
+  "ftml_tokens": 106,
+  "hunks": 4
+ },
+ "scp-1298": {
+  "live_tokens": 130,
+  "ftml_tokens": 88,
+  "hunks": 4
+ },
+ "scp-1305": {
+  "live_tokens": 860,
+  "ftml_tokens": 701,
+  "hunks": 19
+ },
+ "scp-1431": {
+  "live_tokens": 383,
+  "ftml_tokens": 341,
+  "hunks": 4
+ },
+ "scp-1440": {
+  "live_tokens": 309,
+  "ftml_tokens": 267,
+  "hunks": 5
+ },
+ "scp-1464": {
+  "live_tokens": 136,
+  "ftml_tokens": 94,
+  "hunks": 4
+ },
+ "scp-157": {
+  "live_tokens": 208,
+  "ftml_tokens": 166,
+  "hunks": 5
+ },
+ "scp-1577": {
+  "live_tokens": 455,
+  "ftml_tokens": 413,
+  "hunks": 4
+ },
+ "scp-1612": {
+  "live_tokens": 272,
+  "ftml_tokens": 230,
+  "hunks": 7
+ },
+ "scp-1706": {
+  "live_tokens": 442,
+  "ftml_tokens": 393,
+  "hunks": 16
+ },
+ "scp-1994": {
+  "live_tokens": 1055,
+  "ftml_tokens": 1007,
+  "hunks": 18
+ },
+ "scp-201": {
+  "live_tokens": 214,
+  "ftml_tokens": 172,
+  "hunks": 5
+ },
+ "scp-2556": {
+  "live_tokens": 430,
+  "ftml_tokens": 388,
+  "hunks": 6
+ },
+ "scp-2656": {
+  "live_tokens": 397,
+  "ftml_tokens": 355,
+  "hunks": 4
+ },
+ "scp-2664": {
+  "live_tokens": 2815,
+  "ftml_tokens": 1509,
+  "hunks": 8
+ },
+ "scp-2728": {
+  "live_tokens": 1822,
+  "ftml_tokens": 423,
+  "hunks": 19
+ },
+ "scp-2753": {
+  "live_tokens": 1292,
+  "ftml_tokens": 573,
+  "hunks": 11
+ },
+ "scp-2803": {
+  "live_tokens": 368,
+  "ftml_tokens": 326,
+  "hunks": 4
+ },
+ "scp-2816": {
+  "live_tokens": 356,
+  "ftml_tokens": 314,
+  "hunks": 9
+ },
+ "scp-2824": {
+  "live_tokens": 806,
+  "ftml_tokens": 765,
+  "hunks": 5
+ },
+ "scp-2833": {
+  "live_tokens": 850,
+  "ftml_tokens": 808,
+  "hunks": 5
+ },
+ "scp-2953": {
+  "live_tokens": 559,
+  "ftml_tokens": 512,
+  "hunks": 6
+ },
+ "scp-297": {
+  "live_tokens": 972,
+  "ftml_tokens": 103,
+  "hunks": 8
+ },
+ "scp-355": {
+  "live_tokens": 141,
+  "ftml_tokens": 99,
+  "hunks": 4
+ },
+ "scp-372": {
+  "live_tokens": 281,
+  "ftml_tokens": 239,
+  "hunks": 7
+ },
+ "scp-388": {
+  "live_tokens": 136,
+  "ftml_tokens": 94,
+  "hunks": 4
+ },
+ "scp-424": {
+  "live_tokens": 175,
+  "ftml_tokens": 133,
+  "hunks": 4
+ },
+ "scp-593": {
+  "live_tokens": 91,
+  "ftml_tokens": 71,
+  "hunks": 2
+ },
+ "scp-600": {
+  "live_tokens": 203,
+  "ftml_tokens": 161,
+  "hunks": 4
+ },
+ "scp-619": {
+  "live_tokens": 191,
+  "ftml_tokens": 149,
+  "hunks": 4
+ },
+ "scp-661": {
+  "live_tokens": 264,
+  "ftml_tokens": 222,
+  "hunks": 4
+ },
+ "scp-729": {
+  "live_tokens": 137,
+  "ftml_tokens": 95,
+  "hunks": 4
+ },
+ "scp-850": {
+  "live_tokens": 179,
+  "ftml_tokens": 137,
+  "hunks": 4
+ },
+ "scp-855": {
+  "live_tokens": 239,
+  "ftml_tokens": 219,
+  "hunks": 2
+ },
+ "scp-910": {
+  "live_tokens": 430,
+  "ftml_tokens": 369,
+  "hunks": 8
+ },
+ "scp-967": {
+  "live_tokens": 193,
+  "ftml_tokens": 151,
+  "hunks": 4
+ }
+}

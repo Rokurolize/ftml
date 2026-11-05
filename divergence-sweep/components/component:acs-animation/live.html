@@ -1,0 +1,277 @@
+                        
+
+
+
+
+<div class="warning-top-box">
+<h1><span>NOTICE:</span></h1>
+<p>This is a <em>component</em> page used internally by the SCP Wiki. It is intended to be used and included on other pages.</p>
+</div>
+<div style="border: solid 2px #ededed; padding: 0.5rem; margin: 4px;">
+<p>This is a component that animates the <strong><a href="/anomaly-classification-system-guide">ACS header</a></strong> upon loading.</p>
+<h2 id="toc0"><span>How to use:</span></h2>
+<p>Put this in anywhere in the article:</p>
+<div class="blockquote" style="font-family: monospace; font-size: 120%;">
+<p><span style="white-space: pre-wrap;">[[include&#32;:scp-wiki:component:acs-animation]]</span></p>
+</div>
+<p>And you're done!</p>
+<p><em>Example:</em> <strong><a href="/scp-5935">SCP-5935</a></strong></p>
+<p><span style="white-space: pre-wrap;">&#32;</span></p>
+<hr />
+<h2 id="toc1"><span>Note:</span></h2>
+<p>- Two variables, <em><span style="white-space: pre-wrap;">--timeScale</span></em> and <em><span style="white-space: pre-wrap;">--timeDelay</span></em>, control the timings of the animation. For example:</p>
+<div class="blockquote" style="font-family: monospace; font-size: 120%;">
+<p><span style="white-space: pre-wrap;">[[module&#32;CSS]]</span><br />
+:root {<br />
+<span style="white-space: pre-wrap;">&#32;&#32;&#32;&#32;--timeScale:&#32;2;</span><br />
+<span style="white-space: pre-wrap;">&#32;&#32;&#32;&#32;--timeDelay:&#32;0.5s;</span><br />
+}<br />
+<span style="white-space: pre-wrap;">[[/module]]</span></p>
+</div>
+<p><em><span style="white-space: pre-wrap;">--timeScale</span></em> slows down the entire animation by a factor of 2, and <em><span style="white-space: pre-wrap;">--timeDelay</span></em> delays the starting point of the animation by half a second. Default values are 1 and 0s, respectively.</p>
+<p>To change the default values, put the above after the <tt>[[include]]</tt>. <em><span style="white-space: pre-wrap;">--timeDelay</span></em> is recommended if the ACS isn't the first content element, or you're using it in conjunction with other animation modules (a la <strong><a href="/component:fade-in">Fade In</a></strong>.)</p>
+<p><span style="white-space: pre-wrap;">&#32;</span></p>
+<p>- Likely incompatible with other types of ACS headers*.</p>
+<p>*To use with <span class="printuser avatarhover"><a href="http://www.wikidot.com/user:info/peppersghost" onclick="WIKIDOT.page.listeners.userInfo(1553042); return false;"><img class="small" src="https://www.wikidot.com/avatar.php?userid=1553042&amp;amp;size=small&amp;amp;timestamp=1784711595" alt="PeppersGhost" style="background-image:url(https://www.wikidot.com/userkarma.php?u=1553042)" /></a><a href="http://www.wikidot.com/user:info/peppersghost" onclick="WIKIDOT.page.listeners.userInfo(1553042); return false;">PeppersGhost</a></span>'s <a href="/component:acs-peppo-lite">ACS Lite</a>, add the following patch after the <tt>[[include]]</tt>:</p>
+<div class="blockquote" style="font-family: monospace; font-size: 120%;">
+<p><span style="white-space: pre-wrap;">[[module&#32;CSS]]</span><br />
+<span style="white-space: pre-wrap;">/*--&#32;ACS&#32;Lite&#32;Animation&#32;Compatibility&#32;Patch&#32;--*/</span><br />
+.anom-bar &gt; .bottom-box::before { display: none; }<br />
+.anom-bar &gt; .bottom-box { box-shadow: none!important; }<br />
+div.diamond-part { clip-path: none; animation: none; box-shadow: none!important; }<br />
+@media (max-width: 480px) {<br />
+div.top-right-box { clip-path: polygon(0% -30%, 100% -30%, 100% 130%, 0% 130%); }<br />
+}<br />
+<span style="white-space: pre-wrap;">[[/module]]</span></p>
+</div>
+<p><span style="white-space: pre-wrap;">&#32;</span></p>
+<p>- Inspired by the works of <span class="printuser avatarhover"><a href="http://www.wikidot.com/user:info/ananomalouswriter" onclick="WIKIDOT.page.listeners.userInfo(5184766); return false;"><img class="small" src="https://www.wikidot.com/avatar.php?userid=5184766&amp;amp;size=small&amp;amp;timestamp=1784711595" alt="AnAnomalousWriter" style="background-image:url(https://www.wikidot.com/userkarma.php?u=5184766)" /></a><a href="http://www.wikidot.com/user:info/ananomalouswriter" onclick="WIKIDOT.page.listeners.userInfo(5184766); return false;">AnAnomalousWriter</a></span>.</p>
+</div>
+<hr />
+<h2 id="toc2"><span>Source Code:</span></h2>
+<div class="code">
+<div class="hl-main">
+<pre><span class="hl-special">:root</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    --</span><span class="hl-reserved">timeScale:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">;
+    --</span><span class="hl-reserved">timeDelay:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">s</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">Converting</span><span class="hl-code"> </span><span class="hl-identifier">middle</span><span class="hl-code"> </span><span class="hl-identifier">divider</span><span class="hl-code"> </span><span class="hl-identifier">from</span><span class="hl-code"> </span><span class="hl-identifier">box-shadow</span><span class="hl-code"> </span><span class="hl-identifier">to</span><span class="hl-code"> :</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-identifier">pseudo-element</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">.anom-bar</span><span class="hl-code"> &gt; </span><span class="hl-identifier">div.bottom-box</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">box-shadow:</span><span class="hl-code"> </span><span class="hl-string">none</span><span class="hl-code">; </span><span class="hl-reserved">position:</span><span class="hl-code"> </span><span class="hl-string">relative</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.anom-bar</span><span class="hl-code"> &gt; </span><span class="hl-identifier">div.bottom-box</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">position:</span><span class="hl-code"> </span><span class="hl-string">absolute</span><span class="hl-code">;
+    </span><span class="hl-reserved">content:</span><span class="hl-code"> &quot; &quot;</span><span class="hl-code">;
+    </span><span class="hl-reserved">width:</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">;
+    </span><span class="hl-reserved">height:</span><span class="hl-code"> </span><span class="hl-number">0.5</span><span class="hl-code">rem</span><span class="hl-code">;
+    </span><span class="hl-reserved">bottom:</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">; </span><span class="hl-reserved">left:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">;
+    </span><span class="hl-reserved">background-color:</span><span class="hl-code"> rgb(var(--swatch-menubg-black-color, </span><span class="hl-number">12</span><span class="hl-code">, </span><span class="hl-number">12</span><span class="hl-code">, </span><span class="hl-number">12</span><span class="hl-code">))</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">DIVIDER</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">.anom-bar</span><span class="hl-code"> &gt; </span><span class="hl-identifier">.bottom-box</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">animation-name:</span><span class="hl-code"> divider</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-duration:</span><span class="hl-code"> calc(</span><span class="hl-number">0.74</span><span class="hl-code">s * var(--timeScale))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.1</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-iteration-count:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-timing-function:</span><span class="hl-code"> cubic-bezier(</span><span class="hl-number">.32</span><span class="hl-code">,</span><span class="hl-number">.38</span><span class="hl-code">,</span><span class="hl-number">.39</span><span class="hl-code">,</span><span class="hl-number">.94</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-fill-mode:</span><span class="hl-code"> backwards</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">CLASSIFIED</span><span class="hl-code"> </span><span class="hl-identifier">LEVEL</span><span class="hl-code"> </span><span class="hl-identifier">BARS</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">div.top-center-box</span><span class="hl-code">  &gt; </span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">animation-name:</span><span class="hl-code"> bar</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-duration:</span><span class="hl-code"> calc(</span><span class="hl-number">0.45</span><span class="hl-code">s * var(--timeScale))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-iteration-count:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-timing-function:</span><span class="hl-code"> ease-out</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-fill-mode:</span><span class="hl-code"> backwards</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">div.top-center-box</span><span class="hl-code"> &gt; </span><span class="hl-special">:nth-child</span><span class="hl-code">(1) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.2</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">div.top-center-box</span><span class="hl-code"> &gt; </span><span class="hl-special">:nth-child</span><span class="hl-code">(2) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.32</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">div.top-center-box</span><span class="hl-code"> &gt; </span><span class="hl-special">:nth-child</span><span class="hl-code">(3) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.45</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">div.top-center-box</span><span class="hl-code"> &gt; </span><span class="hl-special">:nth-child</span><span class="hl-code">(4) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.61</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">div.top-center-box</span><span class="hl-code"> &gt; </span><span class="hl-special">:nth-child</span><span class="hl-code">(5) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.75</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">div.top-center-box</span><span class="hl-code"> &gt; </span><span class="hl-special">:nth-child</span><span class="hl-code">(6) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.95</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">TOP</span><span class="hl-code"> </span><span class="hl-identifier">TEXT</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">div.top-left-box</span><span class="hl-code">, </span><span class="hl-identifier">div.top-right-box</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">clip-path:</span><span class="hl-code"> polygon( </span><span class="hl-number">0</span><span class="hl-string">%</span><span class="hl-code"> -</span><span class="hl-number">50</span><span class="hl-string">%</span><span class="hl-code">, </span><span class="hl-number">150</span><span class="hl-string">%</span><span class="hl-code"> -</span><span class="hl-number">50</span><span class="hl-string">%</span><span class="hl-code">, </span><span class="hl-number">150</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">div.top-left-box</span><span class="hl-code"> &gt; </span><span class="hl-identifier">*</span><span class="hl-code">, </span><span class="hl-identifier">div.top-right-box</span><span class="hl-code"> &gt; </span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">position:</span><span class="hl-code"> </span><span class="hl-string">relative</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-name:</span><span class="hl-code"> bottomup</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-duration:</span><span class="hl-code"> calc(</span><span class="hl-number">0.65</span><span class="hl-code">s * var(--timeScale))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.5</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-iteration-count:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-timing-function:</span><span class="hl-code"> ease-out</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-fill-mode:</span><span class="hl-code"> backwards</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code">-----------------------------------</span><span class="hl-identifier">*</span><span class="hl-code">/
+/</span><span class="hl-identifier">*</span><span class="hl-code">-----------------------------------</span><span class="hl-identifier">*</span><span class="hl-code">/
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">CONTAINMENT</span><span class="hl-code">, </span><span class="hl-identifier">DISRUPTION</span><span class="hl-code">, </span><span class="hl-identifier">RISK</span><span class="hl-code"> </span><span class="hl-identifier">CLASSES</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">div.text-part</span><span class="hl-code"> &gt; </span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">clip-path:</span><span class="hl-code"> polygon( </span><span class="hl-number">0</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-string">%</span><span class="hl-code">, </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-string">%</span><span class="hl-code">, </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-string">%</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-name:</span><span class="hl-code"> expand2</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-duration:</span><span class="hl-code"> calc(</span><span class="hl-number">0.5</span><span class="hl-code">s * var(--timeScale))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-iteration-count:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-timing-function:</span><span class="hl-code"> cubic-bezier(</span><span class="hl-number">.12</span><span class="hl-code">,</span><span class="hl-number">.41</span><span class="hl-code">,</span><span class="hl-number">.27</span><span class="hl-code">,</span><span class="hl-number">.99</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-fill-mode:</span><span class="hl-code"> backwards</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">div.text-part</span><span class="hl-code"> &gt; </span><span class="hl-special">:nth-child</span><span class="hl-code">(1) </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">animation-name:</span><span class="hl-code"> expand1</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">div.text-part</span><span class="hl-code"> &gt; </span><span class="hl-special">:nth-child</span><span class="hl-code">(1) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.6</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">div.text-part</span><span class="hl-code"> &gt; </span><span class="hl-special">:nth-child</span><span class="hl-code">(2) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.75</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">div.text-part</span><span class="hl-code"> &gt; </span><span class="hl-special">:nth-child</span><span class="hl-code">(3) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.86</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">div.main-class</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code">, </span><span class="hl-identifier">div.main-class</span><span class="hl-code">:</span><span class="hl-special">:after</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">animation-name:</span><span class="hl-code"> iconslide</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-duration:</span><span class="hl-code"> calc(</span><span class="hl-number">0.45</span><span class="hl-code">s * var(--timeScale))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.8</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-iteration-count:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-timing-function:</span><span class="hl-code"> cubic-bezier(</span><span class="hl-number">.12</span><span class="hl-code">,</span><span class="hl-number">.41</span><span class="hl-code">,</span><span class="hl-number">.27</span><span class="hl-code">,</span><span class="hl-number">.99</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-fill-mode:</span><span class="hl-code"> backwards</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ /</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">BOTTOM</span><span class="hl-code"> </span><span class="hl-identifier">TEXT</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">div.main-class</span><span class="hl-code"> &gt; </span><span class="hl-identifier">*</span><span class="hl-code">,  </span><span class="hl-identifier">div.disrupt-class</span><span class="hl-code"> &gt; </span><span class="hl-identifier">*</span><span class="hl-code">, </span><span class="hl-identifier">div.risk-class</span><span class="hl-code"> &gt; </span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">white-space:</span><span class="hl-code"> </span><span class="hl-string">nowrap</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-name:</span><span class="hl-code"> flowIn</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-duration:</span><span class="hl-code"> calc(</span><span class="hl-number">0.42</span><span class="hl-code">s * var(--timeScale))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.75</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-iteration-count:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-timing-function:</span><span class="hl-code"> ease-out</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-fill-mode:</span><span class="hl-code"> backwards</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code">-----------------------------------</span><span class="hl-identifier">*</span><span class="hl-code">/
+/</span><span class="hl-identifier">*</span><span class="hl-code">-----------------------------------</span><span class="hl-identifier">*</span><span class="hl-code">/
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">DIAMOND</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">div.arrows</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">animation-name:</span><span class="hl-code"> arrowspin</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-duration:</span><span class="hl-code"> calc(</span><span class="hl-number">0.65</span><span class="hl-code">s * var(--timeScale))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.55</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-iteration-count:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-timing-function:</span><span class="hl-code"> cubic-bezier(</span><span class="hl-number">.12</span><span class="hl-code">,</span><span class="hl-number">.41</span><span class="hl-code">,</span><span class="hl-number">.27</span><span class="hl-code">,</span><span class="hl-number">.99</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-fill-mode:</span><span class="hl-code"> backwards</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">div.quadrants</span><span class="hl-code"> &gt; </span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">animation-name:</span><span class="hl-code"> fade</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-duration:</span><span class="hl-code"> calc(</span><span class="hl-number">0.3</span><span class="hl-code">s * var(--timeScale))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">1.4</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-iteration-count:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-timing-function:</span><span class="hl-code"> cubic-bezier(</span><span class="hl-number">.12</span><span class="hl-code">,</span><span class="hl-number">.41</span><span class="hl-code">,</span><span class="hl-number">.27</span><span class="hl-code">,</span><span class="hl-number">.99</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-fill-mode:</span><span class="hl-code"> backwards</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">div.top-icon</span><span class="hl-code">, </span><span class="hl-identifier">div.right-icon</span><span class="hl-code">, </span><span class="hl-identifier">div.left-icon</span><span class="hl-code">, </span><span class="hl-identifier">div.bottom-icon</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">animation-name:</span><span class="hl-code"> nodegrow</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-duration:</span><span class="hl-code"> calc(</span><span class="hl-number">0.4</span><span class="hl-code">s * var(--timeScale))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">1.4</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-iteration-count:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-timing-function:</span><span class="hl-code"> cubic-bezier(</span><span class="hl-number">.12</span><span class="hl-code">,</span><span class="hl-number">.41</span><span class="hl-code">,</span><span class="hl-number">.27</span><span class="hl-code">,</span><span class="hl-number">.99</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-fill-mode:</span><span class="hl-code"> backwards</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.bottom-box</span><span class="hl-code"> &gt; </span><span class="hl-identifier">div.diamond-part</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">box-shadow:</span><span class="hl-code"> </span><span class="hl-string">none</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.bottom-box</span><span class="hl-code"> &gt; </span><span class="hl-identifier">div.diamond-part</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">content:</span><span class="hl-code"> &quot;&quot;</span><span class="hl-code">;
+    </span><span class="hl-reserved">position:</span><span class="hl-code"> </span><span class="hl-string">absolute</span><span class="hl-code">;
+    </span><span class="hl-reserved">width:</span><span class="hl-code"> </span><span class="hl-number">0.5</span><span class="hl-code">rem</span><span class="hl-code">; </span><span class="hl-reserved">height:</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">;
+    </span><span class="hl-reserved">top:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-reserved">right:</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">;
+    </span><span class="hl-reserved">background-color:</span><span class="hl-code"> rgb(var(--swatch-menubg-black-color, </span><span class="hl-number">12</span><span class="hl-code">, </span><span class="hl-number">12</span><span class="hl-code">, </span><span class="hl-number">12</span><span class="hl-code">))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-name:</span><span class="hl-code"> diamondBorder</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-duration:</span><span class="hl-code"> calc(</span><span class="hl-number">0.475</span><span class="hl-code">s * var(--timeScale))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.775</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-iteration-count:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-timing-function:</span><span class="hl-code"> cubic-bezier(</span><span class="hl-number">.28</span><span class="hl-code">,</span><span class="hl-number">.72</span><span class="hl-code">,</span><span class="hl-number">.55</span><span class="hl-code">,</span><span class="hl-number">.91</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">animation-fill-mode:</span><span class="hl-code"> backwards</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-identifier">MOBILE</span><span class="hl-code"> </span><span class="hl-identifier">QUERY</span><span class="hl-code"> </span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-var">@media</span><span class="hl-code"> (max-width: 480</span><span class="hl-identifier">px</span><span class="hl-code"> ) </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-identifier">.anom-bar</span><span class="hl-code"> &gt; </span><span class="hl-identifier">div.bottom-box</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">position:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">.anom-bar</span><span class="hl-code"> &gt; </span><span class="hl-identifier">div.bottom-box</span><span class="hl-code">::</span><span class="hl-identifier">before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">bottom:</span><span class="hl-code"> initial</span><span class="hl-code">; </span><span class="hl-reserved">top:</span><span class="hl-code"> </span><span class="hl-number">40</span><span class="hl-code">vw</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">div.top-center-box</span><span class="hl-code">  &gt; </span><span class="hl-identifier">*</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">animation-name:</span><span class="hl-code"> bar-mobile</span><span class="hl-code">;
+        </span><span class="hl-reserved">animation-duration:</span><span class="hl-code"> calc(</span><span class="hl-number">0.9</span><span class="hl-code">s * var(--timeScale))</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">div.top-center-box</span><span class="hl-code"> &gt; :</span><span class="hl-identifier">nth-child</span><span class="hl-code">(1) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.1</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">div.top-center-box</span><span class="hl-code"> &gt; :</span><span class="hl-identifier">nth-child</span><span class="hl-code">(2) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.2</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">div.top-center-box</span><span class="hl-code"> &gt; :</span><span class="hl-identifier">nth-child</span><span class="hl-code">(3) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.3</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">div.top-center-box</span><span class="hl-code"> &gt; :</span><span class="hl-identifier">nth-child</span><span class="hl-code">(4) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.4</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">div.top-center-box</span><span class="hl-code"> &gt; :</span><span class="hl-identifier">nth-child</span><span class="hl-code">(5) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.5</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">div.top-center-box</span><span class="hl-code"> &gt; :</span><span class="hl-identifier">nth-child</span><span class="hl-code">(6) </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">animation-delay:</span><span class="hl-code"> calc(</span><span class="hl-number">0.6</span><span class="hl-code">s * var(--timeScale) + var(--timeDelay))</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code">--- </span><span class="hl-identifier">Motion</span><span class="hl-code"> </span><span class="hl-identifier">Accessibility</span><span class="hl-code"> ---</span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-var">@media</span><span class="hl-code"> </span><span class="hl-identifier">screen</span><span class="hl-code"> </span><span class="hl-identifier">and</span><span class="hl-code"> (prefers-reduced-motion: </span><span class="hl-identifier">reduce</span><span class="hl-code">) </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-identifier">div.anom-bar-container</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> --</span><span class="hl-reserved">timeScale:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">!important</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code">-------------------------</span><span class="hl-identifier">*</span><span class="hl-code">/
+ 
+</span><span class="hl-var">@keyframes</span><span class="hl-code"> </span><span class="hl-identifier">divider</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-identifier">from</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">max-width:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-string">%</span><span class="hl-code">;  </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">to</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">max-width:</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-var">@keyframes</span><span class="hl-code"> </span><span class="hl-identifier">bar</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-identifier">from</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">max-width:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-string">%</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">to</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">max-width:</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-var">@keyframes</span><span class="hl-code"> </span><span class="hl-identifier">bar-mobile</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-identifier">from</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">max-height:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-string">%</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">to</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">max-height:</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-var">@keyframes</span><span class="hl-code"> </span><span class="hl-identifier">bottomup</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-identifier">from</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">top:</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">px</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">to</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">top:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-var">@keyframes</span><span class="hl-code"> </span><span class="hl-identifier">expand1</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-identifier">from</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">opacity:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-reserved">clip-path:</span><span class="hl-code"> </span><span class="hl-string">inset</span><span class="hl-code">(</span><span class="hl-number">0</span><span class="hl-code"> calc(</span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code"> - </span><span class="hl-number">0.75</span><span class="hl-code">rem) </span><span class="hl-number">0</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">)</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">to</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">opacity:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">; </span><span class="hl-reserved">clip-path:</span><span class="hl-code"> </span><span class="hl-string">inset</span><span class="hl-code">(</span><span class="hl-number">0</span><span class="hl-code">)</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-var">@keyframes</span><span class="hl-code"> </span><span class="hl-identifier">iconslide</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-identifier">from</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">opacity:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-reserved">transform:</span><span class="hl-code"> translateX(-</span><span class="hl-number">5</span><span class="hl-code">rem)</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">to</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">opacity:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">; </span><span class="hl-reserved">transform:</span><span class="hl-code"> translateX(</span><span class="hl-number">0</span><span class="hl-code">)</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-var">@keyframes</span><span class="hl-code"> </span><span class="hl-identifier">expand2</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-identifier">from</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">opacity:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-reserved">width:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-string">%</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">to</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">opacity:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">; </span><span class="hl-reserved">width:</span><span class="hl-code"> calc(</span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code"> - </span><span class="hl-number">0.25</span><span class="hl-code">rem)</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-var">@keyframes</span><span class="hl-code"> </span><span class="hl-identifier">fade</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-identifier">from</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">opacity:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">to</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">opacity:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-var">@keyframes</span><span class="hl-code"> </span><span class="hl-identifier">flowIn</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-identifier">from</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">opacity:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-reserved">transform:</span><span class="hl-code"> translateY(</span><span class="hl-number">20</span><span class="hl-string">px</span><span class="hl-code">)</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">to</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">opacity:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">; </span><span class="hl-reserved">transform:</span><span class="hl-code"> translateY(</span><span class="hl-number">0</span><span class="hl-code">)</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-var">@keyframes</span><span class="hl-code"> </span><span class="hl-identifier">arrowspin</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-identifier">from</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">clip-path:</span><span class="hl-code"> </span><span class="hl-string">circle</span><span class="hl-code">(</span><span class="hl-number">0</span><span class="hl-string">%</span><span class="hl-code">)</span><span class="hl-code">; </span><span class="hl-reserved">transform:</span><span class="hl-code"> rotate(</span><span class="hl-number">135</span><span class="hl-code">deg)</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">to</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">clip-path:</span><span class="hl-code"> </span><span class="hl-string">circle</span><span class="hl-code">(</span><span class="hl-number">75</span><span class="hl-string">%</span><span class="hl-code">)</span><span class="hl-code">; </span><span class="hl-reserved">transform:</span><span class="hl-code"> rotate(</span><span class="hl-number">0</span><span class="hl-code">deg)</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-var">@keyframes</span><span class="hl-code"> </span><span class="hl-identifier">nodegrow</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-identifier">from</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">transform:</span><span class="hl-code"> scale(</span><span class="hl-number">0</span><span class="hl-code">)</span><span class="hl-code">;</span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">to</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">  </span><span class="hl-reserved">transform:</span><span class="hl-code"> scale(</span><span class="hl-number">1</span><span class="hl-code">)</span><span class="hl-code">;</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-var">@keyframes</span><span class="hl-code"> </span><span class="hl-identifier">diamondBorder</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-identifier">from</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">height:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">to</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">height:</span><span class="hl-code"> </span><span class="hl-number">100</span><span class="hl-string">%</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span></pre></div>
+</div>
+
+
+
+                    

@@ -1,0 +1,24 @@
+[[iftags +component]]
+[[note]]
+**Author:**
+[[*user 7happy7]]
+----
+**Special Thanks to Advice:**
+[[*user boyu12]]
+----
+**How To Use**
+http://www.scp-wiki.net/scp-style-resource#toc5
+[[/note]]
+[[/iftags]]
+[[include :scp-wiki:component:classified-decoration-base
+|lv={$lv}
+|item={$item}
+|oc={$oc}
+|lang{$lang}=false
+|lang={$lang}
+|lang=false
+|trans-level={$trans-level}
+|trans-level=false
+|trans-classified={$trans-classified}
+|trans-classified=false
+]]

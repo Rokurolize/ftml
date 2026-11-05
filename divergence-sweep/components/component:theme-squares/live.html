@@ -1,0 +1,137 @@
+                        
+
+
+
+
+<div class="warning-top-box">
+<h1><span>NOTICE:</span></h1>
+<p>This is a <em>component</em> page used internally by the SCP Wiki. It is intended to be used and included on other pages.</p>
+</div>
+
+
+
+<div style="border: 1px solid #ddd; padding: 1em;">
+<h1 id="toc0"><span>What this is</span></h1>
+<p>A component that displays a bunch of colored squares to show off a CSS theme's flair.</p>
+<p>Designed by <span class="printuser avatarhover"><a href="http://www.wikidot.com/user:info/woedenaz" onclick="WIKIDOT.page.listeners.userInfo(1404096); return false;"><img class="small" src="https://www.wikidot.com/avatar.php?userid=1404096&amp;amp;size=small&amp;amp;timestamp=1716566679" alt="Woedenaz" style="background-image:url(https://www.wikidot.com/userkarma.php?u=1404096)" /></a><a href="http://www.wikidot.com/user:info/woedenaz" onclick="WIKIDOT.page.listeners.userInfo(1404096); return false;">Woedenaz</a></span> and componentised by <span class="printuser avatarhover"><a href="http://www.wikidot.com/user:info/croquembouche" onclick="WIKIDOT.page.listeners.userInfo(2893766); return false;"><img class="small" src="https://www.wikidot.com/avatar.php?userid=2893766&amp;amp;size=small&amp;amp;timestamp=1716566679" alt="Croquembouche" style="background-image:url(https://www.wikidot.com/userkarma.php?u=2893766)" /></a><a href="http://www.wikidot.com/user:info/croquembouche" onclick="WIKIDOT.page.listeners.userInfo(2893766); return false;">Croquembouche</a></span>.</p>
+<p>This component is designed to be used for CSS themes, but it can be used on almost any page, if you really want.</p>
+<h1 id="toc1"><span>Usage</span></h1>
+<p>On any wiki:</p>
+<div class="code">
+<p><span style="color: blue"><strong>[[include :scp-wiki:component:theme-squares -=-</strong></span><br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">color1-name</span><span style="color: blue"><strong>=</strong></span>My Favourite Colour<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">color1-variable</span><span style="color: blue"><strong>=</strong></span><span style="white-space: pre-wrap;">--</span>fav-color<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">color1-info</span><span style="color: blue"><strong>=</strong></span>(191, 144, 0)<br />
+<span style="color: blue"><strong>]]</strong></span></p>
+</div>
+<p>Note the &quot;<tt>-=-</tt>&quot; after the component name. You <strong><em>do</em></strong> need to include that &#8212; otherwise all this text explaining how to use the component will appear on your page.</p>
+<p>For this component, there are three parameters per color. Replace N with the number of the color.</p>
+<div class="options">
+<table class="wiki-content-table">
+<tr>
+<td><strong>colorN-name</strong></td>
+<td>The name of the color. Pick whatever you want!</td>
+</tr>
+<tr>
+<td><strong>colorN-variable</strong></td>
+<td>The name of the <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/--*">CSS variable</a> that contains this color.<br />
+The variable should hold three comma-separated numbers representing the RGB values of the color. This is consistent with BHL-style variables.<br />
+If your variables hold something else (e.g. a full RGB/RGBA or hex color), you will need to override the background color of each theme square manually with CSS.</td>
+</tr>
+<tr>
+<td><strong>colorN-info</strong></td>
+<td>Some info about the colour. Displaying the RGB values is typical. Keep it short.<br />
+If you don't want any text, add <tt><span style="white-space: pre-wrap;">@@&#32;@@</span></tt> instead.</td>
+</tr>
+<tr>
+<td><strong><em>colorN-has-light-text</em></strong><br />
+<em>Optional. Default: 0</em></td>
+<td>Either 0 or 1. Determines the font color on the square. Useful to make sure there is enough contrast between the background color and the text color.<br />
+If 1, the value of <tt><span style="white-space: pre-wrap;">--swatch-text-light</span></tt> is used, or white (255, 255, 255) if it is not defined. Otherwise <tt><span style="white-space: pre-wrap;">--swatch-text-dark</span></tt>, or black (0, 0, 0). Like all BHL-style CSS color variables, three numbers representing RGB values are expected.</td>
+</tr>
+</table>
+</div>
+<p>A color can only be used if it's exposed as a <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/--*">CSS variable</a>. All colors in a Black Highlighter theme have a corresponding CSS variable by default, so for BHL themes, this component should work out of the box. However, sigma9 does not use CSS variables, so the only CSS variables that are available will be any that you have defined in your theme.</p>
+<p>This component can hold a maximum of 6 primary colors and 12 secondary colors. I recommend two primary colors and no more than six secondary colors.</p>
+<p>To add a primary color, just add the top three of the above parameters to the include, as shown in the example.</p>
+<p>To add a secondary color, it's the same, but replace 'color' with 'subcolor'.</p>
+<h1 id="toc2"><span>Example</span></h1>
+<p>Here's a longer example, taken from the Black Highlighter theme:</p>
+<div class="code">
+<p><span style="color: blue"><strong>[[include :scp-wiki:component:theme-squares -=-</strong></span><br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">color1-name</span><span style="color: blue"><strong>=</strong></span>Payne's Grey<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">color1-variable</span><span style="color: blue"><strong>=</strong></span><span style="white-space: pre-wrap;">--</span>gray-monochrome<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">color1-info</span><span style="color: blue"><strong>=</strong></span>(66, 66, 72)<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">color1-has-light-text</span><span style="color: blue"><strong>=</strong></span>1<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">color2-name</span><span style="color: blue"><strong>=</strong></span>Rosewood<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">color2-variable</span><span style="color: blue"><strong>=</strong></span><span style="white-space: pre-wrap;">--</span>bright-accent<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">color2-info</span><span style="color: blue"><strong>=</strong></span>(133, 0, 5)<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">color2-has-light-text</span><span style="color: blue"><strong>=</strong></span>1<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor1-name</span><span style="color: blue"><strong>=</strong></span>Alto<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor1-variable</span><span style="color: blue"><strong>=</strong></span><span style="white-space: pre-wrap;">--</span>very-light-gray-monochrome<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor1-info</span><span style="color: blue"><strong>=</strong></span>(215, 215, 215)<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor2-name</span><span style="color: blue"><strong>=</strong></span>White Smoke<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor2-variable</span><span style="color: blue"><strong>=</strong></span><span style="white-space: pre-wrap;">--</span>pale-gray-monochrome<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor2-info</span><span style="color: blue"><strong>=</strong></span>(244, 244, 244)<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor3-name</span><span style="color: blue"><strong>=</strong></span>Bastille<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor3-variable</span><span style="color: blue"><strong>=</strong></span><span style="white-space: pre-wrap;">--</span>dark-gray-monochrome<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor3-info</span><span style="color: blue"><strong>=</strong></span>(48, 48, 52)<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor3-has-light-text</span><span style="color: blue"><strong>=</strong></span>1<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor4-name</span><span style="color: blue"><strong>=</strong></span>Buccaneer<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor4-variable</span><span style="color: blue"><strong>=</strong></span><span style="white-space: pre-wrap;">--</span>medium-accent<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor4-info</span><span style="color: blue"><strong>=</strong></span>(100, 46, 44)<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor4-has-light-text</span><span style="color: blue"><strong>=</strong></span>1<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor5-name</span><span style="color: blue"><strong>=</strong></span>Maroon<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor5-variable</span><span style="color: blue"><strong>=</strong></span><span style="white-space: pre-wrap;">--</span>dark-accent<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor5-info</span><span style="color: blue"><strong>=</strong></span>(100, 3, 15)<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor5-has-light-text</span><span style="color: blue"><strong>=</strong></span>1<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor6-name</span><span style="color: blue"><strong>=</strong></span>Mango Tango<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor6-variable</span><span style="color: blue"><strong>=</strong></span><span style="white-space: pre-wrap;">--</span>newpage-color<br />
+<span style="color: blue"><strong>|</strong></span> <span style="color: green">subcolor6-info</span><span style="color: blue"><strong>=</strong></span>(221, 102, 17)<br />
+<span style="color: blue"><strong>]]</strong></span></p>
+</div>
+<p>This produces the following colored squares:</p>
+<div style="text-align: center;"><img src="https://scp-wiki.wdfiles.com/local--files/component:theme-squares/bhl-squares.png" alt="bhl-squares.png" class="image" /></div>
+<h1 id="toc3"><span>Tweaking</span></h1>
+<p>You can adjust the appearance of the component with CSS.</p>
+<p>The whole component has the <tt>.colors-container</tt> class, and any CSS that targets it should included that class to ensure that nothing else on the page is affected. Every colored square has class <tt>.color</tt>. The primary colors have a <tt>.colors</tt> parent and the secondary colors have a <tt>.subcolors</tt> parent.</p>
+<p>You'll need to use <tt>!important</tt> to override a square's background.</p>
+<p>For example, the <a href="/theme:laughter-and-knives-theme">Laughter and Knives theme</a> adds a gradient background to the 9th secondary color like so:</p>
+<div class="code">
+<div class="hl-main">
+<pre><span class="hl-identifier">.colors-container</span><span class="hl-code"> </span><span class="hl-identifier">.subcolors</span><span class="hl-code"> </span><span class="hl-identifier">.color</span><span class="hl-special">:nth-of-type</span><span class="hl-code">(9) </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">background:</span><span class="hl-code"> var(--pastel-rainbow) !important</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span></pre></div>
+</div>
+<hr />
+<p><a href="https://rossjrw.com/series-replace/?f=%5Cn&amp;f=%5E&amp;f=%24&amp;f=%3C%3C%3E%3E&amp;f=%28%3F%3C%3Dsubcolors.%2A%29%28%5B%5E%5C%5B%5C%5D%5D%2B%29%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5Ba-z-%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5B%5E%40%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D&amp;f=%28%5B%5E%5C%5B%5C%5D%5D%2B%29%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5Ba-z-%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D%5C%5B%5C%5Bspan%20class%3D%22css-variable%22%5D%5D%40%40%28%5B%5E%40%5D%2B%29%40%40%5C%5B%5C%5B%5C%2Fspan%5D%5D&amp;f=%5C%7C&amp;f=%5E%5C%5B%5C%5B%5B%5Ei%5D.%2A%7C%5E%5C%7C%5B%5E%20%5D.%2A&amp;f=%5Cn%24&amp;r=&amp;r=%5B%5Binclude%20%3Ascp-wiki%3Acomponent%3Atheme-squares%20-%3D-%3C%3C%3E%3E%7C%20color%24-has-light-text%3D1%3C%3C%3E%3E%7C%20subcolor%24-has-light-text%3D1%3C%3C%3E%3E&amp;r=%5Cn%5D%5D&amp;r=%5Cn&amp;r=%7C%20subcolor%24%24-name%3D%241%7C%20subcolor%24%24-variable%3D%242%7C%20subcolor%24%24-info%3D%243%7C&amp;r=%7C%20color%24%24-name%3D%241%7C%20color%24%24-variable%3D%242%7C%20color%24%24-info%3D%243%7C&amp;r=%5Cn%7C&amp;r=&amp;r=">Tool to convert existing syntax to arguments for this component</a></p>
+</div>
+
+
+
+<div class="colors-container">
+<div class="colors">
+<div class="color" style="background-color: rgb(var({$color1-variable}));" data-variable="{$color1-variable}" data-has-light-text="{$color1-has-light-text}">{$color1-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$color1-variable}</span></span><span class="css-variable">{$color1-info}</span></div>
+<div class="color" style="background-color: rgb(var({$color2-variable}));" data-variable="{$color2-variable}" data-has-light-text="{$color2-has-light-text}">{$color2-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$color2-variable}</span></span><span class="css-variable">{$color2-info}</span></div>
+<div class="color" style="background-color: rgb(var({$color3-variable}));" data-variable="{$color3-variable}" data-has-light-text="{$color3-has-light-text}">{$color3-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$color3-variable}</span></span><span class="css-variable">{$color3-info}</span></div>
+<div class="color" style="background-color: rgb(var({$color4-variable}));" data-variable="{$color4-variable}" data-has-light-text="{$color4-has-light-text}">{$color4-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$color4-variable}</span></span><span class="css-variable">{$color4-info}</span></div>
+<div class="color" style="background-color: rgb(var({$color5-variable}));" data-variable="{$color5-variable}" data-has-light-text="{$color5-has-light-text}">{$color5-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$color5-variable}</span></span><span class="css-variable">{$color5-info}</span></div>
+<div class="color" style="background-color: rgb(var({$color6-variable}));" data-variable="{$color6-variable}" data-has-light-text="{$color6-has-light-text}">{$color6-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$color6-variable}</span></span><span class="css-variable">{$color6-info}</span></div>
+</div>
+<div class="subcolors">
+<div class="color" style="background-color: rgb(var({$subcolor1-variable}));" data-variable="{$subcolor1-variable}" data-has-light-text="{$subcolor1-has-light-text}">{$subcolor1-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$subcolor1-variable}</span></span><span class="css-variable">{$subcolor1-info}</span></div>
+<div class="color" style="background-color: rgb(var({$subcolor2-variable}));" data-variable="{$subcolor2-variable}" data-has-light-text="{$subcolor2-has-light-text}">{$subcolor2-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$subcolor2-variable}</span></span><span class="css-variable">{$subcolor2-info}</span></div>
+<div class="color" style="background-color: rgb(var({$subcolor3-variable}));" data-variable="{$subcolor3-variable}" data-has-light-text="{$subcolor3-has-light-text}">{$subcolor3-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$subcolor3-variable}</span></span><span class="css-variable">{$subcolor3-info}</span></div>
+<div class="color" style="background-color: rgb(var({$subcolor4-variable}));" data-variable="{$subcolor4-variable}" data-has-light-text="{$subcolor4-has-light-text}">{$subcolor4-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$subcolor4-variable}</span></span><span class="css-variable">{$subcolor4-info}</span></div>
+<div class="color" style="background-color: rgb(var({$subcolor5-variable}));" data-variable="{$subcolor5-variable}" data-has-light-text="{$subcolor5-has-light-text}">{$subcolor5-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$subcolor5-variable}</span></span><span class="css-variable">{$subcolor5-info}</span></div>
+<div class="color" style="background-color: rgb(var({$subcolor6-variable}));" data-variable="{$subcolor6-variable}" data-has-light-text="{$subcolor6-has-light-text}">{$subcolor6-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$subcolor6-variable}</span></span><span class="css-variable">{$subcolor6-info}</span></div>
+<div class="color" style="background-color: rgb(var({$subcolor7-variable}));" data-variable="{$subcolor7-variable}" data-has-light-text="{$subcolor7-has-light-text}">{$subcolor7-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$subcolor7-variable}</span></span><span class="css-variable">{$subcolor7-info}</span></div>
+<div class="color" style="background-color: rgb(var({$subcolor8-variable}));" data-variable="{$subcolor8-variable}" data-has-light-text="{$subcolor8-has-light-text}">{$subcolor8-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$subcolor8-variable}</span></span><span class="css-variable">{$subcolor8-info}</span></div>
+<div class="color" style="background-color: rgb(var({$subcolor9-variable}));" data-variable="{$subcolor9-variable}" data-has-light-text="{$subcolor9-has-light-text}">{$subcolor9-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$subcolor9-variable}</span></span><span class="css-variable">{$subcolor9-info}</span></div>
+<div class="color" style="background-color: rgb(var({$subcolor10-variable}));" data-variable="{$subcolor10-variable}" data-has-light-text="{$subcolor10-has-light-text}">{$subcolor10-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$subcolor10-variable}</span></span><span class="css-variable">{$subcolor10-info}</span></div>
+<div class="color" style="background-color: rgb(var({$subcolor11-variable}));" data-variable="{$subcolor11-variable}" data-has-light-text="{$subcolor11-has-light-text}">{$subcolor11-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$subcolor11-variable}</span></span><span class="css-variable">{$subcolor11-info}</span></div>
+<div class="color" style="background-color: rgb(var({$subcolor12-variable}));" data-variable="{$subcolor12-variable}" data-has-light-text="{$subcolor12-has-light-text}">{$subcolor12-name}<span class="css-variable"><span style="white-space: pre-wrap;">{$subcolor12-variable}</span></span><span class="css-variable">{$subcolor12-info}</span></div>
+</div>
+</div>
+
+                    

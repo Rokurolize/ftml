@@ -1,0 +1,123 @@
+--- live
++++ ftml
+@@ -9,27 +9,7 @@
+ </div>
+ <div style="text-align: right;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T"rating: "
+-<span class="number prwN">
+-T"+297"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a title="I like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)">
+-T"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a title="I don&#x27;t like it" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)">
+-T"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a title="Cancel my vote" href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)">
+-T"x"
+-</a>
+-</span>
+-</div>
++<p>
++T"TODO: module Rate"
++</p>
+ </div>
+ <div style="text-align: right; margin-right: 2em; margin-top: -20px;">
+@@ -41,4 +21,7 @@
+ </p>
+ </div>
++<p>
++T"[[iftags -component-backend]]"
++</p>
+ <div class="anom-bar-container item-039 clear-2 euclid none vlam caution {$american}">
+ <div class="anom-bar">
+@@ -51,4 +34,6 @@
+ <span class="number">
+ T"039"
++<br>
++T" "
+ </span>
+ </div>
+@@ -117,4 +102,5 @@
+ T"link to memo"
+ </a>
++T" "
+ <br>
+ <div class="arrows">
+@@ -145,4 +131,6 @@
+ </div>
+ </div>
++<br>
++T" [[/iftags]]"
+ <p>
+ <strong>
+@@ -150,5 +138,5 @@
+ </strong>
+ T" Living SCP-039 instances are to be contained in "
+-<a target="_blank" href="http://www.scp-wiki.net/secure-facility-dossier-site-77">
++<a href="http://www.scp-wiki.net/secure-facility-dossier-site-77" target="_blank">
+ T"Site-77"
+ </a>
+@@ -166,5 +154,5 @@
+ </p>
+ <div class="scp-image-block block-right" style="width:300px; --_image-block-width:300px;">
+-<img src="https://scp-wiki.wdfiles.com/local--files/scp-039/monkey-new.jpg" alt="monkey-new.jpg" class="image">
++<img src="https://scp-wiki.wjfiles.com/local--files/scp-039/monkey-new.jpg" class="image" alt="monkey-new.jpg">
+ <div class="scp-image-caption">
+ <p>
+@@ -1346,29 +1334,7 @@
+ T"Cite this page as:"
+ </p>
+-<div class="list-pages-box" data-lp-id="lp-HEX" data-lp-key="p" data-lp-page="1312160197" data-lp-route="scp-039" data-lp-generation="HEX">
+-<div class="list-pages-item">
+-<blockquote>
+-<p>
+-T"""
+-<a href="/scp-039">
+-T"SCP-039"
+-</a>
+-T"" by Anonymous and Wilt, rewritten by Kothardarastrix, from the "
+-<a href="https://scpwiki.com">
+-T"SCP Wiki"
+-</a>
+-T". Source: "
+-<a href="https://scpwiki.com/scp-039">
+-T"https://scpwiki.com/scp-039"
+-</a>
+-T". Licensed under "
+-<a href="https://creativecommons.org/licenses/by-sa/3.0/">
+-T"CC BY-SA"
+-</a>
+-T"."
+-</p>
+-</blockquote>
+-</div>
+-</div>
++<p>
++T"TODO: module ListPages"
++</p>
+ <p>
+ T"For information on how to use this component, see the "
+@@ -1403,9 +1369,9 @@
+ T" "
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/morbid-memories" onclick="WIKIDOT.page.listeners.userInfo(3633521); return false;">
+-<img class="small" src="https://www.wikidot.com/avatar.php?userid=3633521&amp;amp;size=small&amp;amp;timestamp=TS" alt="Morbid Memories" style="background-image:url(https://www.wikidot.com/userkarma.php?u=3633521)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/morbid-memories" onclick="WIKIDOT.page.listeners.userInfo(3633521); return false;">
+-T"Morbid Memories"
++<a href="/user:info/morbid-memories" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" alt="morbid memories" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/morbid-memories" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T"morbid memories"
+ </a>
+ </span>

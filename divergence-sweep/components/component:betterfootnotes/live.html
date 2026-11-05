@@ -1,0 +1,160 @@
+                        
+
+
+
+
+<div class="warning-top-box">
+<h1><span>NOTICE:</span></h1>
+<p>This is a <em>component</em> page used internally by the SCP Wiki. It is intended to be used and included on other pages.</p>
+</div>
+
+
+
+<div style="border: solid 2px #ededed; padding: 0.5rem; margin: 4px;">
+<p>Better is subjective of course, but <em>what you see is what you get.</em></p>
+<p>This is a component that mimics the custom footnotes as seen in <a href="http://scp-wiki.wikidot.com/scp-4485">SCP-4485</a>.</p>
+<h2 id="toc0"><span>Examples:</span></h2>
+<p>Text<span class="fnnum">.</span><span class="fncon">Text in footnote.</span><br />
+Text<span class="fnnum">.</span><span class="fncon">Text in footnote.</span> and more text.<br />
+Text<span class="fnnum">.</span><span class="fncon">Text in footnote.</span>. More text.<br />
+Text not in footnote.</p>
+<h2 id="toc1"><span>How to use:</span></h2>
+<p>Put this in once:</p>
+<blockquote>
+<p><span style="white-space: pre-wrap;">[[include&#32;:scp-wiki:component:betterfootnotes]]</span></p>
+</blockquote>
+<p>Copy the following structure for each footnote:</p>
+<blockquote>
+<p><span style="white-space: pre-wrap;">[[span&#32;class=&quot;fnnum&quot;]].[[/span]][[span&#32;class=&quot;fncon&quot;]]Text&#32;in&#32;footnote.[[/span]]</span></p>
+</blockquote>
+<h2 id="toc2"><span>Note:</span></h2>
+<p>- The <em>fnnum</em> span class contains a period, as it needs at least one non-space character to properly parse.</p>
+<p>- The color of the footnote superscript is customizable with the following:</p>
+<blockquote>
+<p><span style="white-space: pre-wrap;">[[module&#32;CSS]]</span><br />
+:root {<br />
+<span style="white-space: pre-wrap;">&#32;&#32;&#32;&#32;--fnColor:&#32;COLOR&#32;HERE;</span><br />
+}<br />
+[[/module]]</p>
+</blockquote>
+<p>Otherwise defaults to <strong><span style="color: #e6283c">#E6283C</span></strong>.</p>
+<p>- There is no bottom footnote list.</p>
+<p>- Works with Sigma-9, but might not be as seamless.</p>
+<p>- Special thanks to <span class="printuser avatarhover"><a href="https://www.wikidot.com/user:info/woedenaz" onclick="WIKIDOT.page.listeners.userInfo(1404096); return false;"><img class="small" src="https://www.wikidot.com/avatar.php?userid=1404096&amp;amp;size=small&amp;amp;timestamp=1792300171" alt="Woedenaz" style="background-image:url(https://www.wikidot.com/userkarma.php?u=1404096)" /></a><a href="https://www.wikidot.com/user:info/woedenaz" onclick="WIKIDOT.page.listeners.userInfo(1404096); return false;">Woedenaz</a></span> for their impeccable design sense, and <span class="printuser avatarhover"><a href="https://www.wikidot.com/user:info/placeholder-mcd" onclick="WIKIDOT.page.listeners.userInfo(6536693); return false;"><img class="small" src="https://www.wikidot.com/avatar.php?userid=6536693&amp;amp;size=small&amp;amp;timestamp=1792300171" alt="Placeholder McD" style="background-image:url(https://www.wikidot.com/userkarma.php?u=6536693)" /></a><a href="https://www.wikidot.com/user:info/placeholder-mcd" onclick="WIKIDOT.page.listeners.userInfo(6536693); return false;">Placeholder McD</a></span> for <span style="text-decoration: line-through;">pestering</span> encouraging me to make this.</p>
+</div>
+<hr />
+<h2 id="toc3"><span>Source Code:</span></h2>
+<div class="code">
+<div class="hl-main">
+<pre><span class="hl-special">:root</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    --</span><span class="hl-reserved">posX:</span><span class="hl-code"> calc(</span><span class="hl-number">50</span><span class="hl-string">%</span><span class="hl-code"> - </span><span class="hl-number">358</span><span class="hl-string">px</span><span class="hl-code"> - </span><span class="hl-number">12</span><span class="hl-code">rem)</span><span class="hl-code">;
+    --</span><span class="hl-reserved">fnTransition:</span><span class="hl-code"> </span><span class="hl-number">0.3</span><span class="hl-code">s</span><span class="hl-code">;
+    --</span><span class="hl-reserved">fnLinger:</span><span class="hl-code"> </span><span class="hl-number">0.15</span><span class="hl-code">s</span><span class="hl-code">;
+    --</span><span class="hl-reserved">fnInteract:</span><span class="hl-code"> calc(var(--fnTransition) + var(--fnLinger))</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code">--- </span><span class="hl-identifier">Footnote</span><span class="hl-code"> </span><span class="hl-identifier">Auto-counter</span><span class="hl-code"> --</span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">#main-content</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">counter-reset:</span><span class="hl-code"> megacount</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code">--- </span><span class="hl-identifier">Footnote</span><span class="hl-code"> </span><span class="hl-identifier">Superscript</span><span class="hl-code"> </span><span class="hl-identifier">Number</span><span class="hl-code"> --</span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">.fnnum</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">display:</span><span class="hl-code"> </span><span class="hl-string">inline-block</span><span class="hl-code">;
+    </span><span class="hl-reserved">width:</span><span class="hl-code"> max-content</span><span class="hl-code">;
+    </span><span class="hl-reserved">text-indent:</span><span class="hl-code"> -</span><span class="hl-number">0.475</span><span class="hl-string">ex</span><span class="hl-code">;
+    </span><span class="hl-reserved">vertical-align:</span><span class="hl-code"> </span><span class="hl-string">super</span><span class="hl-code">;
+    </span><span class="hl-reserved">line-height:</span><span class="hl-code"> </span><span class="hl-number">80</span><span class="hl-string">%</span><span class="hl-code">;
+    </span><span class="hl-reserved">word-break:</span><span class="hl-code"> initial</span><span class="hl-code">;
+    </span><span class="hl-reserved">text-decoration:</span><span class="hl-code"> </span><span class="hl-string">none</span><span class="hl-code">;
+    </span><span class="hl-reserved">font-weight:</span><span class="hl-code"> </span><span class="hl-string">bold</span><span class="hl-code">;
+    </span><span class="hl-reserved">font-style:</span><span class="hl-code"> initial</span><span class="hl-code">;
+    </span><span class="hl-reserved">color:</span><span class="hl-code"> </span><span class="hl-string">transparent</span><span class="hl-code">;
+    </span><span class="hl-reserved">position:</span><span class="hl-code"> </span><span class="hl-string">relative</span><span class="hl-code">;
+    </span><span class="hl-reserved">font-size:</span><span class="hl-code"> </span><span class="hl-number">80</span><span class="hl-string">%</span><span class="hl-code">;
+    </span><span class="hl-reserved">padding:</span><span class="hl-code"> </span><span class="hl-number">.15</span><span class="hl-string">em</span><span class="hl-code"> </span><span class="hl-number">.05</span><span class="hl-string">em</span><span class="hl-code">;
+    </span><span class="hl-reserved">margin-right:</span><span class="hl-code"> -</span><span class="hl-number">0.25</span><span class="hl-string">em</span><span class="hl-code">;
+    </span><span class="hl-reserved">counter-increment:</span><span class="hl-code"> megacount</span><span class="hl-code">;
+    -</span><span class="hl-reserved">webkit-user-select:</span><span class="hl-code"> </span><span class="hl-string">none</span><span class="hl-code">;
+    </span><span class="hl-reserved">user-select:</span><span class="hl-code"> </span><span class="hl-string">none</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.fnnum</span><span class="hl-code">:</span><span class="hl-special">:after</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">content:</span><span class="hl-code"> &quot;&quot; counter(megacount)</span><span class="hl-code">;
+    </span><span class="hl-reserved">color:</span><span class="hl-code"> var(--fnColor, </span><span class="hl-var">#E6283C</span><span class="hl-code">)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.fnnum</span><span class="hl-special">:hover</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">text-decoration:</span><span class="hl-code"> </span><span class="hl-string">none</span><span class="hl-code">;
+    </span><span class="hl-reserved">cursor:</span><span class="hl-code"> </span><span class="hl-string">pointer</span><span class="hl-code">;
+    </span><span class="hl-reserved">background-color:</span><span class="hl-code"> var(--fnColor, </span><span class="hl-var">#E6283C</span><span class="hl-code">)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.fnnum</span><span class="hl-special">:hover</span><span class="hl-code">:</span><span class="hl-special">:after</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-reserved">color:</span><span class="hl-code"> </span><span class="hl-var">white</span><span class="hl-code">; </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code">--- </span><span class="hl-identifier">Footnote</span><span class="hl-code"> </span><span class="hl-identifier">Content</span><span class="hl-code"> </span><span class="hl-identifier">Wrapper</span><span class="hl-code"> --</span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-identifier">.fncon</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">position:</span><span class="hl-code"> </span><span class="hl-string">absolute</span><span class="hl-code">;
+    </span><span class="hl-reserved">right:</span><span class="hl-code"> calc(var(--posX) + </span><span class="hl-number">80</span><span class="hl-string">px</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">line-height:</span><span class="hl-code"> </span><span class="hl-number">1.25</span><span class="hl-code">;
+    </span><span class="hl-reserved">padding:</span><span class="hl-code"> </span><span class="hl-number">0.8125</span><span class="hl-code">rem</span><span class="hl-code">;
+    </span><span class="hl-reserved">width:</span><span class="hl-code"> </span><span class="hl-number">12.5</span><span class="hl-code">rem</span><span class="hl-code">;
+    </span><span class="hl-reserved">box-sizing:</span><span class="hl-code"> border-box</span><span class="hl-code">;
+    </span><span class="hl-reserved">background:</span><span class="hl-code"> </span><span class="hl-var">white</span><span class="hl-code">;
+    </span><span class="hl-reserved">border:</span><span class="hl-code"> </span><span class="hl-number">.125</span><span class="hl-code">rem </span><span class="hl-string">solid</span><span class="hl-code"> </span><span class="hl-var">black</span><span class="hl-code">;
+    </span><span class="hl-reserved">font-size:</span><span class="hl-code"> </span><span class="hl-number">.9125</span><span class="hl-code">rem</span><span class="hl-code">;
+    </span><span class="hl-reserved">font-weight:</span><span class="hl-code"> initial</span><span class="hl-code">;
+    </span><span class="hl-reserved">font-style:</span><span class="hl-code"> </span><span class="hl-string">normal</span><span class="hl-code">;
+    </span><span class="hl-reserved">text-align:</span><span class="hl-code"> initial</span><span class="hl-code">;
+    </span><span class="hl-reserved">visibility:</span><span class="hl-code"> </span><span class="hl-string">hidden</span><span class="hl-code">;
+    </span><span class="hl-reserved">opacity:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">;
+    </span><span class="hl-reserved">z-index:</span><span class="hl-code"> </span><span class="hl-number">9</span><span class="hl-code">;
+    </span><span class="hl-reserved">transition:</span><span class="hl-code">
+        opacity </span><span class="hl-number">0.15</span><span class="hl-code">s linear var(--fnLinger),
+        </span><span class="hl-string">right</span><span class="hl-code"> var(--fnTransition) cubic-bezier(</span><span class="hl-number">.08</span><span class="hl-code">,</span><span class="hl-number">.72</span><span class="hl-code">,</span><span class="hl-number">.5</span><span class="hl-code">,</span><span class="hl-number">.94</span><span class="hl-code">) var(--fnLinger),
+        visibility </span><span class="hl-number">0.01</span><span class="hl-code">s linear var(--fnInteract)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-identifier">.fnnum</span><span class="hl-special">:hover</span><span class="hl-code"> + </span><span class="hl-identifier">.fncon</span><span class="hl-code">, </span><span class="hl-identifier">.fncon</span><span class="hl-special">:is</span><span class="hl-code">(</span><span class="hl-special">:hover</span><span class="hl-code">,</span><span class="hl-special">:focus-within</span><span class="hl-code">) </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">opacity:</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">;
+    </span><span class="hl-reserved">z-index:</span><span class="hl-code"> </span><span class="hl-number">10</span><span class="hl-code">;
+    </span><span class="hl-reserved">right:</span><span class="hl-code"> var(--posX)</span><span class="hl-code">;
+    </span><span class="hl-reserved">visibility:</span><span class="hl-code"> </span><span class="hl-string">visible</span><span class="hl-code">;
+    </span><span class="hl-reserved">transition:</span><span class="hl-code">
+        opacity </span><span class="hl-number">0.15</span><span class="hl-code">s linear,
+        </span><span class="hl-string">right</span><span class="hl-code"> var(--fnTransition) cubic-bezier(</span><span class="hl-number">.08</span><span class="hl-code">,</span><span class="hl-number">.72</span><span class="hl-code">,</span><span class="hl-number">.5</span><span class="hl-code">,</span><span class="hl-number">.94</span><span class="hl-code">)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">.fncon</span><span class="hl-code">:</span><span class="hl-special">:before</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">position:</span><span class="hl-code"> </span><span class="hl-string">absolute</span><span class="hl-code">;
+    </span><span class="hl-reserved">top:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-reserved">left:</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">;
+    </span><span class="hl-reserved">transform:</span><span class="hl-code"> translateX(-</span><span class="hl-number">52</span><span class="hl-string">%</span><span class="hl-code">) translateY(-</span><span class="hl-number">55</span><span class="hl-string">%</span><span class="hl-code">) scale(</span><span class="hl-number">1.15</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">background-color:</span><span class="hl-code"> var(--fnColor, </span><span class="hl-var">#E6283C</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">color:</span><span class="hl-code"> </span><span class="hl-var">white</span><span class="hl-code">;
+    </span><span class="hl-reserved">content:</span><span class="hl-code"> counter(megacount)</span><span class="hl-code">;
+    </span><span class="hl-reserved">font-size:</span><span class="hl-code"> initial</span><span class="hl-code">;
+    </span><span class="hl-reserved">font-weight:</span><span class="hl-code"> </span><span class="hl-string">bold</span><span class="hl-code">;
+    </span><span class="hl-reserved">font-style:</span><span class="hl-code"> initial</span><span class="hl-code">;
+    </span><span class="hl-reserved">padding:</span><span class="hl-code"> </span><span class="hl-number">0.18</span><span class="hl-code">rem </span><span class="hl-number">0.32</span><span class="hl-string">em</span><span class="hl-code"> </span><span class="hl-number">0.08</span><span class="hl-code">rem</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+/</span><span class="hl-identifier">*</span><span class="hl-code">--- </span><span class="hl-identifier">Mobile</span><span class="hl-code"> </span><span class="hl-identifier">Query</span><span class="hl-code"> --</span><span class="hl-identifier">*</span><span class="hl-code">/
+</span><span class="hl-var">@media</span><span class="hl-code"> </span><span class="hl-identifier">only</span><span class="hl-code"> </span><span class="hl-identifier">screen</span><span class="hl-code"> </span><span class="hl-identifier">and</span><span class="hl-code"> (max-width: 1279</span><span class="hl-identifier">px</span><span class="hl-code">) </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-identifier">.fncon</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">position:</span><span class="hl-code"> </span><span class="hl-string">fixed</span><span class="hl-code">;
+        </span><span class="hl-reserved">bottom:</span><span class="hl-code"> </span><span class="hl-number">1.5</span><span class="hl-code">rem</span><span class="hl-code">;
+        </span><span class="hl-reserved">left:</span><span class="hl-code"> calc(</span><span class="hl-number">15</span><span class="hl-string">%</span><span class="hl-code"> - </span><span class="hl-number">50</span><span class="hl-string">px</span><span class="hl-code">)</span><span class="hl-code">;
+        </span><span class="hl-reserved">width:</span><span class="hl-code"> </span><span class="hl-number">70</span><span class="hl-string">%</span><span class="hl-code">;
+        </span><span class="hl-reserved">transition:</span><span class="hl-code">
+            opacity </span><span class="hl-number">0.15</span><span class="hl-code">s linear var(--fnLinger),
+            </span><span class="hl-string">left</span><span class="hl-code"> var(--fnTransition) cubic-bezier(</span><span class="hl-number">.08</span><span class="hl-code">,</span><span class="hl-number">.72</span><span class="hl-code">,</span><span class="hl-number">.5</span><span class="hl-code">,</span><span class="hl-number">.94</span><span class="hl-code">) var(--fnLinger),
+            visibility </span><span class="hl-number">0.01</span><span class="hl-code">s linear var(--fnInteract)</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">.fnnum</span><span class="hl-code">:</span><span class="hl-identifier">hover</span><span class="hl-code"> + </span><span class="hl-identifier">.fncon</span><span class="hl-code">, </span><span class="hl-identifier">.fncon</span><span class="hl-code">:</span><span class="hl-identifier">is</span><span class="hl-code">(:</span><span class="hl-identifier">hover</span><span class="hl-code">,:</span><span class="hl-identifier">focus-within</span><span class="hl-code">) </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">left:</span><span class="hl-code"> </span><span class="hl-number">15</span><span class="hl-string">%</span><span class="hl-code">;
+        </span><span class="hl-reserved">transition:</span><span class="hl-code">
+            opacity </span><span class="hl-number">0.15</span><span class="hl-code">s linear,
+            </span><span class="hl-string">left</span><span class="hl-code"> var(--fnTransition) cubic-bezier(</span><span class="hl-number">.08</span><span class="hl-code">,</span><span class="hl-number">.72</span><span class="hl-code">,</span><span class="hl-number">.5</span><span class="hl-code">,</span><span class="hl-number">.94</span><span class="hl-code">)</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span></pre></div>
+</div>
+
+
+
+                    

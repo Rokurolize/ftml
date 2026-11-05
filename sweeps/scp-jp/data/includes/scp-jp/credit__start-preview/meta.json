@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:26:47+00:00",
+  "method": "GET",
+  "response_bytes": 39262,
+  "response_sha256": "dc333bbb877d7e9452d664433b079c6edbcdd2cfe8e8b3391fb62ae1823d0bd2",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/credit:start-preview"
+ },
+ "page": "credit:start-preview",
+ "page_id": 1305181998,
+ "site": "scp-jp",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:26:48+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "1305181998"
+  },
+  "response_bytes": 1836,
+  "response_sha256": "1fa43010fe919895458b9038e5baeec44372a7ba57ba5cd497477e683758b49f",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "a61125640d28160843226f7356dfb3252578c288803bfaf4fd6f6d324ea324ca"
+}

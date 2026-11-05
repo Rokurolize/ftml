@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:27:17+00:00",
+  "method": "GET",
+  "response_bytes": 28908,
+  "response_sha256": "4724ee128efde9c586366eb1d410ae13b9e388408367ea8b9d19941d84622a3b",
+  "status": 200,
+  "url": "https://scp-wiki.wikidot.com/component:image-block"
+ },
+ "page": "component:image-block",
+ "page_id": 19744958,
+ "site": "scp-wiki",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:27:18+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "19744958"
+  },
+  "response_bytes": 437,
+  "response_sha256": "697d00277cd9a58060e85dee6a682e411e28f913d9570d038f81464bf5caeadb",
+  "status": 200,
+  "url": "https://scp-wiki.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "8621baf34484b27a1202c117ea91b4172866a6a74d5d14d0f11fa1859ba03948"
+}

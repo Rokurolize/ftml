@@ -1,0 +1,74 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "credit:start",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "caption": "初期収容時のSCP-1280-JP\n",
+      "clear": "true",
+      "name": "https://scp-jp.wikidot.com/local--files/scp-1280-jp/humehole\n",
+      "width": "300px\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "復元に成功した唯一の画像",
+      "name": "https://scp-jp.wikidot.com/local--files/scp-1280-jp/piclog",
+      "width": "500px"
+     }
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "初期収容時のSCP-1280-JP\n",
+      "clear": "true",
+      "link": "#",
+      "name": "https://scp-jp.wikidot.com/local--files/scp-1280-jp/humehole\n",
+      "width": "300px\n"
+     }
+    }
+   ],
+   "pass": 2
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 3
+  }
+ ],
+ "existing_pages_from_live": [
+  "and-this-one-explains-humes",
+  "scp-3001"
+ ],
+ "newpage_links_in_live": []
+}

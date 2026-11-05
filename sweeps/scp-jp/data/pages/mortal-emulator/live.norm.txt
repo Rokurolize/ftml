@@ -1,0 +1,658 @@
+<p>
+<iframe src="//interwiki.scp-jp.org/styleFrame.html?priority=1&theme=https://scp-jp.wdfiles.com/local--code/theme%3Aminimal/1&css={$css}" style="display: none">
+</iframe>
+</p>
+<div style="display: none">
+<div class="code">
+<div class="hl-main">
+<pre>
+<span class="hl-code">
+T:"/"
+</span>
+<span class="hl-identifier">
+T:"*"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"These"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"two"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"arguments"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"are"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"in"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"a"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"quirked-up"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"CSS"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"Module"
+</span>
+<span class="hl-code">
+T:"("
+</span>
+<span class="hl-identifier">
+T:"rather"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"than"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"the"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"main"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"code"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"block"
+</span>
+<span class="hl-code">
+T:")"
+</span>
+<span class="hl-identifier">
+T:"so"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"users"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"can"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"feed"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"Wikidot"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"variables"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"into"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"them"
+</span>
+<span class="hl-code">
+T:"."
+</span>
+<span class="hl-identifier">
+T:"*"
+</span>
+<span class="hl-code">
+T:"/"
+</span>
+<span class="hl-identifier">
+T:"#header"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"h1"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"a"
+</span>
+<span class="hl-code">
+T:":"
+</span>
+<span class="hl-special">
+T:":before"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-brackets">
+T:"{"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-reserved">
+T:"content:"
+</span>
+<span class="hl-code">
+T:"\"定命種エミュレータ事例集\""
+</span>
+<span class="hl-code">
+T:";"
+</span>
+<span class="hl-reserved">
+T:"color:"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-var">
+T:"black"
+</span>
+<span class="hl-code">
+T:";"
+</span>
+<span class="hl-brackets">
+T:"}"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"#header"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"h2"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-identifier">
+T:"span"
+</span>
+<span class="hl-code">
+T:":"
+</span>
+<span class="hl-special">
+T:":before"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-brackets">
+T:"{"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-reserved">
+T:"content:"
+</span>
+<span class="hl-code">
+T:"\"儚いものと生きていく\""
+</span>
+<span class="hl-code">
+T:";"
+</span>
+<span class="hl-reserved">
+T:"color:"
+</span>
+<span class="hl-code">
+</span>
+<span class="hl-var">
+T:"black"
+</span>
+<span class="hl-code">
+T:";"
+</span>
+<span class="hl-brackets">
+T:"}"
+</span>
+</pre>
+</div>
+</div>
+</div>
+<div class="creditRate creditModule {$mode}">
+<div class="rateBox">
+<div class="rate-box-with-credit-button">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+221"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<div class="rateBox heritage-wrap" style="display:none;">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+221"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<div style="clear:both;">
+</div>
+<div id="u-credit-view">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"クレジット"
+</span>
+</h2>
+</div>
+<div class="credit">
+<p>
+<strong>
+T:"タイトル:"
+</strong>
+T:"人間の「近いうち」を10年単位で考えてはいけない - 定命種エミュレータ事例集"
+<br>
+<strong>
+T:"著者:"
+</strong>
+<span class="printuser avatarhover">
+<a href="https://www.wikidot.com/user:info/dr-knotty" onclick="WIKIDOT.page.listeners.userInfo(2919814); return false;">
+<img alt="Dr_Knotty" class="small" src="https://www.wikidot.com/avatar.php?userid=2919814&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=2919814)">
+</a>
+<a href="https://www.wikidot.com/user:info/dr-knotty" onclick="WIKIDOT.page.listeners.userInfo(2919814); return false;">
+T:"Dr_Knotty"
+</a>
+</span>
+<br>
+<strong>
+T:"作成年:"
+</strong>
+T:"2023"
+</p>
+<hr>
+<p>
+<a href="https://scp-jp.wikidot.com/author:dr-knotty">
+T:"この著者の他の作品"
+</a>
+</p>
+<div class="credit-back" style="text-align: center;">
+<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+</iframe>
+</div>
+</div>
+<div class="creditBottomRate" style="height:30px;">
+<div class="credit-license">
+<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
+</a>
+</div>
+<div style="text-align: center; top: 0px;">
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+221"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+<div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+221"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p>
+<span style="color: #6495ed">
+T:"登録日"
+</span>
+T:"：2023/5/13"
+<br>
+<span style="color: #6495ed">
+T:"タグ"
+</span>
+T:"："
+<a href="javascript:;">
+T:"時間の感覚"
+</a>
+<a href="javascript:;">
+T:"やらない方がよいこと"
+</a>
+<a href="javascript:;">
+T:"人間"
+</a>
+<a href="javascript:;">
+T:"コミュニケーション"
+</a>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<h1 id="toc0">
+<span>
+T:"5W1H+Then状況説明"
+</span>
+</h1>
+<table class="wiki-content-table">
+<tbody>
+<tr>
+<td>
+T:"Who(誰が)"
+</td>
+<td>
+T:"筆者（不死者，人間擬態型）が"
+</td>
+</tr>
+<tr>
+<td>
+T:"When(いつ)"
+</td>
+<td>
+T:"20年ほど前に"
+</td>
+</tr>
+<tr>
+<td>
+T:"Where(どこで)"
+</td>
+<td>
+T:"友人(50代，人間)の家で"
+</td>
+</tr>
+<tr>
+<td>
+T:"Why(なぜ)"
+</td>
+<td>
+T:"「近いうちにまた遊びに来い」と言われたので"
+</td>
+</tr>
+<tr>
+<td>
+T:"How(どのように)"
+</td>
+<td>
+T:"先週ふと思い立って山から降りて"
+</td>
+</tr>
+<tr>
+<td>
+T:"What(何をした)"
+</td>
+<td>
+T:"彼の家を訪れた"
+</td>
+</tr>
+<tr>
+<td>
+T:"Then(どうなった)"
+</td>
+<td>
+T:"知らない顔の人間が出てきたし、警察を呼ばれて騒ぎにされそうになった"
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<h1 id="toc1">
+<span>
+T:"定命的行動ブレイクポイント"
+</span>
+</h1>
+<ul>
+<li>
+T:"「近いうち」が寿命の20%以上を占めるだけの時間を意味する筈がないと気づくべきだった"
+</li>
+<li>
+T:"彼の家から知らない顔が出て来た時に「ガワを変えたのか」といった同類の内輪ノリの冗談をかますべきではなかった"
+</li>
+</ul>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<h1 id="toc2">
+<span>
+T:"どうすればよかったか"
+</span>
+</h1>
+<ul>
+<li>
+T:"初めて見る顔の人間には丁重に接するべきだった"
+</li>
+<li>
+T:"もっと早く会いに行けばよかった"
+</li>
+</ul>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<h1 id="toc3">
+<span>
+T:"備考"
+</span>
+</h1>
+<ul>
+<li>
+T:"十年前に引っ越していた(人間は何かに追われなくともねぐらを変える事がある)"
+</li>
+<li>
+T:"新しい棲み処を探し出して訪れたところ、無事会えた(最初は不審そうにされたが、家に上げてもらった後は楽しいひとときを過ごす事が出来た)"
+</li>
+</ul>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<h1 id="toc4">
+<span>
+T:"関連する投稿(タグ基準)"
+</span>
+</h1>
+<ul>
+<li>
+<a href="javascript:;">
+T:"十年越しに再会するときは前と同じ姿で行かないほうがいい"
+</a>
+</li>
+<li>
+<a href="javascript:;">
+T:"急速に外観を老けさせすぎてはいけない"
+</a>
+</li>
+<li>
+<a href="javascript:;">
+T:"年齢を聞かれても正直に言ってはいけない"
+</a>
+</li>
+<li>
+<a href="javascript:;">
+T:"相手がいくつに見えるか聞かれても正直に言ってはいけない"
+</a>
+</li>
+<li>
+<a href="javascript:;">
+T:"生存期間を月で数えるのは赤ん坊だけである"
+</a>
+</li>
+<li>
+<a href="javascript:;">
+T:"「諸説ある」はやめよう"
+</a>
+</li>
+<li>
+<a href="javascript:;">
+T:"人間の「近いうち」を分単位で考えてはいけない"
+</a>
+</li>
+</ul>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div style="text-align: center;">
+<p>
+<strong>
+T:"«"
+<a href="javascript:;">
+T:"好きな動物を問われても「人間」と答えてはいけない"
+</a>
+T:"|"
+<a href="javascript:;">
+T:"財団はホテルではない"
+</a>
+T:"»"
+</strong>
+</p>
+</div>

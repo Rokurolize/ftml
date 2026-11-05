@@ -1,0 +1,49 @@
+{
+ "schema": "wikijump_syntax_differential.ftml_render_result.v1",
+ "case_id": "mortal-emulator",
+ "status": "rendered",
+ "parse_errors": [
+  {
+   "token": "left-block-end",
+   "rule": "fallback",
+   "span": [
+    13947,
+    13950
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-block",
+   "rule": "fallback",
+   "span": [
+    13953,
+    13955
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "left-block-end",
+   "rule": "fallback",
+   "span": [
+    13956,
+    13959
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-block",
+   "rule": "fallback",
+   "span": [
+    13962,
+    13964
+   ],
+   "kind": "no-rules-match"
+  }
+ ],
+ "engine": {
+  "name": "ftml",
+  "version": "ftml v1.42.1+roku.20261105.5 [c1dc6406]",
+  "package_version": "1.42.1+roku.20261105.5",
+  "git_commit": "c1dc64060a266b7148c029ac6334a7c1c03f916a"
+ }
+}

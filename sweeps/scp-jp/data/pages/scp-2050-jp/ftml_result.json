@@ -1,0 +1,157 @@
+{
+ "schema": "wikijump_syntax_differential.ftml_render_result.v1",
+ "case_id": "scp-2050-jp",
+ "status": "rendered",
+ "parse_errors": [
+  {
+   "token": "identifier",
+   "rule": "block-div",
+   "span": [
+    4435,
+    4440
+   ],
+   "kind": "rule-failed"
+  },
+  {
+   "token": "left-block",
+   "rule": "fallback",
+   "span": [
+    4389,
+    4391
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "identifier",
+   "rule": "block-div",
+   "span": [
+    4901,
+    4906
+   ],
+   "kind": "rule-failed"
+  },
+  {
+   "token": "left-block",
+   "rule": "fallback",
+   "span": [
+    4840,
+    4842
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "left-block-end",
+   "rule": "fallback",
+   "span": [
+    5669,
+    5672
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-block",
+   "rule": "fallback",
+   "span": [
+    5675,
+    5677
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "left-block-end",
+   "rule": "fallback",
+   "span": [
+    5678,
+    5681
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-block",
+   "rule": "fallback",
+   "span": [
+    5684,
+    5686
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "identifier",
+   "rule": "block-div",
+   "span": [
+    6939,
+    6944
+   ],
+   "kind": "rule-failed"
+  },
+  {
+   "token": "left-block",
+   "rule": "fallback",
+   "span": [
+    6880,
+    6882
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "left-block-end",
+   "rule": "fallback",
+   "span": [
+    6990,
+    6993
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-block",
+   "rule": "fallback",
+   "span": [
+    6996,
+    6998
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "left-block-end",
+   "rule": "fallback",
+   "span": [
+    8608,
+    8611
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-link",
+   "rule": "fallback",
+   "span": [
+    8617,
+    8620
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "left-block-end",
+   "rule": "fallback",
+   "span": [
+    8656,
+    8659
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-block",
+   "rule": "fallback",
+   "span": [
+    8662,
+    8664
+   ],
+   "kind": "no-rules-match"
+  }
+ ],
+ "engine": {
+  "name": "ftml",
+  "version": "ftml v1.42.1+roku.20261105.5 [c1dc6406]",
+  "package_version": "1.42.1+roku.20261105.5",
+  "git_commit": "c1dc64060a266b7148c029ac6334a7c1c03f916a"
+ }
+}

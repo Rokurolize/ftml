@@ -1,0 +1,615 @@
+--- live
++++ ftml
+@@ -1,29 +1,9 @@
+ <div class="creditRate creditModule {$mode}">
+-<div class="rateBox">
++T:"[[div_ class=\"rateBox\" ]]"
+ <div class="rate-box-with-credit-button">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+205"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+@@ -31,44 +11,24 @@
+ </div>
+ </div>
+ </div>
+-<div class="rateBox heritage-wrap" style="display:none;">
++<br>
+ <div class="heritage-rating-module">
+ <div class="heritage-emblem">
+ <a href="/">
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+205"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ </div>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+ </a>
+ </div>
+-</div>
+-</div>
++<br>
++<br>
+ <div style="clear:both;">
+ </div>
+ <div id="u-credit-view">
+@@ -97,10 +57,10 @@
+ </strong>
+ T:"©︎"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(5644609); return false;">
+-<img alt="stengan774" class="small" src="https://www.wikidot.com/avatar.php?userid=5644609&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=5644609)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(5644609); return false;">
++<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="stengan774" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"stengan774"
+ </a>
+ </span>
+@@ -119,13 +79,13 @@
+ </em>
+ </p>
+ <div class="credit-back" style="text-align: center;">
+-<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
++<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+ </iframe>
+ </div>
+ </div>
+ <div class="creditBottomRate" style="height:30px;">
+ <div class="credit-license">
+-<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
++<a class="cc cc-by-sa" href="#invalid-url">
+ </a>
+ </div>
+ <div style="text-align: center; top: 0px;">
+@@ -136,63 +96,23 @@
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+205"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-<div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+205"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-</div>
+-</div>
+-</div>
+-</div>
+-<p>
+-<br>
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++<br>
++T:"[[/div]]"
++</div>
++</div>
++</div>
++<p>
+ <br>
+ <br>
+ </p>
+@@ -227,7 +147,7 @@
+ </a>
+ </div>
+ <div class="collapsible-block-content">
+-<img alt="Remembar_us.jpg" class="image" src="https://scp-jp.wdfiles.com/local--files/making-stew-hub/Remembar_us.jpg" style="display: block; border: solid 1px #666; box-shadow: 0 1px 6px rgba(0,0,0,.25); width: 640px; margin: 0 auto;">
++<img alt="Remembar_us.jpg" class="image" src="https://scp-jp.wjfiles.com/local--files/making-stew-hub/Remembar_us.jpg" style="display: block; border: solid 1px #666; box-shadow: 0 1px 6px rgba(0,0,0,.25); width: 640px; margin: 0 auto;">
+ <p>
+ T:"…"
+ </p>
+@@ -340,7 +260,7 @@
+ </p>
+ <div style="text-align: left;">
+ <div class="image-container aligncenter">
+-<img alt="Remind_you.jpg" class="image" src="https://scp-jp.wdfiles.com/local--files/making-stew-hub/Remind_you.jpg" style="display: block; border: solid 1px #666; box-shadow: 0 1px 6px rgba(0,0,0,.25); width: 640px; margin: 0 auto;">
++<img alt="Remind_you.jpg" class="image" src="https://scp-jp.wjfiles.com/local--files/making-stew-hub/Remind_you.jpg" style="display: block; border: solid 1px #666; box-shadow: 0 1px 6px rgba(0,0,0,.25); width: 640px; margin: 0 auto;">
+ </div>
+ <div style="text-align: center;">
+ <table class="wiki-content-table">
+@@ -692,7 +612,7 @@
+ <td class="right">
+ <div class="title">
+ <a href="https://scp-jp.wikidot.com/dear-dr-please-remember-us" target="_blank">
+-T:"Dear Dr, Please Remember Our Money..."
++T:"Dear Dr, Please Remember Our Money…"
+ </a>
+ </div>
+ <div class="description">
+@@ -818,8 +738,6 @@
+ </tbody>
+ </table>
+ <hr>
+-<script src="https://d3g0gp89917ko0.cloudfront.net/v--1e049c54eb7c/common--javascript/yahooui/tabview-min.js" type="text/javascript">
+-</script>
+ <div class="yui-navset" id="wiki-tabview-<ID>">
+ <ul class="yui-nav">
+ <li class="selected">
+@@ -964,7 +882,7 @@
+ T:"このカノンを楽しむ上で必要な知識はこれだけ。あとは隣の「お品書き」タブから、好きなものを読んでいってくれ。"
+ </p>
+ </div>
+-<div id="wiki-tab-0-1" style="display:none">
++<div id="wiki-tab-0-1">
+ <p>
+ <strong>
+ T:"SCP-JP"
+@@ -994,11 +912,13 @@
+ T:"ための会議"
+ </a>
+ T:"<IDSP>by"
+-<span class="error-inline">
+-<em>
++<span class="printuser avatarhover">
++<a href="/user:info/meshiochislash" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="meshiochislash" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/meshiochislash" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"meshiochislash"
+-</em>
+-T:"does not match any existing user name"
++</a>
+ </span>
+ </li>
+ <li>
+@@ -1007,11 +927,11 @@
+ </a>
+ T:"<IDSP>by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/tachyon" onclick="WIKIDOT.page.listeners.userInfo(4794142); return false;">
+-<img alt="Tachyon" class="small" src="https://www.wikidot.com/avatar.php?userid=4794142&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=4794142)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/tachyon" onclick="WIKIDOT.page.listeners.userInfo(4794142); return false;">
+-T:"Tachyon"
++<a href="/user:info/tachyon" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="tachyon" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/tachyon" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T:"tachyon"
+ </a>
+ </span>
+ </li>
+@@ -1021,11 +941,11 @@
+ </a>
+ T:"<IDSP>by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(4062604); return false;">
+-<img alt="Jiraku_Mogana" class="small" src="https://www.wikidot.com/avatar.php?userid=4062604&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=4062604)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(4062604); return false;">
+-T:"Jiraku_Mogana"
++<a href="/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="jiraku mogana" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T:"jiraku mogana"
+ </a>
+ </span>
+ </li>
+@@ -1035,11 +955,11 @@
+ </a>
+ T:"<IDSP>by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(4062604); return false;">
+-<img alt="Jiraku_Mogana" class="small" src="https://www.wikidot.com/avatar.php?userid=4062604&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=4062604)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(4062604); return false;">
+-T:"Jiraku_Mogana"
++<a href="/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="jiraku mogana" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T:"jiraku mogana"
+ </a>
+ </span>
+ </li>
+@@ -1049,11 +969,11 @@
+ </a>
+ T:"by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/tolpo" onclick="WIKIDOT.page.listeners.userInfo(5230464); return false;">
+-<img alt="TOLPO" class="small" src="https://www.wikidot.com/avatar.php?userid=5230464&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=5230464)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/tolpo" onclick="WIKIDOT.page.listeners.userInfo(5230464); return false;">
+-T:"TOLPO"
++<a href="/user:info/tolpo" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="tolpo" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/tolpo" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T:"tolpo"
+ </a>
+ </span>
+ </li>
+@@ -1063,11 +983,11 @@
+ </a>
+ T:"by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/aoicha" onclick="WIKIDOT.page.listeners.userInfo(5881921); return false;">
+-<img alt="Aoicha" class="small" src="https://www.wikidot.com/avatar.php?userid=5881921&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=5881921)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/aoicha" onclick="WIKIDOT.page.listeners.userInfo(5881921); return false;">
+-T:"Aoicha"
++<a href="/user:info/aoicha" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="aoicha" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/aoicha" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T:"aoicha"
+ </a>
+ </span>
+ </li>
+@@ -1077,11 +997,11 @@
+ </a>
+ T:"by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/momiji-coc" onclick="WIKIDOT.page.listeners.userInfo(5268615); return false;">
+-<img alt="momiji_CoC" class="small" src="https://www.wikidot.com/avatar.php?userid=5268615&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=5268615)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/momiji-coc" onclick="WIKIDOT.page.listeners.userInfo(5268615); return false;">
+-T:"momiji_CoC"
++<a href="/user:info/momiji-coc" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="momiji_coc" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/momiji-coc" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T:"momiji_coc"
+ </a>
+ </span>
+ </li>
+@@ -1091,10 +1011,10 @@
+ </a>
+ T:"by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/souyamisaki014" onclick="WIKIDOT.page.listeners.userInfo(3839905); return false;">
+-<img alt="souyamisaki014" class="small" src="https://www.wikidot.com/avatar.php?userid=3839905&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=3839905)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/souyamisaki014" onclick="WIKIDOT.page.listeners.userInfo(3839905); return false;">
++<a href="/user:info/souyamisaki014" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="souyamisaki014" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/souyamisaki014" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"souyamisaki014"
+ </a>
+ </span>
+@@ -1112,10 +1032,10 @@
+ </a>
+ T:"<IDSP>by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/konumatakaki" onclick="WIKIDOT.page.listeners.userInfo(2032955); return false;">
+-<img alt="konumatakaki" class="small" src="https://www.wikidot.com/avatar.php?userid=2032955&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=2032955)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/konumatakaki" onclick="WIKIDOT.page.listeners.userInfo(2032955); return false;">
++<a href="/user:info/konumatakaki" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="konumatakaki" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/konumatakaki" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"konumatakaki"
+ </a>
+ </span>
+@@ -1126,10 +1046,10 @@
+ </a>
+ T:"<IDSP>by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(5644609); return false;">
+-<img alt="stengan774" class="small" src="https://www.wikidot.com/avatar.php?userid=5644609&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=5644609)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(5644609); return false;">
++<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="stengan774" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"stengan774"
+ </a>
+ </span>
+@@ -1140,10 +1060,10 @@
+ </a>
+ T:"by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/islandsmaster" onclick="WIKIDOT.page.listeners.userInfo(5060201); return false;">
+-<img alt="islandsmaster" class="small" src="https://www.wikidot.com/avatar.php?userid=5060201&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=5060201)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/islandsmaster" onclick="WIKIDOT.page.listeners.userInfo(5060201); return false;">
++<a href="/user:info/islandsmaster" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="islandsmaster" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/islandsmaster" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"islandsmaster"
+ </a>
+ </span>
+@@ -1154,10 +1074,10 @@
+ </a>
+ T:"by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(5644609); return false;">
+-<img alt="stengan774" class="small" src="https://www.wikidot.com/avatar.php?userid=5644609&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=5644609)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(5644609); return false;">
++<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="stengan774" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"stengan774"
+ </a>
+ </span>
+@@ -1188,11 +1108,11 @@
+ </a>
+ T:"by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/mishary" onclick="WIKIDOT.page.listeners.userInfo(3438721); return false;">
+-<img alt="Mishary" class="small" src="https://www.wikidot.com/avatar.php?userid=3438721&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=3438721)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/mishary" onclick="WIKIDOT.page.listeners.userInfo(3438721); return false;">
+-T:"Mishary"
++<a href="/user:info/mishary" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="mishary" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/mishary" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T:"mishary"
+ </a>
+ </span>
+ </li>
+@@ -1202,10 +1122,10 @@
+ </a>
+ T:"by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(5644609); return false;">
+-<img alt="stengan774" class="small" src="https://www.wikidot.com/avatar.php?userid=5644609&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=5644609)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(5644609); return false;">
++<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="stengan774" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"stengan774"
+ </a>
+ </span>
+@@ -1216,24 +1136,24 @@
+ </a>
+ T:"by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(5644609); return false;">
+-<img alt="stengan774" class="small" src="https://www.wikidot.com/avatar.php?userid=5644609&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=5644609)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(5644609); return false;">
++<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="stengan774" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"stengan774"
+ </a>
+ </span>
+ </li>
+ <li>
+ <a href="/yamizushi-file-no900">
+-T:"闇寿司ファイルNo.900 \"ハッカクキリンの握り\""
++T:"yamizushi-file-no900"
+ </a>
+ T:"by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/tateito" onclick="WIKIDOT.page.listeners.userInfo(6719937); return false;">
+-<img alt="tateito" class="small" src="https://www.wikidot.com/avatar.php?userid=6719937&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=6719937)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/tateito" onclick="WIKIDOT.page.listeners.userInfo(6719937); return false;">
++<a href="/user:info/tateito" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="tateito" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/tateito" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"tateito"
+ </a>
+ </span>
+@@ -1244,19 +1164,19 @@
+ </a>
+ T:"by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/crow-109" onclick="WIKIDOT.page.listeners.userInfo(2999720); return false;">
+-<img alt="crow_109" class="small" src="https://www.wikidot.com/avatar.php?userid=2999720&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=2999720)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/crow-109" onclick="WIKIDOT.page.listeners.userInfo(2999720); return false;">
++<a href="/user:info/crow-109" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="crow_109" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/crow-109" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"crow_109"
+ </a>
+ </span>
+ T:","
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(5644609); return false;">
+-<img alt="stengan774" class="small" src="https://www.wikidot.com/avatar.php?userid=5644609&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=5644609)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(5644609); return false;">
++<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="stengan774" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"stengan774"
+ </a>
+ </span>
+@@ -1267,31 +1187,31 @@
+ </a>
+ T:"by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/teruteru-5" onclick="WIKIDOT.page.listeners.userInfo(9709811); return false;">
+-<img alt="teruteru_5" class="small" src="https://www.wikidot.com/avatar.php?userid=9709811&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=9709811)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/teruteru-5" onclick="WIKIDOT.page.listeners.userInfo(9709811); return false;">
++<a href="/user:info/teruteru-5" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="teruteru_5" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/teruteru-5" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"teruteru_5"
+ </a>
+ </span>
+ </li>
+ <li>
+ <a href="/kitchen-accident-curry">
+-T:"カレーはレシピ通りに作った方がよい - キッチン生産事故事例集"
++T:"kitchen-accident-curry"
+ </a>
+ T:"by"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/makodot" onclick="WIKIDOT.page.listeners.userInfo(6494751); return false;">
+-<img alt="MAKOdot-" class="small" src="https://www.wikidot.com/avatar.php?userid=6494751&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=6494751)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/makodot" onclick="WIKIDOT.page.listeners.userInfo(6494751); return false;">
+-T:"MAKOdot-"
++<a href="/user:info/makodot" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="makodot-" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/makodot" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T:"makodot-"
+ </a>
+ </span>
+ </li>
+ </ul>
+ </div>
+-<div id="wiki-tab-0-2" style="display:none">
++<div id="wiki-tab-0-2">
+ <h1 id="toc3">
+ <span>
+ T:"人物"
+@@ -1501,7 +1421,7 @@
+ </p>
+ </blockquote>
+ </div>
+-<div id="wiki-tab-0-3" style="display:none">
++<div id="wiki-tab-0-3">
+ <p>
+ T:"このタブでは当カノンに登場する用語についてまとめてある。"
+ <br>
+@@ -1687,7 +1607,7 @@
+ </li>
+ </ul>
+ </div>
+-<div id="wiki-tab-0-4" style="display:none">
++<div id="wiki-tab-0-4">
+ <p>
+ T:"君もシチューを造りたい？ならここを読もう。大丈夫、難しく考える必要はない。このカノンに参加するため満たすべきことは、ほんのわずかなのだから。"
+ </p>
+@@ -1783,13 +1703,10 @@
+ </div>
+ </div>
+ </div>
+-<script type="text/javascript">
+-T:"//<![CDATA[ OZONE.dom.onDomReady(function(){ var tabView4b8185a957ebeb101befcb0d5ec48dc7 = new YAHOO.widget.TabView('wiki-tabview-<ID>'); }, \"dummy-ondomready-block\"); //]]>"
+-</script>
+-</div>
+-</div>
+-</div>
+-</div>
+-<br>
+-<br>
+-<br>
++</div>
++</div>
++</div>
++</div>
++<br>
++<br>
++<br>

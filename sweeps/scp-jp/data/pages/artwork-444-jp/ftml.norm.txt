@@ -1,0 +1,401 @@
+<div style="text-align: right;">
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+<br>
+<br>
+<br>
+<blockquote>
+<p>
+T:"もう二度と、失敗を繰り返さないでください。SCP-444-JPに関しては、誰もが失敗してきました。"
+</p>
+<div style="text-align: right;">
+<p>
+T:"──[削除済]"
+</p>
+</div>
+</blockquote>
+<p>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<strong>
+T:"アーカイブ番号:"
+</strong>
+T:"████-444-JP"
+</p>
+<p>
+<strong>
+T:"分類:"
+</strong>
+T:"["
+<tt>
+T:"Not be present"
+</tt>
+T:"]"
+</p>
+<p>
+<strong>
+T:"概要:"
+</strong>
+T:"無し"
+</p>
+<p>
+<span style="text-decoration: line-through;">
+<strong>
+T:"＝＝＝警告:プロトコル\"焚書\"発動下に無い状況で本ページにアクセスすることは禁じられています＝＝＝"
+</strong>
+</span>
+</p>
+<p>
+<br>
+<br>
+<br>
+</p>
+<blockquote>
+<p>
+T:"全ては無意味です。"
+</p>
+</blockquote>
+<p>
+<br>
+<br>
+<br>
+<br>
+</p>
+<img alt="%E3%82%A2%E3%83%BC%E3%82%AB%E3%82%A4%E3%83%963" class="image" src="https://scp-jp.wikidot.com/local--files/artwork-444-jp/%E3%82%A2%E3%83%BC%E3%82%AB%E3%82%A4%E3%83%963">
+<div class="box4">
+<p>
+<strong>
+T:"検出された形象情報:"
+</strong>
+T:"日本生類創研、SCP-444-JP"
+</p>
+</div>
+<br>
+<br>
+<br>
+<img alt="%E3%82%A2%E3%83%BC%E3%82%AB%E3%82%A4%E3%83%961" class="image" src="https://scp-jp.wikidot.com/local--files/artwork-444-jp/%E3%82%A2%E3%83%BC%E3%82%AB%E3%82%A4%E3%83%961">
+<br>
+<br>
+<div style="text-align: center;">
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"自動文章抽出を開始"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"表示を終了"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+T:"抽出された文章"
+</strong>
+</p>
+<div class="box4">
+<p>
+T:"もう█わり█。この研究所を奴は飲み込んでしまった。"
+<br>
+T:"█に█徒たちによる紅█"
+<span style="text-decoration: underline;">
+T:"███"
+</span>
+T:"は始まってしまった。"
+<br>
+T:"この施設にいる全ての人間は奴に認█の荒野へと引きずり込まれた"
+<br>
+T:"ろう。█やってそうだ。私は、対処すべき事を行った。"
+<br>
+T:"もとは█言えば、復元チームの█中だ。奴らがこの認識の鳥さえ呼び█"
+<br>
+T:"さなければ["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]いや、それは█果論だ。きっと奴らが復活させな███"
+<br>
+T:"彼の緋色の鳥は、再び狩█を初めていただ█う。それ██████"
+<br>
+T:"理解の及ばないところで、常に奴█喰っ█いたのだろう。"
+<br>
+T:"とにかく、ここは閉鎖しなくてはならな████たりとも、██████████████"
+<br>
+T:"鳥は頭にいる。脳に、神経に、肉に、血に、私達█████"
+<br>
+T:"復█は成功した。で█奴は強かった。強███"
+<br>
+T:"一人を食いつくした時、███かった。奴は認識の鳥。["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]"
+<br>
+T:"奴は血で伝染する。█も、今のうちだけだ。、奴は█っている。学習████成長している。進化している。"
+<br>
+T:"彼の█色の鳥は誰にも██かうことなどできない奴はまだ弱い。"
+<br>
+T:"弱い█に人の手ではどうしようもない。"
+<br>
+T:"奴█破壊者█あり、極み。 この赤██の最上。荒野で何度も、"
+<br>
+T:"何人もの魂を喰ひ。進化を続█る捕食者。"
+<br>
+T:"奴が実体化するのは█と容易なことだ。"
+<br>
+T:"とに█く、我█はしっぱいした。しっぱいしたんだ。"
+</p>
+<p>
+T:"奴は█々を利用している。我々は食器だ。認識に付属する肉█包装だ。"
+<br>
+T:"██はそれをは がし、すて、中身を喰らう。"
+<br>
+T:"██こっと444は奴の喰██["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]であふれ█いる。"
+</p>
+<p>
+T:"███["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]やなげひいろのとりよ。"
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<br>
+<br>
+<img alt="%E3%82%A2%E3%83%BC%E3%82%AB%E3%82%A4%E3%83%962" class="image" src="https://scp-jp.wikidot.com/local--files/artwork-444-jp/%E3%82%A2%E3%83%BC%E3%82%AB%E3%82%A4%E3%83%962">
+<br>
+<div style="text-align: center;">
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"自動文章抽出を開始"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"表示を終了"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+T:"抽出された文章"
+</strong>
+</p>
+</div>
+<div class="box4">
+<p>
+T:"█ポート - 1877-444"
+<br>
+T:"█録者 : 佐████"
+<br>
+T:"内容"
+</p>
+<ul>
+<li>
+T:"インタビューによる対["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]解明"
+</li>
+<li>
+T:"["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]よる変["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]"
+</li>
+</ul>
+<div style="text-align: center;">
+<p>
+<br>
+T:"…"
+<br>
+T:"["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]"
+<br>
+T:"…"
+<br>
+</p>
+</div>
+<p>
+T:"["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]タヒは["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]は復元された文章です。"
+</p>
+<p>
+T:"██████薙げ ["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]"
+<br>
+T:"あかしけ やなげ 緋["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]食み 根食み 毛を伸ばせ"
+</p>
+<p>
+<span style="font-size:50%;">
+T:"差す"
+</span>
+<br>
+<span style="font-size:50%;">
+T:"指す"
+</span>
+T:"(※4)"
+<br>
+T:"なのと ██さす["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"] かきやま["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]をほふれ"
+</p>
+<p>
+T:"こ█たる な█ 緋色の██["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]ほれ"
+</p>
+<p>
+T:"煌々たる 紅々 荒野に食みし["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]病みし"
+</p>
+<div style="text-align: center;">
+<p>
+<br>
+T:"…"
+<br>
+T:"["
+<span style="font-size:60%;">
+T:"/Indistinguishable/"
+</span>
+T:"]"
+<br>
+T:"…"
+<br>
+<br>
+<br>
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<blockquote>
+<p>
+T:"誰も知らなかったんです。誰も、この文書が発見されるまで、"
+<span style="color: red">
+T:"444"
+</span>
+T:"の事なんて誰も知らなかったんです。"
+</p>
+</blockquote>
+<p>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+</p>
+<blockquote>
+<div style="text-align: center;">
+<p>
+<span style="font-size:60%;">
+T:"Repeated many times"
+</span>
+</p>
+</div>
+</blockquote>
+<p>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+</p>
+<div style="text-align: right;">
+<p>
+T:"Thank you See you"
+</p>
+</div>
+<br>
+<br>

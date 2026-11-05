@@ -1,0 +1,1410 @@
+--- live
++++ ftml
+@@ -63,7 +63,7 @@
+ </strong>
+ </p>
+ <p>
+-<iframe allowtransparency="true" class="html-block-iframe" frameborder="0" src="/japanese-area-directors-dossier/html/b956a44a85fab1b2a56d9b37ab500f06f892fe29-1122644235805255853">
++<iframe allowtransparency="true" class="html-block-iframe" frameborder="0" src="https://example.com/">
+ </iframe>
+ </p>
+ </div>
+@@ -78,31 +78,11 @@
+ </div>
+ </div>
+ <div class="creditRate creditModule {$mode}">
+-<div class="rateBox">
++T:"[[div_ class=\"rateBox\" ]]"
+ <div class="rate-box-with-credit-button">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+207"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+@@ -110,44 +90,24 @@
+ </div>
+ </div>
+ </div>
+-<div class="rateBox heritage-wrap" style="display:none;">
++<br>
+ <div class="heritage-rating-module">
+ <div class="heritage-emblem">
+ <a href="/">
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+207"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ </div>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+ </a>
+ </div>
+-</div>
+-</div>
++<br>
++<br>
+ <div style="clear:both;">
+ </div>
+ <div id="u-credit-view">
+@@ -176,10 +136,10 @@
+ </strong>
+ T:"©︎"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(5644609); return false;">
+-<img alt="stengan774" class="small" src="https://www.wikidot.com/avatar.php?userid=5644609&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=5644609)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(5644609); return false;">
++<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="stengan774" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"stengan774"
+ </a>
+ </span>
+@@ -198,13 +158,13 @@
+ </em>
+ </p>
+ <div class="credit-back" style="text-align: center;">
+-<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
++<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+ </iframe>
+ </div>
+ </div>
+ <div class="creditBottomRate" style="height:30px;">
+ <div class="credit-license">
+-<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
++<a class="cc cc-by-sa" href="#invalid-url">
+ </a>
+ </div>
+ <div style="text-align: center; top: 0px;">
+@@ -215,58 +175,19 @@
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+207"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-<div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+207"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++<br>
++T:"[[/div]]"
+ </div>
+ </div>
+ </div>
+@@ -288,8 +209,6 @@
+ <a name="background">
+ </a>
+ </p>
+-<script src="https://d3g0gp89917ko0.cloudfront.net/v--1e049c54eb7c/common--javascript/yahooui/tabview-min.js" type="text/javascript">
+-</script>
+ <div class="yui-navset" id="wiki-tabview-<ID>">
+ <ul class="yui-nav">
+ <li class="selected">
+@@ -436,7 +355,7 @@
+ </span>
+ </p>
+ </div>
+-<div id="wiki-tab-0-1" style="display:none">
++<div id="wiki-tab-0-1">
+ <div class="image-container aligncenter">
+ <img alt="%E7%8D%85%E5%AD%90.png" class="image" src="https://scp-jp.wdfiles.com/local--files/foundation-or-goi-logo/%E7%8D%85%E5%AD%90.png" style="max-width:300px">
+ </div>
+@@ -493,47 +412,47 @@
+ <ul>
+ <li>
+ <a href="/seafield13-tale-2-2">
+-T:"青空"
++T:"seafield13-tale-2-2"
+ </a>
+ </li>
+ <li>
+ <a href="/vengeance-demon-or-kempeitai">
+-T:"復讐鬼、もしくは憲兵隊"
++T:"vengeance-demon-or-kempeitai"
+ </a>
+ </li>
+ <li>
+ <a href="/my-blue-heaven">
+-T:"夕暮れに、仰ぎ見る。"
++T:"my-blue-heaven"
+ </a>
+ </li>
+ <li>
+ <a href="/the-restoration-prequel">
+-T:"灰より出でて、再び 前篇"
++T:"the-restoration-prequel"
+ </a>
+ </li>
+ <li>
+ <a href="/the-last-mission-1">
+-T:"三弟子、再び 前篇"
++T:"the-last-mission-1"
+ </a>
+ </li>
+ <li>
+ <a href="/the-last-mission-2">
+-T:"三弟子、再び 後篇"
++T:"the-last-mission-2"
+ </a>
+ </li>
+ <li>
+ <a href="/temporary-facility-dossier-site-49-arc">
+-T:"臨時施設ファイル: サイト-49-ARC"
++T:"temporary-facility-dossier-site-49-arc"
+ </a>
+ </li>
+ <li>
+ <a href="/fusouki">
+-T:"扶桑紀"
++T:"fusouki"
+ </a>
+ </li>
+ <li>
+ <a href="/heasman">
+-T:"ハロルド・A・ヒーズマン"
++T:"heasman"
+ </a>
+ </li>
+ </ul>
+@@ -621,32 +540,32 @@
+ <ul>
+ <li>
+ <a href="/parade">
+-T:"パレード──五行推参"
++T:"parade"
+ </a>
+ </li>
+ <li>
+ <a href="/the-restoration-prequel">
+-T:"灰より出でて、再び 前篇"
++T:"the-restoration-prequel"
+ </a>
+ </li>
+ <li>
+ <a href="/the-last-mission-2">
+-T:"三弟子、再び 後篇"
++T:"the-last-mission-2"
+ </a>
+ </li>
+ <li>
+ <a href="/mishary-s-proposal">
+-T:"御舍利の提言 / 第〇〇〇八番"
++T:"mishary-s-proposal"
+ </a>
+ </li>
+ <li>
+ <a href="/fusouki">
+-T:"扶桑紀"
++T:"fusouki"
+ </a>
+ </li>
+ <li>
+ <a href="/2021-hitsujikaip">
+-T:"謹賀新年"
++T:"2021-hitsujikaip"
+ </a>
+ </li>
+ </ul>
+@@ -689,7 +608,7 @@
+ <ul>
+ <li>
+ <a href="/hannyahara-s-proposal">
+-T:"hannyaharaの提言"
++T:"hannyahara-s-proposal"
+ </a>
+ </li>
+ </ul>
+@@ -789,7 +708,7 @@
+ </li>
+ <li>
+ <a href="/unagi-13">
+-T:"決戦。鰻。"
++T:"unagi-13"
+ </a>
+ </li>
+ </ul>
+@@ -820,27 +739,27 @@
+ <ul>
+ <li>
+ <a href="/29mo-8">
+-T:"次代の\"鵺\"についてのいくつかの考察と懸念点"
++T:"29mo-8"
+ </a>
+ </li>
+ <li>
+ <a href="/be-like-that">
+-T:"汝、█の如くあれ"
++T:"be-like-that"
+ </a>
+ </li>
+ <li>
+ <a href="/scp-1886-jp">
+-T:"SCP-1886-JP"
++T:"scp-1886-jp"
+ </a>
+ </li>
+ <li>
+ <a href="/shishi-artwork">
+-T:"獅子-理性主義者のアートワーク"
++T:"shishi-artwork"
+ </a>
+ </li>
+ <li>
+ <a href="/nihonn-shibu-rizikai-artwork">
+-T:"日本支部理事会のアートワーク"
++T:"nihonn-shibu-rizikai-artwork"
+ </a>
+ </li>
+ </ul>
+@@ -920,7 +839,7 @@
+ <ul>
+ <li>
+ <a href="/ykamikura-7">
+-T:"ミッション・ベアハント"
++T:"ykamikura-7"
+ </a>
+ </li>
+ </ul>
+@@ -958,17 +877,17 @@
+ <ul>
+ <li>
+ <a href="/monster-decisive-battle-1">
+-T:"大怪獣決戦テイル 第一部"
++T:"monster-decisive-battle-1"
+ </a>
+ </li>
+ <li>
+ <a href="/monster-decisive-battle-2">
+-T:"大怪獣決戦テイル 第二部"
++T:"monster-decisive-battle-2"
+ </a>
+ </li>
+ <li>
+ <a href="/kte-3317-green-sunset">
+-T:"Files: KTE-3317-Green-Sunset"
++T:"kte-3317-green-sunset"
+ </a>
+ </li>
+ </ul>
+@@ -1020,22 +939,22 @@
+ <ul>
+ <li>
+ <a href="/emperor-s-february-2">
+-T:"皇帝陛下の星鳥 後編"
++T:"emperor-s-february-2"
+ </a>
+ </li>
+ <li>
+ <a href="/the-man-from-bekson">
+-T:"ベクソンから来た男"
++T:"the-man-from-bekson"
+ </a>
+ </li>
+ <li>
+ <a href="/odss-oneshot-part2">
+-T:"ODSS OneShot part2"
++T:"odss-oneshot-part2"
+ </a>
+ </li>
+ <li>
+ <a href="/officer-doctor-soldier-spy-hub">
+-T:"〈オフィサー、ドクター、ソルジャー、スパイ〉ハブ"
++T:"officer-doctor-soldier-spy-hub"
+ </a>
+ </li>
+ </ul>
+@@ -1058,7 +977,7 @@
+ <p>
+ T:"\"鵺\"と親密である描写がある。"
+ <a href="/protocol-gasshin">
+-T:"プロトコル・GASSHIN"
++T:"protocol-gasshin"
+ </a>
+ T:"のセキュリティロックを解除するための物理鍵と最終実行決定権を有している。"
+ </p>
+@@ -1070,7 +989,7 @@
+ <ul>
+ <li>
+ <a href="/protocol-gasshin">
+-T:"プロトコル・GASSHIN"
++T:"protocol-gasshin"
+ </a>
+ </li>
+ </ul>
+@@ -1083,7 +1002,7 @@
+ </span>
+ </p>
+ </div>
+-<div id="wiki-tab-0-2" style="display:none">
++<div id="wiki-tab-0-2">
+ <div class="image-container aligncenter">
+ <img alt="%E8%8B%A5%E5%B1%B1.png" class="image" src="https://scp-jp.wdfiles.com/local--files/foundation-or-goi-logo/%E8%8B%A5%E5%B1%B1.png" style="max-width:230px">
+ </div>
+@@ -1137,17 +1056,17 @@
+ <ul>
+ <li>
+ <a href="/soilence-20141213-01">
+-T:"テクニカラー"
++T:"soilence-20141213-01"
+ </a>
+ </li>
+ <li>
+ <a href="/soilence-mary-sue01">
+-T:"リソウノジブン"
++T:"soilence-mary-sue01"
+ </a>
+ </li>
+ <li>
+ <a href="/nihonn-shibu-rizikai-artwork">
+-T:"日本支部理事会のアートワーク"
++T:"nihonn-shibu-rizikai-artwork"
+ </a>
+ </li>
+ </ul>
+@@ -1205,12 +1124,12 @@
+ <ul>
+ <li>
+ <a href="/mishary-s-proposal">
+-T:"御舍利の提言 / 第〇〇〇八番"
++T:"mishary-s-proposal"
+ </a>
+ </li>
+ <li>
+ <a href="/temporary-facility-dossier-site-49-arc">
+-T:"臨時施設ファイル: サイト-49-ARC"
++T:"temporary-facility-dossier-site-49-arc"
+ </a>
+ </li>
+ <li>
+@@ -1258,12 +1177,12 @@
+ <ul>
+ <li>
+ <a href="/hannyahara-s-proposal">
+-T:"hannyaharaの提言"
++T:"hannyahara-s-proposal"
+ </a>
+ </li>
+ <li>
+ <a href="/nihonn-shibu-rizikai-artwork">
+-T:"日本支部理事会のアートワーク"
++T:"nihonn-shibu-rizikai-artwork"
+ </a>
+ </li>
+ </ul>
+@@ -1305,7 +1224,7 @@
+ <ul>
+ <li>
+ <a href="/code-first-bravo">
+-T:"最初の献体"
++T:"code-first-bravo"
+ </a>
+ </li>
+ </ul>
+@@ -1384,12 +1303,12 @@
+ <ul>
+ <li>
+ <a href="/monster-decisive-battle-1">
+-T:"大怪獣決戦テイル 第一部"
++T:"monster-decisive-battle-1"
+ </a>
+ </li>
+ <li>
+ <a href="/kte-3317-green-sunset">
+-T:"Files: KTE-3317-Green-Sunset"
++T:"kte-3317-green-sunset"
+ </a>
+ </li>
+ </ul>
+@@ -1427,7 +1346,7 @@
+ <ul>
+ <li>
+ <a href="/officer-doctor-soldier-spy-hub">
+-T:"〈オフィサー、ドクター、ソルジャー、スパイ〉ハブ"
++T:"officer-doctor-soldier-spy-hub"
+ </a>
+ </li>
+ </ul>
+@@ -1450,7 +1369,7 @@
+ <p>
+ T:"異常な記憶能力を持つと考えられ、過去に起きたインシデントをすべて記憶している。"
+ <a href="/protocol-gasshin">
+-T:"プロトコル・GASSHIN"
++T:"protocol-gasshin"
+ </a>
+ T:"のセキュリティロックを解除するための物理鍵を持っている。"
+ </p>
+@@ -1462,7 +1381,7 @@
+ <ul>
+ <li>
+ <a href="/protocol-gasshin">
+-T:"プロトコル・GASSHIN"
++T:"protocol-gasshin"
+ </a>
+ </li>
+ </ul>
+@@ -1475,7 +1394,7 @@
+ </span>
+ </p>
+ </div>
+-<div id="wiki-tab-0-3" style="display:none">
++<div id="wiki-tab-0-3">
+ <div class="image-container aligncenter">
+ <img alt="%E5%8D%83%E9%B3%A5.png" class="image" src="https://scp-jp.wdfiles.com/local--files/foundation-or-goi-logo/%E5%8D%83%E9%B3%A5.png" style="max-width:300px">
+ </div>
+@@ -1538,17 +1457,17 @@
+ <ul>
+ <li>
+ <a href="/scp-1154-jp">
+-T:"SCP-1154-JP"
++T:"scp-1154-jp"
+ </a>
+ </li>
+ <li>
+ <a href="/mishary-s-proposal">
+-T:"御舍利の提言 / 第〇〇〇八番"
++T:"mishary-s-proposal"
+ </a>
+ </li>
+ <li>
+ <a href="/nihonn-shibu-rizikai-artwork">
+-T:"日本支部理事会のアートワーク"
++T:"nihonn-shibu-rizikai-artwork"
+ </a>
+ </li>
+ </ul>
+@@ -1579,12 +1498,12 @@
+ <ul>
+ <li>
+ <a href="/scp-139-jp">
+-T:"SCP-139-JP"
++T:"scp-139-jp"
+ </a>
+ </li>
+ <li>
+ <a href="/scp-1961-jp">
+-T:"SCP-1961-JP"
++T:"scp-1961-jp"
+ </a>
+ </li>
+ </ul>
+@@ -1626,12 +1545,12 @@
+ <ul>
+ <li>
+ <a href="/scp-2468-jp">
+-T:"SCP-2468-JP"
++T:"scp-2468-jp"
+ </a>
+ </li>
+ <li>
+ <a href="/hannyahara-s-proposal">
+-T:"hannyaharaの提言"
++T:"hannyahara-s-proposal"
+ </a>
+ </li>
+ </ul>
+@@ -1675,7 +1594,7 @@
+ <ul>
+ <li>
+ <a href="/scp-2630-jp">
+-T:"SCP-2630-JP"
++T:"scp-2630-jp"
+ </a>
+ </li>
+ </ul>
+@@ -1709,12 +1628,12 @@
+ <ul>
+ <li>
+ <a href="/monster-decisive-battle-1">
+-T:"大怪獣決戦テイル 第一部"
++T:"monster-decisive-battle-1"
+ </a>
+ </li>
+ <li>
+ <a href="/officer-doctor-soldier-spy-hub">
+-T:"〈オフィサー、ドクター、ソルジャー、スパイ〉ハブ"
++T:"officer-doctor-soldier-spy-hub"
+ </a>
+ </li>
+ </ul>
+@@ -1737,7 +1656,7 @@
+ <p>
+ T:"彼女に言及する文書では日本支部理事会の内\"千鳥\"のみが女性であるとされ、\"獅子\"の七支刀を預かるなどほかのメンバーから信用を置かれている様子がある。"
+ <a href="/protocol-gasshin">
+-T:"プロトコル・GASSHIN"
++T:"protocol-gasshin"
+ </a>
+ T:"のセキュリティロックを解除するための物理鍵を持っている。"
+ </p>
+@@ -1749,7 +1668,7 @@
+ <ul>
+ <li>
+ <a href="/protocol-gasshin">
+-T:"プロトコル・GASSHIN"
++T:"protocol-gasshin"
+ </a>
+ </li>
+ </ul>
+@@ -1762,7 +1681,7 @@
+ </span>
+ </p>
+ </div>
+-<div id="wiki-tab-0-4" style="display:none">
++<div id="wiki-tab-0-4">
+ <div class="image-container aligncenter">
+ <img alt="%E9%B3%B3%E6%9E%97.png" class="image" src="https://scp-jp.wdfiles.com/local--files/foundation-or-goi-logo/%E9%B3%B3%E6%9E%97.png" style="max-width:250px">
+ </div>
+@@ -1806,12 +1725,12 @@
+ <ul>
+ <li>
+ <a href="/scp-365-jp">
+-T:"SCP-365-JP"
++T:"scp-365-jp"
+ </a>
+ </li>
+ <li>
+ <a href="/soilence-mary-sue01">
+-T:"リソウノジブン"
++T:"soilence-mary-sue01"
+ </a>
+ </li>
+ </ul>
+@@ -1873,7 +1792,7 @@
+ <ul>
+ <li>
+ <a href="/mishary-s-proposal">
+-T:"御舍利の提言 / 第〇〇〇八番"
++T:"mishary-s-proposal"
+ </a>
+ </li>
+ </ul>
+@@ -1911,7 +1830,7 @@
+ <ul>
+ <li>
+ <a href="/hannyahara-s-proposal">
+-T:"hannyaharaの提言"
++T:"hannyahara-s-proposal"
+ </a>
+ </li>
+ </ul>
+@@ -1966,7 +1885,7 @@
+ <ul>
+ <li>
+ <a href="/scp-2630-jp">
+-T:"SCP-2630-JP"
++T:"scp-2630-jp"
+ </a>
+ </li>
+ </ul>
+@@ -1990,7 +1909,7 @@
+ <ul>
+ <li>
+ <a href="/officer-doctor-soldier-spy-hub">
+-T:"〈オフィサー、ドクター、ソルジャー、スパイ〉ハブ"
++T:"officer-doctor-soldier-spy-hub"
+ </a>
+ </li>
+ </ul>
+@@ -2017,7 +1936,7 @@
+ <p>
+ T:"理事会の誰よりも大きな声で話す。"
+ <a href="/protocol-gasshin">
+-T:"プロトコル・GASSHIN"
++T:"protocol-gasshin"
+ </a>
+ T:"のセキュリティロックを解除するための物理鍵を持っている。"
+ </p>
+@@ -2029,7 +1948,7 @@
+ <ul>
+ <li>
+ <a href="/protocol-gasshin">
+-T:"プロトコル・GASSHIN"
++T:"protocol-gasshin"
+ </a>
+ </li>
+ </ul>
+@@ -2042,7 +1961,7 @@
+ </span>
+ </p>
+ </div>
+-<div id="wiki-tab-0-5" style="display:none">
++<div id="wiki-tab-0-5">
+ <div class="image-container aligncenter">
+ <img alt="%E6%A1%9D.png" class="image" src="https://scp-jp.wdfiles.com/local--files/foundation-or-goi-logo/%E6%A1%9D.png" style="max-width:280px">
+ </div>
+@@ -2087,27 +2006,27 @@
+ <ul>
+ <li>
+ <a href="/scp-052-jp">
+-T:"SCP-052-JP"
++T:"scp-052-jp"
+ </a>
+ </li>
+ <li>
+ <a href="/scp-210-jp">
+-T:"SCP-210-JP"
++T:"scp-210-jp"
+ </a>
+ </li>
+ <li>
+ <a href="/your-missions">
+-T:"使命"
++T:"your-missions"
+ </a>
+ </li>
+ <li>
+ <a href="/the-guardian-and-the-lizard">
+-T:"鉄と蜥蜴"
++T:"the-guardian-and-the-lizard"
+ </a>
+ </li>
+ <li>
+ <a href="/kwana-7">
+-T:"免許を取れ"
++T:"kwana-7"
+ </a>
+ </li>
+ </ul>
+@@ -2157,7 +2076,7 @@
+ <ul>
+ <li>
+ <a href="/mishary-s-proposal">
+-T:"御舍利の提言 / 第〇〇〇八番"
++T:"mishary-s-proposal"
+ </a>
+ </li>
+ </ul>
+@@ -2195,7 +2114,7 @@
+ <ul>
+ <li>
+ <a href="/hannyahara-s-proposal">
+-T:"hannyaharaの提言"
++T:"hannyahara-s-proposal"
+ </a>
+ </li>
+ </ul>
+@@ -2248,7 +2167,7 @@
+ </li>
+ <li>
+ <a href="/kte-3317-green-sunset">
+-T:"Files: KTE-3317-Green-Sunset"
++T:"kte-3317-green-sunset"
+ </a>
+ </li>
+ </ul>
+@@ -2289,7 +2208,7 @@
+ <ul>
+ <li>
+ <a href="/scp-2630-jp">
+-T:"SCP-2630-JP"
++T:"scp-2630-jp"
+ </a>
+ </li>
+ </ul>
+@@ -2327,12 +2246,12 @@
+ <ul>
+ <li>
+ <a href="/odss-oneshot-part2">
+-T:"ODSS OneShot part2"
++T:"odss-oneshot-part2"
+ </a>
+ </li>
+ <li>
+ <a href="/officer-doctor-soldier-spy-hub">
+-T:"〈オフィサー、ドクター、ソルジャー、スパイ〉ハブ"
++T:"officer-doctor-soldier-spy-hub"
+ </a>
+ </li>
+ </ul>
+@@ -2355,7 +2274,7 @@
+ <p>
+ T:"\"獅子\"の発言に根拠を求めるなど、冷静な面がある。"
+ <a href="/protocol-gasshin">
+-T:"プロトコル・GASSHIN"
++T:"protocol-gasshin"
+ </a>
+ T:"のセキュリティロックを解除するための物理鍵を持っている。"
+ </p>
+@@ -2367,7 +2286,7 @@
+ <ul>
+ <li>
+ <a href="/protocol-gasshin">
+-T:"プロトコル・GASSHIN"
++T:"protocol-gasshin"
+ </a>
+ </li>
+ </ul>
+@@ -2380,7 +2299,7 @@
+ </span>
+ </p>
+ </div>
+-<div id="wiki-tab-0-6" style="display:none">
++<div id="wiki-tab-0-6">
+ <div class="image-container aligncenter">
+ <img alt="%E7%A8%B2%E5%A6%BB.png" class="image" src="https://scp-jp.wdfiles.com/local--files/foundation-or-goi-logo/%E7%A8%B2%E5%A6%BB.png" style="max-width:300px">
+ </div>
+@@ -2446,7 +2365,7 @@
+ </li>
+ <li>
+ <a href="/nihonn-shibu-rizikai-artwork">
+-T:"日本支部理事会のアートワーク"
++T:"nihonn-shibu-rizikai-artwork"
+ </a>
+ </li>
+ </ul>
+@@ -2489,7 +2408,7 @@
+ <ul>
+ <li>
+ <a href="/mishary-s-proposal">
+-T:"御舍利の提言 / 第〇〇〇八番"
++T:"mishary-s-proposal"
+ </a>
+ </li>
+ </ul>
+@@ -2527,12 +2446,12 @@
+ <ul>
+ <li>
+ <a href="/hannyahara-s-proposal">
+-T:"hannyaharaの提言"
++T:"hannyahara-s-proposal"
+ </a>
+ </li>
+ <li>
+ <a href="/nihonn-shibu-rizikai-artwork">
+-T:"日本支部理事会のアートワーク"
++T:"nihonn-shibu-rizikai-artwork"
+ </a>
+ </li>
+ </ul>
+@@ -2573,12 +2492,12 @@
+ <ul>
+ <li>
+ <a href="/scp-2630-jp">
+-T:"SCP-2630-JP"
++T:"scp-2630-jp"
+ </a>
+ </li>
+ <li>
+ <a href="/rui-take-directorsjp">
+-T:"rui_takeのアートワーク 日本支部理事"
++T:"rui-take-directorsjp"
+ </a>
+ </li>
+ </ul>
+@@ -2609,12 +2528,12 @@
+ <ul>
+ <li>
+ <a href="/monster-decisive-battle-1">
+-T:"大怪獣決戦テイル 第一部"
++T:"monster-decisive-battle-1"
+ </a>
+ </li>
+ <li>
+ <a href="/kte-3317-green-sunset">
+-T:"Files: KTE-3317-Green-Sunset"
++T:"kte-3317-green-sunset"
+ </a>
+ </li>
+ </ul>
+@@ -2652,12 +2571,12 @@
+ <ul>
+ <li>
+ <a href="/monster-decisive-battle-1">
+-T:"大怪獣決戦テイル 第一部"
++T:"monster-decisive-battle-1"
+ </a>
+ </li>
+ <li>
+ <a href="/officer-doctor-soldier-spy-hub">
+-T:"〈オフィサー、ドクター、ソルジャー、スパイ〉ハブ"
++T:"officer-doctor-soldier-spy-hub"
+ </a>
+ </li>
+ </ul>
+@@ -2680,7 +2599,7 @@
+ <p>
+ T:"激情すると長髪を振り乱す。"
+ <a href="/protocol-gasshin">
+-T:"プロトコル・GASSHIN"
++T:"protocol-gasshin"
+ </a>
+ T:"のセキュリティロックを解除するための物理鍵を持っている。"
+ </p>
+@@ -2692,7 +2611,7 @@
+ <ul>
+ <li>
+ <a href="/protocol-gasshin">
+-T:"プロトコル・GASSHIN"
++T:"protocol-gasshin"
+ </a>
+ </li>
+ </ul>
+@@ -2705,7 +2624,7 @@
+ </span>
+ </p>
+ </div>
+-<div id="wiki-tab-0-7" style="display:none">
++<div id="wiki-tab-0-7">
+ <div class="image-container aligncenter">
+ <img alt="%E9%B5%BA.png" class="image" src="https://scp-jp.wdfiles.com/local--files/foundation-or-goi-logo/%E9%B5%BA.png" style="max-width:230px">
+ </div>
+@@ -2776,12 +2695,12 @@
+ </li>
+ <li>
+ <a href="/o-92-s-proposal">
+-T:"O-92の提言"
++T:"o-92-s-proposal"
+ </a>
+ </li>
+ <li>
+ <a href="/scp-2009-jp">
+-T:"SCP-2009-JP"
++T:"scp-2009-jp"
+ </a>
+ </li>
+ <li>
+@@ -2791,12 +2710,12 @@
+ </li>
+ <li>
+ <a href="/karasuva-nue">
+-T:"墓参り"
++T:"karasuva-nue"
+ </a>
+ </li>
+ <li>
+ <a href="/falsehood-s-proposal">
+-T:"Amaryllis-en-Grappeの提言"
++T:"falsehood-s-proposal"
+ </a>
+ </li>
+ </ul>
+@@ -2844,160 +2763,9 @@
+ T:"関連ファイル"
+ </strong>
+ </p>
+-<div class="list-pages-box" data-lp-generation="d65f91fd56a1558af2fa689bd23b6b69f74b37bf0b262ca6b160f79968b8368f" data-lp-id="lp-5ffe406dbef0ef0d49398c1d" data-lp-key="p" data-lp-page="<TS10>" data-lp-route="japanese-area-directors-dossier">
+-<ul>
+-<li>
+-<a href="/nue-artwork">
+-T:"日本支部理事「鵺」"
+-</a>
+-</li>
+-<li>
+-<a href="/karasuva-nue">
+-T:"墓参り"
+-</a>
+-</li>
+-<li>
+-<a href="/soya-001-nue-artwork">
+-T:"\"鵺\""
+-</a>
+-</li>
+-<li>
+-<a href="/monster">
+-T:"妖怪"
+-</a>
+-</li>
+-<li>
+-<a href="/japanese-area-directors-dossier">
+-T:"日本支部理事会書類"
+-</a>
+-</li>
+-<li>
+-<a href="/29mo-8">
+-T:"次代の\"鵺\"についてのいくつかの考察と懸念点"
+-</a>
+-</li>
+-<li>
+-<a href="/nue-artwork-alter">
+-T:"ぬえのゑ"
+-</a>
+-</li>
+-<li>
+-<a href="/nue-kirie-artwork">
+-T:"\"鵺\"アートワーク-切り絵"
+-</a>
+-</li>
+-<li>
+-<a href="/usotsuki">
+-T:"嘘つき"
+-</a>
+-</li>
+-<li>
+-<a href="/debugger">
+-T:"裏切者の末路"
+-</a>
+-</li>
+-<li>
+-<a href="/monster-art-nue">
+-T:"アートワーク｢妖怪｣"
+-</a>
+-</li>
+-<li>
+-<a href="/nue">
+-T:"足元を見る"
+-</a>
+-</li>
+-<li>
+-<a href="/r-sinano-chuo-co-jp-2050-09-07-e34j876">
+-T:"特集記事 森野雄太郎教授が語る科学の今後"
+-</a>
+-</li>
+-<li>
+-<a href="/it-is-about-time">
+-T:"進望淵旅"
+-</a>
+-</li>
+-<li>
+-<a href="/2021-hitsujikaip">
+-T:"謹賀新年"
+-</a>
+-</li>
+-<li>
+-<a href="/rui-take-directorsjp">
+-T:"rui_takeのアートワーク 日本支部理事"
+-</a>
+-</li>
+-<li>
+-<a href="/be-like-that">
+-T:"汝、█の如くあれ"
+-</a>
+-</li>
+-<li>
+-<a href="/nue-artwork-kihaku">
+-T:"鵺-斎宮のアートワーク"
+-</a>
+-</li>
+-<li>
+-<a href="/nihonn-shibu-rizikai-artwork">
+-T:"日本支部理事会のアートワーク"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-2070-jp">
+-T:"SCP-2070-JP"
+-</a>
+-</li>
+-<li>
+-<a href="/nue-hub">
+-T:"財団日本支部理事「鵺」に関する極秘書類"
+-</a>
+-</li>
+-<li>
+-<a href="/miyageubusuna-kechien">
+-T:"けちえん"
+-</a>
+-</li>
+-<li>
+-<a href="/hitsujikaip-s-proposal">
+-T:"日辻養の提言"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-3003-jp">
+-T:"SCP-3003-JP"
+-</a>
+-</li>
+-<li>
+-<a href="/let-us-lie-together-again-next-year">
+-T:"祀り"
+-</a>
+-</li>
+-<li>
+-<a href="/gokiso-s-proposal">
+-T:"御器所の提言"
+-</a>
+-</li>
+-<li>
+-<a href="/black-raven">
+-T:"鴉が黒くあるために"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-event-005">
+-T:"収容違反インシデント2024-005 メインビジュアル"
+-</a>
+-</li>
+-<li>
+-<a href="/scp-4624-jp">
+-T:"SCP-4624-JP"
+-</a>
+-</li>
+-<li>
+-<a href="/wandering-white">
+-T:"流浪の白"
+-</a>
+-</li>
+-</ul>
+-</div>
++<p>
++T:"TODO: module ListPages"
++</p>
+ <ul>
+ <li>
+ <a href="/scp-040-jp-j">
+@@ -3036,22 +2804,22 @@
+ <ul>
+ <li>
+ <a href="/29mo-8">
+-T:"次代の\"鵺\"についてのいくつかの考察と懸念点"
++T:"29mo-8"
+ </a>
+ </li>
+ <li>
+ <a href="/be-like-that">
+-T:"汝、█の如くあれ"
++T:"be-like-that"
+ </a>
+ </li>
+ <li>
+ <a href="/monster">
+-T:"妖怪"
++T:"monster"
+ </a>
+ </li>
+ <li>
+ <a href="/monster-art-nue">
+-T:"アートワーク｢妖怪｣"
++T:"monster-art-nue"
+ </a>
+ </li>
+ </ul>
+@@ -3091,7 +2859,7 @@
+ <ul>
+ <li>
+ <a href="/mishary-s-proposal">
+-T:"御舍利の提言 / 第〇〇〇八番"
++T:"mishary-s-proposal"
+ </a>
+ </li>
+ </ul>
+@@ -3132,7 +2900,7 @@
+ <ul>
+ <li>
+ <a href="/hannyahara-s-proposal">
+-T:"hannyaharaの提言"
++T:"hannyahara-s-proposal"
+ </a>
+ </li>
+ </ul>
+@@ -3163,7 +2931,7 @@
+ <ul>
+ <li>
+ <a href="/locker-s-tales-plan-8188">
+-T:"対幻島国同盟管理計画またはドリームタイム"
++T:"locker-s-tales-plan-8188"
+ </a>
+ </li>
+ </ul>
+@@ -3208,7 +2976,7 @@
+ <ul>
+ <li>
+ <a href="/scp-2630-jp">
+-T:"SCP-2630-JP"
++T:"scp-2630-jp"
+ </a>
+ </li>
+ </ul>
+@@ -3251,7 +3019,7 @@
+ </li>
+ <li>
+ <a href="/get-rid-of-chimera">
+-T:"鵺退治"
++T:"get-rid-of-chimera"
+ </a>
+ </li>
+ <li>
+@@ -3281,7 +3049,7 @@
+ </li>
+ <li>
+ <a href="/not-rabbit-sing-along">
+-T:"『徹底討論 キメラれNIGHT!』(~聞き飽きたテーマ曲~)"
++T:"not-rabbit-sing-along"
+ </a>
+ </li>
+ <li>
+@@ -3291,7 +3059,7 @@
+ </li>
+ <li>
+ <a href="/29mo-9">
+-T:"\"獅子\"と”鵺”の会談記録"
++T:"29mo-9"
+ </a>
+ </li>
+ <li>
+@@ -3323,7 +3091,7 @@
+ <ul>
+ <li>
+ <a href="/officer-doctor-soldier-spy-hub">
+-T:"〈オフィサー、ドクター、ソルジャー、スパイ〉ハブ"
++T:"officer-doctor-soldier-spy-hub"
+ </a>
+ </li>
+ </ul>
+@@ -3346,7 +3114,7 @@
+ <p>
+ T:"機械的なしゃがれた重低音で発言する。体が不自由である、もしくは標準的な人型構造をしていない可能性がある。最初に"
+ <a href="/protocol-gasshin">
+-T:"プロトコル・GASSHIN"
++T:"protocol-gasshin"
+ </a>
+ T:"の発動を提案した。プロトコル・GASSHINのセキュリティロックを解除するための物理鍵を持っている。"
+ </p>
+@@ -3358,7 +3126,7 @@
+ <ul>
+ <li>
+ <a href="/protocol-gasshin">
+-T:"プロトコル・GASSHIN"
++T:"protocol-gasshin"
+ </a>
+ </li>
+ </ul>
+@@ -3371,7 +3139,7 @@
+ </span>
+ </p>
+ </div>
+-<div id="wiki-tab-0-8" style="display:none">
++<div id="wiki-tab-0-8">
+ <div class="image-container aligncenter">
+ <img alt="i-0.png" class="image" src="https://scp-jp.wdfiles.com/local--files/mtfjp-badge/i-0.png" style="max-width:250px">
+ </div>
+@@ -3404,7 +3172,7 @@
+ </span>
+ </p>
+ </div>
+-<div id="wiki-tab-0-9" style="display:none">
++<div id="wiki-tab-0-9">
+ <div class="image-container aligncenter">
+ <img alt="japanarea.jpg" class="image" src="https://scp-jp.wdfiles.com/local--files/japanese-area-directors/japanarea.jpg" style="max-width:250px">
+ </div>
+@@ -3546,7 +3314,7 @@
+ T:"<IDSP><IDSP>"
+ </span>
+ <a href="/okage-de-mekimeki-to-eigoryokuga-agatte-gakkouseikatsu-nimo">
+-T:"プリチャード学院小等部に送付された冊子"
++T:"okage-de-mekimeki-to-eigoryokuga-agatte-gakkouseikatsu-nimo"
+ </a>
+ </span>
+ </p>
+@@ -3573,7 +3341,7 @@
+ </span>
+ </p>
+ </div>
+-<div id="wiki-tab-0-10" style="display:none">
++<div id="wiki-tab-0-10">
+ <div class="image-container aligncenter">
+ <img alt="sign-s.jpg" class="image" src="https://scp-jp.wdfiles.com/local--files/japanese-area-directors/sign-s.jpg" style="max-width:200px">
+ </div>
+@@ -3613,7 +3381,7 @@
+ <ul>
+ <li>
+ <a href="/scp-1259-jp">
+-T:"SCP-1259-JP"
++T:"scp-1259-jp"
+ </a>
+ </li>
+ </ul>
+@@ -3637,7 +3405,7 @@
+ <ul>
+ <li>
+ <a href="/scp-1953-jp">
+-T:"SCP-1953-JP"
++T:"scp-1953-jp"
+ </a>
+ </li>
+ </ul>
+@@ -3668,7 +3436,7 @@
+ <ul>
+ <li>
+ <a href="/scp-1989-jp">
+-T:"SCP-1989-JP"
++T:"scp-1989-jp"
+ </a>
+ </li>
+ </ul>
+@@ -3699,7 +3467,7 @@
+ <ul>
+ <li>
+ <a href="/scp-1379-jp">
+-T:"SCP-1379-JP"
++T:"scp-1379-jp"
+ </a>
+ </li>
+ </ul>
+@@ -3730,12 +3498,12 @@
+ <ul>
+ <li>
+ <a href="/scp-205-jp">
+-T:"SCP-205-JP"
++T:"scp-205-jp"
+ </a>
+ </li>
+ <li>
+ <a href="/scp-553-jp">
+-T:"SCP-553-JP"
++T:"scp-553-jp"
+ </a>
+ </li>
+ </ul>
+@@ -3763,12 +3531,12 @@
+ <ul>
+ <li>
+ <a href="/beaf-400g-3kara-spinach-crispychicken-cheese-halfboiledegg">
+-T:"【お腹の調子が悪い人から老人、子供にもおススメ】『大特価』背脂入りパックお粥 160g×12袋"
++T:"beaf-400g-3kara-spinach-crispychicken-cheese-halfboiledegg"
+ </a>
+ </li>
+ <li>
+ <a href="/zombie-10g-200kara-monkeybaby-blonzegear-deersoul-humansbloo">
+-T:"★★☆☆☆＿この商品を見つけてから4年間毎月定期的に注文している者です。が、二月程前から酷く味が落ちています。背脂の味も変に臭く、まるで脂肪肝の中年男性の腐乱死体から絞り取った様な…"
++T:"zombie-10g-200kara-monkeybaby-blonzegear-deersoul-humansbloo"
+ </a>
+ </li>
+ </ul>
+@@ -3826,7 +3594,7 @@
+ </li>
+ <li>
+ <a href="/and-my-name-is">
+-T:"And my name is"
++T:"and-my-name-is"
+ </a>
+ </li>
+ </ul>
+@@ -3860,12 +3628,12 @@
+ <ul>
+ <li>
+ <a href="/kwana-s-proposal">
+-T:"Kwanaの提言"
++T:"kwana-s-proposal"
+ </a>
+ </li>
+ <li>
+ <a href="/no-results">
+-T:"【\"日本支部理事会\"に一致する結果はありません】"
++T:"no-results"
+ </a>
+ </li>
+ </ul>
+@@ -3889,7 +3657,7 @@
+ <ul>
+ <li>
+ <a href="/solvex-s-proposal-ii">
+-T:"solvexの提言II"
++T:"solvex-s-proposal-ii"
+ </a>
+ </li>
+ </ul>
+@@ -3904,6 +3672,3 @@
+ </div>
+ </div>
+ </div>
+-<script type="text/javascript">
+-T:"//<![CDATA[ OZONE.dom.onDomReady(function(){ var tabView4dc93788a4391f86ba64effa92cb5582 = new YAHOO.widget.TabView('wiki-tabview-<ID>'); }, \"dummy-ondomready-block\"); //]]>"
+-</script>

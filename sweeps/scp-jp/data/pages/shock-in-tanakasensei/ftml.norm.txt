@@ -1,0 +1,401 @@
+<div class="creditRate creditModule {$mode}">
+T:"[[div_ class=\"rateBox\" ]]"
+<div class="rate-box-with-credit-button">
+<p>
+T:"TODO: module Rate"
+</p>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<br>
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+<br>
+<br>
+<div style="clear:both;">
+</div>
+<div id="u-credit-view">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"クレジット"
+</span>
+</h2>
+</div>
+<div class="credit">
+<p>
+<strong>
+T:"タイトル:"
+</strong>
+T:"Shock in 田中先生"
+<br>
+<strong>
+T:"著者:"
+</strong>
+T:"©︎"
+<span class="printuser avatarhover">
+<a href="/user:info/izhaya" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="izhaya" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/izhaya" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"izhaya"
+</a>
+</span>
+<br>
+<strong>
+T:"作成年:"
+</strong>
+T:"2019"
+</p>
+<div class="credit-back" style="text-align: center;">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+</iframe>
+</div>
+</div>
+<div class="creditBottomRate" style="height:30px;">
+<div class="credit-license">
+<a class="cc cc-by-sa" href="#invalid-url">
+</a>
+</div>
+<div style="text-align: center; top: 0px;">
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+<br>
+T:"[[/div]]"
+</div>
+</div>
+</div>
+<blockquote>
+<p>
+<a href="/scp-v1l3-j">
+T:"未知の悪意によって作られた恐るべき機械"
+</a>
+T:"について、日本支部における更なる実験が命令されました。倫理委員会は自主的な記憶処理が可能なセキュリティクリアランスの職員に限り、当オブジェクトの実験を可能とする通達を出しました。"
+</p>
+<p>
+T:"～遠藤主任研究員"
+</p>
+</blockquote>
+<hr>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"レベル4クリアランスが要求されます。"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"ワーオ…！"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<a href="/scp-036-jp">
+T:"SCP-036-JP"
+</a>
+T:","
+<a href="/scp-1045-jp">
+T:"SCP-1045-JP"
+</a>
+</p>
+<blockquote>
+<p>
+T:"技術準備室には夕日が差し込んでいた。何かが溶けるようなジュゥという音と、サリサリという摩擦音が交互に聞こえてくる。"
+</p>
+<p>
+T:"ふと、そのリズミカルなルーティンが途切れた。技術準備室にいた男は、椅子を回転させて振り返る。"
+</p>
+<p>
+T:"「待っていましたよ、田中先生。」"
+</p>
+<p>
+T:"その言葉に、彼女の細い体はびくりと震えたようだった。"
+</p>
+<p>
+T:"「もう少ししたら迎えに行こうと思ってたんですが、"
+<span class="Dame">
+T:"貴方から来てくれるなんて。"
+</span>
+<em>
+<span style="color: red">
+T:"(1)"
+</span>
+</em>
+T:"嬉しいな。」"
+<br>
+<em>
+<span style="color: red">
+T:"(1)─ギメッセプ先生、貴方が来いって言ったんじゃないですか…！"
+</span>
+</em>
+T:"<NBSP>"
+</p>
+<p>
+T:"男は"
+<span class="Homeru">
+T:"錆びた金属を思わせる深く低い声"
+</span>
+<em>
+<span style="color: blue">
+T:"(1)"
+</span>
+</em>
+T:"でからかうように笑いながら、細いテンプルに蛇のようにしっとりと指を這わせた。笑顔の下にある"
+<span class="Dame">
+T:"獰猛な獣の欲望"
+</span>
+<em>
+<span style="color: red">
+T:"(2)"
+</span>
+</em>
+T:"に、"
+<span class="Dame">
+T:"昨夜は滑らかに開閉したヒンジ"
+</span>
+<em>
+<span style="color: red">
+T:"(3)"
+</span>
+</em>
+T:"が、強張ったように引っかかる。"
+<br>
+<em>
+<span style="color: red">
+T:"(2)─学校現場において不適切な感情です、削除してください。"
+</span>
+</em>
+T:"<NBSP>"
+<br>
+<em>
+<span style="color: red">
+T:"(3)─私、そんないやらしくありません。削除してください。"
+</span>
+</em>
+T:"<NBSP>"
+<br>
+<em>
+<span style="color: blue">
+T:"(1)─その声に私、昨日も騙されて…"
+</span>
+</em>
+T:"<NBSP>"
+</p>
+<p>
+T:"「緊張しているのかい？」"
+</p>
+<p>
+T:"曇ったレンズに彼女の肯定を読み取ると、男は安心させるように"
+<span class="Dame">
+T:"口を寄せて囁く。"
+</span>
+<em>
+<span style="color: red">
+T:"(4)"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(4)─近すぎます。生徒に見られたらどうするんですか。"
+</span>
+</em>
+T:"<NBSP>"
+</p>
+<p>
+T:"「大丈夫。今日はヌンパ災の準備があるから、生徒達もここには来ないさ。」"
+</p>
+<p>
+<span class="Homeru">
+T:"溶解部の生徒達も県大会で全滅"
+</span>
+<em>
+<span style="color: blue">
+T:"(2)"
+</span>
+</em>
+T:"したから、新学期まで活動は休みだ…そう呟きながら、男ははんだごてを脇に置き、ポケットからメガネ拭きを取り出した。"
+<br>
+<em>
+<span style="color: blue">
+T:"(2)─おめでとうございます。"
+</span>
+</em>
+T:"<NBSP>"
+</p>
+<p>
+T:"「田中先生は、"
+<span class="Dame">
+T:"こんな風にされるのが好き"
+</span>
+<em>
+<span style="color: red">
+T:"(5)"
+</span>
+</em>
+T:"なんだよね？」"
+<br>
+<em>
+<span style="color: red">
+T:"(5)─個人情報ですので削除して頂けると助かります。"
+</span>
+</em>
+T:"<NBSP>"
+</p>
+<p>
+T:"男は技術教員らしい繊細な手つきで、彼女の"
+<span class="Dame">
+T:"ささやかに膨らんだ2枚のレンズ"
+</span>
+<em>
+<span style="color: red">
+T:"(6)"
+</span>
+</em>
+T:"を優しく拭いていく。自分で拭くのとは違う、熱を帯びた男の拭浄に、くすんでいた彼女の体は"
+<span class="Dame">
+T:"艶やかに湿った黒色"
+</span>
+<em>
+<span style="color: red">
+T:"(7)"
+</span>
+</em>
+T:"に輝いていく。"
+<span class="Dame">
+T:"頑なに閉じられていたヒンジはゆるみ"
+</span>
+<em>
+<span style="color: red">
+T:"(8)"
+</span>
+</em>
+T:"、無意識にその"
+<span class="Dame">
+T:"滑らかなブリッジ"
+</span>
+<em>
+<span style="color: red">
+T:"(9)"
+</span>
+</em>
+T:"と、テンプルの裏側に秘められた"
+<span class="Dame">
+T:"恥ずかしい製造番号"
+</span>
+<em>
+<span style="color: red">
+T:"(10)"
+</span>
+</em>
+T:"を露わにしていた。"
+<br>
+<em>
+<span style="color: red">
+T:"(6)─不適切です、削除してください。"
+</span>
+</em>
+T:"<NBSP>"
+<br>
+<em>
+<span style="color: red">
+T:"(7)─同様に、削除してください。"
+</span>
+</em>
+T:"<NBSP>"
+<br>
+<em>
+<span style="color: red">
+T:"(8)─削除してください。"
+</span>
+</em>
+T:"<NBSP>"
+<br>
+<em>
+<span style="color: red">
+T:"(9)─削除を。"
+</span>
+</em>
+T:"<NBSP>"
+<br>
+<em>
+<span style="color: red">
+T:"(10)─さ、削除"
+</span>
+</em>
+T:"<NBSP>"
+</p>
+<p>
+T:"男は彼女の製造番号を優しくなぞりながら、そっと囁く。"
+</p>
+<p>
+T:"「"
+<span class="Dame">
+T:"君"
+</span>
+<em>
+<span style="color: red">
+T:"(11)"
+</span>
+</em>
+T:"を、はんだづけしたい。」"
+<br>
+<em>
+<span style="color: red">
+T:"(11)─としこって呼んで。"
+</span>
+</em>
+T:"<NBSP>"
+</p>
+</blockquote>
+<p>
+<strong>
+T:"研究員メモ:"
+</strong>
+<em>
+T:"以降100ページ以上に渡ってギメッセプ先生の執拗な眼鏡クリーニングが行われますが、ついに性的行為には至りませんでした。"
+</em>
+</p>
+</div>
+</div>
+</div>

@@ -1,0 +1,446 @@
+<div class="award-1st">
+</div>
+<div class="creditRate creditModule {$mode}">
+<div class="rateBox">
+<div class="rate-box-with-credit-button">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+1577"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<div class="rateBox heritage-wrap" style="display:none;">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+1577"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<div style="clear:both;">
+</div>
+<div id="u-credit-view">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"クレジット"
+</span>
+</h2>
+</div>
+<div class="credit">
+<p>
+<strong>
+T:"タイトル:"
+</strong>
+T:"SCP-2000-JP - 伝書使"
+<br>
+<strong>
+T:"著者:"
+</strong>
+T:"©︎"
+<span class="printuser avatarhover">
+<a href="https://www.wikidot.com/user:info/wagnascousin" onclick="WIKIDOT.page.listeners.userInfo(3389120); return false;">
+<img alt="WagnasCousin" class="small" src="https://www.wikidot.com/avatar.php?userid=3389120&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=3389120)">
+</a>
+<a href="https://www.wikidot.com/user:info/wagnascousin" onclick="WIKIDOT.page.listeners.userInfo(3389120); return false;">
+T:"WagnasCousin"
+</a>
+</span>
+T:","
+<span class="printuser avatarhover">
+<a href="https://www.wikidot.com/user:info/fes-ryuukatetu" onclick="WIKIDOT.page.listeners.userInfo(4577911); return false;">
+<img alt="FeS_ryuukatetu" class="small" src="https://www.wikidot.com/avatar.php?userid=4577911&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=4577911)">
+</a>
+<a href="https://www.wikidot.com/user:info/fes-ryuukatetu" onclick="WIKIDOT.page.listeners.userInfo(4577911); return false;">
+T:"FeS_ryuukatetu"
+</a>
+</span>
+T:","
+<span class="printuser avatarhover">
+<a href="https://www.wikidot.com/user:info/furabbit" onclick="WIKIDOT.page.listeners.userInfo(3198079); return false;">
+<img alt="furabbit" class="small" src="https://www.wikidot.com/avatar.php?userid=3198079&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=3198079)">
+</a>
+<a href="https://www.wikidot.com/user:info/furabbit" onclick="WIKIDOT.page.listeners.userInfo(3198079); return false;">
+T:"furabbit"
+</a>
+</span>
+<br>
+<strong>
+T:"作成年:"
+</strong>
+T:"2020"
+</p>
+<hr>
+<p>
+<em>
+<a href="/author:wagnascousin">
+T:"WagnasCousinの他の作品"
+</a>
+</em>
+<br>
+<em>
+<a href="/author:fes-ryuukatetu">
+T:"FeS_ryuukatetuの他の作品"
+</a>
+</em>
+<br>
+<em>
+<a href="/author:furabbit">
+T:"furabbitの他の作品"
+</a>
+</em>
+</p>
+</div>
+<div class="credit" style="text-align:right; margin-top: 0.5em;">
+<a href="#u-credit-otherwise">
+T:"その他のライセンス"
+</a>
+</div>
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+1577"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+<div class="modalbox-ratemodule">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+1577"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="u-credit-otherwise">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/otherwise.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"その他"
+</span>
+</h2>
+</div>
+<div class="credit otherwise">
+<div class="contest">
+<p>
+<a href="https://scp-jp.wikidot.com/scp2000jp-contest-hub" target="_blank">
+T:"SCP-2000-JPコンテスト"
+</a>
+<br>
+<span>
+T:"優勝"
+</span>
+</p>
+</div>
+<div class="credit-back" style="text-align: center;">
+<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+</iframe>
+</div>
+</div>
+<div class="creditBottomRate" style="height:30px;">
+<div class="credit-license">
+<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
+</a>
+</div>
+<div style="text-align: center; top: 0px;">
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+1577"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+<div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+1577"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="list-pages-box">
+<div class="list-pages-item">
+<div id="u-back" style="display: none;">
+</div>
+<div id="u-close" style="display: none;">
+</div>
+<div id="u-end" style="display: none;">
+</div>
+<div id="u-shut-popup">
+<div class="fader">
+<p>
+<iframe align="" class="" frameborder="" height="" scrolling="" src="http://shitake-crude-production.wikidot.com/extension:modal-script/code/1" style="" width="">
+</iframe>
+</p>
+</div>
+<div class="u-shut-modalcontainer">
+<div class="modaltable">
+<p>
+<iframe align="" class="" frameborder="" height="" scrolling="" src="http://shitake-crude-production.wikidot.com/extension:modal-script/code/1" style="" width="">
+</iframe>
+</p>
+<div class="modalbox">
+<div class="content">
+<div class="title">
+<p>
+T:"SCiP.netから切断されました"
+</p>
+</div>
+</div>
+<div style="text-align: center; padding: 5px;">
+<p>
+<a href="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page3_limit/1">
+T:"閉じる"
+</a>
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="img-top">
+<img alt="waku.png" class="window" src="https://scp-jp.wikidot.com/local--files/scp-2000-jp/waku.png">
+<img alt="dog.png" class="dog" src="https://scp-jp.wikidot.com/local--files/scp-2000-jp/dog.png">
+</div>
+<p>
+<strong>
+T:"アイテム番号:"
+</strong>
+T:"SCP-2000-JP"
+</p>
+<p>
+<strong>
+T:"オブジェクトクラス:"
+</strong>
+T:"Thaumiel"
+</p>
+<p>
+<strong>
+T:"特別収容プロトコル:"
+</strong>
+T:"SCP-2000-JPは現在未収容です。SCP-2000-JPは「巣」に何らかの反応があった場合「巣」へと帰還します。SCP-2000-JPは入力デバイスを通じて接触することにより一定期間「巣」の内部に留まるため、その際に「巣」が含まれるサーバーを物理的にネットワークから遮断してください。"
+</p>
+<p>
+<strong>
+T:"説明:"
+</strong>
+T:"SCP-2000-JPはコンピュータ/ネットワーク上で活動する情報知性体です。イエイヌ("
+<em>
+T:"Canis lupus familiaris"
+</em>
+T:")をキャラクター化したイメージとテキストボックスから成るグラフィカルユーザーインターフェースを備え、標準的な日本語や英語、または複数のファイル形式による意思疎通およびデータの入出力が可能です。SCP-2000-JPはユーザーである人類に対して極めて友好的に振舞い、対話及び業務指示を与えられることを好みます。ウェクスラー=ネルソン式汎用知能検査によると平均的なヒト5歳児程度の思考能力を有すると示されています。"
+</p>
+<p>
+T:"SCP-2000-JPはコンピュータ/ネットワークセキュリティによる行動阻害に対し、セキュリティホールを「掘る」ことで突破する能力を有します。セキュリティホールを「掘り終わる」までの時間はセキュリティの堅牢さに比例して増加します。この際に発生したセキュリティホールはGUI上で意味を成さないテキストの集合からなるリンクとして可視化され、ユーザーはクリックなどの操作によりSCP-2000-JPによるアクセス経路を辿ることが可能です。SCP-2000-JPは自身が存在するコンピュータ/ネットワーク上の領域を自由に移動し、自身にとって最も重要な情報の所在領域を「巣」と定め、それ以外の領域から持ち帰った情報を保存する習性を持ちます。ただし、SCP-2000-JPによる情報の取扱の際には、携持した情報を「噛んでしまう」ことによる情報内容の破損が高頻度で発生するため、集められた情報および与えられた指示の遂行は信頼性に欠けるものとなります。検証実験によると指示内容・語義など言語型情報の保持率は高い一方、数量やタイムスタンプ・「巣」以外の所在アドレスなどの数値/データ型情報には非常に頻繁な破損が見られます。"
+</p>
+<div class="image-container aligncenter">
+<a href="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1">
+<img alt="ana_in.png" class="hole" src="https://scp-jp.wikidot.com/local--files/scp-2000-jp/ana_in.png">
+</a>
+</div>
+<div id="u-letter-popup">
+<div class="fader">
+<p>
+<iframe align="" class="" frameborder="" height="" scrolling="" src="http://shitake-crude-production.wikidot.com/extension:modal-script/code/1" style="" width="">
+</iframe>
+</p>
+</div>
+<div class="u-letter-modalcontainer">
+<div class="modaltable">
+<p>
+<iframe align="" class="" frameborder="" height="" scrolling="" src="http://shitake-crude-production.wikidot.com/extension:modal-script/code/1" style="" width="">
+</iframe>
+</p>
+<div class="modalbox">
+<div class="content">
+<p>
+T:"このメッセージを開いて読んでいると言う事は、君は新たな財団職員なのだろう。そして、我々に何が起こったのかも把握しているはずだ。"
+</p>
+<p>
+T:"我々が失敗したように、ほんの些細なきっかけから世界は崩壊してしまう。人類の歴史はその繰り返しだ。まるで世界が不条理と不可能を必要としているかのように思うかもしれない。だが、我々人類は諦める事なく全ての崩壊を乗り越え、君達はその先頭に立った。それだけは忘れないでくれ。"
+</p>
+<p>
+T:"君達はこれから様々な異常存在──新たに生まれるもの、かつての財団が対処しきれなかったものも含めて、それらと関わることになるだろう。君の目の前にいる異常存在は私がやり残した物の一つだ。報告書に記した通り、確保と収容、──そして保護をお願いしたい。"
+</p>
+</div>
+<hr>
+<div style="text-align: center; margin: 1em;">
+<p>
+<a href="#u-close">
+T:"閉じる"
+</a>
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="inuarea" style="position: fixed; left: 0; bottom: 0; width: 100vw; height: 70vh; pointer-events: none;">
+<p>
+<iframe allowtransparency="true" class="html-block-iframe" frameborder="0" src="/scp-2000-jp/html/4259c704f289d01767c98da4d3b5c85b057d1af8-142259012426848944">
+</iframe>
+</p>
+</div>
+</div>
+</div>
+<div class="list-pages-box" data-lp-generation="e9f190d09996c65af31a47774fe834725d3193ee22b9c3075eb25f7bfdf96006" data-lp-id="lp-7068cda7a3ec7a9a65701c8c" data-lp-key="page2_p" data-lp-page="986522241" data-lp-route="scp-2000-jp">
+</div>
+<div class="list-pages-box" data-lp-generation="e9f190d09996c65af31a47774fe834725d3193ee22b9c3075eb25f7bfdf96006" data-lp-id="lp-619820a9b6a48330065de826" data-lp-key="page3_p" data-lp-page="986522241" data-lp-route="scp-2000-jp">
+</div>

@@ -1,0 +1,46 @@
+--- live
++++ ftml
+@@ -1,27 +1,7 @@
+ <div style="text-align: right;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+758"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ </div>
+ <blockquote>
+ <p>
+@@ -35,7 +15,11 @@
+ </p>
+ </blockquote>
+ <div class="scp-image-block block-right scp-clear-false" style="width:300px;">
+-<img alt="NotWereWolf.jpg" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-488-jp/NotWereWolf.jpg">
++<p>
++T:"[[image NotWereWolf.jpg"
++<br>
++T:"{$alt}=\"{$alt-text}\" link=#]]"
++</p>
+ <div class="scp-image-caption">
+ <p>
+ <span style="color:#d00">

@@ -1,0 +1,413 @@
+<div class="creditRate creditModule {$mode}">
+T:"[[div_ class=\"rateBox\" ]]"
+<div class="rate-box-with-credit-button">
+<p>
+T:"TODO: module Rate"
+</p>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<br>
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+<br>
+<br>
+<div style="clear:both;">
+</div>
+<div id="u-credit-view">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"クレジット"
+</span>
+</h2>
+</div>
+<div class="credit">
+<p>
+<strong>
+T:"タイトル:"
+</strong>
+T:"SCP-973-JP - エターナル・ダークホース"
+<br>
+<strong>
+T:"著者:"
+</strong>
+T:"©︎"
+<span class="printuser avatarhover">
+<a href="/user:info/perry0720" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="perry0720" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/perry0720" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"perry0720"
+</a>
+</span>
+<br>
+<strong>
+T:"作成年:"
+</strong>
+T:"2017"
+</p>
+<div class="credit-back" style="text-align: center;">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+</iframe>
+</div>
+</div>
+<div class="creditBottomRate" style="height:30px;">
+<div class="credit-license">
+<a class="cc cc-by-sa" href="#invalid-url">
+</a>
+</div>
+<div style="text-align: center; top: 0px;">
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+<br>
+T:"[[/div]]"
+</div>
+</div>
+</div>
+<p>
+<strong>
+T:"アイテム番号:"
+</strong>
+T:"SCP-973-JP"
+</p>
+<p>
+<strong>
+T:"オブジェクトクラス:"
+</strong>
+T:"Euclid"
+</p>
+<p>
+<strong>
+T:"特別収容プロトコル:"
+</strong>
+T:"サイト-81██にて編成された情報収集チームは各地の指定エージェントと連携して、SCP-973-JPの発生を常に監視して下さい。隠蔽部隊う-8(\"尻拭い\")はサイト-81██に出現する物品の修正、他参加者の賞品の回収を行い、修正された順位に移送して下さい。隠蔽部隊う-9(\"しわ寄せ\")はSCP-973-JPの参加した大会・競技会の記録の処理を行って下さい。SCP-973-JPの今までに確認されていない行動を確認した場合は、サイト-81██管理者へ報告して下さい。"
+</p>
+<p>
+<strong>
+T:"説明:"
+</strong>
+T:"SCP-973-JPは黒鹿毛のオスのウマ("
+<em>
+T:"Equus caballus"
+</em>
+T:")です。詳細な種類は判明していません。SCP-973-JPの体長は1.9mであり、外見的に特異な点は確認されていません。"
+</p>
+<p>
+T:"毎日SCP-973-JPは規模に関わらず、日本で行われる"
+<span style="text-decoration: line-through;">
+T:"スポーツ関連の"
+</span>
+T:"大会・競技会に参加します。SCP-973-JPはその際、人間として扱われ「"
+<span class="ruby">
+T:"暗星 豪"
+<span class="rt">
+T:"あんせい ごう"
+</span>
+</span>
+T:"」と呼称されます。参加する競技は多岐にわたりますが、一度参加した競技種に類似したものには少なくとも30日間出場する例はありません。SCP-973-JPの参加枠は大会・競技会の企画時点で用意されており、予選に参加することはありません。またSCP-973-JPは自身の競技開始直前に出現し、競技終了直後に消失します。SCP-973-JPの出現・消失の瞬間は確認されていません。SCP-973-JPの獲得した賞品類なども同様に消失します。"
+</p>
+<p>
+T:"SCP-973-JPは通常のウマの運動能力に加え、人間と同程度の動作が可能です。SCP-973-JPは多くの場合、参加する競技の適性を示しますが、致命的なミスなどにより想定される成績を残すことは"
+<span style="text-decoration: line-through;">
+T:"ありません"
+</span>
+T:"極めて稀です。SCP-973-JPに関する記録・記憶は大会・競技会終了後消失します。しかしそれに対する記憶・記録の置換は行われないため、不自然な記憶の混乱・記録の欠損が確認されます。この消失までの期間は現在確認されている範囲では2分〜29日であり、SCP-973-JPの成績が良好であるほど長くなります。"
+</p>
+<p>
+T:"SCP-973-JPは財団関係者(範囲調査中)以外において、異常と認識されることはありません。SCP-973-JPの獲得した賞品類はSCP-973-JPが消失してから1分後にサイト-81██に出現します。また財団及び財団職員の所有する当該オブジェクトに関する記録は消失しません。これらのことからSCP-973-JPは財団の存在を認知し、自身の処理の不足を財団に委託しようとしていると考えられています。"
+</p>
+<p>
+T:"19██年██月██日、███████県大会の結果順位に不自然な空きがあることから、財団エージェントによる調査が開始されました。翌日、サイト-81██に███████県大会の該当順位の賞状・他█点の賞状・██点の賞品と思われる物品類が出現しました。また同日に、████高等学校にてSCP-973-JPが確認され、翌日に参加賞と思われる物品が出現したことからSCP-973-JPとの関連性が明らかになりました。"
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>SCP-973-JP妨害記録"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>hide"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"973-JP妨害記録█ - 19██/█/██"
+</strong>
+</span>
+</p>
+<blockquote>
+<p>
+<strong>
+T:"方法:"
+</strong>
+T:"SCP-973-JPの参加枠を財団エージェントに書き換える。"
+<br>
+<strong>
+T:"結果:"
+</strong>
+T:"即座に未知の方法で記述が回復する。██回実施したが全て同様の結果であった。"
+</p>
+</blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"973-JP妨害記録█ - 19██/██/█"
+</strong>
+</span>
+</p>
+<blockquote>
+<p>
+<strong>
+T:"方法:"
+</strong>
+T:"企画者のSCP-973-JPについての記憶を消去する。"
+<br>
+<strong>
+T:"結果:"
+</strong>
+T:"記憶処理終了後、即座に記憶は回復していると確認された。"
+</p>
+</blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"973-JP妨害記録██ - 19██/██/██"
+</strong>
+</span>
+</p>
+<blockquote>
+<p>
+<strong>
+T:"方法:"
+</strong>
+T:"SCP-973-JPの参加が予定されている大会を中止とする。"
+<br>
+<strong>
+T:"結果:"
+</strong>
+T:"█時間後、前述の大会のものでないトロフィーが出現した。調査の結果、前述の競技とは関係性が薄いものであった。"
+</p>
+</blockquote>
+<p>
+T:"SCP-973-JPの妨害は無意味、或いはSCP-973-JPの予測できない移動を引き起こすことから、これ以降、停止されています。"
+</p>
+</div>
+</div>
+</div>
+<p>
+T:"SCP-973-JPはその特異性から財団施設内での収容は困難と判断されました。そのためSCP-973-JPによる記録の欠損を補うために、サイト-81██に出現する賞品類をSCP-973-JPを除外した参加者に再配布し、順位を改変することが提案され、特別収容プロトコルが制定されました。"
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>SCP-973-JP事案記録"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>hide"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"事案973-JP-█"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+T:"19██/██/██"
+</span>
+<br>
+<strong>
+T:"大会・競技会名:"
+</strong>
+T:"長野██████"
+<br>
+<strong>
+T:"種目:"
+</strong>
+T:"スピードスケート500m"
+<br>
+<strong>
+T:"結果:"
+</strong>
+T:"試合前練習においてスケート靴が破損した。SCP-973-JPの使用できるスケート履が他に用意できなかったためか、欠場となり直後消失した。"
+<br>
+<strong>
+T:"消失時間:"
+</strong>
+T:"1時間20分"
+</p>
+</blockquote>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"事案973-JP-██"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+T:"19██/██/██"
+</span>
+<br>
+<strong>
+T:"大会・競技会名:"
+</strong>
+T:"全日本██████選手権大会"
+<br>
+<strong>
+T:"種目:"
+</strong>
+T:"フルマラソン"
+<br>
+<strong>
+T:"結果:"
+</strong>
+T:"優勝"
+<br>
+<strong>
+T:"消失時間:"
+</strong>
+T:"29日"
+<br>
+<strong>
+T:"補足:"
+</strong>
+T:"二足走行で競技を行った"
+</p>
+</blockquote>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"事案973-JP-████"
+</span>
+</strong>
+</p>
+<div class="scp-image-block block-right scp-clear-false" style="width:200px ;">
+<p>
+T:"[[image"
+<a href="https://scp-jp.wdfiles.com/local--files/scp-973-jp/uma973-jp.jpg">
+T:"https://scp-jp.wdfiles.com/local--files/scp-973-jp/uma973-jp.jpg"
+</a>
+<br>
+T:"{$alt}=\"{$alt-text}\" link=#]]"
+</p>
+<div class="scp-image-caption">
+<p>
+T:"左: 競技中のSCP-973-JP"
+</p>
+</div>
+</div>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+T:"20██/██/██"
+</span>
+<br>
+<strong>
+T:"大会・競技会名:"
+</strong>
+T:"████村██祭り 余興"
+<br>
+<strong>
+T:"種目:"
+</strong>
+T:"小型馬競馬"
+<br>
+<strong>
+T:"結果:"
+</strong>
+T:"SCP-973-JPの乗る馬がSCP-973-JPの体重に耐えきれず出走不能となり欠場。"
+<br>
+<strong>
+T:"消失時間:"
+</strong>
+T:"2分"
+<br>
+<strong>
+T:"補足:"
+</strong>
+<em>
+T:"よっぽど悔しかったのだろう -エージェント・███"
+</em>
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<strong>
+T:"補遺:"
+</strong>
+T:"SCP-973-JPの参加する大会・競技会は、20██年█月██日時点でスポーツに類するものに限定されていましたが、20██年█月██日に███市の書道コンクール「自身を表す書部門」において、SCP-973-JPの参加が確認されました。SCP-973-JPの参加範囲の拡大に伴い、情報収集チームの増員が検討されています。"
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>SCP-973-JP提出作品"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>hide"
+</a>
+</div>
+<div class="collapsible-block-content">
+<div class="image-container aligncenter">
+<img alt="u" class="image" height="Xpx" src="https://scp-jp.wdfiles.com/local--files/scp-973-jp/u" style="border: 2px solid white; padding: 0em;" width="200px">
+</div>
+</div>
+</div>
+</div>

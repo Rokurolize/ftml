@@ -1,0 +1,524 @@
+[[module css]]
+@import url('https://scp-jp.github.io/files/util/common/credit/style/style.css');
+
+.creditRate.no-rate .page-rate-widget-box {
+    visibility:hidden;
+}
+
+.creditRate.creditModule.no-rate ~ #u-credit-view .creditBottomRate > div:nth-of-type(2) {
+    display: none;
+}
+[[/module]]
+
+[[div_ class="creditRate creditModule {$mode}"]]
+[[div_ class="rateBox" [[iftags 殿堂入り]]style="display:none;"[[/iftags]]]]
+[[div_ class="rate-box-with-credit-button"]]
+[[module Rate]]
+[[div_ class="creditButton"]]
+[[a href="#u-credit-view" class="fa fa-info" style="position:relative;"]][[image https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png title="クレジットを表示する" style="position:absolute;height:100%;width:100%;top:0;left:0;"]][[/a]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[div_ class="rateBox heritage-wrap" [[iftags -殿堂入り]]style="display:none;"[[/iftags]]]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]archived:heritage-collection[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]]" style="max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[div_ class="creditButton"]]
+[[a href="#u-credit-view" class="fa fa-info" style="position:relative;"]][[image https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png title="クレジットを表示する" style="position:absolute;height:100%;width:100%;top:0;left:0;"]][[/a]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+[[div_ style="clear:both;"]]
+[[/div]]
+
+[[div_ id="credit-view"]]
+[[div_ class="fader"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/start.html ]]
+[[/div]]
+
+[[div_ class="modalcontainer"]]
+[[div_ class="modalbox [[iftags 殿堂入り]]heritage[[/iftags]]"]]
+[[div_ class="modalbox-title [[iftags 殿堂入り]]heritage[[/iftags]]"]]
+++* クレジット
+[[/div]]
+[[div class="credit"]]
+
+**タイトル:** SCP-1374-JP - 大団円
+**著者:** ©︎[[*user KanKan]]
+**作成年:** 2018
+----
+[[[author:kankan|著者ページ]]]
+
+[[div_ class="credit-back" style="text-align: center;"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/end.html style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" scrolling="no"]]
+[[/div]]
+[[/div]]
+
+[[div_ class="creditBottomRate" style="height:30px;"]]
+[[div_ class="credit-license"]]
+[[a href="*https://creativecommons.org/licenses/by-sa/3.0/deed.ja" class="cc cc-by-sa"]]@@@@[[/a]]
+[[/div]]
+[[div_ style="text-align: center; top: 0px;"]]
+[[div_ [[iftags +殿堂入り]]style="display: flex;"[[/iftags]] class="Dendo"]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]heritage-collection-arc[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]]" style=" max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[div_ [[iftags +殿堂入り]]style="display:none;"[[/iftags]]]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+
+[[module CSS]]
+/* Mobile Media Query */
+@media (max-width: 479px) { 
+.scp-image-block.block-right {
+    float: none;
+    margin: auto;
+}
+}
+[[/module]]
+[[div style="border:solid 1px #000000; background:#000000; padding:5px; margin-bottom: 10px;"]]
+
+[[module css]]
+@import url(http://scp-jp-sandbox2.wikidot.com/local--files/inc:ayu18/ayu18.css);
+.monoayu{font-size:98%;}
+[[/module]]
+
+[[div class="monoayu"]]
+[[=]]
+[[size 200%]]##1fa131|**SCiPNET**##[[/size]]
+[[size 150%]]##1fa131|Restricted Viewing Server##[[/size]]
+[[image https://scp-jp.wikidot.com/local--files/scp-1374-jp/SCiPNET01.jpg width="200px"]]
+[[size 150%]]##1fa131|Sustained Cautious Piece##[[/size]]
+[[size 150%]]##1fa131|Under Observation of RAISA##[[/size]]
+[[/=]]
+@@@@
+@@@@
+@@@@
+##1fa131|SCiPNETへようこそ。##
+
+##1fa131|SCP-1374-JP関連文書(3)を閲覧しますか？(y/n): y##
+
+##1fa131|…##
+
+##1fa131|……##
+
+##1fa131|………##
+
+[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**あなたの許容クオリア値(Permissible Qualia Level)は閲覧上限値を超過しています。閲覧にはクリアランスに応じたクオリア抑制処置パターン-714が必要です。**##
+
+##1fa131|処置パターン-714を実行しますか？(y/n): y##
+
+##1fa131|前頭葉にアクセスしています………成功##
+
+##1fa131|生体データをデータベースに照会しています………成功##
+
+##1fa131|機器を脳波に同期しています………成功## 
+
+##1fa131|処置パターン-714を開始します。##
+
+##1fa131|…##
+
+##1fa131|……##
+
+##1fa131|………##
+
+##1fa131|**レベル4/1374-JPクリアランス向け処置パターン-714(PQL: 20-48)が完了しました。情報が開示されます。閲覧中、あなたの脳波は常に測定され、異常が認められた瞬間機動部隊がアクセス端末の存在する座標に派遣されます。閲覧終了後は、必ず抑制解除手順を行って下さい。**##
+
+##1fa131|ファイル#01「SCP-1374-JP報告書」を開きます………##
+[[/div]]
+[[div style="display: inline-block; border-radius: 10px; border:dashed 1px #444444; background:#F5F5F5; float:top; width:calc(100% - 22px); padding:10px"]]
+[[div class="scp-image-block block-right" style="width:300px;"]]
+[[image Smiling.jpg style="width:300px;" link=#]]
+[[div class="scp-image-caption" style="width:300px;"]]
+SCP-1374-JP-Aを模写した画像。異常性はない。
+[[/div]]
+[[/div]]
+**アイテム番号:** SCP-1374-JP
+
+**オブジェクトクラス:** ##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##
+
+**特別収容プロトコル:** SCP-1374-JPに関する全資料はSCP-1374-JP-Bに分類され、閲覧する際には前頭葉への電気刺激によるクオリア抑制処置パターン-714が行われます。閲覧中にSCP-1374-JP-Vが発生した際は、1374-JP-V接触用処置パターン-714(PQL: 5)を受けた低PQL機動部隊わ-0"寡黙"により確保し、##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##(以下、座標1374-JP)へ移送します。
+
+座標1374-JPに集合しているSCP-1374-JP-V群は、ガラスの天井が備え付けられた収容施設をSCP-1374-JP-V群を覆うように建設することで収容します。座標1374-JP外のSCP-1374-JP-Vは機動部隊によって確保、内部へ移送します。
+
+全SCP-1374-JP-AやSCP-1374-JP-C及びそれらを記録したデータは、機動部隊やRAISAの担当職員らによって削除されます。またメディアを常に監視し、大規模なSCP-1374-JPの流出を事前に防ぎます。
+
+**説明:** SCP-1374-JPは異常な精神汚染能力を持つ情報です。図形であるSCP-1374-JP-A、文書であるSCP-1374-JP-B、音声であるSCP-1374-JP-Cが存在しています。SCP-1374-JPを直接的/間接的問わず、通常のPQL(100前後)で認識したヒトは、SCP-1374-JPの内容に関係なく「楽しそう」「幸せ」「##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##」等の好意的/楽観的なクオリアを得て、笑い声と共に瞬時にSCP-1374-JP-Vに変化します。PQLが一定の数値まで抑制され、好意的/楽観的なクオリアを得られない状態では、SCP-1374-JP-Vに変化することはありません。
+
+||~ 分類番号 ||~ 内容 ||~ 非汚染PQL上限値 ||
+||SCP-1374-JP-A ||主に円とその内部の小半円と2つの曲線で構成される、一般的に「ニコちゃんマーク」「スマイルマーク」等と呼称される図形。その形には個体差が存在するが、非異常性のスマイルマークとの図形的な差異はない。不明な手段によりランダムな地点に出現し、稀に増殖する。 ||14-17 ||
+||SCP-1374-JP-B ||SCP-1374-JP及びSCP-1374-JP-Vに言及した文書。記憶以外の、確認されている如何なる媒体でも異常性を持つ。 ||16-72 ||
+||SCP-1374-JP-C ||SCP-1374-JP-Vが発する音声。笑い声、歌声、##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##等。SCP-1374-JP-Cに暴露すると、死亡している・白骨化している場合も、断片から肉体が再生、蘇生してSCP-1374-JP-Vに変化する。 ||6-9 ||
+
+SCP-1374-JP-Vの顔面には目・鼻・口・睫毛・眉毛が存在せず、黒い線で描画された円のないSCP-1374-JP-Aが存在します。口がないにも拘らず問題なく発声が可能であり、ほぼ常時SCP-1374-JP-Cを発しています。人間がSCP-1374-JP-Vに変化した瞬間、先天的・後天的問わず全ての疾患・障害が完治し、同時に異常な物理的耐性を獲得します。この為、現在までSCP-1374-JP-Vが死亡した例は確認されていません。
+
+変化から数秒～数日経過すると、SCP-1374-JP-Vは座標1374-JPへの移動を試みます。この時ほぼ直線的に座標1374-JPへ向かう為、本来ならば死亡するようなルートを通る場合が多いですが、大抵はその破壊耐性によって強引に前進します。座標1374-JPに到着したSCP-1374-JP-Vは、既に到着しているSCP-1374-JP-Vらと手を繋いで円を作り、SCP-1374-JP-Cである「##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##」を歌唱します。歌唱中に新たなSCP-1374-JP-Vが到着した場合、歌唱しながら新たなSCP-1374-JP-Vと手を繋ぎます。現在座標1374-JPに集合しているSCP-1374-JP-Vの数は##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##です。
+
+SCP-1374-JPとSCP-1374-JP-Vの増殖によるAK-クラス:世界終焉シナリオ及びXK-クラス:世界終焉シナリオが完了する恐れから、現在[[span class="ruby"]]瀬戸[[span class="rt"]]せど[[/span]][[/span]] [[span class="ruby"]]茂[[span class="rt"]]しげる[[/span]][[/span]]博士によりSCP-1374-JP-Vの治療/終了方法が模索されています。
+
+//SCP-1374-JPによる精神汚染は、収容中のオブジェクトの収容違反を引き起こす恐れがある為、許容されません。例えSCP-1374-JPによってしあわせになれるとしても、我々の理念を忘れてはならないのです。//─瀬戸博士
+[[/div]]
+
+[[div class="monoayu"]]
+##1fa131|ファイル#02「タイムラインレポート抜粋」を開きます………##
+[[/div]]
+
+[[div style="display: inline-block; border-radius: 10px; border:dashed 1px #444444; background:#F5F5F5; float:top; width:calc(100% - 22px); padding:10px"]]
+[[module CSS]]
+table.heritage {
+  border: 0;
+  padding: 0;
+  margin: 0 auto;
+  border-spacing: 0;
+  border-collapse: separate;
+}
+table.heritage td.title,
+table.heritage td.label {
+  border-right: solid 1px #999;
+  font-size: 10pt;
+  width: 120px;
+  text-align: right;
+  padding-right: 10px;
+}
+.heritage{
+width: auto;
+}
+[[/module]]
+[[table class="heritage" cellspacing="0"]]
+
+[[row]]
+[[cell class="label"]]
+[[div class="date"]]
+**2018/08/01**
+[[/div]]
+[[/cell]]
+[[cell class="entry"]]
+[[div class="snippet"]]
+日本国██県██市██村において、SCP-1374-JP-A及びSCP-1374-JP-Vが初めて発見されました。
+[[/div]]
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell class="label"]]
+[[div class="date"]]
+**2018/08/02**
+[[/div]]
+[[/cell]]
+[[cell class="entry"]]
+[[div class="snippet"]]
+光量は変化していないにも拘らず、太陽が肉眼で視認できるようになりました。太陽表面には巨大なSCP-1374-JP-Aが確認できます。
+[[/div]]
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell class="label"]]
+[[div class="date"]]
+**2018/08/03**
+[[/div]]
+[[/cell]]
+[[cell class="entry"]]
+[[div class="snippet"]]
+##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##に集合しているSCP-1374-JP-V4体が発見され、この地点が座標1374-JPに指定されました。
+[[/div]]
+[[/cell]]
+[[/row]]
+
+[[/table]]
+
+[[div class="scp-image-block block-right" style="width:auto;"]]
+[[image https://scp-jp-storage.wikidot.com/local--files/file:2859452-7-87nu/Independent.jpg style="width:auto;" link=#]]
+[[div class="scp-image-caption" style="width:auto;"]]
+発見当時の座標1374-JP。映っているSCP-1374-JP-Vは██一家と特定された。
+[[/div]]
+[[/div]]
+
+[[table class="heritage" cellspacing="0"]]
+
+[[row]]
+[[cell class="label"]]
+[[div class="date"]]
+**2018/08/08**
+[[/div]]
+[[/cell]]
+[[cell class="entry"]]
+[[div class="snippet"]]
+██県██市を中心に、被子植物の花にSCP-1374-JP-Aが出現し始めました。
+[[/div]]
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell class="label"]]
+[[div class="date"]]
+**2018/08/09**
+[[/div]]
+[[/cell]]
+[[cell class="entry"]]
+[[div class="snippet"]]
+SCP-1374-JP-Aが自身を複製しているという仮説が瀬戸博士によって立てられ、これ以上の地球上でのSCP-1374-JP-Aの増殖を食い止めるべくSCP-1374-JP-Aの出現した植物の焼却計画が開始されました。
+[[/div]]
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell class="label"]]
+[[div class="date"]]
+**2018/08/15**
+[[/div]]
+[[/cell]]
+[[cell class="entry"]]
+[[div class="snippet"]]
+日本上空の雲にSCP-1374-JP-Aが見られるようになりました。これにより、焼却計画は無意味と判断された為凍結されました。
+[[/div]]
+[[/cell]]
+[[/row]]
+
+[[/table]]
+
+[[div class="scp-image-block block-right" style="width:auto;"]]
+[[image https://scp-jp-storage.wikidot.com/local--files/file:2859452-5-f70g/Happy.jpg style="width:auto;" link=#]]
+[[div class="scp-image-caption" style="width:auto;"]]
+全住民がSCP-1374-JP-Vに変化した██村と、SCP-1374-JP-V。
+[[/div]]
+[[/div]]
+
+[[table class="heritage" cellspacing="0"]]
+
+[[row]]
+[[cell class="label"]]
+[[div class="date"]]
+**2018/08/17**
+[[/div]]
+[[/cell]]
+[[cell class="entry"]]
+[[div class="snippet"]]
+##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##ヶ国の全国民がSCP-1374-JP-Vに変化しました。これは全人類の##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##%に当たります。
+[[/div]]
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell class="label"]]
+[[div class="date"]]
+**2018/08/23**
+[[/div]]
+[[/cell]]
+[[cell class="entry"]]
+[[div class="snippet"]]
+現在、SCP-1374-JP-Aの存在しない植物や、人間以外の動物は確認されていません。
+[[/div]]
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell class="label"]]
+[[div class="date"]]
+**2018/08/29**
+[[/div]]
+[[/cell]]
+[[cell class="entry"]]
+[[div class="snippet"]]
+##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##
+[[/div]]
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell class="label"]]
+[[div class="date"]]
+**2018/09/03**
+[[/div]]
+[[/cell]]
+[[cell class="entry"]]
+[[div class="snippet"]]
+##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##
+[[/div]]
+[[/cell]]
+[[/row]]
+
+[[/table]]
+
+[[div class="scp-image-block block-right" style="width:auto;"]]
+[[image https://scp-jp-storage.wikidot.com/local--files/file:2859452-6-fmez/Forbidden.jpg style="width:auto;" link=#]]
+[[div class="scp-image-caption" style="width:auto;"]]
+座標1374-JPへ移動するSCP-1374-JP-V。
+[[/div]]
+[[/div]]
+
+[[table class="heritage" cellspacing="0"]]
+
+[[row]]
+[[cell class="label"]]
+[[div class="date"]]
+**2018/09/05**
+[[/div]]
+[[/cell]]
+[[cell class="entry"]]
+[[div class="snippet"]]
+##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##
+[[/div]]
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell class="label"]]
+[[div class="date"]]
+**2018/09/08**
+[[/div]]
+[[/cell]]
+[[cell class="entry"]]
+[[div class="snippet"]]
+しあわせは認められませんでした。
+[[/div]]
+[[/cell]]
+[[/row]]
+
+[!--
+[[row]]
+[[cell class="label"]]
+[[div class="date"]]
+**2018/0/**
+[[/div]]
+[[/cell]]
+[[cell class="entry"]]
+[[div class="snippet"]]
+
+[[/div]]
+[[/cell]]
+[[/row]]
+
+[[include component:image-block
+|name=Happy.jpg
+|caption=SCP-1374-JP-V。この個体とは意思疎通が可能であったが、変化から数日後座標1374-JPへ移動を開始した。
+|width=300px
+]]
+--]
+[[/table]]
+[[/div]]
+[[div class="monoayu"]]
+##1fa131|ファイル#03「インタビュー記録1374-JP」を開きます………##
+[[/div]]
+[[div style="display: inline-block; border-radius: 10px; border:dashed 1px #444444; background:#F5F5F5; float:top; width:calc(100% - 22px); padding:10px"]]
+**対象:** SCP-1374-JP-V-1(元██研究員)
+
+**インタビュアー:** 瀬戸博士 
+
+**付記:** 瀬戸博士は事前に1374-JP-V接触用処置パターン-714を受けている。
+
+**<録音開始>** 
+
+**瀬戸博士:** インタビューを開始します。
+
+**SCP-1374-JP-V-1:** ##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##
+
+**瀬戸博士:** SCP-1374-JP-V-1、聞こえていますか。
+
+**SCP-1374-JP-V-1:** ##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##
+
+**瀬戸博士:** その歌で、一体何を伝えようとしているのでしょうか。団結の呼び掛け？それとも、我々の無力さへの嘆き？
+
+**SCP-1374-JP-V-1:** ##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##
+
+**瀬戸博士:** 両方、了解しました。
+
+**SCP-1374-JP-V-1:** ##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##
+
+**瀬戸博士:** ええ、理解しました。SCP-1374-JPは、望まれなかった選択肢なのですね。しあわせは当事者の間では殆どの場合望まれますが、その上で見ている彼らにとっては、必ずしも望ましいものではないようです。だから、報復や見せしめ、或いはその罪の代償として、この平行宇宙をしあわせにしている。違いますか？
+
+**SCP-1374-JP-V-1:** ##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##
+
+**瀬戸博士:** その通りです。しかし、例えその事実があろうと、我々は義務を果たさなければなりません。我々は##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##である以前に、この世界を守る「財団」なのですから。
+
+**SCP-1374-JP-V-1:** ##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##
+
+**瀬戸博士:** 今の私に悲しみのクオリアは発生しません。これが終われば、私は記憶処理されて、悲しみを覚えることもありません。これを知るのは、この世界のごく一部の人間と、あちらの世界の人間だけで十分でしょう。その中に、私が入る理由はありません。
+
+**SCP-1374-JP-V-1:** ##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##
+
+**瀬戸博士:** はい、どうなさいましたか。
+
+**SCP-1374-JP-V-1:** ##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##
+
+**瀬戸博士:** 質問ですか、どうぞ。
+
+**SCP-1374-JP-V-1:** あなた達は何故、私たちのしあわせを望まないのですか？
+
+**瀬戸博士:** 質問にお答えください。どうして彼らと我々を##1fa131|**[**##[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**PQLが閲覧上限値を超過しています]**##するのですか？
+
+**<録音終了>** 
+
+**終了報告書:** 瀬戸博士にはクラスB記憶処理を施し、SCP-1374-JP-V-1は座標1374-JPへ移送した。返答は未だにない。
+[[/div]]
+
+[[div class="monoayu"]]
+##1fa131|抑制解除手順を実行しますか？(y/n): y##
+
+##1fa131|前頭葉にアクセスしています………成功##
+
+##1fa131|機器を脳波に同期しています………成功## 
+
+##1fa131|抑制解除手順を開始します。##
+
+##1fa131|…##
+
+##1fa131|……##
+
+##1fa131|………##
+
+##1fa131|**クオリア抑制の解除が正常に完了しました。**##
+
+[[span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131"]]@<&nbsp;>@[[/span]]##1fa131|**不明な精神体があなたの精神構造内に確認されています。不要な情報漏洩を防ぐ為、精神体の強制ログアウト処置を開始します。**##
+
+##1fa131|…##
+
+##1fa131|……##
+
+##1fa131|………##
+
+[[module css]]
+.textchange div.sitemember:nth-child(2) {
+display:none;
+}
+[[/module]]
+
+[[div class="textchange"]]
+[[module ListUsers users="."]]
+[[div class="sitemember"]]
+##1fa131|**ログアウト: Site-81XX Member %%title%%**##
+
+##1fa131|お疲れ様でした、%%title%%。いつものように、我々を苦しめ、痛め付け、絶望させる選択肢を希求/創作しにお戻り下さい。##
+[[/div]]
+[[/module]]
+[[div class="sitemember"]]
+##1fa131|**ログアウト: Site-8122 Doctor F.Guest**##
+
+##1fa131|お疲れ様でした、F.Guest。いつものように、我々を苦しめ、痛め付け、絶望させる選択肢を希求/創作しにお戻り下さい。##
+[[/div]]
+[[/div]]
+
+##1fa131|それでは、さようなら。##
+
+##1fa131|………##
+
+##1fa131|……##
+
+##1fa131|…##
+
+[[/div]]
+[[/div]]

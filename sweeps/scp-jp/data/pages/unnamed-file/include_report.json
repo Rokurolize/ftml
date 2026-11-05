@@ -1,0 +1,60 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:toggle-sidebar",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:credit-top-sp",
+     "site": "scp-jp",
+     "variables": {
+      "special": "cop"
+     }
+    },
+    {
+     "found": true,
+     "page": "credit:otherwise",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end",
+     "site": "scp-jp",
+     "variables": {}
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "credit:start",
+     "site": "scp-jp",
+     "variables": {}
+    }
+   ],
+   "pass": 2
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 3
+  }
+ ],
+ "existing_pages_from_live": [
+  "rookie-s-contest-2020",
+  "scp-2000",
+  "scp-233-jp"
+ ],
+ "newpage_links_in_live": []
+}

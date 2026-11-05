@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:27:29+00:00",
+  "method": "GET",
+  "response_bytes": 206725,
+  "response_sha256": "953c6ef3a1f14af1bf964ca586fc8f15d6d47f3ed3f244e212a013531cea5b70",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/fragment:scp-4000-jp-stengan774"
+ },
+ "page": "fragment:scp-4000-jp-stengan774",
+ "page_id": 1469145158,
+ "site": "scp-jp",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:27:30+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "1469145158"
+  },
+  "response_bytes": 266510,
+  "response_sha256": "2fe03a681a74fea33595a39a29723ff4b53dff8288a02a8482bec744e34077f5",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "d78a505a4d0aab80d682714f0f97ada7d6491c16e8a9b1c2eb6015b2e63df34f"
+}

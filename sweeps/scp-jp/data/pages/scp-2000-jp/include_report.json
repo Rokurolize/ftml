@@ -1,0 +1,84 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:credit-top-sp",
+     "site": "scp-jp",
+     "variables": {
+      "special": "1st"
+     }
+    },
+    {
+     "found": true,
+     "page": "credit:otherwise",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "extension:modal-s",
+     "site": "shitake-crude-production",
+     "variables": {
+      "id": "u-shut"
+     }
+    },
+    {
+     "found": true,
+     "page": "extension:modal-e",
+     "site": "shitake-crude-production",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "extension:modal-s",
+     "site": "shitake-crude-production",
+     "variables": {
+      "id": "u-letter"
+     }
+    },
+    {
+     "found": true,
+     "page": "extension:modal-e",
+     "site": "shitake-crude-production",
+     "variables": {}
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "credit:start",
+     "site": "scp-jp",
+     "variables": {}
+    }
+   ],
+   "pass": 2
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 3
+  }
+ ],
+ "existing_pages_from_live": [
+  "author:fes-ryuukatetu",
+  "author:furabbit",
+  "author:wagnascousin",
+  "scp-2000-jp",
+  "scp2000jp-contest-hub"
+ ],
+ "newpage_links_in_live": []
+}

@@ -1,0 +1,926 @@
+<div class="award-1st">
+</div>
+<div class="creditRate creditModule {$mode}">
+<div class="rateBox">
+<div class="rate-box-with-credit-button">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+437"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<div class="rateBox heritage-wrap" style="display:none;">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+437"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<div style="clear:both;">
+</div>
+<div id="u-credit-view">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"クレジット"
+</span>
+</h2>
+</div>
+<div class="credit">
+<p>
+<strong>
+T:"タイトル:"
+</strong>
+T:"SCP-1598-JP - 『ほら、いつものアレやれよ。』"
+<br>
+<strong>
+T:"著者:"
+</strong>
+T:"©︎"
+<span class="printuser avatarhover">
+<a href="https://www.wikidot.com/user:info/yzkrt" onclick="WIKIDOT.page.listeners.userInfo(3205804); return false;">
+<img alt="yzkrt" class="small" src="https://www.wikidot.com/avatar.php?userid=3205804&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=3205804)">
+</a>
+<a href="https://www.wikidot.com/user:info/yzkrt" onclick="WIKIDOT.page.listeners.userInfo(3205804); return false;">
+T:"yzkrt"
+</a>
+</span>
+<br>
+<strong>
+T:"作成年:"
+</strong>
+T:"2019"
+</p>
+</div>
+<div class="credit" style="text-align:right; margin-top: 0.5em;">
+<a href="#u-credit-otherwise">
+T:"その他のライセンス"
+</a>
+</div>
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+437"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+<div class="modalbox-ratemodule">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+437"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="u-credit-otherwise">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/otherwise.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"その他"
+</span>
+</h2>
+</div>
+<div class="credit otherwise">
+<div class="contest">
+<p>
+<a href="https://scp-jp.wikidot.com/recyclecontest19" target="_blank">
+T:"リサイクルコンテスト2019"
+</a>
+<br>
+<span>
+T:"優勝作品"
+</span>
+</p>
+</div>
+<div class="credit-back" style="text-align: center;">
+<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+</iframe>
+</div>
+</div>
+<div class="creditBottomRate" style="height:30px;">
+<div class="credit-license">
+<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
+</a>
+</div>
+<div style="text-align: center; top: 0px;">
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+437"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+<div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+437"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div style="border:solid 1px #999999; background:#ffffff; width:90%; padding:15px; margin-bottom: 15px; margin:0 auto;">
+<p style="text-align: center;">
+T:"SCP-1598-JPへのアクセスが承認されました。"
+</p>
+<p style="text-align: center;">
+<tt>
+T:"前回閲覧終了日時 2020/07/22<NBSP>15:27"
+</tt>
+</p>
+</div>
+<hr>
+<p>
+<strong>
+T:"アイテム番号:"
+</strong>
+T:"<NBSP>SCP-1598-JP"
+</p>
+<p>
+<strong>
+T:"オブジェクトクラス:"
+</strong>
+T:"<NBSP>Safe"
+</p>
+<p>
+<strong>
+T:"特別収容プロトコル:"
+</strong>
+T:"<NBSP>SCP-1598-JP発生地点である██中学校の敷地は研究施設に偽装され、一般から隔離されます。██中学校の屋上への階段は電子ロックが用いられた二重扉によって封鎖され、立ち入りにはセキュリティクリアランス3以上の職員の承認が必要とされます。"
+</p>
+<p>
+<strong>
+T:"説明:"
+</strong>
+T:"<NBSP>SCP-1598-JPは新潟県長岡市立██中学校の屋上に出現する人型実体群です。出現する人型実体にはそれぞれ-1~5までのナンバリング指定がなされています。SCP-1598-JP群は毎日12時28分に██中学校の屋上に出現します。出現したSCP-1598-JP群は全て決まった行動（以下、イベントと表記）を取ります。全てのイベントは12時36分にSCP-1598-JP-1が屋上から飛び降りることで終了し、それに伴って全てのSCP-1598-JP実体が消失します。以下はSCP-1598-JP群の大まかな特徴です。"
+</p>
+<table class="wiki-content-table">
+<tbody>
+<tr>
+<th>
+T:"ナンバリング"
+</th>
+<th>
+T:"特徴"
+</th>
+</tr>
+<tr>
+<td>
+T:"SCP-1598-JP-1"
+</td>
+<td>
+T:"身長148cmの人型実体。外見的特徴は中学時代の塩野 悠氏と一致する。塩野氏は20██年に██中学校の屋上から落下死したとされている。"
+</td>
+</tr>
+<tr>
+<td>
+T:"SCP-1598-JP-2"
+</td>
+<td>
+T:"身長164cmの人型実体。外見的特徴は中学時代の兼山 修介氏と一致する。SCP-1598-JP-2~5の中でリーダー的に振る舞う。現実での兼山氏は2015年に交通事故で今野氏、芝崎氏と共に死亡している。"
+</td>
+</tr>
+<tr>
+<td>
+T:"SCP-1598-JP-3"
+</td>
+<td>
+T:"身長160cmの人型実体。外見的特徴は中学時代の今野 肇氏と一致する。発言量は少ない。現実での今野氏は2015年に交通事故で兼山氏、芝崎氏と共に死亡している。"
+</td>
+</tr>
+<tr>
+<td>
+T:"SCP-1598-JP-4"
+</td>
+<td>
+T:"身長173cmの人型実体。外見的特徴は中学時代の芝崎 啓太氏と一致する。SCP-1598-JP-2に賛同する様子が見られる。現実での芝崎氏は2015年に交通事故で兼山氏、今野氏と共に死亡している。"
+</td>
+</tr>
+<tr>
+<td>
+T:"SCP-1598-JP-5"
+</td>
+<td>
+T:"身長156cmの人型実体。外見的特徴は中学時代の葛西 ██氏と一致する。存命。詳しくはインタビュー記録を参照。"
+</td>
+</tr>
+</tbody>
+</table>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>映像記録1598-JPを開く。"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"映像記録1598-JPを閉じる。"
+</a>
+</div>
+<div class="collapsible-block-content">
+<blockquote>
+<p>
+T:"[映像開始]"
+</p>
+<p>
+<strong>
+T:"12:28:16"
+</strong>
+T:"[SCP-1598-JP-1が屋上に出現する。SCP-1598-JP-1はフェンスに寄りかかりながら校庭を眺めているように見える。]"
+</p>
+<p>
+<strong>
+T:"12:28:31"
+</strong>
+T:"[SCP-1598-JP-2~5が出現する。]"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-2:"
+</strong>
+T:"よお悠、こんなとこにいるのかよ。探したじゃん。"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-1:"
+</strong>
+T:"あ、シュウくん……ごめん。"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-4:"
+</strong>
+T:"″"
+<em>
+T:"いつもみたいに"
+</em>
+T:"″特別棟の方に来いよ。何やってんだよ。"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-3:"
+</strong>
+T:"ビビってるの？"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-2:"
+</strong>
+T:"そんなにビビらなくても俺たち楽しく遊ぶだけなのになぁ。そうだろ？"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-1:"
+</strong>
+T:"えっと、ごめん。先生に手伝えって言われてて、遅くなっちゃったからどうしたら良いかわかんなくて……。"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-5:"
+</strong>
+T:"そういうのはさぁ、先に言っておけよな。つまんねぇ。"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-4:"
+</strong>
+T:"分かる。せっかく俺たちが"
+<em>
+T:"遊んで"
+</em>
+T:"やってんだからしっかりしろよ。"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-5:"
+</strong>
+T:"ほら、″"
+<em>
+T:"いつも通り"
+</em>
+T:"″遊んでやるから着いてこいよ。"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-2:"
+</strong>
+T:"それよりさ、ここでやろうぜ。″"
+<em>
+T:"いつもの"
+</em>
+T:"″"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-1:"
+</strong>
+T:"え……。"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-2:"
+</strong>
+T:"お前もいつもと雰囲気が変わって面白いだろ？早くやってみせろよ。"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-1:"
+</strong>
+T:"でも……。"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-4:"
+</strong>
+T:"文句言うんじゃねぇよ。早く″"
+<em>
+T:"いつも通り"
+</em>
+T:"″にやれよ。自殺ごっこ。"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-5:"
+</strong>
+T:"やーれ！やーれ！"
+</p>
+<p>
+<strong>
+T:"12:33:51"
+</strong>
+T:"[SCP-1598-JP-1が恐る恐る屋上のフェンスを乗り越え、フェンス外側の縁に足を載せる。]"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-3:"
+</strong>
+T:"スゲー、マジでやってるよ。笑う。"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-2:"
+</strong>
+T:"いつもより風が当たって新鮮だろ？最高だな。"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-5:"
+</strong>
+T:"なんとか返事しろよ。つまんねぇの。"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-4:"
+</strong>
+T:"ビビってないで早く飛べよ。ほら飛ーべ！飛ーべ！"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-2:"
+</strong>
+T:"飛ーべ！飛ーべ！"
+</p>
+<p>
+<strong>
+T:"12:35:25"
+</strong>
+T:"[SCP-1598-JP-2~5が同じ言葉を繰り返す。SCP-1598-JP-1は目を瞑ったまま俯いている。]"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-2:"
+</strong>
+T:"あー面白かった。おい、戻ってきて良いぞ。"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-1:"
+</strong>
+T:"……いいの？"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-4:"
+</strong>
+T:"良いって言ってんだろ。どんくせぇなぁ。"
+</p>
+<p>
+<strong>
+T:"12:35:56"
+</strong>
+T:"[SCP-1598-JP-1が再びフェンスを乗り越え屋上に戻ろうとする。SCP-1598-JP-2~5は笑った状態でそれを見ている。]"
+</p>
+<p>
+<strong>
+T:"SCP-1598-JP-1:"
+</strong>
+T:"あ。"
+</p>
+<p>
+<strong>
+T:"12:36:00"
+</strong>
+T:"[SCP-1598-JP-1がフェンスから足を滑らせ落下する。地面に衝突する瞬間、全てのSCP-1598-JP個体は消失する。]"
+</p>
+<p>
+T:"[映像終了]"
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<strong>
+T:"20██/05/12 補遺1:"
+</strong>
+T:"異常性の調査を行うため、現在SCP-1598-JP群において唯一存命の葛西氏にインタビューが行われました。以下はその記録です。"
+</p>
+<blockquote>
+<p style="text-align: center;">
+<strong>
+<span style="text-decoration: underline;">
+T:"インタビュー記録1598-JP.1"
+</span>
+</strong>
+</p>
+<p>
+<strong>
+T:"インタビュアー:"
+</strong>
+T:"狭間研究員"
+</p>
+<p>
+<strong>
+T:"対象:"
+</strong>
+T:"葛西氏（SCP-1598-JP-5にあたる人物）"
+</p>
+<p>
+<strong>
+T:"付記:"
+</strong>
+T:"葛西氏にはインタビューの前に上記の映像記録を確認させています。"
+</p>
+<hr>
+<p>
+T:"[記録開始]"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"……凄いな、これ。俺達そっくりだ。"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"ご信用いただけましたか？"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"あぁ、まぁ。でもこれ、やっぱり特殊メイクとかその類いじゃないのか？"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"そうですね。どうしてもというのであれば実際にご確認いただいてもよろしいのですが…… [時計を眺めながら] その場合はこちらで一泊していただくことになります。"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"そうか。いや、いい、信じた。これは本物だ。当時の俺達そっくりだ。昨日撮ったのか？"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"ええ、といってもこちらの映像の内容は毎日繰り返し発生していますが。"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"そうか、不思議なこともあるもんだな。"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"ええ、それではいくつかご質問させていただきますが、よろしいですか？"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"[沈黙]"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"大丈夫ですよ葛西さん。我々は法の代行者ではありません。ただ、当時のことを確認させていただくだけです。"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"……本当か？こんな身分で言えたことじゃないが、一応俺にも嫁と娘がいてよ。少なくともあいつらだけは……。"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"ご心配なく、正直にお話いただければお返しします。約束しましょう。"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"[逡巡] そうか、まぁ、分かった。聞いてくれ。"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"それでは、この映像に映っている人物は当時のメンバーで間違いありませんね？"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"間違いない。いつもの5人だ。"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"映像の内容と記憶に齟齬はありませんか？"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"あぁ、多分ないと思う。昔のことだけど、強烈だったから。"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"なるほど。当時の塩野さんに変わったところはありませんでしたか？"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"変わったところ？"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"どんなことでも構いません。妙に運が良かったとか、何か人と違うところがあったのでしょうか。"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"[沈黙] いいや、なかったな。ただ、まぁ何というかバスの席は決まった席に乗るとか、筆箱の中身の順番が決まってるとか、そういう″"
+<em>
+T:"いつもと同じ"
+</em>
+T:"″にすることに神経質な奴だったな。でも体が小さくて頭の弱い奴だったから、当時の俺らが目をつけたのはそれが原因だ。"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"そうですか。"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"そうだな。それだけだ。 [溜息] 懺悔のつもりじゃないが、当時は本当に馬鹿らしいことをしたと思ってるよ。今でもたまにフラッシュバックするんだ。本当に死んで欲しいわけじゃなかったのにって。"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"当時の新聞ではいじめ事件ではなく、屋上の不備から起きた事件として紹介されていますね。これには何か理由が？"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"いや、俺達は本当にバレないようにやってたから、誰も気がつかなかったんだと思う。もしかしたらクラスの奴で薄々気がついてた奴はいたかもしれないが、少なくとも警察とか先生から話を聞かれたことはなかったな。"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"そのようですね。塩野さんが亡くなってから周りで不自然なことはありませんでしたか？"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"いいや、普通通り。だけどアイツが落っこちた時の夢は時々見てた。今でいうPTSDみたいな奴だったのかな。でもそれだっておかしいほどみるわけじゃなかったし、多分普通だったんだと思う。"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"なるほど、他にはもうありませんか？"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"多分、ない。覚えている限りは。"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"分かりました。ご協力ありがとうございます。身体検査などはありますが、すぐ帰れるでしょう。"
+</p>
+<p>
+<strong>
+T:"葛西氏:"
+</strong>
+T:"どうも。 [戸惑い] あの、こんなこと言える立場じゃないのは重々承知だけど、アイツのこと助けてやってくれませんか。罪滅ぼしじゃないけど、出来るかぎりのことは手伝いますんで。"
+</p>
+<p>
+<strong>
+T:"狭間研究員:"
+</strong>
+T:"分かりました。善処させていただきます。"
+</p>
+<p>
+T:"[記録終了]"
+</p>
+<hr>
+<p>
+<strong>
+T:"付記:"
+</strong>
+T:"インタビュー後、葛西氏にはクラスA記憶処理を施して解放しました。"
+</p>
+</blockquote>
+<p>
+<strong>
+T:"補遺2:"
+</strong>
+T:"死亡済みのSCP-1598-JP-2~4にあたる3名の事故についての調査が行われました。調査の結果、事故は非異常性のアクシデントであることが判明しています。"
+</p>
+<p>
+<strong>
+T:"20██/05/13 補遺3:"
+</strong>
+T:"異常性の調査を行うため、現在SCP-1598-JP群において唯一存命の葛西氏にインタビューが行われました。インタビューからは新たな情報が得られなかったため、インタビュー後、葛西氏にはクラスA記憶処理を施して解放しました。"
+</p>
+<p>
+<strong>
+T:"20██/05/14 補遺4:"
+</strong>
+T:"異常性の調査を行うため、現在SCP-1598-JP群において唯一存命の葛西氏にインタビューが行われました。インタビューからは新たな情報が得られなかったため、インタビュー後、葛西氏にはクラスA記憶処理を施して解放しました。"
+</p>
+<p>
+<strong>
+T:"20██/05/15 補遺5:"
+</strong>
+T:"異常性の調査を行うため、現在SCP-1598-JP群において唯一存命の葛西氏にインタビューが行われました。インタビューからは新たな情報が得られなかったため、インタビュー後、葛西氏にはクラスA記憶処理を施して解放しました。"
+</p>
+<p>
+<strong>
+T:"["
+<em>
+T:"データ破損"
+</em>
+T:"]"
+</strong>
+</p>
+<p>
+<strong>
+T:"20██/05/28 補遺18:"
+</strong>
+T:"異常性の調査を行うため、現在SCP-1598-JP群において唯一存命の葛西氏にインタビューが行われました。インタビューからは新たな情報が得られなかったため、インタビュー後、葛西氏にはクラスA記憶処理を施して解放しました。"
+</p>
+<p>
+<strong>
+T:"20██/05/29 補遺19:"
+</strong>
+T:"異常性の調査を行うため、現在SCP-1598-JP群において唯一存命の葛西氏にインタビューを行う計画は葛西氏が急性心不全で死亡したため中止されました。死亡理由は短期間に多量の記憶処理剤を投与されたためと推測されています。現在、倫理委員会が記憶処理剤の投与が適正であったかの調査を行っています。"
+</p>
+<p>
+<strong>
+T:"20██/05/30 補遺20:"
+</strong>
+T:"異常性の調査を行うため、現在SCP-1598-JP群において唯一存命の葛西氏にインタビューを行う計画は葛西氏が急性心不全で死亡していたため"
+<span style="text-decoration: line-through;">
+T:"中止されました。"
+</span>
+T:"葛西氏の遺体を遺族から回収し、インタビューが行われました。インタビューからは新たな情報が得られなかったため、インタビュー後、葛西氏にはクラスA記憶処理を施して回収しました。"
+</p>
+<p>
+<strong>
+T:"20██/05/31 補遺21:"
+</strong>
+T:"異常性の調査を行うため、葛西氏の遺体にインタビューが行われました。インタビューからは新たな情報が得られなかったため、インタビュー後、葛西氏にはクラスA記憶処理を施して回収しました。"
+</p>
+<p>
+<strong>
+T:"20██/06/01 補遺22:"
+</strong>
+T:"異常性の調査を行うため、葛西氏の遺体にインタビューが行われました。インタビューからは新たな情報が得られなかったため、インタビュー後、葛西氏にはクラスA記憶処理を施して回収しました。"
+</p>
+<p>
+<strong>
+T:"["
+<em>
+T:"データ削除済"
+</em>
+T:"]"
+</strong>
+</p>
+<p>
+<strong>
+T:"20██/██/██ 補遺███:"
+</strong>
+T:"当報告書及び、SCP-1598-JPの収容計画には明らかな異常が発生しています。葛西氏は既に死亡しているにも関わらず、葛西氏へのインタビュー申請は続けられています。現在、SCP-1598-JPの新たな異常性についての審議が行われています。"
+</p>
+<hr>
+<div style="border:solid 1px #999999; background:#ffffff; width:90%; padding:15px; margin-bottom: 15px; margin:0 auto;">
+<p style="text-align: center;">
+T:"SCP-1598-JPの閲覧を終了します。お疲れ様でした。"
+</p>
+<p style="text-align: center;">
+<tt>
+T:"閲覧終了日時 2020/07/23<NBSP>15:27"
+</tt>
+</p>
+</div>

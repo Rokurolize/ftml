@@ -1,0 +1,1097 @@
+--- live
++++ ftml
+@@ -1,29 +1,9 @@
+ <div class="creditRate creditModule {$mode}">
+-<div class="rateBox">
++T:"[[div_ class=\"rateBox\" ]]"
+ <div class="rate-box-with-credit-button">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+447"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+@@ -31,44 +11,24 @@
+ </div>
+ </div>
+ </div>
+-<div class="rateBox heritage-wrap" style="display:none;">
++<br>
+ <div class="heritage-rating-module">
+ <div class="heritage-emblem">
+ <a href="/">
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+447"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ </div>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+ </a>
+ </div>
+-</div>
+-</div>
++<br>
++<br>
+ <div style="clear:both;">
+ </div>
+ <div id="u-credit-view">
+@@ -97,11 +57,11 @@
+ </strong>
+ T:"©"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(4062604); return false;">
+-<img alt="Jiraku_Mogana" class="small" src="https://www.wikidot.com/avatar.php?userid=4062604&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=4062604)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(4062604); return false;">
+-T:"Jiraku_Mogana"
++<a href="/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="jiraku_mogana" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T:"jiraku_mogana"
+ </a>
+ </span>
+ <br>
+@@ -111,13 +71,13 @@
+ T:"2019"
+ </p>
+ <div class="credit-back" style="text-align: center;">
+-<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
++<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+ </iframe>
+ </div>
+ </div>
+ <div class="creditBottomRate" style="height:30px;">
+ <div class="credit-license">
+-<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
++<a class="cc cc-by-sa" href="#invalid-url">
+ </a>
+ </div>
+ <div style="text-align: center; top: 0px;">
+@@ -128,58 +88,19 @@
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+447"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-<div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+447"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++<br>
++T:"[[/div]]"
+ </div>
+ </div>
+ </div>
+@@ -192,8 +113,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+-<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士キメ">
++<img alt="博士キメ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士キメ/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -206,8 +127,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+-<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手グッド">
++<img alt="助手グッド" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手グッド/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -225,8 +146,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+-<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士キメ">
++<img alt="博士キメ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士キメ/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -243,8 +164,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+-<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手グッド">
++<img alt="助手グッド" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手グッド/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -259,8 +180,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+-<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士キメ">
++<img alt="博士キメ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士キメ/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -273,8 +194,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+-<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手悩む">
++<img alt="助手悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手悩む/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -291,8 +212,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+-<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士キメ">
++<img alt="博士キメ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士キメ/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -306,8 +227,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+-<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士キメ">
++<img alt="博士キメ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士キメ/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -320,8 +241,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+-<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手グッド">
++<img alt="助手グッド" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手グッド/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -334,8 +255,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+-<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士悩む">
++<img alt="博士悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士悩む/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -348,8 +269,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+-<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手悩む">
++<img alt="助手悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手悩む/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -362,8 +283,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+-<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士悩む">
++<img alt="博士悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士悩む/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -376,32 +297,32 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+-<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+-</a>
+-</div>
+-</div>
+-<div style="clear: left;">
+-</div>
+-<p>
+-<br>
+-</p>
+-<div class="image-container aligncenter">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E8%83%8C%E6%99%AF">
+-<img alt="背景" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E8%83%8C%E6%99%AF/medium.jpg" width="300px">
+-</a>
+-</div>
+-<p>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-</p>
+-<div class="image-container aligncenter">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E7%99%BB%E5%A0%B4">
+-<img alt="登場" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E7%99%BB%E5%A0%B4/medium.jpg" width="300px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手悩む">
++<img alt="助手悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手悩む/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++</a>
++</div>
++</div>
++<div style="clear: left;">
++</div>
++<p>
++<br>
++</p>
++<div class="image-container aligncenter">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/背景">
++<img alt="背景" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/背景/medium.jpg" width="300px">
++</a>
++</div>
++<p>
++<br>
++<br>
++<br>
++<br>
++<br>
++<br>
++</p>
++<div class="image-container aligncenter">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/登場">
++<img alt="登場" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/登場/medium.jpg" width="300px">
+ </a>
+ </div>
+ <p>
+@@ -414,19 +335,19 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+-<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+-</a>
+-</div>
+-</div>
+-<div style="clear: left;">
+-</div>
+-<p>
+-<br>
+-</p>
+-<div class="image-container aligncenter">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E8%B2%A1%E5%9B%A3%E3%83%AD%E3%82%B4%E5%BC%B7%E8%AA%BF">
+-<img alt="財団ロゴ強調" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E8%B2%A1%E5%9B%A3%E3%83%AD%E3%82%B4%E5%BC%B7%E8%AA%BF/medium.jpg" width="300px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手悩む">
++<img alt="助手悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手悩む/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++</a>
++</div>
++</div>
++<div style="clear: left;">
++</div>
++<p>
++<br>
++</p>
++<div class="image-container aligncenter">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/財団ロゴ強調">
++<img alt="財団ロゴ強調" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/財団ロゴ強調/medium.jpg" width="300px">
+ </a>
+ </div>
+ <p>
+@@ -445,8 +366,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94">
+-<img alt="助手笑顔" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手笑顔">
++<img alt="助手笑顔" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手笑顔/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -459,8 +380,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+-<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士キメ">
++<img alt="博士キメ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士キメ/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -473,8 +394,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+-<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手悩む">
++<img alt="助手悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手悩む/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -493,8 +414,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+-<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士悩む">
++<img alt="博士悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士悩む/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -507,8 +428,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+-<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手グッド">
++<img alt="助手グッド" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手グッド/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -521,8 +442,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+-<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士悩む">
++<img alt="博士悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士悩む/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -539,8 +460,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+-<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手悩む">
++<img alt="助手悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手悩む/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -553,8 +474,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+-<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士悩む">
++<img alt="博士悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士悩む/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -567,8 +488,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+-<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手グッド">
++<img alt="助手グッド" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手グッド/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -583,8 +504,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+-<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士悩む">
++<img alt="博士悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士悩む/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -594,8 +515,8 @@
+ <br>
+ </p>
+ <div class="scp-image-block block-center scp-clear-false" style="width:200px;">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E7%A2%BA%E4%BF%9D%E5%8F%8E%E5%AE%B9%E4%BF%9D%E8%AD%B7">
+-<img alt="確保収容保護" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E7%A2%BA%E4%BF%9D%E5%8F%8E%E5%AE%B9%E4%BF%9D%E8%AD%B7/medium.jpg">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/確保収容保護">
++<img alt="確保収容保護" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/確保収容保護/medium.jpg">
+ </a>
+ <div class="scp-image-caption">
+ <p>
+@@ -613,35 +534,35 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+-<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+-</a>
+-</div>
+-</div>
+-<div style="clear: right;">
+-</div>
+-<p>
+-<br>
+-</p>
+-<div class="image-container aligncenter">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E7%BD%A01">
+-<img alt="罠1" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E7%BD%A01/medium.jpg" width="300px">
+-</a>
+-</div>
+-<p>
+-<br>
+-</p>
+-<div class="image-container aligncenter">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E7%BD%A02">
+-<img alt="罠2" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E7%BD%A02/medium.jpg" width="300px">
+-</a>
+-</div>
+-<p>
+-<br>
+-</p>
+-<div class="image-container aligncenter">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E6%8D%95%E7%8D%B2">
+-<img alt="捕獲" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E6%8D%95%E7%8D%B2/medium.jpg" width="300px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士悩む">
++<img alt="博士悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士悩む/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++</a>
++</div>
++</div>
++<div style="clear: right;">
++</div>
++<p>
++<br>
++</p>
++<div class="image-container aligncenter">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/罠1">
++<img alt="罠1" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/罠1/medium.jpg" width="300px">
++</a>
++</div>
++<p>
++<br>
++</p>
++<div class="image-container aligncenter">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/罠2">
++<img alt="罠2" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/罠2/medium.jpg" width="300px">
++</a>
++</div>
++<p>
++<br>
++</p>
++<div class="image-container aligncenter">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/捕獲">
++<img alt="捕獲" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/捕獲/medium.jpg" width="300px">
+ </a>
+ </div>
+ <p>
+@@ -656,19 +577,19 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+-<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+-</a>
+-</div>
+-</div>
+-<div style="clear: left;">
+-</div>
+-<p>
+-<br>
+-</p>
+-<div class="image-container aligncenter">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E9%96%89%E3%81%98%E3%82%8B%E3%83%AD%E3%82%B4">
+-<img alt="閉じるロゴ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E9%96%89%E3%81%98%E3%82%8B%E3%83%AD%E3%82%B4/medium.jpg" width="200px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手グッド">
++<img alt="助手グッド" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手グッド/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++</a>
++</div>
++</div>
++<div style="clear: left;">
++</div>
++<p>
++<br>
++</p>
++<div class="image-container aligncenter">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/閉じるロゴ">
++<img alt="閉じるロゴ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/閉じるロゴ/medium.jpg" width="200px">
+ </a>
+ </div>
+ <p>
+@@ -683,8 +604,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+-<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手悩む">
++<img alt="助手悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手悩む/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -697,27 +618,27 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+-<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+-</a>
+-</div>
+-</div>
+-<div style="clear: right;">
+-</div>
+-<p>
+-<br>
+-</p>
+-<div class="image-container aligncenter">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E9%96%8B%E3%81%8F%E3%83%AD%E3%82%B4">
+-<img alt="開くロゴ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E9%96%8B%E3%81%8F%E3%83%AD%E3%82%B4/medium.jpg" width="200px">
+-</a>
+-</div>
+-<p>
+-<br>
+-</p>
+-<div class="image-container aligncenter">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E3%81%8F%E3%81%97%E3%82%83%E3%81%BF%E3%83%AD%E3%82%B4">
+-<img alt="くしゃみロゴ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E3%81%8F%E3%81%97%E3%82%83%E3%81%BF%E3%83%AD%E3%82%B4/medium.jpg" width="200px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士キメ">
++<img alt="博士キメ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士キメ/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++</a>
++</div>
++</div>
++<div style="clear: right;">
++</div>
++<p>
++<br>
++</p>
++<div class="image-container aligncenter">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/開くロゴ">
++<img alt="開くロゴ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/開くロゴ/medium.jpg" width="200px">
++</a>
++</div>
++<p>
++<br>
++</p>
++<div class="image-container aligncenter">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/くしゃみロゴ">
++<img alt="くしゃみロゴ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/くしゃみロゴ/medium.jpg" width="200px">
+ </a>
+ </div>
+ <p>
+@@ -730,8 +651,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+-<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手グッド">
++<img alt="助手グッド" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手グッド/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -744,8 +665,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+-<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士悩む">
++<img alt="博士悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士悩む/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -759,8 +680,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+-<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士キメ">
++<img alt="博士キメ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士キメ/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -773,8 +694,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+-<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手悩む">
++<img alt="助手悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手悩む/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -789,19 +710,19 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+-<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+-</a>
+-</div>
+-</div>
+-<div style="clear: right;">
+-</div>
+-<p>
+-<br>
+-</p>
+-<div class="image-container aligncenter">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E4%B8%8B%E5%87%A6%E7%90%861">
+-<img alt="下処理1" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E4%B8%8B%E5%87%A6%E7%90%861/medium.jpg" width="200px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士キメ">
++<img alt="博士キメ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士キメ/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++</a>
++</div>
++</div>
++<div style="clear: right;">
++</div>
++<p>
++<br>
++</p>
++<div class="image-container aligncenter">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/下処理1">
++<img alt="下処理1" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/下処理1/medium.jpg" width="200px">
+ </a>
+ </div>
+ <p>
+@@ -814,19 +735,19 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+-<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+-</a>
+-</div>
+-</div>
+-<div style="clear: right;">
+-</div>
+-<p>
+-<br>
+-</p>
+-<div class="image-container aligncenter">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E4%B8%8B%E5%87%A6%E7%90%862">
+-<img alt="下処理2" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E4%B8%8B%E5%87%A6%E7%90%862/medium.jpg" width="200px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士悩む">
++<img alt="博士悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士悩む/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++</a>
++</div>
++</div>
++<div style="clear: right;">
++</div>
++<p>
++<br>
++</p>
++<div class="image-container aligncenter">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/下処理2">
++<img alt="下処理2" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/下処理2/medium.jpg" width="200px">
+ </a>
+ </div>
+ <p>
+@@ -843,8 +764,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+-<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士悩む">
++<img alt="博士悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士悩む/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -860,19 +781,19 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+-<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+-</a>
+-</div>
+-</div>
+-<div style="clear: right;">
+-</div>
+-<p>
+-<br>
+-</p>
+-<div class="image-container aligncenter">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E8%AA%BF%E7%90%86%E4%B8%AD">
+-<img alt="調理中" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E8%AA%BF%E7%90%86%E4%B8%AD/medium.jpg" width="200px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士キメ">
++<img alt="博士キメ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士キメ/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++</a>
++</div>
++</div>
++<div style="clear: right;">
++</div>
++<p>
++<br>
++</p>
++<div class="image-container aligncenter">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/調理中">
++<img alt="調理中" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/調理中/medium.jpg" width="200px">
+ </a>
+ </div>
+ <p>
+@@ -885,22 +806,22 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+-<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+-</a>
+-</div>
+-</div>
+-<div style="clear: right;">
+-</div>
+-<div class="joshu">
+-<div class="joshuword">
+-<p>
+-T:"こんがり焼けて美味しそうですね！"
+-</p>
+-</div>
+-<div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94">
+-<img alt="助手笑顔" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士悩む">
++<img alt="博士悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士悩む/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++</a>
++</div>
++</div>
++<div style="clear: right;">
++</div>
++<div class="joshu">
++<div class="joshuword">
++<p>
++T:"]こんがり焼けて美味しそうですね！"
++</p>
++</div>
++<div>
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手笑顔">
++<img alt="助手笑顔" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手笑顔/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -913,8 +834,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+-<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士悩む">
++<img alt="博士悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士悩む/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -930,8 +851,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+-<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士キメ">
++<img alt="博士キメ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士キメ/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -944,19 +865,19 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+-<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+-</a>
+-</div>
+-</div>
+-<div style="clear: left;">
+-</div>
+-<p>
+-<br>
+-</p>
+-<div class="image-container aligncenter">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%88%BB%E3%81%BF%E7%9F%A2%E5%8D%B0">
+-<img alt="刻み矢印" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%88%BB%E3%81%BF%E7%9F%A2%E5%8D%B0/medium.jpg" width="200px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手悩む">
++<img alt="助手悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手悩む/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++</a>
++</div>
++</div>
++<div style="clear: left;">
++</div>
++<p>
++<br>
++</p>
++<div class="image-container aligncenter">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/刻み矢印">
++<img alt="刻み矢印" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/刻み矢印/medium.jpg" width="200px">
+ </a>
+ </div>
+ <p>
+@@ -973,8 +894,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+-<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士キメ">
++<img alt="博士キメ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士キメ/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -990,8 +911,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+-<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士キメ">
++<img alt="博士キメ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士キメ/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -1001,8 +922,8 @@
+ <br>
+ </p>
+ <div class="scp-image-block block-center scp-clear-false" style="width:400px;">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%AE%8C%E6%88%90">
+-<img alt="完成" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%AE%8C%E6%88%90/medium.jpg">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/完成">
++<img alt="完成" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/完成/medium.jpg">
+ </a>
+ <div class="scp-image-caption">
+ <p>
+@@ -1025,8 +946,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+-<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士悩む">
++<img alt="博士悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士悩む/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -1045,8 +966,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+-<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手グッド">
++<img alt="助手グッド" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手グッド/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -1064,8 +985,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+-<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士キメ">
++<img alt="博士キメ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士キメ/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -1082,8 +1003,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+-<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手グッド">
++<img alt="助手グッド" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手グッド/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -1099,8 +1020,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+-<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士キメ">
++<img alt="博士キメ" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士キメ/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -1113,8 +1034,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94">
+-<img alt="助手笑顔" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手笑顔">
++<img alt="助手笑顔" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手笑顔/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -1127,19 +1048,19 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+-<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+-</a>
+-</div>
+-</div>
+-<div style="clear: right;">
+-</div>
+-<p>
+-<br>
+-</p>
+-<div class="image-container aligncenter">
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E3%83%AA%E3%83%AA%E3%83%BC">
+-<img alt="リリー" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E3%83%AA%E3%83%AA%E3%83%BC/medium.jpg" width="400px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士悩む">
++<img alt="博士悩む" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士悩む/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++</a>
++</div>
++</div>
++<div style="clear: right;">
++</div>
++<p>
++<br>
++</p>
++<div class="image-container aligncenter">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/リリー">
++<img alt="リリー" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/リリー/medium.jpg" width="400px">
+ </a>
+ </div>
+ <p>
+@@ -1154,8 +1075,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E7%9B%AE%E7%9E%91%E3%82%8A">
+-<img alt="博士目瞑り" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E7%9B%AE%E7%9E%91%E3%82%8A/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/博士目瞑り">
++<img alt="博士目瞑り" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/博士目瞑り/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+ </a>
+ </div>
+ </div>
+@@ -1168,8 +1089,8 @@
+ </p>
+ </div>
+ <div>
+-<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94">
+-<img alt="助手笑顔" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
++<a href="https://scp-jp.wjfiles.com/local--files/necos-kitchen/助手笑顔">
++<img alt="助手笑顔" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/necos-kitchen/助手笑顔/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+ </a>
+ </div>
+ </div>

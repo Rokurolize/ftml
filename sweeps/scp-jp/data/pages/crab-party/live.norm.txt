@@ -1,0 +1,1184 @@
+<div class="creditRate creditModule {$mode}">
+<div class="rateBox">
+<div class="rate-box-with-credit-button">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+212"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<div class="rateBox heritage-wrap" style="display:none;">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+212"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<div style="clear:both;">
+</div>
+<div id="u-credit-view">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"クレジット"
+</span>
+</h2>
+</div>
+<div class="credit">
+<p>
+<strong>
+T:"タイトル:"
+</strong>
+T:"収容違反記録-833-JP-J"
+<br>
+<strong>
+T:"著者:"
+</strong>
+T:"©︎"
+<span class="printuser avatarhover">
+<a href="https://www.wikidot.com/user:info/chuukunn" onclick="WIKIDOT.page.listeners.userInfo(3013689); return false;">
+<img alt="chuukunn" class="small" src="https://www.wikidot.com/avatar.php?userid=3013689&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=3013689)">
+</a>
+<a href="https://www.wikidot.com/user:info/chuukunn" onclick="WIKIDOT.page.listeners.userInfo(3013689); return false;">
+T:"chuukunn"
+</a>
+</span>
+<br>
+<strong>
+T:"作成年:"
+</strong>
+T:"2018"
+</p>
+<div class="credit-back" style="text-align: center;">
+<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+</iframe>
+</div>
+</div>
+<div class="creditBottomRate" style="height:30px;">
+<div class="credit-license">
+<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
+</a>
+</div>
+<div style="text-align: center; top: 0px;">
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+212"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+<div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+212"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p>
+<strong>
+T:"事件記録:"
+</strong>
+T:"以下は2018/4/1に発生した、"
+<strong>
+<a href="https://scp-jp.wikidot.com/scp-833-jp-j">
+T:"SCP-833-JP-J"
+</a>
+</strong>
+T:"の収容違反記録です。"
+<br>
+T:"実験中、SCP-833-JP-Jの新たなミーム的異常性が発見され、その結果として大規模な収容違反が発生しました。本収容違反において、SCP-833-JP-Jの過剰摂食による体調不良が█名、SCP-833-JP-Jの収容違反中に確保された要注意団体構成員が██名、SCP-833-JP-Jに対し依存性が見られた職員が███名確認されました。"
+<br>
+T:"以下は収容違反における一連の記録です。"
+</p>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"実験記録███ - 日付2018/4/1"
+</strong>
+</span>
+</p>
+<blockquote>
+<p>
+<strong>
+T:"対象:"
+</strong>
+T:"D-833"
+<br>
+<br>
+<strong>
+T:"実施方法:"
+</strong>
+T:"D-833にSCP-833-JP-Jを摂食させ、経過観察をする。"
+<br>
+<br>
+<strong>
+T:"付記:"
+</strong>
+T:"実験は██博士とエージェント・██の監視下で行われる。"
+<br>
+<br>
+<strong>
+T:"<録音開始>"
+</strong>
+<br>
+<br>
+<strong>
+T:"██博士:"
+</strong>
+T:"それでは実験を開始する。D-833、目の前の食物を摂食するように。"
+<br>
+<br>
+<strong>
+T:"D-833:"
+</strong>
+T:"おいおい、こりゃカニ鍋じゃないか。いいのか、こんな豪勢な夕飯で。"
+<br>
+<br>
+<strong>
+T:"██博士:"
+</strong>
+T:"ああ。摂食の様子はこちらで記録する。"
+<br>
+<br>
+<strong>
+T:"D-833:"
+</strong>
+T:"そ、そうか。じゃあ遠慮なく。"
+<br>
+<br>
+T:"[10分経過]"
+<br>
+<br>
+<strong>
+T:"██博士:"
+</strong>
+T:"…………"
+<br>
+<br>
+<strong>
+T:"エージェント・██:"
+</strong>
+T:"博士？どうしましたか？"
+<br>
+<br>
+<strong>
+T:"██博士:"
+</strong>
+T:"ん……いや、何でもないんだ。少し集中が途切れてしまったかな。"
+</p>
+<p>
+<strong>
+T:"エージェント・██:"
+</strong>
+T:"監視役を交代しましょうか？"
+</p>
+<p>
+<strong>
+T:"██博士:"
+</strong>
+T:"あ、ああ。頼んだよ。私はちょっと風にでもあたってくる。"
+<br>
+<br>
+<strong>
+T:"エージェント・██:"
+</strong>
+T:"分かりました。後のことはお任せください。"
+<br>
+<br>
+T:"[2分経過]"
+<br>
+<br>
+<strong>
+T:"エージェント・██:"
+</strong>
+T:"ん…？"
+</p>
+<p>
+T:"[部屋に██警備員が入室する]"
+</p>
+<p>
+<strong>
+T:"エージェント・██:"
+</strong>
+T:"(マイクを通して)██警備員。実験室入室の許可は出していない。即座に退出するように。"
+</p>
+<p>
+T:"[██警備員は警告を無視し、SCP-833-JP-Jを摂食する]"
+</p>
+<p>
+<strong>
+T:"エージェント・██:"
+</strong>
+T:"な……(無線を取り出す)██博士、緊急事態です。██警備員がこちらの指示を無視して実験室内に侵入し、SCP-833-JP-Jを摂食しました。鎮静の許可を要求します。"
+</p>
+<p>
+T:"[部屋に██博士が入室する]"
+<br>
+<br>
+<strong>
+T:"エージェント・██:"
+</strong>
+T:"(マイクを通して)ああ、博士！近づいてはいけません！どのような影響があるか……"
+<br>
+<br>
+T:"[██博士がSCP-833-JP-Jを摂食する]"
+</p>
+<p>
+<strong>
+T:"エージェント・██:"
+</strong>
+T:"は、博士！……ああ、ちくしょう！(無線を通して)機動部隊い-█！聞こえるか！第8実験室でSCP-833-JP-Jの収容違反が発生した！即座に鎮圧し、SCP-833-JP-Jを再収容せよ！"
+</p>
+<p>
+<strong>
+T:"機動部隊い-█:"
+</strong>
+T:"了解。即座にチームを手配し、SCP-833-JP-J再収容を実行する。"
+<br>
+<br>
+<strong>
+T:"エージェント・██:"
+</strong>
+T:"ああ、よかった。これでどうにか………"
+<br>
+<br>
+<strong>
+T:"<録音終了>"
+</strong>
+</p>
+</blockquote>
+<blockquote>
+<p>
+<strong>
+T:"日付:"
+</strong>
+T:"2018/4/1"
+<br>
+<strong>
+T:"任務:"
+</strong>
+T:"SCP-833-JP-Jの再収容"
+</p>
+<p>
+<strong>
+T:"アルファ:"
+</strong>
+T:"これからSCP-833-JP-Jの再収容を開始する。準備はできているか？"
+</p>
+<p>
+<strong>
+T:"デルタ:"
+</strong>
+T:"大丈夫です。"
+</p>
+<p>
+<strong>
+T:"ブラボー:"
+</strong>
+T:"同じく。"
+</p>
+<p>
+<strong>
+T:"チャーリー:"
+</strong>
+T:"………"
+</p>
+<p>
+<strong>
+T:"アルファ:"
+</strong>
+T:"チャーリー？大丈夫か？"
+</p>
+<p>
+<strong>
+T:"チャーリー:"
+</strong>
+T:"隊長。今回の作戦、俺はいかない方がいい気がする。"
+</p>
+<p>
+<strong>
+T:"アルファ:"
+</strong>
+T:"なんだって？"
+</p>
+<p>
+<strong>
+T:"チャーリー:"
+</strong>
+T:"多分、俺はもうSCP-833-JP-Jの影響を受けているんだと思う。さっきからずっと腹がすいてしょうがない。今カニ鍋なんて見たらすぐ飛びついてしまいそうなほどにだ。"
+</p>
+<p>
+<strong>
+T:"デルタ:"
+</strong>
+T:"隊長。彼のためにも休ませましょう。"
+</p>
+<p>
+<strong>
+T:"アルファ:"
+</strong>
+T:"ふむ。しょうがない、チャーリーはここで休んでいてくれ。すぐに戻る。"
+</p>
+<p>
+<strong>
+T:"チャーリー:"
+</strong>
+T:"ああ、頼んだ。"
+</p>
+<p>
+<strong>
+T:"アルファ:"
+</strong>
+T:"いいか、デルタ。ドアを開けたら即座に閃光弾を投げ込め。中の人間が怯んだ隙に俺とブラボーでSCP-833-JP-Jをひっくり返す。中身さえなくなってしまえば一時的に無力化できる。"
+</p>
+<p>
+<strong>
+T:"ブラボー:"
+</strong>
+T:"了解。"
+</p>
+<p>
+<strong>
+T:"アルファ:"
+</strong>
+T:"突入するぞ！"
+</p>
+<p>
+T:"[デルタがドアを開け、中に閃光弾を投げつける。ブラボーが先に駆け込み、アルファは後を追って入室する。ブラボーは鍋の端を掴んだまま止まっている。]"
+</p>
+<p>
+<strong>
+T:"ブラボー:"
+</strong>
+T:"……………"
+</p>
+<p>
+<strong>
+T:"アルファ:"
+</strong>
+T:"おい、ブラボー、どうした！"
+</p>
+<p>
+<strong>
+T:"ブラボー:"
+</strong>
+T:"……おいしそうだ。"
+</p>
+<p>
+<strong>
+T:"アルファ:"
+</strong>
+T:"……くそっ、影響を受けてしまったか…しっかりしろ、ブラボー！"
+</p>
+<p>
+<strong>
+T:"ブラボー:"
+</strong>
+T:"分かってる。分かってはいるんだ。だが、こいつは…こいつは…とってもうまそうで………"
+</p>
+<p>
+<strong>
+T:"アルファ:"
+</strong>
+T:"……むやみにひっくり返そうとしたら俺まで影響を受けるかも知れん。しょうがない、デルタ、退却の準備を…"
+</p>
+<p>
+<strong>
+T:"デルタ:"
+</strong>
+T:"お、おい、アルファ……チャーリーが……"
+</p>
+<p>
+<strong>
+T:"アルファ:"
+</strong>
+T:"な、なんだって？おい、チャー…"
+</p>
+<p>
+<strong>
+T:"チャーリー:"
+</strong>
+T:"カニだ…カニの匂いがする……"
+</p>
+<p>
+<strong>
+T:"アルファ:"
+</strong>
+T:"ああ、くそっ。チャーリーまで…"
+</p>
+<p>
+<strong>
+T:"デルタ:"
+</strong>
+T:"た…退却準備、完了しました……"
+</p>
+<p>
+<strong>
+T:"アルファ:"
+</strong>
+T:"分かった。退却だ…"
+</p>
+<p>
+<strong>
+T:"終了報告書:"
+</strong>
+T:"SCP-833-JP-Jの回収に失敗した。SCP-833-JP-Jには強い精神作用、もしくは認識災害オブジェクトであるとかにがえられる。第カニ次作戦として、目かにくしした状態でカニの狙撃を[この後は「カニ」という言葉で埋められている]"
+</p>
+</blockquote>
+<p>
+T:"その後、機動部隊い-█メンバー全員がSCP-833-JP-Jの精神影響を受けたことが判明しました。"
+<br>
+T:"機動部隊からの連絡が途絶えたことにより、隣接サイトであるサイト-81██に連絡が入りSCP-833-JP-Jの収容の試みがなされましたが、SCP-833-JP-Jはすでにサイト全域に対し影響を及ぼしており、サイト内への侵入による収容が不可能となりました。SCP-833-JP-Jの影響範囲は次第に拡大し、サイト-81██従業員は避難を余儀なくされました。影響範囲は最大で周囲██kmに及んだと見られています。最終的に、SCP-833-JP-Jが完全に消費されることにより事態は鎮圧されました。"
+<br>
+T:"以下は収容違反中の記録です。"
+</p>
+<blockquote>
+<p>
+<em>
+T:"うーん、おいしい…"
+</em>
+T:"- ██博士"
+</p>
+<p>
+<em>
+T:"…味付けが素晴らしい…"
+</em>
+T:"- D-833"
+</p>
+<p>
+<em>
+T:"鍋だけじゃなくてボイルもありますよ…"
+</em>
+T:"- ██博士"
+</p>
+<p>
+<em>
+T:"最近カニなんて食べたことがないので、とてもおいしいです……"
+</em>
+T:"- エージェント・██"
+</p>
+<p>
+<em>
+T:"こういうところにいると、なかなか食べる機会もないからな……"
+</em>
+T:"- ██博士"
+</p>
+<p>
+<em>
+T:"いやー、こんなにたくさん食べられるなんて夢みたいね………"
+</em>
+T:"- 前原博士"
+</p>
+<p>
+<em>
+T:"ええ、今日は食べられるだけ食べちゃいましょう。"
+</em>
+T:"- 宇喜田博士"
+</p>
+<p>
+<em>
+T:"………ひょいっとな。"
+</em>
+T:"- 「博士」"
+</p>
+<p>
+<em>
+T:"ちょっと博士、私の分取らないでくださいよ…………"
+</em>
+T:"- 大和博士"
+</p>
+<p>
+<em>
+T:"お代わりならたくさんあるから、揉めないでくださいねー"
+</em>
+T:"- エージェント・育良"
+</p>
+<p>
+<em>
+T:"そうですね。追加お願いしまーす………………"
+</em>
+T:"- 大和博士"
+</p>
+<p>
+<em>
+T:"カニだけじゃなく、他の具材も高級品じゃないか………"
+</em>
+T:"- 宇喜田博士"
+</p>
+<p>
+<em>
+T:"確保、収容、保護がモットーですからね。新鮮さも、重要です"
+</em>
+T:"- エージェント・育良"
+</p>
+<p>
+<em>
+T:"素晴らしい。まさか、これほどとは……………"
+</em>
+T:"- [日本生類創研職員]"
+</p>
+<p>
+<em>
+T:"……財団が……収容するだけ……ありますね……………"
+</em>
+T:"- ██博士"
+</p>
+<p>
+<em>
+T:"……あれ、ハサミはどこに……"
+</em>
+T:"- D-833"
+</p>
+<p>
+<em>
+T:"……ハサミ、ありますよ。どうぞ……"
+</em>
+T:"- エージェント・██"
+</p>
+<p>
+<em>
+T:"……ありがとうございます……….[甲殻を切る音]うーん、硬い…"
+</em>
+T:"- D-833"
+</p>
+<p>
+<em>
+T:"ああ、ここはこうすれば……[甲殻を切る音]"
+</em>
+T:"- 鬼食料理長"
+</p>
+<p>
+<em>
+T:"わあ、いとも簡単に……"
+</em>
+T:"- エージェント・██"
+</p>
+<p>
+<em>
+T:"まあ「慣れ」だな。いずれできるようになるさ……"
+</em>
+T:"- 鬼食料理長"
+</p>
+<p>
+<em>
+T:"………うまい。よくこれほどの上物を……"
+</em>
+T:"- [日本生類創研職員]"
+</p>
+<p>
+<em>
+T:"そちらでも…………作れないのかい？……カニを。"
+</em>
+T:"- [東弊重工職員]"
+</p>
+<p>
+<em>
+T:"うーん……次の研究、これにしようかな…………"
+</em>
+T:"- [日本生類創研職員]"
+</p>
+<p>
+<em>
+T:"……ちょっとちょっと………収容しちゃいますよ？………"
+</em>
+T:"- ██博士"
+</p>
+<p>
+<em>
+T:"……██博士…独り占めは、良くないな……"
+</em>
+T:"- 「博士」"
+</p>
+<p>
+<em>
+T:"そうだぞ……うーん、こっちでも作ってみるかな………"
+</em>
+T:"- [東弊重工職員]"
+</p>
+<p>
+<em>
+T:"……メカのカニかい？……まずそうだ"
+</em>
+T:"- 「博士」"
+</p>
+<p>
+<em>
+T:"うーん……じゃあ、ちょうどいい調味料の研究を…"
+</em>
+T:"- [東弊重工職員]"
+</p>
+<p>
+<em>
+T:"ポン酢！"
+</em>
+T:"- ██調査員"
+<br>
+<em>
+T:"醤油！"
+</em>
+T:"- ██警備員"
+</p>
+<p>
+<em>
+T:"……ちょうどいい酢醤油調整機器だな………"
+</em>
+T:"- [東弊重工職員]"
+</p>
+<p>
+<em>
+T:"……いいねえ…"
+</em>
+T:"- [日本生類創研職員]"
+</p>
+<p>
+<em>
+T:"あっ……"
+</em>
+T:"- アルファ"
+</p>
+<p>
+<em>
+T:"……ははっ、隊長、不器用だなあ……あっ……"
+</em>
+T:"- デルタ"
+</p>
+<p>
+<em>
+T:"ちょっとちょっと。ハサミ、ありますから……"
+</em>
+T:"- チャーリー"
+</p>
+<p>
+<em>
+T:"…………カニ、すごくおいしいな……………"
+</em>
+T:"- ブラボー"
+</p>
+<p>
+<em>
+T:"だろう？………………ああ、酢醤油もいいぞ"
+</em>
+T:"- アルファ"
+</p>
+<p>
+<em>
+T:"割合はお好みですね……個人的には5:5です……"
+</em>
+T:"- デルタ"
+</p>
+<p>
+<em>
+T:"…あっ、酢が多すぎたかな……………………すっぺ……"
+</em>
+T:"- ブラボー"
+</p>
+<p>
+<em>
+T:"ちょっと、博士。カニだけじゃなくて他のものも…………………"
+</em>
+T:"- [東弊重工職員]"
+</p>
+<p>
+<em>
+T:"うーん……………[蟹の足を割る音]………………善処する……"
+</em>
+T:"- 「博士」"
+</p>
+<p>
+<em>
+T:"…………善処ねぇ……………"
+</em>
+T:"- エージェント・██"
+</p>
+<p>
+<em>
+T:"……善処、だよ…………………………もぐもぐ……"
+</em>
+T:"- 「博士」"
+</p>
+<p>
+<em>
+T:"あっ、またカニを…そろそろ無くなりそうだな。追加を持ってくる。"
+</em>
+T:"- 鬼食料理長"
+</p>
+<p>
+<em>
+T:"……あぁ、じゃあついでにお茶も……わっ"
+</em>
+T:"- 「博士」"
+</p>
+<p>
+<em>
+T:"ついでにあんたも手伝いなさい。"
+</em>
+T:"- 鬼食料理長"
+</p>
+<p>
+<em>
+T:"はーい…"
+</em>
+T:"- 「博士」"
+</p>
+<p>
+<em>
+T:"……あそこの人たちは…………"
+</em>
+T:"- ██研究員"
+</p>
+<p>
+<em>
+T:"あっちは………Dクラス職員の、集まりだな……"
+</em>
+T:"- エージェント・██"
+</p>
+<p>
+<em>
+T:"……食べている間は…………静かですね……"
+</em>
+T:"- ██博士"
+</p>
+<p>
+<em>
+T:"……うまい…"
+</em>
+T:"- D-8331"
+</p>
+<p>
+<em>
+T:"………財団って、いいところだな……"
+</em>
+T:"- D-8332"
+</p>
+<p>
+<em>
+T:"ああ…おっ、うまく剥けた…………"
+</em>
+T:"- D-8333"
+</p>
+<p>
+<em>
+T:"……………………………………"
+</em>
+T:"- D-8334"
+</p>
+<p>
+<em>
+T:"D-8334、いつにもまして静かだな………"
+</em>
+T:"- D-8331"
+</p>
+<p>
+<em>
+T:"…………………………………(うまい)"
+</em>
+T:"- D-8334"
+</p>
+<p>
+<em>
+T:"あれ…いつの間に、人がたくさん……"
+</em>
+T:"- ██博士"
+</p>
+<p>
+<em>
+T:"みんな…カニが好きなんですね……"
+</em>
+T:"- エージェント・██"
+</p>
+<p>
+<em>
+T:"ああ………"
+</em>
+T:"- D-833"
+</p>
+<p>
+<em>
+T:"これ…お持ち帰り……できますかね……"
+</em>
+T:"- [蒐集院構成員]"
+</p>
+<p>
+<em>
+T:"うーん…………できればここで………まあ、少しなら……"
+</em>
+T:"- エージェント・██"
+</p>
+<p>
+<em>
+T:"ありがたい……"
+</em>
+T:"- [蒐集院構成員]"
+</p>
+<p>
+<em>
+T:"ポン酢よりは…………酢醤油かなあ……あっ"
+</em>
+T:"- D-8332"
+</p>
+<p>
+<em>
+T:"……醤油、なくなりましたね。買いに行ってきます。"
+</em>
+T:"- D-833"
+</p>
+<p>
+<em>
+T:"許可する………[甲殻を切る音]…何もつけずにそのままというのもまた……"
+</em>
+T:"- ██博士"
+</p>
+<p>
+<em>
+T:"…………あれ、虎屋博士…が、2人？"
+</em>
+T:"- エージェント・育良"
+</p>
+<p>
+<em>
+T:"こっちは、普通の唐揚げです。淡白なものだけだと、揚げ物が恋しくなるので……"
+</em>
+T:"- 虎屋博士"
+</p>
+<p>
+<em>
+T:"(わかる……)"
+</em>
+T:"- [東弊重工職員]"
+</p>
+<p>
+<em>
+T:"あっ、1ついただきますね。…………あれ？"
+</em>
+T:"- 御先管理員"
+</p>
+<p>
+<em>
+T:"あの……そっちは私です…"
+</em>
+T:"- 虎屋博士"
+</p>
+<p>
+<em>
+T:"あれ？ねこがきましたね"
+</em>
+T:"- エージェント・育良"
+</p>
+<p>
+<em>
+T:"ねこです"
+</em>
+T:"- SCP-040-JP"
+</p>
+<p>
+<em>
+T:"カニ、食べますか？"
+</em>
+T:"- エージェント・育良"
+</p>
+<p>
+<em>
+T:"たべますよろしくおねがいします"
+</em>
+T:"- SCP-040-JP"
+</p>
+<p>
+<em>
+T:"はい、どうぞ。"
+</em>
+T:"- エージェント・育良"
+</p>
+<p>
+<em>
+T:"ねこでした"
+</em>
+T:"- SCP-040-JP"
+</p>
+<p>
+<em>
+T:"…おや、何やら楽しそうなことをしていますね。"
+</em>
+T:"- ██警備員"
+</p>
+<p>
+<em>
+T:"本当だな。…よし、業務も終わったし、参加するかな"
+</em>
+T:"- エージェント・██"
+</p>
+<p>
+<em>
+T:"俺も、参加していいかい？"
+</em>
+T:"- D-8335"
+</p>
+<p>
+<em>
+T:"ええ、もちろんよ。……さて、人も集まってきたし、いよいよ本番といったところかしら？"
+</em>
+T:"- 前原博士"
+</p>
+<p>
+<em>
+T:"みなさーん、調味料持ってきましたよ。酢も醤油もありますからね。"
+</em>
+T:"- D-833"
+</p>
+<p>
+<em>
+T:"追加のカニも持ってきたぞ。"
+</em>
+T:"- 鬼食料理長"
+</p>
+<p>
+<em>
+T:"まだまだたくさんあるからなー…"
+</em>
+T:"- 「博士」"
+</p>
+<p>
+<em>
+T:"あっ、博士。それ、ポテトですか？"
+</em>
+T:"- アルファ"
+</p>
+<p>
+<em>
+T:"ポテト…うまそうだ…"
+</em>
+T:"- デルタ"
+</p>
+<p>
+<em>
+T:"ちょっとちょっと、これは私が買ってきたんだから……あっ"
+</em>
+T:"- 「博士」"
+</p>
+<p>
+<em>
+T:"蒐集。"
+</em>
+T:"- [蒐集院構成員]"
+</p>
+<p>
+<em>
+T:"いただき。"
+</em>
+T:"- ブライト博士"
+</p>
+<p>
+<em>
+T:"3本ゲッチュ。"
+</em>
+T:"- D-833"
+</p>
+<p>
+<em>
+T:"1つかみ分もらいますね。"
+</em>
+T:"- チャーリー"
+</p>
+<p>
+<em>
+T:"もう！君たちがポテトに夢中になっている間に、カニ食べちゃうからね！"
+</em>
+T:"- 「博士」"
+</p>
+<p>
+<em>
+T:"はははっ…いやー、やっぱりカニは美味しいなあ。"
+</em>
+T:"- ██博士"
+</p>
+<p>
+<em>
+T:"そうですね。"
+</em>
+T:"- エージェント・██"
+</p>
+</blockquote>
+<p>
+<br>
+</p>
+<hr>
+<p>
+<br>
+<br>
+T:"「はぁ…こんな所か。」"
+<br>
+T:"やっとの思いで書き終えた始末書を見て、O5-3はため息をつく。"
+<br>
+T:"それもそのはずだ。財団職員だけでなく、GoIや機動部隊、Dクラス職員までがみな一同にSCP-833-JP-Jの影響を受け、カニを食べる姿はさながら宴会のようであった。SCP-833-JP-Jが全て消費されたから良かったものの、もしこれが無尽蔵だったらと思うとぞっとする。あれからずっとSCP-833-JP-Jの研究はしていない。このような事件があったからには、実験許可を下ろそうにも下ろせないのだ。"
+</p>
+<p>
+T:"『O5-3。会議の時間です。』"
+</p>
+<p>
+T:"「ああ、そうか。今すぐ行く。」"
+</p>
+<p>
+T:"O5-8に呼ばれ、会議室に赴く。議題は、おそらくこの件についてだろう。会議室の中は、いつも以上に物々しい感じがした。"
+<br>
+T:"一瞬だけ、机の中央に置かれているものに違和感を感じた。"
+<br>
+T:"しかし、その違和感はすぐに消え失せてしまい、その”異常”に気づくことはできなかった。"
+</p>
+<p>
+T:"『それでは、始めましょうか。』"
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+</p>
+<div class="image-container aligncenter">
+<img alt="crab.jpg" class="image" src="https://scp-jp.wdfiles.com/local--files/crab-party/crab.jpg" style="width: 80%; border: solid 1px #000000; padding: 1px">
+</div>
+<div style="text-align: center;">
+<p>
+<br>
+<strong>
+<span style="font-size:150%;">
+T:"「いただきます」"
+</span>
+</strong>
+</p>
+</div>

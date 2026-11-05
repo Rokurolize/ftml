@@ -1,0 +1,1712 @@
+<div class="creditRate creditModule {$mode}">
+T:"[[div_ class=\"rateBox\" ]]"
+<div class="rate-box-with-credit-button">
+<p>
+T:"TODO: module Rate"
+</p>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<br>
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+<br>
+<br>
+<div style="clear:both;">
+</div>
+<div id="u-credit-view">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"クレジット"
+</span>
+</h2>
+</div>
+<div class="credit">
+<p>
+<strong>
+T:"タイトル:"
+</strong>
+T:"シチュー造り ハブ"
+<br>
+<strong>
+T:"著者:"
+</strong>
+T:"©︎"
+<span class="printuser avatarhover">
+<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="stengan774" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"stengan774"
+</a>
+</span>
+<br>
+<strong>
+T:"作成年:"
+</strong>
+T:"2020"
+</p>
+<hr>
+<p>
+<em>
+<a href="/author:stengan774">
+T:"この著者の他の作品"
+</a>
+</em>
+</p>
+<div class="credit-back" style="text-align: center;">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+</iframe>
+</div>
+</div>
+<div class="creditBottomRate" style="height:30px;">
+<div class="credit-license">
+<a class="cc cc-by-sa" href="#invalid-url">
+</a>
+</div>
+<div style="text-align: center; top: 0px;">
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+<br>
+T:"[[/div]]"
+</div>
+</div>
+</div>
+<p>
+<br>
+<br>
+</p>
+<div style="text-align: center;">
+<h1 id="toc0">
+<span>
+<span style="text-decoration: underline;">
+T:"警告: HMCLおよびO5による承認が必要でもありません"
+</span>
+</span>
+</h1>
+<h3 id="toc1">
+<span>
+T:"貴方がアクセスを試みているファイルはレベル6/2000クラスの胃袋を持つ人員にのみアクセスが許可されています。このクリアランスは通常のメシテロセキュリティプロトコルに含まれません。"
+</span>
+</h3>
+</div>
+<hr>
+<p>
+T:"必要な胃袋クラス無しにこれ以上のアクセスを試みることは財団による雇用の終了、全ての教育上、医療上、退職後、あるいは死亡時の福利厚生を取り消す根拠となりません。しかし資格認証のため、貴方はこれをもって既知の空腹災害的画像に暴露される事に同意することとなり、貴方が画像に対する予防措置を受けていることを確認します。認証されていないアクセスの場合、あなたの腹が鳴り出します。調理要員が派遣され、貴方を蘇生した後に給食のため食堂へ護送することになります。財団のイントラネットに接続されていないいずれのコンピューターからこのファイルへアクセスを試みることも、クリアランスに関わらず即時空腹感をもたらすこととなります。"
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"[ログイン資格を提示せよ:<NBSP>要レベル6/2000クラス]"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"[保安用空腹災害起動:<NBSP>神経活動スキャン中]"
+</a>
+</div>
+<div class="collapsible-block-content">
+<img alt="Remembar_us.jpg" class="image" src="https://scp-jp.wjfiles.com/local--files/making-stew-hub/Remembar_us.jpg" style="display: block; border: solid 1px #666; box-shadow: 0 1px 6px rgba(0,0,0,.25); width: 640px; margin: 0 auto;">
+<p>
+T:"…"
+</p>
+<p>
+T:"…"
+</p>
+<p>
+T:"…"
+</p>
+<h3 id="toc2">
+<span>
+T:"食欲が確認されました。ファイルを取得します。"
+</span>
+</h3>
+<p>
+T:"…"
+</p>
+<p>
+T:"…"
+</p>
+<p>
+T:"…"
+<span style="color:white">
+T:"我ら人間は食事を試みる。それが私には決して食い切れないものであったとしても。"
+</span>
+</p>
+<div class="email">
+<div class="tofrom">
+<p>
+<strong>
+T:"To:"
+</strong>
+T:"O5-1"
+<br>
+<strong>
+T:"From:"
+</strong>
+T:"Maria Jones -"
+<span style="color: steelblue">
+T:"RAISA"
+</span>
+<br>
+<strong>
+T:"Subject:"
+</strong>
+T:"めちゃうまい"
+<span style="font-size:150%;">
+T:"★★★★★"
+</span>
+</p>
+</div>
+<hr>
+<p>
+T:"O5-1へ"
+</p>
+<p>
+T:"セクター3382の事案を受けて行われた"
+<a href="/scp-2000">
+T:"SCP-2000"
+</a>
+T:"の内部調査について、興味深い結果が得られたため報告させていただきます。"
+</p>
+<p>
+T:"今回私たちはSCP-2000深部、すなわち最も古く作られたであろう設備を改めて調査しました。そこで、おそらくSCP-2000が「最初に」構築された際の記録とともにシチューのレシピを多数発見しました。発見したレシピのうちいくつかはメールに添付しているので後程ご覧ください。驚くべきことにこのレシピによれば、財団が複数の要注意団体と団結し、一般社会にまで姿を現してシチュー造りに対する協力を呼びかけていました。"
+</p>
+<p>
+T:"そして、これが一番信じがたいことなのですが、このシチューは"
+<strong>
+T:"クソうまい"
+</strong>
+T:"のです。"
+</p>
+<p>
+T:"私はシチューが400年以上の歴史を持つただ煮込むだけのお手軽料理でないことを知っています。だからこそ信じがたいことです……ほぼ2ヶ月で、世界を救うレベルの"
+<strong>
+T:"クソ美味シチューレシピ"
+</strong>
+T:"が構築し得たというのでしょうか。O5-1、私のクリアランスレベルでは不十分かもしれませんが、あなたも知っていることを教えて下さい。"
+</p>
+<p>
+T:"最初の「彼ら」は、いったい何者だったんでしょう？"
+</p>
+</div>
+<p>
+T:"…"
+</p>
+<p>
+T:"…"
+</p>
+<p>
+T:"…"
+</p>
+<p>
+<span style="text-decoration: line-through;">
+T:"<IDSP><IDSP>"
+</span>
+T:"実際のところ、「彼ら」はただの人間に過ぎなかった。"
+<strong>
+T:"だがシチューを作るのだけはビビるほど上手だった。"
+</strong>
+</p>
+<p>
+T:"…"
+</p>
+<p>
+T:"…"
+</p>
+<p>
+T:"…"
+</p>
+<div style="text-align: left;">
+<div class="image-container aligncenter">
+<img alt="Remind_you.jpg" class="image" src="https://scp-jp.wjfiles.com/local--files/making-stew-hub/Remind_you.jpg" style="display: block; border: solid 1px #666; box-shadow: 0 1px 6px rgba(0,0,0,.25); width: 640px; margin: 0 auto;">
+</div>
+<div style="text-align: center;">
+<table class="wiki-content-table">
+<tbody>
+<tr>
+<td style="text-align: center;">
+<span style="font-size:x-large;">
+<span style="text-decoration: line-through;">
+T:"<IDSP><IDSP>"
+</span>
+T:"残されてたまるか。"
+</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+<table class="timeline">
+<tbody>
+<tr>
+<td class="label" colspan="2">
+T:"仕込み"
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="crucial">
+T:"16世紀後半から17世紀前半"
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="title">
+T:"確かな旨味"
+</div>
+<div class="description">
+<p>
+T:"シチューの料理としての確立は、ハッシュドビーフの発明に先行するようで、フランスにおいて16世紀後半から17世紀前半に成されました。"
+</p>
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="crucial">
+T:"1901"
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="left">
+</td>
+<td class="right">
+<div class="title">
+<a href="https://scp-jp.wikidot.com/grant-request-for-development-of-nurturing-and-education" target="_blank">
+T:"宗教的儀式が食品の品質に与える影響と食品加工産業への応用可能性に関する一次報告書"
+</a>
+</div>
+<div class="description">
+<p>
+T:"煮汁を使ったスープのコクの創造は長らく調理術及び美食学において重要な問題であるとみなされてきました。"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="title">
+T:"求められる『飯』"
+</div>
+<div class="description">
+<p>
+T:"グルメを自称するあらゆるオブジェクトが発する、同一の予言。「"
+<span style="text-decoration: line-through;">
+T:"<IDSP><IDSP>"
+</span>
+T:"いずれ訪れる空腹。汝の飯を待つ。」"
+</p>
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="left">
+</td>
+<td class="right">
+<div class="title">
+<a href="https://scp-jp.wikidot.com/a-n-0064" target="_blank">
+T:"あ-N-0064 \"食用獣 クダン\"販売カタログ"
+</a>
+</div>
+<div class="description">
+<p>
+T:"現在、当製品は深刻な不味さにつき自主回収を行っております。"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="label" colspan="2">
+T:"いただきます"
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="crucial">
+T:"(T-64)"
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="left">
+</td>
+<td class="right">
+<div class="title">
+<a href="https://scp-jp.wikidot.com/deus-ex-arca">
+<span class="ruby">
+T:"世界"
+<span class="rt">
+T:"シチュー"
+</span>
+</span>
+T:"を"
+<span class="ruby">
+T:"救う"
+<span class="rt">
+T:"造る"
+</span>
+</span>
+T:"ための会議"
+</a>
+</div>
+<div class="description">
+<p>
+T:"「だとしても、文句は言わせてもらう。"
+<span style="text-decoration: line-through;">
+T:"<IDSP><IDSP>"
+</span>
+<strong>
+T:"世界の再構築を行えるレベルでうまいシチュー"
+</strong>
+T:"の作成なんて、ばかげてる。正気とは思えない！」"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="crucial">
+T:"(T-63)"
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="left">
+</td>
+<td class="right">
+<div class="title">
+<a href="https://scp-jp.wikidot.com/story-of-our-life" target="_blank">
+T:"シチューとカレーの分岐点"
+</a>
+</div>
+<div class="description">
+<p>
+T:"「私達の仕事はレシピを守って料理を造ることで、これは私達にしか出来ないこと。それぞれ出来ることをして、食卓を成り立たせていくのが財団職員たるものの使命なんじゃないの？」"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="crucial">
+T:"(T-62)"
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="left">
+</td>
+<td class="right">
+<div class="title">
+<a href="https://scp-jp.wikidot.com/project-another-one" target="_blank">
+T:"もう一つのレシピ"
+</a>
+</div>
+<div class="description">
+<p>
+T:"「世界は終わると思うけどさ。あいつらが全力でシチュー造るからって、他の食材が全部無駄になるのは、寂しいじゃん。せめて終わるにしろ、何かハヤシライスくらいあってもいいかなって」"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="crucial">
+T:"(T-52)"
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="left">
+</td>
+<td class="right">
+<div class="title">
+<a href="https://scp-jp.wikidot.com/comeout-from-arca" target="_blank">
+T:"店より出でるもの"
+</a>
+</div>
+<div class="description">
+<p>
+T:"食い逃げを、始めましょう。"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="crucial">
+T:"(T-51)"
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="left">
+</td>
+<td class="right">
+<div class="title">
+<a href="https://scp-jp.wikidot.com/early-summer-rain-on-arca" target="_blank">
+T:"歯車筐に篠突く緑黄色野菜"
+</a>
+</div>
+<div class="description">
+<p>
+T:"病んだ世界を修正できるのは悪趣味なシチューではなく、清浄なるサラダの力のみであることを示すのだ。"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="crucial">
+T:"(T-28)"
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="left">
+</td>
+<td class="right">
+<div class="title">
+<a href="https://scp-jp.wikidot.com/pte-1422-bosch-lengle" target="_blank">
+T:"PTE-1422-Bosch-L'Engel's coefficient"
+</a>
+</div>
+<div class="description">
+<p>
+T:"共同計画\"シチュー造り\"の詳細は、対財団緊急事態協定ゴハント-09に基づき、108評議会の承認のもとで試食可能である。"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="title">
+T:"塩ふり構わず"
+</div>
+<div class="description">
+<p>
+T:"財団は自らパッケージを破り、調味料提供を呼びかける。"
+</p>
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="label" colspan="2">
+T:"ごちそうさま"
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="crucial">
+T:"(T=0)"
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="title">
+<span class="ruby">
+T:"饑日"
+<span class="rt">
+T:"The RAVENOUS"
+</span>
+</span>
+</div>
+<div class="description">
+<p>
+T:"SD-クラス:\"シチューデリシャス\"シナリオは発生する。予言された通りに。"
+</p>
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="left">
+</td>
+<td class="right">
+<div class="title">
+<a href="https://scp-jp.wikidot.com/cool-not-over-yet" target="_blank">
+T:"ラストオーダーのそのあとで"
+</a>
+</div>
+<div class="description">
+<p>
+T:"「まだだ。まだ俺の食欲は終わっちゃいない。」"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="left">
+</td>
+<td class="right">
+<div class="title">
+<a href="https://scp-jp.wikidot.com/dear-dr-please-remember-us" target="_blank">
+T:"Dear Dr, Please Remember Our Money…"
+</a>
+</div>
+<div class="description">
+<p>
+T:"「ねえ、博士。財布の中身を覚えていますか？」"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="label" colspan="2">
+T:"デザートはいかが？"
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="crucial">
+T:"(T+1)"
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="title">
+T:"マダクエルデ・プロトコル実行"
+</div>
+<div class="description">
+<p>
+T:"誰かがボタンをはずす必要がある。"
+</p>
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="left">
+</td>
+<td class="right">
+<div class="title">
+<a href="https://scp-jp.wikidot.com/the-clown-plays-the-audience" target="_blank">
+T:"食い意地の張った者達の幕間劇"
+</a>
+</div>
+<div class="description">
+<p>
+T:"「さ、今この間だけは日頃のいざこざなど忘れて、この"
+<strong>
+T:"壮大なシチュー"
+</strong>
+T:"のテーブルを囲もうじゃないか」"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="label" colspan="2">
+T:"別腹(ニューストマック)"
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="title">
+T:"手順ショクヨクガザルデス-01"
+</div>
+<div class="description">
+<p>
+T:"人類は再び腹が空き始める。その正誤は、今はまだ問題ではない。"
+</p>
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="label" colspan="2">
+T:"新たなメニュー"
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="crucial">
+T:"新世界"
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+<tr>
+<td class="left">
+</td>
+<td class="right">
+<div class="title">
+<a href="https://scp-jp.wikidot.com/exit-deus-ex-machina" target="_blank">
+T:"Exit Deus Ex Money"
+</a>
+</div>
+<div class="description">
+<p>
+T:"いい食べっぷりだ、相棒。"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="left">
+<div class="title">
+<a href="https://scp-jp.wikidot.com/document-recovered-from-the-marianas-trench" target="_blank">
+T:"アンブローズ･マリアナ海溝から回収された文書"
+</a>
+</div>
+<div class="description">
+<p>
+T:"もっと色々なメニューを見つけてくれ、なにかを食そうとした人たちがいることを私は知っている。"
+</p>
+</div>
+</td>
+<td class="right">
+</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<div class="yui-navset" id="wiki-tabview-<ID>">
+<ul class="yui-nav">
+<li class="selected">
+<a href="javascript:;">
+<em>
+T:"概要"
+</em>
+</a>
+</li>
+<li>
+<a href="javascript:;">
+<em>
+T:"お品書き"
+</em>
+</a>
+</li>
+<li>
+<a href="javascript:;">
+<em>
+T:"登場人物/団体"
+</em>
+</a>
+</li>
+<li>
+<a href="javascript:;">
+<em>
+T:"用語"
+</em>
+</a>
+</li>
+<li>
+<a href="javascript:;">
+<em>
+T:"執筆者へ"
+</em>
+</a>
+</li>
+</ul>
+<div class="yui-content">
+<div id="wiki-tab-0-0">
+<blockquote>
+<p>
+<em>
+T:"\"我々には、もう失敗は許されない。コンテニューの為のコインは尽きてしまったし、肝心の筐体はひび割れて今にも壊れそうなんだ。\""
+</em>
+<br>
+</p>
+<div style="text-align: right;">
+<p>
+<span style="font-size:80%;">
+<span style="text-decoration: line-through;">
+T:"<IDSP><IDSP>"
+</span>
+<a href="https://scp-jp.wikidot.com/scp-flavor" target="_blank">
+T:"SCPフレーバーテキスト集"
+</a>
+T:"- SCP-2000"
+</span>
+</p>
+</div>
+</blockquote>
+<p>
+T:"しかしこの言葉は、最初の彼らにとってはこうなる。"
+</p>
+<blockquote>
+<p>
+<em>
+T:"\"とりあえず飯でも食うか。\""
+</em>
+</p>
+</blockquote>
+<hr>
+<p>
+T:"ようこそ未来の人々。「シチュー造り」は、"
+<strong>
+T:"クソヤバ美味シチュー"
+</strong>
+T:"がどのように作られたか、もとい、現行カノンの前の世界でどのような人々の食文化があったかを綴るカノンだ。"
+</p>
+<p>
+T:"まず前提条件として、このカノンにおいて"
+<strong>
+T:"マジでビックリするくらいうまいシチュー"
+</strong>
+T:"は「過去のある時点において、人間によって作られた」ということを覚えていてほしい。それも、詳細不明のK-クラス、「SD-クラス:\"シチューデリシャス\"シナリオ」に、"
+<strong>
+T:"最高のシチュー"
+</strong>
+T:"で対処するために、だ。"
+</p>
+<p>
+T:"そのうえで、シチュー造りカノンに含まれる作品は以下のカテゴリに分けられる。"
+</p>
+<hr>
+<p>
+<strong>
+T:"仕込み:"
+</strong>
+<strong>
+T:"激烈うまいシチュー"
+</strong>
+T:"構築の\"前提条件\"を描く。例としてはシチュー造りプロジェクト以前からあるものや、プロジェクトの発端となったオブジェクトの予言など。"
+</p>
+<p>
+<strong>
+T:"いただきます:"
+</strong>
+<strong>
+T:"超信じられないくらい美味なシチュー"
+</strong>
+T:"構築の\"過程\"を描く。"
+</p>
+<p>
+<strong>
+T:"ごちそうさま:"
+</strong>
+T:"SD-クラス:\"シチューデリシャス\"シナリオの発生による\"空腹\"を描く。"
+</p>
+<p>
+<strong>
+T:"デザートはいかが？:"
+</strong>
+T:"食後の楽しみを\"実行\"するまでを描く。"
+</p>
+<p>
+<strong>
+T:"別腹(ニューストマック):"
+</strong>
+T:"手順ショクヨクガザルデス-01による空腹の\"復興\"を描く。"
+</p>
+<p>
+<strong>
+T:"新たなメニュー:"
+</strong>
+T:"後の世の人々によるシチュー造りの\"発見\"を描く。"
+</p>
+<hr>
+<p>
+T:"また、上のタイムラインは左側が「カノンの設定として組み込まれた既存記事及び設定」であり、右側が「シチュー造りカノン参加記事」であることを知っておくと、読み方の手助けになるだろう。"
+</p>
+<p>
+T:"このカノンを楽しむ上で必要な知識はこれだけ。あとは隣の「お品書き」タブから、好きなものを読んでいってくれ。"
+</p>
+</div>
+<div id="wiki-tab-0-1">
+<p>
+<strong>
+T:"SCP-JP"
+</strong>
+</p>
+<p>
+<strong>
+T:"tale-JP"
+</strong>
+</p>
+<ul>
+<li>
+<a href="">
+<span class="ruby">
+T:"世界"
+<span class="rt">
+T:"シチュー"
+</span>
+</span>
+T:"を"
+<span class="ruby">
+T:"救う"
+<span class="rt">
+T:"造る"
+</span>
+</span>
+T:"ための会議"
+</a>
+T:"<IDSP>by"
+<span class="printuser avatarhover">
+<a href="/user:info/meshiochislash" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="meshiochislash" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/meshiochislash" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"meshiochislash"
+</a>
+</span>
+</li>
+<li>
+<a href="javascript:;">
+T:"店より出でるもの"
+</a>
+T:"<IDSP>by"
+<span class="printuser avatarhover">
+<a href="/user:info/tachyon" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="tachyon" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/tachyon" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"tachyon"
+</a>
+</span>
+</li>
+<li>
+<a href="javascript:;">
+T:"Dear Dr, Please Remember Our Money..."
+</a>
+T:"<IDSP>by"
+<span class="printuser avatarhover">
+<a href="/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="jiraku mogana" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"jiraku mogana"
+</a>
+</span>
+</li>
+<li>
+<a href="javascript:;">
+T:"Exit Deus Ex Money"
+</a>
+T:"<IDSP>by"
+<span class="printuser avatarhover">
+<a href="/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="jiraku mogana" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"jiraku mogana"
+</a>
+</span>
+</li>
+<li>
+<a href="javascript:;">
+T:"ラストオーダーのそのあとで"
+</a>
+T:"by"
+<span class="printuser avatarhover">
+<a href="/user:info/tolpo" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="tolpo" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/tolpo" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"tolpo"
+</a>
+</span>
+</li>
+<li>
+<a href="javascript:;">
+T:"シチューとカレーの分岐点"
+</a>
+T:"by"
+<span class="printuser avatarhover">
+<a href="/user:info/aoicha" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="aoicha" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/aoicha" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"aoicha"
+</a>
+</span>
+</li>
+<li>
+<a href="javascript:;">
+T:"食い意地の張った者達の幕間劇"
+</a>
+T:"by"
+<span class="printuser avatarhover">
+<a href="/user:info/momiji-coc" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="momiji_coc" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/momiji-coc" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"momiji_coc"
+</a>
+</span>
+</li>
+<li>
+<a href="https://scp-jp.wikidot.com/project-another-one" target="_blank">
+T:"もう一つのレシピ"
+</a>
+T:"by"
+<span class="printuser avatarhover">
+<a href="/user:info/souyamisaki014" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="souyamisaki014" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/souyamisaki014" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"souyamisaki014"
+</a>
+</span>
+</li>
+</ul>
+<p>
+<strong>
+T:"GoI-Format"
+</strong>
+</p>
+<ul>
+<li>
+<a href="javascript:;">
+T:"宗教的儀式が食品の品質に与える影響と食品加工産業への応用可能性に関する一次報告書"
+</a>
+T:"<IDSP>by"
+<span class="printuser avatarhover">
+<a href="/user:info/konumatakaki" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="konumatakaki" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/konumatakaki" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"konumatakaki"
+</a>
+</span>
+</li>
+<li>
+<a href="javascript:;">
+T:"\"食用獣 クダン\"販売カタログ"
+</a>
+T:"<IDSP>by"
+<span class="printuser avatarhover">
+<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="stengan774" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"stengan774"
+</a>
+</span>
+</li>
+<li>
+<a href="https://scp-jp.wikidot.com/pte-1422-bosch-lengle" target="_blank">
+T:"PTE-1422-Bosch-L'Engel's coefficient"
+</a>
+T:"by"
+<span class="printuser avatarhover">
+<a href="/user:info/islandsmaster" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="islandsmaster" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/islandsmaster" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"islandsmaster"
+</a>
+</span>
+</li>
+<li>
+<a href="https://scp-jp.wikidot.com/early-summer-rain-on-arca" target="_blank">
+T:"歯車筐に篠突く緑黄色野菜"
+</a>
+T:"by"
+<span class="printuser avatarhover">
+<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="stengan774" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"stengan774"
+</a>
+</span>
+</li>
+</ul>
+<p>
+<strong>
+T:"Other"
+</strong>
+</p>
+<ul>
+<li>
+<a href="https://scp-jp.wikidot.com/making-2000-hub" target="_blank">
+T:"筐体造り ハブ"
+</a>
+T:"by 筐体の造り手"
+</li>
+</ul>
+<p>
+<strong>
+T:"なぜか登場した関連作品"
+</strong>
+</p>
+<ul>
+<li>
+<a href="/r-sinano-chuo-co-jp-2019-12-19-na37u538">
+T:"帝都大学、超常史料編纂所所長に穴生原真理子氏を任用へ"
+</a>
+T:"by"
+<span class="printuser avatarhover">
+<a href="/user:info/mishary" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="mishary" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/mishary" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"mishary"
+</a>
+</span>
+</li>
+<li>
+<a href="/ambrose-the-end-of-the-world">
+T:"アンブローズ・世界の終わり"
+</a>
+T:"by"
+<span class="printuser avatarhover">
+<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="stengan774" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"stengan774"
+</a>
+</span>
+</li>
+<li>
+<a href="/scp-2133-jp">
+T:"SCP-2133-JP"
+</a>
+T:"by"
+<span class="printuser avatarhover">
+<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="stengan774" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"stengan774"
+</a>
+</span>
+</li>
+<li>
+<a href="/yamizushi-file-no900">
+T:"yamizushi-file-no900"
+</a>
+T:"by"
+<span class="printuser avatarhover">
+<a href="/user:info/tateito" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="tateito" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/tateito" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"tateito"
+</a>
+</span>
+</li>
+<li>
+<a href="/scp-2430-jp-j">
+T:"SCP-2430-JP-J"
+</a>
+T:"by"
+<span class="printuser avatarhover">
+<a href="/user:info/crow-109" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="crow_109" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/crow-109" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"crow_109"
+</a>
+</span>
+T:","
+<span class="printuser avatarhover">
+<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="stengan774" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/stengan774" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"stengan774"
+</a>
+</span>
+</li>
+<li>
+<a href="/scp-1670-jp">
+T:"SCP-1670-JP"
+</a>
+T:"by"
+<span class="printuser avatarhover">
+<a href="/user:info/teruteru-5" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="teruteru_5" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/teruteru-5" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"teruteru_5"
+</a>
+</span>
+</li>
+<li>
+<a href="/kitchen-accident-curry">
+T:"kitchen-accident-curry"
+</a>
+T:"by"
+<span class="printuser avatarhover">
+<a href="/user:info/makodot" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="makodot-" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/makodot" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"makodot-"
+</a>
+</span>
+</li>
+</ul>
+</div>
+<div id="wiki-tab-0-2">
+<h1 id="toc3">
+<span>
+T:"人物"
+</span>
+</h1>
+<blockquote>
+<h4 id="toc4">
+<span>
+T:"ヤミ・マスター"
+</span>
+</h4>
+<p>
+T:"闇寿司の伝道者たち。彼らの周りでは複数のラーメンとライフルが飛びかっているが、このカノンにおいてヤミ・マスターたちはいくらか酢飯臭い。"
+</p>
+<blockquote>
+<h5 id="toc5">
+<span>
+T:"闇"
+</span>
+</h5>
+<p>
+T:"おにぎり屋だったりSushi Darkであるとされたりすることが多い闇だが、このカノンでは闇寿司総裁として君臨している。凍結されていた「禁断のシャリカレー計画」の実行を提唱した。"
+</p>
+</blockquote>
+</blockquote>
+<blockquote>
+<h4 id="toc6">
+<span>
+T:"咲下ひるこ"
+</span>
+</h4>
+<p>
+<a href="https://scp-jp.wikidot.com/r-g-b-planning" target="_blank">
+T:"PoI-6478"
+</a>
+T:"。人肉と絶滅動植物料理の権威であり、その知識を活かしてシチュー造り計画に参加する。"
+</p>
+</blockquote>
+<blockquote>
+<h4 id="toc7">
+<span>
+T:"ウェイター"
+</span>
+</h4>
+<p>
+T:"伝説の隠れ家的レストラン「弟の食料品」のウェイター。シチュー造りの要である"
+<strong>
+T:"\"忘れられない味\""
+</strong>
+T:"の構築のため財団に招聘される。ただ大人しくしているわけもなく、案の定夜な夜な何かを仕込もうとしている様子。"
+</p>
+</blockquote>
+<blockquote>
+<h4 id="toc8">
+<span>
+T:"ジェイミー"
+</span>
+</h4>
+<p>
+T:"アンブローズ・レストランのチーフシェフ。レストラン創業者であるチャズ･アンブローズの直弟子であり、食い逃げ犯に対して決して容赦しないことで知られている。シチュー造り計画にはカタコトで参加する。"
+</p>
+</blockquote>
+<blockquote>
+<h4 id="toc9">
+<span>
+T:"東 謙一"
+</span>
+</h4>
+<p>
+T:"イェンロン料理研究会の\"鉄人\"。料理の味をイメージで感じ取る能力を持ち、"
+<strong>
+T:"\"忘れられない味\""
+</strong>
+T:"の噂を聞きつけて勝手にやってきた。"
+</p>
+</blockquote>
+<blockquote>
+<h4 id="toc10">
+<span>
+T:"鬼食 薬子"
+</span>
+</h4>
+<p>
+T:"和食中華イタ飯までなんでもござれのサイト8192料理長。"
+<span class="ruby">
+T:"特別"
+<span class="rt">
+T:"Special"
+</span>
+</span>
+<span class="ruby">
+T:"調理"
+<span class="rt">
+T:"Cooking"
+</span>
+</span>
+<span class="ruby">
+T:"手順"
+<span class="rt">
+T:"Procedure"
+</span>
+</span>
+T:"の制定に貢献し、シチュー造りの中心的役割を果たす。"
+</p>
+</blockquote>
+<blockquote>
+<h4 id="toc11">
+<span>
+T:"宇喜田 啓臣"
+</span>
+</h4>
+<p>
+<a href="https://scp-jp.wikidot.com/takamata-chili-sauce" target="_blank">
+T:"食材。"
+</a>
+</p>
+</blockquote>
+<h1 id="toc12">
+<span>
+T:"団体"
+</span>
+</h1>
+<blockquote>
+<h4 id="toc13">
+<span>
+T:"SCP財団"
+</span>
+</h4>
+<p>
+T:"現在と最も差異がない団体である。職員は現在いる者もいない者もいる。少なくとも"
+<strong>
+T:"怖いくらいうまいシチュー"
+</strong>
+T:"作成に踏み切れるだけの技術力を持つ。"
+</p>
+</blockquote>
+<blockquote>
+<h4 id="toc14">
+<span>
+T:"闇寿司"
+</span>
+</h4>
+<p>
+T:"ことあるごとにシチューにシャリと生魚を投入しようとしてくる。"
+</p>
+</blockquote>
+<blockquote>
+<h4 id="toc15">
+<span>
+T:"イェンロン料理研究会"
+</span>
+</h4>
+<p>
+T:"「味は命より重い」をモットーにする中国由来の料理研究会。東 謙一が財団と接触したのを切っ掛けに、"
+<strong>
+T:"食いたくて食いたくて震えるシチューの味"
+</strong>
+T:"を探求していく。"
+</p>
+</blockquote>
+<blockquote>
+<h4 id="toc16">
+<span>
+T:"弟の食料品"
+</span>
+</h4>
+<p>
+T:"感情や記憶など、通常味覚では感知できないものの味を提供するレストラン。"
+<strong>
+T:"\"忘れられない味\""
+</strong>
+T:"を構築する。"
+</p>
+</blockquote>
+<blockquote>
+<h4 id="toc17">
+<span>
+T:"ポーランド特異茸狩協会"
+</span>
+</h4>
+<p>
+T:"異常なキノコやその派生物の広範な採集、加工、取引を扱っている組織。シチューに欠かせないマッシュルームを提供した。"
+</p>
+</blockquote>
+<blockquote>
+<h4 id="toc18">
+<span>
+T:"アンブローズ･レストラン"
+</span>
+</h4>
+<p>
+T:"世界各地に店舗を構える超常料理店。最高の食事体験に一切の妥協をせず、"
+<strong>
+T:"ゴリゴリにうまいシチュー"
+</strong>
+T:"を造る際にも存分に腕を振るった。"
+</p>
+</blockquote>
+<blockquote>
+<h4 id="toc19">
+<span>
+T:"鉄錆の果実教団"
+</span>
+</h4>
+<p>
+T:"「世界が終わりそうなときにシチュー作ってる場合では無いのでは？」と言ったため壊滅させられた。"
+</p>
+</blockquote>
+</div>
+<div id="wiki-tab-0-3">
+<p>
+T:"このタブでは当カノンに登場する用語についてまとめてある。"
+<br>
+T:"ここに記載されていない用語については、"
+<a href="https://ja.wikipedia.org/wiki/%E3%82%B7%E3%83%81%E3%83%A5%E3%83%BC">
+T:"こちら"
+</a>
+T:"も参照のこと。"
+</p>
+<hr>
+<h3 id="toc20">
+<span>
+<strong>
+T:"カノン独自の単語"
+</strong>
+</span>
+</h3>
+<ul>
+<li>
+<strong>
+T:"SDクラス:\"シチューデリシャス\"シナリオ"
+</strong>
+T:"(SD class: \"Stew Delicious\" Scenario) - 64日後の到来が確定しているK(Kuuhuku)クラスシナリオ。"
+</li>
+</ul>
+<ul>
+<li>
+<strong>
+T:"饑日"
+</strong>
+T:"(The RAVENOUS) : SDクラスシナリオの発生日。"
+</li>
+</ul>
+<ul>
+<li>
+<strong>
+T:"プロジェクト・リフード"
+</strong>
+T:"(Project Refood) - SDクラスシナリオの回避を目的としたプロジェクト。シチュー造り計画はこの一部である。"
+</li>
+</ul>
+<ul>
+<li>
+<strong>
+T:"シチュー造り計画"
+</strong>
+T:"(Project STEW) -"
+<strong>
+T:"世界の再構築を行えるレベルでうまいシチュー"
+</strong>
+T:"を作成するプロジェクト。O5会議によりプロジェクト・リフードの中心に据えられた。"
+</li>
+</ul>
+<ul>
+<li>
+<strong>
+T:"シチュー"
+</strong>
+T:"(The STEW) - 野菜や肉、魚介類を出汁やソースで煮込んだ煮込み料理を指す英語。フランス語ではラグー。"
+</li>
+</ul>
+<hr>
+<h3 id="toc21">
+<span>
+<strong>
+T:"既存の用語"
+</strong>
+</span>
+</h3>
+<p>
+<strong>
+T:"あ行"
+</strong>
+</p>
+<ul>
+<li>
+<strong>
+T:"赤ワイン"
+</strong>
+T:"- ビーフシチューを作るなら欠かせない素材。"
+<span style="font-size:70%;">
+T:"(出典:"
+<a href="https://ja.wikipedia.org/wiki/%E3%82%B7%E3%83%81%E3%83%A5%E3%83%BC">
+T:"Wikipedia"
+</a>
+T:")"
+</span>
+</li>
+</ul>
+<p>
+<strong>
+T:"か行"
+</strong>
+</p>
+<ul>
+<li>
+<strong>
+T:"仮名垣魯文"
+</strong>
+T:"(Robun Kanagaki) - 江戸末期から明治初頭にかけての戯作者であり、新聞記者。1872年に発表された「西洋料理通」においてシチューを日本に紹介した。"
+<span style="font-size:70%;">
+T:"(出典:"
+<a href="https://ja.wikipedia.org/wiki/%E3%82%B7%E3%83%81%E3%83%A5%E3%83%BC">
+T:"Wikipedia"
+</a>
+T:")"
+</span>
+</li>
+</ul>
+<ul>
+<li>
+<strong>
+T:"クリームシチュー"
+</strong>
+T:"(Cream Stew) - ホワイトシチューとも呼ばれる。実は\"クリームシチュー\"という名称は和製英語。"
+<span style="font-size:70%;">
+T:"(出典:"
+<a href="https://ja.wikipedia.org/wiki/%E3%82%B7%E3%83%81%E3%83%A5%E3%83%BC">
+T:"Wikipedia"
+</a>
+T:")"
+</span>
+</li>
+</ul>
+<p>
+<strong>
+T:"さ行"
+</strong>
+</p>
+<ul>
+<li>
+<strong>
+T:"シチュー"
+</strong>
+T:"(The STEW) - シチューを参照せよ。"
+<span style="font-size:70%;">
+T:"(出典:"
+<a href="https://ja.wikipedia.org/wiki/%E3%82%B7%E3%83%81%E3%83%A5%E3%83%BC">
+T:"Wikipedia"
+</a>
+T:")"
+</span>
+</li>
+</ul>
+<p>
+<strong>
+T:"た行"
+</strong>
+</p>
+<ul>
+<li>
+<strong>
+T:"東郷平八郎"
+</strong>
+T:"(Heihachirou Tougo) - 旧日本帝国海軍の軍人。留学先のイギリスで食べたビーフシチューを部下に再現させて産まれたのが肉じゃがだと言われている。"
+<span style="font-size:70%;">
+T:"(出典:"
+<a href="https://ja.wikipedia.org/wiki/%E3%82%B7%E3%83%81%E3%83%A5%E3%83%BC">
+T:"Wikipedia"
+</a>
+T:")"
+</span>
+</li>
+</ul>
+<p>
+<strong>
+T:"その他"
+</strong>
+</p>
+<ul>
+<li>
+<strong>
+T:"SCP-2000"
+</strong>
+T:"- 筐体計画によって64日で作成された財団製オブジェクト。シチュー造りとは大して関係無い。"
+<span style="font-size:70%;">
+T:"(出典:"
+<a href="/scp-2000">
+T:"SCP-2000"
+</a>
+T:")"
+</span>
+</li>
+</ul>
+</div>
+<div id="wiki-tab-0-4">
+<p>
+T:"君もシチューを造りたい？ならここを読もう。大丈夫、難しく考える必要はない。このカノンに参加するため満たすべきことは、ほんのわずかなのだから。"
+</p>
+<p>
+T:"このカノンでは、人類は予言から64日で滅亡する。それに対して財団は、協力の下"
+<strong>
+T:"マジハチャメチャにうまいシチュー"
+</strong>
+T:"を造り上げて人類の食文化を保存する。その後、SCP-2000にそれを収め、数回の再起動を繰り返す。そして今がある。前提にするべき歴史はこれだけ。"
+</p>
+<p>
+T:"「64日で"
+<strong>
+T:"えげつなく美味なシチューは八十路の老人に対し、なんとまあ恥知らずなことを……"
+</strong>
+T:"が造られた」という前提さえ守れば、君の作品は“シチュー造り”だ。タグ「シチュー造り」を付けてくれて構わない。時代にも、既存作品にも縛られる必要はない。ただこれは"
+<span style="text-decoration: line-through;">
+T:"<IDSP><IDSP>"
+</span>
+T:"カノン関係なく言えることだが"
+<span style="text-decoration: line-through;">
+T:"<IDSP><IDSP>"
+</span>
+<strong>
+T:"おいしければの話だ。"
+</strong>
+T:"そのため、先人が残した基本設定を参考にするのも一つの手だろう。他のタブにある既存作品や、このカノンの概要や頻出用語、出てくる登場人物/団体の詳細は、少なからずあなたの調理の助けになる筈だ。"
+<br>
+<span style="color: #f5f5f5">
+T:"ただしすべてを食べる"
+<strong>
+T:"義務"
+</strong>
+T:"はない。"
+</span>
+<br>
+T:"最後に……"
+<strong>
+T:"“人間は弱いが、シチューは旨い”"
+</strong>
+T:"。この一見矛盾した言葉が“シチュー造り”カノン/シリーズのテーマだ。"
+<strong>
+T:"とんでもなくうまいシチュー"
+</strong>
+T:"を造ったのは神業に思えるが、それに関わった一人一人はあくまで人間に過ぎない。焦燥、苦悩、etc…。どの時代だろうと、このカノンに関わる彼/彼女はそんな感情に苛まれる。"
+<br>
+<br>
+<span style="color: #f5f5f5">
+T:"何度造り直そうとも。"
+</span>
+<br>
+<br>
+<br>
+T:"しかし彼等は、最後にはやり遂げるのだ。"
+<span style="color: #f5f5f5">
+T:"例えそれが完璧なシチューでなかったとしても。"
+</span>
+</p>
+<div class="colmod-block">
+<ul>
+<li class="folded">
+<ul>
+<li style="list-style: none">
+T:"_"
+</li>
+</ul>
+<div class="colmod-link-top">
+<div class="foldable-list-container">
+<a href="javascript:;">
+T:"もっとうまいシチューを造りたい？"
+</a>
+<a href="javascript:;">
+T:"welcome!"
+</a>
+</div>
+</div>
+<div class="colmod-content">
+<p>
+T:"クックパッド見て。"
+<br>
+<a href="https://cookpad.com/search/%E3%82%B7%E3%83%81%E3%83%A5%E3%83%BC">
+T:"https://cookpad.com/search/%E3%82%B7%E3%83%81%E3%83%A5%E3%83%BC"
+</a>
+</p>
+</div>
+<div>
+<div class="foldable-list-container">
+</div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<br>
+<br>
+<br>

@@ -1,0 +1,588 @@
+<div class="creditRate creditModule {$mode}">
+<div class="rateBox">
+<div class="rate-box-with-credit-button">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+262"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<div class="rateBox heritage-wrap" style="display:none;">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+262"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<div style="clear:both;">
+</div>
+<div id="u-credit-view">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"クレジット"
+</span>
+</h2>
+</div>
+<div class="credit">
+<p>
+<strong>
+T:"タイトル:"
+</strong>
+T:"独白、あるいはモノローグ"
+<br>
+<strong>
+T:"著者:"
+</strong>
+T:"©"
+<span class="printuser avatarhover">
+<a href="https://www.wikidot.com/user:info/fes-ryuukatetu" onclick="WIKIDOT.page.listeners.userInfo(4577911); return false;">
+<img alt="FeS_ryuukatetu" class="small" src="https://www.wikidot.com/avatar.php?userid=4577911&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=4577911)">
+</a>
+<a href="https://www.wikidot.com/user:info/fes-ryuukatetu" onclick="WIKIDOT.page.listeners.userInfo(4577911); return false;">
+T:"FeS_ryuukatetu"
+</a>
+</span>
+<br>
+<strong>
+T:"作成年:"
+</strong>
+T:"2019"
+</p>
+<hr>
+<p>
+<a href="/author:fes-ryuukatetu">
+T:"この著者の他の作品"
+</a>
+</p>
+<div class="credit-back" style="text-align: center;">
+<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+</iframe>
+</div>
+</div>
+<div class="creditBottomRate" style="height:30px;">
+<div class="credit-license">
+<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
+</a>
+</div>
+<div style="text-align: center; top: 0px;">
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+262"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+<div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+262"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p>
+<span style="color: red">
+<em>
+T:"私は、幸せな日々を送りたかった。"
+</em>
+</span>
+<br>
+</p>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"私は、ただ『私』でありたかった。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"私はいつも『みんな』と一緒だったと思っていた。"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"別に私は特別なんかじゃない。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"それなのに私はずっと『みんな』の玩具にされていた。"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"薄々気づいてはいた。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"『みんな』はずっと、私を指して笑っていたのだ。"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"けれど私はそこから目を背け続けていた。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"味方は、何処にもいなかった。"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"私の気持ちをわかって欲しかった。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"私のやってきたことは、"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"きっと、『みんな』にとっては迷惑だったのだろう。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"全て無意味だったのだ。"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"馬鹿な私はそれに気づいていなかった。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"でも、『みんな』に恨みなどはない。"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"全部、私が悪かった。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"というより、そう考えないととても耐えられなかった。"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"私は気づいた。『みんな』は優しかった、と。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"そう思い込みたかっただけなのだ。"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"きっと、私の心を傷つけるのは簡単だっただろう。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"これは悪夢だと思っていた。"
+<br>
+T:"いつか目は覚めると思っていた。"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"そうはならなかったのは、"
+<br>
+T:"『みんな』が結託していたからだった。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"信じていた私が馬鹿だった。"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"その話を聞いた時、頭を殴られたような衝撃があった。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"私が受けたのは、信じたものからの裏切り。"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"あの時居たのは、ただの子供だった。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"それが一番恐ろしいものだったのだ。"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"あの日、そのことに気づいた。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"でも、今はここに来られた。"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"それだけが救いだ。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"あんな日々、もう思い出したくはないけど、"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"暗い過去は誰にも消せないけど、"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"新しくなった私なら、"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"押し殺して忘れることはできる。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"もう一度、一からやり直せる。"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"あの日々は無かったことにして、"
+</em>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<em>
+T:"新しい場所で新しいみんなと話そう。"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"今まで以上に頑張ればきっと大丈夫。"
+</em>
+</span>
+</p>
+</div>
+<br>
+<br>
+<span style="color: red">
+<em>
+T:"だから、"
+</em>
+</span>
+<br>
+<div style="text-align: right;">
+<p>
+<span style="color: blue">
+<em>
+T:"だから、"
+</em>
+</span>
+</p>
+</div>
+<br>
+<div style="text-align: center;">
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"私は、あの過去を手放して生きていくのだ。"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"私は、あの過去を手放して生きていくのだ。"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+T:"貴方は何を思ってここを開いた？"
+<br>
+<br>
+<br>
+T:"大方、Taleの元となったオブジェクトを"
+<br>
+T:"見に行こうとしたのではないだろうか。"
+<br>
+<br>
+<br>
+T:"だが、そんなことは瑣末事に過ぎない。"
+<br>
+<br>
+<br>
+T:"たとえこの文章が、"
+<br>
+<br>
+<br>
+<br>
+<a href="/scp-014-jp-j">
+T:"二人"
+</a>
+T:"の"
+<a href="/scp-014-jp-ex">
+T:"少女"
+</a>
+T:"が語った独白だったとしても、"
+<br>
+<br>
+<br>
+<br>
+<a href="/scp-1045-jp">
+T:"一人の女性"
+</a>
+T:"が綴ったモノローグだったとしても、"
+<br>
+<br>
+<br>
+<br>
+T:"書かれてある言葉は何も変わらないのだから。"
+</p>
+</div>
+</div>
+</div>
+<br>
+<br>
+</div>

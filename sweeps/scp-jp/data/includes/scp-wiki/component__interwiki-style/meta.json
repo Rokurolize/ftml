@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:27:01+00:00",
+  "method": "GET",
+  "response_bytes": 29053,
+  "response_sha256": "f634339b09837654aa951fd92fcf49d9e7b38bb832b5d461def0d75ecd45225b",
+  "status": 200,
+  "url": "https://scp-wiki.wikidot.com/component:interwiki-style"
+ },
+ "page": "component:interwiki-style",
+ "page_id": 1354788520,
+ "site": "scp-wiki",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:27:02+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "1354788520"
+  },
+  "response_bytes": 1865,
+  "response_sha256": "fc496947333229d150d19fb34a3ee319f8115a5f5d76a91798ea98f1b5483a35",
+  "status": 200,
+  "url": "https://scp-wiki.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "0450ad3c256930db4d98fc63ab0e59743257d8e89e2f7266e793a69d35dc73c7"
+}

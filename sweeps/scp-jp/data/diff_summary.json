@@ -1,0 +1,242 @@
+{
+ "artwork-444-jp": {
+  "ftml_nodes": 401,
+  "hunks": 4,
+  "identical": false,
+  "live_nodes": 422
+ },
+ "crab-party": {
+  "ftml_nodes": 1099,
+  "hunks": 6,
+  "identical": false,
+  "live_nodes": 1184
+ },
+ "dokuhaku-or-monologue": {
+  "ftml_nodes": 509,
+  "hunks": 5,
+  "identical": false,
+  "live_nodes": 588
+ },
+ "hero-no-jihyou": {
+  "ftml_nodes": 348,
+  "hunks": 1,
+  "identical": false,
+  "live_nodes": 368
+ },
+ "holy-nova-tale-businessetiquette-writtenapology": {
+  "ftml_nodes": 561,
+  "hunks": 5,
+  "identical": false,
+  "live_nodes": 577
+ },
+ "japanese-area-directors-dossier": {
+  "ftml_nodes": 3674,
+  "hunks": 90,
+  "identical": false,
+  "live_nodes": 3909
+ },
+ "just-shut-up-and-give-me-fried-chicken": {
+  "ftml_nodes": 520,
+  "hunks": 2,
+  "identical": false,
+  "live_nodes": 529
+ },
+ "making-stew-hub": {
+  "ftml_nodes": 1712,
+  "hunks": 30,
+  "identical": false,
+  "live_nodes": 1795
+ },
+ "mortal-emulator": {
+  "ftml_nodes": 232,
+  "hunks": 1,
+  "identical": false,
+  "live_nodes": 658
+ },
+ "necos-kitchen": {
+  "ftml_nodes": 1139,
+  "hunks": 58,
+  "identical": false,
+  "live_nodes": 1218
+ },
+ "nekoyori": {
+  "ftml_nodes": 537,
+  "hunks": 1,
+  "identical": false,
+  "live_nodes": 557
+ },
+ "o5-a3-f1-recruitsandbox": {
+  "ftml_nodes": 3108,
+  "hunks": 21,
+  "identical": false,
+  "live_nodes": 3128
+ },
+ "scp-004-jp": {
+  "ftml_nodes": 985,
+  "hunks": 1,
+  "identical": false,
+  "live_nodes": 1005
+ },
+ "scp-024-jp": {
+  "ftml_nodes": 547,
+  "hunks": 1,
+  "identical": false,
+  "live_nodes": 567
+ },
+ "scp-065-jp": {
+  "ftml_nodes": 592,
+  "hunks": 1,
+  "identical": false,
+  "live_nodes": 612
+ },
+ "scp-1045-jp": {
+  "ftml_nodes": 1156,
+  "hunks": 16,
+  "identical": false,
+  "live_nodes": 1214
+ },
+ "scp-1065-jp": {
+  "ftml_nodes": 488,
+  "hunks": 1,
+  "identical": false,
+  "live_nodes": 506
+ },
+ "scp-1134-jp": {
+  "ftml_nodes": 911,
+  "hunks": 5,
+  "identical": false,
+  "live_nodes": 990
+ },
+ "scp-1280-jp": {
+  "ftml_nodes": 1215,
+  "hunks": 5,
+  "identical": false,
+  "live_nodes": 1287
+ },
+ "scp-1374-jp": {
+  "ftml_nodes": 1220,
+  "hunks": 7,
+  "identical": false,
+  "live_nodes": 1288
+ },
+ "scp-1442-jp": {
+  "ftml_nodes": 1032,
+  "hunks": 6,
+  "identical": false,
+  "live_nodes": 1107
+ },
+ "scp-1475-jp": {
+  "ftml_nodes": 608,
+  "hunks": 2,
+  "identical": false,
+  "live_nodes": 625
+ },
+ "scp-1598-jp": {
+  "ftml_nodes": 811,
+  "hunks": 7,
+  "identical": false,
+  "live_nodes": 926
+ },
+ "scp-161-jp": {
+  "ftml_nodes": 226,
+  "hunks": 5,
+  "identical": false,
+  "live_nodes": 305
+ },
+ "scp-1970-jp": {
+  "ftml_nodes": 1146,
+  "hunks": 7,
+  "identical": false,
+  "live_nodes": 1202
+ },
+ "scp-2000-jp": {
+  "ftml_nodes": 208,
+  "hunks": 6,
+  "identical": false,
+  "live_nodes": 446
+ },
+ "scp-2050-jp": {
+  "ftml_nodes": 504,
+  "hunks": 7,
+  "identical": false,
+  "live_nodes": 623
+ },
+ "scp-210-jp": {
+  "ftml_nodes": 693,
+  "hunks": 1,
+  "identical": false,
+  "live_nodes": 713
+ },
+ "scp-2144-jp": {
+  "ftml_nodes": 185,
+  "hunks": 6,
+  "identical": false,
+  "live_nodes": 416
+ },
+ "scp-2299-jp": {
+  "ftml_nodes": 2458,
+  "hunks": 12,
+  "identical": false,
+  "live_nodes": 2535
+ },
+ "scp-3000-jp": {
+  "ftml_nodes": 6540,
+  "hunks": 7,
+  "identical": false,
+  "live_nodes": 6640
+ },
+ "scp-4000-jp": {
+  "ftml_nodes": 185,
+  "hunks": 6,
+  "identical": false,
+  "live_nodes": 5014
+ },
+ "scp-488-jp": {
+  "ftml_nodes": 529,
+  "hunks": 2,
+  "identical": false,
+  "live_nodes": 545
+ },
+ "scp-511-jp": {
+  "ftml_nodes": 1152,
+  "hunks": 8,
+  "identical": false,
+  "live_nodes": 1230
+ },
+ "scp-544-jp": {
+  "ftml_nodes": 1121,
+  "hunks": 1,
+  "identical": false,
+  "live_nodes": 1141
+ },
+ "scp-973-jp": {
+  "ftml_nodes": 413,
+  "hunks": 7,
+  "identical": false,
+  "live_nodes": 483
+ },
+ "scp-998-jp": {
+  "ftml_nodes": 1023,
+  "hunks": 1,
+  "identical": false,
+  "live_nodes": 1043
+ },
+ "shock-in-tanakasensei": {
+  "ftml_nodes": 401,
+  "hunks": 5,
+  "identical": false,
+  "live_nodes": 480
+ },
+ "teubuku": {
+  "ftml_nodes": 2072,
+  "hunks": 7,
+  "identical": false,
+  "live_nodes": 2154
+ },
+ "unnamed-file": {
+  "ftml_nodes": 3824,
+  "hunks": 8,
+  "identical": false,
+  "live_nodes": 5042
+ }
+}

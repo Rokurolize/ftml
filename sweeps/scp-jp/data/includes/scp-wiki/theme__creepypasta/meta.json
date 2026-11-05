@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:27:15+00:00",
+  "method": "GET",
+  "response_bytes": 114760,
+  "response_sha256": "d1f83ed28be410afa4cb80fe94324b3366d4cc8b611b0204328a525307b937ff",
+  "status": 200,
+  "url": "https://scp-wiki.wikidot.com/theme:creepypasta"
+ },
+ "page": "theme:creepypasta",
+ "page_id": 852940340,
+ "site": "scp-wiki",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:27:16+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "852940340"
+  },
+  "response_bytes": 21628,
+  "response_sha256": "058a5a1652d96d545d6a9e16a63d705947950354c179ebc0686c13bd512420de",
+  "status": 200,
+  "url": "https://scp-wiki.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "0b20902b72edc012a511e9572bffed3f7c119d5a31ed8de770bf7ec2d5a2d9d1"
+}

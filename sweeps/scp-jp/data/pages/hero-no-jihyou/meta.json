@@ -1,0 +1,81 @@
+{
+ "kind": "tale",
+ "listed_size": 2272,
+ "live_page_content_sha256": "63b560a23da94883be6713178252b727a0b5707f44e5d481e628459d389ab7f5",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:24:56+00:00",
+  "method": "GET",
+  "response_bytes": 36105,
+  "response_sha256": "dbcaf9b744946fd8ecbc84f392608189f822e591972169f745acb5a9c61e3ba4",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/hero-no-jihyou"
+ },
+ "page_id": 996326665,
+ "rating": 229,
+ "site": "scp-jp",
+ "slug": "hero-no-jihyou",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:24:57+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "996326665"
+  },
+  "response_bytes": 11831,
+  "response_sha256": "88c97abba4811912efa593f32bd5a988776a2ea7e2e12a256b79436b77540b8d",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "e8c6afd2d947facf384460e6a8dd2236bbe8815824671f78a81ba1e66de058d6",
+ "stats": {
+  "counts": {
+   "anchor": 0,
+   "blocks": 12,
+   "bold": 18,
+   "cjk_dash_pair": 0,
+   "cjk_emphasis": 40,
+   "collapsible": 0,
+   "color": 0,
+   "css": 0,
+   "div": 0,
+   "ellipsis_dash": 0,
+   "footnote": 0,
+   "fullwidth_space": 9,
+   "heading": 0,
+   "hr": 1,
+   "html": 0,
+   "iftags": 0,
+   "image": 0,
+   "include": 0,
+   "italic": 24,
+   "link3": 0,
+   "list": 0,
+   "module": 1,
+   "mono": 0,
+   "quote": 57,
+   "raw": 38,
+   "ruby": 1,
+   "size": 0,
+   "span": 2,
+   "strike": 1,
+   "sup_sub": 0,
+   "table": 0,
+   "tabview": 0,
+   "underline": 0
+  },
+  "density_per_kchar": 85.83,
+  "markup_tokens": 195
+ },
+ "title": "ヒーローの辞表",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "996326665",
+  "pageUnixName": "hero-no-jihyou",
+  "requestPageName": "hero-no-jihyou",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

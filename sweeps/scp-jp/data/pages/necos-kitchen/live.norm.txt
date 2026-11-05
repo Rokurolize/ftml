@@ -1,0 +1,1218 @@
+<div class="creditRate creditModule {$mode}">
+<div class="rateBox">
+<div class="rate-box-with-credit-button">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+447"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<div class="rateBox heritage-wrap" style="display:none;">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+447"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<div style="clear:both;">
+</div>
+<div id="u-credit-view">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"クレジット"
+</span>
+</h2>
+</div>
+<div class="credit">
+<p>
+<strong>
+T:"タイトル:"
+</strong>
+T:"NECO’S キッチン<IDSP>～SCP財団ロゴのステーキ～"
+<br>
+<strong>
+T:"著者:"
+</strong>
+T:"©"
+<span class="printuser avatarhover">
+<a href="https://www.wikidot.com/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(4062604); return false;">
+<img alt="Jiraku_Mogana" class="small" src="https://www.wikidot.com/avatar.php?userid=4062604&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=4062604)">
+</a>
+<a href="https://www.wikidot.com/user:info/jiraku-mogana" onclick="WIKIDOT.page.listeners.userInfo(4062604); return false;">
+T:"Jiraku_Mogana"
+</a>
+</span>
+<br>
+<strong>
+T:"作成年:"
+</strong>
+T:"2019"
+</p>
+<div class="credit-back" style="text-align: center;">
+<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+</iframe>
+</div>
+</div>
+<div class="creditBottomRate" style="height:30px;">
+<div class="credit-license">
+<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
+</a>
+</div>
+<div style="text-align: center; top: 0px;">
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+447"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+<div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+447"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"皆さんおはようございます。"
+<br>
+T:"[編集済]博士です。さぁ今日もよろしくおねがいします。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"こんばんは。アシスタントの[編集済]助手です。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<p>
+<span style="font-size:0%;">
+T:"ねこのきっちんですよろしくおねがいします"
+</span>
+</p>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"[編集済]くん、本日はSCPテレビ173周年記念スペシャル番組です。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"ええ、博士。"
+<a href="https://scp-jp.wikidot.com/scp-056-jp">
+T:"SCP-056-JP"
+</a>
+T:"を使ったときのように心を躍らしています。今日はどんな料理を作るのでしょうか？"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"スペシャルですからスペシャルにふさわしいスペシャルな素材を使ったスペシャルな料理です。"
+<br>
+T:"では今から素材を採りに行きましょう。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"今から採りに行くのですか。それは私を驚かせました。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"では行きましょう。表に"
+<a href="https://scp-jp.wikidot.com/scp-1365">
+T:"バイク・ジャスティス"
+</a>
+T:"を手配してあります。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<hr>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"つきました。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"森オブ森に来ましたね。目的の食材はウスヒラタケですか？それともクリタケ？もしかしてベニテングダケ？"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"違います。どうしてキノコ限定なのですか。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"では何で────"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"しっ、静かに。近くにいます。警戒されるといけない。あそこを見てください。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"ん、何かいますね。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<p>
+<br>
+</p>
+<div class="image-container aligncenter">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E8%83%8C%E6%99%AF">
+<img alt="背景" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E8%83%8C%E6%99%AF/medium.jpg" width="300px">
+</a>
+</div>
+<p>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+</p>
+<div class="image-container aligncenter">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E7%99%BB%E5%A0%B4">
+<img alt="登場" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E7%99%BB%E5%A0%B4/medium.jpg" width="300px">
+</a>
+</div>
+<p>
+<br>
+</p>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"あっ"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<p>
+<br>
+</p>
+<div class="image-container aligncenter">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E8%B2%A1%E5%9B%A3%E3%83%AD%E3%82%B4%E5%BC%B7%E8%AA%BF">
+<img alt="財団ロゴ強調" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E8%B2%A1%E5%9B%A3%E3%83%AD%E3%82%B4%E5%BC%B7%E8%AA%BF/medium.jpg" width="300px">
+</a>
+</div>
+<p>
+<br>
+</p>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"SCP財団ロゴ"
+<sup class="footnoteref">
+<a class="footnoteref" href="javascript:;" id="footnoteref-1" onclick="WIKIDOT.page.utils.scrollToReference('footnote-1')">
+T:"1"
+</a>
+</sup>
+T:"だ～～～～！！"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94">
+<img alt="助手笑顔" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"この大きさはなかなかの上モノですよ。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"私、野生の財団ロゴを初めて見ました。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"最近"
+<a href="https://scp-jp.wikidot.com/scp-4065">
+T:"財団ロゴを排斥する動き"
+</a>
+T:"があって個体数が減ってますからね。"
+<br>
+T:"今時の子供の中には財団ロゴは左上にしかいない、と思っている子もいるそうです。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"博士、さっそく捕まえましょう。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"[編集済]くん、財団ロゴの特別捕獲プロトコル (Special Capture Procedures) を知っているのかい？"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"えー……この"
+<a href="https://scp-jp.wikidot.com/scp-572">
+T:"SCP-572"
+</a>
+T:"でバッサリと？"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"どこから持ってきたのですか、違いますよ。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"いやでもこの刀なら絶対一刀両断できますって！"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"今回は生け捕りするので真っ二つにされては困ります。没収です。"
+<br>
+T:"財団ロゴはこのエサでおびき寄せて捕まえるんですよ。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<p>
+<br>
+</p>
+<div class="scp-image-block block-center scp-clear-false" style="width:200px;">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E7%A2%BA%E4%BF%9D%E5%8F%8E%E5%AE%B9%E4%BF%9D%E8%AD%B7">
+<img alt="確保収容保護" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E7%A2%BA%E4%BF%9D%E5%8F%8E%E5%AE%B9%E4%BF%9D%E8%AD%B7/medium.jpg">
+</a>
+<div class="scp-image-caption">
+<p>
+T:"財団ロゴの好物。"
+</p>
+</div>
+</div>
+<p>
+<br>
+</p>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"早速罠を設置しましょう。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<p>
+<br>
+</p>
+<div class="image-container aligncenter">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E7%BD%A01">
+<img alt="罠1" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E7%BD%A01/medium.jpg" width="300px">
+</a>
+</div>
+<p>
+<br>
+</p>
+<div class="image-container aligncenter">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E7%BD%A02">
+<img alt="罠2" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E7%BD%A02/medium.jpg" width="300px">
+</a>
+</div>
+<p>
+<br>
+</p>
+<div class="image-container aligncenter">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E6%8D%95%E7%8D%B2">
+<img alt="捕獲" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E6%8D%95%E7%8D%B2/medium.jpg" width="300px">
+</a>
+</div>
+<p>
+<br>
+</p>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"お見事です博士！"
+<br>
+T:"……おや？"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<p>
+<br>
+</p>
+<div class="image-container aligncenter">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E9%96%89%E3%81%98%E3%82%8B%E3%83%AD%E3%82%B4">
+<img alt="閉じるロゴ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E9%96%89%E3%81%98%E3%82%8B%E3%83%AD%E3%82%B4/medium.jpg" width="200px">
+</a>
+</div>
+<p>
+<br>
+</p>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"矢印が集まっています！"
+<br>
+T:"博士これは！？"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"うむ、これはですね……"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<p>
+<br>
+</p>
+<div class="image-container aligncenter">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E9%96%8B%E3%81%8F%E3%83%AD%E3%82%B4">
+<img alt="開くロゴ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E9%96%8B%E3%81%8F%E3%83%AD%E3%82%B4/medium.jpg" width="200px">
+</a>
+</div>
+<p>
+<br>
+</p>
+<div class="image-container aligncenter">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E3%81%8F%E3%81%97%E3%82%83%E3%81%BF%E3%83%AD%E3%82%B4">
+<img alt="くしゃみロゴ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E3%81%8F%E3%81%97%E3%82%83%E3%81%BF%E3%83%AD%E3%82%B4/medium.jpg" width="200px">
+</a>
+</div>
+<p>
+<br>
+</p>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"なんだ、くしゃみだったんですね。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"え、ロゴってくしゃみするんだ。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<hr>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"キッチンに戻ってきました。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"いよいよ調理開始ですね。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"財団ロゴの下ごしらえから始めましょう。"
+<br>
+T:"まず矢印を取り外しておきます。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<p>
+<br>
+</p>
+<div class="image-container aligncenter">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E4%B8%8B%E5%87%A6%E7%90%861">
+<img alt="下処理1" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E4%B8%8B%E5%87%A6%E7%90%861/medium.jpg" width="200px">
+</a>
+</div>
+<p>
+<br>
+</p>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"本体の突起物は苦みがあるので切り落とします。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<p>
+<br>
+</p>
+<div class="image-container aligncenter">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E4%B8%8B%E5%87%A6%E7%90%862">
+<img alt="下処理2" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E4%B8%8B%E5%87%A6%E7%90%862/medium.jpg" width="200px">
+</a>
+</div>
+<p>
+<br>
+</p>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"本体を"
+<a href="https://scp-jp.wikidot.com/scp-3794">
+T:"SCP-3794"
+</a>
+T:"で叩いて柔らかくした後、片面に塩、コショウ、██████████を振りかけます。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<p>
+<br>
+</p>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"ニンニクで香り付けしたオリーブオイルでフライパンを熱し、強火で財団ロゴを焼きます。このとき塩を振った面を下にしてください。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<p>
+<br>
+</p>
+<div class="image-container aligncenter">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E8%AA%BF%E7%90%86%E4%B8%AD">
+<img alt="調理中" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E8%AA%BF%E7%90%86%E4%B8%AD/medium.jpg" width="200px">
+</a>
+</div>
+<p>
+<br>
+</p>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"表になっている方にも塩、コショウ、██████████を振った後、裏面がしっかり焼けたらひっくり返します。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"こんがり焼けて美味しそうですね！"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94">
+<img alt="助手笑顔" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"そのまま30秒ほど焼いたら取り出してアルミホイルに包み、余熱で中までじっくり火を通します。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<p>
+<br>
+</p>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"この間にソースを作りましょう。先ほど外した矢印を食感が残るように刻んでください。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"こんな感じですか？"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80">
+<img alt="助手悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<p>
+<br>
+</p>
+<div class="image-container aligncenter">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%88%BB%E3%81%BF%E7%9F%A2%E5%8D%B0">
+<img alt="刻み矢印" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%88%BB%E3%81%BF%E7%9F%A2%E5%8D%B0/medium.jpg" width="200px">
+</a>
+</div>
+<p>
+<br>
+</p>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"バッチグーです。これに"
+<a href="https://scp-jp.wikidot.com/scp-2484">
+T:"マヨネーズ"
+</a>
+T:"、酢などの合わせ調味料と混ぜてタルタルソースの出来上がりです。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<p>
+<br>
+</p>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"最後にお皿に綺麗に盛り付けて出来上がりです。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<p>
+<br>
+</p>
+<div class="scp-image-block block-center scp-clear-false" style="width:400px;">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%AE%8C%E6%88%90">
+<img alt="完成" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%AE%8C%E6%88%90/medium.jpg">
+</a>
+<div class="scp-image-caption">
+<p>
+T:"SCP財団ロゴのステーキ"
+<sup class="footnoteref">
+<a class="footnoteref" href="javascript:;" id="footnoteref-2" onclick="WIKIDOT.page.utils.scrollToReference('footnote-2')">
+T:"2"
+</a>
+</sup>
+</p>
+</div>
+</div>
+<p>
+<br>
+</p>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"では[編集済]くん、実食お願い致します。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"うーんおいしい！ふうわりした食感ながらジューシーで絶品です！"
+<br>
+T:"やはり絞めたての新鮮な財団ロゴはうまいなぁ。"
+<a href="https://scp-jp.wikidot.com/scp-2317">
+T:"巨人が貪るように"
+</a>
+T:"ぺろりと食べてしまいました。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+<a href="https://scp-jp.wikidot.com/scp-2317">
+T:"巨人"
+</a>
+T:"……？"
+<br>
+T:"ソースはどうでしたか？"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"シャキシャキした矢印の感触がいい塩梅ですし、マヨネーズのマイルドさが本体のサルサ風味によく合います。"
+<a href="https://scp-jp.wikidot.com/old:scp-1548">
+T:"星"
+</a>
+T:"3つです！"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89">
+<img alt="助手グッド" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E3%82%B0%E3%83%83%E3%83%89/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+<a href="https://scp-jp.wikidot.com/old:scp-1548">
+T:"星"
+</a>
+T:"が3つ……！？"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1">
+<img alt="博士キメ" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E3%82%AD%E3%83%A1/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"あぁ、本当にうますぎで、天国に行ったように花畑が見えてきました……。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94">
+<img alt="助手笑顔" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"[編集済]くん、おかしなことに本当に辺りが花畑になっています。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80">
+<img alt="博士悩む" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E6%82%A9%E3%82%80/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<p>
+<br>
+</p>
+<div class="image-container aligncenter">
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E3%83%AA%E3%83%AA%E3%83%BC">
+<img alt="リリー" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E3%83%AA%E3%83%AA%E3%83%BC/medium.jpg" width="400px">
+</a>
+</div>
+<p>
+<br>
+</p>
+<div class="hakase">
+<div class="hakaseword">
+<p>
+T:"只今O5評議会から連絡がありました。この番組は今回で打ち切りのようです。"
+<br>
+T:"最終回もお付き合いいただきありがとうございました。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8D%9A%E5%A3%AB%E7%9B%AE%E7%9E%91%E3%82%8A">
+<img alt="博士目瞑り" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8D%9A%E5%A3%AB%E7%9B%AE%E7%9E%91%E3%82%8A/medium.jpg" style="margin-top: 5px; margin-right: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: right;">
+</div>
+<div class="joshu">
+<div class="joshuword">
+<p>
+T:"ありがとうございました。"
+</p>
+</div>
+<div>
+<a href="https://scp-jp.wdfiles.com/local--files/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94">
+<img alt="助手笑顔" class="image" src="https://scp-jp.wdfiles.com/local--resized-images/necos-kitchen/%E5%8A%A9%E6%89%8B%E7%AC%91%E9%A1%94/medium.jpg" style="margin-top: 5px; margin-left: 20px;" width="120px">
+</a>
+</div>
+</div>
+<div style="clear: left;">
+</div>
+<p>
+<br>
+<br>
+<br>
+<br>
+</p>
+<hr>
+<p>
+<br>
+</p>
+<p>
+T:"以上の映像は次元██から送信された映像です。次元██はこれ以降連絡が途絶えており、何らかのK-クラスシナリオが発生したとみられています。この映像は"
+<a href="https://scp-jp.wikidot.com/lily-s-proposal">
+T:"SCP-001"
+</a>
+T:"イベントの発生例として保存されています。"
+</p>
+<div class="footnotes-footer">
+<div class="title">
+T:"Footnotes"
+</div>
+<div class="footnote-footer" id="footnote-1">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('footnoteref-1')">
+T:"1"
+</a>
+T:". SCP財団ロゴマークは、\"Aelanna\"作「Logo SCP Foundation」に基づき、CC BY-SA 3.0の範囲で公開されます。"
+<span style="font-size:smaller;">
+T:"("
+<a href="https://commons.wikimedia.org/wiki/File:Logo_SCP_Foundation.jpg">
+T:"https://commons.wikimedia.org/wiki/File:Logo_SCP_Foundation.jpg"
+</a>
+T:")"
+</span>
+</div>
+<div class="footnote-footer" id="footnote-2">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('footnoteref-2')">
+T:"2"
+</a>
+T:". 詳しいレシピは番組公式サイトをご覧ください"
+</div>
+</div>

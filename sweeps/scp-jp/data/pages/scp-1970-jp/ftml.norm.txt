@@ -1,0 +1,1146 @@
+<div class="creditRate creditModule {$mode}">
+T:"[[div_ class=\"rateBox\" ]]"
+<div class="rate-box-with-credit-button">
+<p>
+T:"TODO: module Rate"
+</p>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<br>
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+<br>
+<br>
+<div style="clear:both;">
+</div>
+<div id="u-credit-view">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"クレジット"
+</span>
+</h2>
+</div>
+<div class="credit">
+<p>
+<strong>
+T:"タイトル:"
+</strong>
+T:"SCP-1970-JP -"
+<span class="ruby">
+T:"13"
+<span class="rt">
+T:"サーティーン"
+</span>
+</span>
+<br>
+<strong>
+T:"著者:"
+</strong>
+T:"©︎"
+<span class="printuser avatarhover">
+<a href="/user:info/fennecist" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="fennecist" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/fennecist" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"fennecist"
+</a>
+</span>
+<br>
+<strong>
+T:"作成年:"
+</strong>
+T:"2018"
+</p>
+<div class="credit-back" style="text-align: center;">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+</iframe>
+</div>
+</div>
+<div class="creditBottomRate" style="height:30px;">
+<div class="credit-license">
+<a class="cc cc-by-sa" href="#invalid-url">
+</a>
+</div>
+<div style="text-align: center; top: 0px;">
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+<br>
+T:"[[/div]]"
+</div>
+</div>
+</div>
+<div style="text-align: center;">
+<img alt="warning.png" class="image" src="https://scp-jp.wjfiles.com/local--files/scp-1970-jp/warning.png">
+</div>
+<table class="scale EN -base">
+<tbody>
+<tr>
+<td class="class1">
+<h1>
+<span>
+<span class="base false EN">
+T:"4"
+</span>
+</span>
+</h1>
+<p>
+<span class="base false EN">
+T:"/1970-JP"
+</span>
+</p>
+<p>
+T:"false"
+<br>
+<span class="base false EN">
+T:"4"
+</span>
+</p>
+<p>
+<span class="base false EN">
+T:"/1970-JP"
+</span>
+</p>
+<h1>
+<span>
+T:"false"
+</span>
+</h1>
+</td>
+<td class="class1image" rowspan="2">
+<p>
+T:"[[image"
+<a href="https://scp-jp.wdfiles.com/local--files/component:classified-decoration-base/classified-lv4">
+T:"https://scp-jp.wdfiles.com/local--files/component:classified-decoration-base/classified-lv4"
+</a>
+</p>
+<p>
+T:".png link=#]]"
+</p>
+</td>
+<td class="item1 EN">
+</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<div class="scp-image-block block-center scp-clear-false" style="width:700px ;">
+<p>
+T:"[[image Apollo13_D.jpg"
+<br>
+T:"{$alt}=\"{$alt-text}\" link=#]]"
+</p>
+<div class="scp-image-caption">
+<p>
+T:"ハルトマン霊体撮影機で撮影されたSCP-1970-JP-D-1の写真"
+</p>
+</div>
+</div>
+<hr>
+<p>
+<strong>
+T:"特別収容プロトコル:"
+</strong>
+T:"SCP-1970-JPに関する情報は常に捜索され、民間または宇宙観測機関で何らかの形でSCP-1970-JPが観測されていたことが発覚した場合、情報の規制と秘匿ならびに関係者への記憶処理の施行やカバースト―リーの流布を行います。"
+</p>
+<p>
+T:"オーバーライド・プロトコル実行のために設置された月面サイト-30の秘匿を目的に、財団宇宙科学部門はNASAと協力し、月面画像等を編集した状態にして一般に公開します。オーバーライド・プロトコルの詳細は"
+<em>
+T:"補遺1970-JP.4"
+</em>
+T:"を参照してください。"
+</p>
+<p>
+T:"現在SCP-1970-JPが地球上へ墜落する可能性は極めて低いものとされていますが、墜落予想地点が居住区である場合は洪水等の災害予報などの偽情報を流布して住民を避難させ、オブジェクトが墜落した場合、墜落現場直近のサイトで特別に結成される機動部隊クシー-4 (\"ロストムーン\") がすぐさま現場に出動しオブジェクトを回収します。また、墜落現場周辺に居住する人物には記憶処理を施し、一般にはカバーストーリー「微小隕石の墜落」を流布します。墜落しなかった場合、住民には誤報であったことを伝え避難指令を解きます。"
+</p>
+<p>
+<strong>
+T:"説明:"
+</strong>
+T:"SCP-1970-JPは宇宙空間上に出現するアポロ13号の月着陸船\"アクエリアス\"の複製 (SCP-1970-JP-D-1に指定) と、それに乗船している3名の人型実体 (SCP-1970-JP-A～-Cに指定) の総称です。SCP-1970-JPはクラスΔ霊体"
+<sup class="footnoteref">
+<a class="footnoteref" href="javascript:;" id="footnoteref-1" onclick="WIKIDOT.page.utils.scrollToReference('footnote-1')">
+T:"1"
+</a>
+</sup>
+T:"で構成されており、通常の方法で観測することはできませんが物理的干渉を受け付けます。"
+</p>
+<div class="scp-image-block block-right scp-clear-true" style="width:300px;">
+<p>
+T:"[[image Apollo_13_Prime_Crew.jpg"
+<br>
+T:"{$alt}=\"{$alt-text}\" link=#]]"
+</p>
+<div class="scp-image-caption">
+<p>
+T:"左から順にラヴェル、スワイガート、ヘイズ"
+</p>
+</div>
+</div>
+<p>
+T:"SCP-1970-JP-A～-Cの説明は以下の通りです。"
+<br>
+<br>
+<br>
+</p>
+<ol>
+<li>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"アポロ13号の船長であるジェームズ・A・ラヴェルJr. (James A. Lovell, Jr.) に相当すると推測される人型実体です。"
+</li>
+<li>
+<strong>
+T:"SCP-1970-JP-B:"
+</strong>
+T:"同船の司令船操縦士であるジョン・L・スワイガートJr. (John L. Swigert, Jr.) に相当すると推測される人型実体です。"
+</li>
+<li>
+<strong>
+T:"SCP-1970-JP-C:"
+</strong>
+T:"同船の月着陸船操縦士のフレッド・W・ヘイズJr. (Fred W. Haise, Jr.) に相当すると推測される人型実体です。"
+</li>
+</ol>
+<p>
+<br>
+<br>
+</p>
+<div class="scp-image-block block-right scp-clear-true" style="width:300px;">
+<p>
+T:"[[image Apollo13_Route.jpg"
+<br>
+T:"{$alt}=\"{$alt-text}\" link=#]]"
+</p>
+<div class="scp-image-caption">
+<p>
+T:"実際のアポロ13号の周回ルート"
+</p>
+</div>
+</div>
+<p>
+T:"毎月13日の午前3時7分53秒"
+<sup class="footnoteref">
+<a class="footnoteref" href="javascript:;" id="footnoteref-2" onclick="WIKIDOT.page.utils.scrollToReference('footnote-2')">
+T:"2"
+</a>
+</sup>
+T:"になると、SCP-1970-JPは月を基準におよそアポロ13号の酸素タンク爆発事故発生地点と同様の宇宙空間上の地点"
+<sup class="footnoteref">
+<a class="footnoteref" href="javascript:;" id="footnoteref-3" onclick="WIKIDOT.page.utils.scrollToReference('footnote-3')">
+T:"3"
+</a>
+</sup>
+T:"に出現します。このとき、出現箇所では瞬間的かつ急激な"
+<a href="/and-this-one-explains-humes">
+T:"ヒューム値"
+</a>
+T:"(以下\"Hm値\"と略記) の低下が発生します"
+<sup class="footnoteref">
+<a class="footnoteref" href="javascript:;" id="footnoteref-4" onclick="WIKIDOT.page.utils.scrollToReference('footnote-4')">
+T:"4"
+</a>
+</sup>
+T:"。出現したSCP-1970-JPはアポロ13号の事故発生後の周回ルートとほぼ同様のルートを通り地球へと接近し、最終的にSCP-1970-JP-D-1から司令船\"オデッセイ\" (SCP-1970-JP-D-2に指定、両船を総称してSCP-1970-JP-Dとする) を切り離し大気圏に突入します。"
+<span style="text-decoration: line-through;">
+T:"現在までSCP-1970-JPが大気圏を突破したケースは存在しておらず、常に大気との摩擦により焼失しています。"
+</span>
+<em>
+T:"補遺1970-JP.3"
+</em>
+T:"を参照してください。"
+<br>
+<br>
+<br>
+T:"SCP-1970-JPはアポロ13号の酸素タンク爆発事故発生当時を再現した状態で出現を繰り返していると考えられていますが、それにもかかわらずSCP-1970-JP-A～-Cは出現毎に以前の記憶を維持しています。また、発見当初のSCP-1970-JP-Dには実際の機体と比較して以下の差異が見られました。"
+</p>
+<ul>
+<li>
+T:"温度計が存在していない。"
+</li>
+<li>
+T:"着陸用パラシュートが存在していない。"
+</li>
+<li>
+T:"クルーの操作に関係なく周回ルートを未知の方法で移動する。"
+</li>
+</ul>
+<p>
+<strong>
+T:"補遺1970-JP.1:"
+</strong>
+T:"発見"
+</p>
+<p>
+T:"1970/05/13"
+<sup class="footnoteref">
+<a class="footnoteref" href="javascript:;" id="footnoteref-5" onclick="WIKIDOT.page.utils.scrollToReference('footnote-5')">
+T:"5"
+</a>
+</sup>
+T:"に宇宙空間で瞬間的なHm値の低下が観測されて以来、1か月周期で同様の現象が確認されていました。現象発生ごとの共通点として、毎月17日に不可視の実体が大気圏に突入し燃え尽きていることも同じく観測されていたため、財団宇宙科学部門は何かしらの実体がHm値の低下とともに出現していると推定し、調査を開始しました。"
+</p>
+<p>
+T:"1970/11/13に発生したHm値低下の際、宇宙科学部門はいくつかの観測機器の中からハルトマン霊体撮影機を用いてオブジェクトの観測に成功し、アポロ13号の月着陸船に実体が酷似していることを確認しました。その後実体はSCP-1970-JPに指定されました。またこのとき、宇宙科学部門はSCP-1970-JPから発せられていた無線電波を傍受することによりコンタクトに成功しました。"
+</p>
+<p>
+T:"以下は初期接触時の対話ログです。当接触時の財団側の話者は宇宙科学部門所属のアリア博士でした。"
+</p>
+<blockquote>
+<p style="text-align: center;">
+<span style="text-decoration: underline;">
+<strong>
+T:"ログ1970-JP.1"
+</strong>
+</span>
+</p>
+<hr>
+<p>
+T:"[記録開始]"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"ヒューストン、ヒューストン。応答せよ。ヒューストン、誰かいないのか！"
+</p>
+<p>
+<strong>
+T:"アリア博士:"
+</strong>
+T:"あなたたちは何者ですか。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"ヒューストンなのか！？こちらアポロ13号！今、明らかな異常事態のさなかにある。"
+</p>
+<p>
+T:"("
+<em>
+T:"ここでジョンソン宇宙センター管制室を装いSCP-1970-JPとコンタクトを図ることが指示される"
+</em>
+T:")"
+</p>
+<p>
+<strong>
+T:"アリア博士:"
+</strong>
+T:"わかりました。アポロ13号、状況をできる限り詳細に伝えてください。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"ああ、ああ、わかった。既に我々は地球への墜落を繰り返しているらしい。最悪なことに、何も手を加えていないのに着陸船が周回ルートを通って、操作を受け付けてくれない。しかも着陸船が地球の大気との摩擦に耐え切れないらしく、何度も燃え尽きている。ここはあまりにも寒すぎるし、大気圏突入のときは文字通りに身が焼ける。クソッ。一体何が起こっているんだ、頼む説明してくれ。"
+</p>
+<p>
+<strong>
+T:"アリア博士:"
+</strong>
+T:"アポロ13号、落ち着いてください。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"すまない。とにかくだ。今我々には到底理解のできない何かが起きている。我々の全員が、酸素タンクの爆発とともに幾度となく目覚めているんだ。もうこれ以上繰り返したくない！ヒューストン、助けてくれ！どうして、どうして地球も月も目前にあるというのに──"
+</p>
+<p>
+<strong>
+T:"アリア博士:"
+</strong>
+T:"このような異常事態は想定の域を完全に超えています。アポロ13号、どうか今は耐えてください。私たちも全力を以て最善を尽くすと誓います。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"ああ、頼むよヒューストン。我々が今頼りにできるのはあなたたちしかいないのだから。"
+</p>
+<p>
+<strong>
+T:"アリア博士:"
+</strong>
+T:"もちろんです。ところで、他の船員の無事はいかがなのでしょうか。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"全員無事だ。いや、無事ではないのだが。酸素タンク爆発と同時に全部元通りだ。"
+</p>
+<p>
+<strong>
+T:"アリア博士:"
+</strong>
+T:"把握しました。現在のところ、異常事態により地球への帰還を繰り返している、という認識で間違いはありませんね。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"その通りだ。"
+</p>
+<p>
+<strong>
+T:"アリア博士:"
+</strong>
+T:"私たちはアポロ13号の無事を祈っています。緊急で対策を──"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"頼む！早く助けてくれ！"
+</p>
+<p>
+<strong>
+T:"アリア博士:"
+</strong>
+T:"もちろんです。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"ああクソ、待ってくれ。いや、何でもない。[以降聞き取り不可]"
+</p>
+<p>
+T:"("
+<em>
+T:"この時点で無線信号は途絶し、対話は不可能となった"
+</em>
+T:")"
+</p>
+<p>
+T:"[記録終了]"
+</p>
+<hr>
+<p>
+<strong>
+T:"報告:"
+</strong>
+T:"その後SCP-1970-JPは他の事例と同様に17日にSCP-1970-JP-D-2を切り離して大気圏に突入し、焼失した。"
+</p>
+</blockquote>
+<p>
+<strong>
+T:"補遺1970-JP.2:"
+</strong>
+T:"初版特別収容プロトコルについて"
+</p>
+<p>
+T:"1970/11/20、財団はSCP-1970-JPの収容方法考案のためアメリカ航空宇宙局 (以下\"NASA\") と協力体制を確立しました。以下はその状況下で作成されたアーカイブ済初期報告書の一部です。"
+</p>
+<div class="block-1">
+<p>
+<strong>
+T:"アイテム番号:"
+</strong>
+T:"SCP-1970-JP"
+</p>
+<p>
+<strong>
+T:"オブジェクトクラス:"
+</strong>
+T:"Euclid"
+</p>
+<p>
+<strong>
+T:"特別収容プロトコル:"
+</strong>
+T:"民間に広まる情報は常に捜索され、一般人がSCP-1970-JPを何らかの形で観測していたことが確認された場合、状況に応じて記憶処理の実行もしくはカバーストーリー「スペースデブリの大気圏突入」を適用し隠蔽します。また、財団はNASAと協力し、隠蔽が困難な規模でSCP-1970-JPの存在が民間に知られる状況が発生した場合に備え、公開可能な宇宙観測情報に偽装情報を含めて一般に公開し、SCP-1970-JPの存在の隠蔽を図ります。"
+</p>
+<p>
+T:"SCP-1970-JPが大気圏を突破し地上に墜落した場合、墜落現場直近のサイトで特別に結成される機動部隊クシー-4 (\"ロストムーン\") がすぐさま現場に出動しオブジェクトを回収します。また、墜落現場周辺に居住する人物には記憶処理を施し、一般にはカバーストーリー「微小隕石の墜落」を流布します。"
+</p>
+<p>
+T:"SCP-1970-JP-A～-CとのコンタクトはSCP-1970-JPに関する情報を収集するため可能な限り実行されます。実体が記憶を維持した状態で再出現を繰り返しているため、実体に不安/疑念を持たせずコンタクトを円滑に進める目的で、対話は常にNASAの人物によるものという状況設定下で行われます。"
+</p>
+</div>
+<p>
+T:"特別収容プロトコルの実行の他、SCP-1970-JPとの物理的接触の試みおよびオブジェクトの回収作戦が宇宙科学部門により考案されていましたが、後述するインシデント1970-JPの発生のため緊急的に見直しと改定が行われました。"
+</p>
+<p>
+<strong>
+T:"補遺1970-JP.3:"
+</strong>
+T:"インシデント1970-JP"
+</p>
+<p>
+T:"1978/02/17、SCP-1970-JPが大気圏を突破し太平洋上に墜落する事案が発生しました。以前よりSCP-1970-JPが大気圏に突入してから焼失するまでの経過時間が延びていることが指摘されていましたが、完全に突破したケースはこのインシデントが初めてのことでした。"
+</p>
+<p>
+T:"SCP-1970-JPの墜落地点は周辺海域の状況などの情報を基に同定されましたが、クラスΔ霊体で構成されたエクトプラズムが発見されるのみでオブジェクト自体の発見には至りませんでした。インシデント発生から1か月後、SCP-1970-JPは再び宇宙空間上に再出現し、当インシデントと同様のプロセスを経て大気圏を突破し、アメリカ合衆国████公園の森林地帯に墜落しました。このとき、2名の一般人の死亡が確認されています。その後SCP-1970-JPの捜索が再び行われましたが、同様に発見することには失敗しています。"
+</p>
+<p>
+T:"SCP-1970-JPがハルトマン霊体撮影機のみで観測されること、並びに発見されたエクトプラズムから、オブジェクトがクラスΔ霊体で構成されていると判断されました。また、回収されたエクトプラズムは新たに宇宙空間にSCP-1970-JPが出現するたびに消失し、保管は現在のところ不可能であると報告されています。"
+</p>
+<p>
+T:"以下はインシデント発生直後に行われた対話の記録です。財団側の話者はマシュー研究員でした。"
+</p>
+<blockquote>
+<p style="text-align: center;">
+<span style="text-decoration: underline;">
+<strong>
+T:"ログ1970-JP.14"
+</strong>
+</span>
+</p>
+<hr>
+<p>
+T:"[記録開始]"
+</p>
+<p>
+<strong>
+T:"マシュー研究員:"
+</strong>
+T:"こちら管制室。アポロ13号、調子はどうだ。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-B:"
+</strong>
+T:"悪くないね。今日は月が綺麗だ。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"いつも綺麗さ。"
+</p>
+<p>
+<strong>
+T:"マシュー研究員:"
+</strong>
+T:"何か変わったことはなかったか。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"いいや、特にない。"
+</p>
+<p>
+<strong>
+T:"マシュー研究員:"
+</strong>
+T:"了解した。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-C:"
+</strong>
+T:"ところでだ。我々を救助するためのプロジェクトはどれくらい進行しているんだ？"
+</p>
+<p>
+<strong>
+T:"マシュー研究員:"
+</strong>
+T:"半ば、といったところだ。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-C:"
+</strong>
+T:"ハッ、最悪だな。我々は一体何度地球へと落ちて行く必要があるのだろうか。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"いやフレッド。これを最悪と言えるのなら、こんなことは真の最悪ではないのさ。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-C:"
+</strong>
+T:"……ジェームズ、何が言いたいんだ。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"いや、つまりだ。もっと最悪なことがあるだろうって考えれば、少しは心が楽になるだろうってことさ。そう、我々は選ばれしアポロ13号のクルーだ。なんとしてでも地球へ帰還するんだ。人類のため、アメリカのため、そして何より、地球で待つ家族のため──"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-B:"
+</strong>
+T:"おいジェームズ！俺は独身だぞ！"
+</p>
+<p>
+T:"("
+<em>
+T:"笑い声が聴き取れる"
+</em>
+T:")"
+</p>
+<p>
+<strong>
+T:"マシュー研究員:"
+</strong>
+T:"元気そうだな。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-C:"
+</strong>
+T:"まあな。我々は今、地球も月も最も綺麗に見える特等席にいるんだ。楽しまないと。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"管制室、聞いてくれ。そろそろ電池残量の節約のため通信を終了する。そして、大気圏突入の際にもう一度連絡する予定でいる。憶えておいてくれ。"
+</p>
+<p>
+<strong>
+T:"マシュー研究員:"
+</strong>
+T:"了解。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-B:"
+</strong>
+T:"今回は何だか上手くいきそうな気がするな。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"ああ。"
+</p>
+<p>
+T:"[記録終了]"
+</p>
+</blockquote>
+<div class="block-1">
+<p style="text-align: center;">
+<span style="text-decoration: underline;">
+<strong>
+T:"マローア博士の提言"
+</strong>
+</span>
+</p>
+<p>
+T:"彼らの心理状態とSCP-1970-JP-Dの耐久性には関係性があると私は考えます。"
+</p>
+<p>
+T:"ついにSCP-1970-JPは大気圏を突破してしまいました。これは由々しき事態であると断言できます。なぜなら、1か月毎に地球上のどこかに不可視の隕石が落ちてくるようなものなのですから。"
+</p>
+<p>
+T:"その耐久性を除いてSCP-1970-JPに関して大きな変化が見られたことと言えば、クルーの心理状態のみでしょう。私は、このことがSCP-1970-JPが大気圏を突破することが出来た1つの要因であると考えています。"
+</p>
+<p>
+T:"我々はSCP-1970-JPについて知るために数度の対話を行ってきました。その内容は決して慣れ合いのようなものではありませんでしたが、その行為自体が宇宙空間を漂う難破船のクルーを励ましてしまったのだと思います。きっと我々が干渉せず放置しておけば、彼らは絶望の中で自然に\"死\"を求めたでしょう。しかし、彼らの発言から絶望を感じられるでしょうか？"
+</p>
+<p>
+T:"彼らはこのような状況下でも、必死に\"生\"を求めているのです。そういう心理状況を生み出したのは──もちろん身元を隠しているとはいえ──他でもない我々財団です。我々の存在そのものが、彼らにとっての\"希望\"となっているのです。"
+</p>
+<p>
+T:"無論断定できる話ではありませんが、私はこの説を提唱します。"
+</p>
+</div>
+<p>
+T:"当インシデント以降SCP-1970-JPが大気圏を突破するケースが増加したため、Keterに再分類されました。以降の墜落現場と人的被害などの情報については"
+<em>
+T:"付属資料1970-JP.α"
+</em>
+T:"を参照してください。"
+</p>
+<p>
+<strong>
+T:"補遺1970-JP.4:"
+</strong>
+<br>
+</p>
+<div style="text-align: center;">
+<h3 id="toc0">
+<span>
+<strong>
+T:"オーバーライド・プロトコル"
+</strong>
+</span>
+</h3>
+</div>
+<div class="block-2">
+<p style="text-align: center;">
+<span style="text-decoration: underline;">
+<strong>
+T:"LEVEL 4/1970-JP CLASSIFIED"
+</strong>
+</span>
+</p>
+<hr>
+<p>
+<strong>
+T:"前記:"
+</strong>
+T:"オーバーライド・プロトコルは1979/01/04に財団宇宙科学部門所属のマローア博士により提案されたものです。"
+</p>
+<p>
+<strong>
+T:"概要:"
+</strong>
+T:"月の裏側に存在する\"夕焼けの湖\"に、月面サイト-30と機動部隊オミクロン-8 (\"ブルームーン\") が設置されます。当機動部隊のメンバーは、NASAと財団外宇宙支部の担当審査員による審査に合格した他の機動部隊隊員6名が選出され、該当サイトで1年間の勤務にあたります。"
+</p>
+<p>
+T:"選出基準は以下の通りです。"
+</p>
+<ul>
+<li>
+T:"射撃能力テストにおいて90%以上のスコアを得ている"
+</li>
+<li>
+T:"視力が両目ともに2.0以上である"
+</li>
+<li>
+T:"何らかの負傷を負っていない、またはそれが既に完治している"
+</li>
+<li>
+T:"[審査員にのみ公開]"
+</li>
+<li>
+T:"[審査員にのみ公開]"
+</li>
+</ul>
+<p>
+T:"選ばれた機動部隊隊員は毎月13日に3か所の指定月面エリアに移動し、SCP-1970-JPを迎撃することでオブジェクトの軌道を強制的に変更し、地球への接近を阻止します。迎撃の際、隊員は必ずハルトマン霊体撮影機と宇宙空間用銃器OR-11の使用が求められます。軌道変更に失敗した場合、すぐさまその旨を当月のSCP-1970-JP担当サイトに報告します。"
+</p>
+<p>
+T:"月ごとの担当サイトはSCP-1970-JPから発せられる無線を全て傍受/記録し、基本的には無視します。軌道変更に失敗しSCP-1970-JPが地球へと接近した場合、担当サイトの職員は鬱誘発性聴覚ミームを音声に載せて通信を行う、または通常通り無視します。これらの判断はSCP-1970-JP収容担当職員の指示に従う必要があります。"
+</p>
+<p>
+T:"NASAは財団宇宙科学部門と協力し、月面写真などの公開情報を常に編集し\"夕焼けの湖\"を秘匿します。"
+</p>
+<p>
+<strong>
+T:"目的:"
+</strong>
+T:"SCP-1970-JPの性質上、オブジェクトの直接的な回収は無意味であると判断されました。そのため、当プロトコルの主な目的は、SCP-1970-JPの軌道を強制的に変更し地球から遠ざけ大気圏突入を阻止することにあります。また、当プロトコルを実行することでSCP-1970-JP-Dの耐久性変化を調査することも目的です。"
+</p>
+</div>
+<p>
+<strong>
+T:"補遺1970-JP.5:"
+</strong>
+T:"無線傍受記録"
+</p>
+<p>
+T:"以下はオーバーライド・プロトコル実行後にSCP-1970-JPから発せられた無線通信の記録の抜粋です。"
+</p>
+<blockquote>
+<p>
+<strong>
+T:"日付:"
+</strong>
+T:"1979/04/13"
+</p>
+<hr>
+<p>
+T:"[記録開始]"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"管制室、聞こえているか。ここ最近は大気圏を突破することが可能になってきているようだ、どういう原理かは全くわからないが。おかげで全員、希望で満ち溢れているよ。ところで、そろそろ我々を救助するプロジェクトは大詰めになってきたのではないだろうか？"
+</p>
+<p>
+T:"("
+<em>
+T:"プロトコルに従い、鬱誘発性聴覚ミームを音声に載せた状態で会話が行われる"
+</em>
+T:")"
+</p>
+<p>
+<strong>
+T:"マローア博士:"
+</strong>
+T:"突然ですが伝えなければならないことがあります。まず、私たちはNASAの人間ではありません。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"何？"
+</p>
+<p>
+<strong>
+T:"マローア博士:"
+</strong>
+T:"あなたたちを地球へと帰還させるプロジェクトは、諸事情により没案となりました。つまり、私たち、ひいてはNASAの職員たちはアポロ13号のクルーを救出することを諦めました。"
+</p>
+<p>
+T:"("
+<em>
+T:"騒めきが聴き取れる"
+</em>
+T:")"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"待て、待つんだ。話が唐突すぎて理解できない。"
+</p>
+<p>
+<strong>
+T:"マローア博士:"
+</strong>
+T:"申し訳ありません。どうか私たちを許してください。"
+</p>
+<p>
+T:"("
+<em>
+T:"以降無視が行われる"
+</em>
+T:")"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"待ってくれ、我々の今までの努力は一体何だったというのか！頼む、助けてくれ！聞こえないのか！？"
+</p>
+<p>
+T:"("
+<em>
+T:"沈黙が続く"
+</em>
+T:")"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"……クソッタレ。"
+</p>
+<p>
+T:"("
+<em>
+T:"通信が切断される"
+</em>
+T:")"
+</p>
+<p>
+T:"[記録終了]"
+</p>
+<hr>
+<p>
+<strong>
+T:"報告:"
+</strong>
+T:"1979/04/17、SCP-1970-JPは大気圏を突破し██████砂漠に墜落した。墜落現場からはクラスΔ霊体が検出された。"
+</p>
+</blockquote>
+<blockquote>
+<p>
+<strong>
+T:"日付:"
+</strong>
+T:"1979/05/14"
+</p>
+<hr>
+<p>
+T:"[記録開始]"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-C:"
+</strong>
+T:"聞いてくれ！月に宇宙服を着た人間がいて、見たことのない武装をして攻撃をしてきたんだ。船長が衝撃で飛んできた船のパーツにやられて意識がない。管制室、アレはどういうことだ！"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-B:"
+</strong>
+T:"我々は今、地球から遠ざかっている。何としても我々を帰らせないつもりなのか？"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-C:"
+</strong>
+T:"いいか、我々は何度だって挑戦する。諦めないからな！"
+</p>
+<p>
+T:"("
+<em>
+T:"通信が切断される"
+</em>
+T:")"
+</p>
+<p>
+T:"[記録終了]"
+</p>
+<hr>
+<p>
+<strong>
+T:"報告:"
+</strong>
+T:"通信後、SCP-1970-JPは機動部隊により周回ルートから外され、凡そ太陽の方向へ飛ばされたことが確認された。"
+</p>
+</blockquote>
+<blockquote>
+<p>
+<strong>
+T:"日付:"
+</strong>
+T:"1979/09/13"
+</p>
+<hr>
+<p>
+T:"[記録開始]"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"管制室、どうせ聞いているんだろう？もう長い間我々は地球への帰還ミッションを繰り返してきた。もちろん不安だったが、ここまで死を恐れずに帰還の努力を続けることが出来たのは、あなたたちのおかげだった。地球から話掛けてくれるだけでも、我々にとっては十分だった。"
+</p>
+<p>
+T:"("
+<em>
+T:"沈黙が続く"
+</em>
+T:")"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"しかし、あなたたちは私たちを見捨てた。今までは我々の心に希望の光が指していたが、一瞬にしてその希望は無くなってしまったのかもしれない。あるいは、我々が単純に疲れてしまったのだろう。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"死にたくはない。だが、生きるための手段がなくなってしまったように感じている。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"我々は、どうしたらよいのだろうか。なあ、[不明瞭な発言]"
+</p>
+<p>
+T:"("
+<em>
+T:"通信が切断される"
+</em>
+T:")"
+</p>
+<p>
+T:"[記録終了]"
+</p>
+<hr>
+<p>
+<strong>
+T:"報告:"
+</strong>
+T:"1979/09/17、SCP-1970-JPは大気圏を突破することなく焼失した。オーバーライド・プロトコル実行以降初のケースである。"
+</p>
+</blockquote>
+<blockquote>
+<p>
+<strong>
+T:"日付:"
+</strong>
+T:"1983/01/13"
+</p>
+<hr>
+<p>
+T:"[記録開始]"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-C:"
+</strong>
+T:"聞いてくれ、スワイガートがいなくなってしまった。一体何が起きているんだ。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"我々に生きることを諦めろということなのかもしれない。もしくは、彼だけが先に救われた、そう信じよう。"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-C:"
+</strong>
+T:"クソッ、クソッ。俺には受け入れられない。"
+</p>
+<p>
+T:"("
+<em>
+T:"以降無線が入った状態が維持されるが、発言は無かった"
+</em>
+T:")"
+</p>
+<p>
+T:"[記録終了]"
+</p>
+<hr>
+<p>
+<strong>
+T:"報告:"
+</strong>
+T:"その後機動部隊によりSCP-1970-JPは周回ルートを外された。また、SCP-1970-JP-Cの発言と同様にSCP-1970-JP-Bの消失、並びに酸素タンク数の減少も確認された。特筆すべきこととして、1982/12/27にジョン・L・スワイガートJr. が非異常性の要因により死亡している。このことから、実際のアポロ13号のクルーの死亡に対応してオブジェクトが自発的に無力化される可能性が浮上した。"
+</p>
+</blockquote>
+<blockquote>
+<p>
+<strong>
+T:"日付:"
+</strong>
+T:"1998/06/13"
+</p>
+<p>
+<strong>
+T:"注記:"
+</strong>
+T:"これが現在のところSCP-1970-JPより発せられた最後の無線連絡である。"
+</p>
+<hr>
+<p>
+T:"[記録開始]"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"久々の通信だが聞いてほしい、ヒューストン。我々にはもう、声を発する気力もない。"
+</p>
+<p>
+T:"("
+<em>
+T:"沈黙"
+</em>
+T:")"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"なあヒューストン、教えてくれ。どうして、どうしてなんだ。地球も月もこんなに近いというのに。どうしてこんなに、遠いのだろうか。"
+</p>
+<p>
+T:"("
+<em>
+T:"沈黙"
+</em>
+T:")"
+</p>
+<p>
+<strong>
+T:"SCP-1970-JP-A:"
+</strong>
+T:"我々はただ、帰りたかったんだ。"
+</p>
+<p>
+T:"("
+<em>
+T:"以降無線が入った状態が維持されるが、発言は無かった"
+</em>
+T:")"
+</p>
+<p>
+T:"[記録終了]"
+</p>
+<hr>
+<p>
+<strong>
+T:"報告:"
+</strong>
+T:"その後機動部隊によりSCP-1970-JPは周回ルートを外された。また、明らかにSCP-1970-JP-Dの耐久性が落ちているようであり、機動部隊の迎撃で機体に大きな損傷を負っていることが見受けられた。"
+</p>
+</blockquote>
+<p>
+<strong>
+T:"追記 - 2001/01/01:"
+</strong>
+T:"SCP-1970-JP-Dの耐久性が大気圏突入に耐え得るものではなくなったことが確認されたため、オーバーライド・プロトコルの一部解除が提案されています。また、以降もオブジェクトの挙動を観察し危険性が低いものと判断された場合、もしくは存命のアポロ13号のクルーのどちらかが死亡しオブジェクトに無力化の兆候が見られた場合、同プロトコルの全解除が承認される予定です。"
+</p>
+<p>
+<br>
+</p>
+<div class="footnotes-footer">
+<div class="title">
+T:"Footnotes"
+</div>
+<div class="footnote-footer" id="footnote-1">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('footnoteref-1')">
+T:"1"
+</a>
+T:". 発生/作成方法不明の霊体。その詳細については大部分が未解明であるが、クラスΔ霊体で構成される実体の多くは、存命の生命体に類似する、一般的に\"生霊\"と呼ばれる形態を取っている。"
+</div>
+<div class="footnote-footer" id="footnote-2">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('footnoteref-2')">
+T:"2"
+</a>
+T:". 協定世界時 (UTC)"
+</div>
+<div class="footnote-footer" id="footnote-3">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('footnoteref-3')">
+T:"3"
+</a>
+T:". 地球から321,860km上空。"
+</div>
+<div class="footnote-footer" id="footnote-4">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('footnoteref-4')">
+T:"4"
+</a>
+T:". およそ0.5～0.6Hmまで低下する。"
+</div>
+<div class="footnote-footer" id="footnote-5">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('footnoteref-5')">
+T:"5"
+</a>
+T:". アポロ13号の酸素タンク爆発事故が発生して丁度1か月後である。"
+</div>
+</div>

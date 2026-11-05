@@ -1,0 +1,133 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "credit:start",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:classified-decoration",
+     "site": "scp-jp",
+     "variables": {
+      "item": "1970-JP\n",
+      "lang": "EN\n",
+      "lv": "4\n",
+      "oc": "Keter\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center\n",
+      "caption": "ハルトマン霊体撮影機で撮影されたSCP-1970-JP-D-1の写真\n",
+      "name": "Apollo13_D.jpg\n",
+      "width": "700px\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "caption": "左から順にラヴェル、スワイガート、ヘイズ\n",
+      "clear": "true\n",
+      "name": "Apollo_13_Prime_Crew.jpg\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "caption": "実際のアポロ13号の周回ルート\n",
+      "clear": "true\n",
+      "name": "Apollo13_Route.jpg\n"
+     }
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:classified-decoration-base",
+     "site": "scp-jp",
+     "variables": {
+      "item": "1970-JP\n\n",
+      "lang": "EN\n\n",
+      "langEN": "false\n",
+      "lv": "4\n\n",
+      "oc": "Keter\n\n",
+      "trans-classified": "false\n",
+      "trans-level": "false\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center\n",
+      "caption": "ハルトマン霊体撮影機で撮影されたSCP-1970-JP-D-1の写真\n",
+      "clear": "false",
+      "link": "#",
+      "name": "Apollo13_D.jpg\n",
+      "width": "700px\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "左から順にラヴェル、スワイガート、ヘイズ\n",
+      "clear": "true\n",
+      "link": "#",
+      "name": "Apollo_13_Prime_Crew.jpg\n",
+      "width": "300px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "実際のアポロ13号の周回ルート\n",
+      "clear": "true\n",
+      "link": "#",
+      "name": "Apollo13_Route.jpg\n",
+      "width": "300px"
+     }
+    }
+   ],
+   "pass": 2
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 3
+  }
+ ],
+ "existing_pages_from_live": [
+  "and-this-one-explains-humes"
+ ],
+ "newpage_links_in_live": []
+}

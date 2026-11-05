@@ -1,0 +1,99 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "credit:start",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "caption": "記録511-JP_3を参照",
+      "name": "じょうじゅうえくう"
+     }
+    },
+    {
+     "found": true,
+     "page": "html5player",
+     "site": "snippets",
+     "variables": {
+      "type": "audio\n",
+      "url": "https://scp-jp.wdfiles.com/local--files/scp-511-jp/%E3%81%8D%E3%81%94"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "caption": "00:23",
+      "name": "わくごっく"
+     }
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "記録511-JP_3を参照",
+      "clear": "false",
+      "link": "#",
+      "name": "じょうじゅうえくう",
+      "width": "300px"
+     }
+    },
+    {
+     "found": false,
+     "page": "html5audio",
+     "site": "snippets",
+     "variables": {
+      "autoplay": "{$autoplay_{$autoplay}}\n",
+      "autoplay_true": "autoplay\n",
+      "url": "https://scp-jp.wdfiles.com/local--files/scp-511-jp/%E3%81%8D%E3%81%94\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "00:23",
+      "clear": "false",
+      "link": "#",
+      "name": "わくごっく",
+      "width": "300px"
+     }
+    }
+   ],
+   "pass": 2
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 3
+  }
+ ],
+ "existing_pages_from_live": [],
+ "newpage_links_in_live": []
+}

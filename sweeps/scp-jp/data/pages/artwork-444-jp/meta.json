@@ -1,0 +1,81 @@
+{
+ "kind": "tale",
+ "listed_size": 3655,
+ "live_page_content_sha256": "4f31035669ef8f2e140bc3d6860616779502a16b75116e812cebc864257a61e4",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:24:13+00:00",
+  "method": "GET",
+  "response_bytes": 37024,
+  "response_sha256": "b732bfe3f7d7a1e115db76ae7563b98b5399bf62028579c29511e46c4380412f",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/artwork-444-jp"
+ },
+ "page_id": 324192645,
+ "rating": 260,
+ "site": "scp-jp",
+ "slug": "artwork-444-jp",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:24:14+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "324192645"
+  },
+  "response_bytes": 11563,
+  "response_sha256": "49fc6fd98408df2be7bb711a28507c7cd47efe27406b9fc7293e5b1cd76620cd",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "15de3c3ad7f0483798d968c0305c4a5cc5d73867aa91e07caa23bc2d34bb03d8",
+ "stats": {
+  "counts": {
+   "anchor": 0,
+   "blocks": 76,
+   "bold": 14,
+   "cjk_dash_pair": 0,
+   "cjk_emphasis": 11,
+   "collapsible": 2,
+   "color": 0,
+   "css": 1,
+   "div": 3,
+   "ellipsis_dash": 5,
+   "footnote": 0,
+   "fullwidth_space": 0,
+   "heading": 0,
+   "hr": 0,
+   "html": 0,
+   "iftags": 0,
+   "image": 3,
+   "include": 2,
+   "italic": 0,
+   "link3": 0,
+   "list": 2,
+   "module": 2,
+   "mono": 2,
+   "quote": 10,
+   "raw": 162,
+   "ruby": 0,
+   "size": 20,
+   "span": 1,
+   "strike": 5,
+   "sup_sub": 0,
+   "table": 0,
+   "tabview": 0,
+   "underline": 2
+  },
+  "density_per_kchar": 87.0,
+  "markup_tokens": 318
+ },
+ "title": "発見されてしまった文書 ████-444-JP",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "324192645",
+  "pageUnixName": "artwork-444-jp",
+  "requestPageName": "artwork-444-jp",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

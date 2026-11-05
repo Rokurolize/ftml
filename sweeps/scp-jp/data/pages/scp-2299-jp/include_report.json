@@ -1,0 +1,207 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "theme:black-highlighter-theme",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:centered-header-bhl",
+     "site": "scp-wiki",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:toggle-sidebar-bhl",
+     "site": "scp-wiki",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:start",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "info-bar-pon",
+     "site": "scp-pon",
+     "variables": {
+      "authorPage": "https://scp-jp.wikidot.com/author:ponhiro\n",
+      "comments": "= //**SCP-2299-JP** - [[span class=\"ruby\"]]正常恐怖症[[span class=\"rt\"]]Sanitophobia[[/span]][[/span]]//\n\n= //[[span class=\"ruby\"]]正常[[span class=\"rt\"]]Sanity[[/span]][[/span]]が何かなど、誰一人として知らない。//\n-----\nこれは、私の実体験に基づいて書かれた作品であり、自著の中で初めて大きく評価された作品でもある。内容は酷くリアリティに欠けていると思うかもしれないが、それでも確かに私が体験したものである。\n\n忘れがちだが、フィクションの“リアリティ”というのは主観的な許容値に過ぎず、「事実」という意味の“リアリティ”とは全く違うものである。この作品において描かれた“リアリティ”は後者の方である。そのため、ここで描かれたものの幾つかはきっと、読者にとって信じがたい事かもしれない。\n\nリストカットだけは私の古い友人が経験した事だが、本文にて描写されたものや情動の変化は、私の経験と主観に基づいてありのままを描いている。被害者だと思っていた自分が加害者になっていく過程、嫌なものに対する依存、自分が既に正しい側にいないと気付いた時の感情や行動、愛情の誤認など。\n\n私達は自分が思うよりも遥かに不自然で不合理な存在であり、それは己が受け入れられない物事に直面した時ほど、自分が正常な人間だと思っている人ほど浮き彫りになる。誰も正常が何かを知らないし、正常をどう定義すべきかも、正常を保つ方法も、何ひとつとして知らないのだ。\n\nこの作品を通して描いた「相互監視」というものは、将来的に社会問題として提起される可能性を孕んだテーマである。誰しもコンテンツとして見られる事に辟易しているが、一方で自分が誰かをコンテンツとして見たいという衝動を持ち合わせている。それらの矛盾はインターネットと合わさる事で、より深刻で複雑な問題へと変容していく。\n\nもし貴方が似たような矛盾や問題に直面したり、将来これが社会問題として提起された時、この作品をふと思い返してくれる事をどうか願っている。\n\nお読みいただきありがとうございました。\n",
+      "lang": "jp\n",
+      "page": "scp-2299-jp\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:classified-bar-woed",
+     "site": "scp-wiki",
+     "variables": {
+      "item": "2299-JP ",
+      "lang": "EN\n",
+      "lv": "2 ",
+      "oc": "Keter "
+     }
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:interwiki-style",
+     "site": "scp-jp",
+     "variables": {
+      "priority": "1\n",
+      "theme": "https://scp-jp.github.io/Black-Highlighter/css/min/normalize.min.css\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:interwiki-style",
+     "site": "scp-jp",
+     "variables": {
+      "priority": "2\n",
+      "theme": "https://scp-jp.github.io/Black-Highlighter/css/min/black-highlighter.min.css\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "credit:start-preview",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end-preview",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:theme-squares",
+     "site": "scp-jp",
+     "variables": {
+      "-": "-\n",
+      "color1-has-light-text": "1\n",
+      "color1-info": "(66, 66, 72)\n",
+      "color1-name": "Payne's Grey\n",
+      "color1-variable": "--gray-monochrome\n",
+      "color2-has-light-text": "1\n",
+      "color2-info": "(133, 0, 5)\n",
+      "color2-name": "Rosewood\n",
+      "color2-variable": "--bright-accent\n",
+      "subcolor1-info": "(215, 215, 215)\n",
+      "subcolor1-name": "Alto\n",
+      "subcolor1-variable": "--very-light-gray-monochrome\n",
+      "subcolor2-info": "(244, 244, 244)\n",
+      "subcolor2-name": "White Smoke\n",
+      "subcolor2-variable": "--pale-gray-monochrome\n",
+      "subcolor3-has-light-text": "1\n",
+      "subcolor3-info": "(48, 48, 52)\n",
+      "subcolor3-name": "Bastille\n",
+      "subcolor3-variable": "--dark-gray-monochrome\n",
+      "subcolor4-has-light-text": "1\n",
+      "subcolor4-info": "(100, 46, 44)\n",
+      "subcolor4-name": "Buccaneer\n",
+      "subcolor4-variable": "--medium-accent\n",
+      "subcolor5-has-light-text": "1\n",
+      "subcolor5-info": "(100, 3, 15)\n",
+      "subcolor5-name": "Maroon\n",
+      "subcolor5-variable": "--dark-accent\n",
+      "subcolor6-info": "(221, 102, 17)\n",
+      "subcolor6-name": "Mango Tango\n",
+      "subcolor6-variable": "--newpage-color\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "caption": "SCP財団ロゴ",
+      "name": "https://scp-jp.github.io/Black-Highlighter/img/logo.svg",
+      "width": "200px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:interwiki-style",
+     "site": "scp-wiki",
+     "variables": {
+      "priority": "1\n",
+      "theme": "https://nu-scptheme.github.io/Black-Highlighter/css/min/normalize.min.css\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:interwiki-style",
+     "site": "scp-wiki",
+     "variables": {
+      "priority": "2\n",
+      "theme": "https://nu-scptheme.github.io/Black-Highlighter/css/min/black-highlighter.min.css\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:classified-bar-woed-source",
+     "site": "scp-wiki",
+     "variables": {
+      "item": "2299-JP \n",
+      "lang": "EN\n\n",
+      "langEN": "false\n",
+      "lv": "2 \n",
+      "oc": "Keter \n",
+      "trans-classified": "false\n",
+      "trans-level": "false\n"
+     }
+    }
+   ],
+   "pass": 2
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "SCP財団ロゴ",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp.github.io/Black-Highlighter/img/logo.svg",
+      "width": "200px"
+     }
+    }
+   ],
+   "pass": 3
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 4
+  }
+ ],
+ "existing_pages_from_live": [
+  "author:ponhiro",
+  "component:info-ayers"
+ ],
+ "newpage_links_in_live": []
+}

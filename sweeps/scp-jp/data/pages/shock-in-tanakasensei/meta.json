@@ -1,0 +1,81 @@
+{
+ "kind": "tale",
+ "listed_size": 2509,
+ "live_page_content_sha256": "b3abf07dc03e9eb69371ba484698f4fed3c9f726b06bc6e9c28d4aa4508ee851",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:23:32+00:00",
+  "method": "GET",
+  "response_bytes": 40445,
+  "response_sha256": "ff5ed8b13d9a543cdb9c34aeb09b327e494ffc2a2bb88cc344796621f1f383cc",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/shock-in-tanakasensei"
+ },
+ "page_id": 828609712,
+ "rating": 291,
+ "site": "scp-jp",
+ "slug": "shock-in-tanakasensei",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:23:33+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "828609712"
+  },
+  "response_bytes": 9373,
+  "response_sha256": "4957a0350e7630f706415917129d23031eeb478740a9ea63225bdd1d19f043f8",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "27637aa8666086824f6e6f05ab5c29f20fa80c3ca296aef778ba07a5fadae959",
+ "stats": {
+  "counts": {
+   "anchor": 0,
+   "blocks": 36,
+   "bold": 8,
+   "cjk_dash_pair": 0,
+   "cjk_emphasis": 18,
+   "collapsible": 1,
+   "color": 26,
+   "css": 1,
+   "div": 0,
+   "ellipsis_dash": 4,
+   "footnote": 0,
+   "fullwidth_space": 0,
+   "heading": 0,
+   "hr": 1,
+   "html": 0,
+   "iftags": 0,
+   "image": 0,
+   "include": 2,
+   "italic": 54,
+   "link3": 3,
+   "list": 0,
+   "module": 1,
+   "mono": 0,
+   "quote": 44,
+   "raw": 0,
+   "ruby": 0,
+   "size": 0,
+   "span": 13,
+   "strike": 0,
+   "sup_sub": 0,
+   "table": 0,
+   "tabview": 0,
+   "underline": 0
+  },
+  "density_per_kchar": 82.9,
+  "markup_tokens": 208
+ },
+ "title": "Shock in 田中先生",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "828609712",
+  "pageUnixName": "shock-in-tanakasensei",
+  "requestPageName": "shock-in-tanakasensei",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

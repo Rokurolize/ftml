@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:26:37+00:00",
+  "method": "GET",
+  "response_bytes": 94627,
+  "response_sha256": "fef348ab22705cd1a0c9e3783e82af3ca023d2d5987285b9c20b546a2c5cb921",
+  "status": 200,
+  "url": "https://scp-wiki.wikidot.com/component:classified-bar-woed"
+ },
+ "page": "component:classified-bar-woed",
+ "page_id": 761742232,
+ "site": "scp-wiki",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:26:38+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "761742232"
+  },
+  "response_bytes": 54477,
+  "response_sha256": "282ab6c31fbed64568f5759e6f26957044db5312dc004b25eab578bf55a141a9",
+  "status": 200,
+  "url": "https://scp-wiki.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "10fbf0d8911f39993c0f27ce53b84330f91faf39114aae72191109909a428c85"
+}

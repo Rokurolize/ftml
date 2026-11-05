@@ -1,0 +1,121 @@
+{
+ "schema": "wikijump_syntax_differential.ftml_render_result.v1",
+ "case_id": "necos-kitchen",
+ "status": "rendered",
+ "parse_errors": [
+  {
+   "token": "identifier",
+   "rule": "block-div",
+   "span": [
+    1066,
+    1071
+   ],
+   "kind": "rule-failed"
+  },
+  {
+   "token": "left-block",
+   "rule": "fallback",
+   "span": [
+    1020,
+    1022
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "identifier",
+   "rule": "block-div",
+   "span": [
+    1532,
+    1537
+   ],
+   "kind": "rule-failed"
+  },
+  {
+   "token": "left-block",
+   "rule": "fallback",
+   "span": [
+    1471,
+    1473
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "left-block-end",
+   "rule": "fallback",
+   "span": [
+    2300,
+    2303
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-block",
+   "rule": "fallback",
+   "span": [
+    2306,
+    2308
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "left-block-end",
+   "rule": "fallback",
+   "span": [
+    2309,
+    2312
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-block",
+   "rule": "fallback",
+   "span": [
+    2315,
+    2317
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "left-block-end",
+   "rule": "fallback",
+   "span": [
+    3950,
+    3953
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-link",
+   "rule": "fallback",
+   "span": [
+    3959,
+    3962
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "left-block-end",
+   "rule": "fallback",
+   "span": [
+    3998,
+    4001
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-block",
+   "rule": "fallback",
+   "span": [
+    4004,
+    4006
+   ],
+   "kind": "no-rules-match"
+  }
+ ],
+ "engine": {
+  "name": "ftml",
+  "version": "ftml v1.42.1+roku.20261105.5 [c1dc6406]",
+  "package_version": "1.42.1+roku.20261105.5",
+  "git_commit": "c1dc64060a266b7148c029ac6334a7c1c03f916a"
+ }
+}

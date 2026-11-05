@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:27:21+00:00",
+  "method": "GET",
+  "response_bytes": 29837,
+  "response_sha256": "ffd339cf116adb3ed967d278075da680d4208e63068aa322f8af9ce4a8d73a89",
+  "status": 200,
+  "url": "https://scp-wiki.wikidot.com/component:license-box-theme"
+ },
+ "page": "component:license-box-theme",
+ "page_id": 1436870596,
+ "site": "scp-wiki",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:27:22+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "1436870596"
+  },
+  "response_bytes": 362,
+  "response_sha256": "fa3e5f36e04f52e4f3f419ff4d968fea94b57b6c037fe1e4544c4881ba6f82ec",
+  "status": 200,
+  "url": "https://scp-wiki.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "fe760774f2d6809a88a311d8fa8a0813cbe6bc701e933c217b49143e5d057c61"
+}

@@ -1,0 +1,153 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:credit-top-sp",
+     "site": "scp-jp",
+     "variables": {
+      "special": "1st"
+     }
+    },
+    {
+     "found": true,
+     "page": "credit:otherwise",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "aim-st",
+     "site": "pseudo-scp-jp",
+     "variables": {
+      "cc-link": "https://scp-jp-storage.wdfiles.com/local--files/file:5644609-249-kfqr/Chaosphere.png\n",
+      "ha": "2. 許可なき筆記・発声\n",
+      "hi": "1. 指定符号以外での呼称\n",
+      "kei": "情報災害性異常\n",
+      "kin": "↳右記行為を厳に禁ずる\n",
+      "lv": "three\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "{{図 2.1.}} 初代\"管理者\"、W██████ F████。",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A5644609-251-ypb0/FW.jpg",
+      "width": "175px"
+     }
+    },
+    {
+     "found": true,
+     "page": "fragment:scp-4000-jp-stengan774",
+     "site": "scp-jp",
+     "variables": {}
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "credit:start",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "{{図 2.1.}} 初代\"管理者\"、W██████ F████。",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A5644609-251-ypb0/FW.jpg",
+      "width": "175px"
+     }
+    },
+    {
+     "found": true,
+     "page": "aim-st",
+     "site": "pseudo-scp-jp",
+     "variables": {
+      "cc-link": "https://scp-jp-storage.wdfiles.com/local--files/file:5644609-249-kfqr/Chaosphere.png\n",
+      "ha": "2. 許可なき筆記・発声\n",
+      "hi": "1. 指定符号以外での呼称\n",
+      "kei": "情報災害性異常\n",
+      "kin": "↳右記行為を厳に禁ずる\n",
+      "lv": "three\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "{{図 2.1.}} 初代\"管理者\"、W██████ F████。",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A5644609-251-ypb0/FW.jpg",
+      "width": "175px"
+     }
+    }
+   ],
+   "pass": 2
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "{{図 2.1.}} 初代\"管理者\"、W██████ F████。",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A5644609-251-ypb0/FW.jpg",
+      "width": "175px"
+     }
+    }
+   ],
+   "pass": 3
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 4
+  }
+ ],
+ "existing_pages_from_live": [
+  "about-the-scp-foundation",
+  "are-we-cool-yet-hub",
+  "author:stengan774",
+  "canon-jp-2",
+  "church-of-the-broken-god-hub",
+  "dr-wondertainment-hub",
+  "goc-hub-page",
+  "scp-1086-jp",
+  "scp-268",
+  "scp-4000",
+  "scp-4000-jp",
+  "scp-408-jp",
+  "scp-774-jp",
+  "scp4000jp-contest-hub",
+  "serpent-s-hand-hub",
+  "standard-template"
+ ],
+ "newpage_links_in_live": []
+}

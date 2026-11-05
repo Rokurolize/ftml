@@ -1,0 +1,121 @@
+{
+ "schema": "wikijump_syntax_differential.ftml_render_result.v1",
+ "case_id": "making-stew-hub",
+ "status": "rendered",
+ "parse_errors": [
+  {
+   "token": "identifier",
+   "rule": "block-div",
+   "span": [
+    1888,
+    1893
+   ],
+   "kind": "rule-failed"
+  },
+  {
+   "token": "left-block",
+   "rule": "fallback",
+   "span": [
+    1842,
+    1844
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "identifier",
+   "rule": "block-div",
+   "span": [
+    2354,
+    2359
+   ],
+   "kind": "rule-failed"
+  },
+  {
+   "token": "left-block",
+   "rule": "fallback",
+   "span": [
+    2293,
+    2295
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "left-block-end",
+   "rule": "fallback",
+   "span": [
+    3122,
+    3125
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-block",
+   "rule": "fallback",
+   "span": [
+    3128,
+    3130
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "left-block-end",
+   "rule": "fallback",
+   "span": [
+    3131,
+    3134
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-block",
+   "rule": "fallback",
+   "span": [
+    3137,
+    3139
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "left-block-end",
+   "rule": "fallback",
+   "span": [
+    4798,
+    4801
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-link",
+   "rule": "fallback",
+   "span": [
+    4807,
+    4810
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "left-block-end",
+   "rule": "fallback",
+   "span": [
+    4846,
+    4849
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-block",
+   "rule": "fallback",
+   "span": [
+    4852,
+    4854
+   ],
+   "kind": "no-rules-match"
+  }
+ ],
+ "engine": {
+  "name": "ftml",
+  "version": "ftml v1.42.1+roku.20261105.5 [c1dc6406]",
+  "package_version": "1.42.1+roku.20261105.5",
+  "git_commit": "c1dc64060a266b7148c029ac6334a7c1c03f916a"
+ }
+}

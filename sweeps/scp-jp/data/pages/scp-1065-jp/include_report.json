@@ -1,0 +1,46 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "caption": "SCP-1065-JPの間取り図",
+      "name": "フラクタル次元構造空間\n"
+     }
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "SCP-1065-JPの間取り図",
+      "clear": "false",
+      "link": "#",
+      "name": "フラクタル次元構造空間\n",
+      "width": "300px"
+     }
+    }
+   ],
+   "pass": 2
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 3
+  }
+ ],
+ "existing_pages_from_live": [],
+ "newpage_links_in_live": []
+}

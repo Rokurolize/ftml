@@ -1,0 +1,338 @@
+[[module css]]
+div[class*="award"] + .creditRate .creditButton .fa.fa-info:before {
+content: "\f091";
+color: #fff!important;
+}
+div.award-1st ~ #u-credit-otherwise .credit.otherwise .contest {
+background-image: linear-gradient(349deg, #F7DE05, #DA8E00, #EDAC06, #F7DE05, #ECB802, #DAAF08, #B67B03);
+}
+div.award-elec ~ #u-credit-otherwise .credit.otherwise .contest {
+background-image: linear-gradient(349deg, #A5A5A5, #BABAC2, #E8E8E8, #A5A5A5, #BABAC2);
+}
+div.award-cop ~ #u-credit-otherwise .credit.otherwise .contest {
+background-image: linear-gradient(349deg, rgba(229,138,61,.9), rgba(217,139,43,.9), rgba(168,80,21,.9), rgba(260,164,79,.9));
+}
+div[class*="award"] ~ #u-credit-otherwise .credit.otherwise .contest {
+border: 1px solid transparent;
+border-radius: 1px;
+text-shadow: 1px 2px 3px rgba(0,0,0,0.35);
+}
+div[class*="award"] ~ #u-credit-otherwise .credit.otherwise .contest a {
+background-color: transparent!important;
+color: #fff!important;
+font-weight: bold;
+transition: text-shadow 0.3s;
+}
+div[class*="award"] ~ #u-credit-otherwise .creditButton a:hover,
+div[class*="award"] ~ #u-credit-otherwise .credit.otherwise .contest a:hover {
+text-decoration: none;
+text-shadow: 1px 2px 5px rgba(255,255,255,0.9);
+}
+div[class*="award"] ~ #u-credit-otherwise .credit.otherwise .contest {
+border-radius: 2px;
+border-width: 2px;
+color: #fff;
+font-family: BauhausLTDemi,Arial,sans-serif;
+font-size: 110%;
+margin: 0 0.3em;
+text-align: center;
+text-shadow: 3px 3px 5px #000;
+}
+div[class*="award"] ~ #u-credit-otherwise .credit.otherwise .contest {
+border-radius: 2px;
+border-width: 2px;
+color: #fff;
+font-family: BauhausLTDemi,Arial,sans-serif;
+font-size: 110%;
+margin: 0 0.3em;
+text-align: center;
+text-shadow: 3px 3px 5px #000;
+}
+div.award-1st ~ #u-credit-otherwise .credit.otherwise .contest span:before,
+div.award-1st ~ #u-credit-otherwise .credit.otherwise .contest span:after {
+content: "\f091";
+display: inline-block;
+font: normal normal normal 14px/1 FontAwesome;
+text-rendering: auto;
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+margin: 0.3em;
+}
+div[class*="award"] ~ #u-credit-otherwise .contest {
+cursor: pointer;
+}
+div[class*="award"] ~ #u-credit-otherwise .contest p span {
+transition: font-size 0.6s 0.2s;
+text-rendering: auto;
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+}
+div[class*="award"] ~ #u-credit-otherwise .contest p a,
+div[class*="award"] ~ #u-credit-otherwise .contest:hover p span {
+font-size: 1.1em;
+}
+div[class*="award"] ~ #u-credit-otherwise .contest p span {
+cursor: auto;
+}
+
+/*
+border-image is created by Woedenaz
+https://wanderers-library.wikidot.com/component:dustjacket-theme
+CC BY-SA 3.0
+*/
+div[class*="award"] ~ #u-credit-otherwise .modalbox {
+box-sizing: border-box;
+border: 2ex solid rgba(0,0,0,0.5);
+border-image: url("https://scp-jp.wdfiles.com/local--files/component%3Acredit-top-sp/gold.png") 475 round;
+border-image-width: 6;
+background: radial-gradient(rgba(255, 219, 90, 0.95) 0, #fff 100%);
+background: -webkit-radial-gradient(rgba(255, 219, 90, 0.95) 0, #fff 100%);
+}
+div.award-elec ~ #u-credit-otherwise .modalbox {
+    background: radial-gradient(rgba(165, 205, 205, 0.95) 0, #fff 100%);
+    background: -webkit-radial-gradient(rgba(165, 205, 205, 0.95) 0, #fff 100%);
+    filter: grayscale(75%);
+}
+div.award-cop ~ #u-credit-otherwise .modalbox {
+    background: radial-gradient(rgba(205, 205, 165, 0.95) 0, #fff 100%);
+    background: -webkit-radial-gradient(rgba(205, 205, 165, 0.95) 0, #fff 100%);
+    filter: grayscale(45%);
+}
+div[class*="award"] ~ #u-credit-otherwise .modalbox .modalbox-title {
+background: transparent;
+}
+div[class*="award"] ~ #u-credit-otherwise .modalbox .modalbox-title h2 {
+color: #fff;
+text-shadow: 1px 1px 3px rgba(221, 102, 17, 0.5), 1px -1px 3px rgba(221, 102, 17, 0.5), -1px 1px 3px rgba(221, 102, 17, 0.5), -1px -1px 3px rgba(221, 102, 17, 0.5);
+font-weight: bold;
+}
+div[class*="award"] ~ #u-credit-otherwise .modalbox .credit.otherwise {
+overflow: auto;
+}
+[[/module]]
+[[div_ class="award-elec"]]
+[[/div]]
+
+[[module css]]
+@import url('https://scp-jp.github.io/files/util/common/credit/style/style.css');
+
+.creditRate.no-rate .page-rate-widget-box {
+    visibility:hidden;
+}
+
+.creditRate.creditModule.no-rate ~ #u-credit-view .creditBottomRate > div:nth-of-type(2) {
+    display: none;
+}
+[[/module]]
+
+[[div_ class="creditRate creditModule {$mode}"]]
+[[div_ class="rateBox" [[iftags 殿堂入り]]style="display:none;"[[/iftags]]]]
+[[div_ class="rate-box-with-credit-button"]]
+[[module Rate]]
+[[div_ class="creditButton"]]
+[[a href="#u-credit-view" class="fa fa-info" style="position:relative;"]][[image https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png title="クレジットを表示する" style="position:absolute;height:100%;width:100%;top:0;left:0;"]][[/a]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[div_ class="rateBox heritage-wrap" [[iftags -殿堂入り]]style="display:none;"[[/iftags]]]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]archived:heritage-collection[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]]" style="max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[div_ class="creditButton"]]
+[[a href="#u-credit-view" class="fa fa-info" style="position:relative;"]][[image https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png title="クレジットを表示する" style="position:absolute;height:100%;width:100%;top:0;left:0;"]][[/a]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+[[div_ style="clear:both;"]]
+[[/div]]
+
+[[div_ id="credit-view"]]
+[[div_ class="fader"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/start.html ]]
+[[/div]]
+
+[[div_ class="modalcontainer"]]
+[[div_ class="modalbox [[iftags 殿堂入り]]heritage[[/iftags]]"]]
+[[div_ class="modalbox-title [[iftags 殿堂入り]]heritage[[/iftags]]"]]
+++* クレジット
+[[/div]]
+[[div class="credit"]]
+
+
+**タイトル:** SCP-2050-JP - 誰
+**著者:** ©︎[[*user Mistertako]]
+**作成年:** 2020/05/06
+
+[[/div]]
+[[div_ class="credit" style="text-align:right; margin-top: 0.5em;"]]
+[[a href="#u-credit-otherwise"]]その他のライセンス[[/a]]
+[[/div]]
+[[div_ [[iftags +殿堂入り]]style="display: flex;"[[/iftags]] class="Dendo"]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]heritage-collection-arc[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]]" style="max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[div_ class="modalbox-ratemodule" [[iftags +殿堂入り]]style="display:none;"[[/iftags]]]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[div_ id="credit-otherwise"]]
+[[div_ class="fader"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/otherwise.html ]]
+[[/div]]
+[[div_ class="modalcontainer"]]
+[[div_ class="modalbox [[iftags +殿堂入り]]heritage[[/iftags]]"]]
+[[div_ class="modalbox-title"]]
+++* その他
+[[/div]]
+[[div_ class="credit otherwise"]]
+
+[[div class="contest"]]
+[*https://scp-jp.wikidot.com/rookie-s-contest-2020 ルーキーコンテスト2020]
+[[span]]SCP-JP部門 優秀賞[[/span]]
+[[/div]]
+
+[[div_ class="credit-back" style="text-align: center;"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/end.html style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" scrolling="no"]]
+[[/div]]
+[[/div]]
+
+[[div_ class="creditBottomRate" style="height:30px;"]]
+[[div_ class="credit-license"]]
+[[a href="*https://creativecommons.org/licenses/by-sa/3.0/deed.ja" class="cc cc-by-sa"]]@@@@[[/a]]
+[[/div]]
+[[div_ style="text-align: center; top: 0px;"]]
+[[div_ [[iftags +殿堂入り]]style="display: flex;"[[/iftags]] class="Dendo"]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]heritage-collection-arc[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]]" style=" max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[div_ [[iftags +殿堂入り]]style="display:none;"[[/iftags]]]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+
+**アイテム番号:** SCP-2050-JP
+
+**オブジェクトクラス:** Euclid
+
+**特別収容プロトコル:** SCP-2050-JPを覆うようにして収容ユニット-8173を建設します。ユニット内に立ち入る場合は専用の遮光バイザーを装備してください。SCP-2050-JPの周辺地域は、カバーストーリー「豪雨災害による道路崩落」を適用して民間人の立ち入りを禁じます。週に一度、SCP-2050-JP-Aとのコミュニケーション試行が実施されています。
+
+**説明:** SCP-2050-JPは巨大な岩石です。おおむね円筒形の花崗岩であり、最大全高10.2m最大円周14.3mです。表面には複数の加工痕[[footnote]]切削・顔料の塗布など[[/footnote]]が見られますが、いずれも風化・摩耗が顕著であり、本来の加工の全容は不明です。側面には大きな亀裂が1つあり、内部からは常に光源不明の光が漏れ出ています。
+
+発せられている光の照度は、亀裂から1m地点における計測では7██████luxですが、亀裂から距離をとるにつれて異常なペースで減衰し、1.5km地点では観測不可能な程に弱まります。内部の観測実験では、侵入した器材が溶解・蒸発する様子が確認され、内部に超高温の熱源が存在することが示唆されました。しかし熱による物理的影響は亀裂の外部では観測できず、音波による観測では内部が5.3m^^3^^の空洞であることが判明しており、熱源の詳細は不明です。
+
+SCP-2050-JPから3mの範囲内では、不明な知的存在(SCP-2050-JP-A)とテレパシーを介した会話が可能です。SCP-2050-JP-Aは20~30代程の女性の声で発話し、上代日本語を用いてコミュニケーションを行います。会話可能な範囲から、SCP-2050-JP-AはSCP-2050-JP内部に存在すると仮定されていますが、観測に成功した例はありません。
+
+**補遺2050-JP-1:** 発見経緯
+
+SCP-2050-JPは██県██郡██山の地中に存在しましたが、2018/7/7に発生した土砂崩れに際して亀裂部分が部分的に露出しました。漏出した光を当該地域に居住していた財団職員が発見、財団に通報して収容しました。光を目撃した民間人に対してはカバーストーリー「被災者捜索のサーチライト」が適用されました。
+
+**補遺2050-JP-2:** インタビュー記録
+
+以下のインタビューは、収容に際してSCP-2050-JP-Aに対して行われたインタビュー記録の書き起こしです。インタビュアーはいずれもエージェント・██でした。また、SCP-2050-JP-Aの発言は上代日本語から翻訳して記載しています。
+
+[[collapsible show="+ インタビュー記録2050-JP-1" hide="- インタビュー記録2050-JP-1"]]
+> [[=]]
+> [[size 115%]]**インタビュー記録2050-JP-1**[[/size]]
+> **日付:** 2018/7/8
+> [[/=]]
+> ------
+>  
+> **<記録開始>**
+>  
+> **エージェント・██:** すみません、少しよろしいですか？
+>  
+> **SCP-2050-JP-A:** [長い沈黙]なんでしょうか？
+>  
+> **エージェント・██:** いくつかおたずねしたいことがあるのですが、お願いできますか。
+>  
+> **SCP-2050-JP-A:** 話すことなど何もございませんよ。ここから出ることもございません。[沈黙]放っておいていただけませんか。
+>  
+> **エージェント・██:** そこにいらっしゃるのには、何か理由があるのですか？
+>  
+> **SCP-2050-JP-A:** [長い沈黙]昔、私はある男をかばったことがあるのです。その時には正しいことをしたと思っておりました。
+> 
+> **SCP-2050-JP-A:** [長い沈黙]しかし、私はそれを強く悔いたのです。私があの男をかばったことで他の皆様にも失礼をいたしましたし、ここでしばらく反省させていただきたいのですよ。
+>  
+> **エージェント・██:** なるほど、反省ですか[黙考]よければ貴女のお名前をうかがいたいのですが、よろしいでしょうか？
+>  
+> **SCP-2050-JP-A:** [長い沈黙]いいえ、どなたかは存じ上げませんが、あなたが私を連れ出しに来たのではないという証拠はありません。[沈黙]申し訳ありませんが、そろそろお引き取りいただけませんか？
+> 
+> **エージェント・██:** いえ、こちらこそ長々と申し訳ない。今日はこれでおいとましますが、その前に私に言っておきたいことなどはありますか？
+>  
+> **SCP-2050-JP-A:** [沈黙]2つほど、周りにいる方にもお伝え願えますか？
+> 
+> **エージェント・██:** [黙考]はい、なんでしょう？
+>  
+> **SCP-2050-JP-A:** 少し明かりを弱めてほしい、と。 いくら外を照らそうと、今しばらく私が外に出ることはございません。以前のように宴に惹かれることもない、とも。お願いいたします。
+> 
+> **エージェント・██:** [沈黙]はい、承りました。これでインタビューを終了します。
+> 
+> **<記録終了>**
+[[/collapsible]]
+@@@@
+[[collapsible show="+ インタビュー記録2050-JP-2" hide="- インタビュー記録2050-JP-2"]]
+> [[=]]
+> [[size 115%]]**インタビュー記録2050-JP-2**[[/size]]
+> **日付:** 2018/7/9
+> [[/=]]
+> ------
+>  
+> **<記録開始>**
+>  
+> **エージェント・██:** すみません。少しお時間よろしいでしょうか？
+>  
+> **SCP-2050-JP-A:** [長い沈黙]またあなたですか。[沈黙]お話しすることなど、もうありはしませんよ。
+>  
+> **エージェント・██:** いえ、今回おたずねしたいのは先日あなたがおっしゃったことについてです。
+>  
+> **SCP-2050-JP-A:** [沈黙]
+> 
+> **エージェント・██:** あなたは先日、周りにいる方と仰いましたね。あれは誰のことでしょうか？ あの時、周辺には誰もいませんでした。少し離れたところに私の同僚は待機していましたが、彼女のことでしょうか？
+>  
+> **SCP-2050-JP-A:** [長い沈黙]いえ、それが真実ならば、先日のお願いは私の勘違いによるものです。外が明るいので、大勢でやってきてかがり火かたき火でも焚いているのだろうと思ったのですよ。[沈黙]あなた1人なのですか？ では、わずらわしいので、火を弱めて下さいな。
+>  
+> **エージェント・██:** いいえ、火など焚いていません。今も先日も、周りにあるのは森だけです。
+>  
+> **SCP-2050-JP-A:** そんな筈はありません。ならばこの光は何だというのです？
+> 
+> **エージェント・██:** こちらには今、太陽以外の光源はありません。太陽光ではありませんか？
+>  
+> **SCP-2050-JP-A:** [沈黙]
+> 
+> **エージェント・██:** どうかされましたか？
+> 
+> [発生する光が8██████luxまで上昇]
+>  
+> **SCP-2050-JP-A:** [声を張り上げて]いえ、いいえ！ そんな筈はありません。そちらは今、いいえ、ずっと夜のはずです！ 太陽はそこにいないのですから！ ここ数日、時間を置いて光を照らすのは、私があの時手を振りほどいたのをいまさらになって責めているのでしょう？ 違いますか！ そもそも太陽の輝きと
+> 
+> **エージェント・██:** そんなことはありませんよ。
+>  
+> **SCP-2050-JP-A:** では
+> 
+> [長い沈黙]
+>  
+> **SCP-2050-JP-A:** 誰なのですか、あれは
+>  
+> **<記録終了>**
+> 
+> **付記:** 最後の発言以降、SCP-2050-JP-Aは職員の呼び掛けに対して一切の反応を示していません。
+[[/collapsible]]

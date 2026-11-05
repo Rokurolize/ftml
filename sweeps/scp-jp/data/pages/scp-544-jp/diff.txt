@@ -1,0 +1,33 @@
+--- live
++++ ftml
+@@ -1,27 +1,7 @@
+ <div style="text-align: right;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+1053"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ </div>
+ <p>
+ <strong>

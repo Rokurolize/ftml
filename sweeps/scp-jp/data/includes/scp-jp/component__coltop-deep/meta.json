@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:26:20+00:00",
+  "method": "GET",
+  "response_bytes": 29936,
+  "response_sha256": "c4ff157f49e80e84c613e88732161fe4d0d5edc7942fc596043667d5dea32427",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/component:coltop-deep"
+ },
+ "page": "component:coltop-deep",
+ "page_id": 105379771,
+ "site": "scp-jp",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:26:21+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "105379771"
+  },
+  "response_bytes": 598,
+  "response_sha256": "a1b1d9fa546979261f41ae9744d876ddd093b6f0011b9bd95119afa4ae5b467e",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "183e86c95cf50a1636a526f9b14ace99bcbaeacd5bbec0d8fba25965650b6177"
+}

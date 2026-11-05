@@ -1,0 +1,642 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:credit-top-sp",
+     "site": "scp-jp",
+     "variables": {
+      "special": "1st"
+     }
+    },
+    {
+     "found": true,
+     "page": "credit:otherwise",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:classified-bar-woed",
+     "site": "scp-wiki",
+     "variables": {
+      "item": "3000-JP\n",
+      "lang": "EN\n",
+      "lv": "3\n",
+      "oc": "Neutralized\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "SCP-3000-JP発生中の京都市街",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-115-ibni/20180310-submitted.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "撮影された画像",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-254-jiku/20180409.jpg",
+      "width": "200px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "サイト-81K3入り口",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-232-8b4p/20171128.jpg",
+      "width": "200px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "Agt.亀島が提供した画像 ",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-233-ctyx/20170704-5-3.jpg",
+      "width": "200px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "財団製汎用四輪駆動車\"Avery\" ",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-234-h6ga/Abir.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "サンプル採取現場 ",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-235-60uo/20170421.jpg",
+      "width": "300px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "移動中に記録された映像",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-237-6mzv/site_no_oku.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "「虎の牙」安置所",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-236-y8k2/20180905.jpg",
+      "width": "300px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "作戦実施中に記録された映像",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-238-gmhk/20181008.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "作戦実施中に記録された映像",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-256-0v11/20221112-2.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "作戦実施中に記録された映像",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-239-no9u/20220911-2.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "当時の近畿地方周辺のアキヴァ放射強度マッピング",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-240-m6nt/awajishima-2.jpg",
+      "width": "300px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "現地の映像",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-241-u6fu/red_akashikaikyo.jpg",
+      "width": "300px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "現地の映像（ミーム汚染効果除去済み）",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-242-ezq7/an-yogajouzu.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "記録された映像",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-243-zk0x/20170626-2.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "記録された映像",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-250-93xh/20171004.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "記録された映像",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-247-dhr2/20170614.jpg",
+      "width": "250px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "記録された映像",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-248-s86d/20180427.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "記録された映像",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-249-x2py/20170420.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "記録された映像",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-244-q4fx/20210407-2-2.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "記録された映像",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-253-173g/20180310-2.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "斎場所・大元宮",
+      "display": "inline",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-255-lbnh/daigenguu-2.jpg",
+      "width": "250px"
+     }
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "credit:start",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:classified-bar-woed-source",
+     "site": "scp-wiki",
+     "variables": {
+      "item": "3000-JP\n\n",
+      "lang": "EN\n\n",
+      "langEN": "false\n",
+      "lv": "3\n\n",
+      "oc": "Neutralized\n\n",
+      "trans-classified": "false\n",
+      "trans-level": "false\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "SCP-3000-JP発生中の京都市街",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-115-ibni/20180310-submitted.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "撮影された画像",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-254-jiku/20180409.jpg",
+      "width": "200px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "サイト-81K3入り口",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-232-8b4p/20171128.jpg",
+      "width": "200px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "Agt.亀島が提供した画像 ",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-233-ctyx/20170704-5-3.jpg",
+      "width": "200px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "財団製汎用四輪駆動車\"Avery\" ",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-234-h6ga/Abir.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "サンプル採取現場 ",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-235-60uo/20170421.jpg",
+      "width": "300px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "移動中に記録された映像",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-237-6mzv/site_no_oku.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "「虎の牙」安置所",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-236-y8k2/20180905.jpg",
+      "width": "300px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "作戦実施中に記録された映像",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-238-gmhk/20181008.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "作戦実施中に記録された映像",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-256-0v11/20221112-2.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "作戦実施中に記録された映像",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-239-no9u/20220911-2.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "当時の近畿地方周辺のアキヴァ放射強度マッピング",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-240-m6nt/awajishima-2.jpg",
+      "width": "300px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "現地の映像",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-241-u6fu/red_akashikaikyo.jpg",
+      "width": "300px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "現地の映像（ミーム汚染効果除去済み）",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-242-ezq7/an-yogajouzu.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "記録された映像",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-243-zk0x/20170626-2.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "記録された映像",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-250-93xh/20171004.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "記録された映像",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-247-dhr2/20170614.jpg",
+      "width": "250px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "記録された映像",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-248-s86d/20180427.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "記録された映像",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-249-x2py/20170420.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "記録された映像",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-244-q4fx/20210407-2-2.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "記録された映像",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-253-173g/20180310-2.jpg",
+      "width": "700px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "斎場所・大元宮",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A7550279-255-lbnh/daigenguu-2.jpg",
+      "width": "250px"
+     }
+    }
+   ],
+   "pass": 2
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 3
+  }
+ ],
+ "existing_pages_from_live": [
+  "ahashima",
+  "code-stillbirth-zulu",
+  "scp-1200-jp",
+  "scp-1343-jp",
+  "scp-1710-jp",
+  "scp-1730",
+  "scp-2112-jp",
+  "scp-2176",
+  "scp-2332-jp",
+  "scp-2879-jp",
+  "scp-295-jp",
+  "scp-3936",
+  "scp-856-jp",
+  "scp-936-jp",
+  "scp3000jp-contest-hub",
+  "spikebrennan-s-proposal"
+ ],
+ "newpage_links_in_live": []
+}

@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:27:35+00:00",
+  "method": "GET",
+  "response_bytes": 32353,
+  "response_sha256": "4d8bdc2fb744771055731bed46e4106fdd74e5f8eaa6418ee0060617865d9ac6",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/component:classified-decoration-base"
+ },
+ "page": "component:classified-decoration-base",
+ "page_id": 106894579,
+ "site": "scp-jp",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:27:36+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "106894579"
+  },
+  "response_bytes": 6979,
+  "response_sha256": "204d41106f4ef8638732678979fc862ba028bdafcad1dbf9eb7b9739758c282d",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "20e5ea0eac3665f1eac9cfbd51b83ae2dc612cd3a84331cb0cfa20b4124a0d18"
+}

@@ -1,0 +1,103 @@
+{
+ "schema": "wikijump_syntax_differential.ftml_render_result.v1",
+ "case_id": "scp-004-jp",
+ "status": "rendered",
+ "parse_errors": [
+  {
+   "token": "right-block",
+   "rule": "fallback",
+   "span": [
+    5546,
+    5548
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "italics",
+   "rule": "italics",
+   "span": [
+    8186,
+    8188
+   ],
+   "kind": "rule-failed"
+  },
+  {
+   "token": "italics",
+   "rule": "fallback",
+   "span": [
+    8186,
+    8188
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "quote",
+   "rule": "block",
+   "span": [
+    10857,
+    10858
+   ],
+   "kind": "no-such-block"
+  },
+  {
+   "token": "left-block",
+   "rule": "fallback",
+   "span": [
+    10687,
+    10689
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "quote",
+   "rule": "block",
+   "span": [
+    10857,
+    10858
+   ],
+   "kind": "no-such-block"
+  },
+  {
+   "token": "left-block",
+   "rule": "fallback",
+   "span": [
+    10738,
+    10740
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-link",
+   "rule": "fallback",
+   "span": [
+    10824,
+    10827
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-link",
+   "rule": "fallback",
+   "span": [
+    10828,
+    10831
+   ],
+   "kind": "no-rules-match"
+  },
+  {
+   "token": "right-link",
+   "rule": "fallback",
+   "span": [
+    10832,
+    10835
+   ],
+   "kind": "no-rules-match"
+  }
+ ],
+ "engine": {
+  "name": "ftml",
+  "version": "ftml v1.42.1+roku.20261105.5 [c1dc6406]",
+  "package_version": "1.42.1+roku.20261105.5",
+  "git_commit": "c1dc64060a266b7148c029ac6334a7c1c03f916a"
+ }
+}

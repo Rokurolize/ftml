@@ -1,0 +1,57 @@
+--- live
++++ ftml
+@@ -1,27 +1,7 @@
+ <div style="text-align: right;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+260"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ </div>
+ <br>
+ <br>
+@@ -213,7 +193,6 @@
+ <br>
+ <img alt="%E3%82%A2%E3%83%BC%E3%82%AB%E3%82%A4%E3%83%962" class="image" src="https://scp-jp.wikidot.com/local--files/artwork-444-jp/%E3%82%A2%E3%83%BC%E3%82%AB%E3%82%A4%E3%83%962">
+ <br>
+-<br>
+ <div style="text-align: center;">
+ <div class="collapsible-block">
+ <div class="collapsible-block-folded">
+@@ -367,6 +346,7 @@
+ <br>
+ <br>
+ <br>
++<br>
+ <blockquote>
+ <p>
+ T:"誰も知らなかったんです。誰も、この文書が発見されるまで、"
+@@ -411,7 +391,6 @@
+ <br>
+ <br>
+ <br>
+-<br>
+ </p>
+ <div style="text-align: right;">
+ <p>

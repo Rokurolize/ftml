@@ -1,0 +1,305 @@
+--- live
++++ ftml
+@@ -1,29 +1,9 @@
+ <div class="creditRate creditModule {$mode}">
+-<div class="rateBox">
++T:"[[div_ class=\"rateBox\" ]]"
+ <div class="rate-box-with-credit-button">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+736"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+@@ -31,44 +11,24 @@
+ </div>
+ </div>
+ </div>
+-<div class="rateBox heritage-wrap" style="display:none;">
++<br>
+ <div class="heritage-rating-module">
+ <div class="heritage-emblem">
+ <a href="/">
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+736"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ </div>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+ </a>
+ </div>
+-</div>
+-</div>
++<br>
++<br>
+ <div style="clear:both;">
+ </div>
+ <div id="u-credit-view">
+@@ -103,11 +63,11 @@
+ </strong>
+ T:"©︎"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/fennecist" onclick="WIKIDOT.page.listeners.userInfo(3705485); return false;">
+-<img alt="Fennecist" class="small" src="https://www.wikidot.com/avatar.php?userid=3705485&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=3705485)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/fennecist" onclick="WIKIDOT.page.listeners.userInfo(3705485); return false;">
+-T:"Fennecist"
++<a href="/user:info/fennecist" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="fennecist" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/fennecist" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T:"fennecist"
+ </a>
+ </span>
+ <br>
+@@ -117,13 +77,13 @@
+ T:"2018"
+ </p>
+ <div class="credit-back" style="text-align: center;">
+-<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
++<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+ </iframe>
+ </div>
+ </div>
+ <div class="creditBottomRate" style="height:30px;">
+ <div class="credit-license">
+-<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
++<a class="cc cc-by-sa" href="#invalid-url">
+ </a>
+ </div>
+ <div style="text-align: center; top: 0px;">
+@@ -134,106 +94,82 @@
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+736"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-<div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+736"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++<br>
++T:"[[/div]]"
+ </div>
+ </div>
+ </div>
+ <div style="text-align: center;">
+-<img alt="warning.png" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-1970-jp/warning.png">
+-</div>
+-<table class="scale EN-base">
++<img alt="warning.png" class="image" src="https://scp-jp.wjfiles.com/local--files/scp-1970-jp/warning.png">
++</div>
++<table class="scale EN -base">
+ <tbody>
+ <tr>
+ <td class="class1">
+ <h1>
+ <span>
+ <span class="base false EN">
+-T:"4/1970-JP"
+-</span>
+-T:"LEVEL"
++T:"4"
++</span>
++</span>
++</h1>
++<p>
+ <span class="base false EN">
+-T:"4/1970-JP"
+-</span>
+-</span>
+-</h1>
++T:"/1970-JP"
++</span>
++</p>
++<p>
++T:"false"
++<br>
++<span class="base false EN">
++T:"4"
++</span>
++</p>
++<p>
++<span class="base false EN">
++T:"/1970-JP"
++</span>
++</p>
+ <h1>
+ <span>
+-T:"CLASSIFIED"
++T:"false"
+ </span>
+ </h1>
+ </td>
+ <td class="class1image" rowspan="2">
+-<img alt="classified-lv4.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:classified-decoration-base/classified-lv4.png">
++<p>
++T:"[[image"
++<a href="https://scp-jp.wdfiles.com/local--files/component:classified-decoration-base/classified-lv4">
++T:"https://scp-jp.wdfiles.com/local--files/component:classified-decoration-base/classified-lv4"
++</a>
++</p>
++<p>
++T:".png link=#]]"
++</p>
+ </td>
+ <td class="item1 EN">
+-<h1>
+-<span>
+-T:"Item #: SCP-1970-JP"
+-</span>
+-</h1>
+-<h1>
+-<span>
+-T:"Object Class: Keter"
+-</span>
+-</h1>
+ </td>
+ </tr>
+ </tbody>
+ </table>
+ <hr>
+-<div class="scp-image-block block-center scp-clear-false" style="width:700px;">
+-<img alt="Apollo13_D.jpg" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-1970-jp/Apollo13_D.jpg">
++<div class="scp-image-block block-center scp-clear-false" style="width:700px ;">
++<p>
++T:"[[image Apollo13_D.jpg"
++<br>
++T:"{$alt}=\"{$alt-text}\" link=#]]"
++</p>
+ <div class="scp-image-caption">
+ <p>
+ T:"ハルトマン霊体撮影機で撮影されたSCP-1970-JP-D-1の写真"
+@@ -270,7 +206,11 @@
+ T:"で構成されており、通常の方法で観測することはできませんが物理的干渉を受け付けます。"
+ </p>
+ <div class="scp-image-block block-right scp-clear-true" style="width:300px;">
+-<img alt="Apollo_13_Prime_Crew.jpg" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-1970-jp/Apollo_13_Prime_Crew.jpg">
++<p>
++T:"[[image Apollo_13_Prime_Crew.jpg"
++<br>
++T:"{$alt}=\"{$alt-text}\" link=#]]"
++</p>
+ <div class="scp-image-caption">
+ <p>
+ T:"左から順にラヴェル、スワイガート、ヘイズ"
+@@ -308,7 +248,11 @@
+ <br>
+ </p>
+ <div class="scp-image-block block-right scp-clear-true" style="width:300px;">
+-<img alt="Apollo13_Route.jpg" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-1970-jp/Apollo13_Route.jpg">
++<p>
++T:"[[image Apollo13_Route.jpg"
++<br>
++T:"{$alt}=\"{$alt-text}\" link=#]]"
++</p>
+ <div class="scp-image-caption">
+ <p>
+ T:"実際のアポロ13号の周回ルート"

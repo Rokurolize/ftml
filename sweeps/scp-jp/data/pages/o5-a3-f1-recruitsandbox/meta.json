@@ -1,0 +1,81 @@
+{
+ "kind": "tale",
+ "listed_size": 20571,
+ "live_page_content_sha256": "272ff7a07be4676c914987138cab4e01b9916dc92b99d96b94578761757c8704",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:24:00+00:00",
+  "method": "GET",
+  "response_bytes": 98451,
+  "response_sha256": "1b34ce61eb895aa7aaddebb6ccff35c08cafa4034ce6ad017845e90c94a80107",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/o5-a3-f1-recruitsandbox"
+ },
+ "page_id": 1306403468,
+ "rating": 263,
+ "site": "scp-jp",
+ "slug": "o5-a3-f1-recruitsandbox",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:24:01+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "1306403468"
+  },
+  "response_bytes": 54574,
+  "response_sha256": "96f9bbf3ec638b376a6173c802f7ac63798794f2d825b2626ef47a2733078407",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "020711f3adcb75ca798a8c7376edd1fe80f84fbfcd2ede81683d5cec9aaac078",
+ "stats": {
+  "counts": {
+   "anchor": 21,
+   "blocks": 463,
+   "bold": 274,
+   "cjk_dash_pair": 0,
+   "cjk_emphasis": 88,
+   "collapsible": 1,
+   "color": 33,
+   "css": 0,
+   "div": 44,
+   "ellipsis_dash": 6,
+   "footnote": 20,
+   "fullwidth_space": 2,
+   "heading": 19,
+   "hr": 25,
+   "html": 0,
+   "iftags": 0,
+   "image": 14,
+   "include": 1,
+   "italic": 38,
+   "link3": 0,
+   "list": 22,
+   "module": 1,
+   "mono": 0,
+   "quote": 265,
+   "raw": 0,
+   "ruby": 0,
+   "size": 14,
+   "span": 0,
+   "strike": 14,
+   "sup_sub": 2,
+   "table": 19,
+   "tabview": 0,
+   "underline": 0
+  },
+  "density_per_kchar": 66.99,
+  "markup_tokens": 1378
+ },
+ "title": "現実のコンテスト",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "1306403468",
+  "pageUnixName": "o5-a3-f1-recruitsandbox",
+  "requestPageName": "o5-a3-f1-recruitsandbox",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

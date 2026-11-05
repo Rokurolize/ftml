@@ -1,0 +1,1480 @@
+--- live
++++ ftml
+@@ -1,1180 +1,52 @@
+-<div style="display: none">
+-<div class="code">
+-<div class="hl-main">
+-<pre>
+-<span class="hl-code">
+-T:"/"
+-</span>
+-<span class="hl-identifier">
+-T:"*"
+-</span>
+-<span class="hl-code">
+-T:"source:"
+-</span>
+-<span class="hl-identifier">
+-T:"https"
+-</span>
+-<span class="hl-code">
+-T:"://"
+-</span>
+-<span class="hl-identifier">
+-T:"ah-sandbox.wikidot.com"
+-</span>
+-<span class="hl-code">
+-T:"/"
+-</span>
+-<span class="hl-identifier">
+-T:"component"
+-</span>
+-<span class="hl-special">
+-T:":collapsible-sidebar-x1"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"*"
+-</span>
+-<span class="hl-code">
+-T:"/"
+-</span>
+-<span class="hl-identifier">
+-T:"#top-bar"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:".open-menu"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"a"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-brackets">
+-T:"{"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-reserved">
+-T:"position:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"fixed"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"bottom:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0.5"
+-</span>
+-<span class="hl-string">
+-T:"em"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"left:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0.5"
+-</span>
+-<span class="hl-string">
+-T:"em"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"z-index:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"15"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"font-family:"
+-</span>
+-<span class="hl-code">
+-T:"san-serif"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"font-size:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"30"
+-</span>
+-<span class="hl-string">
+-T:"px"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"font-weight:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"700"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"width:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"30"
+-</span>
+-<span class="hl-string">
+-T:"px"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"height:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"30"
+-</span>
+-<span class="hl-string">
+-T:"px"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"line-height:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0.9"
+-</span>
+-<span class="hl-string">
+-T:"em"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"text-align:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"center"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"border:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0.2"
+-</span>
+-<span class="hl-string">
+-T:"em"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"solid"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-var">
+-T:"#888"
+-</span>
+-<span class="hl-code">
+-T:"!important"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"background-color:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-var">
+-T:"#fff"
+-</span>
+-<span class="hl-code">
+-T:"!important"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"border-radius:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"3"
+-</span>
+-<span class="hl-string">
+-T:"em"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"color:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-var">
+-T:"#888"
+-</span>
+-<span class="hl-code">
+-T:"!important"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"text-decoration:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"none"
+-</span>
+-<span class="hl-code">
+-T:"!important"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-brackets">
++<p>
++T:"[[module CSS arguments…]]"
++<br>
++T:"#page-title {"
++<br>
++T:"display: none;"
++<br>
+ T:"}"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-var">
+-T:"@media"
+-</span>
+-<span class="hl-code">
+-T:"(min-width: 768"
+-</span>
+-<span class="hl-identifier">
+-T:"px"
+-</span>
+-<span class="hl-code">
+-T:")"
+-</span>
+-<span class="hl-brackets">
+-T:"{"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:".mobile-top-bar"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-brackets">
+-T:"{"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-reserved">
+-T:"display:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"block"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-brackets">
++<br>
++T:".fake_title {"
++<br>
++T:"font-size: 200%;"
++<br>
++T:"color: #990011;"
++<br>
++T:"padding: 0<NBSP>0<NBSP>0.25em;"
++<br>
++T:"margin: 0<NBSP>0<NBSP>0.6em;"
++<br>
++T:"border-bottom: 1px solid #bbb;"
++<br>
++T:"font-weight: normal;"
++<br>
+ T:"}"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:".mobile-top-bar"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"li"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-brackets">
+-T:"{"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-reserved">
+-T:"display:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"none"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-brackets">
++<br>
++T:".fake_title p {"
++<br>
++T:"padding: 0;"
++<br>
++T:"margin: 0;"
++<br>
+ T:"}"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"#main-content"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-brackets">
+-T:"{"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-reserved">
+-T:"max-width:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"708"
+-</span>
+-<span class="hl-string">
+-T:"px"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"margin:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"auto"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"padding:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"transition:"
+-</span>
+-<span class="hl-code">
+-T:"max-width"
+-</span>
+-<span class="hl-number">
+-T:"0.2"
+-</span>
+-<span class="hl-code">
+-T:"s ease-in-out"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-brackets">
+-T:"}"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"#side-bar"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-brackets">
+-T:"{"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-reserved">
+-T:"display:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"block"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"position:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"fixed"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"top:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"left:"
+-</span>
+-<span class="hl-code">
+-T:"-"
+-</span>
+-<span class="hl-number">
+-T:"25"
+-</span>
+-<span class="hl-string">
+-T:"em"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"width:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"17"
+-</span>
+-<span class="hl-string">
+-T:"em"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"height:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"100"
+-</span>
+-<span class="hl-string">
+-T:"%"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"background-color:"
+-</span>
+-<span class="hl-code">
+-T:"rgb("
+-</span>
+-<span class="hl-number">
+-T:"184"
+-</span>
+-<span class="hl-code">
+-T:","
+-</span>
+-<span class="hl-number">
+-T:"134"
+-</span>
+-<span class="hl-code">
+-T:","
+-</span>
+-<span class="hl-number">
+-T:"134"
+-</span>
+-<span class="hl-code">
+-T:")"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"overflow-y:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"auto"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"z-index:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"10"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"padding:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"1"
+-</span>
+-<span class="hl-string">
+-T:"em"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"1"
+-</span>
+-<span class="hl-string">
+-T:"em"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"1"
+-</span>
+-<span class="hl-string">
+-T:"em"
+-</span>
+-<span class="hl-code">
+-T:";\n        -"
+-</span>
+-<span class="hl-reserved">
+-T:"webkit-transition:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"left"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0.5"
+-</span>
+-<span class="hl-code">
+-T:"s ease-in-out"
+-</span>
+-<span class="hl-number">
+-T:"0.1"
+-</span>
+-<span class="hl-code">
+-T:"s"
+-</span>
+-<span class="hl-code">
+-T:";\n        -"
+-</span>
+-<span class="hl-reserved">
+-T:"moz-transition:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"left"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0.5"
+-</span>
+-<span class="hl-code">
+-T:"s ease-in-out"
+-</span>
+-<span class="hl-number">
+-T:"0.1"
+-</span>
+-<span class="hl-code">
+-T:"s"
+-</span>
+-<span class="hl-code">
+-T:";\n        -"
+-</span>
+-<span class="hl-reserved">
+-T:"ms-transition:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"left"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0.5"
+-</span>
+-<span class="hl-code">
+-T:"s ease-in-out"
+-</span>
+-<span class="hl-number">
+-T:"0.1"
+-</span>
+-<span class="hl-code">
+-T:"s"
+-</span>
+-<span class="hl-code">
+-T:";\n        -"
+-</span>
+-<span class="hl-reserved">
+-T:"o-transition:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"left"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0.5"
+-</span>
+-<span class="hl-code">
+-T:"s ease-in-out"
+-</span>
+-<span class="hl-number">
+-T:"0.1"
+-</span>
+-<span class="hl-code">
+-T:"s"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"transition:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"left"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0.5"
+-</span>
+-<span class="hl-code">
+-T:"s ease-in-out"
+-</span>
+-<span class="hl-number">
+-T:"0.1"
+-</span>
+-<span class="hl-code">
+-T:"s"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-brackets">
+-T:"}"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"#side-bar"
+-</span>
+-<span class="hl-code">
+-T:":"
+-</span>
+-<span class="hl-identifier">
+-T:"after"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-brackets">
+-T:"{"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-reserved">
+-T:"content:"
+-</span>
+-<span class="hl-code">
+-T:"\"\""
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"position:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"absolute"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"top:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"width:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"height:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"100"
+-</span>
+-<span class="hl-string">
+-T:"%"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"background-color:"
+-</span>
+-<span class="hl-code">
+-T:"rgba("
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-T:","
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-T:","
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-T:","
+-</span>
+-<span class="hl-number">
+-T:"0.2"
+-</span>
+-<span class="hl-code">
+-T:")"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-brackets">
+-T:"}"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"#side-bar"
+-</span>
+-<span class="hl-code">
+-T:":"
+-</span>
+-<span class="hl-identifier">
+-T:"target"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-brackets">
+-T:"{"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-reserved">
+-T:"display:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"block"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"left:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"width:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"17"
+-</span>
+-<span class="hl-string">
+-T:"em"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"margin:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"border:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"1"
+-</span>
+-<span class="hl-string">
+-T:"px"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"solid"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-var">
+-T:"#dedede"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"z-index:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"10"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-brackets">
+-T:"}"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"#side-bar"
+-</span>
+-<span class="hl-code">
+-T:":"
+-</span>
+-<span class="hl-identifier">
+-T:"target"
+-</span>
+-<span class="hl-code">
+-T:"+"
+-</span>
+-<span class="hl-identifier">
+-T:"#main-content"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-brackets">
+-T:"{"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-reserved">
+-T:"left:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-brackets">
+-T:"}"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"#side-bar"
+-</span>
+-<span class="hl-code">
+-T:":"
+-</span>
+-<span class="hl-identifier">
+-T:"target"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:".close-menu"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-brackets">
+-T:"{"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-reserved">
+-T:"display:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"block"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"position:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"fixed"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"width:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"100"
+-</span>
+-<span class="hl-string">
+-T:"%"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"height:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"100"
+-</span>
+-<span class="hl-string">
+-T:"%"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"top:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"left:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"background:"
+-</span>
+-<span class="hl-code">
+-T:"rgba("
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-T:","
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-T:","
+-</span>
+-<span class="hl-number">
+-T:"0"
+-</span>
+-<span class="hl-code">
+-T:","
+-</span>
+-<span class="hl-number">
+-T:"0.3"
+-</span>
+-<span class="hl-code">
+-T:")"
+-</span>
+-<span class="hl-number">
+-T:"1"
+-</span>
+-<span class="hl-string">
+-T:"px"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-number">
+-T:"1"
+-</span>
+-<span class="hl-string">
+-T:"px"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-string">
+-T:"repeat"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"z-index:"
+-</span>
+-<span class="hl-code">
+-T:"-"
+-</span>
+-<span class="hl-number">
+-T:"1"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-brackets">
+-T:"}"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-brackets">
+-T:"}"
+-</span>
+-</pre>
+-</div>
+-</div>
+-</div>
++<br>
++T:"[[/module]]"
++</p>
++<p>
++T:"[[div style=\"display: none\"]]"
++</p>
++<p>
++T:"[[/div]]"
++</p>
+ <div class="award-cop">
+ </div>
+ <div class="creditRate creditModule {$mode}">
+-<div class="rateBox">
++T:"[[div_ class=\"rateBox\" ]]"
+ <div class="rate-box-with-credit-button">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+425"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+@@ -1182,44 +54,24 @@
+ </div>
+ </div>
+ </div>
+-<div class="rateBox heritage-wrap" style="display:none;">
++<br>
+ <div class="heritage-rating-module">
+ <div class="heritage-emblem">
+ <a href="/">
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+425"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ </div>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+ </a>
+ </div>
+-</div>
+-</div>
++<br>
++<br>
+ <div style="clear:both;">
+ </div>
+ <div id="u-credit-view">
+@@ -1248,10 +100,10 @@
+ </strong>
+ T:"©︎"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/v-vetman" onclick="WIKIDOT.page.listeners.userInfo(6103090); return false;">
+-<img alt="v vetman" class="small" src="https://www.wikidot.com/avatar.php?userid=6103090&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=6103090)">
++<a href="/user:info/v-vetman" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="v vetman" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+ </a>
+-<a href="https://www.wikidot.com/user:info/v-vetman" onclick="WIKIDOT.page.listeners.userInfo(6103090); return false;">
++<a href="/user:info/v-vetman" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"v vetman"
+ </a>
+ </span>
+@@ -1274,56 +126,17 @@
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+425"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-<div class="modalbox-ratemodule">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+425"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++<br>
++T:"[[div_ class=\"modalbox-ratemodule\" ]]"
++<p>
++T:"TODO: module Rate"
++</p>
++T:"[[/div]]"
+ </div>
+ </div>
+ </div>
+@@ -1354,13 +167,13 @@
+ </p>
+ </div>
+ <div class="credit-back" style="text-align: center;">
+-<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
++<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+ </iframe>
+ </div>
+ </div>
+ <div class="creditBottomRate" style="height:30px;">
+ <div class="credit-license">
+-<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
++<a class="cc cc-by-sa" href="#invalid-url">
+ </a>
+ </div>
+ <div style="text-align: center; top: 0px;">
+@@ -1371,58 +184,19 @@
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+425"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-<div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+425"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++<br>
++T:"[[/div]]"
+ </div>
+ </div>
+ </div>
+@@ -1946,6 +720,8 @@
+ <li>
+ T:"6350排撃班 “Hound Dog”"
+ </li>
++</ul>
++<ul>
+ <li>
+ T:"サイト81██管理官 石破博士"
+ </li>
+@@ -1974,18 +750,24 @@
+ </strong>
+ T:"“ヴァイトマン”"
+ </li>
++</ul>
++<ul>
+ <li>
+ <strong>
+ T:"ST-6350-W2:"
+ </strong>
+ T:"“ロケット”"
+ </li>
++</ul>
++<ul>
+ <li>
+ <strong>
+ T:"ST-6350-W3:"
+ </strong>
+ T:"“リポーター”"
+ </li>
++</ul>
++<ul>
+ <li>
+ <strong>
+ T:"ST-6350-W4:"

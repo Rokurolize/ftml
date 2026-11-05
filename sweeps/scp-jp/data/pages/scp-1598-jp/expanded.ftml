@@ -1,0 +1,435 @@
+[[module css]]
+div[class*="award"] + .creditRate .creditButton .fa.fa-info:before {
+content: "\f091";
+color: #fff!important;
+}
+div.award-1st ~ #u-credit-otherwise .credit.otherwise .contest {
+background-image: linear-gradient(349deg, #F7DE05, #DA8E00, #EDAC06, #F7DE05, #ECB802, #DAAF08, #B67B03);
+}
+div.award-elec ~ #u-credit-otherwise .credit.otherwise .contest {
+background-image: linear-gradient(349deg, #A5A5A5, #BABAC2, #E8E8E8, #A5A5A5, #BABAC2);
+}
+div.award-cop ~ #u-credit-otherwise .credit.otherwise .contest {
+background-image: linear-gradient(349deg, rgba(229,138,61,.9), rgba(217,139,43,.9), rgba(168,80,21,.9), rgba(260,164,79,.9));
+}
+div[class*="award"] ~ #u-credit-otherwise .credit.otherwise .contest {
+border: 1px solid transparent;
+border-radius: 1px;
+text-shadow: 1px 2px 3px rgba(0,0,0,0.35);
+}
+div[class*="award"] ~ #u-credit-otherwise .credit.otherwise .contest a {
+background-color: transparent!important;
+color: #fff!important;
+font-weight: bold;
+transition: text-shadow 0.3s;
+}
+div[class*="award"] ~ #u-credit-otherwise .creditButton a:hover,
+div[class*="award"] ~ #u-credit-otherwise .credit.otherwise .contest a:hover {
+text-decoration: none;
+text-shadow: 1px 2px 5px rgba(255,255,255,0.9);
+}
+div[class*="award"] ~ #u-credit-otherwise .credit.otherwise .contest {
+border-radius: 2px;
+border-width: 2px;
+color: #fff;
+font-family: BauhausLTDemi,Arial,sans-serif;
+font-size: 110%;
+margin: 0 0.3em;
+text-align: center;
+text-shadow: 3px 3px 5px #000;
+}
+div[class*="award"] ~ #u-credit-otherwise .credit.otherwise .contest {
+border-radius: 2px;
+border-width: 2px;
+color: #fff;
+font-family: BauhausLTDemi,Arial,sans-serif;
+font-size: 110%;
+margin: 0 0.3em;
+text-align: center;
+text-shadow: 3px 3px 5px #000;
+}
+div.award-1st ~ #u-credit-otherwise .credit.otherwise .contest span:before,
+div.award-1st ~ #u-credit-otherwise .credit.otherwise .contest span:after {
+content: "\f091";
+display: inline-block;
+font: normal normal normal 14px/1 FontAwesome;
+text-rendering: auto;
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+margin: 0.3em;
+}
+div[class*="award"] ~ #u-credit-otherwise .contest {
+cursor: pointer;
+}
+div[class*="award"] ~ #u-credit-otherwise .contest p span {
+transition: font-size 0.6s 0.2s;
+text-rendering: auto;
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+}
+div[class*="award"] ~ #u-credit-otherwise .contest p a,
+div[class*="award"] ~ #u-credit-otherwise .contest:hover p span {
+font-size: 1.1em;
+}
+div[class*="award"] ~ #u-credit-otherwise .contest p span {
+cursor: auto;
+}
+
+/*
+border-image is created by Woedenaz
+https://wanderers-library.wikidot.com/component:dustjacket-theme
+CC BY-SA 3.0
+*/
+div[class*="award"] ~ #u-credit-otherwise .modalbox {
+box-sizing: border-box;
+border: 2ex solid rgba(0,0,0,0.5);
+border-image: url("https://scp-jp.wdfiles.com/local--files/component%3Acredit-top-sp/gold.png") 475 round;
+border-image-width: 6;
+background: radial-gradient(rgba(255, 219, 90, 0.95) 0, #fff 100%);
+background: -webkit-radial-gradient(rgba(255, 219, 90, 0.95) 0, #fff 100%);
+}
+div.award-elec ~ #u-credit-otherwise .modalbox {
+    background: radial-gradient(rgba(165, 205, 205, 0.95) 0, #fff 100%);
+    background: -webkit-radial-gradient(rgba(165, 205, 205, 0.95) 0, #fff 100%);
+    filter: grayscale(75%);
+}
+div.award-cop ~ #u-credit-otherwise .modalbox {
+    background: radial-gradient(rgba(205, 205, 165, 0.95) 0, #fff 100%);
+    background: -webkit-radial-gradient(rgba(205, 205, 165, 0.95) 0, #fff 100%);
+    filter: grayscale(45%);
+}
+div[class*="award"] ~ #u-credit-otherwise .modalbox .modalbox-title {
+background: transparent;
+}
+div[class*="award"] ~ #u-credit-otherwise .modalbox .modalbox-title h2 {
+color: #fff;
+text-shadow: 1px 1px 3px rgba(221, 102, 17, 0.5), 1px -1px 3px rgba(221, 102, 17, 0.5), -1px 1px 3px rgba(221, 102, 17, 0.5), -1px -1px 3px rgba(221, 102, 17, 0.5);
+font-weight: bold;
+}
+div[class*="award"] ~ #u-credit-otherwise .modalbox .credit.otherwise {
+overflow: auto;
+}
+[[/module]]
+[[div_ class="award-1st"]]
+[[/div]]
+
+[[module css]]
+@import url('https://scp-jp.github.io/files/util/common/credit/style/style.css');
+
+.creditRate.no-rate .page-rate-widget-box {
+    visibility:hidden;
+}
+
+.creditRate.creditModule.no-rate ~ #u-credit-view .creditBottomRate > div:nth-of-type(2) {
+    display: none;
+}
+[[/module]]
+
+[[div_ class="creditRate creditModule {$mode}"]]
+[[div_ class="rateBox" [[iftags 殿堂入り]]style="display:none;"[[/iftags]]]]
+[[div_ class="rate-box-with-credit-button"]]
+[[module Rate]]
+[[div_ class="creditButton"]]
+[[a href="#u-credit-view" class="fa fa-info" style="position:relative;"]][[image https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png title="クレジットを表示する" style="position:absolute;height:100%;width:100%;top:0;left:0;"]][[/a]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[div_ class="rateBox heritage-wrap" [[iftags -殿堂入り]]style="display:none;"[[/iftags]]]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]archived:heritage-collection[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]]" style="max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[div_ class="creditButton"]]
+[[a href="#u-credit-view" class="fa fa-info" style="position:relative;"]][[image https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png title="クレジットを表示する" style="position:absolute;height:100%;width:100%;top:0;left:0;"]][[/a]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+[[div_ style="clear:both;"]]
+[[/div]]
+
+[[div_ id="credit-view"]]
+[[div_ class="fader"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/start.html ]]
+[[/div]]
+
+[[div_ class="modalcontainer"]]
+[[div_ class="modalbox [[iftags 殿堂入り]]heritage[[/iftags]]"]]
+[[div_ class="modalbox-title [[iftags 殿堂入り]]heritage[[/iftags]]"]]
+++* クレジット
+[[/div]]
+[[div class="credit"]]
+
+
+**タイトル:** SCP-1598-JP - 『ほら、いつものアレやれよ。』
+**著者:** ©︎[[*user yzkrt]]
+**作成年:** 2019
+
+[[/div]]
+[[div_ class="credit" style="text-align:right; margin-top: 0.5em;"]]
+[[a href="#u-credit-otherwise"]]その他のライセンス[[/a]]
+[[/div]]
+[[div_ [[iftags +殿堂入り]]style="display: flex;"[[/iftags]] class="Dendo"]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]heritage-collection-arc[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]]" style="max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[div_ class="modalbox-ratemodule" [[iftags +殿堂入り]]style="display:none;"[[/iftags]]]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[div_ id="credit-otherwise"]]
+[[div_ class="fader"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/otherwise.html ]]
+[[/div]]
+[[div_ class="modalcontainer"]]
+[[div_ class="modalbox [[iftags +殿堂入り]]heritage[[/iftags]]"]]
+[[div_ class="modalbox-title"]]
+++* その他
+[[/div]]
+[[div_ class="credit otherwise"]]
+
+[[div class="contest"]]
+[*https://scp-jp.wikidot.com/recyclecontest19 リサイクルコンテスト2019]
+[[span]]優勝作品[[/span]]
+[[/div]]
+
+[[div_ class="credit-back" style="text-align: center;"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/end.html style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" scrolling="no"]]
+[[/div]]
+[[/div]]
+
+[[div_ class="creditBottomRate" style="height:30px;"]]
+[[div_ class="credit-license"]]
+[[a href="*https://creativecommons.org/licenses/by-sa/3.0/deed.ja" class="cc cc-by-sa"]]@@@@[[/a]]
+[[/div]]
+[[div_ style="text-align: center; top: 0px;"]]
+[[div_ [[iftags +殿堂入り]]style="display: flex;"[[/iftags]] class="Dendo"]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]heritage-collection-arc[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]]" style=" max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[div_ [[iftags +殿堂入り]]style="display:none;"[[/iftags]]]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+
+[[div style="border:solid 1px #999999; background:#ffffff; width:90%; padding:15px; margin-bottom: 15px; margin:0 auto;"]]
+
+= SCP-1598-JPへのアクセスが承認されました。
+
+= {{前回閲覧終了日時 2020/07/22 15:27}}
+
+[[/div]]
+----
+**アイテム番号:** SCP-1598-JP
+
+**オブジェクトクラス:** Safe
+
+**特別収容プロトコル:** SCP-1598-JP発生地点である██中学校の敷地は研究施設に偽装され、一般から隔離されます。██中学校の屋上への階段は電子ロックが用いられた二重扉によって封鎖され、立ち入りにはセキュリティクリアランス3以上の職員の承認が必要とされます。
+
+**説明:** SCP-1598-JPは新潟県長岡市立██中学校の屋上に出現する人型実体群です。出現する人型実体にはそれぞれ-1~5までのナンバリング指定がなされています。SCP-1598-JP群は毎日12時28分に██中学校の屋上に出現します。出現したSCP-1598-JP群は全て決まった行動（以下、イベントと表記）を取ります。全てのイベントは12時36分にSCP-1598-JP-1が屋上から飛び降りることで終了し、それに伴って全てのSCP-1598-JP実体が消失します。以下はSCP-1598-JP群の大まかな特徴です。
+
+||~ ナンバリング ||~ 特徴 ||
+|| SCP-1598-JP-1 || 身長148cmの人型実体。外見的特徴は中学時代の塩野 悠氏と一致する。塩野氏は20██年に██中学校の屋上から落下死したとされている。 ||
+|| SCP-1598-JP-2 || 身長164cmの人型実体。外見的特徴は中学時代の兼山 修介氏と一致する。SCP-1598-JP-2~5の中でリーダー的に振る舞う。現実での兼山氏は2015年に交通事故で今野氏、芝崎氏と共に死亡している。 ||
+|| SCP-1598-JP-3 || 身長160cmの人型実体。外見的特徴は中学時代の今野 肇氏と一致する。発言量は少ない。現実での今野氏は2015年に交通事故で兼山氏、芝崎氏と共に死亡している。 ||
+|| SCP-1598-JP-4 || 身長173cmの人型実体。外見的特徴は中学時代の芝崎 啓太氏と一致する。SCP-1598-JP-2に賛同する様子が見られる。現実での芝崎氏は2015年に交通事故で兼山氏、今野氏と共に死亡している。 ||
+|| SCP-1598-JP-5 || 身長156cmの人型実体。外見的特徴は中学時代の葛西 ██氏と一致する。存命。詳しくはインタビュー記録を参照。 ||
+@@@@
+[[collapsible show="+ 映像記録1598-JPを開く。" hide="映像記録1598-JPを閉じる。"]]
+
+> [映像開始]
+> 
+> **12:28:16** [SCP-1598-JP-1が屋上に出現する。SCP-1598-JP-1はフェンスに寄りかかりながら校庭を眺めているように見える。]
+> 
+> **12:28:31** [SCP-1598-JP-2~5が出現する。]
+> 
+> **SCP-1598-JP-2:** よお悠、こんなとこにいるのかよ。探したじゃん。
+> 
+> **SCP-1598-JP-1:** あ、シュウくん……ごめん。
+> 
+> **SCP-1598-JP-4:** ″//いつもみたいに//″特別棟の方に来いよ。何やってんだよ。
+> 
+> **SCP-1598-JP-3:** ビビってるの？
+> 
+> **SCP-1598-JP-2:** そんなにビビらなくても俺たち楽しく遊ぶだけなのになぁ。そうだろ？
+> 
+> **SCP-1598-JP-1:** えっと、ごめん。先生に手伝えって言われてて、遅くなっちゃったからどうしたら良いかわかんなくて……。
+> 
+> **SCP-1598-JP-5:** そういうのはさぁ、先に言っておけよな。つまんねぇ。
+> 
+> **SCP-1598-JP-4:** 分かる。せっかく俺たちが//遊んで//やってんだからしっかりしろよ。
+> 
+> **SCP-1598-JP-5:** ほら、″//いつも通り//″遊んでやるから着いてこいよ。
+> 
+> **SCP-1598-JP-2:** それよりさ、ここでやろうぜ。″//いつもの//″
+> 
+> **SCP-1598-JP-1:** え……。
+> 
+> **SCP-1598-JP-2:** お前もいつもと雰囲気が変わって面白いだろ？早くやってみせろよ。
+> 
+> **SCP-1598-JP-1:** でも……。
+> 
+> **SCP-1598-JP-4:** 文句言うんじゃねぇよ。早く″//いつも通り//″にやれよ。自殺ごっこ。
+> 
+> **SCP-1598-JP-5:** やーれ！やーれ！
+> 
+> **12:33:51** [SCP-1598-JP-1が恐る恐る屋上のフェンスを乗り越え、フェンス外側の縁に足を載せる。]
+> 
+> **SCP-1598-JP-3:** スゲー、マジでやってるよ。笑う。
+> 
+> **SCP-1598-JP-2:** いつもより風が当たって新鮮だろ？最高だな。
+> 
+> **SCP-1598-JP-5:** なんとか返事しろよ。つまんねぇの。
+> 
+> **SCP-1598-JP-4:** ビビってないで早く飛べよ。ほら飛ーべ！飛ーべ！
+> 
+> **SCP-1598-JP-2:** 飛ーべ！飛ーべ！
+> 
+> **12:35:25** [SCP-1598-JP-2~5が同じ言葉を繰り返す。SCP-1598-JP-1は目を瞑ったまま俯いている。]
+> 
+> **SCP-1598-JP-2:** あー面白かった。おい、戻ってきて良いぞ。
+> 
+> **SCP-1598-JP-1:** ……いいの？
+> 
+> **SCP-1598-JP-4:** 良いって言ってんだろ。どんくせぇなぁ。
+> 
+> **12:35:56** [SCP-1598-JP-1が再びフェンスを乗り越え屋上に戻ろうとする。SCP-1598-JP-2~5は笑った状態でそれを見ている。]
+> 
+> **SCP-1598-JP-1:** あ。
+> 
+> **12:36:00** [SCP-1598-JP-1がフェンスから足を滑らせ落下する。地面に衝突する瞬間、全てのSCP-1598-JP個体は消失する。]
+> 
+> [映像終了]
+> 
+> [[/collapsible]]
+
+**20██/05/12 補遺1:** 異常性の調査を行うため、現在SCP-1598-JP群において唯一存命の葛西氏にインタビューが行われました。以下はその記録です。
+
+> = **__インタビュー記録1598-JP.1__**
+> 
+> **インタビュアー:** 狭間研究員
+> 
+> **対象:** 葛西氏（SCP-1598-JP-5にあたる人物）
+> 
+> **付記:** 葛西氏にはインタビューの前に上記の映像記録を確認させています。
+> ----
+> [記録開始]
+> 
+> **葛西氏:** ……凄いな、これ。俺達そっくりだ。
+> 
+> **狭間研究員:** ご信用いただけましたか？
+> 
+> **葛西氏:** あぁ、まぁ。でもこれ、やっぱり特殊メイクとかその類いじゃないのか？
+> 
+> **狭間研究員:** そうですね。どうしてもというのであれば実際にご確認いただいてもよろしいのですが…… [時計を眺めながら] その場合はこちらで一泊していただくことになります。
+> 
+> **葛西氏:** そうか。いや、いい、信じた。これは本物だ。当時の俺達そっくりだ。昨日撮ったのか？
+> 
+> **狭間研究員:** ええ、といってもこちらの映像の内容は毎日繰り返し発生していますが。
+> 
+> **葛西氏:** そうか、不思議なこともあるもんだな。
+> 
+> **狭間研究員:** ええ、それではいくつかご質問させていただきますが、よろしいですか？
+> 
+> **葛西氏:** [沈黙]
+> 
+> **狭間研究員:** 大丈夫ですよ葛西さん。我々は法の代行者ではありません。ただ、当時のことを確認させていただくだけです。
+> 
+> **葛西氏:** ……本当か？こんな身分で言えたことじゃないが、一応俺にも嫁と娘がいてよ。少なくともあいつらだけは……。
+> 
+> **狭間研究員:** ご心配なく、正直にお話いただければお返しします。約束しましょう。
+> 
+> **葛西氏:** [逡巡] そうか、まぁ、分かった。聞いてくれ。
+> 
+> **狭間研究員:** それでは、この映像に映っている人物は当時のメンバーで間違いありませんね？
+> 
+> **葛西氏:** 間違いない。いつもの5人だ。
+> 
+> **狭間研究員:** 映像の内容と記憶に齟齬はありませんか？
+> 
+> **葛西氏:** あぁ、多分ないと思う。昔のことだけど、強烈だったから。
+> 
+> **狭間研究員:** なるほど。当時の塩野さんに変わったところはありませんでしたか？
+> 
+> **葛西氏:** 変わったところ？
+> 
+> **狭間研究員:** どんなことでも構いません。妙に運が良かったとか、何か人と違うところがあったのでしょうか。
+> 
+> **葛西氏:** [沈黙] いいや、なかったな。ただ、まぁ何というかバスの席は決まった席に乗るとか、筆箱の中身の順番が決まってるとか、そういう″//いつもと同じ//″にすることに神経質な奴だったな。でも体が小さくて頭の弱い奴だったから、当時の俺らが目をつけたのはそれが原因だ。
+> 
+> **狭間研究員:** そうですか。
+> 
+> **葛西氏:** そうだな。それだけだ。 [溜息] 懺悔のつもりじゃないが、当時は本当に馬鹿らしいことをしたと思ってるよ。今でもたまにフラッシュバックするんだ。本当に死んで欲しいわけじゃなかったのにって。
+> 
+> **狭間研究員:** 当時の新聞ではいじめ事件ではなく、屋上の不備から起きた事件として紹介されていますね。これには何か理由が？
+> 
+> **葛西氏:** いや、俺達は本当にバレないようにやってたから、誰も気がつかなかったんだと思う。もしかしたらクラスの奴で薄々気がついてた奴はいたかもしれないが、少なくとも警察とか先生から話を聞かれたことはなかったな。
+> 
+> **狭間研究員:** そのようですね。塩野さんが亡くなってから周りで不自然なことはありませんでしたか？
+> 
+> **葛西氏:** いいや、普通通り。だけどアイツが落っこちた時の夢は時々見てた。今でいうPTSDみたいな奴だったのかな。でもそれだっておかしいほどみるわけじゃなかったし、多分普通だったんだと思う。
+> 
+> **狭間研究員:** なるほど、他にはもうありませんか？
+> 
+> **葛西氏:** 多分、ない。覚えている限りは。
+> 
+> **狭間研究員:** 分かりました。ご協力ありがとうございます。身体検査などはありますが、すぐ帰れるでしょう。
+> 
+> **葛西氏:** どうも。 [戸惑い] あの、こんなこと言える立場じゃないのは重々承知だけど、アイツのこと助けてやってくれませんか。罪滅ぼしじゃないけど、出来るかぎりのことは手伝いますんで。
+> 
+> **狭間研究員:** 分かりました。善処させていただきます。
+> 
+> [記録終了]
+> ----
+> **付記:** インタビュー後、葛西氏にはクラスA記憶処理を施して解放しました。
+
+**補遺2:** 死亡済みのSCP-1598-JP-2~4にあたる3名の事故についての調査が行われました。調査の結果、事故は非異常性のアクシデントであることが判明しています。
+
+**20██/05/13 補遺3:** 異常性の調査を行うため、現在SCP-1598-JP群において唯一存命の葛西氏にインタビューが行われました。インタビューからは新たな情報が得られなかったため、インタビュー後、葛西氏にはクラスA記憶処理を施して解放しました。
+
+**20██/05/14 補遺4:** 異常性の調査を行うため、現在SCP-1598-JP群において唯一存命の葛西氏にインタビューが行われました。インタビューからは新たな情報が得られなかったため、インタビュー後、葛西氏にはクラスA記憶処理を施して解放しました。
+
+**20██/05/15 補遺5:** 異常性の調査を行うため、現在SCP-1598-JP群において唯一存命の葛西氏にインタビューが行われました。インタビューからは新たな情報が得られなかったため、インタビュー後、葛西氏にはクラスA記憶処理を施して解放しました。
+
+**[//データ破損//]**
+
+**20██/05/28 補遺18:** 異常性の調査を行うため、現在SCP-1598-JP群において唯一存命の葛西氏にインタビューが行われました。インタビューからは新たな情報が得られなかったため、インタビュー後、葛西氏にはクラスA記憶処理を施して解放しました。
+
+**20██/05/29 補遺19:** 異常性の調査を行うため、現在SCP-1598-JP群において唯一存命の葛西氏にインタビューを行う計画は葛西氏が急性心不全で死亡したため中止されました。死亡理由は短期間に多量の記憶処理剤を投与されたためと推測されています。現在、倫理委員会が記憶処理剤の投与が適正であったかの調査を行っています。
+
+**20██/05/30 補遺20:** 異常性の調査を行うため、現在SCP-1598-JP群において唯一存命の葛西氏にインタビューを行う計画は葛西氏が急性心不全で死亡していたため--中止されました。--葛西氏の遺体を遺族から回収し、インタビューが行われました。インタビューからは新たな情報が得られなかったため、インタビュー後、葛西氏にはクラスA記憶処理を施して回収しました。
+
+**20██/05/31 補遺21:** 異常性の調査を行うため、葛西氏の遺体にインタビューが行われました。インタビューからは新たな情報が得られなかったため、インタビュー後、葛西氏にはクラスA記憶処理を施して回収しました。
+
+**20██/06/01 補遺22:** 異常性の調査を行うため、葛西氏の遺体にインタビューが行われました。インタビューからは新たな情報が得られなかったため、インタビュー後、葛西氏にはクラスA記憶処理を施して回収しました。
+
+**[//データ削除済//]**
+
+**20██/██/██ 補遺███:** 当報告書及び、SCP-1598-JPの収容計画には明らかな異常が発生しています。葛西氏は既に死亡しているにも関わらず、葛西氏へのインタビュー申請は続けられています。現在、SCP-1598-JPの新たな異常性についての審議が行われています。
+
+----
+
+[[div style="border:solid 1px #999999; background:#ffffff; width:90%; padding:15px; margin-bottom: 15px; margin:0 auto;"]]]
+
+= SCP-1598-JPの閲覧を終了します。お疲れ様でした。
+
+= {{閲覧終了日時 2020/07/23 15:27}}
+
+[[/div]]

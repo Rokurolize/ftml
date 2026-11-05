@@ -1,0 +1,81 @@
+{
+ "kind": "tale",
+ "listed_size": 4314,
+ "live_page_content_sha256": "8ecefd97627cfdc9d79b07aa98d9b14895ff2f9cea3feb424558264318831b61",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:23:38+00:00",
+  "method": "GET",
+  "response_bytes": 38514,
+  "response_sha256": "d2daadbdfea8364fa7aef882283a7b8059a3811c3460f2d887b472feaa2663b1",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/nekoyori"
+ },
+ "page_id": 43640222,
+ "rating": 276,
+ "site": "scp-jp",
+ "slug": "nekoyori",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:23:39+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "43640222"
+  },
+  "response_bytes": 12413,
+  "response_sha256": "c6a8c2d6565b895d9f2513f4831d0387ae7f744b85e1575761fb29d58ff2db1d",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "080a667ac46b465dd63f03f75fe573f4c2433be37503b37a845770c6b0f58194",
+ "stats": {
+  "counts": {
+   "anchor": 0,
+   "blocks": 237,
+   "bold": 0,
+   "cjk_dash_pair": 0,
+   "cjk_emphasis": 0,
+   "collapsible": 0,
+   "color": 0,
+   "css": 0,
+   "div": 1,
+   "ellipsis_dash": 0,
+   "footnote": 0,
+   "fullwidth_space": 10,
+   "heading": 0,
+   "hr": 0,
+   "html": 0,
+   "iftags": 0,
+   "image": 0,
+   "include": 0,
+   "italic": 0,
+   "link3": 0,
+   "list": 0,
+   "module": 1,
+   "mono": 0,
+   "quote": 0,
+   "raw": 0,
+   "ruby": 0,
+   "size": 115,
+   "span": 1,
+   "strike": 1,
+   "sup_sub": 0,
+   "table": 0,
+   "tabview": 0,
+   "underline": 0
+  },
+  "density_per_kchar": 82.52,
+  "markup_tokens": 356
+ },
+ "title": "ねこより",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "43640222",
+  "pageUnixName": "nekoyori",
+  "requestPageName": "nekoyori",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

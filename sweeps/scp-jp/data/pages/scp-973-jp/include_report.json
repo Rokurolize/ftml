@@ -1,0 +1,59 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "credit:start",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "caption": "左: 競技中のSCP-973-JP\n",
+      "name": "https://scp-jp.wdfiles.com/local--files/scp-973-jp/uma973-jp.jpg\n",
+      "width": "200px\n"
+     }
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "左: 競技中のSCP-973-JP\n",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp.wdfiles.com/local--files/scp-973-jp/uma973-jp.jpg\n",
+      "width": "200px\n"
+     }
+    }
+   ],
+   "pass": 2
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 3
+  }
+ ],
+ "existing_pages_from_live": [],
+ "newpage_links_in_live": []
+}

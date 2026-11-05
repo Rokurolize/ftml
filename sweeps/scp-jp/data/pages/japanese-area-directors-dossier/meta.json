@@ -1,0 +1,81 @@
+{
+ "kind": "tale",
+ "listed_size": 36621,
+ "live_page_content_sha256": "7421a9ec3f41cb276ee3e478fea759d08366e38aa72aeaaf20f430870fddf20f",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:25:38+00:00",
+  "method": "GET",
+  "response_bytes": 124630,
+  "response_sha256": "0913bae2c539dc991b37fc05e788edddc569f8b41f4cf6d20984f46e06bab609",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/japanese-area-directors-dossier"
+ },
+ "page_id": 1260745390,
+ "rating": 207,
+ "site": "scp-jp",
+ "slug": "japanese-area-directors-dossier",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:25:38+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "1260745390"
+  },
+  "response_bytes": 134649,
+  "response_sha256": "e1c5619f2ad26811dcd94e8da7f20120c67889bd3847998d64a59a287b7c608c",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "2bc58c7be524e7e469a58a55ecdfde9c4c4d4619d6b75589ce63d4c097b68028",
+ "stats": {
+  "counts": {
+   "anchor": 1,
+   "blocks": 643,
+   "bold": 296,
+   "cjk_dash_pair": 2,
+   "cjk_emphasis": 285,
+   "collapsible": 0,
+   "color": 0,
+   "css": 1,
+   "div": 5,
+   "ellipsis_dash": 9,
+   "footnote": 0,
+   "fullwidth_space": 15,
+   "heading": 0,
+   "hr": 82,
+   "html": 1,
+   "iftags": 0,
+   "image": 11,
+   "include": 4,
+   "italic": 4,
+   "link3": 240,
+   "list": 147,
+   "module": 2,
+   "mono": 0,
+   "quote": 43,
+   "raw": 2,
+   "ruby": 77,
+   "size": 18,
+   "span": 155,
+   "strike": 27,
+   "sup_sub": 2,
+   "table": 1,
+   "tabview": 12,
+   "underline": 0
+  },
+  "density_per_kchar": 56.28,
+  "markup_tokens": 2061
+ },
+ "title": "日本支部理事会書類",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "1260745390",
+  "pageUnixName": "japanese-area-directors-dossier",
+  "requestPageName": "japanese-area-directors-dossier",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

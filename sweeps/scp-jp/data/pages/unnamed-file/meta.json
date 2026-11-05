@@ -1,0 +1,81 @@
+{
+ "kind": "tale",
+ "listed_size": 21734,
+ "live_page_content_sha256": "7f02df54afd4da8c69ce68d29df8e65d3ede1c8117aeeb1819db0c7a01f2763b",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:22:16+00:00",
+  "method": "GET",
+  "response_bytes": 139055,
+  "response_sha256": "44954ba096bdd85d9d8b4bd87effeabb999dcb1d51092dbaad935750314b5d5a",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/unnamed-file"
+ },
+ "page_id": 1133224546,
+ "rating": 425,
+ "site": "scp-jp",
+ "slug": "unnamed-file",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:22:17+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "1133224546"
+  },
+  "response_bytes": 97204,
+  "response_sha256": "8d138679e46dfacf2933ec0a0bd47257242f1723da02ff042056e590007cbfc3",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "3d3f80bcf74f3fc951492e6941f625a3f2a53c5a7556458de71063a8b1a2c371",
+ "stats": {
+  "counts": {
+   "anchor": 0,
+   "blocks": 87,
+   "bold": 330,
+   "cjk_dash_pair": 4,
+   "cjk_emphasis": 53,
+   "collapsible": 13,
+   "color": 0,
+   "css": 1,
+   "div": 4,
+   "ellipsis_dash": 53,
+   "footnote": 0,
+   "fullwidth_space": 117,
+   "heading": 0,
+   "hr": 13,
+   "html": 0,
+   "iftags": 0,
+   "image": 0,
+   "include": 4,
+   "italic": 0,
+   "link3": 2,
+   "list": 0,
+   "module": 2,
+   "mono": 0,
+   "quote": 473,
+   "raw": 878,
+   "ruby": 2,
+   "size": 14,
+   "span": 5,
+   "strike": 4,
+   "sup_sub": 0,
+   "table": 0,
+   "tabview": 0,
+   "underline": 162
+  },
+  "density_per_kchar": 94.37,
+  "markup_tokens": 2051
+ },
+ "title": "名前の無いファイル",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "1133224546",
+  "pageUnixName": "unnamed-file",
+  "requestPageName": "unnamed-file",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

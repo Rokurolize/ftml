@@ -1,0 +1,100 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "theme:creepypasta",
+     "site": "scp-wiki",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:start",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end",
+     "site": "scp-jp",
+     "variables": {}
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:interwiki-style",
+     "site": "scp-wiki",
+     "variables": {
+      "priority": "1\n",
+      "theme": "https://scp-wiki.wdfiles.com/local--code/theme%3Acreepypasta/1\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "caption": "Parawatch Logo.",
+      "name": "rook.png",
+      "width": "200px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:license-box-theme",
+     "site": "scp-wiki",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:license-box-end",
+     "site": "scp-wiki",
+     "variables": {}
+    }
+   ],
+   "pass": 2
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "Parawatch Logo.",
+      "clear": "false",
+      "link": "#",
+      "name": "rook.png",
+      "width": "200px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:license-box-backend",
+     "site": "scp-wiki",
+     "variables": {
+      "author": "%%created_by%%\n"
+     }
+    }
+   ],
+   "pass": 3
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 4
+  }
+ ],
+ "existing_pages_from_live": [],
+ "newpage_links_in_live": []
+}

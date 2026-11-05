@@ -1,0 +1,3824 @@
+<p>
+T:"[[module CSS arguments…]]"
+<br>
+T:"#page-title {"
+<br>
+T:"display: none;"
+<br>
+T:"}"
+<br>
+T:".fake_title {"
+<br>
+T:"font-size: 200%;"
+<br>
+T:"color: #990011;"
+<br>
+T:"padding: 0<NBSP>0<NBSP>0.25em;"
+<br>
+T:"margin: 0<NBSP>0<NBSP>0.6em;"
+<br>
+T:"border-bottom: 1px solid #bbb;"
+<br>
+T:"font-weight: normal;"
+<br>
+T:"}"
+<br>
+T:".fake_title p {"
+<br>
+T:"padding: 0;"
+<br>
+T:"margin: 0;"
+<br>
+T:"}"
+<br>
+T:"[[/module]]"
+</p>
+<p>
+T:"[[div style=\"display: none\"]]"
+</p>
+<p>
+T:"[[/div]]"
+</p>
+<div class="award-cop">
+</div>
+<div class="creditRate creditModule {$mode}">
+T:"[[div_ class=\"rateBox\" ]]"
+<div class="rate-box-with-credit-button">
+<p>
+T:"TODO: module Rate"
+</p>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<br>
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+<br>
+<br>
+<div style="clear:both;">
+</div>
+<div id="u-credit-view">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"クレジット"
+</span>
+</h2>
+</div>
+<div class="credit">
+<p>
+<strong>
+T:"タイトル:"
+</strong>
+T:"名前の無いファイル"
+<br>
+<strong>
+T:"著者:"
+</strong>
+T:"©︎"
+<span class="printuser avatarhover">
+<a href="/user:info/v-vetman" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="v vetman" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/v-vetman" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"v vetman"
+</a>
+</span>
+<br>
+<strong>
+T:"作成年:"
+</strong>
+T:"2020"
+</p>
+</div>
+<div class="credit" style="text-align:right; margin-top: 0.5em;">
+<a href="#u-credit-otherwise">
+T:"その他のライセンス"
+</a>
+</div>
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+<br>
+T:"[[div_ class=\"modalbox-ratemodule\" ]]"
+<p>
+T:"TODO: module Rate"
+</p>
+T:"[[/div]]"
+</div>
+</div>
+</div>
+<div id="u-credit-otherwise">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/otherwise.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"その他"
+</span>
+</h2>
+</div>
+<div class="credit otherwise">
+<div class="contest">
+<p>
+<a href="https://scp-jp.wikidot.com/rookie-s-contest-2020" target="_blank">
+T:"ルーキーコンテスト2020"
+</a>
+<br>
+<span>
+T:"Tale-JP部門 入賞"
+</span>
+</p>
+</div>
+<div class="credit-back" style="text-align: center;">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+</iframe>
+</div>
+</div>
+<div class="creditBottomRate" style="height:30px;">
+<div class="credit-license">
+<a class="cc cc-by-sa" href="#invalid-url">
+</a>
+</div>
+<div style="text-align: center; top: 0px;">
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+<br>
+T:"[[/div]]"
+</div>
+</div>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<blockquote>
+<p>
+<strong>
+T:"ファイル名:"
+</strong>
+T:"未記入"
+</p>
+<p>
+<strong>
+T:"ファイル作成者:"
+</strong>
+T:"サイト81██管理官 石破博士"
+<br>
+<strong>
+T:"作成日:"
+</strong>
+T:"<IDSP>2024/03/01<NBSP>08:49"
+<br>
+<strong>
+T:"最終更新:"
+</strong>
+T:"更新中"
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div class="fake_title">
+<p>
+T:"名前の無いファイル"
+</p>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>2024/03/01"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>2024/03/01"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+<span style="text-decoration: underline;">
+<span style="font-size:1.5em;">
+T:"2024/03/01"
+</span>
+</span>
+</strong>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"08:57"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>原因不明の世界終焉シナリオ開始から四日ほど経つ。米国サイト17からのメッセージによれば、つい先ほど"
+<a href="/scp-2000">
+T:"SCP-2000"
+</a>
+T:"が完全破壊されたらしい。いったい何が起きたのか、今更原因を究明しても無意味である。思い出された途端に吹っ飛ぶとは何とも不遇な最終兵器だった。事実上世界を救うすべての手段がこれでゼロになったとのことで、ひとまず人類の滅亡は確定したらしい。そしてたった今、O5-1による財団壊滅、ならびに世界滅亡宣言が発令された。後は好きに生きろとのことだ。"
+</p>
+<p>
+T:"<IDSP>私、サイト81██管理官"
+<span class="ruby">
+T:"石破"
+<span class="rt">
+T:"いしば"
+</span>
+</span>
+<span class="ruby">
+T:"善嗣"
+<span class="rt">
+T:"よしつぐ"
+</span>
+</span>
+T:"はただ一人、地下シェルターにてこの短い宣言を読み始めた。中身がスカスカで笑っている。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"09:03"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>メッセージのすべてを閲覧した後、ミルク入りのコーヒーを一杯飲み干した。長野に残してきた祖母のことが気がかりだが、何が起きていようと助けに行くこともできないし助けたところで世界は滅亡する。潔く考えるのをやめて目の前の問題に取りかかろうとするも、その「問題」というのがまず皆無であり、何か命令を下してくれる上司もなければ自分で動かせる部下も今はなく、周囲状況の把握すらできないためにこうしてコーヒーを飲んで無意味に時を過ごす事しかできない。疲労と絶望と退屈は一杯のミルクコーヒーと、端末に保存しておいた海外支部管轄のオブジェクト報告書で補える。が、三日もすればこんなものすぐに飽きるだろう。今、私がやるべきなのは「この世界の救済」でもなければ「生き残った人類の保護」でもなく、「市街地を闊歩するKeter級の収容」でもない。「死ぬ前に暇つぶしのネタを見つける」ことだ。残る余生を楽しませてくれる何かが必要なのだ。こうして誰も読まないログを書いて気を紛らわせるのにもいい加減疲れた。"
+</p>
+<p>
+T:"<IDSP>このまま虚空の中で何も楽しまずに死を待つのは──この二十年あまりの期間、人間らしい感情を押し殺し、自分の人生を地獄に捧げてきたからこそ言える台詞だが──、いくらなんでも悲しすぎる。あんまりじゃないか。童貞すら捨てることができない人生だったんだぞ。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<hr>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>2024/03/02"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>2024/03/02"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+<span style="text-decoration: underline;">
+<span style="font-size:1.5em;">
+T:"2024/03/02"
+</span>
+</span>
+</strong>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<blockquote>
+<ul>
+<li>
+T:"該当データ無し"
+</li>
+</ul>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<hr>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>2024/03/03"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>2024/03/03"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+<span style="text-decoration: underline;">
+<span style="font-size:1.5em;">
+T:"2024/03/03"
+</span>
+</span>
+</strong>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"04:16"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>世界滅亡宣言が発令されてからさらに二日経つ。サイト内の全職員に施設外退避命令を下したのが裏目に出てしまった。あの日私は、プロトコルに反する形ではあったが長年の経験に基づく独断で私よりも先に彼らを脱出させ、地下に収容されていたすべてのオブジェクトを単独で終了した。ここまでは良かったのものの、最後の最後で凍結状態から復活したSCP-████-JP-3実体群に追いかけ回された挙げ句この地下シェルターに閉じこもっているわけだ。幽閉されているの間違いか。"
+</p>
+<p>
+T:"<IDSP>本当に退屈で死にそうだ。シェルターの中からでは他のサイトとの連絡は付かず、友人も家族ももちろん応答しない。孤独がこんなにも悲しいことだなんて知らなかった。せめてDクラス、あるいは知性持ちのオブジェクトでもいい、話が通じるやつに会いたい。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"08:23"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>奇跡だ。6350排撃班を名乗るGOC工作員四名が、シェルターの向こう側でうろついていた悩みの種、SCP-████-JP-3実体を全部ぶち殺してくれた。すぐにサイト内の放送システムを用いてシェルターに案内し、治療と飯と寝床を提供して今に至る。外は混沌たる有り様らしい。乳幼児の生首で構成される柱が天高くそびえ立ってるんだとか。そんなオブジェクトの報告書は見当たらない。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"22:35"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>死ぬ前に、一回で良いからミサイルを撃ってみたい。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<hr>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>2024/03/04"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>2024/03/04"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+<span style="text-decoration: underline;">
+<span style="font-size:1.5em;">
+T:"2024/03/04"
+</span>
+</span>
+</strong>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"01:02"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>彼らの隊長格……“ヴァイトマン”を名乗る男が持っていたトランプで夜通し大富豪をしている。ルールそのものはずっと前から知っていたがこうして遊ぶのは今日が初めてだ。とても楽しい。"
+</p>
+<p>
+T:"<IDSP>GOCは──少なくとも極東部門は──とっくに壊滅しているとのことで、彼らは前もってそれを予見し、連合ステーションから武器と食料を奪い逃亡したらしい。実に賢明な判断だと互いに苦笑いしながらゲームを続けた。恐らくステーションに踏みとどまっていたら彼らも死んでいたし、私もまた他の職員とともにサイトを退避していたら命がなかった。"
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"05:37"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>ここを出たい。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"08:23"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>先ほどの私は徹夜で遊んだせいか疲れていたらしい。誰が出るものか。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"09:07"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>バッテリーの残量が残り少ないのに(一応非常電源を用いた充電は可能だが)無駄なものばかり書いている。いい加減にここから出たい気持ちも抑えられなくなってきた。排撃班の面々にこんなこと言えるわけがない。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<hr>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>2024/03/05"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>2024/03/05"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+<span style="text-decoration: underline;">
+<span style="font-size:1.5em;">
+T:"2024/03/05"
+</span>
+</span>
+</strong>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"05:52"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>地下シェルターを出た。現在サイト内の物資をありったけ装甲車に詰め込んでいる。一時間後に排撃班の面々と共にここを出る予定だ。昨日まで死ぬほど求めていた暇潰しのネタのために、人生最後の、命懸けの冒険に出る。"
+</p>
+<p>
+T:"<IDSP>収容エリアにてSCP-████-JP、SCP-████-JP、SCP-███-JP、SCP-████-JP-2、SCP-███-JP-1の死亡、完全破壊を確認した後、すぐにサイトの電源を落とした。あの日、施設封鎖プロトコルに従いすべての脅威を終了しておいてよかった。この状況下で収容違反でもされたら困る。"
+</p>
+<p>
+T:"<IDSP>それから、まだ無事らしい米国本部の極秘サイト██と、国内サイト81██のデータベースに私の権限でログインして、クリアランスレベル4までの情報に(よほどのことが無い限り)誰でもアクセスできるようにした。これら二つの施設に日本国内の、SCP-JPとして登録されるオブジェクトのデータがほぼすべて眠っている。ついでに有り余っている職員用作業端末の全データを初期化し、行く先々に予備電池とともに置いていくことにした。これを介して私のアカウントでサーバーにアクセスできる。職務放棄した身だが元財団職員としてやれることをやっておきたい。とにかく財団職員含む日本国内の残存人類がこれに気づくことを願う。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"07:02"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>音声ログが取れたので写しを添付しておこう。誰がこれを読むのかは解らないがとりあえずは載せる。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div class="blockquote" style="border-radius: 10px; margin: 10px">
+<p>
+<strong>
+T:"無題 2024/03/05<NBSP>06:32 Ishiba,No.2044"
+</strong>
+</p>
+<p>
+<strong>
+T:"日付:"
+</strong>
+T:"2024/03/05<NBSP>06:32"
+</p>
+<p>
+<strong>
+T:"探索部隊:"
+</strong>
+</p>
+<ul>
+<li>
+T:"6350排撃班 “Hound Dog”"
+</li>
+</ul>
+<ul>
+<li>
+T:"サイト81██管理官 石破博士"
+</li>
+</ul>
+<p>
+<strong>
+T:"対象:"
+</strong>
+T:"未記入"
+</p>
+<p>
+<strong>
+T:"部隊長:"
+</strong>
+T:"石破博士"
+</p>
+<p>
+<strong>
+T:"部隊員:"
+</strong>
+</p>
+<ul>
+<li>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"“ヴァイトマン”"
+</li>
+</ul>
+<ul>
+<li>
+<strong>
+T:"ST-6350-W2:"
+</strong>
+T:"“ロケット”"
+</li>
+</ul>
+<ul>
+<li>
+<strong>
+T:"ST-6350-W3:"
+</strong>
+T:"“リポーター”"
+</li>
+</ul>
+<ul>
+<li>
+<strong>
+T:"ST-6350-W4:"
+</strong>
+T:"“コーフィー”"
+</li>
+</ul>
+<hr>
+<p>
+T:"[ログ開始]"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"大丈夫か？……吐きそうな顔してるぜ。しばらく休みなよ。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"問題ありません。ただ、何というか……君たちを巻き添えにすることは無かったんじゃないかと後悔しているんです。ここから出ることができたのは紛れもなく君たちのおかげなんですが、その恩人をまた──"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"いいって。もういいんだよ。俺ら全員あんたに同行するって決めたんだ。理由なんて何一つ無いんだけどな。いいんだよそれで。あと敬語使う必要もねえから。もうクソ忌々しいGOCも、財団も、消えたんだからさ。気楽に行こうぜ。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"……そうですね。地下に収容されていた全てのオブジェクトは既に私が殺しておきました。今更脅威になることはありません。残りの物資を探しましょう。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"敬語使うことないのに。まぁしゃーないか。ハウンド2聞こえてるか？今から俺と3と博士で食料を探す。お前は4と共にありったけの武器弾薬を探してこい。個人防衛火器が望ましい。分担して車両に詰め込んでおいてくれ。五分毎にチャンネル4で連絡すること。サイト内に脅威は確認されていないが万が一のことを考えフェーズ2戦闘態勢を維持。班員ロスト時は速やかに撤退しろ。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W2:"
+</strong>
+T:"ハウンド2了解。ついでに燃料とかも補給しておく。それから……悪い。やっぱ供養の時間が欲しい。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"あー……サイト内での死人は今んとこ確認されてないけど……どうするよ博士。線香も坊さんもいないけどやる時間はあるぜ。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"お心遣い感謝します。その……GOCの皆さんの分も祈りを捧げておきましょう。出る直前にちょっとだけ黙祷させてください。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"悪いね。俺も精一杯祈っておく。あー班員一同、聞いての通りだ。早めに準備して早めにやるぞ。"
+</p>
+<p>
+T:"[ログ終了]"
+</p>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>今は車内から青空を見上げている。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"12:05"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>写真や映像ログを載せることができなくて困っている。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"12:47"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>Twitterとか、とりあえず何かしらのSNSをやってみたかった。"
+<br>
+T:"↑こんな戯れ言書いても怒られないのが笑えるww"
+<br>
+T:"w←何気に初めて使った。高校生になったような気分だ。wwww(笑) (｡･ω･｡)ｲｪｰｲ ! (｀･ω･´)ﾌﾝﾌﾝ ! デフォルトで絵文字が変換候補に入っているのか。"
+</p>
+<p>
+T:"顔文字ってやっぱり可愛いな。癒される。ω←が大切なのか。(･∀･)(･∀･)(･∀･)ﾖﾎﾟﾎﾟﾎﾟﾎﾟﾎﾜｰｰﾝ"
+</p>
+<p>
+T:"くたばれ財団。くたばれSCP。二度とその忌々しい三文字を見たくない。こんなにあっさり終わる世界のために私の人生を踏みにじりやがって。全員等しく死ね。"
+</p>
+<p>
+T:"(･∀･)ｹﾝｶﾊﾔﾒﾅｻｰｲ!"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>虚しくなってきたからやめる。恥ずかしい。クソ。仮にもサイトの管理官だった男が何をやってるんだ。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"18:23"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>先ほどのログを排撃班のみんなに爆笑されている。赤面が止まらないが消すつもりはない。"
+</p>
+<p>
+T:"<IDSP>ついでに彼らに"
+<span style="text-decoration: line-through;">
+T:"遺書を書かせてやることにした。"
+</span>
+T:"この記録端末を貸してやることにした。使えるかどうかは知らない。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"18:59"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<strong>
+T:"執筆者:"
+</strong>
+T:"ST-6350-W1: “ヴァイトマン”"
+<br>
+T:"本名: 赤塚劉生(あかつかりゅうせい)<IDSP>遺書など。"
+</p>
+<p>
+T:"<IDSP>ルビの入力方法が解らない。"
+</p>
+<p>
+T:"<IDSP>真っ先に逃げ出して悠々と生き延びている卑怯者ことヴァイトマンです。こんにちは。"
+</p>
+<p>
+T:"<IDSP>上官殿がこのログを読んでるなら心からこう言わせてもらいます。世界を守れて、人類の盾として役目を果たせて本当に光栄でした。満足してますし後悔もありません。でも目の前でクソデカいクモに食われている部下を見捨てろと指示したあんたらのことは忘れない。あれが最良の選択だろうと絶対に許さない。ぶっ殺してやる。あいつの、フィーメイルの分まで苦しめ。"
+</p>
+<p>
+T:"<IDSP>恨みつらみはぶちまけたので、あとは幸運を祈ります。誰であれこの文書を読む全ての人類に幸あれ。俺は生き残る。"
+</p>
+<p>
+T:"<IDSP>最後に妻に会いたい。"
+</p>
+<hr>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"2024/03/08<NBSP>14:22"
+</span>
+</strong>
+</p>
+<ul>
+<li>
+<strong>
+T:"追記:"
+</strong>
+T:"愛知県███市跡にて最後に生存を確認。死亡確認できず。"
+</li>
+</ul>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"19:02"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"** ** 執筆者: ST-6350-W2: “ロケット”"
+<br>
+T:"本名: 書かない。"
+<br>
+T:"** ** 項目: 遺書"
+</p>
+<p>
+T:"<IDSP>太字入力が全然できない。よく解らない。"
+<br>
+T:"お袋も親父も、兄ちゃんも、大好きです。以上。行けるかどうか解らないけど天国で会おうね。遺書ってこれでいいのかな。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"19:36"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<strong>
+T:"執筆者:"
+</strong>
+T:"ST-6350-W3: “リポーター”"
+<br>
+<strong>
+T:"本名:"
+</strong>
+T:"未記入"
+</p>
+<p>
+T:"<IDSP>多分これが遺書になります。家族全員の死亡が確認されたため思い残すことは恐らくありません。書き終わってから後悔するのが遺書なのでモヤモヤ悩まずこのまま書ききります。とりあえずこの仕事やれて楽しかったです。救出した人たちや僕が殺した人たちの顔を絶対に忘れません。僕の人生に意味を与えてくれた世界オカルト連合に、僕がこの日まで救い続けた世界に感謝を。以上です。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"19:45"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>ハウンド4は書かないらしい。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"22:17"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>神奈川県のサイト81██に到着。施設の破損は見受けられない。VERITASで探知した限り敵性反応は確認されない。今夜はここに泊まる。"
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"22:24"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>ハウンド1、ハウンド2、ハウンド3と共に風呂に直行した。私は全く知らなかったのだが、ホワイト・スーツは風呂場で洗えるものらしい。三人の屈強な兵士は自らの装備を素早く脱ぎ捨て丁寧に汚れを落とし、乾燥剤を詰め込んで即座にそれを脱衣所に放り出した。実に意外だった。最先端技術の結晶たるGOCの殺戮兵器が私の隣で、スポンジと石鹸で磨かれている様子は正直笑えた。実際腹を抱えて爆笑した。次からは私も手伝うことにしよう。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"23:12"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>“ヴァイトマン”が何か隠しているような気がする。心当たりはある。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<hr>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>2024/03/06"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>2024/03/06"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+<span style="text-decoration: underline;">
+<span style="font-size:1.5em;">
+T:"2024/03/06"
+</span>
+</span>
+</strong>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"00:08"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>“ヴァイトマン”と少しだけ喋った。"
+</p>
+<div class="blockquote" style="border-radius: 10px; margin: 10px">
+<p>
+<strong>
+T:"無題 2024/03/06<NBSP>00:06 Ishiba,No.2045"
+</strong>
+</p>
+<p>
+<strong>
+T:"日付:"
+</strong>
+T:"2024/03/06<NBSP>00:06"
+</p>
+<p>
+<strong>
+T:"探索部隊:"
+</strong>
+</p>
+<ul>
+<li>
+T:"未記入"
+</li>
+</ul>
+<p>
+<strong>
+T:"対象:"
+</strong>
+T:"ST-6350-W1: “ヴァイトマン”"
+</p>
+<p>
+<strong>
+T:"部隊長:"
+</strong>
+T:"石破博士"
+</p>
+<p>
+<strong>
+T:"部隊員:"
+</strong>
+</p>
+<ul>
+<li>
+T:"未記入"
+</li>
+</ul>
+<hr>
+<p>
+T:"[ログ開始]"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"寝れねえ。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"同じく。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"トランプでもやるか？"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"たぶん徹夜でやる羽目になりますよ。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"ふはは。違いない。あんた滅茶苦茶粘るもんな。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"負けず嫌いなものでして。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"音声ログ取ってんの？"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"はい。先ほどから。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"何故……まぁ構わないけどさ。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"唐突にお聞きしますけど、奥さんがいらっしゃるので？"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"話さなくちゃダメかよ。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"はい。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"ごく普通の一般人だ。いつでも、今でも愛している。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"存命しているんですか？"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"語っていいのかなこれ。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"長くてもあと数ヶ月程度でみんな死ぬんですからいいじゃないですか。教えてくださいよ。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"生きてる。遠くにいる。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"今は連絡取れるんですか？"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"あんたと出会う二日前に最後の連絡を取ったきりだ。財団サイト81██、愛知県だっけ、そこに避難民として受け入れられたらしい。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"あそこはもともと一般市民の避難先として使用可能な設計になってましたね。で、どうします？協力しますが。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"は？何の？"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"我々は今神奈川にいるわけですが。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"おいおいおいおい。無茶することはねえよ。それに財団が保護してくれてるってんならもう心配は──"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"十分行ける距離です。国道沿いのサイト四つを避けなければならないためかなり遠回りにはなりますけどね。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"お心遣いには感謝するが道中どんな脅威に出くわすか解らねえし、何よりあんたを巻き込むことじゃ──"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"シンプルにお聞きします。あなたは奥さんに会いたいですか？"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"それは……"
+</p>
+<p>
+T:"[数秒間の沈黙]"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"既に亡くなってるかもしれませんし、あるいは別の場所で生存しているかもしれません。が、そんなの関係ありませんよ。行くかどうかを聞いてるんです。私は職務放棄した身ゆえ今なら私情だけでいくらでも動けますし、どのみちどう足掻こうとあと数ヶ月もすれば全人類漏れなく死ぬんですよ。それを踏まえた上で再度お聞きします。あなたは奥さんに会いたいですか？いくらでも協力できますよ。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"会いたい。ずっと前から会いたかった。会いたいよ。今すぐ。彼女の顔をもう一度見たい。抱き締めたいよ。愛しているんだ。妻を愛している。死ぬ前に会いたい。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"決まりですね。愛知県の財団サイト81██を目指しますよ。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"正気なのか？"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"恩返しみたいなものです。道案内は任せてください。護衛は頼みます。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"ああ、了解した。必ず。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"泣いてるんですか？"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"諦めてたんだよ。ほとんど諦めてたんだ。妻のことを思い出さないように必死だったんだよ。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"希望を捨てないでください。あのサイトは強固だ。核でも使わない限り絶対に安全です。……初めて出会った日に言ってくれればよかったのに。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"すまない。すまない。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"謝ること無いですよ。……そんなに泣かれると困るなぁ。胸貸します？"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"大丈夫だ。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"そうですか。では、明日にでも出発できるように寝ましょう。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"あぁ。お休み。明日も無事で。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"あなたもね。あと毎晩言ってる気がしますけど、トランプ、ありがとう。"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"博士。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"何ですか？"
+</p>
+<p>
+<strong>
+T:"ST-6350-W1:"
+</strong>
+T:"俺は死なねえから、どうか死なないでくれ。"
+</p>
+<p>
+<strong>
+T:"石破博士:"
+</strong>
+T:"……もちろんです。生き残りましょう。"
+</p>
+<p>
+T:"[ログ終了]"
+</p>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>そんなわけでこれから愛知を目指す。明日までに神奈川を出たい。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"06:15"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>二分前からハウンド4と共に経路の先行調査を進めている。町が静かなのはこのエリア一帯の「音」という概念が消えているからかもしれない。テレパシー的な何かで互いにコンタクトがとれる。多分SCP-████-KOの能力だ。さして脅威にならないのはいいが何で日本にいるかは知らない。ついでに例の職員用端末もたくさんばらまいてきた。"
+</p>
+<p>
+T:"<IDSP>私の予想通り、敵対的な異常存在とは一回も出くわさなかった。壊れたビル群が、市街地が、朝日に輝いている。とても綺麗だ。写真を載せられないのが本当につらい。この美しさもいつか消え去ってしまうのか。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"06:51"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>トカゲ頭の男が血塗れのまま倒れていたのを発見。安否を確認したところ「蛇の手」とだけ呟いて意識を飛ばしてしまった。私が背負ってサイト内まで運ぶ。何やってるのか自分でも解らない。でもこれから治療する。絶対に助ける。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"09:21"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>止血消毒、その他諸々の処置を施した。男の名は「ハキム」。日本国内の蛇の手と蒐集院残党一派との連絡員をやっていたらしい。排撃班の面々は彼を殺そうとしない。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"10:32"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>ハキムは排撃班の面々とトランプで遊んでいる。とても楽しそうだ。先月まで我々は水面下で殺し合いを繰り広げていた仲だったのに。ハウンド4の笑顔が眩しい。"
+</p>
+<p>
+T:"<IDSP>ガソリン、武器、食料の補充を完了。ホワイト・スーツの充電は各員問題なし。予備電源に感謝する。ハキムは我々と同行することになった。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"10:51"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>出発する。さよならサイト81██。さよなら神奈川。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"12:12"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>さっそく敵性存在に遭遇するもハキムがこれを単独で撃破。全身の傷が完治している。並みの財団エージェントを上回る戦闘能力を持っていたとは。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"12:52"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>二回目の戦闘がたった今終了した。奇しくも私が収容作戦を指揮したオブジェクト、SCP-████-JPが相手だった。異常性と対処法は私の頭の中にギッチリ詰まっている。"
+</p>
+<p>
+T:"<IDSP>あの日四人のDクラス職員を食い殺したスライム野郎は、私の目の前でハウンド4の腕部火炎放射器にこんがり焼き殺された。仇討ちをしたようなしてないような。そんな気分だ。収容より破壊の方が圧倒的に楽なのが財団職員としては何となくモヤモヤする。あの犠牲は何だったんだろう。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"13:24"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>シェルターを出てから民間人をまったく見かけない。今のところ死体すら発見できない。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"14:39"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>目的地、サイト81██との通信に成功。民間人多数保護。“ヴァイトマン”の妻の確実な生存を確認。通話はできなかったが、端末を一時的に貸してちょっとだけ彼らにメールのやりとりをさせてやることにした。メールの内容はここに載せないし私も確認しない。流石にこれは触れちゃいけない領域だ。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"14:51"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>通信終了。絶対に“ヴァイトマン”をサイト81██に連れて行く。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"18:25"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>右後輪がパンクした。ハキムと私が急いでタイヤ交換を行い、なんとか事なきを得た。スリル満点。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"20:09"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>このファイルの過去ログを追いながらちょっとだけ運転を休む。戦闘とタイヤ交換と用を足す目的以外で車外に出なかったからかなり疲労が溜まっている。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"22:21"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>このファイルはいつどこで誰が見るんだろうか。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"22:36"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>気づけば静岡県、三島にいた。遠回りに遠回りを重ねたから仕方ないのだが、やはりここまで時間をかけすぎた気がする。今日はここで野営する。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<hr>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>2024/03/07"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>2024/03/07"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+<span style="text-decoration: underline;">
+<span style="font-size:1.5em;">
+T:"2024/03/07"
+</span>
+</span>
+</strong>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"06:32"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>起床。すぐに出発する。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"06:41"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>街が静かだ。装甲車のエンジン音以外何も聞こえない。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"07:23"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>サイト81██と再度通信。安全を確認した。今日中の到着を目指す。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"09:45"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>写真を載せるべきなのだがどうにもうまくいかない。南北にかけて本州が割れているらしい。我々の眼前に大きな奈落が立ちはだかり、遙か向こうにほんの少しだけ陸地が見える。霧が濃すぎてよく解らない。何が起きているんだ。サイト81██は存続しているのか？我々はそこへ行けるのか？"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"13:45"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>“ヴァイトマン”の元気がない。とにかく現地への移動手段、ヘリコプターを探さねばならない。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"14:23"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>彼は何も語らなくなってしまった。周りの声に反応しない上に立ち上がろうとしない。全員疲弊しきっている。ヘリコプターは発見できないが正直これを捜す前に重要なことを確認せねばなるまい。"
+</p>
+<p>
+T:"<IDSP>我々は既に愛知県に、サイト81██付近に到着しているはずなのだ。GPSは機能していないが、明らかに数時間前に県境を越えている。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"23:58"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>サイト81██と通信を行い、これを元に我々の現在位置を特定することにした。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<hr>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>2024/03/08"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>2024/03/08"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+<span style="text-decoration: underline;">
+<span style="font-size:1.5em;">
+T:"2024/03/08"
+</span>
+</span>
+</strong>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"00:02"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>データが正しければ現在地は愛知県███市、サイト81██が我々の直下4500mに位置することになる。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"00:24"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>先ほどの情報を向こうに告げた途端サイト81██との通信が途絶。その後の合計80回にも及ぶメールに反応無し。さっきまで我々と通信していた彼らが何者だったのかは私も判断できないが、とりあえず保護されていたと思われる多数の民間人、“ヴァイトマン”の妻は死亡したと考えられる。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"00:53"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>“ヴァイトマン”が消えた。他の排撃班員が位置情報を割り出す。まだ彼のバイタルサインは停止していない。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"06:42"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>“ヴァイトマン”について記す。"
+</p>
+<p>
+T:"<IDSP>捜索開始から発見までそう時間はかからなかったが、その後は一瞬だった。あの奈落の淵にポツンと座っていた彼は、駆け寄る我々に振り返るや否や、後ろ向きに飛び降りた。音もなく深淵に吸い込まれていった。バイザーに隠れた表情は最後まで明かされず、探知可能範囲のさらに向こう側に旅立っていった彼の携帯端末は、明確な「死亡信号」を我々の端末に送らないままである。彼が死んだのかどうかは未だに解らない。彼の妻がそうであったように。"
+</p>
+<p>
+T:"<IDSP>これからどこへ行けばいいのか解らない。だけど進もう。ここじゃない何処かへ。まずは折り返して██市へ、サイト81██へ行こう。あの付近にはKeter級の収容施設は無かった。多分まだ安全地帯のままだ。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"15:15"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>彼の遺書に追記した。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"17:32"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>すばらしい夕焼けが奈落の向こう側を、西日本と思わしき崖の上の大都市を飲み込んでいる。その輪郭は霧のフィルターと逆光でゆらゆらと揺れていて、生き物みたいに手を振ってくる。"
+</p>
+<p>
+T:"<IDSP>私は生まれて初めて空を眺めている。こんなに広かった。鮮やかだった。もっと空に目を向けるべきだった。文字では到底形容できないくらい綺麗だ。シェルターを出たあの日、車内から眺めたあの空も、多分これくらい綺麗だったんだ。"
+</p>
+<p>
+T:"<IDSP>今からここを出発する。ハキムの探知能力とホワイト・スーツのVERITASシステムで警戒体制を維持しながら、明日の朝までにサイト81██、静岡県██市に向かう。さようなら“ヴァイトマン”。また会おう。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"18:52"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>高速道路に乗り込む前にガソリンスタンドにて燃料を補給する。排撃班の班員三名が武装しながら警戒、ハキムが装甲車のガソリン補給、私がタンクへの補給を行う。余裕があったらタイヤも交換する。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"22:32"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>誰もいない高速道路を突っ走る。化け物に捕捉されたくないからライトは消したままだ。遠回りはせずに全速力で走ることにした。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"22:45"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>SCP-████-JPが車両の前に立ちふさがっている。流石に機械実体はVERITASでもハキムでも認識できないらしい。どうしたものかな。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"22:53"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>責任をもってやつを破壊した。初めて重機関銃を撃ったがなかなか爽快だ。今は車内で治療を受けている。私の左耳など、みんなの命に比べれば、今まで見殺しにしてきた命に比べれば遙かに安い。ハウンド4の手が、ハウンド3の手が、ハウンド2の手が、ハキムの手が、暖かい。生きている。私はこの瞬間をたs"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"23:59"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>ハウンド4です。石破さんは私の横でぐっすり眠ってます。命に別状はありません。ハキムが運転、ハウンド2が銃座で索敵を担当。ハウンド3と私はホワイト・スーツのバッテリーを充電しています。班長が消える前に残してくれた予備バッテリーと弾薬は私が管理しています。"
+</p>
+<p>
+T:"<IDSP>班長のトランプに誰も触ろうとしません。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<hr>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>2024/03/09"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>2024/03/09"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+<span style="text-decoration: underline;">
+<span style="font-size:1.5em;">
+T:"2024/03/09"
+</span>
+</span>
+</strong>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"02:21"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>ハキムと交代してハウンド3が運転、私が銃座で警戒態勢に入ります。石破さんはまだ寝てます。左耳は無くなってしまいましたが死ぬ傷ではありません。ハウンド2はバッテリー充電しながら就寝。ハキムはハキムで日誌のようなものをつけています。さっきから彼と会話してますがなかなか陽気な人です。現役で戦っていた頃の話や当時の連絡網、武器の輸送経路など、守る必要がなくなった機密情報をお互い語り合いました。もう殺し合う理由がなくて安心しています。"
+</p>
+<p>
+T:"<IDSP>サイト到着まで残り六時間くらいです。このまま生き残ります。いつまでかは解りませんが生き残ります。とりあえずお風呂に入りたいです。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"03:19"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>何とか起床した。ハウンド4は私の横で眠っている。にやけ顔が可愛い。"
+</p>
+<p>
+T:"<IDSP>“ヴァイトマン”と公園のベンチで語り合う夢を見た。何を語り合ってたのかは憶えていないが、彼の寂しげな表情だけは脳裏に焼き付いている。ポーチに収納してあるトランプケースを固く握りしめながら、私は初めて彼がいないことを実感した。散々Dクラス職員を、仲間を見殺しにしてきた私が、今更友人の行方不明で泣いている。書ききれない罪悪感が胸の中に渦巻いている。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"06:42"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>夜明けの光が車内に射し込む。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"08:27"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>サイト81██到着。VERITASシステムとハキムの能力による索敵を開始。当サイトは1000を越えるAnomalousアイテムと二つの移動不能なSafeクラス、それから4000発の各種ミサイルを管理する、比較的安全な場所だ。セキュリティロックは既に外れているから侵入も簡単である。外部から確認可能な損傷は無し。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"08:52"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>敵性反応無し。セキュリティロックを再度作動。外部と我々を完全に遮断した。食糧備蓄もこの人数なら二年間は保つ。勝った。我々の勝利だ。ひとまず安全は保証される。と信じたい。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"09:47"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>当サイトのメール受信ボックスにアクセスし、今までこの世界に何が起きていたのかを確認した。以下に特筆すべき項目を載せる。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<ul>
+<li>
+T:"米国本部の極秘情報管理サイト██が二日前に陥落。現在のところ81管区に登録されるオブジェクトのデータは管理サイト81██のみが保管している。"
+</li>
+</ul>
+<ul>
+<li>
+T:"国内に登録されているオブジェクトの約半数以上が──少なくとも六割以上──あの日、各サイトの管理者により完全に終了されていたらしい。逆に言えば今外を闊歩している化け物のほとんどが破壊不能オブジェクト、あるいは終了プロトコルを突破するような危険度のオブジェクトという仮説も立てられる。あの日ぶっ壊した████-JPはたまたま勝てただけなのかもしれない。"
+</li>
+</ul>
+<ul>
+<li>
+T:"韓国支部、ドイツ支部、イタリア支部は正式に任務放棄を宣言済み。ヨーロッパに残存人類は確認されず。"
+</li>
+</ul>
+<ul>
+<li>
+T:"世界終焉の原因は特定できていない。"
+</li>
+</ul>
+<ul>
+<li>
+T:"O5-5、O5-11、O5-12は死亡、または自殺済み。他のO5メンバーは何処かに消えた。"
+</li>
+</ul>
+<ul>
+<li>
+T:"大阪府にて財団とGOCの残存勢力が防衛戦を繰り広げているとのことだが、あの奈落がある以上は何もできないし恐らく彼らもすぐに負ける。この件に関しては見なかったことにする。"
+</li>
+</ul>
+<ul>
+<li>
+T:"GOC極東部門の中核を担うステーション████が消滅。6350排撃班の面々が所属していた場所だった。"
+</li>
+</ul>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>奈落や愛知県サイト81██の情報は一切無い。"
+<span style="text-decoration: line-through;">
+T:"読むだけで疲れる。だが読まねば。記さねばなるまい。"
+</span>
+T:"途中だがやめる。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"09:58"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>この付近に万が一存在しうる敵性オブジェクトを絞り込むことにしたのはいいが調べるのが怖い。知るべきなのに知らないままでいたい。正直疲れた。疲れたんだ。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"18:30"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>サイトの北東2km先に"
+<a href="/scp-233-jp">
+T:"SCP-233-JP-3"
+</a>
+T:"の群を確認。およそ20。何でここにいるのか解らない。こっちの宇宙にも出てくるものなのか。"
+</p>
+<p>
+T:"<IDSP>いずれにせよ確実な脅威である。やつらの耐久性と攻撃能力は計り知れない。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"18:41"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>カエルの対応マニュアル(遭遇時の対処法など)を可能な限り排撃班とハキムに伝えた。彼らの大口径ライフル、ハキムの徒手格闘なら倒せるかもしれない。確証は一切無い。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"18:55"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>やはり彼はいない。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"19:23"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>SCP-233-JP-3の群を見失った。全個体漏れなく消失を確認。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+T:"22:42"
+</span>
+</strong>
+</p>
+<blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+T:"<IDSP>明日も死ぬまで生き残ってやる。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<hr>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>2024/03/10"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>2024/03/10"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+<span style="text-decoration: underline;">
+<span style="font-size:1.5em;">
+T:"2024/03/10"
+</span>
+</span>
+</strong>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<blockquote>
+<ul>
+<li>
+T:"該当データ無し"
+</li>
+</ul>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<hr>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>2024/03/11"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>2024/03/11"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+<span style="text-decoration: underline;">
+<span style="font-size:1.5em;">
+T:"2024/03/11"
+</span>
+</span>
+</strong>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<blockquote>
+<ul>
+<li>
+T:"該当データ無し"
+</li>
+</ul>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<hr>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>2024/03/12"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>2024/03/12"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+<span style="text-decoration: underline;">
+<span style="font-size:1.5em;">
+T:"2024/03/12"
+</span>
+</span>
+</strong>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<blockquote>
+<ul>
+<li>
+T:"該当データ無し"
+</li>
+</ul>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<hr>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>2024/03/13"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>2024/03/13"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+<span style="text-decoration: underline;">
+<span style="font-size:1.5em;">
+T:"2024/03/13"
+</span>
+</span>
+</strong>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<blockquote>
+<ul>
+<li>
+T:"該当データ無し"
+</li>
+</ul>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"That's All."
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<hr>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<strong>
+<span style="text-decoration: underline;">
+<span style="font-size:1.5em;">
+T:"2024/03/14<NBSP>07:52"
+</span>
+</span>
+</strong>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>──弾切れが近い。すぐに補充しないと丸腰になる。SCP-233-JP-3実体の死体で運動場出入り口に防御壁を構成し、すぐに二階へと移動した。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"「石破さん！こっちに！」"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>ハウンド4の声に誘導され、何かが破れるような轟音を背中に受けながら死に物狂いで二階に駆け上がり、自動防壁を降ろした。武器弾薬の補充を一瞬で済ませ、すぐにこのサイトの地下シェルターに向かう。ハウンド2とハウンド3が先行して食料を輸送している最中だ。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>もう四日ほど前からあれと戦い続けている。数は減るどころか寧ろ増えるばかりで、サイトをぐるりと一周囲う迎撃システムも今日の明け方に全滅した。防壁は突破され、東棟の一階部分は占領されている。装甲車で逃げ切れる数でもない。それこそ自殺行為だ。ここから出てはいけない。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>ああ、何であの日シェルターから出たんだろうか。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>あの日、自分を押し殺して、踏みとどまっていれば、“ヴァイトマン”は死ななかった。こんな最後を迎えなかった。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>これから私は死ぬ。確実に死ぬ。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>死にたくない。しかし死ぬ。避けることができない運命なんだ。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>だからせめて、あの日外の世界へ一歩踏み出した自分のように、最後に、最期に、「暇潰しのネタ」を探そう。退屈と孤独の中で死にかけていた自分はもういない。死の瞬間までそれを探す。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"「……ハウンド2とハウンド3のバイタルサインが停止。多分地下シェルターはダメです。駐車場は占拠されているため脱出も不可能です。」"
+</p>
+<p>
+T:"「畜生、ここまでか。石破さん、俺なら外壁を伝って別のエリアにアクセスすることが可能だ。何かやれるはずだから、まだ粘ってみようぜ。」"
+</p>
+<p>
+T:"「それはだめ。あのカエルは速すぎるし壁も上る。ハキムでも追いつかれる。」"
+</p>
+<p>
+T:"「じゃあどうしろってんだよ。他に何かできんのかよ。」"
+</p>
+<p>
+T:"「……私の拳銃、二発残すから好きに使って。」"
+</p>
+<p>
+T:"「……ふざけんなよ。何ヘルメット取ってるんだ馬鹿。よせ！」"
+</p>
+<p>
+T:"「まずはそれで私を殺して」"
+</p>
+<p>
+T:"「コーフィー！ 石破さん、彼女を──」"
+</p>
+<p>
+T:"<IDSP>──目の前で壮絶なドラマを繰り広げる彼らに、私は軽く微笑み、そして頭ではなく、心の底から湧き出る、私ですら予期していなかった声をぶつけた。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"「ミサイル」"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"さっきまでの争いは嘘のように止まった。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"「ミサイル撃ってみませんか？」"
+</p>
+<p>
+T:"「……は？」"
+</p>
+<p>
+T:"「石破さん？」"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>二人の間に転がっていた拳銃を窓から投げ捨て、自分でもびっくりするような笑顔で再度問いかける。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"「ミサイル、撃ってみませんか？4000発、この基地に眠っているやつ全部。楽しいですよ。きっと。」"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>ハキムは口を開けたまま立ち尽くしていたが、ハウンド4はちょっと沈黙したあとにまぶしい笑顔を見せてくれた。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"「……やります！」"
+</p>
+<p>
+T:"「石破さん？ コーフィー？ あんたら何を……」"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>ハウンド4と共に五階中央管制施設へと走り出した。ハキムはしばらく棒立ちしたあとに慌てて追随する。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>最後の最後まで持っていた私の職員証を提示し、クリアランスレベル4権限でサイトの武装システムにアクセス。全ミサイルを発射可能体制に移行する。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>もはや「確保、収容、保護」などというふざけた理念も、私が人生を費やしてきた信念も必要ない。職員証も、白衣も、部屋の片隅に転がっていたゴミ箱に叩き込んで、日本全土に均等にミサイルをお届けすべくデタラメに攻撃座標を設定した。部屋一面に位置する発射ボタンが一斉に点滅する。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>私はこれから死ぬ。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>世界はこれから滅び行く。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>こんな世界のために、私は全てを捨てて生きてきた。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>だから最後の最後くらい"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>大儀も責務も、全部捨てて"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>やりたいことをやろう。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"「押せェッ！」"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>三人で片っ端から発射ボタンを叩き、叩き、叩き、叩ききって、管制室を揺るがす轟音から逃げるかのごとく、すぐに屋上に向かう。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+T:"<IDSP>──今日も今日とて空は青く、美しく、見上げれば短距離、中距離、長距離、弾道弾、対地、対空、対艦、ありとあらゆる種類のミサイルが、4000発、大空へと舞い上がっている。私の背後から、左右から、目の前から、眩く光るそれが一斉に羽ばたいて行く。もう音が聞こえない。何も聞こえない。後ろの笑い声は何かに消されて届かない。"
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<div style="text-align: center;">
+<p>
+T:"無数の光が、私だけを照らしている。"
+</p>
+</div>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<blockquote>
+<div style="text-align: center;">
+<p>
+T:"ファイルを消去中……"
+</p>
+</div>
+</blockquote>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>

@@ -1,0 +1,81 @@
+{
+ "kind": "tale",
+ "listed_size": 1479,
+ "live_page_content_sha256": "086597b28198be04ce775ad85efd2e9e49b9ce4ce2e541a5ed5522574ad71922",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:25:08+00:00",
+  "method": "GET",
+  "response_bytes": 42523,
+  "response_sha256": "a5564dc2b390c2eb58fdaef1bbe53bdf1c0211fb919c19d4e2bc95257885d41e",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/mortal-emulator"
+ },
+ "page_id": 1447727979,
+ "rating": 221,
+ "site": "scp-jp",
+ "slug": "mortal-emulator",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:25:09+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "1447727979"
+  },
+  "response_bytes": 6168,
+  "response_sha256": "b3e03224c7bd8a56e1c3923cff40538ad0fff3a8a6d15f8d2179d51bbcdc3da3",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "fcc9505cbbe2eabe3325e4e4c7b6727029c0adc8367b04a89f39543ff791b178",
+ "stats": {
+  "counts": {
+   "anchor": 13,
+   "blocks": 8,
+   "bold": 8,
+   "cjk_dash_pair": 0,
+   "cjk_emphasis": 3,
+   "collapsible": 0,
+   "color": 2,
+   "css": 1,
+   "div": 0,
+   "ellipsis_dash": 0,
+   "footnote": 0,
+   "fullwidth_space": 0,
+   "heading": 5,
+   "hr": 1,
+   "html": 0,
+   "iftags": 0,
+   "image": 0,
+   "include": 3,
+   "italic": 0,
+   "link3": 0,
+   "list": 13,
+   "module": 1,
+   "mono": 0,
+   "quote": 0,
+   "raw": 20,
+   "ruby": 0,
+   "size": 0,
+   "span": 0,
+   "strike": 0,
+   "sup_sub": 0,
+   "table": 7,
+   "tabview": 0,
+   "underline": 0
+  },
+  "density_per_kchar": 57.47,
+  "markup_tokens": 85
+ },
+ "title": "人間の「近いうち」を10年単位で考えてはいけない - 定命種エミュレータ事例集",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "1447727979",
+  "pageUnixName": "mortal-emulator",
+  "requestPageName": "mortal-emulator",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

@@ -1,0 +1,1347 @@
+[[module CSS]]
+@import url('https://scp-wiki.wdfiles.com/local--code/theme%3Acreepypasta/1');
+[[/module]]
+
+
+[!--
+Styling component for the EN Interwiki, based on the CN Interwiki by 7happy7 and Sekai-s.
+
+Interwiki: https://scpwiki.com/interwiki
+Source: https://github.com/scpwiki/interwiki
+
+See also: https://scpwiki.com/how-to-create-a-branch-of-the-scp-foundation
+
+Usage:
+
+On the page that intends to restyle the Interwiki:
+
+ [[include :scp-wiki:component:interwiki-style
+| priority=X
+| theme=<link to CSS stylesheet>
+| css=<URI-encoded CSS>
+]]
+
+The `priority` value must be set to a number that is 1 greater than the priority of the theme that this theme is extending.
+
+Examples:
+- The base theme of the site (for the SCP Wiki, this is Sigma-9) has a priority of 0.
+- A CSS theme designed to be used on pages that are already styled with Sigma-9 (i.e. a theme that extends Sigma-9) would have a priority of 1.
+- The Black Market theme extends the Black Highlighter theme, which has a priority of 2; therefore the Black Market theme would have a priority of 3.
+
+The `theme` value is optional, and can be a URL to a CSS stylesheet e.g. a CSS theme.
+
+The `css` value is optional, and can be URI-encoded CSS to apply directly to the Interwiki. To URI-encode CSS, see https://meyerweb.com/eric/tools/dencoder
+--]
+
+[[embed]]
+<iframe src="//interwiki.scpwiki.com/styleFrame.html?priority=1
+&theme=https://scp-wiki.wdfiles.com/local--code/theme%3Acreepypasta/1
+&css={$css}" style="display: none"></iframe>
+[[/embed]]
+
+
+
+[[iftags +theme]]
+[[>]]
+[[module Rate]]
+[[/>]]
+
++ Usage
+
+To import this theme to your page, put the following anywhere inside it:
+
+[[div class="code"]]
+@@[[include :scp-wiki:theme:creepypasta]]@@
+[[/div]]
+
+Importing the theme using @@[[include]]@@ adds your page to a list of Backlinks. This is useful for seeing what pages would be affected when this theme is updated, and allows any errors caused by that to be noticed and corrected much faster.
+
+You can view any page's Backlinks by clicking "+ Options" at the bottom of the page, then "Backlinks".
+
+-----
+
++ Examples
+
+
+
+[[div class="scp-image-block block-right scp-clear-false" style="width:200px;"]]
+[[image rook.png {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+Parawatch Logo.
+[[/div]]
+[[/div]]
+
+
+
+A horizontal rule can be created with 5 hyphens "@@-----@@" and extends across the whole page if it's not placed inside anything (eg a blockquote). The lines separating sections of this document are horizontal rules.
+
+Titles can be created by putting between one and six plus "+" at the start of the line
+
+[[collapsible show="+ Titles" hide="- Titles"]]
++ First Title
+
+++ Second Title
+
++++ Third Title
+
+++++ Fourth Title
+
++++++ Fifth Title
+
+++++++ Sixth Title
+[[/collapsible]]
+
+@@ @@
+
+@@ @@
+
+@@ @@
+
+@@ @@
+
+[[tabview]]
+[[tab Tabulator]]
+This is a tab view.
+[[/tab]]
+[[tab Tabulation]]
+Hey look, more text here.
+
+How quaint.
+[[/tab]]
+[[tab Long Tab]]
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+
+This is a long tab. It contains a lot of text.
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[tab Empty Tab]]
+[[/tab]]
+[[/tabview]]
+
+> This is a blockquote, created by putting "> " at the start of each line.
+> 
+> More text
+> -----
+> That's a horizontal rule
+> 
+>> Nested blockquotes
+
+||~ This is a ||~ table ||
+||You should know || how to make these ||
+||||already ||
+
+
+[[code type="CSS"]]
+@import url('https://fonts.bunny.net/css?family=PT+Mono&display=swap');
+ 
+/*
+    Powered on 2019/05/09 06:09:42
+    [2019 Wikidot Theme]
+    Created by The Great Hippo
+    CC BY-SA 3.0
+*/
+ 
+/* FONTS AND COLORS */
+ 
+:root {
+    --bg-light: #262626;
+    --bg: #1a1a1a;
+    --bg-dark: #000000;
+ 
+    --fg-light: #ffffff; 
+    --fg:  #f2f2f2;
+    --fg-dark: #e6e6e6;
+ 
+    --fg-accent-light: #ffffcc;
+    --fg-accent: #ffff99;
+    --fg-accent-dark: #ffff80;
+ 
+    --fg-accent-2: #ffffff;
+ 
+}
+
+body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'PT Mono', monospace;
+}
+ 
+a, a:visited {
+    color: var(--fg-accent-dark);
+}
+ 
+h1, h2, h3, h4, h5, h6, #page-title {
+    color: var(--fg-light);
+    font-family: 'PT Mono', monospace;
+}
+
+ins, del {
+    color: black;
+}
+
+/* HEADER */
+ 
+div#container-wrap {
+    background: url(https://scp-wiki.wdfiles.com/local--files/theme%3Acreepypasta/gradient.png) top left repeat-x;
+}
+ 
+div#header {
+    background: url(https://scp-wiki.wdfiles.com/local--files/theme%3Acreepypasta/parawatch.png) 10px 40px no-repeat;
+}
+ 
+div#header h1 a span {
+    /* hiding header text */
+    font-size: 0px;
+    color: transparent;
+}
+ 
+div#header h1 a:before {
+    content: " ";
+    color: rgb(24, 24, 24);
+}
+ 
+div#header h2 span {
+    font-size:0px;
+    padding: 4px;
+}
+ 
+div#header h2:after {
+    content: " ";
+    font-weight: bold;
+    color: rgb(255, 224, 135);
+    padding: 19px 0;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, .8);
+    white-space: pre;
+}
+ 
+/* SIDE-BAR */
+ 
+div#side-bar a,
+div#side-bar a:visited,
+#interwiki a,
+#interwiki a:visited {
+    color: var(--fg-dark);
+}
+ 
+div#side-bar div.side-block,
+#interwiki div.side-block {
+    background: rgb(24, 24, 24);
+    border: 1px solid #ffe087;
+    box-shadow: 0 2px 6px #404040;
+}
+
+div#side-bar div.side-block.media,
+div#side-bar div.side-block.resources {
+    background: rgb(24,24,24);
+}
+ 
+div#side-bar div.side-block div.heading,
+#interwiki div.side-block div.heading,
+div#side-bar .collapsible-block-unfolded-link,
+div#side-bar .collapsible-block-unfolded-link .collapsible-block-link {
+    color: rgb(255, 224, 135);
+    border-color: rgb(255, 224, 135);
+}
+
+#side-bar .collapsible-block-unfolded-link .collapsible-block-link:hover {
+    color: var(--fg-dark);
+}
+  
+/* Recolors the Translation Module */
+#interwiki .menu-item img {
+    filter: hue-rotate(230deg) invert(100%);
+}
+ 
+/* Recolors the panel that opens on mobile with the side-bar */
+@media (max-width: 767px) {
+    #side-bar{
+        background-color: var(--bg);
+    }
+}
+ 
+/* Recolors the drop down from the arrow next to username in the header */
+#login-status ul a {
+    color: var(--fg);
+    background: var(--bg);
+    border-color: var(--fg);
+}
+ 
+#login-status ul a:hover {
+    color: var(--fg-dark);
+}
+ 
+/* Makes the code readable */
+.hl-identifier, .hl-code, .hl-brackets {
+    color: var(--fg);
+}
+ 
+/* Top-Bar */
+#top-bar a { 
+    color: var(--fg-dark);
+}
+ 
+#top-bar ul li ul {
+    border-color: var(--fg-light);
+}
+ 
+#top-bar ul li.sfhover ul li a,
+#top-bar ul li:hover ul li a {
+   border-top-color: var(-fg-light);
+}
+ 
+#top-bar ul li.sfhover a,
+#top-bar ul li:hover a {
+    background-color: var(--bg-light);
+    color: var(--fg-dark);
+}
+ 
+#top-bar ul li.sfhover a:hover,
+#top-bar ul li:hover a:hover {
+    background: var(--bg-dark); /* top bar hover background color */
+    color: var(--fg-dark);
+}
+ 
+div.yui-navset div.yui-content {
+    background: rgb(24, 24, 24);
+}
+ 
+div.yui-navset ul.yui-nav a,
+div.yui-navset div.yui-navset-top ul.yui-nav a {
+    background: rgb(24, 24, 24);
+    color: rgb(255, 237, 185);
+    border: solid 1px #ffffff;
+}
+ 
+div.yui-navset ul.yui-nav a:hover,
+div.yui-navset ul.yui-nav a:focus {
+    background: rgb(40, 40, 40);
+    color: rgb(255, 237, 185);
+}
+ 
+div.yui-navset ul.yui-nav .selected a,
+div.yui-navset ul.yui-nav .selected a:focus,
+div.yui-navset ul.yui-nav .selected a:hover {
+    background: rgb(50, 50, 50);
+    color: var(--fg);
+    border: solid 2px #ffff99;
+}
+ 
+/* rating module */
+ 
+.page-rate-widget-box .rate-points {
+    background-color: var(--bg-dark) !important;
+}
+ 
+.page-rate-widget-box .rate-points,
+.page-rate-widget-box .rateup a,
+.page-rate-widget-box .ratedown a,
+.page-rate-widget-box .cancel a {
+    background-color: var(--bg-dark);
+    color: white;
+    border: 0;
+}
+ 
+.page-rate-widget-box .rateup,
+.page-rate-widget-box .ratedown,
+.page-rate-widget-box .cancel {
+    background-color: var(--bg-dark);
+    border: 0;
+    border-left: 1px solid var(--fg-accent-light);
+}
+ 
+div.page-rate-widget-box .rate-points,
+.page-rate-widget-box .cancel a {
+    border: 0;
+ 
+}
+ 
+.page-rate-widget-box .rateup a,
+.page-rate-widget-box .ratedown a {
+    background-color: var(--bg-dark);
+    color: white;
+}
+ 
+.page-rate-widget-box .rateup a:hover,
+.page-rate-widget-box .ratedown a:hover,
+.page-rate-widget-box .cancel a:hover {
+    background-color: var(--bg-dark);
+    color: white;
+}
+ 
+/* footnote hovers */
+ 
+.hovertip {
+    width: 20em;
+    padding: 0.5em;
+ 
+    border: 1px solid var(--fg-accent-light) !important;
+    border-radius: 0.5em;
+ 
+    background-color: #000000ee !important;
+    box-shadow: 0 0 6px 1px #000000aa;
+    z-index: 100;
+}
+ 
+.hovertip .f-heading {
+    color: var(--fg-accent-light);
+}
+ 
+/* inputs */
+ 
+input.text, input.button,
+#search-top-box-input,
+#search-top-box-form input[type=submit],
+div.buttons input, input.button, button, file, a.button {
+    background: transparent;
+    color: var(--fg);
+    border: 1px solid var(--fg-accent-2);
+    border-radius: 0;
+    font-size: 1em;
+    outline: 0;
+}
+ 
+div.buttons input:hover, div.buttons input:focus,
+input.button:hover, input.button:focus,
+button:hover, button:focus,
+file:hover, file:focus,
+a.button:hover, a.button:focus {
+    border-color: var(--fg-accent-2);
+    background: transparent;
+    color: var(--fg);
+}
+ 
+input.text:hover, input.button:hover,
+input.text:focus, input.button:focus,
+#search-top-box-input:hover,
+#search-top-box-input:focus,
+#search-top-box-form input[type=submit]:hover,
+#search-top-box-form input[type=submit]:focus {
+    color: var(--fg);
+    background: transparent;
+    border: 1px solid var(--fg-accent-2);
+    outline: 0;
+}
+ 
+/* EDITING WINDOWS */
+.owindow {
+    color: #000;
+}
+ 
+.owindow h1, .owindow h2, .owindow h3, .owindow h4, .owindow h5, .owindow h6 {
+    color: #000;
+}
+ 
+.owindow a {
+    color: #272727;
+}
+ 
+table.page-files .highlight {
+    background-color: #272727;
+}
+ 
+input.text {
+    border: 1px dashed #000;
+    color: #fff;
+}
+ 
+input.text:focus {
+    border: 1px dashed #000;
+    color: #fff;
+}
+ 
+input.text:hover {
+    border: 1px dashed #000;
+    color: #fff;
+}
+
+div#lock-info {
+    background-color: var(--bg-light);
+}
+
+/* BLOCKQUOTES */
+ 
+blockquote,
+div.blockquote {
+    background:  var(--bg-dark);
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--bg-light);
+}
+ 
+/* Parawatch Forum Pseudo-Blockquotes */
+div.parapost {
+    background:  var(--bg-dark);
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--bg-light);
+    padding: 0 1em;
+    margin: 1em 3em;
+}
+
+div.parapost.reply1 {margin: 1em 3em 1em 4em;}
+div.parapost.reply2 {margin: 1em 3em 1em 5em;}
+div.parapost.reply3 {margin: 1em 3em 1em 6em;}
+div.parapost.reply4 {margin: 1em 3em 1em 7em;}
+div.parapost.reply5 {margin: 1em 3em 1em 8em;}
+
+@media (max-width: 479px) {
+   div.parapost {margin: 1em 0;}
+   div.parapost.reply1 {margin: 1em 0 1em 1em;}
+   div.parapost.reply2 {margin: 1em 0 1em 2em;}
+   div.parapost.reply3 {margin: 1em 0 1em 3em;}
+   div.parapost.reply4 {margin: 1em 0 1em 4em;}
+   div.parapost.reply5 {margin: 1em 0 1em 5em;}
+}
+
+@media (min-width: 480px) and (max-width: 580px) {
+   div.parapost {margin: 0.5em;}
+   div.parapost.reply1 {margin: 0.5em 0.5em 0.5em 1em;}
+   div.parapost.reply2 {margin: 0.5em 0.5em 0.5em 1.5em;}
+   div.parapost.reply3 {margin: 0.5em 0.5em 0.5em 2em;}
+   div.parapost.reply4 {margin: 0.5em 0.5em 0.5em 2.5em;}
+   div.parapost.reply5 {margin: 0.5em 0.5em 0.5em 3em;}
+}
+
+/* IMAGES */
+ 
+#page-content .scp-image-block {
+    border-color: var(--fg-accent);
+    box-shadow: none;
+}
+#page-content .scp-image-block .scp-image-caption {
+    border-color: var(--fg-accent);
+    background-color: var(--bg-dark);
+}
+ 
+table.wiki-content-table th {
+    background-color: var(--bg-dark);
+}
+ 
+hr {
+    background-color: var(--fg);
+}
+ 
+.code {
+    border: 1px dashed var(--fg);
+    background-color: transparent;
+ 
+    font-family: "Courier", "Courier New", "Roboto Mono", monospace;
+    font-size: 1em;
+}
+
+/* INFO MODULE */
+
+#page-content .rate-box-with-credit-button {
+    background-color: var(--bg-dark); 
+    border: 1px solid var(--bg-dark);
+}
+
+#page-content .rate-box-with-credit-button .creditButton p a {
+    border-left-color: var(--fg-accent-light);
+}
+
+#page-content .rate-box-with-credit-button .page-rate-widget-box .cancel {
+    border-radius: 0;
+}
+#page-content .rate-box-with-credit-button .page-rate-widget-box .rate-points {
+    border-left: 0;
+}
+
+#page-content .modalbox {
+    background: linear-gradient(var(--bg) 51px,var(--bg-light) 51px,var(--bg-light)) !important;
+    color: var(--fg);
+    box-shadow: 0 2px 6px #404040;
+}
+
+.close-credits,
+.credit-back {
+    filter: hue-rotate(230deg) invert(100%) brightness(150%);
+}
+
+#footer {
+    background: var(--bg-light);
+}
+
+/* MOBILE CODE */
+@media (max-width: 767px) { 
+    div#header {
+        background-size: 22em;
+        background-position: 1em;
+    }
+ 
+    #top-bar .open-menu a {
+        border: 0.2em solid var(--bg-light);
+        background-color: #787878;
+        color: var(--bg-light);
+  }
+}
+[[/code]]
+
+
+
+[[div class="licensebox"]]
+[[collapsible show="‡ Licensing / Citation" hide="‡ Hide Licensing / Citation"]]
+Cite this page as:
+[[module listpages range="."]]
+> "%%title_linked%%" by %%created_by%%
+, from the [https://scpwiki.com SCP Wiki]. Source: https://scpwiki.com/%%fullname%%. Licensed under [https://creativecommons.org/licenses/by-sa/3.0/ CC BY-SA].
+[[/module]]
+For information on how to use this component, see the [[[component:license-box|License Box component]]]. To read about licensing policy, see the [[[Licensing Guide]]].
+
+
+=====
+> **Filename:** parawatch.png
+> **Author:** [[*user The Great Hippo]]
+> **License:** CC BY-SA 3.0
+
+> **Filename:** rook.png
+> **Author:** [[*user The Great Hippo]]
+> **License:** CC BY-SA 3.0
+
+> **Filename:** gradient.png
+> **Author:** [[*user The Great Hippo]]
+> **License:** CC BY-SA 3.0
+=====
+
+[[/collapsible]]
+[[/div]]
+
+
+[[/iftags]]
+
+
+[[module css]]
+@import url('https://scp-jp.github.io/files/util/common/credit/style/style.css');
+
+.creditRate.no-rate .page-rate-widget-box {
+    visibility:hidden;
+}
+
+.creditRate.creditModule.no-rate ~ #u-credit-view .creditBottomRate > div:nth-of-type(2) {
+    display: none;
+}
+[[/module]]
+
+[[div_ class="creditRate creditModule {$mode}"]]
+[[div_ class="rateBox" [[iftags 殿堂入り]]style="display:none;"[[/iftags]]]]
+[[div_ class="rate-box-with-credit-button"]]
+[[module Rate]]
+[[div_ class="creditButton"]]
+[[a href="#u-credit-view" class="fa fa-info" style="position:relative;"]][[image https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png title="クレジットを表示する" style="position:absolute;height:100%;width:100%;top:0;left:0;"]][[/a]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[div_ class="rateBox heritage-wrap" [[iftags -殿堂入り]]style="display:none;"[[/iftags]]]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]archived:heritage-collection[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]]" style="max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[div_ class="creditButton"]]
+[[a href="#u-credit-view" class="fa fa-info" style="position:relative;"]][[image https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png title="クレジットを表示する" style="position:absolute;height:100%;width:100%;top:0;left:0;"]][[/a]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+[[div_ style="clear:both;"]]
+[[/div]]
+
+[[div_ id="credit-view"]]
+[[div_ class="fader"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/start.html ]]
+[[/div]]
+
+[[div_ class="modalcontainer"]]
+[[div_ class="modalbox [[iftags 殿堂入り]]heritage[[/iftags]]"]]
+[[div_ class="modalbox-title [[iftags 殿堂入り]]heritage[[/iftags]]"]]
+++* クレジット
+[[/div]]
+[[div class="credit"]]
+
+**タイトル:** てうぶく
+**著者:** ©︎[[*user Pear_QU]]
+**作成年:** 2020
+
+[[div_ class="credit-back" style="text-align: center;"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/end.html style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" scrolling="no"]]
+[[/div]]
+[[/div]]
+
+[[div_ class="creditBottomRate" style="height:30px;"]]
+[[div_ class="credit-license"]]
+[[a href="*https://creativecommons.org/licenses/by-sa/3.0/deed.ja" class="cc cc-by-sa"]]@@@@[[/a]]
+[[/div]]
+[[div_ style="text-align: center; top: 0px;"]]
+[[div_ [[iftags +殿堂入り]]style="display: flex;"[[/iftags]] class="Dendo"]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]heritage-collection-arc[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]]" style=" max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[div_ [[iftags +殿堂入り]]style="display:none;"[[/iftags]]]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+[[note]]
+このスレッド「最近体験した変なことの話をする」は現在、過去ログ倉庫に格納されています。
+新しくコメントを書き込むことは出来ません。
+[[/note]]
+> ##red|**雛**## 06/08/05 (Sat) 02:10:03 #PhwWyNAAxY
+> ------
+> 初めてスレ建ててみますた　まだこの掲示板の感じにあんま慣れてないから、なんか問題あったらｽﾏｿ
+> まあ内容はスレタイ通りなんだけど、最近なんか怖いっていう感じじゃないけど変な体験したんだよね
+> ここにいる人ならなんかそういうのに詳しい人いそうって思ったから、備忘録も兼ねて書いておきまつ
+
+> ##white|**白帯**## 06/08/05 (Sat) 02:15:06 #tGLUbl280s
+> ------
+> 期待！
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 02:18:44 #ZjHMPybZ0
+> ------
+> スペックageきぼん
+
+> ##red|**雛**## 06/08/05 (Sat) 02:19:32 #PhwWyNAAxY
+> ------
+> 思ったよりも早く人が集まってびっくり　正直あんま書き溜めとかしてないしキーボード打つの遅いからテンポ悪くなるかもしれん。
+> 以下スペック
+> ・大学生、男、20代
+> ・キモヲタ
+> ・普段は埼玉にアパート借りて住んでるんだけど、何日か前から佐賀の実家に帰省してる
+
+> ##red|**雛**## 06/08/05 (Sat) 02:20:02 #PhwWyNAAxY
+> ------
+> 三日前に体験した話
+> さっきもちょっと書いたけど漏れの実家って結構な田舎にあって、特に夜とかめっちゃ暇になるのよ。
+> テレビのチャンネルは三つぐらいしかないし、ネットなんて漏れが工房の頃ｶｰﾁｬﾝに頼んで繋いでもらったテレホが未だに現役なレベル。
+> だから夜にやる事っていったら速度がおっそいの我慢してネットやるか、部屋にある昔集めてた漫画読むかぐらいしかないのね
+> そんでその日も夜中に部屋で寝っ転がりながら漫画読み返してたんだけど、何か小腹が空いてきて。一番近くにあるコンビニに行くことにしたんだ。近くっつってもやっぱ田舎だから歩いて行けるようなとこじゃなくて、街灯もそんな無いから非常用の懐中電灯持ってかなきゃいけないし、チャリで20分ぐらいはかかるような所なんだが
+> 確か夜の11時ぐらいだったと思うんだけど、蛙のうるさい声が聞こえるだけで全然人気のない道をチャリで走って、そんでジュースとアイス買って家に戻ってたんだよ。そしたらその帰り道の途中で、変なのに会った。ていうか変なのを見た。
+
+> ##red|**雛**## 06/08/05 (Sat) 02:21:04 #PhwWyNAAxY
+> ------
+> 続き 2/4
+> 実家からコンビニまでの道は何個かあるんだけど、漏れはその中で一番近いルートで行ってたのね。そのルートってのが、結構早く着くんだけど割と山道とかを走って、街灯もまばらだし人の家とか全くないような感じだったの。そもそもそこが秘密の抜け道的な感じだったから、人が通る事なんてまあ無いんだよ。
+> だから当然行きの時は何も見なかったんだけど、帰りにその道を通ってたら、なんか山道逸れたところから、なんか変な音みたいのが聞こえだした。
+> 割と遠くからなんだけど、まず最初に聞こえたのが、低い太鼓の音。その後に、笛の高い音とか金属音みたいのとかが聞こえてきたの。なんか、全然反響しないタイプの鐘を鳴らしてるみたいな音だった。チャンチキとか、ああいうのに近い感じ。かんかんちきちき、みたいなアレね。
+> 正直、最初は怖いっていうよりも「何これ」みたいな気持ちのが強かった。だってほんとに今までそんなこと無くて、人とすれ違うことすらないようなレベルの道なのに、明らかに何人もいる感じの音が聞こえてくるんだもん。しかも夜中の、それも道を逸れたところから。
+> 最初はなんか夏祭りとか縁日の出し物の練習でもしてんのかと思ったのよ。でも明らかにおかしいじゃん?そんなの公民館とか借りてやりゃいいし、もうその時点で11時半とか回ってんだよ。マジでイノシシとかと遭遇してもおかしくないようなところだから、そんな山ん中で太鼓とか笛とか鳴らす理由なんて無いんだもん。
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 02:22:31 #ZjHMPybZ0
+> ------
+> 太鼓と笛と鐘、っていうか鉦だよな。神楽の類か?
+
+> ##red|**雛**## 06/08/05 (Sat) 02:23:52 #PhwWyNAAxY
+> ------
+> 続き 3/4
+> それで気になったから、ちょっとその音のする方に行ってみようって思ったんだよ。まあその時点では多少怖くはあったんだけど、一応懐中電灯は持ってたしなんかあったらチャリで逃げればいいやって感じだった。
+> そんでチャリと買い物袋を取り敢えず端っこに置いて、道を逸れて懐中電灯だけ持って山ん中に入ってみたんだ。足元が不安定だし何となく物音とかは立てない方がいい気がしたから、そーっと分け入っていくみたいな歩き方になった。
+> 体感で大体2分ぐらい歩いたと思う。音も大分近くなってて、多分音のしてるところとの距離は20メートルぐらいの所にいた。そしたら、木とか草とかで良く見えないんだけど、奥の方からなんか明かりみたいなのが漏れてるのに気付いた。こう、オレンジ色でぼんやりした、電球とかの人工的な光ね。
+> あ、やっぱり人いるんだって思ってその明かりの方向に歩いて行こうとしたんだよ。でそっから更に何歩か進んだところで、まあ目が慣れてきたこともあるんだろうけど、その明かりで大分自分の周りが懐中電灯無くても何となく見える感じになってたの。そこでふっと先にある木の所を見たら、なんかしぼんだゴム風船みたいなのが木に掛かってるっていうか、打ち付けられてんのが見えたわけ。
+> 気になって近付いてよく見てみたら、漢字が5、6文字ぐらい(多分筆で)書かれたのが、釘かなんかで固定されてるんだって気付いた。筆で書かれてたっぽいから古い文章だったのかなって思ってる。
+> 
+> >>神楽の類か?
+> そういうのに詳しくないから良く分からん。ただ、和風な感じはしたかも。
+
+> ##red|**雛**## 06/08/05 (Sat) 02:24:42 #PhwWyNAAxY
+> ------
+> 続き 4/4
+> ほんとうろ覚えなんだけど、字面はこんな感じ
+> 
+> ?　名　?　旧　八　命
+> 
+> (?のところは良く分からない。画数が多くて難しめな漢字だった)
+> その何かを見た時、そこに書かれてる意味とか全く分かんないんだけど、何故かここに居ることが滅茶苦茶怖く感じたんだよね。直感で、「これ以上行ったらヤバい」って思ったの。多分もう何メートルか先には楽器鳴らしてる何かがいるんだけど、理屈とか抜きで「絶対に見ちゃいけないし、見られちゃいけない」って本能で感じた。
+> そんで、そこに居る何かに気付かれない様に、(忍び足ではあるんだけど)急いで元来たチャリのところまで引き返して、すごい速さで家まで帰ってきた。楽器の音はいつの間にか聞こえなくなってたんだけど、なんであんな風に思ったのかは不明。別に怖い何かと出会ったりしたってわけでもないんだけど……。
+> 
+> 以上が、漏れが体験した話。オチとかも全然ないから本当に申し訳ないんだけど、なんかこういうので心当たりのある人っていますか?特にその文字が気になってる。
+
+> ##white|**白帯**## 06/08/05 (Sat) 02:25:50 #tGLUbl280s
+> ------
+> 確かに思ったよりは怖くなかったけど、なんか気味悪い話だね。。（；´∀｀）
+> その後、明るくなってからその場所に行ったりとかした?
+
+> ##red|**雛**## 06/08/05 (Sat) 02:28:22 #PhwWyNAAxY
+> ------
+> >>その後、明るくなってからその場所に行ったりとかした?
+> この時期だから暑いし蚊多いし、わざわざもう一回行くのも面倒臭くて行ってない。
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 02:32:48 #iGZ5enWl0
+> ------
+> スレ追い付きました　
+> まさかの地元話で驚きましたが、佐賀で笛や太鼓、そして鉦の音となると、ふりゅうの祭りに関係している可能性は無いですか?
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 02:34:21 #ZjHMPybZ0
+> ------
+> >>?　名　?　旧　八　命　
+> ↑やっぱこれが気になるよなあ。八命って何なんだろう
+> その前に旧って付いてるあたりも良く分からん
+> まあ、それ以前に字面がちゃんと分かってないからどうしようもないって言えばそれまでなんだが……なんかの名前か?
+
+> ##white|**白帯**## 06/08/05 (Sat) 02:36:11 #tGLUbl280s
+> ------
+> すご。。みんな博識でﾋﾞｸｰﾘだよ
+> ふりゅうの祭り?って、そんな山奥で夜中に楽器鳴らしたりするお祭りが今の時代にあるのかなあ
+
+> ##red|**雛**## 06/08/05 (Sat) 02:39:27 #PhwWyNAAxY
+> ------
+> うおー、色々意見が来てる……ほんと助かる
+> ふりゅうの祭りは、佐賀の色んなところでやってるやつだよな。漏れも昔、何回か連れてってもらった記憶があるよ
+> 白帯さんとか県外の人はあんまり知らないだろうし簡単に言うと、(漏れ自身もうろ覚えだけど)それこそさっき言ったみたいな楽器を鳴らしてる中で、その音に合わせて仮装した人が一人代表で出て来て踊って、その踊りを奉納するみたいなやつ。仮装の種類は割と地区によって違うんだけど、漏れが見たことあるのはでっかい鬼のお面だった
+> 思い出してみると確かにそれっぽい感じな気もしてきた……けど、だとしたら中々に怖くないか?
+
+> ##red|**雛**## 06/08/05 (Sat) 02:42:13 #PhwWyNAAxY
+> ------
+> あと文字に関しては、大分それ自体が汚れてたのもあってあんまり読めなかったんだよな……そもそもしぼんだゴム風船って何だよ
+> うーん、何か考えてたらすごい気になってきた
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 02:42:48 #iGZ5enWl0
+> ------
+> 凸ってみますか?
+
+> ##white|**白帯**## 06/08/05 (Sat) 02:43:51 #tGLUbl280s
+> ------
+> >>漏れが見たことあるのはでっかい鬼のお面だった
+> ((((;ﾟДﾟ))))ｶﾞｸｶﾞｸﾌﾞﾙﾌﾞﾙ
+
+> ##red|**雛**## 06/08/05 (Sat) 02:47:12 #PhwWyNAAxY
+> ------
+> >>凸ってみますか?
+> いや正直、マジで明日辺りに凸ってみようかなとか思ったりしてる。
+> なんか皆のレス見てると気になりすぎて眠れなくなってきた……
+> 今日は流石に夜遅すぎてｶｰﾁｬﾝにバレたらめんどくさそうだし、明日の夜十時ぐらいにもっかい行ってみようかな　電波がどうなるか分からんから実況できるかどうかが心配だけど
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 02:48:41 #ZjHMPybZ0
+> ------
+> mjd?勇者だな
+
+> ##white|**白帯**## 06/08/05 (Sat) 02:50:10 #tGLUbl280s
+> ------
+> うおおお、久々に出来るスレ主を見た
+
+> ##red|**雛**## 06/08/05 (Sat) 02:52:31 #PhwWyNAAxY
+> ------
+> 取り敢えず行けるかどうかは明日次第なんだけど、それまでこのスレ残したいんで即死回避お願いできまつか?多分@7、8レスだと思ふ
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 02:52:58 #ZjHMPybZ0
+> ------
+> >>それまでこのスレ残したいんで即死回避お願いできまつか?
+> おｋ
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 02:53:51 #iGZ5enWl0
+> ------
+> 軽い気持ちで言ったんだけど、なんかスレがすごそうな方向に……
+
+> ##red|**雛**## 06/08/05 (Sat) 02:54:45 #PhwWyNAAxY
+> ------
+> >> 軽い気持ちで言ったんだけど
+> いや、このままじゃ漏れも消化不良だからwww　あんま凄い発見とかは期待しないでね
+> それじゃ一旦落ちますー　こんな遅くまで付き合ってくれて㌧クス
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 02:55:31 #ZjHMPybZ0
+> ------
+> 乙。
+
+> ##white|**白帯**## 06/08/05 (Sat) 02:55:58 #tGLUbl280s
+> ------
+> ひとまず乙ですた
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 02:57:22 #iGZ5enWl0
+> ------
+> おつかれさまでした。
+
+> ##white|**白帯**## 06/08/05 (Sat) 10:42:24 #tGLUbl280s
+> ------
+> 即死回避支援
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 17:23:41 #ZjHMPybZ0
+> ------
+> 支援レスついでに
+> 知り合いの、そういう神社とか祭りとかに詳しい奴に聞いてみたんだけど、佐賀で夜中にそんな事するような祭りは少なくとも今は無いみたいだった
+> 「八命神」についても聞いてみたんだけど、そんな名前の神様は知らないらしい
+>
+> あと個人的に「電球みたいな明かり」も気になるんだよな……なんで電球なんだよ
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 21:43:10 #iGZ5enWl0
+> ------
+> そろそろですね
+> >>電球みたいな明かり
+> 電気が通ってないから、でしょうか?　白熱電球とかなら電池式のが安くで売ってますし
+
+> ##white|**白帯**## 06/08/05 (Sat) 21:48:31 #tGLUbl280s
+> ------
+> もうすぐ夜十時。。果たして雛さんの運命は。。。。
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 21:56:20 #ZjHMPybZ0
+> ------
+> 戻ってきた
+> >>電気が通ってないから、でしょうか?　白熱電球とかなら電池式のが安くで売ってますし
+> あー、なるほど。ありそう
+
+> ##red|**雛**## 06/08/05 (Sat) 22:02:19 #PhwWyNAAxY
+> ------
+> 支援ありがとう。
+> で凸なんだけど、昼ごろにちょっとその周辺まで行ってみた感じだと、そこの道の途中までならギリ電波が入る感じだったから、取り敢えずそこまでは携帯で実況してみる。その現場まで行って、そんで家まで戻ってきてからもっかい詳細を話す感じで考えてる(ちなみに昼時点では何にも見えなかったし聞こえなかった)
+> 携帯だと更に書き込み遅くなるだろうから、そのつもりで……
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:04:22 #tGLUbl280s
+> ------
+> ｷﾀーーーーーー(ﾟ∀ﾟ)－－－－－－!!
+> 楽しみにしてる!!!!!マジ乙
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 22:06:01 #iGZ5enWl0
+> ------
+> 写真のうｐって出来そうな感じですか?
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:06:34 #ZjHMPybZ0
+> ------
+> おおマジか(正直釣りじゃねえかと思ってた)
+> でも気を付けろよ……?　ただでさえ暗い夜道なんだろうし
+
+> ##red|**雛**## 06/08/05 (Sat) 22:10:21 #PhwWyNAAxY
+> ------
+> >>写真のうｐって出来そうな感じですか?
+> やってみる……ただ、幽戸さんも言ってるけどマジで暗いからそこまで鮮明なのは期待しないでね
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 22:10:53 #iGZ5enWl0
+> ------
+> いえいえ、ありがとうございます
+
+> ##red|**雛**## 06/08/05 (Sat) 22:12:34 #PhwWyNAAxY
+> ------
+> それじゃ、15分に出発します
+> やべえ、緊張してきたwwwwww
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:13:54 #tGLUbl280s
+> ------
+> 神スレの予感
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 22:14:20 #iGZ5enWl0
+> ------
+> いってらっしゃい
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:14:41 #ZjHMPybZ0
+> ------
+> こういうのにリアタイすんの何気に初めてだわ……なんかこっちまでドキドキしてくるな
+
+> ##red|**雛**## 06/08/05 (Sat) 22:15:15 #PhwWyNAAxY
+> ------
+> いってきます　いまチャリ乗った
+> しばらく近くに行くまで落ちます
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:18:14 #tGLUbl280s
+> ------
+> 自転車でコンビニまで片道20分だっけ。。なら大体10分前後かな
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:19:10 #ZjHMPybZ0
+> ------
+> そういや忘れてたけど、こういう時の写真って大体IDも付けてもらうんだっけか　まあ良いよな
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 22:22:31 #iGZ5enWl0
+> ------
+> >>こういう時の写真って大体IDも付けてもらうんだっけか　まあ良いよな
+> どうせ暗くてよく見えないでしょうし、IDのせいでそこの場所の写真が隠れちゃってもあれですからね
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:23:42 #tGLUbl280s
+> ------
+> 待機
+
+> ##red|**雛**## 06/08/05 (Sat) 22:24:10 #PhwWyNAAxY
+> ------
+> ちょっとまって
+
+> ##red|**雛**## 06/08/05 (Sat) 22:24:34 #PhwWyNAAxY
+> ------
+> もうあかりがみえる
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:25:10 #tGLUbl280s
+> ------
+> >>もうあかりがみえる
+> !?!?
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:25:19 #ZjHMPybZ0
+> ------
+> え?
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 22:25:46 #iGZ5enWl0
+> ------
+> >>あかり
+> あの電球のですか?
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:26:10 #ZjHMPybZ0
+> ------
+> もうってどゆこと
+
+> ##red|**雛**## 06/08/05 (Sat) 22:28:30 #PhwWyNAAxY
+> ------
+> ごめん、よくわからん　ちょっと運転止めて落ち着く
+> なんか、チャリで前言った山道のルートを走ってたんだけど、何日か前に電球っぽい明かりを見たとこのずっと手前でもう光っぽいのが見えてる
+> 前のと同じ奴かは分からん
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:29:10 #tGLUbl280s
+> ------
+> え。。。。?
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:29:23 #ZjHMPybZ0
+> ------
+> 怖い怖い怖い怖い怖い怖い
+> どういうこと?近づいてるってこと?もしくはその明かりとやらが前より眩しくなってんの?
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:29:37 #tGLUbl280s
+> ------
+> え、本当に?
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 22:30:01 #iGZ5enWl0
+> ------
+> 楽器の音は聞こえますか?
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:31:03 #ZjHMPybZ0
+> ------
+> いや、ほんとマジで無理すんなよ……ちょっと本気で怖くなってきた
+
+> ##red|**雛**## 06/08/05 (Sat) 22:32:35 #PhwWyNAAxY
+> ------
+> 楽器の音は聞こえない。
+
+> ##red|**雛**## 06/08/05 (Sat) 22:32:52 #PhwWyNAAxY
+> ------
+> 写真上げるわ
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:33:41 #tGLUbl280s
+> ------
+> まだ電波は通じるんだよね。。。?そこがわりと心配
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 22:33:57 #iGZ5enWl0
+> ------
+> >>写真上げるわ
+> お願いします
+
+> ##red|**雛**## 06/08/05 (Sat) 22:35:02 #PhwWyNAAxY
+> ------
+> 見えるかな
+> [[collapsible show="http://imguly.net/k6aCqoKzgsiCog==.jpg" hide="画像を読み込みました"]]
+> [[image k6aCqoKzgsiCog==]]
+> [[/collapsible]]
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:35:41 #tGLUbl280s
+> ------
+> え、ほんとに何?
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:36:11 #ZjHMPybZ0
+> ------
+> 明かりって、手ぶれしてるっぽいけど左に何個かあるやつか?
+> だとしたら右のはなんだよ
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 22:36:37 #iGZ5enWl0
+> ------
+> 私も右にある物が気になりますね……。
+
+> ##red|**雛**## 06/08/05 (Sat) 22:37:58 #PhwWyNAAxY
+> ------
+> ごめん、自分自身混乱しててどれが何とかまったくわからん
+> 右って何
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:38:11 #ZjHMPybZ0
+> ------
+> >>右って何
+> 写真の右上のあたりに写ってる、なんか四角くて細いやつ
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 22:38:37 #iGZ5enWl0
+> ------
+> 雛さん、今もその明かりは見えますか?
+
+> ##red|**雛**## 06/08/05 (Sat) 22:40:41 #PhwWyNAAxY
+> ------
+> 写真見てびっくりしたなにこれ
+> 今も明かりは見えるけど右に写ってたやつは見えん
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:41:21 #tGLUbl280s
+> ------
+> >>今も明かりは見えるけど右に写ってたやつは見えん
+> どういうこと?本当に怖いんだけど
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:41:42 #ZjHMPybZ0
+> ------
+> 見えない?写真にだけ写ったってことか?
+
+> ##red|**雛**## 06/08/05 (Sat) 22:43:21 #PhwWyNAAxY
+> ------
+> とりあえず先に進んでみます
+> 途中で電波切れたらごめん
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:43:58 #ZjHMPybZ0
+> ------
+> >>とりあえず先に進んでみます
+> え、マジで?ヤバくなったらすぐ戻って来いよ
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:44:21 #tGLUbl280s
+> ------
+> やめといた方が良くない、、、?
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 22:44:57 #iGZ5enWl0
+> ------
+> >>とりあえず先に進んでみます
+> お気をつけて
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:45:08 #tGLUbl280s
+> ------
+> 心配。。
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:46:38 #ZjHMPybZ0
+> ------
+> なあ、ちょっと思ったんだけど
+> 右にあるやつ鳥居に見えね?
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:47:41 #tGLUbl280s
+> ------
+> >>右にあるやつ鳥居に見えね?
+> やめてこわい
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 22:48:47 #iGZ5enWl0
+> ------
+> >>右にあるやつ鳥居に見えね?
+> 確かに、そのようにも見えますね。
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:50:38 #ZjHMPybZ0
+> ------
+> >>神楽っぽい音
+> ひょっとして本当にそういうのなのかな
+> それとも密教系とか?
+
+> ##red|**雛**## 06/08/05 (Sat) 22:50:45 #PhwWyNAAxY
+> ------
+> きこえた
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:51:31 #tGLUbl280s
+> ------
+> >>きこえた
+> なにが
+> 楽器の音?
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 22:52:17 #iGZ5enWl0
+> ------
+> きこえたというのは、以前話していた楽器の音のことでしょうか?だとしたら、それは以前と同じような場所ですか?
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:52:20 #ZjHMPybZ0
+> ------
+> なんで今になってその4文字だけなんだよ怖えよ
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:52:31 #tGLUbl280s
+> ------
+> え、大丈夫かな雛さん
+> まだアンテナ立ってる?書き込める?
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:53:50 #ZjHMPybZ0
+> ------
+> 確かに電波は心配だな……もしなんかあった時に繋がらんかったらヤバそう
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:54:20 #ZjHMPybZ0
+> ------
+> そういや時間的にはもう着いててもおかしくないかな
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 22:55:27 #iGZ5enWl0
+> ------
+> >>時間的にはもう着いててもおかしくないかな
+> もう出発してから30分ぐらい経ってるので、途中で書き込みの為に止まってるとしてもそろそろ着いている頃かもしれませんね
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:57:31 #tGLUbl280s
+> ------
+> >>もう出発してから30分ぐらい経ってるので、
+> もうそんなに経ってるのか、、、はやい
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:58:41 #ZjHMPybZ0
+> ------
+> うーん、やっぱりあの写真が気になるなあ
+> ほんとに何なんだあれ　雛さんが肉眼では見えなかったっぽいのもなんか
+
+> ##white|**白帯**## 06/08/05 (Sat) 22:58:48 #tGLUbl280s
+> ------
+> >>うーん、やっぱりあの写真が気になるなあ
+> 禿同。あと光がオレンジっていうより全体的に白っぽいんだよね。。
+
+> ##purple|**幽戸ゆかり**## 06/08/05 (Sat) 22:59:41 #ZjHMPybZ0
+> ------
+> とりあえずは帰還報告待ちか
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 23:02:18 #iGZ5enWl0
+> ------
+> そうですね。いろいろ気になるところが多いですがいかんせん情報が少ないので
+
+> ##white|**白帯**## 06/08/05 (Sat) 23:04:31 #tGLUbl280s
+> ------
+> 大丈夫かなあ
+
+> ##yellow|**うぶくて**## 06/08/05 (Sat) 23:35:12 #iGZ5enWl0
+> ------
+> なかなか来ませんね
+
+> ##purple|**幽戸ゆかり**## 06/08/06 (Sun) 00:59:43 #ZjHMPybZ0
+> ------
+> 最後の書き込みから二時間かあ
+> もう帰ってきててもおかしくないと思うんだけどなあ
+
+> ##white|**白帯**## 06/08/06 (Sun) 01:05:28 #tGLUbl280s
+> ------
+> 流石に心配になってくる、、
+
+> ##yellow|**うぶくて**## 06/08/06 (Sun) 01:17:31 #iGZ5enWl0
+> ------
+> 雛さん、今日のうちに帰ってこられますかね?
+
+> ##white|**白帯**## 06/08/06 (Sun) 01:23:41 #tGLUbl280s
+> ------
+> >>今日のうちに帰ってこられますかね?
+> 帰ってきて寝落ちしてるだけだと思いたい、、
+
+> ##yellow|**うぶくて**## 06/08/06 (Sun) 01:26:54 #iGZ5enWl0
+> ------
+> つかれているだけだと良いのですが
+
+> ##purple|**幽戸ゆかり**## 06/08/06 (Sun) 01:29:31 #ZjHMPybZ0
+> ------
+> >>帰ってきて寝落ちしてるだけ
+> 俺もそうである事を祈るよ……
+
+> ##purple|**幽戸ゆかり**## 06/08/06 (Sun) 01:31:23 #ZjHMPybZ0
+> ------
+> すまん、なんか来客っぽいからそろそろ落ちる
+
+> ##white|**白帯**## 06/08/06 (Sun) 01:33:13 #tGLUbl280s
+> ------
+> 幽戸さん、お疲れ様ですー。では、今夜は一旦お開きにしますか、、?とりあえず雛さんの降臨待ちということで。。。。
+
+> ##yellow|**うぶくて**## 06/08/06 (Sun) 01:34:11 #iGZ5enWl0
+> ------
+> 分かりました。
+
+> ##white|**白帯**## 06/08/06 (Sun) 01:33:45 #tGLUbl280s
+> ------
+> ではでは、とりあえず乙ですたーﾉｼ
+
+> ##white|**白帯**## 06/08/06 (Sun) 01:34:56 #tGLUbl280s
+> ------
+> そういえば幽戸さん、こんな時間に来客ってすごいですね、、
+
+> ##white|**白帯**## 06/08/06 (Sun) 01:35:31 #tGLUbl280s
+> ------
+> あ
+
+> ##yellow|**うぶくて**## 06/08/06 (Sun) 22:10:23 #iGZ5enWl0
+> ------
+> 夜十時を回りましたので再びこのスレに戻ってきました
+> ただ、まだ雛さんは来ていらっしゃらない様ですね。
+
+> ##yellow|**うぶくて**## 06/08/06 (Sun) 22:13:45 #iGZ5enWl0
+> ------
+> 白帯さんも幽戸さんも、なかなか来ませんね
+> ただでさえ四人しかいない過疎スレなのですし、この調子だと早々に落ちてしまいそうです。
+
+> ##yellow|**うぶくて**## 06/08/06 (Sun) 22:30:55 #iGZ5enWl0
+> ------
+> 10時半になりましたが、私だけがレスしてる状態になっていますね……。
+> 折角ですし、スレの保守も兼ねて雛さんが遭遇したものに対する解釈でも書いていくことにします。
+
+> ##yellow|**うぶくて**## 06/08/06 (Sun) 22:35:45 #iGZ5enWl0
+> ------
+> まずは最初の方のレスで仰っていたオレンジ色の人工的な明かり、あれは雛さんが言っていた通り、電球か何かを使っているのではないでしょうか。
+> 山の中だとそれほど大きな光源は使えないでしょうし、その音が聞こえた場所が元々入り組んだ山道の中にあったという事を考えると、あまり人目に付くような事態は避けたかったのではないかと思います。
+> 幽戸さんが密教系の儀式ではないかと言っていましたが、そうでなくても第三者に知られてはいけない祭祀は幾らでもあります。
+
+> ##yellow|**うぶくて**## 06/08/06 (Sun) 22:42:18 #iGZ5enWl0
+> ------
+> 儀式というと、ふりゅうの祭りで鬼のお面を使うという話も出ていましたね。私も小さい頃、気になって親に尋ねたことがあるんです。なんであんなにこわいものを被って踊りなんかするんだって。実際、其処に居た赤ん坊が泣いている姿をよく見ていましたから、少なくとも子供の目で見たら多くの人が恐ろしく感じるものであったんだと思います。
+> 私の母は、それが良いんだと言いました。こわいものを見て、子供がめいっぱい声を張り上げて泣く。それが、この集落一体の厄除けや子供たちの無病息災に繋がるんだと。純真無垢な子供の感情や声を神聖視する行事は、佐賀に限らず九州一帯にはよくあるのだそうです。
+> 
+> 当時は無理やり子供を泣かせるなんて、と少し不快に感じたものですが、今になって考えるとその気持ちも少し分かるような気がします。
+
+> ##yellow|**うぶくて**## 06/08/06 (Sun) 22:51:21 #iGZ5enWl0
+> ------
+> 惜しかったのは、雛さんが最初にその儀式を見なかった事と、其処に打ち付けられていたものに書かれた漢字を覚えていなかった事でしょうか。ただ、軽く凸に誘ってみたらすぐ応じて下さいましたし、何よりもあの写真を上げて下さったので、別に良いのですが。
+> 気になる方がいらっしゃったら申し訳ないのでここで書いておきますが、多分あれに書いてあった文字は
+> 
+> ?　名　?　旧　八　命
+> 
+> ではなく、
+> 
+> 穢　名　嬰　児　命
+> 
+> だと思います。筆字に慣れていなかったので、少し読みづらかったり字が崩れていたりしたのも悪かったんでしょう。「旧八」ではなく「児」です。
+> 幾ら神社などに詳しくても、字が間違っていたら解釈のしようもありませんよね。これなら、幽戸さんの知り合いの方も少しぴんとくるのではないでしょうか。「嬰児命」は、まさに神社でよく使われる決まり文句ですから。
+> 漢字をどうするかは割と最後の方まで決めてなかったんですけど「えな」って読み方にするっていうのは、実はずっと前から考えてたんです。
+
+> ##yellow|**うぶくて**## 06/08/06 (Sun) 23:01:31 #iGZ5enWl0
+> ------
+> 私の母から聞いた話をします。
+> 先程少し話した私の母親の、祖母。つまり私のひいおばあちゃんにあたる人は、少し変わった職業に就いていたんだそうです。私も成長してから色んな場所で調べてみたりしてるんですが中々その言葉が見つからないので、職種はともかくとして、その職業の名前に関しては多分、私たちが住んでいる一帯にしかない言葉で伝わっているんだと思います。
+> その職業の名前を、「えなめ」といいます。口伝えなので漢字でどう書くかについては私も知らないのですが、多分漢字で書くとしたら「胞衣女」になるのではないでしょうか。胞衣とは、赤ちゃんを産むときに一緒にずるっと出てくる、胎盤とか紐みたいなやつとかのことを言います。私のひいおばあちゃんは、誰かが子供を産んだ時に出てきたその胞衣を処理する、そんな職業に就いていたのだそうです。
+> といっても、子供が生まれる度に胞衣を回収しに行くという訳ではありません。胞衣を貰いに行くのは、生まれてきた赤ちゃんが駄目になったり、もしくは元々生まれてきてはいけなかったりする時だったとの事でした。
+> 特に夏場は、鬼灯を煎じた酸っぱい匂いと、垂れ流された羊水の生臭い匂いが体に染み付いて、非常に難儀したと言っていました。
+> 
+> 「えなづか」と呼ばれる、山奥の少し開けたところにある小高い塚に子供を埋めた後、周囲にある木に釘で胞衣を打ち付けます。そこに足を踏み入れる人はひいおばあちゃんの代わりに誰も居らず、そのため何年も何十年もえなめを続けていたのだそうです。
+> ひいおばあちゃんは亡くなる数日前になって、自分の孫、つまり私のお母さんに対して、次のような事を言ったのでした。
+> 「最近なあ、えなづかに居る子らが夢に出てきてなあ、寂しい寂しいと泣きようるのよ。儂が居らんなったらほんとうに独りぼっちじゃて、赤ん坊が何十人も儂にしがみついて鼻啜って泣きじゃくるんじゃ。」
+> 「ええか、あの子らは何も悪うない。じゃけんど、お願いじゃからあそこには行くな。もう、全部終わらせにゃあかんのよ。」
+> そう言って、それまで一度も見たことの無い涙を流す祖母の姿を見た若い頃の母は、全く言っていることの意味が分からないながらも何故かとても悲しくなり、二人でわんわんと泣いたのだそうです。
+> 
+> 今これを読んでいる多くの方がそうだと思うのですが、この祖母の言い分は何とも腑に落ちません。それでは、その「えなづかに居る子ら」はどうなるのでしょうか。何故、涙を流してまで、そこに行ってはいけないと言ったのでしょうか。
+> 私がそう聞くと、母は難しそうな顔をしながら言いました。
+> あの子たちは、あんまりにも純粋だから。寂しくて、悲しくて、誰彼構わず、もっていってしまうんだよ。
+> だから、えなめはひとりだったんだ。
+> それきり、母はその話をしてくれなくなりました。
+
+> ##yellow|**うぶくて**## 06/08/06 (Sun) 23:32:01 #iGZ5enWl0
+> ------
+> その話を聞いた数年後、私はある事がきっかけで、再びこの話を思い出すことになりました。
+> そのきっかけがどのようなもので、私がその後何をしたのかは、ここでは書かない事にします。
+> 
+> ですが、お願いです。どうか、このお話が一体何なのかを、少しだけでも良いので想像して、考えて、思いを馳せてみて下さい。
+> あの集落で起こった事や、雛さん達が体験した事が、どのような事なのか。考えて考えて、あの子たちに少しでも近づこうとしてあげて下さい。
+
+> ##yellow|**うぶくて**## 06/08/07 (Mon) 00:00:00 #iGZ5enWl0
+> ------
+> まさか、こういった形で再びこの話をするとは思いませんでした。
+> さて、私もそろそろこのスレを落ちます。結局、誰も来ない様ですので。
+> このスレの様子を見ていると恐らくは写真だけで良さそうなのですが、一応念のために名前も書いておいたので、きっと大丈夫です。
+> もしまだこれを読んでいる方がいらっしゃったら。出来れば、えなみどりごのみこと、と、声に出してよんであげてください。
+> [[span style="color:black"]]どちらにせよ、もう手遅れですが。[[/span]]
+> ここまでお付き合い下さり、本当に有難うございました。
+
+[[note]]
+既に終了したスレッドです。新たな書き込みはできません。
+[[/note]]

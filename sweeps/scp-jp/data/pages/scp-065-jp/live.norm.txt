@@ -1,0 +1,612 @@
+<div style="text-align: right;">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+343"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+<div class="scp-image-block block-right scp-clear-false" style="width:300px;">
+<img alt="mati.jpg" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-065-jp/mati.jpg">
+<div class="scp-image-caption">
+<p>
+T:"SCP-065-JP内の日本の██県██市の航空写真"
+</p>
+</div>
+</div>
+<p>
+<strong>
+T:"アイテム番号:"
+</strong>
+T:"SCP-065-JP"
+</p>
+<p>
+<strong>
+T:"オブジェクトクラス:"
+</strong>
+T:"Safe"
+</p>
+<p>
+<strong>
+T:"特別収容プロトコル:"
+</strong>
+T:"SCP-065-JPが含まれる井川氏宅をサイト-81██と指定し、民間人の立ち入りを制限します。またSCP-065-JP内の側の井川氏宅は常に警備員を配置し、SCP-065-JP内の人間が基底次元に侵入することを防ぎます。SCP-065-JP内の調査は、特にSCP-065-JP内の日本が荒廃する以前の文明や統治システムに焦点を当て、SCP-065-JP内の財団と合同で行われます。"
+</p>
+<p>
+T:"井川██氏とその関連の情報の調査は現在も進行しています。"
+</p>
+<p>
+<strong>
+T:"説明:"
+</strong>
+T:"SCP-065-JPは東京都██区の民家の二階に存在する扉から侵入することが可能な異常次元です。SCP-065-JPの発見された民家には、後述する井川██氏とその家族が居住しており、SCP-065-JPは異常性が発現する以前は井川██氏の部屋でした。扉を開くとまずSCP-065-JP内の同一の民家の廊下に出ます。"
+</p>
+<p>
+T:"SCP-065-JP内は基底次元と非常に似通っており、井川氏がSCP-065-JP内では誕生していなかったこと、基底次元より3年█ヶ月ほど後であるという差異を除いて、井川氏が誕生した200█年までは基底次元とほぼ同様の歴史を辿っていたことが調査から判明しています。SCP-065-JP内において、最も基底次元との差異が見られるのは日本です。"
+</p>
+<p>
+T:"SCP-065-JP内の日本と基底次元の日本との大きな差異は、国土全体が荒廃しておりアメリカによる占領政策が行われている、独裁制が採用されていたという点などに見られます。SCP-065-JPの日本には極めて無計画に建設されたと見られる公共設備、またそれによって発生したと見られるスラム街の形成が顕著に見られます。またテーマパーク、アミューズメントパークなどのレジャー施設の跡地などもまた国全土に渡って多く見られます。SCP-065-JP内の財団はこの日本の状態を認識していたにも関わらず異常現象として認識しておらず、基底次元の財団が介入を行ったことにより初めて収容処置が取られました。"
+</p>
+<p>
+T:"SCP-065-JP内の様々な調査により、SCP-065-JP内の日本が荒廃する以前の日本の首相は、基底次元から何らかの要因により、SCP-065-JP内へと転移したと推測される、井川氏であったことが発覚しています。なお、井川氏は20██年に行方不明者として捜索届けが出されています。また井川氏はSCP-065-JP内の日本の東京都██区の██駅で死亡していることが確認されています"
+<sup class="footnoteref">
+<a class="footnoteref" href="javascript:;" id="footnoteref-1" onclick="WIKIDOT.page.utils.scrollToReference('footnote-1')">
+T:"1"
+</a>
+</sup>
+T:"。"
+</p>
+<p>
+<strong>
+T:"補遺1:"
+</strong>
+T:"以下は、SCP-065-JP内の日本の民間人へのインタビューです。"
+</p>
+<blockquote>
+<p>
+<strong>
+T:"インタビュアー:"
+</strong>
+T:"スタイルズ博士"
+</p>
+<p>
+<strong>
+T:"付記:"
+</strong>
+T:"インタビュー対象には、記録の前にスタイルズ博士がイギリス人ジャーナリストであるという旨を伝えている。"
+</p>
+<p>
+<strong>
+T:"<記録開始>"
+</strong>
+</p>
+<p>
+<strong>
+T:"インタビュアー:"
+</strong>
+T:"わざわざ、お時間を取らせて申し訳ございません。"
+</p>
+<p>
+<strong>
+T:"対象:"
+</strong>
+T:"別に大丈夫ですよ。まあすることも無いですし。"
+</p>
+<p>
+<strong>
+T:"インタビュアー:"
+</strong>
+T:"ありがとうございます。それでなのですが、井川総理が就任した当時のことについて教えていただけますか？"
+</p>
+<p>
+<strong>
+T:"対象:"
+</strong>
+T:"それは、周りの雰囲気とか世論とかのことですかね？"
+</p>
+<p>
+<strong>
+T:"インタビュアー:"
+</strong>
+T:"そうですね。"
+</p>
+<p>
+<strong>
+T:"対象:"
+</strong>
+T:"少しいいですか。[しばらく沈黙する] 言うとすれば、反発だとかそういうのも無く、みんな笑ってましたね、最初の内は。というか、真に受けてる人なんていませんでした。冗談としか思えなかった。ネタバラしのようなものも無く、ただ一週間、一ヶ月と経って行きました。あの総理自体が冗談のような存在だけど、言うことも冗談みたいでしたよ。あなたも知っているでしょう？"
+</p>
+<p>
+<strong>
+T:"インタビュアー:"
+</strong>
+T:"ええ、政治について知らない人間でも政治としておかしいものだとわかるでしょうね。"
+</p>
+<p>
+<strong>
+T:"対象:"
+</strong>
+T:"まあ、なんていうか、ウチの子供は喜んでいましたね。正確には\"も\"って言った方がいいかな。まあそんなもんですよね。あっという間に国中がレジャーランドになりました。そして、あっという間に国家予算が尽きました。"
+</p>
+<p>
+<strong>
+T:"インタビュアー:"
+</strong>
+T:"事前に色々なところで日本が現在、どんな状況かは見ていましたが、本当に国中が遊園地ですね。もし、井川総理の近くに着いていた人物をご存知でしたら教えていただきたいのですが。"
+</p>
+<p>
+<strong>
+T:"対象:"
+</strong>
+T:"いや、流石に知りませんね。それに内閣の連中は全員消えました。"
+</p>
+<p>
+<strong>
+T:"<記録終了>"
+</strong>
+</p>
+</blockquote>
+<p>
+<strong>
+T:"補遺2:"
+</strong>
+T:"以下は、SCP-065-JP内の総理官邸の首相執務室にて発見された文書の転写です。全ての文書は井川██氏によって書かれたと見られています。"
+</p>
+<blockquote>
+<p>
+T:"20██年4月6日"
+</p>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"今日やったこと"
+</strong>
+</span>
+</p>
+<ul>
+<li>
+T:"お父さんお母さんとけんかした"
+</li>
+<li>
+T:"おうちを出た"
+</li>
+<li>
+T:"██さん"
+<sup class="footnoteref">
+<a class="footnoteref" href="javascript:;" id="footnoteref-2" onclick="WIKIDOT.page.utils.scrollToReference('footnote-2')">
+T:"2"
+</a>
+</sup>
+T:"とやくそくした"
+</li>
+<li>
+T:"あしたからのことをおしえてもらった"
+</li>
+</ul>
+</blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"感想"
+</strong>
+</span>
+<br>
+T:"きょうからぼくはそうり大じん。お父さんもお母さんももうしらない。██さんはやさしいからぼくをそうり大"
+<span style="text-decoration: line-through;">
+T:"人"
+</span>
+T:"じんにしてくれるってやくそくしてくれました。これからは\"かんてい\"ってところにすむみたい。日きもめんどくさいけどちゃんとかきます。"
+</p>
+</blockquote>
+<blockquote>
+<p>
+T:"20██年4月7日"
+</p>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"今日やったこと"
+</strong>
+</span>
+</p>
+<ul>
+<li>
+T:"いろんな紙に名前とハンコをおした"
+</li>
+<li>
+T:"カメラの前ではなした"
+</li>
+<li>
+T:"いろんな人とあく手した"
+</li>
+</ul>
+</blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"感想"
+</strong>
+</span>
+<br>
+T:"おなじことばかりやらされてつまらなかった。テレビであいさつしたのはちょっとおもしろかったけど、まじめな話しあいはたのしくなかった。明日から「ほうりつ」を作れるのがたのしみです。"
+</p>
+</blockquote>
+<blockquote>
+<p>
+T:"20██年4月12日"
+</p>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"今日やったこと"
+</strong>
+</span>
+</p>
+<ul>
+<li>
+<span style="text-decoration: line-through;">
+T:"ほうりつを作った"
+</span>
+</li>
+<li>
+T:"「宿だいをなくす」法を作った"
+</li>
+<li>
+T:"「あさは10時からおきていい」法を作った"
+</li>
+<li>
+T:"「なつ休みながくする」法を作った"
+</li>
+<li>
+T:"まだまだあるのでまたこんど全ぶかきます"
+</li>
+</ul>
+</blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"感想"
+</strong>
+</span>
+<br>
+T:"たくさんほうりつを作った。いろいろとやることがあるからこれがちゃんと法りつになるのは、もう少しかかるみたいです。よくかんがえたら宿だいやなつ休みの法りつを作るひつようはもうなかったと思いました。"
+</p>
+</blockquote>
+<blockquote>
+<p>
+T:"20██年7月16日"
+</p>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"今日やったこと"
+</strong>
+</span>
+</p>
+<ul>
+<li>
+T:"████ランドができたからおいわいのパーティ"
+</li>
+<li>
+T:"████ランドであそんだ"
+</li>
+</ul>
+</blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"感想"
+</strong>
+</span>
+<br>
+T:"████ランドはあんまおもしろくなかったので██さんにもっとかっこいいのをたのんだ。"
+</p>
+</blockquote>
+<blockquote>
+<p>
+T:"20██年7月19日"
+</p>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"今日やったこと"
+</strong>
+</span>
+</p>
+<ul>
+<li>
+T:"いっぱいびょう院とか線ろとか作ることにした"
+</li>
+<li>
+T:"ここのちかくから日本のどこにでも行けるように線ろを作る"
+</li>
+<li>
+<span style="text-decoration: line-through;">
+T:"そうり大じんらしいことをした"
+</span>
+</li>
+</ul>
+</blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"感想"
+</strong>
+</span>
+<br>
+T:"さすがに楽しいことばかりだとだめだと思ったのでちゃんとをしごとをしました。がんばった"
+</p>
+</blockquote>
+<blockquote>
+<p>
+T:"20██年10月24日"
+</p>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"今日やったこと"
+</strong>
+</span>
+</p>
+<ul>
+<li>
+T:"████の町の人たちとお話しをした"
+</li>
+<li>
+T:"████の人たちにお金をはらってどいってもらうことにした"
+</li>
+</ul>
+</blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"感想"
+</strong>
+</span>
+<br>
+T:"うざいよ。"
+</p>
+</blockquote>
+<blockquote>
+<p>
+T:"20██年3月2日"
+</p>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"今日やったこと"
+</strong>
+</span>
+</p>
+<ul>
+<li>
+T:"テレビでお話しをした"
+</li>
+<li>
+<span style="text-decoration: line-through;">
+T:"██さんとけんかした"
+</span>
+</li>
+<li>
+T:"「ぼくの言うことを聞かせる」法を作った"
+</li>
+</ul>
+</blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"感想"
+</strong>
+</span>
+<br>
+T:"日本の人たちからのぼくの人気がすごく下がってるらしい。楽しいのになんでかわからない。██さんは「しかたない」って言ってた。でもなんだか落ち着かないからあたらしいほうりつを作りました。"
+</p>
+</blockquote>
+<blockquote>
+<p>
+T:"20██年5月23日"
+</p>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"今日やったこと"
+</strong>
+</span>
+</p>
+<ul>
+<li>
+T:"アメリカにおこられた"
+</li>
+<li>
+T:"アメリカとやくそくをした"
+</li>
+</ul>
+</blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"感想"
+</strong>
+</span>
+<br>
+T:"アメリカの"
+<span style="text-decoration: line-through;">
+T:"そうり大じん"
+</span>
+T:"大とうりょうもぼくのこと好きじゃないみたい。みんなぼくのことがきらい。"
+</p>
+</blockquote>
+<blockquote>
+<p>
+T:"20██年5月25日"
+</p>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"今日やったこと"
+</strong>
+</span>
+</p>
+<ul>
+<li>
+T:"いろんな人と話そうとした"
+</li>
+<li>
+T:"ここにかくれることにきめた"
+</li>
+</ul>
+</blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"感想"
+</strong>
+</span>
+<br>
+T:"ここのまわりに人がいっぱいきています。みんなぼくと話がしたいらしい。おこってる。かくれることにした。たべものは大じょうぶそうです。"
+</p>
+</blockquote>
+<blockquote>
+<p>
+T:"20██年1月5日"
+</p>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"今日やったこと"
+</strong>
+</span>
+</p>
+<ul>
+<li>
+T:"ごはんをたべた"
+</li>
+<li>
+T:"ほかはきのうと同じ"
+</li>
+</ul>
+</blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"感想"
+</strong>
+</span>
+<br>
+T:"日本の人、おこってるらしい。どうしよう。これってぼくのせい？"
+</p>
+</blockquote>
+<blockquote>
+<p>
+T:"20██年1月10日"
+</p>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"今日やったこと"
+</strong>
+</span>
+</p>
+<ul>
+<li>
+T:"███さん"
+<sup class="footnoteref">
+<a class="footnoteref" href="javascript:;" id="footnoteref-3" onclick="WIKIDOT.page.utils.scrollToReference('footnote-3')">
+T:"3"
+</a>
+</sup>
+T:"がしんだ"
+</li>
+</ul>
+</blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"感想"
+</strong>
+</span>
+<br>
+T:"ここの中に入って来た入にころされたらしい。██さんは「もうすぐにげた方がいい」って言ってた。ぼくもそうおもった。"
+</p>
+</blockquote>
+<blockquote>
+<p>
+T:"20██年1月14日"
+</p>
+<blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"今日やったこと"
+</strong>
+</span>
+</p>
+<ul>
+<li>
+T:"なにもしてない"
+</li>
+</ul>
+</blockquote>
+<p>
+<span style="text-decoration: underline;">
+<strong>
+T:"感想"
+</strong>
+</span>
+</p>
+<p>
+<br>
+<br>
+</p>
+</blockquote>
+<div class="footnotes-footer">
+<div class="title">
+T:"Footnotes"
+</div>
+<div class="footnote-footer" id="footnote-1">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('footnoteref-1')">
+T:"1"
+</a>
+T:". 何者かの暴行によると見られる"
+</div>
+<div class="footnote-footer" id="footnote-2">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('footnoteref-2')">
+T:"2"
+</a>
+T:". 他の文書などからして井川██氏の秘書、もしくは側近であると見られる"
+</div>
+<div class="footnote-footer" id="footnote-3">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('footnoteref-3')">
+T:"3"
+</a>
+T:". 何者かは不明"
+</div>
+</div>

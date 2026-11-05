@@ -1,0 +1,447 @@
+--- live
++++ ftml
+@@ -1,437 +1,11 @@
+-<p>
+-<iframe src="//interwiki.scp-jp.org/styleFrame.html?priority=1&theme=https://scp-jp.wdfiles.com/local--code/theme%3Aminimal/1&css={$css}" style="display: none">
+-</iframe>
+-</p>
+-<div style="display: none">
+-<div class="code">
+-<div class="hl-main">
+-<pre>
+-<span class="hl-code">
+-T:"/"
+-</span>
+-<span class="hl-identifier">
+-T:"*"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"These"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"two"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"arguments"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"are"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"in"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"a"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"quirked-up"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"CSS"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"Module"
+-</span>
+-<span class="hl-code">
+-T:"("
+-</span>
+-<span class="hl-identifier">
+-T:"rather"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"than"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"the"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"main"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"code"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"block"
+-</span>
+-<span class="hl-code">
+-T:")"
+-</span>
+-<span class="hl-identifier">
+-T:"so"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"users"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"can"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"feed"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"Wikidot"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"variables"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"into"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"them"
+-</span>
+-<span class="hl-code">
+-T:"."
+-</span>
+-<span class="hl-identifier">
+-T:"*"
+-</span>
+-<span class="hl-code">
+-T:"/"
+-</span>
+-<span class="hl-identifier">
+-T:"#header"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"h1"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"a"
+-</span>
+-<span class="hl-code">
+-T:":"
+-</span>
+-<span class="hl-special">
+-T:":before"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-brackets">
+-T:"{"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-reserved">
+-T:"content:"
+-</span>
+-<span class="hl-code">
+-T:"\"定命種エミュレータ事例集\""
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"color:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-var">
+-T:"black"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-brackets">
+-T:"}"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"#header"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"h2"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-identifier">
+-T:"span"
+-</span>
+-<span class="hl-code">
+-T:":"
+-</span>
+-<span class="hl-special">
+-T:":before"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-brackets">
+-T:"{"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-reserved">
+-T:"content:"
+-</span>
+-<span class="hl-code">
+-T:"\"儚いものと生きていく\""
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-reserved">
+-T:"color:"
+-</span>
+-<span class="hl-code">
+-</span>
+-<span class="hl-var">
+-T:"black"
+-</span>
+-<span class="hl-code">
+-T:";"
+-</span>
+-<span class="hl-brackets">
+-T:"}"
+-</span>
+-</pre>
++<div class="error-block">
++T:"Sorry, no match for the embedded content."
+ </div>
+-</div>
+-</div>
+-<div class="creditRate creditModule {$mode}">
+-<div class="rateBox">
+-<div class="rate-box-with-credit-button">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+221"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-<div class="creditButton">
+-<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+-<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+-</a>
+-</div>
+-</div>
+-</div>
+-<div class="rateBox heritage-wrap" style="display:none;">
+-<div class="heritage-rating-module">
+-<div class="heritage-emblem">
+-<a href="/">
+-<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+-</a>
+-</div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+221"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-<div class="creditButton">
+-<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+-<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+-</a>
+-</div>
+-</div>
+-</div>
+-<div style="clear:both;">
+-</div>
+-<div id="u-credit-view">
+-<div class="fader">
+-<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+-</iframe>
+-</div>
+-<div class="modalcontainer">
+-<div class="modalbox">
+-<div class="modalbox-title">
+-<h2>
+-<span>
+-T:"クレジット"
+-</span>
+-</h2>
+-</div>
+-<div class="credit">
+-<p>
+-<strong>
+-T:"タイトル:"
+-</strong>
+-T:"人間の「近いうち」を10年単位で考えてはいけない - 定命種エミュレータ事例集"
+-<br>
+-<strong>
+-T:"著者:"
+-</strong>
+-<span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/dr-knotty" onclick="WIKIDOT.page.listeners.userInfo(2919814); return false;">
+-<img alt="Dr_Knotty" class="small" src="https://www.wikidot.com/avatar.php?userid=2919814&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=2919814)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/dr-knotty" onclick="WIKIDOT.page.listeners.userInfo(2919814); return false;">
+-T:"Dr_Knotty"
+-</a>
+-</span>
+-<br>
+-<strong>
+-T:"作成年:"
+-</strong>
+-T:"2023"
+-</p>
+-<hr>
+-<p>
+-<a href="https://scp-jp.wikidot.com/author:dr-knotty">
+-T:"この著者の他の作品"
+-</a>
+-</p>
+-<div class="credit-back" style="text-align: center;">
+-<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+-</iframe>
+-</div>
+-</div>
+-<div class="creditBottomRate" style="height:30px;">
+-<div class="credit-license">
+-<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
+-</a>
+-</div>
+-<div style="text-align: center; top: 0px;">
+-<div class="Dendo">
+-<div class="heritage-rating-module">
+-<div class="heritage-emblem">
+-<a href="/">
+-<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+-</a>
+-</div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+221"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-<div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+221"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-</div>
+-</div>
+-</div>
+-</div>
++<br>
++<br>
++<br>
++<br>
++<br>
+ <p>
+ <span style="color: #6495ed">
+ T:"登録日"

@@ -1,0 +1,414 @@
+--- live
++++ ftml
+@@ -1,31 +1,11 @@
+ <div class="award-1st">
+ </div>
+ <div class="creditRate creditModule {$mode}">
+-<div class="rateBox">
++T:"[[div_ class=\"rateBox\" ]]"
+ <div class="rate-box-with-credit-button">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+754"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+@@ -33,44 +13,24 @@
+ </div>
+ </div>
+ </div>
+-<div class="rateBox heritage-wrap" style="display:none;">
++<br>
+ <div class="heritage-rating-module">
+ <div class="heritage-emblem">
+ <a href="/">
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+754"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ </div>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+ </a>
+ </div>
+-</div>
+-</div>
++<br>
++<br>
+ <div style="clear:both;">
+ </div>
+ <div id="u-credit-view">
+@@ -99,11 +59,11 @@
+ </strong>
+ T:"©︎"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/mitan" onclick="WIKIDOT.page.listeners.userInfo(4589204); return false;">
+-<img alt="Mitan" class="small" src="https://www.wikidot.com/avatar.php?userid=4589204&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=4589204)">
++<a href="/user:info/mitan" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="mitan" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+ </a>
+-<a href="https://www.wikidot.com/user:info/mitan" onclick="WIKIDOT.page.listeners.userInfo(4589204); return false;">
+-T:"Mitan"
++<a href="/user:info/mitan" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++T:"mitan"
+ </a>
+ </span>
+ <br>
+@@ -125,56 +85,17 @@
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+754"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
++<p>
++T:"TODO: module Rate"
++</p>
+ </div>
+ </div>
+-</div>
+-<div class="modalbox-ratemodule">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+754"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
++<br>
++T:"[[div_ class=\"modalbox-ratemodule\" ]]"
++<p>
++T:"TODO: module Rate"
++</p>
++T:"[[/div]]"
+ </div>
+ </div>
+ </div>
+@@ -205,13 +126,13 @@
+ </p>
+ </div>
+ <div class="credit-back" style="text-align: center;">
+-<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
++<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+ </iframe>
+ </div>
+ </div>
+ <div class="creditBottomRate" style="height:30px;">
+ <div class="credit-license">
+-<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
++<a class="cc cc-by-sa" href="#invalid-url">
+ </a>
+ </div>
+ <div style="text-align: center; top: 0px;">
+@@ -222,195 +143,43 @@
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+754"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++<br>
++T:"[[/div]]"
+ </div>
+ </div>
+ </div>
+-<div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+754"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-</div>
+-</div>
+-</div>
+-</div>
+-<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-91b1ea44994cc52636eae21d" data-lp-key="p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+-</div>
+-<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-906b9c9dddc1b4d9770c27f4" data-lp-key="p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+-<div class="list-pages-item">
+-<div class="fake_title">
+ <p>
+-T:"コックスの部屋"
++T:"TODO: module ListPages"
+ </p>
+-</div>
+-<span style="font-size:300%;">
+-T:"…やぁ！"
+-</span>
+-<br>
+-<img alt="G1" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/G1">
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<div class="textchange">
+-<div class="sitemember">
+-<span style="font-size:200%;">
+-T:"君は……財団職員だね。"
+-<br>
+-<img alt="G2" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/G2">
+-<br>
+-<br>
+-<br>
+-T:"そうだろう！？"
+-</span>
+-<br>
+-<img alt="G4" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/G4" width="550px">
+-</div>
+-</div>
+-<div class="content-panel standalone series" style="background-color: #a8dbff;">
+-<p style="text-align: center;">
+-<span style="font-size:300%;">
+-<a href="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/%E7%85%BD%E3%82%8A" style="color:#000000;">
+-T:"いいえ"
+-</a>
+-</span>
++<p>
++T:"TODO: module ListPages"
+ </p>
+-</div>
+-<div class="content-panel standalone series" style="background-color: #ffbfba;">
+-<p style="text-align: center;">
+-<span style="font-size:300%;">
+-<a href="#u-wrapper-null">
+-T:"はい"
+-</a>
+-</span>
++<p>
++T:"TODO: module ListPages"
+ </p>
+-</div>
+-<div class="typearea0" id="u-wrapper-null">
+-<br>
+-<br>
+-<br>
+-<span style="font-size:400%;">
+-T:"HAHA！！正直でいいね！"
+-</span>
+-<br>
+-<br>
+-<br>
+-<img alt="G1" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/G1">
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<span style="font-size:200%;">
+-T:"うん？｢お前は一体なんなのか｣って？"
+-</span>
+-<br>
+-<img alt="G2" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/G2">
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<span style="font-size:200%;">
+-T:"僕の名前はクリストファー＝コックス！！24歳のハンサムさ！！"
+-</span>
+-<br>
+-<img alt="G2" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/G2">
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<span style="font-size:200%;">
+-T:"僕が手に持ってるページが詳しい自己紹介だからさ。クリックして読んでみてよ！！"
+-</span>
+-<br>
+-<img alt="1" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/1">
+-<a href="https://scp-jp.wikidot.com/scp-2144-jp/offset/1/page2_limit/1">
+-<img alt="2" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/2" width="(サイズ)">
+-</a>
+-<br>
+-<img alt="3" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/3">
+-</div>
+ <p>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
+-<br>
++T:"TODO: module ListPages"
+ </p>
+-</div>
+-</div>
+-<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-642b836885f26dc5160de8b0" data-lp-key="page2_p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+-</div>
+-<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-050dc3b3329a5c2cd0fcce1e" data-lp-key="page3_p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+-</div>
+-<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-c26380a952003886a123c15d" data-lp-key="page4_p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+-</div>
+-<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-430406aa87d5952df2e5f2dc" data-lp-key="page5_p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+-</div>
+-<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-4770539c74a8189c9376ada0" data-lp-key="page6_p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+-</div>
+-<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-7d92a11259faeac4658dae91" data-lp-key="page7_p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+-</div>
++<p>
++T:"TODO: module ListPages"
++</p>
++<p>
++T:"TODO: module ListPages"
++</p>
++<p>
++T:"TODO: module ListPages"
++</p>
++<p>
++T:"TODO: module ListPages"
++</p>

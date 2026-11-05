@@ -1,0 +1,81 @@
+{
+ "kind": "tale",
+ "listed_size": 5371,
+ "live_page_content_sha256": "c18de1d70b00616f3658e8e52dc5ea968e60be6ff98673fa85b0180dd0f61522",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:24:43+00:00",
+  "method": "GET",
+  "response_bytes": 44075,
+  "response_sha256": "592b220a8f78a143789bf1ec917752cee14e420709751247007bf67fe5a21bb2",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/just-shut-up-and-give-me-fried-chicken"
+ },
+ "page_id": 598238145,
+ "rating": 235,
+ "site": "scp-jp",
+ "slug": "just-shut-up-and-give-me-fried-chicken",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:24:44+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "598238145"
+  },
+  "response_bytes": 22697,
+  "response_sha256": "143e4da761c166923cf7c9978757884c556184dbb8ed62c1841845370c45e742",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "8d1eb9c6fd56a325fb2f1ac2d70ca5c3f38a7fa9cf1799faf1cf8b6f097dd401",
+ "stats": {
+  "counts": {
+   "anchor": 0,
+   "blocks": 85,
+   "bold": 26,
+   "cjk_dash_pair": 0,
+   "cjk_emphasis": 26,
+   "collapsible": 1,
+   "color": 24,
+   "css": 1,
+   "div": 3,
+   "ellipsis_dash": 16,
+   "footnote": 1,
+   "fullwidth_space": 30,
+   "heading": 0,
+   "hr": 0,
+   "html": 0,
+   "iftags": 0,
+   "image": 0,
+   "include": 1,
+   "italic": 8,
+   "link3": 1,
+   "list": 0,
+   "module": 3,
+   "mono": 0,
+   "quote": 129,
+   "raw": 19,
+   "ruby": 0,
+   "size": 10,
+   "span": 13,
+   "strike": 0,
+   "sup_sub": 0,
+   "table": 0,
+   "tabview": 0,
+   "underline": 8
+  },
+  "density_per_kchar": 66.84,
+  "markup_tokens": 359
+ },
+ "title": "緋色の鳥よ（半額キャンペーン中）",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "598238145",
+  "pageUnixName": "just-shut-up-and-give-me-fried-chicken",
+  "requestPageName": "just-shut-up-and-give-me-fried-chicken",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

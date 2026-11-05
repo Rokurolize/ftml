@@ -1,0 +1,523 @@
+[[module css]]
+body {
+  -webkit-text-size-adjust: 110%;
+}
+.vpoem {
+  text-indent: 0;
+  -webkit-writing-mode: vertical-rl;
+          writing-mode: vertical-rl;
+  margin: auto;
+  margin-bottom: 0.5em;
+  font-size: 2.5em;
+  font-family: "KaiTi", "MS PMincho", "STKaiti", "HiraMinProN-W6", "Hiragino Kaku Gothic Pro", "MS PGothic", serif;
+}
+.vpoem p {
+  line-height: 1.4;
+  margin: 0 auto;
+}
+.vpoem tt {
+  vertical-align: middle;
+  font-family: "KaiTi", "MS PMincho", "STKaiti", "HiraMinProN-W6", "Hiragino Kaku Gothic Pro", "MS PGothic", serif;
+}
+@media screen and (max-width: 767px) {
+  .vpoem {
+    font-size: 1.5em;
+  }
+}
+span[style="text-decoration: line-through;"] {
+  display: -webkit-inline-flex;   /* Safari */
+  display:         inline-flex;
+  -webkit-flex-direction: column; /* Safari */
+          flex-direction: column;
+  vertical-align: bottom;
+}
+span[style="text-decoration: line-through;"] > tt {
+  font-size: 50%;
+  line-height: 0.5em;
+}
+.tategaki span[style="text-decoration: line-through;"] > tt {
+  line-height: 1em;
+}
+.tategaki span[style="text-decoration: line-through;"] {
+  vertical-align: 0.3em;
+}
+.tategaki blockquote {
+  padding: 2em 0.5em;
+}
+.tategaki tt {
+  vertical-align: middle;
+  font-family: "ヒラギノ明朝 Pro W3", "HG明朝E", "ＭＳ Ｐ明朝", "ＭＳ 明朝", serif;
+}
+.tategaki .henoji:before {
+  content: "〳〵";
+  color: rgba(51, 51, 51, 1.0);
+  opacity: 1;
+  transform: scale(1, 1)rotateX(0) translateY(0);
+}
+.tategaki .dhenoji:before {
+  content: "〴〵";
+  color: rgba(51, 51, 51, 1.0);
+  opacity: 1;
+  transform: scale(1, 1)rotateX(0) translateY(0);
+}
+.tategaki .dhenoji:after {
+  content: "";
+  color: rgba(51, 51, 51, 1.0);
+  opacity: 1;
+  transform: scale(1, 1)rotateX(0) translateY(0);
+}
+.tategaki {
+  -webkit-columns-axis: vertical;
+  -webkit-columns: auto 20em;
+  -webkit-column-gap: 20px;
+  -webkit-column-rule: 1px solid #dddddd;
+  -webkit-column-fill: auto;
+          columns: auto 20em;
+          column-gap: 20px;
+          column-rule: 1px solid #dddddd;
+          column-fill: auto;
+  font-size: small;
+  overflow-y: scroll;
+  width: calc(100% + 3em);
+  padding-right: 2em;
+          writing-mode: tb-rl;
+          writing-mode: vertical-rl;
+  -webkit-writing-mode: vertical-rl;
+  font-family: "ヒラギノ明朝 Pro W3", "HG明朝E", "ＭＳ Ｐ明朝", "ＭＳ 明朝", serif;
+}
+.tategaki {
+  -webkit-column-axis: vertical;
+  -webkit-columns: auto 20em;
+  -webkit-column-gap: 20px;
+  -webkit-column-rule: 1px solid #dddddd;
+  -webkit-column-fill: auto;
+          columns: auto 20em;
+          column-gap: 20px;
+          column-rule: 1px solid #dddddd;
+          column-fill: auto;
+  font-size: small;
+  width: calc(100% + 3em);
+  padding-right: 2em;
+          writing-mode: tb-rl;
+          writing-mode: vertical-rl;
+  -webkit-writing-mode: vertical-rl;
+  font-family: "ヒラギノ明朝 Pro W3", "HG明朝E", "ＭＳ Ｐ明朝", "ＭＳ 明朝", serif;
+}
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  .tategaki {
+    overflow-y: scroll;
+  }
+}
+.henoji:before {
+  content: "へ";
+  color: rgba(51, 51, 51, 1.0);
+  opacity: 1;
+  transform: scale(1.9, 1)rotateX(180deg) translateY(-0.08em);
+  position: absolute;
+  display: inline-block;
+          user-select: none;
+  -webkit-user-select: none;
+  z-index: 1;
+}
+.henoji {
+  position: relative;
+  width: 1em;
+  white-space: pre;
+  display: inline-block;
+  padding: 0 0.5em;
+  color: rgba(51, 51, 51, 0);
+}
+.dhenoji:before {
+  content: "へ";
+  color: rgba(51, 51, 51, 1.0);
+  opacity: 1;
+  transform: scale(1.9, 1)rotateX(180deg) translateY(-0.08em);
+  position: absolute;
+  display: inline-block;
+          user-select: none;
+  -webkit-user-select: none;
+  z-index: 1;
+}
+.dhenoji {
+  position: relative;
+  width: 1em;
+  white-space: pre;
+  display: inline-block;
+  padding: 0 0.5em;
+  color: rgba(51, 51, 51, 0);
+}
+.dhenoji:after {
+  position: absolute;
+  color: rgba(51, 51, 51, 1.0);
+  content: "゛";
+  top: 0.07em;
+  left: 0.6em;
+  z-index: 1;
+}
+.hdhenoji:before {
+  content: "へ";
+  color: rgba(51, 51, 51, 1.0);
+  opacity: 1;
+  transform: scale(1.9, 1)rotateX(180deg) translateY(-0.08em);
+  position: absolute;
+  display: inline-block;
+          user-select: none;
+  -webkit-user-select: none;
+  z-index: 1;
+}
+.hdhenoji {
+  position: relative;
+  width: 1em;
+  white-space: pre;
+  display: inline-block;
+  padding: 0 0.5em;
+  color: rgba(51, 51, 51, 0);
+}
+.hdhenoji:after {
+  position: absolute;
+  color: rgba(51, 51, 51, 1.0);
+  content: "゜";
+  top: 0.07em;
+  left: 0.6em;
+  z-index: 1;
+}
+span[style="text-decoration: underline;"] tt {
+  position: relative;
+  text-decoration: none;
+}
+span[style="text-decoration: underline;"] tt::before {
+  content: "";
+  position: absolute;
+  top: 90%;
+  width: 100%;
+  height: 0.25em;
+  background: -webkit-linear-gradient(315deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%), -webkit-linear-gradient(45deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%);
+  background:         linear-gradient(135deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%), linear-gradient(45deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%);
+  background-size: 0.5em 0.5em;
+  background-repeat: repeat-x, repeat-x;
+}
+.namisen {
+  position: relative;
+}
+.namisen::before {
+  content: "";
+  position: absolute;
+  top: 90%;
+  width: 100%;
+  height: 0.25em;
+  background: -webkit-linear-gradient(315deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%), -webkit-linear-gradient(45deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%);
+  background:         linear-gradient(135deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%), linear-gradient(45deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%);
+  background-size: 0.5em 0.5em;
+  background-repeat: repeat-x, repeat-x;
+}
+.warning {
+  position: relative;
+}
+.warning::before {
+  content: "";
+  position: absolute;
+  top: 90%;
+  width: 100%;
+  height: 0.25em;
+  background: -webkit-linear-gradient(315deg, transparent, transparent 45%, #ff0000, transparent 55%, transparent 100%), -webkit-linear-gradient(45deg, transparent, transparent 45%, #ff0000, transparent 55%, transparent 100%);
+  background:         linear-gradient(135deg, transparent, transparent 45%, #ff0000, transparent 55%, transparent 100%), linear-gradient(45deg, transparent, transparent 45%, #ff0000, transparent 55%, transparent 100%);
+  background-size: 0.5em 0.5em;
+  background-repeat: repeat-x, repeat-x;
+}
+tt {
+  font-family: inherit;
+  font-size: 1em;
+  display: inline-table;
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1;
+  height: 1em;
+  vertical-align: calc(1em - 1px);
+  text-indent: 0%;
+}
+tt > sup {
+  font-family: inherit;
+  display: table-header-group;
+  font-size: 0.6em;
+  line-height: 1.1;
+  text-align: center;
+  white-space: pre;
+}
+tt > sub {
+  font-family: inherit;
+  -webkit-text-emphasis-style: filled sesame;
+          text-emphasis-style: filled sesame;
+  font-size: 1em;
+  vertical-align: calc(-1em + 1px);
+}
+tt > em {
+  font-size: 12.8px;
+  font-style: normal;
+  -webkit-text-emphasis-style: filled dot;
+          text-emphasis-style: filled dot;
+  vertical-align: calc(-1em + 1px);
+}
+tt > em {
+  /* For the environments which comply with CSS3. */
+  font-style: normal;
+  font-weight: 400;
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAABgCAYAAAAU0fKgAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsSAAALEgHS3X78AAAAbElEQVRYw+3TQQ6AIAxEUcZw/yuXlYkRKaPEhMXvnsfQFkVElIU6Vg5vCEgqkr4DZz/fQN0TrkNxkMce3JEMGjbRXQ97CqMUKeCk+H+RZimqc0uGbPYXAAAAAAAAAAAAAAAAAAAAAAAAAACSajbCGcGsSkirAAAAAElFTkSuQmCC), none;
+  background-repeat: repeat-x;
+  padding: 0.5em 0 0;
+  background-color: transparent;
+  background-clip: padding-box, content-box;
+  background-size: 1em 1.3em, auto;
+}
+.reddel {
+  position: relative;
+}
+.reddel:before {
+  content: " ";
+  display: block;
+  position: absolute;
+  right: 0;
+  left: 0;
+  top: 40%;
+  bottom: 40%;
+  border-top: 1px solid red;
+  border-bottom: 1px solid red;
+}
+.kenten-b {
+  -webkit-text-emphasis-style: filled dot;
+          text-emphasis-style: filled dot;
+}
+.kenten-c {
+  -webkit-text-emphasis-style: filled circle;
+          text-emphasis-style: filled circle;
+}
+.kenten-janome {
+  -webkit-text-emphasis-style: filled double-circle;
+          text-emphasis-style: filled double-circle;
+}
+.kenten-t {
+  -webkit-text-emphasis-style: filled triangle;
+          text-emphasis-style: filled triangle;
+}
+.kenten-goma {
+  -webkit-text-emphasis-style: filled sesame;
+          text-emphasis-style: filled sesame;
+}
+.kenten-wb {
+  -webkit-text-emphasis-style: open dot;
+          text-emphasis-style: open dot;
+}
+.kenten-wc {
+  -webkit-text-emphasis-style: open circle;
+          text-emphasis-style: open circle;
+}
+.kenten-doublec {
+  -webkit-text-emphasis-style: open double-circle;
+          text-emphasis-style: open double-circle;
+}
+.kenten-wt {
+  -webkit-text-emphasis-style: open triangle;
+          text-emphasis-style: open triangle;
+}
+.kenten-wgoma {
+  -webkit-text-emphasis-style: open sesame;
+          text-emphasis-style: open sesame;
+}
+.kenten-hoshi {
+  -webkit-text-emphasis-style: "★";
+          text-emphasis-style: "★";
+}
+.kenten-kane {
+  -webkit-text-emphasis-style: "¥";
+          text-emphasis-style: "¥";
+}
+.bousen {
+  text-decoration: overline;
+}
+
+
+/* thank you tonootto */
+div.pseudo-tags ul {
+  font-size: 85%;
+  border-top: 1px solid #bbbbbb;
+  display: inline-block;
+  margin: 10px 0 0;
+  padding: 0 2px;
+  list-style: none;
+}
+div.pseudo-tags li {
+  color: #bb0011;
+  text-decoration: none;
+  display: inline-block;
+  margin: 0 1px;
+  cursor: pointer;
+}
+div.pseudo-tags li:hover {
+  text-decoration: underline;
+}
+#page-content span[style$="new"] {
+  display: inline-block;
+  background: #eaffea;
+}
+#page-content span[style$="new"]::before {
+  padding-left: 5px;
+  content: "+ ";
+  color: #55cc55;
+}
+#page-content span[style$="new"]::after {
+  content: " ";
+  padding-right: 5px;
+}
+#page-content span[style$="old"] {
+  display: inline-block;
+  background: #ffecec;
+}
+#page-content span[style$="old"]::before {
+  padding-left: 5px;
+  content: "- ";
+  color: #da5757;
+}
+#page-content span[style$="old"]::after {
+  content: " ";
+  padding-right: 5px;
+}
+#page-content .new {
+  display: inline-block;
+  margin-right: 5px;
+  background: #eaffea;
+}
+#page-content .new::before {
+  padding-left: 5px;
+  content: "+ ";
+  color: #55cc55;
+}
+#page-content .new::after {
+  content: " ";
+  padding-right: 5px;
+}
+#page-content .old {
+  display: inline-block;
+  margin-right: 5px;
+  background: #ffecec;
+}
+#page-content .old::before {
+  padding-left: 5px;
+  content: "- ";
+  color: #da5757;
+}
+#page-content .old::after {
+  content: " ";
+  padding-right: 5px;
+}
+
+[[/module]]
+
+
+[[>]]
+[[module Rate]]
+[[/>]]
+
+> [[span style="color:#d00"]]メッセージの受信に失敗しました。[[/span]]
+> [[span style="color:#d00"]]メッセージの再送信まで待機して下さい。[[/span]]
+
+
+
+[[div class="scp-image-block block-right scp-clear-false" style="width:300px;"]]
+[[image NotWereWolf.jpg
+ {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+[[span style="color:#d00"]]SCP-488-JP[[/span]]の元となった種
+[[/div]]
+[[/div]]
+
+
+
+[[span style="color:#d00"]]**アイテム番号:** SCP-488-JP[[/span]]
+
+[[span style="color:#d00"]]**オブジェクトクラス:** [[/span]]--[[span style="color:#d00"]]Euclid[[/span]]--　Keter
+
+[[span style="color:#d00"]]**特別収容プロトコル:** SCP-488-JPはサイト-81██の低危険度生物収容室に[[/span]]収容するには危険過ぎるため、外壁の厚みを20cm以上に保った5m×5m×5mの高危険度人型実体収容室に[[span style="color:#d00"]]収容してください。SCP-488-JP[[/span]]の機嫌を損ねないよう[[span style="color:#d00"]]に1日に2回適切な食事[[/span]]として生きた人間の子供[[span style="color:#d00"]]を与えてください。SCP-488-JPの個体数[[/span]]は増加傾向にあります。収容[[span style="color:#d00"]]を維持するため繁殖活動を[[/span]]機動部隊が出来る限り妨害し、機動部隊以外の人員も妨害行為を[[span style="color:#d00"]]補助してください。現在、財団は[[/span]]総力を以て[[span style="color:#d00"]]14体のSCP-488-JPを収容しています。[[/span]]
+
+[[span style="color:#d00"]]SCP-488-JPに関する業務を行う職員は最低一度、SCP-488-JPの[[/span]]恐ろしく残虐な[[span style="color:#d00"]]実体/画像/動画を自身で目視[[/span]]し、それでも気を失わずにいられるか試験[[span style="color:#d00"]]する事が義務づけられています。[[/span]]
+
+[[span style="color:#d00"]]この文書への質問/編集要請は収容リーダーを通して情報管理チーム"赤ずきん"に連絡してください。[[/span]]
+
+[[span style="color:#d00"]]**説明:** SCP-488-JPはタイリクオオカミ(//Canis lupus//)の一種[[/span]]が突然変異を経て人間の姿を得た生物[[span style="color:#d00"]]です。SCP-488-JPは[[/span]]文献の[[span style="color:#d00"]]情報[[/span]]によると強力な現実[[span style="color:#d00"]]改変能力を備えており、自身に関する情報[[/span]]の作成者[[span style="color:#d00"]]を[[/span]]現実[[span style="color:#d00"]]改変[[/span]]能力を使用して無惨に殺害[[span style="color:#d00"]]します。あらゆる情報媒体のうち、文書/音声/肉声[[/span]]/画像/動画/その他すべて[[span style="color:#d00"]]が情報として見做され[[/span]]、不幸にもSCP-488-JPの殺害対象になり[[span style="color:#d00"]]ます。[[/span]]SCP-488-JPの現実[[span style="color:#d00"]]改変[[/span]]能力を使用[[span style="color:#d00"]]された[[/span]]人間の[[span style="color:#d00"]]情報は[[/span]]明文化する事すら憚られ、SCP-488-JPが[[span style="color:#d00"]]客観的な視点[[/span]]から見ても倫理観[[span style="color:#d00"]]に欠け[[/span]]た[[span style="color:#d00"]]、"凶暴で残酷な人狼"であることを示します。[[/span]]SCP-488-JPの行う現実[[span style="color:#d00"]]改変は[[/span]]対象に対して[[span style="color:#d00"]]全体的ではなく、[[/span]]身体の[[span style="color:#d00"]]一部の改変、[[/span]]機能不明な部位の[[span style="color:#d00"]]追加という[[/span]]醜悪な[[span style="color:#d00"]]形式を取ります[[/span]]が、これがあくまでSCP-488-JPの手加減である事に留意すべきです[[span style="color:#d00"]]。改変された[[/span]]対象は大抵の場合@@[@@[[span style="color:#d00"]]データ[[/span]]削除済]。犠牲者[[span style="color:#d00"]]の復旧の[[/span]]手段は財団によって限りなく模索されましたが、講じられた[[span style="color:#d00"]]試みは[[/span]]残念ながら[[span style="color:#d00"]]すべて更なる改変という結果に終わりました。[[/span]]
+
+[[span style="color:#d00"]]SCP-488-JPは██山の周囲で人狼に関する噂が横行し[[/span]]機動部隊が投入され[[span style="color:#d00"]]たにも関わらず、その実体[[/span]]すら見る事が叶わずに機動部隊が全滅し犠牲者[[span style="color:#d00"]]や死傷者が[[/span]]多数[[span style="color:#d00"]]発見され[[/span]]、追加の援軍も一人も帰還し[[span style="color:#d00"]]なかった事から財団の注意を引きました。更なる調査で[[/span]]機動部隊隊員が残した[[span style="color:#d00"]]SCP-488-JPの情報[[/span]]からSCP-488-JPの[[span style="color:#d00"]]改変能力が明らかになり、[[/span]]大規模作戦で███名の犠牲者を出した後、ようやく[[span style="color:#d00"]]すべての個体が収容されました。SCP-488-JPはタイリクオオカミ種の中[[/span]]に限らず動物の中[[span style="color:#d00"]]では[[/span]]随一の戦闘能力を誇り、クマやシャチですらSCP-488-JPと[[span style="color:#d00"]]比較[[/span]]すると絶望[[span style="color:#d00"]]的[[/span]]に[[span style="color:#d00"]]活動能力が劣っています。そのためSCP-488-JPは改変能力[[/span]]すら使用せずに全動物を蹂躙出来ます。██山周囲の人間はSCP-488-JPに服従し、SCP-488-JP中心の文化を築く事[[span style="color:#d00"]]によって生存を図っていたと推測されています。[[/span]]
+
+[[span style="color:#d00"]]__**実験記録488-1 - 日付20██/██/█**__[[/span]]
+> [[span style="color:#d00"]]**対象:** SCP-488-JP[[/span]]
+> 
+> [[span style="color:#d00"]]**実施方法:** D-3793を収容室に入れ[[/span]]、生贄として捧げ[[span style="color:#d00"]]る。[[/span]]
+> 
+> [[span style="color:#d00"]]**結果:** 接触による異常性は発現し[[/span]]ないと推測されていたが、SCP-488-JPがD-3793に触れると皮膚が激しく[編集済]し、それからはとても見て居られ[[span style="color:#d00"]]なかった。D-3793はSCP-488-JPについて[[/span]]「ああ、この世の終わりだ」と[[span style="color:#d00"]]述べ[[/span]]、逃げ[[span style="color:#d00"]]ようとすると[[/span]]直後にD-3793の[[span style="color:#d00"]]叫び声[[/span]]が収容室に鳴り響いた。D-3793は現実改変能力によって[データ削除済][[span style="color:#d00"]]に変換され、[[/span]]絶大な[[span style="color:#d00"]]苦悩を示した。[[/span]]
+> 
+> **分析:** //ああ、我々は生贄なんだ -██博士//
+
+[[span style="color:#d00"]]**補遺:** 改変された文書を赤色に着色する試みはデータの更なる改変を招き[[/span]]、有効な手段とは判断され[[span style="color:#d00"]]ませんでした。詳細な経緯は研究ログ488-█"イヌ科生物の色覚と書体ごとの改変傾向の関係性"を参照してください。現在、この文書を含むSCP-488-JPに関連する情報は、[[/span]]恐怖と[[span style="color:#d00"]]混乱を避けるために常に情報管理チーム"赤ずきん"によって改変監視と着色処理が行われています。[[/span]]
+
+[[size 0%]].[[/size]]
+
+> [[span style="color:#d00"]]メッセージの再送信を確認...[[/span]]
+
+[[size 0%]].[[/size]]
+
+> [[span style="color:#d00"]]受信に成功しました。メッセージを表示します。[[/span]]
+
+[[size 0%]].[[/size]]
+
+[[div style="border:solid 1px #999999; background:#ccffcc; padding:5px; margin-bottom: 10px;"]]
+[[=]]
+
+[[size 150%]][[span style="color:#d00"]]自動通達[[/span]][[/size]]
+
+[[span style="color:#d00"]]この文書は情報管理チーム"赤ずきん"によって作成されました。[[/span]]
+[[span style="color:#d00"]]文書の編集権限は"赤ずきん"所属者に限られます。[[/span]]
+
+[[span style="color:#d00"]]この文書を閲覧する際、赤く着色された文字だけ[[/span]]でなく全体[[span style="color:#d00"]]を読むようにして下さい。[[/span]]
+
+[[/=]]
+[[/div]]
+
+
+[[size 0%]].[[/size]]
+
+[[size 0%]].[[/size]]
+
+[[size 0%]].[[/size]]
+
+[[size 0%]].[[/size]]
+
+[[size 0%]].[[/size]]
+
+[[div class="pseudo-tags"]]
+* jp
+* ##black|keter##
+* scp
+* ##black|人間型##
+* 狼
+* ##black|現実改変##
+* ##black|破壊命令##
+* ##black|未収容##
+* ##black|K-クラスシナリオ##
+[[/div]]
+
+[[size 0%]].[[/size]]
+
+[[size 0%]].[[/size]]
+
+[[size 0%]].[[/size]]
+
+[[size 0%]].[[/size]]
+
+[[size 0%]].[[/size]]
+
+[[size 0%]].[[/size]]
+
+[[size 0%]].[[/size]]
+
+[[size 0%]].[[/size]]
+
+[[size 0%]].[[/size]]
+
+[[size 0%]].[[/size]]

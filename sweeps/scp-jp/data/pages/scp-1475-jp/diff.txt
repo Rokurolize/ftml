@@ -1,0 +1,49 @@
+--- live
++++ ftml
+@@ -1,30 +1,14 @@
+ <div style="text-align: right;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+576"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ </div>
+ <div class="scp-image-block block-right scp-clear-false" style="width:300px;">
+-<img alt="chair.jpg" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-1475-jp/chair.jpg">
++<p>
++T:"[[image chair.jpg"
++<br>
++T:"{$alt}=\"{$alt-text}\" link=#]]"
++</p>
+ <div class="scp-image-caption">
+ <p>
+ T:"実験時に撮影されたSCP-1475-JP"
+@@ -95,7 +79,6 @@
+ </div>
+ <div class="collapsible-block-content">
+ <p>
+-<br>
+ <strong>
+ <span style="text-decoration: underline;">
+ T:"実験記録1475-JP-1"

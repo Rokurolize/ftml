@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:27:41+00:00",
+  "method": "GET",
+  "response_bytes": 75093,
+  "response_sha256": "87b747dd4c13eab4f420b604bea64ef7711fd4c86a43bafa622c6ae61830346b",
+  "status": 200,
+  "url": "https://snippets.wikidot.com/html5player"
+ },
+ "page": "html5player",
+ "page_id": 51083921,
+ "site": "snippets",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:27:42+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "51083921"
+  },
+  "response_bytes": 312,
+  "response_sha256": "63c60d7268e92c445e2ba0d9b44758360806526e399752ab882acd7eed125aa0",
+  "status": 200,
+  "url": "https://snippets.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "e1bc349ecc7156612adda2698201427c6ad0776aea71768849853d967dfff1ef"
+}

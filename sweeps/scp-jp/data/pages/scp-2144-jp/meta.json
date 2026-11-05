@@ -1,0 +1,81 @@
+{
+ "kind": "scp",
+ "listed_size": 26007,
+ "live_page_content_sha256": "052c1315d3828b1f3162c58f6ee5c5057ddaf92ac6e345ea7bacea7a003f7491",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T07:59:17+00:00",
+  "method": "GET",
+  "response_bytes": 46516,
+  "response_sha256": "d5f8e75e0ea498a02d874a14006bce61f3b04d3e23e2a893f8acf655d0e9cedf",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/scp-2144-jp"
+ },
+ "page_id": 1260742159,
+ "rating": 754,
+ "site": "scp-jp",
+ "slug": "scp-2144-jp",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T07:59:18+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "1260742159"
+  },
+  "response_bytes": 71538,
+  "response_sha256": "c72d8d71b2e1821bb339818114c15ed357db5ac28bd7d82ffbbe40b0e4f4e4cd",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "35c91324885e4546501518953c405992f636fd0b7cb32a4e7157ff48364600e1",
+ "stats": {
+  "counts": {
+   "anchor": 2,
+   "blocks": 412,
+   "bold": 60,
+   "cjk_dash_pair": 0,
+   "cjk_emphasis": 37,
+   "collapsible": 8,
+   "color": 4,
+   "css": 12,
+   "div": 45,
+   "ellipsis_dash": 19,
+   "footnote": 0,
+   "fullwidth_space": 7,
+   "heading": 0,
+   "hr": 4,
+   "html": 0,
+   "iftags": 0,
+   "image": 46,
+   "include": 8,
+   "italic": 0,
+   "link3": 1,
+   "list": 30,
+   "module": 26,
+   "mono": 4,
+   "quote": 0,
+   "raw": 776,
+   "ruby": 0,
+   "size": 46,
+   "span": 1,
+   "strike": 52,
+   "sup_sub": 0,
+   "table": 0,
+   "tabview": 0,
+   "underline": 0
+  },
+  "density_per_kchar": 60.52,
+  "markup_tokens": 1574
+ },
+ "title": "SCP-2144-JP",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "1260742159",
+  "pageUnixName": "scp-2144-jp",
+  "requestPageName": "scp-2144-jp",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

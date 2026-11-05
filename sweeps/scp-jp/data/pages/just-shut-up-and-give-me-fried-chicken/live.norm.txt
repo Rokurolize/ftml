@@ -1,0 +1,529 @@
+<div style="text-align: right;">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+235"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+<div style="border:solid 1px #000000; background:#000000; padding:5px; margin-bottom: 10px;">
+<div class="monoayu">
+<div style="text-align: center;">
+<p>
+<span style="font-size:200%;">
+<span style="color: #1fa131">
+<strong>
+T:"SCiPNET GOURMET GUIDE"
+</strong>
+</span>
+</span>
+<br>
+<span style="font-size:150%;">
+<span style="color: #1fa131">
+T:"Powered by RAISA"
+</span>
+</span>
+</p>
+</div>
+</div>
+<blockquote>
+<div style="text-align: right;">
+<p>
+<span style="font-size:150%;">
+T:"██████"
+<br>
+T:"★★★★★★★★★★★★★★★★★★★★"
+</span>
+</p>
+</div>
+<br>
+<span style="color:red">
+T:"おいしさ<IDSP>やばげ<IDSP>緋色の鳥よ<IDSP>あぶらみあかみ<IDSP>てをのばせ"
+</span>
+<br>
+<span style="color:red">
+T:"ころも<IDSP>かろやか<IDSP>緋色の鳥よ<IDSP>いちまいにまい<IDSP>いをつかめ"
+</span>
+<br>
+<span style="color:red">
+T:"ぴりりと<IDSP>からし<IDSP>緋色の鳥よ<IDSP>あつきやみつき<IDSP>みなもかえ"
+</span>
+<p>
+T:"香々たる幸々広野に飼いし庭鶏の肉を捌きしさくりと油で揚げるを何となる"
+<br>
+T:"口角は垂涎し買うかをも誘いたる所業こそ何たるや"
+<br>
+T:"其は尋常に非ず其は美味也"
+<br>
+T:"タマラン<IDSP>タマラン<IDSP>喰い散らかし御腹満たさむを願い"
+<span style="color:red">
+T:"けれ"
+</span>
+<br>
+<span style="color:red">
+T:"紅軽たる軽快たる快心たる心熱たる熱汁たる汁気たる気楽たる楽辛たる辛味たる我らが揚物の御味や"
+</span>
+T:"（語彙力）"
+<br>
+<span style="color:red">
+T:"今こそ来たらん我が飢餓の民へ"
+</span>
+<br>
+<span style="color:red">
+T:"今こそ来たらん我が世の吉報へ"
+</span>
+<br>
+<span style="color:red">
+T:"今こそ来たらん我が店の販促ヘ"
+</span>
+</p>
+<p>
+<span style="color:red">
+T:"緋色の鳥よ<IDSP>今こそ食いぬ"
+</span>
+</p>
+<hr>
+<p>
+T:"人は常に何かの欲求を感じながら生きている。"
+<br>
+T:"それは常に「何か」の欲求でしか無い。そこには如何なる具体性も像も存在しない。"
+<br>
+T:"だが、一体誰が己の胃袋は何者に満たされている事を保証出来るだろうか？"
+<br>
+T:"一体誰が人の食欲は誰の侵入も許さぬ神聖な不可侵領域であると嘯いた？"
+<br>
+T:"一体誰が己が己たる部分にはフライドチキンすらも届かぬであろうと説いたというのか？"
+</p>
+<p>
+T:"偶然などはどこにも存在しない。全ては必然であり、何らかの誘導の結果引き起こされたものである。"
+<br>
+T:"だがそれを観測出来ぬ者はそれを偶然と決めつけなければ気が済まなくなる。人は結論の出ない問いにすら答えを押し当て、前に前にと進んで来た。それが故に、飢餓であった。"
+<br>
+T:"そしてそれは自然の摂理であった。飢餓につけ込む美食家。人が人たるを満足させる、人類種の天敵（ある意味）。"
+</p>
+<p>
+T:"それを思い付いた者がいた。数言の簡単な言葉と、その羅列。その者はそれを発見して、それを販売に使った。事実その者は、店の前に並ぶ行列を目にしたのだ。"
+<br>
+T:"それもそのはず、その者が使ったのは、最高の鶏と最高の油だからだ。"
+<br>
+T:"その者は言葉を想い、それを目にし、それを記し、そしてがっぽりと稼いだ。"
+<br>
+T:"だがフライドチキンは、余りにも世界にありふれていた。その者のフライドチキンは、あまりにありふれたフライドチキンの中に埋もれてしまった。そのフライドチキンが持つ真の美味しさに何者かが気付いていれば、その何者かはその者を単なる成金とは見なさなかったであろう。"
+<br>
+T:"意味不明な言葉を呟き続ける狂人ではなく、真心を皆に届ける料理人であり、そのついでに金を手に入れてしまった商人であったと気付いただろう。"
+<br>
+T:"しかし、何もかもは遅過ぎた。人々はあまりに飢餓であった。何度となく繰り返されて来た販売に、誰一人として気付く者が無かった。"
+</p>
+<p>
+T:"それは緋色の鶏。CFCによって作られ、CFCを利用し力を得た、お前の腹を満たすチキン。"
+</p>
+<p>
+T:"やがて、それは力を得た。SNSを、グルメサイトを通じてそれはより広く拡散し、より多くの人々に見つかった。"
+<br>
+T:"それの言葉も、それを知らぬ者も、一切の飢餓でしか無かった者すらそれを視線に収めた。"
+<br>
+T:"あらゆる人々が、正常な生活の中にそれの存在を感じ取っていた。あらゆる人々が、それを見つけていた。"
+<br>
+T:"飢餓を感じる。赤い飢餓を。"
+<br>
+T:"声が聞こえる。赤い言葉が。"
+<br>
+T:"匂いを感じる。あの香ばしい匂いだ。"
+<strong>
+T:"奴"
+</strong>
+T:"の揚げたての匂いだ！"
+</p>
+<p>
+T:"そして、あらゆる人々は後ろを振り向いた。自身の食欲をそそる者を見つめ返さんとばかりに。"
+<br>
+T:"そこにいる何かはただそこに、だが値段は下がり求めやすくなっていた。"
+<br>
+T:"そしてあらゆる人々が、その姿を見た。あらゆる人々がそれを──"
+<strong>
+T:"奴"
+</strong>
+T:"がキャンペーン中であると認識したのだ。"
+<br>
+T:"認識は唾液の分泌を促進し、観測は腹を減らせる。それはまさに美食界から現界へとまろび出た一羽の鶏。美味の鶏！"
+<br>
+T:"あらゆる人々が"
+<strong>
+T:"奴"
+</strong>
+T:"を見つめ、思わず購入した。そして"
+<strong>
+T:"奴"
+</strong>
+T:"を食用し、胃の片隅にのみ存在した"
+<strong>
+T:"奴"
+</strong>
+T:"を己の胃袋一杯へと拡大した。あらゆる人々が！"
+<br>
+T:"そしてそれは、遂にあらゆる人々の腹に存在を得た！"
+</p>
+<p>
+T:"おお、今こそ来ませり！"
+</p>
+<p>
+T:"其は一人一人の食欲であり、販促中のフライドチキンの王。緋色の鶏は来り！"
+</p>
+<p>
+T:"史上最高の販売枚数を打ち出しし業界の支配者。緋色の広野は拡がれり！"
+</p>
+<p>
+T:"緋色よ来れ！<IDSP>人々がまだ汝を食い求むれば。"
+</p>
+<p>
+T:"全ての人々よ見るべし！<IDSP>平成最後の大売出し、2週間限定で"
+<a href="/scp-444-jp-j">
+T:"スカーレット・フライドチキン"
+</a>
+T:"が半額なり！<IDSP>緋色の鶏をもっと食える機会なり！"
+</p>
+<p>
+T:"食い上げよ。彼の鶏が気まぐれに汝らの食欲を満たすためのみに存在する、それがスカーレット・フライドチキンなのだ！"
+</p>
+<p>
+T:"そして彼の鶏が最後の一人に嚥下された後に、進化するだろう。人を、皆を、世界を満たす、新たなる形として生まれ変わるだろう。２週間後に、レシピがより美味しく改良されるだろう。しかし過去の味を、懐かしく思う人も居るだろう。"
+<br>
+T:"スカーレット・フライドチキンのレシピが改良されるその時までに──"
+</p>
+<p>
+T:"──"
+<span style="color:red">
+T:"緋色の鳥よ<IDSP>未だ食える"
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+</blockquote>
+<blockquote>
+<div style="text-align: right;">
+<p>
+<span style="font-size:150%;">
+T:"Dr. Enjo"
+<br>
+T:"★★★★★"
+</span>
+</p>
+</div>
+<br>
+T:"CFCは２週間後にメニューを一新し、名物のスカーレット・フライドチキンのレシピも改良するというので、従来の味を楽しむには今しかないです。ちょうど半額キャンペーンもやっているので、みなさんもぜひ堪能していってください。"
+<span style="color: red">
+<span style="text-decoration: underline;">
+<em>
+T:"(1)"
+</em>
+</span>
+</span>
+<div style="text-align: right;">
+<p>
+<span style="color: red">
+<span style="text-decoration: underline;">
+<em>
+T:"Ms. Tanaka"
+</em>
+</span>
+</span>
+<br>
+<span style="color: red">
+<span style="text-decoration: underline;">
+<em>
+T:"評価: 100点"
+</em>
+</span>
+</span>
+</p>
+</div>
+<br>
+<span style="color: red">
+<span style="text-decoration: underline;">
+<em>
+T:"(1)先生も美味しいと思います。改良されるとはいえ、なんだか寂しくなりますね。"
+</em>
+</span>
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</blockquote>
+<blockquote>
+<div style="text-align: right;">
+<p>
+<span style="font-size:150%;">
+T:"Pizza_K"
+<br>
+T:"★★★★★"
+</span>
+</p>
+</div>
+<br>
+T:"ヘイ<IDSP>ヨー<IDSP>俺はピザ・K<IDSP>そしてこれがスカーレット"
+<br>
+T:"ピザもいけんけど<IDSP>チキンもOK"
+<br>
+T:"サクサク衣には<IDSP>やみつきだぜ"
+<br>
+T:"２週間キャンペーン<IDSP>いまは半額"
+<br>
+T:"機会を逃したら<IDSP>もうあとはないぜ"
+<br>
+T:"けど俺は<IDSP>新レシピにも期待"
+<br>
+T:"ヘイ<IDSP>ヨー<IDSP>これがスカーレット"
+<br>
+T:"みんなもだいすきの<IDSP>チキンだぜ"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</blockquote>
+<blockquote>
+<div style="text-align: right;">
+<p>
+<span style="font-size:150%;">
+T:"Agt.Yurusan"
+<br>
+T:"★★★★★"
+</span>
+</p>
+</div>
+<br>
+T:"我揚鶏大好物。CFC緋色揚鶏超絶美味。好吃也。一日百枚行。衣佐久佐久、肉辛々、我慢甚難也。二週間後新配合期待、然古味消失甚残念也。嗚呼！"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</blockquote>
+<blockquote>
+<div style="text-align: right;">
+<p>
+<span style="font-size:150%;">
+T:"KWUSMR_518"
+<br>
+T:"★★★★★"
+</span>
+</p>
+</div>
+<br>
+T:"きゅいきゅい。きゅきゅきゅきゅーきゅい！きゅっきゅっ…きゅきゅきゅい！きゅい！"
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"▶<NBSP>自動翻訳を展開する"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"▼<NBSP>非表示"
+</a>
+</div>
+<div class="collapsible-block-content">
+<p>
+<strong>
+T:"美味しいです。"
+</strong>
+<sup class="footnoteref">
+<a class="footnoteref" href="javascript:;" id="footnoteref-1" onclick="WIKIDOT.page.utils.scrollToReference('footnote-1')">
+T:"1"
+</a>
+</sup>
+</p>
+</div>
+</div>
+</div>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</blockquote>
+<blockquote>
+<div style="text-align: right;">
+<p>
+<span style="font-size:150%;">
+T:"Datenshi_Eisbein"
+<br>
+T:"★★★★★"
+</span>
+</p>
+</div>
+<br>
+T:"悪魔の果実を喰いし聖なる鳥は地獄の劫火の洗礼を受け、死者をも蘇らせる毒を漂わせ我を誘う。ならばこの満月照らす魔力満ちる夜に、深奥なる緋色をより多く錬成せねばなるまい。皆の者よ、我に続けよ。"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</blockquote>
+<blockquote>
+<div style="text-align: right;">
+<p>
+<span style="font-size:150%;">
+T:"☺☺☺☺"
+<br>
+T:"★★★★★"
+</span>
+</p>
+</div>
+<br>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"この内容はあなたの許容飯テロ値(Permissible MeshiTero Level)を超過しています。それでも閲覧したい方は少なくとも100枚のスカーレット・フライドチキンを食べてきてください。本当です。"
+</strong>
+</span>
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</blockquote>
+<blockquote>
+<div style="text-align: right;">
+<p>
+<span style="font-size:150%;">
+T:"Cradle_N"
+<br>
+T:"★★★★★"
+</span>
+</p>
+</div>
+<br>
+T:"ピリッと唐辛子が効いてて衣もさくさくでたまらなくて美味しいけどなんで口コミがクセモノだらけなのよ（笑）！美味しいけど！"
+<br>
+T:"というか一番上の人星20個も出てるけどこれバグなの？"
+<br>
+<span style="white-space: pre-wrap;">
+</span>
+</blockquote>
+<div class="monoayu">
+<p>
+<span style="color: #1fa131">
+T:"スカーレット・フライドチキンは２週間限定で半額キャンペーン中です。すぐ購入しますか？(y/n): y"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"購入枚数を入力してください: 100"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"胃部容量の上限値を超えていますがよろしいですか？(y/n): y"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"調理中です。しばらくお待ちください。"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"…"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"……"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"………"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"お待たせいたしました。スカーレット・フライドチキン100枚です。どうぞごゆっくりとご賞味ください。"
+</span>
+</p>
+<p>
+<span class="fa fa-cutlery" style="color:red">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: red">
+<strong>
+T:"緋色の鳥よ、未だ食える。"
+</strong>
+T:"今ならスカーレット・フライドチキンが半額（税抜60円）！"
+</span>
+</p>
+<p>
+<span style="color: red">
+<strong>
+T:"美味しいチキンをあまねく世界に。クライシス・フライド・チキン。"
+</strong>
+</span>
+</p>
+<p>
+<span style="color: red">
+<strong>
+T:"２週間後にメニュー一新！ぜひご期待ください！"
+</strong>
+</span>
+</p>
+<p>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"胃部の圧迫感が確認されています。健康のため、強制ログアウト処置を開始します。"
+</strong>
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"………"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"……"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"…"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"サイト-8141便所予約システムにログインしますか？(y/n): y"
+</span>
+</p>
+</div>
+</div>
+<div class="footnotes-footer">
+<div class="title">
+T:"Footnotes"
+</div>
+<div class="footnote-footer" id="footnote-1">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('footnoteref-1')">
+T:"1"
+</a>
+T:". カワウソ語では長い文も短い意味になります。別に自動翻訳のバグではありません。本当です。"
+</div>
+</div>

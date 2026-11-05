@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:26:14+00:00",
+  "method": "GET",
+  "response_bytes": 37104,
+  "response_sha256": "aa0971a2330936807311927a3cf2a6657ab41770c8939f55f11a25b7c4a1a12d",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/component:credit-top-sp"
+ },
+ "page": "component:credit-top-sp",
+ "page_id": 772589445,
+ "site": "scp-jp",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:26:15+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "772589445"
+  },
+  "response_bytes": 5591,
+  "response_sha256": "ef983b5cf03b2a81f17fe8191a8149f564eb684e4debe5324ee53fce3571f860",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "4309e210fb6205d9a3ef8f393e33fc91e131a92e35c8e14d24862039303d7867"
+}

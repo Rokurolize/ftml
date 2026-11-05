@@ -1,0 +1,13 @@
+{
+ "exists": false,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:27:43+00:00",
+  "method": "GET",
+  "response_bytes": 61909,
+  "response_sha256": "f7d382011652f0ab709a49ca5430c170233f08c22049c3e6ab4ccfdd9024062d",
+  "status": 404,
+  "url": "https://snippets.wikidot.com/html5-type"
+ },
+ "page": "html5-type",
+ "site": "snippets"
+}

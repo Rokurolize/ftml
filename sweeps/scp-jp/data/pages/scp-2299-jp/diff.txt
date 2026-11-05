@@ -1,0 +1,327 @@
+--- live
++++ ftml
+@@ -1,37 +1,15 @@
+-<p>
+-<iframe src="//interwiki.scp-jp.org/styleFrame.html?priority=1&theme=https://scp-jp.github.io/Black-Highlighter/css/min/normalize.min.css&css={$css}" style="display: none">
+-</iframe>
+-</p>
+-<p>
+-<iframe src="//interwiki.scp-jp.org/styleFrame.html?priority=2&theme=https://scp-jp.github.io/Black-Highlighter/css/min/black-highlighter.min.css&css={$css}" style="display: none">
+-</iframe>
+-</p>
++<div class="error-block">
++T:"Sorry, no match for the embedded content."
++</div>
++<div class="error-block">
++T:"Sorry, no match for the embedded content."
++</div>
+ <div class="creditRate creditModule {$mode}">
+-<div class="rateBox">
++T:"[[div_ class=\"rateBox\" ]]"
+ <div class="rate-box-with-credit-button">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+336"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+@@ -39,44 +17,24 @@
+ </div>
+ </div>
+ </div>
+-<div class="rateBox heritage-wrap" style="display:none;">
++<br>
+ <div class="heritage-rating-module">
+ <div class="heritage-emblem">
+ <a href="/">
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+336"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ </div>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+ </a>
+ </div>
+-</div>
+-</div>
++<br>
++<br>
+ <div style="clear:both;">
+ </div>
+ <div id="u-credit-view">
+@@ -105,10 +63,10 @@
+ </strong>
+ T:"©︎"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/ponhiro" onclick="WIKIDOT.page.listeners.userInfo(6637840); return false;">
+-<img alt="ponhiro" class="small" src="https://www.wikidot.com/avatar.php?userid=6637840&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=6637840)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/ponhiro" onclick="WIKIDOT.page.listeners.userInfo(6637840); return false;">
++<a href="/user:info/ponhiro" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="ponhiro" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/ponhiro" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"ponhiro"
+ </a>
+ </span>
+@@ -119,13 +77,13 @@
+ T:"2021"
+ </p>
+ <div class="credit-back" style="text-align: center;">
+-<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
++<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+ </iframe>
+ </div>
+ </div>
+ <div class="creditBottomRate" style="height:30px;">
+ <div class="credit-license">
+-<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
++<a class="cc cc-by-sa" href="#invalid-url">
+ </a>
+ </div>
+ <div style="text-align: center; top: 0px;">
+@@ -136,58 +94,19 @@
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+336"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-<div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+336"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++<br>
++T:"[[/div]]"
+ </div>
+ </div>
+ </div>
+@@ -257,9 +176,13 @@
+ <hr>
+ <div id="u-author_block">
+ <p style="text-align: center;">
++T:"["
+ <a href="https://scp-jp.wikidot.com/author:ponhiro">
+-T:"▸ この著者の他の作品 ◂"
+-</a>
++T:"https://scp-jp.wikidot.com/author:ponhiro"
++</a>
++</p>
++<p>
++T:"▸ この著者の他の作品 ◂]"
+ </p>
+ <hr>
+ </div>
+@@ -269,14 +192,9 @@
+ T:"翻訳:"
+ </span>
+ </h1>
+-<div class="list-pages-box">
+-<div class="list-pages-item">
+-<p>
+-<iframe align="" class="" frameborder="" height="" scrolling="" src="http://interwiki.scpdb.org/?wiki=scp-jp&lang=jp&page=_default:scp-2299-jp" style="" width="">
+-</iframe>
+-</p>
+-</div>
+-</div>
++<p>
++T:"TODO: module ListPages"
++</p>
+ </div>
+ <div class="u-faq">
+ <p>
+@@ -293,22 +211,30 @@
+ </div>
+ </div>
+ </div>
+-<div class="scale EN-base Keter">
++<div class="scale EN -base Keter">
+ <div class="class1">
+ <div class="level-text">
+ <span class="base false EN">
+-T:"2/2299-JP"
+-</span>
+-T:"LEVEL"
++T:"2"
++<br>
++T:"/2299-JP"
++<br>
++</span>
++T:"false"
++<br>
+ <span class="base false EN">
+-T:"2/2299-JP"
++T:"2"
++<br>
++T:"/2299-JP"
++<br>
+ </span>
+ </div>
+ <div class="class-text">
+-T:"CLASSIFIED"
+-</div>
+-</div>
+-<div class="class1image" data-level="lv2">
++T:"false"
++</div>
++</div>
++T:"\"]]"
++<br>
+ <div class="classified-bar">
+ <img alt="classified-bar.svg" class="sizing-image" src="https://scp-wiki.wikidot.com/local--files/component:classified-bar-woed-source/classified-bar.svg">
+ </div>
+@@ -339,18 +265,18 @@
+ </div>
+ </div>
+ <div class="item1 EN">
+-<div class="itemnum EN">
+-T:"Item #: SCP-2299-JP"
++T:"\"]]"
+ </div>
+ <div class="objclass EN">
+-<div class="obj Keter">
++T:"\"]]"
++<br>
+ <div class="obj-text">
+ T:"Keter"
+ </div>
+ </div>
+-</div>
+-</div>
+-</div>
++<br>
++<br>
++<br>
+ <hr>
+ <div class="scp-image-block block-center scp-clear-false" style="width:100%;">
+ <img alt="girl-People-in-nature-photograph-beauty-skin-spring-1596632-pxhere.com.jpg" class="image" src="https://scp-jp-storage.wikidot.com/local--files/file:6637840-9-yfz4/girl-People-in-nature-photograph-beauty-skin-spring-1596632-pxhere.com.jpg" style="width:100%;">
+@@ -2251,7 +2177,6 @@
+ </strong>
+ </p>
+ </div>
+-<br>
+ <div style="text-align: left;">
+ <p>
+ T:"2016/06/23、SCP-2299-JPが収容セル内で死亡している状態で発見されました。死因は失血死であり、スマートフォンに取り付けられたケースを割り、その一か所を数十回も壁に打ち付けて鋭利にし、その鋭利な箇所で自身の左手首を何度も切ることで失血に至るまで傷を深くした事が死後調査で明らかになっています。"
+@@ -2259,7 +2184,6 @@
+ T:"また、SCP-2299-JPはそれら一連の行動と発言をスマートフォンのビデオカメラで撮影していました。以下はその記録です。"
+ </p>
+ </div>
+-<br>
+ <div style="text-align: center;">
+ <hr>
+ <h2 id="toc17">
+@@ -2287,7 +2211,6 @@
+ </strong>
+ </p>
+ </div>
+-<br>
+ <div style="text-align: left;">
+ <div class="box5">
+ <p>

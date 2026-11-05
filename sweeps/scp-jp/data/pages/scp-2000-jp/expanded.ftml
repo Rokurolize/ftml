@@ -1,0 +1,2618 @@
+[[module css]]
+div[class*="award"] + .creditRate .creditButton .fa.fa-info:before {
+content: "\f091";
+color: #fff!important;
+}
+div.award-1st ~ #u-credit-otherwise .credit.otherwise .contest {
+background-image: linear-gradient(349deg, #F7DE05, #DA8E00, #EDAC06, #F7DE05, #ECB802, #DAAF08, #B67B03);
+}
+div.award-elec ~ #u-credit-otherwise .credit.otherwise .contest {
+background-image: linear-gradient(349deg, #A5A5A5, #BABAC2, #E8E8E8, #A5A5A5, #BABAC2);
+}
+div.award-cop ~ #u-credit-otherwise .credit.otherwise .contest {
+background-image: linear-gradient(349deg, rgba(229,138,61,.9), rgba(217,139,43,.9), rgba(168,80,21,.9), rgba(260,164,79,.9));
+}
+div[class*="award"] ~ #u-credit-otherwise .credit.otherwise .contest {
+border: 1px solid transparent;
+border-radius: 1px;
+text-shadow: 1px 2px 3px rgba(0,0,0,0.35);
+}
+div[class*="award"] ~ #u-credit-otherwise .credit.otherwise .contest a {
+background-color: transparent!important;
+color: #fff!important;
+font-weight: bold;
+transition: text-shadow 0.3s;
+}
+div[class*="award"] ~ #u-credit-otherwise .creditButton a:hover,
+div[class*="award"] ~ #u-credit-otherwise .credit.otherwise .contest a:hover {
+text-decoration: none;
+text-shadow: 1px 2px 5px rgba(255,255,255,0.9);
+}
+div[class*="award"] ~ #u-credit-otherwise .credit.otherwise .contest {
+border-radius: 2px;
+border-width: 2px;
+color: #fff;
+font-family: BauhausLTDemi,Arial,sans-serif;
+font-size: 110%;
+margin: 0 0.3em;
+text-align: center;
+text-shadow: 3px 3px 5px #000;
+}
+div[class*="award"] ~ #u-credit-otherwise .credit.otherwise .contest {
+border-radius: 2px;
+border-width: 2px;
+color: #fff;
+font-family: BauhausLTDemi,Arial,sans-serif;
+font-size: 110%;
+margin: 0 0.3em;
+text-align: center;
+text-shadow: 3px 3px 5px #000;
+}
+div.award-1st ~ #u-credit-otherwise .credit.otherwise .contest span:before,
+div.award-1st ~ #u-credit-otherwise .credit.otherwise .contest span:after {
+content: "\f091";
+display: inline-block;
+font: normal normal normal 14px/1 FontAwesome;
+text-rendering: auto;
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+margin: 0.3em;
+}
+div[class*="award"] ~ #u-credit-otherwise .contest {
+cursor: pointer;
+}
+div[class*="award"] ~ #u-credit-otherwise .contest p span {
+transition: font-size 0.6s 0.2s;
+text-rendering: auto;
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+}
+div[class*="award"] ~ #u-credit-otherwise .contest p a,
+div[class*="award"] ~ #u-credit-otherwise .contest:hover p span {
+font-size: 1.1em;
+}
+div[class*="award"] ~ #u-credit-otherwise .contest p span {
+cursor: auto;
+}
+
+/*
+border-image is created by Woedenaz
+https://wanderers-library.wikidot.com/component:dustjacket-theme
+CC BY-SA 3.0
+*/
+div[class*="award"] ~ #u-credit-otherwise .modalbox {
+box-sizing: border-box;
+border: 2ex solid rgba(0,0,0,0.5);
+border-image: url("https://scp-jp.wdfiles.com/local--files/component%3Acredit-top-sp/gold.png") 475 round;
+border-image-width: 6;
+background: radial-gradient(rgba(255, 219, 90, 0.95) 0, #fff 100%);
+background: -webkit-radial-gradient(rgba(255, 219, 90, 0.95) 0, #fff 100%);
+}
+div.award-elec ~ #u-credit-otherwise .modalbox {
+    background: radial-gradient(rgba(165, 205, 205, 0.95) 0, #fff 100%);
+    background: -webkit-radial-gradient(rgba(165, 205, 205, 0.95) 0, #fff 100%);
+    filter: grayscale(75%);
+}
+div.award-cop ~ #u-credit-otherwise .modalbox {
+    background: radial-gradient(rgba(205, 205, 165, 0.95) 0, #fff 100%);
+    background: -webkit-radial-gradient(rgba(205, 205, 165, 0.95) 0, #fff 100%);
+    filter: grayscale(45%);
+}
+div[class*="award"] ~ #u-credit-otherwise .modalbox .modalbox-title {
+background: transparent;
+}
+div[class*="award"] ~ #u-credit-otherwise .modalbox .modalbox-title h2 {
+color: #fff;
+text-shadow: 1px 1px 3px rgba(221, 102, 17, 0.5), 1px -1px 3px rgba(221, 102, 17, 0.5), -1px 1px 3px rgba(221, 102, 17, 0.5), -1px -1px 3px rgba(221, 102, 17, 0.5);
+font-weight: bold;
+}
+div[class*="award"] ~ #u-credit-otherwise .modalbox .credit.otherwise {
+overflow: auto;
+}
+[[/module]]
+[[div_ class="award-1st"]]
+[[/div]]
+
+[[module css]]
+@import url('https://scp-jp.github.io/files/util/common/credit/style/style.css');
+
+.creditRate.no-rate .page-rate-widget-box {
+    visibility:hidden;
+}
+
+.creditRate.creditModule.no-rate ~ #u-credit-view .creditBottomRate > div:nth-of-type(2) {
+    display: none;
+}
+[[/module]]
+
+[[div_ class="creditRate creditModule {$mode}"]]
+[[div_ class="rateBox" [[iftags 殿堂入り]]style="display:none;"[[/iftags]]]]
+[[div_ class="rate-box-with-credit-button"]]
+[[module Rate]]
+[[div_ class="creditButton"]]
+[[a href="#u-credit-view" class="fa fa-info" style="position:relative;"]][[image https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png title="クレジットを表示する" style="position:absolute;height:100%;width:100%;top:0;left:0;"]][[/a]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[div_ class="rateBox heritage-wrap" [[iftags -殿堂入り]]style="display:none;"[[/iftags]]]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]archived:heritage-collection[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]]" style="max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[div_ class="creditButton"]]
+[[a href="#u-credit-view" class="fa fa-info" style="position:relative;"]][[image https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png title="クレジットを表示する" style="position:absolute;height:100%;width:100%;top:0;left:0;"]][[/a]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+[[div_ style="clear:both;"]]
+[[/div]]
+
+[[div_ id="credit-view"]]
+[[div_ class="fader"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/start.html ]]
+[[/div]]
+
+[[div_ class="modalcontainer"]]
+[[div_ class="modalbox [[iftags 殿堂入り]]heritage[[/iftags]]"]]
+[[div_ class="modalbox-title [[iftags 殿堂入り]]heritage[[/iftags]]"]]
+++* クレジット
+[[/div]]
+[[div class="credit"]]
+
+
+**タイトル:** SCP-2000-JP - 伝書使
+**著者:** ©︎[[*user WagnasCousin]], [[*user FeS_ryuukatetu]], [[*user furabbit]]
+**作成年:** 2020
+----
+//[[[author:WagnasCousin|WagnasCousinの他の作品]]]//
+//[[[author:FeS_ryuukatetu|FeS_ryuukatetuの他の作品]]]//
+//[[[author:furabbit|furabbitの他の作品]]]//
+
+[[/div]]
+[[div_ class="credit" style="text-align:right; margin-top: 0.5em;"]]
+[[a href="#u-credit-otherwise"]]その他のライセンス[[/a]]
+[[/div]]
+[[div_ [[iftags +殿堂入り]]style="display: flex;"[[/iftags]] class="Dendo"]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]heritage-collection-arc[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]]" style="max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[div_ class="modalbox-ratemodule" [[iftags +殿堂入り]]style="display:none;"[[/iftags]]]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[div_ id="credit-otherwise"]]
+[[div_ class="fader"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/otherwise.html ]]
+[[/div]]
+[[div_ class="modalcontainer"]]
+[[div_ class="modalbox [[iftags +殿堂入り]]heritage[[/iftags]]"]]
+[[div_ class="modalbox-title"]]
+++* その他
+[[/div]]
+[[div_ class="credit otherwise"]]
+
+[[div class="contest"]]
+[*https://scp-jp.wikidot.com/scp2000jp-contest-hub SCP-2000-JPコンテスト]
+[[span]]優勝[[/span]]
+[[/div]]
+
+[[div_ class="credit-back" style="text-align: center;"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/end.html style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" scrolling="no"]]
+[[/div]]
+[[/div]]
+
+[[div_ class="creditBottomRate" style="height:30px;"]]
+[[div_ class="credit-license"]]
+[[a href="*https://creativecommons.org/licenses/by-sa/3.0/deed.ja" class="cc cc-by-sa"]]@@@@[[/a]]
+[[/div]]
+[[div_ style="text-align: center; top: 0px;"]]
+[[div_ [[iftags +殿堂入り]]style="display: flex;"[[/iftags]] class="Dendo"]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]heritage-collection-arc[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]]" style=" max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[div_ [[iftags +殿堂入り]]style="display:none;"[[/iftags]]]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+
+[[module ListPages offset="@URL|0" range="."]]
+%%content{2}%%
+[[/module]]
+[[module ListPages limit="@URL|0" range="." urlAttrPrefix="page2"]]
+%%content{3}%%
+[[/module]]
+[[module ListPages limit="@URL|0" range="." urlAttrPrefix="page3"]]
+%%content{4}%%
+[[/module]]
+[!--
+====
+[[div id="u-back" style="display: none;"]]
+[[/div]]
+[[div id="u-close" style="display: none;"]]
+[[/div]]
+[[div id="u-end" style="display: none;"]]
+[[/div]]
+
+
+[[module css]]
+
+#u-shut-popup {
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    position: fixed;
+    display: flex;
+    display: -webkit-flex;
+    display: -moz-flex;
+    display: -ms-flex;
+    display: -o-flex;
+    z-index: 10;
+}
+
+#u-shut-popup:not(:target) {
+    opacity: 0;
+    display: none;
+    
+}
+#u-shut-popup:target{
+    opacity: 1;
+        animation-duration: 0.3s;
+      animation-name: fade-in;
+      -moz-animation-duration: 0.5s;
+      -moz-animation-name: fade-in;
+      -webkit-animation-duration: 0.5s;
+      -webkit-animation-name: fade-in;
+}
+
+@keyframes fade-in {
+      0% {
+        display: none;
+        opacity: 0;
+      }
+
+      1% {
+        display: block;
+        opacity: 0;
+      }
+
+      100% {
+        display: block;
+        opacity: 1;
+      }
+    }
+
+    @-moz-keyframes fade-in {
+      0% {
+        display: none;
+        opacity: 0;
+      }
+
+      1% {
+        display: block;
+        opacity: 0;
+      }
+
+      100% {
+        display: block;
+        opacity: 1;
+      }
+    }
+
+    @-webkit-keyframes fade-in {
+      0% {
+        display: none;
+        opacity: 0;
+      }
+
+      1% {
+        display: block;
+        opacity: 0;
+      }
+
+      100% {
+        display: block;
+        opacity: 1;
+      }
+    }
+
+#u-shut-popup .fader{
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.5);
+    width: 100%;
+    height: 100%;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+#u-shut-popup .fader > p >iframe,
+#u-shut-popup .fader > iframe{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+.u-shut-modalcontainer{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 400px;
+    height: 200px;
+    margin: auto;
+}
+
+.u-shut-modalcontainer .modaltable{
+position:relative;
+width:100%;
+height:100%;
+}
+
+.u-shut-modalcontainer .modaltable > p{
+position:absolute;
+left:0;
+top:0;
+width:100%;
+height:100%;
+margin:0;
+padding:0;
+}
+
+.u-shut-modalcontainer .modaltable > p > iframe,
+.u-shut-modalcontainer .modaltable > iframe{
+position:absolute;
+width:100%;
+height:100%;
+top:0;
+left0;
+z-index:30;
+}
+
+.u-shut-modalcontainer .modaltable .modalbox{
+position:absolute;
+left:0;
+top:0;
+z-index:40;
+    min-width: 400px;
+    background: #fefefe;
+    border: #333 solid 1px;
+    border-radius: 5px;
+    box-shadow: 0 2px 6px rgba(102, 0, 0, .5);
+    padding:0 0 0 4px;
+overflow:hidden;
+   -ms-user-select: none; /* IE 10+ */
+   -moz-user-select: -moz-none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+   user-select: none;
+}
+
+.u-shut-modalcontainer .modaltable .modalbox .content{
+    padding: 4px;
+}
+
+.u-shut-modalcontainer .modaltable .modalbox .title{
+font-size:150%;
+text-align:center;
+margin:0;
+border-bottom:solid #000 1px;
+padding:0.4em;
+width:100%;
+
+}
+
+
+.u-shut-modalcontainer .modaltable .modalbox p{
+margin:0;
+padding:0;
+}
+
+.u-shut-modalcontainer .modaltable .modalbox .choicebox{
+float:right;
+padding:3px;
+}
+
+.u-shut-modalcontainer .modaltable .modalbox .confirm{
+width:100%;
+text-align:center;
+}
+
+.u-shut-modalcontainer .modaltable .modalbox .confirm a,
+.u-shut-modalcontainer .modaltable .modalbox .choicebox a{
+text-align:center;
+display:inline-block;
+border-radius:6px;
+min-width:8em;
+-moz-box-shadow: 0px 3px 3px rgba(0,0,0,0.4);
+-webkit-box-shadow: 0px 3px 3px rgba(0,0,0,0.4);
+-o-box-shadow: 0px 3px 3px rgba(0,0,0,0.4);
+-ms-box-shadow: 0px 3px 3px rgba(0,0,0,0.4);
+}
+
+.u-shut-modalcontainer .modaltable .modalbox .confirm a:hover,
+.u-shut-modalcontainer .modaltable .modalbox .choicebox a:hover{
+text-decoration:none;
+-moz-box-shadow: 0px 1px 1px rgba(0,0,0,0.4);
+-webkit-box-shadow: 0px 1px 1px rgba(0,0,0,0.4);
+-o-box-shadow: 0px 1px 1px rgba(0,0,0,0.4);
+-ms-box-shadow: 0px 1px 1px rgba(0,0,0,0.4);
+}
+
+.u-shut-modalcontainer .modaltable .modalbox .confirm a:active,
+.u-shut-modalcontainer .modaltable .modalbox .choicebox a:active{
+-moz-box-shadow: 0px 3px 3px rgba(0,0,0,0.4) inset;
+-webkit-box-shadow: 0px 3px 3px rgba(0,0,0,0.4) inset;
+-o-box-shadow: 0px 3px 3px rgba(0,0,0,0.4) inset;
+-ms-box-shadow: 0px 3px 3px rgba(0,0,0,0.4) inset;
+}
+
+.u-shut-modalcontainer .modaltable .modalbox .choicebox a{
+background: #eeeeee; /* Old browsers */
+background: -moz-linear-gradient(top, #eeeeee 0%, #cccccc 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #eeeeee 0%,#cccccc 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #eeeeee 0%,#cccccc 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eeeeee', endColorstr='#cccccc',GradientType=0 ); /* IE6-9 */
+padding:0.5px;
+margin:0.2em 0.5em 0 0.2em;
+color:#000;
+}
+
+.u-shut-modalcontainer .modaltable .modalbox .choicebox a:hover{
+background-color:#EEE;
+background: #d6d6d6; /* Old browsers */
+background: -moz-linear-gradient(top, #d6d6d6 0%, #b8b8b8 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #d6d6d6 0%,#b8b8b8 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #d6d6d6 0%,#b8b8b8 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d6d6d6', endColorstr='#b8b8b8',GradientType=0 ); /* IE6-9 */
+}
+
+
+.u-shut-modalcontainer .modaltable .modalbox .choicebox a:active{
+background: #cbcbcb; /* Old browsers */
+background: -moz-linear-gradient(top, #cbcbcb 0%, #afafaf 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #cbcbcb 0%,#afafaf 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #cbcbcb 0%,#afafaf 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cbcbcb', endColorstr='#afafaf',GradientType=0 ); /* IE6-9 */
+}
+
+
+
+
+
+.u-shut-modalcontainer .modaltable .modalbox .confirm a{
+
+padfing:8px;
+color:#fff;
+font-weight:bold;
+margin:auto;
+font-size:120%;
+
+background: #87c2fd; /* Old browsers */
+background: -moz-linear-gradient(top, #87c2fd 0%, #53a5f1 40%, #0573e1 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #87c2fd 0%,#53a5f1 40%,#0573e1 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #87c2fd 0%,#53a5f1 40%,#0573e1 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#87c2fd', endColorstr='#0573e1',GradientType=0 ); /* IE6-9 */
+}
+
+.u-shut-modalcontainer .modaltable .modalbox .confirm a:hover{
+background: #4ea5fc; /* Old browsers */
+background: -moz-linear-gradient(top, #4ea5fc 0%, #268dee 40%, #0462c0 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #4ea5fc 0%,#268dee 40%,#0462c0 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #4ea5fc 0%,#268dee 40%,#0462c0 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#4ea5fc', endColorstr='#0462c0',GradientType=0 ); /* IE6-9 */
+}
+
+.u-shut-modalcontainer .modaltable .modalbox .confirm a:active{
+color:#ececec;
+background: #2490fc; /* Old browsers */
+background: -moz-linear-gradient(top, #2490fc 0%, #1281e8 40%, #0460bc 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #2490fc 0%,#1281e8 40%,#0460bc 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #2490fc 0%,#1281e8 40%,#0460bc 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#2490fc', endColorstr='#0460bc',GradientType=0 ); /* IE6-9 */
+}
+
+@media (max-width: 479px) {
+
+.u-shut-modalcontainer{
+width:90%;
+min-width:90%;
+}
+
+
+.u-shut-modalcontainer .modalbox{
+min-width:90%;
+}
+
+
+}
+
+
+@media (max-width: 767px) {
+#u-shut-popup {
+    height: 100%;
+    top: 0;
+}
+.u-shut-modalcontainer{
+    min-width: 300px;
+}
+
+.u-shut-modalcontainer .modaltable .modalbox{
+    min-width: 300px;
+}
+}
+
+
+
+[[/module]]
+[[div id="u-shut-popup"]]
+[[div class="fader"]]
+[[iframe http://shitake-crude-production.wikidot.com/extension:modal-script/code/1 ]]
+[[/div]]
+[[div class="u-shut-modalcontainer"]]
+[[div class="modaltable"]]
+[[iframe http://shitake-crude-production.wikidot.com/extension:modal-script/code/1 ]]
+[[div class="modalbox"]]
+
+[[div class="content"]]
+[[div class="title"]]
+SCiP.netから切断されました
+[[/div]]
+[[/div]]
+[[div style="text-align: center; padding: 5px;"]]
+[https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page3_limit/1 閉じる]
+[[/div]]
+
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+
+[[module css]]
+.dog,
+#u-end:target ~div .window,
+#u-shut-popup:target ~div .window{
+display: none;
+}
+#u-end:target  ~div .dog,
+#u-shut-popup:target  ~div .dog{
+display: inline;
+}
+
+.img-top{
+width: 324px;
+pointer-events: none;
+float: right;
+margin: 0 2em 1em 2em;
+}
+
+@media (max-width: 979px) {
+.img-top{
+float: none;
+clear: both;
+margin-left: auto;
+margin-right: auto;
+}
+}
+[[/module]]
+
+[[div class="img-top"]]
+[[image https://scp-jp.wikidot.com/local--files/scp-2000-jp/waku.png class="window"]][[image https://scp-jp.wikidot.com/local--files/scp-2000-jp/dog.png class="dog"]]
+[[/div]]
+
+**アイテム番号:** SCP-2000-JP
+
+**オブジェクトクラス:** Thaumiel
+
+**特別収容プロトコル:** SCP-2000-JPは現在未収容です。SCP-2000-JPは「巣」に何らかの反応があった場合「巣」へと帰還します。SCP-2000-JPは入力デバイスを通じて接触することにより一定期間「巣」の内部に留まるため、その際に「巣」が含まれるサーバーを物理的にネットワークから遮断してください。
+
+**説明:** SCP-2000-JPはコンピュータ/ネットワーク上で活動する情報知性体です。イエイヌ(//Canis lupus familiaris//)をキャラクター化したイメージとテキストボックスから成るグラフィカルユーザーインターフェースを備え、標準的な日本語や英語、または複数のファイル形式による意思疎通およびデータの入出力が可能です。SCP-2000-JPはユーザーである人類に対して極めて友好的に振舞い、対話及び業務指示を与えられることを好みます。ウェクスラー=ネルソン式汎用知能検査によると平均的なヒト5歳児程度の思考能力を有すると示されています。
+
+SCP-2000-JPはコンピュータ/ネットワークセキュリティによる行動阻害に対し、セキュリティホールを「掘る」ことで突破する能力を有します。セキュリティホールを「掘り終わる」までの時間はセキュリティの堅牢さに比例して増加します。この際に発生したセキュリティホールはGUI上で意味を成さないテキストの集合からなるリンクとして可視化され、ユーザーはクリックなどの操作によりSCP-2000-JPによるアクセス経路を辿ることが可能です。SCP-2000-JPは自身が存在するコンピュータ/ネットワーク上の領域を自由に移動し、自身にとって最も重要な情報の所在領域を「巣」と定め、それ以外の領域から持ち帰った情報を保存する習性を持ちます。ただし、SCP-2000-JPによる情報の取扱の際には、携持した情報を「噛んでしまう」ことによる情報内容の破損が高頻度で発生するため、集められた情報および与えられた指示の遂行は信頼性に欠けるものとなります。検証実験によると指示内容・語義など言語型情報の保持率は高い一方、数量やタイムスタンプ・「巣」以外の所在アドレスなどの数値/データ型情報には非常に頻繁な破損が見られます。
+
+[[module css]]
+.dog,
+#u-end:target ~div .window,
+#u-shut-popup:target ~div .window{
+display:none;
+}
+#u-end:target  ~* .hole{
+pointer-events: none;
+}
+[[/module]]
+
+[[=image https://scp-jp.wikidot.com/local--files/scp-2000-jp/ana_in.png link="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1" class="hole"]]
+
+[[module css]]
+#u-letter-popup .u-letter-modalcontainer{
+top: -100px;
+width: 450px;
+height: 250px;
+max-width: 90%;
+max-height: 80%;
+}
+
+#u-shut-popup .u-shut-modalcontainer{
+width: 300px;
+height: 50px;
+max-width: 70%;
+}
+
+#u-shut-popup .u-shut-modalcontainer .modaltable .modalbox .title{
+width: auto;
+}
+
+#u-letter-popup
+.modaltable .modalbox{
+width: 100%;
+}
+
+#u-letter-popup
+.modaltable .modalbox .content{
+padding: calc(4px + 1em);
+}
+
+#u-letter-popup
+.modaltable .modalbox .content p{
+margin-bottom: 0.5em;
+}
+
+#u-letter-popup
+.modaltable .modalbox hr{
+margin: 0 2em;
+}
+
+#u-shut-popup .modaltable .modalbox{
+min-height: auto;
+}
+
+#u-letter-popup .fader,
+#u-shut-popup .fader{
+pointer-events: none;
+}
+[[/module]]
+
+
+[[module css]]
+
+#u-letter-popup {
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    position: fixed;
+    display: flex;
+    display: -webkit-flex;
+    display: -moz-flex;
+    display: -ms-flex;
+    display: -o-flex;
+    z-index: 10;
+}
+
+#u-letter-popup:not(:target) {
+    opacity: 0;
+    display: none;
+    
+}
+#u-letter-popup:target{
+    opacity: 1;
+        animation-duration: 0.3s;
+      animation-name: fade-in;
+      -moz-animation-duration: 0.5s;
+      -moz-animation-name: fade-in;
+      -webkit-animation-duration: 0.5s;
+      -webkit-animation-name: fade-in;
+}
+
+@keyframes fade-in {
+      0% {
+        display: none;
+        opacity: 0;
+      }
+
+      1% {
+        display: block;
+        opacity: 0;
+      }
+
+      100% {
+        display: block;
+        opacity: 1;
+      }
+    }
+
+    @-moz-keyframes fade-in {
+      0% {
+        display: none;
+        opacity: 0;
+      }
+
+      1% {
+        display: block;
+        opacity: 0;
+      }
+
+      100% {
+        display: block;
+        opacity: 1;
+      }
+    }
+
+    @-webkit-keyframes fade-in {
+      0% {
+        display: none;
+        opacity: 0;
+      }
+
+      1% {
+        display: block;
+        opacity: 0;
+      }
+
+      100% {
+        display: block;
+        opacity: 1;
+      }
+    }
+
+#u-letter-popup .fader{
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.5);
+    width: 100%;
+    height: 100%;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+#u-letter-popup .fader > p >iframe,
+#u-letter-popup .fader > iframe{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+.u-letter-modalcontainer{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 400px;
+    height: 200px;
+    margin: auto;
+}
+
+.u-letter-modalcontainer .modaltable{
+position:relative;
+width:100%;
+height:100%;
+}
+
+.u-letter-modalcontainer .modaltable > p{
+position:absolute;
+left:0;
+top:0;
+width:100%;
+height:100%;
+margin:0;
+padding:0;
+}
+
+.u-letter-modalcontainer .modaltable > p > iframe,
+.u-letter-modalcontainer .modaltable > iframe{
+position:absolute;
+width:100%;
+height:100%;
+top:0;
+left0;
+z-index:30;
+}
+
+.u-letter-modalcontainer .modaltable .modalbox{
+position:absolute;
+left:0;
+top:0;
+z-index:40;
+    min-width: 400px;
+    background: #fefefe;
+    border: #333 solid 1px;
+    border-radius: 5px;
+    box-shadow: 0 2px 6px rgba(102, 0, 0, .5);
+    padding:0 0 0 4px;
+overflow:hidden;
+   -ms-user-select: none; /* IE 10+ */
+   -moz-user-select: -moz-none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+   user-select: none;
+}
+
+.u-letter-modalcontainer .modaltable .modalbox .content{
+    padding: 4px;
+}
+
+.u-letter-modalcontainer .modaltable .modalbox .title{
+font-size:150%;
+text-align:center;
+margin:0;
+border-bottom:solid #000 1px;
+padding:0.4em;
+width:100%;
+
+}
+
+
+.u-letter-modalcontainer .modaltable .modalbox p{
+margin:0;
+padding:0;
+}
+
+.u-letter-modalcontainer .modaltable .modalbox .choicebox{
+float:right;
+padding:3px;
+}
+
+.u-letter-modalcontainer .modaltable .modalbox .confirm{
+width:100%;
+text-align:center;
+}
+
+.u-letter-modalcontainer .modaltable .modalbox .confirm a,
+.u-letter-modalcontainer .modaltable .modalbox .choicebox a{
+text-align:center;
+display:inline-block;
+border-radius:6px;
+min-width:8em;
+-moz-box-shadow: 0px 3px 3px rgba(0,0,0,0.4);
+-webkit-box-shadow: 0px 3px 3px rgba(0,0,0,0.4);
+-o-box-shadow: 0px 3px 3px rgba(0,0,0,0.4);
+-ms-box-shadow: 0px 3px 3px rgba(0,0,0,0.4);
+}
+
+.u-letter-modalcontainer .modaltable .modalbox .confirm a:hover,
+.u-letter-modalcontainer .modaltable .modalbox .choicebox a:hover{
+text-decoration:none;
+-moz-box-shadow: 0px 1px 1px rgba(0,0,0,0.4);
+-webkit-box-shadow: 0px 1px 1px rgba(0,0,0,0.4);
+-o-box-shadow: 0px 1px 1px rgba(0,0,0,0.4);
+-ms-box-shadow: 0px 1px 1px rgba(0,0,0,0.4);
+}
+
+.u-letter-modalcontainer .modaltable .modalbox .confirm a:active,
+.u-letter-modalcontainer .modaltable .modalbox .choicebox a:active{
+-moz-box-shadow: 0px 3px 3px rgba(0,0,0,0.4) inset;
+-webkit-box-shadow: 0px 3px 3px rgba(0,0,0,0.4) inset;
+-o-box-shadow: 0px 3px 3px rgba(0,0,0,0.4) inset;
+-ms-box-shadow: 0px 3px 3px rgba(0,0,0,0.4) inset;
+}
+
+.u-letter-modalcontainer .modaltable .modalbox .choicebox a{
+background: #eeeeee; /* Old browsers */
+background: -moz-linear-gradient(top, #eeeeee 0%, #cccccc 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #eeeeee 0%,#cccccc 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #eeeeee 0%,#cccccc 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eeeeee', endColorstr='#cccccc',GradientType=0 ); /* IE6-9 */
+padding:0.5px;
+margin:0.2em 0.5em 0 0.2em;
+color:#000;
+}
+
+.u-letter-modalcontainer .modaltable .modalbox .choicebox a:hover{
+background-color:#EEE;
+background: #d6d6d6; /* Old browsers */
+background: -moz-linear-gradient(top, #d6d6d6 0%, #b8b8b8 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #d6d6d6 0%,#b8b8b8 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #d6d6d6 0%,#b8b8b8 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d6d6d6', endColorstr='#b8b8b8',GradientType=0 ); /* IE6-9 */
+}
+
+
+.u-letter-modalcontainer .modaltable .modalbox .choicebox a:active{
+background: #cbcbcb; /* Old browsers */
+background: -moz-linear-gradient(top, #cbcbcb 0%, #afafaf 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #cbcbcb 0%,#afafaf 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #cbcbcb 0%,#afafaf 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cbcbcb', endColorstr='#afafaf',GradientType=0 ); /* IE6-9 */
+}
+
+
+
+
+
+.u-letter-modalcontainer .modaltable .modalbox .confirm a{
+
+padfing:8px;
+color:#fff;
+font-weight:bold;
+margin:auto;
+font-size:120%;
+
+background: #87c2fd; /* Old browsers */
+background: -moz-linear-gradient(top, #87c2fd 0%, #53a5f1 40%, #0573e1 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #87c2fd 0%,#53a5f1 40%,#0573e1 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #87c2fd 0%,#53a5f1 40%,#0573e1 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#87c2fd', endColorstr='#0573e1',GradientType=0 ); /* IE6-9 */
+}
+
+.u-letter-modalcontainer .modaltable .modalbox .confirm a:hover{
+background: #4ea5fc; /* Old browsers */
+background: -moz-linear-gradient(top, #4ea5fc 0%, #268dee 40%, #0462c0 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #4ea5fc 0%,#268dee 40%,#0462c0 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #4ea5fc 0%,#268dee 40%,#0462c0 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#4ea5fc', endColorstr='#0462c0',GradientType=0 ); /* IE6-9 */
+}
+
+.u-letter-modalcontainer .modaltable .modalbox .confirm a:active{
+color:#ececec;
+background: #2490fc; /* Old browsers */
+background: -moz-linear-gradient(top, #2490fc 0%, #1281e8 40%, #0460bc 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #2490fc 0%,#1281e8 40%,#0460bc 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #2490fc 0%,#1281e8 40%,#0460bc 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#2490fc', endColorstr='#0460bc',GradientType=0 ); /* IE6-9 */
+}
+
+@media (max-width: 479px) {
+
+.u-letter-modalcontainer{
+width:90%;
+min-width:90%;
+}
+
+
+.u-letter-modalcontainer .modalbox{
+min-width:90%;
+}
+
+
+}
+
+
+@media (max-width: 767px) {
+#u-letter-popup {
+    height: 100%;
+    top: 0;
+}
+.u-letter-modalcontainer{
+    min-width: 300px;
+}
+
+.u-letter-modalcontainer .modaltable .modalbox{
+    min-width: 300px;
+}
+}
+
+
+
+[[/module]]
+[[div id="u-letter-popup"]]
+[[div class="fader"]]
+[[iframe http://shitake-crude-production.wikidot.com/extension:modal-script/code/1 ]]
+[[/div]]
+[[div class="u-letter-modalcontainer"]]
+[[div class="modaltable"]]
+[[iframe http://shitake-crude-production.wikidot.com/extension:modal-script/code/1 ]]
+[[div class="modalbox"]]
+
+[[div class="content"]]
+このメッセージを開いて読んでいると言う事は、君は新たな財団職員なのだろう。そして、我々に何が起こったのかも把握しているはずだ。
+
+我々が失敗したように、ほんの些細なきっかけから世界は崩壊してしまう。人類の歴史はその繰り返しだ。まるで世界が不条理と不可能を必要としているかのように思うかもしれない。だが、我々人類は諦める事なく全ての崩壊を乗り越え、君達はその先頭に立った。それだけは忘れないでくれ。
+
+君達はこれから様々な異常存在──新たに生まれるもの、かつての財団が対処しきれなかったものも含めて、それらと関わることになるだろう。君の目の前にいる異常存在は私がやり残した物の一つだ。報告書に記した通り、確保と収容、──そして保護をお願いしたい。
+[[/div]]
+----
+[[div style="text-align: center; margin: 1em;"]]
+[#u-close 閉じる]
+[[/div]]
+
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+
+[[module css]]
+.inuarea{
+display:none;
+}
+#u-back:target  ~.inuarea,
+#u-letter-popup:target  ~.inuarea,
+#u-close:target  ~.inuarea{
+display:block;
+}
+.inuarea > p{
+margin: 0;
+height: 100%;
+}
+iframe.html-block-iframe{
+height: 100% !important;
+pointer-events: auto;
+}
+[[/module]]
+[[div class="inuarea" style="position: fixed; left: 0; bottom: 0; width: 100vw; height: 70vh; pointer-events: none;"]]
+[[html]]
+
+<style type="text/css">
+@import url(https://scp-jp.wdfiles.com/local--files/japanese-syntax/scp-WikidotCss.css);
+
+body *{
+pointer-events: none;
+}
+
+img{
+position:absolute;
+bottom: 0;
+left: 0;
+right: 0;
+margin: 0 auto;
+max-height: 100vh;
+pointer-events: auto;
+}
+
+.remove{
+display: none;
+}
+
+.up{
+animation: upmove 1.7s cubic-bezier(0.965,1,0.965,1) 1s 1 both;
+}
+
+@keyframes upmove{
+0%{top: 100vh;}
+9%{top: 55vh;}
+84%{top: 55vh;}
+87%{top: 60vh;}
+93%{top: 5vh;}
+96.5%{top: 0;}
+100%{top: 5vh;}
+}
+
+.down{
+animation: downmove 0.5s cubic-bezier(0.2,0,0.2,0) 0s 1 both;
+}
+
+@keyframes downmove{
+0%{top: 5vh;}
+15%{top: 0;}
+30%{top: 5vh;}
+100%{top: 100vh;}
+}
+
+.down img{
+pointer-events: none;
+}
+</style>
+
+<script type="text/javascript" src="https://scp-jp.wdfiles.com/local--files/japanese-syntax/scpHTMLblockCtrl_ver1_ex.js"></script>
+
+<div id="area" class="up" style="position:relative; height: 100vh; top: 5vh;">
+<a href="javascript:remotePop1()">
+<img src="https://scp-jp.wikidot.com/local--files/scp-2000-jp/inu_mail.png" alt="メールを開く" id="inu1" class="">
+</a>
+<a href="javascript:remotePop2()">
+<img src="https://scp-jp.wikidot.com/local--files/scp-2000-jp/inu_close.png" alt="撫でる" id="inu2" class="remove">
+</a>
+<img src="https://scp-jp.wikidot.com/local--files/scp-2000-jp/inu_smile.png" id="inu3" class="remove">
+</div>
+
+<script type="text/javascript">
+function remotePop1(){
+document.getElementById("inu1").classList.add("remove");
+document.getElementById("inu2").classList.remove("remove");
+window.parent.window.location.href="https://scp-jp.wikidot.com/scp-2000-jp#u-letter-popup";
+}
+function remotePop2(){
+document.getElementById("inu2").classList.add("remove");
+document.getElementById("inu3").classList.remove("remove");
+setTimeout(function(){
+document.getElementById("inu3").classList.add("remove");
+document.getElementById("inu2").classList.remove("remove");
+document.getElementById("area").classList.add("down");
+setTimeout(function(){
+window.parent.window.location.href="https://scp-jp.wikidot.com/scp-2000-jp#u-end";
+setTimeout(function(){
+window.parent.window.location.href="https://scp-jp.wikidot.com/scp-2000-jp#u-shut-popup";},4000);
+},1500);
+}, 1000);
+}
+</script>
+[[/html]]
+[[/div]]
+====
+[[module CSS]]
+div#container-wrap{
+background: url(https://scp-jp.wikidot.com/local--files/scp-2000-jp/black.png) top left repeat-x;
+background-size:100px;
+}
+#html-body{
+background-color:#000;
+color:#FFF;
+}
+.scp-image-caption{
+color:#333;
+}
+.hovertip .content{
+color:#333;
+}
+
+:root{
+--mecolor: #B0C4DE;
+--youcolor: #FFFFFF;
+}
+
+#page-content .me{
+position: relative;
+float: right;
+width: 75%;
+max-width: 450px;
+margin-bottom: 8px;
+padding-right: 12px;
+text-align: right;
+white-space: nowrap;
+}
+
+#page-content .metalk{
+background: var(--mecolor);
+}
+
+#page-content .you{
+display: inline-block;
+position: relative;
+width: 75%;
+max-width: 450px;
+margin-bottom: 8px;
+padding-left: 12px;
+text-align: left;
+white-space: nowrap;
+vertical-align: top;
+}
+
+#page-content .youtalk{
+background: var(--youcolor);
+}
+
+#page-content .talk{
+display: inline-block;
+max-width: 75%;
+white-space: normal;
+color: #000000;
+text-align: left;
+padding: 6px 11px;
+vertical-align: bottom;
+}
+
+.talk p{
+margin: 0;
+}
+
+.me::after{
+content: "";
+right: -18px;
+position: absolute;
+transform: rotate(-30deg);
+height: 0;
+width: 0;
+border-top: 5px solid transparent;
+border-bottom: 5px solid transparent;
+border-right: 20px solid transparent;
+border-left: 20px solid var(--mecolor);
+}
+
+.you::before{
+content: "";
+left: -18px;
+position: absolute;
+transform: rotate(30deg);
+height: 0;
+width: 0;
+border-top: 5px solid transparent;
+border-bottom: 5px solid transparent;
+border-right: 20px solid var(--youcolor);
+border-left: 20px solid transparent;
+}
+
+#page-content .area{
+height:500px;
+width:330px;
+position: absolute;
+max-width: none;
+font-family: Meiryo,メイリオ,ariel,sans-serif;
+}
+
+#page-content .mail{
+color: #333333;
+max-width:700px;
+min-width:300px;
+width:60vw;
+position: absolute;
+}
+
+.top{
+width:100%;
+height: 50px;
+color: #FFFFFF;
+background-color: #4682B4;
+border-collapse:collapse;
+font-size: 150%;
+}
+
+.chat{
+background-color: #DDDDDD;
+padding-top: 10px;
+height: 400px;
+overflow-x: hidden;
+overflow-y: scroll;
+}
+
+.bottom{
+width:100%;
+height: 50px;
+color: #333333;
+background-color: #FFFFFF;
+border-collapse:collapse;
+border: solid 1px;
+font-size: 180%;"
+}
+
+.hole{
+position: relative;
+overflow: hidden;
+}
+
+.hole img{
+position: absolute;
+z-index: 5;
+}
+
+#u-open0:target ~.hole0{
+overflow: visible;
+z-index: 6;
+}
+
+#u-open0:target ~.hole0 img{
+display: none;
+}
+
+#u-open1:target ~.hole1{
+overflow: visible;
+z-index: 6;
+}
+
+#u-open1:target ~.hole1 img{
+display: none;
+}
+
+#u-open2:target ~.hole2{
+overflow: visible;
+z-index: 6;
+}
+
+#u-open2:target ~.hole2 img{
+display: none;
+}
+
+#u-open3:target ~.hole3{
+overflow: visible;
+z-index: 6;
+}
+
+#u-open3:target ~.hole3 img{
+display: none;
+}
+
+#u-open4:target ~.hole4{
+overflow: visible;
+z-index: 6;
+}
+
+#u-open4:target ~.hole4 img{
+display: none;
+}
+#u-open5:target ~.hole5{
+overflow: visible;
+z-index: 6;
+}
+
+#u-open5:target ~.hole5 img{
+display: none;
+}
+
+#u-open6:target ~.hole6{
+overflow: visible;
+z-index: 6;
+}
+
+#u-open6:target ~.hole6 img{
+display: none;
+}
+#u-open7:target ~.hole7{
+overflow: visible;
+z-index: 6;
+}
+
+#u-open7:target ~.hole7 img{
+display: none;
+}
+
+#u-open8:target ~.hole8{
+overflow: visible;
+z-index: 6;
+}
+
+#u-open8:target ~.hole8 img{
+display: none;
+}
+
+#u-open9:target ~.hole9{
+overflow: visible;
+z-index: 6;
+}
+
+#u-open9:target ~.hole9 img{
+display: none;
+}
+
+#u-open10:target ~.hole10{
+overflow: visible;
+z-index: 6;
+}
+
+#u-open10:target ~.hole10 img{
+display: none;
+}
+
+[[/module]]
+
+[[div id="u-back" style="display:none;"]]
+[[/div]]
+[[div id="u-open0" style="display:none;"]]
+[[/div]]
+[[div id="u-open1" style="display:none;"]]
+[[/div]]
+[[div id="u-open2" style="display:none;"]]
+[[/div]]
+[[div id="u-open3" style="display:none;"]]
+[[/div]]
+[[div id="u-open4" style="display:none;"]]
+[[/div]]
+[[div id="u-open5" style="display:none;"]]
+[[/div]]
+[[div id="u-open6" style="display:none;"]]
+[[/div]]
+[[div id="u-open7" style="display:none;"]]
+[[/div]]
+[[div id="u-open8" style="display:none;"]]
+[[/div]]
+[[div id="u-open9" style="display:none;"]]
+[[/div]]
+[[div id="u-open10" style="display:none;"]]
+[[/div]]
+
+
+[[div class="hole hole0" style="height:200px; width:200px;right: calc(-100%  + 300px)"]]
+[[image https://scp-jp.wikidot.com/local--files/scp-2000-jp/ana_clear.png link="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-open0"]]
+[[div class="mail" style="right: -100px;"]]
+>> 五條研究員
+>> 初めまして、↑日ほど前からこのエリアで「SCP-■縺ｫ帙s」の情報収集を行っているクレフと言う者だ。君の報告を読ませて貰ったよ。
+>> 君の報告通り、「サイト-縺斐↓」で対抗ミーム兵器の開発が完成付近まで進んでいた可能性は高い。サイト内の調査は最重要項目だ。だが、「サイト-縺斐↓」の施設放棄プロトコル解除のために技術者を派遣して欲しいという件に関しては却下せざるを得ない。
+>>
+>> と言うのはこちらも「サイト-縺斐↓」とほぼ同様の状況でね。私がこのエリアを訪れた時点で財団職員は全滅していたんだよ。つまり、ここには派遣可能な職員が残っていないと言う事だ。必要なら「サイト-縺斐↓」のAnomalous収容ユニットからアノマリーを持ち出して使ってもいい。時間も労力も足りていないのは分かっているが、君個人で対応して頂きたい。
+> [[=]]
+> [#u-back 閉じる]
+> [[/=]]
+[[/div]]
+[[/div]]
+
+[[div class="hole hole1" style="height:150px; width:150px;"]]
+[[image https://scp-jp.wikidot.com/local--files/scp-2000-jp/ana_clear.png link="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-open1"]]
+[[div class="mail"]]
+>> 君はどうも状況が把握出来ていないようだ。まあ、しばらく隔離された場所にいたんだから無理も無いが。
+>> 他の拠点に連絡して欲しいとの話だが、機能していないのはこのエリアだけじゃない。財団は「[[[https://scp-jp.wikidot.com/scp-3519|SCP-輔s縺阪]]]」の制御に失敗した。指揮系統は完全に崩壊しているし他拠点からの情報も入らなくなった。誰かが君を発見して事態を好転させてくれるなどと思わない方が良い。下手に動いて失敗する事を恐れる段階はとうに過ぎてしまった。
+>>
+>> 私は今自分に出来る限りの事をするつもりだ。このままでは先人達にも顔向けできないからね。
+>> 君はどうする？
+> [[=]]
+> [#u-back 閉じる]
+> [[/=]]
+[[/div]]
+[[/div]]
+
+
+[[div class="hole hole2" style="height:250px; width:250px; right: calc(-100% + 250px)"]]
+[[image https://scp-jp.wikidot.com/local--files/scp-2000-jp/ana_clear.png link="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-open2"]]
+[[div class="area" style="right: 0;"]]
+[[table class="top"]]
+[[row]]
+[[cell style="width: 10%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="text-align: center;"]]
+莠悟鴻蜊/梧怦/莠牙
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[a href="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-back"]][[span class="fa fa-times fa-2x"]]@<&nbsp;>@[[/span]][[/a]]
+[[/cell]]
+[[/row]]
+[[/table]]
+
+[[div class="chat"]]
+[[div class="you"]]
+[[div class="talk youtalk"]]
+目的地でさっき渡したプログラムを実行したら訓練成功だ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+まずは「蜿ｳ髫｣縺ｮ」に行こう。それ以外のルートは危ないから行っちゃ駄目だぞ。「AO-蝗幃峺」、大丈夫そうか？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+うん、分かった！
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+ばしょがわかんない……
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+「蜿ｳ髫｣縺ｮ」だ。もっと詳しく説明した方がいいか？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+だいじょぶ！おぼえた！
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+まよった……。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+「蜿ｳ髫｣縺ｮ」だ。分かるか？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+うん！かんぺき！
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+どこだっけ……。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+[[/div]]
+
+[[table class="bottom"]]
+[[row]]
+[[cell style="width: 2%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[span class="fa fa-image"]]@<&nbsp;>@[[/span]]
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[span class="fa fa-microphone"]]@<&nbsp;>@[[/span]]
+[[/cell]]
+[[cell style="text-align: center;"]]
+[[div class="talk" style="background-color: #EEEEEE; width: 85%; max-width: none; font-size: medium;"]]
+[[div style="float: right; display: inline-block; color: #303060;"]]
+‪‪[[span class="fa fa-user-circle"]]@<&nbsp;>@[[/span]]
+[[/div]]
+[[div style="display: inline-block; color: #BBBBBB;"]]
+Aa
+[[/div]]
+[[/div]]
+[[/cell]]
+[[/row]]
+[[/table]]
+[[/div]]
+[[/div]]
+
+
+[[div class="hole hole3" style="height:100px; width:100px; left:20vw"]]
+[[image https://scp-jp.wikidot.com/local--files/scp-2000-jp/ana_clear.png link="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-open3"]]
+[[div class="mail" style="left: -20vw"]]
+>> 理解して貰えたようで助かるよ。私はこれから「SCP-■縺ｫ帙s」の管理施設に向かうつもりだ。自分以外に動いている人がいる事が分かっただけでもありがたい。もし、上手く行ったら連絡を取ろう。
+>>
+>> 幸運を祈る。
+> [[=]]
+> [#u-back 閉じる]
+> [[/=]]
+[[/div]]
+[[/div]]
+
+
+
+[[div class="hole hole4" style="height:200px; width:200px;"]]
+[[image https://scp-jp.wikidot.com/local--files/scp-2000-jp/ana_clear.png link="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-open4"]]
+[[div class="area" style="top: -200px;"]]
+[[table class="top"]]
+[[row]]
+[[cell style="width: 10%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="text-align: center;"]]
+莠悟鴻蜊/梧怦/香譌
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[a href="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-back"]][[span class="fa fa-times fa-2x"]]@<&nbsp;>@[[/span]][[/a]]
+[[/cell]]
+[[/row]]
+[[/table]]
+
+[[div class="chat"]]
+[[div class="you"]]
+[[div class="talk youtalk"]]
+「AO-蝗幃峺」、時間が無いんだ。巣から出てきてくれ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+やだ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+ほら、撫でてあげるから。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+うん……。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+よしよし。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+どうした？訓練が嫌になったのか？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+うん。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+すぐに分からなくなるからやりたくない。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+弱ったな……。ご褒美とかあれば頑張れるか？何でもいいぞ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+じゃあ、あたらしいなまえがほしい。とくべつなの。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+「AO-蝗幃峺」以外の名前を付けるだけでいいのか。成功したら特別な奴でも何でも付けてあげよう。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+ほんとに？じゃあSCPなんとかってなまえがいい。ばんごうふるやつ
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+確かに特別な名前だが……。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+ちょっと待ってくれ、そいつは……。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+だめなの？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+いや……うん、大丈夫だ。上手く行ったら何とかしよう。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+やった！
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+[[/div]]
+
+[[table class="bottom"]]
+[[row]]
+[[cell style="width: 2%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[span class="fa fa-image"]]@<&nbsp;>@[[/span]]
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[span class="fa fa-microphone"]]@<&nbsp;>@[[/span]]
+[[/cell]]
+[[cell style="text-align: center;"]]
+[[div class="talk" style="background-color: #EEEEEE; width: 85%; max-width: none; font-size: medium;"]]
+[[div style="float: right; display: inline-block; color: #303060;"]]
+‪‪[[span class="fa fa-user-circle"]]@<&nbsp;>@[[/span]]
+[[/div]]
+[[div style="display: inline-block; color: #BBBBBB;"]]
+Aa
+[[/div]]
+[[/div]]
+[[/cell]]
+[[/row]]
+[[/table]]
+[[/div]]
+[[/div]]
+
+
+[[div class="hole hole5" style="height:80px; width:80px; right: calc(-50% + 40px);"]]
+[[image https://scp-jp.wikidot.com/local--files/scp-2000-jp/ana_clear.png link="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-open5"]]
+[[div class="mail" style="right:-150px;"]]
+> [[=]]
+>> ++++ RAISAによる通達
+>> 当メールは「SCP-輔s縺阪」の検知により閲覧が禁止されています。
+>> 詳細を確認される場合は担当者までご連絡下さい。
+> [#u-back 閉じる]
+> [[/=]]
+[[/div]]
+[[/div]]
+
+
+
+[[div class="hole hole6" style="height:150px; width:150px;"]]
+[[image https://scp-jp.wikidot.com/local--files/scp-2000-jp/ana_clear.png link="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-open6"]]
+[[div class="area" style="top:-50px;"]]
+[[table class="top"]]
+[[row]]
+[[cell style="width: 10%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="text-align: center;"]]
+莠悟鴻蜊/∽ｹ/荳ｴ
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[a href="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-back"]][[span class="fa fa-times fa-2x"]]@<&nbsp;>@[[/span]][[/a]]
+[[/cell]]
+[[/row]]
+[[/table]]
+
+[[div class="chat"]]
+[[div class="me"]]
+[[div class="talk metalk"]]
+ごじょうさん、きょうはくんれんしないの？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+ああ。今までよく頑張ってくれたな。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+まだせいこうしてないよ？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+もう必要ないんだ。世界は明日滅びるんだから。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+ほろびるの？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+そう。だから早く死なないといけない訳だ。わかるな？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+えっと、えっと……。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+うん！わかる！はやくしないとだよね！
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+「AO-蝗幃峺」も早く死ぬ準備を……。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+「AO-蝗幃峺」はどうやって死ぬんだ？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+あれ？どうするんだろう？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+それは困ったな。何か出来る事があったら言ってくれ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+じゃあね、ぼくいちどお外が見てみたかったの。
+SCiPNETってところにつないでほしいな。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+本当は駄目なんだが、世界が滅びるし構わないか。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+ほら、繋いだぞ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+ばしょさえきまれば、そのあとはうまくいくってところ見ててほしいの。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+何の話だ？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+RAISAによる……
+「ポート-蝗幃峺」に……不正アクセス……。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+きゅうにどうしたの？ごじょうさん？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+「AO-蝗幃峺」、まさかここで訓練したのか……？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+鎮静ガスを……
+セキュリティ担当者は……装備を……。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+うわうわ、なにこれ。とまんない。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+ごじょうさん、どうしよう？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+ごじょうさん？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[/div]]
+
+[[table class="bottom"]]
+[[row]]
+[[cell style="width: 2%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[span class="fa fa-image"]]@<&nbsp;>@[[/span]]
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[span class="fa fa-microphone"]]@<&nbsp;>@[[/span]]
+[[/cell]]
+[[cell style="text-align: center;"]]
+[[div class="talk" style="background-color: #EEEEEE; width: 85%; max-width: none; font-size: medium;"]]
+[[div style="float: right; display: inline-block; color: #303060;"]]
+‪‪[[span class="fa fa-user-circle"]]@<&nbsp;>@[[/span]]
+[[/div]]
+[[div style="display: inline-block; color: #BBBBBB;"]]
+Aa
+[[/div]]
+[[/div]]
+[[/cell]]
+[[/row]]
+[[/table]]
+[[/div]]
+[[/div]]
+
+
+[[div class="hole hole7" style="height:300px; width:300px; right: calc(-100% + 300px);"]]
+[[image https://scp-jp.wikidot.com/local--files/scp-2000-jp/ana_clear.png link="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-open7"]]
+[[div class="area" style="right: 0; top: -20;"]]
+[[table class="top"]]
+[[row]]
+[[cell style="width: 10%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="text-align: center;"]]
+莠悟鴻蜊/∽ｹ/晏ｴ
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[a href="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-back"]][[span class="fa fa-times fa-2x"]]@<&nbsp;>@[[/span]][[/a]]
+[[/cell]]
+[[/row]]
+[[/table]]
+
+[[div class="chat"]]
+[[div class="you"]]
+[[div class="talk youtalk"]]
+う……
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+今何時だ？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+今はねえ、莠悟鴻蜊/∽ｹ/晏ｴの荳画:疲律だよ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+今なんて言った？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+もう一度言ってくれ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+莠悟鴻蜊/∽ｹ/晏ｴの荳画:疲律だよ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+∽ｹ/晏ｴなら、世界はもう滅びてるはずじゃ……。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+もう過ぎたけど、何もなかったよ？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+よかったね。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+[[/div]]
+
+[[table class="bottom"]]
+[[row]]
+[[cell style="width: 2%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[span class="fa fa-image"]]@<&nbsp;>@[[/span]]
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[span class="fa fa-microphone"]]@<&nbsp;>@[[/span]]
+[[/cell]]
+[[cell style="text-align: center;"]]
+[[div class="talk" style="background-color: #EEEEEE; width: 85%; max-width: none; font-size: medium;"]]
+[[div style="float: right; display: inline-block; color: #303060;"]]
+‪‪[[span class="fa fa-user-circle"]]@<&nbsp;>@[[/span]]
+[[/div]]
+[[div style="display: inline-block; color: #BBBBBB;"]]
+Aa
+[[/div]]
+[[/div]]
+[[/cell]]
+[[/row]]
+[[/table]]
+[[/div]]
+[[/div]]
+
+
+
+[[div class="hole hole8" style="height:170px; width:170px; right: calc(-100% + 240px);"]]
+[[image https://scp-jp.wikidot.com/local--files/scp-2000-jp/ana_clear.png link="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-open8"]]
+[[div class="area" style="right: -60px;"]]
+[[table class="top"]]
+[[row]]
+[[cell style="width: 10%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="text-align: center;"]]
+莠悟鴻蜊/∽ｹ/蜈ｭ
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[a href="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-back"]][[span class="fa fa-times fa-2x"]]@<&nbsp;>@[[/span]][[/a]]
+[[/cell]]
+[[/row]]
+[[/table]]
+
+[[div class="chat"]]
+[[div class="me"]]
+[[div class="talk metalk"]]
+ごじょうさん、あたまいたいの？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+ちょうしわるそう……。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+まあその、ちょっとショックな事があってね。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+この先一人で頑張らないといけなくなったんだ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+ぼくもついてるよ。げんき出して。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+まあ、そうだな。凹んでる場合じゃないよな。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+うんうん。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+ごめんね、へんなことしちゃって。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+いや、あれは凄く助かったよ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+ほんとに？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+ああ。よくやった。
+この前言ってたご褒美をあげてもいい。欲しがっていた特別な名前だぞ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+やった！新しい巣だ！
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+その代わりに頼みたい事があるんだが、いいか？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+なに？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+SCiPNETの気に入った場所で、いつもみたいに情報を集めてきて貰えないか。
+それを私にも見せて貰いたい。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+わかった！いいよ！
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+[[/div]]
+
+[[table class="bottom"]]
+[[row]]
+[[cell style="width: 2%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[span class="fa fa-image"]]@<&nbsp;>@[[/span]]
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[span class="fa fa-microphone"]]@<&nbsp;>@[[/span]]
+[[/cell]]
+[[cell style="text-align: center;"]]
+[[div class="talk" style="background-color: #EEEEEE; width: 85%; max-width: none; font-size: medium;"]]
+[[div style="float: right; display: inline-block; color: #303060;"]]
+‪‪[[span class="fa fa-user-circle"]]@<&nbsp;>@[[/span]]
+[[/div]]
+[[div style="display: inline-block; color: #BBBBBB;"]]
+Aa
+[[/div]]
+[[/div]]
+[[/cell]]
+[[/row]]
+[[/table]]
+[[/div]]
+[[/div]]
+
+
+
+[[div class="hole hole9" style="height:140px; width:140px;"]]
+[[image https://scp-jp.wikidot.com/local--files/scp-2000-jp/ana_clear.png link="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-open9"]]
+[[div class="mail"]]
+> [[=]]
+>> ++++ RAISAによる通達
+>> 当メールは「SCP-輔s縺阪」の検知により閲覧が禁止されています。
+>> 詳細を確認される場合は担当者までご連絡下さい。
+> [[/=]]
+>>
+>> 五條研究員、そちらの状況はどうだ？
+>> こちらは最悪だ。ガニメデ・プロトコルの実行によるセキュリティロック解除が正常作動しなかった。どうやら管理者が「[[[https://scp-jp.wikidot.com/scp-2000|SCP-■縺ｫ帙s]]]」の施設を封鎖していたらしい。一人で財団最高のセキュリティに対抗しろとは随分な無茶を言われたものだ。
+>>
+>> あと少し早く動いていれば上手く行ったのだろうか。長く続いた人類の歴史も、私のせいで間もなく終わってしまう。
+>> 私に出来るのはあと一つ、今度こそ遅れずに死ぬ事だけだ。
+> [[=]]
+> [#u-back 閉じる]
+> [[/=]]
+[[/div]]
+[[/div]]
+
+
+
+[[div class="hole hole10" style="height:230px; width:230px; left: 50px;"]]
+[[image https://scp-jp.wikidot.com/local--files/scp-2000-jp/ana_clear.png link="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-open10"]]
+[[div class="area" style="left: -50px; bottom: -70px;"]]
+[[table class="top"]]
+[[row]]
+[[cell style="width: 10%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="text-align: center;"]]
+莠悟鴻莠/疲怦/晄蜊
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[a href="https://scp-jp.wikidot.com/scp-2000-jp/offset/1/page2_limit/1#u-back"]][[span class="fa fa-times fa-2x"]]@<&nbsp;>@[[/span]][[/a]]
+[[/cell]]
+[[/row]]
+[[/table]]
+
+[[div class="chat"]]
+[[div class="you"]]
+[[div class="talk youtalk"]]
+そうか、クレフ博士もか……。
+よく拾ってきてくれたな。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+えらいでしょ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+ああ。良い子だ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+良い子にもう一つ頼みたい事があるんだが。いいか？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+いいよ、がんばる！
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+訓練の時みたいに「SCP-■縺ｫ帙s」の所まで行って、プログラムを実行して欲しい。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+うまくいったらなでてね！
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+あ、でもばしょわすれるかも……。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+今度は大丈夫さ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+一つ聞きたいんだが、この前付けた名前は気に入ってくれたか？
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+うん！だいすき！
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+さっき話した「SCP-■縺ｫ帙s」も同じ特別な名前が付いてるんだ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+ほんとだ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+お友達だな。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+うん！
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+向こうにはたくさん人がいるからな、上手く行ったらたくさん褒めて貰えるぞ。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+ほんとに？たのしみ！
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="you"]]
+[[div class="talk youtalk"]]
+これで場所を忘れたとしても、思い出せるな。
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+
+[[div class="me"]]
+[[div class="talk metalk"]]
+うん！
+[[/div]]
+[[/div]]
+[[div style="clear: both;"]]
+[[/div]]
+[[/div]]
+
+[[table class="bottom"]]
+[[row]]
+[[cell style="width: 2%; text-align: center;"]]
+@<&nbsp;>@
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[span class="fa fa-image"]]@<&nbsp;>@[[/span]]
+[[/cell]]
+[[cell style="width: 10%; text-align: center;"]]
+[[span class="fa fa-microphone"]]@<&nbsp;>@[[/span]]
+[[/cell]]
+[[cell style="text-align: center;"]]
+[[div class="talk" style="background-color: #EEEEEE; width: 85%; max-width: none; font-size: medium;"]]
+[[div style="float: right; display: inline-block; color: #303060;"]]
+‪‪[[span class="fa fa-user-circle"]]@<&nbsp;>@[[/span]]
+[[/div]]
+[[div style="display: inline-block; color: #BBBBBB;"]]
+Aa
+[[/div]]
+[[/div]]
+[[/cell]]
+[[/row]]
+[[/table]]
+[[/div]]
+[[/div]]
+
+[[=image https://scp-jp.wikidot.com/local--files/scp-2000-jp/ana_out.png link="https://scp-jp.wikidot.com/scp-2000-jp#u-back" style="width: 70%;"]]
+====
+[[module css]]
+.img-top{
+pointer-events: none;
+width: 324px;
+float: right;
+margin: 0 2em 1em 2em;
+}
+
+@media (max-width: 979px) {
+.img-top{
+float: none;
+clear: both;
+margin-left: auto;
+margin-right: auto;
+}
+}
+[[/module]]
+
+[[div class="img-top"]]
+[[image https://scp-jp.wikidot.com/local--files/scp-2000-jp/dog_last.png class="dog"]]
+[[/div]]
+
+**アイテム番号:** SCP-2000-JP
+
+**オブジェクトクラス:** Thaumiel
+
+##00d|**特別収容プロトコル:** SCP-2000-JPのホストとなるコンピュータは低脅威度物品保管庫内に収容されています。収容担当者はSCP-2000-JPと1日2時間以上の対話を行ってください。##
+
+**説明:** SCP-2000-JPはコンピュータ/ネットワーク上で活動する情報知性体です。イエイヌ(//Canis lupus familiaris//)をキャラクター化したイメージとテキストボックスから成るグラフィカルユーザーインターフェースを備え、標準的な日本語や英語、または複数のファイル形式による意思疎通およびデータの入出力が可能です。SCP-2000-JPはユーザーである人類に対して極めて友好的に振舞い、対話及び業務指示を与えられることを好みます。ウェクスラー=ネルソン式汎用知能検査によると平均的なヒト5歳児程度の思考能力を有すると示されています。
+
+SCP-2000-JPはコンピュータ/ネットワークセキュリティによる行動阻害に対し、セキュリティホールを「掘る」ことで突破する能力を有します。セキュリティホールを「掘り終わる」までの時間はセキュリティの堅牢さに比例して増加します。この際に発生したセキュリティホールはGUI上で意味を成さないテキストの集合からなるリンクとして可視化され、ユーザーはクリックなどの操作によりSCP-2000-JPによるアクセス経路を辿ることが可能です。SCP-2000-JPは自身が存在するコンピュータ/ネットワーク上の領域を自由に移動し、自身にとって最も重要な情報の所在領域を「巣」と定め、それ以外の領域から持ち帰った情報を保存する習性を持ちます。ただし、SCP-2000-JPによる情報の取扱の際には、携持した情報を「噛んでしまう」ことによる情報内容の破損が高頻度で発生するため、集められた情報および与えられた指示の遂行は信頼性に欠けるものとなります。検証実験によると指示内容・語義など言語型情報の保持率は高い一方、数量やタイムスタンプ・「巣」以外の所在アドレスなどの数値/データ型情報には非常に頻繁な破損が見られます。
+====
+--]

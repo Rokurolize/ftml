@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:27:39+00:00",
+  "method": "GET",
+  "response_bytes": 29929,
+  "response_sha256": "711ceb901a6c4c0ba02889b1037911de2101ef08e7f66f33e9145c303898a8e6",
+  "status": 200,
+  "url": "https://shitake-crude-production.wikidot.com/extension:modal-e"
+ },
+ "page": "extension:modal-e",
+ "page_id": 80829135,
+ "site": "shitake-crude-production",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:27:40+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "80829135"
+  },
+  "response_bytes": 238,
+  "response_sha256": "09c9e621abe21fe20f3816b66b7454dd4698ac847807ebd0491c8249c398e7c8",
+  "status": 200,
+  "url": "https://shitake-crude-production.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "5e06559fe252e03b7422e47e2899d4dea57df5433b609ffb8e4c14ba5a10bc3e"
+}

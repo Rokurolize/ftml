@@ -1,0 +1,102 @@
+--- live
++++ ftml
+@@ -1,27 +1,7 @@
+ <div style="text-align: right;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+244"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ </div>
+ <div style="text-align: center;margin: 60px 0px;font-size: 140%">
+ <p>
+@@ -140,11 +120,12 @@
+ </strong>
+ <div style="float:right; margin:0 2em 1em 2em; width:230px; border:0;">
+ </div>
+-<br>
++<p>
+ <em>
+ T:"█年█月█日、[削除済]した際に、私は酒量を過ごし、不適切な行動をして[削除済]。この不始末は、仕事の場である意識を欠き、適量を超えて飲酒をするという、財団職員としての自覚と責任に欠ける恥ずべき態度であると、深く反省しております。今後は、二度とこのような過ちを繰り返さないよう、時と場所をわきまえた細心の注意とともに応対していく所存ですので、寛大なご措置を賜りますようお願い申し上げます。"
+ </em>
+ T:"<IDSP>- エージェント・厚木"
++</p>
+ </blockquote>
+ <p>
+ <span style="font-size:0%;">
+@@ -209,14 +190,15 @@
+ </span>
+ </strong>
+ <div style="float:right; margin:0 2em 1em 2em; width:230px; border:0;">
+-<img alt="針山博士.png" class="image" src="https://scp-jp.wdfiles.com/local--files/holy-nova-tale-businessetiquette-writtenapology/%E9%87%9D%E5%B1%B1%E5%8D%9A%E5%A3%AB.png" width="230px">
+-</div>
+-<br>
++<img alt="針山博士.png" class="image" src="https://scp-jp.wjfiles.com/local--files/holy-nova-tale-businessetiquette-writtenapology/針山博士.png" width="230px">
++</div>
++<p>
+ T:"私はこのたび、一部にレベル3の機密を含む重要書類を紛失するという重大な[判読不可]。これは、[判読不可]。現時点では具体的な被害が発生していないとはいえ、次第によっては[判読不可]。財団、関係各位に対し、本状をもちましてお詫び申し上げます。<IDSP>-"
+ <span style="text-decoration: line-through;">
+ T:"エメラルドマウンテン"
+ </span>
+ T:"針山博士<IDSP>(解読：解読班B)"
++</p>
+ </blockquote>
+ <p>
+ <em>
+@@ -303,13 +285,14 @@
+ </span>
+ </strong>
+ <div style="float:right; margin:0 2em 1em 2em; width:230px; border:0;">
+-<img alt="暴発.gif" class="image" src="https://scp-jp.wdfiles.com/local--files/holy-nova-tale-businessetiquette-writtenapology/%E6%9A%B4%E7%99%BA.gif" width="230px">
+-</div>
+-<br>
++<img alt="暴発.gif" class="image" src="https://scp-jp.wjfiles.com/local--files/holy-nova-tale-businessetiquette-writtenapology/暴発.gif" width="230px">
++</div>
++<p>
+ <em>
+ T:"200█年08月25日、閉所戦闘訓練施設（相良コンバットパークAエリア）において、私は無許可で雷極光陣の詠唱練習を実施し、自身のマナを暴走させ、施設内の公衆便所と自販機1台を炎上させました。自身のヒット・ウィザードとしての未熟さが原因であると理解しています。この度の不始末に関しまして深く反省しています。寛大なご措置のほどをお願い申し上げます。"
+ </em>
+ T:"<IDSP>- 斥候班C(\"無計画\") 04号"
++</p>
+ </blockquote>
+ <p>
+ <em>
+@@ -327,13 +310,14 @@
+ </span>
+ </strong>
+ <div style="float:right; margin:0 2em 1em 2em; width:230px; border:0;">
+-<img alt="試験.gif" class="image" src="https://scp-jp.wdfiles.com/local--files/holy-nova-tale-businessetiquette-writtenapology/%E8%A9%A6%E9%A8%93.gif" width="230px">
+-</div>
+-<br>
++<img alt="試験.gif" class="image" src="https://scp-jp.wjfiles.com/local--files/holy-nova-tale-businessetiquette-writtenapology/試験.gif" width="230px">
++</div>
++<p>
+ <em>
+ T:"200█年09月07日、閉所戦闘訓練施設（相良コンバットパークAエリア）において、自身のマナを抑えきれず無許可で光速天翼翔を実施しました。次第によっては封印されし混沌の扉が開きかねない不始末であり、財団及び魔法界隈ならびに関係各位に対し、心からお詫び申し上げます。なにとぞ寛大なるご措置をいただきたく、本状を提出し、お願い申し上げます。"
+ </em>
+ T:"<IDSP>- 斥候班C(\"無計画\") 04号"
++</p>
+ </blockquote>
+ <p>
+ <em>

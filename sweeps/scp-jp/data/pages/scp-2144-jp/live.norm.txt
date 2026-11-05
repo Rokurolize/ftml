@@ -1,0 +1,416 @@
+<div class="award-1st">
+</div>
+<div class="creditRate creditModule {$mode}">
+<div class="rateBox">
+<div class="rate-box-with-credit-button">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+754"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<div class="rateBox heritage-wrap" style="display:none;">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+754"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<div style="clear:both;">
+</div>
+<div id="u-credit-view">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"クレジット"
+</span>
+</h2>
+</div>
+<div class="credit">
+<p>
+<strong>
+T:"タイトル:"
+</strong>
+T:"SCP-2144-JP - やぁ！そこの君。君だよ君。そこでこのページをぼうっと眺めてる君。ちょっとしたことなんだけど、このリンクをクリックしてくれないかな。"
+<br>
+<strong>
+T:"著者:"
+</strong>
+T:"©︎"
+<span class="printuser avatarhover">
+<a href="https://www.wikidot.com/user:info/mitan" onclick="WIKIDOT.page.listeners.userInfo(4589204); return false;">
+<img alt="Mitan" class="small" src="https://www.wikidot.com/avatar.php?userid=4589204&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=4589204)">
+</a>
+<a href="https://www.wikidot.com/user:info/mitan" onclick="WIKIDOT.page.listeners.userInfo(4589204); return false;">
+T:"Mitan"
+</a>
+</span>
+<br>
+<strong>
+T:"作成年:"
+</strong>
+T:"2020"
+</p>
+</div>
+<div class="credit" style="text-align:right; margin-top: 0.5em;">
+<a href="#u-credit-otherwise">
+T:"その他のライセンス"
+</a>
+</div>
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+754"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+<div class="modalbox-ratemodule">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+754"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="u-credit-otherwise">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/otherwise.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"その他"
+</span>
+</h2>
+</div>
+<div class="credit otherwise">
+<div class="contest">
+<p>
+<a href="https://scp-jp.wikidot.com/usocontest2020-hub" target="_blank">
+T:"嘘のコンテスト2020"
+</a>
+<br>
+<span>
+T:"舞文曲筆賞"
+</span>
+</p>
+</div>
+<div class="credit-back" style="text-align: center;">
+<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+</iframe>
+</div>
+</div>
+<div class="creditBottomRate" style="height:30px;">
+<div class="credit-license">
+<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
+</a>
+</div>
+<div style="text-align: center; top: 0px;">
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+754"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+<div>
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+754"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-91b1ea44994cc52636eae21d" data-lp-key="p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+</div>
+<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-906b9c9dddc1b4d9770c27f4" data-lp-key="p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+<div class="list-pages-item">
+<div class="fake_title">
+<p>
+T:"コックスの部屋"
+</p>
+</div>
+<span style="font-size:300%;">
+T:"…やぁ！"
+</span>
+<br>
+<img alt="G1" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/G1">
+<br>
+<br>
+<br>
+<br>
+<br>
+<div class="textchange">
+<div class="sitemember">
+<span style="font-size:200%;">
+T:"君は……財団職員だね。"
+<br>
+<img alt="G2" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/G2">
+<br>
+<br>
+<br>
+T:"そうだろう！？"
+</span>
+<br>
+<img alt="G4" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/G4" width="550px">
+</div>
+</div>
+<div class="content-panel standalone series" style="background-color: #a8dbff;">
+<p style="text-align: center;">
+<span style="font-size:300%;">
+<a href="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/%E7%85%BD%E3%82%8A" style="color:#000000;">
+T:"いいえ"
+</a>
+</span>
+</p>
+</div>
+<div class="content-panel standalone series" style="background-color: #ffbfba;">
+<p style="text-align: center;">
+<span style="font-size:300%;">
+<a href="#u-wrapper-null">
+T:"はい"
+</a>
+</span>
+</p>
+</div>
+<div class="typearea0" id="u-wrapper-null">
+<br>
+<br>
+<br>
+<span style="font-size:400%;">
+T:"HAHA！！正直でいいね！"
+</span>
+<br>
+<br>
+<br>
+<img alt="G1" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/G1">
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<span style="font-size:200%;">
+T:"うん？｢お前は一体なんなのか｣って？"
+</span>
+<br>
+<img alt="G2" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/G2">
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<span style="font-size:200%;">
+T:"僕の名前はクリストファー＝コックス！！24歳のハンサムさ！！"
+</span>
+<br>
+<img alt="G2" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/G2">
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<span style="font-size:200%;">
+T:"僕が手に持ってるページが詳しい自己紹介だからさ。クリックして読んでみてよ！！"
+</span>
+<br>
+<img alt="1" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/1">
+<a href="https://scp-jp.wikidot.com/scp-2144-jp/offset/1/page2_limit/1">
+<img alt="2" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/2" width="(サイズ)">
+</a>
+<br>
+<img alt="3" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-2144-jp/3">
+</div>
+<p>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+</p>
+</div>
+</div>
+<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-642b836885f26dc5160de8b0" data-lp-key="page2_p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+</div>
+<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-050dc3b3329a5c2cd0fcce1e" data-lp-key="page3_p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+</div>
+<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-c26380a952003886a123c15d" data-lp-key="page4_p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+</div>
+<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-430406aa87d5952df2e5f2dc" data-lp-key="page5_p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+</div>
+<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-4770539c74a8189c9376ada0" data-lp-key="page6_p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+</div>
+<div class="list-pages-box" data-lp-generation="299a652b310eea776626f1b1ede9b7e356ae51778616fd43e3568584223a5e7b" data-lp-id="lp-7d92a11259faeac4658dae91" data-lp-key="page7_p" data-lp-page="<TS10>" data-lp-route="scp-2144-jp">
+</div>

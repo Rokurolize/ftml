@@ -1,0 +1,1156 @@
+<div class="creditRate creditModule {$mode}">
+T:"[[div_ class=\"rateBox\" ]]"
+<div class="rate-box-with-credit-button">
+<p>
+T:"TODO: module Rate"
+</p>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<br>
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+<br>
+<br>
+<div style="clear:both;">
+</div>
+<div id="u-credit-view">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"クレジット"
+</span>
+</h2>
+</div>
+<div class="credit">
+<p>
+<strong>
+T:"タイトル:"
+</strong>
+T:"SCP-1045-JP - お眼鏡にはかなわない"
+<br>
+<strong>
+T:"著者:"
+</strong>
+T:"©︎"
+<span class="printuser avatarhover">
+<a href="/user:info/kankan" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="kankan" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/kankan" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"kankan"
+</a>
+</span>
+<br>
+<strong>
+T:"作成年:"
+</strong>
+T:"2018"
+</p>
+<hr>
+<p>
+<a href="/author:kankan">
+T:"著者ページ"
+</a>
+</p>
+<div class="credit-back" style="text-align: center;">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+</iframe>
+</div>
+</div>
+<div class="creditBottomRate" style="height:30px;">
+<div class="credit-license">
+<a class="cc cc-by-sa" href="#invalid-url">
+</a>
+</div>
+<div style="text-align: center; top: 0px;">
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+<br>
+T:"[[/div]]"
+</div>
+</div>
+</div>
+<blockquote>
+<p>
+T:"─"
+<strong>
+T:"注意"
+</strong>
+T:"─"
+<br>
+T:"以下の報告書は田中先生によって大幅に添削されています。報告書の修正箇所を確認する為にも、改訂前報告書も必ず参照して下さい。"
+</p>
+</blockquote>
+<div class="scp-image-block block-right scp-clear-false" style="width:300px;">
+<a href="https://scp-jp.wjfiles.com/local--files/scp-1045-jp/Mrs.Glasses">
+<img alt="Mrs.Glasses" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/scp-1045-jp/Mrs.Glasses/medium.jpg">
+</a>
+<div class="scp-image-caption">
+<p>
+T:"就任前の田中先生"
+</p>
+</div>
+</div>
+<p>
+<strong>
+T:"ID:"
+</strong>
+T:"1045"
+</p>
+<p>
+<strong>
+T:"担当クラス:"
+</strong>
+<span style="text-decoration: line-through;">
+T:"S組"
+</span>
+T:"E組"
+</p>
+<p>
+<strong>
+T:"普段の先生:"
+</strong>
+T:"田中先生は授業の時以外は8104棟の職員室にいます。先生や添削された文章から半径"
+<span style="text-decoration: line-through;">
+T:"9m"
+</span>
+<span style="text-decoration: line-through;">
+T:"16m"
+</span>
+T:"25mの範囲(以下、範囲)には、どんな文章も近づけないで下さい。田中先生添削事件のようなことを防ぐために、添削された文章は早めに再提出して下さい。"
+</p>
+<p>
+<strong>
+T:"説明:"
+</strong>
+T:"先生は度数1.7のフレームが黒い眼鏡を掛けた女性です。日本語及び初歩的な英語の文章が範囲内に入ると、瞬時に赤ペンで校閲と添削が、青ペンで称賛のコメントがされます。また赤文字・青文字が書かれている文章(添削された文章)の範囲内の文章も先生が見つけて添削します。添削内容は現実に合っているかを重視したもので、当然ながらたとえフィクションや比喩表現だとしても現実的なあるいは現実に即した内容に訂正します。しかし自身については現実より少々盛った内容に訂正することがあります。添削された文章が"
+<span style="text-decoration: line-through;">
+T:"32時間"
+</span>
+<span style="text-decoration: line-through;">
+T:"16時間"
+</span>
+T:"8時間以内に添削通りに修正されなかった場合、おしおきとして強制的に修正され範囲の半径の拡張や次回の修正期限の短縮がされます。その修正を削除することはいけないことであり、添削された文章の物理的破壊によってのみ強制的な修正や範囲拡張、期限短縮を防ぐことが可能ですがしないで下さい。"
+</p>
+<p>
+<strong>
+T:"追記1:"
+</strong>
+T:"田中先生はとあるアパートの一室にいました。当時室内の全ての文書と隣接する部屋のいくつかの文書に強制的な修正がされており、通報が入り発見され無事就任しました。"
+</p>
+<p>
+<strong>
+T:"追記2:"
+</strong>
+T:"ある日の早朝に8104棟にて大規模な添削が行われ(田中先生添削事件)、1000枚以上の添削された文章が作成されました。この事件から丁度16時間前にこの報告書が添削されていましたが、学級委員は添削された文章を折り畳んで放置していました。このことが範囲の拡大に繋がり、結果として添削事件を許すことになり、先生もE組に異動しました。また、学級委員は辞退しました。"
+</p>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>改訂前1045-JP報告書"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>テキストを隠す"
+</a>
+</div>
+<div class="collapsible-block-content">
+<blockquote>
+<p>
+T:"この報告書は先生に添削されたもののコピーであり、上記の報告書は田中先生添削事件後更に修正したものです。そのため、あくまで添削の例として参照して下さい。"
+</p>
+</blockquote>
+<div class="scp-image-block block-right scp-clear-false" style="width:300px;">
+<a href="https://scp-jp.wjfiles.com/local--files/scp-1045-jp/Mrs.Glasses">
+<img alt="Mrs.Glasses" class="image" src="https://scp-jp.wjfiles.com/local--resized-images/scp-1045-jp/Mrs.Glasses/medium.jpg">
+</a>
+<div class="scp-image-caption">
+<p>
+T:"発見当時のSCP-1045-JP"
+</p>
+</div>
+</div>
+<p>
+<em>
+<span style="color: red">
+T:"(1)─(キャプションについて)私には田中という名前があります。ちゃんと名前で呼んで下さい。"
+</span>
+</em>
+</p>
+<p>
+<span class="Dame">
+<strong>
+T:"アイテム番号"
+</strong>
+</span>
+<em>
+<span style="color: red">
+T:"(2)"
+</span>
+</em>
+<strong>
+T:":"
+</strong>
+<span class="Dame">
+T:"SCP-1045-JP"
+</span>
+<em>
+<span style="color: red">
+T:"(3)"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(2)─人のことを「アイテム」扱いしてはいけませんよ。「ID」と書くのがいいでしょう。"
+</span>
+</em>
+T:"<NBSP>"
+<br>
+<em>
+<span style="color: red">
+T:"(3)─「JP」は日本のことだと思いますが、「SCP」とは何を指している文字列なんですか？何にせよ、校内新聞なら番号部分だけで十分だと思いますよ。"
+</span>
+</em>
+</p>
+<p>
+<span class="Dame">
+<strong>
+T:"オブジェクトクラス"
+</strong>
+</span>
+<strong>
+T:":"
+</strong>
+<em>
+<span style="color: red">
+T:"(4)"
+</span>
+</em>
+<span class="Dame">
+T:"Safe"
+</span>
+<em>
+<span style="color: red">
+T:"(5)"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(4)─ここも同様です。「担当クラス」として下さい。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(5)─クラス番号はクラスの皆のものですから、勝手に変更せず「S組」と改めて下さい。"
+</span>
+</em>
+</p>
+<p>
+<span class="Dame">
+<strong>
+T:"特別収容プロトコル"
+</strong>
+</span>
+<strong>
+T:":"
+</strong>
+<em>
+<span style="color: red">
+T:"(6)"
+</span>
+</em>
+<span class="Dame">
+T:"SCP-1045-JP"
+</span>
+<em>
+<span style="color: red">
+T:"(7)"
+</span>
+</em>
+T:"は"
+<span class="Dame">
+T:"サイト-8104"
+</span>
+<em>
+<span style="color: red">
+T:"(8)"
+</span>
+</em>
+T:"の"
+<span class="Dame">
+T:"電子保管庫にて収容されています"
+</span>
+<em>
+<span style="color: red">
+T:"(9)"
+</span>
+</em>
+T:"。"
+<br>
+<em>
+<span style="color: red">
+T:"(6)─「収容」という表現はまるで私が特別な施設に入っているように感じられます。ここは学校なのですから、「普段の先生」とすればいいと思いますよ。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(7)─人をIDで呼ぶのは失礼です。ちゃんと「田中先生」と表記するか単に「先生」として下さいね。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(8)─「サイト」という表現は分かりづらい気がします。「8104棟」としましょう。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(9)─これではまるで私が物みたいではないですか。きちんと「職員室に授業の時以外はいます」と改めなさい。"
+</span>
+</em>
+</p>
+<p>
+T:"SCP-1045-JPや"
+<span class="Dame">
+T:"SCP-1045-JP-a"
+</span>
+<em>
+<span style="color: red">
+T:"(10)"
+</span>
+</em>
+T:"から半径"
+<span class="Homeru">
+<span style="text-decoration: line-through;">
+T:"9m"
+</span>
+T:"16m"
+</span>
+<em>
+<span style="color: blue">
+T:"(1)"
+</span>
+</em>
+T:"の範囲"
+<span class="Homeru">
+T:"(以下、範囲)"
+</span>
+<em>
+<span style="color: blue">
+T:"(2)"
+</span>
+</em>
+T:"には、"
+<span class="Dame">
+T:"文章の書かれた如何なる物体や電子データ"
+</span>
+<em>
+<span style="color: red">
+T:"(11)"
+</span>
+</em>
+T:"も近づけないで下さい。"
+<br>
+<em>
+<span style="color: red">
+T:"(10)─この文章を読む限りでは、これは私が添削した文章を指しているのですね？でしたら「添削された文章」とした方が分かりやすいと思います。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(11)─単純に「どんな文章」と言えば分かりやすく簡潔でしょう。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: blue">
+T:"(1)─あえて修正したところを削除しないことで変化が分かりやすくなっていますね！素晴らしいです！(*^.^*)"
+</span>
+</em>
+<br>
+<em>
+<span style="color: blue">
+T:"(2)─文章を短く、かつ分かりやすくするいい書き方です！(^-^)"
+</span>
+</em>
+</p>
+<p>
+<span class="Dame">
+T:"SCP-1045-JP-aは発見次第破棄して下さい"
+</span>
+<em>
+<span style="color: red">
+T:"(12)"
+</span>
+</em>
+T:"。"
+<br>
+<em>
+<span style="color: red">
+T:"(12)─添削された文章は捨てないで下さい。「添削された文章は、早めに再提出して下さい」と訂正して下さい。"
+</span>
+</em>
+</p>
+<p>
+<strong>
+T:"説明:"
+</strong>
+T:"SCP-1045-JPは度数1.7のフレームが黒い"
+<span class="Dame">
+T:"眼鏡です"
+</span>
+<em>
+<span style="color: red">
+T:"(13)"
+</span>
+</em>
+T:"。"
+<br>
+<em>
+<span style="color: red">
+T:"(13)─私は物ではないので、「眼鏡を掛けた女性」としましょう。"
+</span>
+</em>
+</p>
+<p>
+T:"日本語及び初歩的な英語の"
+<span class="Dame">
+T:"文章の記されたもの"
+</span>
+<em>
+<span style="color: red">
+T:"(14)"
+</span>
+</em>
+T:"が範囲内に入ると瞬時に"
+<span class="Dame">
+T:"約9割の文に"
+</span>
+<em>
+<span style="color: red">
+T:"(15)"
+</span>
+</em>
+<span class="Dame">
+T:"赤の斜体による校閲・添削や青の斜体による称賛のコメントが追加され"
+</span>
+<em>
+<span style="color: red">
+T:"(16)"
+</span>
+</em>
+T:"、"
+<span class="Dame">
+T:"コメントは範囲から離れても消えることはありません"
+</span>
+<em>
+<span style="color: red">
+T:"(17)"
+</span>
+</em>
+T:"。"
+<br>
+<em>
+<span style="color: red">
+T:"(14)─「文章」とだけ書けばいいと思いますよ。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(15)─私もそのくらい頑張りたいとは思っているんですが、どうしても添削の量はその文章によって変わってしまいます。「約九割」と断言するとそうでない添削が作成された時に修正する必要がでてきますから、削除しましょうか。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(16)─「斜体」とまで書く必要はないのでは？「赤ペンで校閲と添削が、青ペンで称賛のコメントがされ」とするのがベターです。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(17)─文字が勝手に消えたりしないのは当たり前です。この一文はいらないと思います。"
+</span>
+</em>
+</p>
+<p>
+T:"また斜体が出現している文章"
+<span class="Homeru">
+T:"(SCP-1045-JP-a)"
+</span>
+<em>
+<span style="color: blue">
+T:"(3)"
+</span>
+</em>
+<span class="Dame">
+T:"の範囲内の文章も添削され"
+</span>
+<em>
+<span style="color: red">
+T:"(18)"
+</span>
+</em>
+T:"、"
+<span class="Dame">
+T:"SCP-1045-JP-aとなります"
+</span>
+<em>
+<span style="color: red">
+T:"(19)"
+</span>
+</em>
+T:"。"
+<br>
+<em>
+<span style="color: red">
+T:"(18)─なんとなく超常現象に聞こえるので、「範囲内の文章も先生が見つけて添削し」としておきましょうか。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(19)─こちらも同様です。前の文に繋げて「…ます」と変更しましょう。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: blue">
+T:"(3)─括弧の中の表現はともかく、この書き方はすごくグッジョブですよ！(^^)d"
+</span>
+</em>
+</p>
+<p>
+T:"添削内容は現実に合っているかを重視したもので、"
+<span class="Dame">
+T:"たとえフィクションや比喩表現だとしても現実的なあるいは現実に即した内容に訂正します"
+</span>
+<em>
+<span style="color: red">
+T:"(20)"
+</span>
+</em>
+T:"。"
+<br>
+<em>
+<span style="color: red">
+T:"(20)─当然のことです。「当然ながら」等といれて下さい。"
+</span>
+</em>
+</p>
+<p>
+<span>
+T:"SCP-1045-JP-aが"
+<span class="Homeru">
+<span style="text-decoration: line-through;">
+T:"32時間"
+</span>
+T:"16時間"
+</span>
+<em>
+<span style="color: blue">
+T:"(4)"
+</span>
+</em>
+T:"以内に添削通りに修正されなかった場合、"
+<span class="Dame">
+T:"強制的にSCP-1045-JP-aは修正され範囲の半径の拡張や次回の修正期限の短縮がされます"
+</span>
+<em>
+<span style="color: red">
+T:"(21)"
+</span>
+</em>
+T:"。"
+<br>
+<em>
+<span style="color: red">
+T:"(21)─何故そうなるかが分かりにくいので、「おしおきとして」と一言入れるといいでしょう。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: blue">
+T:"(4)─ここもナイスです！記載されていないので名前は分かりませんが、作成者さんは文章を理解しやすくする天才ですね！(^-^)ゝ゛"
+</span>
+</em>
+T:"<NBSP>"
+</span>
+</p>
+<p>
+<span>
+<span class="Dame">
+T:"その修正を削除することは不可能です"
+</span>
+<em>
+<span style="color: red">
+T:"(22)"
+</span>
+</em>
+T:"が、SCP-1045-JP-aの物理的破壊によってのみ"
+<span class="Dame">
+T:"強制的な修正や範囲拡張、期限短縮を防ぐことが可能です"
+</span>
+<em>
+<span style="color: red">
+T:"(23)"
+</span>
+</em>
+T:"。"
+<br>
+<em>
+<span style="color: red">
+T:"(22)─「不可能」ではなく「いけないこと」です。その表現も超常現象に誤解されるでしょうから、修正しておいて下さい。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(23)─ですが実際にされるととても困りますので、「がしないで下さい」と付け足して下さい。"
+</span>
+</em>
+</span>
+</p>
+<p>
+<span>
+<span class="Dame">
+<strong>
+T:"補遺1"
+</strong>
+</span>
+<strong>
+T:":"
+</strong>
+<em>
+<span style="color: red">
+T:"(24)"
+</span>
+</em>
+T:"SCP-1045-JPは"
+<span class="Dame">
+T:"██県██市"
+</span>
+<em>
+<span style="color: red">
+T:"(25)"
+</span>
+</em>
+T:"のアパートで、"
+<span class="Dame">
+T:"20██/██/██に[削除済]した[データ削除]勤務"
+</span>
+<em>
+<span style="color: red">
+T:"(26)"
+</span>
+</em>
+T:"の"
+<span class="Dame">
+T:"女性教師の部屋に親族が遺品整理の為に訪れた際に発見されました"
+</span>
+<em>
+<span style="color: red">
+T:"(27)"
+</span>
+</em>
+T:"。"
+<br>
+<em>
+<span style="color: red">
+T:"(24)─「補遺」という言葉は分からない人が出てきてしまうでしょう。「追記」の方が一般的です。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(25)─この黒塗りに何の意味があるのかよく分かりませんが、わざわざそう表記するぐらいなら最初から書かなければよいのでは？"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(26)─これも同様です。削除しておきましょう。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(27)─これはこの項全体に言えることですが、こういった個人情報は不特定多数の人が読む文章に記載しない方がよいです。必要なら仕方ないですが、なるべく記載するのは最小限に留めてもらえると助かります。"
+</span>
+</em>
+</span>
+</p>
+<p>
+<span>
+T:"当時室内の全ての文書と隣接する部屋のいくつかの文書に強制的な修正がされており、"
+<span class="Dame">
+T:"親族のスマートフォン内の電話帳にも添削が入れられていた"
+</span>
+<em>
+<span style="color: red">
+T:"(28)"
+</span>
+</em>
+T:"ことから通報が入り"
+<span class="Dame">
+T:"発見・収容に至りました"
+</span>
+<em>
+<span style="color: red">
+T:"(29)"
+</span>
+</em>
+T:"。"
+<span class="Dame">
+T:"同校の教師達へのインタビューでは「女性教師は生徒の提出物に丁寧な添削をしていたが、そうしなければという義務感と焦燥感もあったようだった」という多数の証言がされています"
+</span>
+<em>
+<span style="color: red">
+T:"(30)"
+</span>
+</em>
+T:"が、SCP-1045-JPとの関連は不明です。親族及びアパート住民には"
+<span class="Dame">
+T:"クラスA記憶処理を施しました"
+</span>
+<em>
+<span style="color: red">
+T:"(31)"
+</span>
+</em>
+T:"。"
+<br>
+<em>
+<span style="color: red">
+T:"(28)─同様に、削除をお願いします。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(29)─何度も書いた様に私は物ではありません。「発見され無事就任しました」として下さい。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(30)─不要です、削除を。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(31)─「記憶処理」ときましたか…。そのようなものが現実に存在したら今頃世界は大パニックに陥っていますよ。存在しないものは書かないで下さいね。"
+</span>
+</em>
+</span>
+</p>
+<p>
+<span>
+<strong>
+<em>
+<span style="color: red">
+T:"～まとめ～"
+</span>
+</em>
+</strong>
+<br>
+<em>
+<span style="color: red">
+T:"全体的に私を物のように説明していたのが気になりました。人を物扱いすることはいけないことです。良いところもちゃんとあったので、それに気をつけて頑張って下さいね。(^-^)ゝ゛"
+<br>
+T:"(提出期限は05/18(水)の朝学活前までです。)"
+</span>
+</em>
+<br>
+</span>
+</p>
+<div style="text-align: right;">
+<p>
+<span>
+<em>
+<span style="color: red">
+T:"田中より"
+</span>
+</em>
+</span>
+</p>
+</div>
+</div>
+</div>
+</div>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<span>
+<a class="collapsible-block-link" href="javascript:;">
+T:"+<NBSP>追記3"
+</a>
+</span>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<span>
+<a class="collapsible-block-link" href="javascript:;">
+T:"-<NBSP>テキストを隠す"
+</a>
+</span>
+</div>
+<div class="collapsible-block-content">
+<blockquote>
+<p>
+<span>
+T:"以下の文章は田中先生添削事件の際、添削から45分後に削除されたものです。先生の提示した締切より15時間以上早い修正だったことから、先生の異常性との関連が指摘されています。"
+</span>
+</p>
+</blockquote>
+<p>
+<span>
+<span class="Dame">
+<strong>
+T:"補遺2"
+</strong>
+</span>
+<em>
+<span style="color: red">
+T:"(32)"
+</span>
+</em>
+<strong>
+T:":"
+</strong>
+<span class="Dame">
+T:"発見当時、SCP-1045-JPは以下の内容のメモ用紙が入った封筒の側に置かれていました"
+</span>
+<em>
+<span style="color: red">
+T:"(33)"
+</span>
+</em>
+T:"。メモ用紙は撮影した上で破棄し、"
+<span class="Dame">
+T:"写真を[削除済]した女性教師の親族"
+</span>
+<em>
+<span style="color: red">
+T:"(34)"
+</span>
+</em>
+T:"へ"
+<span class="Dame">
+T:"カバーストーリー\"証拠として押収\"を伝えて"
+</span>
+<em>
+<span style="color: red">
+T:"(35)"
+</span>
+</em>
+T:"返却しました。"
+<br>
+<em>
+<span style="color: red">
+T:"(32)─ここも同様に修正しましょう。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(33)─繰り返しになりますが、これらは個人情報です。記事には必要ありませんし、全て削除してもらいたいです。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(34)─ここも同様に、削除をお願いします。"
+</span>
+</em>
+<br>
+<em>
+<span style="color: red">
+T:"(35)─「カバーストーリー」とは何のことなのでしょうか…？もっと一般的な表現に変更するか、訂正や削除をすべきかと思います。"
+</span>
+</em>
+</span>
+</p>
+<blockquote>
+<p>
+<span>
+T:"<IDSP>"
+<span class="Dame">
+T:"元█年█組の皆へ"
+</span>
+<em>
+<span style="color: red">
+T:"─黒塗りは無意味ですし、個人情報ですので削除して頂けると助かります。"
+</span>
+</em>
+<br>
+T:"<IDSP>"
+<span class="Dame">
+T:"いざこういう時になると、何を書けばいいか思い付きません"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─早く削除して下さい。"
+</span>
+</em>
+<span class="Dame">
+T:"けれども、皆にいくつか、どうしても言っておきたいことがあったのでペンを取りました"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─不必要なので削除しなさい。"
+</span>
+</em>
+<br>
+T:"<IDSP>"
+<span class="Dame">
+T:"一つ目"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─何故こんなものを記載したんですか。"
+</span>
+</em>
+<span class="Dame">
+T:"皆の文章はとても素晴らしかったです"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─削除を。"
+</span>
+</em>
+<span class="Dame">
+T:"去年の4月から1年間見てきたけれど、毎回毎回皆がとっても上手な作文を書いてきて驚きました"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─削除です。"
+</span>
+</em>
+<span class="Dame">
+T:"あんなにいっぱい添削したのも、あんなにいっぱい駄目出ししたのも、意地悪ではなくて「皆の文章力に答えなくちゃ」って思ったからです"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─全て削除してください。"
+</span>
+</em>
+<span class="Dame">
+T:"だから、出来れば、私のことを恨まないで欲しいな"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─やめてください。"
+</span>
+</em>
+<br>
+T:"<IDSP>"
+<span class="Dame">
+T:"二つ目"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─おねがいです。"
+</span>
+</em>
+<span class="Dame">
+T:"私は皆のことを全く恨んでいません"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─のせないでください。"
+</span>
+</em>
+<span class="Dame">
+T:"確かに、お手洗いで上から水を掛けられたり、手袋の中に画鋲を入れられたりしたけれど、それでも毎日が本当に楽しかった"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─いたいんです"
+</span>
+</em>
+<span class="Dame">
+T:"ドッジボール大会、合唱コンクール、運動会、卒業式"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─わすれたいんです"
+</span>
+</em>
+<span class="Dame">
+T:"どれもが、私の大切な思い出です"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─なんで"
+</span>
+</em>
+<span class="Dame">
+T:"だからどうか、私がいなくなったことを自分たちのせいにしないで"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─さくじょして"
+</span>
+</em>
+<span class="Dame">
+T:"私は、私自身のせいでいなくなったんです"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─おねがいだから"
+</span>
+</em>
+<br>
+T:"<IDSP>"
+<span class="Dame">
+T:"三つ目"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─わたしがわるかったから"
+</span>
+</em>
+<span class="Dame">
+T:"私のお別れ会の時は、皆でクラスの歌を歌って欲しいです"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"─あやまるから"
+</span>
+</em>
+<span class="Dame">
+T:"合唱コンクールで散々歌ったから「もう歌いたくない」って人もいると思います"
+</span>
+T:"。"
+<em>
+<span style="color: red">
+T:"ごめんなさい"
+</span>
+</em>
+T:"でも、皆とお別れする前に、最後に一回だけ、皆の歌が聞きたいんです。"
+<em>
+<span style="color: red">
+T:"おねが"
+</span>
+</em>
+<br>
+T:"<IDSP>読んでくれて、ありがとう。"
+<em>
+<span style="color: red">
+T:"ゆるして"
+</span>
+</em>
+T:"じゃあ、伝えたいことも書き終わ"
+<em>
+<span style="color: red">
+T:"やだ"
+</span>
+</em>
+T:"ったので、そろそろ行ってきます。"
+<em>
+<span style="color: red">
+T:"やだ"
+</span>
+</em>
+T:"皆がこれからも、良い文章を"
+<em>
+<span style="color: red">
+T:"やだ"
+</span>
+</em>
+T:"書けることを願"
+<em>
+<span style="color: red">
+T:"やだ"
+</span>
+</em>
+T:"っています。"
+<br>
+</span>
+</p>
+<div style="text-align: right;">
+<p>
+<span>
+T:"[削"
+<em>
+<span style="color: red">
+T:"いじめないで"
+</span>
+</em>
+T:"除済]より"
+</span>
+</p>
+</div>
+</blockquote>
+</div>
+</div>
+</div>
+<p>
+T:"[[span class=\"Dame\"]]"
+</p>

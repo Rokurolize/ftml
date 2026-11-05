@@ -1,0 +1,81 @@
+{
+ "kind": "tale",
+ "listed_size": 17875,
+ "live_page_content_sha256": "b05abc61e0f1944a7b42747f683fce079123038f31a1c376c9a691149a02305a",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:23:55+00:00",
+  "method": "GET",
+  "response_bytes": 80338,
+  "response_sha256": "3bd94c11b1a1e1485f16a4e82ef866176189523b9d26e8504f4628d96d310e22",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/teubuku"
+ },
+ "page_id": 1153808331,
+ "rating": 268,
+ "site": "scp-jp",
+ "slug": "teubuku",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:23:55+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "1153808331"
+  },
+  "response_bytes": 70792,
+  "response_sha256": "4ab534458b72e5aab6112f7c84797d142d749bd39126c2776bc0b1283c7c46ff",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "714ec7dbc670b79b49bbe6db96ab36e1987b1a931c5111fa580b205581310f6f",
+ "stats": {
+  "counts": {
+   "anchor": 0,
+   "blocks": 13,
+   "bold": 244,
+   "cjk_dash_pair": 0,
+   "cjk_emphasis": 215,
+   "collapsible": 1,
+   "color": 119,
+   "css": 0,
+   "div": 0,
+   "ellipsis_dash": 34,
+   "footnote": 0,
+   "fullwidth_space": 34,
+   "heading": 0,
+   "hr": 0,
+   "html": 0,
+   "iftags": 0,
+   "image": 1,
+   "include": 3,
+   "italic": 0,
+   "link3": 0,
+   "list": 0,
+   "module": 0,
+   "mono": 0,
+   "quote": 500,
+   "raw": 0,
+   "ruby": 0,
+   "size": 0,
+   "span": 1,
+   "strike": 0,
+   "sup_sub": 0,
+   "table": 0,
+   "tabview": 0,
+   "underline": 0
+  },
+  "density_per_kchar": 61.37,
+  "markup_tokens": 1097
+ },
+ "title": "てうぶく",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "1153808331",
+  "pageUnixName": "teubuku",
+  "requestPageName": "teubuku",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

@@ -1,0 +1,99 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "credit:start",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:coltop",
+     "site": "scp-int",
+     "variables": {
+      "hide": "welcome!",
+      "show": "もっとうまいシチューを造りたい？"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:colend",
+     "site": "scp-int",
+     "variables": {}
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:coltop-deep",
+     "site": "scp-jp",
+     "variables": {
+      "folded": "1",
+      "hide": "welcome!",
+      "ifprot": "0",
+      "nohide": "0",
+      "show": "もっとうまいシチューを造りたい？"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:colend-deep",
+     "site": "scp-jp",
+     "variables": {
+      "hide": "- Hide block",
+      "nohide": "1"
+     }
+    }
+   ],
+   "pass": 2
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 3
+  }
+ ],
+ "existing_pages_from_live": [
+  "a-n-0064",
+  "ambrose-the-end-of-the-world",
+  "author:stengan774",
+  "comeout-from-arca",
+  "cool-not-over-yet",
+  "dear-dr-please-remember-us",
+  "deus-ex-arca",
+  "document-recovered-from-the-marianas-trench",
+  "early-summer-rain-on-arca",
+  "exit-deus-ex-machina",
+  "grant-request-for-development-of-nurturing-and-education",
+  "kitchen-accident-curry",
+  "making-2000-hub",
+  "project-another-one",
+  "pte-1422-bosch-lengle",
+  "r-g-b-planning",
+  "r-sinano-chuo-co-jp-2019-12-19-na37u538",
+  "scp-1670-jp",
+  "scp-2000",
+  "scp-2133-jp",
+  "scp-2430-jp-j",
+  "scp-flavor",
+  "story-of-our-life",
+  "takamata-chili-sauce",
+  "the-clown-plays-the-audience",
+  "yamizushi-file-no900"
+ ],
+ "newpage_links_in_live": []
+}

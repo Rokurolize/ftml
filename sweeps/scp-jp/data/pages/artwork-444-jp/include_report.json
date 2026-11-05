@@ -1,0 +1,35 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "inc:changepagetitle",
+     "site": "scp-jp-sandbox2",
+     "variables": {
+      "COLOR": "#EEE",
+      "TITLE": "＊＊＊"
+     }
+    },
+    {
+     "found": true,
+     "page": "inc:headsubtitle",
+     "site": "scp-jp-sandbox2",
+     "variables": {
+      "title": "████ █ ████ ██"
+     }
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 2
+  }
+ ],
+ "existing_pages_from_live": [],
+ "newpage_links_in_live": []
+}

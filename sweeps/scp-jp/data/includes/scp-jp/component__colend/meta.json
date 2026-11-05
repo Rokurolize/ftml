@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:26:22+00:00",
+  "method": "GET",
+  "response_bytes": 29647,
+  "response_sha256": "d256cfda25932d9a3ce128bfb41cbae061431044e88747ba8d0d7443c33cbeda",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/component:colend"
+ },
+ "page": "component:colend",
+ "page_id": 105379208,
+ "site": "scp-jp",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:26:23+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "105379208"
+  },
+  "response_bytes": 443,
+  "response_sha256": "a8cfad7f54069a881e87c8c7b2182a59ecad6770ab8403b7ee80b37c76fba44e",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "de2e7551fc9d8b2b8a391711f648bb762dce85318c08e93bb3f39240b9621d6b"
+}

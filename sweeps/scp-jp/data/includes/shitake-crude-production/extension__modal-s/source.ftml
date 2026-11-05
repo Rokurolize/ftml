@@ -1,0 +1,326 @@
+[[module css]]
+
+#{$id}-popup {
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    position: fixed;
+    display: flex;
+    display: -webkit-flex;
+    display: -moz-flex;
+    display: -ms-flex;
+    display: -o-flex;
+    z-index: 10;
+}
+
+#{$id}-popup:not(:target) {
+    opacity: 0;
+    display: none;
+    
+}
+#{$id}-popup:target{
+    opacity: 1;
+        animation-duration: 0.3s;
+      animation-name: fade-in;
+      -moz-animation-duration: 0.5s;
+      -moz-animation-name: fade-in;
+      -webkit-animation-duration: 0.5s;
+      -webkit-animation-name: fade-in;
+}
+
+@keyframes fade-in {
+      0% {
+        display: none;
+        opacity: 0;
+      }
+
+      1% {
+        display: block;
+        opacity: 0;
+      }
+
+      100% {
+        display: block;
+        opacity: 1;
+      }
+    }
+
+    @-moz-keyframes fade-in {
+      0% {
+        display: none;
+        opacity: 0;
+      }
+
+      1% {
+        display: block;
+        opacity: 0;
+      }
+
+      100% {
+        display: block;
+        opacity: 1;
+      }
+    }
+
+    @-webkit-keyframes fade-in {
+      0% {
+        display: none;
+        opacity: 0;
+      }
+
+      1% {
+        display: block;
+        opacity: 0;
+      }
+
+      100% {
+        display: block;
+        opacity: 1;
+      }
+    }
+
+#{$id}-popup .fader{
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.5);
+    width: 100%;
+    height: 100%;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+#{$id}-popup .fader > p >iframe,
+#{$id}-popup .fader > iframe{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+.{$id}-modalcontainer{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 400px;
+    height: 200px;
+    margin: auto;
+}
+
+.{$id}-modalcontainer .modaltable{
+position:relative;
+width:100%;
+height:100%;
+}
+
+.{$id}-modalcontainer .modaltable > p{
+position:absolute;
+left:0;
+top:0;
+width:100%;
+height:100%;
+margin:0;
+padding:0;
+}
+
+.{$id}-modalcontainer .modaltable > p > iframe,
+.{$id}-modalcontainer .modaltable > iframe{
+position:absolute;
+width:100%;
+height:100%;
+top:0;
+left0;
+z-index:30;
+}
+
+.{$id}-modalcontainer .modaltable .modalbox{
+position:absolute;
+left:0;
+top:0;
+z-index:40;
+    min-width: 400px;
+    background: #fefefe;
+    border: #333 solid 1px;
+    border-radius: 5px;
+    box-shadow: 0 2px 6px rgba(102, 0, 0, .5);
+    padding:0 0 0 4px;
+overflow:hidden;
+   -ms-user-select: none; /* IE 10+ */
+   -moz-user-select: -moz-none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+   user-select: none;
+}
+
+.{$id}-modalcontainer .modaltable .modalbox .content{
+    padding: 4px;
+}
+
+.{$id}-modalcontainer .modaltable .modalbox .title{
+font-size:150%;
+text-align:center;
+margin:0;
+border-bottom:solid #000 1px;
+padding:0.4em;
+width:100%;
+
+}
+
+
+.{$id}-modalcontainer .modaltable .modalbox p{
+margin:0;
+padding:0;
+}
+
+.{$id}-modalcontainer .modaltable .modalbox .choicebox{
+float:right;
+padding:3px;
+}
+
+.{$id}-modalcontainer .modaltable .modalbox .confirm{
+width:100%;
+text-align:center;
+}
+
+.{$id}-modalcontainer .modaltable .modalbox .confirm a,
+.{$id}-modalcontainer .modaltable .modalbox .choicebox a{
+text-align:center;
+display:inline-block;
+border-radius:6px;
+min-width:8em;
+-moz-box-shadow: 0px 3px 3px rgba(0,0,0,0.4);
+-webkit-box-shadow: 0px 3px 3px rgba(0,0,0,0.4);
+-o-box-shadow: 0px 3px 3px rgba(0,0,0,0.4);
+-ms-box-shadow: 0px 3px 3px rgba(0,0,0,0.4);
+}
+
+.{$id}-modalcontainer .modaltable .modalbox .confirm a:hover,
+.{$id}-modalcontainer .modaltable .modalbox .choicebox a:hover{
+text-decoration:none;
+-moz-box-shadow: 0px 1px 1px rgba(0,0,0,0.4);
+-webkit-box-shadow: 0px 1px 1px rgba(0,0,0,0.4);
+-o-box-shadow: 0px 1px 1px rgba(0,0,0,0.4);
+-ms-box-shadow: 0px 1px 1px rgba(0,0,0,0.4);
+}
+
+.{$id}-modalcontainer .modaltable .modalbox .confirm a:active,
+.{$id}-modalcontainer .modaltable .modalbox .choicebox a:active{
+-moz-box-shadow: 0px 3px 3px rgba(0,0,0,0.4) inset;
+-webkit-box-shadow: 0px 3px 3px rgba(0,0,0,0.4) inset;
+-o-box-shadow: 0px 3px 3px rgba(0,0,0,0.4) inset;
+-ms-box-shadow: 0px 3px 3px rgba(0,0,0,0.4) inset;
+}
+
+.{$id}-modalcontainer .modaltable .modalbox .choicebox a{
+background: #eeeeee; /* Old browsers */
+background: -moz-linear-gradient(top, #eeeeee 0%, #cccccc 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #eeeeee 0%,#cccccc 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #eeeeee 0%,#cccccc 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eeeeee', endColorstr='#cccccc',GradientType=0 ); /* IE6-9 */
+padding:0.5px;
+margin:0.2em 0.5em 0 0.2em;
+color:#000;
+}
+
+.{$id}-modalcontainer .modaltable .modalbox .choicebox a:hover{
+background-color:#EEE;
+background: #d6d6d6; /* Old browsers */
+background: -moz-linear-gradient(top, #d6d6d6 0%, #b8b8b8 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #d6d6d6 0%,#b8b8b8 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #d6d6d6 0%,#b8b8b8 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d6d6d6', endColorstr='#b8b8b8',GradientType=0 ); /* IE6-9 */
+}
+
+
+.{$id}-modalcontainer .modaltable .modalbox .choicebox a:active{
+background: #cbcbcb; /* Old browsers */
+background: -moz-linear-gradient(top, #cbcbcb 0%, #afafaf 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #cbcbcb 0%,#afafaf 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #cbcbcb 0%,#afafaf 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cbcbcb', endColorstr='#afafaf',GradientType=0 ); /* IE6-9 */
+}
+
+
+
+
+
+.{$id}-modalcontainer .modaltable .modalbox .confirm a{
+
+padfing:8px;
+color:#fff;
+font-weight:bold;
+margin:auto;
+font-size:120%;
+
+background: #87c2fd; /* Old browsers */
+background: -moz-linear-gradient(top, #87c2fd 0%, #53a5f1 40%, #0573e1 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #87c2fd 0%,#53a5f1 40%,#0573e1 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #87c2fd 0%,#53a5f1 40%,#0573e1 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#87c2fd', endColorstr='#0573e1',GradientType=0 ); /* IE6-9 */
+}
+
+.{$id}-modalcontainer .modaltable .modalbox .confirm a:hover{
+background: #4ea5fc; /* Old browsers */
+background: -moz-linear-gradient(top, #4ea5fc 0%, #268dee 40%, #0462c0 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #4ea5fc 0%,#268dee 40%,#0462c0 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #4ea5fc 0%,#268dee 40%,#0462c0 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#4ea5fc', endColorstr='#0462c0',GradientType=0 ); /* IE6-9 */
+}
+
+.{$id}-modalcontainer .modaltable .modalbox .confirm a:active{
+color:#ececec;
+background: #2490fc; /* Old browsers */
+background: -moz-linear-gradient(top, #2490fc 0%, #1281e8 40%, #0460bc 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, #2490fc 0%,#1281e8 40%,#0460bc 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, #2490fc 0%,#1281e8 40%,#0460bc 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#2490fc', endColorstr='#0460bc',GradientType=0 ); /* IE6-9 */
+}
+
+@media (max-width: 479px) {
+
+.{$id}-modalcontainer{
+width:90%;
+min-width:90%;
+}
+
+
+.{$id}-modalcontainer .modalbox{
+min-width:90%;
+}
+
+
+}
+
+
+@media (max-width: 767px) {
+#{$id}-popup {
+    height: 100%;
+    top: 0;
+}
+.{$id}-modalcontainer{
+    min-width: 300px;
+}
+
+.{$id}-modalcontainer .modaltable .modalbox{
+    min-width: 300px;
+}
+}
+
+
+
+[[/module]]
+[[div id="{$id}-popup"]]
+[[div class="fader"]]
+[[iframe http://shitake-crude-production.wikidot.com/extension:modal-script/code/1 ]]
+[[/div]]
+[[div class="{$id}-modalcontainer"]]
+[[div class="modaltable"]]
+[[iframe http://shitake-crude-production.wikidot.com/extension:modal-script/code/1 ]]
+[[div class="modalbox"]]

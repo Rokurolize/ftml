@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:26:57+00:00",
+  "method": "GET",
+  "response_bytes": 77507,
+  "response_sha256": "ed9d2fd40e909f77c4456e3e48531fa3cf05dff1dd477307fd80247e0fce5352",
+  "status": 200,
+  "url": "https://scp-wiki.wikidot.com/component:centered-header-bhl"
+ },
+ "page": "component:centered-header-bhl",
+ "page_id": 1307032079,
+ "site": "scp-wiki",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:26:58+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "1307032079"
+  },
+  "response_bytes": 23882,
+  "response_sha256": "7e7c4894672407ce3af2eb8e9db53390f0e6ca67af746e4e49db64f2d151033a",
+  "status": 200,
+  "url": "https://scp-wiki.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "8bbb4cdd0a3d6c74a175bf62024c968bce188123582608c2f254d6d68e5284f0"
+}

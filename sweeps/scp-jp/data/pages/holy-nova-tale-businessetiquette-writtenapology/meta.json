@@ -1,0 +1,81 @@
+{
+ "kind": "tale",
+ "listed_size": 5324,
+ "live_page_content_sha256": "1d56ee1ae81fa6e4ca109174c7fad84ebc924cc26dd79f1e017181abe24b8475",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:24:27+00:00",
+  "method": "GET",
+  "response_bytes": 44235,
+  "response_sha256": "5c4c03decb157b277799c985c43a3cefba7f4d01007954a99a0405bb9b60c346",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/holy-nova-tale-businessetiquette-writtenapology"
+ },
+ "page_id": 25085266,
+ "rating": 244,
+ "site": "scp-jp",
+ "slug": "holy-nova-tale-businessetiquette-writtenapology",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:24:28+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "25085266"
+  },
+  "response_bytes": 22538,
+  "response_sha256": "d7b4d4539e8c22294cdee3e3a6ae3124637b3534701221d4b2cce6c5d0363957",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "421fe01b32cdcb7859efd919bd6ec7d758a42365d804fcd3f5e4981ab1951c26",
+ "stats": {
+  "counts": {
+   "anchor": 0,
+   "blocks": 106,
+   "bold": 42,
+   "cjk_dash_pair": 1,
+   "cjk_emphasis": 86,
+   "collapsible": 0,
+   "color": 0,
+   "css": 0,
+   "div": 6,
+   "ellipsis_dash": 0,
+   "footnote": 0,
+   "fullwidth_space": 111,
+   "heading": 0,
+   "hr": 2,
+   "html": 0,
+   "iftags": 0,
+   "image": 3,
+   "include": 0,
+   "italic": 58,
+   "link3": 0,
+   "list": 0,
+   "module": 1,
+   "mono": 0,
+   "quote": 57,
+   "raw": 0,
+   "ruby": 0,
+   "size": 44,
+   "span": 0,
+   "strike": 2,
+   "sup_sub": 0,
+   "table": 0,
+   "tabview": 0,
+   "underline": 30
+  },
+  "density_per_kchar": 82.27,
+  "markup_tokens": 438
+ },
+ "title": "新人職員のためのビジネスマナー講座　始末書編",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "25085266",
+  "pageUnixName": "holy-nova-tale-businessetiquette-writtenapology",
+  "requestPageName": "holy-nova-tale-businessetiquette-writtenapology",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

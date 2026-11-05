@@ -1,0 +1,1282 @@
+[[module css]]
+body {
+  -webkit-text-size-adjust: 110%;
+}
+.vpoem {
+  text-indent: 0;
+  -webkit-writing-mode: vertical-rl;
+          writing-mode: vertical-rl;
+  margin: auto;
+  margin-bottom: 0.5em;
+  font-size: 2.5em;
+  font-family: "KaiTi", "MS PMincho", "STKaiti", "HiraMinProN-W6", "Hiragino Kaku Gothic Pro", "MS PGothic", serif;
+}
+.vpoem p {
+  line-height: 1.4;
+  margin: 0 auto;
+}
+.vpoem tt {
+  vertical-align: middle;
+  font-family: "KaiTi", "MS PMincho", "STKaiti", "HiraMinProN-W6", "Hiragino Kaku Gothic Pro", "MS PGothic", serif;
+}
+@media screen and (max-width: 767px) {
+  .vpoem {
+    font-size: 1.5em;
+  }
+}
+span[style="text-decoration: line-through;"] {
+  display: -webkit-inline-flex;   /* Safari */
+  display:         inline-flex;
+  -webkit-flex-direction: column; /* Safari */
+          flex-direction: column;
+  vertical-align: bottom;
+}
+span[style="text-decoration: line-through;"] > tt {
+  font-size: 50%;
+  line-height: 0.5em;
+}
+.tategaki span[style="text-decoration: line-through;"] > tt {
+  line-height: 1em;
+}
+.tategaki span[style="text-decoration: line-through;"] {
+  vertical-align: 0.3em;
+}
+.tategaki blockquote {
+  padding: 2em 0.5em;
+}
+.tategaki tt {
+  vertical-align: middle;
+  font-family: "ヒラギノ明朝 Pro W3", "HG明朝E", "ＭＳ Ｐ明朝", "ＭＳ 明朝", serif;
+}
+.tategaki .henoji:before {
+  content: "〳〵";
+  color: rgba(51, 51, 51, 1.0);
+  opacity: 1;
+  transform: scale(1, 1)rotateX(0) translateY(0);
+}
+.tategaki .dhenoji:before {
+  content: "〴〵";
+  color: rgba(51, 51, 51, 1.0);
+  opacity: 1;
+  transform: scale(1, 1)rotateX(0) translateY(0);
+}
+.tategaki .dhenoji:after {
+  content: "";
+  color: rgba(51, 51, 51, 1.0);
+  opacity: 1;
+  transform: scale(1, 1)rotateX(0) translateY(0);
+}
+.tategaki {
+  -webkit-columns-axis: vertical;
+  -webkit-columns: auto 20em;
+  -webkit-column-gap: 20px;
+  -webkit-column-rule: 1px solid #dddddd;
+  -webkit-column-fill: auto;
+          columns: auto 20em;
+          column-gap: 20px;
+          column-rule: 1px solid #dddddd;
+          column-fill: auto;
+  font-size: small;
+  overflow-y: scroll;
+  width: calc(100% + 3em);
+  padding-right: 2em;
+          writing-mode: tb-rl;
+          writing-mode: vertical-rl;
+  -webkit-writing-mode: vertical-rl;
+  font-family: "ヒラギノ明朝 Pro W3", "HG明朝E", "ＭＳ Ｐ明朝", "ＭＳ 明朝", serif;
+}
+.tategaki {
+  -webkit-column-axis: vertical;
+  -webkit-columns: auto 20em;
+  -webkit-column-gap: 20px;
+  -webkit-column-rule: 1px solid #dddddd;
+  -webkit-column-fill: auto;
+          columns: auto 20em;
+          column-gap: 20px;
+          column-rule: 1px solid #dddddd;
+          column-fill: auto;
+  font-size: small;
+  width: calc(100% + 3em);
+  padding-right: 2em;
+          writing-mode: tb-rl;
+          writing-mode: vertical-rl;
+  -webkit-writing-mode: vertical-rl;
+  font-family: "ヒラギノ明朝 Pro W3", "HG明朝E", "ＭＳ Ｐ明朝", "ＭＳ 明朝", serif;
+}
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  .tategaki {
+    overflow-y: scroll;
+  }
+}
+.henoji:before {
+  content: "へ";
+  color: rgba(51, 51, 51, 1.0);
+  opacity: 1;
+  transform: scale(1.9, 1)rotateX(180deg) translateY(-0.08em);
+  position: absolute;
+  display: inline-block;
+          user-select: none;
+  -webkit-user-select: none;
+  z-index: 1;
+}
+.henoji {
+  position: relative;
+  width: 1em;
+  white-space: pre;
+  display: inline-block;
+  padding: 0 0.5em;
+  color: rgba(51, 51, 51, 0);
+}
+.dhenoji:before {
+  content: "へ";
+  color: rgba(51, 51, 51, 1.0);
+  opacity: 1;
+  transform: scale(1.9, 1)rotateX(180deg) translateY(-0.08em);
+  position: absolute;
+  display: inline-block;
+          user-select: none;
+  -webkit-user-select: none;
+  z-index: 1;
+}
+.dhenoji {
+  position: relative;
+  width: 1em;
+  white-space: pre;
+  display: inline-block;
+  padding: 0 0.5em;
+  color: rgba(51, 51, 51, 0);
+}
+.dhenoji:after {
+  position: absolute;
+  color: rgba(51, 51, 51, 1.0);
+  content: "゛";
+  top: 0.07em;
+  left: 0.6em;
+  z-index: 1;
+}
+.hdhenoji:before {
+  content: "へ";
+  color: rgba(51, 51, 51, 1.0);
+  opacity: 1;
+  transform: scale(1.9, 1)rotateX(180deg) translateY(-0.08em);
+  position: absolute;
+  display: inline-block;
+          user-select: none;
+  -webkit-user-select: none;
+  z-index: 1;
+}
+.hdhenoji {
+  position: relative;
+  width: 1em;
+  white-space: pre;
+  display: inline-block;
+  padding: 0 0.5em;
+  color: rgba(51, 51, 51, 0);
+}
+.hdhenoji:after {
+  position: absolute;
+  color: rgba(51, 51, 51, 1.0);
+  content: "゜";
+  top: 0.07em;
+  left: 0.6em;
+  z-index: 1;
+}
+span[style="text-decoration: underline;"] tt {
+  position: relative;
+  text-decoration: none;
+}
+span[style="text-decoration: underline;"] tt::before {
+  content: "";
+  position: absolute;
+  top: 90%;
+  width: 100%;
+  height: 0.25em;
+  background: -webkit-linear-gradient(315deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%), -webkit-linear-gradient(45deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%);
+  background:         linear-gradient(135deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%), linear-gradient(45deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%);
+  background-size: 0.5em 0.5em;
+  background-repeat: repeat-x, repeat-x;
+}
+.namisen {
+  position: relative;
+}
+.namisen::before {
+  content: "";
+  position: absolute;
+  top: 90%;
+  width: 100%;
+  height: 0.25em;
+  background: -webkit-linear-gradient(315deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%), -webkit-linear-gradient(45deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%);
+  background:         linear-gradient(135deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%), linear-gradient(45deg, transparent, transparent 45%, #000000, transparent 55%, transparent 100%);
+  background-size: 0.5em 0.5em;
+  background-repeat: repeat-x, repeat-x;
+}
+.warning {
+  position: relative;
+}
+.warning::before {
+  content: "";
+  position: absolute;
+  top: 90%;
+  width: 100%;
+  height: 0.25em;
+  background: -webkit-linear-gradient(315deg, transparent, transparent 45%, #ff0000, transparent 55%, transparent 100%), -webkit-linear-gradient(45deg, transparent, transparent 45%, #ff0000, transparent 55%, transparent 100%);
+  background:         linear-gradient(135deg, transparent, transparent 45%, #ff0000, transparent 55%, transparent 100%), linear-gradient(45deg, transparent, transparent 45%, #ff0000, transparent 55%, transparent 100%);
+  background-size: 0.5em 0.5em;
+  background-repeat: repeat-x, repeat-x;
+}
+tt {
+  font-family: inherit;
+  font-size: 1em;
+  display: inline-table;
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1;
+  height: 1em;
+  vertical-align: calc(1em - 1px);
+  text-indent: 0%;
+}
+tt > sup {
+  font-family: inherit;
+  display: table-header-group;
+  font-size: 0.6em;
+  line-height: 1.1;
+  text-align: center;
+  white-space: pre;
+}
+tt > sub {
+  font-family: inherit;
+  -webkit-text-emphasis-style: filled sesame;
+          text-emphasis-style: filled sesame;
+  font-size: 1em;
+  vertical-align: calc(-1em + 1px);
+}
+tt > em {
+  font-size: 12.8px;
+  font-style: normal;
+  -webkit-text-emphasis-style: filled dot;
+          text-emphasis-style: filled dot;
+  vertical-align: calc(-1em + 1px);
+}
+tt > em {
+  /* For the environments which comply with CSS3. */
+  font-style: normal;
+  font-weight: 400;
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAABgCAYAAAAU0fKgAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsSAAALEgHS3X78AAAAbElEQVRYw+3TQQ6AIAxEUcZw/yuXlYkRKaPEhMXvnsfQFkVElIU6Vg5vCEgqkr4DZz/fQN0TrkNxkMce3JEMGjbRXQ97CqMUKeCk+H+RZimqc0uGbPYXAAAAAAAAAAAAAAAAAAAAAAAAAACSajbCGcGsSkirAAAAAElFTkSuQmCC), none;
+  background-repeat: repeat-x;
+  padding: 0.5em 0 0;
+  background-color: transparent;
+  background-clip: padding-box, content-box;
+  background-size: 1em 1.3em, auto;
+}
+.reddel {
+  position: relative;
+}
+.reddel:before {
+  content: " ";
+  display: block;
+  position: absolute;
+  right: 0;
+  left: 0;
+  top: 40%;
+  bottom: 40%;
+  border-top: 1px solid red;
+  border-bottom: 1px solid red;
+}
+.kenten-b {
+  -webkit-text-emphasis-style: filled dot;
+          text-emphasis-style: filled dot;
+}
+.kenten-c {
+  -webkit-text-emphasis-style: filled circle;
+          text-emphasis-style: filled circle;
+}
+.kenten-janome {
+  -webkit-text-emphasis-style: filled double-circle;
+          text-emphasis-style: filled double-circle;
+}
+.kenten-t {
+  -webkit-text-emphasis-style: filled triangle;
+          text-emphasis-style: filled triangle;
+}
+.kenten-goma {
+  -webkit-text-emphasis-style: filled sesame;
+          text-emphasis-style: filled sesame;
+}
+.kenten-wb {
+  -webkit-text-emphasis-style: open dot;
+          text-emphasis-style: open dot;
+}
+.kenten-wc {
+  -webkit-text-emphasis-style: open circle;
+          text-emphasis-style: open circle;
+}
+.kenten-doublec {
+  -webkit-text-emphasis-style: open double-circle;
+          text-emphasis-style: open double-circle;
+}
+.kenten-wt {
+  -webkit-text-emphasis-style: open triangle;
+          text-emphasis-style: open triangle;
+}
+.kenten-wgoma {
+  -webkit-text-emphasis-style: open sesame;
+          text-emphasis-style: open sesame;
+}
+.kenten-hoshi {
+  -webkit-text-emphasis-style: "★";
+          text-emphasis-style: "★";
+}
+.kenten-kane {
+  -webkit-text-emphasis-style: "¥";
+          text-emphasis-style: "¥";
+}
+.bousen {
+  text-decoration: overline;
+}
+
+
+/* thank you tonootto */
+div.pseudo-tags ul {
+  font-size: 85%;
+  border-top: 1px solid #bbbbbb;
+  display: inline-block;
+  margin: 10px 0 0;
+  padding: 0 2px;
+  list-style: none;
+}
+div.pseudo-tags li {
+  color: #bb0011;
+  text-decoration: none;
+  display: inline-block;
+  margin: 0 1px;
+  cursor: pointer;
+}
+div.pseudo-tags li:hover {
+  text-decoration: underline;
+}
+#page-content span[style$="new"] {
+  display: inline-block;
+  background: #eaffea;
+}
+#page-content span[style$="new"]::before {
+  padding-left: 5px;
+  content: "+ ";
+  color: #55cc55;
+}
+#page-content span[style$="new"]::after {
+  content: " ";
+  padding-right: 5px;
+}
+#page-content span[style$="old"] {
+  display: inline-block;
+  background: #ffecec;
+}
+#page-content span[style$="old"]::before {
+  padding-left: 5px;
+  content: "- ";
+  color: #da5757;
+}
+#page-content span[style$="old"]::after {
+  content: " ";
+  padding-right: 5px;
+}
+#page-content .new {
+  display: inline-block;
+  margin-right: 5px;
+  background: #eaffea;
+}
+#page-content .new::before {
+  padding-left: 5px;
+  content: "+ ";
+  color: #55cc55;
+}
+#page-content .new::after {
+  content: " ";
+  padding-right: 5px;
+}
+#page-content .old {
+  display: inline-block;
+  margin-right: 5px;
+  background: #ffecec;
+}
+#page-content .old::before {
+  padding-left: 5px;
+  content: "- ";
+  color: #da5757;
+}
+#page-content .old::after {
+  content: " ";
+  padding-right: 5px;
+}
+
+[[/module]]
+
+
+[[>]]
+[[div style="margin: 3px 10px 15px auto;"]]
+[[module Rate]]
+[[/div]]
+[[/>]]
+
+[[=]]
+
+[[image https://scp-jp-storage.wikidot.com/local--files/file:1955008-1-b706/RealContest001.jpg]]
+
+##99a5c9|現実とは作られるのであって、見つけられるものではない。[[footnote]]0.9909GHm[[/footnote]]
+Nグッドマン -　世界制作の方法##
+
+[[/=]]
+
+[[=]]
+
+[[image https://scp-jp-storage.wikidot.com/local--files/file:1955008-10-fe21/RealContestruler001.png]]
+
+[[div style="margin: 50px auto;"]]
++++* 結果発表
+[[div style="background-color: #fffff0; font-size: 140%; border: solid 1px #cc0000; border-radius: 10px; text-align: center; width: 400px; margin: 0 auto;"]]
+**優勝**
+
+[[size 110%]]**[# スペシャルコンプリートガチャ]**[[/size]]
+by **[[*user stengan774]]**
+
+[[/div]]
+[[/div]]
+
+[[image https://scp-jp-storage.wikidot.com/local--files/file:1955008-11-kgwl/RealContestruler002.png]]
+
+[[/=]]
+
++* 投稿作品
+
+[[div style="margin: 3px 30px 30px;"]]
+
+1.**[# スペシャルコンプリートガチャ]** by [[*user stengan774]] **182点**
+2.**[# ありきたりなガッフィアス]** by [[*user KanKan]] **180点**
+3.**[# 偽のコンテスト]** by Jack_Dowland[[footnote]]0.0005GHm[[/footnote]] **173点**
+4.**[# DJ斑座の財団けもラジオ ～エントロピーの彼方へ～]** by [[*user Come_Dream]] **151点**
+5.**[# 氷漬けの豹]** by [[*user karkaroff]] **149点**
+6.**[# Hey!Omachi!]** by [[*user Okaka_Onigiri]] **130点**
+7.**[# 警告:UVB-76/2001/11/03-B]** by [[*user izhaya]] **114点**
+8.**[# Safe任務]** by [[*user yzkrt]] **108点**
+9.**[# 新発売「０秒ラーメン」]** by [[*user FattyAcid]] **93点**
+10.**[# 君のいたあらゆる場所。]** by [[*user locker]] **80点**
+11.**[# 決壊]** by [[*user Hasuma_S]] **62点**
+12.**[# 私は魔女ではありません]** by [[*user tonootto]] **61点**
+11.**[# リカの診療所]** by [[*user crow_109]] **49点**
+13.**[# １０人のナナボーゾ]** by [[*user 29mo]] **45点**
+14.**[# カーテンコール]** by [[*user ukarayakara]] **39点**
+15.**[# 盗まれた星]** by [[*user Ikkeby-V]] **20点**
+16.**[# ３５分も過ぎればただの砂]** by [[*user kyougoku08]] **8点**
+------
+17.**[# dr_torayaの提言Ⅶ - 回転]** by [[*user dr_toraya]] **-3点**
+18.**[# 試作車両IRV0014-運用レポート]** by [[*user ZeroWinchester]] **-11点**
+
+[[/div]]
+
+[[=]]
+[[image https://scp-jp-storage.wikidot.com/local--files/file:1955008-10-fe21/RealContestruler001.png]]
+[[/=]]
+
++* 選評
+投票を行った選考委員たちによる各記事の選評です。
+[[toc title="選評リスト"]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**スペシャルコンプリートガチャ**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //目を覚ませ//
+[[/div]]
+||~ Wilson値[[footnote]]ウィルソンの信頼値 全体の投票行動から算出した、好みに一致するかを示す数値。0から100の間で示される。[[/footnote]] || サイトスタッフ ||~ 76.4 || ベテランスタッフ ||~ 96.9 || レギュラースタッフ ||~ 98.0 ||
+
+> どれくらいの職員が網羅されているかはわかりませんが、
+> 集めていくのは単純に楽しいです。
+> しかし、星5の120JPがまったく出てこないのはつらいです。仕様ですか？
+> [[>]]
+> **+10** / 選考委員-S
+> [[/>]]
+
+> 毎日現実石を消費して星1のケーキを集める作業はとても楽しいです。
+> 消照闇子の出現確率を教えてもらえますか？
+> [[>]]
+> **+9** / 選考委員-M
+> [[/>]]
+
+> [[table style="margin-right:auto; margin-left:auto; border-collapse:collapse;"]][[row]][[cell style="text-align: center; border: 1px solid gray; padding: 10px;"]][[image https://scp-jp-storage.wikidot.com/local--files/file:1955008-4-6cm4/RealContest004b01.jpg]][[/cell]][[/row]][[/table]]
+> 
+> オレの現実石返してくれよ…　１０点
+> [[>]]
+> **+10** / 選考委員-T
+> [[/>]]
+
+> コンプガチャは違法。運営はお詫びに現実石を１００個配るべき。
+> [[>]]
+> **+10** / 選考委員-M
+> [[/>]]
+
+> これはスペシャルコンプガチャだからコンプガチャじゃないよ。
+> [[>]]
+> **+10** / 選考委員-H
+> [[/>]]
+
+> [[table style="margin-right:auto; margin-left:auto; border-collapse:collapse;"]][[row]][[cell style="text-align: center; border: 1px solid gray; padding: 10px;"]][[image https://scp-jp-storage.wikidot.com/local--files/file:1955008-8-1n1n/RealContest007.jpg]][[/cell]][[/row]][[/table]]
+> 
+> ああああああっ！！アッシュが来たあああああ！！
+> ああうあおああぉああああ神様運営様ありがとおおお！！！
+> [[>]]
+> **+10** / 選考委員-R
+> [[/>]]
+
+> [[table style="margin-right:auto; margin-left:auto; border-collapse:collapse;"]][[row]][[cell style="text-align: center; border: 1px solid gray; padding: 10px;"]][[image https://scp-jp-storage.wikidot.com/local--files/file:1955008-5-ngv6/RealContest004a01.jpg]][[/cell]][[/row]][[/table]]
+> 
+> おいまじでふざけんなよ唐揚げ…オレは信じないからな…
+> [[>]]
+> **+10** / 選考委員-K
+> [[/>]]
+
+> こんなの現実じゃない。[[footnote]]0.0013GHm[[/footnote]]
+> [[>]]
+> **-10** / ミシマ博士
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**ありきたりなガッフィアス**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //星なんか信じるもんじゃない//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 90.8 || ベテランスタッフ ||~ 97.2 || レギュラースタッフ ||~ 96.2 ||
+
+> たしかに１点爆撃はおそろしい。希釈される評価点。
+> 私もこの記事に１点を入れたくなったが、彼のようにはなりたくないので１０点を入れた。
+> [[>]]
+> **+10** / 選考委員-S
+> [[/>]]
+
+> 元の記事では評価2となっている点が気にはなるが、
+> フリマアプリに出品するしかない彼がかわいそうで最高だった。
+> [[>]]
+> **+8** / 選考委員-J
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**偽のコンテスト**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //とこしえの追放を受けたれば、せめて我に悲嘆を許し給え。//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 86.1 || ベテランスタッフ ||~ 94.0 || レギュラースタッフ ||~ 80.6 ||
+
+> [[table style="margin-right:auto; margin-left:auto; border-collapse:collapse;"]][[row]][[cell style="text-align: center; border: 1px solid gray; padding: 10px;"]][[image https://scp-jp-storage.wikidot.com/local--files/file:1955008-3-lc4t/RealContest003.jpg]][[/cell]][[/row]][[/table]]
+> 
+> コンテスト自体が偽物というアイディアは良かった。
+> ただコンテストの中に現実のコンテストが存在するのは複雑すぎるのでは？
+> [[>]]
+> **+9** / 選考委員-K
+> [[/>]]
+
+> SCP-109-JP-Aってなんだ？[[footnote]]0.00043GHm[[/footnote]]
+> [[>]]
+> **±0** / ミシマ博士
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**DJ斑座の財団けもラジオ ～エントロピーの彼方へ～**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //全ての物質はこの宇宙に希釈されていく。いわばこの世界すべてが私の机の上。//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 84.1 || ベテランスタッフ ||~ 86.7 || レギュラースタッフ ||~ 82.7 ||
+
+> エントロピーの権化！？
+> 研究員Iってそんなキャラクターだったの。
+> [[>]]
+> **+10** / 選考委員-F
+> [[/>]]
+
+> [[table style="margin-right:auto; margin-left:auto; border-collapse:collapse;"]][[row]][[cell style="text-align: center; border: 1px solid gray; padding: 10px;"]][[image https://scp-jp-storage.wikidot.com/local--files/file:1955008-6-sqme/RealContest005.jpg]][[/cell]][[/row]][[/table]]
+> 
+> かわいい。
+> [[>]]
+> **+10** / 選考委員-R
+> [[/>]]
+
+> 部屋も話もちらかってる。
+> [[>]]
+> **+7** / 選考委員-E
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**氷漬けの豹**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //豹の頭が出口に向いていたのか、先を目指していたのか、今では誰にもわからない。//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 86.8 || ベテランスタッフ ||~ 82.1 || レギュラースタッフ ||~ 78.3 ||
+
+> 107JP内での回収作戦の雰囲気がとても良かった。
+> タタールの軛も好きなのでそちらとも絡めてほしかった。
+> [[>]]
+> **+9** / 選考委員-U
+> [[/>]]
+
+> 合計で２４本ってことはやっぱり…
+> [[>]]
+> **+10** / 選考委員-S
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**Hey!Omachi!**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //そんなことまで頼むもんじゃない。//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 41.9 || ベテランスタッフ ||~ 77.9 || レギュラースタッフ ||~ 91.5 ||
+
+> 絶対スシブレードだと思ったのに、いい意味で裏切られた。思わずゾッとした。
+> うちのGoogleHomeにもそんな機能があったら…
+> [[>]]
+> **+9** / 選考委員-B
+> [[/>]]
+
+> もはや当サイトとミームは切っても切り離せない存在になって、
+> さらにリチャードドーキンスと縁が深くなったように思える。
+> [[>]]
+> **+8** / 選考委員-E
+> [[/>]]
+
+> Hey!Siri!この記憶を消去して！
+> [[>]]
+> **+7** / 選考委員-U
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**[警告]UVB-76/2001/11/03-B**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //奇跡なんて言葉はこの機内じゃシートベルトより役に立たない。//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 85.5 || ベテランスタッフ ||~ 70.2 || レギュラースタッフ ||~ 90.3 ||
+
+> ここまでくると洒落怖なような気がしないでもないけど、それでも好き。
+> [[>]]
+> **+9** / 選考委員-S
+> [[/>]]
+
+> 音源を使った音声記録というのが少ないので、もっと増えて欲しい。
+> さすがに英語にしてほしいというのは贅沢かな。
+> [[>]]
+> **+10** / 選考委員-K
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**Safe任務**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //なで放題。呼びたい放題。しっぽふり放題。//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 67.0 || ベテランスタッフ ||~ 73.1 || レギュラースタッフ ||~ 85.4 ||
+
+> [[table style="margin-right:auto; margin-left:auto; border-collapse:collapse;"]][[row]][[cell style="text-align: center; border: 1px solid gray; padding: 10px;"]][[image https://scp-jp-storage.wikidot.com/local--files/file:1955008-7-6rrv/RealContest006.jpg]][[/cell]][[/row]][[/table]]
+> 
+> これはただの犬の散歩なのでは？まあ2000JPがかわいいのでヨシ。
+> [[>]]
+> **+10** / 選考委員-R
+> [[/>]]
+
+> 爪きりがどれだけ危険な任務なのかは、私はよく知っているぞ。
+> [[>]]
+> **+9** / 選考委員-E
+> [[/>]]
+
+> 異常性のなくなった世界のことは私も良く考えるよ。[[footnote]]0.28GHm[[/footnote]]
+> [[>]]
+> **±0** / Agt.A
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**新発売「０秒ラーメン」**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //おかわりある？//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 32.2 || ベテランスタッフ ||~ 70.9 || レギュラースタッフ ||~ 83.2 ||
+
+> いやいやホルスはニートじゃないから！
+> たまに９柱に入れないだけだから！
+> [[>]]
+> **+6** / 選考委員-N
+> [[/>]]
+
+> ツタンラーメンって名前は嫌いじゃない。すごく呪われそうだけど。
+> 彼の墓に製造所を造るのはいかにも現実離れしている。
+> [[>]]
+> **+7** / 選考委員-K
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**君のいたあらゆる場所。**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //人生は迷路だ。だから地図が必要だ。//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 74.0 || ベテランスタッフ ||~ 61.2 || レギュラースタッフ ||~ 44.7 ||
+
+> 現代社会においてカードはまだまだ重要なアイテムで、
+> それを簡単にコピーされてしまうというのは確かに恐怖だと思った。
+> [[>]]
+> **+9** / 選考委員-U
+> [[/>]]
+
+> タイトルが良いですね。内容もどこかロマンチック。
+> [[>]]
+> **+8** / 選考委員-I
+> [[/>]]
+
+> セキュリティカードって黒マナ？[[footnote]]0.46GHm[[/footnote]]
+> [[>]]
+> **+8** / 選考委員-S
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**決壊**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //明日降る雨の中で、あなたはこの夜のことを思い出すだろう。//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 63.8 || ベテランスタッフ ||~ 54.5 || レギュラースタッフ ||~ 48.5 ||
+
+> 189JPのダムが涙を溜めているというアイディアは良い。
+> 世界が終わったあとも涙を流してくれる誰かがいる。
+> [[>]]
+> **+8** / 選考委員-R
+> [[/>]]
+
+> そして枯れてしまった。
+> [[>]]
+> **+8** / 選考委員-U
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**私は魔女ではありません**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //私は魔女でした。//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 45.2 || ベテランスタッフ ||~ 50.6 || レギュラースタッフ ||~ 52.1 ||
+
+> 読み終わると現実ではなくなるという儚さがあって良い。
+> [[>]]
+> **+8** / 選考委員-U
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**リカの診療所**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //だって斬っちゃったほうが早いでしょ。//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 28.7 || ベテランスタッフ ||~ 38.5 || レギュラースタッフ ||~ 49.3 ||
+
+> 治療法がコレしかないというのはまあ面白かった。
+> どこを斬るかを想像すると恐ろしい部分もある。
+> [[>]]
+> **+8** / 選考委員-K
+> [[/>]]
+
+> この画像どこにあったの？
+> 日本刀を持ったナースの画像を使いたかっただけなのでは。
+> [[>]]
+> **+5** / 選考委員-E
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**１０人のナナボーゾ**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //ひとりはブランコから落ちて。ひとりはふたりになって。//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 31.4 || ベテランスタッフ ||~ 35.7 || レギュラースタッフ ||~ 33.3 ||
+
+> 造られた新世界がとても私たちの現実と同じとは思えないけど、
+> 彼らには幸せになってほしい。
+> [[>]]
+> **+9** / 選考委員-U
+> [[/>]]
+
+> [[table style="margin-right:auto; margin-left:auto; border-collapse:collapse;"]][[row]][[cell style="text-align: center; border: 1px solid gray; padding: 10px;"]][[image https://scp-jp-storage.wikidot.com/local--files/file:1955008-9-qxp2/RealContest008.jpg]][[/cell]][[/row]][[/table]]
+> 
+> いや結局誰もいなくなるんかーい！
+> [[>]]
+> **+10** / 選考委員-N
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**カーテンコール**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //Show must go on.//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 29.5 || ベテランスタッフ ||~ 25.8 || レギュラースタッフ ||~ 20.2 ||
+
+> マイクを置くことで現実に帰っていくということですね。
+> 私は拍手を惜しみません。
+> [[>]]
+> **+9** / 選考委員-J
+> [[/>]]
+
+> 実在の人物を扱った記事の中では好きなほう。
+> [[>]]
+> **+8** / 選考委員-U
+> [[/>]]
+
+> どこかで彼女もデーモン小暮閣下になることを期待していた。
+> [[>]]
+> **+7** / 選考委員-K
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**盗まれた星**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //雨とともに、風とともに、眠ることも忘れて。//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 22.8 || ベテランスタッフ ||~ 20.4 || レギュラースタッフ ||~ 16.5 ||
+
+> 移動の自由からここまで複雑になるとは思わなかった。
+> 結局権利の移動はいままで以上にめんどくさくて笑った。
+> [[>]]
+> **+8** / 選考委員-E
+> [[/>]]
+
+> ひとりひとりアバターを持った世界ってことでいいのかな？[[footnote]]0.76GHm[[/footnote]]
+> 財団職員はどうしてるんだろう。
+> [[>]]
+> **+7** / 選考委員-U
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**３５分も過ぎればただの砂**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //水の底で今も主と陽の光を待つ。//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 16.8 || ベテランスタッフ ||~ 15.6 || レギュラースタッフ ||~ 18.7 ||
+
+> たしかに３５分前まではそこにあったのになー
+> 移築じゃなくて複製という過程には魅力を感じる。
+> [[>]]
+> **+9** / 選考委員-R
+> [[/>]]
+
+> ラムセス２世なのかオジマンディアスなのか。
+> [[>]]
+> **+5** / 選考委員-U
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 35px auto;"]]
+
+++ ##b32536|**dr_torayaの提言Ⅶ - 回転**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //真の法則が真の現実を生み出す。//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 8.2 || ベテランスタッフ ||~ 6.4 || レギュラースタッフ ||~ 2.0 ||
+
+> 絶対スシブレードだと思ったのに裏切られた。
+> [[>]]
+> **+2** / 選考委員-B
+> [[/>]]
+
+> 正直よくわからなかった。
+> 渡ってしまうと消滅する橋？
+> [[>]]
+> **+2** / 選考委員-U
+> [[/>]]
+
+> アフィン変換まではわかったけど、四元数はさっぱり…
+> これって普通の行列じゃダメなんです？
+> [[>]]
+> **+3** / 選考委員-J
+> [[/>]]
+
+> 前回の提言「撃鉄」よりもよくわかりません。
+> 結局あの銃ってどういう意味だったんですか？
+> 男性職員だけに効果のある銃？
+> [[>]]
+> **+1** / 選考委員-S
+> [[/>]]
+
+> 提言書きすぎでは？[[footnote]]0.977GHm[[/footnote]]
+> [[>]]
+> **+1** / 選考委員-R
+> [[/>]]
+
+[[/div]]
+
+
+------
+[[div style="margin: 40px auto;"]]
+
+++ ##b32536|**試作車両IRV0014-運用レポート**##
+
+[[div class="content-panel centered standalone invite" style="text-align: left;padding: 5px 30px 5px;"]]
+推薦人による紹介文
+* //それより車内にコーヒーメーカーつけてくれへん？//
+[[/div]]
+||~ Wilson値 || サイトスタッフ ||~ 2.1 || ベテランスタッフ ||~ 1.5 || レギュラースタッフ ||~ 0.9 ||
+
+> [[table style="margin-right:auto; margin-left:auto; border-collapse:collapse;"]][[row]][[cell style="text-align: center; border: 1px solid gray; padding: 1px;"]][[image https://scp-jp-storage.wikidot.com/local--files/file:1955008-143-oi7u/IRV0014A001.jpg width="600px"]][[/cell]][[/row]][[row]][[hcell style="text-align: center; border: 1px solid gray; padding: 3px; background-color: #f0f0f0;"]] ^^試作車両IRV0014(標準型) 外観^^ [[/hcell]][[/row]][[/table]]
+> 
+> 画像はおもしろい。
+> [[>]]
+> **+1** / 選考委員-U
+> [[/>]]
+
+> エージェントカナヘビを出しとけばいいってもんじゃない。
+> [[>]]
+> **±0** / 選考委員-E
+> [[/>]]
+
+> 彼は1000JPで優勝できなくておかしくなっているんだ。[[footnote]]0.94GHm[[/footnote]]
+> 許してやってくれ。
+> [[>]]
+> **-1** / 選考委員-K
+> [[/>]]
+
+> 特性職員を回収していたという現在の記事が複雑すぎるんじゃない？
+> 探査機が試料を回収するというルートA案を選択するべきだった。[[footnote]]0.9902GHm[[/footnote]]
+> [[>]]
+> **-1** / 選考委員-S
+> [[/>]]
+
+> スクラントン現実ビームとやらにはどんな効果があるんですか？
+> [[>]]
+> **-1** / 選考委員-J
+> [[/>]]
+
+> まともじゃない。[[footnote]]0.45GHm[[/footnote]]
+> [[>]]
+> **-10** / ミシマ博士
+> [[/>]]
+
+[[/div]]
+
+[[=]]
+[[image https://scp-jp-storage.wikidot.com/local--files/file:1955008-11-kgwl/RealContestruler002.png]]
+[[/=]]
+
+
+[[div style="margin: 35px auto;"]]
+[EOF]
+[[/div]]
+
+
+[[=]]
+
+[[image https://scp-jp-storage.wikidot.com/local--files/file:1955008-2-0usk/RealContest002.jpg]]
+
+##c1c7d9|人間は自身の住む世界が自身によって創造されたことを忘れてはならない。
+PLバーガー - 現実の社会的構成##
+
+[[/=]]
+
+++++* テーマ
+[[=]]
+[[size x-large]]「##3f5cd1|現実##」[[/size]]
+[[/=]]
+
+++++* 設定
+[[size large]]「現実」をテーマとした記事を書いて投稿しましょう。[[/size]]
+
+[[table style="margin-right:auto; margin-left:auto; border: 0px solid silver; width: 100%;"]]
+[[row]]
+[[cell style="text-align: center; border: 1px solid silver; padding: 5px;"]]
+
+++++* 投稿条件
+本コンテストに投稿するには下書きの段階で、3名以上の推薦人を得る必要があります。
+------
+++++* 推薦人
+全てのサイトメンバーが推薦人になることができます。
+推薦人のうち少なくとも1名は著者ページを所持している必要があります。
+推薦したい記事のディスカッションで名乗るだけで条件を満たします。
+同じメンバーが3つ以上の記事で推薦人になることはできません。
+推薦人は短い紹介文を書くこともできます。
+コンテスト終了後はフレーバーテキストとして扱われます。
+------
+++++* 投票
+選考委員はひとりにつき -1点 から 10点までを全ての選考対象の記事に与えます。
+サイトメンバーによる通常のVote値が21位以下の記事は選考の対象になりません。
+申請があればガリレウスヒューム値(GHm値)[[footnote]]ガリレウスヒューム値(GHm値) 情報が高多様度知性群の間でどれくらい共通化されているかを示す数値。0から1の間で示される。
+表象サーバー八咫、草薙、八尺瓊による敵対的生成ネットワークで算出される。情報の真偽を示す数値ではない。[[/footnote]]の測定が行われます。
+------
+++++* 選評
+選考委員は少なくとも1つ以上の選評を与えます。
+コンテスト終了時、最も選評の少なかった選考委員が、選評の無い記事に選評を与えます。
+------
+++++* 決定
+最も得票の多かった記事が優勝です。喜びましょう。[[footnote]]0.66GHm[[/footnote]]
+
+[[/cell]]
+[[/row]]
+[[/table]]
+
+++++* 選考委員
+選考委員は立候補あるいは主催者の依頼によって決まります。
+選考委員は少なくとも1つ以上の報告書を執筆している必要があります。
+選考委員構成内訳
+* サイトスタッフ - 15%
+* ベテランスタッフ(10以上の報告書を執筆したメンバー) - 35%
+* レギュラースタッフ(1以上の報告書を執筆したメンバー) - 45%[[footnote]]0.0002GHm[[/footnote]]
+
+++++* 投稿期間
+2016/08/20 AM:05:55 ～ 2020/11/07 PM11:55
+
+------
+
++* Q & A
+
+[[table style="margin-right:auto; margin-left:auto; border: 0px solid silver; width: 100%;"]]
+[[row]]
+[[cell style="text-align: center; border: 1px solid silver; padding: 10px; background-color: #f0f3f5;"]]
+[[size 115%]]##7a6fad|**Q:** テーマの現実って、何が"現実"なの？##[[/size]]
+
+**A:** 私は専門家ではないので、スピノザかライプニッツに聞いてください。
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="border: 0px solid silver; padding: 6px;"]][[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="text-align: center; border: 1px solid silver; padding: 10px; background-color: #f0f3f5;"]]
+[[size 115%]]##7a6fad|**Q:** 推薦人が集まらないよ。##[[/size]]
+
+**A:** ディスカッションで募集中であることをアピールしましょう。
+ついでに泣いてみるのも良いかもしれません。
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="border: 0px solid silver; padding: 6px;"]][[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="text-align: center; border: 1px solid silver; padding: 10px; background-color: #f0f3f5;"]]
+[[size 115%]]##7a6fad|**Q:** 記事は書けたけどこれは現実じゃないような気がする。##[[/size]]
+
+**A:** それを判断するのはあなたではなく、選考委員と表象サーバーです。[[footnote]]0.951GHm[[/footnote]]
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="border: 0px solid silver; padding: 6px;"]][[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="text-align: center; border: 1px solid silver; padding: 10px; background-color: #f0f3f5;"]]
+[[size 115%]]##7a6fad|**Q:** 誰が著者ページを持っているかなんてわからないよ。##[[/size]]
+
+**A:** 当サイトには人事ファイルをまとめたページがあります。
+そこから接触を試みるのも良いでしょう。
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="border: 0px solid silver; padding: 6px;"]][[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="text-align: center; border: 1px solid silver; padding: 10px; background-color: #f0f3f5;"]]
+[[size 115%]]##7a6fad|**Q:** やっぱりやめたくなった。記事を削除してもいい？##[[/size]]
+
+**A:** 創造主はあなたです。あなたの好きにしましょう。
+ただし彗星に導かれし推薦人には知らせるべきです。
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="border: 0px solid silver; padding: 6px;"]][[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="text-align: center; border: 1px solid silver; padding: 10px; background-color: #f0f3f5;"]]
+[[size 115%]]##7a6fad|**Q:** このページのどこに"現実"があるの？##[[/size]]
+
+**A:** 私は専門家ではないので、サイトスタッフに問い合わせてください。[[footnote]]0.64GHm[[/footnote]]
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="border: 0px solid silver; padding: 6px;"]][[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="text-align: center; border: 1px solid silver; padding: 10px; background-color: #f0f3f5;"]]
+[[size 115%]]##7a6fad|**Q:** 遅刻しちゃった。どうしてもコンテストに参加したい！##[[/size]]
+
+**A:** 現在ロールバックの予定はありません。別のコンテストに応募するべきでしょう。
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="border: 0px solid silver; padding: 6px;"]][[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="text-align: center; border: 1px solid silver; padding: 10px; background-color: #f0f3f5;"]]
+[[size 115%]]##7a6fad|**Q:** 共著はアリ？##[[/size]]
+
+**A:** もちろん。あなたが誰かと合体することも違法ではありません。
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="border: 0px solid silver; padding: 6px;"]][[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="text-align: center; border: 1px solid silver; padding: 10px; background-color: #f0f3f5;"]]
+[[size 115%]]##7a6fad|**Q:** 財団職員すべての生きる目的を奪って、それを"現実"と言ってもいいの？##[[/size]]
+
+**A:** 問題ありません。人間はそれほど弱くありません。[[footnote]]0.9909GHm[[/footnote]]
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="border: 0px solid silver; padding: 6px;"]][[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="text-align: center; border: 1px solid silver; padding: 10px; background-color: #f0f3f5;"]]
+[[size 115%]]##7a6fad|**Q:** 君たちを許すことができない。##[[/size]]
+
+**A:** 我々が空の青さを忘れなければ、いつか全てを許すときがくるでしょう。[[footnote]]0.043GHm[[/footnote]]
+[[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="border: 0px solid silver; padding: 6px;"]][[/cell]]
+[[/row]]
+
+[[row]]
+[[cell style="text-align: center; border: 1px solid silver; padding: 10px; background-color: #f0f3f5;"]]
+[[size 115%]]##7a6fad|**Q:** ここは現実じゃない。##[[/size]]
+
+**A:** はい。[[footnote]]0.9918GHm[[/footnote]]
+[[/cell]]
+[[/row]]
+
+[[/table]]
+
+[[div style="margin: 35px auto;"]]
+[[collapsible show="+ 脚注" hide="- 脚注を隠す"]]
+[[footnoteblock]]
+[[/collapsible]]
+[[/div]]

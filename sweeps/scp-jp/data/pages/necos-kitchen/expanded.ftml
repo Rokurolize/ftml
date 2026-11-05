@@ -1,0 +1,1034 @@
+[[module CSS]]
+
+.hakase{
+float:right; 
+width: 240px; 
+margin-top: 0; 
+margin-right: 0; 
+margin-bottom: 10px; 
+margin-left: 10px; 
+padding-right: 10px;
+text-align: right; 
+}
+
+.hakaseword{
+color: #000000; 
+background-color: #6DF560; 
+font-family: Verdana, Arial, sans-serif; 
+border-radius:30px /70px; 
+text-align: left; 
+padding: 2px 20px;
+}
+
+.joshu{
+float: left; 
+width: 240px; 
+margin-top: 0; 
+margin-right: 0; 
+margin-bottom: 10px; 
+margin-left: 10px; 
+padding-right: 10px;
+text-align: left; 
+}
+
+
+.joshuword{
+color: #000000; 
+background-color: #F899E1; 
+font-family: Verdana, Arial, sans-serif; 
+border-radius:30px /70px; 
+text-align: left; 
+padding: 2px 20px;
+}
+
+[[/module]]
+
+
+[[module css]]
+@import url('https://scp-jp.github.io/files/util/common/credit/style/style.css');
+
+.creditRate.no-rate .page-rate-widget-box {
+    visibility:hidden;
+}
+
+.creditRate.creditModule.no-rate ~ #u-credit-view .creditBottomRate > div:nth-of-type(2) {
+    display: none;
+}
+[[/module]]
+
+[[div_ class="creditRate creditModule {$mode}"]]
+[[div_ class="rateBox" [[iftags 殿堂入り]]style="display:none;"[[/iftags]]]]
+[[div_ class="rate-box-with-credit-button"]]
+[[module Rate]]
+[[div_ class="creditButton"]]
+[[a href="#u-credit-view" class="fa fa-info" style="position:relative;"]][[image https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png title="クレジットを表示する" style="position:absolute;height:100%;width:100%;top:0;left:0;"]][[/a]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[div_ class="rateBox heritage-wrap" [[iftags -殿堂入り]]style="display:none;"[[/iftags]]]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]archived:heritage-collection[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]]" style="max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[div_ class="creditButton"]]
+[[a href="#u-credit-view" class="fa fa-info" style="position:relative;"]][[image https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png title="クレジットを表示する" style="position:absolute;height:100%;width:100%;top:0;left:0;"]][[/a]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+[[div_ style="clear:both;"]]
+[[/div]]
+
+[[div_ id="credit-view"]]
+[[div_ class="fader"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/start.html ]]
+[[/div]]
+
+[[div_ class="modalcontainer"]]
+[[div_ class="modalbox [[iftags 殿堂入り]]heritage[[/iftags]]"]]
+[[div_ class="modalbox-title [[iftags 殿堂入り]]heritage[[/iftags]]"]]
+++* クレジット
+[[/div]]
+[[div class="credit"]]
+
+**タイトル:**  NECO’S キッチン　～SCP財団ロゴのステーキ～
+**著者:** ©[[*user Jiraku_Mogana]]
+**作成年:** 2019
+
+[[div_ class="credit-back" style="text-align: center;"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/end.html style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" scrolling="no"]]
+[[/div]]
+[[/div]]
+
+[[div_ class="creditBottomRate" style="height:30px;"]]
+[[div_ class="credit-license"]]
+[[a href="*https://creativecommons.org/licenses/by-sa/3.0/deed.ja" class="cc cc-by-sa"]]@@@@[[/a]]
+[[/div]]
+[[div_ style="text-align: center; top: 0px;"]]
+[[div_ [[iftags +殿堂入り]]style="display: flex;"[[/iftags]] class="Dendo"]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]heritage-collection-arc[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]]" style=" max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[div_ [[iftags +殿堂入り]]style="display:none;"[[/iftags]]]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+皆さんおはようございます。
+[編集済]博士です。さぁ今日もよろしくおねがいします。
+
+[[/div]]
+[[div]]
+[[image 博士キメ width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+こんばんは。アシスタントの[編集済]助手です。
+
+[[/div]]
+[[div]]
+[[image 助手グッド width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+[[size 0%]] ねこのきっちんですよろしくおねがいします [[/size]]
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+[編集済]くん、本日はSCPテレビ173周年記念スペシャル番組です。
+
+[[/div]]
+[[div]]
+[[image 博士キメ width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+ええ、博士。[https://scp-jp.wikidot.com/scp-056-jp SCP-056-JP]を使ったときのように心を躍らしています。今日はどんな料理を作るのでしょうか？
+
+[[/div]]
+[[div]]
+[[image 助手グッド width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+スペシャルですからスペシャルにふさわしいスペシャルな素材を使ったスペシャルな料理です。
+では今から素材を採りに行きましょう。
+
+[[/div]]
+[[div]]
+[[image 博士キメ width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+今から採りに行くのですか。それは私を驚かせました。
+
+[[/div]]
+[[div]]
+[[image 助手悩む width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+では行きましょう。表に[https://scp-jp.wikidot.com/scp-1365 バイク・ジャスティス]を手配してあります。
+
+[[/div]]
+[[div]]
+[[image 博士キメ width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+----
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+つきました。
+
+[[/div]]
+[[div]]
+[[image 博士キメ width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+森オブ森に来ましたね。目的の食材はウスヒラタケですか？それともクリタケ？もしかしてベニテングダケ？
+
+[[/div]]
+[[div]]
+[[image 助手グッド width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+違います。どうしてキノコ限定なのですか。
+
+[[/div]]
+[[div]]
+[[image 博士悩む width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+では何で────
+
+[[/div]]
+[[div]]
+[[image 助手悩む width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+しっ、静かに。近くにいます。警戒されるといけない。あそこを見てください。
+
+[[/div]]
+[[div]]
+[[image 博士悩む width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+ん、何かいますね。
+
+[[/div]]
+[[div]]
+[[image 助手悩む width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+@@@@
+@@@@
+
+[[=image 背景 width="300px"]]
+
+@@@@
+@@@@
+@@@@
+@@@@
+@@@@
+@@@@
+@@@@
+
+[[=image 登場 width="300px"]]
+
+@@@@
+@@@@
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+あっ
+
+[[/div]]
+[[div]]
+[[image 助手悩む width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+@@@@
+@@@@
+
+[[=image 財団ロゴ強調 width="300px"]]
+
+@@@@
+@@@@
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+SCP財団ロゴ[[footnote]] SCP財団ロゴマークは、"Aelanna"作「Logo SCP Foundation」に基づき、CC BY-SA 3.0の範囲で公開されます。[[size smaller]](https://commons.wikimedia.org/wiki/File:Logo_SCP_Foundation.jpg)[[/size]][[/footnote]]だ～～～～！！
+
+[[/div]]
+[[div]]
+[[image 助手笑顔 width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+この大きさはなかなかの上モノですよ。
+
+[[/div]]
+[[div]]
+[[image 博士キメ width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+私、野生の財団ロゴを初めて見ました。
+
+[[/div]]
+[[div]]
+[[image 助手悩む width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+最近[https://scp-jp.wikidot.com/scp-4065 財団ロゴを排斥する動き]があって個体数が減ってますからね。
+今時の子供の中には財団ロゴは左上にしかいない、と思っている子もいるそうです。
+
+[[/div]]
+[[div]]
+[[image 博士悩む width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+博士、さっそく捕まえましょう。
+
+[[/div]]
+[[div]]
+[[image 助手グッド width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+[編集済]くん、財団ロゴの特別捕獲プロトコル (Special Capture Procedures) を知っているのかい？
+
+[[/div]]
+[[div]]
+[[image 博士悩む width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+えー……この[https://scp-jp.wikidot.com/scp-572 SCP-572]でバッサリと？
+
+[[/div]]
+[[div]]
+[[image 助手悩む width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+どこから持ってきたのですか、違いますよ。
+
+[[/div]]
+[[div]]
+[[image 博士悩む width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+いやでもこの刀なら絶対一刀両断できますって！
+
+[[/div]]
+[[div]]
+[[image 助手グッド width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+今回は生け捕りするので真っ二つにされては困ります。没収です。
+財団ロゴはこのエサでおびき寄せて捕まえるんですよ。
+
+[[/div]]
+[[div]]
+[[image 博士悩む width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+@@@@
+@@@@
+
+
+
+[[div class="scp-image-block block-center scp-clear-false" style="width:200px;"]]
+[[image 確保収容保護 {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+財団ロゴの好物。
+[[/div]]
+[[/div]]
+
+
+
+@@@@
+@@@@
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+早速罠を設置しましょう。
+
+[[/div]]
+[[div]]
+[[image 博士悩む width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+@@@@
+@@@@
+
+[[=image 罠1 width="300px"]]
+
+@@@@
+@@@@
+
+[[=image 罠2 width="300px"]]
+
+@@@@
+@@@@
+
+[[=image 捕獲 width="300px"]]
+
+@@@@
+@@@@
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+お見事です博士！
+……おや？
+
+[[/div]]
+[[div]]
+[[image 助手グッド width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+@@@@
+@@@@
+
+[[=image 閉じるロゴ width="200px"]]
+
+@@@@
+@@@@
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+矢印が集まっています！
+博士これは！？
+
+[[/div]]
+[[div]]
+[[image 助手悩む width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+うむ、これはですね……
+
+[[/div]]
+[[div]]
+[[image 博士キメ width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+@@@@
+@@@@
+
+[[=image 開くロゴ width="200px"]]
+
+@@@@
+@@@@
+
+[[=image くしゃみロゴ width="200px"]]
+
+@@@@
+@@@@
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+なんだ、くしゃみだったんですね。
+
+[[/div]]
+[[div]]
+[[image 助手グッド width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+え、ロゴってくしゃみするんだ。
+
+[[/div]]
+[[div]]
+[[image 博士悩む width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+----
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+キッチンに戻ってきました。
+
+[[/div]]
+[[div]]
+[[image 博士キメ width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+いよいよ調理開始ですね。
+
+[[/div]]
+[[div]]
+[[image 助手悩む width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+財団ロゴの下ごしらえから始めましょう。
+まず矢印を取り外しておきます。
+
+[[/div]]
+[[div]]
+[[image 博士キメ width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+@@@@
+@@@@
+
+[[=image 下処理1 width="200px"]]
+
+@@@@
+@@@@
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+本体の突起物は苦みがあるので切り落とします。
+
+[[/div]]
+[[div]]
+[[image 博士悩む width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+@@@@
+@@@@
+
+[[=image 下処理2 width="200px"]]
+
+@@@@
+@@@@
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+本体を[https://scp-jp.wikidot.com/scp-3794 SCP-3794]で叩いて柔らかくした後、片面に塩、コショウ、██████████を振りかけます。
+
+[[/div]]
+[[div]]
+[[image 博士悩む width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+@@@@
+@@@@
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+ニンニクで香り付けしたオリーブオイルでフライパンを熱し、強火で財団ロゴを焼きます。このとき塩を振った面を下にしてください。
+
+[[/div]]
+[[div]]
+[[image 博士キメ width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+@@@@
+@@@@
+
+[[=image 調理中 width="200px"]]
+
+@@@@
+@@@@
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+表になっている方にも塩、コショウ、██████████を振った後、裏面がしっかり焼けたらひっくり返します。
+
+[[/div]]
+[[div]]
+[[image 博士悩む width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]]
+
+こんがり焼けて美味しそうですね！
+[[/div]]
+[[div]]
+[[image 助手笑顔 width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+そのまま30秒ほど焼いたら取り出してアルミホイルに包み、余熱で中までじっくり火を通します。
+
+[[/div]]
+[[div]]
+[[image 博士悩む width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+@@@@
+@@@@
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+この間にソースを作りましょう。先ほど外した矢印を食感が残るように刻んでください。
+
+[[/div]]
+[[div]]
+[[image 博士キメ width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+こんな感じですか？
+
+[[/div]]
+[[div]]
+[[image 助手悩む width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+@@@@
+@@@@
+
+[[=image 刻み矢印 width="200px"]]
+
+@@@@
+@@@@
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+バッチグーです。これに[https://scp-jp.wikidot.com/scp-2484 マヨネーズ]、酢などの合わせ調味料と混ぜてタルタルソースの出来上がりです。
+
+[[/div]]
+[[div]]
+[[image 博士キメ width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+@@@@
+@@@@
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+最後にお皿に綺麗に盛り付けて出来上がりです。
+
+[[/div]]
+[[div]]
+[[image 博士キメ width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+@@@@
+@@@@
+
+
+
+[[div class="scp-image-block block-center scp-clear-false" style="width:400px;"]]
+[[image 完成 {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+SCP財団ロゴのステーキ[[footnote]] 詳しいレシピは番組公式サイトをご覧ください[[/footnote]]
+[[/div]]
+[[/div]]
+
+
+
+@@@@
+@@@@
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+では[編集済]くん、実食お願い致します。
+
+[[/div]]
+[[div]]
+[[image 博士悩む width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+うーんおいしい！ふうわりした食感ながらジューシーで絶品です！
+やはり絞めたての新鮮な財団ロゴはうまいなぁ。[https://scp-jp.wikidot.com/scp-2317 巨人が貪るように]ぺろりと食べてしまいました。
+
+[[/div]]
+[[div]]
+[[image 助手グッド width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+[https://scp-jp.wikidot.com/scp-2317 巨人]……？
+ソースはどうでしたか？
+
+[[/div]]
+[[div]]
+[[image 博士キメ width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+シャキシャキした矢印の感触がいい塩梅ですし、マヨネーズのマイルドさが本体のサルサ風味によく合います。[https://scp-jp.wikidot.com/old:scp-1548 星]3つです！
+
+[[/div]]
+[[div]]
+[[image 助手グッド width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+[https://scp-jp.wikidot.com/old:scp-1548 星]が3つ……！？
+
+[[/div]]
+[[div]]
+[[image 博士キメ width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+あぁ、本当にうますぎで、天国に行ったように花畑が見えてきました……。
+
+[[/div]]
+[[div]]
+[[image 助手笑顔 width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+[編集済]くん、おかしなことに本当に辺りが花畑になっています。
+
+[[/div]]
+[[div]]
+[[image 博士悩む width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+@@@@
+@@@@
+
+[[=image リリー width="400px"]]
+
+@@@@
+@@@@
+
+[[div class="hakase"]]
+[[div class="hakaseword"]]
+
+只今O5評議会から連絡がありました。この番組は今回で打ち切りのようです。
+最終回もお付き合いいただきありがとうございました。
+
+[[/div]]
+[[div]]
+[[image 博士目瞑り width="120px" style="margin-top: 5px; margin-right: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: right;"]]
+[[/div]]
+
+
+[[div class="joshu"]]
+[[div class="joshuword"]]
+
+ありがとうございました。
+
+[[/div]]
+[[div]]
+[[image 助手笑顔 width="120px" style="margin-top: 5px; margin-left: 20px;"]]
+[[/div]]
+[[/div]]
+[[div style="clear: left;"]]
+[[/div]]
+
+
+@@@@
+@@@@
+@@@@
+@@@@
+@@@@
+
+----
+
+@@@@
+@@@@
+
+以上の映像は次元██から送信された映像です。次元██はこれ以降連絡が途絶えており、何らかのK-クラスシナリオが発生したとみられています。この映像は[https://scp-jp.wikidot.com/lily-s-proposal SCP-001]イベントの発生例として保存されています。

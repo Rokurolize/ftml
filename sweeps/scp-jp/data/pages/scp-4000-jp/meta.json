@@ -1,0 +1,81 @@
+{
+ "kind": "scp",
+ "listed_size": 71371,
+ "live_page_content_sha256": "33eba1abf351458265a2752ddff9b70afc4a18105a13f0754c57f0e5fea7b475",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T07:59:27+00:00",
+  "method": "GET",
+  "response_bytes": 233508,
+  "response_sha256": "bbff8f0565505faa78a2a68ff625b75cbf517cc11c204d80a8c6bf8bfec148f4",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/scp-4000-jp"
+ },
+ "page_id": 1467563197,
+ "rating": 723,
+ "site": "scp-jp",
+ "slug": "scp-4000-jp",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T07:59:28+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "1467563197"
+  },
+  "response_bytes": 290632,
+  "response_sha256": "cafaa43ca421b6695fd11b163655622ec074d8c6d41d17f5fe194467bcfe0f4f",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "8004e740333d571b888feb5558a9cf8001f4669240e4187328729cac9542b291",
+ "stats": {
+  "counts": {
+   "anchor": 1,
+   "blocks": 419,
+   "bold": 488,
+   "cjk_dash_pair": 123,
+   "cjk_emphasis": 532,
+   "collapsible": 4,
+   "color": 180,
+   "css": 3,
+   "div": 61,
+   "ellipsis_dash": 106,
+   "footnote": 14,
+   "fullwidth_space": 353,
+   "heading": 6,
+   "hr": 38,
+   "html": 0,
+   "iftags": 0,
+   "image": 25,
+   "include": 6,
+   "italic": 141,
+   "link3": 15,
+   "list": 5,
+   "module": 8,
+   "mono": 42,
+   "quote": 0,
+   "raw": 524,
+   "ruby": 24,
+   "size": 18,
+   "span": 61,
+   "strike": 206,
+   "sup_sub": 12,
+   "table": 0,
+   "tabview": 0,
+   "underline": 4
+  },
+  "density_per_kchar": 41.47,
+  "markup_tokens": 2960
+ },
+ "title": "SCP:/4000-JP/文書/Incōdex処理済ファイル.Doc",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "1467563197",
+  "pageUnixName": "scp-4000-jp",
+  "requestPageName": "scp-4000-jp",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

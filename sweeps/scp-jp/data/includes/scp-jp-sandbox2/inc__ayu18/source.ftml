@@ -1,0 +1,4 @@
+[[module css]]
+@import url(http://scp-jp-sandbox2.wikidot.com/local--files/inc:ayu18/ayu18.css);
+.monoayu{font-size:98%;}
+[[/module]]

@@ -1,0 +1,557 @@
+<div style="background: url( https://scp-jp-sandbox2.wikidot.com/local--files/boatob/nekohaimasuyo.soregadoushita%3F.png) center no-repeat ; float: center; #000000; width: 650px; padding: 0px 1px; margin: 10px 10px 1px 1px; box-shadow: 0 1px 10px rgba(0,0,0,.0);">
+<div style="text-align: right;">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+276"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+<p>
+T:"ねこです"
+</p>
+<p>
+T:"ねこはいます"
+</p>
+<p>
+T:"ねこはどこにでもいます"
+</p>
+<p>
+T:"どこにでもいるねこは"
+</p>
+<p>
+T:"そこにもいます。"
+</p>
+<p>
+T:"はかせのひとがねこをみます。ねこはそこにいます。よろしくおねがいします。"
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+</p>
+<p>
+T:"ねこはどこにでもいるねこはいます。そこにねこはいますのに、ざいだんのひとはねこをつかまえません。ねこはそこにいます。ねこはどこにでもいます。"
+</p>
+<p>
+T:"たくさんのひとがねこをみます。ねこはそこにいます。たくさんのひとのそばにいます。"
+<br>
+T:"ねこはどこにでもいます。よろしくおねがいします。"
+</p>
+<p>
+T:"ねこはいます。ねこのいるところはふえます。よろしくおねがいします。"
+</p>
+<p>
+T:"ねこがすきなひとがいます。ねこがすきなひとはねこをみるときによろしくおねがいします。とはいいません。"
+<br>
+T:"ねこがすきなひとがいます。ねこがすきなひとはほかのなんにんかのねこがすきなひとといて、ねこがすきなひとはねこがすきなひとにむけてねこがいます。といいます。ねこがすきなひとはそれをきいて、ねこですよろしくおねがいします。といいます。そのねこはねこではないねこです。よろしくおねがいします。"
+</p>
+<p>
+T:"ねこがいないですところにねこがすきなひとはねこをみつけます。それはねこでもなければねこでもありませんのに、ねこがすきなひとはねこだといいます。ねこですよろしくおねがいしますといいます。よろしくおねがいします。"
+</p>
+<p>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+T:"ねこはいます。ねこははいおくにいます。ねこはえのなかにいます。ねこはどうがにいます。ねこはけいじばんにいます。ねこはともだちつきあいのなかにいます。ねこはねこのいないところにもいます。"
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+</p>
+<p>
+T:"ねこはいます。ねこはひとりであるきます。"
+</p>
+<p>
+T:"ねこはねこからはなれてひとりであるきますねこですよろしくおねがいします。"
+</p>
+<p>
+T:"ねこはねこです。ねこはねこですからこわくありません。ねこはねこですです。ねこはねこですよろしくおねがいしますです。"
+</p>
+<p>
+T:"ねこがすきなひとはねこがいますといいます。ねこはねこがすきなひとのそばにいきたいです。のが、ねこがすきなひとはねこがねこですからねこがいますことをわらいます。ねこがすきなひとはねこをみんなにみせます。ねこがすきなひとがこれはねこですよろしくおねがいしますですといいます。みんながわらいます。"
+</p>
+<p>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+T:"皆んなは嗤っています。"
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+T:"ねこはいます。よろしくおねがいします。ねこはねこがねこでねこでないとおもっているひとのそばにもいます。"
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+T:"メモ"
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+T:"<IDSP><IDSP><IDSP><IDSP><IDSP><IDSP><IDSP><IDSP><IDSP><IDSP>"
+<span style="font-size:177%;">
+<span style="color:red">
+T:"あなたの事ですよ。"
+</span>
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+<br>
+<span style="font-size:0%;">
+T:"空白"
+</span>
+</p>
+<p>
+T:"ねこはいます。これからもぜひともねこをどうぞ、よろしくおねがいします。ねこはそこにいます。あなたのそばにいます。"
+</p>
+<p>
+T:"ねこでした。ありがとうございました。"
+</p>
+</div>

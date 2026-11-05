@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:26:45+00:00",
+  "method": "GET",
+  "response_bytes": 29970,
+  "response_sha256": "9cf79b8602ac3256b0307b59be245b8636a5e8b1f9e589209af4af9664071a00",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/component:interwiki-style"
+ },
+ "page": "component:interwiki-style",
+ "page_id": 1436436623,
+ "site": "scp-jp",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:26:46+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "1436436623"
+  },
+  "response_bytes": 413,
+  "response_sha256": "d8539a239698c44d8412c83627eb7125045d9a48deb2f926837e62e75669f41a",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "51ad052297c3ea8bf38549b93154eebb20995448b316458911f97677b9cee2dd"
+}

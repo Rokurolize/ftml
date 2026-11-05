@@ -1,0 +1,81 @@
+{
+ "kind": "tale",
+ "listed_size": 14685,
+ "live_page_content_sha256": "26aeecd50bca9ebc4fa1ad4ed846f6d5d7704860a38b5a71e3b193b016c52959",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:22:12+00:00",
+  "method": "GET",
+  "response_bytes": 70056,
+  "response_sha256": "3966ed7833a9a36e84a8bbb419406593995c646a339651acd10b6034254d47cd",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/necos-kitchen"
+ },
+ "page_id": 752586841,
+ "rating": 447,
+ "site": "scp-jp",
+ "slug": "necos-kitchen",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:22:13+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "752586841"
+  },
+  "response_bytes": 35258,
+  "response_sha256": "7432b2d11df3e0680785473fb524976c1bacf9a86472a4f2ee0006d3bc7733a4",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "9eaf2f69985213ac7e68a2d076b7bc054a1407570ba02a59adb9c785b17686d2",
+ "stats": {
+  "counts": {
+   "anchor": 0,
+   "blocks": 497,
+   "bold": 6,
+   "cjk_dash_pair": 0,
+   "cjk_emphasis": 3,
+   "collapsible": 0,
+   "color": 0,
+   "css": 1,
+   "div": 208,
+   "ellipsis_dash": 14,
+   "footnote": 2,
+   "fullwidth_space": 1,
+   "heading": 0,
+   "hr": 3,
+   "html": 0,
+   "iftags": 0,
+   "image": 66,
+   "include": 4,
+   "italic": 0,
+   "link3": 0,
+   "list": 0,
+   "module": 1,
+   "mono": 0,
+   "quote": 0,
+   "raw": 148,
+   "ruby": 0,
+   "size": 2,
+   "span": 0,
+   "strike": 0,
+   "sup_sub": 0,
+   "table": 0,
+   "tabview": 0,
+   "underline": 0
+  },
+  "density_per_kchar": 64.08,
+  "markup_tokens": 941
+ },
+ "title": "NECO’S キッチン　～SCP財団ロゴのステーキ～",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "752586841",
+  "pageUnixName": "necos-kitchen",
+  "requestPageName": "necos-kitchen",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

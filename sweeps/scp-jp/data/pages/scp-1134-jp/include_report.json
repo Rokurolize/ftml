@@ -1,0 +1,30 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "credit:start",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end",
+     "site": "scp-jp",
+     "variables": {}
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 2
+  }
+ ],
+ "existing_pages_from_live": [],
+ "newpage_links_in_live": []
+}

@@ -1,0 +1,154 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:credit-top-sp",
+     "site": "scp-jp",
+     "variables": {
+      "special": "1st"
+     }
+    },
+    {
+     "found": true,
+     "page": "credit:otherwise",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right\n",
+      "caption": "エージェント・クリストファー＝コックスの生前の画像\n",
+      "clear": "true\n",
+      "name": "https://scp-jp.wdfiles.com/local--files/scp-2144-jp/Face\n\n",
+      "width": "150px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:coltop",
+     "site": "scp-jp",
+     "variables": {
+      "nohide": "true",
+      "show": "だって"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:colend",
+     "site": "scp-jp",
+     "variables": {
+      "nohide": "true"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:coltop",
+     "site": "scp-jp",
+     "variables": {
+      "nohide": "true",
+      "show": "だって"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:colend",
+     "site": "scp-jp",
+     "variables": {
+      "nohide": "true"
+     }
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "credit:start",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right\n",
+      "caption": "エージェント・クリストファー＝コックスの生前の画像\n",
+      "clear": "true\n",
+      "link": "#",
+      "name": "https://scp-jp.wdfiles.com/local--files/scp-2144-jp/Face\n\n",
+      "width": "150px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:coltop-deep",
+     "site": "scp-jp",
+     "variables": {
+      "folded": "1\n",
+      "hide": "- hide block\n",
+      "ifprot": "0\n",
+      "nohide": "true\n",
+      "show": "だって\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:colend-deep",
+     "site": "scp-jp",
+     "variables": {
+      "hide": "- hide block\n",
+      "nohide": "true\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:coltop-deep",
+     "site": "scp-jp",
+     "variables": {
+      "folded": "1\n",
+      "hide": "- hide block\n",
+      "ifprot": "0\n",
+      "nohide": "true\n",
+      "show": "だって\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:colend-deep",
+     "site": "scp-jp",
+     "variables": {
+      "hide": "- hide block\n",
+      "nohide": "true\n"
+     }
+    }
+   ],
+   "pass": 2
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 3
+  }
+ ],
+ "existing_pages_from_live": [
+  "scp-2144-jp",
+  "usocontest2020-hub"
+ ],
+ "newpage_links_in_live": []
+}

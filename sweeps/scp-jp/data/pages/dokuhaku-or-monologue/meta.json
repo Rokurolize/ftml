@@ -1,0 +1,81 @@
+{
+ "kind": "tale",
+ "listed_size": 2071,
+ "live_page_content_sha256": "1a84058ea7ef2d86ad4b903b1b76fd7405365a73f5845364d8eb6501fdaefec6",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:24:02+00:00",
+  "method": "GET",
+  "response_bytes": 40904,
+  "response_sha256": "2f4f00442798928220e11352775bd698e7969a66d1c4973b0736ca5506df18a1",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/dokuhaku-or-monologue"
+ },
+ "page_id": 674798847,
+ "rating": 262,
+ "site": "scp-jp",
+ "slug": "dokuhaku-or-monologue",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:24:03+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "674798847"
+  },
+  "response_bytes": 8053,
+  "response_sha256": "9110b67e30d19c0aefd0f9864265fe0580dceda4cf3f4a065f68f51f925e3348",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "a261520a8b50185e06e40ce5cab35c50a27195ab523b369acbc5c3c94f897405",
+ "stats": {
+  "counts": {
+   "anchor": 0,
+   "blocks": 51,
+   "bold": 6,
+   "cjk_dash_pair": 0,
+   "cjk_emphasis": 83,
+   "collapsible": 1,
+   "color": 40,
+   "css": 0,
+   "div": 0,
+   "ellipsis_dash": 0,
+   "footnote": 0,
+   "fullwidth_space": 0,
+   "heading": 0,
+   "hr": 1,
+   "html": 0,
+   "iftags": 0,
+   "image": 0,
+   "include": 2,
+   "italic": 80,
+   "link3": 4,
+   "list": 0,
+   "module": 0,
+   "mono": 0,
+   "quote": 0,
+   "raw": 52,
+   "ruby": 0,
+   "size": 0,
+   "span": 0,
+   "strike": 0,
+   "sup_sub": 0,
+   "table": 0,
+   "tabview": 0,
+   "underline": 0
+  },
+  "density_per_kchar": 154.51,
+  "markup_tokens": 320
+ },
+ "title": "独白、あるいはモノローグ",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "674798847",
+  "pageUnixName": "dokuhaku-or-monologue",
+  "requestPageName": "dokuhaku-or-monologue",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

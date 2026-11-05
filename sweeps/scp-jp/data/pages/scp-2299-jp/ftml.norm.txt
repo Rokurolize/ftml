@@ -1,0 +1,2458 @@
+<div class="error-block">
+T:"Sorry, no match for the embedded content."
+</div>
+<div class="error-block">
+T:"Sorry, no match for the embedded content."
+</div>
+<div class="creditRate creditModule {$mode}">
+T:"[[div_ class=\"rateBox\" ]]"
+<div class="rate-box-with-credit-button">
+<p>
+T:"TODO: module Rate"
+</p>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<br>
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+<br>
+<br>
+<div style="clear:both;">
+</div>
+<div id="u-credit-view">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"クレジット"
+</span>
+</h2>
+</div>
+<div class="credit">
+<p>
+<strong>
+T:"タイトル:"
+</strong>
+T:"SCP-2299-JP - 正常恐怖症"
+<br>
+<strong>
+T:"著者:"
+</strong>
+T:"©︎"
+<span class="printuser avatarhover">
+<a href="/user:info/ponhiro" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="ponhiro" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/ponhiro" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"ponhiro"
+</a>
+</span>
+<br>
+<strong>
+T:"作成年:"
+</strong>
+T:"2021"
+</p>
+<div class="credit-back" style="text-align: center;">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+</iframe>
+</div>
+</div>
+<div class="creditBottomRate" style="height:30px;">
+<div class="credit-license">
+<a class="cc cc-by-sa" href="#invalid-url">
+</a>
+</div>
+<div style="text-align: center; top: 0px;">
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+<br>
+T:"[[/div]]"
+</div>
+</div>
+</div>
+<div class="info-container">
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"<NBSP>"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"<NBSP>"
+</a>
+</div>
+<div class="collapsible-block-content">
+<div>
+<p style="text-align: center;">
+<em>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+T:"-"
+<span class="ruby">
+T:"正常恐怖症"
+<span class="rt">
+T:"Sanitophobia"
+</span>
+</span>
+</em>
+</p>
+<p style="text-align: center;">
+<em>
+<span class="ruby">
+T:"正常"
+<span class="rt">
+T:"Sanity"
+</span>
+</span>
+T:"が何かなど、誰一人として知らない。"
+</em>
+</p>
+<hr>
+<p>
+T:"これは、私の実体験に基づいて書かれた作品であり、自著の中で初めて大きく評価された作品でもある。内容は酷くリアリティに欠けていると思うかもしれないが、それでも確かに私が体験したものである。"
+</p>
+<p>
+T:"忘れがちだが、フィクションの“リアリティ”というのは主観的な許容値に過ぎず、「事実」という意味の“リアリティ”とは全く違うものである。この作品において描かれた“リアリティ”は後者の方である。そのため、ここで描かれたものの幾つかはきっと、読者にとって信じがたい事かもしれない。"
+</p>
+<p>
+T:"リストカットだけは私の古い友人が経験した事だが、本文にて描写されたものや情動の変化は、私の経験と主観に基づいてありのままを描いている。被害者だと思っていた自分が加害者になっていく過程、嫌なものに対する依存、自分が既に正しい側にいないと気付いた時の感情や行動、愛情の誤認など。"
+</p>
+<p>
+T:"私達は自分が思うよりも遥かに不自然で不合理な存在であり、それは己が受け入れられない物事に直面した時ほど、自分が正常な人間だと思っている人ほど浮き彫りになる。誰も正常が何かを知らないし、正常をどう定義すべきかも、正常を保つ方法も、何ひとつとして知らないのだ。"
+</p>
+<p>
+T:"この作品を通して描いた「相互監視」というものは、将来的に社会問題として提起される可能性を孕んだテーマである。誰しもコンテンツとして見られる事に辟易しているが、一方で自分が誰かをコンテンツとして見たいという衝動を持ち合わせている。それらの矛盾はインターネットと合わさる事で、より深刻で複雑な問題へと変容していく。"
+</p>
+<p>
+T:"もし貴方が似たような矛盾や問題に直面したり、将来これが社会問題として提起された時、この作品をふと思い返してくれる事をどうか願っている。"
+</p>
+<p>
+T:"お読みいただきありがとうございました。"
+</p>
+</div>
+<hr>
+<div id="u-author_block">
+<p style="text-align: center;">
+T:"["
+<a href="https://scp-jp.wikidot.com/author:ponhiro">
+T:"https://scp-jp.wikidot.com/author:ponhiro"
+</a>
+</p>
+<p>
+T:"▸ この著者の他の作品 ◂]"
+</p>
+<hr>
+</div>
+<div class="translation_block">
+<h1 id="toc0">
+<span>
+T:"翻訳:"
+</span>
+</h1>
+<p>
+T:"TODO: module ListPages"
+</p>
+</div>
+<div class="u-faq">
+<p>
+<span style="white-space: pre-wrap;">
+</span>
+</p>
+<p style="text-align: center;">
+<a href="http://scp-jp.wikidot.com/component:info-ayers">
+T:"F.A.Q."
+</a>
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="scale EN -base Keter">
+<div class="class1">
+<div class="level-text">
+<span class="base false EN">
+T:"2"
+<br>
+T:"/2299-JP"
+<br>
+</span>
+T:"false"
+<br>
+<span class="base false EN">
+T:"2"
+<br>
+T:"/2299-JP"
+<br>
+</span>
+</div>
+<div class="class-text">
+T:"false"
+</div>
+</div>
+T:"\"]]"
+<br>
+<div class="classified-bar">
+<img alt="classified-bar.svg" class="sizing-image" src="https://scp-wiki.wikidot.com/local--files/component:classified-bar-woed-source/classified-bar.svg">
+</div>
+<div class="image-space">
+</div>
+<div class="classified-bar">
+<img alt="classified-bar.svg" class="sizing-image" src="https://scp-wiki.wikidot.com/local--files/component:classified-bar-woed-source/classified-bar.svg">
+</div>
+<div class="image-space">
+</div>
+<div class="classified-bar">
+<img alt="classified-bar.svg" class="sizing-image" src="https://scp-wiki.wikidot.com/local--files/component:classified-bar-woed-source/classified-bar.svg">
+</div>
+<div class="image-space">
+</div>
+<div class="classified-bar">
+<img alt="classified-bar.svg" class="sizing-image" src="https://scp-wiki.wikidot.com/local--files/component:classified-bar-woed-source/classified-bar.svg">
+</div>
+<div class="image-space">
+</div>
+<div class="classified-bar">
+<img alt="classified-bar.svg" class="sizing-image" src="https://scp-wiki.wikidot.com/local--files/component:classified-bar-woed-source/classified-bar.svg">
+</div>
+<div class="image-space">
+</div>
+<div class="classified-bar">
+<img alt="classified-bar.svg" class="sizing-image" src="https://scp-wiki.wikidot.com/local--files/component:classified-bar-woed-source/classified-bar.svg">
+</div>
+</div>
+<div class="item1 EN">
+T:"\"]]"
+</div>
+<div class="objclass EN">
+T:"\"]]"
+<br>
+<div class="obj-text">
+T:"Keter"
+</div>
+</div>
+<br>
+<br>
+<br>
+<hr>
+<div class="scp-image-block block-center scp-clear-false" style="width:100%;">
+<img alt="girl-People-in-nature-photograph-beauty-skin-spring-1596632-pxhere.com.jpg" class="image" src="https://scp-jp-storage.wikidot.com/local--files/file:6637840-9-yfz4/girl-People-in-nature-photograph-beauty-skin-spring-1596632-pxhere.com.jpg" style="width:100%;">
+<div class="scp-image-caption" style="width:100%;">
+<p>
+T:"18歳時点でのSCP-2299-JP。"
+</p>
+</div>
+</div>
+<hr>
+<div class="box1">
+<div class="box-title">
+<p>
+<strong>
+T:"特別収容プロトコル"
+</strong>
+</p>
+</div>
+<br>
+T:"SCP-2299-JPはサイト-8163の標準人型実体収容セルに収容されています。取り扱いは標準人型実体収容プロトコルに従って行って下さい。"
+<br>
+T:"SCP-2299-JPが所有するスマートフォンは小林博士の管理下に置かれ、異常性の調査の為に特殊なスマートフォンをSCP-2299-JPに携帯させます。"
+<br>
+<br>
+T:"SCP-2299-JP-Aは未発見・未収容です。性質上はSCP-2299-JPにしか影響を及ぼさないと考えられていますが、早急な発見・収容が望まれます。"
+<br>
+T:"発見された場合はその性質を把握したうえで最適な収容方法を適用して下さい。"
+</div>
+<div class="box1">
+<div class="box-title">
+<p>
+<strong>
+T:"説明"
+</strong>
+</p>
+</div>
+<br>
+T:"SCP-2299-JPは、"
+<span class="ruby">
+T:"桜場 愛奈"
+<span class="rt">
+T:"さくらば あいな"
+</span>
+</span>
+T:"と呼称される成人済みの日本人女性です。"
+<br>
+T:"SCP-2299-JPが所有するスマートフォンには、\"Watching over Everyday(WoE)\"というアプリケーションがダウンロードされており、異常な要因によりアプリの削除が不可能になっています。"
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"補足 > WoEについて"
+</strong>
+</p>
+</div>
+<br>
+T:"WoEは█████社によって2012年に開発された位置情報共有アプリケーションです。当該アプリケーションは、インストールした人物同士でメンバーに設定することで、メンバー全員のスマホの位置情報を常にアプリ内の地図上に表示する機能を持っています。"
+<br>
+T:"世俗で言うところの\"見守り\"機能であり、一般的には防犯や見守りに使用されます。"
+<br>
+T:"開発元の█████社は2016年に倒産によってサービスを終了しており、現在はアプリケーションストアからも削除されています。"
+</div>
+<p>
+T:"SCP-2299-JP-Aは、SCP-2299-JPの実母である"
+<span class="ruby">
+T:"桜場 妙子"
+<span class="rt">
+T:"さくらば たえこ"
+</span>
+</span>
+T:"です。SCP-2299-JP-Aは交通事故により2016年4月に死亡しており、所有していたスマートフォンが処分されているにも関わらず、LINEやメールを介してSCP-2299-JPにメッセージを送ります。また、SCP-2299-JP-Aを特定する試みは全て失敗しています。"
+</p>
+</div>
+<div class="box1">
+<div class="box-title">
+<p>
+<strong>
+T:"補遺1 > 発見"
+</strong>
+</p>
+</div>
+<br>
+T:"SCP-2299-JPは初め、『死んだはずの母からLINEが送られてくる』と警察に相談したことにより、財団の知るところとなりました。よって財団がSCP-2299-JPをサイト-8163に護送し、異常性に関するインタビューを行いました。"
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"▹OPEN"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"▹CLOSE"
+</a>
+</div>
+<div class="collapsible-block-content">
+<div style="text-align: center;">
+<hr>
+<h2 id="toc1">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"インタビュー > 2299-JP.1"
+</span>
+</strong>
+</span>
+</h2>
+<h3 id="toc2">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"日付 > 2016/04/22"
+</span>
+</strong>
+</span>
+</h3>
+<hr>
+<p>
+<strong>
+T:"<記録開始>"
+</strong>
+</p>
+<hr>
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"愛奈さん、『亡くなったはずの母からメールが送られてくる』との事でしたが、どういうことでしょう？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"はい。その…私の母は、つい1週間前に交通事故で亡くなりました。色々な処分が終わって、私は市街でパンケーキを食べていたんです。そうしたら、そうしたら、死んだはずの母からメールが…"
+<em>
+T:"[過呼吸気味になる]"
+</em>
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+<em>
+T:"[SCP-2299-JPの背中をさすって]"
+</em>
+T:"落ち着いて。まずはゆっくりと深呼吸を…ああそうだ、そのメールの内容は覚えていますか。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"え？それならスマホに…あっ、削除欄に入れちゃってますが、どうぞ。"
+<em>
+T:"[スマートフォンを小林博士に渡して]"
+</em>
+T:"幻覚じゃありませんよね..？"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+<em>
+T:"[確認して]"
+</em>
+T:"はい、はい、幻覚じゃありませんよ。『またパンケーキを食べてるの？』ですか。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"ああ、本当に良かった。それで…このようなメールが来るのは日常茶飯事なのですが、流石に亡くなったのにも関わらず送られてくるのは流石に怖くって。どうすればいいのでしょう。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"ふむ。気になったのですが、『日常茶飯事』とはどういう事でしょうか。貴方の親御さんとは頻繁にメールを？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"はい。私の母はよく、『私がどこに行ってるのか』とか『今何をしているのか』をよくLINEで聞いてくるのです。…知ってるのに。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"\"知ってるのに\"？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"ホーム画面の右下にWoEというアプリが入ってますよね。開いてみてください。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"ええ。…待ってください。WoEを作っている会社って、確かつい最近倒産したはずですよね？アプリだってもう使えないはずです。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"ご存知なのですか？"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"ええ。私の息子が学校からの帰り道によく寄り道するのが心配だったので使っていました。息子がどこに居るかがいつだって分かりますからね。アプリが削除される事を知ってからはもう使うのをやめてしまいましたが。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"なるほど。それで、そのアプリ…昔からそうだったんですが、なぜか削除出来ないんです。試してみてください。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+<em>
+T:"[いくつかの削除方法を試して]"
+</em>
+T:"本当ですね。これは確かに異常だ。愛奈さん、何か心当たりはありますか？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"ありませんよ。でも削除できないせいで、私はまだ母に見られているんです。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"それってつまり、貴方のお母様は常に、このアプリを使って貴方がどこに居るかを見ている、という事ですか？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"常にかは分かりませんが、そうですね。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"それは…苦労されてきたのですね。"
+<em>
+T:"[アプリを開き、確認して]"
+</em>
+T:"GPSに問題は無し、と。貴方のいる位置はちゃんとマップに表示されています。ああでも、もう1つ貴方とは違うアイコンがマップに表示されていますね。お知り合いの方ですか？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"あー、それは多分私の母です。母のスマホは処分したのでアプリは作動しないはずなのですが…なぜか、今も動いているのです。そのアイコン、どこに表示されてますか？"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"█████ですね。徒歩のスピードで北上しています。失礼ですが、本当にお母様のスマホを処分したのですか？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"本当です！ショップの店員さんに任せて、粉砕処理を行ってもらいました。それは私もこの目で見てましたよ！"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"ううむ、なら異常性によるものなのか。…とりあえず事情は分かりました。申し訳ありませんが、こちらのスマートフォンを捜査の為に押収させていただきます。そして貴方も、解決するまではこちらで生活していただくことになります。方針なのでご了承ください。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"ええ、構いません。…その、私の母は幽霊になって彷徨っているのでしょうか？こんな非現実なこと…私はどうすればいいのか分かりません。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"大丈夫ですよ。貴方のお母様が幽霊であるかは今の所分かりませんが、我々はそれらを特定し、解決する手段を有しています。解決に向けて、一緒に頑張っていきましょうね。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"はい、ありがとうございます！"
+</div>
+<hr>
+<p style="text-align: center;">
+<strong>
+T:"<記録終了>"
+</strong>
+</p>
+<hr>
+<p>
+<strong>
+T:"終了報告書:"
+</strong>
+T:"SCP-2299-JP関係者にはカバーストーリー『交通事故の後処理及び詳細調査』を流布し、SCP-2299-JPは標準人型実体収容プロトコルに従ってサイト-8163に収容されてナンバリングされました。"
+</p>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"補足 > ナンバリング"
+</strong>
+</p>
+</div>
+<br>
+T:"当初、この異常性からスマートフォンの方に異常性があると考えられており、スマートフォンの方がナンバリングされていましたが、後の実験により桜場愛奈氏が異常性の中心となっている事が判明したためにナンバリングは修正されています(実験記録2299-JP.6を参照)。ファイルの可読性のためにその変化については省略します。省略された部分についての詳細は別紙を参照してください。"
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="box1">
+<div class="box-title">
+<p>
+<strong>
+T:"補遺2 > 実験"
+</strong>
+</p>
+</div>
+<br>
+T:"SCP-2299-JPの異常性の解明のため、複数回の実験が行われました。以下は実行された実験の抜粋です。"
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"▹OPEN"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"▹CLOSE"
+</a>
+</div>
+<div class="collapsible-block-content">
+<div style="text-align: center;">
+<hr>
+<h2 id="toc3">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"実験記録 > 2299-JP.1"
+</span>
+</strong>
+</span>
+</h2>
+<h2 id="toc4">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"日付 > 2016/04/30"
+</span>
+</strong>
+</span>
+</h2>
+<hr>
+</div>
+<br>
+<strong>
+T:"実験内容:"
+</strong>
+T:"SCP-2299-JPに自身の保有するスマートフォンを持たせた状態で自由に行動させる。監視のため、小林博士が常に傍につき、常に小林博士が画面を確認する。"
+<hr>
+<p style="text-align: center;">
+<strong>
+T:"<記録開始>"
+</strong>
+</p>
+<hr>
+<p>
+<strong>
+T:"<11:24>"
+</strong>
+T:"SCP-2299-JPは車でサイト-8163を発つ。"
+<br>
+<br>
+<strong>
+T:"<11:35>"
+</strong>
+T:"SCP-2299-JPはデパート██████で車を止め、様々な店舗を回る。"
+<br>
+<br>
+<strong>
+T:"<12:10>"
+</strong>
+T:"SCP-2299-JPが休憩の為に座り、近くの店でクレープを買って戻る。"
+<br>
+<br>
+<strong>
+T:"<12:12>"
+</strong>
+T:"SCP-2299-JP-Aからメッセージが届く。"
+</p>
+<div class="box4">
+<div class="box4-title">
+<p>
+<strong>
+T:"SCP-2299-JP-A"
+</strong>
+</p>
+</div>
+<br>
+<p style="text-align: center;">
+T:"あまり帰りが遅くならないようにね。"
+</p>
+</div>
+<br>
+T:"小林博士の指示により、SCP-2299-JPはSCP-2299-JP-Aからのメッセージに対し、『分かった』と返信。返信後すぐに既読がついた。"
+<br>
+<br>
+<strong>
+T:"<12:28>"
+</strong>
+T:"実験が終了される。"
+<br>
+<hr>
+<p style="text-align: center;">
+<strong>
+T:"<記録終了>"
+</strong>
+</p>
+<hr>
+<p>
+<strong>
+T:"終了報告書:"
+</strong>
+T:"目視では一切の異常を発見する事が出来ませんでした。また、実験終了後に様々な検査を行いましたが、いずれもSCP-2299-JP-Aに繋がるような情報を得るには至りませんでした。"
+<br>
+</p>
+<div style="text-align: center;">
+<hr>
+<h2 id="toc5">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"実験記録 > 2299-JP.4"
+</span>
+</strong>
+</span>
+</h2>
+<h2 id="toc6">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"日付 > 2016/05/11"
+</span>
+</strong>
+</span>
+</h2>
+<hr>
+</div>
+<br>
+<strong>
+T:"実験内容:"
+</strong>
+T:"SCP-2299-JPが所有するスマートフォンを別の人が持ち運び、SCP-2299-JP-Aの反応を調べる。"
+<br>
+T:"持ち運びは小林博士が行う。また、実験中はSCP-2299-JPが別途の通信機を用いて小林博士と常にコンタクトをとる。"
+<hr>
+<p style="text-align: center;">
+<strong>
+T:"<記録開始>"
+</strong>
+</p>
+<hr>
+<p>
+<strong>
+T:"<13:50>"
+</strong>
+T:"小林博士はデパートを一通り回る。"
+<br>
+<br>
+<strong>
+T:"<14:20>"
+</strong>
+T:"別職員の提案により、小林博士はSCP-2299-JPの指示に従って行動し始める。"
+<br>
+<br>
+<strong>
+T:"<19:03>"
+</strong>
+T:"状況に進展が見られないため、実験が終了される。"
+<br>
+<br>
+<strong>
+T:"<00:10(05/12)>"
+</strong>
+T:"SCP-2299-JP-Aからメッセージが届く。"
+<br>
+</p>
+<div class="box4">
+<div class="box4-title">
+<p>
+<strong>
+T:"SCP-2299-JP-A"
+</strong>
+</p>
+</div>
+<br>
+<p style="text-align: center;">
+T:"今日は友達と遊んだの？お金の使い過ぎには気をつけなさいね。"
+</p>
+</div>
+<br>
+<strong>
+T:"<08:23>"
+</strong>
+T:"当該メッセージをSCP-2299-JPに見せ、その意図を尋ねたが、SCP-2299-JPは「わからない」と回答。SCP-2299-JPは『りょ』"
+<sup class="footnoteref">
+<a class="footnoteref" href="javascript:;" id="footnoteref-1" onclick="WIKIDOT.page.utils.scrollToReference('footnote-1')">
+T:"1"
+</a>
+</sup>
+T:"と返信した。"
+<br>
+<hr>
+<p style="text-align: center;">
+<strong>
+T:"<記録終了>"
+</strong>
+</p>
+<hr>
+<p>
+<strong>
+T:"終了報告書:"
+</strong>
+T:"送信されたメッセージにおいて、SCP-2299-JP-Aがなぜ『SCP-2299-JPは友達と遊んでいた』という結論に至ったのかについては"
+<span style="text-decoration: line-through;">
+T:"不明です。"
+</span>
+T:"下部の実験記録2299-JP.5を参照してください。"
+<br>
+</p>
+<div style="text-align: center;">
+<hr>
+<h2 id="toc7">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"実験記録 > 2299-JP.5"
+</span>
+</strong>
+</span>
+</h2>
+<h2 id="toc8">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"日付 > 2016/05/13"
+</span>
+</strong>
+</span>
+</h2>
+<hr>
+</div>
+<br>
+<strong>
+T:"実験内容:"
+</strong>
+T:"SCP-2299-JPに自由に行動させる。SCP-2299-JP-Aからメッセージが届いた場合、SCP-2299-JPとSCP-2299-JP-A同士で会話を行わせる。"
+<hr>
+<p style="text-align: center;">
+<strong>
+T:"<記録開始>"
+</strong>
+</p>
+<hr>
+<p>
+<strong>
+T:"<14:20>"
+</strong>
+T:"事前の取り決めに従い、SCP-2299-JPはデパートを訪れる。"
+<br>
+<br>
+<strong>
+T:"<14:35>"
+</strong>
+T:"SCP-2299-JP-Aから電話がかかる。小林博士の指示により、SCP-2299-JPは応答する。"
+<br>
+</p>
+<hr>
+<div class="box4">
+<div class="box4-title">
+<p>
+<strong>
+T:"SCP-2299-JP-A"
+</strong>
+</p>
+</div>
+<br>
+T:"愛奈、久しぶり。それにしても最近よくデパートに行くね。そんなに買いたいものがあるの？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"あーいや、ちょっと用事があってね。ちゃんと勉強もしてるしいいでしょ？"
+</div>
+<div class="box4">
+<div class="box4-title">
+<p>
+<strong>
+T:"SCP-2299-JP-A"
+</strong>
+</p>
+</div>
+<br>
+T:"本当にしてる？今度のTOEICこそは800点越して欲しいな。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"ええとね、800点取るのって結構難しいのよ？最初の300点から650点台まであげただけでも充分だと思うんだけどさ。"
+</div>
+<div class="box4">
+<div class="box4-title">
+<p>
+<strong>
+T:"SCP-2299-JP-A"
+</strong>
+</p>
+</div>
+<br>
+T:"うーん、でもこれからの時代は英語が重要になるよ？頑張っていかないと時代の流れに遅れるよ。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"はぁ…うん、そうだね。ところでお母さんは何してるの？"
+</div>
+<div class="box4">
+<div class="box4-title">
+<p>
+<strong>
+T:"SCP-2299-JP-A"
+</strong>
+</p>
+</div>
+<br>
+T:"今？今はWoE見てるよ。そういえば一昨日は友達と遊んだの？"
+<sup class="footnoteref">
+<a class="footnoteref" href="javascript:;" id="footnoteref-2" onclick="WIKIDOT.page.utils.scrollToReference('footnote-2')">
+T:"2"
+</a>
+</sup>
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"え！？あー、いや、そうだよ。ほら友達に振り回されてね。…ええとさ、なんでそう思ったの？"
+</div>
+<div class="box4">
+<div class="box4-title">
+<p>
+<strong>
+T:"SCP-2299-JP-A"
+</strong>
+</p>
+</div>
+<br>
+T:"いや、一昨日のWoEの動きが貴方らしくないなーって。貴方はいつも、デパートに入ったら最初に本屋に寄るでしょう？でも一昨日は最初にネックレス売り場に寄ったじゃない。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"…ええとさ、何…一昨日はずっとWoE見てたの？というか私の動きを全部把握してるの…？"
+</div>
+<div class="box4">
+<div class="box4-title">
+<p>
+<strong>
+T:"SCP-2299-JP-A"
+</strong>
+</p>
+</div>
+<br>
+T:"そうよ。貴方に何かあったら心配だからね。まぁそんな事はどうでもいいけど、ネックレスって…もしかして新しい彼氏でもできたの？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+<em>
+T:"[長い沈黙]"
+</em>
+T:"…違うよ。それにそんな事お母さんには関係ないでしょ。"
+</div>
+<div class="box4">
+<div class="box4-title">
+<p>
+<strong>
+T:"SCP-2299-JP-A"
+</strong>
+</p>
+</div>
+<br>
+T:"えぇ？家族なんだし、関係あるでしょ。前の彼氏とはどうなったの？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"前？"
+<em>
+T:"[沈黙]"
+</em>
+T:"…お、お母さんが……いや、何でもない、ええと…ごめんなさい、気にしないで。切るよ、じゃあね！"
+</div>
+<div class="box5">
+<p>
+T:"SCP-2299-JPはSCP-2299-JP-Aからの返事を待たずに電話を切る。"
+</p>
+</div>
+<div class="box5">
+<p>
+T:"SCP-2299-JPが精神的苦痛を示したため、精神状態を鑑みて実験は終了される。"
+</p>
+</div>
+<hr>
+<p style="text-align: center;">
+<strong>
+T:"<記録終了>"
+</strong>
+</p>
+<hr>
+</div>
+</div>
+</div>
+</div>
+<div class="box1">
+<div class="box-title">
+<p>
+<strong>
+T:"補遺3 > インタビュー"
+</strong>
+</p>
+</div>
+<br>
+T:"実験記録2299-JP.5終了直後、SCP-2299-JPは酷く動揺し、多量の発汗などの症状が現れたため実験を中止し、収容セルで数日の休養を取らせました。"
+<br>
+<br>
+T:"その後、カウンセリングと更なる調査を兼ねてSCP-2299-JPにインタビューを行いました。"
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"▹OPEN"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"▹CLOSE"
+</a>
+</div>
+<div class="collapsible-block-content">
+<div style="text-align: center;">
+<hr>
+<h2 id="toc9">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"インタビュー > 2299-JP.2"
+</span>
+</strong>
+</span>
+</h2>
+<h3 id="toc10">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"日付 > 2016/05/16"
+</span>
+</strong>
+</span>
+</h3>
+<hr>
+<p>
+<strong>
+T:"<記録開始>"
+</strong>
+</p>
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"体調はいかがですか、SCP-2299-JP。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"まぁまぁです。その…この前はご迷惑をおかけしました。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"そんな事はありませんよ。人間として当たり前の反応です。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"…話した方がいいんですよね。色々。前の彼氏の事とか。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"貴方の精神状態さえ良ければ。今じゃなくてもいいですよ。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+<em>
+T:"[軽く笑って]"
+</em>
+T:"いつかは話さないといけないって事じゃないですか。なら今話しますよ。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"よろしくお願いします。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"…高校3年の時、2年前ですね。私は初めて恋愛というものを経験しまして。5月くらいにお付き合いを始めたんです。なかなか困難もありましたが、上手くやってたと思います。普通の恋愛でした。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"その人物の方に何か異常はありませんでした？行動とか。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"特に何も。それで、付き合って1か月くらいの時に、お母さんの行動がなんかおかしいなぁ、って気づいたんです。学校から家に帰ってきたとき、普段ならお母さんは家にいるんですけども、私が付き合い始めてから家を空ける事が多くなったんですよね。妙だなーって思って。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"それで、まぁ…その時はWoEの事なんて全く考えていませんでした。気にも留めていませんでした。はは…杜撰でしたね、私。馬鹿だ。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"自分を責めすぎないで下さい。ただでさえ今の貴方の精神状態は不安定なんですから。…ともかく、続きを。話せば多少は落ち着くと思いますよ。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"…ありがとうございます。そして7月、いや8月だったでしょうか。少し遠出して、2人で海に行ったんです。甘美？って言うんですかね、あの日は本当に人生で一番楽しい時間でした。…すいません、私のスマホを借りてもいいですか。"
+</div>
+<div class="box5">
+<p>
+T:"SCP-2299-JPは小林博士から自身のスマホを借り、\"写真\"フォルダを開いてスクロールする。"
+</p>
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"そして、思い切って私は…彼に、キスを迫りました。彼は優しく受け入れてくれて、私の身を引き寄せて唇を合わせてくれました。…幸せでした。幸せだったんです。唇が離れて…私は、ああ…"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"SCP-2299-JP、大丈夫ですか？私達は何も、貴方に情報提供を強制するつもりはありません。辛いのであればインタビューを中断しますよ。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"いえ、いえ、続けます。その…目を開けたら、居たんです。母が、左奥の木の陰に隠れて、私達を見てたんです。……スマートフォンを構えながら。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"…盗撮されていた、と？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"はい。視界の端の方で、レンズの反射光が見えていました。……私は後で、お母さんのスマホの写真フォルダをこっそり見てみました。そしたら、6枚もあったんです。様々な角度から撮っていました。"
+<br>
+<em>
+T:"[小林博士に写真を見せて]"
+</em>
+T:"これはその内の1枚をバレないように私のスマホに転送したものです。"
+</div>
+<div class="scp-image-block block-center scp-clear-false" style="width:100%;">
+<img alt="%E3%82%AD%E3%82%B9.png" class="image" src="https://scp-jp-storage.wikidot.com/local--files/file:6637840-13-8f8z/%E3%82%AD%E3%82%B9.png" style="width:100%;">
+<div class="scp-image-caption" style="width:100%;">
+<p>
+T:"SCP-2299-JP-Aが盗撮した写真。右がSCP-2299-JP。"
+</p>
+</div>
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"……他にもいっぱい写真がありました。私が彼と一緒に下校してた時の写真、彼とケーキバイキングに行った時の写真、理由をつけてイルミネーションを見に行った時の写真……全部秘密にしてたのに、何もかも見られてたんです。"
+<br>
+T:"…手が震えました。いや、人間って恐怖を感じたら手が悴んだり震えたりするのって本当なんですね。感じたこともないくらいに恐怖に慄いて、それでも涙は流れなくて、ただ、手足だけが感覚もなくずっと震えていました。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"本当に大丈夫ですか、SCP-2299-JP。今も貴方の手は震えていますよ。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"あ、そうですか？…本当だ、何ででしょうか…。"
+<br>
+T:"まぁいいや、頭の中が真っ白になった私は、ありのままを彼に伝えたんです。…彼は、凄く優しく接してくれました。半日くらい慰めてくれました。それだけなら…良かったんですが。"
+</div>
+<div class="box5">
+<p>
+T:"SCP-2299-JPは再度写真フォルダをスクロールし、SNSアプリケーション\"Twitter\"の画面をスクリーンショットした画像を表示する。"
+</p>
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"このスクショ、彼の裏アカです。あ…えっと、たまたま見つけちゃって、暇潰しに見てたんですよ。そうしたら、『僕の彼女、親から監視されてるような感じだ。可哀想だけど…僕も見られてるのかな。嫌だなあ』ってツイートしてました。…当たり前ですよね。"
+<br>
+T:"それからというもの、彼とは疎遠になっていきました。受験期だったし、倦怠期でもあったし、色々と理由はあるのですが…やっぱり彼も、彼女の親に見られているってのは嫌だったんでしょう。グダグダと付き合っていましたが、クリスマスになる頃にはもう会話も無くなりました。…後はまぁ、言わなくても分かりますよね。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"えぇ。その…親にストーカー行為をやめるように言ったりは出来ませんでしたか？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"…言いました。あの写真を見せつけて、『どうしてこんなことするの』って言いましたよ。でも…お母さんは、ニヤニヤ笑いながら『だって、子供の成長を見るのがとても楽しいんだもの』って。『どうやって私が付き合ってるのを知ったの』って尋ねたら、『WoEを見れば貴方が何をしているか分かるんだよ』って言いました。私はそれ以来、何度も何度もアプリを削除しようと試みました。でも、何度やっても何をやっても出来ませんでした。…諦めましたよ。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"……なるほど。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"それ以来、私はどこへ行くにもWoEの事を考えざるを得なくなりました。服を買いに行ったり、スイーツを食べに行ったり、ゲームセンターに行ったり…そうする度に、『今もお母さんが私を見てるんだな』って思うようになって…そう思う内に、私は引きこもりがちになりました。大学に合格して一人暮らしするようになっても、何をやっているか把握されないであろうデパートばっかり行くようになりました。まぁ、バレてましたけどね。"
+<br>
+T:"…覚えてますか、最初のインタビューで、私が『パンケーキを食べに行ってた』って言ったことを。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"ええ、覚えてますよ。パンケーキを食べてる時にメールが来たんですよね？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"はい。あれは…私にとって、大事な日でした。お母さんが死んで、付き纏われる事もなくなって、やっと自由になったんだと思いました。だから…数年間行ってなかった、大好きなパンケーキ屋さんに行ったんです。そうしたら……メールが来ちゃったんです…わ、私は…どうして、どうして自由になれないんですか！？"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"…今は耐えてください。最初のインタビューの時、『解決する手段を有している』と私は言いました。貴方はきっと自由になれます。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"本当ですか？私は…私自身で、自由に行動していけるようになりますか？"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"ええ！本当ですよ。……それで、貴方の親に関する異常な点は以上ですか？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"はい。…でも、私は…これが異常だとは思いません。至って正常だと思います。"
+<em>
+T:"[笑って]"
+</em>
+T:"お母さんの言ってることは正しいです。子供の成長を見るのはとっても楽しいですから。こんな行動をするのも、きっとお母さんが私を愛してくれている証拠なんだと思います。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+<em>
+T:"[困惑して]"
+</em>
+T:"……そういうものでしょうか？私には理解できません。"
+<br>
+T:"ただ、そんな正常に、貴方は恐怖しているんでしょう？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"それはまぁ…そうですが。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"じゃあ、貴方の為に解決しなければなりません。貴方だって、これを早く解決したいんですよね？"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"ええ。一刻も早く、お母さんには、安らかに眠って欲しいです。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"よし。ならばまたすぐに実験を再開しましょう。まだまだ打つ手はあります。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"ありがとうございます。本当に、ここまでしてくださって…。"
+</div>
+<div class="box2">
+<div class="box2-title">
+<p>
+<strong>
+T:"小林博士"
+</strong>
+</p>
+</div>
+<br>
+T:"それが我々の仕事ですから。ではインタビューを終了します。"
+</div>
+<hr>
+<p style="text-align: center;">
+<strong>
+T:"<記録終了>"
+</strong>
+</p>
+<hr>
+</div>
+</div>
+</div>
+</div>
+<div class="box1">
+<div class="box-title">
+<p>
+<strong>
+T:"補遺4 > 追加実験"
+</strong>
+</p>
+</div>
+<br>
+T:"SCP-2299-JPの精神状態が良好であると判断されたため、実験はインタビューの2日後に再開されました。以下は実行された実験の抜粋です。"
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"▹OPEN"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"▹CLOSE"
+</a>
+</div>
+<div class="collapsible-block-content">
+<div style="text-align: center;">
+<hr>
+<h2 id="toc11">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"実験記録 > 2299-JP.6"
+</span>
+</strong>
+</span>
+</h2>
+<h2 id="toc12">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"日付 > 2016/05/18"
+</span>
+</strong>
+</span>
+</h2>
+<hr>
+</div>
+<br>
+<strong>
+T:"実験内容:"
+</strong>
+T:"SCP-2299-JPが現在保持しているスマートフォンを解約し、別のスマートフォンを契約する。"
+<br>
+<br>
+<strong>
+T:"結果:"
+</strong>
+T:"別のスマートフォンを契約して電源をオンにしたところ、不明な要因により既にWoEがインストールされていた。アプリは同様に削除が不可能になっており、アプリ内ではSCP-2299-JPとSCP-2299-JP-Aの位置情報を示した。"
+<br>
+<br>
+<strong>
+T:"分析:"
+</strong>
+T:"SCP-2299-JPに所有権があるという事が異常性発現のトリガーとなっているのかもしれません。"
+<br>
+<br>
+<strong>
+T:"終了報告書:"
+</strong>
+T:"SCP-2299-JPの元のスマートフォンは不明な要因によってWoEが削除されており、非異常となった事が確認された為、保管場所は実験の便宜上、小林博士の研究オフィスに移されました。"
+<br>
+<div style="text-align: center;">
+<hr>
+<h2 id="toc13">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"実験記録 > 2299-JP.7"
+</span>
+</strong>
+</span>
+</h2>
+<h2 id="toc14">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"日付 > 2016/05/23～未定"
+</span>
+</strong>
+</span>
+</h2>
+<hr>
+</div>
+<br>
+<strong>
+T:"実験内容:"
+</strong>
+T:"実験記録6で得た異常なスマートフォンに財団が特殊加工を施したものを常に携帯させる。"
+<br>
+T:"施した加工は以下の通り。"
+<ul>
+<li>
+T:"当該スマートフォンを通して利用したアプリケーション・検索履歴・行動の全ての記録化。"
+</li>
+<li>
+T:"それらの記録に何らかの異常性やそれに関わる事項が発見された場合、それらを検知する機能。"
+</li>
+<li>
+T:"財団の存在を唆すような行動(SNSでの発言やLINEなど)を起こした場合、それらを自動的に検閲する機能。"
+</li>
+</ul>
+<strong>
+T:"結果:"
+</strong>
+T:"SCP-2299-JPは要求に従い、現在まで当該機器を使用し続けている。これまでに得られた記録は以下の通り。"
+<br>
+<table class="wiki-content-table">
+<tbody>
+<tr>
+<th>
+T:"使用App"
+</th>
+<th colspan="2">
+T:"平均使用割合(%)"
+</th>
+<th colspan="2">
+T:"異常ベクター"
+</th>
+</tr>
+<tr>
+<td style="text-align: center;">
+T:"SNS"
+</td>
+<td colspan="2" style="text-align: center;">
+T:"43%"
+</td>
+<td colspan="2" style="text-align: center;">
+T:"なし"
+</td>
+</tr>
+<tr>
+<td style="text-align: center;">
+T:"WoE"
+</td>
+<td colspan="2" style="text-align: center;">
+T:"24%"
+</td>
+<td colspan="2" style="text-align: center;">
+T:"なし"
+</td>
+</tr>
+<tr>
+<td style="text-align: center;">
+T:"検索エンジン"
+</td>
+<td colspan="2" style="text-align: center;">
+T:"18%"
+</td>
+<td colspan="2" style="text-align: center;">
+T:"なし"
+</td>
+</tr>
+<tr>
+<td style="text-align: center;">
+T:"ゲーム"
+</td>
+<td colspan="2" style="text-align: center;">
+T:"8%"
+</td>
+<td colspan="2" style="text-align: center;">
+T:"なし"
+</td>
+</tr>
+<tr>
+<td style="text-align: center;">
+T:"動画配信サービス"
+</td>
+<td colspan="2" style="text-align: center;">
+T:"7%"
+</td>
+<td colspan="2" style="text-align: center;">
+T:"なし"
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+<br>
+<strong>
+T:"分析:"
+</strong>
+T:"今の所、当該実験において異常性と関係する事柄は見つかっていません。"
+<br>
+T:"判明した事柄の中で記録に値するものは、\"SCP-2299-JPの行動は模範的であり、SNSでも財団に関する事柄については言及せず、財団が関与する以前の行動とほぼ変わらずSNSを使用している\"こと、\"検索履歴は『幽霊<IDSP>科学的見解』『見るということ』『WoE<IDSP>会社』など、自身の異常性に関する情報を積極的に調べ、メモ帳に自身の見解を連ねている\"点のみです。"
+<br>
+<br>
+<strong>
+T:"終了報告書:"
+</strong>
+T:"当該実験は現在も継続されています。"
+</p>
+<div style="text-align: center;">
+<hr>
+<h2 id="toc15">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"実験記録 > 2299-JP.8"
+</span>
+</strong>
+</span>
+</h2>
+<h2 id="toc16">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"日付 > 2016/06/10"
+</span>
+</strong>
+</span>
+</h2>
+<hr>
+</div>
+<br>
+<strong>
+T:"実験内容:"
+</strong>
+T:"SCP-2299-JPが所有するスマートフォンが位置情報を送信する事を停止する。"
+<br>
+<br>
+<strong>
+T:"結果:"
+</strong>
+T:"位置情報の送信を停止してから2分後、SCP-2299-JP-Aは複数のメッセージをSCP-2299-JPに送りました。以下はそのタイムラインです。"
+<hr>
+<p style="text-align: center;">
+<strong>
+T:"<記録開始>"
+</strong>
+</p>
+<hr>
+<p>
+<br>
+<strong>
+T:"<15:20>"
+</strong>
+</p>
+<div class="box4">
+<div class="box4-title">
+<p>
+<strong>
+T:"SCP-2299-JP-A"
+</strong>
+</p>
+</div>
+<br>
+T:"どうしてGPSを切ってるの？？"
+</div>
+<p>
+<strong>
+T:"<15:21>"
+</strong>
+</p>
+<div class="box4">
+<div class="box4-title">
+<p>
+<strong>
+T:"SCP-2299-JP-A"
+</strong>
+</p>
+</div>
+<br>
+T:"見られたら困る事でもあるの？無いでしょう？"
+</div>
+<p>
+<strong>
+T:"<15:29>"
+</strong>
+T:"SCP-2299-JP-AはSCP-2299-JPに着信する。小林博士の指示により、電話を無視する。"
+<br>
+<br>
+<strong>
+T:"<15:31>"
+</strong>
+T:"SCP-2299-JP-Aが再度着信する。"
+<br>
+<br>
+<strong>
+T:"<15:32>"
+</strong>
+</p>
+<div class="box4">
+<div class="box4-title">
+<p>
+<strong>
+T:"SCP-2299-JP-A"
+</strong>
+</p>
+</div>
+<br>
+T:"どうして電話に出ないの？愛奈、どこにいるの？"
+</div>
+<p>
+<strong>
+T:"<15:35〜15:38>"
+</strong>
+T:"SCP-2299-JP-Aが15時35分～38分の間に6回着信する。SCP-2299-JPは恐怖しながら応答しようとするが、小林博士は異常性の調査の為にそれを阻止する。"
+<br>
+<br>
+<strong>
+T:"<15:41>"
+</strong>
+T:"LINEの機能を使い、SCP-2299-JP-AはSCP-2299-JPに音声メッセージを送る。内容は以下の通り。"
+</p>
+<div class="box4">
+<div class="box4-title">
+<p>
+<strong>
+T:"SCP-2299-JP-A"
+</strong>
+</p>
+</div>
+<br>
+T:"頼むから電話に出てよ。見られて困るような事をしてるの？どうしてGPSを切るの？早く電話に出て。電話に出てね。早く電話に出て。早くGPSをオンにして。"
+</div>
+<br>
+<strong>
+T:"<15:43〜16:02>"
+</strong>
+T:"SCP-2299-JP-Aは15:43～16:02の間に7回の着信を行う。"
+<br>
+<br>
+<strong>
+T:"<16:30>"
+</strong>
+T:"SCP-2299-JP-Aが再度着信する。以下、頻度は低下するも15分〜30分おきに着信を行う。"
+<br>
+<br>
+<strong>
+T:"<16:47>"
+</strong>
+T:"状況の進展が見られないため、指示によりSCP-2299-JPは位置情報の送信停止を解除する。"
+<br>
+<br>
+<strong>
+T:"<16:49>"
+</strong>
+<br>
+T:"SCP-2299-JP-Aからメッセージが届く。"
+<div class="box4">
+<div class="box4-title">
+<p>
+<strong>
+T:"SCP-2299-JP-A"
+</strong>
+</p>
+</div>
+<br>
+T:"やっと貴方の位置が分かった。どうしてこんな事したの？それとも何か困ってることがあるの？もしそうならいつでも言ってね。"
+</div>
+<p>
+<strong>
+T:"<16:52>"
+</strong>
+T:"SCP-2299-JP-Aを刺激する事を避けるため、協議の上でSCP-2299-JPは『スマホを最近変えたから、まだ設定に慣れてなくてこうなっちゃった、ごめん』と返信した。すぐに既読がついたが、返答はされなかった。"
+</p>
+<hr>
+<p style="text-align: center;">
+<strong>
+T:"<記録終了>"
+</strong>
+</p>
+<hr>
+</div>
+</div>
+</div>
+</div>
+<div style="text-align: center;">
+<p>
+<tt>
+T:"."
+</tt>
+<br>
+<br>
+<tt>
+T:"."
+</tt>
+<br>
+<br>
+<tt>
+T:"."
+</tt>
+<br>
+<br>
+<tt>
+T:"."
+</tt>
+<br>
+<br>
+<tt>
+T:"."
+</tt>
+<br>
+<br>
+<tt>
+T:"."
+</tt>
+<br>
+<br>
+<tt>
+T:"."
+</tt>
+<br>
+<br>
+<tt>
+T:"."
+</tt>
+<br>
+<br>
+<tt>
+T:"."
+</tt>
+<br>
+<br>
+<tt>
+T:"."
+</tt>
+</p>
+</div>
+<div style="text-align: center;">
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"(<NBSP>1<NBSP>)件の更新があります！"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"(<NBSP>1<NBSP>)件の更新があります！"
+</a>
+</div>
+<div class="collapsible-block-content">
+</div>
+<div class="box1">
+<div class="box-title">
+<p>
+<strong>
+T:"更新ファイル > SCP-2299-JP"
+</strong>
+</p>
+</div>
+<div style="text-align: left;">
+<p>
+T:"2016/06/23、SCP-2299-JPが収容セル内で死亡している状態で発見されました。死因は失血死であり、スマートフォンに取り付けられたケースを割り、その一か所を数十回も壁に打ち付けて鋭利にし、その鋭利な箇所で自身の左手首を何度も切ることで失血に至るまで傷を深くした事が死後調査で明らかになっています。"
+<br>
+T:"また、SCP-2299-JPはそれら一連の行動と発言をスマートフォンのビデオカメラで撮影していました。以下はその記録です。"
+</p>
+</div>
+<div style="text-align: center;">
+<hr>
+<h2 id="toc17">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"撮影記録 > SCP-2299-JP"
+</span>
+</strong>
+</span>
+</h2>
+<h2 id="toc18">
+<span>
+<strong>
+<span style="text-decoration: underline;">
+T:"日付 > 2016/06/23"
+</span>
+</strong>
+</span>
+</h2>
+<hr>
+<p>
+<strong>
+T:"<記録開始>"
+</strong>
+</p>
+</div>
+<div style="text-align: left;">
+<div class="box5">
+<p>
+T:"SCP-2299-JPはスマートフォンを横向きにして立て、ビデオを起動させる。部屋は乱雑に散らかっており、椅子や机は何か硬いもので擦ったり打ち付けあったような跡がある。また、壁の一部分は剥がれている。"
+</p>
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"えーと。その…何から話せばいいのか分かりませんが、今から私は、死のうと思います。一応それを何か記録に残しておきたいなーと思って。その、なんで急にそんなことするのか、と思ってらっしゃるかもしれません。それも話します。"
+</div>
+<div class="box5">
+<p>
+T:"SCP-2299-JPは、あらかじめ外しておいたと思われるプラスチック製のスマホケースを手に取り、二つに折って割る。"
+</p>
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"そうだ。最初から思ってたんですけど、この部屋って不自然ですよね。死のうと思って、何か使えるものはないかと部屋を見回したら…驚いた、この部屋には鋭利なものが無かったんです。机も椅子もタンスも何もかも、角が丸くなっているし、全体的に物が柔らかいもので覆われている。傷を負う手段が全くないんです。私はすごく困りました。"
+</div>
+<div class="box5">
+<p>
+T:"SCP-2299-JPは割ったスマホケースの一部分を壁にこすり、鋭利にしていく。"
+</p>
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"だから、こうするんです。貰い物を壊したり公共物に傷をつけるのは気が引けるんですが…仕方ないです。…それで、死ぬ理由は…そうですね、あまり褒められたものじゃありません。"
+<em>
+T:"[笑って]"
+</em>
+T:"そりゃそうか。死ぬこと自体、こう、褒められることじゃないか。"
+</div>
+<div class="box5">
+<p>
+T:"SCP-2299-JPは充分に鋭利にした後、深呼吸してその部分を左手首にあてて切る。"
+</p>
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"痛っ。あれ？予想以上に血が出ないなぁ…まあいいや。それでですね、私が死ぬのは、私自身が変わっていくのが耐えられないからです。"
+</div>
+<div class="box5">
+<p>
+T:"SCP-2299-JPは涙を流しながら何回も手首を切る。"
+</p>
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"はは…簡単には死なせてくれないな。酷い。….最近気付いたんです。私はずっとずっと、『見る』と言う事が、どうしようもないくらい大好きだったんです。"
+<br>
+T:"前に話しましたよね？元カレの裏アカがなんとかかんとか…って。『たまたま見つけた』って言いましたが、ごめんなさい、あれは嘘です。付き合ってる間、友達に見つけてもらって、ずっと毎日見続けていましたよ。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"私は、彼の裏アカに粘着していました。プロフィール写真とか気に入ったツイートをスクショしたり、暇さえあれば彼の裏アカを眺めてました。"
+<em>
+T:"[泣きながら笑って]"
+</em>
+T:"…結局、私はお母さんと何も変わらない。"
+<br>
+T:"そして何より…WoEを見るのが、楽しくてたまらないんです！お母さんがどこにいるのか、どういう風に移動しているのか、今何をしているのか…何の役にも立たない情報なのに、把握するのがとても…支配しているかのようで、楽しいことに気付いてしまったんです！小林さん、貴方もそう思いませんか！？"
+</div>
+<div class="box5">
+<p>
+T:"SCP-2299-JPはしばらく笑った後、倒れていた椅子を元に戻して座る。充分に出血している事を確認し、スマホケースを放り投げ、脱力した体制で泣きながら笑う。"
+</p>
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"…日に日に、WoEを開く回数と眺める時間が増えていくのを感じています。それはとても嫌な事にはずなのに止められません。私は…見ることに依存しています。中毒者です。今だって、お母さんはどこに居るのかなぁって、考えてしまっています。"
+<br>
+T:"気付いてしまったんです。今の私は、WoEに縛られている。自由じゃない。もう普通の生活に戻れない事に気付いたんです。"
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"それでもなお、これは正常なんだと私は思っています。見ることの楽しさ…小林さん、貴方もそう思いませんか？もっと正確に言うと、観察する、監視する楽しさです！もしかしたら、実験とかこつけて、私の行動を把握しようとしたりしてませんでしたか？それが当たってたとしたら…なおさら、これは正常だ！当たり前で、ごく自然な反応だ。きっとそうだ…"
+<em>
+T:"[小声で]"
+</em>
+T:"私何言ってんだろうな…"
+</div>
+<div class="box5">
+<p>
+T:"SCP-2299-JPは数分間何も喋らず、天井と壁と自身の手首を交互に見つめている。"
+</p>
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"私は…怖いんです。いつか私も、お母さんのようにWoEに取り憑かれたようになるんじゃないかって思ったんです。これが解決しても、私は昔のように純粋には戻れない。それがもう耐えられないから、ここで死ぬことにしました。小林さん、こんな考え方をする私は…もう、狂っていますか？異常ですか？"
+</div>
+<div class="box5">
+<p>
+T:"SCP-2299-JPは脱力し、地面に倒れる。その時、右手が収容セル内の家具に取り付けられた監視用隠しカメラにぶつかり、外れる。SCP-2299-JPはそれを手に取る。SCP-2299-JPは笑う。"
+</p>
+</div>
+<div class="box3">
+<div class="box3-title">
+<p>
+<strong>
+T:"SCP-2299-JP"
+</strong>
+</p>
+</div>
+<br>
+T:"やっぱり、ずうっと見てたんですね。"
+</div>
+</div>
+<hr>
+<p style="text-align: center;">
+<strong>
+T:"<記録終了>"
+</strong>
+</p>
+<hr>
+<div style="text-align: left;">
+<p>
+<br>
+T:"死亡後、撮影された記録を基にSCP-2299-JPに何らかの異常な影響が発生していたかの捜査が行われましたが、特筆するような異常は発見されませんでした。"
+<br>
+<br>
+T:"また調査によれば、SCP-2299-JPが撮影を行っている間、小林博士は監視カメラ映像でSCP-2299-JPを見ていた可能性が高いと推測されました。このことについて小林博士は黙秘しています。小林博士は何らかの異常な影響が作用していた可能性があるために収容セルに拘置されており、検査が進められていますが、あらゆる異常性精査や精神鑑定において、現在まで全て正常な値を記録しています。"
+<br>
+<br>
+T:"SCP-2299-JPの死亡から8時間後、SCP-2299-JP-Aからメールが届きました。"
+<br>
+<br>
+</p>
+<div class="box4">
+<div class="box4-title">
+<p>
+<strong>
+T:"SCP-2299-JP-A"
+</strong>
+</p>
+</div>
+<br>
+T:"今、私の目の前に愛奈が居ます。死んだような目でずっと笑っています。私を見て、『やっと会えたね』と言って、笑っているんです。"
+<br>
+T:"もし誰かがこのメッセージを見ているなら、知り合いであるのなら、聞きたいことがあります。"
+<br>
+T:"私の娘は、こんな人間じゃなかったはずです。誰がこの子をこんな風にしてしまったんですか？"
+</div>
+<br>
+T:"SCP-2299-JP及びSCP-2299-JP-Aに関する更なる情報は、未だ明らかになっていません。"
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="collapsible-block">
+<div class="collapsible-block-folded">
+<a class="collapsible-block-link" href="javascript:;">
+T:"<IDSP>"
+</a>
+</div>
+<div class="collapsible-block-unfolded" style="display:none">
+<div class="collapsible-block-unfolded-link">
+<a class="collapsible-block-link" href="javascript:;">
+T:"<IDSP>"
+</a>
+</div>
+<div class="collapsible-block-content">
+<div class="footnotes-footer">
+<div class="title">
+T:"Footnotes"
+</div>
+<div class="footnote-footer" id="footnote-1">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('footnoteref-1')">
+T:"1"
+</a>
+T:". \"了解\"を表す。いわゆる若者言葉の1つ。"
+</div>
+<div class="footnote-footer" id="footnote-2">
+<a href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('footnoteref-2')">
+T:"2"
+</a>
+T:". 実験記録2299-JP.4について言及していると思われる。"
+</div>
+</div>
+</div>
+</div>
+</div>

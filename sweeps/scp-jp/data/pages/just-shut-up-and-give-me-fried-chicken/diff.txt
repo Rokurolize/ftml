@@ -1,0 +1,51 @@
+--- live
++++ ftml
+@@ -1,27 +1,7 @@
+ <div style="text-align: right;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+235"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ </div>
+ <div style="border:solid 1px #000000; background:#000000; padding:5px; margin-bottom: 10px;">
+ <div class="monoayu">
+@@ -494,6 +474,17 @@
+ </strong>
+ </span>
+ </p>
++<div class="error-block">
++T:"[[module"
++<em>
++T:"ListUsers"
++</em>
++T:"]] No such module, please"
++<a href="https://www.wikidot.com/doc:modules" rel="noopener noreferrer" target="_blank">
++T:"check available modules"
++</a>
++T:"and fix this page."
++</div>
+ <p>
+ <span style="color: #1fa131">
+ T:"………"

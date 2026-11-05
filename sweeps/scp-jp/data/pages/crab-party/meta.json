@@ -1,0 +1,81 @@
+{
+ "kind": "tale",
+ "listed_size": 9724,
+ "live_page_content_sha256": "18e6170bc2db92625fbadc39b191671457b07d2b37037cbaaeef82fc9221c073",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:25:32+00:00",
+  "method": "GET",
+  "response_bytes": 55332,
+  "response_sha256": "880d7e6d5f91e002233e819080171e9a779109012b34885707c76b67391ffdc7",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/crab-party"
+ },
+ "page_id": 86993816,
+ "rating": 212,
+ "site": "scp-jp",
+ "slug": "crab-party",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:25:33+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "86993816"
+  },
+  "response_bytes": 38654,
+  "response_sha256": "26a0bbcf2e318e86caa06cd0da629c69f0bbafe1ffca1c20448c7b863db442cf",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "da843b618242a003a12cabef86ba270513abbe751a40f1854b71f6297359cd74",
+ "stats": {
+  "counts": {
+   "anchor": 0,
+   "blocks": 8,
+   "bold": 116,
+   "cjk_dash_pair": 0,
+   "cjk_emphasis": 154,
+   "collapsible": 0,
+   "color": 0,
+   "css": 0,
+   "div": 0,
+   "ellipsis_dash": 50,
+   "footnote": 0,
+   "fullwidth_space": 0,
+   "heading": 0,
+   "hr": 1,
+   "html": 0,
+   "iftags": 0,
+   "image": 1,
+   "include": 2,
+   "italic": 188,
+   "link3": 0,
+   "list": 0,
+   "module": 0,
+   "mono": 0,
+   "quote": 303,
+   "raw": 78,
+   "ruby": 0,
+   "size": 1,
+   "span": 0,
+   "strike": 13,
+   "sup_sub": 0,
+   "table": 0,
+   "tabview": 0,
+   "underline": 2
+  },
+  "density_per_kchar": 89.16,
+  "markup_tokens": 867
+ },
+ "title": "収容違反記録-833-JP-J",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "86993816",
+  "pageUnixName": "crab-party",
+  "requestPageName": "crab-party",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

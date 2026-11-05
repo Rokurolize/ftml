@@ -1,0 +1,97 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "theme:minimal",
+     "site": "scp-jp",
+     "variables": {
+      "subtitle": "儚いものと生きていく",
+      "title": "定命種エミュレータ事例集\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "credit:start",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end",
+     "site": "scp-jp",
+     "variables": {}
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:interwiki-style",
+     "site": "scp-jp",
+     "variables": {
+      "priority": "1\n",
+      "theme": "https://scp-jp.wdfiles.com/local--code/theme%3Aminimal/1\n"
+     }
+    },
+    {
+     "found": true,
+     "page": "credit:start-preview",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end-preview",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "caption": "画像。",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A8260379-66-pxvf/minimal.svg",
+      "width": "100px"
+     }
+    }
+   ],
+   "pass": 2
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "right",
+      "caption": "画像。",
+      "clear": "false",
+      "link": "#",
+      "name": "https://scp-jp-storage.wdfiles.com/local--files/file%3A8260379-66-pxvf/minimal.svg",
+      "width": "100px"
+     }
+    }
+   ],
+   "pass": 3
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 4
+  }
+ ],
+ "existing_pages_from_live": [
+  "author:dr-knotty"
+ ],
+ "newpage_links_in_live": []
+}

@@ -1,0 +1,661 @@
+[[module CSS]]
+@import url('https://scp-jp.wdfiles.com/local--code/theme%3Aminimal/1');
+[[/module]]
+
+
+[[embed]]
+<iframe src="//interwiki.scp-jp.org/styleFrame.html?priority=1
+&theme=https://scp-jp.wdfiles.com/local--code/theme%3Aminimal/1
+&css={$css}" style="display: none"></iframe>
+[[/embed]]
+
+
+[[iftags +テーマ]]
+[[>]]
+**評価モジュール:**
+[[module Rate]]
+[[/>]]
+
+[[>]]
+**クレジット付き評価モジュール:**
+[[/>]]
+
+
+[[module css]]
+@import url('https://scp-jp.github.io/files/util/common/credit/style/style.css');
+
+.creditRate.no-rate .page-rate-widget-box {
+    visibility:hidden;
+}
+
+.creditRate.creditModule.no-rate ~ #u-credit-view .creditBottomRate > div:nth-of-type(2) {
+    display; none;
+}
+[[/module]]
+
+[[div_ class="creditRate creditModule {$mode}"]]
+[[div_ class="rateBox"]]
+[[div_ class="rate-box-with-credit-button"]]
+[[module Rate]]
+[[div_ class="creditButton"]]
+[[a href="#u-credit-view" class="fa fa-info" style="position:relative;"]][[image https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png title="クレジットを表示する" style="position:absolute;height:100%;width:100%;top:0;left:0;"]][[/a]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+[[div_ style="clear:both;"]]
+[[/div]]
+
+[[div_ id="credit-view"]]
+[[div_ class="fader"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/start.html ]]
+[[/div]]
+
+[[div_ class="modalcontainer"]]
+[[div_ class="modalbox"]]
+[[div_ class="modalbox-title"]]
+++* クレジット
+[[/div]]
+[[div class="credit"]]
+
+**タイトル:** Minimalテーマ
+**翻訳責任者:** [[*user nebula2700]]
+**翻訳年:** 2024
+**原題:** Minimal Theme
+**著作権者:** [[*user stormbreath]]
+**作成年:** 2020
+**初訳時参照リビジョン:** 19
+**元記事リンク:** [https://scp-wiki.wikidot.com/theme:minimal ソース]
+
+[[div_ class="credit-back" style="text-align: center;"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/end.html style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" scrolling="no"]]
+[[/div]]
+[[/div]]
+
+[[div_ class="creditBottomRate" style="height:30px;"]]
+[[div_ class="credit-license"]]
+[[a href="*https://creativecommons.org/licenses/by-sa/3.0/deed.ja" class="cc cc-by-sa"]]@@@@[[/a]]
+[[/div]]
+[[div_ style="text-align: center; top: 0px;"]]
+[[div_]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+
+これはGoI/カノンやイン＝ユニバースのコンセプトに限らず、どんな用途にも使えるミニマリストのCSSです。このテーマを使用するには、記事のどこかに以下の構文を記述してください！(タイトルとサブタイトルは好きなように変更できますが、これらの行の値がない場合、テーマは機能しません。)
+
+> [[include :scp-jp:theme:minimal
+> |title=SCP財団
+> |subtitle=確保、収容、保護]]
+
+
+
+[[div class="scp-image-block block-right scp-clear-false" style="width:100px;"]]
+[[image https://scp-jp-storage.wdfiles.com/local--files/file%3A8260379-66-pxvf/minimal.svg {$alt}="{$alt-text}" link=#]]
+[[div class="scp-image-caption"]]
+画像。
+[[/div]]
+[[/div]]
+
+
+
++ 見出し
+
+[[toc]]
+
+[# 未訪問のリンク] ([[[theme:minimal|訪問済みのリンク]]])
+
+[[tabview]]
+[[tab タブ1]]
+1つ目のタブ
+[[/tab]]
+[[tab タブ2]]
+2つ目のタブ
+[[/tab]]
+[[/tabview]]
+
+[[code type="CSS"]]
+/*
+    None CSS with Left Beef
+    [2019 Wikidot Theme]
+    Created by stormbreath.
+*/
+
+/* LINKS */
+a {
+    color: #0645AD;
+}
+ 
+a.newpage {
+    color: #CC2200;
+}
+ 
+ a:visited:not(.fa-info) {
+     color: #0B0080;
+}
+
+#side-bar a,
+#interwiki a {
+     color: black
+}
+
+#side-bar a:visited,
+#interwiki a:visited {
+     color: black;
+}
+
+/* REMAKE THE HEADER */
+h1, #page-title {
+    color: black;
+}
+ 
+#page-title {
+    border-color: black;
+}
+ 
+
+div#container-wrap {
+    background: none;
+}
+
+div#extra-div-1 {
+    height: 22px;
+    width: 100%;
+    top: 140px;
+    position: absolute;
+    background: black;
+}
+
+#header {
+    background-image: url('https://scp-jp-storage.wdfiles.com/local--files/file%3A8260379-66-pxvf/minimal.svg');
+    background-size: 6rem;
+}
+
+@media (max-width: 580px) and (min-width: 480px) {
+    #header {
+        background-position: 0.5em 4.5em;
+        background-size: 66px 66px;
+    }
+}
+ 
+@media (max-width: 479px) {
+    #header {
+        background-position: 0 5.5em;
+        background-size: 55px 55px;
+    }
+}
+
+#header h1 a {
+    color: transparent;
+    text-shadow: none;
+}
+ 
+#header h2 span {
+    color: transparent;
+    text-shadow: none;
+}
+
+/* SIDE-BAR */
+#side-bar .side-block,
+#interwiki .side-block {
+    background-color: white !important;
+    border-color: transparent;
+    border-radius: 0px;
+    box-shadow: none;
+}
+
+#side-bar .heading,
+#interwiki .heading {
+    color: black;
+    border-bottom: solid 1px black;
+}
+
+
+@media (max-width: 767px) {   
+    #side-bar {
+         background-color: white;
+    }
+  
+    #side-bar:target .close-menu {
+         background: none;
+    }
+}
+
+#side-bar .collapsible-block-unfolded-link {
+    border-bottom: solid 1px black;
+}
+
+#side-bar .collapsible-block-unfolded-link .collapsible-block-link,
+#side-bar .collapsible-block-unfolded-link .collapsible-block-link:hover {
+    color: black;
+}
+
+#interwiki .menu-item img{
+    filter: grayscale(100%) saturate(0%);
+}
+
+/* TOP-BAR */
+#top-bar ul li ul {
+    border: solid 1px black;
+}
+#top-bar ul li.sfhover ul li a,
+#top-bar ul li:hover ul li a {
+    border-top: 1px solid white;
+}
+ 
+#top-bar ul li.sfhover a,
+#top-bar ul li:hover a {
+    background: white;
+    color: black;
+}
+#top-bar ul li ul a, #top-bar a:hover {
+    color: black;
+}
+#top-bar ul li.sfhover a:hover,
+#top-bar ul li:hover a:hover {
+    background: black;
+    color: white; /* top bar hover background color */
+}
+
+/* RATING MODULE */
+div.page-rate-widget-box .rate-points {
+    background-color: black;
+    border: solid 1px black;
+    text-transform: capitalize;
+}
+
+.page-rate-widget-box .rateup,
+.page-rate-widget-box .ratedown {
+    background-color: black;
+    border-top: solid 1px black;
+    border-bottom: solid 1px black;
+}
+
+.page-rate-widget-box .rateup a,
+.page-rate-widget-box .ratedown a {
+    background: transparent;
+    color: white;
+}
+
+.page-rate-widget-box .rateup a:hover,
+.page-rate-widget-box .ratedown a:hover {
+    background: white;
+    color: black;
+}
+
+.page-rate-widget-box .cancel {
+    background-color: black;
+    border: solid 1px black;
+}
+
+.page-rate-widget-box .cancel a {
+    color: white;
+}
+
+.page-rate-widget-box .cancel a:hover {
+    background: white;
+    color: black !important;
+    border-radius: 0;
+}
+
+#page-content .rate-box-with-credit-button {
+    color: white;
+    background-color: black;
+    border-radius: 5px !important;
+}
+
+#page-content .rate-box-with-credit-button .creditButton {
+  background-color: black;
+  border: 1px solid black;
+}
+
+#page-content .rate-box-with-credit-button .creditButton p a {
+    border-left-color: transparent;
+}
+
+#page-content .rate-box-with-credit-button :is(.fa-info, .creditButton):hover {
+     color: black !important;
+     background-color: white;
+     border: 1px solid white;
+}
+
+#page-content .modalbox {
+    box-shadow: 0 2px 6px rgba(102, 102, 102, .5);
+}
+
+.close-credits,
+.credit-back {
+    filter: hue-rotate(260deg);
+}
+
+/* PAGE ELEMENTS */
+blockquote,
+div.blockquote,
+#toc,
+.code {
+     background-color: white;
+}
+
+.scp-image-block {
+    border: solid 1px black;
+    box-shadow: none;
+}
+.scp-image-block .scp-image-caption {
+    background-color: white !important;
+    border-top: solid 1px black !important;
+    color: black;
+}
+
+/* RECOLOR THE SEARCH BAR */
+#search-top-box-input {
+    border-color: black;
+    color: black !important;
+    background-color: white;
+}
+ 
+#search-top-box-input:hover,
+#search-top-box-input:focus {
+    background-color: white;
+    border-color: black;
+}
+ 
+#search-top-box-form input[type=submit] {
+    border: solid 1px black;
+    color: black;
+    background-color: white;
+    background: white;
+}
+ 
+#search-top-box-form input[type=submit]:hover,
+#search-top-box-form input[type=submit]:focus {
+    border: solid 1px black;
+    background-color: white;
+    background: white;
+    color: black;
+}
+
+/* LOGIN STUFF */
+#login-status {
+    color: black;
+    filter: grayscale(100%) saturate(0%);
+    -webkit-filter: grayscale(100%) saturate(0%);
+}
+
+#login-status a {
+    color: black;
+}
+
+#login-status ul a {
+    color: black;
+}
+
+#account-topbutton {
+     background: #ccc;
+     color: black;
+}
+
+/* HOVER THINGIES */
+.hovertip {
+     background: white !important;
+}
+
+/* FOOTER  */
+#footer {
+    background: black;
+    color: white;
+}
+
+/* TABS */
+.yui-navset .yui-nav,
+.yui-navset .yui-navset-top .yui-nav {
+    border-color: transparent; /* color between tab list and content */
+}
+ 
+.yui-navset .yui-nav a,
+.yui-navset .yui-navset-top .yui-nav a {
+    background: white; /* tab background */
+    border-color: white;
+    color: black;
+    transition: 0.125s;
+}
+ 
+.yui-navset .yui-nav a em {
+    background: white;
+    box-shadow: 0px 1px 2px rgba(0,0,0,0.7);
+    border-color: white;
+}
+ 
+.yui-navset .yui-nav .selected a,
+.yui-navset .yui-nav .selected a:focus,
+.yui-navset .yui-nav .selected a:hover {
+    background: white; /* selected tab background */
+    color: black;
+}
+ 
+.yui-navset .yui-nav a:hover,
+.yui-navset .yui-nav a:focus {
+    background: white;
+}
+
+.yui-navset .yui-nav .selected a,
+.yui-navset .yui-nav .selected a em {
+    border-color: transparent;
+    box-shadow: 0px 1px 2px 0.5px rgba(0,0,0,0.5);
+    background: white;
+}
+ 
+.yui-navset .yui-content {
+    background: transparent; /* content background color */
+}
+ 
+.yui-navset .yui-content,
+.yui-navset .yui-navset-top .yui-content {
+    border-color: transparent; /* content border */
+    border-top-color: transparent; /* different border color */
+}
+ 
+.yui-navset-left .yui-content {
+    border-left-color: #b7a9a9; /* different border color */
+}
+[[/code]]
+[[/iftags]]
+
+[[div [[iftags -テーマ]]style="display: none"[[/iftags]]]]
+[[module CSS show="true"]]
+/* These two arguments are in a quirked-up CSS Module (rather than the main code block) so users can feed Wikidot variables into them. */
+
+#header h1 a::before {
+    content: "定命種エミュレータ事例集
+";
+    color: black;
+}
+
+#header h2 span::before {
+    content: "儚いものと生きていく";
+    color: black;
+}
+[[/module]]
+[[/div]]
+
+
+
+[[module CSS]]
+#page-content h1 {
+    color: white;
+    background: rgb(100, 100, 100)}
+
+#header {
+    background: unset;
+}
+
+#header h1 {
+    font-size: 130%;
+}
+
+[[/module]]
+
+
+[[module css]]
+@import url('https://scp-jp.github.io/files/util/common/credit/style/style.css');
+
+.creditRate.no-rate .page-rate-widget-box {
+    visibility:hidden;
+}
+
+.creditRate.creditModule.no-rate ~ #u-credit-view .creditBottomRate > div:nth-of-type(2) {
+    display: none;
+}
+[[/module]]
+
+[[div_ class="creditRate creditModule {$mode}"]]
+[[div_ class="rateBox" [[iftags 殿堂入り]]style="display:none;"[[/iftags]]]]
+[[div_ class="rate-box-with-credit-button"]]
+[[module Rate]]
+[[div_ class="creditButton"]]
+[[a href="#u-credit-view" class="fa fa-info" style="position:relative;"]][[image https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png title="クレジットを表示する" style="position:absolute;height:100%;width:100%;top:0;left:0;"]][[/a]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[div_ class="rateBox heritage-wrap" [[iftags -殿堂入り]]style="display:none;"[[/iftags]]]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]archived:heritage-collection[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]]" style="max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[div_ class="creditButton"]]
+[[a href="#u-credit-view" class="fa fa-info" style="position:relative;"]][[image https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png title="クレジットを表示する" style="position:absolute;height:100%;width:100%;top:0;left:0;"]][[/a]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+[[div_ style="clear:both;"]]
+[[/div]]
+
+[[div_ id="credit-view"]]
+[[div_ class="fader"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/start.html ]]
+[[/div]]
+
+[[div_ class="modalcontainer"]]
+[[div_ class="modalbox [[iftags 殿堂入り]]heritage[[/iftags]]"]]
+[[div_ class="modalbox-title [[iftags 殿堂入り]]heritage[[/iftags]]"]]
+++* クレジット
+[[/div]]
+[[div class="credit"]]
+
+**タイトル:** 人間の「近いうち」を10年単位で考えてはいけない - 定命種エミュレータ事例集
+**著者:** [[*user Dr_Knotty]]
+**作成年:** 2023
+------
+[https://scp-jp.wikidot.com/author:dr-knotty この著者の他の作品]
+
+
+[[div_ class="credit-back" style="text-align: center;"]]
+[[iframe https://scp-jp.github.io/files/util/common/credit/backmodule/end.html style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" scrolling="no"]]
+[[/div]]
+[[/div]]
+
+[[div_ class="creditBottomRate" style="height:30px;"]]
+[[div_ class="credit-license"]]
+[[a href="*https://creativecommons.org/licenses/by-sa/3.0/deed.ja" class="cc cc-by-sa"]]@@@@[[/a]]
+[[/div]]
+[[div_ style="text-align: center; top: 0px;"]]
+[[div_ [[iftags +殿堂入り]]style="display: flex;"[[/iftags]] class="Dendo"]]
+[[div_ class="heritage-rating-module"]]
+[[div_ class="heritage-emblem"]]
+[[image https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png link="[[iftags +殿堂入り +en]]heritage-collection-arc[[/iftags]][[iftags +殿堂入り +fr]]patrimoine-francais-de-la-fondation-scp[[/iftags]][[iftags +殿堂入り +jp]]heritage-collection-jp[[/iftags]]" style=" max-width: none;"]]
+[[/div]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[div_ [[iftags +殿堂入り]]style="display:none;"[[/iftags]]]]
+[[module Rate]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+
+
+###6495ed|登録日##：2023/5/13
+###6495ed|タグ##：[# 時間の感覚] [# やらない方がよいこと] [# 人間] [# コミュニケーション]
+
+@@ @@
+
++ 5W1H+Then状況説明
+
+
+|| Who(誰が) || 筆者（不死者，人間擬態型）が ||
+|| When(いつ) || 20年ほど前に ||
+|| Where(どこで) || 友人(50代，人間)の家で ||
+|| Why(なぜ) || 「近いうちにまた遊びに来い」と言われたので ||
+|| How(どのように) || 先週ふと思い立って山から降りて ||
+|| What(何をした) || 彼の家を訪れた ||
+|| Then(どうなった) || 知らない顔の人間が出てきたし、警察を呼ばれて騒ぎにされそうになった ||
+
+@@ @@
+
+@@ @@
+
+
++ 定命的行動ブレイクポイント
+
+* 「近いうち」が寿命の20%以上を占めるだけの時間を意味する筈がないと気づくべきだった
+* 彼の家から知らない顔が出て来た時に「ガワを変えたのか」といった同類の内輪ノリの冗談をかますべきではなかった
+
+@@ @@
+
+@@ @@
+
+
++ どうすればよかったか
+
+* 初めて見る顔の人間には丁重に接するべきだった
+* もっと早く会いに行けばよかった
+
+
+@@ @@
+
+@@ @@
+
+
++ 備考
+
+* 十年前に引っ越していた(人間は何かに追われなくともねぐらを変える事がある)
+* 新しい棲み処を探し出して訪れたところ、無事会えた(最初は不審そうにされたが、家に上げてもらった後は楽しいひとときを過ごす事が出来た)
+
+
+
+
+@@ @@
+
+@@ @@
+
+
++ 関連する投稿(タグ基準)
+
+* [# 十年越しに再会するときは前と同じ姿で行かないほうがいい]
+* [# 急速に外観を老けさせすぎてはいけない]
+* [# 年齢を聞かれても正直に言ってはいけない]
+* [# 相手がいくつに見えるか聞かれても正直に言ってはいけない]
+* [# 生存期間を月で数えるのは赤ん坊だけである]
+* [# 「諸説ある」はやめよう]
+* [# 人間の「近いうち」を分単位で考えてはいけない]
+
+
+
+@@ @@
+
+
+[[=]]
+**<<[# 好きな動物を問われても「人間」と答えてはいけない]|[# 財団はホテルではない]>>**
+[[/=]]

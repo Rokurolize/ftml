@@ -1,0 +1,545 @@
+<div style="text-align: right;">
+<div class="page-rate-widget-box">
+<span class="rate-points">
+T:"評価:<NBSP>"
+<span class="number prw<N>">
+T:"+758"
+</span>
+</span>
+<span class="rateup btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+T:"+"
+</a>
+</span>
+<span class="ratedown btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+T:"–"
+</a>
+</span>
+<span class="cancel btn btn-default">
+<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+T:"x"
+</a>
+</span>
+</div>
+</div>
+<blockquote>
+<p>
+<span style="color:#d00">
+T:"メッセージの受信に失敗しました。"
+</span>
+<br>
+<span style="color:#d00">
+T:"メッセージの再送信まで待機して下さい。"
+</span>
+</p>
+</blockquote>
+<div class="scp-image-block block-right scp-clear-false" style="width:300px;">
+<img alt="NotWereWolf.jpg" class="image" src="https://scp-jp.wdfiles.com/local--files/scp-488-jp/NotWereWolf.jpg">
+<div class="scp-image-caption">
+<p>
+<span style="color:#d00">
+T:"SCP-488-JP"
+</span>
+T:"の元となった種"
+</p>
+</div>
+</div>
+<p>
+<span style="color:#d00">
+<strong>
+T:"アイテム番号:"
+</strong>
+T:"SCP-488-JP"
+</span>
+</p>
+<p>
+<span style="color:#d00">
+<strong>
+T:"オブジェクトクラス:"
+</strong>
+</span>
+<span style="text-decoration: line-through;">
+<span style="color:#d00">
+T:"Euclid"
+</span>
+</span>
+T:"<IDSP>Keter"
+</p>
+<p>
+<span style="color:#d00">
+<strong>
+T:"特別収容プロトコル:"
+</strong>
+T:"SCP-488-JPはサイト-81██の低危険度生物収容室に"
+</span>
+T:"収容するには危険過ぎるため、外壁の厚みを20cm以上に保った5m×5m×5mの高危険度人型実体収容室に"
+<span style="color:#d00">
+T:"収容してください。SCP-488-JP"
+</span>
+T:"の機嫌を損ねないよう"
+<span style="color:#d00">
+T:"に1日に2回適切な食事"
+</span>
+T:"として生きた人間の子供"
+<span style="color:#d00">
+T:"を与えてください。SCP-488-JPの個体数"
+</span>
+T:"は増加傾向にあります。収容"
+<span style="color:#d00">
+T:"を維持するため繁殖活動を"
+</span>
+T:"機動部隊が出来る限り妨害し、機動部隊以外の人員も妨害行為を"
+<span style="color:#d00">
+T:"補助してください。現在、財団は"
+</span>
+T:"総力を以て"
+<span style="color:#d00">
+T:"14体のSCP-488-JPを収容しています。"
+</span>
+</p>
+<p>
+<span style="color:#d00">
+T:"SCP-488-JPに関する業務を行う職員は最低一度、SCP-488-JPの"
+</span>
+T:"恐ろしく残虐な"
+<span style="color:#d00">
+T:"実体/画像/動画を自身で目視"
+</span>
+T:"し、それでも気を失わずにいられるか試験"
+<span style="color:#d00">
+T:"する事が義務づけられています。"
+</span>
+</p>
+<p>
+<span style="color:#d00">
+T:"この文書への質問/編集要請は収容リーダーを通して情報管理チーム\"赤ずきん\"に連絡してください。"
+</span>
+</p>
+<p>
+<span style="color:#d00">
+<strong>
+T:"説明:"
+</strong>
+T:"SCP-488-JPはタイリクオオカミ("
+<em>
+T:"Canis lupus"
+</em>
+T:")の一種"
+</span>
+T:"が突然変異を経て人間の姿を得た生物"
+<span style="color:#d00">
+T:"です。SCP-488-JPは"
+</span>
+T:"文献の"
+<span style="color:#d00">
+T:"情報"
+</span>
+T:"によると強力な現実"
+<span style="color:#d00">
+T:"改変能力を備えており、自身に関する情報"
+</span>
+T:"の作成者"
+<span style="color:#d00">
+T:"を"
+</span>
+T:"現実"
+<span style="color:#d00">
+T:"改変"
+</span>
+T:"能力を使用して無惨に殺害"
+<span style="color:#d00">
+T:"します。あらゆる情報媒体のうち、文書/音声/肉声"
+</span>
+T:"/画像/動画/その他すべて"
+<span style="color:#d00">
+T:"が情報として見做され"
+</span>
+T:"、不幸にもSCP-488-JPの殺害対象になり"
+<span style="color:#d00">
+T:"ます。"
+</span>
+T:"SCP-488-JPの現実"
+<span style="color:#d00">
+T:"改変"
+</span>
+T:"能力を使用"
+<span style="color:#d00">
+T:"された"
+</span>
+T:"人間の"
+<span style="color:#d00">
+T:"情報は"
+</span>
+T:"明文化する事すら憚られ、SCP-488-JPが"
+<span style="color:#d00">
+T:"客観的な視点"
+</span>
+T:"から見ても倫理観"
+<span style="color:#d00">
+T:"に欠け"
+</span>
+T:"た"
+<span style="color:#d00">
+T:"、\"凶暴で残酷な人狼\"であることを示します。"
+</span>
+T:"SCP-488-JPの行う現実"
+<span style="color:#d00">
+T:"改変は"
+</span>
+T:"対象に対して"
+<span style="color:#d00">
+T:"全体的ではなく、"
+</span>
+T:"身体の"
+<span style="color:#d00">
+T:"一部の改変、"
+</span>
+T:"機能不明な部位の"
+<span style="color:#d00">
+T:"追加という"
+</span>
+T:"醜悪な"
+<span style="color:#d00">
+T:"形式を取ります"
+</span>
+T:"が、これがあくまでSCP-488-JPの手加減である事に留意すべきです"
+<span style="color:#d00">
+T:"。改変された"
+</span>
+T:"対象は大抵の場合"
+<span style="white-space: pre-wrap;">
+T:"["
+</span>
+<span style="color:#d00">
+T:"データ"
+</span>
+T:"削除済]。犠牲者"
+<span style="color:#d00">
+T:"の復旧の"
+</span>
+T:"手段は財団によって限りなく模索されましたが、講じられた"
+<span style="color:#d00">
+T:"試みは"
+</span>
+T:"残念ながら"
+<span style="color:#d00">
+T:"すべて更なる改変という結果に終わりました。"
+</span>
+</p>
+<p>
+<span style="color:#d00">
+T:"SCP-488-JPは██山の周囲で人狼に関する噂が横行し"
+</span>
+T:"機動部隊が投入され"
+<span style="color:#d00">
+T:"たにも関わらず、その実体"
+</span>
+T:"すら見る事が叶わずに機動部隊が全滅し犠牲者"
+<span style="color:#d00">
+T:"や死傷者が"
+</span>
+T:"多数"
+<span style="color:#d00">
+T:"発見され"
+</span>
+T:"、追加の援軍も一人も帰還し"
+<span style="color:#d00">
+T:"なかった事から財団の注意を引きました。更なる調査で"
+</span>
+T:"機動部隊隊員が残した"
+<span style="color:#d00">
+T:"SCP-488-JPの情報"
+</span>
+T:"からSCP-488-JPの"
+<span style="color:#d00">
+T:"改変能力が明らかになり、"
+</span>
+T:"大規模作戦で███名の犠牲者を出した後、ようやく"
+<span style="color:#d00">
+T:"すべての個体が収容されました。SCP-488-JPはタイリクオオカミ種の中"
+</span>
+T:"に限らず動物の中"
+<span style="color:#d00">
+T:"では"
+</span>
+T:"随一の戦闘能力を誇り、クマやシャチですらSCP-488-JPと"
+<span style="color:#d00">
+T:"比較"
+</span>
+T:"すると絶望"
+<span style="color:#d00">
+T:"的"
+</span>
+T:"に"
+<span style="color:#d00">
+T:"活動能力が劣っています。そのためSCP-488-JPは改変能力"
+</span>
+T:"すら使用せずに全動物を蹂躙出来ます。██山周囲の人間はSCP-488-JPに服従し、SCP-488-JP中心の文化を築く事"
+<span style="color:#d00">
+T:"によって生存を図っていたと推測されています。"
+</span>
+</p>
+<p>
+<span style="color:#d00">
+<span style="text-decoration: underline;">
+<strong>
+T:"実験記録488-1 - 日付20██/██/█"
+</strong>
+</span>
+</span>
+</p>
+<blockquote>
+<p>
+<span style="color:#d00">
+<strong>
+T:"対象:"
+</strong>
+T:"SCP-488-JP"
+</span>
+</p>
+<p>
+<span style="color:#d00">
+<strong>
+T:"実施方法:"
+</strong>
+T:"D-3793を収容室に入れ"
+</span>
+T:"、生贄として捧げ"
+<span style="color:#d00">
+T:"る。"
+</span>
+</p>
+<p>
+<span style="color:#d00">
+<strong>
+T:"結果:"
+</strong>
+T:"接触による異常性は発現し"
+</span>
+T:"ないと推測されていたが、SCP-488-JPがD-3793に触れると皮膚が激しく[編集済]し、それからはとても見て居られ"
+<span style="color:#d00">
+T:"なかった。D-3793はSCP-488-JPについて"
+</span>
+T:"「ああ、この世の終わりだ」と"
+<span style="color:#d00">
+T:"述べ"
+</span>
+T:"、逃げ"
+<span style="color:#d00">
+T:"ようとすると"
+</span>
+T:"直後にD-3793の"
+<span style="color:#d00">
+T:"叫び声"
+</span>
+T:"が収容室に鳴り響いた。D-3793は現実改変能力によって[データ削除済]"
+<span style="color:#d00">
+T:"に変換され、"
+</span>
+T:"絶大な"
+<span style="color:#d00">
+T:"苦悩を示した。"
+</span>
+</p>
+<p>
+<strong>
+T:"分析:"
+</strong>
+<em>
+T:"ああ、我々は生贄なんだ -██博士"
+</em>
+</p>
+</blockquote>
+<p>
+<span style="color:#d00">
+<strong>
+T:"補遺:"
+</strong>
+T:"改変された文書を赤色に着色する試みはデータの更なる改変を招き"
+</span>
+T:"、有効な手段とは判断され"
+<span style="color:#d00">
+T:"ませんでした。詳細な経緯は研究ログ488-█\"イヌ科生物の色覚と書体ごとの改変傾向の関係性\"を参照してください。現在、この文書を含むSCP-488-JPに関連する情報は、"
+</span>
+T:"恐怖と"
+<span style="color:#d00">
+T:"混乱を避けるために常に情報管理チーム\"赤ずきん\"によって改変監視と着色処理が行われています。"
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<blockquote>
+<p>
+<span style="color:#d00">
+T:"メッセージの再送信を確認…"
+</span>
+</p>
+</blockquote>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<blockquote>
+<p>
+<span style="color:#d00">
+T:"受信に成功しました。メッセージを表示します。"
+</span>
+</p>
+</blockquote>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<div style="border:solid 1px #999999; background:#ccffcc; padding:5px; margin-bottom: 10px;">
+<div style="text-align: center;">
+<p>
+<span style="font-size:150%;">
+<span style="color:#d00">
+T:"自動通達"
+</span>
+</span>
+</p>
+<p>
+<span style="color:#d00">
+T:"この文書は情報管理チーム\"赤ずきん\"によって作成されました。"
+</span>
+<br>
+<span style="color:#d00">
+T:"文書の編集権限は\"赤ずきん\"所属者に限られます。"
+</span>
+</p>
+<p>
+<span style="color:#d00">
+T:"この文書を閲覧する際、赤く着色された文字だけ"
+</span>
+T:"でなく全体"
+<span style="color:#d00">
+T:"を読むようにして下さい。"
+</span>
+</p>
+</div>
+</div>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<div class="pseudo-tags">
+<ul>
+<li>
+T:"jp"
+</li>
+<li>
+<span style="color: black">
+T:"keter"
+</span>
+</li>
+<li>
+T:"scp"
+</li>
+<li>
+<span style="color: black">
+T:"人間型"
+</span>
+</li>
+<li>
+T:"狼"
+</li>
+<li>
+<span style="color: black">
+T:"現実改変"
+</span>
+</li>
+<li>
+<span style="color: black">
+T:"破壊命令"
+</span>
+</li>
+<li>
+<span style="color: black">
+T:"未収容"
+</span>
+</li>
+<li>
+<span style="color: black">
+T:"K-クラスシナリオ"
+</span>
+</li>
+</ul>
+</div>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>
+<p>
+<span style="font-size:0%;">
+T:"."
+</span>
+</p>

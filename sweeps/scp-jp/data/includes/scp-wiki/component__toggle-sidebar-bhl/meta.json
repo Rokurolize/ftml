@@ -1,0 +1,27 @@
+{
+ "exists": true,
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:26:59+00:00",
+  "method": "GET",
+  "response_bytes": 76096,
+  "response_sha256": "7d596f3abf675a77086a4175e2f358d34b959c383a6dfbde790a05335b255b39",
+  "status": 200,
+  "url": "https://scp-wiki.wikidot.com/component:toggle-sidebar-bhl"
+ },
+ "page": "component:toggle-sidebar-bhl",
+ "page_id": 1307032076,
+ "site": "scp-wiki",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:27:00+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "1307032076"
+  },
+  "response_bytes": 15483,
+  "response_sha256": "5242d7eaa82bb0968cd9aa23d04db115878327ef8ec7516ce4c78c019aff3881",
+  "status": 200,
+  "url": "https://scp-wiki.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "c6babb5f597b28a219a66c04acf75e3cb354b03e54d47f0ae94fc3028d1e72ee"
+}

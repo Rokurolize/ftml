@@ -1,0 +1,304 @@
+[[iftags -コンポーネント]]
+
+[[module CSS]]
+@import url('https://fonts.googleapis.com/css2?family=Zen+Antique&display=swap');
+
+.w-container {
+  padding: 11px;
+  margin-bottom: 16px;
+  margin-top: 16px;
+  border: 1px #bbbbbb solid;
+  box-shadow: 1px 2px 2px 0 rgba(0,0,0,0.16);
+  box-sizing: border-box;
+}
+
+@media (max-width: 490px) {
+.w-container {
+   padding: 10px;
+}
+}
+.w-cell {
+  flex-grow: 2;
+  max-width: 50%;
+  text-align: center;
+  font-size: 0.66rem;
+  border-left: 1px solid #ccc;
+  margin-top: -1px;
+  margin-left: -1px;
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+.cell-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  width: 100%;
+  overflow: hidden;
+  font-size: small;
+  margin-bottom: -8px;
+  margin-top: -8px;
+  padding: 0px;
+}
+
+.cell-container-image {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  width: 100%;
+  overflow: hidden;
+  font-size: small;
+  margin-bottom: -8px;
+  margin-top: -8px;
+  padding: 0px;
+  background-size: var(--aim-cc-siz), var(--aim-lv-siz), var(--aim-sc-siz);
+  background-repeat: no-repeat;
+  background-position: 50%,50%,50%;
+  background-image: var(--aim-cc-image), var(--aim-lv-image), var(--aim-sc-image);
+}
+.s-cell {
+  width: 50%;
+  font-size: 15px;
+  margin-top: -0.4rem;
+  margin-bottom: -0.8rem;
+}
+@media (max-width: 460px) {
+.s-cell {
+   margin-top: 1rem;
+}
+}
+@media (max-width: 350px) {
+.cell-container-image {
+   font-size: 12px;
+}
+.s-cell {
+   font-size: 12px;
+}
+}
+
+/* Only affects horizontal bar in w-cell */
+.w-cell > hr {
+  margin: -2px;
+  margin-top: -0.6em;
+  background-color: #ccc;
+}
+.b-cell {
+    position: relative;
+    padding: 0.5em;
+    margin: 0.5em;
+    overflow-wrap: break-word;
+    color: black;
+}
+
+/*====================================================================================*/
+/*DESKTOP IMAGES*/
+/* CC images */
+
+.cell-container-image {
+  --aim-cc-image: url({$cc-link});
+  --aim-cc-siz: contain;
+}
+.cell-container-image.cc-SAFE {
+  --aim-cc-image: url("http://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/cc_SAFE.png");
+   --aim-cc-siz: contain;
+}
+.cell-container-image.cc-EUCLID {
+  --aim-cc-image: url("http://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/cc_EUCLID.png");
+   --aim-cc-siz: contain;
+}
+.cell-container-image.cc-KETER {
+  --aim-cc-image: url("http://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/cc_KETER.png");
+   --aim-cc-siz: contain;
+}
+.cell-container-image.cc-NEUTRALIZED {
+  --aim-cc-image: url("http://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/cc_NEUTRALIZED.png");
+   --aim-cc-siz: contain;
+}
+.cell-container-image.cc-THAUMIEL {
+  --aim-cc-image: url("http://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/cc_THAUMIEL.png");
+   --aim-cc-siz: contain;
+}
+
+/* Level images */
+
+.cell-container-image {
+  --aim-lv-image:  url({$lv-link});
+  --aim-lv-siz: contain;
+}
+
+.cell-container-image.lv-one {
+  --aim-lv-image: url("http://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/c_lvl_one.png");
+   --aim-lv-siz: contain;
+}
+.cell-container-image.lv-two {
+  --aim-lv-image: url("http://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/c_lvl_two.png");
+   --aim-lv-siz: contain;
+}
+.cell-container-image.lv-three {
+  --aim-lv-image: url("http://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/c_lvl_three.png");
+   --aim-lv-siz: contain;
+}
+.cell-container-image.lv-four {
+  --aim-lv-image: url("http://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/c_lvl_four.png");
+   --aim-lv-siz: contain;
+}
+.cell-container-image.lv-five {
+  --aim-lv-image: url("http://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/c_lvl_five.png");
+   --aim-lv-siz: contain;
+}
+.cell-container-image.lv-six {
+  --aim-lv-image: url("http://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/c_lvl_six.png");
+   --aim-lv-siz: contain;
+}
+
+
+/*====================================================================================*/
+/*MOBILE IMAGES*/
+
+@media (max-width: 350px) {
+.cell-container-image {
+   --aim-cc-siz: 10px;
+}
+}
+/* Level images */
+
+.cell-container-image.lvm-one {
+  --aim-lv-image: url("https://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/mlvlone.svg");
+   --aim-lv-siz: 100px;
+}
+.cell-container-image.lvm-two {
+  --aim-lv-image: url("https://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/mlvltwo.svg");
+   --aim-lv-siz: 100px;
+}
+.cell-container-image.lvm-three {
+  --aim-lv-image: url("https://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/mlvlthree.svg");
+   --aim-lv-siz: 100px;
+}
+.cell-container-image.lvm-four {
+  --aim-lv-image: url("https://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/mlvlfour.svg");
+   --aim-lv-siz: 100px;
+}
+.cell-container-image.lvm-five {
+  --aim-lv-image: url("https://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/m_lvlfive.png");
+   --aim-lv-siz: 100px;
+}
+.cell-container-image.lvm-six {
+  --aim-lv-image: url("https://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/m_lvlsix.png");
+   --aim-lv-siz: 100px;
+}
+
+.desktop-aim{
+}
+
+.mobile-aim{
+}
+
+@media (max-width: 600px) {
+.desktop-aim{
+   display: none;
+}
+}
+@media (min-width: 601px) {
+.mobile-aim{
+   display: none;
+}
+}
+
+/* Defaults for if the user doesn't use one of the variables */
+.display-\{\$sc\} {
+  display: none;
+}
+.cell-container-image {
+  --aim-sc-image:  url({$sc-link});
+  --aim-sc-siz: contain;
+}
+
+/* Default darkmode background */
+.cell-container-image.sc-\{\$sc\} {
+  --aim-sc-image: url("https://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/scNONE.png");
+  --aim-sc-siz: contain;
+
+}
+
+.cell-container-image.darkmode-a.sc-\{\$sc\} {
+  --aim-sc-image: url("http://scp-jp-storage.wdfiles.com/local--files/file%3A5644609-106-2lvf/scp-trans.png");
+  --aim-sc-siz: contain;
+
+}
+
+.cell-container-image.mobile {
+  --aim-sc-image:  url("http://scp-jp-storage.wdfiles.com/local--files/file%3A5644609-106-2lvf/scp-trans.png");
+  --aim-sc-siz: contain;
+
+}
+.notice06-wrapper {
+  position: relative;
+  display: inline-block;
+  border: none;
+  background: url('http://scp-jp-storage.wdfiles.com/local--files/file%3A5644609-106-2lvf/scp-trans.png') no-repeat center/75%;
+  margin: 0 auto;
+  width: auto;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.notice07-wrapper {
+  position: relative;
+  display: inline-block;
+  border: none;
+  background: url('http://scp-wiki.wikidot.com/local--files/component:advanced-information-methodology/c_lvl_three.png') no-repeat center/250%;
+  margin: 0 auto;
+  width: auto;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+[[/module]]
+
+[[div class="desktop-aim"]]
+[[div class="w-container"]]
+[[div class="cell-container-image darkmode-{$darkmode} cc-{$cc} sc-{$sc} lv-{$lv}"]]
+[[div class="s-cell"]]
+[[size 120%]][[span style="font-family: Zen Antique; "]]**警告: ##E91B68|__{$kei}__##**[[/span]][[/size]]
+[[/div]]
+[[div class="s-cell" style="text-align: right;"]]
+[[size 110%]][[span style="font-family: Zen Antique; "]]**{$hi}**[[/span]][[/size]]
+[[/div]]
+[[div class="s-cell"]]
+[[size 110%]][[span style="font-family: Zen Antique; "]]**{$kin}**[[/span]][[/size]]
+[[/div]]
+[[div class="s-cell" style="text-align: right;"]]
+[[size 110%]][[span style="font-family: Zen Antique; "]]**{$ha}**[[/span]][[/size]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+[[div class="mobile-aim"]]
+[[div class="notice06-wrapper"]]
+[[div class="notice07-wrapper"]]
+[[div class="w-container"]]
+[[div class="cell-container-image darkmode-{$darkmode} cc-{$cc}"]]
+[[div class="s-cell"]]
+[[span style="font-family: Zen Antique; "]]**異常性警告:**
+**##E91B68|__情報災害__##**[[/span]]
+[[/div]]
+[[div class="s-cell" style="text-align: right;"]]
+[[span style="font-family: Zen Antique; "]]**下記の行為を**
+**厳に禁ずる**[[/span]]
+[[/div]]
+[[div class="s-cell"]]
+[[span style="font-family: Zen Antique; "]]**1. 指定符号以外の呼称**[[/span]]
+[[/div]]
+[[div class="s-cell" style="text-align: right;"]]
+[[span style="font-family: Zen Antique; "]]**2. 許可なき筆記・発声**[[/span]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+[[/div]]
+
+[[/iftags]]

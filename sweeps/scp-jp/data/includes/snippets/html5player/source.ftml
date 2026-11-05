@@ -1,0 +1,5 @@
+[[include :snippets:html5{$type}
+|url={$url}
+|autoplay={$autoplay_{$autoplay}}
+|autoplay_true=autoplay
+]]

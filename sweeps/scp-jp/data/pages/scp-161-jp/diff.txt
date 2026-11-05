@@ -1,0 +1,278 @@
+--- live
++++ ftml
+@@ -1,29 +1,9 @@
+ <div class="creditRate creditModule {$mode}">
+-<div class="rateBox" style="display:none;">
++T:"[[div_ class=\"rateBox\" ]]"
+ <div class="rate-box-with-credit-button">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+987"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+@@ -31,44 +11,24 @@
+ </div>
+ </div>
+ </div>
+-<div class="rateBox heritage-wrap">
++<br>
+ <div class="heritage-rating-module">
+ <div class="heritage-emblem">
+-<a href="/heritage-collection-jp">
++<a href="/">
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+987"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
++<p>
++T:"TODO: module Rate"
++</p>
+ </div>
+ <div class="creditButton">
+ <a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+ <img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+ </a>
+ </div>
+-</div>
+-</div>
++<br>
++<br>
+ <div style="clear:both;">
+ </div>
+ <div id="u-credit-view">
+@@ -77,8 +37,8 @@
+ </iframe>
+ </div>
+ <div class="modalcontainer">
+-<div class="modalbox heritage">
+-<div class="modalbox-title heritage">
++<div class="modalbox">
++<div class="modalbox-title">
+ <h2>
+ <span>
+ T:"クレジット"
+@@ -97,10 +57,10 @@
+ </strong>
+ T:"©︎"
+ <span class="printuser avatarhover">
+-<a href="https://www.wikidot.com/user:info/undercat" onclick="WIKIDOT.page.listeners.userInfo(2014334); return false;">
+-<img alt="undercat" class="small" src="https://www.wikidot.com/avatar.php?userid=2014334&amp;size=small&amp;timestamp=<TS>" style="background-image:url(https://www.wikidot.com/userkarma.php?u=2014334)">
+-</a>
+-<a href="https://www.wikidot.com/user:info/undercat" onclick="WIKIDOT.page.listeners.userInfo(2014334); return false;">
++<a href="/user:info/undercat" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
++<img alt="undercat" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
++</a>
++<a href="/user:info/undercat" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+ T:"undercat"
+ </a>
+ </span>
+@@ -111,111 +71,72 @@
+ T:"2014"
+ </p>
+ <div class="credit-back" style="text-align: center;">
+-<iframe align="" class="" frameborder="" height="" scrolling="no" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
++<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+ </iframe>
+ </div>
+ </div>
+ <div class="creditBottomRate" style="height:30px;">
+ <div class="credit-license">
+-<a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank">
++<a class="cc cc-by-sa" href="#invalid-url">
+ </a>
+ </div>
+ <div style="text-align: center; top: 0px;">
+-<div class="Dendo" style="display: flex;">
++<div class="Dendo">
+ <div class="heritage-rating-module">
+ <div class="heritage-emblem">
+-<a href="/heritage-collection-jp">
++<a href="/">
+ <img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+ </a>
+ </div>
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+987"
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
++<p>
++T:"TODO: module Rate"
++</p>
++</div>
++</div>
++<br>
++T:"[[/div]]"
++</div>
++</div>
++</div>
++<p>
++<strong>
++T:"アイテム番号:"
++</strong>
++T:"SCP-161-JP"
++</p>
++<p>
++<strong>
++T:"オブジェクトクラス:"
++</strong>
++T:"Keter"
++</p>
++<p>
++<strong>
++T:"特別収容プロトコル:"
++</strong>
++T:"SCP-161-JPの患者に「伊る」を意味する単語を聞かせないで下さい。また、それをひらがな・カタカナ・ローマ字等の表音文字で表記したものを視認させないで下さい。患者に対応する全ての施設は、最高レベルの防疫体制を維持して下さい。"
++</p>
++<p>
++<strong>
++T:"説明:"
++</strong>
++T:"SCP-161-JPは「伊る」という動作、および概念への認識に異常をもたらす精神疾患です。SCP-161-JPの患者からは「伊る」という動作や、それに関係する概念への認識が、過去にさかのぼって失われます。この結果、例えばバレリーナが伊り回る動作は、単に片足立ちで回転しているだけの動作として認識され、また「以前からそのような動作であった」という虚偽記憶が形成されます。極端な例では、日本の伝統芸能である「能」は、大半が伊り歩く動作によって構成されているため、それは単に扇を持って舞台上を歩き回っているだけのように認識されます。"
++</p>
++<p>
++T:"「伊る」を意味する単語を音声として認識したSCP-161-JPの患者からは、その時点から過去数時間の記憶が失われます。この症状は、表音文字で表記されたものを見ることによっても同様に発症します。"
++</p>
++<p>
++<span style="text-decoration: underline;">
++<strong>
++T:"実験記録（一部抜粋）:"
++</strong>
+ </span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-<div style="display:none;">
+-<div class="page-rate-widget-box">
+-<span class="rate-points">
+-T:"評価:<NBSP>"
+-<span class="number prw<N>">
+-T:"+987"
+-</span>
+-</span>
+-<span class="rateup btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, 1)" title="好き">
+-T:"+"
+-</a>
+-</span>
+-<span class="ratedown btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.rate(event, -1)" title="好きじゃない">
+-T:"–"
+-</a>
+-</span>
+-<span class="cancel btn btn-default">
+-<a href="javascript:;" onclick="WIKIDOT.modules.PageRateWidgetModule.listeners.cancelVote(event)" title="投票を取り消す">
+-T:"x"
+-</a>
+-</span>
+-</div>
+-</div>
+-</div>
+-</div>
+-</div>
+-</div>
+-</div>
+-<p>
+-<strong>
+-T:"アイテム番号:"
+-</strong>
+-T:"SCP-161-JP"
+-</p>
+-<p>
+-<strong>
+-T:"オブジェクトクラス:"
+-</strong>
+-T:"Keter"
+-</p>
+-<p>
+-<strong>
+-T:"特別収容プロトコル:"
+-</strong>
+-T:"SCP-161-JPの患者に「伊る」を意味する単語を聞かせないで下さい。また、それをひらがな・カタカナ・ローマ字等の表音文字で表記したものを視認させないで下さい。患者に対応する全ての施設は、最高レベルの防疫体制を維持して下さい。"
+-</p>
+-<p>
+-<strong>
+-T:"説明:"
+-</strong>
+-T:"SCP-161-JPは「伊る」という動作、および概念への認識に異常をもたらす精神疾患です。SCP-161-JPの患者からは「伊る」という動作や、それに関係する概念への認識が、過去にさかのぼって失われます。この結果、例えばバレリーナが伊り回る動作は、単に片足立ちで回転しているだけの動作として認識され、また「以前からそのような動作であった」という虚偽記憶が形成されます。極端な例では、日本の伝統芸能である「能」は、大半が伊り歩く動作によって構成されているため、それは単に扇を持って舞台上を歩き回っているだけのように認識されます。"
+-</p>
+-<p>
+-T:"「伊る」を意味する単語を音声として認識したSCP-161-JPの患者からは、その時点から過去数時間の記憶が失われます。この症状は、表音文字で表記されたものを見ることによっても同様に発症します。"
+-</p>
+-<p>
+-<span style="text-decoration: underline;">
+-<strong>
+-T:"実験記録（一部抜粋）:"
+-</strong>
+-</span>
+ </p>
+ <blockquote>
+ <p>

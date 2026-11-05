@@ -1,0 +1,81 @@
+{
+ "kind": "tale",
+ "listed_size": 16934,
+ "live_page_content_sha256": "d646d7b4604d085be3f082e519eda6fa0dcfb8fa0270a42d45e362c8663e7e17",
+ "live_provenance": {
+  "fetched_at": "2026-11-05T08:25:41+00:00",
+  "method": "GET",
+  "response_bytes": 78134,
+  "response_sha256": "56fe3d54c91c50e03be55572600f195e5d608b67f93cbff466a1ae3dc799e94f",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/making-stew-hub"
+ },
+ "page_id": 1153807258,
+ "rating": 205,
+ "site": "scp-jp",
+ "slug": "making-stew-hub",
+ "source_provenance": {
+  "fetched_at": "2026-11-05T08:25:42+00:00",
+  "method": "POST",
+  "module": "viewsource/ViewSourceModule",
+  "params": {
+   "page_id": "1153807258"
+  },
+  "response_bytes": 51850,
+  "response_sha256": "f995aa238ed59b1b2693d04b0c3d476bfda90c2d20bb701038023fc43ff99513",
+  "status": 200,
+  "url": "https://scp-jp.wikidot.com/ajax-module-connector.php"
+ },
+ "source_sha256": "f3b83dad451a67db6589f44f4d2ca7d22cf3119fde32410daced7c9f96a7e13a",
+ "stats": {
+  "counts": {
+   "anchor": 10,
+   "blocks": 433,
+   "bold": 116,
+   "cjk_dash_pair": 8,
+   "cjk_emphasis": 105,
+   "collapsible": 1,
+   "color": 4,
+   "css": 2,
+   "div": 21,
+   "ellipsis_dash": 7,
+   "footnote": 0,
+   "fullwidth_space": 20,
+   "heading": 7,
+   "hr": 10,
+   "html": 0,
+   "iftags": 0,
+   "image": 2,
+   "include": 4,
+   "italic": 6,
+   "link3": 16,
+   "list": 31,
+   "module": 2,
+   "mono": 0,
+   "quote": 50,
+   "raw": 18,
+   "ruby": 8,
+   "size": 9,
+   "span": 17,
+   "strike": 14,
+   "sup_sub": 0,
+   "table": 1,
+   "tabview": 6,
+   "underline": 2
+  },
+  "density_per_kchar": 53.32,
+  "markup_tokens": 903
+ },
+ "title": "シチュー造り ハブ",
+ "wikirequest_info": {
+  "categoryId": "3777353",
+  "domain": "scp-jp.wikidot.com",
+  "lang": "ja-corrections",
+  "pageId": "1153807258",
+  "pageUnixName": "making-stew-hub",
+  "requestPageName": "making-stew-hub",
+  "siteId": "578002",
+  "siteUnixName": "scp-jp",
+  "themeId": "1"
+ }
+}

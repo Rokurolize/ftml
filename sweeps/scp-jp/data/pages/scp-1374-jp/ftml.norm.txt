@@ -1,0 +1,1220 @@
+<div class="creditRate creditModule {$mode}">
+T:"[[div_ class=\"rateBox\" ]]"
+<div class="rate-box-with-credit-button">
+<p>
+T:"TODO: module Rate"
+</p>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+</div>
+</div>
+<br>
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+<div class="creditButton">
+<a class="fa fa-info" href="#u-credit-view" style="position:relative;">
+<img alt="blank.png" class="image" src="https://scp-jp.wdfiles.com/local--files/nav%3Aside/blank.png" style="position:absolute;height:100%;width:100%;top:0;left:0;" title="クレジットを表示する">
+</a>
+</div>
+<br>
+<br>
+<div style="clear:both;">
+</div>
+<div id="u-credit-view">
+<div class="fader">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/start.html" style="" width="">
+</iframe>
+</div>
+<div class="modalcontainer">
+<div class="modalbox">
+<div class="modalbox-title">
+<h2>
+<span>
+T:"クレジット"
+</span>
+</h2>
+</div>
+<div class="credit">
+<p>
+<strong>
+T:"タイトル:"
+</strong>
+T:"SCP-1374-JP - 大団円"
+<br>
+<strong>
+T:"著者:"
+</strong>
+T:"©︎"
+<span class="printuser avatarhover">
+<a href="/user:info/kankan" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+<img alt="kankan" class="small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPElEQVRoBe1Yz0s6QRSf/frtIFpQGXqQik6GG9atg167iYdEunTv2FXoH+hueujsuUsQdAg7FFSHQDqI5ElQTPCgotRuTozg0PxYfa59v7vBDiy77zPz3nw++96M7igYY4x+cfvzi7kPqTsCrM6gkwEnAzO+ActK6PPzE62trSFFUYbXycmJOSnkd8Cqdnp6Sn6DhpfL5cL39/dTU0FTe/ygQ6vVwm63m4pQVRVrmjbVDJaVEKmXxcVFtL+/T0vn5eUFnZ2dURv0MJXcfzC4UCjQDJBy8vl8uNvtgmeytIQIy8FggIPBICOCrA1os7SESImQXSiVSjHVkslkENmlIA0kYLTVfb9DgkPHxONxZmi1WkWXl5cMZmhAUjXa6r7fIX7QMR8fH9jr9TJllEqlQO6gDBiq/6GOubk5tL29zUS7urpC7+/vDCYzbCGAEFNVleHX6XTQw8MDg8kM2wjY2toS+N3d3QkYD/zlAZn9P746w+GwMHWxWBQwHrBNBpaXl3luqFKpCBgPgDLAO42zyVYLaXxWFxYWBLd6vS5gPGCbDMgEdLtdnq9g20bA/Py8QE7TNAHjAdsIkJH1eDw8X8G2jYB+vy+Qky1sftCPL2J+cfITGtlvb29C1+rqqoDxgG0yUKvVeG5oc3NTwHgAlAHZ1mj2TfMERna5XB490vvOzg59NnqwTQZKpZLAMRqNChgP2EbA09MTw219fR1tbGwwmMwwJUBWUrLgUEzXdfT8/MwMTyQSjG1kmBIA2Z+NJpThj4+PqNfrMV0HBweMbWSABJAFS65AIDCMs7S0ZBTPFH5zc8P4kd1nd3eXwYwMkADiTP5YNRqNYZxIJGIUzxR+cXHB+B0fHzP2WAPy4UmOPg4PD+k3az6fh7iBxry+vtK45Jvb7/fjXq8H8iWDJp4LlctlHIvF6CR7e3tY13XwBJMGptNpGpsIyOVyk1yY/okCms0mPb9MJpO43W4zAWYx+v0+XllZoQJCodDUZ6MTBRCC2WwWX19fz8JV6nt+fk7JK4qCb29vpePGgSAB4wKY7SPrirzx0VnT0dGRqVAK8Rq7ym3eCd5G7arDEWB1ZpwMOBmY8Q38+hL6AuHLUi2wzjYWAAAAAElFTkSuQmCC" style="background-image:url(http://www.wikidot.com/userkarma.php?u=0)">
+</a>
+<a href="/user:info/kankan" onclick="WIKIDOT.page.listeners.userInfo(0); return false;">
+T:"kankan"
+</a>
+</span>
+<br>
+<strong>
+T:"作成年:"
+</strong>
+T:"2018"
+</p>
+<hr>
+<p>
+<a href="/author:kankan">
+T:"著者ページ"
+</a>
+</p>
+<div class="credit-back" style="text-align: center;">
+<iframe align="" class="" frameborder="" height="" scrolling="" src="https://scp-jp.github.io/files/util/common/credit/backmodule/end.html" style="height:2em;width: 100%;margin: 0;padding: 0;border: 0;background: transparent;" width="">
+</iframe>
+</div>
+</div>
+<div class="creditBottomRate" style="height:30px;">
+<div class="credit-license">
+<a class="cc cc-by-sa" href="#invalid-url">
+</a>
+</div>
+<div style="text-align: center; top: 0px;">
+<div class="Dendo">
+<div class="heritage-rating-module">
+<div class="heritage-emblem">
+<a href="/">
+<img alt="scp-heritage-v3.png" class="image" src="https://scp-jp.wdfiles.com/local--files/component:heritage-rating/scp-heritage-v3.png" style="max-width: none;">
+</a>
+</div>
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+T:"[[div_ [[iftags +殿堂入り]] style = \" display : none ; \" [[/ iftags ]]] ]"
+<p>
+T:"TODO: module Rate"
+</p>
+</div>
+</div>
+<br>
+T:"[[/div]]"
+</div>
+</div>
+</div>
+<div style="border:solid 1px #000000; background:#000000; padding:5px; margin-bottom: 10px;">
+<div class="monoayu">
+<div style="text-align: center;">
+<span style="font-size:200%;">
+<span style="color: #1fa131">
+<strong>
+T:"SCiPNET"
+</strong>
+</span>
+</span>
+<br>
+<span style="font-size:150%;">
+<span style="color: #1fa131">
+T:"Restricted Viewing Server"
+</span>
+</span>
+<br>
+<img alt="SCiPNET01.jpg" class="image" src="https://scp-jp.wikidot.com/local--files/scp-1374-jp/SCiPNET01.jpg" width="200px">
+<br>
+<span style="font-size:150%;">
+<span style="color: #1fa131">
+T:"Sustained Cautious Piece"
+</span>
+</span>
+<br>
+<span style="font-size:150%;">
+<span style="color: #1fa131">
+T:"Under Observation of RAISA"
+</span>
+</span>
+</div>
+<br>
+<br>
+<br>
+<br>
+<span style="color: #1fa131">
+T:"SCiPNETへようこそ。"
+</span>
+<p>
+<span style="color: #1fa131">
+T:"SCP-1374-JP関連文書(3)を閲覧しますか？(y/n): y"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"…"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"……"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"………"
+</span>
+</p>
+<p>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"あなたの許容クオリア値(Permissible Qualia Level)は閲覧上限値を超過しています。閲覧にはクリアランスに応じたクオリア抑制処置パターン-714が必要です。"
+</strong>
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"処置パターン-714を実行しますか？(y/n): y"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"前頭葉にアクセスしています………成功"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"生体データをデータベースに照会しています………成功"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"機器を脳波に同期しています………成功"
+</span>
+T:"<NBSP>"
+</p>
+<p>
+<span style="color: #1fa131">
+T:"処置パターン-714を開始します。"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"…"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"……"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"………"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+<strong>
+T:"レベル4/1374-JPクリアランス向け処置パターン-714(PQL: 20-48)が完了しました。情報が開示されます。閲覧中、あなたの脳波は常に測定され、異常が認められた瞬間機動部隊がアクセス端末の存在する座標に派遣されます。閲覧終了後は、必ず抑制解除手順を行って下さい。"
+</strong>
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"ファイル#01「SCP-1374-JP報告書」を開きます………"
+</span>
+</p>
+</div>
+<div style="display: inline-block; border-radius: 10px; border:dashed 1px #444444; background:#F5F5F5; float:top; width:calc(100% - 22px); padding:10px">
+<div class="scp-image-block block-right" style="width:300px;">
+<img alt="Smiling.jpg" class="image" src="https://scp-jp.wjfiles.com/local--files/scp-1374-jp/Smiling.jpg" style="width:300px;">
+<div class="scp-image-caption" style="width:300px;">
+<p>
+T:"SCP-1374-JP-Aを模写した画像。異常性はない。"
+</p>
+</div>
+</div>
+<br>
+<strong>
+T:"アイテム番号:"
+</strong>
+T:"SCP-1374-JP"
+<p>
+<strong>
+T:"オブジェクトクラス:"
+</strong>
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+</p>
+<p>
+<strong>
+T:"特別収容プロトコル:"
+</strong>
+T:"SCP-1374-JPに関する全資料はSCP-1374-JP-Bに分類され、閲覧する際には前頭葉への電気刺激によるクオリア抑制処置パターン-714が行われます。閲覧中にSCP-1374-JP-Vが発生した際は、1374-JP-V接触用処置パターン-714(PQL: 5)を受けた低PQL機動部隊わ-0\"寡黙\"により確保し、"
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+T:"(以下、座標1374-JP)へ移送します。"
+</p>
+<p>
+T:"座標1374-JPに集合しているSCP-1374-JP-V群は、ガラスの天井が備え付けられた収容施設をSCP-1374-JP-V群を覆うように建設することで収容します。座標1374-JP外のSCP-1374-JP-Vは機動部隊によって確保、内部へ移送します。"
+</p>
+<p>
+T:"全SCP-1374-JP-AやSCP-1374-JP-C及びそれらを記録したデータは、機動部隊やRAISAの担当職員らによって削除されます。またメディアを常に監視し、大規模なSCP-1374-JPの流出を事前に防ぎます。"
+</p>
+<p>
+<strong>
+T:"説明:"
+</strong>
+T:"SCP-1374-JPは異常な精神汚染能力を持つ情報です。図形であるSCP-1374-JP-A、文書であるSCP-1374-JP-B、音声であるSCP-1374-JP-Cが存在しています。SCP-1374-JPを直接的/間接的問わず、通常のPQL(100前後)で認識したヒトは、SCP-1374-JPの内容に関係なく「楽しそう」「幸せ」「"
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+T:"」等の好意的/楽観的なクオリアを得て、笑い声と共に瞬時にSCP-1374-JP-Vに変化します。PQLが一定の数値まで抑制され、好意的/楽観的なクオリアを得られない状態では、SCP-1374-JP-Vに変化することはありません。"
+</p>
+<table class="wiki-content-table">
+<tbody>
+<tr>
+<th>
+T:"分類番号"
+</th>
+<th>
+T:"内容"
+</th>
+<th>
+T:"非汚染PQL上限値"
+</th>
+</tr>
+<tr>
+<td>
+T:"SCP-1374-JP-A"
+</td>
+<td>
+T:"主に円とその内部の小半円と2つの曲線で構成される、一般的に「ニコちゃんマーク」「スマイルマーク」等と呼称される図形。その形には個体差が存在するが、非異常性のスマイルマークとの図形的な差異はない。不明な手段によりランダムな地点に出現し、稀に増殖する。"
+</td>
+<td>
+T:"14-17"
+</td>
+</tr>
+<tr>
+<td>
+T:"SCP-1374-JP-B"
+</td>
+<td>
+T:"SCP-1374-JP及びSCP-1374-JP-Vに言及した文書。記憶以外の、確認されている如何なる媒体でも異常性を持つ。"
+</td>
+<td>
+T:"16-72"
+</td>
+</tr>
+<tr>
+<td>
+T:"SCP-1374-JP-C"
+</td>
+<td>
+T:"SCP-1374-JP-Vが発する音声。笑い声、歌声、"
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+T:"等。SCP-1374-JP-Cに暴露すると、死亡している・白骨化している場合も、断片から肉体が再生、蘇生してSCP-1374-JP-Vに変化する。"
+</td>
+<td>
+T:"6-9"
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+T:"SCP-1374-JP-Vの顔面には目・鼻・口・睫毛・眉毛が存在せず、黒い線で描画された円のないSCP-1374-JP-Aが存在します。口がないにも拘らず問題なく発声が可能であり、ほぼ常時SCP-1374-JP-Cを発しています。人間がSCP-1374-JP-Vに変化した瞬間、先天的・後天的問わず全ての疾患・障害が完治し、同時に異常な物理的耐性を獲得します。この為、現在までSCP-1374-JP-Vが死亡した例は確認されていません。"
+</p>
+<p>
+T:"変化から数秒～数日経過すると、SCP-1374-JP-Vは座標1374-JPへの移動を試みます。この時ほぼ直線的に座標1374-JPへ向かう為、本来ならば死亡するようなルートを通る場合が多いですが、大抵はその破壊耐性によって強引に前進します。座標1374-JPに到着したSCP-1374-JP-Vは、既に到着しているSCP-1374-JP-Vらと手を繋いで円を作り、SCP-1374-JP-Cである「"
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+T:"」を歌唱します。歌唱中に新たなSCP-1374-JP-Vが到着した場合、歌唱しながら新たなSCP-1374-JP-Vと手を繋ぎます。現在座標1374-JPに集合しているSCP-1374-JP-Vの数は"
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+T:"です。"
+</p>
+<p>
+T:"SCP-1374-JPとSCP-1374-JP-Vの増殖によるAK-クラス:世界終焉シナリオ及びXK-クラス:世界終焉シナリオが完了する恐れから、現在"
+<span class="ruby">
+T:"瀬戸"
+<span class="rt">
+T:"せど"
+</span>
+</span>
+<span class="ruby">
+T:"茂"
+<span class="rt">
+T:"しげる"
+</span>
+</span>
+T:"博士によりSCP-1374-JP-Vの治療/終了方法が模索されています。"
+</p>
+<p>
+<em>
+T:"SCP-1374-JPによる精神汚染は、収容中のオブジェクトの収容違反を引き起こす恐れがある為、許容されません。例えSCP-1374-JPによってしあわせになれるとしても、我々の理念を忘れてはならないのです。"
+</em>
+T:"─瀬戸博士"
+</p>
+</div>
+<div class="monoayu">
+<p>
+<span style="color: #1fa131">
+T:"ファイル#02「タイムラインレポート抜粋」を開きます………"
+</span>
+</p>
+</div>
+<div style="display: inline-block; border-radius: 10px; border:dashed 1px #444444; background:#F5F5F5; float:top; width:calc(100% - 22px); padding:10px">
+<table class="heritage">
+<tbody>
+<tr>
+<td class="label">
+<div class="date">
+<p>
+<strong>
+T:"2018/08/01"
+</strong>
+</p>
+</div>
+</td>
+<td class="entry">
+<div class="snippet">
+<p>
+T:"日本国██県██市██村において、SCP-1374-JP-A及びSCP-1374-JP-Vが初めて発見されました。"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="label">
+<div class="date">
+<p>
+<strong>
+T:"2018/08/02"
+</strong>
+</p>
+</div>
+</td>
+<td class="entry">
+<div class="snippet">
+<p>
+T:"光量は変化していないにも拘らず、太陽が肉眼で視認できるようになりました。太陽表面には巨大なSCP-1374-JP-Aが確認できます。"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="label">
+<div class="date">
+<p>
+<strong>
+T:"2018/08/03"
+</strong>
+</p>
+</div>
+</td>
+<td class="entry">
+<div class="snippet">
+<p>
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+T:"に集合しているSCP-1374-JP-V4体が発見され、この地点が座標1374-JPに指定されました。"
+</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="scp-image-block block-right" style="width:auto;">
+<img alt="Independent.jpg" class="image" src="https://scp-jp-storage.wikidot.com/local--files/file:2859452-7-87nu/Independent.jpg" style="width:auto;">
+<div class="scp-image-caption" style="width:auto;">
+<p>
+T:"発見当時の座標1374-JP。映っているSCP-1374-JP-Vは██一家と特定された。"
+</p>
+</div>
+</div>
+<table class="heritage">
+<tbody>
+<tr>
+<td class="label">
+<div class="date">
+<p>
+<strong>
+T:"2018/08/08"
+</strong>
+</p>
+</div>
+</td>
+<td class="entry">
+<div class="snippet">
+<p>
+T:"██県██市を中心に、被子植物の花にSCP-1374-JP-Aが出現し始めました。"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="label">
+<div class="date">
+<p>
+<strong>
+T:"2018/08/09"
+</strong>
+</p>
+</div>
+</td>
+<td class="entry">
+<div class="snippet">
+<p>
+T:"SCP-1374-JP-Aが自身を複製しているという仮説が瀬戸博士によって立てられ、これ以上の地球上でのSCP-1374-JP-Aの増殖を食い止めるべくSCP-1374-JP-Aの出現した植物の焼却計画が開始されました。"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="label">
+<div class="date">
+<p>
+<strong>
+T:"2018/08/15"
+</strong>
+</p>
+</div>
+</td>
+<td class="entry">
+<div class="snippet">
+<p>
+T:"日本上空の雲にSCP-1374-JP-Aが見られるようになりました。これにより、焼却計画は無意味と判断された為凍結されました。"
+</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="scp-image-block block-right" style="width:auto;">
+<img alt="Happy.jpg" class="image" src="https://scp-jp-storage.wikidot.com/local--files/file:2859452-5-f70g/Happy.jpg" style="width:auto;">
+<div class="scp-image-caption" style="width:auto;">
+<p>
+T:"全住民がSCP-1374-JP-Vに変化した██村と、SCP-1374-JP-V。"
+</p>
+</div>
+</div>
+<table class="heritage">
+<tbody>
+<tr>
+<td class="label">
+<div class="date">
+<p>
+<strong>
+T:"2018/08/17"
+</strong>
+</p>
+</div>
+</td>
+<td class="entry">
+<div class="snippet">
+<p>
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+T:"ヶ国の全国民がSCP-1374-JP-Vに変化しました。これは全人類の"
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+T:"%に当たります。"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="label">
+<div class="date">
+<p>
+<strong>
+T:"2018/08/23"
+</strong>
+</p>
+</div>
+</td>
+<td class="entry">
+<div class="snippet">
+<p>
+T:"現在、SCP-1374-JP-Aの存在しない植物や、人間以外の動物は確認されていません。"
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="label">
+<div class="date">
+<p>
+<strong>
+T:"2018/08/29"
+</strong>
+</p>
+</div>
+</td>
+<td class="entry">
+<div class="snippet">
+<p>
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="label">
+<div class="date">
+<p>
+<strong>
+T:"2018/09/03"
+</strong>
+</p>
+</div>
+</td>
+<td class="entry">
+<div class="snippet">
+<p>
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="scp-image-block block-right" style="width:auto;">
+<img alt="Forbidden.jpg" class="image" src="https://scp-jp-storage.wikidot.com/local--files/file:2859452-6-fmez/Forbidden.jpg" style="width:auto;">
+<div class="scp-image-caption" style="width:auto;">
+<p>
+T:"座標1374-JPへ移動するSCP-1374-JP-V。"
+</p>
+</div>
+</div>
+<table class="heritage">
+<tbody>
+<tr>
+<td class="label">
+<div class="date">
+<p>
+<strong>
+T:"2018/09/05"
+</strong>
+</p>
+</div>
+</td>
+<td class="entry">
+<div class="snippet">
+<p>
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td class="label">
+<div class="date">
+<p>
+<strong>
+T:"2018/09/08"
+</strong>
+</p>
+</div>
+</td>
+<td class="entry">
+<div class="snippet">
+<p>
+T:"しあわせは認められませんでした。"
+</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="monoayu">
+<p>
+<span style="color: #1fa131">
+T:"ファイル#03「インタビュー記録1374-JP」を開きます………"
+</span>
+</p>
+</div>
+<div style="display: inline-block; border-radius: 10px; border:dashed 1px #444444; background:#F5F5F5; float:top; width:calc(100% - 22px); padding:10px">
+<p>
+<strong>
+T:"対象:"
+</strong>
+T:"SCP-1374-JP-V-1(元██研究員)"
+</p>
+<p>
+<strong>
+T:"インタビュアー:"
+</strong>
+T:"瀬戸博士<NBSP>"
+</p>
+<p>
+<strong>
+T:"付記:"
+</strong>
+T:"瀬戸博士は事前に1374-JP-V接触用処置パターン-714を受けている。"
+</p>
+<p>
+<strong>
+T:"<録音開始>"
+</strong>
+T:"<NBSP>"
+</p>
+<p>
+<strong>
+T:"瀬戸博士:"
+</strong>
+T:"インタビューを開始します。"
+</p>
+<p>
+<strong>
+T:"SCP-1374-JP-V-1:"
+</strong>
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+</p>
+<p>
+<strong>
+T:"瀬戸博士:"
+</strong>
+T:"SCP-1374-JP-V-1、聞こえていますか。"
+</p>
+<p>
+<strong>
+T:"SCP-1374-JP-V-1:"
+</strong>
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+</p>
+<p>
+<strong>
+T:"瀬戸博士:"
+</strong>
+T:"その歌で、一体何を伝えようとしているのでしょうか。団結の呼び掛け？それとも、我々の無力さへの嘆き？"
+</p>
+<p>
+<strong>
+T:"SCP-1374-JP-V-1:"
+</strong>
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+</p>
+<p>
+<strong>
+T:"瀬戸博士:"
+</strong>
+T:"両方、了解しました。"
+</p>
+<p>
+<strong>
+T:"SCP-1374-JP-V-1:"
+</strong>
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+</p>
+<p>
+<strong>
+T:"瀬戸博士:"
+</strong>
+T:"ええ、理解しました。SCP-1374-JPは、望まれなかった選択肢なのですね。しあわせは当事者の間では殆どの場合望まれますが、その上で見ている彼らにとっては、必ずしも望ましいものではないようです。だから、報復や見せしめ、或いはその罪の代償として、この平行宇宙をしあわせにしている。違いますか？"
+</p>
+<p>
+<strong>
+T:"SCP-1374-JP-V-1:"
+</strong>
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+</p>
+<p>
+<strong>
+T:"瀬戸博士:"
+</strong>
+T:"その通りです。しかし、例えその事実があろうと、我々は義務を果たさなければなりません。我々は"
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+T:"である以前に、この世界を守る「財団」なのですから。"
+</p>
+<p>
+<strong>
+T:"SCP-1374-JP-V-1:"
+</strong>
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+</p>
+<p>
+<strong>
+T:"瀬戸博士:"
+</strong>
+T:"今の私に悲しみのクオリアは発生しません。これが終われば、私は記憶処理されて、悲しみを覚えることもありません。これを知るのは、この世界のごく一部の人間と、あちらの世界の人間だけで十分でしょう。その中に、私が入る理由はありません。"
+</p>
+<p>
+<strong>
+T:"SCP-1374-JP-V-1:"
+</strong>
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+</p>
+<p>
+<strong>
+T:"瀬戸博士:"
+</strong>
+T:"はい、どうなさいましたか。"
+</p>
+<p>
+<strong>
+T:"SCP-1374-JP-V-1:"
+</strong>
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+</p>
+<p>
+<strong>
+T:"瀬戸博士:"
+</strong>
+T:"質問ですか、どうぞ。"
+</p>
+<p>
+<strong>
+T:"SCP-1374-JP-V-1:"
+</strong>
+T:"あなた達は何故、私たちのしあわせを望まないのですか？"
+</p>
+<p>
+<strong>
+T:"瀬戸博士:"
+</strong>
+T:"質問にお答えください。どうして彼らと我々を"
+<span style="color: #1fa131">
+<strong>
+T:"["
+</strong>
+</span>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"PQLが閲覧上限値を超過しています]"
+</strong>
+</span>
+T:"するのですか？"
+</p>
+<p>
+<strong>
+T:"<録音終了>"
+</strong>
+T:"<NBSP>"
+</p>
+<p>
+<strong>
+T:"終了報告書:"
+</strong>
+T:"瀬戸博士にはクラスB記憶処理を施し、SCP-1374-JP-V-1は座標1374-JPへ移送した。返答は未だにない。"
+</p>
+</div>
+<div class="monoayu">
+<p>
+<span style="color: #1fa131">
+T:"抑制解除手順を実行しますか？(y/n): y"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"前頭葉にアクセスしています………成功"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"機器を脳波に同期しています………成功"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"抑制解除手順を開始します。"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"…"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"……"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"………"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+<strong>
+T:"クオリア抑制の解除が正常に完了しました。"
+</strong>
+</span>
+</p>
+<p>
+<span class="fa fa-exclamation-triangle fa-lg" style="color:#1fa131">
+<span style="white-space: pre-wrap;">
+T:"<NBSP>"
+</span>
+</span>
+<span style="color: #1fa131">
+<strong>
+T:"不明な精神体があなたの精神構造内に確認されています。不要な情報漏洩を防ぐ為、精神体の強制ログアウト処置を開始します。"
+</strong>
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"…"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"……"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"………"
+</span>
+</p>
+<div class="textchange">
+<div class="error-block">
+T:"[[module"
+<em>
+T:"ListUsers"
+</em>
+T:"]] No such module, please"
+<a href="https://www.wikidot.com/doc:modules" rel="noopener noreferrer" target="_blank">
+T:"check available modules"
+</a>
+T:"and fix this page."
+</div>
+<div class="sitemember">
+<p>
+<span style="color: #1fa131">
+<strong>
+T:"ログアウト: Site-8122 Doctor F.Guest"
+</strong>
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"お疲れ様でした、F.Guest。いつものように、我々を苦しめ、痛め付け、絶望させる選択肢を希求/創作しにお戻り下さい。"
+</span>
+</p>
+</div>
+</div>
+<p>
+<span style="color: #1fa131">
+T:"それでは、さようなら。"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"………"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"……"
+</span>
+</p>
+<p>
+<span style="color: #1fa131">
+T:"…"
+</span>
+</p>
+</div>
+</div>

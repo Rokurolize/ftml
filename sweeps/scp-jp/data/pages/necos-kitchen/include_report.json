@@ -1,0 +1,94 @@
+{
+ "max_passes": 5,
+ "passes": [
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "credit:start",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "credit:end",
+     "site": "scp-jp",
+     "variables": {}
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "財団ロゴの好物。",
+      "name": "確保収容保護",
+      "width": "200px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "SCP財団ロゴのステーキ[[footnote]] 詳しいレシピは番組公式サイトをご覧ください[[/footnote]]",
+      "name": "完成",
+      "width": "400px"
+     }
+    }
+   ],
+   "pass": 1
+  },
+  {
+   "changed": true,
+   "includes": [
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "財団ロゴの好物。",
+      "clear": "false",
+      "link": "#",
+      "name": "確保収容保護",
+      "width": "200px"
+     }
+    },
+    {
+     "found": true,
+     "page": "component:image-block-base",
+     "site": "scp-jp",
+     "variables": {
+      "align": "center",
+      "caption": "SCP財団ロゴのステーキ[[footnote]] 詳しいレシピは番組公式サイトをご覧ください[[/footnote]]",
+      "clear": "false",
+      "link": "#",
+      "name": "完成",
+      "width": "400px"
+     }
+    }
+   ],
+   "pass": 2
+  },
+  {
+   "changed": false,
+   "includes": [],
+   "pass": 3
+  }
+ ],
+ "existing_pages_from_live": [
+  "lily-s-proposal",
+  "old:scp-1548",
+  "scp-056-jp",
+  "scp-1365",
+  "scp-2317",
+  "scp-2484",
+  "scp-3794",
+  "scp-4065",
+  "scp-572"
+ ],
+ "newpage_links_in_live": []
+}

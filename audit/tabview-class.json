@@ -1,0 +1,68 @@
+{
+ "tabview/blockquote": [
+  "display",
+  "br"
+ ],
+ "tabview/blockquote-body-shallower-line": [
+  "bq"
+ ],
+ "tabview/blockquote-eject": [
+  "bq"
+ ],
+ "tabview/blockquote-eject-blank-separated": [
+  "bq"
+ ],
+ "tabview/blockquote-eject-depth2": [
+  "bq"
+ ],
+ "tabview/blockquote-eject-lesser-row": [
+  "bq"
+ ],
+ "tabview/blockquote-eject-multiple": [
+  "bq"
+ ],
+ "tabview/blockquote-eject-row-between": [
+  "bq"
+ ],
+ "tabview/blockquote-eject-sameline-closes": [
+  "bq"
+ ],
+ "tabview/blockquote-eject-shallower-closes": [
+  "bq"
+ ],
+ "tabview/blockquote-nested": [
+  "display",
+  "br"
+ ],
+ "tabview/blockquote-nested-tab-literal": [
+  "br"
+ ],
+ "tabview/blockquote-sameline-closes": [
+  "br"
+ ],
+ "tabview/blockquote-text-around": null,
+ "tabview/iftags-seam": null,
+ "tabview/iftags-seam-abutting": [
+  "display"
+ ],
+ "tabview/tab-stray-fails": null,
+ "tabview/title-footnote-numbering": [
+  "display",
+  "em"
+ ],
+ "tabview/title-footnote-unit": [
+  "em"
+ ],
+ "tabview/title-footnoteblock-after": null,
+ "tabview/title-footnoteblock-alone": null,
+ "tabview/title-head-only-unit": [
+  "em"
+ ],
+ "tabview/title-inline-unit": [
+  "em"
+ ],
+ "tabview/title-opener-literal": null,
+ "tabview/title-typography-raw": [
+  "display"
+ ]
+}

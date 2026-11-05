@@ -1,0 +1,367 @@
+{
+ "schema": "ftml.corpus_audit2.summary.v1",
+ "audited_total": 987,
+ "fixtures_with_wikidot_html": 987,
+ "coverage": "987/987 fixtures with wikidot.html",
+ "class_totals": {
+  "match": 718,
+  "bug-encoded": 51,
+  "match-exact": 92,
+  "harmless-whitespace (normalization-only)": 53,
+  "context-caller-runtime (newpage)": 12,
+  "context-boundary (Wikijump embedvideo marker)": 1,
+  "context-caller-runtime (fileurl)": 11,
+  "context-caller-runtime (asset-script+tabview-init-script)": 19,
+  "context-boundary (Wikijump gallery marker)": 21,
+  "context-caller-runtime (caller-iframe)": 1,
+  "context-caller-runtime (newpage+fileurl+asset-script+tabview-init-script+gallery-id+tabview-id+caller-iframe)": 1,
+  "context-boundary (caller user resolution)": 7
+ },
+ "families": {
+  "align": {
+   "total": 3,
+   "audited": 3,
+   "match": 3
+  },
+  "anchor": {
+   "total": 31,
+   "audited": 31,
+   "match": 27,
+   "bug-encoded": 3,
+   "match-exact": 1
+  },
+  "audio": {
+   "total": 3,
+   "audited": 3,
+   "match": 3
+  },
+  "bibliography": {
+   "total": 11,
+   "audited": 11,
+   "match": 10,
+   "bug-encoded": 1
+  },
+  "blockquote": {
+   "total": 27,
+   "audited": 27,
+   "match": 14,
+   "match-exact": 12,
+   "bug-encoded": 1
+  },
+  "bold": {
+   "total": 29,
+   "audited": 29,
+   "match": 26,
+   "match-exact": 3
+  },
+  "button": {
+   "total": 2,
+   "audited": 2,
+   "match": 1,
+   "match-exact": 1
+  },
+  "char": {
+   "total": 2,
+   "audited": 2,
+   "match": 2
+  },
+  "checkbox": {
+   "total": 2,
+   "audited": 2,
+   "match": 2
+  },
+  "code": {
+   "total": 19,
+   "audited": 19,
+   "match": 13,
+   "harmless-whitespace (normalization-only)": 4,
+   "bug-encoded": 2
+  },
+  "collapsible": {
+   "total": 6,
+   "audited": 6,
+   "match": 5,
+   "bug-encoded": 1
+  },
+  "color": {
+   "total": 24,
+   "audited": 24,
+   "match": 22,
+   "match-exact": 1,
+   "context-caller-runtime (newpage)": 1
+  },
+  "date": {
+   "total": 13,
+   "audited": 13,
+   "match": 12,
+   "bug-encoded": 1
+  },
+  "definition-list": {
+   "total": 12,
+   "audited": 12,
+   "match": 11,
+   "match-exact": 1
+  },
+  "diff": {
+   "total": 3,
+   "audited": 3,
+   "match": 3
+  },
+  "div": {
+   "total": 37,
+   "audited": 37,
+   "match": 35,
+   "bug-encoded": 1,
+   "harmless-whitespace (normalization-only)": 1
+  },
+  "embed": {
+   "total": 1,
+   "audited": 1,
+   "match": 1
+  },
+  "embedvideo": {
+   "total": 1,
+   "audited": 1,
+   "context-boundary (Wikijump embedvideo marker)": 1
+  },
+  "file": {
+   "total": 3,
+   "audited": 3,
+   "context-caller-runtime (fileurl)": 3
+  },
+  "footnote": {
+   "total": 54,
+   "audited": 54,
+   "match": 41,
+   "bug-encoded": 6,
+   "harmless-whitespace (normalization-only)": 4,
+   "match-exact": 2,
+   "context-caller-runtime (asset-script+tabview-init-script)": 1
+  },
+  "gallery": {
+   "total": 21,
+   "audited": 21,
+   "context-boundary (Wikijump gallery marker)": 21
+  },
+  "heading": {
+   "total": 3,
+   "audited": 3,
+   "match": 3
+  },
+  "hidden": {
+   "total": 1,
+   "audited": 1,
+   "match": 1
+  },
+  "html": {
+   "total": 2,
+   "audited": 2,
+   "match": 2
+  },
+  "ifcategory": {
+   "total": 1,
+   "audited": 1,
+   "match": 1
+  },
+  "iframe": {
+   "total": 8,
+   "audited": 8,
+   "match": 8
+  },
+  "iftags": {
+   "total": 132,
+   "audited": 132,
+   "harmless-whitespace (normalization-only)": 14,
+   "match-exact": 60,
+   "match": 56,
+   "context-caller-runtime (caller-iframe)": 1,
+   "bug-encoded": 1
+  },
+  "image": {
+   "total": 7,
+   "audited": 7,
+   "context-caller-runtime (fileurl)": 6,
+   "bug-encoded": 1
+  },
+  "invisible": {
+   "total": 1,
+   "audited": 1,
+   "match": 1
+  },
+  "italics": {
+   "total": 11,
+   "audited": 11,
+   "match": 10,
+   "match-exact": 1
+  },
+  "later": {
+   "total": 1,
+   "audited": 1,
+   "match": 1
+  },
+  "line-breaks": {
+   "total": 3,
+   "audited": 3,
+   "match": 3
+  },
+  "lines": {
+   "total": 1,
+   "audited": 1,
+   "match": 1
+  },
+  "link": {
+   "total": 51,
+   "audited": 51,
+   "match": 40,
+   "context-caller-runtime (newpage)": 10,
+   "context-caller-runtime (fileurl)": 1
+  },
+  "list": {
+   "total": 55,
+   "audited": 55,
+   "match": 41,
+   "bug-encoded": 2,
+   "harmless-whitespace (normalization-only)": 8,
+   "match-exact": 4
+  },
+  "mark": {
+   "total": 1,
+   "audited": 1,
+   "match": 1
+  },
+  "math": {
+   "total": 9,
+   "audited": 9,
+   "match": 6,
+   "bug-encoded": 2,
+   "match-exact": 1
+  },
+  "media": {
+   "total": 2,
+   "audited": 2,
+   "match": 2
+  },
+  "misc": {
+   "total": 42,
+   "audited": 42,
+   "match": 38,
+   "bug-encoded": 1,
+   "harmless-whitespace (normalization-only)": 2,
+   "context-caller-runtime (fileurl)": 1
+  },
+  "module": {
+   "total": 2,
+   "audited": 2,
+   "match": 2
+  },
+  "monospace": {
+   "total": 14,
+   "audited": 14,
+   "match": 14
+  },
+  "note": {
+   "total": 4,
+   "audited": 4,
+   "match": 4
+  },
+  "paragraph": {
+   "total": 21,
+   "audited": 21,
+   "match": 21
+  },
+  "radio": {
+   "total": 3,
+   "audited": 3,
+   "match": 3
+  },
+  "raw": {
+   "total": 16,
+   "audited": 16,
+   "match": 16
+  },
+  "ruby": {
+   "total": 3,
+   "audited": 3,
+   "match": 3
+  },
+  "size": {
+   "total": 13,
+   "audited": 13,
+   "match": 12,
+   "match-exact": 1
+  },
+  "span": {
+   "total": 54,
+   "audited": 54,
+   "harmless-whitespace (normalization-only)": 1,
+   "match": 50,
+   "bug-encoded": 1,
+   "match-exact": 2
+  },
+  "strikethrough": {
+   "total": 69,
+   "audited": 69,
+   "match": 67,
+   "harmless-whitespace (normalization-only)": 1,
+   "context-caller-runtime (newpage)": 1
+  },
+  "subscript": {
+   "total": 7,
+   "audited": 7,
+   "match": 7
+  },
+  "superscript": {
+   "total": 7,
+   "audited": 7,
+   "match": 7
+  },
+  "table": {
+   "total": 50,
+   "audited": 50,
+   "match": 29,
+   "harmless-whitespace (normalization-only)": 18,
+   "bug-encoded": 2,
+   "match-exact": 1
+  },
+  "tabview": {
+   "total": 57,
+   "audited": 57,
+   "bug-encoded": 25,
+   "match": 13,
+   "context-caller-runtime (asset-script+tabview-init-script)": 18,
+   "context-caller-runtime (newpage+fileurl+asset-script+tabview-init-script+gallery-id+tabview-id+caller-iframe)": 1
+  },
+  "target": {
+   "total": 4,
+   "audited": 4,
+   "match": 4
+  },
+  "toc": {
+   "total": 9,
+   "audited": 9,
+   "match": 8,
+   "match-exact": 1
+  },
+  "underline": {
+   "total": 5,
+   "audited": 5,
+   "match": 5
+  },
+  "underscore": {
+   "total": 3,
+   "audited": 3,
+   "match": 3
+  },
+  "user": {
+   "total": 8,
+   "audited": 8,
+   "context-boundary (caller user resolution)": 7,
+   "match": 1
+  },
+  "video": {
+   "total": 3,
+   "audited": 3,
+   "match": 3
+  }
+ }
+}

@@ -1,0 +1,937 @@
+{
+ "code/closer-first-suffixed-wins": {
+  "live_raw_html_sha256": "c7e0b88ae74f6f8c36b6224ab8b794f31bc672bbaa9136fec9d989ba2fe6ebfc",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nx",
+    "fixture": "\n x",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "code/closer-whitespace-then-text": {
+  "live_raw_html_sha256": "05965146d1f1265672abe21ecec2d1b562908d0b0b94df2ed2a0f42fe9daece8",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nx",
+    "fixture": "\n x",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "code/nested-suffixed-outer-closer": {
+  "live_raw_html_sha256": "ed2f9bcdb13e820a4cfc1987404de1879c66d90416eee3dfc02d2bf3e627a0c9",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nx",
+    "fixture": "\n x",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "code/two-codes-suffixed-first-closer": {
+  "live_raw_html_sha256": "eb8813db84386fb2d9c580003b4aad901e64a8252acd479592f26c699928653e",
+  "positions": [
+   "line-start whitespace",
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nx\n",
+    "fixture": "\n x",
+    "class": [
+     "line-start whitespace",
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "div/list-item-end": {
+  "live_raw_html_sha256": "f28717f5bd791f1fd95adf3f6e1a5fb218e778764d10b1501ccc4445871ec44f",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\ntail",
+    "fixture": "\n tail",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "footnote/block-scope-wrapped": {
+  "live_raw_html_sha256": "8eb2131eeb3a815366acc4f945ae34c460033a4d4bc24ed254fe170e65e1b98c",
+  "positions": [
+   "line-edge (after br)"
+  ],
+  "text_diffs": [
+   {
+    "side": "fixture",
+    "text": "\n"
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "footnote/code-in-footnote-suffixed-closer": {
+  "live_raw_html_sha256": "a3c6d5acc97fd0c105650aea757b75ee9420af79b74561e96c714236548c6eea",
+  "positions": [
+   "line-start whitespace",
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": ". intro\n",
+    "fixture": ". intro",
+    "class": [
+     "trailing block-edge whitespace"
+    ]
+   },
+   {
+    "side": "both",
+    "live": "\nB[[footnote]]plain",
+    "fixture": "\n B[[footnote]]plain",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "footnote/heading-end": {
+  "live_raw_html_sha256": "f1eff40da459946d35c5ef9880e52abf2fd8063b0d3d5249b8558f70347fbdfe",
+  "positions": [
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": ". intro\n",
+    "fixture": ". intro",
+    "class": [
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "footnote/list-item-end": {
+  "live_raw_html_sha256": "c96dc23a1b99e37aab7740c6ccd3e709f0ac7f689f46412be0fa89a8a443adac",
+  "positions": [
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": ". intro\n",
+    "fixture": ". intro",
+    "class": [
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "iftags/body-div-literal": {
+  "live_raw_html_sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+  "positions": [
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "[[div]]D[[/div]]",
+    "fixture": "[[div]]D[[/div]]\n",
+    "class": [
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "iftags/closer-midline": {
+  "live_raw_html_sha256": "a059d56967a2f2712b7ba14ca3b182322fa79f8be2c46382e543c4abdc61c3c6",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nafter",
+    "fixture": "\n after",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "iftags/kept-gate-list-close-inside-unclosed-item": {
+  "live_raw_html_sha256": "b3e6921f552eba359c49f74d3471db7b0114f1e04cbc7ebd22df8186a38cb141",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\ncd",
+    "fixture": "cd",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "iftags/kept-spaced-head-doc-start": {
+  "live_raw_html_sha256": "a059d56967a2f2712b7ba14ca3b182322fa79f8be2c46382e543c4abdc61c3c6",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nplain body",
+    "fixture": "\n plain body",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "iftags/list-item-after-closer-joins": {
+  "live_raw_html_sha256": "a61c0fe0b00644b90ead3c9cc19e807a07ff791a418ebbae4da667d881e2c99e",
+  "positions": [
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "B",
+    "fixture": "B ",
+    "class": [
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "iftags/list-item-after-paragraph-break": {
+  "live_raw_html_sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+  "positions": [
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "B",
+    "fixture": "B ",
+    "class": [
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "iftags/list-item-joins-from-second-item": {
+  "live_raw_html_sha256": "f81721c184085f06cc42cf4d293d80747408964060aa59faa4cbcbef32140554",
+  "positions": [
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "C",
+    "fixture": "C ",
+    "class": [
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "iftags/list-item-line-at-body-start": {
+  "live_raw_html_sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+  "positions": [
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "B",
+    "fixture": "B ",
+    "class": [
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "iftags/list-items-close-definition-list": {
+  "live_raw_html_sha256": "7906d897d002355a39bfe638350be3dc7ac319f47b23d0caacf697c87f488804",
+  "positions": [
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "B",
+    "fixture": "B ",
+    "class": [
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "iftags/list-items-join": {
+  "live_raw_html_sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+  "positions": [
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "B",
+    "fixture": "B ",
+    "class": [
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "iftags/list-items-join-ordered": {
+  "live_raw_html_sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+  "positions": [
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "B",
+    "fixture": "B ",
+    "class": [
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "iftags/list-items-split-on-marker-type": {
+  "live_raw_html_sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+  "positions": [
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "B",
+    "fixture": "B ",
+    "class": [
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "iftags/list-parabreak-starts-new-list": {
+  "live_raw_html_sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+  "positions": [
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "C",
+    "fixture": "C ",
+    "class": [
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "iftags/list-plain-line-before-starts-new-list": {
+  "live_raw_html_sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+  "positions": [
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "B",
+    "fixture": "B ",
+    "class": [
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "list/explicit-crossed-pre-trailing-dissolves": {
+  "live_raw_html_sha256": "483657d5e9e88477d30af9affd95b164106e1195f3fab4ce5531fb68c3cb98f1",
+  "positions": [
+   "line-edge (after br)"
+  ],
+  "text_diffs": [
+   {
+    "side": "fixture",
+    "text": "\n"
+   },
+   {
+    "side": "fixture",
+    "text": "\n"
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "list/explicit-post-table-literal": {
+  "live_raw_html_sha256": "7ac859f0e3404d2aea693c74137bb017539f5d8d5b8ffd9ddeaead8f20be655b",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\n|| T ||",
+    "fixture": "|| T ||",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "list/explicit-pre-kept-before-prose": {
+  "live_raw_html_sha256": "65f708cada99a247aacc835dc1e120cad9e4fad660e8be06a12fce872cec0001",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nY Z",
+    "fixture": "Y Z",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "list/explicit-scope-break-inside-paragraph": {
+  "live_raw_html_sha256": "10b846067d2576796d4f12cd09c9c6c3f25baeccd6a61a6fcee345aaab36143a",
+  "positions": [
+   "line-edge (after br)"
+  ],
+  "text_diffs": [
+   {
+    "side": "fixture",
+    "text": "\n"
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "list/explicit-scope-break-paragraph": {
+  "live_raw_html_sha256": "488b5e5b878344a0d01b1484469750655bfe19bb269041f2e16cfcb1f5ce84d9",
+  "positions": [
+   "line-edge (after br)"
+  ],
+  "text_diffs": [
+   {
+    "side": "fixture",
+    "text": "\n"
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "list/nested-multi-item-partial-close": {
+  "live_raw_html_sha256": "6c881923fdf2ed1b64ddbcbf13e0caa3b445707a853747f3690f3aea61d0c664",
+  "positions": [
+   "line-edge (after br)",
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "fixture",
+    "text": "\n"
+   },
+   {
+    "side": "both",
+    "live": "\nBC",
+    "fixture": "BC",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "list/nested-partial-close-in-item": {
+  "live_raw_html_sha256": "2433ad7e486774f7cf32a207198e2a0f40c89a03f6968c58998c10c6724cd85c",
+  "positions": [
+   "line-edge (after br)",
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "fixture",
+    "text": "\n"
+   },
+   {
+    "side": "both",
+    "live": "\nBC",
+    "fixture": "BC",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "list/zombie-pair-fired-scope-not-reopened": {
+  "live_raw_html_sha256": "27e52c3920572529e39f09c66c220faf539fc2b8326fe1334b050238c10fd874",
+  "positions": [
+   "line-edge (after br)",
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "fixture",
+    "text": "\n"
+   },
+   {
+    "side": "both",
+    "live": "\nBC",
+    "fixture": "BC",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "misc/bibliography-second-block": {
+  "live_raw_html_sha256": "a37f295156f765b0604f18b52d9063e5c97690116db5c6b682609fb91fee097d",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\n[[bibliography]]",
+    "fixture": "[[bibliography]]",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "misc/dash-line-fusion": {
+  "live_raw_html_sha256": "a71ee2e6d4adace4502b78f6372cc6e664f96b0859b7904d8d70d42d5f83232e",
+  "positions": [
+   "line-edge (after br)",
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "fixture",
+    "text": "\n"
+   },
+   {
+    "side": "both",
+    "live": " -",
+    "fixture": "-",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "span/basic": {
+  "live_raw_html_sha256": "b7190d37bc1cd5756dde68ebd36604ac4e580d9d6bb17b5dfd00aea4ca5bd29a",
+  "positions": [
+   "line-edge (after br)"
+  ],
+  "text_diffs": [
+   {
+    "side": "fixture",
+    "text": "\n"
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "strikethrough/end-block-closes-scope": {
+  "live_raw_html_sha256": "384af40530ed6ba27c7dfdd6a655928feb7a7d45ffb7c2f8b754fbaf29f5b9fc",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\ny—",
+    "fixture": "\n y—",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/advcell-collapsible": {
+  "live_raw_html_sha256": "ed34ad98cd0634d47cd841f4e85f0fe389722dba2eabae29a0ed3b476494678b",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nC3",
+    "fixture": "C3",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/eof-stray-root": {
+  "live_raw_html_sha256": "bf389fb03b58b6700d0cb296ebaf64f9eeefaf15df70d719e40da7f084fede4a",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nE",
+    "fixture": "E",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/paragraph-after-table-scope": {
+  "live_raw_html_sha256": "7812b0fbc6a7e96b6152634621cbf8476ebc9bfa35bc31bb84e8d3c5a4246d69",
+  "positions": [
+   "line-edge (after br)"
+  ],
+  "text_diffs": [
+   {
+    "side": "fixture",
+    "text": "\n"
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/simple-cell-carry-in": {
+  "live_raw_html_sha256": "933a7ef3a5360c5ea53608d2417eade39c24d9d0bdf35d99b931b8e86f0c2963",
+  "positions": [
+   "line-edge (after br)"
+  ],
+  "text_diffs": [
+   {
+    "side": "fixture",
+    "text": "\n"
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/simple-unterminated-row-advanced-body": {
+  "live_raw_html_sha256": "7c6c9392c98d011650b0506d354b189ab38cd2bc16de0e3b58cb72d066295970",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\n[[row]]",
+    "fixture": "[[row]]",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/simple-unterminated-row-table-opener": {
+  "live_raw_html_sha256": "8b1f14f79b78828979aa6e78242b6658d8a21c865d5b343793c655176beb5a36",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\n[[/table]] ||",
+    "fixture": "[[/table]] ||",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/t-c-before-closein": {
+  "live_raw_html_sha256": "95bc3aaabda8ab00b4bfab365a8f28225545aee873f6479635de7c37be57c326",
+  "positions": [
+   "line-start whitespace",
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nE\n",
+    "fixture": "\nE",
+    "class": [
+     "line-start whitespace",
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/t-d-before-closein": {
+  "live_raw_html_sha256": "fb28a500734410ff1e29fe31eac13a09dd0a46dc44d090cfa7c290ff5cc0f790",
+  "positions": [
+   "line-start whitespace",
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nE\n",
+    "fixture": "\nE",
+    "class": [
+     "line-start whitespace",
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/t-d-before-closein2": {
+  "live_raw_html_sha256": "0a35f014c88a586eb4d157f8e36245ef60b40406ffb7ee046b596cc5dde9734d",
+  "positions": [
+   "line-start whitespace",
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nE\n",
+    "fixture": "\nE",
+    "class": [
+     "line-start whitespace",
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/t-d-cell": {
+  "live_raw_html_sha256": "d065486e6abd17e43826160afaf46a667bfd3daea69b90bd922ba5b2b828c483",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nE",
+    "fixture": "E",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/t-d-in-c-in-cell": {
+  "live_raw_html_sha256": "41865af45bab908a0f2f473610565a7871b0d5e54aacfc02dae971c8477c2cc5",
+  "positions": [
+   "line-start whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nH",
+    "fixture": "H",
+    "class": [
+     "line-start whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/tf-block-after": {
+  "live_raw_html_sha256": "448ba70256a260a2af2ee4ef74e8014c4d2ae53771458b8de54d9550adbf4fab",
+  "positions": [
+   "line-start whitespace",
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nE\n",
+    "fixture": "\nE",
+    "class": [
+     "line-start whitespace",
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/tf-coll-open-in-outer-cell": {
+  "live_raw_html_sha256": "8675413257e4f8c3749c2051850c1fb081fee49aaba8eb163895ad633e0852ac",
+  "positions": [
+   "line-start whitespace",
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nE\n",
+    "fixture": "\nE",
+    "class": [
+     "line-start whitespace",
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/tf-first-in-cell": {
+  "live_raw_html_sha256": "276d0ebd153ef616833241fc2f76490d2c4c5facc04d1f90382ce8995bc4e563",
+  "positions": [
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "E\n",
+    "fixture": "E",
+    "class": [
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/tf-inline-before-cell": {
+  "live_raw_html_sha256": "d49642de7088ac0da2ea5040a9d03e21dd26efef539194731c8a14b6f784796e",
+  "positions": [
+   "line-start whitespace",
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nE\n",
+    "fixture": "\nE",
+    "class": [
+     "line-start whitespace",
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/tf-nested-table": {
+  "live_raw_html_sha256": "a5e92f08e137a07152ad204b8a686b79d6ab83ff7c8c198f12293378eb28300b",
+  "positions": [
+   "line-start whitespace",
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nE\n",
+    "fixture": "\nE",
+    "class": [
+     "line-start whitespace",
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/tf-next-row": {
+  "live_raw_html_sha256": "6037dc7209e689ab1a81a36d5470a832503d707b32d6f445503bdc37308fee4d",
+  "positions": [
+   "line-start whitespace",
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nE\n",
+    "fixture": "\nE",
+    "class": [
+     "line-start whitespace",
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ },
+ "table/tf-second-close": {
+  "live_raw_html_sha256": "626b038c8e0094fbce8f06c553eec6a5e11eee7865887bb8ba1c049579b59fa5",
+  "positions": [
+   "line-start whitespace",
+   "trailing block-edge whitespace"
+  ],
+  "text_diffs": [
+   {
+    "side": "both",
+    "live": "\nE\n",
+    "fixture": "\nE",
+    "class": [
+     "line-start whitespace",
+     "trailing block-edge whitespace"
+    ]
+   },
+   {
+    "side": "both",
+    "live": "\nH ",
+    "fixture": "\nH\n",
+    "class": [
+     "line-start whitespace",
+     "trailing block-edge whitespace"
+    ]
+   }
+  ],
+  "verdict": "normalization-only (whitespace collapses at fragment/block/line edge; element+attribute topology and collapsed visible text identical)"
+ }
+}

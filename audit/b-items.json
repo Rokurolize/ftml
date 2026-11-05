@@ -1,0 +1,338 @@
+[
+ {
+  "id": "B7",
+  "title": "Anchor dangerous-scheme href regression (`anchor/xss`, `anchor/href-slug`)",
+  "fixtures": [
+   "anchor/xss",
+   "anchor/href-slug"
+  ],
+  "ftml": "wikidot.html expects href=\"#invalid-url\" for javascript:/data: anchor targets (regression introduced by commit 7227cb1cd, 2026-11-04).",
+  "live_rule": "Wikidot anchor blocks slugify the raw href instead of rejecting the scheme: `[[a href=\"javascript:alert(1)\"]]` -> `javascript:alert-1`, `data:text/html;base64,AAAA` -> `data:text-html-base64-aaaa`, `HTTP://EXAMPLE.COM/A` -> `http:example-com-a`, `Some Page Name` -> `some-page-name`.",
+  "probes": [
+   "anchor-js-control",
+   "anchor-data-url",
+   "anchor-http-upper",
+   "anchor-spaces",
+   "anchor-href-slug-fixture"
+  ],
+  "notes": "Frozen parity reference test--anchor--xss (references-20260815-01.jsonl, source_sha256 5fc2cb1a..., raw_html_sha256 7c32bdb1...) matches the fresh capture and its binding says status=match with ftml_html_sha256 f252ad81...; the current fixture hash is 2aae557c..., so the fixture drifted after the frozen capture. docs/WikidotCompatibilityHazards.md still declares this hazard a parity requirement. Disposition decision required: either restore parity or record an explicit documented `security-boundary` disposition (today the hardening has neither a hazards-doc update nor a binding disposition)."
+ },
+ {
+  "id": "B8",
+  "title": "Bracket-anchor reference text skips typography (`anchor/name-with-dots`)",
+  "fixtures": [
+   "anchor/name-with-dots"
+  ],
+  "ftml": "`[#aa...bb ref]` stays literal `[#aa...bb ref]`; the anchor name attribute also stays `aa...bb`.",
+  "live_rule": "Literal bracket-anchor reference text still goes through typography: `[#aa...bb ref]` -> `[#aa…bb ref]` (U+2026). The `[[# aa...bb]]` anchor name attribute keeps the three dots.",
+  "probes": [
+   "anchor2-ref-dots",
+   "anchor2-ref-dots-only",
+   "anchor2-anchor-dots",
+   "anchor2-link-dots"
+  ],
+  "notes": "Probes show the conversion in any bracket-anchor reference text and in ordinary prose, but not in the anchor name attribute value."
+ },
+ {
+  "id": "B9",
+  "title": "Unclosed `[[bibliography]]` opener swallows its line break (`bibliography/unclosed-chain-literal`)",
+  "fixtures": [
+   "bibliography/unclosed-chain-literal"
+  ],
+  "ftml": "`unterminated-0[[bibliography]]<br>` - the failed opener is literal but the preceding line break is gone.",
+  "live_rule": "A literalized `[[bibliography]]` opener keeps the newline before it: `unterminated-0<br>[[bibliography]]<br>unterminated-1<br>...`; a run of unclosed openers renders as one paragraph with `<br>` between every source line.",
+  "probes": [
+   "bib-chain-fixture",
+   "bib-one-unclosed",
+   "bib-two-unclosed",
+   "bib-unclosed-then-text",
+   "bib-unclosed-blank",
+   "bib2-unclosed-then-bq"
+  ],
+  "notes": "The same shape with a following blockquote/list/heading keeps the openers literal at the start of the paragraph; only the inter-line break before each unclosed opener differs."
+ },
+ {
+  "id": "B10",
+  "title": "Paragraph wrapper for a line-break-only blockquote body (`blockquote/indented-underscore-break`)",
+  "fixtures": [
+   "blockquote/indented-underscore-break"
+  ],
+  "ftml": "`<blockquote><p><br>\\n<br>\\n</p></blockquote>` - a `<p>` wrapper around the line breaks.",
+  "live_rule": "`>  _` (quote marker, two spaces, lone underscore at end of line) renders `<blockquote><br>\\n<br></blockquote>` with no `<p>` wrapper.",
+  "probes": [
+   "bq-underscore-fixture",
+   "bq-underscore-one-space",
+   "bq-underscore-two-space-nonl",
+   "bq-underscore-two-space-nl",
+   "bq-underscore-then-text",
+   "bq-underscore-two-rows",
+   "bq2-underscore-two",
+   "bq2-underscore-three",
+   "bq2-underscore-two-space-trail",
+   "bq2-double-underscore",
+   "bq2-underscore-a",
+   "bq2-underscore-then-blank"
+  ],
+  "notes": "Probes isolate the trigger: `> _`, `>  __`, `>  ___`, `>  _a`, `>  _x_`, `>  _#` and `>  _ ` all render `<blockquote><p>…</p></blockquote>` in live; only the lone `_` as the final character after two or more spaces drops the paragraph wrapper. The same body shape preceded by text (`a\\n>  _\\nb`) still drops the wrapper."
+ },
+ {
+  "id": "B11",
+  "title": "Trailing `<br>` in a footnote footer whose body starts with a literalized block (`footnote/*-first-line-literal`)",
+  "fixtures": [
+   "footnote/blockquote-first-line-literal",
+   "footnote/definition-list-first-line-literal",
+   "footnote/heading-first-line-literal",
+   "footnote/table-first-line-literal",
+   "footnote/tabview-first-line-literal"
+  ],
+  "ftml": "The footnote footer ends with `…<br>\\n</div>`.",
+  "live_rule": "The footnote footer ends immediately after the body text: `…&gt; quoted</div>`; no trailing `<br>` for any first-line-literal body shape (quote, heading, table, definition list, tabview source lines).",
+  "probes": [
+   "fn-bq-fixture",
+   "fn-bq-no-trailing-nl",
+   "fn-bq-blank-end",
+   "fn-bq-inline",
+   "fn-head-fixture",
+   "fn-table-fixture",
+   "fn-deflist-fixture",
+   "fn-tabview-first",
+   "fn-plain",
+   "fn-list",
+   "fn-bq-then-text",
+   "fn2-underline-first"
+  ],
+  "notes": "Controls `fn-plain`, `fn-empty`, `fn-list`, `fn-bq-then-text` match; only bodies whose first non-blank line is a literalized block marker (blockquote, heading, table row, definition list, tabview opener) gain the extra break in FTML."
+ },
+ {
+  "id": "B12",
+  "title": "Fused-closer residual ends the inline flow (div/collapsible/table closers)",
+  "fixtures": [
+   "div/fused-close",
+   "collapsible/fused-close",
+   "table/fused-close",
+   "table/iftags-seam-fused-close"
+  ],
+  "ftml": "`</div>]<p>after</p>` (table: `</table>]<p>after</p>`) - the residual `]` is bare and the next line starts a paragraph.",
+  "live_rule": "After a fused closer the residual `]` and the following non-blank line stay in one inline flow separated by `<br>`: `</div>\\n]<br>\\nafter` (table: `<p>]<br>\\nafter</p>`); only a blank line starts a new paragraph.",
+  "probes": [
+   "div-fused-fixture",
+   "div-fused-eof",
+   "div-fused-blank",
+   "div-fused-plain",
+   "div-fused-x",
+   "div-fused-two-lines",
+   "coll-fused-fixture",
+   "div3-two-residual",
+   "div3-same-line-residual",
+   "div3-after-two-lines",
+   "table3-fused-blank",
+   "coll3-fused-blank"
+  ],
+  "notes": "Probes fix the live rule: residual on the following line joins the next line with `<br>`; two residuals (`]]`) join as `]]<br>`; a residual on the same line stays same-line (`] after`); a blank line after the residual restores the paragraph split. `[[div]]…[[/div]]` followed by text (no residual) already matches FTML (`div/empty-attributed-stays`). The gate-seam variant `table/iftags-seam-fused-close` (saved page `muse-probe-audit2-127`, content sha256 600c2ff16e4477ee) shows the same class with no following line: live emits `<table>…</table><p>]</p>`, FTML a bare `]`."
+ },
+ {
+  "id": "B13",
+  "title": "`[[eref]]` after a literal inline math falls through to link parsing (`math/eref-head-comment-seam`, `math/eref-head-segment-seam`)",
+  "fixtures": [
+   "math/eref-head-comment-seam",
+   "math/eref-head-segment-seam"
+  ],
+  "ftml": "Renders `[[math eq1]]x^2[<a href=\"/math]]\">[[eref eq1</a>]` - the `[[eref …]]` block is not recognized and the surrounding brackets/`[[/math]]` become a link.",
+  "live_rule": "`[[math eq1]]x^2[[/math]]` stays literal (inline math form) and the following `[[eref eq1]]` still renders an eref anchor: `<a class=\"eref\" href=\"javascript:;\" onclick=\"WIKIDOT.page.utils.scrollToReference('equation-')\"></a>` (empty label when the equation is unknown). A standalone `[[eref eq1]]` renders the same anchor.",
+  "probes": [
+   "math-eref-fixture",
+   "math-eref-plain",
+   "math2-eref-alone",
+   "math2-math-then-eref-block",
+   "math-simple",
+   "math-label"
+  ],
+  "notes": "Both fixtures reduce to the same head `[[eref eq1]]` after comment/gate removal; the same shape with a real rendered equation head matches live, so only the literal-inline-math context is affected."
+ },
+ {
+  "id": "B14",
+  "title": "Tabview panel visibility: non-selected panels lack `style=\"display:none\"`",
+  "fixtures": [
+   "tabview/blockquote",
+   "tabview/blockquote-nested",
+   "tabview/title-footnote-numbering",
+   "tabview/title-typography-raw",
+   "tabview/iftags-seam-abutting"
+  ],
+  "ftml": "All `wiki-tab` content divs are emitted without a style attribute, so non-selected tab bodies are visible without JavaScript.",
+  "live_rule": "Every tab panel after the first is emitted as `<div id=\"wiki-tab-…\" style=\"display:none\">`; the first panel has no style.",
+  "probes": [
+   "tab2-plain-two-tabs",
+   "tab2-blockquote",
+   "tab2-title-typography-raw"
+  ],
+  "notes": "Fixtures with a single tab are unaffected. Live also emits a per-page `<script src=…tabview-min.js>` asset include and an inline YUI `new YAHOO.widget.TabView(...)` init script plus per-request `wiki-tabview-<hex>` ids; both are caller/browser-runtime and are relaxed for the audit (they are not counted as mismatches)."
+ },
+ {
+  "id": "B15",
+  "title": "Trailing `<br>` in tab bodies of blockquote-hosted tabviews",
+  "fixtures": [
+   "tabview/blockquote",
+   "tabview/blockquote-nested",
+   "tabview/blockquote-nested-tab-literal",
+   "tabview/blockquote-sameline-closes"
+  ],
+  "ftml": "Tab body paragraphs end `Body one<br>\\n</p>`.",
+  "live_rule": "Quoted tab bodies end `Body one</p>` - no trailing `<br>`.",
+  "probes": [
+   "tab2-blockquote",
+   "tab2-blockquote-eject",
+   "tab2-blockquote-body-shallower-line"
+  ],
+  "notes": "Two additional tabview cases (`tabview/blockquote` and `tabview/blockquote-nested`) also carry B14."
+ },
+ {
+  "id": "B16",
+  "title": "Empty `<em>` wrapper in tabview nav titles",
+  "fixtures": [
+   "tabview/title-head-only-unit",
+   "tabview/title-inline-unit",
+   "tabview/title-footnote-numbering",
+   "tabview/title-footnote-unit"
+  ],
+  "ftml": "Emits `<a href=\"javascript:;\"><em></em></a>` when the computed tab title is empty.",
+  "live_rule": "Live emits `<a href=\"javascript:;\"></a>` with no `<em>` element when the computed title is empty (title built only from a caller-owned placeholder such as `[[user]]` or from an elided `[[footnote]]`).",
+  "probes": [
+   "tab2-empty-title",
+   "tab2-title-footnote",
+   "tab2-title-inline-unit"
+  ],
+  "notes": "Caller-owned title content (user lookup) is separately caller-runtime; the structural `<em>` wrapper is FTML-owned."
+ },
+ {
+  "id": "B17",
+  "title": "Tabview row ejection leaves an unmatched empty trailing blockquote in live",
+  "fixtures": [
+   "tabview/blockquote-eject",
+   "tabview/blockquote-eject-blank-separated",
+   "tabview/blockquote-eject-depth2",
+   "tabview/blockquote-eject-lesser-row",
+   "tabview/blockquote-eject-multiple",
+   "tabview/blockquote-eject-row-between",
+   "tabview/blockquote-eject-sameline-closes",
+   "tabview/blockquote-eject-shallower-closes",
+   "tabview/blockquote-body-shallower-line"
+  ],
+  "ftml": "The quote nesting closes cleanly; no empty blockquote element remains.",
+  "live_rule": "A row that ejects out of the quoted tabview leaves an empty `<blockquote></blockquote>` (or a nested empty pair at depth 2) as the last child of the outer blockquote.",
+  "probes": [
+   "tab2-blockquote-eject",
+   "tab2-blockquote-body-shallower-line"
+  ],
+  "notes": "Minimal-difference search: removing only empty `<blockquote>` elements from the live capture makes every listed fixture match; depth-2 needs iterative removal."
+ },
+ {
+  "id": "B18",
+  "title": "Text after a closing tabview starts a paragraph in FTML but continues inline in live (`tabview/blockquote-text-around`)",
+  "fixtures": [
+   "tabview/blockquote-text-around"
+  ],
+  "ftml": "Inside the blockquote: `…</div><p>outro</p></blockquote>`.",
+  "live_rule": "Inside the blockquote: `…</div><br>\\noutro</blockquote>` - the line after the tabview continues the inline flow with a `<br>`, with no paragraph wrapper. At top level the same shape also gives `…</div><br>\\noutro`; a blank line restores `<p>outro</p>`.",
+  "probes": [
+   "tab3-outro-top",
+   "tab3-outro-top-blank",
+   "tab3-outro-in-bq"
+  ],
+  "notes": "FTML already models plain block+text continuation correctly for `[[div]]` (`div/empty-attributed-stays`); the paragraph start is tabview-specific."
+ },
+ {
+  "id": "B19",
+  "title": "Tabview failure/recovery shapes differ (`tab-stray-fails`, `title-footnoteblock-*`, `title-opener-literal`)",
+  "fixtures": [
+   "tabview/tab-stray-fails",
+   "tabview/title-footnoteblock-after",
+   "tabview/title-footnoteblock-alone",
+   "tabview/title-opener-literal"
+  ],
+  "ftml": "FTML leaves the failed tabview source literal (`<p>[[tabview]]<br>…</p>`) or mangles the tab body opener (`]` before `<p>]</p>`).",
+  "live_rule": "Live recovers a tabview from the later well-formed attempt in the same source, forms a navset whose title is the literal `[[tab ]]` text when the title contains `[[footnoteblock]]`, and keeps `[[/tab]]` residual text inside the panel body (`<p>]]<br>`).",
+  "probes": [
+   "tab2-tab-stray-fails",
+   "tab2-title-footnoteblock-alone",
+   "tab2-empty-title"
+  ],
+  "notes": "These are parse-recovery divergences rather than rendering differences; each fixture is pinned from FTML output."
+ },
+ {
+  "id": "B20",
+  "title": "`[[date]]` head with extra whitespace-separated tokens renders literally (`date/subname-iftags-seam-whitespace`)",
+  "fixtures": [
+   "date/subname-iftags-seam-whitespace"
+  ],
+  "ftml": "The block fails and the marker is emitted literally, with the typed space turned into `&nbsp;`: `<p>[[date 123\\u00a045]]</p>`.",
+  "live_rule": "A `[[date]]` head with more than one whitespace-separated token still renders a date from the first token and ignores the rest: `[[date 123 45]]` and `[[date 123 45 67]]` both render `<span class=\"odate time_123\">01 Jan 1970 00:02</span>`.",
+  "probes": [
+   "date3-two-tokens",
+   "date3-one",
+   "date3-subname-space"
+  ],
+  "notes": "Found only after a saved-page capture: PagePreview evaluates the `[[iftags -zzz]]` seam false, so the preview-renderable source is the reduced `[[date 12]]` form. Saved page `muse-probe-audit2-25`, saved content sha256 041313bd96cfd4e2, two fetches stable."
+ },
+ {
+  "id": "B21",
+  "title": "`[[footnoteblock]]` assembled across an iftags seam right after a paragraph line stays literal (`footnote/block-iftags-seam-name`)",
+  "fixtures": [
+   "footnote/block-iftags-seam-name"
+  ],
+  "ftml": "Leaves the marker literal inside the paragraph: `<p>a<sup …>1</sup><br>\\n[[footnoteblock]]</p><div class=\"footnotes-footer\">…`.",
+  "live_rule": "Live recognizes the block assembled across the gate seam and consumes it: `<p>a<sup …>1</sup></p><div class=\"footnotes-footer\">…` (a `[[footnoteblock]]` with no matching footnote renders nothing, as in `footnote/block-empty`).",
+  "probes": [
+   "fnb3-alone",
+   "fnb3-after-footnote",
+   "fnb3-inline-name"
+  ],
+  "notes": "Found only after a saved-page capture (the `-zzz` gate is false in PagePreview). Saved page `muse-probe-audit2-28`, saved content sha256 979daca6fffc2584, two fetches stable. The seed shape is a block name split by a gate: `[[foot[[iftags -zzz]][[/iftags]]noteblock]]`."
+ },
+ {
+  "id": "B22",
+  "title": "List item opened inside a span becomes nested instead of a sibling (`iftags/list-item-inside-span-stays-nested`)",
+  "fixtures": [
+   "iftags/list-item-inside-span-stays-nested"
+  ],
+  "ftml": "Nests the second item under the first: `<ul><li><span>A</span><ul><li><span>B</span></li></ul></li></ul>`.",
+  "live_rule": "Both items are siblings: `<ul><li><span>A</span></li><li><span>B</span></li></ul>` — the span closes after `A` and the second list line is a sibling item.",
+  "probes": [
+   "list3-span-first",
+   "list3-span-first-indent",
+   "list3-span-plain"
+  ],
+  "notes": "Found only after a saved-page capture (the `+fruit` gate is true under the corpus tags but false in PagePreview). Saved page `muse-probe-audit2-92`, saved content sha256 744b88cf6df3c4f7, two fetches stable. The gate seam is what puts `A` and `B` in one span; the list nesting ownership is the FTML-owned part."
+ },
+ {
+  "id": "B23",
+  "title": "Quoted tab head attribute map is title text in FTML (`tabview/iftags-seam`)",
+  "fixtures": [
+   "tabview/iftags-seam"
+  ],
+  "ftml": "The whole head becomes the title: `<em>label=\"AB\"</em>`.",
+  "live_rule": "A quoted `key=value` tab head is parsed as an attribute map: `[[tab label=\"A\"]]` renders title `untitled` (unknown key ignored) and `[[tab title=\"A\"]]` renders title `A`; only the unquoted `[[tab label=A]]` form becomes literal title text `label=A`.",
+  "probes": [
+   "tab5-label-attr",
+   "tab5-title-attr",
+   "tab5-label-plain"
+  ],
+  "notes": "Found only after a saved-page capture (the `-zzz` gate seam is false in PagePreview). Saved page `muse-probe-audit2-131`, saved content sha256 f5e712d329a1 (see audit/classifications.json for the exact full hash), two fetches stable."
+ },
+ {
+  "id": "B24",
+  "title": "Whitespace in an image head: live splits filename from attribute tokens (`image/subname-iftags-seam-whitespace`)",
+  "fixtures": [
+   "image/subname-iftags-seam-whitespace"
+  ],
+  "ftml": "Keeps the whole space-containing value as the filename: `<img alt=\"pictu re.png\" class=\"image\" src=\"…/pictu re.png\">` (no link wrapper).",
+  "live_rule": "The image filename is the first whitespace-delimited token; later tokens are attribute-like and, when any are present, live wraps the image in a link to the file and uses the resized `medium` URL: `[[image pictu re.png]]` -> `<a href=\"…/pictu\"><img alt=\"pictu\" class=\"image\" src=\"…/resized-images/…/pictu/medium.jpg\"></a>`. The same wrapper appears for `[[image a.png size=\"small\"]]`; a head with no attributes (`[[image abc.png]]`) stays a bare `<img>`.",
+  "probes": [
+   "img5-space",
+   "img5-space2",
+   "img5-normal",
+   "img5-space-size"
+  ],
+  "notes": "Found only after a saved-page capture (the `-zzz` gate seam is false in PagePreview). Saved page `muse-probe-audit2-119`, saved content sha256 a5d243b6ddd49b08, two fetches stable. The filename URL/host itself is caller-owned, but the token split and link wrapper are FTML-owned."
+ }
+]

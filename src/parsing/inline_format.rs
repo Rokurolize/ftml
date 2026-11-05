@@ -380,6 +380,7 @@ fn normalize_sequence_passes<'t>(
             | repair_raw_strike_pairs_pass(elements)
             | repair_strike_shed_pairs_pass(elements)
             | repair_deferred_strike_trailing_dash_pass(elements)
+            | repair_deferred_strike_double_shell_pass(elements)
             | repair_script_split_close_pass(elements)
             | repair_script_pairs_pass(elements);
         // A monospace container's children are already owned content:
@@ -1275,6 +1276,138 @@ fn repair_deferred_strike_trailing_dash_pass<'t>(
 
     *elements = output;
     changed
+}
+
+/// Triple-nesting inversion (live Wikidot, libtidy istack repair; see
+/// REPORT.md): a strike close deferred across TWO symmetric non-span shells
+/// inside a color span, with the shells closing before the color close and an
+/// exact trailing `--` (`--a##red|xb**//--c##--//**##`).
+///
+/// The default stream is
+/// `[sO A+ colorO B+ S1o sC S2o C+ S2c S1c colorC --]`. Live lowers it to
+/// `[sO A+ colorO B+ S2o S1o C+ S1c -- S2c colorC ... sC]`: the later-opened
+/// shell is outermost and holds the dash, the color closes after it, and the
+/// strike never closes before the end of the sequence (so trailing `##`
+/// stays inside the strike). Span-backed shells (underline) and anything
+/// else keep the default lowering.
+fn repair_deferred_strike_double_shell_pass<'t>(elements: &mut Vec<Element<'t>>) -> bool {
+    fn shell_kind(element: &Element<'_>) -> Option<InlineFormatKind> {
+        match element {
+            Element::Partial(PartialElement::InlineFormatOpen(
+                kind @ (InlineFormatKind::Bold
+                | InlineFormatKind::Italics
+                | InlineFormatKind::Subscript
+                | InlineFormatKind::Monospace),
+            )) => Some(*kind),
+            _ => None,
+        }
+    }
+
+    fn is_close(element: &Element<'_>, expected: InlineFormatKind) -> bool {
+        matches!(
+            element,
+            Element::Partial(PartialElement::InlineFormatClose(kind)) if *kind == expected
+        )
+    }
+
+    fn back_run(output: &[Element<'_>], mut end: usize) -> Option<usize> {
+        let start = end;
+        while end > 0 && text(&output[end - 1]).is_some() {
+            end -= 1;
+        }
+        (end < start).then_some(end)
+    }
+
+    // Cheap pre-gate: the pattern requires a strike close.
+    if !elements
+        .iter()
+        .any(|element| is_close(element, InlineFormatKind::Strikethrough))
+    {
+        return false;
+    }
+
+    // Forward match at `index` (the first shell open); returns the index of
+    // the second shell's close.
+    let forward = |input: &[Element<'t>], index: usize| -> Option<(usize, usize)> {
+        let first = shell_kind(input.get(index)?)?;
+        if !is_close(input.get(index + 1)?, InlineFormatKind::Strikethrough) {
+            return None;
+        }
+        let second = shell_kind(input.get(index + 2)?)?;
+        let mut content_end = index + 3;
+        while input.get(content_end).is_some_and(|e| text(e).is_some()) {
+            content_end += 1;
+        }
+        if content_end == index + 3
+            || !is_close(input.get(content_end)?, second)
+            || !is_close(input.get(content_end + 1)?, first)
+            || !matches!(
+                input.get(content_end + 2)?,
+                Element::Partial(PartialElement::InlineColorClose)
+            )
+            || !is_exact_text(input.get(content_end + 3)?, "--")
+        {
+            return None;
+        }
+        Some((index + 3, content_end))
+    };
+
+    let backward = |output: &[Element<'t>]| -> Option<()> {
+        let color_open = back_run(output, output.len())?;
+        if !matches!(
+            output.get(color_open.checked_sub(1)?)?,
+            Element::Partial(PartialElement::InlineColorOpen(..))
+        ) {
+            return None;
+        }
+        let strike_open = back_run(output, color_open - 1)?;
+        matches!(
+            output.get(strike_open.checked_sub(1)?)?,
+            Element::Partial(PartialElement::InlineFormatOpen(
+                InlineFormatKind::Strikethrough,
+            ))
+        )
+        .then_some(())
+    };
+
+    let all = take_elements(elements);
+    let plain: Vec<Element<'t>> = all.iter().flatten().cloned().collect();
+    let mut output: Vec<Element<'t>> = Vec::with_capacity(plain.len());
+    for index in 0..plain.len() {
+        if shell_kind(&plain[index]).is_none() {
+            continue;
+        }
+        let Some((content_start, content_end)) = forward(&plain, index) else {
+            continue;
+        };
+        output.extend(plain[..index].iter().cloned());
+        if backward(&output).is_none() {
+            output.clear();
+            continue;
+        }
+        let mut taken: Vec<Option<Element<'t>>> = plain.into_iter().map(Some).collect();
+        let first_open = take_element(&mut taken, index);
+        let strike_close = take_element(&mut taken, index + 1);
+        let second_open = take_element(&mut taken, index + 2);
+        let content = take_range(&mut taken, content_start..content_end);
+        let second_close = take_element(&mut taken, content_end);
+        let first_close = take_element(&mut taken, content_end + 1);
+        let color_close = take_element(&mut taken, content_end + 2);
+        let dash = take_element(&mut taken, content_end + 3);
+        output.push(second_open);
+        output.push(first_open);
+        output.extend(content);
+        output.push(first_close);
+        output.push(dash);
+        output.push(second_close);
+        output.push(color_close);
+        output.extend(taken.into_iter().skip(content_end + 4).flatten());
+        output.push(strike_close);
+        *elements = output;
+        return true;
+    }
+    *elements = plain;
+    false
 }
 
 fn script_shell<'t>(kind: FormatKind) -> FormatShell<'t> {

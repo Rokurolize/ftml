@@ -17,10 +17,23 @@
   75/81 existing corpus `wikidot.html` pins that use only inline syntax. The
   6 misses use URL, table and blockquote rules, which the simulator does not
   model.
-- **Partial — ftml.** At the current HEAD, ftml matched live on only **8/63**
-  of the same probes. No changes to ftml were committed.
-- **Not done:** the ftml fix, corpus fixtures and targeted tests (see
-  "Remaining work").
+- **Done — narrow ftml fix.** `repair_deferred_strike_double_shell_pass`
+  (`src/parsing/inline_format.rs`) lowers
+  `--a##red|xb{S1}{S2}--c##--{S2}{S1}##` like live: the later-opened shell is
+  outermost and holds the dash, the color closes after it, and the strike
+  close moves to the end of the sequence so trailing `##` stays inside it.
+  It covers every ordered pair of `** // {{ ,,` (12 shapes) and trailing text
+  after `##`. Pinned by corpus fixture
+  `test/strikethrough/deep-nesting-double-shell-inversion` (live
+  `wikidot.html` from PagePreview, 5 inputs). The full `cargo test` passes
+  (1160 lib, 582 security, doc test) and `cargo fmt` is clean. The only
+  clippy errors are pre-existing lints outside this change.
+- **Partial — ftml overall.** Before the fix ftml matched live on 8/63 of the
+  simulator-checked probes; after it, 23/63. The other 40 are different
+  shapes that need the faithful istack lowering below (underline pairs,
+  plain crossings like `**a//b--c**d--e//`, `--a**//--c//**` without a color,
+  `##red|a**//b##c//**##`, and shapes with text between the content and the
+  shell closes).
 
 ## Pipeline (source: gabrys/wikidot)
 
@@ -131,23 +144,13 @@ expects a single shell and does not match. In addition, `tidy_close` in
 
 ## Remaining work
 
-1. **Recommended — faithful lowering.** Replace or augment `tidy_close` with
-   an exact `ParseInline`/istack emulator: pop the istack top, keep the
-   entry after a swap, use an insert pointer, discard end tags that cannot
-   be matched, and drop empty elements. Feed it a stream that keeps the
-   positions Text_Wiki actually produces. Use the simulator as a
-   differential oracle over the existing B1 crossing generator.
-2. **Narrow alternative.** Generalize the D1 pass to N shells. The output
-   for N≥2 is
-   `[sO a colorO xb X_N..X_1 opens c X_1 close — X_N close colorC ## sC]`,
-   with the shell order reversed and `##` inside the strike. Check the
-   three-shell order and the underline variants against the simulator
-   before pinning them.
-3. Pin one corpus fixture for the family, for example
-   `test/strikethrough/deep-nesting-shell-inversion/`, with `**//` and
-   `//**` inputs and the live `wikidot.html`. Add a negative sibling that
-   keeps the default lowering. Follow CLAUDE.md: no duplicate per-shape Rust
-   test, and revert unrelated `FTML_UPDATE_TESTS` rewrites.
-4. Optionally commit the probe and compare harness and the 65 live captures
-   as a provenance-backed fixture. They exist only in the session
-   scratchpad and were not committed.
+1. **Faithful lowering (recommended, not done).** Replace or augment
+   `tidy_close` in `src/parsing/inline_scope.rs` with an exact
+   `ParseInline`/istack emulator: pop the istack top, keep the entry after a
+   swap, use an insert pointer, discard unmatched end tags, drop empty
+   elements. It must be fed a stream that keeps the positions Text_Wiki
+   produces, including stage-1 pairing across earlier rules' tokens. Use
+   `misc/wikidot-inline-sim/sim.php` as a differential oracle.
+2. Underline (`__`, a span) pairs are not covered by the narrow pass.
+3. The probe and compare harness and the 65 live captures were not
+   committed; they lived in the session scratchpad.

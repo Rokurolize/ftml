@@ -1,0 +1,13 @@
+[package]
+name = "sweep-expander"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+# Sweep-side helper: expands [[include]] blocks using ftml's own `ftml::include`
+# against component sources fetched from the live wiki. Does not modify ftml.
+[dependencies]
+ftml = { path = "../.." }
+serde_json = "1"
+
+[workspace]

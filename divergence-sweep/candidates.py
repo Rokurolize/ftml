@@ -43,6 +43,9 @@ def main():
     cands = sorted(set(cands))
     random.Random(20261105).shuffle(cands)
     (HERE / "excluded-repo-slugs.txt").write_text("\n".join(sorted(used, key=lambda s: (len(s), s))) + "\n")
+    # older articles (<=3000) are far more often include-free; try them first
+    n = lambda x: int(x.split('-')[1])
+    cands = [x for x in cands if n(x) <= 3000] + [x for x in cands if n(x) > 3000]
     (HERE / "candidates.json").write_text(json.dumps(cands, indent=0) + "\n")
     print(len(used), "repo slugs excluded;", len(cands), "candidates")
 

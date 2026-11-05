@@ -7,6 +7,7 @@ import fetch
 
 HERE = Path(__file__).resolve().parent
 data, comp, n = Path(sys.argv[1]), Path(sys.argv[2]), int(sys.argv[3])
+comp.mkdir(parents=True, exist_ok=True)
 EXP = HERE.parent / "target/release/sweep-expander"
 cands = json.loads((HERE / "candidates.json").read_text())
 slugs, bad = [], {}

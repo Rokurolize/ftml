@@ -226,6 +226,12 @@ pub(super) fn remove_wikidot_space_before_footnote(text: &mut String) {
         if space_start == start {
             continue;
         }
+        // A native line marker needs its separating space: live keeps
+        // `* [[footnote]]`, `> [[footnote]]` and friends as authored (the
+        // reference is line-owned there), so never join across that space.
+        if wikidot_line_marker_prefix(&text[..space_start]) {
+            continue;
+        }
         if wikidot_line_end_required_closer(&text[..space_start]) {
             // Live keeps a code or math closer's own line ending: joining it
             // to the footnote would turn the whole block into literal text.
@@ -259,6 +265,20 @@ pub(super) fn remove_wikidot_space_before_footnote(text: &mut String) {
     }
     output.push_str(&text[last_copied..]);
     *text = output;
+}
+
+fn wikidot_line_marker_prefix(text: &str) -> bool {
+    let line_start = text.rfind('\n').map_or(0, |index| index + 1);
+    let mut rest = text[line_start..].trim_start_matches([' ', '\t']);
+    let mut quote = false;
+    while let Some(tail) = rest.strip_prefix('>') {
+        quote = true;
+        rest = tail.trim_start_matches([' ', '\t']);
+    }
+    if quote && rest.is_empty() {
+        return true;
+    }
+    matches!(rest, "*" | "#" | "+" | ":")
 }
 
 fn wikidot_line_end_required_closer(text: &str) -> bool {

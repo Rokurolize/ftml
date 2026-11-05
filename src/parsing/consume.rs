@@ -1312,6 +1312,16 @@ pub fn consume<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Eleme
                     }
                 }
 
+                // A rule that overran the recursion limit would only be
+                // re-descended by every later rule for this token, so each
+                // level past the limit multiplied the work (exponential in
+                // marker count). The error already routes the whole parse to
+                // the deeper-limit retry, so stop here.
+                if error.kind() == ParseErrorKind::RecursionDepthExceeded {
+                    parser.depth_decrement();
+                    return Err(error);
+                }
+
                 all_errors.push(error);
             }
         }

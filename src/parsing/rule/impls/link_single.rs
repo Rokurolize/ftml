@@ -300,6 +300,28 @@ where
     }))
 }
 
+fn token_starts_line(token: Token) -> bool {
+    matches!(
+        token,
+        Token::InputStart | Token::LineBreak | Token::ParagraphBreak
+    )
+}
+
+/// Whether `RULE_BLOCK` accepts the position with non-text output.
+fn block_head_claims<'r, 't>(probe: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    let mut block_probe = probe.clone();
+    let Ok(success) = super::RULE_BLOCK.try_consume(&mut block_probe) else {
+        return false;
+    };
+    let (elements, _, _) = success.into();
+    elements
+        .into_iter()
+        .any(|element| !matches!(element, crate::tree::Element::Text(_)))
+}
+
 pub fn try_consume_wikidot_end_block_link<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> Result<Option<Elements<'t>>, ParseError>
@@ -322,38 +344,63 @@ where
     // footnote list; a footnote registered by a probe block that does not own
     // this closer must not survive into the real parse.
     let footnote_count = parser.footnote_count();
-    let head_claimed =
-        if let Some(outcome) = parser.end_block_link_head_outcome(tokens, region_end) {
-            outcome
+    let head_claimed = if let Some(outcome) =
+        parser.end_block_link_head_outcome(tokens, region_end)
+    {
+        outcome
+    } else {
+        let mut saw_left_block = false;
+        let mut head_claimed = false;
+        // One probe advanced alongside the scan. Re-cloning the parser and
+        // stepping the clone `index + 1` times for every block head was
+        // cubic on a single line of unmatched closer/opener pairs: each
+        // closer rescanned the tail and each candidate head re-stepped from
+        // the closer. Stepping one clone once per token reaches the same
+        // probe position (a step is a deterministic function of the token
+        // stream and the clone it starts from).
+        let cached_clean_tail = parser.end_block_link_clean_tail(start, region_end);
+        let mut probe = parser.clone();
+        let mut last_left_block_start = start;
+        if let Some(last_left_block_start) = cached_clean_tail {
+            saw_left_block = last_left_block_start > start;
+            parser.cache_end_block_link_head_outcome(tokens, region_end, saw_left_block);
         } else {
-            let mut saw_left_block = false;
-            let mut head_claimed = false;
             for (index, token) in tokens
                 .iter()
                 .take_while(|token| token.span.start < region_end)
                 .enumerate()
             {
-                if token.token != Token::LeftBlock || token.span.start <= start {
-                    continue;
+                if probe.step().is_err() {
+                    break;
                 }
-                saw_left_block = true;
-                let mut probe = parser.clone();
-                let mut stepped = true;
-                for _ in 0..=index {
-                    if probe.step().is_err() {
-                        stepped = false;
-                        break;
-                    }
-                }
-                if !stepped {
-                    continue;
-                }
-                if let Ok(success) = super::RULE_BLOCK.try_consume(&mut probe) {
-                    let (elements, _, _) = success.into();
-                    if elements
-                        .into_iter()
-                        .any(|element| !matches!(element, crate::tree::Element::Text(_)))
-                    {
+                if token.token == Token::LeftBlock && token.span.start > start {
+                    saw_left_block = true;
+                    last_left_block_start = last_left_block_start.max(token.span.start);
+                    let probe_remaining = tokens.len() - index - 1;
+                    let probe_start_of_line = if index == 0 {
+                        token_starts_line(parser.current().token)
+                    } else {
+                        token_starts_line(tokens[index - 1].token)
+                    };
+                    let cached = parser.end_block_link_head_claim(
+                        token.span.start,
+                        probe_remaining,
+                        probe_start_of_line,
+                    );
+                    let claimed = match cached {
+                        Some(outcome) => outcome,
+                        None => {
+                            let outcome = block_head_claims(&probe);
+                            parser.cache_end_block_link_head_claim(
+                                token.span.start,
+                                probe_remaining,
+                                probe_start_of_line,
+                                outcome,
+                            );
+                            outcome
+                        }
+                    };
+                    if claimed {
                         head_claimed = true;
                         break;
                     }
@@ -366,9 +413,17 @@ where
                     .take_while(|token| token.span.start < region_end)
                     .count(),
             );
+            if !head_claimed {
+                parser.cache_end_block_link_clean_tail(
+                    start,
+                    region_end,
+                    last_left_block_start,
+                );
+            }
             parser.cache_end_block_link_head_outcome(tokens, region_end, saw_left_block);
-            head_claimed
-        };
+        }
+        head_claimed
+    };
     if parser.footnote_count() != footnote_count {
         parser.truncate_footnotes(footnote_count);
     }

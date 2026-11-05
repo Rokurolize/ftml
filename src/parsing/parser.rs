@@ -132,6 +132,8 @@ pub(super) struct BlockScanCache<'t> {
     wikidot_tabview_failures: BTreeMap<(usize, bool), ParseError>,
     wikidot_collapsible_failures: BTreeMap<usize, ParseError>,
     wikidot_div_bounded_span: BTreeMap<usize, bool>,
+    end_block_link_head_claims: std::collections::HashMap<(usize, RuleAttemptKey), bool>,
+    end_block_link_clean_tail: Option<(usize, usize, RuleAttemptKey, usize)>,
     wikidot_div_stream_marks: BTreeMap<usize, (u32, u32)>,
     wikidot_block_pairs: block_pairs::WikidotBlockPairs,
     wikidot_line_runs: block_pairs::WikidotLineRuns,
@@ -1522,6 +1524,94 @@ impl<'r, 't> Parser<'r, 't> {
             discarding_hidden_body: self.discarding_hidden_body(),
             in_wikidot_center_body: self.in_wikidot_center_body(),
         }
+    }
+
+    /// Memo for the end-block-link head probe: whether `RULE_BLOCK` succeeds
+    /// with non-text output at a given token position, under the caller rule
+    /// attempt key. The probe only changes `remaining` and `start_of_line`
+    /// relative to the caller, so those two replace the caller values in the
+    /// key and the rest of the parser state is the shared `RuleAttemptKey`.
+    pub(crate) fn end_block_link_head_claim(
+        &self,
+        token_start: usize,
+        remaining: usize,
+        start_of_line: bool,
+    ) -> Option<bool> {
+        let mut key = self.rule_attempt_key("block")?;
+        key.remaining = remaining;
+        key.depth = Some(self.depth);
+        key.start_of_line = start_of_line;
+        self.block_end_scan_cache
+            .borrow()
+            .end_block_link_head_claims
+            .get(&(token_start, key))
+            .copied()
+    }
+
+    /// A previously scanned range with no block head that claims the closer.
+    ///
+    /// The scan is a suffix question: if no head in `(from, region_end)` claims
+    /// the closer under `key`, then no head in a narrower suffix does either.
+    /// The stored `last_left_block_start` keeps `saw_left_block` exact for the
+    /// narrower suffix.
+    pub(crate) fn end_block_link_clean_tail(
+        &self,
+        start: usize,
+        region_end: usize,
+    ) -> Option<usize> {
+        let key = self.end_block_link_claim_key()?;
+        let cache = self.block_end_scan_cache.borrow();
+        let (from, cached_region_end, cached_key, last_left_block_start) =
+            cache.end_block_link_clean_tail.as_ref()?;
+        if *from <= start && *cached_region_end == region_end && *cached_key == key {
+            Some(*last_left_block_start)
+        } else {
+            None
+        }
+    }
+
+    pub(crate) fn cache_end_block_link_clean_tail(
+        &self,
+        start: usize,
+        region_end: usize,
+        last_left_block_start: usize,
+    ) {
+        let Some(key) = self.end_block_link_claim_key() else {
+            return;
+        };
+        self.block_end_scan_cache
+            .borrow_mut()
+            .end_block_link_clean_tail =
+            Some((start, region_end, key, last_left_block_start));
+    }
+
+    fn end_block_link_claim_key(&self) -> Option<RuleAttemptKey> {
+        let mut key = self.rule_attempt_key("block")?;
+        key.depth = Some(self.depth);
+        // The suffix scan answer does not depend on how many tokens the caller
+        // has left, only on the parser state it inherits; pin it so successive
+        // closers in one run share the entry.
+        key.remaining = 0;
+        Some(key)
+    }
+
+    pub(crate) fn cache_end_block_link_head_claim(
+        &self,
+        token_start: usize,
+        remaining: usize,
+        start_of_line: bool,
+        outcome: bool,
+    ) {
+        let Some(mut key) = self.rule_attempt_key("block") else {
+            return;
+        };
+        key.remaining = remaining;
+        key.depth = Some(self.depth);
+        key.start_of_line = start_of_line;
+        self.block_end_scan_cache
+            .borrow_mut()
+            .end_block_link_head_claims
+            .insert((token_start, key), outcome);
     }
 
     pub(crate) fn block_end_scan_outcome(&self, key: BlockEndScanKey) -> Option<bool> {

@@ -1336,6 +1336,7 @@ fn flat_close_frame<'t>(dom: &mut Vec<FlatFrame<'t>>, output: &mut Vec<Element<'
 }
 
 fn flat_reopen<'t>(dom: &mut Vec<FlatFrame<'t>>, istack: &[FlatShell<'t>], at: usize) {
+    let at = at.min(istack.len());
     for shell in &istack[at..] {
         dom.push(FlatFrame {
             shell: shell.clone(),
@@ -1378,12 +1379,8 @@ fn flat_close_shell<'t>(
     }
 }
 
-/// Lower a flat inline event stream the way live Wikidot's inline repair
-/// nests it: a close tag closes the innermost open element whose HTML tag
-/// name matches; a close of an outer tag above the current element swaps the
-/// stack, closes the current element and reopens the deferred copies at the
-/// next text or opener. Empty inline elements are dropped.
-
+/// Flatten a repaired tree back into well-nested inline events so the
+/// lowering pass does not re-flatten it.
 fn flatten_nested_inline_stream<'t>(nested: Vec<Element<'t>>) -> Vec<Element<'t>> {
     let mut output = Vec::with_capacity(nested.len());
     for element in nested {
@@ -1429,6 +1426,12 @@ fn flatten_nested_inline_stream<'t>(nested: Vec<Element<'t>>) -> Vec<Element<'t>
     output
 }
 
+/// Lower a flat inline event stream the way live Wikidot's inline repair
+/// nests it: a close tag closes the innermost open element whose HTML tag
+/// name matches; a close of an outer tag above the current element swaps the
+/// stack, closes the current element and reopens the deferred copies at the
+/// next text or opener; an unmatched close pops the stack top and is
+/// discarded. Empty inline elements are dropped.
 fn nest_flat_inline_stream<'t>(events: Vec<Element<'t>>) -> Vec<Element<'t>> {
     let mut output = Vec::new();
     let mut dom: Vec<FlatFrame<'t>> = Vec::new();
@@ -1534,10 +1537,18 @@ fn repair_deferred_strike_shell_stream_pass<'t>(elements: &mut Vec<Element<'t>>)
         return false;
     }
 
+    struct ShellMatch {
+        strike_close: usize,
+        content_start: usize,
+        content_end: usize,
+        tail_end: usize,
+        shells: Vec<usize>,
+        closes: Vec<usize>,
+    }
+
     let input = take_elements(elements);
     let len = input.len();
-    let mut match_info: Option<(usize, usize, usize, usize, Vec<usize>, Vec<usize>)> =
-        None;
+    let mut match_info: Option<ShellMatch> = None;
 
     'search: for strike_close in 1..len {
         let Some(close_element) = input[strike_close].as_ref() else {
@@ -1649,19 +1660,25 @@ fn repair_deferred_strike_shell_stream_pass<'t>(elements: &mut Vec<Element<'t>>)
             continue;
         }
 
-        match_info = Some((
+        match_info = Some(ShellMatch {
             strike_close,
             content_start,
             content_end,
             tail_end,
             shells,
             closes,
-        ));
+        });
         break;
     }
 
-    let Some((strike_close, content_start, content_end, tail_end, shells, closes)) =
-        match_info
+    let Some(ShellMatch {
+        strike_close,
+        content_start,
+        content_end,
+        tail_end,
+        shells,
+        closes,
+    }) = match_info
     else {
         *elements = input.into_iter().flatten().collect();
         return false;

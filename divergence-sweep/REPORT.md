@@ -54,7 +54,7 @@ Counts are hunks / pages, taken from `out/hunks.json` and `out/family-pages.json
 - **Disposition:** not attributed to the parser. Comment handling of `[!-- … --]` reproduces correctly in isolation (repro tested). Treat as an include-expansion or variable-substitution mismatch to investigate.
 
 ### F4. `<img>` attribute order and file host (cosmetic or caller)
-- **Hunks / pages:** 40 hunks across the 17 pages with `img` hunks.
+- **Hunks / pages:** 24 hunks (17 plain `img` + 7 linked `img`) across the 17 pages in `out/family-pages.json`; the 16 avatar `img.small` hunks are counted under F5 (user links).
 - **Live (scp-201):** `<img src="https://scp-wiki.wdfiles.com/local--files/scp-201/005.jpg" alt="005.jpg" class="image" />`.
 - **ftml:** `<img src="https://scp-wiki.wjfiles.com/local--files/scp-201/005.jpg" class="image" alt="005.jpg">`.
 - **Differences:** attribute order (`alt`,`class` vs `class`,`alt`) and file host (`wdfiles.com` vs `wjfiles.com`).

@@ -94,6 +94,20 @@ fn try_consume_fn<'r, 't>(
 
     let mut paragraph_safe = false;
 
+    let list_anchor_quote_run = if parser.settings().layout.legacy()
+        && parser.native_blockquote_depth().is_some()
+    {
+        let pos = parser.current().span.start;
+        let source = parser.full_text().inner();
+        let line_start = source[..pos.min(source.len())]
+            .rfind('\n')
+            .map(|offset| offset + 1)
+            .unwrap_or(0);
+        parser.wikidot_quote_run_id(line_start)
+    } else {
+        None
+    };
+
     let mut ended = false;
     while !ended {
         if !depths.is_empty() && skip_wikidot_list_comment_lines(parser, &depths)? {
@@ -108,7 +122,31 @@ fn try_consume_fn<'r, 't>(
             ListItemStep::End => ended = true,
             ListItemStep::Item(item, ends_run) => {
                 depths.push(item);
-                ended = ends_run || parser.native_blockquote_depth().is_some();
+                let mut finish = ends_run;
+                if parser.settings().layout.legacy()
+                    && parser.native_blockquote_depth().is_some()
+                    && !finish
+                {
+                    let next_byte = parser.current().span.start;
+                    let source = parser.full_text().inner();
+                    if next_byte < source.len() {
+                        let next_line_start = source[..next_byte]
+                            .rfind('\n')
+                            .map(|offset| offset + 1)
+                            .unwrap_or(0);
+                        if !parser.wikidot_byte_in_quote_run(next_line_start) {
+                            finish = true;
+                        } else if let (Some(anchor), Some(next_run)) = (
+                            list_anchor_quote_run,
+                            parser.wikidot_quote_run_id(next_line_start),
+                        ) {
+                            if anchor != next_run {
+                                finish = true;
+                            }
+                        }
+                    }
+                }
+                ended = finish;
             }
             ListItemStep::Fallback(elements) => {
                 debug_assert!(depths.is_empty());

@@ -336,6 +336,13 @@ fn unquoted_structural_lines_end_native_blockquotes() {
 }
 
 #[test]
+fn quoted_list_items_in_the_same_quote_run_stay_in_one_blockquote() {
+    let (html, _) = render("> * A\n> * B");
+    assert_eq!(html.matches("<blockquote>").count(), 1, "{html}");
+    assert_eq!(html.matches("<li>").count(), 2, "{html}");
+}
+
+#[test]
 fn same_line_div_span_crossings_reuse_exact_recovery_decisions() {
     use std::time::{Duration, Instant};
 

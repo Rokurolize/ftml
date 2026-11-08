@@ -1725,6 +1725,7 @@ fn parse_list_item<'r, 't>(
                     &parser.full_text().inner(),
                     body_start,
                 ),
+            parser.peek_wikidot_quote_boundary_quoted_li_close(),
         );
         // NL81 (E, all-linebreaks-body): no content survived inside the
         // shadowed region — the region-end break goes before any content
@@ -2592,6 +2593,7 @@ fn assemble_wikidot_li_segments<'t>(
     shadowed_div_region: bool,
     last_run_is_doc_final: bool,
     suppress_trail: bool,
+    quoted_li_close_hoisted: bool,
 ) -> Vec<Element<'t>> {
     let mut had_trailing_empty = false;
     while segments
@@ -2860,6 +2862,17 @@ fn assemble_wikidot_li_segments<'t>(
     }
     while matches!(elements.last(), Some(Element::Text(text)) if text == " ") {
         elements.pop();
+    }
+    // BRIEF-QC89 quoted-closer pairing: shallow text hoisted out before
+    // the quoted `[[/li]]` close takes the item's trailing break with
+    // it on live (a directly closed quoted item keeps its `<br />`).
+    if quoted_li_close_hoisted {
+        while matches!(
+            elements.last(),
+            Some(Element::LineBreak | Element::LineBreaks(_))
+        ) {
+            elements.pop();
+        }
     }
     wrap_post_heading_segments(&mut elements, enclosing_block, suppress_trail);
     elements
@@ -3180,6 +3193,7 @@ pub(crate) fn parse_wikidot_implicit_list_block<'r, 't>(
                     &parser.full_text().inner(),
                     body_start,
                 ),
+            parser.peek_wikidot_quote_boundary_quoted_li_close(),
         );
         if parser.take_wikidot_li_swallowed_block_at(body_start, source_end) {
             if elements.is_empty() {

@@ -330,7 +330,9 @@ where
                     if kind == 1 && follower_text && !crossed_blank {
                         // UL: the close vanishes; the text row renders
                         // bare on the following iterations (live leaves
-                        // it unwrapped, not paragraphed).
+                        // it unwrapped, not paragraphed). The hoisted
+                        // run's paragraph ends at the close line first.
+                        stack.end_paragraph();
                         stack.mark_next_unwrapped();
                     } else if kind == 1 {
                         stack.end_paragraph();

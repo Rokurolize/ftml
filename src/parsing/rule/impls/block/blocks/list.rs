@@ -19,7 +19,9 @@
  */
 
 use super::prelude::*;
-use crate::parsing::rule::impls::block::parser::BlockBodyStart;
+use crate::parsing::rule::impls::block::parser::{
+    BlockBodyStart, WikidotStashFollowerChrome,
+};
 use crate::parsing::{ParagraphSplitKind, ParserWrap, strip_newlines};
 use crate::tree::{
     AcceptsPartial, AttributeMap, Container, ContainerType, ListItem, ListType,
@@ -801,6 +803,17 @@ fn parse_list_block_impl<'r, 't>(
         || (follower_wrap && parser.wikidot_next_line_has_content_skipping_blanks()))
         && !parser.body_end_boundary_accepts("iftags")
         && !parser.has_pending_iftags_end_ahead();
+    // BF79 (e-residual): the stash anchor chrome varies by follower type on
+    // live (probes muse-probe-bf79-*): kept CLOSED before an immediate
+    // structural block (heading/hr/quote/multiline div/note/collapsible),
+    // dropped before code/math/raw blocks, single-line containers, prose,
+    // tables, and across a blank line; kept unclosed at end of input.
+    // End-of-input preserves the historic emission for non-stash shapes.
+    let stash_chrome = if stash_formed {
+        parser.wikidot_stash_follower_chrome()
+    } else {
+        WikidotStashFollowerChrome::EndOfInput
+    };
     if wikidot && !nested && follower_wrap {
         parser.record_wikidot_post_list_follower_wrap(stash_formed);
     }
@@ -846,9 +859,30 @@ fn parse_list_block_impl<'r, 't>(
             // A numbered list re-emits the anchor lists stashed by
             // decomposed numbered lost-owner formations in the break's
             // place (LT46 p23-ord). With neither suppressed nor stashed
-            // material, the ordinary post-list break remains.
+            // material, the ordinary post-list break remains. BF79
+            // (e-residual): before a keep-class block follower live closes
+            // the chrome; before a drop-class follower (code/math/raw,
+            // single-line container, prose, table, or across a blank) the
+            // chrome vanishes; at end of input it stays unclosed.
             if list_type == ListType::Numbered && !anchor_chromes.is_empty() {
-                output.extend(anchor_chromes);
+                let mut anchor_chromes = anchor_chromes;
+                match stash_chrome {
+                    WikidotStashFollowerChrome::Drop => {}
+                    WikidotStashFollowerChrome::KeepClosed => {
+                        for chrome in &mut anchor_chromes {
+                            if let Element::List {
+                                wikidot_unclosed, ..
+                            } = chrome
+                            {
+                                *wikidot_unclosed = false;
+                            }
+                        }
+                        output.extend(anchor_chromes);
+                    }
+                    WikidotStashFollowerChrome::EndOfInput => {
+                        output.extend(anchor_chromes);
+                    }
+                }
             } else if !closer_drops_break && !closer_anchor {
                 output.push(Element::LineBreak);
             }
@@ -856,6 +890,24 @@ fn parse_list_block_impl<'r, 't>(
         ok!(false; output, errors)
     } else if fused_close {
         ok!(false; vec![element, text!("]")], errors)
+    } else if list_type == ListType::Numbered
+        && !anchor_chromes.is_empty()
+        && stash_chrome == WikidotStashFollowerChrome::KeepClosed
+    {
+        // Content path (heading/hr/quote followers): the chrome is emitted
+        // closed before the follower block.
+        let mut anchor_chromes = anchor_chromes;
+        for chrome in &mut anchor_chromes {
+            if let Element::List {
+                wikidot_unclosed, ..
+            } = chrome
+            {
+                *wikidot_unclosed = false;
+            }
+        }
+        let mut output = vec![element];
+        output.extend(anchor_chromes);
+        success_elements_with_paragraph_safety(false, output, errors)
     } else {
         success_elements_with_paragraph_safety(false, element, errors)
     }

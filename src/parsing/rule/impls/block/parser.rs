@@ -52,6 +52,19 @@ pub(crate) enum BlockBodyStart {
     NextPhysicalLine,
 }
 
+/// BF79 (e-residual): what a stash-formed list's anchor chrome does in
+/// front of the following content. See
+/// `Parser::wikidot_stash_follower_chrome`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum WikidotStashFollowerChrome {
+    /// No follower (end of input): keep the current unclosed chrome.
+    EndOfInput,
+    /// Emit the chrome closed (`</li></ul>`) before the follower block.
+    KeepClosed,
+    /// Drop the chrome entirely.
+    Drop,
+}
+
 #[derive(Debug)]
 pub(crate) enum WikidotHeadSpaceRegion {
     SingleSeparator,
@@ -3277,6 +3290,122 @@ where
             }
         }
         false
+    }
+
+    /// BF79 (e-residual): classify the first content after a stash-formed
+    /// list's close for anchor-chrome emission (saved-page probes
+    /// muse-probe-bf79-*). Live keeps the stash chrome CLOSED before an
+    /// immediate structural block (heading, hr, quote, multiline
+    /// div/note/collapsible), drops it before raw/math code blocks,
+    /// single-line containers (which become literal paragraph text),
+    /// prose, tables, and across a blank line. End of input keeps the
+    /// current unclosed chrome.
+    pub(crate) fn wikidot_stash_follower_chrome(&self) -> WikidotStashFollowerChrome {
+        use WikidotStashFollowerChrome as Chrome;
+        if !matches!(
+            self.current().token,
+            Token::LineBreak | Token::ParagraphBreak
+        ) {
+            return Chrome::EndOfInput;
+        }
+        // The list body gather may already have consumed the blank-line
+        // token, so at this point the immediate boundary is only
+        // recoverable from the source: the current break ends the closer's
+        // line, and each skipped break in `remaining()` adds a line. A
+        // blank separator is two or more line terminators between the
+        // closer and the follower's first content token.
+        let mut newlines = if self.current().token == Token::ParagraphBreak {
+            2
+        } else {
+            1
+        };
+        let remaining = self.remaining();
+        let mut index = 0_usize;
+        loop {
+            let Some(extracted) = remaining.get(index) else {
+                return Chrome::EndOfInput;
+            };
+            match extracted.token {
+                Token::Whitespace => {}
+                Token::LineBreak => newlines += 1,
+                Token::ParagraphBreak => newlines += 1,
+                Token::InputEnd => return Chrome::EndOfInput,
+                Token::Heading | Token::Equals | Token::Quote | Token::TripleDash => {
+                    return if newlines >= 2 {
+                        Chrome::Drop
+                    } else {
+                        Chrome::KeepClosed
+                    };
+                }
+                Token::LeftMath => return Chrome::Drop,
+                Token::LeftBlock | Token::LeftBlockStar => {
+                    // Extract the block name: slices until RightBlock.
+                    let mut scan = index + 1;
+                    if remaining
+                        .get(scan)
+                        .is_some_and(|token| token.token == Token::Whitespace)
+                    {
+                        scan += 1;
+                    }
+                    let mut name = String::new();
+                    let head_end = loop {
+                        let Some(token) = remaining.get(scan) else {
+                            return Chrome::Drop;
+                        };
+                        match token.token {
+                            Token::Whitespace | Token::RightBlock => break scan,
+                            Token::LineBreak
+                            | Token::ParagraphBreak
+                            | Token::InputEnd
+                            | Token::LeftBlock
+                            | Token::LeftBlockStar
+                            | Token::LeftBlockEnd => return Chrome::Drop,
+                            _ => name.push_str(token.slice),
+                        }
+                        scan += 1;
+                    };
+                    let name =
+                        name.strip_suffix('_').unwrap_or(&name).to_ascii_lowercase();
+                    // A container whose close lands on the same line
+                    // becomes literal paragraph text on live: chrome drops.
+                    let mut single_line = false;
+                    let mut probe = head_end + 1;
+                    loop {
+                        let Some(token) = remaining.get(probe) else {
+                            break;
+                        };
+                        match token.token {
+                            Token::LeftBlockEnd => {
+                                single_line = true;
+                                break;
+                            }
+                            Token::LineBreak
+                            | Token::ParagraphBreak
+                            | Token::InputEnd => break,
+                            _ => {}
+                        }
+                        probe += 1;
+                    }
+                    if single_line {
+                        return Chrome::Drop;
+                    }
+                    match name.as_str() {
+                        "code" | "raw" | "math" => return Chrome::Drop,
+                        "div" | "note" | "collapsible" => {
+                            return if newlines >= 2 {
+                                Chrome::Drop
+                            } else {
+                                Chrome::KeepClosed
+                            };
+                        }
+                        _ => return Chrome::Drop,
+                    }
+                }
+                // Block closers, tables and prose: chrome drops.
+                _ => return Chrome::Drop,
+            }
+            index += 1;
+        }
     }
 
     /// BL79 (e): whether the next non-blank line after the current break

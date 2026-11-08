@@ -2986,14 +2986,6 @@ fn lower_root_sequence<'t>(
                         | PartialElement::InlineSizeClose(_)
                 )]
             );
-            let understrike_close_only_paragraph = matches!(
-                container.elements(),
-                [Element::Partial(
-                    PartialElement::InlineSpanClose(_)
-                        | PartialElement::InlineSizeClose(_)
-                        | PartialElement::InlineAnchorClose(_)
-                )]
-            );
             let tail_break = matches!(span_tail, Some(SpanListCloseTail::Break))
                 && close_only_paragraph;
             let tail_bare = matches!(span_tail, Some(SpanListCloseTail::Bare))
@@ -3013,14 +3005,11 @@ fn lower_root_sequence<'t>(
             // after the list, with no scope tags).
             let understrike_tail = understrike_list_close_tail.take();
             let understrike_break =
-                matches!(understrike_tail, Some(SpanListCloseTail::Break))
-                    && understrike_close_only_paragraph;
+                matches!(understrike_tail, Some(SpanListCloseTail::Break));
             let understrike_bare =
-                matches!(understrike_tail, Some(SpanListCloseTail::Bare))
-                    && !understrike_close_only_paragraph;
+                matches!(understrike_tail, Some(SpanListCloseTail::Bare));
             let understrike_lead =
-                matches!(understrike_tail, Some(SpanListCloseTail::Lead))
-                    && !understrike_close_only_paragraph;
+                matches!(understrike_tail, Some(SpanListCloseTail::Lead));
             // Fold shape: the stopped pair's post-list segment has content
             // (live closes the scope at the pair's close marker, right after
             // it). The pending post-list run is flushed into the still-open
@@ -3437,17 +3426,6 @@ fn flush_root_pending<'t>(
     }
     let group_flushed = paragraph_group.is_some();
     let pending_has_format = sequence_contains_format_container(pending);
-    flush_paragraph_group(output, paragraph_group);
-    active.sync_chain_to_istack();
-    let scope_before = active.outer_active_position();
-    let scope_open_at_start = active.has_active_scope();
-    let scope_is_span_size_only = active.active_scopes_all_span_size();
-    // The generic explicit-list predicate for the stopped-segment family;
-    // the crossed rejected pair family decides on item shapes instead
-    // (62(b)). Both gates apply only at explicit-list boundaries and are
-    // mutually exclusive by construction: 62(b) requires the pending run
-    // to start with a bare format-open marker and hold no format container;
-    // AP60 (B) requires the pending run to contain one.
     let at_explicit_list = next.is_some_and(|next| {
         matches!(
             next,
@@ -3457,6 +3435,19 @@ fn flush_root_pending<'t>(
             }
         )
     });
+    flush_paragraph_group(output, paragraph_group);
+    if !(at_explicit_list && pending_has_format) {
+        active.sync_chain_to_istack();
+    }
+    let scope_before = active.outer_active_position();
+    let scope_open_at_start = active.has_active_scope();
+    let _scope_is_span_size_only = active.active_scopes_all_span_size();
+    // The generic explicit-list predicate for the stopped-segment family;
+    // the crossed rejected pair family decides on item shapes instead
+    // (62(b)). Both gates apply only at explicit-list boundaries and are
+    // mutually exclusive by construction: 62(b) requires the pending run
+    // to start with a bare format-open marker and hold no format container;
+    // AP60 (B) requires the pending run to contain one.
     // A crossed rejected format pair leaves its pre-list run as bare
     // marker text and scope segments (the markers were lifted out of the
     // format container at flatten time). Live wraps that run in a paragraph
@@ -3570,8 +3561,7 @@ fn flush_root_pending<'t>(
             }
         ) && formed_chunk_wraps(next)
     });
-    if (!scope_open_at_start || scope_is_span_size_only)
-        && at_explicit_list
+    if at_explicit_list
         && pending_has_format
         && sequence_has_inline_content(&sequence)
         && sequence.iter().all(Element::paragraph_safe)
@@ -3581,28 +3571,15 @@ fn flush_root_pending<'t>(
             && let Some(Element::Container(paragraph)) = output.last_mut()
             && paragraph.ctype() == ContainerType::Paragraph
         {
-            // Merge a same-scope wrapper across the boundary
-            // (e.g. a break-only span segment + the styled pre-list
-            // segment) so the paragraph keeps one wrapper like
-            // `append_root_sequence` does for the scope-continuation
-            // case; otherwise the two wrappers render as siblings.
-            let should_merge = matches!(
-                (paragraph.elements().last(), sequence.first()),
-                (Some(tail), Some(first)) if same_scope_wrapper(tail, first)
-            );
-            if should_merge {
-                let next = sequence.remove(0);
-                let previous = paragraph
-                    .elements_mut()
-                    .last_mut()
-                    .expect("last checked above");
-                let merged = scope_sibling_merge(previous, next);
-                debug_assert!(merged, "same-scope wrappers must merge");
+            for elem in sequence {
+                paragraph_tail_deep_scope_sibling_merge(paragraph, elem);
             }
-            paragraph.elements_mut().append(&mut sequence);
             return true;
         }
-        if output.is_empty() {
+        if output.is_empty()
+            && !scope_open_at_start
+            && !sequence_has_chunk_prefix_marker(&sequence)
+        {
             sequence = vec![Element::Container(Container::new(
                 ContainerType::Paragraph,
                 sequence,
@@ -3666,13 +3643,24 @@ fn sequence_contains_format_container(elements: &[Element<'_>]) -> bool {
 /// Whether the pending sequence carries renderable inline content: anything but a
 /// break or a bare partial (inline partials alone are sequencing artefacts,
 /// not content an appended or merged chunk would render).
+fn sequence_has_chunk_prefix_marker(elements: &[Element<'_>]) -> bool {
+    elements.iter().any(|element| match element {
+        Element::Container(container) => {
+            container
+                .attributes()
+                .get()
+                .contains_key(WIKIDOT_BLOCK_CHUNK_PREFIX_MARKER)
+                || sequence_has_chunk_prefix_marker(container.elements())
+        }
+        _ => false,
+    })
+}
+
 fn sequence_has_inline_content(elements: &[Element<'_>]) -> bool {
     elements.iter().any(|element| match element {
         Element::LineBreak | Element::LineBreaks(_) | Element::Partial(_) => false,
-        Element::Container(container) => {
-            sequence_has_inline_content(container.elements())
-        }
-        Element::Color { elements, .. } => sequence_has_inline_content(elements),
+        Element::Container(container) => !container.elements().is_empty(),
+        Element::Color { elements, .. } => !elements.is_empty(),
         _ => true,
     })
 }
@@ -3849,6 +3837,48 @@ fn paragraph_tail_scope_sibling_merge<'t>(
         return false;
     };
     scope_sibling_merge(tail, next)
+}
+
+fn deep_scope_sibling_merge<'t>(
+    previous: &mut Element<'t>,
+    next: Element<'t>,
+) -> Result<(), Element<'t>> {
+    if !same_scope_wrapper(previous, &next) {
+        return Err(next);
+    }
+    let next_children = match next {
+        Element::Container(c) => Vec::from(c),
+        Element::Color { elements, .. } | Element::Anchor { elements, .. } => elements,
+        _ => return Ok(()),
+    };
+    let prev_children = match previous {
+        Element::Container(c) => c.elements_mut(),
+        Element::Color { elements, .. } | Element::Anchor { elements, .. } => elements,
+        _ => return Ok(()),
+    };
+    for child in next_children {
+        if let Some(last) = prev_children.last_mut()
+            && same_scope_wrapper(last, &child)
+        {
+            let _ = deep_scope_sibling_merge(last, child);
+        } else {
+            prev_children.push(child);
+        }
+    }
+    Ok(())
+}
+
+fn paragraph_tail_deep_scope_sibling_merge<'t>(
+    paragraph: &mut Container<'t>,
+    next: Element<'t>,
+) {
+    if let Some(tail) = paragraph.elements_mut().last_mut() {
+        if let Err(elem) = deep_scope_sibling_merge(tail, next) {
+            paragraph.elements_mut().push(elem);
+        }
+    } else {
+        paragraph.elements_mut().push(next);
+    }
 }
 
 fn flush_paragraph_group<'t>(
@@ -4668,10 +4698,11 @@ fn lower_sequence<'t>(
         } else {
             None
         };
+        let is_stopped_pre = stopped_pre_segment(&element);
         if active.has_active_scope()
             && element.paragraph_safe()
             && contains_inline_scope_control(&element)
-            && inline_scope_controls_are_self_contained(&element)
+            && (inline_scope_controls_are_self_contained(&element) || is_stopped_pre)
         {
             let mut nested_active = ActiveScopes::default();
             let root_parts = inline_scope_parts(&element);
@@ -4689,16 +4720,14 @@ fn lower_sequence<'t>(
                 bib,
             );
             if lowered {
-                if let Some((tag, wrapper)) = &root_parts {
+                if is_stopped_pre {
+                    clear_stop_marker(&mut element);
+                } else if let Some((tag, wrapper)) = &root_parts {
                     let stolen = nested_active.has_active_scope();
                     if stolen {
                         nested_active.tidy_close(*tag);
                     }
-                    if stopped_pre_segment(&element) {
-                        clear_stop_marker(&mut element);
-                    } else {
-                        nested_active.istack.pop();
-                    }
+                    nested_active.istack.pop();
                     active.istack = std::mem::take(&mut nested_active.istack);
                     if stolen {
                         flush_run(

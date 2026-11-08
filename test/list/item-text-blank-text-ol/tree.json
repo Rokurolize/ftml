@@ -1,0 +1,30 @@
+{
+    "elements": [
+        {
+            "element": "list",
+            "data": {
+                "type": "numbered",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "text1"
+                            },
+                            {
+                                "element": "line-break"
+                            },
+                            {
+                                "element": "text",
+                                "data": "text2"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

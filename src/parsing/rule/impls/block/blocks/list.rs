@@ -1650,6 +1650,13 @@ fn parse_list_item<'r, 't>(
         // all-linebreaks flag state separately.
         let shadowed_div_region = !post_yield_scope
             && parser.take_wikidot_li_shadowed_div_region_at(body_start, source_end);
+        // BRIEF-TB74 (ledger item 74(e)): the trailing plain run after a
+        // blank line merges bare into the item flow when it sits in the
+        // document-final paragraph chunk (probes muse-probe-tb74-*).
+        let last_run_is_doc_final = !enclosing_block
+            && wikidot_li_last_run_is_doc_final(
+                &parser.full_text().inner()[source_end..],
+            );
         let mut elements = assemble_wikidot_li_segments(
             segments,
             source,
@@ -1660,6 +1667,7 @@ fn parse_list_item<'r, 't>(
             parser.in_wikidot_advanced_table_cell_body(),
             enclosing_block,
             shadowed_div_region,
+            last_run_is_doc_final,
         );
         // NL81 (E, all-linebreaks-body): no content survived inside the
         // shadowed region — the region-end break goes before any content
@@ -2345,6 +2353,177 @@ fn wikidot_li_trailing_break_dropped_after_block_always(element: &Element) -> bo
     }
 }
 
+/// BRIEF-TB74 (ledger item 74(e)): does the item's trailing plain run sit
+/// in the document-final paragraph chunk? Live merges a blank-separated
+/// trailing run bare (`text1text2<br>`) when no later chunk carries content,
+/// and paragraph-wraps it otherwise (probes muse-probe-tb74-*). `remainder`
+/// is the raw source after this item's `[[li]]` close. Item/list tags are
+/// transparent (a following item's text joins the current chunk, with its
+/// leading blank trimmed); a blank line or a `[[/ul]]`/`[[/ol]]` close ends
+/// the current chunk; formed blocks after the list close are not paragraph
+/// content. The caller gates this on `!enclosing_block` (items inside a
+/// div always wrap).
+fn wikidot_li_last_run_is_doc_final(remainder: &str) -> bool {
+    // Remove formed blocks (`[[div]]` et al. incl. body) — not paragraph
+    // content after the list close (probe muse-probe-tb74-ulclose-div-after).
+    let mut stream = remainder.to_string();
+    for name in ["div", "note", "code", "math", "collapsible"] {
+        loop {
+            let lower = stream.to_ascii_lowercase();
+            let open_pat = format!("[[").to_string() + name;
+            let Some(open_rel) = lower.find(&open_pat) else {
+                break;
+            };
+            let after_name = open_rel + open_pat.len();
+            if !matches!(
+                lower.as_bytes().get(after_name),
+                Some(b']') | Some(b' ') | Some(b'\t')
+            ) {
+                break;
+            }
+            let close_pat = format!("[[/{}]]", name);
+            let Some(close_rel) = lower[after_name..].find(&close_pat) else {
+                break;
+            };
+            let end = after_name + close_rel + close_pat.len();
+            stream.replace_range(open_rel..end, "");
+        }
+    }
+    // Remove `[[li]]` openers (with leading-blank trim) and `[[/li]]`.
+    // Removing a lone-on-its-line tag must not synthesize a blank line:
+    // swallow the following newline run with the tag.
+    loop {
+        let lower = stream.to_ascii_lowercase();
+        let Some(open_rel) = lower.find("[[li") else {
+            break;
+        };
+        let after_name = open_rel + 4;
+        if !matches!(
+            lower.as_bytes().get(after_name),
+            Some(b']') | Some(b' ') | Some(b'\t')
+        ) {
+            break;
+        }
+        let Some(tag_end_rel) = lower[after_name..].find("]]") else {
+            break;
+        };
+        let mut end = after_name + tag_end_rel + 2;
+        // Trim the following item's leading blank lines.
+        let mut rest = &stream[end..];
+        loop {
+            if let Some(stripped) = rest.strip_prefix('\n') {
+                rest = stripped;
+                continue;
+            }
+            let trimmed = rest.trim_start_matches([' ', '\t']);
+            if rest.len() > trimmed.len()
+                && let Some(after_blank) = trimmed.strip_prefix('\n')
+            {
+                rest = after_blank;
+                continue;
+            }
+            break;
+        }
+        end = stream.len() - rest.len();
+        stream.replace_range(open_rel..end, "");
+    }
+    loop {
+        let lower = stream.to_ascii_lowercase();
+        let Some(close_rel) = lower.find("[[/li") else {
+            break;
+        };
+        let Some(tag_end_rel) = lower[close_rel..].find("]]") else {
+            break;
+        };
+        let mut end = close_rel + tag_end_rel + 2;
+        // Join across the close: swallow one following newline so removing
+        // the tag cannot synthesize a blank line.
+        if stream.as_bytes().get(end) == Some(&b'\n') {
+            end += 1;
+        }
+        stream.replace_range(close_rel..end, "");
+    }
+    // Chunk split: blank line or `[[/ul]]`/`[[/ol]]` ends a chunk. Bare iff
+    // no later chunk holds non-tag content.
+    let lower = stream.to_ascii_lowercase();
+    let mut separators = Vec::new();
+    for pat in ["[[/ul]]", "[[/ol]]"] {
+        let mut from = 0;
+        while let Some(rel) = lower[from..].find(pat) {
+            separators.push(from + rel);
+            from += rel + pat.len();
+        }
+    }
+    let mut pos = 0;
+    while pos < stream.len() {
+        if stream.as_bytes()[pos] == b'\n' {
+            let mut probe = pos + 1;
+            while probe < stream.len() && matches!(stream.as_bytes()[probe], b' ' | b'\t')
+            {
+                probe += 1;
+            }
+            if probe < stream.len() && stream.as_bytes()[probe] == b'\n' {
+                separators.push(probe);
+            }
+        }
+        pos += 1;
+    }
+    separators.sort_unstable();
+    separators.dedup();
+    // Later chunks are those after the first separator.
+    let Some(&first) = separators.first() else {
+        return true;
+    };
+    let mut chunk_start = first;
+    // Skip the separator itself: advance past its end.
+    let mut rest = &stream[first..];
+    // Determine separator end: list close or blank line's second newline.
+    let lower_rest = rest.to_ascii_lowercase();
+    // Blank separators are stored at the second newline's index, so the
+    // separator ends one byte after `first`; list closes end after `]]`.
+    let sep_end =
+        if lower_rest.starts_with("[[/ul]]") || lower_rest.starts_with("[[/ol]]") {
+            7
+        } else {
+            1
+        };
+    chunk_start = first + sep_end.min(rest.len());
+    while chunk_start < stream.len() {
+        // Find next separator at/after chunk_start (excluding `first`).
+        let next_sep = separators
+            .iter()
+            .copied()
+            .find(|&sep| sep > first && sep >= chunk_start);
+        let chunk_end = next_sep.unwrap_or(stream.len());
+        let chunk = &stream[chunk_start..chunk_end];
+        // Strip remaining `[[...]]` tags; content = non-whitespace.
+        let mut content = chunk.to_string();
+        loop {
+            let cl = content.to_ascii_lowercase();
+            let Some(tag_rel) = cl.find("[[") else { break };
+            let Some(tag_end_rel) = cl[tag_rel..].find("]]") else {
+                break;
+            };
+            content.replace_range(tag_rel..tag_rel + tag_end_rel + 2, "");
+        }
+        if content.chars().any(|c| !c.is_whitespace()) {
+            return false;
+        }
+        let Some(sep) = next_sep else { break };
+        let sep_rest = &stream[sep..];
+        let sep_rest_lower = sep_rest.to_ascii_lowercase();
+        let step = if sep_rest_lower.starts_with("[[/ul]]")
+            || sep_rest_lower.starts_with("[[/ol]]")
+        {
+            7
+        } else {
+            1
+        };
+        chunk_start = sep + step;
+    }
+    true
+}
+
 fn assemble_wikidot_li_segments<'t>(
     mut segments: Vec<Vec<Element<'t>>>,
     source: &str,
@@ -2354,6 +2533,7 @@ fn assemble_wikidot_li_segments<'t>(
     in_cell: bool,
     enclosing_block: bool,
     shadowed_div_region: bool,
+    last_run_is_doc_final: bool,
 ) -> Vec<Element<'t>> {
     let mut had_trailing_empty = false;
     while segments
@@ -2478,10 +2658,13 @@ fn assemble_wikidot_li_segments<'t>(
         }
         // A blank line between two plain inline runs, with the closer on the
         // next line, is a paragraph. A run on the closer's own line stays put,
-        // and so does a run beside a literal block marker.
+        // and so does a run beside a literal block marker. BRIEF-TB74: the
+        // trailing run merges bare when it sits in the document-final
+        // paragraph chunk (probes muse-probe-tb74-*).
         let middle_inline =
             index > 0 && index < kept_last && segment_is_inline_content(&segment);
-        let closing_paragraph = last_plain_run_is_paragraph && index == kept_last;
+        let closing_paragraph =
+            last_plain_run_is_paragraph && index == kept_last && !last_run_is_doc_final;
         if middle_inline || closing_paragraph {
             elements.push(Element::Container(Container::new(
                 ContainerType::Paragraph,
@@ -2855,6 +3038,11 @@ pub(crate) fn parse_wikidot_implicit_list_block<'r, 't>(
             || consumed.is_some();
         let enclosing_block = parser.wikidot_flat_pair_open_at(body_start);
         let shadowed_div_region = parser.take_wikidot_li_shadowed_div_region_at(body_start, source_end);
+        // BRIEF-TB74 (ledger item 74(e)): see the explicit-item call site.
+        let last_run_is_doc_final = !enclosing_block
+            && wikidot_li_last_run_is_doc_final(
+                &parser.full_text().inner()[source_end..],
+            );
         let mut elements = assemble_wikidot_li_segments(
             segments,
             source,
@@ -2865,6 +3053,7 @@ pub(crate) fn parse_wikidot_implicit_list_block<'r, 't>(
             parser.in_wikidot_advanced_table_cell_body(),
             enclosing_block,
             shadowed_div_region,
+            last_run_is_doc_final,
         );
         if parser.take_wikidot_li_swallowed_block_at(body_start, source_end) {
             if elements.is_empty() {

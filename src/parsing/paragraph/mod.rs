@@ -33,13 +33,66 @@ use super::parser::{BodyWalkKey, Parser};
 use super::prelude::*;
 use super::rule::Rule;
 use super::token::Token;
-use crate::tree::{ContainerType, ListItem, ListType, WIKIDOT_QUOTE_LIST_REPAIR_MARKER};
+use crate::tree::{
+    AttributeMap, ContainerType, ListItem, ListType, WIKIDOT_QUOTE_LIST_REPAIR_MARKER,
+};
 use std::borrow::Cow;
 
 type CloseConditionFn = fn(&mut Parser) -> Result<bool, ParseError>;
 
 pub fn no_close_condition() -> Option<CloseConditionFn> {
     None
+}
+
+/// The degraded trailing shell an ordered list closed at a shallower
+/// quote depth leaves behind live (BRIEF-UQ91A OL aftermath): a bullet
+/// list holding one list-style-none item. Mirrors
+/// `ordered_boundary_close_shell` in the blockquote rule.
+fn evaporation_aftermath_shell<'t>(
+    item_elements: Vec<Element<'t>>,
+    closed: bool,
+) -> Element<'t> {
+    let mut item_attributes = AttributeMap::new();
+    item_attributes.insert("style", cow!("list-style: none"));
+    Element::List {
+        ltype: ListType::Bullet,
+        items: vec![ListItem::Elements {
+            elements: item_elements,
+            attributes: item_attributes,
+        }],
+        attributes: AttributeMap::new(),
+        wikidot_explicit_block: false,
+        wikidot_unclosed: !closed,
+    }
+}
+
+/// Whether the row at the cursor (depth 0, no quote prefix) is plain
+/// text: no block markers before the line end, and non-empty content.
+fn wikidot_plain_text_row(parser: &Parser<'_, '_>) -> bool {
+    let mut scan = parser.clone();
+    let mut has_text = false;
+    loop {
+        match scan.current().token {
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd => {
+                return has_text;
+            }
+            Token::LeftBlock | Token::LeftBlockStar | Token::LeftBlockEnd => {
+                return false;
+            }
+            Token::BulletItem | Token::NumberedItem => return false,
+            Token::Whitespace => {
+                if scan.step().is_err() {
+                    return false;
+                }
+            }
+            _ => {
+                has_text = true;
+                if scan.step().is_err() {
+                    return false;
+                }
+            }
+        }
+    }
 }
 
 pub fn gather_paragraphs<'r, 't, F>(
@@ -92,6 +145,150 @@ where
                 continue;
             }
             parser.clear_wikidot_merge_follow();
+        }
+        // BRIEF-UQ91A aftermath consumer: an evaporated list whose
+        // paired close is a depth-0 (unquoted) line. The close sits
+        // outside every quote run, so the blockquote paired-close
+        // path can never consume it; the gather owns the row when it
+        // reaches it. Live consumes the close and emits its break
+        // (UL) or degraded shell (OL) outside the quote run, with
+        // follower-dependent shape: a directly following unquoted
+        // text row vanishes the break (UL) or joins the shell item
+        // (OL); any other follower (quoted row, blank then text,
+        // block, end of input) keeps the break/shell. The flag
+        // persists across the intervening evaporation-body rows
+        // (paragraph x, blockquote head) and fires only on the
+        // matching closer line; a different closer line disarms it.
+        if parser.settings().layout.legacy()
+            && close_condition_fn.is_none()
+            && parser.wikidot_pending_unquoted_evaporation_close() != 0
+            && parser.start_of_line()
+            && parser.current().token == Token::LeftBlockEnd
+        {
+            let kind = parser.wikidot_pending_unquoted_evaporation_close();
+            let want = if kind == 2 { "ol" } else { "ul" };
+            let mut probe = parser.clone();
+            let name_matches = probe.get_end_block().is_ok_and(|name| {
+                name.strip_suffix('_')
+                    .unwrap_or(&name)
+                    .eq_ignore_ascii_case(want)
+            });
+            if name_matches {
+                let _ = probe.get_optional_space();
+                if matches!(
+                    probe.current().token,
+                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                ) {
+                    parser.get_end_block()?;
+                    parser.get_optional_space()?;
+                    // A `ParagraphBreak` here is the blank line after
+                    // the closer (the tokenizer folds it into the
+                    // closer line's terminator); it counts as crossed.
+                    let mut crossed_blank =
+                        parser.current().token == Token::ParagraphBreak;
+                    if matches!(
+                        parser.current().token,
+                        Token::LineBreak | Token::ParagraphBreak
+                    ) {
+                        parser.step()?;
+                    }
+                    parser.take_wikidot_pending_unquoted_evaporation_close();
+                    // Follower classification (peek only).
+                    let mut peek = parser.clone();
+                    loop {
+                        match peek.current().token {
+                            Token::LineBreak => {
+                                if peek.step().is_err() {
+                                    break;
+                                }
+                            }
+                            Token::ParagraphBreak => {
+                                crossed_blank = true;
+                                if peek.step().is_err() {
+                                    break;
+                                }
+                            }
+                            _ => break,
+                        }
+                    }
+                    let follower_text = peek.current().token != Token::InputEnd
+                        && peek.current().token != Token::Quote
+                        && wikidot_plain_text_row(&peek);
+                    if kind == 1 && follower_text && !crossed_blank {
+                        // UL: the close vanishes; the text row renders
+                        // bare on the following iterations (live leaves
+                        // it unwrapped, not paragraphed).
+                        stack.mark_next_unwrapped();
+                    } else if kind == 1 {
+                        stack.end_paragraph();
+                        stack.mark_next_unwrapped();
+                        stack.push_element(Element::LineBreak, true);
+                    } else if follower_text {
+                        // OL: the follower run becomes the shell item
+                        // (live: `y<br />z `, blank-then-text keeps a
+                        // leading break inside the item).
+                        let mut item: Vec<Element<'t>> = Vec::new();
+                        if crossed_blank {
+                            item.push(Element::LineBreak);
+                        }
+                        let mut first_line = true;
+                        loop {
+                            if !wikidot_plain_text_row(parser) {
+                                break;
+                            }
+                            let start = parser.current().span.start;
+                            let mut end = start;
+                            while !matches!(
+                                parser.current().token,
+                                Token::LineBreak
+                                    | Token::ParagraphBreak
+                                    | Token::InputEnd
+                            ) {
+                                end = parser.current().span.end;
+                                if parser.step().is_err() {
+                                    break;
+                                }
+                            }
+                            let text = &parser.full_text().inner()[start..end];
+                            if !first_line {
+                                item.push(Element::LineBreak);
+                            }
+                            item.push(Element::Text(Cow::Borrowed(text)));
+                            first_line = false;
+                            if !matches!(
+                                parser.current().token,
+                                Token::LineBreak | Token::ParagraphBreak
+                            ) {
+                                break;
+                            }
+                            if parser.current().token == Token::ParagraphBreak {
+                                break;
+                            }
+                            parser.step()?;
+                        }
+                        item.push(Element::Text(Cow::Borrowed(" ")));
+                        stack.push_element(
+                            evaporation_aftermath_shell(item, false),
+                            false,
+                        );
+                    } else {
+                        let quoted_follower = peek.current().token == Token::Quote;
+                        stack.push_element(
+                            evaporation_aftermath_shell(
+                                vec![Element::LineBreak],
+                                quoted_follower,
+                            ),
+                            false,
+                        );
+                    }
+                    line_prefix_whitespace_only = true;
+                    continue;
+                }
+            }
+            // A different closer line (or trailing content on the
+            // closer line): the aftermath does not apply; disarm and
+            // fall through to the ordinary rendering.
+            parser.take_wikidot_pending_unquoted_evaporation_close();
         }
         // BRIEF-MF65b: escaped-region stray closers render nothing in
         // live. Swallow the line and its trailing break, emit nothing.

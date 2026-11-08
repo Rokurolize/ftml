@@ -229,6 +229,12 @@ pub(super) struct BlockScanCache<'t> {
     /// (quoted) rather than shallower: the fresh run's first content row
     /// after the paired close renders as a paragraph (ulclose-y).
     wikidot_quote_boundary_blank_in_li_body_quoted_close: Cell<bool>,
+    /// Surplus quote markers on the blank-tolerated `[[/li]]` close line
+    /// (BRIEF-BL69b): a deeper close pairs on live but its extra leading
+    /// `>`s are not item text — they reappear as remnant text in the fresh
+    /// quote run. Set by the LI body consumer at the deeper close; taken
+    /// by the blockquote fresh run's paired-close row.
+    wikidot_li_close_remnant_quotes: Cell<u8>,
     /// BRIEF-BH57a: shallow text was hoisted out of an explicit list body
     /// before its unquoted `[[/li]]` close AND the next non-blank row after
     /// that close is reachable unquoted text, so the hoisted run merges into
@@ -1586,6 +1592,20 @@ impl<'r, 't> Parser<'r, 't> {
             .borrow()
             .wikidot_quote_boundary_blank_in_li_body_quoted_close
             .get()
+    }
+
+    pub(crate) fn set_wikidot_li_close_remnant_quotes(&self, quotes: u8) {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_li_close_remnant_quotes
+            .set(quotes);
+    }
+
+    pub(crate) fn take_wikidot_li_close_remnant_quotes(&self) -> u8 {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_li_close_remnant_quotes
+            .take()
     }
 
     pub(crate) fn set_wikidot_merge_follow(&self) {

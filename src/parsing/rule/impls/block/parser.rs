@@ -3652,10 +3652,31 @@ where
             }
             if self.quotes_then_block_end(block_rule) {
                 let prefix = self.take_quoted_closer_marks()?;
-                segments
-                    .last_mut()
-                    .expect("segments always has a current segment")
-                    .extend(prefix);
+                // BRIEF-BL69b: when this LI body tolerated a blank before
+                // this deeper `[[/li]]` close, live pairs the close but
+                // does not absorb the close line's quote prefix into the
+                // item — all but the one pairing quote reappears as
+                // remnant text in the fresh quote run. Count them (the
+                // prefix's `>` chars minus one) and carry the count in
+                // the scan cache.
+                let blank_in_li_body = self.wikidot_quote_boundary_blank_in_li_body()
+                    && block_rule.name == "block-list-item";
+                if blank_in_li_body {
+                    let quote_chars: usize = prefix
+                        .iter()
+                        .filter_map(|element| match element {
+                            Element::Text(text) => Some(text.matches('>').count()),
+                            _ => None,
+                        })
+                        .sum();
+                    let remnants = quote_chars.saturating_sub(1).min(u8::MAX as usize);
+                    self.set_wikidot_li_close_remnant_quotes(remnants as u8);
+                } else {
+                    segments
+                        .last_mut()
+                        .expect("segments always has a current segment")
+                        .extend(prefix);
+                }
                 if self
                     .verify_end_block(first, block_rule, false, false)
                     .is_some()

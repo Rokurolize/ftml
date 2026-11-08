@@ -3682,7 +3682,6 @@ fn append_root_sequence<'t>(
     sequence: &mut Vec<Element<'t>>,
     scope_continues: bool,
 ) {
-
     let mergeable = scope_continues
         && matches!(
             (output.last(), sequence.first()),
@@ -3732,10 +3731,10 @@ fn append_root_sequence<'t>(
                             | Element::Partial(PartialElement::WikidotEmptyInlineOwner)
                     )
                 };
-                if !tail_elements.iter().all(is_break_or_empty_owner) {
-                    if !matches!(tail, Element::Anchor { .. }) {
-                        return false;
-                    }
+                if !tail_elements.iter().all(is_break_or_empty_owner)
+                    && !matches!(tail, Element::Anchor { .. })
+                {
+                    return false;
                 }
                 sequence
                     .first()
@@ -3759,10 +3758,7 @@ fn append_root_sequence<'t>(
 /// tails only (item 60) — a segment carrying plain content before the
 /// segmentation boundary. See the `paragraph_tail_merge` predicate in
 /// `append_root_sequence` for the root-side rule.
-fn paragraph_scope_tail_continues<'t>(
-    tail: &Element<'t>,
-    next: &Element<'t>,
-) -> bool {
+fn paragraph_scope_tail_continues<'t>(tail: &Element<'t>, next: &Element<'t>) -> bool {
     if !same_scope_wrapper(tail, next) {
         return false;
     }

@@ -1,0 +1,65 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "italics",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "note",
+                                        "attributes": {},
+                                        "elements": [
+                                            {
+                                                "element": "container",
+                                                "data": {
+                                                    "type": "italics",
+                                                    "attributes": {},
+                                                    "elements": [
+                                                        {
+                                                            "element": "container",
+                                                            "data": {
+                                                                "type": "span",
+                                                                "attributes": {},
+                                                                "elements": [
+                                                                    {
+                                                                        "element": "container",
+                                                                        "data": {
+                                                                            "type": "note",
+                                                                            "attributes": {},
+                                                                            "elements": [
+                                                                                {
+                                                                                    "element": "text",
+                                                                                    "data": "n"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "element": "line-break"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

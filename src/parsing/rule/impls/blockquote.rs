@@ -872,6 +872,10 @@ fn try_consume_fn<'r, 't>(
     let mut flat_split: Option<QuoteFlatSplit<'t>> = None;
     let mut first_row_depth: Option<usize> = None;
     let mut pending_paired_close_quoted_follower_paragraph = false;
+    // BRIEF-BL69b: surplus quote markers carried from the paired-[[/li]] /
+    // paired-[[/ul]] close lines, heading for the next content row of
+    // this run (live merges them into the follower paragraph).
+    let mut pending_paired_close_remnant_elements: Vec<Element> = Vec::new();
 
     if parser.settings().layout.legacy()
         && let Some(gate_quote) = virtual_gate_quote_leader(parser)
@@ -1115,12 +1119,34 @@ fn try_consume_fn<'r, 't>(
             .inner()
             .get(content_start..line_text_end)
             .unwrap_or("");
-        let is_paired_close_row = parser.settings().layout.legacy()
-            && parser.wikidot_pending_paired_list_close()
-            && {
+        // BRIEF-BL69b: a `[[/ul]]`/`[[ /ol]]` close quoted DEEPER than
+        // this run's level still pairs on live (its surplus leading `>`s
+        // reappear as remnant text next to it). The base row starts after
+        // this run's own level was stepped over, so count the row's
+        // extra leading quotes beyond that level.
+        let (is_paired_close_row, row_extra_quotes) =
+            if !(parser.settings().layout.legacy()
+                && parser.wikidot_pending_paired_list_close())
+            {
+                (false, 0)
+            } else {
                 let trimmed = row_source.trim();
-                trimmed.eq_ignore_ascii_case("[[/ul]]")
+                if trimmed.eq_ignore_ascii_case("[[/ul]]")
                     || trimmed.eq_ignore_ascii_case("[[/ol]]")
+                {
+                    (true, 0)
+                } else {
+                    let after_prefix = row_source.trim_start_matches(['>', ' ', '\t']);
+                    let prefix = &row_source[..row_source.len() - after_prefix.len()];
+                    let quotes = prefix.matches('>').count();
+                    let remainder = after_prefix.trim();
+                    (
+                        quotes > 0
+                            && (remainder.eq_ignore_ascii_case("[[/ul]]")
+                                || remainder.eq_ignore_ascii_case("[[/ol]]")),
+                        quotes,
+                    )
+                }
             };
         if is_paired_close_row {
             errors.truncate(errors_before);
@@ -1144,6 +1170,7 @@ fn try_consume_fn<'r, 't>(
             }
         }
         let mut elements = line.elements;
+        let mut paired_close_remnant_quotes = 0usize;
         if is_paired_close_row {
             // v2m: when the previous row of this fresh run already ends with
             // a break (`> [[li]]b` + break), drop that break and keep only the
@@ -1156,7 +1183,25 @@ fn try_consume_fn<'r, 't>(
             {
                 prev_row.elements.pop();
             }
-            elements = vec![Element::LineBreak];
+            // BRIEF-BL69b: surplus `>`s from the `[[/li]]` close line
+            // (carried in the scan cache) plus this close line's own
+            // extra quotes render as remnant text on the break row. When
+            // a follower row follows, they ride into it instead (live
+            // merges them into the follower paragraph, with a space
+            // before the follower's content).
+            paired_close_remnant_quotes =
+                parser.take_wikidot_li_close_remnant_quotes() as usize + row_extra_quotes;
+            let remnant_quotes = paired_close_remnant_quotes;
+            if remnant_quotes > 0 && parser.current().token == Token::Quote {
+                let mut rem = remnant_text_elements(remnant_quotes);
+                rem.push(Element::Text(std::borrow::Cow::Borrowed(" ")));
+                pending_paired_close_remnant_elements = rem;
+                elements = vec![Element::LineBreak];
+            } else {
+                let mut rem = remnant_text_elements(remnant_quotes);
+                rem.push(Element::LineBreak);
+                elements = rem;
+            }
             paragraph_safe = false;
         }
         let marker_row = parser.settings().layout.legacy()
@@ -1561,13 +1606,26 @@ fn try_consume_fn<'r, 't>(
         if quoted_close_paragraph_follower {
             pending_paired_close_quoted_follower_paragraph = false;
         }
+        // BRIEF-BL69b: surplus close-line remnant quotes ride into the
+        // quoted-close follower row (its paragraph wrap lands below).
+        if quoted_close_paragraph_follower
+            && !pending_paired_close_remnant_elements.is_empty()
+        {
+            let mut rem = std::mem::take(&mut pending_paired_close_remnant_elements);
+            rem.append(&mut elements);
+            elements = rem;
+        }
         let paragraph_split = paragraph_split.filter(|counts| {
             counts.len() >= 2
                 && counts.iter().map(|entry| entry.0).sum::<usize>() == elements.len()
         });
         let cut_boundary = parser.take_wikidot_table_cut_boundary();
         let keep_trailing_break = quote_end_list_break
-            || (marker_final && !matches!(elements.last(), Some(Element::LineBreaks(_))));
+            || (marker_final && !matches!(elements.last(), Some(Element::LineBreaks(_))))
+            // BRIEF-BL69b: a paired-close row carrying surplus remnant
+            // quotes keeps its trailing break (live renders them bare
+            // with a trailing `<br />`, not via the empty-list break).
+            || (is_paired_close_row && paired_close_remnant_quotes > 0);
         let residual_block = parser.settings().layout.legacy()
             && match elements.iter().position(|element| {
                 matches!(
@@ -2237,6 +2295,20 @@ fn demote_ungrounded_indented_list_rows(
         }
     }
     demoted
+}
+
+/// Surplus quote markers as remnant text (BRIEF-BL69b): `n` leading
+/// `>`s that live re-emits ahead of a paired-close break or inside the
+/// quoted-close follower paragraph, separated by single spaces.
+fn remnant_text_elements<'t>(quotes: usize) -> Vec<Element<'t>> {
+    let mut elements = Vec::new();
+    for index in 0..quotes {
+        if index > 0 {
+            elements.push(Element::Text(std::borrow::Cow::Borrowed(" ")));
+        }
+        elements.push(Element::Text(std::borrow::Cow::Borrowed(">")));
+    }
+    elements
 }
 
 fn demote_indented_list_row(row: &mut NativeQuoteRow<'_>) {

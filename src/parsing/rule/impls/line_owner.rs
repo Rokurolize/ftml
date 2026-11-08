@@ -326,6 +326,90 @@ pub(crate) fn wikidot_list_follower_wraps_items(source: &str, from_byte: usize) 
     false
 }
 
+/// Whether a `[[footnote]]` opening appears inside the innermost
+/// enclosing explicit list of `from_byte`, anywhere in that list's
+/// extent. Live keeps the math/table trailing run of every item in such
+/// a list bare (harvest-ad75 probes muse-probe-ad75-c1..c8 and pool
+/// 3760/3784), even when the footnote sits in a later item, an earlier
+/// sibling item, or a nested footnote body inside the item — the
+/// footnote zone owns the list's paragraph flow, so the text never
+/// becomes a paragraph. The match is a source-level opening-token scan;
+/// a literal `[[footnote]]` inside the list also suppresses, which is
+/// live's own behavior for the assembled shapes.
+pub(crate) fn wikidot_list_contains_footnote_open(source: &str, from_byte: usize) -> bool {
+    let from_byte = from_byte.min(source.len());
+    // Locate the innermost enclosing list head: the nearest own-line
+    // `[[ul]]`/`[[ol]]` at or before `from_byte` (fall back to the start
+    // of the document when none — same extent the follower scan starts
+    // from).
+    let mut list_start = 0usize;
+    let mut pos = from_byte;
+    loop {
+        let line_start = source[..pos]
+            .rfind('\n')
+            .map_or(0, |offset| offset + 1);
+        let line_end = source[line_start..]
+            .find('\n')
+            .map_or(source.len(), |offset| line_start + offset);
+        let trimmed = source[line_start..line_end].trim_matches([' ', '\t']);
+        if trimmed.eq_ignore_ascii_case("[[ul]]")
+            || trimmed.eq_ignore_ascii_case("[[ol]]")
+        {
+            list_start = line_start;
+            break;
+        }
+        if line_start == 0 {
+            break;
+        }
+        pos = line_start - 1;
+    }
+    // Scan forward from the head, tracking nested list depth like the
+    // follower helper; a footnote open anywhere inside is the verdict.
+    let mut depth = 1usize;
+    let mut line_start = list_start;
+    while line_start < source.len() {
+        let line_end = source[line_start..]
+            .find('\n')
+            .map_or(source.len(), |offset| line_start + offset);
+        let raw = &source[line_start..line_end];
+        let trimmed = raw.trim_matches([' ', '\t']);
+        if trimmed.eq_ignore_ascii_case("[[ul]]")
+            || trimmed.eq_ignore_ascii_case("[[ol]]")
+        {
+            depth += 1;
+        } else if trimmed.eq_ignore_ascii_case("[[/ul]]")
+            || trimmed.eq_ignore_ascii_case("[[/ol]]")
+        {
+            depth = depth.saturating_sub(1);
+            if depth == 0 {
+                return false;
+            }
+        } else if contains_footnote_open(raw) {
+            return true;
+        }
+        line_start = line_end + 1;
+    }
+    false
+}
+
+fn contains_footnote_open(line: &str) -> bool {
+    // Case-insensitive substring for a `[[footnote` opening token (a
+    // following space/tab/`\n`/`]` distinguishes it from longer heads like
+    // `[[footnotes]]`/`[[footnoteblock]]`).
+    const NEEDLE: &[u8] = b"[[footnote";
+    let haystack = line.to_ascii_lowercase();
+    let bytes = haystack.as_bytes();
+    if bytes.len() < NEEDLE.len() {
+        return false;
+    }
+    (0..=bytes.len() - NEEDLE.len()).any(|start| {
+        bytes[start..start + NEEDLE.len()] == *NEEDLE
+            && bytes
+                .get(start + NEEDLE.len())
+                .is_none_or(|next| matches!(next, b' ' | b'\t' | b']' | b'\n'))
+    })
+}
+
 /// Whether the line following a list-closer line allows the post-heading
 /// wrap: every content line except the block-start classes named in
 /// `wikidot_list_follower_wraps_items`. EOF and contentless lines other

@@ -901,7 +901,7 @@ fn push_literal_list_item<'t>(
         item_elements.append(elements);
     } else {
         if f7_enclosing {
-            wrap_post_heading_segments(elements, true);
+            wrap_post_heading_segments(elements, true, false);
         }
         if append_to_last && !outer_list_is_scored {
             wrap_wikidot_malformed_scored_items(elements, content_follows);
@@ -1668,6 +1668,11 @@ fn parse_list_item<'r, 't>(
             enclosing_block,
             shadowed_div_region,
             last_run_is_doc_final,
+            parser.in_footnote()
+                || crate::parsing::rule::impls::line_owner::wikidot_list_contains_footnote_open(
+                    &parser.full_text().inner(),
+                    body_start,
+                ),
         );
         // NL81 (E, all-linebreaks-body): no content survived inside the
         // shadowed region — the region-end break goes before any content
@@ -2534,6 +2539,7 @@ fn assemble_wikidot_li_segments<'t>(
     enclosing_block: bool,
     shadowed_div_region: bool,
     last_run_is_doc_final: bool,
+    suppress_trail: bool,
 ) -> Vec<Element<'t>> {
     let mut had_trailing_empty = false;
     while segments
@@ -2803,7 +2809,7 @@ fn assemble_wikidot_li_segments<'t>(
     while matches!(elements.last(), Some(Element::Text(text)) if text == " ") {
         elements.pop();
     }
-    wrap_post_heading_segments(&mut elements, enclosing_block);
+    wrap_post_heading_segments(&mut elements, enclosing_block, suppress_trail);
     elements
 }
 
@@ -2827,6 +2833,7 @@ fn assemble_wikidot_li_segments<'t>(
 fn wrap_post_heading_segments<'t>(
     elements: &mut Vec<Element<'t>>,
     enclosing_block: bool,
+    suppress_trail: bool,
 ) {
     fn has_content(chunk: &[Element<'_>]) -> bool {
         chunk.iter().any(|element| {
@@ -2834,6 +2841,29 @@ fn wrap_post_heading_segments<'t>(
                 && !matches!(element, Element::Text(text) if text.trim().is_empty())
         })
     }
+
+    // A footnote reference in the item keeps the trailing run bare on live
+    // (muse-probe-ad75-c1..c5 and the pool cases: any `[[footnote]]` ref in
+    // the item suppresses the paragraph wrap), as does parsing the item
+    // inside a footnote definition body. Walk the assembled elements for a
+    // footnote element so cell-nested refs count too.
+    fn subtree_has_footnote(elements: &[Element<'_>]) -> bool {
+        fn visit(element: &Element<'_>) -> bool {
+            matches!(element, Element::Footnote(_)) || {
+                let mut found = false;
+                crate::parsing::inline_scope::visit_children(element, &mut |children| {
+                    for child in children {
+                        if !found && visit(child) {
+                            found = true;
+                        }
+                    }
+                });
+                found
+            }
+        }
+        elements.iter().any(visit)
+    }
+    let suppress_trail = suppress_trail || subtree_has_footnote(elements);
 
     enum Flush {
         /// A block that can resume paragraph flow (hr, separator, math, quote,
@@ -2852,24 +2882,52 @@ fn wrap_post_heading_segments<'t>(
     let mut out: Vec<Element<'t>> = Vec::with_capacity(elements.len() + 4);
     let mut chunk: Vec<Element<'t>> = Vec::new();
     let mut after_heading = false;
+    // A math or table block inside the item: the inline run after it is
+    // paragraph-wrapped at the end of the item body when the enclosing
+    // list carries a content follower (or an enclosing block frame is
+    // open), and stays bare otherwise (muse-probe-ad75-*; m2/t2 sit at
+    // EOF so they stay bare, m3/t3 and the adi4/scope forms carry a
+    // follower or a span scope after the list close and wrap).
+    // Headings keep the wider Soft/SegmentGap family; this flag feeds
+    // only the end-of-item flush, where enclosing_block decides.
+    let mut after_ref_block = false;
     let mut latched = false;
     let flush = |chunk: &mut Vec<Element<'t>>,
                  out: &mut Vec<Element<'t>>,
                  after_heading: bool,
+                 after_ref_block: bool,
                  latched: bool,
                  enclosing_block: bool,
                  kind: Flush| {
         if chunk.is_empty() {
             return;
         }
-        let wrap = after_heading
-            && !latched
+        // The math/table trailing flag wraps a free inline run; a chunk
+        // owned by an inline scope inside the item (span/size partials in
+        // it) belongs to the scope's segment flow, not to this wrap:
+        // live keeps it bare (test/span/same-line-div-text-has-no-leading-
+        // space pins `**||` in a span after its table; the heading family's
+        // scope wraps are unaffected since headings set after_heading).
+        let chunk_has_partial = chunk
+            .iter()
+            .any(|element| matches!(element, Element::Partial(_)));
+        // Headings drive the Soft/SegmentGap families unconditionally. A
+        // math/table trail wraps only the trailing run at the end of the
+        // item body (probes muse-probe-ad75-*) and only when the chunk is
+        // free of inline-scope partials.
+        let wrap = (!latched
             && has_content(chunk)
-            && match kind {
-                Flush::BeforeTable => false,
-                Flush::SegmentGap | Flush::End => enclosing_block,
-                Flush::Soft | Flush::CodeOrAlign => true,
-            };
+            && ((after_heading
+                && match kind {
+                    Flush::BeforeTable => false,
+                    Flush::SegmentGap | Flush::End => enclosing_block,
+                    Flush::Soft | Flush::CodeOrAlign => true,
+                })
+                || (after_ref_block
+                    && !suppress_trail
+                    && !chunk_has_partial
+                    && matches!(kind, Flush::End)
+                    && enclosing_block)));
         if wrap {
             out.push(Element::Container(Container::new(
                 ContainerType::Paragraph,
@@ -2899,6 +2957,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut chunk,
                 &mut out,
                 after_heading,
+                after_ref_block,
                 latched,
                 enclosing_block,
                 Flush::SegmentGap,
@@ -2910,6 +2969,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut chunk,
                 &mut out,
                 after_heading,
+                after_ref_block,
                 latched,
                 enclosing_block,
                 Flush::Soft,
@@ -2923,11 +2983,13 @@ fn wrap_post_heading_segments<'t>(
                 &mut chunk,
                 &mut out,
                 after_heading,
+                after_ref_block,
                 latched,
                 enclosing_block,
                 Flush::BeforeTable,
             );
             out.push(element);
+            after_ref_block = true;
             continue;
         }
         if is_code_or_align {
@@ -2935,6 +2997,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut chunk,
                 &mut out,
                 after_heading,
+                after_ref_block,
                 latched,
                 enclosing_block,
                 Flush::CodeOrAlign,
@@ -2944,15 +3007,20 @@ fn wrap_post_heading_segments<'t>(
             continue;
         }
         if !element.paragraph_safe() {
+            let is_math = matches!(element, Element::Math { .. });
             flush(
                 &mut chunk,
                 &mut out,
                 after_heading,
+                after_ref_block,
                 latched,
                 enclosing_block,
                 Flush::Soft,
             );
             out.push(element);
+            if is_math {
+                after_ref_block = true;
+            }
             continue;
         }
         chunk.push(element);
@@ -2961,6 +3029,7 @@ fn wrap_post_heading_segments<'t>(
         &mut chunk,
         &mut out,
         after_heading,
+        after_ref_block,
         latched,
         enclosing_block,
         Flush::End,
@@ -3054,6 +3123,11 @@ pub(crate) fn parse_wikidot_implicit_list_block<'r, 't>(
             enclosing_block,
             shadowed_div_region,
             last_run_is_doc_final,
+            parser.in_footnote()
+                || crate::parsing::rule::impls::line_owner::wikidot_list_contains_footnote_open(
+                    &parser.full_text().inner(),
+                    body_start,
+                ),
         );
         if parser.take_wikidot_li_swallowed_block_at(body_start, source_end) {
             if elements.is_empty() {

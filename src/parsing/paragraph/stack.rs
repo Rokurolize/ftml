@@ -1721,7 +1721,7 @@ impl<'t> ParagraphStack<'t> {
             Element::Container(container) => {
                 matches!(
                     container.ctype(),
-                    ContainerType::Div | ContainerType::Blockquote
+                    ContainerType::Div | ContainerType::Note | ContainerType::Blockquote
                 ) || container
                     .elements()
                     .first()
@@ -1731,8 +1731,9 @@ impl<'t> ParagraphStack<'t> {
                 items.iter().any(Self::wikidot_list_item_starts_with_block)
             }
             // A code block at item start owns the item's head line; live
-            // dissolves the pre-list paragraph there.
-            Element::Code(_) => true,
+            // dissolves the pre-list paragraph there. A collapsible at item
+            // start does too (muse-probe-ad75-n7).
+            Element::Code(_) | Element::Collapsible { .. } => true,
             Element::Color { elements, .. } | Element::Anchor { elements, .. } => {
                 elements
                     .first()
@@ -1801,7 +1802,7 @@ impl<'t> ParagraphStack<'t> {
         match element {
             Element::Table(_) | Element::TabView(_) => true,
             Element::Container(container) => {
-                matches!(container.ctype(), ContainerType::Div)
+                matches!(container.ctype(), ContainerType::Div | ContainerType::Note)
                     || container
                         .elements()
                         .iter()
@@ -1812,7 +1813,9 @@ impl<'t> ParagraphStack<'t> {
             }
             // A code block held anywhere in an item counts (the pre-list
             // paragraph unwrap at the explicit-list arm in push_element).
-            Element::Code(_) => true,
+            // A collapsible does too (muse-probe-ad75-n7: collapsible-first
+            // keeps the head bare via its own presence, no div needed).
+            Element::Code(_) | Element::Collapsible { .. } => true,
             Element::Color { elements, .. } | Element::Anchor { elements, .. } => {
                 elements.iter().any(Self::wikidot_element_holds_item_block)
             }

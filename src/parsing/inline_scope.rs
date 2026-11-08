@@ -2248,6 +2248,18 @@ fn formed_chunk_wraps(list: &Element<'_>) -> bool {
     true
 }
 
+/// Drop leading line breaks from a collected run (shared by the Color
+/// segmentation below; the Container path trims inline in
+/// `seal_format_segment` / `segment_format_run`).
+fn strip_leading_breaks<'t>(run: &mut Vec<Element<'t>>) {
+    while matches!(
+        run.first(),
+        Some(Element::LineBreak | Element::LineBreaks(_))
+    ) {
+        run.remove(0);
+    }
+}
+
 /// Flush the collected run for a segmented format crossing an explicit list
 /// or a `[[code]]` block. Leading breaks are trimmed except for the
 /// own-line opener of the pair (live renders that leading chunk as a
@@ -2561,6 +2573,15 @@ fn format_explicit_list_segments<'t>(
                         wikidot_explicit_block: true,
                         ..
                     } => {
+                        // Mirror `seal_format_segment`: post-boundary runs
+                        // (and a stopped pair's first run) lose leading
+                        // breaks, so the newline after the list does not
+                        // become a leading `<br>` in the post-list segment
+                        // (anchres R1: the color tail was keep-everything,
+                        // unlike the Container path).
+                        if stops_at_list || seen_list {
+                            strip_leading_breaks(&mut current_run);
+                        }
                         if !current_run.is_empty() {
                             let mut seg_attrs = AttributeMap::new();
                             if stops_at_list && !seen_list {
@@ -2589,6 +2610,12 @@ fn format_explicit_list_segments<'t>(
                         current_run.push(child);
                     }
                 }
+            }
+            // Mirror `segment_format_run`'s final-run trim: the post-list
+            // run (appended bare when stopped, re-wrapped in color when
+            // crossing) loses leading breaks.
+            if seen_list {
+                strip_leading_breaks(&mut current_run);
             }
             if !current_run.is_empty() {
                 if stops_at_list && seen_list {

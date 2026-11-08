@@ -1,0 +1,7 @@
+[[note]]
+//x
+[[note a="b"]]
+n
+[[/note]]
+y//
+[[/note]]

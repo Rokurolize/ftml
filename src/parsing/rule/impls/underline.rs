@@ -49,6 +49,8 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::token_pair(Token::Whitespace, Token::Underline),
     ];
     let ctype = ContainerType::Underline;
+    let inside_note = parser.in_note()
+        || parser.wikidot_note_pair_encloses(parser.current().span.start);
     let collected =
         collect_container(parser, RULE_UNDERLINE, ctype, &close, &invalid, None)?;
     let (elements, errors, paragraph_safe) = collected.into();
@@ -58,6 +60,17 @@ fn try_consume_fn<'r, 't>(
             Elements::Single(Element::Container(container))
                 if inline_body_padded_through_seams(container.elements())
         )
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    if parser.settings().layout.legacy()
+        && super::bold::bold_body_crosses_flow_block(&elements)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    if parser.settings().layout.legacy()
+        && inside_note
+        && super::bold::body_contains_literal_note_region(&elements)
     {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }

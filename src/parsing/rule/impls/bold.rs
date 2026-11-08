@@ -310,7 +310,7 @@ fn try_consume_split_delimiter<'r, 't>(
     finish_collected(parser, collected, inside_note)
 }
 
-fn bold_body_crosses_flow_block(elements: &Elements<'_>) -> bool {
+pub(super) fn bold_body_crosses_flow_block(elements: &Elements<'_>) -> bool {
     let Elements::Single(Element::Container(container)) = elements else {
         return false;
     };
@@ -390,8 +390,9 @@ fn finish_collected<'r, 't>(
 /// collapsed to fallback text inside a note body. Live rejects the bold pair
 /// spanning such a region (its markers stay literal, and the following
 /// markers re-pair after the note); an unbalanced head, or the same text
-/// outside a note body, keeps the pair.
-fn body_contains_literal_note_region(elements: &Elements<'_>) -> bool {
+/// outside a note body, keeps the pair. Shared with italics and underline
+/// (BRIEF-IU84), whose probes show the identical rejection + re-pairing.
+pub(super) fn body_contains_literal_note_region(elements: &Elements<'_>) -> bool {
     let mut text = String::new();
     body_text_into(elements, &mut text);
     let lower = text.to_ascii_lowercase();

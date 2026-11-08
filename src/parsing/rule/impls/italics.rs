@@ -74,9 +74,11 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::PaddedSplitClose(SplitDelimiter::Italics),
     ];
     let ctype = ContainerType::Italics;
+    let inside_note = parser.in_note()
+        || parser.wikidot_note_pair_encloses(parser.current().span.start);
     let collected =
         collect_container(parser, RULE_ITALICS, ctype, &close, &invalid, None)?;
-    finish_collected(parser, collected)
+    finish_collected(parser, collected, inside_note)
 }
 
 /// The two `/`s of an italics opener can be split by elided source
@@ -96,6 +98,8 @@ fn try_consume_split_delimiter<'r, 't>(
     ) else {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     };
+    let inside_note = parser.in_note()
+        || parser.wikidot_note_pair_encloses(parser.current().span.start);
     validate_reachable_close(
         parser,
         Token::Italics,
@@ -135,12 +139,13 @@ fn try_consume_split_delimiter<'r, 't>(
         }
         None => collected,
     };
-    finish_collected(parser, collected)
+    finish_collected(parser, collected, inside_note)
 }
 
 fn finish_collected<'r, 't>(
     parser: &mut Parser<'r, 't>,
     collected: ParseSuccess<Elements<'t>>,
+    inside_note: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     let leftover = collected.split_close_leftover.clone();
     let (elements, errors, paragraph_safe) = collected.into();
@@ -150,6 +155,17 @@ fn finish_collected<'r, 't>(
             Elements::Single(Element::Container(container))
                 if inline_body_padded_through_seams(container.elements())
         )
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    if parser.settings().layout.legacy()
+        && super::bold::bold_body_crosses_flow_block(&elements)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    if parser.settings().layout.legacy()
+        && inside_note
+        && super::bold::body_contains_literal_note_region(&elements)
     {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }

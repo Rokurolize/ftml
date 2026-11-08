@@ -5172,10 +5172,16 @@ where
                 "block-list-unordered" | "block-list-ordered"
             )
             && self.has_shallower_quote_text_line(block_rule, required_depth);
+        // BRIEF-UQ91A: the depth-0 close that makes an unquoted-close
+        // evaporation eligible is itself a shallower close, so
+        // `!has_shallower_close` must not veto the evaporation flag;
+        // the gate's own region scan (first close, head requirement)
+        // is the arbiter. A shallower quoted close still cannot
+        // evaporate: the region scan returns its depth, not the
+        // required depth, so the gate stays false there.
         let has_shallower_evaporation = !has_close
             && !has_later_close
             && !has_surplus_list_close
-            && !has_shallower_close
             && literal_residual_quotes
             && matches!(
                 block_rule.name,
@@ -6552,13 +6558,6 @@ where
                 if self.quote_boundary_starts_body_end(block_rule) {
                     return self.consume_quote_boundary_body_end(block_rule);
                 }
-                // The unquoted closer (or the next boundary line) follows
-                // from here; the attempted lines stay unconsumed.
-                if self.hoist_unquoted_close_shallow_text(block_rule)? {
-                    // BRIEF-UQ57d: shallow text was hoisted bare and any
-                    // blanks absorbed; the closer line is next.
-                    continue;
-                }
                 // BRIEF-UE57b: a UL/OL whose body soft-ended before
                 // any `[[li]]` head or same-depth content (the first
                 // body line was shallower than the required depth)
@@ -6568,13 +6567,38 @@ where
                 // produces no output. The attempted lines stay
                 // unconsumed; the fresh quote run renders the paired
                 // close as break (BRIEF-QR45/QT52 machinery).
+                // BRIEF-UQ91A: evaporation is checked BEFORE the
+                // unquoted-close hoist. Without this ordering the hoist
+                // absorbs the shallower x bare and the list degrades;
+                // with it, the evaporation body (x as paragraph, the
+                // quoted head as a literal blockquote paragraph) is
+                // byte-right. A depth-0 close also arms the aftermath
+                // consumer (top-level gather) instead of the quote-run
+                // paired-close path, which can never see a depth-0 row.
                 if self.wikidot_quote_boundary_evaporation()
-                    && self.shallower_text_list_close_ahead(block_rule)
+                    && let Some(close_depth) =
+                        self.evaporation_list_close_ahead_depth(block_rule)
                 {
                     self.set_wikidot_quote_boundary_li_auto_close();
                     self.set_wikidot_pending_paired_list_close();
                     self.set_wikidot_evaporated_list(true);
+                    if close_depth == 0 {
+                        self.set_wikidot_pending_unquoted_evaporation_close(
+                            if block_rule.name == "block-list-ordered" {
+                                2
+                            } else {
+                                1
+                            },
+                        );
+                    }
                     return Ok(());
+                }
+                // The unquoted closer (or the next boundary line) follows
+                // from here; the attempted lines stay unconsumed.
+                if self.hoist_unquoted_close_shallow_text(block_rule)? {
+                    // BRIEF-UQ57d: shallow text was hoisted bare and any
+                    // blanks absorbed; the closer line is next.
+                    continue;
                 }
                 // BRIEF-QT52: a UL/OL in shallower-text mode soft-ends at
                 // the first shallower line (text, blank, or block markup)
@@ -7664,6 +7688,62 @@ where
         }
     }
 
+    /// Region scan from a line-content position (BRIEF-UQ91A): like
+    /// `shallower_text_region_has_quoted_list_close`, but returns the
+    /// quote depth of the first bare list close ahead (before any bare
+    /// `[[/li]]` close line or input end), plus whether a quoted
+    /// `[[li]]` head at the required depth was seen on an earlier line.
+    /// `None` when no such close comes first. Used by the evaporation
+    /// gate and soft-end, where a depth-0 close is also eligible —
+    /// but only when a quoted `[[li]]` head precedes it (without a
+    /// head the shape is the unquoted-close hoist family, not
+    /// evaporation: live renders it bare-hoisted, not dissolved).
+    fn shallower_text_region_list_close_depth(
+        &self,
+        block_rule: &BlockRule,
+        required_depth: usize,
+        start: &Parser<'r, 't>,
+    ) -> Option<(usize, bool)> {
+        let mut probe = start.clone();
+        let mut saw_li_head = false;
+        loop {
+            if probe.current().token == Token::InputEnd {
+                return None;
+            }
+            if matches!(
+                probe.current().token,
+                Token::LineBreak | Token::ParagraphBreak
+            ) {
+                if probe.step().is_err() {
+                    return None;
+                }
+                continue;
+            }
+            let mut depth = 0usize;
+            let mut content = probe.clone();
+            while content.current().token == Token::Quote {
+                depth += content.current().slice.len();
+                if content.step().is_err() || content.get_optional_space().is_err() {
+                    return None;
+                }
+            }
+            if Self::bare_line_is_li_close_after_quotes(&content) {
+                return None;
+            }
+            if Self::bare_line_is_list_close(&content, block_rule) {
+                return Some((depth, saw_li_head));
+            }
+            if depth >= required_depth && Self::line_contains_li_head(&content) {
+                saw_li_head = true;
+            }
+            while !token_is_body_boundary(probe.current().token) {
+                if probe.step().is_err() {
+                    return None;
+                }
+            }
+        }
+    }
+
     /// Whether the UL/OL body belongs to the shallower-text family
     /// (BRIEF-QT52): some `[[li]]` head line is followed by a shallower
     /// line that is not a bare `[[/li]]` close — text, blank, or block
@@ -7764,11 +7844,15 @@ where
         }
         if self.current().token == Token::ParagraphBreak {
             // A blank line is shallower than any required depth.
-            return self.shallower_text_region_has_quoted_list_close(
-                block_rule,
-                required_depth,
-                &self.clone(),
-            );
+            return self
+                .shallower_text_region_list_close_depth(
+                    block_rule,
+                    required_depth,
+                    &self.clone(),
+                )
+                .is_some_and(|(depth, saw_li_head)| {
+                    depth == required_depth || (depth == 0 && saw_li_head)
+                });
         }
         let mut probe = self.clone();
         let mut depth = 0usize;
@@ -7783,11 +7867,10 @@ where
             // the list forms; no evaporation.
             return false;
         }
-        self.shallower_text_region_has_quoted_list_close(
-            block_rule,
-            required_depth,
-            &probe,
-        )
+        self.shallower_text_region_list_close_depth(block_rule, required_depth, &probe)
+            .is_some_and(|(depth, saw_li_head)| {
+                depth == required_depth || (depth == 0 && saw_li_head)
+            })
     }
 
     /// Whether the fresh quote run's quoted `[[ /ul]]`/`[[ /ol]]` close is
@@ -7822,6 +7905,42 @@ where
         // if it is at required depth already, the region scan handles it.
         // Otherwise scan onward for the quoted close.
         self.shallower_text_region_has_quoted_list_close(block_rule, required, &probe)
+    }
+
+    /// Evaporation soft-end probe (BRIEF-UQ91A): like
+    /// `shallower_text_list_close_ahead`, but returns the quote depth
+    /// of the first bare list close ahead when it is eligible for
+    /// evaporation — quoted at the required depth, or at depth 0 with
+    /// a quoted `[[li]]` head seen before it. Peeks only; the
+    /// soft-end leaves the attempted lines unconsumed.
+    pub(crate) fn evaporation_list_close_ahead_depth(
+        &self,
+        block_rule: &BlockRule,
+    ) -> Option<usize> {
+        if self.quote_body_literal_residuals() != Some(true)
+            || !matches!(
+                block_rule.name,
+                "block-list-unordered" | "block-list-ordered"
+            )
+        {
+            return None;
+        }
+        let required = match self.quote_body_required_depth() {
+            Some(depth) if depth > 0 => depth,
+            _ => return None,
+        };
+        let mut probe = self.clone();
+        if matches!(
+            probe.current().token,
+            Token::LineBreak | Token::ParagraphBreak
+        ) && probe.step().is_err()
+        {
+            return None;
+        }
+        self.shallower_text_region_list_close_depth(block_rule, required, &probe)
+            .and_then(|(depth, saw_li_head)| {
+                (depth == required || (depth == 0 && saw_li_head)).then_some(depth)
+            })
     }
 
     /// Whether the next non-blank row after the unquoted list close or

@@ -247,6 +247,14 @@ pub(super) struct BlockScanCache<'t> {
     /// list entirely when a bare list close quoted at the required
     /// depth is still ahead — the head line produces no output.
     wikidot_quote_boundary_evaporation: Cell<bool>,
+    /// Aftermath of a depth-0 (unquoted) list close that ended an
+    /// evaporated list (BRIEF-UQ91A): the close itself is still ahead
+    /// at depth 0, outside any quote run, so the pending-paired-close
+    /// machinery (which only fires on quote-run rows) cannot consume
+    /// it. `1` = unordered (bare break), `2` = ordered (unclosed
+    /// shell), `0` = none. The top-level paragraph gather consumes
+    /// the close line when it reaches it and emits the aftermath.
+    wikidot_pending_unquoted_evaporation_close: Cell<u8>,
     wikidot_inline_markers: inline_pairs::WikidotInlineMarkers,
     wikidot_heading_barrier: Option<usize>,
     wikidot_heading_reopen: Option<(usize, crate::tree::HeadingReopen<'t>)>,
@@ -1648,6 +1656,38 @@ impl<'r, 't> Parser<'r, 't> {
             .borrow()
             .wikidot_quote_boundary_evaporation
             .get()
+    }
+
+    /// Arm the depth-0 evaporation aftermath (`1` = UL break, `2` = OL
+    /// shell). Set only at the evaporation soft-end when the paired
+    /// close ahead is at depth 0.
+    pub(crate) fn set_wikidot_pending_unquoted_evaporation_close(&self, kind: u8) {
+        debug_assert!(matches!(kind, 1 | 2));
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_pending_unquoted_evaporation_close
+            .set(kind);
+    }
+
+    pub(crate) fn wikidot_pending_unquoted_evaporation_close(&self) -> u8 {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_pending_unquoted_evaporation_close
+            .get()
+    }
+
+    pub(crate) fn take_wikidot_pending_unquoted_evaporation_close(&self) -> u8 {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_pending_unquoted_evaporation_close
+            .take()
+    }
+
+    pub(crate) fn clear_wikidot_pending_unquoted_evaporation_close(&self) {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_pending_unquoted_evaporation_close
+            .set(0);
     }
 
     pub(crate) fn wikidot_flat_close_splits_quote_run(&self, head_byte: usize) -> bool {

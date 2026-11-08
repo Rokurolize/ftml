@@ -95,6 +95,57 @@ fn wikidot_plain_text_row(parser: &Parser<'_, '_>) -> bool {
     }
 }
 
+/// Whether the rows ahead are plain text rows (and blanks) that end at
+/// a bare unquoted list close for `want` (BRIEF-SA89 split aftermath
+/// lookahead): only plain rows may intervene; a quoted row, block
+/// marker, or a different closer disqualifies. Peeks only.
+fn plain_rows_then_unquoted_close<'r, 't>(parser: &Parser<'r, 't>, want: &str) -> bool
+where
+    'r: 't,
+{
+    let mut probe = parser.clone();
+    loop {
+        match probe.current().token {
+            Token::LineBreak | Token::ParagraphBreak => {
+                if probe.step().is_err() {
+                    return false;
+                }
+                continue;
+            }
+            Token::InputEnd => return false,
+            Token::Quote => return false,
+            Token::LeftBlockEnd => {
+                let mut end = probe.clone();
+                let matches = end.get_end_block().is_ok_and(|name| {
+                    name.strip_suffix('_')
+                        .unwrap_or(&name)
+                        .eq_ignore_ascii_case(want)
+                });
+                if !matches {
+                    return false;
+                }
+                let _ = end.get_optional_space();
+                return matches!(
+                    end.current().token,
+                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                );
+            }
+            _ => {}
+        }
+        if !wikidot_plain_text_row(&probe) {
+            return false;
+        }
+        while !matches!(
+            probe.current().token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        ) {
+            if probe.step().is_err() {
+                return false;
+            }
+        }
+    }
+}
+
 pub fn gather_paragraphs<'r, 't, F>(
     parser: &mut Parser<'r, 't>,
     rule: Rule,
@@ -145,6 +196,68 @@ where
                 continue;
             }
             parser.clear_wikidot_merge_follow();
+        }
+        // BRIEF-SA89: split post-head rows. When the armed unquoted
+        // close is directly ahead modulo plain text rows, those rows
+        // hoist bare (live: `y<br />`, `y<br />z<br />`) instead of
+        // paragraphing; the close row itself is then handled by the
+        // aftermath consumer below on the next iteration. A quoted or
+        // block row before the close (the pre-split paragraph, the
+        // stranded head blockquote) disqualifies, so those rows keep
+        // their paragraph/blockquote rendering.
+        if parser.settings().layout.legacy()
+            && close_condition_fn.is_none()
+            && parser.wikidot_pending_unquoted_evaporation_close() != 0
+            && parser.start_of_line()
+            && parser.current().token != Token::LeftBlockEnd
+            && wikidot_plain_text_row(parser)
+        {
+            let kind = parser.wikidot_pending_unquoted_evaporation_close();
+            let want = if kind == 2 { "ol" } else { "ul" };
+            if plain_rows_then_unquoted_close(parser, want) {
+                let mut first_line = true;
+                loop {
+                    if parser.current().token == Token::LeftBlockEnd {
+                        break;
+                    }
+                    if parser.current().token == Token::ParagraphBreak {
+                        if parser.step().is_err() {
+                            return Err(parser.make_err(ParseErrorKind::EndOfInput));
+                        }
+                        continue;
+                    }
+                    let start = parser.current().span.start;
+                    let mut end = start;
+                    while !matches!(
+                        parser.current().token,
+                        Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                    ) {
+                        end = parser.current().span.end;
+                        if parser.step().is_err() {
+                            return Err(parser.make_err(ParseErrorKind::EndOfInput));
+                        }
+                    }
+                    let text = &parser.full_text().inner()[start..end];
+                    if first_line {
+                        stack.end_paragraph();
+                        stack.mark_next_unwrapped();
+                    } else {
+                        stack.push_element(Element::LineBreak, false);
+                    }
+                    stack.push_element(Element::Text(Cow::Borrowed(text)), false);
+                    first_line = false;
+                    if matches!(
+                        parser.current().token,
+                        Token::LineBreak | Token::ParagraphBreak
+                    ) {
+                        parser.step()?;
+                    } else {
+                        break;
+                    }
+                }
+                line_prefix_whitespace_only = true;
+                continue;
+            }
         }
         // BRIEF-UQ91A aftermath consumer: an evaporated list whose
         // paired close is a depth-0 (unquoted) line. The close sits

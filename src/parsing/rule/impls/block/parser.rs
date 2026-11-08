@@ -5291,10 +5291,16 @@ where
             && literal_residual_quotes
             && block_rule.name.starts_with("block-list-")
             && self.has_shallower_quote_list_close(block_rule, required_depth);
+        // BRIEF-SA89: a depth-0 (unquoted) list close after a quoted
+        // `[[li]]` head is itself a shallower close, so
+        // `!has_shallower_close` must not veto the shallower-text flag
+        // for that split shape; the gate's own region scan (head seen
+        // before the depth-0 close) is the arbiter. A shallower quoted
+        // close still cannot qualify: the region scan returns its
+        // depth, not the required depth, so the gate stays false there.
         let has_shallower_text_line = !has_close
             && !has_later_close
             && !has_surplus_list_close
-            && !has_shallower_close
             && literal_residual_quotes
             && matches!(
                 block_rule.name,
@@ -6742,6 +6748,20 @@ where
                 {
                     self.set_wikidot_quote_boundary_li_auto_close();
                     self.set_wikidot_pending_paired_list_close();
+                    // BRIEF-SA89: a depth-0 (unquoted) close after the
+                    // quoted head sits outside every quote run; arm the
+                    // top-level gather aftermath for it (post-head shallow
+                    // rows hoist bare, then the close emits its break/shell),
+                    // like the evaporation aftermath (BRIEF-UQ91A).
+                    if self.shallower_text_list_close_depth_ahead(block_rule) == Some(0) {
+                        self.set_wikidot_pending_unquoted_evaporation_close(
+                            if block_rule.name == "block-list-ordered" {
+                                2
+                            } else {
+                                1
+                            },
+                        );
+                    }
                     return Ok(());
                 }
                 if self.quote_body_literal_residuals() == Some(true)
@@ -7782,6 +7802,7 @@ where
         start: &Parser<'r, 't>,
     ) -> bool {
         let mut probe = start.clone();
+        let mut saw_li_head = false;
         loop {
             if probe.current().token == Token::InputEnd {
                 return false;
@@ -7807,7 +7828,10 @@ where
                 return false;
             }
             if Self::bare_line_is_list_close(&content, block_rule) {
-                return depth == required_depth;
+                return depth == required_depth || (depth == 0 && saw_li_head);
+            }
+            if depth >= required_depth && Self::line_contains_li_head(&content) {
+                saw_li_head = true;
             }
             while !token_is_body_boundary(probe.current().token) {
                 if probe.step().is_err() {
@@ -8036,6 +8060,41 @@ where
         self.shallower_text_region_has_quoted_list_close(block_rule, required, &probe)
     }
 
+    /// Depth-aware soft-end probe (BRIEF-SA89): like
+    /// `shallower_text_list_close_ahead`, but returns the quote depth of
+    /// the first bare list close ahead when it qualifies — quoted at the
+    /// required depth, or at depth 0 with a quoted `[[li]]` head seen
+    /// before it (the split shape). Peeks only.
+    pub(crate) fn shallower_text_list_close_depth_ahead(
+        &self,
+        block_rule: &BlockRule,
+    ) -> Option<usize> {
+        if self.quote_body_literal_residuals() != Some(true)
+            || !matches!(
+                block_rule.name,
+                "block-list-unordered" | "block-list-ordered"
+            )
+        {
+            return None;
+        }
+        let required = match self.quote_body_required_depth() {
+            Some(depth) if depth > 0 => depth,
+            _ => return None,
+        };
+        let mut probe = self.clone();
+        if matches!(
+            probe.current().token,
+            Token::LineBreak | Token::ParagraphBreak
+        ) && probe.step().is_err()
+        {
+            return None;
+        }
+        self.shallower_text_region_list_close_depth(block_rule, required, &probe)
+            .and_then(|(depth, saw_li_head)| {
+                (depth == required || (depth == 0 && saw_li_head)).then_some(depth)
+            })
+    }
+
     /// Evaporation soft-end probe (BRIEF-UQ91A): like
     /// `shallower_text_list_close_ahead`, but returns the quote depth
     /// of the first bare list close ahead when it is eligible for
@@ -8179,6 +8238,54 @@ where
         }
     }
 
+    /// Lookahead from a deeper-quoted `[[li]]` head row (BRIEF-SA89):
+    /// whether the first closer ahead is an unquoted (depth-0) bare list
+    /// close, before any `[[/li]]` close, quoted closer, or input end.
+    /// Peeks only.
+    fn unquoted_list_close_ahead_after_head(parser: &Parser<'r, 't>) -> bool {
+        let mut probe = parser.clone();
+        loop {
+            if matches!(
+                probe.current().token,
+                Token::LineBreak | Token::ParagraphBreak
+            ) {
+                if probe.step().is_err() {
+                    return false;
+                }
+                continue;
+            }
+            if probe.current().token == Token::InputEnd {
+                return false;
+            }
+            let mut depth = 0usize;
+            let mut content = probe.clone();
+            while content.current().token == Token::Quote {
+                depth += content.current().slice.len();
+                if content.step().is_err() || content.get_optional_space().is_err() {
+                    return false;
+                }
+            }
+            if Self::bare_line_is_li_close_after_quotes(&content) {
+                return false;
+            }
+            let mut end = content.clone();
+            if let Ok(name) = end.get_end_block() {
+                let _ = end.get_optional_space();
+                if token_is_body_boundary(end.current().token) {
+                    let name = name.strip_suffix('_').unwrap_or(&name);
+                    let is_list_close = name.eq_ignore_ascii_case("ul")
+                        || name.eq_ignore_ascii_case("ol");
+                    return depth == 0 && is_list_close;
+                }
+            }
+            while !token_is_body_boundary(probe.current().token) {
+                if probe.step().is_err() {
+                    return false;
+                }
+            }
+        }
+    }
+
     /// Scan from the boundary without mutating: the first depth-0 closer line
     /// in the region decides. Blank lines and shallow plain-text lines are
     /// absorbed by the hoist; anything else (deeper-quoted content, block
@@ -8270,6 +8377,16 @@ where
                 // the body's own rows. (`> [[li]]` heads are also skipped;
                 // the unquoted-close two-items family where this causes
                 // mis-attribution is a known residual — BRIEF-UQ67 item (a).)
+                // BRIEF-SA89: a deeper-quoted `[[li]]` HEAD with an
+                // unquoted list close ahead is a split shape instead:
+                // bail the hoist so the shallower-text soft-end can strand
+                // the head to the quote-run split (pre segment paragraph,
+                // head blockquote, post segment bare).
+                if Self::line_contains_li_head(&probe)
+                    && Self::unquoted_list_close_ahead_after_head(&scan)
+                {
+                    return None;
+                }
                 while !matches!(
                     scan.current().token,
                     Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
@@ -8285,6 +8402,9 @@ where
             }
             // A depth-0 shallow line candidate: decide whether it is plain
             // text (no block markers). Blank lines are absorbed silently.
+            // BRIEF-SA89 (a2): a depth-0 `[[li]]` head row is hoist text
+            // (live: degraded list + bare `x<br />` + bare `[[li]]v<br />`),
+            // not a scan bail that sends the whole UL literal.
             let mut plain_text = true;
             let mut line_end = None;
             let mut scan_line = scan.clone();
@@ -8295,6 +8415,35 @@ where
                         break;
                     }
                     Token::LeftBlock | Token::LeftBlockStar | Token::LeftBlockEnd => {
+                        if scan_line.current().span.start == line_start
+                            && scan_line.current().token == Token::LeftBlock
+                        {
+                            let mut head = scan_line.clone();
+                            if head.get_block_name(false).is_ok_and(|(name, _, _)| {
+                                name.strip_suffix('_')
+                                    .unwrap_or(&name)
+                                    .eq_ignore_ascii_case("li")
+                            }) {
+                                let mut end_scan = scan_line.clone();
+                                loop {
+                                    match end_scan.current().token {
+                                        Token::LineBreak
+                                        | Token::ParagraphBreak
+                                        | Token::InputEnd => {
+                                            line_end =
+                                                Some(end_scan.current().span.start);
+                                            break;
+                                        }
+                                        _ => {
+                                            if end_scan.step().is_err() {
+                                                return None;
+                                            }
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                        }
                         plain_text = false;
                         break;
                     }

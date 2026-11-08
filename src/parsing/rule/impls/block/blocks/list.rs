@@ -901,7 +901,7 @@ fn push_literal_list_item<'t>(
         item_elements.append(elements);
     } else {
         if f7_enclosing {
-            wrap_post_heading_segments(elements, true);
+            wrap_post_heading_segments(elements, true, false);
         }
         if append_to_last && !outer_list_is_scored {
             wrap_wikidot_malformed_scored_items(elements, content_follows);
@@ -1668,6 +1668,11 @@ fn parse_list_item<'r, 't>(
             enclosing_block,
             shadowed_div_region,
             last_run_is_doc_final,
+            parser.in_footnote()
+                || crate::parsing::rule::impls::line_owner::wikidot_list_contains_footnote_open(
+                    &parser.full_text().inner(),
+                    body_start,
+                ),
         );
         // NL81 (E, all-linebreaks-body): no content survived inside the
         // shadowed region — the region-end break goes before any content
@@ -2534,6 +2539,7 @@ fn assemble_wikidot_li_segments<'t>(
     enclosing_block: bool,
     shadowed_div_region: bool,
     last_run_is_doc_final: bool,
+    suppress_trail: bool,
 ) -> Vec<Element<'t>> {
     let mut had_trailing_empty = false;
     while segments
@@ -2803,7 +2809,7 @@ fn assemble_wikidot_li_segments<'t>(
     while matches!(elements.last(), Some(Element::Text(text)) if text == " ") {
         elements.pop();
     }
-    wrap_post_heading_segments(&mut elements, enclosing_block);
+    wrap_post_heading_segments(&mut elements, enclosing_block, suppress_trail);
     elements
 }
 
@@ -2827,6 +2833,7 @@ fn assemble_wikidot_li_segments<'t>(
 fn wrap_post_heading_segments<'t>(
     elements: &mut Vec<Element<'t>>,
     enclosing_block: bool,
+    suppress_trail: bool,
 ) {
     fn has_content(chunk: &[Element<'_>]) -> bool {
         chunk.iter().any(|element| {
@@ -2834,6 +2841,29 @@ fn wrap_post_heading_segments<'t>(
                 && !matches!(element, Element::Text(text) if text.trim().is_empty())
         })
     }
+
+    // A footnote reference in the item keeps the trailing run bare on live
+    // (muse-probe-ad75-c1..c5 and the pool cases: any `[[footnote]]` ref in
+    // the item suppresses the paragraph wrap), as does parsing the item
+    // inside a footnote definition body. Walk the assembled elements for a
+    // footnote element so cell-nested refs count too.
+    fn subtree_has_footnote(elements: &[Element<'_>]) -> bool {
+        fn visit(element: &Element<'_>) -> bool {
+            matches!(element, Element::Footnote(_)) || {
+                let mut found = false;
+                crate::parsing::inline_scope::visit_children(element, &mut |children| {
+                    for child in children {
+                        if !found && visit(child) {
+                            found = true;
+                        }
+                    }
+                });
+                found
+            }
+        }
+        elements.iter().any(visit)
+    }
+    let suppress_trail = suppress_trail || subtree_has_footnote(elements);
 
     enum Flush {
         /// A block that can resume paragraph flow (hr, separator, math, quote,
@@ -2894,6 +2924,7 @@ fn wrap_post_heading_segments<'t>(
                     Flush::Soft | Flush::CodeOrAlign => true,
                 })
                 || (after_ref_block
+                    && !suppress_trail
                     && !chunk_has_partial
                     && matches!(kind, Flush::End)
                     && enclosing_block)));
@@ -3092,6 +3123,11 @@ pub(crate) fn parse_wikidot_implicit_list_block<'r, 't>(
             enclosing_block,
             shadowed_div_region,
             last_run_is_doc_final,
+            parser.in_footnote()
+                || crate::parsing::rule::impls::line_owner::wikidot_list_contains_footnote_open(
+                    &parser.full_text().inner(),
+                    body_start,
+                ),
         );
         if parser.take_wikidot_li_swallowed_block_at(body_start, source_end) {
             if elements.is_empty() {

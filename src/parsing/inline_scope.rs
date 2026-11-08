@@ -7559,7 +7559,30 @@ impl<'t> WikidotFrameAssembly<'t> {
 /// 1 break already present on the terminal closer span); a second list splits
 /// the breaks (the closer span is followed by a list — leave it). Gated to
 /// root `outer_close_eof` frames only.
+///
+/// R3 (v2v4 scope items, item 82b), also here:
+/// - Scope style: an outer `[[size]]` scope still open over the heading text
+///   styles the post-list segment spans (closer span, blank-follower
+///   paragraph span, second-list item spans) with its style.
+/// - Cancellation: when the heading label contains a completed span-rendered
+///   scope close (color/span/size inside the label), live drops the heading
+///   wrapper entirely after the list: every post-list segment span dissolves
+///   to bare content (closer literal, break, trail text, following
+///   paragraph/list content) and R2's added block-end breaks do not exist.
 fn fix_outer_close_eof_breaks<'t>(children: &mut Vec<Element<'t>>) {
+    let signals = outer_close_eof_signals(children);
+    if let Some(anchor) = children
+        .iter()
+        .position(|el| matches!(el, Element::List { .. }))
+    {
+        if signals.cancelled {
+            dissolve_post_list_segments(children, anchor, signals.outer_scope);
+            return;
+        }
+        if let Some(attrs) = &signals.outer_size {
+            restyle_post_list_segments(children, anchor, attrs);
+        }
+    }
     // Find the closer-literal span: a plain Span container whose leading text
     // forms `[[/div]]`, `[[/note]]`, or `[[/collapsible]]`. Prefer the one
     // that is the heading wrapper's post-list emission (after a list, in this
@@ -7579,7 +7602,7 @@ fn fix_outer_close_eof_breaks<'t>(children: &mut Vec<Element<'t>>) {
     let Element::Container(container) = &mut children[idx] else {
         return;
     };
-    if container.ctype() != ContainerType::Span {
+    if !matches!(container.ctype(), ContainerType::Span | ContainerType::Size) {
         return;
     }
     let elements = container.elements_mut();
@@ -7642,16 +7665,331 @@ fn fix_outer_close_eof_breaks<'t>(children: &mut Vec<Element<'t>>) {
             content.pop();
         }
         elements.extend(content);
-        elements.push(Element::LineBreak);
-        elements.push(Element::LineBreak); // block end (2 breaks total at end)
+        // Block-end breaks: 2 without an outer scope, 1 absorbed when an
+        // outer scope boundary is open (span-wrap/size-wrap trail shapes).
+        let block_end_breaks = if signals.outer_scope { 1 } else { 2 };
+        for _ in 0..block_end_breaks {
+            elements.push(Element::LineBreak);
+        }
     }
 }
 
-/// Is this a plain Span container whose text content starts with a block
-/// closer literal `[[/div]]`, `[[/note]]`, or `[[/collapsible]]`?
+/// R3 scope signals read from a frame's barrier heading (item 82b): whether
+/// the heading-wrapper post-list spans dissolve, and which outer scope (if
+/// any) styles them. Derived from saved-page live probes
+/// (`muse-probe-r382-*`): a completed span-rendered scope close inside the
+/// label (color/span/size) kills the wrapper; bold/italic/anchor do not.
+struct R3HeadingSignals<'t> {
+    cancelled: bool,
+    outer_scope: bool,
+    outer_size: Option<AttributeMap<'t>>,
+}
+
+impl Default for R3HeadingSignals<'_> {
+    fn default() -> Self {
+        R3HeadingSignals {
+            cancelled: false,
+            outer_scope: false,
+            outer_size: None,
+        }
+    }
+}
+
+fn outer_close_eof_signals<'t>(children: &[Element<'t>]) -> R3HeadingSignals<'t> {
+    let Some(heading) = find_barrier_heading(children) else {
+        return R3HeadingSignals::default();
+    };
+    // Descend through single-child Span/Size chains: every entry but the
+    // innermost is an outer scope; the innermost container's children are
+    // the heading wrapper's content.
+    let mut chain: Vec<(ContainerType, Option<AttributeMap<'t>>)> = Vec::new();
+    let mut level = heading.elements();
+    loop {
+        if level.len() == 1
+            && let Element::Container(c) = &level[0]
+            && matches!(c.ctype(), ContainerType::Span | ContainerType::Size)
+        {
+            let attrs = if c.ctype() == ContainerType::Size {
+                Some(c.attributes().clone())
+            } else {
+                None
+            };
+            chain.push((c.ctype(), attrs));
+            level = c.elements();
+            continue;
+        }
+        break;
+    }
+    if chain.is_empty() {
+        return R3HeadingSignals::default();
+    }
+    let cancelled = subtree_has_span_rendered(level);
+    let outer = &chain[..chain.len() - 1];
+    let outer_scope = !outer.is_empty();
+    let outer_size = outer.iter().rev().find_map(|(ctype, attrs)| {
+        if *ctype == ContainerType::Size {
+            attrs.clone()
+        } else {
+            None
+        }
+    });
+    R3HeadingSignals {
+        cancelled,
+        outer_scope,
+        outer_size,
+    }
+}
+
+/// The first barrier heading in DFS order, skipping nested block frames'
+/// subtrees (their headings belong to their own shells, not this frame's).
+fn find_barrier_heading<'a, 't>(
+    elements: &'a [Element<'t>],
+) -> Option<&'a Container<'t>> {
+    for element in elements {
+        match element {
+            Element::Container(container) => {
+                if matches!(container.ctype(), ContainerType::Header(_)) {
+                    if container
+                        .attributes()
+                        .get()
+                        .contains_key(crate::tree::WIKIDOT_HEADING_BARRIER_MARKER)
+                    {
+                        return Some(container);
+                    }
+                    continue;
+                }
+                if let Some(found) = find_barrier_heading(container.elements()) {
+                    return Some(found);
+                }
+            }
+            Element::List { items, .. } => {
+                for item in items {
+                    match item {
+                        ListItem::Elements { elements, .. } => {
+                            if let Some(found) = find_barrier_heading(elements) {
+                                return Some(found);
+                            }
+                        }
+                        ListItem::SubList { element } => {
+                            let slice = std::slice::from_ref(&**element);
+                            if let Some(found) = find_barrier_heading(slice) {
+                                return Some(found);
+                            }
+                        }
+                    }
+                }
+            }
+            _ => continue,
+        }
+    }
+    None
+}
+
+/// Does this run of plain content contain a completed span-rendered scope
+/// close (a `Color` element or a Span/Size container)? Formatted containers
+/// (bold/italic), anchors, and plain text do not count.
+fn subtree_has_span_rendered<'t>(elements: &[Element<'t>]) -> bool {
+    for element in elements {
+        match element {
+            Element::Color { .. } => return true,
+            Element::Container(c)
+                if matches!(c.ctype(), ContainerType::Span | ContainerType::Size) =>
+            {
+                return true;
+            }
+            _ => {
+                if let Some(children) = subtree_children(element)
+                    && subtree_has_span_rendered(children)
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Restyle the post-list segment spans (every span emitted after the frame's
+/// first list: the closer span, blank-follower paragraph spans, second-list
+/// item spans) as `Size` containers carrying the outer size scope's style.
+fn restyle_post_list_segments<'t>(
+    children: &mut Vec<Element<'t>>,
+    anchor: usize,
+    attrs: &AttributeMap<'t>,
+) {
+    for element in children[anchor + 1..].iter_mut() {
+        match element {
+            Element::Container(c) if c.ctype() == ContainerType::Span => {
+                let elements = mem::take(c.elements_mut());
+                *c = Container::new(ContainerType::Size, elements, attrs.clone());
+            }
+            Element::Container(c) if c.ctype() == ContainerType::Paragraph => {
+                restyle_span_children(c.elements_mut(), attrs);
+            }
+            Element::List { items, .. } => {
+                restyle_list_items(items, attrs);
+            }
+            _ => {}
+        }
+    }
+}
+
+fn restyle_span_children<'t>(elements: &mut Vec<Element<'t>>, attrs: &AttributeMap<'t>) {
+    for element in elements.iter_mut() {
+        match element {
+            Element::Container(c) if c.ctype() == ContainerType::Span => {
+                let inner = mem::take(c.elements_mut());
+                *c = Container::new(ContainerType::Size, inner, attrs.clone());
+            }
+            Element::List { items, .. } => {
+                restyle_list_items(items, attrs);
+            }
+            _ => {}
+        }
+    }
+}
+
+fn restyle_list_items<'t>(items: &mut Vec<ListItem<'t>>, attrs: &AttributeMap<'t>) {
+    for item in items.iter_mut() {
+        match item {
+            ListItem::Elements { elements, .. } => {
+                restyle_span_children(elements, attrs);
+            }
+            ListItem::SubList { element } => {
+                let mut single = vec![mem::replace(
+                    &mut **element,
+                    Element::Text(Cow::Borrowed("")),
+                )];
+                restyle_span_children(&mut single, attrs);
+                if let Some(inner) = single.pop() {
+                    **element = inner;
+                }
+            }
+        }
+    }
+}
+
+/// The wrapper died on live: splice every post-list segment span's content
+/// into place, bare. The closer span loses the block-end break R2 would
+/// have added (its content is kept as lowered, modulo trailing break/space
+/// trimming and one block-end break left when an outer scope is open).
+/// Split closer spans (followed by a list) keep their as-lowered content.
+fn dissolve_post_list_segments<'t>(
+    children: &mut Vec<Element<'t>>,
+    anchor: usize,
+    outer_scope: bool,
+) {
+    if let Some(idx) = children.iter().rposition(|el| is_closer_literal_span(el)) {
+        let split = children[idx + 1..]
+            .iter()
+            .any(|el| matches!(el, Element::List { .. }));
+        let blank_follower = matches!(
+            children.get(idx + 1),
+            Some(Element::Container(c)) if c.ctype() == ContainerType::Paragraph
+        );
+        if !split {
+            let Element::Container(container) = &mut children[idx] else {
+                unreachable!("checked by is_closer_literal_span")
+            };
+            let elements = container.elements_mut();
+            while matches!(
+                elements.last(),
+                Some(Element::LineBreak | Element::LineBreaks(_))
+            ) || matches!(elements.last(), Some(Element::Text(t)) if t.trim().is_empty())
+            {
+                elements.pop();
+            }
+            if !blank_follower && outer_scope {
+                elements.push(Element::LineBreak);
+            }
+        }
+    }
+    let mut out: Vec<Element<'t>> = Vec::with_capacity(children.len());
+    for (i, element) in mem::take(children).into_iter().enumerate() {
+        if i <= anchor {
+            out.push(element);
+            continue;
+        }
+        out.extend(dissolve_element(element));
+    }
+    *children = out;
+}
+
+fn dissolve_element<'t>(element: Element<'t>) -> Vec<Element<'t>> {
+    match element {
+        Element::Container(c) if c.ctype() == ContainerType::Span => {
+            Vec::<Element<'t>>::from(c)
+        }
+        Element::Container(mut c) if c.ctype() == ContainerType::Paragraph => {
+            dissolve_span_children(c.elements_mut());
+            vec![Element::Container(c)]
+        }
+        Element::List { .. } => {
+            let mut element = element;
+            if let Element::List { items, .. } = &mut element {
+                dissolve_list_items(items);
+            }
+            vec![element]
+        }
+        other => vec![other],
+    }
+}
+
+fn dissolve_span_children(elements: &mut Vec<Element<'_>>) {
+    let mut out: Vec<Element<'_>> = Vec::new();
+    for element in mem::take(elements) {
+        match element {
+            Element::Container(c) if c.ctype() == ContainerType::Span => {
+                out.extend(Vec::<Element<'_>>::from(c));
+            }
+            Element::Container(mut c) if c.ctype() == ContainerType::Paragraph => {
+                dissolve_span_children(c.elements_mut());
+                out.push(Element::Container(c));
+            }
+            Element::List { .. } => {
+                let mut element = element;
+                if let Element::List { items, .. } = &mut element {
+                    dissolve_list_items(items);
+                }
+                out.push(element);
+            }
+            other => out.push(other),
+        }
+    }
+    *elements = out;
+}
+
+fn dissolve_list_items(items: &mut Vec<ListItem<'_>>) {
+    for item in items.iter_mut() {
+        match item {
+            ListItem::Elements { elements, .. } => {
+                dissolve_span_children(elements);
+            }
+            ListItem::SubList { element } => {
+                // The sub-list lives in a single-element slot; wrap it so the
+                // vec-based dissolve can splice spans inside it, then put
+                // the single result back.
+                let mut single = vec![mem::replace(
+                    &mut **element,
+                    Element::Text(Cow::Borrowed("")),
+                )];
+                dissolve_span_children(&mut single);
+                if let Some(inner) = single.pop() {
+                    **element = inner;
+                }
+            }
+        }
+    }
+}
+
+/// Is this a Span (or, after R3 restyling, Size) container whose text content
+/// starts with a block closer literal `[[/div]]`, `[[/note]]`, or
+/// `[[/collapsible]]`?
 fn is_closer_literal_span(el: &Element<'_>) -> bool {
-    let Element::Container(c) = el else { return false; };
-    if c.ctype() != ContainerType::Span {
+    let Element::Container(c) = el else {
+        return false;
+    };
+    if !matches!(c.ctype(), ContainerType::Span | ContainerType::Size) {
         return false;
     }
     closer_literal_text_len(c.elements()) > 0

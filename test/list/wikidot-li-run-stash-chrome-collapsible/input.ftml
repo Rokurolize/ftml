@@ -1,0 +1,12 @@
+[[ol]]
+[[li]]
+* [[ol]]
+* [[li]]
+* x
+* [[/li]]
+* [[/ol]]
+[[/li]]
+[[/ol]]
+[[collapsible show="H" hide="H"]]
+c
+[[/collapsible]]

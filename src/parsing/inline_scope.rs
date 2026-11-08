@@ -832,6 +832,17 @@ impl<'t> ActiveScopes<'t> {
         self.active_tail.is_some()
     }
 
+    fn active_scopes_all_span_size(&self) -> bool {
+        let mut position = self.active_tail;
+        while let Some(current) = position {
+            if !matches!(self.scopes[current].kind, ScopeKind::Span | ScopeKind::Size) {
+                return false;
+            }
+            position = self.scopes[current].previous_active;
+        }
+        true
+    }
+
     fn outer_active_position(&self) -> Option<usize> {
         let mut position = self.active_tail?;
         while let Some(previous) = self.scopes[position].previous_active {
@@ -3430,6 +3441,7 @@ fn flush_root_pending<'t>(
     active.sync_chain_to_istack();
     let scope_before = active.outer_active_position();
     let scope_open_at_start = active.has_active_scope();
+    let scope_is_span_size_only = active.active_scopes_all_span_size();
     // The generic explicit-list predicate for the stopped-segment family;
     // the crossed rejected pair family decides on item shapes instead
     // (62(b)). Both gates apply only at explicit-list boundaries and are
@@ -3532,19 +3544,23 @@ fn flush_root_pending<'t>(
             }
         }
     }
-    // A plain (scope-free) inline chunk separated from its paragraph by a
-    // block boundary re-joins a just-flushed paragraph on live, and a chunk
-    // with no preceding paragraph becomes a fresh paragraph: live renders
-    // the pre-list segment of a stopped format pair as
-    // `<p><span underline>a<br></span></p><ul>…` even with no inline scope
+    // A pre-list inline chunk cut by an explicit list re-joins a
+    // just-flushed paragraph on live, and a chunk with no preceding
+    // paragraph becomes a fresh paragraph: live renders the pre-list
+    // segment of a stopped format pair as
+    // `<p><span underline>a<br></span></p><ul>…` with no inline scope
     // open (and as `<p>x<br><span underline>a<br></span></p>` when the chunk
-    // continues an open paragraph cut by the list). Gated to the
-    // segmentation shape (an inline-format segment in the pending run) at an
-    // explicit list boundary; a chunk flushed after a non-paragraph block
-    // (post-list content) stays bare, as does any chunk with an open inline
-    // scope (the scope-continuation merges in `append_root_sequence` own
-    // those), and ordinary inline content parked at a root boundary keeps
-    // the bare-append behaviour.
+    // continues an open paragraph cut by the list). The same wrap holds
+    // when the only open scopes are span/size (item 90(ii)): live puts
+    // `<p>` around the span/size pre-list segment
+    // (`<p><span><span underline>a<br></span></span></p>`, and
+    // `<p>x <span>…</span></p>` for the prefixed shape). Anchor and other
+    // scopes keep the bare behaviour here (anchor pre-segment placement is
+    // item 60). Gated to the segmentation shape (an inline-format segment
+    // in the pending run) at an explicit list boundary; a chunk flushed
+    // after a non-paragraph block (post-list content) stays bare, and
+    // ordinary inline content parked at a root boundary keeps the
+    // bare-append behaviour.
     let formed_chunk_wraps = next.is_some_and(|next| {
         matches!(
             next,
@@ -3554,7 +3570,7 @@ fn flush_root_pending<'t>(
             }
         ) && formed_chunk_wraps(next)
     });
-    if !scope_open_at_start
+    if (!scope_open_at_start || scope_is_span_size_only)
         && at_explicit_list
         && pending_has_format
         && sequence_has_inline_content(&sequence)
@@ -3565,6 +3581,24 @@ fn flush_root_pending<'t>(
             && let Some(Element::Container(paragraph)) = output.last_mut()
             && paragraph.ctype() == ContainerType::Paragraph
         {
+            // Merge a same-scope wrapper across the boundary
+            // (e.g. a break-only span segment + the styled pre-list
+            // segment) so the paragraph keeps one wrapper like
+            // `append_root_sequence` does for the scope-continuation
+            // case; otherwise the two wrappers render as siblings.
+            let should_merge = matches!(
+                (paragraph.elements().last(), sequence.first()),
+                (Some(tail), Some(first)) if same_scope_wrapper(tail, first)
+            );
+            if should_merge {
+                let next = sequence.remove(0);
+                let previous = paragraph
+                    .elements_mut()
+                    .last_mut()
+                    .expect("last checked above");
+                let merged = scope_sibling_merge(previous, next);
+                debug_assert!(merged, "same-scope wrappers must merge");
+            }
             paragraph.elements_mut().append(&mut sequence);
             return true;
         }
@@ -3608,18 +3642,22 @@ fn sequence_has_content(elements: &[Element<'_>]) -> bool {
 
 /// Whether the pending sequence contains an inline-format segment produced
 /// by segmentation (a format-kind container: bold/italics/underline/
-/// superscript/subscript/strikethrough/monospace). That is the shape every
-/// segmentation-produced inline chunk has in pending: live re-wraps it in a
-/// paragraph when the containing chunk was cut by an explicit list (the
-/// frozen pre-list segment family), while ordinary inline content parked at
-/// a root boundary (an image, bare text/link before a block) stays bare.
+/// superscript/subscript/strikethrough/monospace, or a `Color` segment).
+/// That is the shape every segmentation-produced inline chunk has in
+/// pending: live re-wraps it in a paragraph when the containing chunk was
+/// cut by an explicit list (the frozen pre-list segment family), while
+/// ordinary inline content parked at a root boundary (an image, bare
+/// text/link before a block) stays bare. A `Color` element itself counts:
+/// segmentation emits it as a leaf segment (`format_explicit_list_segments`
+/// splits `Element::Color` around the list), so without counting it the
+/// color pre-list segment never qualified for the wrap (item 90(ii)).
 fn sequence_contains_format_container(elements: &[Element<'_>]) -> bool {
     elements.iter().any(|element| match element {
+        Element::Color { .. } => true,
         Element::Container(container) => {
             format_kind_of(container.ctype()).is_some()
                 || sequence_contains_format_container(container.elements())
         }
-        Element::Color { elements, .. } => sequence_contains_format_container(elements),
         Element::Anchor { elements, .. } => sequence_contains_format_container(elements),
         _ => false,
     })

@@ -3707,16 +3707,33 @@ fn append_root_sequence<'t>(
             paragraph.elements().last().is_some_and(|tail| {
                 // A content-bearing tail ends its chunk on live (heading
                 // wrapper copies stay separate); only a break-only segment
-                // is a piece of the continuing scope.
+                // is a piece of the continuing scope. Two item-60
+                // extensions for anchor tails: a fused opener
+                // (`[[a]]##red|`) leaves its first-paragraph anchor with
+                // only a `WikidotEmptyInlineOwner` partial — that renders
+                // empty and is likewise a piece of the continuing scope —
+                // and an anchor tail carrying plain content before the
+                // segmentation boundary (`[[a]]x##red|`) continues into
+                // the styled pre segment inside the same anchor on live
+                // (`<p><a>x<span>a<br></span></a></p>`), unlike container
+                // or color tails where content still ends the chunk.
                 let tail_elements: &[Element<'t>] = match tail {
                     Element::Container(tail_container) => tail_container.elements(),
                     Element::Anchor { elements, .. } => elements,
                     Element::Color { elements, .. } => elements,
                     _ => return false,
                 };
-                if !tail_elements.iter().all(|element| {
-                    matches!(element, Element::LineBreak | Element::LineBreaks(_))
-                }) {
+                let is_break_or_empty_owner = |element: &Element<'_>| {
+                    matches!(
+                        element,
+                        Element::LineBreak
+                            | Element::LineBreaks(_)
+                            | Element::Partial(PartialElement::WikidotEmptyInlineOwner)
+                    )
+                };
+                if !tail_elements.iter().all(is_break_or_empty_owner)
+                    && !matches!(tail, Element::Anchor { .. })
+                {
                     return false;
                 }
                 sequence
@@ -3734,6 +3751,91 @@ fn append_root_sequence<'t>(
         paragraph_tail_scope_sibling_merge(previous, next);
     }
     output.append(sequence);
+}
+
+/// Whether a paragraph tail wrapper is a piece of the scope continuing into
+/// `next`: a break-only (or empty-owner-only) segment, or — for anchor
+/// tails only (item 60) — a segment carrying plain content before the
+/// segmentation boundary. See the `paragraph_tail_merge` predicate in
+/// `append_root_sequence` for the root-side rule.
+fn paragraph_scope_tail_continues<'t>(tail: &Element<'t>, next: &Element<'t>) -> bool {
+    if !same_scope_wrapper(tail, next) {
+        return false;
+    }
+    let tail_elements: &[Element<'t>] = match tail {
+        Element::Container(tail_container) => tail_container.elements(),
+        Element::Anchor { elements, .. } => elements,
+        Element::Color { elements, .. } => elements,
+        _ => return false,
+    };
+    let is_break_or_empty_owner = |element: &Element<'_>| {
+        matches!(
+            element,
+            Element::LineBreak
+                | Element::LineBreaks(_)
+                | Element::Partial(PartialElement::WikidotEmptyInlineOwner)
+        )
+    };
+    if tail_elements.iter().all(is_break_or_empty_owner) {
+        return true;
+    }
+    matches!(tail, Element::Anchor { .. })
+}
+
+/// Frame-context pre-list chunk placement (item 60): inside a `[[div]]`
+/// (or `[[note]]`) frame, a segmentation-produced pre chunk cut by an
+/// explicit list keeps the enclosing scope's first paragraph, exactly as
+/// at block root. When the paragraph precedes, the chunk merges into the
+/// paragraph tail (anchor/span/size); when no paragraph precedes, a
+/// formatted scope chunk cut by the list takes a fresh `<p>` (the fused
+/// `[[span]]` shape, which has no break-only segment for the group flush
+/// to merge). Gate: the chunk is directly followed by an explicit-block
+/// list. Other frames (blockquote/align/collapsible/...) are unprobed
+/// and untouched.
+fn merge_frame_prelist_chunks<'t>(children: &mut Vec<Element<'t>>) {
+    let is_explicit_block_list = |element: &Element<'_>| {
+        matches!(
+            element,
+            Element::List {
+                wikidot_explicit_block: true,
+                ..
+            }
+        )
+    };
+    // Fresh wrap: a formatted scope chunk at the frame head cut by an
+    // explicit list, with no paragraph before it.
+    if children.len() > 1
+        && is_explicit_block_list(&children[1])
+        && sequence_contains_format_container(std::slice::from_ref(&children[0]))
+        && sequence_has_inline_content(std::slice::from_ref(&children[0]))
+    {
+        let chunk = children.remove(0);
+        children.insert(
+            0,
+            Element::Container(Container::new(
+                ContainerType::Paragraph,
+                vec![chunk],
+                AttributeMap::new(),
+            )),
+        );
+        return;
+    }
+    let mut index = 0;
+    while index + 2 < children.len() {
+        let paragraph_tail = matches!(&children[index], Element::Container(paragraph)
+            if paragraph.ctype() == ContainerType::Paragraph)
+            && matches!(&children[index], Element::Container(paragraph)
+                if paragraph.elements().last().is_some());
+        let mergeable = paragraph_tail
+            && is_explicit_block_list(&children[index + 2])
+            && matches!(&children[index], Element::Container(paragraph)
+                if paragraph.elements().last().is_some_and(|tail| paragraph_scope_tail_continues(tail, &children[index + 1])));
+        if mergeable {
+            let next = children.remove(index + 1);
+            paragraph_tail_scope_sibling_merge(&mut children[index], next);
+        }
+        index += 1;
+    }
 }
 
 fn paragraph_tail_scope_sibling_merge<'t>(
@@ -6699,6 +6801,11 @@ fn lower_children<'t>(
         );
     let mut lowered = false;
     let truncate_at_entry = matches!(element, Element::List { .. });
+    let is_div_frame = matches!(
+        element,
+        Element::Container(container)
+            if matches!(container.ctype(), ContainerType::Div | ContainerType::Note)
+    );
     let mut visit = |children: &mut Vec<Element<'t>>| {
         lowered = true;
         if truncate_at_entry {
@@ -6744,6 +6851,15 @@ fn lower_children<'t>(
         if eject {
             eject_segment_trailing_space(children);
             strip_trailing_space_from_vec(children);
+        }
+        // Item 60 frame-context: inside a [[div]] (and [[note]]) frame, a
+        // segmentation-produced pre-list chunk keeps the enclosing scope's
+        // first paragraph (merging into it, or taking a fresh `<p>` when
+        // it is the frame's head chunk) instead of re-materializing the
+        // scope as a sibling. Other eject frames (blockquote/align/
+        // collapsible) are unprobed and stay ungated.
+        if is_div_frame {
+            merge_frame_prelist_chunks(children);
         }
         // Trailing frame-edge segment (d8-44): emitted after the eject
         // passes above, which would eat a trailing space-only segment.

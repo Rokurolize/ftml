@@ -68,8 +68,10 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::PaddedSplitClose(SplitDelimiter::Bold),
     ];
     let ctype = ContainerType::Bold;
+    let inside_note = parser.in_note()
+        || parser.wikidot_note_pair_encloses(parser.current().span.start);
     let collected = collect_container(parser, RULE_BOLD, ctype, &close, &invalid, None)?;
-    finish_collected(parser, collected)
+    finish_collected(parser, collected, inside_note)
 }
 
 fn is_break_token(token: Token) -> bool {
@@ -257,6 +259,8 @@ fn empty_list_bold_after(parser: &Parser<'_, '_>) -> Option<usize> {
 fn try_consume_split_delimiter<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    let inside_note = parser.in_note()
+        || parser.wikidot_note_pair_encloses(parser.current().span.start);
     let Some(split_match) = split_delimiter_end(
         TokenWindow::at(parser),
         SegmentCtx::from_parser(parser),
@@ -303,7 +307,7 @@ fn try_consume_split_delimiter<'r, 't>(
         }
         None => collected,
     };
-    finish_collected(parser, collected)
+    finish_collected(parser, collected, inside_note)
 }
 
 fn bold_body_crosses_flow_block(elements: &Elements<'_>) -> bool {
@@ -326,6 +330,7 @@ fn bold_body_crosses_flow_block(elements: &Elements<'_>) -> bool {
 fn finish_collected<'r, 't>(
     parser: &mut Parser<'r, 't>,
     collected: ParseSuccess<Elements<'t>>,
+    inside_note: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     let leftover = collected.split_close_leftover.clone();
     let (elements, errors, paragraph_safe) = collected.into();
@@ -339,6 +344,12 @@ fn finish_collected<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     if parser.settings().layout.legacy() && bold_body_crosses_flow_block(&elements) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    if parser.settings().layout.legacy()
+        && inside_note
+        && body_contains_literal_note_region(&elements)
+    {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     if parser.settings().layout.legacy()
@@ -372,6 +383,71 @@ fn finish_collected<'r, 't>(
     let elements = super::bold::mark_format_stop_at_list(parser, elements);
     let elements = mark_span_list_close_tail(parser, elements);
     ok!(paragraph_safe; elements, errors)
+}
+
+/// A literal note region inside a bold body (BRIEF-NN84): a `[[note]]` head
+/// (with or without arguments) followed later by a `[[/note]]` close, both
+/// collapsed to fallback text inside a note body. Live rejects the bold pair
+/// spanning such a region (its markers stay literal, and the following
+/// markers re-pair after the note); an unbalanced head, or the same text
+/// outside a note body, keeps the pair.
+fn body_contains_literal_note_region(elements: &Elements<'_>) -> bool {
+    let mut text = String::new();
+    body_text_into(elements, &mut text);
+    let lower = text.to_ascii_lowercase();
+    let Some(head) = literal_note_head_at(&lower) else {
+        return false;
+    };
+    lower[head..].contains("[[/note]]")
+}
+
+fn body_text_into(elements: &Elements<'_>, text: &mut String) {
+    match elements {
+        Elements::Single(element) => body_element_text_into(element, text),
+        Elements::Multiple(elements) => {
+            for element in elements {
+                body_element_text_into(element, text);
+            }
+        }
+        Elements::None => {}
+    }
+}
+
+fn body_element_text_into(element: &Element<'_>, text: &mut String) {
+    match element {
+        Element::Text(data) => text.push_str(data),
+        Element::LineBreak | Element::LineBreaks { .. } => text.push('\n'),
+        Element::Container(container) => {
+            for child in container.elements() {
+                body_element_text_into(child, text);
+            }
+        }
+        Element::Partial(PartialElement::WikidotFoster(elements)) => {
+            for child in elements {
+                body_element_text_into(child, text);
+            }
+        }
+        _ => text.push('\n'),
+    }
+}
+
+/// The byte of the first literal note head (`[[note]]`, or with arguments)
+/// in lowercased body text: `[[note` followed by `]` or whitespace.
+fn literal_note_head_at(lower: &str) -> Option<usize> {
+    let bytes = lower.as_bytes();
+    let mut search = 0usize;
+    while let Some(rel) = lower[search..].find("[[note") {
+        let start = search + rel;
+        let after = start + "[[note".len();
+        if matches!(
+            bytes.get(after),
+            Some(b']') | Some(b'\t') | Some(b' ') | Some(b'\n')
+        ) {
+            return Some(start);
+        }
+        search = after;
+    }
+    None
 }
 
 /// A bold, italics, superscript or subscript pair that closed beyond an

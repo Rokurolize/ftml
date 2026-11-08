@@ -1690,6 +1690,19 @@ impl<'r, 't> Parser<'r, 't> {
             .set(0);
     }
 
+    /// Whether a scanned note pair encloses `byte` (BRIEF-NN84): a bold
+    /// pair that starts inside a note body, on either note parsing path
+    /// (the `in_note` flag only covers the recursive path).
+    pub(crate) fn wikidot_note_pair_encloses(&self, byte: usize) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_block_pairs
+            .heads_between(0, byte)
+            .any(|pair| {
+                pair.kind == block_pairs::WikidotBlockKind::Note && pair.closer_byte > byte
+            })
+    }
+
     pub(crate) fn wikidot_flat_close_splits_quote_run(&self, head_byte: usize) -> bool {
         if !self.settings().layout.legacy() {
             return false;

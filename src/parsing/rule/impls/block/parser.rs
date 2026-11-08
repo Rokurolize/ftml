@@ -7898,13 +7898,19 @@ where
     }
 
     /// Whether the UL/OL body belongs to the shallower-text family
-    /// (BRIEF-QT52): some `[[li]]` head line is followed by a shallower
-    /// line that is not a bare `[[/li]]` close — text, blank, or block
-    /// markup — and from that line a bare list close quoted at the required
-    /// depth comes before any bare `[[/li]]` close line (the `[[/li]]`
-    /// close is the PR #1227 boundary path's own territory). A shallower
-    /// line before the first `[[li]]` head dissolves the UL in live (the
-    /// x-first shape), so it never qualifies.
+    /// (BRIEF-QT52): some `[[li]]` head line — or, since BRIEF-MB91(91b),
+    /// any same-depth line with visible content (quoted text, a bare
+    /// `[[/li]]`, block markup; a quoted blank is not content) — is
+    /// followed by a shallower line that is not a bare `[[/li]]` close
+    /// — text, blank, or block markup — and from that line a bare list
+    /// close quoted at the required depth comes before any bare
+    /// `[[/li]]` close line (the `[[/li]]` close is the PR #1227
+    /// boundary path's own territory). A shallower line before any
+    /// same-depth content dissolves the UL in live (the x-first shape,
+    /// evaporation territory), so it never qualifies. The content arm
+    /// is bounded to the quoted close by the region scan's
+    /// `depth == required_depth` requirement, so the unquoted-close twin
+    /// (same body, depth-0 close) keeps its hoist-family rendering.
     pub(crate) fn has_shallower_quote_text_line(
         &self,
         block_rule: &BlockRule,
@@ -7915,6 +7921,7 @@ where
         }
         let mut parser = self.clone();
         let mut saw_li_head = false;
+        let mut saw_content = false;
         loop {
             if parser.current().token == Token::InputEnd {
                 return false;
@@ -7923,7 +7930,7 @@ where
             // line: a shallow line for the family (depth 0). Do not skip
             // it; decide on it like any other shallow line.
             if parser.current().token == Token::ParagraphBreak {
-                if !saw_li_head {
+                if !saw_li_head && !saw_content {
                     return false;
                 }
                 return self.shallower_text_region_has_quoted_list_close(
@@ -7943,8 +7950,23 @@ where
             if depth >= required_depth && Self::line_contains_li_head(&probe) {
                 saw_li_head = true;
             }
+            // BRIEF-MB91(91b): a same-depth line with visible content is
+            // consumed into the degraded item before the shallow break,
+            // so the soft-end applies to it exactly as it does to a
+            // `[[li]]` head. A quoted blank line (only the quote marker
+            // before the line break) is not content: the lead-blank and
+            // quoted-blank-only shapes keep the evaporation-side
+            // rendering (verified against saved pages).
+            if depth >= required_depth
+                && !matches!(
+                    probe.current().token,
+                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                )
+            {
+                saw_content = true;
+            }
             if depth < required_depth {
-                if !saw_li_head {
+                if !saw_li_head && !saw_content {
                     return false;
                 }
                 if !Self::bare_line_is_li_close_after_quotes(&probe) {

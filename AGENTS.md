@@ -1,5 +1,9 @@
 # FTML
 
+## Where work goes
+
+Development happens on this fork, `Rokurolize/ftml`. Open pull requests against this repository and name it explicitly (`gh pr create --repo Rokurolize/ftml`). The upstream `scpwiki/ftml` serves as a reference; pull requests and pushes go to the fork.
+
 ## Product and documentation
 
 - `README.md`, `docs/WikijumpBoundary.md`, the workspace manifests, and nearby parser/render fixtures.

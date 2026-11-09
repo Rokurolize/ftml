@@ -1150,10 +1150,9 @@ impl<'t> ParagraphStack<'t> {
                 self.finished.get(self.finished.len().saturating_sub(2)),
                 Some(Element::List { .. })
             )
+            && !keep_post_list_break
         {
-            if !keep_post_list_break {
-                self.finished.pop();
-            }
+            self.finished.pop();
         }
         // pw65a: the first content element after a stash-formed explicit
         // list (blank line seen) opens its paragraph with live's leading
@@ -2414,11 +2413,10 @@ impl<'t> ParagraphStack<'t> {
         }) else {
             return false;
         };
-        let keeps = match content {
-            Element::Text(_) | Element::Raw(_) | Element::LineBreak => true,
-            Element::List { .. } => true,
-            _ => false,
-        };
+        let keeps = matches!(
+            content,
+            Element::Text(_) | Element::Raw(_) | Element::LineBreak | Element::List { .. }
+        );
         keeps && self.wikidot_poppable_post_list_break()
     }
 

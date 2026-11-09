@@ -1,0 +1,67 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "bold",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "note",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "bold",
+                                        "attributes": {},
+                                        "elements": [
+                                            {
+                                                "element": "container",
+                                                "data": {
+                                                    "type": "span",
+                                                    "attributes": {},
+                                                    "elements": [
+                                                        {
+                                                            "element": "container",
+                                                            "data": {
+                                                                "type": {
+                                                                    "align": "center"
+                                                                },
+                                                                "attributes": {},
+                                                                "elements": [
+                                                                    {
+                                                                        "element": "container",
+                                                                        "data": {
+                                                                            "type": "paragraph",
+                                                                            "attributes": {},
+                                                                            "elements": [
+                                                                                {
+                                                                                    "element": "text",
+                                                                                    "data": "d"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "element": "line-break"
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

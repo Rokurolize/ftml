@@ -71,8 +71,9 @@ mod superscript;
 mod table;
 pub(crate) use self::table::{
     eject_wikidot_row_cut_marker, eject_wikidot_row_suffix, keep_wikidot_row_suffix,
-    wikidot_row_suffix_start_index,
+    wikidot_row_suffix_start_index, wikidot_spill_closer_drops_post_list_break,
 };
+pub(crate) use crate::parsing::consume::wikidot_discarded_closer_has_same_line_remainder;
 mod text;
 mod underline;
 mod underscore_line_break;

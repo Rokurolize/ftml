@@ -187,6 +187,10 @@ pub(crate) const WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER: &str =
 /// inline-scope lowering; the tree cleanup strips it before output.
 pub(crate) const WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER: &str =
     "data-ftml-list-item-blank-line";
+pub(crate) const WIKIDOT_POST_LIST_BLANK_GAP_MARKER: &str =
+    "data-ftml-post-list-blank-gap";
+pub(crate) const WIKIDOT_LIST_POST_BLANK_GAP_MARKER: &str =
+    "data-ftml-list-post-blank-gap";
 /// Marks an explicit list whose post-list tail content is preceded by source
 /// whitespace (`[[/ul]] __ d`, or a leading space on the next line). Live's
 /// inline pairing sees that pad, so a closer sitting at the first tail content
@@ -588,7 +592,8 @@ fn collect_page_references(
                 | PartialElement::InlineColorOpen(..)
                 | PartialElement::InlineColorClose
                 | PartialElement::InlineAnchorOpen(..)
-                | PartialElement::InlineAnchorClose(_) => {}
+                | PartialElement::InlineAnchorClose(_)
+                | PartialElement::WikidotEquationNumber(..) => {}
             },
             _ => {}
         }
@@ -699,7 +704,8 @@ fn collect_user_references(
                 | PartialElement::InlineColorOpen(..)
                 | PartialElement::InlineColorClose
                 | PartialElement::InlineAnchorOpen(..)
-                | PartialElement::InlineAnchorClose(_) => {}
+                | PartialElement::InlineAnchorClose(_)
+                | PartialElement::WikidotEquationNumber(..) => {}
             },
             _ => {}
         }

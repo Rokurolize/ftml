@@ -1,0 +1,84 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "xx"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "list",
+            "data": {
+                "type": "numbered",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "list",
+                                "data": {
+                                    "type": "numbered",
+                                    "attributes": {},
+                                    "items": [
+                                        {
+                                            "item-type": "elements",
+                                            "attributes": {},
+                                            "elements": [
+                                                {
+                                                    "element": "text",
+                                                    "data": "[["
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "ul"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "]]"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "element": "text",
+                                "data": "[[/"
+                            },
+                            {
+                                "element": "text",
+                                "data": "hidden"
+                            },
+                            {
+                                "element": "text",
+                                "data": "]]"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "xx"
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -18,8 +18,81 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::container::render_container;
+use super::math::{render_math_block, wikidot_math_number_will_render};
 use super::prelude::*;
-use crate::tree::{AttributeMap, ContainerType, ListItem, ListType};
+use crate::tree::{
+    AttributeMap, Container, ContainerType, ListItem, ListType, PartialElement,
+};
+
+fn render_scope_math_pair(
+    ctx: &mut HtmlContext,
+    elements: &[Element],
+    index: usize,
+) -> bool {
+    let Element::Container(container) = &elements[index] else {
+        return false;
+    };
+    if !matches!(container.ctype(), ContainerType::Span | ContainerType::Size) {
+        return false;
+    }
+    let Some(math) = elements.get(index + 1) else {
+        return false;
+    };
+    let Element::Math {
+        name,
+        latex_source,
+        environment,
+        wikidot_block_open_elements,
+        wikidot_label_spans,
+        ..
+    } = math
+    else {
+        return false;
+    };
+    if wikidot_label_spans.is_empty() {
+        return false;
+    }
+    let Some(assigned) = ctx.wikidot_equation_number(std::ptr::from_ref(math) as usize)
+    else {
+        return false;
+    };
+    let number_will_render =
+        wikidot_math_number_will_render(environment.as_deref(), latex_source);
+    let mut children = container.elements().to_vec();
+    let mut trailing_breaks = 0;
+    for element in children.iter().rev() {
+        match element {
+            Element::LineBreak => trailing_breaks += 1,
+            Element::LineBreaks(amount) => trailing_breaks += amount.get(),
+            _ => break,
+        }
+    }
+    for _ in trailing_breaks..2 {
+        children.push(Element::LineBreak);
+    }
+    if number_will_render {
+        children.push(Element::Partial(PartialElement::WikidotEquationNumber(
+            assigned,
+            wikidot_block_open_elements.to_vec(),
+        )));
+    }
+    let merged =
+        Container::new(container.ctype(), children, container.attributes().clone());
+    render_container(ctx, &merged);
+    render_math_block(
+        ctx,
+        Some(assigned),
+        name.as_deref(),
+        latex_source,
+        environment.as_deref(),
+        wikidot_block_open_elements,
+        wikidot_label_spans,
+        number_will_render,
+        false,
+    );
+    true
+}
 
 pub fn render_list(
     ctx: &mut HtmlContext,
@@ -62,7 +135,15 @@ pub fn render_list(
                         li.omit_close();
                     }
                     li.inner(|ctx| {
-                        for element in elements {
+                        let mut index = 0;
+                        while index < elements.len() {
+                            if ctx.layout().legacy()
+                                && render_scope_math_pair(ctx, elements, index)
+                            {
+                                index += 2;
+                                continue;
+                            }
+                            let element = &elements[index];
                             let nested_list = matches!(element, Element::List { .. });
                             let paragraph = matches!(
                                 element,
@@ -76,6 +157,7 @@ pub fn render_list(
                             if ctx.layout().legacy() && (nested_list || paragraph) {
                                 ctx.push_raw('\n');
                             }
+                            index += 1;
                         }
                     });
                   }

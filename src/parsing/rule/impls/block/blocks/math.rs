@@ -82,6 +82,7 @@ fn parse_fn<'r, 't>(
         wikidot_closer_line_br_prefix: closer_line_br_prefix,
         wikidot_block_open_elements: Vec::new(),
         wikidot_label_spans: Vec::new(),
+        wikidot_capture_eq: false,
     };
 
     success_elements(element)

@@ -82,7 +82,7 @@ fn try_consume_fn<'r, 't>(
     }
 
     let close = [ParseCondition::current(Token::RightMonospace)];
-    let invalid = [ParseCondition::current(Token::ParagraphBreak)];
+    let invalid: [ParseCondition; 0] = [];
     let preserve_empty_lists = parser.settings().layout.legacy();
     let previous_preserve = if preserve_empty_lists {
         parser.set_wikidot_preserve_empty_lists(true)

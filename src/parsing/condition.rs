@@ -91,3 +91,32 @@ impl ParseCondition {
         ParseCondition::TokenPair(current, next)
     }
 }
+
+pub(crate) fn paragraph_break_in_post_list_gap(source: &str, break_byte: usize) -> bool {
+    let bytes = source.as_bytes();
+    let mut pos = break_byte.min(bytes.len());
+    let skip_gap = |pos: &mut usize| {
+        while *pos > 0 && matches!(bytes[*pos - 1], b' ' | b'\t' | b'\r' | b'\n') {
+            *pos -= 1;
+        }
+    };
+    skip_gap(&mut pos);
+    if pos < 2 || &bytes[pos - 2..pos] != b"]]" {
+        return false;
+    }
+    pos -= 2;
+    skip_gap(&mut pos);
+    let name_end = pos;
+    while pos > 0 && bytes[pos - 1].is_ascii_alphabetic() {
+        pos -= 1;
+    }
+    let name = &bytes[pos..name_end];
+    if !(name.eq_ignore_ascii_case(b"ul") || name.eq_ignore_ascii_case(b"ol")) {
+        return false;
+    }
+    skip_gap(&mut pos);
+    if pos < 3 || &bytes[pos - 3..pos] != b"[[/" {
+        return false;
+    }
+    true
+}

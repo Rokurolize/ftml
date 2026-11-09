@@ -363,6 +363,8 @@ pub(super) struct BlockScanCache<'t> {
     /// own depth's anchors. Keeps the anchor out of the decompose
     /// discarded on the floor.
     wikidot_list_anchor_chromes: Vec<(usize, Element<'t>)>,
+    wikidot_list_anchor_unstarred: Vec<(usize, bool)>,
+    wikidot_anchor_capture: Option<(Option<Element<'t>>, bool, bool)>,
     /// Set when a numbered lost-owner formation closes its enclosing
     /// numbered explicit list (the multi-formation escape). Own-line stray
     /// closers in the following region render nothing in live; the closing
@@ -2961,11 +2963,47 @@ impl<'r, 't> Parser<'r, 't> {
         &self,
         depth: usize,
         element: Element<'t>,
+        unstarred: bool,
+    ) {
+        let mut cache = self.block_end_scan_cache.borrow_mut();
+        cache.wikidot_list_anchor_chromes.push((depth, element));
+        cache.wikidot_list_anchor_unstarred.push((depth, unstarred));
+    }
+
+    pub(crate) fn take_wikidot_anchor_unstarred_at(&self, depth: usize) -> bool {
+        let mut cache = self.block_end_scan_cache.borrow_mut();
+        let mut any = false;
+        cache.wikidot_list_anchor_unstarred.retain(|(stamp, unstarred)| {
+            if *stamp >= depth {
+                if *stamp == depth {
+                    any |= *unstarred;
+                }
+                false
+            } else {
+                true
+            }
+        });
+        any
+    }
+
+    pub(crate) fn arm_wikidot_anchor_capture(
+        &self,
+        chrome: Option<Element<'t>>,
+        blank: bool,
+        equation: bool,
     ) {
         self.block_end_scan_cache
             .borrow_mut()
-            .wikidot_list_anchor_chromes
-            .push((depth, element));
+            .wikidot_anchor_capture = Some((chrome, blank, equation));
+    }
+
+    pub(crate) fn take_wikidot_anchor_capture(
+        &self,
+    ) -> Option<(Option<Element<'t>>, bool, bool)> {
+        self.block_end_scan_cache
+            .borrow_mut()
+            .wikidot_anchor_capture
+            .take()
     }
 
     /// Records that the just-closed explicit list carried a marker-line
@@ -3159,9 +3197,10 @@ impl<'r, 't> Parser<'r, 't> {
     }
 
     pub(crate) fn drop_wikidot_list_anchor_chromes_at(&self, depth: usize) {
-        self.block_end_scan_cache
-            .borrow_mut()
-            .wikidot_list_anchor_chromes
+        let mut cache = self.block_end_scan_cache.borrow_mut();
+        cache.wikidot_list_anchor_chromes.retain(|(stamp, _)| *stamp < depth);
+        cache
+            .wikidot_list_anchor_unstarred
             .retain(|(stamp, _)| *stamp < depth);
     }
 

@@ -25,6 +25,7 @@ use super::{
 };
 use crate::parsing::ParseErrorKind;
 use std::borrow::Cow;
+use std::num::NonZeroUsize;
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum InlineFormatKind {
@@ -330,6 +331,9 @@ pub enum PartialElement<'t> {
     Tab(Tab<'t>),
 
     RubyText(RubyText<'t>),
+
+    /// Never produced by the parser; render-time only.
+    WikidotEquationNumber(NonZeroUsize, Vec<Element<'t>>),
 }
 
 impl PartialElement<'_> {
@@ -358,9 +362,9 @@ impl PartialElement<'_> {
             PartialElement::TableCell(_) => "TableCell",
             PartialElement::Tab(_) => "Tab",
             PartialElement::RubyText(_) => "RubyText",
+            PartialElement::WikidotEquationNumber(..) => "WikidotEquationNumber",
         }
     }
-
     #[inline]
     pub fn parse_error_kind(&self) -> ParseErrorKind {
         match self {
@@ -385,6 +389,7 @@ impl PartialElement<'_> {
             PartialElement::TableCell(_) => ParseErrorKind::TableCellOutsideTable,
             PartialElement::Tab(_) => ParseErrorKind::TabOutsideTabView,
             PartialElement::RubyText(_) => ParseErrorKind::RubyTextOutsideRuby,
+            PartialElement::WikidotEquationNumber(..) => ParseErrorKind::NoRulesMatch,
         }
     }
 
@@ -457,6 +462,9 @@ impl PartialElement<'_> {
             }
             PartialElement::Tab(tab) => PartialElement::Tab(tab.to_owned()),
             PartialElement::RubyText(text) => PartialElement::RubyText(text.to_owned()),
+            PartialElement::WikidotEquationNumber(index, elements) => {
+                PartialElement::WikidotEquationNumber(*index, elements_to_owned(elements))
+            }
         }
     }
 

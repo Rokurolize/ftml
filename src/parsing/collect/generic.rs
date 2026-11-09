@@ -21,6 +21,7 @@
 use super::consume_valid_comment;
 use super::iftags::{SegmentCtx, SplitDelimiterMatch, TokenWindow, split_delimiter_end};
 use super::prelude::*;
+use crate::parsing::condition::paragraph_break_in_post_list_gap;
 use crate::parsing::parser::QuoteBodyLineStatus;
 use crate::parsing::rule::impls::line_break_skipped_for_own_line_block;
 
@@ -196,7 +197,24 @@ where
         }
 
         if parser.evaluate_any(invalid_conditions) {
-            return Err(parser.make_err(error_kind.unwrap_or(ParseErrorKind::RuleFailed)));
+            let forgiven_post_list_gap = parser.current().token == Token::ParagraphBreak
+                && matches!(_rule.name(), "bold")
+                && parser.settings().layout.legacy()
+                && invalid_conditions.iter().any(|condition| {
+                    matches!(
+                        condition,
+                        ParseCondition::CurrentToken(Token::ParagraphBreak)
+                    )
+                })
+                && paragraph_break_in_post_list_gap(
+                    parser.full_text().inner(),
+                    parser.current().span.start,
+                );
+            if !forgiven_post_list_gap {
+                return Err(
+                    parser.make_err(error_kind.unwrap_or(ParseErrorKind::RuleFailed))
+                );
+            }
         }
 
         if parser.current().token == Token::InputEnd {

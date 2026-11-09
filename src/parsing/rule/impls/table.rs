@@ -1294,6 +1294,9 @@ fn legacy_unclosed_row(text: &str, pipe: usize) -> Option<UnclosedRow> {
             if text[index..end].contains("||") {
                 return None;
             }
+            if unclosed_run_closed_directly(text, end) {
+                return None;
+            }
             return Some(unclosed_plan(end, &pending_closers));
         }
         if let Some((closer, next)) = plain_span_opener(text, index) {
@@ -1328,6 +1331,15 @@ fn legacy_unclosed_row(text: &str, pipe: usize) -> Option<UnclosedRow> {
         index += utf8_len(bytes[index]);
     }
     None
+}
+
+fn unclosed_run_closed_directly(text: &str, end: usize) -> bool {
+    let line_end = text[end..]
+        .find('\n')
+        .map_or(text.len(), |offset| end + offset);
+    let line = text[end..line_end].trim_matches([' ', '\t', '\r']);
+    let lower = line.to_ascii_lowercase();
+    lower.starts_with("[[/ul]]") || lower.starts_with("[[/ol]]")
 }
 
 fn unclosed_plan(resume: usize, closers: &[usize]) -> UnclosedRow {
@@ -2044,10 +2056,29 @@ fn try_consume_inner<'r, 't>(
                                             ));
                                         } else {
                                             if !suffix_empty {
-                                                interior.extend(suffix);
+                                                let mut suffix = suffix;
+                                                let glued = suffix
+                                                    .iter()
+                                                    .position(|element| {
+                                                        !matches!(
+                                                            element,
+                                                            Element::Text(
+                                                                prefix
+                                                            ) if prefix
+                                                                .trim_matches([
+                                                                    ' ',
+                                                                    '\t',
+                                                                ])
+                                                                .is_empty()
+                                                        )
+                                                    })
+                                                    .unwrap_or(suffix.len());
+                                                interior.extend(suffix.drain(glued..));
                                             }
-                                            if interior.iter().any(element_is_row_suffix) {
-                                                parser.set_wikidot_row_suffix_at(suffix_at);
+                                            if interior.iter().any(element_is_row_suffix)
+                                            {
+                                                parser
+                                                    .set_wikidot_row_suffix_at(suffix_at);
                                                 parser.set_wikidot_row_suffix_cut(row_cut);
                                             } else if row_cut == RowSuffixCut::Collapsible
                                                 && suffix_empty
@@ -2195,6 +2226,49 @@ fn try_consume_inner<'r, 't>(
 
         push_row(&mut rows, &mut cells);
     }
+}
+
+pub(crate) fn wikidot_spill_closer_drops_post_list_break(
+    parser: &Parser<'_, '_>,
+) -> bool {
+    if !parser.settings().layout.legacy() || parser.discarding_hidden_body() {
+        return false;
+    }
+    if parser.current().token != Token::LineBreak {
+        return false;
+    }
+    let Some(next) = parser.look_ahead(0) else {
+        return false;
+    };
+    if next.token != Token::LeftBlockEnd {
+        return false;
+    }
+    let Some(pair) = parser.wikidot_block_pair_at_closer_byte(next.span.start) else {
+        return false;
+    };
+    if !parser.wikidot_head_on_table_row_line(pair.head_byte) {
+        return false;
+    }
+    let source = parser.full_text().inner();
+    let line_end = source[next.span.end..]
+        .find('\n')
+        .map_or(source.len(), |offset| next.span.end + offset);
+    if !source[next.span.end..line_end]
+        .trim_matches([' ', '\t', '\r'])
+        .is_empty()
+    {
+        return true;
+    }
+    if line_end >= source.len() {
+        return true;
+    }
+    let after = line_end + 1;
+    let after_end = source[after..]
+        .find('\n')
+        .map_or(source.len(), |offset| after + offset);
+    !source[after..after_end]
+        .trim_start_matches([' ', '\t', '\r'])
+        .starts_with("||")
 }
 
 fn wikidot_table_closer_cuts(parser: &Parser<'_, '_>) -> bool {

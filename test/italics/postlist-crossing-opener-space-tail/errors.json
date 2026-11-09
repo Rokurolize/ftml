@@ -1,0 +1,20 @@
+[
+    {
+        "token": "italics",
+        "rule": "italics",
+        "span": [
+            42,
+            44
+        ],
+        "kind": "end-of-input"
+    },
+    {
+        "token": "italics",
+        "rule": "fallback",
+        "span": [
+            42,
+            44
+        ],
+        "kind": "no-rules-match"
+    }
+]

@@ -18,10 +18,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use super::inline_delimiter::{ReachableCloseMode, validate_reachable_close};
+use super::inline_delimiter::{
+    ReachableCloseMode, block_name_at, validate_reachable_close,
+};
 use super::prelude::*;
 use crate::parsing::ParseSuccess;
-use crate::tree::{Container, PartialElement, WikidotBlockShell};
+use crate::tree::{AcceptsPartial, Container, PartialElement, WikidotBlockShell};
 use std::borrow::Cow;
 
 #[derive(Debug, Clone)]
@@ -130,6 +132,9 @@ fn try_consume_fn<'r, 't>(
             None,
             ReachableCloseMode::BlockBarrier,
         )?;
+        if legacy && color_body_crosses_item_boundary(parser) {
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
     }
     let close = if table_owned {
         &[
@@ -266,6 +271,59 @@ fn try_consume_fn<'r, 't>(
 
     let elements = super::bold::mark_format_stop_at_list(parser, Elements::Multiple(output));
     ok!(paragraph_safe; elements, errors)
+}
+
+/// Whether a color opened inside an explicit-list item would cross that item's
+/// boundary before its closer. Live substitutes the explicit-list block before
+/// its inline rules run, so such a pair belongs to the segment pairing pass
+/// (exactly like underline/bold); the rule must not swallow the item boundary
+/// tokens as body text.
+fn color_body_crosses_item_boundary(parser: &Parser<'_, '_>) -> bool {
+    if parser.accepts_partial() != AcceptsPartial::ListItem {
+        return false;
+    }
+    let tokens = parser.remaining();
+    let mut blocks: Vec<String> = Vec::new();
+    let mut raw = false;
+    let mut monospace = 0usize;
+    for (index, token) in tokens.iter().enumerate() {
+        match token.token {
+            Token::Color | Token::ParagraphBreak | Token::InputEnd => return false,
+            Token::Raw => raw = !raw,
+            Token::LeftRaw => raw = true,
+            Token::RightRaw => raw = false,
+            Token::LeftMonospace => monospace += 1,
+            Token::RightMonospace => monospace = monospace.saturating_sub(1),
+            _ => {}
+        }
+        if raw || monospace > 0 {
+            continue;
+        }
+        match token.token {
+            Token::LeftBlock | Token::LeftBlockStar => {
+                let name = block_name_at(tokens, index);
+                if !name.is_empty() && name != "li" {
+                    blocks.push(name);
+                }
+            }
+            Token::LeftBlockEnd => {
+                let name = block_name_at(tokens, index);
+                if blocks.is_empty() {
+                    if is_explicit_list_block_name(&name) {
+                        return true;
+                    }
+                } else if blocks.last().is_some_and(|open| *open == name) {
+                    blocks.pop();
+                }
+            }
+            _ => {}
+        }
+    }
+    false
+}
+
+fn is_explicit_list_block_name(name: &str) -> bool {
+    matches!(name, "li" | "ul" | "ol")
 }
 
 fn wikidot_flow_block_element(element: &Element<'_>) -> bool {

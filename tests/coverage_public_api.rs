@@ -313,6 +313,7 @@ fn public_api_html_render_covers_fallback_branches_from_ast() {
                 label: Cow::Borrowed("Detached"),
                 elements: vec![Element::Text(Cow::Borrowed("partial body"))],
                 wikidot_label_spans: Vec::new(),
+                wikidot_row_cut: None,
             })),
             Element::Partial(PartialElement::RubyText(RubyText {
                 attributes: AttributeMap::new(),

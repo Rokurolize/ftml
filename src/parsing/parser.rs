@@ -423,6 +423,11 @@ pub(super) struct BlockScanCache<'t> {
     /// Item 78 (A2 crossed): 0 = none, 1 = bare follower (no `<br />`),
     /// 2 = `<br />` + bare follower (inline/text, no blank line).
     wikidot_a2_crossed_follower_bare: Cell<u8>,
+    /// A crossed ol tail just emitted its unclosed bullet anchor list: the
+    /// remainder of the tail continues inside its open item, so the next
+    /// line stays a bare run (BRIEF-RMRES u2r-ol open rows). Consumed by the
+    /// paragraph gather like the A2 crossed-follower signal.
+    wikidot_crossed_ol_anchor_bare: Cell<bool>,
     /// Item 73 (fr73): a crossed-pair tail (bare/lead) was just stamped at
     /// the pair's rule exit and the gap's break may still be pending: the
     /// next explicit list keeps it (live renders one bare break before the
@@ -2978,6 +2983,20 @@ impl<'r, 't> Parser<'r, 't> {
             .borrow()
             .wikidot_a2_crossed_follower_bare
             .replace(0)
+    }
+
+    pub(crate) fn record_wikidot_crossed_ol_anchor_bare(&self) {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_crossed_ol_anchor_bare
+            .set(true);
+    }
+
+    pub(crate) fn take_wikidot_crossed_ol_anchor_bare(&self) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_crossed_ol_anchor_bare
+            .replace(false)
     }
 
     pub(crate) fn record_wikidot_crossed_pair_tail_pending(&self) {

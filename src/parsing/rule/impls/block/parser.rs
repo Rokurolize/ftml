@@ -1599,30 +1599,41 @@ where
     }
 
     /// Consume a crossed-tail sentinel that follows a FLAT block close (the
-    /// closer of a flat-pair shell, consumed by `consume` rather than by the
-    /// block rule). The preprocessor keeps the sentinel only where live keeps
-    /// the crossed frame's post-close break, so the caller emits a break
-    /// (BRIEF-RM83 shapes 2/3: probes muse-probe-rm83-u2g and
-    /// muse-probe-rm83r2-*). Returns whether a sentinel was consumed.
+    /// closer of a flat-pair shell, consumed by consume rather than by the
+    /// block rule). The preprocessor keeps a sentinel only where live keeps
+    /// the crossed frame's post-close accounting: a break for list frames
+    /// (BRIEF-RM83 shapes 2/3), the closed ol anchor before a block follower,
+    /// or the unclosed ol anchor tail (BRIEF-RMRES u2r-ol). Returns which
+    /// sentinel was consumed.
     pub(crate) fn take_wikidot_crossed_close_sentinel(
         &mut self,
-    ) -> Result<bool, ParseError> {
+    ) -> Result<Option<crate::preproc::WikidotCrossedCloseSentinel>, ParseError> {
         if !self.settings().layout.legacy() || self.current().token != Token::LeftComment
         {
-            return Ok(false);
+            return Ok(None);
         }
         let mut candidate = self.clone();
         let range = match consume_valid_comment(&mut candidate) {
             Ok(range) => range,
-            Err(_) => return Ok(false),
+            Err(_) => return Ok(None),
         };
-        if &self.full_text().inner()[range]
-            != crate::preproc::WIKIDOT_CROSSED_LIST_BREAK_SENTINEL
-        {
-            return Ok(false);
+        let kind = match &self.full_text().inner()[range] {
+            crate::preproc::WIKIDOT_CROSSED_LIST_BREAK_SENTINEL => {
+                crate::preproc::WikidotCrossedCloseSentinel::Break
+            }
+            crate::preproc::WIKIDOT_CROSSED_OL_TAIL_SENTINEL => {
+                crate::preproc::WikidotCrossedCloseSentinel::OlTail
+            }
+            crate::preproc::WIKIDOT_CROSSED_OL_OPEN_SENTINEL => {
+                crate::preproc::WikidotCrossedCloseSentinel::OlOpen
+            }
+            _ => return Ok(None),
+        };
+        if candidate.current().token == Token::LineBreak {
+            candidate.step()?;
         }
         self.update(&candidate);
-        Ok(true)
+        Ok(Some(kind))
     }
 
     fn take_wikidot_crossed_tail_sentinel(

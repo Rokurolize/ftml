@@ -3897,12 +3897,14 @@ fn wrap_post_heading_segments<'t>(
     let mut out: Vec<Element<'t>> = Vec::with_capacity(elements.len() + 4);
     let mut chunk: Vec<Element<'t>> = Vec::new();
     let mut after_heading = false;
+    let mut after_blank_boundary = false;
     let mut after_ref_block = false;
     let mut latched = false;
     let flush = |chunk: &mut Vec<Element<'t>>,
                  out: &mut Vec<Element<'t>>,
                  after_heading: bool,
                  after_ref_block: bool,
+                 after_blank_boundary: bool,
                  latched: bool,
                  enclosing_block: bool,
                  kind: Flush| {
@@ -3920,6 +3922,7 @@ fn wrap_post_heading_segments<'t>(
                     Flush::SegmentGap | Flush::End => enclosing_block,
                     Flush::Soft | Flush::CodeOrAlign | Flush::BeforeMath => true,
                 })
+                || (after_blank_boundary && matches!(kind, Flush::Soft))
                 || (after_ref_block
                     && !suppress_trail
                     && !chunk_has_partial
@@ -3955,10 +3958,12 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::SegmentGap,
             );
+            after_blank_boundary = true;
             continue;
         }
         if is_heading {
@@ -3967,6 +3972,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::Soft,
@@ -3981,6 +3987,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::BeforeTable,
@@ -3995,6 +4002,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::CodeOrAlign,
@@ -4010,6 +4018,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 if is_math {
@@ -4031,6 +4040,7 @@ fn wrap_post_heading_segments<'t>(
         &mut out,
         after_heading,
         after_ref_block,
+        after_blank_boundary,
         latched,
         enclosing_block,
         Flush::End,

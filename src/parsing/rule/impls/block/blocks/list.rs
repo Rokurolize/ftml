@@ -339,12 +339,9 @@ fn parse_list_block_impl<'r, 't>(
     // BRIEF-F7R83 (b/c): degraded (none-styled) items form in the element
     // loop below, never through parse_list_item's segment assembly, so the
     // post-heading wrap gate arrives as a plain bool (frame || follower).
-    let li_wrap_enclosing = wikidot
-        && (parser.wikidot_flat_pair_open_at(opener_start)
-            || crate::parsing::rule::impls::line_owner::wikidot_list_follower_wraps_items(
-                parser.full_text().inner(),
-                opener_start,
-            ));
+    // BRIEF-RM83 shape 4: the follower can also VETO the frame wrap (a
+    // formed flat-pair head / heading / `----` right after the closer).
+    let li_wrap_enclosing = wikidot && wikidot_li_wrap_enclosing(parser, opener_start);
 
     if flag_score {
         strip_newlines(&mut elements);
@@ -987,6 +984,28 @@ fn parse_list_block_impl<'r, 't>(
     } else {
         success_elements_with_paragraph_safety(false, element, errors)
     }
+}
+
+/// Whether a list's items paragraph-wrap their post-heading trailing chunk
+/// (BRIEF-F7R83 (c), BRIEF-RM83 shape 4). The gate is:
+///   * the follower line right after the enclosing list's own-line closer
+///     wraps (plain text, inline content, blank line, ...), OR
+///   * a flat-pair frame spans the item AND the follower does not veto the
+///     frame wrap (only a formed flat-pair head, a heading line, or `----`
+///     veto; a list head vetoes only the follower wrap, and EOF vetoes
+///     nothing).
+/// Probes: muse-probe-f7r-* (follower classes without a frame) and
+/// muse-probe-rm83-fda1..fda17 (frame open, one probe per follower class).
+fn wikidot_li_wrap_enclosing(parser: &Parser<'_, '_>, from_byte: usize) -> bool {
+    use crate::parsing::rule::impls::line_owner::{
+        WikidotListFollower, wikidot_list_follower_kind,
+    };
+    let follower = wikidot_list_follower_kind(parser.full_text().inner(), from_byte);
+    let follower_wraps = follower.is_some_and(WikidotListFollower::wraps);
+    let follower_vetoes_frame =
+        follower.is_some_and(WikidotListFollower::suppresses_frame);
+    follower_wraps
+        || (parser.wikidot_flat_pair_open_at(from_byte) && !follower_vetoes_frame)
 }
 
 fn record_wikidot_explicit_list_end(parser: &Parser) {
@@ -1909,14 +1928,11 @@ fn parse_list_item<'r, 't>(
                 .wikidot_li_cross_pair_at(parser.current().span.start)
                 .is_some_and(|(_, crossed)| crossed))
             || consumed.is_some();
-        // BRIEF-F7R83 (c): the post-heading wrap is also gated by what
-        // follows the enclosing list — see
-        // `wikidot_list_follower_wraps_items` (probes muse-probe-f7r-*).
-        let enclosing_block = parser.wikidot_flat_pair_open_at(body_start)
-            || crate::parsing::rule::impls::line_owner::wikidot_list_follower_wraps_items(
-                parser.full_text().inner(),
-                body_start,
-            );
+        // BRIEF-F7R83 (c) + BRIEF-RM83 shape 4: the post-heading wrap is
+        // gated by what follows the enclosing list — see
+        // `wikidot_li_wrap_enclosing` (probes muse-probe-f7r-* and
+        // muse-probe-rm83-fda*).
+        let enclosing_block = wikidot_li_wrap_enclosing(parser, body_start);
         // NL81 (E): take shadowed-div-region signal before assembly so the
         // region-end break can be positioned. Clear swallowed-block's
         // all-linebreaks flag state separately.

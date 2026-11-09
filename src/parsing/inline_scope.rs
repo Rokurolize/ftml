@@ -189,6 +189,13 @@ struct ActiveScopes<'t> {
     heading_wrapper: Option<usize>,
     heading_wrapper_dying: bool,
     suppress_scope_wrap: bool,
+    /// When a heading barrier's post-closer tail is lowered with
+    /// `suppress_scope_wrap`, only scopes opened before the tail stay bare (the
+    /// heading wrapper and label scopes crossing the barrier); a span opened
+    /// and closed inside the tail materialises normally
+    /// (cnl3-color-user-span-same-line keeps `<span>z</span>` in the label).
+    /// `None` suppresses every scope (heading reopen path).
+    suppress_scope_wrap_watermark: Option<usize>,
     /// Ordinal watermark of the last explicit list element emitted into the
     /// current sequence's output (B2 anchor-close-inside dissolve, item 82
     /// residual): an anchor close whose scope ordinal precedes this is a close
@@ -5005,13 +5012,19 @@ fn lower_sequence<'t>(
                 run.push(Element::Text(close_source));
                 continue;
             }
-            if active.suppress_scope_wrap {
+            let resolved = active.resolve_close(current, InlineTag::Span);
+            let crosses_barrier = active.suppress_scope_wrap
+                && active
+                    .suppress_scope_wrap_watermark
+                    .is_none_or(|watermark| {
+                        resolved.is_none_or(|position| position < watermark)
+                    });
+            if crosses_barrier {
                 if let Some(position) = active.pop_pending_above_heading_wrapper() {
                     active.kill_scope(position);
                 }
                 continue;
             }
-            let resolved = active.resolve_close(current, InlineTag::Span);
             let scored =
                 resolved.is_some_and(|position| active.scope_is_scored(position));
             let empty = !resolved
@@ -5619,6 +5632,14 @@ fn lower_sequence<'t>(
                 }
                 if block_boundary && active.has_active_scope() {
                     strip_trailing_space_from_vec(&mut run);
+                }
+                if is_wikidot_heading(&element) {
+                    emit_heading_inline_closure(
+                        &mut output,
+                        &mut run,
+                        active,
+                        &mut last_run_outer_scope,
+                    );
                 }
                 flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
                 if matches!(element, Element::TabView(_)) {
@@ -6856,6 +6877,138 @@ fn end_anchor_at_explicit_list<'t>(
     active.kill_from(position);
 }
 
+/// Whether this element is a Wikidot heading container.
+fn is_wikidot_heading(element: &Element<'_>) -> bool {
+    matches!(
+        element,
+        Element::Container(container)
+            if matches!(container.ctype(), ContainerType::Header(_))
+    )
+}
+
+/// A heading block start closes every open element but keeps the inline stack
+/// (docs/WikidotInlineNesting.md, stage 2), so an inline scope crossing into
+/// a heading is closed before the heading and the label reopens it inside the
+/// heading. Live's closed copy carries the scope's pending run plus two
+/// block-edge breaks (muse-probe-fu82b-li-cross-anchorline-text:
+/// `<li>x<br><a href>Y<br><br></a><h1>...`; `li-cross-span` shows the same for
+/// a span). Lowering keeps the scope active into the label, so only the
+/// in-heading copy existed; in the div/root case the preceding paragraph
+/// already materialises the copy (`emit_segment_copies`), which is why those
+/// shapes match.
+fn emit_heading_inline_closure<'t>(
+    output: &mut Vec<Element<'t>>,
+    run: &mut Vec<Element<'t>>,
+    active: &mut ActiveScopes<'t>,
+    last_run_outer_scope: &mut RunMergeState,
+) {
+    let positions = active.active_positions();
+    let crossing: Vec<usize> = positions
+        .iter()
+        .copied()
+        .filter(|position| Some(*position) != active.heading_wrapper)
+        .collect();
+    let Some(&innermost) = crossing.last() else {
+        return;
+    };
+    // A scope that was already active when a frame's children began has
+    // crossed that frame's block boundary; the frame entry machinery owns its
+    // closure, so a heading inside the frame does not close it again (a
+    // blockquote > collapsible > div > heading body keeps no copy).
+    if let Some(entry) = active.frame_entry.as_deref()
+        && entry.contains(&innermost)
+    {
+        return;
+    }
+    let materialized = crossing.iter().any(|position| {
+        active.scope_materialized(*position) || active.scope_is_pending(*position)
+    });
+    if materialized {
+        // The crossing scope already emitted its closed copy (the line-end
+        // flush): live ends that copy with the two block-edge breaks.
+        if !run.is_empty() {
+            flush_run(output, run, active, last_run_outer_scope);
+        }
+        let tag = active.scopes[innermost].wrapper.tag();
+        let Some(last) = output.last_mut() else {
+            return;
+        };
+        if element_wrapper_tag(last) == Some(tag) {
+            top_up_closed_copy_breaks(last, 2);
+        }
+        return;
+    }
+    if !run.is_empty() {
+        // The pending run is the crossing scope's content: flush_run wraps it
+        // (trimming and merging as usual), and live ends that closed copy with
+        // the two block-edge breaks.
+        flush_run(output, run, active, last_run_outer_scope);
+        if let Some(last) = output.last_mut() {
+            top_up_closed_copy_breaks(last, 2);
+        }
+        return;
+    }
+    let mut closed: Vec<Element<'t>> = vec![Element::LineBreak, Element::LineBreak];
+    for entry in crossing.iter().rev() {
+        closed = vec![active.scopes[*entry].wrapper.wrap(closed)];
+    }
+    output.extend(closed);
+    last_run_outer_scope.reset();
+}
+
+/// The inline tag of a scope-wrapper element, if it is one.
+fn element_wrapper_tag(element: &Element<'_>) -> Option<InlineTag> {
+    match element {
+        Element::Anchor { .. } => Some(InlineTag::Anchor),
+        Element::Color { .. } => Some(InlineTag::Span),
+        Element::Container(container) if is_inline_scope_ctype(container.ctype()) => {
+            Some(inline_tag_for_ctype(container.ctype()))
+        }
+        _ => None,
+    }
+}
+
+fn wrapper_elements_mut<'a, 't>(
+    element: &'a mut Element<'t>,
+) -> Option<&'a mut Vec<Element<'t>>> {
+    match element {
+        Element::Container(container) if is_inline_scope_ctype(container.ctype()) => {
+            Some(container.elements_mut())
+        }
+        Element::Color { elements, .. } | Element::Anchor { elements, .. } => {
+            Some(elements)
+        }
+        _ => None,
+    }
+}
+
+/// End a closed heading-crossing inline copy with `target` trailing breaks.
+/// A copy whose run already ends with the block-edge breaks is left alone
+/// (`aw2-span-close-inside`).
+fn top_up_closed_copy_breaks(element: &mut Element<'_>, target: usize) {
+    let Some(elements) = wrapper_elements_mut(element) else {
+        return;
+    };
+    if let Some(first) = elements.first_mut()
+        && element_wrapper_tag(first).is_some()
+    {
+        top_up_closed_copy_breaks(first, target);
+        return;
+    }
+    let mut breaks = 0usize;
+    for element in elements.iter().rev() {
+        match element {
+            Element::LineBreak => breaks += 1,
+            Element::LineBreaks(count) => breaks += count.get() as usize,
+            Element::Text(text) if text.trim().is_empty() => {}
+            _ => break,
+        }
+    }
+    for _ in breaks..target {
+        elements.push(Element::LineBreak);
+    }
+}
+
 fn close_live_anchor<'t>(
     output: &mut Vec<Element<'t>>,
     run: &mut Vec<Element<'t>>,
@@ -6997,7 +7150,22 @@ fn flush_run<'t>(
         return;
     }
     if active.suppress_scope_wrap {
-        output.extend(mem::take(run));
+        let mut wrapped = mem::take(run);
+        if let Some(watermark) = active.suppress_scope_wrap_watermark {
+            let mut position = active.active_tail;
+            while let Some(current) = position {
+                if current < watermark {
+                    break;
+                }
+                let scope = &mut active.scopes[current];
+                wrapped = vec![scope.wrapper.wrap(wrapped)];
+                scope.has_content = true;
+                scope.materialized = true;
+                scope.pending = false;
+                position = scope.previous_active;
+            }
+        }
+        output.extend(wrapped);
         last_run_outer_scope.reset();
         return;
     }
@@ -7411,7 +7579,10 @@ fn lower_wikidot_heading_barrier<'t>(
         false,
     );
     active.pend_all();
+    let outer_suppress = active.suppress_scope_wrap;
+    let outer_watermark = active.suppress_scope_wrap_watermark;
     active.suppress_scope_wrap = true;
+    active.suppress_scope_wrap_watermark = Some(active.scopes.len());
     lower_sequence(
         &mut elements,
         valid,
@@ -7423,7 +7594,8 @@ fn lower_wikidot_heading_barrier<'t>(
         bib,
         false,
     );
-    active.suppress_scope_wrap = false;
+    active.suppress_scope_wrap = outer_suppress;
+    active.suppress_scope_wrap_watermark = outer_watermark;
     let mut kill = Vec::new();
     for position in active.active_positions() {
         if position != wrapper && active.scopes[position].wrapper.tag() == InlineTag::Span
@@ -8850,10 +9022,16 @@ fn outer_close_eof_signals<'t>(children: &[Element<'t>]) -> R3HeadingSignals<'t>
     // the heading wrapper's content.
     let mut chain: Vec<(ContainerType, Option<AttributeMap<'t>>)> = Vec::new();
     let mut level = heading.elements();
+    // The heading wrapper span is the label's first child; a post-closer tail
+    // sibling (`[[div]]` literal, a same-line user span) sits beside it and
+    // must not hide the signal (cnl3-color-nested-frame,
+    // cnl3-color-user-span-same-line). Deeper levels stay single-child.
+    let mut first_level = true;
     loop {
-        if level.len() == 1
-            && let Element::Container(c) = &level[0]
+        let single_child = level.len() == 1;
+        if let Some(Element::Container(c)) = level.first()
             && matches!(c.ctype(), ContainerType::Span | ContainerType::Size)
+            && (first_level || single_child)
         {
             let attrs = if c.ctype() == ContainerType::Size {
                 Some(c.attributes().clone())
@@ -8862,6 +9040,7 @@ fn outer_close_eof_signals<'t>(children: &[Element<'t>]) -> R3HeadingSignals<'t>
             };
             chain.push((c.ctype(), attrs));
             level = c.elements();
+            first_level = false;
             continue;
         }
         break;
@@ -8869,7 +9048,20 @@ fn outer_close_eof_signals<'t>(children: &[Element<'t>]) -> R3HeadingSignals<'t>
     if chain.is_empty() {
         return R3HeadingSignals::default();
     }
-    let cancelled = subtree_has_span_rendered(level);
+    // The signal covers the whole heading content: the label inside the
+    // implicit wrapper and the post-closer tail siblings that stay in the h1
+    // beside the wrapper (cnl4-bold-tail-color, cnl4-plain-tail-span). With a
+    // tail present, a Span/Size container in the label may be a scope opened
+    // in the label and closed in the tail (a crossing span, not a completed
+    // close: `heading/barrier-span-depth` keeps the wrapper), so only a Color
+    // counts on the label side.
+    let tail = &heading.elements()[1..];
+    let label_signal = if tail.is_empty() {
+        subtree_has_span_rendered(level)
+    } else {
+        subtree_has_color(level)
+    };
+    let cancelled = label_signal || subtree_has_span_rendered(tail);
     let outer = &chain[..chain.len() - 1];
     let outer_scope = !outer.is_empty();
     let outer_size = outer.iter().rev().find_map(|(ctype, attrs)| {
@@ -8929,6 +9121,22 @@ fn find_barrier_heading<'a, 't>(
         }
     }
     None
+}
+
+/// Does this run of plain content contain a `Color` element (the only
+/// span-rendered close that cannot cross a block closer)?
+fn subtree_has_color<'t>(elements: &[Element<'t>]) -> bool {
+    for element in elements {
+        if matches!(element, Element::Color { .. }) {
+            return true;
+        }
+        if let Some(children) = subtree_children(element)
+            && subtree_has_color(children)
+        {
+            return true;
+        }
+    }
+    false
 }
 
 /// Does this run of plain content contain a completed span-rendered scope

@@ -368,10 +368,12 @@ fn parse_list_block_impl<'r, 't>(
         WikidotListWrapGates {
             wrap_enclosing: false,
             mid_join_enclosed: false,
+            head_is_own_line: false,
         }
     };
     let li_wrap_enclosing = wrap_gates.wrap_enclosing;
     let mid_join_enclosed = wrap_gates.mid_join_enclosed;
+    let head_is_own_line = wrap_gates.head_is_own_line;
 
     if flag_score {
         strip_newlines(&mut elements);
@@ -453,16 +455,18 @@ fn parse_list_block_impl<'r, 't>(
                 // muse-probe-pu81-*): each blank-separated run wraps as one
                 // paragraph (MIDBLANK probes muse-probe-midblank-*), formed
                 // blocks join as-is. DIVMID: the same join runs inside an
-                // enclosing flat frame or table cell when mid_join_enclosed
-                // (saved-page probes muse-probe-divmid-*). The arriving list
-                // then joins the same item through the ordinary push below.
+                // enclosing flat frame or table cell (saved-page probes
+                // muse-probe-divmid-*); F7PROBE: it also runs at page root
+                // under any follower (saved-page probes
+                // muse-probe-f7probe-root-mid-*). The arriving list then
+                // joins the same item through the ordinary push below.
                 // Whitespace-only gaps keep the old merge path. Explicit
-                // [[li]] partials and scored/nested lists keep the old
-                // behavior (unprobed there).
+                // [[li]] partials, scored/nested lists, and hoisted heads
+                // keep the old behavior (unprobed or live-split there).
                 if wikidot
                     && !flag_score
                     && !nested
-                    && (!li_wrap_enclosing || mid_join_enclosed)
+                    && (!li_wrap_enclosing || head_is_own_line)
                     && partial_count == 0
                     && literal_elements
                         .iter()
@@ -1218,12 +1222,15 @@ struct WikidotListWrapGates {
     /// advanced table cell (BRIEF-DIVMID). Live keeps text between two
     /// native lists joined into one inline-styled item inside
     /// div/note/collapsible/align bodies and table cells exactly as at page
-    /// root; only the F7 frame-veto followers opt back out. Only an ordinary
-    /// list block qualifies: a head hoisted off a list or quote item line is
-    /// a lost-owner formation whose items are emitted at the owner level,
-    /// where live keeps the inter-list text unjoined (frozen pin
-    /// list/hoisted-between-lazy-line).
+    /// root; the frame-veto followers still opt the frame tail back out
+    /// (BRIEF-RM83 shape 4).
     mid_join_enclosed: bool,
+    /// Whether the list head starts its own line (only indentation before
+    /// it). A head hoisted off a list or quote item line is a lost-owner
+    /// formation whose items are emitted at the owner level, where live
+    /// keeps the inter-list text unjoined (frozen pin
+    /// list/hoisted-between-lazy-line).
+    head_is_own_line: bool,
 }
 
 fn wikidot_list_wrap_gates(
@@ -1238,13 +1245,15 @@ fn wikidot_list_wrap_gates(
     let follower_vetoes_frame =
         follower.is_some_and(WikidotListFollower::suppresses_frame);
     let frame_open = parser.wikidot_flat_pair_open_at(from_byte);
-    let mid_join_enclosed =
-        wikidot_list_head_is_own_line(parser.full_text().inner(), from_byte)
-            && (frame_open || parser.in_wikidot_advanced_table_cell_body())
-            && !follower_vetoes_frame;
+    let head_is_own_line =
+        wikidot_list_head_is_own_line(parser.full_text().inner(), from_byte);
+    let mid_join_enclosed = head_is_own_line
+        && (frame_open || parser.in_wikidot_advanced_table_cell_body())
+        && !follower_vetoes_frame;
     WikidotListWrapGates {
         wrap_enclosing: follower_wraps || (frame_open && !follower_vetoes_frame),
         mid_join_enclosed,
+        head_is_own_line,
     }
 }
 
@@ -3808,11 +3817,9 @@ fn assemble_wikidot_li_segments<'t>(
             .is_some_and(|element| matches!(element, Element::List { .. }));
     let last_plain_run_is_paragraph = match kept.as_slice() {
         [.., penultimate, last]
-            if body_before_close.ends_with('\n')
+            if (body_before_close.ends_with('\n') || !doc_final.literal)
                 && segment_is_inline_content(last)
-                && !segment_has_block_marker(last)
-                && segment_is_inline_content(penultimate)
-                && !segment_has_block_marker(penultimate) =>
+                && segment_is_inline_content(penultimate) =>
         {
             true
         }
@@ -3829,11 +3836,9 @@ fn assemble_wikidot_li_segments<'t>(
             // empty-text marker is consumed there and never renders.
             elements.push(Element::Text(std::borrow::Cow::Borrowed("")));
         }
-        // A blank line between two plain inline runs, with the closer on the
-        // next line, is a paragraph. A run on the closer's own line stays put,
-        // and so does a run beside a literal block marker. BRIEF-TB74: the
-        // trailing run merges bare when it sits in the document-final
-        // paragraph chunk (probes muse-probe-tb74-*).
+        // Live merges this run bare only in the document-final paragraph chunk
+        // (probes muse-probe-tb74-*); elsewhere it wraps even with the closer on
+        // the run's line and literal block markers in the run.
         let middle_inline =
             index > 0 && index < kept_last && segment_is_inline_content(&segment);
         let closing_paragraph = index == kept_last

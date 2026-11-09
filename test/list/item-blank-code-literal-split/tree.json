@@ -1,0 +1,72 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "**"
+                    },
+                    {
+                        "element": "text",
+                        "data": "a"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "b"
+                            },
+                            {
+                                "element": "code",
+                                "data": {
+                                    "contents": "x\n\ny",
+                                    "language": null,
+                                    "name": null
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "d"
+                    },
+                    {
+                        "element": "text",
+                        "data": "**"
+                    }
+                ]
+            }
+        }
+    ],
+    "code-blocks": [
+        {
+            "contents": "x\n\ny",
+            "language": null,
+            "name": null
+        }
+    ]
+}

@@ -195,6 +195,10 @@ pub enum WikidotBlockCloseKind<'t> {
     Div {
         head: usize,
         scored: bool,
+        /// g10res: a crossed list tail ending at this closer keeps its
+        /// final break (u-second-frame probe); set at emission when the
+        /// closer is the recorded tail terminator.
+        keep_trailing_break: bool,
     },
     Collapsible {
         head: usize,
@@ -227,9 +231,14 @@ impl WikidotBlockCloseKind<'_> {
 
     pub fn to_owned(&self) -> WikidotBlockCloseKind<'static> {
         match self {
-            WikidotBlockCloseKind::Div { head, scored } => WikidotBlockCloseKind::Div {
+            WikidotBlockCloseKind::Div {
+                head,
+                scored,
+                keep_trailing_break,
+            } => WikidotBlockCloseKind::Div {
                 head: *head,
                 scored: *scored,
+                keep_trailing_break: *keep_trailing_break,
             },
             WikidotBlockCloseKind::Collapsible { head } => {
                 WikidotBlockCloseKind::Collapsible { head: *head }

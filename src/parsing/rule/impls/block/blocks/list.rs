@@ -1539,6 +1539,26 @@ fn unowned_dissolve_unwrap<'t>(
     if !trailing.is_empty()
         && let Some(last) = dissolved.last_mut()
     {
+        // Live separates a following formed block from the dissolved
+        // item's text with one break (probes muse-probe-x88f-g1-hash-
+        // after-heading/-div/-quote); a following run, code block, or
+        // inline content joins with no break (after-item/-itemtext/
+        // -after-code/-after-inline).
+        let block_follower = matches!(
+            trailing.first(),
+            Some(Element::Container(container))
+                if matches!(
+                    container.ctype(),
+                    ContainerType::Div
+                        | ContainerType::Header(_)
+                        | ContainerType::Blockquote
+                        | ContainerType::Note
+                        | ContainerType::Align(_)
+                )
+        );
+        if block_follower && !matches!(last.last(), Some(Element::LineBreak)) {
+            last.push(Element::LineBreak);
+        }
         last.extend(trailing);
     }
     let mut result = Vec::with_capacity(1 + dissolved.len());

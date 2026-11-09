@@ -1416,6 +1416,7 @@ fn try_consume_fn<'r, 't>(
             );
         let boundary_list_close = parser.take_wikidot_quote_boundary_list_close();
         let li_auto_close = parser.take_wikidot_quote_boundary_li_auto_close();
+        let _ = parser.take_wikidot_quote_boundary_quoted_li_close();
         let text_hoist = parser.take_wikidot_quote_boundary_unquoted_close_text();
         let li_closed = parser.take_wikidot_quote_boundary_li_closed();
         // A hoisted shallow text line carries its own break; the unquoted

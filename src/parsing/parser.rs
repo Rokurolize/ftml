@@ -217,6 +217,13 @@ pub(super) struct BlockScanCache<'t> {
     /// attempt (BRIEF-UQ57d): the item paired, so the unquoted list close
     /// keeps the trailing `<br />` live emits for the paired family.
     wikidot_quote_boundary_li_closed: Cell<bool>,
+    /// Shallow text was hoisted out of an item body before its QUOTED
+    /// `[[/li]]` close (BRIEF-QC89 quoted-closer pairing): live pairs
+    /// the item cleanly WITHOUT the trailing break a directly-closed
+    /// quoted item carries, and the enclosing UL soft-ends with its
+    /// quoted close still ahead so the fresh quote run renders the
+    /// paired close as a break.
+    wikidot_quote_boundary_quoted_li_close: Cell<bool>,
     /// A blank physical line was tolerated inside an LI body (BRIEF-BL57c):
     /// a bare `[[/li]]` close comes before the enclosing list's close, so
     /// the blank must not fail the LI. The UL/OL soft-ends at the line
@@ -1569,6 +1576,27 @@ impl<'r, 't> Parser<'r, 't> {
             .borrow()
             .wikidot_quote_boundary_li_closed
             .take()
+    }
+
+    pub(crate) fn set_wikidot_quote_boundary_quoted_li_close(&self) {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_quote_boundary_quoted_li_close
+            .set(true);
+    }
+
+    pub(crate) fn take_wikidot_quote_boundary_quoted_li_close(&self) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_quote_boundary_quoted_li_close
+            .take()
+    }
+
+    pub(crate) fn peek_wikidot_quote_boundary_quoted_li_close(&self) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_quote_boundary_quoted_li_close
+            .get()
     }
 
     pub(crate) fn set_wikidot_quote_boundary_blank_in_li_body(&self, quoted_close: bool) {

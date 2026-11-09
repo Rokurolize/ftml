@@ -290,6 +290,7 @@ pub(crate) fn own_line_li_close_after(source: &str, from_byte: usize) -> Option<
 pub(crate) enum WikidotListFollower {
     /// Content that lets the items' post-heading chunk wrap.
     Wrap,
+    Quote,
     /// EOF after the closer (nothing follows): no follower wrap.
     Eof,
     /// `+ h` heading line: suppresses both wraps.
@@ -306,7 +307,7 @@ pub(crate) enum WikidotListFollower {
 impl WikidotListFollower {
     /// Whether the follower line allows the post-heading wrap.
     pub(crate) fn wraps(self) -> bool {
-        matches!(self, Self::Wrap)
+        matches!(self, Self::Wrap | Self::Quote)
     }
 
     /// Whether the follower also suppresses the enclosing-frame wrap
@@ -479,6 +480,9 @@ fn wikidot_list_follower_line_kind(
     // `----` (FTML's TripleDash token) suppresses; `====` does not.
     if trimmed.len() >= 4 && trimmed.bytes().all(|byte| byte == b'-') {
         return WikidotListFollower::Hr;
+    }
+    if trimmed.starts_with('>') {
+        return WikidotListFollower::Quote;
     }
     if trimmed.eq_ignore_ascii_case("[[ul]]") || trimmed.eq_ignore_ascii_case("[[ol]]") {
         return WikidotListFollower::ListHead;

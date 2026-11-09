@@ -2823,7 +2823,7 @@ fn items_opens_with_visible_text(elements: &[Element<'_>]) -> bool {
         )
 }
 
-fn format_open_marker(text: &str) -> bool {
+pub(crate) fn format_open_marker(text: &str) -> bool {
     // `—` is the typographed strikethrough opener a rejected pair emits.
     matches!(text, "**" | "//" | "__" | "^^" | ",," | "--" | "{{" | "—")
         // A literalised color opener carries its spec: `##red|` / `###fff|`.
@@ -4724,7 +4724,7 @@ fn lower_root_sequence<'t>(
                 previous_scored_close || effects.scored_span_opened_at_start;
 
             if !joins_previous {
-                flush_paragraph_group(&mut output, &mut paragraph_group);
+                flush_paragraph_group(&mut output, &mut paragraph_group, false);
             }
             let group = paragraph_group.get_or_insert_with(|| ParagraphGroup {
                 wrapped: !empty_footnote_tail_bare
@@ -4765,7 +4765,7 @@ fn lower_root_sequence<'t>(
         {
             group.ends_at_advanced_table = true;
         }
-        flush_paragraph_group(&mut output, &mut paragraph_group);
+        flush_paragraph_group(&mut output, &mut paragraph_group, false);
         if align_head_joins_previous_chunk(&output, &element, active)
             && let Some(position) = active.anchor_position()
         {
@@ -4839,7 +4839,7 @@ fn lower_root_sequence<'t>(
         None,
         scope_closed_in_last_list,
     );
-    flush_paragraph_group(&mut output, &mut paragraph_group);
+    flush_paragraph_group(&mut output, &mut paragraph_group, false);
     top_up_crossing_anchor_color_breaks(&mut output);
     *elements = output;
 }
@@ -5108,7 +5108,13 @@ fn flush_root_pending<'t>(
             }
         )
     });
-    flush_paragraph_group(output, paragraph_group);
+    let keep_trailing_space = group_flushed
+        && at_explicit_list
+        && pending_has_format
+        && sequence_has_inline_content(pending)
+        && pending.iter().all(Element::paragraph_safe)
+        && next.is_some_and(formed_chunk_wraps);
+    flush_paragraph_group(output, paragraph_group, keep_trailing_space);
     if !(at_explicit_list && pending_has_format) {
         active.sync_chain_to_istack();
     }
@@ -5775,6 +5781,7 @@ fn paragraph_tail_deep_scope_sibling_merge<'t>(
 fn flush_paragraph_group<'t>(
     output: &mut Vec<Element<'t>>,
     paragraph_group: &mut Option<ParagraphGroup<'t>>,
+    keep_trailing_space: bool,
 ) {
     let Some(ParagraphGroup {
         wrapped,
@@ -5797,7 +5804,9 @@ fn flush_paragraph_group<'t>(
         return;
     }
     eject_segment_trailing_space(&mut elements);
-    strip_trailing_run_before_newline_tail(&mut elements);
+    if !keep_trailing_space {
+        strip_trailing_run_before_newline_tail(&mut elements);
+    }
     if elements.is_empty() {
         return;
     }

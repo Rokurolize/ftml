@@ -2019,6 +2019,16 @@ impl<'r, 't> Parser<'r, 't> {
             .pop();
     }
 
+    /// Whether any enclosing explicit [[li]] body is still being
+    /// collected (the list-level entries are None, item entries Some).
+    pub(crate) fn wikidot_li_collect_inside_item(&self) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_li_collect_stack
+            .iter()
+            .any(|head| head.is_some())
+    }
+
     pub(crate) fn wikidot_li_collect_top(&self) -> Option<Option<usize>> {
         self.block_end_scan_cache
             .borrow()

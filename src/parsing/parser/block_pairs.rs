@@ -259,6 +259,14 @@ pub(crate) struct WikidotLiCrossScan {
     /// Scanned region (after the outer head through its closer or input end).
     pub(crate) region_start: usize,
     pub(crate) region_end: usize,
+    /// g10: the FIRST `[[/ul]]`/`[[/ol]]` of the same literal tail, the
+    /// structural list closer live consumes (g10a/g10b/g10j, aa probe). Its
+    /// closer byte is also in `redundant`.
+    pub(crate) tail_list_close: Option<usize>,
+    /// g10: byte at which the line following `tail_list_close` starts, when
+    /// that closer's preceding line is literal text. The vanished closer then
+    /// eats the break before it (g10b `z[[/div]]`, g10x1 `w[[/div]]`).
+    pub(crate) tail_join_line: Option<usize>,
 }
 
 #[derive(Debug, Clone, Default)]

@@ -162,9 +162,11 @@ pub(crate) const WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER: &str =
 pub(crate) const WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER: &str =
     "data-ftml-span-list-close-tail-fold";
 /// Sibling mark for the same close when a blank gap then an explicit list
-/// follows it (live drops the tail entirely: no break, no paragraph).
-/// Consumed by the rewrite pass, which removes the trapped break-only run;
-/// never rendered.
+/// follows it. Break-only tails are dropped entirely (no break, no
+/// paragraph): the rewrite pass removes the trapped break-only run.
+/// Content-bearing post-list tails keep the blank break inside the scope
+/// (`<span><strong>b</strong><br><br></span>`); the root-pass arms consume
+/// those and the rewrite pass only strips the leftover mark. Never rendered.
 pub(crate) const WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER: &str =
     "data-ftml-span-list-close-tail-blank";
 /// Marks an underline or strikethrough pair that closed beyond an explicit
@@ -236,6 +238,14 @@ pub(crate) const WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER: &str =
 /// lowering at the after-list paragraph; never rendered.
 pub(crate) const WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_FOLD_MARKER: &str =
     "data-ftml-understrike-list-close-tail-fold";
+/// Blank-gap companion for the stopped fold fallback: the gap after the
+/// stopped pair's closer held a blank line (two line breaks or a paragraph
+/// break past transparent tokens), so live drops the tail break that the
+/// attached-gap fold keeps (`<span>b</span><ul>` vs `<span>b</span><br><ul>`)
+/// and wraps a following content paragraph instead of leaving it bare.
+/// Stamped alongside FOLD; consumed by inline-scope lowering; never rendered.
+pub(crate) const WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BLANK_MARKER: &str =
+    "data-ftml-understrike-list-close-tail-blank";
 use std::borrow::Cow;
 use std::collections::HashSet;
 

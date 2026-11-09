@@ -2556,6 +2556,62 @@ fn quote_residue_text(element: &Element<'_>, keep_space: bool) -> bool {
     trimmed.bytes().all(|byte| byte == b'>')
 }
 
+/// Whether a quote row opens a block-level construct, ending the quote's inline
+/// run. Such a row drops the previous row's trailing break (live: `> a` +
+/// `> [[div]]` renders `<p>a</p><div>`), unlike a row that only continues an
+/// inline scope.
+fn quote_row_opens_block(elements: &[Element<'_>]) -> bool {
+    elements.iter().any(|element| match element {
+        Element::Container(container) => !matches!(
+            container.ctype(),
+            ContainerType::Bold
+                | ContainerType::Italics
+                | ContainerType::Underline
+                | ContainerType::Superscript
+                | ContainerType::Subscript
+                | ContainerType::Strikethrough
+                | ContainerType::Monospace
+                | ContainerType::Span
+                | ContainerType::Size
+                | ContainerType::Mark
+                | ContainerType::Insertion
+                | ContainerType::Deletion
+                | ContainerType::Hidden
+                | ContainerType::Invisible
+                | ContainerType::Ruby
+                | ContainerType::RubyText
+                | ContainerType::HeadingLabel
+        ),
+        Element::Module(_)
+        | Element::List { .. }
+        | Element::DefinitionList(_)
+        | Element::Table(_)
+        | Element::TabView(_)
+        | Element::Collapsible { .. }
+        | Element::WikidotBlockFrame { .. }
+        | Element::TableOfContents { .. }
+        | Element::FootnoteBlock { .. }
+        | Element::BibliographyBlock { .. }
+        | Element::Code(_)
+        | Element::Math { .. }
+        | Element::Embed(_)
+        | Element::EmbedVideo(_)
+        | Element::Gallery(_)
+        | Element::Html { .. }
+        | Element::Iframe { .. }
+        | Element::ClearFloat(_)
+        | Element::Style(_)
+        | Element::HorizontalRule
+        | Element::ContentSeparator => true,
+        Element::Include { paragraph_safe, .. } => !*paragraph_safe,
+        Element::Partial(partial) => matches!(
+            partial,
+            PartialElement::WikidotBlockOpen(_) | PartialElement::WikidotBlockClose(_)
+        ),
+        _ => false,
+    })
+}
+
 fn push_native_quote_row<'t>(
     stack: &mut ParagraphStack<'t>,
     row: NativeQuoteRow<'t>,
@@ -2592,11 +2648,30 @@ fn push_native_quote_row<'t>(
     let empty_list_break_row = wikidot
         && !row.paragraph_safe
         && matches!(row.elements.as_slice(), [Element::LineBreak]);
+    // Live ends the quote's inline run when the next row opens a block, and
+    // that close drops the run's trailing break (`> a` + `> [[div]]` renders
+    // `<p>a</p><div>`, as do table, rule and native `*` list rows). A row that
+    // only continues the inline run keeps the break instead: a plain text row,
+    // a format continuation (`> __x`), or a fused/wrapped inline scope. An
+    // explicit `[[ul]]`/`[[ol]]` row keeps it as well even though it is a
+    // block: live renders `> a` + `> [[ul]]` as `<p>a<br></p><ul>…</ul>`.
+    let block_row = wikidot && quote_row_opens_block(&row.elements);
+    let explicit_list_row = wikidot
+        && row.elements.iter().any(|element| {
+            matches!(
+                element,
+                Element::List {
+                    wikidot_explicit_block: true,
+                    ..
+                }
+            )
+        });
     if wikidot
-        && !row.paragraph_safe
+        && block_row
         && !alignment_block
         && !row.residual_block
         && !empty_list_break_row
+        && !explicit_list_row
     {
         stack.pop_line_break();
     }

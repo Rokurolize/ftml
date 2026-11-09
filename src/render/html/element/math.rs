@@ -36,19 +36,17 @@ cfg_if! {
     }
 }
 
-pub struct MathBlockArgs<'a, 't> {
-    pub assigned_index: Option<NonZeroUsize>,
-    pub name: Option<&'a str>,
-    pub latex_source: &'a str,
-    pub environment: Option<&'a str>,
-    pub open_elements: &'a [Element<'t>],
-    pub label_spans: &'a [AttributeMap<'t>],
-    pub capture_eq: bool,
-}
-
+#[allow(clippy::too_many_arguments)]
 pub fn render_math_block(
     ctx: &mut HtmlContext,
-    args: MathBlockArgs<'_, '_>,
+    assigned_index: Option<NonZeroUsize>,
+    name: Option<&str>,
+    latex_source: &str,
+    environment: Option<&str>,
+    open_elements: &[Element],
+    label_spans: &[AttributeMap],
+    suppress_number: bool,
+    capture_eq: bool,
 ) {
     let MathBlockArgs {
         assigned_index,
@@ -77,6 +75,7 @@ pub fn render_math_block(
             latex_source,
             open_elements,
             label_spans,
+            suppress_number,
             capture_eq,
         );
         return;
@@ -172,6 +171,14 @@ fn join_wikidot_math_source(source: &str) -> String {
         .join(" ")
 }
 
+pub(crate) fn wikidot_math_number_will_render(
+    environment: Option<&str>,
+    latex_source: &str,
+) -> bool {
+    let source = join_wikidot_math_source(latex_source);
+    resolve_wikidot_math_environment(environment, &source).is_ok()
+}
+
 fn render_wikidot_math_block(
     ctx: &mut HtmlContext,
     index: NonZeroUsize,
@@ -179,28 +186,18 @@ fn render_wikidot_math_block(
     latex_source: &str,
     open_elements: &[Element],
     label_spans: &[AttributeMap],
+    suppress_number: bool,
     capture_eq: bool,
 ) {
     let source = join_wikidot_math_source(latex_source);
     match resolve_wikidot_math_environment(environment, &source) {
         Err(bad) => {
-            // Live Wikidot escapes `&`, `<` and `>` in the rejected name
-            // but leaves both quote characters verbatim, so the message is
-            // assembled with raw pushes instead of escaped contents.
+            // Live leaves both quote characters verbatim in the rejected name; the raw pushes are deliberate.
             ctx.html()
                 .div()
                 .attr(attr!("class" => "error-block"))
                 .inner(|ctx| {
-                    ctx.push_raw_str("Unsupported math environment \"");
-                    for character in bad.chars() {
-                        match character {
-                            '&' => ctx.push_raw_str("&amp;"),
-                            '<' => ctx.push_raw_str("&lt;"),
-                            '>' => ctx.push_raw_str("&gt;"),
-                            _ => ctx.push_raw(character),
-                        }
-                    }
-                    ctx.push_raw('"');
+                    render_wikidot_error_message_with_spans(ctx, &bad, label_spans);
                 });
         }
         Ok((environment, source)) => {
@@ -220,7 +217,7 @@ fn render_wikidot_math_block(
                     label_spans,
                 );
                 ctx.push_raw_str("</li>\n</ul>");
-            } else {
+            } else if !suppress_number {
                 render_wikidot_equation_number_with_spans(
                     ctx,
                     index,
@@ -235,6 +232,29 @@ fn render_wikidot_math_block(
                 .contents(&wrapped);
         }
     }
+}
+
+fn render_wikidot_error_message_with_spans(
+    ctx: &mut HtmlContext,
+    bad: &str,
+    label_spans: &[AttributeMap],
+) {
+    let Some((attributes, remaining)) = label_spans.split_first() else {
+        ctx.push_raw_str("Unsupported math environment \"");
+        for character in bad.chars() {
+            match character {
+                '&' => ctx.push_raw_str("&amp;"),
+                '<' => ctx.push_raw_str("&lt;"),
+                '>' => ctx.push_raw_str("&gt;"),
+                _ => ctx.push_raw(character),
+            }
+        }
+        ctx.push_raw('"');
+        return;
+    };
+    ctx.html().span().attr(attr!(;; attributes)).inner(|ctx| {
+        render_wikidot_error_message_with_spans(ctx, bad, remaining);
+    });
 }
 
 fn render_wikidot_equation_number_with_spans(
@@ -252,7 +272,7 @@ fn render_wikidot_equation_number_with_spans(
     });
 }
 
-fn render_wikidot_equation_number(
+pub(crate) fn render_wikidot_equation_number(
     ctx: &mut HtmlContext,
     index: NonZeroUsize,
     open_elements: &[Element],

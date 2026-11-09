@@ -188,7 +188,8 @@ where
             | PartialElement::InlineColorOpen(..)
             | PartialElement::InlineColorClose
             | PartialElement::InlineAnchorOpen(..)
-            | PartialElement::InlineAnchorClose(_) => {}
+            | PartialElement::InlineAnchorClose(_)
+            | PartialElement::WikidotEquationNumber(..) => {}
         },
         _ => {}
     }

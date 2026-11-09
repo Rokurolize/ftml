@@ -57,6 +57,8 @@ pub struct ParagraphStack<'t> {
 
     current: Vec<Element<'t>>,
 
+    wikidot_keep_chunk_trailing_space: bool,
+
     pending_suppression_seams: Vec<Element<'t>>,
 
     current_unwrapped: bool,
@@ -1457,15 +1459,18 @@ impl<'t> ParagraphStack<'t> {
                 self.mark_next_unwrapped_after_block();
             }
             // A chunk-leading single space is indentation at a line start and
-            // keeps the historical drop everywhere except directly after an
-            // inline container flat lowering will literalise: its closer
-            // ended the previous chunk mid-line, so the space is content the
-            // rejoined run must keep.
-            let chunk_leading_line_start = self.current.is_empty()
-                && (self.next_element_started_line
-                    || !self.wikidot_finished_is_literalise_bound_container());
+            // keeps the historical drop, except directly after an inline
+            // container closed mid-line (a format pair crossing a list closes
+            // on the same line): its closer ended the previous chunk mid-line,
+            // so the space is content of the run that continues after it, not
+            // line-start indentation.
+            let mid_line_format_container = !self.next_element_started_line
+                && self.wikidot_finished_ends_with_inline_container();
+            let chunk_leading_line_start =
+                self.current.is_empty() && self.next_element_started_line;
             if self.wikidot
                 && matches!(element, Element::Text(ref text) if text == " ")
+                && !mid_line_format_container
                 && (chunk_leading_line_start
                     || self.current.iter().all(|element| {
                         matches!(
@@ -1656,7 +1661,27 @@ impl<'t> ParagraphStack<'t> {
                     *text = Cow::Owned(stripped.to_owned());
                 }
             }
+            if matches!(
+                &element,
+                Element::Container(container)
+                    if matches!(
+                        container.ctype(),
+                        ContainerType::Bold
+                            | ContainerType::Italics
+                            | ContainerType::Underline
+                            | ContainerType::Superscript
+                            | ContainerType::Subscript
+                            | ContainerType::Strikethrough
+                            | ContainerType::Monospace
+                    )
+            ) {
+                // A format pair crossing a block closes mid-line: the chunk
+                // before it resumes inline content at the same line position,
+                // so its trailing single space is content, not a line ending.
+                self.wikidot_keep_chunk_trailing_space = true;
+            }
             self.end_paragraph();
+            self.wikidot_keep_chunk_trailing_space = false;
             if !invisible_block_line {
                 if element.paragraph_safe() {
                     self.wikidot_absorb_post_list_break_for_prose(
@@ -2159,7 +2184,9 @@ impl<'t> ParagraphStack<'t> {
     }
 
     pub fn build_paragraph(&mut self) -> Option<Element<'t>> {
-        self.trim_trailing_ascii_space();
+        if !self.wikidot_keep_chunk_trailing_space {
+            self.trim_trailing_ascii_space();
+        }
         if self.current.is_empty() {
             return None;
         }
@@ -2190,11 +2217,11 @@ impl<'t> ParagraphStack<'t> {
         Some(element)
     }
 
-    fn wikidot_finished_is_literalise_bound_container(&self) -> bool {
+    fn wikidot_finished_ends_with_inline_container(&self) -> bool {
         let Some(Element::Container(container)) = self.finished.last() else {
             return false;
         };
-        if !matches!(
+        matches!(
             container.ctype(),
             ContainerType::Bold
                 | ContainerType::Italics
@@ -2203,18 +2230,7 @@ impl<'t> ParagraphStack<'t> {
                 | ContainerType::Subscript
                 | ContainerType::Strikethrough
                 | ContainerType::Monospace
-        ) {
-            return false;
-        }
-        container.elements().iter().any(|element| {
-            matches!(
-                element,
-                Element::Partial(
-                    PartialElement::WikidotBlockOpen(_)
-                        | PartialElement::WikidotBlockClose(_)
-                )
-            )
-        })
+        )
     }
 
     fn trim_trailing_ascii_space(&mut self) {

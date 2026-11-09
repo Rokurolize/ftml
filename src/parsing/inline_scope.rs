@@ -7,9 +7,10 @@ use crate::tree::{
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, WIKIDOT_HEADING_REOPEN_MARKER,
     WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER, WIKIDOT_LIST_POST_BLANK_GAP_MARKER,
-    WIKIDOT_QUOTE_BLANK_ANCHOR_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
-    WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
-    WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
+    WIKIDOT_POST_LIST_BLANK_GAP_MARKER, WIKIDOT_QUOTE_BLANK_ANCHOR_MARKER,
+    WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER,
+    WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
+    WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BARE_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BLANK_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BREAK_MARKER,
@@ -1068,6 +1069,7 @@ pub(crate) fn lower_wikidot_inline_size_scopes_with_bibliographies<'t>(
     );
     drop_empty_inline_scopes(elements);
     drop_vanished_paragraphs(elements);
+    split_lists_out_of_paragraphs(elements);
     splice_wikidot_foster(elements);
     rewrite_block_chunk_prefix(elements, BlockChunkCtx::Block);
     lowered
@@ -2640,7 +2642,6 @@ enum PreListFlowBlock {
     /// An align block: live p-wraps the pre-list run unconditionally.
     Align,
     /// A blockquote block: live p-wraps the pre-list run when the blockquote
-    /// subtree carries visible content; an empty one swallows the list on
     /// live (quoted-plain residual family).
     BlockquoteVisible(bool),
     /// Any other flow block: live p-wraps only when visible inline content
@@ -2657,7 +2658,7 @@ impl PreListFlowBlock {
     fn verdict(&self, seen_inline: bool) -> bool {
         match self {
             PreListFlowBlock::Align => true,
-            PreListFlowBlock::BlockquoteVisible(visible) => *visible,
+            PreListFlowBlock::BlockquoteVisible(visible) => *visible && seen_inline,
             PreListFlowBlock::Other => seen_inline,
             PreListFlowBlock::Table => false,
         }
@@ -3077,6 +3078,26 @@ fn strip_leading_breaks<'t>(run: &mut Vec<Element<'t>>) {
     }
 }
 
+fn keep_single_leading_break(run: &mut Vec<Element<'_>>) {
+    while matches!(
+        run.first(),
+        Some(Element::LineBreak | Element::LineBreaks(_))
+    ) && matches!(
+        run.get(1),
+        Some(Element::LineBreak | Element::LineBreaks(_))
+    ) {
+        run.remove(0);
+    }
+    if !run.is_empty()
+        && !matches!(
+            run.first(),
+            Some(Element::LineBreak | Element::LineBreaks(_))
+        )
+    {
+        run.insert(0, Element::LineBreak);
+    }
+}
+
 /// Flush the collected run for a segmented format crossing an explicit list
 /// or a `[[code]]` block. Leading breaks are trimmed except for the
 /// own-line opener of the pair (live renders that leading chunk as a
@@ -3088,6 +3109,7 @@ fn strip_leading_breaks<'t>(run: &mut Vec<Element<'t>>) {
 /// boundary (emitted as a format segment); otherwise it becomes a format
 /// segment (formed), tagged for the stopped-pair family and the own-line
 /// opener family when applicable.
+#[allow(clippy::too_many_arguments)]
 fn seal_format_segment<'t>(
     output: &mut Vec<Element<'t>>,
     run: &mut Vec<Element<'t>>,
@@ -3097,6 +3119,7 @@ fn seal_format_segment<'t>(
     boundary_seen: bool,
     keep_leading_breaks: bool,
     wrap_lead: bool,
+    keep_one_leading_break: bool,
 ) {
     let first_list = !boundary_seen;
     // Only runs after a boundary lose their leading breaks. The first
@@ -3104,11 +3127,15 @@ fn seal_format_segment<'t>(
     // opener-line break(s) inside its format span
     // (`__\na` renders `<span style="text-decoration: underline;"><br>a<br></span>`).
     if !first_list && !keep_leading_breaks {
-        while matches!(
-            run.first(),
-            Some(Element::LineBreak | Element::LineBreaks(_))
-        ) {
-            run.remove(0);
+        if keep_one_leading_break {
+            keep_single_leading_break(run);
+        } else {
+            while matches!(
+                run.first(),
+                Some(Element::LineBreak | Element::LineBreaks(_))
+            ) {
+                run.remove(0);
+            }
         }
     }
     if stop_at_list && boundary_seen {
@@ -3178,6 +3205,7 @@ fn segment_format_run<'t>(
     // A run seeded by a code block keeps its leading break(s); live keeps
     // the break between the code div and the following content.
     let mut run_starts_after_code = false;
+    let mut run_follows_blank_gap = false;
     let mut prev_list_post_blank = false;
     for element in elements {
         if matches!(
@@ -3211,8 +3239,16 @@ fn segment_format_run<'t>(
                     && !stop_at_list
                     && formed_chunk_wraps(&element)
                     && !format_close_inside_list(&element, ctype),
+                mem::replace(&mut run_follows_blank_gap, false),
             );
             let mut list = element;
+            if let Element::List { attributes, .. } = &mut list
+                && attributes
+                    .remove(WIKIDOT_POST_LIST_BLANK_GAP_MARKER)
+                    .is_some()
+            {
+                run_follows_blank_gap = true;
+            }
             prev_list_post_blank = take_post_blank_gap_mark(&mut list);
             segment_format_list_items(
                 &mut list,
@@ -3237,6 +3273,7 @@ fn segment_format_run<'t>(
                 seen_list,
                 mem::replace(&mut run_starts_after_code, false),
                 true,
+                mem::replace(&mut run_follows_blank_gap, false),
             );
             if let Some(kind) = format_kind_of(ctype) {
                 code.wikidot_code_format_wrappers.push(kind);
@@ -3260,11 +3297,15 @@ fn segment_format_run<'t>(
             run.drain(..leading - 1);
         }
     } else if !run_starts_after_code {
-        while matches!(
-            run.first(),
-            Some(Element::LineBreak | Element::LineBreaks(_))
-        ) {
-            run.remove(0);
+        if run_follows_blank_gap {
+            keep_single_leading_break(&mut run);
+        } else {
+            while matches!(
+                run.first(),
+                Some(Element::LineBreak | Element::LineBreaks(_))
+            ) {
+                run.remove(0);
+            }
         }
     }
     if stop_at_list && seen_list {
@@ -4225,6 +4266,78 @@ fn split_code_children_of_format_containers<'t>(elements: &mut Vec<Element<'t>>)
     *elements = output;
 }
 
+fn post_span_ends_with_literal_color_close(output: &[Element<'_>]) -> bool {
+    matches!(output.last(), Some(Element::Container(container))
+        if matches!(
+            container.ctype(),
+            ContainerType::Span | ContainerType::Size
+        ) && matches!(container.elements().last(), Some(Element::Text(text)) if text.as_ref() == "##"))
+}
+
+fn split_lists_out_of_paragraphs(elements: &mut Vec<Element<'_>>) {
+    for element in elements.iter_mut() {
+        visit_children_mut(element, &mut split_lists_out_of_paragraphs);
+    }
+    let mut index = 0;
+    while index < elements.len() {
+        let splits = match &elements[index] {
+            Element::Container(container)
+                if container.ctype() == ContainerType::Paragraph
+                    && container.elements().iter().any(|child| {
+                        matches!(
+                            child,
+                            Element::List {
+                                wikidot_explicit_block: true,
+                                ..
+                            }
+                        )
+                    }) =>
+            {
+                let mut taken = mem::replace(
+                    &mut elements[index],
+                    Element::LineBreak,
+                );
+                let children = match &mut taken {
+                    Element::Container(container) => mem::take(container.elements_mut()),
+                    _ => unreachable!("paragraph checked above"),
+                };
+                let mut replacement = Vec::new();
+                let mut run = Vec::new();
+                for child in children {
+                    if matches!(
+                        child,
+                        Element::List {
+                            wikidot_explicit_block: true,
+                            ..
+                        }
+                    ) {
+                        if !run.is_empty() {
+                            replacement.push(Element::Container(Container::new(
+                                ContainerType::Paragraph,
+                                mem::take(&mut run),
+                                AttributeMap::new(),
+                            )));
+                        }
+                        replacement.push(child);
+                    } else {
+                        run.push(child);
+                    }
+                }
+                replacement.extend(run);
+                Some(replacement)
+            }
+            _ => None,
+        };
+        if let Some(replacement) = splits {
+            let width = replacement.len();
+            elements.splice(index..=index, replacement);
+            index += width;
+        } else {
+            index += 1;
+        }
+    }
+}
+
 fn lower_root_sequence<'t>(
     elements: &mut Vec<Element<'t>>,
     valid: &BTreeSet<usize>,
@@ -4585,6 +4698,8 @@ fn lower_root_sequence<'t>(
                 && (!previous_is_own_chunk_block || tail_break)
                 && !output.is_empty()
                 && paragraph_group.is_none()
+                && !(close_only_paragraph
+                    && post_span_ends_with_literal_color_close(&output))
             {
                 container.elements_mut().insert(0, Element::LineBreak);
             }
@@ -5804,6 +5919,38 @@ fn collect_valid_pairs(
     }
 }
 
+fn span_blank_split_has_content(element: &Element<'_>) -> bool {
+    match element {
+        Element::LineBreak | Element::LineBreaks(_) => false,
+        Element::Text(text) => !text.trim().is_empty(),
+        _ => true,
+    }
+}
+
+fn split_run_at_blank_break<'t>(
+    run: &[Element<'t>],
+) -> Option<(Vec<Element<'t>>, Vec<Element<'t>>)> {
+    if !run
+        .first()
+        .is_some_and(span_blank_split_has_content)
+        || !run.last().is_some_and(span_blank_split_has_content)
+    {
+        return None;
+    }
+    let mut index = 0;
+    while index + 1 < run.len() {
+        if matches!(run[index], Element::LineBreak)
+            && matches!(run[index + 1], Element::LineBreak)
+            && run[..index].iter().any(span_blank_split_has_content)
+            && run[index + 2..].iter().any(span_blank_split_has_content)
+        {
+            return Some((run[..index + 2].to_vec(), run[index + 2..].to_vec()));
+        }
+        index += 1;
+    }
+    None
+}
+
 fn lower_sequence<'t>(
     elements: &mut Vec<Element<'t>>,
     valid: &BTreeSet<usize>,
@@ -6701,6 +6848,26 @@ fn lower_sequence<'t>(
                 false
             };
             if list_legacy {
+                let native_list_takes_run_breaks = matches!(
+                    element,
+                    Element::List {
+                        wikidot_explicit_block: false,
+                        ..
+                    }
+                ) && active.has_span_or_size_scope()
+                    && !matches!(
+                        run.last(),
+                        Some(Element::LineBreak | Element::LineBreaks(_))
+                    )
+                    && run.iter().any(|run_element| match run_element {
+                        Element::LineBreak | Element::LineBreaks(_) => false,
+                        Element::Text(text) => !text.trim().is_empty(),
+                        _ => true,
+                    });
+                if native_list_takes_run_breaks {
+                    run.push(Element::LineBreak);
+                    run.push(Element::LineBreak);
+                }
                 flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
                 if matches!(
                     element,
@@ -8386,6 +8553,37 @@ fn flush_run<'t>(
     if run.is_empty() {
         return;
     }
+    if active.has_span_or_size_scope()
+        && active.active_scopes_all_span_size()
+        && let Some((head, tail)) = split_run_at_blank_break(run)
+    {
+        mem::take(run);
+        let mut head = head;
+        flush_run_wrapped(output, &mut head, active, last_run_outer_scope);
+        let mut tail_out = Vec::new();
+        let mut tail = tail;
+        let mut tail_merge = RunMergeState::default();
+        flush_run_wrapped(&mut tail_out, &mut tail, active, &mut tail_merge);
+        output.push(Element::Container(Container::new(
+            ContainerType::Paragraph,
+            tail_out,
+            AttributeMap::new(),
+        )));
+        last_run_outer_scope.reset();
+        return;
+    }
+    flush_run_wrapped(output, run, active, last_run_outer_scope);
+}
+
+fn flush_run_wrapped<'t>(
+    output: &mut Vec<Element<'t>>,
+    run: &mut Vec<Element<'t>>,
+    active: &mut ActiveScopes<'t>,
+    last_run_outer_scope: &mut RunMergeState,
+) {
+    if run.is_empty() {
+        return;
+    }
     if active.suppress_scope_wrap {
         let mut wrapped = mem::take(run);
         if let Some(watermark) = active.suppress_scope_wrap_watermark {
@@ -9485,6 +9683,17 @@ pub(crate) fn visit_children_mut<'t>(
             | PartialElement::WikidotEquationNumber(..) => {}
         },
         _ => {}
+    }
+}
+
+pub(crate) fn strip_post_list_blank_gap_markers<'t>(elements: &mut Vec<Element<'t>>) {
+    for element in elements.iter_mut() {
+        if let Element::List { attributes, .. } = element {
+            attributes.remove(WIKIDOT_POST_LIST_BLANK_GAP_MARKER);
+        }
+        visit_children_mut(element, &mut |children| {
+            strip_post_list_blank_gap_markers(children);
+        });
     }
 }
 

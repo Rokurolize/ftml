@@ -1,0 +1,72 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "span",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "color",
+                        "data": {
+                            "color": "red",
+                            "background": false,
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "a"
+                                },
+                                {
+                                    "element": "list",
+                                    "data": {
+                                        "type": "bullet",
+                                        "attributes": {},
+                                        "items": [
+                                            {
+                                                "item-type": "elements",
+                                                "attributes": {},
+                                                "elements": [
+                                                    {
+                                                        "element": "text",
+                                                        "data": "b"
+                                                    },
+                                                    {
+                                                        "element": "list",
+                                                        "data": {
+                                                            "type": "bullet",
+                                                            "attributes": {},
+                                                            "items": [
+                                                                {
+                                                                    "item-type": "elements",
+                                                                    "attributes": {},
+                                                                    "elements": [
+                                                                        {
+                                                                            "element": "text",
+                                                                            "data": "n1"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "element": "line-break"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "c"
+                                }
+                            ],
+                            "attributes": {}
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -926,6 +926,7 @@ pub(super) fn mark_format_stop_at_list<'r, 't>(
             || color_info.elements_ref().iter().any(|child| {
                 crate::parsing::inline_scope::subtree_contains_flow_block(child)
                     || crate::parsing::inline_scope::subtree_contains_native_list(child)
+                    || crate::parsing::inline_scope::subtree_contains_blank_line_item(child)
             })
         {
             return elements;

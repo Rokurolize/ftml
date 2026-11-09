@@ -27,7 +27,8 @@ use crate::parsing::{ParagraphSplitKind, ParserWrap, strip_newlines};
 use crate::tree::{
     AcceptsPartial, AttributeMap, Container, ContainerType, ListItem, ListType,
     PartialElement, TableType, WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER,
-    WIKIDOT_LIST_TAIL_LEAD_SPACE_MARKER, WikidotBlockCloseKind,
+    WIKIDOT_LIST_TAIL_LEAD_SPACE_MARKER, WIKIDOT_POST_LIST_BLANK_GAP_MARKER,
+    WikidotBlockCloseKind,
 };
 use std::borrow::Cow;
 
@@ -1017,6 +1018,7 @@ fn parse_list_block_impl<'r, 't>(
         && !parser.pending_note_list_closer()
         && !parser.wikidot_cross_list_terminated_body()
     {
+        maybe_stamp_post_list_blank_gap(parser, &mut element, list_end);
         let mut output = vec![element];
         if fused_close {
             // A fused closer's residual `]` occupies the line-end slot: live
@@ -1119,6 +1121,7 @@ fn parse_list_block_impl<'r, 't>(
             parser.step()?;
             return ok!(false; vec![element, Element::LineBreak], errors);
         }
+        maybe_stamp_post_list_blank_gap(parser, &mut element, list_end);
         success_elements_with_paragraph_safety(false, element, errors)
     }
 }
@@ -1209,6 +1212,84 @@ fn wikidot_tail_lead_space(parser: &Parser) -> bool {
 fn record_wikidot_explicit_list_end(parser: &Parser) {
     if parser.settings().layout.legacy() {
         parser.record_wikidot_explicit_list_end(parser.current().span.start);
+    }
+}
+
+fn post_list_blank_gap(parser: &Parser<'_, '_>, list_end: usize) -> bool {
+    let source = parser.full_text().inner();
+    let between = source.get(list_end..parser.current().span.start);
+    let Some(between) = between else {
+        return false;
+    };
+    if !between
+        .bytes()
+        .all(|byte| matches!(byte, b' ' | b'\t' | b'\r' | b'\n'))
+    {
+        return false;
+    }
+    let mut rest = parser.remaining();
+    if parser.current().token == Token::LineBreak {
+        while matches!(
+            rest.first().map(|token| token.token),
+            Some(Token::Whitespace)
+        ) {
+            rest = &rest[1..];
+        }
+        if !matches!(
+            rest.first().map(|token| token.token),
+            Some(Token::ParagraphBreak)
+        ) {
+            return false;
+        }
+        rest = &rest[1..];
+    } else if parser.current().token != Token::ParagraphBreak {
+        return false;
+    }
+    while matches!(
+        rest.first().map(|token| token.token),
+        Some(Token::Whitespace)
+    ) {
+        rest = &rest[1..];
+    }
+    !matches!(
+        rest.first().map(|token| token.token),
+        None | Some(
+            Token::LineBreak
+                | Token::ParagraphBreak
+                | Token::InputEnd
+                | Token::LeftBlock
+                | Token::LeftBlockStar
+                | Token::LeftBlockEnd
+                | Token::RightBlock
+                | Token::Heading
+                | Token::Equals
+                | Token::Quote
+                | Token::TableColumn
+                | Token::TableColumnTitle
+                | Token::TableColumnCenter
+                | Token::TableColumnRight
+        )
+    )
+}
+
+fn maybe_stamp_post_list_blank_gap(
+    parser: &Parser<'_, '_>,
+    element: &mut Element<'_>,
+    list_end: usize,
+) {
+    if !parser.settings().layout.legacy() {
+        return;
+    }
+    let Element::List {
+        wikidot_explicit_block: true,
+        attributes,
+        ..
+    } = element
+    else {
+        return;
+    };
+    if post_list_blank_gap(parser, list_end) {
+        attributes.insert(WIKIDOT_POST_LIST_BLANK_GAP_MARKER, Cow::Borrowed(""));
     }
 }
 
@@ -3932,6 +4013,29 @@ fn assemble_wikidot_li_segments<'t>(
     }
     while matches!(elements.last(), Some(Element::Text(text)) if text == " ") {
         elements.pop();
+    }
+    let trailing_quote_goes_bare = !body_before_close.ends_with('\n')
+        && elements.last().is_some_and(|element| match element {
+            Element::Container(container) => {
+                container.ctype() == ContainerType::Blockquote
+                    && match container.elements() {
+                        [Element::Container(paragraph)]
+                            if paragraph.ctype() == ContainerType::Paragraph
+                                && paragraph.attributes().get().is_empty() =>
+                        {
+                            paragraph.elements().iter().all(Element::paragraph_safe)
+                        }
+                        _ => false,
+                    }
+            }
+            _ => false,
+        });
+    if trailing_quote_goes_bare
+        && let Some(Element::Container(container)) = elements.last_mut()
+        && let [Element::Container(paragraph)] = container.elements_mut().as_mut_slice()
+    {
+        let mut bare = std::mem::take(paragraph.elements_mut());
+        std::mem::swap(container.elements_mut(), &mut bare);
     }
     // BRIEF-QC89 quoted-closer pairing: shallow text hoisted out before
     // the quoted `[[/li]]` close takes the item's trailing break with

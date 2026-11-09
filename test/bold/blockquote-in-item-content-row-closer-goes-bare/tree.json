@@ -1,0 +1,65 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "bold",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "a"
+                    },
+                    {
+                        "element": "list",
+                        "data": {
+                            "type": "bullet",
+                            "attributes": {},
+                            "items": [
+                                {
+                                    "item-type": "elements",
+                                    "attributes": {},
+                                    "elements": [
+                                        {
+                                            "element": "text",
+                                            "data": "b"
+                                        },
+                                        {
+                                            "element": "container",
+                                            "data": {
+                                                "type": "blockquote",
+                                                "attributes": {},
+                                                "elements": [
+                                                    {
+                                                        "element": "container",
+                                                        "data": {
+                                                            "type": "paragraph",
+                                                            "attributes": {},
+                                                            "elements": [
+                                                                {
+                                                                    "element": "text",
+                                                                    "data": "q"
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "text",
+                        "data": "c"
+                    }
+                ]
+            }
+        }
+    ]
+}

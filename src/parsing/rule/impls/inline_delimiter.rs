@@ -221,6 +221,62 @@ pub(super) enum ReachableCloseMode {
     BlockBarrier,
 }
 
+fn post_list_gap_before(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
+    let mut pos = index;
+    loop {
+        if pos == 0 {
+            return false;
+        }
+        pos -= 1;
+        match tokens[pos].token {
+            Token::Whitespace | Token::LineBreak => {}
+            Token::RightBlock => break,
+            _ => return false,
+        }
+    }
+    loop {
+        if pos == 0 {
+            return false;
+        }
+        pos -= 1;
+        match tokens[pos].token {
+            Token::Whitespace | Token::LineBreak => {}
+            Token::Identifier
+                if tokens[pos].slice.eq_ignore_ascii_case("ul")
+                    || tokens[pos].slice.eq_ignore_ascii_case("ol") =>
+            {
+                break;
+            }
+            _ => return false,
+        }
+    }
+    loop {
+        if pos == 0 {
+            return false;
+        }
+        pos -= 1;
+        match tokens[pos].token {
+            Token::Whitespace | Token::LineBreak => {}
+            Token::LeftBlockEnd => break,
+            _ => return false,
+        }
+    }
+    true
+}
+
+fn closer_bare_before(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
+    let mut pos = index;
+    while pos > 0 {
+        pos -= 1;
+        match tokens[pos].token {
+            Token::Whitespace => {}
+            Token::LineBreak | Token::ParagraphBreak => return true,
+            _ => return false,
+        }
+    }
+    true
+}
+
 fn paragraph_break_after_list_close(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
     if tokens
         .get(index)
@@ -293,6 +349,17 @@ pub(super) fn validate_reachable_close(
 
     let mut paragraph_error = None;
     let suppress_breaks = parser.settings().layout.legacy();
+    let gap_forgiveness = token == Token::Bold && suppress_breaks;
+    let opener_bare = !tokens.first().is_some_and(|next| {
+        !matches!(
+            next.token,
+            Token::Whitespace
+                | Token::LineBreak
+                | Token::ParagraphBreak
+                | Token::InputEnd
+        )
+    });
+    let mut forgave_post_list_gap = false;
     let mut open_blocks: Vec<String> = Vec::new();
     let mut pb_stack: Vec<String> = Vec::new();
     let mut saw_break = false;
@@ -324,6 +391,9 @@ pub(super) fn validate_reachable_close(
                     tokens[index - 1].span.end,
                 )
             {
+                return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
+            if forgave_post_list_gap {
                 return Err(parser.make_err(ParseErrorKind::RuleFailed));
             }
             return Ok(());
@@ -377,7 +447,13 @@ pub(super) fn validate_reachable_close(
                     && !parser.in_wikidot_size_body()
                     && !parser.in_wikidot_anchor_body()
                     && paragraph_break_after_list_close(tokens, index);
-                if !post_list_gap && (!suppress_breaks || pb_stack.is_empty()) {
+                if gap_forgiveness
+                    && pb_stack.is_empty()
+                    && !opener_bare
+                    && post_list_gap_before(tokens, index)
+                {
+                    forgave_post_list_gap = true;
+                } else if !post_list_gap && (!suppress_breaks || pb_stack.is_empty()) {
                     paragraph_error
                         .get_or_insert_with(|| parser.make_err(ParseErrorKind::RuleFailed));
                 }
@@ -418,6 +494,9 @@ pub(super) fn validate_reachable_close(
                         tokens[index - 1].span.end,
                     )
                 {
+                    return Err(parser.make_err(ParseErrorKind::RuleFailed));
+                }
+                if forgave_post_list_gap && closer_bare_before(tokens, index) {
                     return Err(parser.make_err(ParseErrorKind::RuleFailed));
                 }
                 return Ok(());

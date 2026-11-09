@@ -23,7 +23,8 @@ use super::BLOCK_SPAN;
 use super::prelude::*;
 use super::{
     consume_wikidot_flat_head_break, merge_adjacent_native_lists,
-    restore_crossed_li_terminated_body_break, unwrap_wikidot_paragraph_after_explicit_list,
+    restore_crossed_li_terminated_body_break, trim_wikidot_trailing_explicit_list_break,
+    unwrap_wikidot_paragraph_after_explicit_list,
     wikidot_eject_after_lost_owner_collapsible, wikidot_flat_pair_for_head,
     wikidot_scan_pairs_head,
 };
@@ -1328,6 +1329,10 @@ fn parse_fn<'r, 't>(
     };
     if parser.settings().layout.legacy() {
         restore_crossed_li_terminated_body_break(parser, body_start_byte, &mut elements);
+        // A frame body ending in a post-list break plus invisible content
+        // (a hidden iftags body) keeps no break on live (BRIEF-RMRES fda12,
+        // saved-page probes muse-probe-rmres-fda-f7).
+        trim_wikidot_trailing_explicit_list_break(&mut elements);
         normalize_wikidot_div_elements(&mut elements, flag_score);
         if parser.wikidot_div_yielded_to_tab() {
             strip_yielded_div_break(&mut elements);

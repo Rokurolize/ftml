@@ -1,0 +1,12 @@
+[[div]]
+[[ul]]
+[[li]]
+x
++ h
+y
+[[/li]]
+[[/ul]]
+[[iftags +x]]
+z
+[[/iftags]]
+[[/div]]

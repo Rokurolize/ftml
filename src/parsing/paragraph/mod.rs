@@ -884,7 +884,16 @@ where
                     .any(|error| error.kind() == ParseErrorKind::ListItemOutsideList);
             let split_batch = paragraph_split_batch(&elements, paragraph_split);
             if split_batch.is_none() {
-                defer_suppression_seams(&mut stack, &mut elements);
+                let seam_deferred = defer_suppression_seams(&mut stack, &mut elements);
+                // A hidden body between the list and the frame close: live
+                // drops the attached post-list break entirely, so the seam's
+                // retained leading break goes with it (BRIEF-RMRES fda12).
+                if seam_deferred
+                    && stack.take_wikidot_seam_dropped_post_list_break()
+                    && matches!(elements, Elements::Single(Element::LineBreak))
+                {
+                    elements = Elements::None;
+                }
             }
             let fused_block_residual = take_fused_block_residual(&mut elements);
             let active_div = elements_contain_div(&elements);
@@ -1057,6 +1066,12 @@ where
             }
             if parser.take_wikidot_bare_div_literal() {
                 stack.mark_next_unwrapped();
+            }
+            // BRIEF-RMRES u2r-ol: the crossed ol tail's open anchor list keeps
+            // the remaining tail as a bare run inside its open item, so mark
+            // after the batch flushed (the anchor push is a block push).
+            if parser.take_wikidot_crossed_ol_anchor_bare() {
+                stack.mark_next_unwrapped_after_block();
             }
             if colon_line_vanished && parser.settings().layout.legacy() {
                 stack.mark_current_unwrapped();
@@ -2056,12 +2071,14 @@ fn push_elements<'t>(
 fn defer_suppression_seams<'t>(
     stack: &mut ParagraphStack<'t>,
     elements: &mut Elements<'t>,
-) {
+) -> bool {
+    let mut deferred = false;
     let original = std::mem::replace(elements, Elements::None);
     *elements = match original {
         Elements::Single(element) if matches!(&element, Element::Delayed(delayed) if delayed.is_suppression_seam()) =>
         {
             stack.defer_suppression_seam(element);
+            deferred = true;
             Elements::None
         }
         Elements::Multiple(items) => {
@@ -2083,6 +2100,7 @@ fn defer_suppression_seams<'t>(
                 if matches!(&element, Element::Delayed(delayed) if delayed.is_suppression_seam())
                 {
                     stack.defer_suppression_seam(element);
+                    deferred = true;
                 } else {
                     retained.push(element);
                 }
@@ -2098,6 +2116,7 @@ fn defer_suppression_seams<'t>(
         }
         other => other,
     };
+    deferred
 }
 
 fn push_element<'t>(

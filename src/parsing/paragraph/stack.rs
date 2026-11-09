@@ -71,6 +71,10 @@ pub struct ParagraphStack<'t> {
 
     pending_aligned_image_separator: Option<usize>,
     unwrapped_after_block_line: bool,
+    /// A deferred suppression seam dropped the attached post-list break: the
+    /// paragraph gather also drops the seam batch's own leading break
+    /// (BRIEF-RMRES fda12).
+    wikidot_seam_dropped_post_list_break: bool,
     crossed_collapsible_tail: bool,
     wikidot_footnote_joined_math_break: bool,
     wikidot_literal_iftags_line: bool,
@@ -1101,6 +1105,24 @@ impl<'t> ParagraphStack<'t> {
 
     #[inline]
     pub fn push_element(&mut self, element: Element<'t>, paragraph_safe: bool) {
+        // A hidden iftags body is invisible content: live drops the attached
+        // post-list break before it, even when the frame's shell path already
+        // emitted [list, break] into the finished tail (BRIEF-RMRES fda12,
+        // saved-page probes muse-probe-rmres-fda-f7 / fda-f10).
+        if self.wikidot
+            && matches!(
+                &element,
+                Element::Delayed(delayed) if delayed.is_suppression_seam()
+            )
+            && self.current.is_empty()
+            && matches!(self.finished.last(), Some(Element::LineBreak))
+            && matches!(
+                self.finished.get(self.finished.len().saturating_sub(2)),
+                Some(Element::List { .. })
+            )
+        {
+            self.finished.pop();
+        }
         // pw65a: the first content element after a stash-formed explicit
         // list (blank line seen) opens its paragraph with live's leading
         // `<br />`; a same-line follower (no blank) attaches bare. Any
@@ -2306,7 +2328,21 @@ impl<'t> ParagraphStack<'t> {
         debug_assert!(
             matches!(&element, Element::Delayed(delayed) if delayed.is_suppression_seam())
         );
+        // A deferred suppression seam is invisible content: live drops the
+        // attached post-list break before a hidden iftags body (BRIEF-RMRES
+        // fda12, saved-page muse-probe-rmres-fda-f7). At page root the seam
+        // is not poppable, so this is a nested-frame-only correction.
+        let popped = self.wikidot && self.wikidot_poppable_post_list_break();
+        if popped {
+            self.wikidot_pop_post_list_break();
+            self.wikidot_seam_dropped_post_list_break = true;
+        }
         self.pending_suppression_seams.push(element);
+    }
+
+    /// Consume the "seam dropped the post-list break" signal.
+    pub(crate) fn take_wikidot_seam_dropped_post_list_break(&mut self) -> bool {
+        std::mem::take(&mut self.wikidot_seam_dropped_post_list_break)
     }
 
     pub fn end_paragraph_at_break(&mut self) {

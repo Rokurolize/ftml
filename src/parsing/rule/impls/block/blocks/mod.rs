@@ -75,6 +75,45 @@ mod prelude {
     pub(crate) use crate::parsing::trim_cow;
 }
 
+/// Closed bullet anchor item live emits for a swallowed crossed ol tail before
+/// a keep-class block follower (BRIEF-RMRES u2r-ol closed rows).
+pub(crate) fn wikidot_crossed_ol_tail_element<'t>() -> Element<'t> {
+    let mut item_attributes = AttributeMap::new();
+    item_attributes.insert("style", cow!("list-style: none"));
+    Element::List {
+        ltype: ListType::Bullet,
+        items: vec![ListItem::Elements {
+            elements: vec![Element::LineBreak],
+            attributes: item_attributes,
+        }],
+        attributes: AttributeMap::new(),
+        wikidot_explicit_block: false,
+        wikidot_unclosed: false,
+    }
+}
+
+/// Unclosed bullet anchor list live emits for a swallowed crossed ol tail that
+/// absorbs the remaining tail: later sibling elements render inside its open
+/// item, as live's raw HTML does (BRIEF-RMRES u2r-ol open rows).
+pub(crate) fn wikidot_crossed_ol_open_element<'t>(with_break: bool) -> Element<'t> {
+    let mut item_attributes = AttributeMap::new();
+    item_attributes.insert("style", cow!("list-style: none"));
+    Element::List {
+        ltype: ListType::Bullet,
+        items: vec![ListItem::Elements {
+            elements: if with_break {
+                vec![Element::LineBreak]
+            } else {
+                Vec::new()
+            },
+            attributes: item_attributes,
+        }],
+        attributes: AttributeMap::new(),
+        wikidot_explicit_block: false,
+        wikidot_unclosed: true,
+    }
+}
+
 #[macro_use]
 mod align;
 
@@ -213,7 +252,7 @@ pub use self::user::BLOCK_USER;
 use crate::parsing::parser::Parser;
 use crate::parsing::parser::block_pairs::{WikidotBlockKind, WikidotBlockPair};
 use crate::parsing::{ParseError, Token};
-use crate::tree::{Element, ListItem, PartialElement};
+use crate::tree::{AttributeMap, Element, ListItem, ListType, PartialElement};
 
 /// Live Wikidot renders one native list for a quote-row block body whose
 /// rows were collected in per-row fragments: the native list rule ends after
@@ -266,16 +305,23 @@ pub(crate) fn merge_adjacent_native_lists(elements: &mut Vec<Element<'_>>) {
 /// line break is dropped there, while it survives at the page root, in a plain
 /// div and in a table cell.
 pub(crate) fn trim_wikidot_trailing_explicit_list_break(elements: &mut Vec<Element<'_>>) {
-    if matches!(elements.last(), Some(Element::LineBreak))
-        && matches!(
-            elements.get(elements.len().saturating_sub(2)),
-            Some(Element::List {
-                wikidot_explicit_block: true,
-                ..
-            })
-        )
+    // Trailing suppression seams are invisible content (a hidden iftags body):
+    // live drops the attached post-list break before them, exactly as it drops
+    // it before the frame close itself (BRIEF-RMRES fda12, saved-page probes
+    // muse-probe-rmres-fda-f7 / fda-f10).
+    let mut end = elements.len();
+    while end > 0 {
+        match &elements[end - 1] {
+            Element::Delayed(delayed) if delayed.is_suppression_seam() => end -= 1,
+            Element::Text(text) if text.trim().is_empty() => end -= 1,
+            _ => break,
+        }
+    }
+    if end >= 2
+        && matches!(&elements[end - 1], Element::LineBreak)
+        && matches!(&elements[end - 2], Element::List { .. })
     {
-        elements.pop();
+        elements.remove(end - 1);
     }
 }
 

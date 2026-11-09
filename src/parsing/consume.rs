@@ -1046,10 +1046,14 @@ where
     // crossed-tail sentinel right after it; the preprocessor keeps that
     // sentinel only where live keeps the crossed frame's post-close break
     // (probes muse-probe-rm83-u2g, muse-probe-rm83r2-u2r-div-follower).
-    let crossed_tail_break = matches!(
+    let crossed_tail = if matches!(
         &element,
         Element::Partial(PartialElement::WikidotBlockClose(_))
-    ) && parser.take_wikidot_crossed_close_sentinel()?;
+    ) {
+        parser.take_wikidot_crossed_close_sentinel()?
+    } else {
+        None
+    };
     if !scored_close
         && normalized.eq_ignore_ascii_case("collapsible")
         && !parser.in_wikidot_collapsible()
@@ -1093,8 +1097,32 @@ where
     if residual_close_bracket || fused_residual {
         output.push(text!("]"));
     }
-    if crossed_tail_break {
-        output.push(Element::LineBreak);
+    match crossed_tail {
+        Some(crate::preproc::WikidotCrossedCloseSentinel::Break) => {
+            output.push(Element::LineBreak);
+        }
+        Some(crate::preproc::WikidotCrossedCloseSentinel::OlTail) => {
+            output.push(
+                crate::parsing::rule::impls::block::blocks::wikidot_crossed_ol_tail_element(),
+            );
+        }
+        Some(crate::preproc::WikidotCrossedCloseSentinel::OlOpen) => {
+            // EOF leaves live's anchor item holding the crossed tail's own
+            // break; a blank line after the swallowed ol closer becomes the
+            // open item's break too (BRIEF-RMRES u2r-ol o3/o4).
+            let mut with_break = parser.current().token == Token::InputEnd;
+            if parser.current().token == Token::ParagraphBreak {
+                parser.step()?;
+                with_break = true;
+            }
+            output.push(
+                crate::parsing::rule::impls::block::blocks::wikidot_crossed_ol_open_element(
+                    with_break,
+                ),
+            );
+            parser.record_wikidot_crossed_ol_anchor_bare();
+        }
+        None => {}
     }
     Ok(Some(if output.len() == 1 {
         output.pop().expect("one element").into()

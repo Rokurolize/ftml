@@ -26,8 +26,8 @@ use super::parser::{
 use super::{
     BlockRule,
     blocks::{
-        BLOCK_COLLAPSIBLE, BLOCK_EMBED, BLOCK_EMBED_AUDIO, BLOCK_EMBED_VIDEO, BLOCK_HTML,
-        BLOCK_IFTAGS, BLOCK_NOTE, BLOCK_SPAN, BLOCK_TABVIEW,
+        BLOCK_COLLAPSIBLE, BLOCK_DIV, BLOCK_EMBED, BLOCK_EMBED_AUDIO, BLOCK_EMBED_VIDEO,
+        BLOCK_HTML, BLOCK_IFTAGS, BLOCK_NOTE, BLOCK_SPAN, BLOCK_TABVIEW,
         iftags_head_keeps_inline_body,
     },
 };
@@ -168,6 +168,12 @@ fn block_skip<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elemen
                         block_rule.name,
                         "block-list-unordered" | "block-list-ordered"
                     ))
+                // Inside a bold/italics/underline collection a [[div]]
+                // head stays literal (live pairs across it); the break in
+                // front of it survives like the explicit-list case above.
+                && !(parser.settings().layout.legacy()
+                    && parser.wikidot_format_collection_body()
+                    && block_rule.name == BLOCK_DIV.name)
                 // L85 scope-5: live keeps the break before an align block in
                 // item bodies (li-align-contained; family-uniform per ruling
                 // treatment, only [[=]] directly probed).

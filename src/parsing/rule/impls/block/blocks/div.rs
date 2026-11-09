@@ -329,7 +329,13 @@ where
         let line_start = source[..owner_start]
             .rfind('\n')
             .map_or(0, |offset| offset + 1);
+        // Inside a bold/italics/underline collection the head stays a
+        // plain inline literal (live pairs across it): the preceding
+        // newline is already a break element, so it must not be fused
+        // into the literal (which would split the paragraph and defeat
+        // the later repair pass).
         let line_started_after_physical_newline = line_start > 0
+            && !parser.wikidot_format_collection_body()
             && source[line_start..owner_start]
                 .trim_matches([' ', '\t'])
                 .is_empty();
@@ -501,10 +507,14 @@ where
             }
             // L85 scope-5: in item bodies the newline after a literal div
             // is left for the real break token (e25/e18/e32 trail it bare);
-            // elsewhere the old text newline is kept.
+            // elsewhere the old text newline is kept. Inside a
+            // bold/italics/underline collection it is likewise left for
+            // the real break token (a text newline would split the pair's
+            // paragraph).
             if literal_end > owner_end
                 && parser.current().span.start == owner_end
                 && !parser.wikidot_li_inside_item_body()
+                && !parser.wikidot_format_collection_body()
             {
                 elements.push(text!("\n"));
             }

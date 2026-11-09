@@ -5558,6 +5558,12 @@ where
             return Err(error);
         }
 
+        // A [[div]] directly in a bold/italics/underline collection stays
+        // literal (live pairs across it); inside a nested block body the
+        // collection no longer governs it, so suspend the flag for the
+        // body and restore it after.
+        let previous_format_body = self.set_wikidot_format_collection_body(false);
+
         let track_boundary = self.discarding_hidden_body();
         if track_boundary {
             self.push_hidden_body_boundary(
@@ -5590,6 +5596,8 @@ where
         if track_boundary {
             self.pop_hidden_body_boundary();
         }
+
+        self.set_wikidot_format_collection_body(previous_format_body);
 
         result
     }

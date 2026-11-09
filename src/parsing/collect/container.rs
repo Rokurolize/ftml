@@ -47,8 +47,24 @@ pub fn collect_container<'r, 't>(
     } else {
         false
     };
+    // A [[div]] head inside these collections stays literal (live pairs
+    // across it); the div rule's recovery consults this instead of fusing
+    // the preceding newline into the literal.
+    let format_body = parser.settings().layout.legacy()
+        && matches!(
+            container_type,
+            ContainerType::Bold | ContainerType::Italics | ContainerType::Underline
+        );
+    let previous_format_body = if format_body {
+        parser.set_wikidot_format_collection_body(true)
+    } else {
+        false
+    };
 
     let collection = collect_consume(parser, rule, closes, invalids, kind);
+    if format_body {
+        parser.set_wikidot_format_collection_body(previous_format_body);
+    }
     if preserve_empty_lists {
         parser.set_wikidot_preserve_empty_lists(previous_preserve);
     }

@@ -242,6 +242,17 @@ where
         {
             return Ok(false);
         }
+        // Inside a bold/italics/underline collection a [[div]] head stays
+        // literal (live pairs across it); keep the break in front of it.
+        // Other blocks still form there, so their skip stands.
+        if parser.wikidot_format_collection_body()
+            && parser.current().token == Token::LeftBlock
+            && parser
+                .block_head_name_here()
+                .is_some_and(|name| name == "div")
+        {
+            return Ok(false);
+        }
         let rules = own_line_rules(parser.current().token);
         Ok(rules.iter().any(|rule| rule.try_consume(parser).is_ok()))
     });

@@ -34,9 +34,6 @@ use crate::parsing::consume::consume;
 use crate::parsing::discard_wikidot_controls;
 use crate::parsing::parser::block_pairs::WikidotBlockKind;
 use crate::parsing::rule::impls::block::parser::BlockBodyStart;
-use crate::preproc::{
-    LiteralRegionIndex, wikidot_outer_div_still_open_at_collapsible_close,
-};
 use crate::settings::WikitextMode;
 use crate::tree::{
     AcceptsPartial, AttributeMap, ContainerType, ListItem, ListType, PartialElement,
@@ -921,13 +918,16 @@ fn same_line_div_drops_tail_after_wrapped_center(
     opener_start: usize,
 ) -> bool {
     let source = parser.full_text().inner();
-    let lower = source.to_ascii_lowercase();
     let line_end = source[opener_start..]
         .find('\n')
         .map_or(source.len(), |offset| opener_start + offset);
-    if !lower[opener_start..line_end].contains("[[/div]]") {
+    if !source[opener_start..line_end]
+        .to_ascii_lowercase()
+        .contains("[[/div]]")
+    {
         return false;
     }
+    let lower = source.to_ascii_lowercase();
     let mut head = None;
     let mut search = 0usize;
     while search < opener_start {
@@ -944,10 +944,7 @@ fn same_line_div_drops_tail_after_wrapped_center(
     let Some(close_rel) = lower[opener_start..].find("[[/collapsible]]") else {
         return false;
     };
-    let literal = LiteralRegionIndex::new(source);
-    let (_, wrapped) = wikidot_outer_div_still_open_at_collapsible_close(
-        source,
-        &literal,
+    let (_, wrapped) = parser.wikidot_outer_div_still_open_at_collapsible_close(
         head,
         opener_start + close_rel,
     );

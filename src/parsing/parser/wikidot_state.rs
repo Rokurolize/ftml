@@ -140,11 +140,22 @@ impl WikidotState {
     pub(super) fn attempt_key(self) -> Self {
         Self {
             div_body_depth: self.div_body_depth.min(1),
+            scored_div_body_depth: self.scored_div_body_depth.min(1),
+            center_body_depth: self.center_body_depth.min(1),
             row_suffix_at: ROW_SUFFIX_INACTIVE,
             row_suffix_cut: RowSuffixCut::None,
             render_interior_row_cut: RowSuffixCut::None,
             ..self
         }
+    }
+
+    pub(super) fn apply_cached_success(&mut self, cached: Self) {
+        *self = Self {
+            div_body_depth: self.div_body_depth,
+            scored_div_body_depth: self.scored_div_body_depth,
+            center_body_depth: self.center_body_depth,
+            ..cached
+        };
     }
 }
 

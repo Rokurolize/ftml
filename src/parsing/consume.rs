@@ -32,9 +32,6 @@ use super::rule::{
         starts_wikidot_only_scheme_url, try_consume_wikidot_end_block_link, url_elements,
     },
 };
-use crate::preproc::{
-    LiteralRegionIndex, wikidot_outer_div_still_open_at_collapsible_close,
-};
 use crate::tree::{
     LinkLabel, LinkLocation, LinkType, PartialElement, WikidotBlockCloseKind,
 };
@@ -1087,17 +1084,13 @@ where
         && parser
             .wikidot_block_pair_at_closer_byte(start)
             .is_some_and(|pair| {
-                pair.kind == WikidotBlockKind::Collapsible && {
-                    let source = parser.full_text().inner();
-                    let literal = LiteralRegionIndex::new(source);
-                    wikidot_outer_div_still_open_at_collapsible_close(
-                        source,
-                        &literal,
-                        pair.head_byte,
-                        pair.closer_byte,
-                    )
-                    .1
-                }
+                pair.kind == WikidotBlockKind::Collapsible
+                    && parser
+                        .wikidot_outer_div_still_open_at_collapsible_close(
+                            pair.head_byte,
+                            pair.closer_byte,
+                        )
+                        .1
             })
     {
         if parser.current().token == Token::LineBreak {

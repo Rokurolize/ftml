@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::element_source_offset;
 use super::prelude::*;
 use crate::parsing::rule::impls::block::parser::{
     BlockBodyStart, WikidotStashFollowerChrome,
@@ -440,12 +441,15 @@ fn parse_list_block_impl<'r, 't>(
                 // PU81 (plainul-text-mid): literal content between two
                 // native lists joins the open list-derived item instead of
                 // starting a degraded none-styled item (saved-page probes
-                // muse-probe-pu81-*): inline runs wrap as one paragraph
-                // each, formed blocks join as-is. The arriving list then
-                // joins the same item through the ordinary push below.
+                // muse-probe-pu81-*): each blank-separated run wraps as one
+                // paragraph (MIDBLANK probes muse-probe-midblank-*), formed
+                // blocks join as-is. DIVMID: the same join runs inside an
+                // enclosing flat frame or table cell when mid_join_enclosed
+                // (saved-page probes muse-probe-divmid-*). The arriving list
+                // then joins the same item through the ordinary push below.
                 // Whitespace-only gaps keep the old merge path. Explicit
-                // [[li]] partials, scored/nested/flat-enclosed lists keep
-                // the old behavior (unprobed there).
+                // [[li]] partials and scored/nested lists keep the old
+                // behavior (unprobed there).
                 if wikidot
                     && !flag_score
                     && !nested
@@ -466,11 +470,32 @@ fn parse_list_block_impl<'r, 't>(
                     }) = items.last_mut()
                     {
                         join_wikidot_mid_list_literals(
+                            parser.full_text().inner(),
                             item_elements,
                             &mut literal_elements,
                         );
                     }
                 } else {
+                    // MIDBLANK (before-first): text before the first native
+                    // list splits at blank gaps like live (the body-leading
+                    // run stays bare, the rest wrap as paragraphs;
+                    // muse-probe-midblank-before-*). Only the plain
+                    // before-first creation qualifies: anywhere else with
+                    // content here is scored/nested/enclosed/partial shaped.
+                    if wikidot
+                        && !flag_score
+                        && !nested
+                        && !li_wrap_enclosing
+                        && partial_count == 0
+                        && items.is_empty()
+                    {
+                        wikidot_assemble_blank_runs(
+                            parser.full_text().inner(),
+                            &mut literal_elements,
+                            true,
+                            false,
+                        );
+                    }
                     push_literal_list_item(
                         &mut items,
                         &mut literal_elements,
@@ -526,6 +551,10 @@ fn parse_list_block_impl<'r, 't>(
     // DIVMID: inside an enclosing flat frame the frame's paragraph flow owns
     // the tail, so the same text joins as a paragraph instead
     // (saved-page probes muse-probe-divmid-div-after-ul/-div-mid-tail).
+    // MIDBLANK: blank-separated trailing runs split like live (every run
+    // but the body-final one wraps as a paragraph;
+    // muse-probe-midblank-after-*).
+    let mut trailing_joined = false;
     if wikidot
         && !flag_score
         && !nested
@@ -535,12 +564,51 @@ fn parse_list_block_impl<'r, 't>(
             .any(|element| !element.is_whitespace())
     {
         let joined_frame_tail = mid_join_enclosed
-            && join_wikidot_frame_tail_literals(&mut items, &mut literal_elements);
+            && join_wikidot_frame_tail_literals(
+                parser.full_text().inner(),
+                &mut items,
+                &mut literal_elements,
+            );
         if !joined_frame_tail
             && !li_wrap_enclosing
             && matches!(items.last(), Some(ListItem::SubList { .. }))
         {
             inline_wikidot_sublist_item(&mut items);
+            wikidot_assemble_blank_runs(
+                parser.full_text().inner(),
+                &mut literal_elements,
+                false,
+                true,
+            );
+            trailing_joined = true;
+        }
+    }
+    // MIDBLANK (text-only and degraded appends): a list-free body splits
+    // like live (the body-leading and body-final runs stay bare, interior
+    // runs wrap; muse-probe-midblank-textonly-*), and text appended to a
+    // degraded item after its lists splits like the trailing path above
+    // (muse-probe-midblank-before-after-blank).
+    if !trailing_joined
+        && wikidot
+        && !flag_score
+        && !nested
+        && !li_wrap_enclosing
+        && partial_count == 0
+    {
+        if items.is_empty() {
+            wikidot_assemble_blank_runs(
+                parser.full_text().inner(),
+                &mut literal_elements,
+                true,
+                true,
+            );
+        } else if matches!(items.last(), Some(ListItem::Elements { .. })) {
+            wikidot_assemble_blank_runs(
+                parser.full_text().inner(),
+                &mut literal_elements,
+                false,
+                true,
+            );
         }
     }
     push_literal_list_item(
@@ -1127,7 +1195,9 @@ fn wikidot_list_head_is_own_line(source: &str, head_byte: usize) -> bool {
 /// paragraph flow owns the tail; live renders `<p>text</p>`, saved-page
 /// probes muse-probe-divmid-div-after-ul and -div-mid-tail). Returns
 /// whether the content joined an item that ends with a native list.
+/// Blank-separated runs split like the page-root mid join (MIDBLANK).
 fn join_wikidot_frame_tail_literals<'t>(
+    source: &str,
     items: &mut Vec<ListItem<'t>>,
     pending: &mut Vec<Element<'t>>,
 ) -> bool {
@@ -1140,35 +1210,206 @@ fn join_wikidot_frame_tail_literals<'t>(
     if !matches!(elements.last(), Some(Element::List { .. })) {
         return false;
     }
-    join_wikidot_mid_list_literals(elements, pending);
+    join_wikidot_mid_list_literals(source, elements, pending);
     true
 }
 
+/// MIDBLANK: whether the source line directly above `content_start` is
+/// blank (empty or whitespace-only). Only that one line is inspected, so
+/// block markup between two runs can never fake a blank.
+fn wikidot_blank_line_before(source: &str, content_start: usize) -> bool {
+    let bytes = source.as_bytes();
+    if content_start == 0 || content_start > bytes.len() {
+        return false;
+    }
+    let mut index = content_start;
+    while index > 0 && (bytes[index - 1] == b' ' || bytes[index - 1] == b'\t') {
+        index -= 1;
+    }
+    if index == 0 || bytes[index - 1] != b'\n' {
+        return false;
+    }
+    index -= 1;
+    if index > 0 && bytes[index - 1] == b'\r' {
+        index -= 1;
+    }
+    while index > 0 && (bytes[index - 1] == b' ' || bytes[index - 1] == b'\t') {
+        index -= 1;
+    }
+    index == 0 || bytes[index - 1] == b'\n' || bytes[index - 1] == b'\r'
+}
+
+/// MIDBLANK: one blank-delimited piece of pending mid literals. A run
+/// records whether a blank gap precedes it; anything not paragraph-safe
+/// (e.g. a formed div) is its own segment.
+enum WikidotBlankSegment<'t> {
+    Run {
+        elements: Vec<Element<'t>>,
+        blank_before: bool,
+    },
+    Other(Element<'t>),
+}
+
+/// MIDBLANK: splits pending mid literals at source-anchored blank lines
+/// (saved-page probes muse-probe-midblank-*: each blank-separated run is
+/// its own paragraph). The blank-line distinction is lost during body
+/// gathering (a blank collapses to one `LineBreak`, byte-identical to a
+/// plain line break), so the split is re-anchored here: a break cluster is
+/// a blank boundary exactly when the next content element starts its line
+/// after a blank line. Elements store no spans, so the next content
+/// element's start comes from its borrowed text address, like the other
+/// source-anchored list scans.
+#[allow(clippy::disallowed_methods)]
+fn wikidot_split_blank_runs<'t>(
+    source: &str,
+    pending: Vec<Element<'t>>,
+) -> Vec<WikidotBlankSegment<'t>> {
+    let source_ptr = source.as_ptr() as usize;
+    let mut pending = pending;
+    while pending.first().is_some_and(|element| {
+        element.is_whitespace() || matches!(element, Element::LineBreaks(_))
+    }) {
+        pending.remove(0);
+    }
+    while pending.last().is_some_and(|element| {
+        element.is_whitespace() || matches!(element, Element::LineBreaks(_))
+    }) {
+        pending.pop();
+    }
+    let mut segments = Vec::new();
+    let mut run: Vec<Element<'t>> = Vec::new();
+    let mut run_blank_before = false;
+    let mut cluster: Vec<Element<'t>> = Vec::new();
+    let flush_run = |segments: &mut Vec<WikidotBlankSegment<'t>>,
+                     run: &mut Vec<Element<'t>>,
+                     run_blank_before: &mut bool| {
+        if !run.is_empty() {
+            segments.push(WikidotBlankSegment::Run {
+                elements: std::mem::take(run),
+                blank_before: *run_blank_before,
+            });
+        }
+        *run_blank_before = false;
+    };
+    for element in pending {
+        if element.is_whitespace() || matches!(element, Element::LineBreaks(_)) {
+            cluster.push(element);
+            continue;
+        }
+        if !element.paragraph_safe() {
+            flush_run(&mut segments, &mut run, &mut run_blank_before);
+            cluster.clear();
+            segments.push(WikidotBlankSegment::Other(element));
+            continue;
+        }
+        if !cluster.is_empty() {
+            let blank = element_source_offset(source_ptr, &element)
+                .is_some_and(|start| wikidot_blank_line_before(source, start));
+            if blank {
+                flush_run(&mut segments, &mut run, &mut run_blank_before);
+                cluster.clear();
+                run_blank_before = true;
+            } else {
+                run.append(&mut cluster);
+            }
+        }
+        run.push(element);
+    }
+    flush_run(&mut segments, &mut run, &mut run_blank_before);
+    segments
+}
+
+/// MIDBLANK: appends one run bare (no paragraph wrap), dropping its
+/// trailing breaks (they are separators, not run content). Leading breaks
+/// stay: they glue the run to a preceding formed block on live
+/// (muse-probe-midblank-mid-div-textlast-noblank renders `<br>t1` bare).
+fn wikidot_push_bare_mid_run<'t>(
+    item_elements: &mut Vec<Element<'t>>,
+    run: &mut Vec<Element<'t>>,
+) {
+    while run.last().is_some_and(|element| {
+        matches!(element, Element::LineBreak | Element::LineBreaks(_))
+    }) {
+        run.pop();
+    }
+    if run.is_empty() {
+        return;
+    }
+    item_elements.append(run);
+}
+
+/// MIDBLANK: reassembles blank-delimited runs for a degraded or trailing
+/// flush. `first_bare` keeps the opening run bare (before-first and
+/// text-only live keep the body-leading run bare); `last_bare` keeps the
+/// closing run bare (after-last and text-only live keep the body-final run
+/// bare). Interior runs always wrap as one paragraph each. Anything but a
+/// clean split (formed blocks present, a single blank-free run, only
+/// whitespace) restores the legacy pending untouched.
+fn wikidot_assemble_blank_runs(
+    source: &str,
+    pending: &mut Vec<Element<'_>>,
+    first_bare: bool,
+    last_bare: bool,
+) {
+    if !pending.iter().all(Element::paragraph_safe) {
+        return;
+    }
+    let mut runs: Vec<Vec<Element<'_>>> = Vec::new();
+    for segment in wikidot_split_blank_runs(source, std::mem::take(pending)) {
+        match segment {
+            WikidotBlankSegment::Run { elements, .. } => runs.push(elements),
+            WikidotBlankSegment::Other(element) => runs.push(vec![element]),
+        }
+    }
+    if runs.len() <= 1 {
+        *pending = runs.into_iter().flatten().collect();
+        return;
+    }
+    let last = runs.len() - 1;
+    let mut combined = Vec::new();
+    for (index, mut run) in runs.into_iter().enumerate() {
+        if (index == 0 && first_bare) || (index == last && last_bare) {
+            wikidot_push_bare_mid_run(&mut combined, &mut run);
+        } else {
+            push_wikidot_mid_list_paragraph(&mut combined, &mut run);
+        }
+    }
+    *pending = combined;
+}
+
 /// PU81 (plainul-text-mid): appends pending literal content between two
-/// native lists to the open item. Maximal paragraph-safe runs wrap as one
-/// paragraph each (saved-page probes muse-probe-pu81-mid-*: a blank-free
-/// run is one `<p>`, inner line breaks stay inside it); anything else
-/// (e.g. a formed div, probe muse-probe-pu81b-mid-div) joins as-is.
+/// native lists to the open item. Each blank-separated run wraps as one
+/// paragraph (saved-page probes muse-probe-midblank-*: a blank-free run is
+/// one `<p>`, inner line breaks stay inside it); anything else (e.g. a
+/// formed div, probe muse-probe-pu81b-mid-div) joins as-is, and a run
+/// glued to a preceding formed block stays bare like live
+/// (muse-probe-midblank-mid-div-textlast-noblank).
 fn join_wikidot_mid_list_literals<'t>(
+    source: &str,
     item_elements: &mut Vec<Element<'t>>,
     pending: &mut Vec<Element<'t>>,
 ) {
-    while pending.first().is_some_and(Element::is_whitespace) {
-        pending.remove(0);
-    }
-    while pending.last().is_some_and(Element::is_whitespace) {
-        pending.pop();
-    }
-    let mut run: Vec<Element<'t>> = Vec::new();
-    for element in std::mem::take(pending) {
-        if element.paragraph_safe() {
-            run.push(element);
-            continue;
+    let segments = wikidot_split_blank_runs(source, std::mem::take(pending));
+    let mut bare_after_other = false;
+    for segment in segments {
+        match segment {
+            WikidotBlankSegment::Other(element) => {
+                item_elements.push(element);
+                bare_after_other = true;
+            }
+            WikidotBlankSegment::Run {
+                mut elements,
+                blank_before,
+            } => {
+                if bare_after_other && !blank_before {
+                    wikidot_push_bare_mid_run(item_elements, &mut elements);
+                } else {
+                    push_wikidot_mid_list_paragraph(item_elements, &mut elements);
+                }
+                bare_after_other = false;
+            }
         }
-        push_wikidot_mid_list_paragraph(item_elements, &mut run);
-        item_elements.push(element);
     }
-    push_wikidot_mid_list_paragraph(item_elements, &mut run);
 }
 
 /// Wraps one pending paragraph-safe run as a paragraph, dropping the

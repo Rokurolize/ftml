@@ -554,7 +554,10 @@ fn byte_head_on_list_item_line(source: &str, byte: usize) -> bool {
     line_start + (line.len() - after_marker.len()) == byte
 }
 
-fn element_source_offset<'t>(source_ptr: usize, element: &Element<'t>) -> Option<usize> {
+pub(crate) fn element_source_offset<'t>(
+    source_ptr: usize,
+    element: &Element<'t>,
+) -> Option<usize> {
     let mut result = None;
     scan_element_source_offset(source_ptr, element, &mut result);
     result

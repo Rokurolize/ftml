@@ -84,3 +84,51 @@ print("mc02528", len(cases["mc02528"]), *run_source("mc02528", cases["mc02528"])
 | 4-case concat (`mc04908` + `mc05686` + `mc07497` + `mc07629`, 2,172 chars) | **PANIC** at `src/parsing/consume.rs:647:20` | **OK (`rc=0`)** in **8.04 ms** |
 | `badpages/sandbox-synth-0692.barrier.ftml` (194,972 chars) | **PANIC** at `src/parsing/rule/impls/block/blocks/list.rs:1777:54` | **OK (`rc=0`)** in **704.10 ms** |
 
+
+---
+
+## Stage 3: Predecessor (Argon) Session-Log Reconstruction and Diff Judgment
+
+### Sources
+
+Argon session `ses_e3df02169ffe7qBkfbf7VzqEgN` (140 rows, `/home/roku/.traycer/host/opencode/line-2/db-a5010091/opencode.db`, `session_message` ordered by `seq`), lived 2026-11-10 05:46-07:26 JST, ended seq 1398 with `provider.quota` 402 `OUT_OF_CREDITS`. Reasoning text and tool inputs/outputs were extracted per `seq` and every claim below was cross-checked against the actual diff and code; the log is evidence, not authority.
+
+### What Argon believed causes the blowup (Defect 2)
+
+Argon concluded Defect 2 is **three compounding mechanisms**, not one:
+
+1. **Tabview exponential re-measure** (`src/parsing/parser/block_pairs.rs`, `Scanner::measure_tabview`). Memoization was skipped entirely when `tab_body_scan_depth > 0` ("keep nested measures out of the memo"), so a chain of N nested `[[tabview]]` constructs was re-measured 2^k times (`V_k` measured 2^k times, `2^{n-1}` calls for n views). GDB sample (seq 753, `mc02528`) showed 13 stacked `measure_tabview` frames with `get_block_rule_with_name` at the leaf. GDB sample (seq 760, 0766) showed deep `align_center::parse_fn` -> `parse_alignment_block` -> `parse_tabview` -> `parse_tab` nesting instead.
+2. **Center/div depth corruption through the rule-attempt cache** (`src/parsing/parser/wikidot_state.rs`, `WikidotState::attempt_key`). Only `div_body_depth` was clamped to 1 in `attempt_key`, while `scored_div_body_depth` and `center_body_depth` were left unclamped; and `apply_rule_attempt_success` replaced the live `wikidot` state with the cached shallow value, so a non-"block" rule cached at depth 1 replayed over a live depth-3+ `[[=]]`/`[[div]]` stack overwrote the depths. Net effect: `in_wikidot_center_body()` flickered inside deeply nested `[[=]]` fragments, defeating tabview/collapsible failure memoization (see mechanism 3).
+3. **Per-collapsible full-source rescans plus center-body memoization disabled** (`src/preproc/compatibility.rs` `wikidot_outer_div_still_open_at_collapsible_close` + its three callers; `BlockFailureMemoization::wikidot_cache_context`). Each collapsible close check rebuilt `LiteralRegionIndex::new(source)` (full-source literal-range scan), copied the entire source with `to_ascii_lowercase()`, and linearly scanned lines from offset 0 to find the head line. Separately, `wikidot_cache_context` required `!parser.in_wikidot_center_body()`, so tabview/collapsible failures inside `[[=]]` were never memoized and large `[[tabview]]` bodies were re-parsed (notably `TabViewContainsNonTab` rejections). GDB sample (seq 934, 0766 after mechanisms 1-2 were fixed) showed `wikidot_outer_div_still_open_at_collapsible_close` at the top frame under `align_center::parse_fn`. Argon also argued `body_end_boundary_fingerprint` counted duplicate ancestors in `sum`/`xor`/`len` even though its own doc comment says "the ancestors' order and repeats do not change any boundary check," so `[[=]]` levels 2..30 produced distinct fingerprints and defeated body-walk failure sharing.
+
+### What the uncommitted diff is intended to do
+
+Nine files, +129/-81 (all Argon-authored, edits at seq 879/907/1143/1185/1340):
+
+- `block_pairs.rs`: `tabview_measure_memo` key gains `nested_in_tab = tab_body_scan_depth > 0`; nested measures are now memoized (guarded by the existing `measure_guard_trips` check) instead of bypassed.
+- `wikidot_state.rs`: `attempt_key` also clamps `scored_div_body_depth`/`center_body_depth` to 1; new `apply_cached_success` preserves the three live depths across cached-success replay.
+- `parser.rs`: `apply_rule_attempt_success` uses `apply_cached_success`; tabview/collapsible failure caches keyed by `(owner, collapsible, center)`; new `BlockScanCache::literal_region_index` + `wikidot_collapsible_outer_div_memo` with a `Parser::wikidot_outer_div_still_open_at_collapsible_close` accessor.
+- `rule.rs`: `wikidot_cache_context` no longer excludes `in_wikidot_center_body()`.
+- `consume.rs` / `collapsible.rs` / `div.rs`: route through the memoized accessor instead of rebuilding `LiteralRegionIndex` per call; `div.rs` lowercases only the opener line before early-exiting, then the remainder.
+- `compatibility.rs`: `rfind('\n')` for head-line start instead of linear scan; whole-source `lower` copy removed in favor of case-insensitive helpers directly on `source`.
+- `body_end.rs`: fingerprint deduplicates distinct ancestor `mix` values (`unique` count replaces `ancestors.len()`).
+
+### What Argon had already measured or tested
+
+- seq 925 (mechanisms 1+2 built, seq 918): `scp-play-podcast-hub` 37.65 ms; `mc02528` **19.85 ms** (from 8,580 ms); `0464` **188 ms** (from >180 s timeout); `0766` **10.60 s** (from 32.49 s); `0818` 176 ms; `0692` 509 ms. Verdict in seq 934: "`mc02528` 8580 -> 19.85 ms, 432x."
+- seq 1171 (mechanism 3 partial: fingerprint dedup + div early-exit + linear-to-`rfind` + `lower = source[..limit].to_ascii_lowercase()`): `0766` **5.39 s** (from 10.60 s), but that intermediate **introduced a new panic** on `0818`: `rc=101` at `compatibility.rs:337:34: end byte index 120576 is out of bounds for string of length 74680`. The truncated `lower` (length `limit`, not source length) was indexed with source-relative extents beyond `limit`.
+- seq 1185 removed the truncated `lower` entirely (helpers already case-insensitive; `[`/`]` searches unaffected), built at seq 1194. **No benchmark follows seq 1185 in the log.**
+- seq 1340 final edits (literal memo, outer-div memo, center-bit failure keys, center-memo enablement) were **never compiled or measured**: the run died at seq 1398 (`OUT_OF_CREDITS`) while re-reading import lines (seq 1369-1391), i.e. about to clean the now-unused `LiteralRegionIndex` imports. No `cargo test` run appears anywhere in the Defect 2 portion.
+
+### Takeover verification of the on-disk state (before any code change)
+
+- `cargo build --release --example render_html_jsonl` succeeds (2m07s); `cargo check` shows exactly three new unused-import warnings: `src/parsing/consume.rs:36`, `src/parsing/rule/impls/block/blocks/collapsible.rs:35`, `src/parsing/rule/impls/block/blocks/div.rs:38` (`LiteralRegionIndex` + `wikidot_outer_div_still_open_at_collapsible_close`, now routed through the parser accessor). Argon died before removing them.
+- Same-method re-measurement on the uncommitted tree (release `render_html_jsonl`, single-thread): `mc02528` 19 ms; `0464` 189 ms; `0766` **1.91 s** (the seq-1340 memo edits land a further ~2.8x over seq 1171's 5.39 s); `0818` 167 ms; `0692` 468 ms; 4-case concat 6 ms; hub 36 ms. The seq-1171 panic is gone (validates the seq-1185 `lower` removal in the current tree).
+- Remaining question: `0766` at 1.91 s for 185 KB is ~50x the hub's rate (55 KB in 36 ms); Stage 2's "proportionate" bar and a first-k-parts scaling check decide whether another mechanism remains (see Stage 4).
+
+### Judgment (keep / fix / revert)
+
+- **Keep** the tabview memo key change, the `attempt_key` clamps + `apply_cached_success`, the `wikidot_cache_context` center-memo enablement, the literal/outer-div memo plumbing, the `rfind` head-line fix, and the `lower` removal. Each is mechanism-level (no per-shape special-casing), and the measured progression 32.5 s / 10.6 s / 5.39 s / 1.91 s across the three diff layers tracks the three mechanisms.
+- **Keep** the `body_end.rs` dedup: it makes the fingerprint match its documented set semantics ("order and repeats do not change any boundary check"). The fingerprint feeds body-walk failure keys (`parser.rs:3675,3784`); collapsing repeat-only distinctions can only merge keys that the documented semantics declare equivalent. Full-suite output equality is the backstop.
+- **Keep** the `div.rs` early-exit (test the opener line only before paying for the full lowercase).
+- **Fix** (do not revert): remove the three unused imports Argon left behind; they fail the `-D warnings` clippy gate. Nothing else in the diff is reverted.

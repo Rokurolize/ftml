@@ -103,6 +103,10 @@ pub(crate) const WIKIDOT_TABVIEW_TAIL_MARKER: &str = "data-ftml-tabview-tail";
 /// live's libtidy repair leaves a stray unclosed `<ul>` opener after the
 /// quote. On the last body element only; stripped when rendered.
 pub(crate) const WIKIDOT_QUOTE_LIST_REPAIR_MARKER: &str = "data-ftml-quote-list-repair";
+/// Marks the explicit list a blank quoted line reopened an anchor before, so
+/// the inline lowering repeats the empty anchor paragraph; stripped when
+/// rendered.
+pub(crate) const WIKIDOT_QUOTE_BLANK_ANCHOR_MARKER: &str = "data-ftml-quote-blank-anchor";
 /// Lists the attributes whose Wikidot head value evaluated to empty, so the
 /// renderer emits `key=""` for them the way live does; stripped when rendered.
 pub(crate) const WIKIDOT_EMPTY_VALUE_ATTRIBUTE_MARKER: &str = "data-ftml-empty-value";

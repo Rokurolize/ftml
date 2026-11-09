@@ -92,20 +92,6 @@ impl ParseCondition {
     }
 }
 
-/// Whether the byte offset of a paragraph break sits in a post-explicit-list
-/// gap: the closest non-whitespace source before it is an explicit
-/// `[[/ul]]` or `[[/ol]]` close, with only spaces, tabs, carriage returns,
-/// and newlines between the close and the break.
-///
-/// This is the source-level twin of the token-level post-list gap check in
-/// `inline_delimiter::validate_reachable_close`. The collect loop
-/// (`collect::generic`) has no backward token access, so it re-derives the
-/// same shape from byte spans. It is an approximation: source text that
-/// merely spells `[[/ul]]` without tokenizing as a block close (a literal
-/// inside code, for example) also matches. That overreach is contained
-/// because the collect only consults this after `validate_reachable_close`
-/// already vetted the same region at token level, and both call sites are
-/// scoped to bold pairs in the legacy layout.
 pub(crate) fn paragraph_break_in_post_list_gap(source: &str, break_byte: usize) -> bool {
     let bytes = source.as_bytes();
     let mut pos = break_byte.min(bytes.len());

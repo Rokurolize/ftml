@@ -197,14 +197,6 @@ where
         }
 
         if parser.evaluate_any(invalid_conditions) {
-            // R8: skip one blank line in a post-explicit-list gap for bold
-            // pairs. `validate_reachable_close` already vetted this region at
-            // token level (non-bare opener and closer), so the collect only
-            // re-derives the gap shape from source bytes because it has no
-            // backward token access. The list rule left its own post-list
-            // break in the stream (path (a)) or the pair segmenter restores
-            // the blank as a single leading break (path (c)); the skipped
-            // break itself leaves no element.
             let forgiven_post_list_gap = parser.current().token == Token::ParagraphBreak
                 && matches!(_rule.name(), "bold")
                 && parser.settings().layout.legacy()

@@ -183,14 +183,6 @@ pub(crate) const WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER: &str =
 /// inline-scope lowering; the tree cleanup strips it before output.
 pub(crate) const WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER: &str =
     "data-ftml-list-item-blank-line";
-/// Marks an explicit `ul`/`ol` list whose close is followed by exactly one
-/// blank line and then a content line. A bold pair that crosses the list
-/// across that blank (see `validate_reachable_close`'s post-list gap
-/// forgiveness) renders the blank as a single leading `<br>` in its
-/// post-list segment; the pair segmenter keeps exactly one leading break
-/// for the run after a boundary carrying this mark. Consumed by inline-scope
-/// lowering; the tree cleanup strips it before output, and it is never
-/// rendered (all `data-ftml-*` keys are omitted by the HTML builder).
 pub(crate) const WIKIDOT_POST_LIST_BLANK_GAP_MARKER: &str =
     "data-ftml-post-list-blank-gap";
 /// Marks the first pre-list segment of an inline format pair that was

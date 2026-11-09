@@ -221,11 +221,6 @@ pub(super) enum ReachableCloseMode {
     BlockBarrier,
 }
 
-/// Whether the paragraph break at `index` sits in a post-explicit-list gap:
-/// walking back over whitespace and line breaks lands on a `RightBlock`,
-/// then an `ul`/`ol` identifier, then a `LeftBlockEnd`. Only a single blank
-/// line qualifies: an earlier paragraph break between the close and this one
-/// is not skipped, so a second blank still rejects the pair.
 fn post_list_gap_before(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
     let mut pos = index;
     loop {
@@ -269,8 +264,6 @@ fn post_list_gap_before(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
     true
 }
 
-/// Whether the closer at `index` is bare: only whitespace, then a line or
-/// paragraph break (or the token-stream start), precedes it on its side.
 fn closer_bare_before(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
     let mut pos = index;
     while pos > 0 {
@@ -321,13 +314,7 @@ pub(super) fn validate_reachable_close(
 
     let mut paragraph_error = None;
     let suppress_breaks = parser.settings().layout.legacy();
-    // R8: forgive one blank line in a post-explicit-list gap for bold pairs
-    // only. The opener must carry same-line content (a bare own-line opener
-    // like the crossed-closer pin keeps the pair literal), and the closer
-    // must too (checked at the close site below).
     let gap_forgiveness = token == Token::Bold && suppress_breaks;
-    // `tokens` is `parser.remaining()`, which starts after the opener, so
-    // the token after the opener is `tokens[0]`.
     let opener_bare = !tokens.first().is_some_and(|next| {
         !matches!(
             next.token,

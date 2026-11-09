@@ -1098,14 +1098,6 @@ fn record_wikidot_explicit_list_end(parser: &Parser) {
     }
 }
 
-/// Whether an explicit `ul`/`ol` close is followed by exactly one blank line
-/// and then a content line: between the close end and the current token only
-/// horizontal whitespace and newlines sit; the current token is the close's
-/// own line break (the blank follows it) or the blank's paragraph break;
-/// past the blank, skipping horizontal whitespace only, comes a token that
-/// starts no block structure and is not another break, EOF, or a stray
-/// block-assembly token. A second blank line, EOF, or a following block
-/// head/quote/heading/table column keeps the legacy behavior (no mark).
 fn post_list_blank_gap(parser: &Parser<'_, '_>, list_end: usize) -> bool {
     let source = parser.full_text().inner();
     let between = source.get(list_end..parser.current().span.start);
@@ -1163,10 +1155,6 @@ fn post_list_blank_gap(parser: &Parser<'_, '_>, list_end: usize) -> bool {
     )
 }
 
-/// Stamp the post-list blank-gap mark on an explicit list whose close the
-/// gap check accepts. The pair segmenter keeps a single leading break for
-/// the post-list run after a marked boundary; every other consumer ignores
-/// the mark, and the tree cleanup strips it before output.
 fn maybe_stamp_post_list_blank_gap(
     parser: &Parser<'_, '_>,
     element: &mut Element<'_>,
@@ -3630,15 +3618,6 @@ fn assemble_wikidot_li_segments<'t>(
     while matches!(elements.last(), Some(Element::Text(text)) if text == " ") {
         elements.pop();
     }
-    // The item's own `[[/li]]` shares its line with native quote content
-    // (the body does not end with a newline before the closer): live keeps
-    // that trailing quote's content bare instead of paragraph-wrapped
-    // (probes muse-probe-bcolr2-nl-blockquote-item,
-    // muse-probe-bcolr2-bd-quoted-blank-item and the plain
-    // muse-probe-bcolr2-quote-in-li-plain; the closer-on-a-later-line
-    // muse-probe-bcolr2-quote-ownline-in-li-plain keeps its paragraph).
-    // Only a trailing quote holding exactly one plain paragraph is
-    // unwrapped; anything richer keeps the historical shape.
     let trailing_quote_goes_bare = !body_before_close.ends_with('\n')
         && elements.last().is_some_and(|element| match element {
             Element::Container(container) => {

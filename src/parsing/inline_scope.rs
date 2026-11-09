@@ -2403,9 +2403,6 @@ enum PreListFlowBlock {
     /// An align block: live p-wraps the pre-list run unconditionally.
     Align,
     /// A blockquote block: live p-wraps the pre-list run when the blockquote
-    /// subtree carries visible content preceded by visible inline text in
-    /// the same item (probe muse-probe-bcolr2-bd-quote-first-item keeps a
-    /// blockquote-first item's run bare); an empty one swallows the list on
     /// live (quoted-plain residual family).
     BlockquoteVisible(bool),
     /// Any other flow block: live p-wraps only when visible inline content
@@ -2818,10 +2815,6 @@ fn strip_leading_breaks<'t>(run: &mut Vec<Element<'t>>) {
     }
 }
 
-/// Trim a post-boundary run to exactly one leading break for a blank-gap
-/// boundary (R8): extras collapse to one, and a content run with no leading
-/// break gains one, matching live's single `<br>` there. Empty runs stay
-/// empty, exactly as the plain trim leaves them.
 fn keep_single_leading_break(run: &mut Vec<Element<'_>>) {
     while matches!(
         run.first(),
@@ -2949,9 +2942,6 @@ fn segment_format_run<'t>(
     // A run seeded by a code block keeps its leading break(s); live keeps
     // the break between the code div and the following content.
     let mut run_starts_after_code = false;
-    // R8: whether the run after the most recent boundary follows a blank
-    // gap (the boundary list carried the mark). That run keeps exactly one
-    // leading break; live renders the blank as a single `<br>`.
     let mut run_follows_blank_gap = false;
     for element in elements {
         if matches!(
@@ -3749,10 +3739,6 @@ fn split_code_children_of_format_containers<'t>(elements: &mut Vec<Element<'t>>)
     *elements = output;
 }
 
-/// Whether the pending post-list span ends with a literalised color closer
-/// (bare `##` text from a rejected nested color). Live materialises no
-/// continuation break after it, so a close-only scope-close paragraph must
-/// not manufacture one.
 fn post_span_ends_with_literal_color_close(output: &[Element<'_>]) -> bool {
     matches!(output.last(), Some(Element::Container(container))
         if matches!(
@@ -3761,13 +3747,6 @@ fn post_span_ends_with_literal_color_close(output: &[Element<'_>]) -> bool {
         ) && matches!(container.elements().last(), Some(Element::Text(text)) if text.as_ref() == "##"))
 }
 
-/// Split explicit lists out of paragraphs: live closes the pre-list run's
-/// paragraph before the list (`</p><ul>`), but a color scope spanning the
-/// list can trap the pre/list/post segments in one paragraph at lowering
-/// (probe muse-probe-bcolr2-e2-div-in-item). No pinned tree holds a
-/// paragraph with a direct explicit-list child, so only that defect shape
-/// splits; the pre-list run keeps its paragraph, the post-list run renders
-/// bare like any other post-list tail.
 fn split_lists_out_of_paragraphs(elements: &mut Vec<Element<'_>>) {
     for element in elements.iter_mut() {
         visit_children_mut(element, &mut split_lists_out_of_paragraphs);
@@ -4192,18 +4171,6 @@ fn lower_root_sequence<'t>(
                 && (!previous_is_own_chunk_block || tail_break)
                 && !output.is_empty()
                 && paragraph_group.is_none()
-                // A close-only scope-close paragraph carries no content run,
-                // but the insert is still load-bearing when the scope stays
-                // open across the close (spanin post spans, crossed-pair
-                // tails). The one shape that drops it: the post-list span
-                // ends with a literalised color closer (`##` text from a
-                // rejected nested color). Live closes the scope with no
-                // break there (probes
-                // muse-probe-bcolr2-bd-span-color-stopped-nl/-bl keep the
-                // post-list span bare); the inserted break would lower to
-                // a same-wrapper segment that merges into the post-list
-                // span. Close-led paragraphs (close plus content) always
-                // keep the insert.
                 && !(close_only_paragraph
                     && post_span_ends_with_literal_color_close(&output))
             {
@@ -5295,8 +5262,6 @@ fn collect_valid_pairs(
     }
 }
 
-/// Whether an element counts as content around a span blank split: breaks
-/// and whitespace-only text do not; anything else does.
 fn span_blank_split_has_content(element: &Element<'_>) -> bool {
     match element {
         Element::LineBreak | Element::LineBreaks(_) => false,
@@ -5305,13 +5270,6 @@ fn span_blank_split_has_content(element: &Element<'_>) -> bool {
     }
 }
 
-/// Split a run at the first interior blank-line double break, returning the
-/// pre-break run (breaks included) and the remainder. Only fires with
-/// content on both sides of the pair, and with content (not a break) at
-/// both run edges: a complete span body keeps its own-line edge breaks and
-/// stays merged, while a stopped-span fragment merged across an item blank
-/// line has bare edges. Leading, trailing, or content-less doubles keep
-/// the historical merge.
 fn split_run_at_blank_break<'t>(
     run: &[Element<'t>],
 ) -> Option<(Vec<Element<'t>>, Vec<Element<'t>>)> {
@@ -6192,14 +6150,6 @@ fn lower_sequence<'t>(
                 false
             };
             if list_legacy {
-                // A native list following an inline run with a span/size
-                // scope open: live seals two breaks inside the scope's
-                // fragment (`<span>b<br><br></span>`) before the nested
-                // list (probe muse-probe-bcolr2-fmt-nl-span). Explicit
-                // lists own their breaks through the segmentation paths,
-                // so only native lists take this branch; a run that
-                // already ends at a break or carries no content keeps the
-                // historical shape.
                 let native_list_takes_run_breaks = matches!(
                     element,
                     Element::List {
@@ -7807,19 +7757,10 @@ fn flush_run<'t>(
     if run.is_empty() {
         return;
     }
-    // A blank-line double break inside a span/size-only run (the stopped-
-    // span item-merge shape, probe
-    // muse-probe-bcolr2-bd-span-color-stopped-bl): live seals the pre-break
-    // run inside the scope and starts the remainder as a fresh scope
-    // paragraph. Complete spans lower scope-free (their breaks stay inline),
-    // as do break-only or edge-double runs, so only a content-bearing
-    // interior pair splits.
     if active.has_span_or_size_scope()
         && active.active_scopes_all_span_size()
         && let Some((head, tail)) = split_run_at_blank_break(run)
     {
-        // Consume the run: the head/tail copies below replace it, and the
-        // caller's run must not flush a second time.
         mem::take(run);
         let mut head = head;
         flush_run_wrapped(output, &mut head, active, last_run_outer_scope);
@@ -8924,11 +8865,6 @@ pub(crate) fn visit_children_mut<'t>(
     }
 }
 
-/// Remove un-consumed post-list blank-gap marks after lowering, so they
-/// never reach the returned syntax tree. Only the pair segmenter consumes
-/// the mark (keeping one leading break for the marked boundary); every
-/// other list carrying one (a pair-less gap, a gap in a span/color pair,
-/// a literalised pair) keeps the legacy rendering and loses the mark here.
 pub(crate) fn strip_post_list_blank_gap_markers<'t>(elements: &mut Vec<Element<'t>>) {
     for element in elements.iter_mut() {
         if let Element::List { attributes, .. } = element {

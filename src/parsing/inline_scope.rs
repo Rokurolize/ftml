@@ -3320,9 +3320,6 @@ fn trim_post_list_leading_breaks<'t>(children: Vec<Element<'t>>) -> Vec<Element<
     output
 }
 
-/// A stopped pair's pre-list segment ends at the pair's line end; on live
-/// a break following an anchor close inside the segment renders after the
-/// close, outside the segment.
 fn split_trailing_breaks_after_anchor_close<'t>(
     elements: &mut Vec<Element<'t>>,
 ) -> Vec<Element<'t>> {
@@ -4522,8 +4519,6 @@ fn lower_root_sequence<'t>(
     *elements = output;
 }
 
-/// Live tops a scope wrapper carrying an anchor continuation to two
-/// trailing block-edge breaks.
 fn top_up_crossing_anchor_color_breaks<'t>(output: &mut [Element<'t>]) {
     let Some(last) = output.last_mut() else {
         return;
@@ -4822,8 +4817,6 @@ fn flush_root_pending<'t>(
     let content_led_marker_head = crossed_head_warrants
         && !pending_is_marker_run
         && pending_ends_with_bare_marker(pending);
-    // Live dissolves the crossed pair at an anchor close adjacent to the
-    // crossed list: the pair's scope does not reopen for the tail.
     let post_list_anchor_close = matches!(
         output.last(),
         Some(Element::List {

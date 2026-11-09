@@ -13,6 +13,12 @@ Development happens on this fork, `Rokurolize/ftml`. Open pull requests against 
 - Corpus expectations are staged: `tree.json` records the parse tree only; rendering is judged from `wikidot.html` and `output.html`. Some constructs exist in only one layout (Wikijump-native blocks render literally in the Wikidot layout); judge each construct in the layout where it exists.
 - Evidence from Wikidot's PagePreview route can differ from saved pages, notably for `[[iftags]]` gate evaluation; treat PagePreview-only verdicts as provisional until a saved page confirms them.
 
+## Content licensing
+
+- The fixture corpus in `test/`, page-derived data in `tests/`, and live-measured evidence in `verification/` are derived from SCP Foundation wiki and SCP-JP wiki pages and are licensed CC BY-SA 3.0, not under the project AGPL. Attribution lives in [`LICENSES/ATTRIBUTION-test-corpus.md`](LICENSES/ATTRIBUTION-test-corpus.md), [`tests/ATTRIBUTION.md`](tests/ATTRIBUTION.md), and [`verification/ATTRIBUTION.md`](verification/ATTRIBUTION.md); keep it intact when editing those areas, and share-alike applies to the material.
+- Do not commit bulk verbatim wiki content (such as full page sources) to this repository; it is managed outside version control.
+- New wiki-derived material is added only together with the attribution update that covers it.
+
 ## Development
 
 - Never run an unbounded search rooted at the home directory (`find /home/roku`, `find ~`, or a recursive `rg` / `grep` started from `~`). The home directory holds very large trees - the SCP Wiki translation corpus at `~/src/Rokurolize/scp-wiki-translation`, other checkouts and worktrees, and build output - so a casual home-wide search can run for minutes, time out, and load the machine. Start every search from the specific repository or directory the task concerns, state the starting point and exclusions first, list files inside a repository with `git ls-files`, and search contents with `rg`. When `find` is unavoidable, prune heavy trees explicitly: at minimum the translation corpus (unless it is the task target), and any `target/`, `node_modules/`, and `.git/` directory.

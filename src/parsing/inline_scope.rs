@@ -8042,6 +8042,11 @@ impl<'t> WikidotFrameAssembly<'t> {
 ///   wrapper entirely after the list: every post-list segment span dissolves
 ///   to bare content (closer literal, break, trail text, following
 ///   paragraph/list content) and R2's added block-end breaks do not exist.
+/// - Cancellation without a list (color-no-list follow-up): the same signal
+///   drops the wrapper layer on the paragraphs after the barrier heading even
+///   when no explicit list follows. The paragraph shell and every nested
+///   user element (span/bold/color) survive; only the outer wrapper span
+///   layer goes (saved pages muse-probe-fu82-cnl-*, cnl2-*, cnl3-*).
 fn fix_outer_close_eof_breaks<'t>(children: &mut Vec<Element<'t>>) {
     let signals = outer_close_eof_signals(children);
     if let Some(anchor) = children
@@ -8055,6 +8060,9 @@ fn fix_outer_close_eof_breaks<'t>(children: &mut Vec<Element<'t>>) {
         if let Some(attrs) = &signals.outer_size {
             restyle_post_list_segments(children, anchor, attrs);
         }
+    } else if signals.cancelled {
+        dissolve_post_heading_wrapper_spans(children);
+        return;
     }
     // Find the closer-literal span: a plain Span container whose leading text
     // forms `[[/div]]`, `[[/note]]`, or `[[/collapsible]]`. Prefer the one
@@ -8338,6 +8346,46 @@ fn restyle_list_items<'t>(items: &mut Vec<ListItem<'t>>, attrs: &AttributeMap<'t
                     **element = inner;
                 }
             }
+        }
+    }
+}
+
+/// No-list cancellation (color-no-list follow-up): the heading label's
+/// completed span-rendered scope close also kills the heading wrapper when no
+/// explicit list follows the barrier heading. Live keeps the paragraph and
+/// every nested user element; only the outer wrapper span layer is dropped
+/// (saved pages: `cnl-color` `<p>[[/div]]</p>`, `cnl2-color-userspan`
+/// `<p><span>z</span><br>[[/div]]</p>`, `cnl-color-trail`
+/// `<p>t<br>[[/div]]</p>`, `cnl-color-outerspan`
+/// `<p>[[/div]]<br></p>`). Bold/italic/anchor/plain labels keep the wrapper,
+/// so this runs only under the cancellation signal.
+fn dissolve_post_heading_wrapper_spans<'t>(children: &mut Vec<Element<'t>>) {
+    let Some(heading) = children.iter().position(|element| {
+        matches!(
+            element,
+            Element::Container(container)
+                if matches!(container.ctype(), ContainerType::Header(_))
+                    && container
+                        .attributes()
+                        .get()
+                        .contains_key(crate::tree::WIKIDOT_HEADING_BARRIER_MARKER)
+        )
+    }) else {
+        return;
+    };
+    for element in children[heading + 1..].iter_mut() {
+        let Element::Container(paragraph) = element else {
+            continue;
+        };
+        if paragraph.ctype() != ContainerType::Paragraph {
+            continue;
+        }
+        let elements = paragraph.elements_mut();
+        if let [Element::Container(span)] = elements.as_mut_slice()
+            && span.ctype() == ContainerType::Span
+            && span.attributes().get().is_empty()
+        {
+            *elements = mem::take(span.elements_mut());
         }
     }
 }

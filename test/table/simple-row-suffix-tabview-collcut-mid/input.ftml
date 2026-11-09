@@ -1,0 +1,13 @@
+[[tabview]]
+[[tab A]]
+one
+[[/tab]]
+[[tab B]]
+||[[collapsible]]
++ h
+[[/collapsible]]||
+[[/tab]]
+[[tab C]]
+thr
+[[/tab]]
+[[/tabview]]

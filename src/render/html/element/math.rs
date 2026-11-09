@@ -48,15 +48,6 @@ pub fn render_math_block(
     suppress_number: bool,
     capture_eq: bool,
 ) {
-    let MathBlockArgs {
-        assigned_index,
-        name,
-        latex_source,
-        environment,
-        open_elements,
-        label_spans,
-        capture_eq,
-    } = args;
     debug!(
         "Rendering math block (name '{}', source '{}')",
         name.unwrap_or("<none>"),

@@ -89,6 +89,7 @@ fn render_scope_math_pair(
         wikidot_block_open_elements,
         wikidot_label_spans,
         number_will_render,
+        false,
     );
     true
 }

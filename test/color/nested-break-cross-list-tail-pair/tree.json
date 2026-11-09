@@ -1,0 +1,75 @@
+{
+    "elements": [
+        {
+            "element": "color",
+            "data": {
+                "color": "red",
+                "background": false,
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "a"
+                    },
+                    {
+                        "element": "list",
+                        "data": {
+                            "type": "bullet",
+                            "attributes": {},
+                            "items": [
+                                {
+                                    "item-type": "elements",
+                                    "attributes": {},
+                                    "elements": [
+                                        {
+                                            "element": "color",
+                                            "data": {
+                                                "color": "blue",
+                                                "background": false,
+                                                "elements": [
+                                                    {
+                                                        "element": "text",
+                                                        "data": "b"
+                                                    }
+                                                ],
+                                                "attributes": {}
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    }
+                ],
+                "attributes": {}
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "green"
+                    },
+                    {
+                        "element": "text",
+                        "data": "|"
+                    },
+                    {
+                        "element": "text",
+                        "data": "c"
+                    },
+                    {
+                        "element": "text",
+                        "data": "##"
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -58,6 +58,20 @@ pub fn collect_consume_keep<'r, 't>(
 
     let mut comment_line_break_pending = false;
     let collection = collect(parser, rule, closes, invalids, kind, |parser| {
+        if is_list_crossing_format_rule(rule)
+            && parser.current().token == Token::ParagraphBreak
+        {
+            if !parser.settings().layout.legacy() {
+                return Err(parser.make_err(kind.unwrap_or(ParseErrorKind::RuleFailed)));
+            }
+            if parser.in_wikidot_span_body()
+                || parser.in_wikidot_size_body()
+                || parser.in_wikidot_anchor_body()
+            {
+                return Err(parser.make_err(kind.unwrap_or(ParseErrorKind::RuleFailed)));
+            }
+            return wikidot_format_body_post_list_blank(parser, &mut all_elements, kind);
+        }
         let drop_line_break = comment_line_break_pending;
         comment_line_break_pending = false;
         let comment_line = parser.settings().layout.legacy()
@@ -314,15 +328,77 @@ fn collapse_adjacent_ascii_spaces(elements: &mut Vec<Element<'_>>) {
     });
 }
 
+/// Whether a paragraph break at the current position belongs to one of the
+/// seven list-crossing inline formats (bold, italics, underline,
+/// strikethrough, superscript, subscript, monospace), whose own
+/// paragraph-break invalid moved here so a post-list blank gap can pair.
+/// Outside the Wikidot layout, or inside a span/size/anchor body with its
+/// own blank handling, the break still fails the collect exactly like that
+/// invalid used to.
+fn is_list_crossing_format_rule(rule: Rule) -> bool {
+    matches!(
+        rule.name(),
+        "bold"
+            | "italics"
+            | "underline"
+            | "strikethrough-dash"
+            | "strikethrough-tilde"
+            | "superscript"
+            | "subscript"
+            | "monospace"
+    )
+}
+
+/// Collect a paragraph break inside a list-crossing format pair's body. The
+/// break may only sit directly after an explicit list close: it becomes one
+/// break element and stamps the list, so lowering keeps exactly one break in
+/// the post-list run. Anywhere else the collect fails, exactly like the
+/// paragraph-break invalid these rules used to carry.
+fn wikidot_format_body_post_list_blank<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    all_elements: &mut Vec<Element<'t>>,
+    kind: Option<ParseErrorKind>,
+) -> ParseResult<'r, 't, ()> {
+    // The list rule emits its own trailing break when the next line holds no
+    // content, so the blank gap's paragraph break trails that break element,
+    // not the list itself: look past trailing breaks for the list close.
+    let list_index = all_elements.iter().rposition(|element| {
+        !matches!(element, Element::LineBreak | Element::LineBreaks(_))
+    });
+    let post_list_gap = matches!(
+        list_index.and_then(|index| all_elements.get(index)),
+        Some(Element::List {
+            wikidot_explicit_block: true,
+            ..
+        })
+    );
+    if !post_list_gap {
+        return Err(parser.make_err(kind.unwrap_or(ParseErrorKind::RuleFailed)));
+    }
+    let Some(index) = list_index else {
+        unreachable!("post-list gap requires an explicit list");
+    };
+    let Some(Element::List { attributes, .. }) = all_elements.get_mut(index) else {
+        unreachable!("post-list gap requires an explicit list");
+    };
+    attributes.insert(
+        crate::tree::WIKIDOT_LIST_POST_BLANK_GAP_MARKER,
+        std::borrow::Cow::Borrowed(""),
+    );
+    parser.step()?;
+    all_elements.push(Element::LineBreak);
+    Ok(ParseSuccess::new((), Vec::new(), true))
+}
+
 /// A crossed explicit list emits the post-list trailing break when the line
 /// after it has no same-paragraph content (the list rule's `!content_after_list`
 /// branch), the paragraph stack pops that break when content arrives, and the
 /// stack also drops the source newline into the same empty run. A format collect
 /// has no stack, so the emitted break and the source newline survive as
 /// adjacent breaks; the span-close rule then re-spaces them before the literal
-/// close marker, and live keeps neither. Two adjacent breaks after an explicit
-/// list only arise this way inside a collect: a literal blank line would be a
-/// paragraph break, which already fails the collect outright.
+/// close marker, and live keeps neither. A blank gap collected after the list
+/// is marked on the list instead, so only unmarked pairs collapse here fully;
+/// a marked pair keeps one of its breaks for the post-list segment.
 fn collapse_post_list_break_pair(elements: &mut Vec<Element<'_>>) {
     let mut index = 0;
     while index + 2 < elements.len() {
@@ -335,8 +411,18 @@ fn collapse_post_list_break_pair(elements: &mut Vec<Element<'_>>) {
         ) && elements[index + 1] == Element::LineBreak
             && elements[index + 2] == Element::LineBreak
         {
-            elements.remove(index + 2);
-            elements.remove(index + 1);
+            let marked = match &elements[index] {
+                Element::List { attributes, .. } => attributes
+                    .get()
+                    .contains_key(crate::tree::WIKIDOT_LIST_POST_BLANK_GAP_MARKER),
+                _ => false,
+            };
+            if marked {
+                elements.remove(index + 2);
+            } else {
+                elements.remove(index + 2);
+                elements.remove(index + 1);
+            }
         } else {
             index += 1;
         }

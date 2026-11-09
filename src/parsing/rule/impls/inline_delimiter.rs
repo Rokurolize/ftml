@@ -221,6 +221,45 @@ pub(super) enum ReachableCloseMode {
     BlockBarrier,
 }
 
+/// Whether the token at `index` is a paragraph break inside a list-crossing
+/// format pair's post-list gap: only breaks before any gap text count, so a
+/// blank right after the list close (`[[/ul]]` / `[[/ol]]`) or after earlier
+/// gap breaks does not stop pairing, while a blank after gap text still does.
+fn paragraph_break_after_list_close(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
+    if tokens
+        .get(index)
+        .is_none_or(|token| token.token != Token::ParagraphBreak)
+    {
+        return false;
+    }
+    let mut cursor = index;
+    while cursor > 0 {
+        let Some(previous) = tokens.get(cursor - 1) else {
+            break;
+        };
+        if matches!(previous.token, Token::LineBreak | Token::ParagraphBreak) {
+            cursor -= 1;
+            continue;
+        }
+        break;
+    }
+    if cursor < 3 {
+        return false;
+    }
+    let (Some(close), Some(name), Some(open)) = (
+        tokens.get(cursor - 1),
+        tokens.get(cursor - 2),
+        tokens.get(cursor - 3),
+    ) else {
+        return false;
+    };
+    close.token == Token::RightBlock
+        && open.token == Token::LeftBlockEnd
+        && name.token == Token::Identifier
+        && (name.slice.eq_ignore_ascii_case("ul")
+            || name.slice.eq_ignore_ascii_case("ol"))
+}
+
 pub(super) fn validate_reachable_close(
     parser: &Parser<'_, '_>,
     token: Token,
@@ -336,7 +375,13 @@ pub(super) fn validate_reachable_close(
             Token::ParagraphBreak => {
                 last_paragraph_break = Some(scan_start + index);
                 saw_break = true;
-                if !suppress_breaks || pb_stack.is_empty() {
+                let post_list_gap = parser.settings().layout.legacy()
+                    && pb_stack.is_empty()
+                    && !parser.in_wikidot_span_body()
+                    && !parser.in_wikidot_size_body()
+                    && !parser.in_wikidot_anchor_body()
+                    && paragraph_break_after_list_close(tokens, index);
+                if !post_list_gap && (!suppress_breaks || pb_stack.is_empty()) {
                     paragraph_error
                         .get_or_insert_with(|| parser.make_err(ParseErrorKind::RuleFailed));
                 }

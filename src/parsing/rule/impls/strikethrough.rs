@@ -73,7 +73,6 @@ fn try_consume_strikethrough<'r, 't>(
     }
     let close = [ParseCondition::current(token)];
     let invalid = [
-        ParseCondition::current(Token::ParagraphBreak),
         ParseCondition::token_pair(token, Token::Whitespace),
         ParseCondition::token_pair(Token::Whitespace, token),
     ];

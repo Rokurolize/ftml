@@ -342,6 +342,7 @@ where
                 // Internal parse marks the lowering consumed never reach the
                 // returned tree.
                 inline_scope::strip_list_item_blank_line_markers(&mut elements);
+                inline_format::unwrap_frame_cut_marker_paragraphs(&mut elements);
                 inline_scope::strip_post_list_blank_gap_markers(&mut elements);
                 for footnote in &mut footnotes {
                     inline_scope::strip_list_item_blank_line_markers(footnote);

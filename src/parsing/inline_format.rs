@@ -199,6 +199,7 @@ fn normalize_sequence_scoped<'t>(
     }
     hoist_kept_leading_space_pass(elements);
     normalize_sequence_children(elements);
+    unwrap_frame_cut_marker_paragraphs(elements);
     lower_dash_runs(elements);
     substitute_number_unit_spaces(elements);
 }
@@ -213,6 +214,65 @@ fn is_format_event(element: &Element<'_>) -> bool {
                 | PartialElement::InlineColorClose
         )
     )
+}
+
+fn marker_only_paragraph_text<'t>(element: &Element<'t>) -> Option<Cow<'t, str>> {
+    let Element::Container(paragraph) = element else {
+        return None;
+    };
+    if paragraph.ctype() != ContainerType::Paragraph
+        || !paragraph.attributes().get().is_empty()
+    {
+        return None;
+    }
+    let [Element::Text(text)] = paragraph.elements() else {
+        return None;
+    };
+    matches!(text.as_ref(), "**" | "//" | "__" | "^^" | ",," | "{{" | "—")
+        .then(|| text.clone())
+}
+
+fn is_rendered_frame_block(element: &Element<'_>) -> bool {
+    match element {
+        Element::Collapsible { .. } => true,
+        Element::Container(container) => match container.ctype() {
+            ContainerType::Div => {
+                !container.attributes().get().is_empty()
+                    || !container.elements().is_empty()
+            }
+            ContainerType::Note => true,
+            _ => false,
+        },
+        _ => false,
+    }
+}
+
+pub(crate) fn unwrap_frame_cut_marker_paragraphs(elements: &mut [Element<'_>]) {
+    let mut index = 0;
+    while index + 2 < elements.len() {
+        let Some(marker) = marker_only_paragraph_text(&elements[index]) else {
+            index += 1;
+            continue;
+        };
+        let frame = is_rendered_frame_block(&elements[index + 1]);
+        if !frame {
+            index += 1;
+            continue;
+        }
+        let closer = if marker == "{{" {
+            "}}"
+        } else {
+            marker.as_ref()
+        };
+        let closed_after = matches!(
+            &elements[index + 2],
+            Element::Text(text) if text.as_ref() == closer
+        );
+        if closed_after {
+            elements[index] = Element::Text(marker);
+        }
+        index += 1;
+    }
 }
 
 /// A literal opener may live inside the paragraph that ends at an

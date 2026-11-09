@@ -247,6 +247,9 @@ pub(crate) fn normalize_wikidot_blocks(
             *elements = output;
             break;
         };
+        if footnotes_empty && parent.ctype() == ContainerType::Div {
+            output.retain(|element| !matches!(element, Element::FootnoteBlock { .. }));
+        }
         *parent.elements_mut() = output;
         stack
             .last_mut()

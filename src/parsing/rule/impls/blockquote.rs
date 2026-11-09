@@ -2155,8 +2155,26 @@ fn collect_native_blockquote_line<'r, 't>(
         elements.extend(chunk);
         escaped_units.extend(parser.take_quote_escaped_units());
 
+        // A rule (a color body on a quote cursor) can step past this row's
+        // line break and stop before consuming the rest of the deeper line.
+        // When that deeper line is itself a quote row whose marker the rule
+        // already stepped over, the remaining tokens are still this row's
+        // content; collect them instead of stranding them for the outer
+        // parser. Anything else (a break, the next quote row's marker, or an
+        // unquoted follower line) ends the row as before.
         if parser.current().span.start >= line_end {
-            return ok!(paragraph_safe; native_quote_line(elements, layout, layout_live, escaped_units), errors);
+            let at_break = matches!(
+                parser.current().token,
+                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+            );
+            let row_marker_ahead = parser.current().token == Token::Quote;
+            let source = parser.full_text().inner();
+            let here = parser.current().span.start.min(source.len());
+            let line_start = source[..here].rfind('\n').map_or(0, |index| index + 1);
+            let quoted_line = source[line_start..].starts_with('>');
+            if at_break || row_marker_ahead || !quoted_line {
+                return ok!(paragraph_safe; native_quote_line(elements, layout, layout_live, escaped_units), errors);
+            }
         }
     }
 }

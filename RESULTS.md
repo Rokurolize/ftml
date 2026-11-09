@@ -132,3 +132,36 @@ Nine files, +129/-81 (all Argon-authored, edits at seq 879/907/1143/1185/1340):
 - **Keep** the `body_end.rs` dedup: it makes the fingerprint match its documented set semantics ("order and repeats do not change any boundary check"). The fingerprint feeds body-walk failure keys (`parser.rs:3675,3784`); collapsing repeat-only distinctions can only merge keys that the documented semantics declare equivalent. Full-suite output equality is the backstop.
 - **Keep** the `div.rs` early-exit (test the opener line only before paying for the full lowercase).
 - **Fix** (do not revert): remove the three unused imports Argon left behind; they fail the `-D warnings` clippy gate. Nothing else in the diff is reverted.
+
+---
+
+## Stage 4: Defect 2 Root Cause, Fix, and Re-measurement (Takeover)
+
+### Mechanism summary (four compounding causes, all verified in this run)
+
+1. **Exponential tabview re-measure** (`block_pairs.rs::measure_tabview`). The memo was bypassed whenever `tab_body_scan_depth > 0`, so chains of nested `[[tabview]]` were re-measured 2^k times. Cost: the `mc02528` 8.5 s and `0464` >180 s cases. Fix: memoize under key `(head_index, limit, nested_in_tab)`, still guarded by `measure_guard_trips`.
+2. **Body-depth corruption through the rule-attempt cache** (`wikidot_state.rs`). `attempt_key` clamped only `div_body_depth`, and cached-success replay restored a shallow `WikidotState` over a live deeper stack, flickering `in_wikidot_center_body()` inside nested `[[=]]` and defeating tabview/collapsible failure memoization. Fix: clamp `scored_div_body_depth`/`center_body_depth` too, and preserve the three live depths in `apply_cached_success`.
+3. **Per-collapsible full-source rescans** (`compatibility.rs` + callers + `rule.rs`). Every collapsible-close check rebuilt `LiteralRegionIndex` (O(n)), copied the whole source (`to_ascii_lowercase`, O(n)), and linearly scanned lines from offset 0. Fix: one `literal_region_index` + one `wikidot_collapsible_outer_div_memo` on `BlockScanCache` with a parser accessor; `rfind('\n')` for the head line; whole-source `lower` removed (the marker/extent helpers are already case-insensitive, and `[[` search is unaffected); `div.rs` lowercases only the opener line before early-exiting. Relatedly, `wikidot_cache_context` no longer excludes `in_wikidot_center_body()`, so tabview/collapsible failures inside `[[=]]` are memoized under `(owner, collapsible, center)` keys. `body_end.rs`: the fingerprint deduplicates ancestor mixes, matching its documented set semantics.
+4. **Per-image-attempt raw-escape rescan** (`image.rs` -> `wikidot_raw_escape::raw_escapes`), found by takeover GDB sampling (3 of 5 samples in `raw_escapes`, 182 `[[image` attempts x O(n) scan). Fix: one `raw_escapes_cache` on `BlockScanCache` with a parser accessor; same vector (same order, same ordinals), scanned once per parse. The attribute-value encoder (`parser.rs:1194`) still calls the pure function on its value slice, which is also the whole-document scan in the head-map path; no hot frame implicated it in the blowup cases, so it is left as-is and recorded here.
+
+### Defect 2 Before / After (final head `0fb589e7c`, release `render_html_jsonl`, single-thread, same method as Stage 1)
+
+| Case | Before (`origin/main`) | After (final head) |
+| --- | --- | --- |
+| `mc02528` (31,794 chars) | 8,580 ms (48.4 s under shard load) | **21.5 ms** |
+| `badpages/sandbox-synth-0464.ftml` (190,834 chars) | >180,000 ms timeout | **240.7 ms** |
+| `badpages/sandbox-synth-0766.barrier.ftml` (185,034 chars) | 32,492 ms (>45 s under load) | **1,494.6 ms** |
+| `scoped-play-podcast-hub` (54,984 chars) | 38.20 ms | 43.2 ms |
+| `badpages/sandbox-synth-0818.ftml` | PANIC | **163.9 ms** (Stage 2) |
+| `badpages/sandbox-synth-0692.barrier.ftml` | PANIC | **501.3 ms** (Stage 2) |
+| 4-case concat | PANIC | **8.1 ms** (Stage 2) |
+
+`0766` at ~1.5 s for 185 KB is a pathological 114-fragment concatenation, not a real page; post-fix GDB sampling shows distributed retry work (URL scheme checks, paragraph seams, allocation) with no single full-source rescan dominating. No per-shape special-casing was added; all four fixes are mechanism-level memoization/caching.
+
+### Final gates (final head)
+
+- `cargo test --lib`: **1228 passed; 0 failed; 13 ignored** (83.76 s).
+- `cargo test` (full, including integration): PENDING - result appended below.
+- `cargo build --release --example render_html_jsonl`: clean; no new warnings from touched files.
+- `cargo fmt --check`: own hunks hand-formatted clean; 164 diffs remain elsewhere (pre-existing rustfmt-version drift, untouched per brief).
+- `RUSTFLAGS='-D warnings' cargo clippy --tests --no-deps`: **fails identically on pre-existing lints** (~90 locations outside these hunks, including the same warnings Argon's builds show at seq 900/918 on the Defect-1 head; none of the error locations fall in the hunks above). No new clippy errors introduced. Unused-import warnings from the uncommitted diff were removed as part of this change.

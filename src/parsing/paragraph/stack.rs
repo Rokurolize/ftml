@@ -526,6 +526,14 @@ impl<'t> ParagraphStack<'t> {
         self.wikidot_post_empty_list_break = false;
     }
 
+    pub(crate) fn clear_wikidot_paired_close_break_marks(&mut self) {
+        if self.wikidot {
+            self.wikidot_bare_after_explicit_list = false;
+            self.current_unwrapped = false;
+            self.trim_unwrapped_trailing_line_break = false;
+        }
+    }
+
     /// pw65a: arms the stash-break state after a stash-formed explicit list
     /// (numbered lost-owner formation decomposed in its body). The follower
     /// paragraph takes a leading `<br />` in live after blank lines.

@@ -3331,13 +3331,24 @@ fn amend_scope_tail<'t>(
         }
         return true;
     }
-    let Some(Element::Container(container)) = elements.last_mut() else {
-        return false;
-    };
-    if container.ctype() != chain[0].0 || container.attributes() != &chain[0].1 {
-        return false;
+    match elements.last_mut() {
+        Some(Element::Container(container))
+            if container.ctype() == chain[0].0
+                && container.attributes() == &chain[0].1 =>
+        {
+            amend_scope_tail(container.elements_mut(), &chain[1..])
+        }
+        // An anchor (or color) tail wraps the scope pre segment: descend
+        // without consuming the chain, exactly like
+        // `scope_tail_ends_with_break` and `deep_tail_is_break_unit` do.
+        // Without this, a span/size break unit whose pre segment sits
+        // inside the anchor's first paragraph never folds and leaks as a
+        // break-only sibling between </p> and <ul> (R2).
+        Some(Element::Anchor { elements, .. } | Element::Color { elements, .. }) => {
+            amend_scope_tail(elements, chain)
+        }
+        _ => false,
     }
-    amend_scope_tail(container.elements_mut(), &chain[1..])
 }
 
 fn fold_scope_break_unit<'t>(

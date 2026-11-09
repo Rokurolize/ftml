@@ -393,6 +393,7 @@ fn parse_footnote_block<'r, 't>(
     let inline_prefix =
         footnote_block_line_prefix(parser, opener_start).is_inline_prose();
     let inline_prose = inline_prefix || inline_suffix;
+    let tail_attached = footnote_block_tail_attached(parser);
 
     parser.set_footnote_block();
 
@@ -402,6 +403,7 @@ fn parse_footnote_block<'r, 't>(
         wikidot_wrappers: Vec::new(),
         wikidot_inline_suffix: inline_suffix,
         wikidot_inline_prefix: inline_prefix,
+        wikidot_tail_attached: tail_attached,
     };
     let row_tails = parser.footnote_row_tails_flat();
     if row_tails.is_empty() {
@@ -470,6 +472,24 @@ fn footnote_block_has_inline_suffix(parser: &Parser<'_, '_>) -> bool {
         };
     }
     true
+}
+
+fn footnote_block_tail_attached(parser: &Parser<'_, '_>) -> bool {
+    if !parser.settings().layout.legacy() {
+        return false;
+    }
+    let current = parser.current();
+    match current.token {
+        Token::ParagraphBreak | Token::InputEnd => false,
+        Token::Whitespace => {
+            let source = parser.full_text().inner();
+            source[current.span.start..]
+                .chars()
+                .find(|character| !matches!(character, ' ' | '\t'))
+                .is_some_and(|character| !matches!(character, '\n' | '\r'))
+        }
+        _ => true,
+    }
 }
 
 fn wikidot_footnote_block_has_inline_prefix(

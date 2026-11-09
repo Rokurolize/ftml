@@ -244,6 +244,7 @@ fn public_api_html_render_covers_fallback_branches_from_ast() {
                 wikidot_wrappers: Vec::new(),
                 wikidot_inline_suffix: false,
                 wikidot_inline_prefix: false,
+                wikidot_tail_attached: false,
             },
             Element::BibliographyCite {
                 label: Cow::Borrowed("missing"),

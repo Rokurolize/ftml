@@ -165,6 +165,7 @@ fn render_contents(ctx: &mut HtmlContext, tree: &SyntaxTree) {
                 wikidot_wrappers: Vec::new(),
                 wikidot_inline_suffix: false,
                 wikidot_inline_prefix: false,
+                wikidot_tail_attached: false,
             },
         );
     }

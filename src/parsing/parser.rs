@@ -572,6 +572,21 @@ pub(crate) fn wikidot_quoted_own_line_prefix(source: &str, byte: usize) -> bool 
         .all(|character| matches!(character, '>' | ' ' | '\t'))
 }
 
+pub(crate) fn closer_whitespace_is_quote_row_prefix(
+    source: &str,
+    whitespace_start: usize,
+    whitespace_end: usize,
+) -> bool {
+    let start = whitespace_start.min(source.len());
+    let end = whitespace_end.min(source.len());
+    if source.get(start..end) != Some(" ") {
+        return false;
+    }
+    let line_start = source[..start].rfind('\n').map_or(0, |offset| offset + 1);
+    let prefix = &source[line_start..start];
+    !prefix.is_empty() && prefix.bytes().all(|byte| byte == b'>')
+}
+
 fn wikidot_closer_ends_line(source: &str, byte: usize) -> bool {
     let start = byte.min(source.len());
     let end = source[start..]

@@ -881,11 +881,8 @@ pub(super) fn mark_format_stop_at_list<'r, 't>(
             || in_anchor_body)
     {
         // Scopeless underline/strikethrough crossing (page root or a block
-        // envelope): the after-list tail follows the same bare/lead rule.
         // Only the tail marker is stamped — no stop marker — so lowering
         // keeps the styling across the list and only unwraps the tail.
-        // A flow-block-crossed pair is rejected like bold at lowering; the
-        // tail verdict still rides the crossed list for the bare tail.
         if parser.settings().layout.legacy()
             && let Some(container) = find_stop_at_list_container(&elements)
         {

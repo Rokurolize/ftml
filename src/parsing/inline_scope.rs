@@ -2040,11 +2040,6 @@ fn clear_format_label_inside_marker(element: &mut Element<'_>) {
 /// next item text reopens it. The paired container is that pre-tidy shape.
 /// Returns the replacement elements when the foster applies (a marked prefix
 /// chunk for the own-line opener, then the fostered list).
-/// Whether a format pair crossing an explicit list is rejected wholesale:
-/// the crossed list's subtree holds a native list, a flow block, an
-/// item-body blank line, or a blockquote/heading line (all stop live's
-/// stage-1 inline pairing). Shared by the foster path; the general segment
-/// path carries the same predicate inline.
 fn crossed_list_is_poisoned(element: &Element<'_>) -> bool {
     if subtree_contains_native_list(element) {
         return true;
@@ -2065,8 +2060,6 @@ fn crossed_list_is_poisoned(element: &Element<'_>) -> bool {
     })
 }
 
-/// Take the post-blank-gap mark off an explicit list, reporting whether the
-/// pair's post-list gap held a blank line there.
 fn take_post_blank_gap_mark(list: &mut Element<'_>) -> bool {
     if let Element::List { attributes, .. } = list
         && attributes
@@ -3078,10 +3071,6 @@ fn segment_format_run<'t>(
     // A run seeded by a code block keeps its leading break(s); live keeps
     // the break between the code div and the following content.
     let mut run_starts_after_code = false;
-    // Whether the most recent explicit list's post-list gap held a blank
-    // line: that run keeps exactly one leading break (live renders the
-    // block's swallowed trailing blank as a single break), where an ordinary
-    // post-boundary run loses all of them as intra-pair spacing.
     let mut prev_list_post_blank = false;
     for element in elements {
         if matches!(

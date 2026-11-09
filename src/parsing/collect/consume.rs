@@ -328,13 +328,6 @@ fn collapse_adjacent_ascii_spaces(elements: &mut Vec<Element<'_>>) {
     });
 }
 
-/// Whether a paragraph break at the current position belongs to one of the
-/// seven list-crossing inline formats (bold, italics, underline,
-/// strikethrough, superscript, subscript, monospace), whose own
-/// paragraph-break invalid moved here so a post-list blank gap can pair.
-/// Outside the Wikidot layout, or inside a span/size/anchor body with its
-/// own blank handling, the break still fails the collect exactly like that
-/// invalid used to.
 fn is_list_crossing_format_rule(rule: Rule) -> bool {
     matches!(
         rule.name(),
@@ -349,19 +342,11 @@ fn is_list_crossing_format_rule(rule: Rule) -> bool {
     )
 }
 
-/// Collect a paragraph break inside a list-crossing format pair's body. The
-/// break may only sit directly after an explicit list close: it becomes one
-/// break element and stamps the list, so lowering keeps exactly one break in
-/// the post-list run. Anywhere else the collect fails, exactly like the
-/// paragraph-break invalid these rules used to carry.
 fn wikidot_format_body_post_list_blank<'r, 't>(
     parser: &mut Parser<'r, 't>,
     all_elements: &mut Vec<Element<'t>>,
     kind: Option<ParseErrorKind>,
 ) -> ParseResult<'r, 't, ()> {
-    // The list rule emits its own trailing break when the next line holds no
-    // content, so the blank gap's paragraph break trails that break element,
-    // not the list itself: look past trailing breaks for the list close.
     let list_index = all_elements.iter().rposition(|element| {
         !matches!(element, Element::LineBreak | Element::LineBreaks(_))
     });
@@ -396,9 +381,6 @@ fn wikidot_format_body_post_list_blank<'r, 't>(
 /// stack also drops the source newline into the same empty run. A format collect
 /// has no stack, so the emitted break and the source newline survive as
 /// adjacent breaks; the span-close rule then re-spaces them before the literal
-/// close marker, and live keeps neither. A blank gap collected after the list
-/// is marked on the list instead, so only unmarked pairs collapse here fully;
-/// a marked pair keeps one of its breaks for the post-list segment.
 fn collapse_post_list_break_pair(elements: &mut Vec<Element<'_>>) {
     let mut index = 0;
     while index + 2 < elements.len() {

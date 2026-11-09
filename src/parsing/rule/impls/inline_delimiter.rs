@@ -221,10 +221,6 @@ pub(super) enum ReachableCloseMode {
     BlockBarrier,
 }
 
-/// Whether the token at `index` is a paragraph break inside a list-crossing
-/// format pair's post-list gap: only breaks before any gap text count, so a
-/// blank right after the list close (`[[/ul]]` / `[[/ol]]`) or after earlier
-/// gap breaks does not stop pairing, while a blank after gap text still does.
 fn paragraph_break_after_list_close(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
     if tokens
         .get(index)

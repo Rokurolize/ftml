@@ -280,6 +280,9 @@ pub(super) fn validate_reachable_close(
             if let Some(error) = paragraph_error {
                 return Err(error);
             }
+            // A closer after a quote row's own prefix still pairs (live
+            // mirror of the own-line opener rule); content whitespace does
+            // not.
             if mode == ReachableCloseMode::Standard
                 && index > 0
                 && tokens[index - 1].token == Token::Whitespace
@@ -368,6 +371,9 @@ pub(super) fn validate_reachable_close(
                 if let Some(error) = paragraph_error {
                     return Err(error);
                 }
+                // A closer after a quote row's own prefix still pairs (live
+                // mirror of the own-line opener rule); content whitespace
+                // does not.
                 if mode == ReachableCloseMode::Standard
                     && index > 0
                     && tokens[index - 1].token == Token::Whitespace

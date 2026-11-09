@@ -23,6 +23,7 @@ use super::inline_delimiter::{
     validate_reachable_close,
 };
 use super::prelude::*;
+use crate::parsing::collect::QuoteBodyCursorInstallation;
 use crate::parsing::inline_format::{element_contains_link, monospace_close_split};
 use crate::tree::{Container, WIKIDOT_WS_MONO_VANISH_MARKER};
 use std::borrow::Cow;
@@ -88,7 +89,12 @@ fn try_consume_fn<'r, 't>(
     } else {
         false
     };
+    // A closer on its own quote row still pairs across an explicit list
+    // (live mirror of the own-line opener rule): let the body collect cross
+    // quote rows exactly like `collect_container` does. No-op off-quote.
+    let quote_cursor = QuoteBodyCursorInstallation::install(parser);
     let collected = collect_consume_keep(parser, RULE_MONOSPACE, &close, &invalid, None);
+    quote_cursor.uninstall(parser);
     if preserve_empty_lists {
         parser.set_wikidot_preserve_empty_lists(previous_preserve);
     }

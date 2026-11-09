@@ -1924,7 +1924,8 @@ fn parse_list_item<'r, 't>(
     if wikidot && parser.wikidot_greedy_tail_eats_closers(opener_start, &["li"]) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
-    if wikidot && parser.wikidot_li_pairing_depth() > 0 {
+    let pending_list_scope = wikidot && parser.wikidot_pending_paired_list_close();
+    if wikidot && (parser.wikidot_li_pairing_depth() > 0 || pending_list_scope) {
         if !parser.wikidot_li_head_paired(opener_start) {
             return Err(parser.make_err(ParseErrorKind::RuleFailed));
         }
@@ -1944,11 +1945,23 @@ fn parse_list_item<'r, 't>(
         && parser.wikidot_explicit_list_yield_tail_peek();
 
     if wikidot
-        && (parser.wikidot_li_pairing_depth() > 0 || post_yield_scope)
+        && (parser.wikidot_li_pairing_depth() > 0 || post_yield_scope || pending_list_scope)
         && !parser.discarding_hidden_body()
     {
         parser.push_wikidot_li_collect(Some(opener_start));
+        let previous_cursor = parser.quote_body_cursor();
+        let installed = if previous_cursor.is_none()
+            && let Some(depth) = parser.native_blockquote_depth()
+        {
+            parser.install_quote_body_cursor_at_current_line_with_literal_residuals(depth);
+            true
+        } else {
+            false
+        };
         let body = parser.get_wikidot_li_body_segments(&BLOCK_LI);
+        if installed {
+            parser.set_quote_body_cursor(previous_cursor);
+        }
         parser.pop_wikidot_li_collect();
         let body = body?;
         let source_end = parser.current().span.start;
@@ -2352,10 +2365,21 @@ fn parse_list_item<'r, 't>(
                 }
             }
         }
-        let element = Element::Partial(PartialElement::ListItem(ListItem::Elements {
+        let list_item = ListItem::Elements {
             elements,
             attributes,
-        }));
+        };
+        let element = if parser.accepts_partial() == AcceptsPartial::ListItem {
+            Element::Partial(PartialElement::ListItem(list_item))
+        } else {
+            Element::List {
+                ltype: ListType::Bullet,
+                items: vec![list_item],
+                attributes: AttributeMap::new(),
+                wikidot_explicit_block: true,
+                wikidot_unclosed: false,
+            }
+        };
         return success_elements_with_paragraph_safety(false, element, errors);
     }
 

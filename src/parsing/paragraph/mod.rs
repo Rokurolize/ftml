@@ -1011,6 +1011,11 @@ where
                         Elements::None => Vec::new(),
                     };
                     let seam_bounded = batch_is_seam_bounded(&elements);
+                    stack.arm_wikidot_seam_wrap_paragraph(&elements);
+                    if stack.wikidot_shown_seam_keeps_post_list_break(&elements) {
+                        stack.arm_wikidot_seam_keep_post_list_break(true);
+                        stack.arm_wikidot_seam_keep_pending_unwrap(true);
+                    }
                     let mut elements = elements.into_iter();
                     let last_index = counts.len() - 1;
                     for (index, (count, segment_safe, _)) in counts.iter().enumerate() {
@@ -2085,10 +2090,23 @@ fn defer_suppression_seams<'t>(
 ) -> bool {
     let mut deferred = false;
     let original = std::mem::replace(elements, Elements::None);
+    let keep = match &original {
+        Elements::Multiple(items) => {
+            stack.wikidot_shown_seam_keeps_post_list_break(items)
+        }
+        _ => false,
+    };
+    match &original {
+        Elements::Multiple(items) => stack.arm_wikidot_seam_wrap_paragraph(items),
+        _ => stack.arm_wikidot_seam_wrap_paragraph(&[]),
+    }
+    if keep {
+        stack.arm_wikidot_seam_keep_pending_unwrap(true);
+    }
     *elements = match original {
         Elements::Single(element) if matches!(&element, Element::Delayed(delayed) if delayed.is_suppression_seam()) =>
         {
-            stack.defer_suppression_seam(element);
+            stack.defer_suppression_seam(element, keep);
             deferred = true;
             Elements::None
         }
@@ -2110,7 +2128,7 @@ fn defer_suppression_seams<'t>(
             for element in items {
                 if matches!(&element, Element::Delayed(delayed) if delayed.is_suppression_seam())
                 {
-                    stack.defer_suppression_seam(element);
+                    stack.defer_suppression_seam(element, keep);
                     deferred = true;
                 } else {
                     retained.push(element);

@@ -113,7 +113,7 @@ fn apply(stack: &mut ParagraphStack<'static>, op: usize) {
         9 => stack.mark_wikidot_empty_list_break(),
         10 => stack.defer_suppression_seam(Element::Delayed(
             DelayedElement::typography_boundary(),
-        )),
+        ), false),
         11 => stack.end_paragraph(),
         12 => stack.end_paragraph_at_break(),
         13 => stack.pop_line_break(),

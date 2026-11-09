@@ -398,6 +398,11 @@ pub(crate) fn unwrap_wikidot_paragraph_after_explicit_list(elements: &mut Vec<El
                     element,
                     Element::Container(container)
                         if container.ctype() == crate::tree::ContainerType::Paragraph
+                            && !matches!(
+                                container.elements().first(),
+                                Some(Element::Delayed(delayed))
+                                    if delayed.is_typography_boundary()
+                            )
                 )
             });
         if explicit_list && paragraph {

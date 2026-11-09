@@ -187,6 +187,15 @@ pub(crate) const WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER: &str =
 /// inline-scope lowering; the tree cleanup strips it before output.
 pub(crate) const WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER: &str =
     "data-ftml-list-item-blank-line";
+/// Marks an explicit list whose post-list tail content is preceded by source
+/// whitespace (`[[/ul]] __ d`, or a leading space on the next line). Live's
+/// inline pairing sees that pad, so a closer sitting at the first tail content
+/// cannot close a symmetric format pair; FTML's paragraph gathering trims the
+/// space before inline pairing, so the segment join carries the fact here.
+/// Consumed by the inline-format join; never rendered (all `data-ftml-*` keys
+/// are omitted by the HTML builder).
+pub(crate) const WIKIDOT_LIST_TAIL_LEAD_SPACE_MARKER: &str =
+    "data-ftml-list-tail-lead-space";
 /// Marks the first pre-list segment of an inline format pair that was
 /// segmented around an explicit list (the own-line opener of the pair sits on
 /// a line of its own before the list). Live renders that leading chunk as a

@@ -2822,7 +2822,7 @@ fn items_opens_with_visible_text(elements: &[Element<'_>]) -> bool {
         )
 }
 
-fn format_open_marker(text: &str) -> bool {
+pub(crate) fn format_open_marker(text: &str) -> bool {
     // `—` is the typographed strikethrough opener a rejected pair emits.
     matches!(text, "**" | "//" | "__" | "^^" | ",," | "--" | "{{" | "—")
         // A literalised color opener carries its spec: `##red|` / `###fff|`.

@@ -1187,7 +1187,6 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                                 .inner(|ctx| {
                                     render_wikidot_tab_anchor(ctx, label, spans);
                                 });
-                            ctx.push_raw('\n');
                         }
                         return;
                     }
@@ -1209,7 +1208,6 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                                     &tab.wikidot_label_spans,
                                 );
                             });
-                        ctx.push_raw('\n');
                         tab_index += 1;
                     }
                 });
@@ -2068,7 +2066,7 @@ mod tests {
         assert!(!html.contains("yui-navset-top"), "{html}");
         assert!(!html.contains("tabview-min.js"), "{html}");
         assert!(!html.contains("title=\"active\""), "{html}");
-        assert!(html.contains("<em>Apple</em></a></li>\n<li>"), "{html}");
+        assert!(html.contains("<em>Apple</em></a></li><li>"), "{html}");
         assert!(
             html.contains("<div id=\"wiki-tab-0-0\">one</div>"),
             "{html}",

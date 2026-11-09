@@ -149,7 +149,6 @@ struct ActiveScope<'t> {
     pending: bool,
     materialized: bool,
     origin: usize,
-    /// Live keeps a pending anchor active over the explicit list that follows an item whose heading pended it: the list's items and the post-list tail render inside the scope.
     afterlife: bool,
     previous_active: Option<usize>,
     next_active: Option<usize>,

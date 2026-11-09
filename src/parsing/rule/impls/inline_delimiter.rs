@@ -24,7 +24,7 @@ use crate::parsing::collect::{SegmentCtx, TokenWindow, split_delimiter_end};
 use crate::parsing::inline_scope::visit_children;
 use crate::parsing::parser::closer_scan::count_scan_token_visit;
 use crate::parsing::parser::closer_whitespace_is_quote_row_prefix;
-use crate::tree::{Container, Element, ListItem};
+use crate::tree::{AcceptsPartial, Container, Element, ListItem};
 use std::borrow::Cow;
 
 /// Wikidot's table rule runs before inline pairing and splits a glued marker
@@ -448,6 +448,55 @@ fn end_block_fails(
                 || (name == "collapsible" && parser.in_wikidot_collapsible()))
         }
     }
+}
+
+pub(super) fn body_crosses_item_boundary(parser: &Parser<'_, '_>, close: Token) -> bool {
+    if parser.accepts_partial() != AcceptsPartial::ListItem {
+        return false;
+    }
+    let tokens = parser.remaining();
+    let mut blocks: Vec<String> = Vec::new();
+    let mut raw = false;
+    let mut monospace = 0usize;
+    for (index, token) in tokens.iter().enumerate() {
+        if token.token == close
+            || token.token == Token::ParagraphBreak
+            || token.token == Token::InputEnd
+        {
+            return false;
+        }
+        match token.token {
+            Token::Raw => raw = !raw,
+            Token::LeftRaw => raw = true,
+            Token::RightRaw => raw = false,
+            Token::LeftMonospace => monospace += 1,
+            Token::RightMonospace => monospace = monospace.saturating_sub(1),
+            _ => {}
+        }
+        if raw || monospace > 0 {
+            continue;
+        }
+        match token.token {
+            Token::LeftBlock | Token::LeftBlockStar => {
+                let name = block_name_at(tokens, index);
+                if !name.is_empty() && name != "li" {
+                    blocks.push(name);
+                }
+            }
+            Token::LeftBlockEnd => {
+                let name = block_name_at(tokens, index);
+                if blocks.is_empty() {
+                    if matches!(name.as_str(), "li" | "ul" | "ol") {
+                        return true;
+                    }
+                } else if blocks.last().is_some_and(|open| *open == name) {
+                    blocks.pop();
+                }
+            }
+            _ => {}
+        }
+    }
+    false
 }
 
 pub(super) fn block_name_at(tokens: &[ExtractedToken<'_>], index: usize) -> String {

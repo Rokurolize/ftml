@@ -20,8 +20,9 @@
 
 use super::inline_delimiter::{
     ReachableCloseMode, append_wikidot_line_close_space, assert_unpadded_open,
-    inline_body_padded_through_seams, legacy_format_body_code_preceded_by_content,
-    legacy_format_body_contains_table, validate_reachable_close,
+    body_crosses_item_boundary, inline_body_padded_through_seams,
+    legacy_format_body_code_preceded_by_content, legacy_format_body_contains_table,
+    validate_reachable_close,
 };
 use super::prelude::*;
 
@@ -42,6 +43,11 @@ fn try_consume_fn<'r, 't>(
         ReachableCloseMode::BlockBarrier,
     )?;
     assert_unpadded_open(parser, Token::Subscript)?;
+    if parser.settings().layout.legacy()
+        && body_crosses_item_boundary(parser, Token::Subscript)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     let close = [ParseCondition::current(Token::Subscript)];
     let invalid = [
         ParseCondition::current(Token::ParagraphBreak),

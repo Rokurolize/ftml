@@ -1,0 +1,38 @@
+[
+    {
+        "token": "input-end",
+        "rule": "subscript",
+        "span": [
+            48,
+            48
+        ],
+        "kind": "end-of-input"
+    },
+    {
+        "token": "subscript",
+        "rule": "fallback",
+        "span": [
+            13,
+            15
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "subscript",
+        "rule": "subscript",
+        "span": [
+            31,
+            33
+        ],
+        "kind": "end-of-input"
+    },
+    {
+        "token": "subscript",
+        "rule": "fallback",
+        "span": [
+            31,
+            33
+        ],
+        "kind": "no-rules-match"
+    }
+]

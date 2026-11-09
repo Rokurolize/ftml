@@ -2973,6 +2973,9 @@ where
         let mut tail_pending_list = false;
         let mut tail_li_close: Option<usize> = None;
         let mut tail_list_close: Option<usize> = None;
+        let mut tail_ol_close: Option<usize> = None;
+        let mut tail_br_blanks: Vec<usize> = Vec::new();
+        let mut tail_terminator: Option<usize> = None;
         let mut tail_region_end: Option<usize> = None;
 
         // Pop through `index` (inclusive); inner frames with unseen closers
@@ -3043,7 +3046,14 @@ where
                         let name = raw_name.strip_suffix('_').unwrap_or(&raw_name);
                         if name.eq_ignore_ascii_case("li") {
                             if !self.wikidot_li_cross_byte_opaque(pos) {
-                                tail_li_close = Some(pos);
+                                // g10res: the vanished `[[/li]]` is the
+                                // nearest one BEFORE the vanished list
+                                // close (ol-li-after probe: a post-ol
+                                // `[[/li]]` stays literal, so stop once
+                                // the list close is set).
+                                if tail_list_close.is_none() {
+                                    tail_li_close = Some(pos);
+                                }
                             }
                             if scan.step().is_err() {
                                 break;
@@ -3051,12 +3061,16 @@ where
                         } else if name.eq_ignore_ascii_case("ul")
                             || name.eq_ignore_ascii_case("ol")
                         {
+                            let is_ol = name.eq_ignore_ascii_case("ol");
                             if !self.wikidot_li_cross_byte_opaque(pos) {
                                 // The vanished list closer is the FIRST of
                                 // its kind in the tail (aa probe: the
-                                // structural list closer, not a later twin).
+                                // structural list-closer, not a later twin).
                                 if tail_list_close.is_none() {
                                     tail_list_close = Some(pos);
+                                    if is_ol {
+                                        tail_ol_close = Some(pos);
+                                    }
                                 }
                                 depth = depth.saturating_sub(1);
                                 if depth == 0 && tail_region_end.is_none() {
@@ -3069,6 +3083,13 @@ where
                         } else {
                             // Any other closer (the crossed frame's own
                             // closer, span/code closes, ...) ends the tail.
+                            // g10res: record it; the div rule keeps its
+                            // body's trailing break when it pairs with its
+                            // own opener, and the ol remainder loop uses it
+                            // to tell a real closer from an orphan.
+                            if tail_terminator.is_none() {
+                                tail_terminator = Some(pos);
+                            }
                             break;
                         }
                     }
@@ -3086,6 +3107,15 @@ where
                     // the closer search continues and the blank renders as
                     // its own break).
                     Token::ParagraphBreak => {
+                        // g10res: only blanks AFTER the vanished list
+                        // close render as a break in one paragraph
+                        // (t-blank-in-tail); earlier blanks are swallowed
+                        // by the closer eats or split normally. The
+                        // pending gate mirrors the vanish itself: an
+                        // unpending tail records but never consumes.
+                        if tail_pending_list && tail_list_close.is_some() {
+                            tail_br_blanks.push(pos);
+                        }
                         if scan.step().is_err() {
                             break;
                         }
@@ -3358,6 +3388,16 @@ where
                 redundant.insert(close);
                 tail_join_line = self.wikidot_tail_join_line(close);
             }
+            // g10res: the nearest-before `[[/li]]` also eats the break
+            // before it when it ends a run of 3+ consecutive own-line
+            // `[[/li]]`s (q-three-li, four-li probes).
+            let mut tail_li_pre_join = None;
+            if tail_pending_li && let Some(close) = tail_li_close {
+                tail_li_pre_join = self.wikidot_tail_li_pre_join(close);
+            }
+            // g10res: only the ordered wrap needs the remainder recorded;
+            // gate it on the same pending condition as the vanish itself.
+            let tail_ol_close = tail_pending_list.then_some(tail_ol_close).flatten();
             if let Some(end) = tail_region_end {
                 region_end = end;
             }
@@ -3369,7 +3409,12 @@ where
                     region_start: scan_start,
                     region_end,
                     tail_list_close,
+                    tail_li_close,
                     tail_join_line,
+                    tail_ol_close,
+                    tail_li_pre_join,
+                    tail_br_blanks,
+                    tail_terminator,
                 });
             return;
         }
@@ -3381,7 +3426,12 @@ where
                 region_start: scan_start,
                 region_end,
                 tail_list_close: None,
+                tail_li_close: None,
                 tail_join_line: None,
+                tail_ol_close: None,
+                tail_li_pre_join: None,
+                tail_br_blanks: Vec::new(),
+                tail_terminator: None,
             });
     }
 
@@ -3428,6 +3478,67 @@ where
             && !inner.contains("[[")
             && !inner.contains("]]")
         {
+            return None;
+        }
+        Some(line_start)
+    }
+
+    /// g10res: the full physical line containing `byte`, as
+    /// `(line_start, line_end)` with the line break excluded.
+    fn wikidot_tail_line_of(&self, byte: usize) -> Option<(usize, usize)> {
+        let source = self.full_text().inner();
+        let byte = byte.min(source.len());
+        let line_start = source[..byte].rfind('\n').map_or(0, |index| index + 1);
+        let line_end = source[byte..]
+            .find('\n')
+            .map_or(source.len(), |offset| byte + offset);
+        Some((line_start, line_end))
+    }
+
+    /// g10res: whether the physical line at `line_start..line_end` holds
+    /// exactly the own-line closer `name` (strictly unquoted,
+    /// whitespace-tolerant). Used to recognise the consecutive `[[/li]]`
+    /// run ending at the vanished tail closer; quoted lines never count
+    /// (quote runs are opaque to the tail).
+    fn wikidot_tail_own_line_is(
+        &self,
+        line_start: usize,
+        line_end: usize,
+        name: &str,
+    ) -> bool {
+        let source = self.full_text().inner();
+        let Some(line) = source.get(line_start..line_end.min(source.len())) else {
+            return false;
+        };
+        let trimmed = line.trim_matches([' ', '\t', '\r']);
+        trimmed.len() == name.len() + 5
+            && trimmed.starts_with("[[/")
+            && trimmed.ends_with("]]")
+            && trimmed[3..trimmed.len() - 2].eq_ignore_ascii_case(name)
+    }
+
+    /// g10res: when the vanished tail `[[/li]]` ends a run of 3+
+    /// consecutive own-line `[[/li]]`s, live also eats the break before it
+    /// (after the last literal `[[/li]]`): q-three-li and four-li probes.
+    /// Shorter runs, spread closers and mid-line closers keep that break
+    /// (g10i, three-li-spread and w-ul-sameline probes). Returns the
+    /// vanished closer's line start, like `wikidot_tail_join_line`.
+    fn wikidot_tail_li_pre_join(&self, close: usize) -> Option<usize> {
+        let (line_start, line_end) = self.wikidot_tail_line_of(close)?;
+        if line_start == 0 {
+            return None;
+        }
+        if !self.wikidot_tail_own_line_is(line_start, line_end, "li") {
+            return None;
+        }
+        let (prev_start, prev_end) =
+            self.wikidot_tail_line_of(line_start.checked_sub(1)?)?;
+        if !self.wikidot_tail_own_line_is(prev_start, prev_end, "li") {
+            return None;
+        }
+        let (prev2_start, prev2_end) =
+            self.wikidot_tail_line_of(prev_start.checked_sub(1)?)?;
+        if !self.wikidot_tail_own_line_is(prev2_start, prev2_end, "li") {
             return None;
         }
         Some(line_start)
@@ -3507,6 +3618,59 @@ where
             .wikidot_li_cross_scan
             .as_ref()
             .is_some_and(|scan| scan.tail_join_line == Some(end))
+    }
+
+    /// g10res: whether `byte` is the vanished nearest-before `[[/li]]` of a
+    /// crossed list tail (blank-after-li swallowing keys on it).
+    pub(crate) fn wikidot_li_cross_tail_li_at(&self, byte: usize) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_li_cross_scan
+            .as_ref()
+            .is_some_and(|scan| scan.tail_li_close == Some(byte))
+    }
+
+    /// g10res: whether `byte` is the vanished `[[/ol]]` of a crossed list
+    /// tail (the remainder wraps in a degraded list; a vanished `[[/ul]]`
+    /// leaves it bare).
+    pub(crate) fn wikidot_li_cross_tail_ol_at(&self, byte: usize) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_li_cross_scan
+            .as_ref()
+            .is_some_and(|scan| scan.tail_ol_close == Some(byte))
+    }
+
+    /// g10res: whether the line break ending at `end` is the one before the
+    /// vanished tail `[[/li]]` ending a 3+ own-line run (q-three-li,
+    /// four-li probes).
+    pub(crate) fn wikidot_li_cross_tail_li_pre_join_break_at(&self, end: usize) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_li_cross_scan
+            .as_ref()
+            .is_some_and(|scan| scan.tail_li_pre_join == Some(end))
+    }
+
+    /// g10res: whether the blank at `byte` sits after the vanished list
+    /// close of a crossed tail (t-blank-in-tail probe: kept in-paragraph as
+    /// its own break instead of splitting).
+    pub(crate) fn wikidot_li_cross_tail_blank_at(&self, byte: usize) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_li_cross_scan
+            .as_ref()
+            .is_some_and(|scan| scan.tail_br_blanks.contains(&byte))
+    }
+
+    /// g10res: the first non-list closer ending the crossed tail, if any
+    /// (u probe: the outer frame's real closer).
+    pub(crate) fn wikidot_li_cross_tail_terminator(&self) -> Option<usize> {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_li_cross_scan
+            .as_ref()?
+            .tail_terminator
     }
 
     pub(crate) fn wikidot_li_cross_clear(&self) {

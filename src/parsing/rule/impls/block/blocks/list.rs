@@ -25,7 +25,7 @@ use crate::parsing::rule::impls::block::parser::{
 use crate::parsing::{ParagraphSplitKind, ParserWrap, strip_newlines};
 use crate::tree::{
     AcceptsPartial, AttributeMap, Container, ContainerType, ListItem, ListType,
-    PartialElement, WikidotBlockCloseKind,
+    PartialElement, WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER, WikidotBlockCloseKind,
 };
 use std::borrow::Cow;
 
@@ -1916,7 +1916,7 @@ fn parse_list_item<'r, 't>(
     }
 
     let arguments = parser.get_head_map_wikidot(&BLOCK_LI, in_head)?;
-    let attributes = arguments.to_attribute_map(parser.settings());
+    let mut attributes = arguments.to_attribute_map(parser.settings());
     let body_start = parser.current().span.start;
     if wikidot && parser.wikidot_li_inside_item_body() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -1987,6 +1987,9 @@ fn parse_list_item<'r, 't>(
             parser.record_wikidot_cell_div_li_opener(opener_start);
         }
         let source = &parser.full_text().inner()[body_start..source_end];
+        if wikidot && wikidot_li_body_has_inner_blank_line(source) {
+            attributes.insert(WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER, cow!(""));
+        }
         let consumed = parser.wikidot_consumed_li_close();
         let terminated_at_cross_close = (parser.current().token == Token::LeftBlockEnd
             && parser
@@ -2427,6 +2430,63 @@ fn parse_list_item<'r, 't>(
     }));
 
     success_elements_with_paragraph_safety(false, element, errors)
+}
+
+/// Whether an explicit list item's authored body carries a blank line that
+/// live's stage-1 inline pairing treats as a real paragraph break: any
+/// whitespace-only line after the item's leading blanks (the list rule
+/// absorbs those) and outside nested explicit lists (a blank between two
+/// nested items behaves like one between top-level items: the pair forms).
+/// A blank before a nested list opener, after item text, at the item end, or
+/// inside a literal block body all reject the crossed pair.
+fn wikidot_li_body_has_inner_blank_line(source: &str) -> bool {
+    // The body slice ends right before the closer; its final newline is the
+    // line break that put the closer on its own line, not a blank line.
+    let body = source.strip_suffix('\n').unwrap_or(source);
+    let mut nested_lists = 0i32;
+    let mut seen_content = false;
+    for line in body.split('\n') {
+        let blank = line
+            .bytes()
+            .all(|byte| byte == b' ' || byte == b'\t' || byte == b'\r');
+        if blank {
+            if seen_content && nested_lists == 0 {
+                return true;
+            }
+        } else {
+            seen_content = true;
+            nested_lists += explicit_list_depth_delta(line);
+            if nested_lists < 0 {
+                nested_lists = 0;
+            }
+        }
+    }
+    false
+}
+
+/// Net change in nested explicit-list depth across one source line.
+fn explicit_list_depth_delta(line: &str) -> i32 {
+    let lowered = line.to_ascii_lowercase();
+    let mut delta = 0i32;
+    let mut index = 0usize;
+    while let Some(offset) = lowered[index..].find("[[") {
+        let start = index + offset;
+        let rest = &lowered[start..];
+        let closer = rest.starts_with("[[/");
+        if closer {
+            if rest.starts_with("[[/ul]]") || rest.starts_with("[[/ol]]") {
+                delta -= 1;
+                index = start + 7;
+                continue;
+            }
+        } else if rest.starts_with("[[ul]]") || rest.starts_with("[[ol]]") {
+            delta += 1;
+            index = start + 6;
+            continue;
+        }
+        index = start + 2;
+    }
+    delta
 }
 
 fn wikidot_li_closer_line_is_quote_prefix(body: &str) -> bool {

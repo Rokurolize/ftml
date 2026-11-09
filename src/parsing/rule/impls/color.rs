@@ -270,9 +270,16 @@ fn try_consume_fn<'r, 't>(
 
 fn wikidot_flow_block_element(element: &Element<'_>) -> bool {
     match element {
-        Element::Container(container) => {
-            matches!(container.ctype(), ContainerType::Div | ContainerType::Note)
-        }
+        Element::Container(container) => matches!(
+            container.ctype(),
+            // A blockquote or heading line inside a color body is consumed by
+            // an early rule on live, so the color pair cannot form across it
+            // (the Container formats' collect rejects the same shapes).
+            ContainerType::Div
+                | ContainerType::Note
+                | ContainerType::Blockquote
+                | ContainerType::Header(_)
+        ),
         Element::Table(_) | Element::Collapsible { .. } => true,
         Element::Partial(partial) => matches!(
             partial,

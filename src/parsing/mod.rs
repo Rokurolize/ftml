@@ -339,6 +339,17 @@ where
                         inline_scope::lower_wikidot_bibliography_scopes(bibliography);
                     }
                 }
+                // Internal parse marks the lowering consumed never reach the
+                // returned tree.
+                inline_scope::strip_list_item_blank_line_markers(&mut elements);
+                for footnote in &mut footnotes {
+                    inline_scope::strip_list_item_blank_line_markers(footnote);
+                }
+                for bibliography in bibliographies.slice_mut() {
+                    for (_, items) in bibliography.slice_mut() {
+                        inline_scope::strip_list_item_blank_line_markers(items);
+                    }
+                }
             }
             debug!(
                 "Finished parsing into syntax tree ({} errors)",

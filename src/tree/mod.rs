@@ -168,6 +168,13 @@ pub(crate) const WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER: &str =
 /// never rendered.
 pub(crate) const WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER: &str =
     "data-ftml-format-stops-at-list";
+/// Marks an explicit-list item whose authored body carried a blank line after
+/// the item's leading blank (which the list rule absorbs): live's stage-1
+/// inline pairing stops at that paragraph break, so any format pair that
+/// crosses the enclosing list is rejected wholesale. Consumed by
+/// inline-scope lowering; the tree cleanup strips it before output.
+pub(crate) const WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER: &str =
+    "data-ftml-list-item-blank-line";
 /// Marks the first pre-list segment of an inline format pair that was
 /// segmented around an explicit list (the own-line opener of the pair sits on
 /// a line of its own before the list). Live renders that leading chunk as a

@@ -27,22 +27,13 @@
                                             }
                                         ]
                                     }
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "tail"
                                 }
                             ]
                         }
-                    }
-                ]
-            }
-        },
-        {
-            "element": "container",
-            "data": {
-                "type": "paragraph",
-                "attributes": {},
-                "elements": [
-                    {
-                        "element": "text",
-                        "data": "tail"
                     }
                 ]
             }

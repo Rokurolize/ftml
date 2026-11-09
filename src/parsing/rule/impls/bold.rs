@@ -330,12 +330,17 @@ pub(super) fn bold_body_crosses_flow_block(elements: &Elements<'_>) -> bool {
     };
     container.elements().iter().any(|element| match element {
         Element::Container(inner) => {
-            matches!(inner.ctype(), ContainerType::Div | ContainerType::Note)
+            matches!(
+                inner.ctype(),
+                ContainerType::Div | ContainerType::Note | ContainerType::Align(_)
+            )
         }
         Element::Table(_) | Element::Math { .. } | Element::Code(_) => true,
         Element::Partial(
             PartialElement::WikidotBlockOpen(WikidotBlockShell::Div { .. })
-            | PartialElement::WikidotBlockClose(WikidotBlockCloseKind::Div { .. }),
+            | PartialElement::WikidotBlockClose(WikidotBlockCloseKind::Div { .. })
+            | PartialElement::WikidotBlockOpen(WikidotBlockShell::Align { .. })
+            | PartialElement::WikidotBlockClose(WikidotBlockCloseKind::Align { .. }),
         ) => true,
         _ => false,
     })

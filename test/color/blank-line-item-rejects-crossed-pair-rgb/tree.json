@@ -1,0 +1,123 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "##"
+                    },
+                    {
+                        "element": "text",
+                        "data": "rgb"
+                    },
+                    {
+                        "element": "text",
+                        "data": "("
+                    },
+                    {
+                        "element": "text",
+                        "data": "241"
+                    },
+                    {
+                        "element": "text",
+                        "data": ","
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "194"
+                    },
+                    {
+                        "element": "text",
+                        "data": ","
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "50"
+                    },
+                    {
+                        "element": "text",
+                        "data": ")"
+                    },
+                    {
+                        "element": "text",
+                        "data": "|"
+                    },
+                    {
+                        "element": "text",
+                        "data": "a"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "b"
+                            },
+                            {
+                                "element": "line-break"
+                            },
+                            {
+                                "element": "list",
+                                "data": {
+                                    "type": "bullet",
+                                    "attributes": {},
+                                    "items": [
+                                        {
+                                            "item-type": "elements",
+                                            "attributes": {},
+                                            "elements": [
+                                                {
+                                                    "element": "text",
+                                                    "data": "x"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "d"
+                    },
+                    {
+                        "element": "text",
+                        "data": "##"
+                    }
+                ]
+            }
+        }
+    ]
+}

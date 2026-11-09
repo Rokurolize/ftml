@@ -6,6 +6,7 @@ use crate::tree::{
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER,
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, WIKIDOT_HEADING_REOPEN_MARKER,
+    WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER,
     WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BARE_MARKER,
@@ -1913,6 +1914,102 @@ pub(crate) fn subtree_contains_native_list(element: &Element<'_>) -> bool {
     found
 }
 
+/// Whether any explicit-list item in the subtree carries the blank-line mark
+/// recorded by the list rule: live's stage-1 inline pairing stops at the
+/// item-body paragraph break, so a format pair crossing the list is rejected.
+pub(crate) fn subtree_contains_blank_line_item(element: &Element<'_>) -> bool {
+    match element {
+        Element::List { items, .. } => items.iter().any(|item| match item {
+            ListItem::Elements {
+                attributes,
+                elements,
+            } => {
+                attributes
+                    .get()
+                    .contains_key(WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER)
+                    || elements.iter().any(subtree_contains_blank_line_item)
+            }
+            ListItem::SubList { element } => subtree_contains_blank_line_item(element),
+        }),
+        _ => {
+            let mut found = false;
+            visit_children(element, &mut |children| {
+                for child in children {
+                    if !found && subtree_contains_blank_line_item(child) {
+                        found = true;
+                    }
+                }
+            });
+            found
+        }
+    }
+}
+
+/// Whether the subtree holds a blockquote or heading container at any depth:
+/// constructs whose source line an early block rule consumes, so live's
+/// stage-1 inline pairing stops at them. A format pair that crosses an
+/// explicit list whose item carries one is rejected wholesale.
+pub(crate) fn subtree_contains_early_pairing_block(element: &Element<'_>) -> bool {
+    if let Element::Container(container) = element
+        && matches!(
+            container.ctype(),
+            ContainerType::Blockquote | ContainerType::Header(_)
+        )
+    {
+        return true;
+    }
+    let mut found = false;
+    visit_children(element, &mut |children| {
+        for child in children {
+            if !found && subtree_contains_early_pairing_block(child) {
+                found = true;
+            }
+        }
+    });
+    found
+}
+
+/// Whether the subtree holds a native list nested inside a blockquote (the
+/// quoted-native poison: live keeps a rejected crossed pair's pre-list run
+/// bare, unlike a native list directly in an item).
+pub(crate) fn subtree_contains_quoted_native_list(element: &Element<'_>) -> bool {
+    fn quote_holds_native(element: &Element<'_>) -> bool {
+        if matches!(
+            element,
+            Element::List {
+                wikidot_explicit_block: false,
+                ..
+            }
+        ) {
+            return true;
+        }
+        let mut found = false;
+        visit_children(element, &mut |children| {
+            for child in children {
+                if !found && quote_holds_native(child) {
+                    found = true;
+                }
+            }
+        });
+        found
+    }
+    if let Element::Container(container) = element
+        && container.ctype() == ContainerType::Blockquote
+        && quote_holds_native(element)
+    {
+        return true;
+    }
+    let mut found = false;
+    visit_children(element, &mut |children| {
+        for child in children {
+            if !found && subtree_contains_quoted_native_list(child) {
+                found = true;
+            }
+        }
+    });
+    found
+}
+
 /// Whether the subtree contains an explicit list (`[[ul]]`/`[[ol]]`/…) at
 /// any depth. A format pair nested inside another format pair (e.g.
 /// `__**[[ul]]...**__`) reaches its rule exit with the list nested inside
@@ -2102,6 +2199,10 @@ fn pre_list_flow_block(element: &Element<'_>) -> Option<PreListFlowBlock> {
             ContainerType::Blockquote => Some(PreListFlowBlock::BlockquoteVisible(
                 container_subtree_has_visible_content(container.elements()),
             )),
+            // A heading line is consumed by an early rule on live, so it stops
+            // a crossed pair's inline pairing exactly like a flow block; it
+            // p-wraps the pre-list run when visible text precedes it.
+            ContainerType::Header(_) => Some(PreListFlowBlock::Other),
             ContainerType::Div | ContainerType::Note => Some(PreListFlowBlock::Other),
             _ => None,
         },
@@ -2204,6 +2305,19 @@ fn crossed_pre_list_head_should_wrap(list: &Element<'_>) -> bool {
     else {
         return false;
     };
+    // A blank line inside an item is itself an early pairing stop; live
+    // p-wraps the pre-list run whenever an item opens with visible inline
+    // text (the blank line stands where the item's first flow block would).
+    if subtree_contains_blank_line_item(list)
+        && items.iter().any(|item| match item {
+            ListItem::Elements { elements, .. } => items_opens_with_visible_text(elements),
+            ListItem::SubList { element } => {
+                items_opens_with_visible_text(std::slice::from_ref(element))
+            }
+        })
+    {
+        return true;
+    }
     items.iter().any(|item| match item {
         ListItem::Elements { elements, .. } => item_pre_list_head_wraps(elements),
         ListItem::SubList { element } => {
@@ -2212,8 +2326,19 @@ fn crossed_pre_list_head_should_wrap(list: &Element<'_>) -> bool {
     })
 }
 
+/// Whether the element run opens with visible inline text (breaks aside).
+fn items_opens_with_visible_text(elements: &[Element<'_>]) -> bool {
+    elements
+        .iter()
+        .find(|element| !matches!(element, Element::LineBreak | Element::LineBreaks(_)))
+        .is_some_and(|element| matches!(element, Element::Text(text) if !text.trim().is_empty()))
+}
+
 fn format_open_marker(text: &str) -> bool {
-    matches!(text, "**" | "//" | "__" | "^^" | ",," | "--" | "{{")
+    // `—` is the typographed strikethrough opener a rejected pair emits.
+    matches!(text, "**" | "//" | "__" | "^^" | ",," | "--" | "{{" | "—")
+        // A literalised color opener carries its spec: `##red|` / `###fff|`.
+        || (text.len() >= 4 && text.starts_with("##") && text.ends_with('|'))
 }
 
 /// Whether a pending pre-list run is the head of a rejected crossed format
@@ -2804,8 +2929,59 @@ pub(crate) fn literalises_around_explicit_list(element: &Element<'_>) -> bool {
                     wikidot_explicit_block: true,
                     ..
                 }
-            ) && subtree_contains_flow_block(child)
+            ) && (subtree_contains_flow_block(child)
+                || subtree_contains_blank_line_item(child)
+                || subtree_contains_early_pairing_block(child))
         })
+}
+
+/// Drop the leading break(s) of the run that follows each direct explicit
+/// list in a rejected crossed pair's body: live attaches the post-list text
+/// to the list (`</ul>c**`), never `</ul><br>c**`. A blank line cannot sit
+/// there (it would have stopped the pair's collection), so only the single
+/// source newline is removed.
+fn trim_post_list_leading_breaks<'t>(
+    children: Vec<Element<'t>>,
+) -> Vec<Element<'t>> {
+    let mut output = Vec::with_capacity(children.len());
+    let mut iter = children.into_iter().peekable();
+    while let Some(element) = iter.next() {
+        let is_list = matches!(
+            &element,
+            Element::List {
+                wikidot_explicit_block: true,
+                ..
+            }
+        );
+        output.push(element);
+        if is_list {
+            while matches!(
+                iter.peek(),
+                Some(Element::LineBreak | Element::LineBreaks(_))
+            ) {
+                iter.next();
+            }
+        }
+    }
+    output
+}
+
+/// Re-emit a rejected crossing color pair as its literal marker bytes.
+fn literalised_color<'t>(
+    color: &Cow<'t, str>,
+    background: bool,
+    children: Vec<Element<'t>>,
+) -> Vec<Element<'t>> {
+    let open = if background {
+        format!("###{}|", color)
+    } else {
+        format!("##{}|", color)
+    };
+    let mut output = Vec::with_capacity(children.len() + 2);
+    output.push(Element::Text(Cow::Owned(open)));
+    output.extend(trim_post_list_leading_breaks(children));
+    output.push(Element::Text(Cow::Borrowed("##")));
+    output
 }
 
 fn format_explicit_list_segments<'t>(
@@ -2813,7 +2989,6 @@ fn format_explicit_list_segments<'t>(
 ) -> Option<Vec<Element<'t>>> {
     // Handle Color elements
     if matches!(element, Element::Color { .. }) {
-        let poisoned_check = subtree_contains_native_list(element);
         let crosses_list = match element {
             Element::Color { elements, .. } => elements.iter().any(|child| {
                 matches!(
@@ -2838,9 +3013,25 @@ fn format_explicit_list_segments<'t>(
             }
             return None;
         }
-        if poisoned_check {
-            return None;
-        }
+        // A color pair that crosses an explicit list whose item subtree holds
+        // a blank-line paragraph break, a native list, or an early-pairing
+        // block (blockquote/heading) or flow block is rejected by live like
+        // the container formats: the markers stay literal. The stopped color
+        // inside a span/size/anchor body keeps its own segmentation below.
+        let crosses_poison_list = match element {
+            Element::Color { elements, .. } => elements.iter().any(|child| {
+                matches!(
+                    child,
+                    Element::List {
+                        wikidot_explicit_block: true,
+                        ..
+                    }
+                ) && (subtree_contains_blank_line_item(child)
+                    || subtree_contains_early_pairing_block(child)
+                    || subtree_contains_flow_block(child))
+            }),
+            _ => false,
+        };
         // Extract needed data
         let (color_clone, bg_clone, understrike_tail_mark, stops_at_list) = match element {
             Element::Color { color, background, attributes, .. } => {
@@ -2853,6 +3044,16 @@ fn format_explicit_list_segments<'t>(
             }
             _ => return None,
         };
+        if (subtree_contains_native_list(element) || crosses_poison_list) && !stops_at_list {
+            let Element::Color { elements, attributes, .. } = element else {
+                unreachable!("color element checked above")
+            };
+            strip_span_list_close_tail_markers(attributes);
+            strip_understrike_list_close_tail_markers(attributes);
+            strip_format_label_list_close_tail_markers(attributes);
+            let children = std::mem::take(elements);
+            return Some(literalised_color(&color_clone, bg_clone, children));
+        }
         if let Element::Color { elements, .. } = element {
             let children = std::mem::take(elements);
             let mut segmented: Vec<Element<'t>> = Vec::new();
@@ -2985,7 +3186,31 @@ fn format_explicit_list_segments<'t>(
             }
         ) && subtree_contains_flow_block(child)
     });
-    let poisoned = subtree_contains_native_list(element) || crosses_flow_list;
+    // A blank line inside a crossed item is a real paragraph break to live's
+    // stage-1 inline pairing, and a blockquote/heading source line is consumed
+    // by an early rule there; either stops the pair, literalising both markers.
+    let crosses_blank_list = container.elements().iter().any(|child| {
+        matches!(
+            child,
+            Element::List {
+                wikidot_explicit_block: true,
+                ..
+            }
+        ) && subtree_contains_blank_line_item(child)
+    });
+    let crosses_early_list = container.elements().iter().any(|child| {
+        matches!(
+            child,
+            Element::List {
+                wikidot_explicit_block: true,
+                ..
+            }
+        ) && subtree_contains_early_pairing_block(child)
+    });
+    let poisoned = subtree_contains_native_list(element)
+        || crosses_flow_list
+        || crosses_blank_list
+        || crosses_early_list;
     let Element::Container(container) = element else {
         unreachable!()
     };
@@ -2998,14 +3223,23 @@ fn format_explicit_list_segments<'t>(
         .contains_key(WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER);
     let children = mem::take(container.elements_mut());
     let literalised = |children: Vec<Element<'t>>| {
+        // Strikethrough's `--` renders as an em dash in live Wikidot text;
+        // emit the typographed form so the literal markers match.
+        let (open_marker, close_marker) = match kind {
+            InlineFormatKind::Strikethrough => ("—", "—"),
+            _ => (kind.open_marker(), kind.close_marker()),
+        };
         let mut output = Vec::with_capacity(children.len() + 2);
-        output.push(Element::Text(Cow::Borrowed(kind.open_marker())));
+        output.push(Element::Text(Cow::Borrowed(open_marker)));
         output.extend(children);
-        output.push(Element::Text(Cow::Borrowed(kind.close_marker())));
+        output.push(Element::Text(Cow::Borrowed(close_marker)));
         output
     };
     if poisoned {
-        return Some(literalised(children));
+        // The post-list run attaches to the list on live (never
+        // `</ul><br>c**`): drop the source newline that follows each
+        // crossed list before re-emitting the body under literal markers.
+        return Some(literalised(trim_post_list_leading_breaks(children)));
     }
     let mut formed = false;
     let mut segmented = segment_format_run(children, ctype, &mut formed, stops_at_list);
@@ -3768,7 +4002,8 @@ fn flush_root_pending<'t>(
     // a head wrap, independent of each other.
     let pending_is_marker_run = pending_starts_with_format_marker(pending);
     let crossed_head_warrants = next.is_some_and(|next| {
-        crossed_pre_list_head_should_wrap(next) && !subtree_contains_native_list(next)
+        crossed_pre_list_head_should_wrap(next)
+            && !subtree_contains_quoted_native_list(next)
     });
     let wrap_crossed_head = crossed_head_warrants && pending_is_marker_run;
     let mut sequence = mem::take(pending);
@@ -7689,6 +7924,23 @@ pub(crate) fn visit_children_mut<'t>(
             | PartialElement::InlineAnchorClose(_) => {}
         },
         _ => {}
+    }
+}
+
+/// Remove the internal blank-line item marks after lowering has consumed
+/// them, so they never reach the returned syntax tree.
+pub(crate) fn strip_list_item_blank_line_markers<'t>(elements: &mut Vec<Element<'t>>) {
+    for element in elements.iter_mut() {
+        if let Element::List { items, .. } = element {
+            for item in items.iter_mut() {
+                if let ListItem::Elements { attributes, .. } = item {
+                    attributes.remove(WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER);
+                }
+            }
+        }
+        visit_children_mut(element, &mut |children| {
+            strip_list_item_blank_line_markers(children);
+        });
     }
 }
 

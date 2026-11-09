@@ -2293,14 +2293,16 @@ fn seal_format_segment<'t>(
     wrap_lead: bool,
 ) {
     let first_list = !boundary_seen;
-    if stop_at_list || !first_list {
-        if !keep_leading_breaks {
-            while matches!(
-                run.first(),
-                Some(Element::LineBreak | Element::LineBreaks(_))
-            ) {
-                run.remove(0);
-            }
+    // Only runs after a boundary lose their leading breaks. The first
+    // (pre-list) segment is styled — crossing or stopped — and live keeps the
+    // opener-line break(s) inside its format span
+    // (`__\na` renders `<span style="text-decoration: underline;"><br>a<br></span>`).
+    if !first_list && !keep_leading_breaks {
+        while matches!(
+            run.first(),
+            Some(Element::LineBreak | Element::LineBreaks(_))
+        ) {
+            run.remove(0);
         }
     }
     if stop_at_list && boundary_seen {
@@ -2327,16 +2329,24 @@ fn seal_format_segment<'t>(
         )));
         return;
     }
-    if !stop_at_list && first_list && !run.is_empty()
-        && run.iter().all(|e| matches!(e, Element::LineBreak | Element::LineBreaks(_)))
+    if first_list
+        && !run.is_empty()
+        && run
+            .iter()
+            .all(|e| matches!(e, Element::LineBreak | Element::LineBreaks(_)))
     {
-        // A break-only leading chunk (own-line opener of the pair). Live emits
-        // it as a segment; paragraph-wrap it only when `wrap_lead` (text-first
-        // / CK61 shapes). Code-first items keep the chunk bare (no <p>) but the
-        // segment itself must remain (item 85 / 84a own-line, harvest-markwrap).
+        // A break-only leading chunk (own-line opener of the pair, or the
+        // break-only pre segment of a stopped pair). Live emits it as a
+        // segment; paragraph-wrap it only when `wrap_lead` (text-first / CK61
+        // shapes). Code-first items keep the chunk bare (no <p>) but the
+        // segment itself must remain (item 85 / 84a own-line,
+        // harvest-markwrap). A stopped pair tags it so lowering leaves the
+        // enclosing scope's stack entry in place (`stopped_pre_segment`).
         *formed = true;
         let mut attributes = AttributeMap::new();
-        if wrap_lead {
+        if stop_at_list {
+            attributes.insert(WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, Cow::Borrowed(""));
+        } else if wrap_lead {
             attributes.insert(WIKIDOT_BLOCK_CHUNK_PREFIX_MARKER, Cow::Borrowed(""));
         }
         output.push(Element::Container(Container::new(
@@ -2686,12 +2696,15 @@ fn format_explicit_list_segments<'t>(
                         ..
                     } => {
                         // Mirror `seal_format_segment`: post-boundary runs
-                        // (and a stopped pair's first run) lose leading
-                        // breaks, so the newline after the list does not
-                        // become a leading `<br>` in the post-list segment
-                        // (anchres R1: the color tail was keep-everything,
-                        // unlike the Container path).
-                        if stops_at_list || seen_list {
+                        // lose leading breaks, so the newline after the list
+                        // does not become a leading `<br>` in the post-list
+                        // segment (anchres R1: the color tail was
+                        // keep-everything, unlike the Container path). The
+                        // first (pre-list) run keeps them for a stopped pair
+                        // like it already does for a crossing one: live keeps
+                        // the opener-line break inside the color span
+                        // (`##red|\na` renders `<span color><br>a<br></span>`).
+                        if seen_list {
                             strip_leading_breaks(&mut current_run);
                         }
                         if !current_run.is_empty() {

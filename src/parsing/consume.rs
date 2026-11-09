@@ -1768,29 +1768,7 @@ where
     let double_cross_close_break = li_cross_close_break
         && (parser.in_wikidot_span_body() || parser.in_wikidot_size_body());
 
-    // HMFOL: live keeps the post-list break before a keep-class block head
-    // (heading, quote, `----`; saved-page probes
-    // `muse-probe-hmfol-ul/ol-adj-h1/h2/h6/hr/quote`), so the own-line skip
-    // above must not fire there. Scoped to the break right after an explicit
-    // list's end; every other skip (adjacent lists merging, tables, marker
-    // lines, span double-breaks, cross-close breaks, …) is unchanged. The
-    // break is emitted paragraph-unsafe, the proven shape of the kept breaks
-    // before `[[`-led followers (they reach the stack with safety false).
-    let keep_post_list_break = skip
-        && !li_cross_close_break
-        && !double_break_in_li_span
-        && parser.settings().layout.legacy()
-        && parser.current().token == Token::LineBreak
-        && parser.wikidot_line_follows_explicit_list(parser.current().span.end)
-        && parser.wikidot_next_line_is_post_list_keep_head();
     parser.step()?;
-    if keep_post_list_break {
-        return Ok(Some(ParseSuccess::new(
-            Element::LineBreak.into(),
-            Vec::new(),
-            false,
-        )));
-    }
     if li_cross_close_break {
         if double_cross_close_break {
             return Ok(Some(ParseSuccess::new(

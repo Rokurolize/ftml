@@ -734,7 +734,6 @@ where
                     && stack.current_empty()
                     && stack.wikidot_finished_ends_with_explicit_list()
                     && parser.wikidot_next_line_has_content()
-                    && !parser.wikidot_next_line_is_post_list_keep_head()
                     && !parser.body_end_boundary_accepts("iftags")
                     && !parser.has_pending_iftags_end_ahead()
                 {

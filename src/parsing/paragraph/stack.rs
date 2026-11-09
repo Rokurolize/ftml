@@ -75,16 +75,8 @@ pub struct ParagraphStack<'t> {
     /// paragraph gather also drops the seam batch's own leading break
     /// (BRIEF-RMRES fda12).
     wikidot_seam_dropped_post_list_break: bool,
-    /// A pushed seam's batch was decided to keep the attached post-list
-    /// break (a shown iftags body whose first content is prose or a list);
-    /// the first seam push of the batch consumes the arm.
     wikidot_seam_keep_post_list_break: bool,
-    /// The batch kept the attached post-list break; the next non-seam,
-    /// non-break element marks its run unwrapped (live: the body's first
-    /// paragraph stays bare after the kept break).
     wikidot_seam_keep_pending_unwrap: bool,
-    /// A blank line precedes the gate; live wraps the body's first paragraph
-    /// instead of attaching it as the bare post-list continuation.
     wikidot_seam_wrap_paragraph: bool,
     crossed_collapsible_tail: bool,
     wikidot_footnote_joined_math_break: bool,

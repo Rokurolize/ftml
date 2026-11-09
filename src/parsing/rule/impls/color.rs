@@ -160,6 +160,8 @@ fn try_consume_fn<'r, 't>(
     // The no-nesting flag is set around body collection only; it is reset
     // before `body?` so an abandoned color never leaks into siblings.
     parser.set_color_flag(legacy && !table_owned);
+    // The quote-body cursor installed above (bcolq) already lets a closer
+    // on its own quote row pair across an explicit list here.
     let body_result = if table_owned {
         collect_consume_before(parser, RULE_COLOR, close, &invalid, None)
     } else if legacy {

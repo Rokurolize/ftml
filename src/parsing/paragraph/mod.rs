@@ -2080,7 +2080,9 @@ fn defer_suppression_seams<'t>(
     let mut deferred = false;
     let original = std::mem::replace(elements, Elements::None);
     let keep = match &original {
-        Elements::Multiple(items) => stack.wikidot_shown_seam_keeps_post_list_break(items),
+        Elements::Multiple(items) => {
+            stack.wikidot_shown_seam_keeps_post_list_break(items)
+        }
         _ => false,
     };
     match &original {

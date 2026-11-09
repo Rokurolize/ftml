@@ -1138,7 +1138,8 @@ impl<'t> ParagraphStack<'t> {
         // post-list break before it, even when the frame's shell path already
         // emitted [list, break] into the finished tail (BRIEF-RMRES fda12,
         // saved-page probes muse-probe-rmres-fda-f7 / fda-f10).
-        let keep_post_list_break = std::mem::take(&mut self.wikidot_seam_keep_post_list_break);
+        let keep_post_list_break =
+            std::mem::take(&mut self.wikidot_seam_keep_post_list_break);
         if self.wikidot
             && matches!(
                 &element,
@@ -2404,7 +2405,8 @@ impl<'t> ParagraphStack<'t> {
         let Some(first) = items.first() else {
             return false;
         };
-        if !matches!(first, Element::Delayed(delayed) if delayed.is_typography_boundary()) {
+        if !matches!(first, Element::Delayed(delayed) if delayed.is_typography_boundary())
+        {
             return false;
         }
         let Some(content) = items.iter().skip(1).find(|element| {
@@ -2415,7 +2417,10 @@ impl<'t> ParagraphStack<'t> {
         };
         let keeps = matches!(
             content,
-            Element::Text(_) | Element::Raw(_) | Element::LineBreak | Element::List { .. }
+            Element::Text(_)
+                | Element::Raw(_)
+                | Element::LineBreak
+                | Element::List { .. }
         );
         keeps && self.wikidot_poppable_post_list_break()
     }
@@ -2445,12 +2450,10 @@ impl<'t> ParagraphStack<'t> {
     pub fn end_paragraph_at_break(&mut self) {
         if !self.current.is_empty()
             && self.current_unwrapped
-            && self.current.iter().all(|element| {
-                match element {
-                    Element::Delayed(delayed) => delayed.is_suppression_seam(),
-                    Element::Text(text) => text.trim().is_empty(),
-                    _ => false,
-                }
+            && self.current.iter().all(|element| match element {
+                Element::Delayed(delayed) => delayed.is_suppression_seam(),
+                Element::Text(text) => text.trim().is_empty(),
+                _ => false,
             })
         {
             self.pending_suppression_seams.append(&mut self.current);
@@ -2863,9 +2866,10 @@ mod tests {
 
         stack.push_element(text!("alpha"), true);
         stack.end_paragraph_at_break();
-        stack.defer_suppression_seam(Element::Delayed(
-            crate::delayed::DelayedElement::typography_boundary(),
-        ), false);
+        stack.defer_suppression_seam(
+            Element::Delayed(crate::delayed::DelayedElement::typography_boundary()),
+            false,
+        );
         stack.end_paragraph();
         stack.push_element(Element::Footnote(0.into()), true);
 

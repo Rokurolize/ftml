@@ -365,5 +365,8 @@ fn exercise_partial_element_helpers(partial: &PartialElement<'_>) -> usize {
         PartialElement::WikidotCollapsibleHeadingEnd => 0,
         PartialElement::Tab(tab) => exercise_elements_helpers(&tab.elements),
         PartialElement::RubyText(text) => exercise_elements_helpers(&text.elements),
+        PartialElement::WikidotEquationNumber(_, elements) => {
+            exercise_elements_helpers(elements)
+        }
     }
 }

@@ -1,0 +1,38 @@
+[
+    {
+        "token": "quote",
+        "rule": "bold",
+        "span": [
+            17,
+            18
+        ],
+        "kind": "end-of-input"
+    },
+    {
+        "token": "bold",
+        "rule": "fallback",
+        "span": [
+            13,
+            15
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "bold",
+        "rule": "bold",
+        "span": [
+            56,
+            58
+        ],
+        "kind": "rule-failed"
+    },
+    {
+        "token": "bold",
+        "rule": "fallback",
+        "span": [
+            56,
+            58
+        ],
+        "kind": "no-rules-match"
+    }
+]

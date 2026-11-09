@@ -7218,8 +7218,11 @@ fn frame_children_need_root_tail_assembly(elements: &[Element<'_>]) -> bool {
 }
 
 /// Frame vehicles whose direct children are block-assembled like page root
-/// content on live: div, note and collapsible bodies (probed). Blockquote and
-/// align bodies assemble differently (their own residual families) and other
+/// content on live: div, note, collapsible and blockquote bodies (probed:
+/// `muse-probe-fr60-*` for div/note/collapsible, `muse-probe-bqftail-bq-*`
+/// for blockquote — a crossed/list-crossing tail with an own-line closer
+/// keeps the tail break before the frame close exactly as at page root).
+/// Align bodies assemble differently (own residual family) and other
 /// contexts (list items, table cells) are unprobed, so they keep the legacy
 /// frame lowering.
 fn frame_uses_root_tail_assembly(element: &Element<'_>) -> bool {
@@ -7229,7 +7232,10 @@ fn frame_uses_root_tail_assembly(element: &Element<'_>) -> bool {
     ) || matches!(
         element,
         Element::Container(container)
-            if matches!(container.ctype(), ContainerType::Div | ContainerType::Note)
+            if matches!(
+                container.ctype(),
+                ContainerType::Div | ContainerType::Note | ContainerType::Blockquote
+            )
     )
 }
 
@@ -7384,12 +7390,13 @@ fn lower_children<'t>(
         if frame_children {
             active.frame_entry = Some(active.active_positions());
         }
-        // R-frame (ledger item 60 residual): a div/note/collapsible body whose
-        // explicit list carries a post-list inline-scope tail mark is assembled
-        // by the root block pass, which owns that tail accounting (scope
-        // retirement + tail break). Without this the frame close lost the tail
-        // break and kept the enclosing scope wrapped around the post-list
-        // segment (live: `<span>b</span><br></div>`).
+        // R-frame (ledger item 60 residual) + R-bq-frame-br: a
+        // div/note/collapsible/blockquote body whose explicit list carries a
+        // post-list inline-scope tail mark is assembled by the root block
+        // pass, which owns that tail accounting (scope retirement + tail
+        // break). Without this the frame close lost the tail break and kept
+        // the enclosing scope wrapped around the post-list segment (live:
+        // `<span>b</span><br></div>`, `<span>b</span><br></blockquote>`).
         if root_tail_vehicle && frame_children_need_root_tail_assembly(children) {
             lower_root_sequence(children, valid, ordinal, active, trim_next_break, bib);
         } else {

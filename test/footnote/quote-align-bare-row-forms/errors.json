@@ -54,13 +54,13 @@
         "kind": "no-rules-match"
     },
     {
-        "token": "bold",
+        "token": "left-block-end",
         "rule": "bold",
         "span": [
-            44,
-            46
+            82,
+            85
         ],
-        "kind": "rule-failed"
+        "kind": "end-of-input"
     },
     {
         "token": "bold",

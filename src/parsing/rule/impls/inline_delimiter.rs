@@ -23,6 +23,7 @@ use crate::parsing::ParseSuccess;
 use crate::parsing::collect::{SegmentCtx, TokenWindow, split_delimiter_end};
 use crate::parsing::inline_scope::visit_children;
 use crate::parsing::parser::closer_scan::count_scan_token_visit;
+use crate::parsing::parser::closer_whitespace_is_quote_row_prefix;
 use crate::tree::{Container, Element, ListItem};
 use std::borrow::Cow;
 
@@ -282,6 +283,11 @@ pub(super) fn validate_reachable_close(
             if mode == ReachableCloseMode::Standard
                 && index > 0
                 && tokens[index - 1].token == Token::Whitespace
+                && !closer_whitespace_is_quote_row_prefix(
+                    parser.full_text().inner(),
+                    tokens[index - 1].span.start,
+                    tokens[index - 1].span.end,
+                )
             {
                 return Err(parser.make_err(ParseErrorKind::RuleFailed));
             }
@@ -365,6 +371,11 @@ pub(super) fn validate_reachable_close(
                 if mode == ReachableCloseMode::Standard
                     && index > 0
                     && tokens[index - 1].token == Token::Whitespace
+                    && !closer_whitespace_is_quote_row_prefix(
+                        parser.full_text().inner(),
+                        tokens[index - 1].span.start,
+                        tokens[index - 1].span.end,
+                    )
                 {
                     return Err(parser.make_err(ParseErrorKind::RuleFailed));
                 }

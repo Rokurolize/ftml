@@ -344,6 +344,11 @@ fn parse_list_block_impl<'r, 't>(
     } else {
         Vec::new()
     };
+    let anchor_unstarred = if wikidot {
+        parser.take_wikidot_anchor_unstarred_at(parser.wikidot_li_pairing_depth())
+    } else {
+        false
+    };
 
     let mut items = Vec::new();
     let mut literal_elements = Vec::new();
@@ -988,7 +993,8 @@ fn parse_list_block_impl<'r, 't>(
     // r3e with blank-separated prose). The blank-tolerant peek applies only
     // to those shapes; plain/degraded lists keep the untolerant check.
     let stash_formed = !anchor_chromes.is_empty();
-    let follower_wrap = closer_line_marker.is_some() || stash_formed;
+    let stash_o4 = wikidot && !nested && stash_formed && anchor_unstarred;
+    let follower_wrap = closer_line_marker.is_some() || (stash_formed && !stash_o4);
     let content_after_list = (parser.wikidot_next_line_has_content()
         || (follower_wrap && parser.wikidot_next_line_has_content_skipping_blanks())
         || crate::parsing::rule::impls::wikidot_spill_closer_drops_post_list_break(
@@ -1007,6 +1013,61 @@ fn parse_list_block_impl<'r, 't>(
     } else {
         WikidotStashFollowerChrome::EndOfInput
     };
+    if stash_o4 {
+        use crate::parsing::rule::impls::line_owner::WikidotAnchorFollower as F;
+        let class = crate::parsing::rule::impls::line_owner::wikidot_anchor_follower_after_close(
+            parser.full_text().inner(),
+            list_end,
+            parser.current().token == Token::ParagraphBreak,
+            parser.current().token == Token::LineBreak,
+        );
+        match class {
+            F::InlineRun { blank } if list_type == ListType::Numbered && !fused_close => {
+                let mut chromes = anchor_chromes;
+                let mut chrome = chromes.first_mut().cloned();
+                if let Some(Element::List {
+                    wikidot_unclosed,
+                    ..
+                }) = chrome.as_mut()
+                {
+                    *wikidot_unclosed = false;
+                }
+                parser.arm_wikidot_anchor_capture(chrome, blank, false);
+                let mut output = vec![element];
+                if fused_close {
+                    output.push(text!("]"));
+                }
+                return ok!(false; output, errors);
+            }
+            F::MathBlock { blank } if list_type == ListType::Numbered && !fused_close => {
+                let _ = anchor_chromes;
+                parser.arm_wikidot_anchor_capture(None, blank, true);
+                let mut output = vec![element];
+                if fused_close {
+                    output.push(text!("]"));
+                }
+                return ok!(false; output, errors);
+            }
+            F::TableBlank if list_type == ListType::Numbered => {
+                let mut chromes = anchor_chromes;
+                for chrome in &mut chromes {
+                    if let Element::List {
+                        wikidot_unclosed, ..
+                    } = chrome
+                    {
+                        *wikidot_unclosed = false;
+                    }
+                }
+                let mut output = vec![element];
+                if fused_close {
+                    output.push(text!("]"));
+                }
+                output.extend(chromes);
+                return success_elements_with_paragraph_safety(false, output, errors);
+            }
+            _ => {}
+        }
+    }
     if wikidot && !nested && follower_wrap {
         parser.record_wikidot_post_list_follower_wrap(stash_formed);
     }
@@ -2606,6 +2667,11 @@ fn parse_list_item<'r, 't>(
                 }
             }
         }
+        if wikidot && !post_yield_scope {
+            let full = parser.full_text().inner();
+            let splice_from = splice_dissolved_formation_run(&mut elements, source);
+            wrap_dissolved_formation_tail(&mut elements, source, full, body_start, splice_from);
+        }
         // lihoist p23: a body folding to a single native run list whose only
         // items are depth-2+ marker lines is no formation in live — the
         // lines dissolve to a paragraph when a starred list pair formation
@@ -3037,6 +3103,95 @@ struct DocFinalSignals {
 
 fn deep_marker_head(element: &Element) -> bool {
     matches!(element, Element::Text(text) if text.starts_with("**") || text.starts_with("##"))
+}
+
+fn splice_dissolved_formation_run<'t>(
+    elements: &mut Vec<Element<'t>>,
+    body_source: &str,
+) -> Option<usize> {
+    use crate::parsing::rule::impls::line_owner::{
+        deep_formation_in_source, starred_list_closer_in_source, strict_item_marker_line,
+    };
+    if starred_list_closer_in_source(body_source)
+        || !deep_formation_in_source(body_source)
+        || strict_item_marker_line(body_source)
+    {
+        return None;
+    }
+    let mut splice_from = None;
+    loop {
+        let Some(Element::List {
+            items,
+            wikidot_explicit_block: false,
+            ..
+        }) = elements.last()
+        else {
+            return splice_from;
+        };
+        if items.is_empty() {
+            return splice_from;
+        }
+        let spliceable = items.iter().all(|item| {
+            matches!(item, ListItem::Elements { elements: inner, .. }
+                if !inner.is_empty()
+                    && inner.iter().all(|element| matches!(
+                        element,
+                        Element::Text(_) | Element::LineBreak
+                    )))
+        });
+        if !spliceable {
+            return splice_from;
+        }
+        if splice_from.is_none() {
+            splice_from = Some(elements.len() - 1);
+        }
+        let Some(Element::List { items, .. }) = elements.pop() else {
+            return splice_from;
+        };
+        for item in items {
+            if let ListItem::Elements { elements: inner, .. } = item {
+                elements.extend(inner);
+            }
+        }
+    }
+}
+
+fn wrap_dissolved_formation_tail<'t>(
+    elements: &mut Vec<Element<'t>>,
+    body_source: &str,
+    full_source: &str,
+    body_start: usize,
+    splice_from: Option<usize>,
+) {
+    use crate::parsing::rule::impls::line_owner::{
+        deep_formation_in_source, wikidot_anchor_follower_kind,
+    };
+    if !deep_formation_in_source(body_source) {
+        return;
+    }
+    let safe_from = elements
+        .iter()
+        .rposition(|element| !element.paragraph_safe())
+        .map_or(0, |index| index + 1);
+    let wrap_from = splice_from.map_or(safe_from, |index| index.max(safe_from));
+    let run = &elements[wrap_from..];
+    if run.is_empty() || run.iter().all(Element::is_whitespace) {
+        return;
+    }
+    if !run.iter().all(Element::paragraph_safe) {
+        return;
+    }
+    let follower_wraps = wikidot_anchor_follower_kind(full_source, body_start)
+        .is_some_and(|follower| follower.wraps());
+    if !follower_wraps {
+        return;
+    }
+    let tail: Vec<Element<'t>> = elements.split_off(wrap_from);
+    elements.push(Element::Container(Container::new(
+        ContainerType::Paragraph,
+        tail,
+        AttributeMap::new(),
+    )));
 }
 
 /// lihoist p23-early (LT46): splits one list whose items mix deep-marker

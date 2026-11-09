@@ -423,6 +423,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
             environment,
             wikidot_block_open_elements,
             wikidot_label_spans,
+            wikidot_capture_eq,
             ..
         } => render_math_block(
             ctx,
@@ -433,6 +434,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
             wikidot_block_open_elements,
             wikidot_label_spans,
             false,
+            *wikidot_capture_eq,
         ),
         Element::MathInline { latex_source } => render_math_inline(ctx, latex_source),
         Element::EquationReference(name) => render_equation_reference(ctx, name),

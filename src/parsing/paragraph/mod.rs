@@ -1104,6 +1104,9 @@ where
             if list_follower_wrap == 2 {
                 stack.arm_wikidot_stash_br();
             }
+            if let Some((chrome, blank, equation)) = parser.take_wikidot_anchor_capture() {
+                stack.arm_wikidot_anchor_capture(chrome, blank, equation);
+            }
             if parser.take_crossed_collapsible_tail() {
                 stack.mark_crossed_collapsible_tail();
             }
@@ -1132,6 +1135,7 @@ where
                 && ends_with_explicit_list
                 && parser.wikidot_next_line_has_content()
                 && list_follower_wrap == 0
+                && !stack.wikidot_anchor_capture_armed()
             {
                 stack.mark_next_unwrapped_after_block();
             }

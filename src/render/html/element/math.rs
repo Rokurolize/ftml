@@ -46,6 +46,7 @@ pub fn render_math_block(
     open_elements: &[Element],
     label_spans: &[AttributeMap],
     suppress_number: bool,
+    capture_eq: bool,
 ) {
     debug!(
         "Rendering math block (name '{}', source '{}')",
@@ -66,6 +67,7 @@ pub fn render_math_block(
             open_elements,
             label_spans,
             suppress_number,
+            capture_eq,
         );
         return;
     }
@@ -176,6 +178,7 @@ fn render_wikidot_math_block(
     open_elements: &[Element],
     label_spans: &[AttributeMap],
     suppress_number: bool,
+    capture_eq: bool,
 ) {
     let source = join_wikidot_math_source(latex_source);
     match resolve_wikidot_math_environment(environment, &source) {
@@ -196,7 +199,16 @@ fn render_wikidot_math_block(
             };
             let id = format!("equation-{index}");
 
-            if !suppress_number {
+            if capture_eq {
+                ctx.push_raw_str("<ul>\n<li style=\"list-style: none\">");
+                render_wikidot_equation_number_with_spans(
+                    ctx,
+                    index,
+                    open_elements,
+                    label_spans,
+                );
+                ctx.push_raw_str("</li>\n</ul>");
+            } else if !suppress_number {
                 render_wikidot_equation_number_with_spans(
                     ctx,
                     index,

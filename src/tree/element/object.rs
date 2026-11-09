@@ -341,6 +341,8 @@ pub enum Element<'t> {
         /// compatibility wrappers, not authored math attributes.
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         wikidot_label_spans: Vec<AttributeMap<'t>>,
+        #[serde(default, skip_serializing_if = "is_false")]
+        wikidot_capture_eq: bool,
     },
 
     #[serde(rename_all = "kebab-case")]
@@ -883,6 +885,7 @@ impl Element<'_> {
                 wikidot_closer_line_br_prefix,
                 wikidot_block_open_elements,
                 wikidot_label_spans,
+                wikidot_capture_eq,
             } => Element::Math {
                 name: option_string_to_owned(name),
                 latex_source: string_to_owned(latex_source),
@@ -895,6 +898,7 @@ impl Element<'_> {
                     .iter()
                     .map(AttributeMap::to_owned)
                     .collect(),
+                wikidot_capture_eq: *wikidot_capture_eq,
             },
             Element::MathInline { latex_source } => Element::MathInline {
                 latex_source: string_to_owned(latex_source),

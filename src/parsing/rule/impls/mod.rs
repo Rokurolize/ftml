@@ -90,6 +90,7 @@ pub(crate) use self::block::{
     get_block_rule_with_name_for_layout, head_seam_forms_block, head_word_never_resolves,
 };
 pub use self::blockquote::RULE_BLOCKQUOTE;
+pub(crate) use self::blockquote::remnant_text_elements;
 pub use self::bold::RULE_BOLD;
 pub use self::center::RULE_CENTER;
 pub use self::clear_float::RULE_CLEAR_FLOAT;

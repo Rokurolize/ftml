@@ -102,6 +102,20 @@ enum UnquotedCloseTerminator {
     QuotedLiClose,
 }
 
+/// How a no-blank quoted `[[/li]]` pairing consumed its quote prefix
+/// (BRIEF-NB69). `None` also covers the with-blank and non-item paths,
+/// where the NB69 accounting never runs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum NoblankLic {
+    None,
+    /// Same-depth or non-canonical prefix kept as-is: the list-close
+    /// surplus below glues bare (the same-depth prefix renders nothing).
+    SameLevel,
+    /// Deeper prefix synthesized to `>`-minus-1: the list-close surplus
+    /// below space-joins the visible `>`s.
+    Deeper,
+}
+
 /// Token window the `[[iftags]]` pairing scan may look at, matching the
 /// window the previous pairing dynamic program was built over.
 const IFTAGS_PAIRING_WINDOW: usize = 8192;
@@ -3820,6 +3834,12 @@ where
                 // the scan cache.
                 let blank_in_li_body = self.wikidot_quote_boundary_blank_in_li_body()
                     && block_rule.name == "block-list-item";
+                // BRIEF-NB69: without the blank, live still pairs the
+                // deeper close, but each close line's `>`-minus-1 surplus
+                // stays in the item (the blank only moves where the
+                // surplus lands — one rule). `None` keeps the historical
+                // prefix bytes (same-depth or non-canonical prefix).
+                let mut noblank_lic = NoblankLic::None;
                 if blank_in_li_body {
                     let quote_chars: usize = prefix
                         .iter()
@@ -3830,16 +3850,38 @@ where
                         .sum();
                     let remnants = quote_chars.saturating_sub(1).min(u8::MAX as usize);
                     self.set_wikidot_li_close_remnant_quotes(remnants as u8);
+                } else if block_rule.name == "block-list-item"
+                    && let Some(kept) = Self::noblank_deeper_close_prefix(&prefix)
+                {
+                    segments
+                        .last_mut()
+                        .expect("segments always has a current segment")
+                        .extend(kept);
+                    noblank_lic = NoblankLic::Deeper;
                 } else {
                     segments
                         .last_mut()
                         .expect("segments always has a current segment")
                         .extend(prefix);
+                    if block_rule.name == "block-list-item" {
+                        noblank_lic = NoblankLic::SameLevel;
+                    }
                 }
                 if self
                     .verify_end_block(first, block_rule, false, false)
                     .is_some()
                 {
+                    // BRIEF-NB69: the list's own deeper close on the
+                    // immediate next line contributes its `>`-minus-1
+                    // surplus to this same item.
+                    if !matches!(noblank_lic, NoblankLic::None) {
+                        self.extend_noblank_ulc_surplus(
+                            segments
+                                .last_mut()
+                                .expect("segments always has a current segment"),
+                            matches!(noblank_lic, NoblankLic::Deeper),
+                        );
+                    }
                     return Ok(crate::parsing::ParseSuccess::new(
                         segments,
                         all_errors,
@@ -4025,6 +4067,23 @@ where
             if !self.wikidot_li_non_ending_close_past_break() {
                 let result = self.verify_end_block(first, block_rule, false, false);
                 if result.is_some() {
+                    // BRIEF-NB69: same accounting as the deeper-close arm
+                    // above for a same-depth quoted `[[/li]]` pairing: the
+                    // list's own deeper close on the immediate next line
+                    // contributes its `>`-minus-1 surplus to this same
+                    // item (glued bare — the same-depth prefix renders
+                    // nothing).
+                    if block_rule.name == "block-list-item"
+                        && !self.wikidot_quote_boundary_blank_in_li_body()
+                        && self.quote_body_required_depth().is_some()
+                    {
+                        self.extend_noblank_ulc_surplus(
+                            segments
+                                .last_mut()
+                                .expect("segments always has a current segment"),
+                            false,
+                        );
+                    }
                     return Ok(crate::parsing::ParseSuccess::new(
                         segments,
                         all_errors,
@@ -7663,6 +7722,76 @@ where
             self.step()?;
         }
         Ok(elements)
+    }
+
+    /// BRIEF-NB69: how a no-blank quoted `[[/li]]` pairing consumed its
+    /// quote prefix (decides the list-close surplus spacing below).
+    /// `None` also covers the with-blank and non-item paths, where the
+    /// NB69 accounting never runs.
+    fn noblank_deeper_close_prefix(prefix: &[Element<'t>]) -> Option<Vec<Element<'t>>> {
+        let mut quotes = 0usize;
+        for element in prefix {
+            let Element::Text(text) = element else {
+                return None;
+            };
+            if text.bytes().all(|byte| byte == b'>') {
+                quotes += text.matches('>').count();
+            } else if text.as_ref() != " " {
+                // Non-canonical separator (tabs, runs): keep history.
+                return None;
+            }
+        }
+        if quotes < 2 {
+            return None;
+        }
+        Some(super::super::remnant_text_elements(quotes - 1))
+    }
+
+    /// BRIEF-NB69: when the list's own `[[/ul]]`/`[[/ol]]` close sits on
+    /// the immediate next line at depth 2+, it was consumed as the
+    /// list's own close (its prefix dropped), but live keeps its
+    /// `>`-minus-1 surplus in this same item. `spaced` is true when the
+    /// item side already kept visible `>`s (space-join); otherwise the
+    /// surplus glues bare (the same-depth prefix renders nothing).
+    fn extend_noblank_ulc_surplus(&self, segment: &mut Vec<Element<'t>>, spaced: bool) {
+        let required = self.native_blockquote_depth().unwrap_or(0);
+        let mut probe = self.clone();
+        // The cursor sits just after the `[[/li]]` closer (its prefix was
+        // consumed up front and verify consumes the close on success).
+        // Step over the line end and the next line's quote prefix.
+        if probe.get_optional_space().is_err() {
+            return;
+        }
+        if probe.current().token != Token::LineBreak {
+            return;
+        }
+        if probe.step().is_err() {
+            return;
+        }
+        let mut depth = 0usize;
+        while probe.current().token == Token::Quote {
+            depth += probe.current().slice.len();
+            if probe.step().is_err() || probe.get_optional_space().is_err() {
+                return;
+            }
+        }
+        if depth < 2 || depth < required {
+            return;
+        }
+        let is_list_close = probe.get_end_block().is_ok_and(|name| {
+            name.eq_ignore_ascii_case("ul") || name.eq_ignore_ascii_case("ol")
+        });
+        if !is_list_close {
+            return;
+        }
+        let _ = probe.get_optional_space();
+        if !token_is_body_boundary(probe.current().token) {
+            return;
+        }
+        if spaced {
+            segment.push(Element::Text(Cow::Borrowed(" ")));
+        }
+        segment.extend(super::super::remnant_text_elements(depth - 1));
     }
 
     pub(crate) fn has_surplus_quote_list_close(

@@ -2301,7 +2301,7 @@ fn demote_ungrounded_indented_list_rows(
 /// Surplus quote markers as remnant text (BRIEF-BL69b): `n` leading
 /// `>`s that live re-emits ahead of a paired-close break or inside the
 /// quoted-close follower paragraph, separated by single spaces.
-fn remnant_text_elements<'t>(quotes: usize) -> Vec<Element<'t>> {
+pub(crate) fn remnant_text_elements<'t>(quotes: usize) -> Vec<Element<'t>> {
     let mut elements = Vec::new();
     for index in 0..quotes {
         if index > 0 {

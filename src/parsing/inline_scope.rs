@@ -149,6 +149,7 @@ struct ActiveScope<'t> {
     pending: bool,
     materialized: bool,
     origin: usize,
+    afterlife: bool,
     previous_active: Option<usize>,
     next_active: Option<usize>,
 }
@@ -261,6 +262,7 @@ impl<'t> ActiveScopes<'t> {
             pending: false,
             materialized: false,
             origin,
+            afterlife: false,
             previous_active,
             next_active: None,
         });
@@ -7785,6 +7787,9 @@ fn end_anchor_at_explicit_list<'t>(
     let Some(position) = active.anchor_position() else {
         return;
     };
+    if active.scope_is_pending(position) && active.scopes[position].afterlife {
+        return;
+    }
     if !active.scope_is_pending(position) {
         close_live_anchor(output, run, active, last_run_outer_scope);
     } else if blank_anchor_reopen && !active.scope_materialized(position) {
@@ -7918,6 +7923,9 @@ fn emit_item_end_reopened_copy<'t>(
     let mut copy: Vec<Element<'t>> = Vec::new();
     for entry in crossing.iter().rev() {
         copy = vec![active.scopes[*entry].wrapper.wrap(copy)];
+    }
+    for position in crossing {
+        active.scopes[position].afterlife = true;
     }
     children.push(Element::Container(Container::new(
         ContainerType::Paragraph,
@@ -8549,6 +8557,11 @@ fn lower_wikidot_heading_barrier<'t>(
         false,
     );
     active.pend_all();
+    for position in active.active_positions() {
+        if Some(position) != active.heading_wrapper {
+            active.scopes[position].afterlife = false;
+        }
+    }
     active.heading_barrier_pended = active
         .active_positions()
         .iter()
@@ -9131,7 +9144,8 @@ pub(crate) fn visit_children<'t>(
             | PartialElement::InlineColorOpen(..)
             | PartialElement::InlineColorClose
             | PartialElement::InlineAnchorOpen(..)
-            | PartialElement::InlineAnchorClose(_) => {}
+            | PartialElement::InlineAnchorClose(_)
+            | PartialElement::WikidotEquationNumber(..) => {}
         },
         _ => {}
     }
@@ -9204,7 +9218,8 @@ pub(crate) fn visit_children_mut<'t>(
             | PartialElement::InlineColorOpen(..)
             | PartialElement::InlineColorClose
             | PartialElement::InlineAnchorOpen(..)
-            | PartialElement::InlineAnchorClose(_) => {}
+            | PartialElement::InlineAnchorClose(_)
+            | PartialElement::WikidotEquationNumber(..) => {}
         },
         _ => {}
     }

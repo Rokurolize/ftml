@@ -3891,57 +3891,43 @@ fn wrap_post_heading_segments<'t>(
         CodeOrAlign,
         /// End of the item body.
         End,
+        BeforeMath,
     }
 
     let mut out: Vec<Element<'t>> = Vec::with_capacity(elements.len() + 4);
     let mut chunk: Vec<Element<'t>> = Vec::new();
     let mut after_heading = false;
-    // A math or table block inside the item: the inline run after it is
-    // paragraph-wrapped at the end of the item body when the enclosing
-    // list carries a content follower (or an enclosing block frame is
-    // open), and stays bare otherwise (muse-probe-ad75-*; m2/t2 sit at
-    // EOF so they stay bare, m3/t3 and the adi4/scope forms carry a
-    // follower or a span scope after the list close and wrap).
-    // Headings keep the wider Soft/SegmentGap family; this flag feeds
-    // only the end-of-item flush, where enclosing_block decides.
+    let mut after_blank_boundary = false;
     let mut after_ref_block = false;
     let mut latched = false;
     let flush = |chunk: &mut Vec<Element<'t>>,
                  out: &mut Vec<Element<'t>>,
                  after_heading: bool,
                  after_ref_block: bool,
+                 after_blank_boundary: bool,
                  latched: bool,
                  enclosing_block: bool,
                  kind: Flush| {
         if chunk.is_empty() {
             return;
         }
-        // The math/table trailing flag wraps a free inline run; a chunk
-        // owned by an inline scope inside the item (span/size partials in
-        // it) belongs to the scope's segment flow, not to this wrap:
-        // live keeps it bare (test/span/same-line-div-text-has-no-leading-
-        // space pins `**||` in a span after its table; the heading family's
-        // scope wraps are unaffected since headings set after_heading).
         let chunk_has_partial = chunk
             .iter()
             .any(|element| matches!(element, Element::Partial(_)));
-        // Headings drive the Soft/SegmentGap families unconditionally. A
-        // math/table trail wraps only the trailing run at the end of the
-        // item body (probes muse-probe-ad75-*) and only when the chunk is
-        // free of inline-scope partials.
-        let wrap = (!latched
+        let wrap = !latched
             && has_content(chunk)
             && ((after_heading
                 && match kind {
                     Flush::BeforeTable => false,
                     Flush::SegmentGap | Flush::End => enclosing_block,
-                    Flush::Soft | Flush::CodeOrAlign => true,
+                    Flush::Soft | Flush::CodeOrAlign | Flush::BeforeMath => true,
                 })
+                || (after_blank_boundary && matches!(kind, Flush::Soft))
                 || (after_ref_block
                     && !suppress_trail
                     && !chunk_has_partial
-                    && matches!(kind, Flush::End)
-                    && enclosing_block)));
+                    && (matches!(kind, Flush::BeforeMath)
+                        || (matches!(kind, Flush::End) && enclosing_block))));
         if wrap {
             out.push(Element::Container(Container::new(
                 ContainerType::Paragraph,
@@ -3972,10 +3958,12 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::SegmentGap,
             );
+            after_blank_boundary = true;
             continue;
         }
         if is_heading {
@@ -3984,6 +3972,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::Soft,
@@ -3998,6 +3987,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::BeforeTable,
@@ -4012,6 +4002,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::CodeOrAlign,
@@ -4027,9 +4018,14 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
-                Flush::Soft,
+                if is_math {
+                    Flush::BeforeMath
+                } else {
+                    Flush::Soft
+                },
             );
             out.push(element);
             if is_math {
@@ -4044,6 +4040,7 @@ fn wrap_post_heading_segments<'t>(
         &mut out,
         after_heading,
         after_ref_block,
+        after_blank_boundary,
         latched,
         enclosing_block,
         Flush::End,

@@ -161,6 +161,12 @@ pub(crate) const WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER: &str =
 /// post-list continuation break when it fires. Never rendered.
 pub(crate) const WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER: &str =
     "data-ftml-span-list-close-tail-fold";
+/// Sibling mark for the same close when a blank gap then an explicit list
+/// follows it (live drops the tail entirely: no break, no paragraph).
+/// Consumed by the rewrite pass, which removes the trapped break-only run;
+/// never rendered.
+pub(crate) const WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER: &str =
+    "data-ftml-span-list-close-tail-blank";
 /// Marks an underline or strikethrough pair that closed beyond an explicit
 /// list inside a Wikidot inline scope (`[[span]]`, `[[size]]`, `[[a]]`):
 /// live carries its styling only up to the list (see
@@ -198,6 +204,13 @@ pub(crate) const WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BARE_MARKER: &str =
 /// inline-scope lowering; never rendered.
 pub(crate) const WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_LEAD_MARKER: &str =
     "data-ftml-understrike-list-close-tail-lead";
+/// Marks the root paragraph that continues the line of an empty
+/// `[[footnoteblock]]` after an explicit list (no blank line between them):
+/// live renders that tail bare, with the block's own line break in front of
+/// it, instead of wrapping it in a paragraph. Consumed by inline-scope
+/// lowering; never rendered.
+pub(crate) const WIKIDOT_EMPTY_FOOTNOTE_TAIL_BARE_MARKER: &str =
+    "data-ftml-empty-footnote-tail-bare";
 /// Marks a segmented format wrapper around explicit-list item content when
 /// a span/size scope opened INSIDE that format pair and closes beyond the
 /// list (strong-x family: `**[[span]]` over a list). Live nests that scope

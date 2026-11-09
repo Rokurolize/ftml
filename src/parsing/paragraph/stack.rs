@@ -102,6 +102,11 @@ pub struct ParagraphStack<'t> {
     /// After `[[/math]]`, some closer-line whitespace tails make live's next
     /// wrapped paragraph start with `<br />` before the following text.
     wikidot_math_next_paragraph_leads_with_br: bool,
+    /// fr73: a stamped crossed-pair tail is pending at the next explicit
+    /// list: keep the lone gap break instead of the L85 pop. Set from the
+    /// paragraph driver (which reads the parser signal); consumed by the
+    /// next explicit-list push.
+    keep_lone_break_before_list: bool,
     wikidot_toc_next_paragraph_leads_with_br: bool,
     wikidot_quote_boundary_next_paragraph_leads_with_br: bool,
     wikidot_row_suffix_break: bool,
@@ -141,6 +146,20 @@ impl<'t> ParagraphStack<'t> {
         self.wikidot_row_suffix_break
     }
 
+    /// fr73: arm keeping the lone gap break before the next explicit list
+    /// (a stamped crossed-pair tail). Consumed by that list's push; any
+    /// other push leaves it armed (only explicit-list batches arm it, and
+    /// the next explicit list consumes it).
+    pub(crate) fn mark_keep_lone_break_before_list(&mut self) {
+        if self.wikidot {
+            self.keep_lone_break_before_list = true;
+        }
+    }
+
+    /// fr73: an explicit list arriving via the paragraph-safe bulk path
+    /// (which appends without per-element pushes, so the L85 gate never
+    /// sees it). Applies the blank-separated tail drop and consumes any
+    /// pending keep: bulk appends never pop, so keeping is automatic.
     pub(crate) fn clear_wikidot_row_suffix_break(&mut self) {
         self.wikidot_row_suffix_break = false;
     }
@@ -324,10 +343,37 @@ impl<'t> ParagraphStack<'t> {
         self.wikidot_post_empty_list_break = false;
     }
 
+    /// HMFOL: block followers whose rules report paragraph-safe content yet
+    /// live keeps the attached post-list break before (heading, hr, quote;
+    /// saved-page probes `muse-probe-hmfol-ul/ol-adj-h1/h2/h6/hr/quote`).
+    /// The prose absorb must not pop the pending break for these; the break
+    /// then travels the same pending path as the kept `[[`-led followers.
+    fn wikidot_post_list_keep_block(element: &Element<'_>) -> bool {
+        match element {
+            Element::HorizontalRule => true,
+            Element::Container(container) => matches!(
+                container.ctype(),
+                ContainerType::Header(_) | ContainerType::Blockquote
+            ),
+            _ => false,
+        }
+    }
+
     fn wikidot_post_list_break_absorber(element: &Element<'_>) -> bool {
         match element {
-            Element::List { .. } | Element::Code(_) | Element::TabView(_) => true,
+            // HMFOL: live drops the attached post-list break before math and
+            // align (saved-page probes `muse-probe-hmfol-ul/ol-adj-math` and
+            // `-adj-align`); every other `[[`-block follower keeps it.
+            Element::List { .. }
+            | Element::Code(_)
+            | Element::TabView(_)
+            | Element::Math { .. } => true,
             Element::Table(table) => table.table_type != TableType::Simple,
+            Element::Container(container)
+                if matches!(container.ctype(), ContainerType::Align(_)) =>
+            {
+                true
+            }
             _ => false,
         }
     }
@@ -356,12 +402,14 @@ impl<'t> ParagraphStack<'t> {
                 alignment: Some(_), ..
             } => true,
             Element::Table(table) => table.table_type != TableType::Simple,
+            // HMFOL: align no longer swallows here — live keeps the
+            // blank-separated post-list break before align (saved-page probes
+            // `muse-probe-hmfol-ul/ol-blank-align`), routing it like prose.
             Element::Container(container) => matches!(
                 container.ctype(),
                 ContainerType::Div
                     | ContainerType::Note
                     | ContainerType::Blockquote
-                    | ContainerType::Align(_)
                     | ContainerType::Header(_)
             ),
             _ => false,
@@ -1099,6 +1147,8 @@ impl<'t> ParagraphStack<'t> {
         // keeps real breaks only with content: R1 keeps, para-start drops).
         // Except: a break after a break-kept block is content, not a para-start
         // (live o-top/o-cell-ol keep it), and stays bare like the cell rule.
+        // Except: a stamped crossed-pair tail keeps the gap break (fr73: live
+        // renders one bare break before a second list after a pair close).
         if self.wikidot
             && matches!(
                 &element,
@@ -1115,7 +1165,9 @@ impl<'t> ParagraphStack<'t> {
                 )
             })
         {
-            if self.finished_ends_with_break_kept_block() {
+            if self.keep_lone_break_before_list {
+                self.keep_lone_break_before_list = false;
+            } else if self.finished_ends_with_break_kept_block() {
                 self.current_unwrapped = true;
             } else {
                 self.current.pop();
@@ -1413,6 +1465,7 @@ impl<'t> ParagraphStack<'t> {
             }
             if Self::wikidot_element_has_run_content(&element)
                 && !self.wikidot_current_has_run_content()
+                && !Self::wikidot_post_list_keep_block(&element)
             {
                 self.wikidot_absorb_post_list_break_for_prose(!paragraph_break_separated);
             }

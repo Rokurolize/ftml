@@ -52,6 +52,7 @@ const OPS: &[&str] = &[
     "ensure-trailing-line-break",
     "mark-discarded-control",
     "mark-advanced-table-cell",
+    "mark-keep-lone-break-before-list",
     "clear-paired-close-break-marks",
 ];
 
@@ -123,6 +124,7 @@ fn apply(stack: &mut ParagraphStack<'static>, op: usize) {
         18 => stack.ensure_wikidot_trailing_line_break(),
         19 => stack.mark_discarded_control(),
         20 => stack.mark_wikidot_advanced_table_cell(),
+        21 => stack.mark_keep_lone_break_before_list(),
         21 => stack.clear_wikidot_paired_close_break_marks(),
         _ => unreachable!("operation table and apply() disagree"),
     }

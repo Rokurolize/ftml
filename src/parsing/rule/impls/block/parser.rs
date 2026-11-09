@@ -3563,6 +3563,71 @@ where
         false
     }
 
+    /// HMFOL: whether the line starting at the current line break is led by
+    /// a keep-class block head (heading, leaf quote, `----`). Live keeps the
+    /// post-list break before these (saved-page probes `muse-probe-hmfol-*`:
+    /// `ul/ol-adj-h1/h2/h6/hr/quote`). The taxonomy mirrors the stash-chrome
+    /// keep class (`wikidot_stash_follower_chrome`); `=`-led lines stay on
+    /// the drop path (an `= x` line is a centered paragraph, not a
+    /// keep-class block, and is unprobed). A `>` line that opens another
+    /// block (list, table, `[[`-block, …) is not a leaf quote: live drops
+    /// the break there (e.g. the hoisted quote-list pin keeps one break).
+    pub(crate) fn wikidot_next_line_is_post_list_keep_head(&self) -> bool {
+        if self.current().token != Token::LineBreak {
+            return false;
+        }
+        let mut remaining = self.remaining().iter();
+        loop {
+            let Some(extracted) = remaining.next() else {
+                return false;
+            };
+            match extracted.token {
+                Token::Whitespace => {}
+                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd => {
+                    return false;
+                }
+                Token::Heading | Token::TripleDash => return true,
+                Token::Quote => {
+                    return Self::wikidot_post_list_quote_head_is_leaf(remaining);
+                }
+                _ => return false,
+            }
+        }
+    }
+
+    /// Whether the quote-led follower line is a leaf quote (no block head
+    /// after the `>` run): only then does live keep the post-list break.
+    fn wikidot_post_list_quote_head_is_leaf(
+        remaining: impl Iterator<Item = &'r crate::parsing::token::ExtractedToken<'t>>,
+    ) -> bool {
+        for extracted in remaining {
+            match extracted.token {
+                Token::Whitespace => {}
+                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd => {
+                    return false;
+                }
+                Token::Quote => return true,
+                Token::LeftBlock
+                | Token::LeftBlockStar
+                | Token::LeftBlockEnd
+                | Token::BulletItem
+                | Token::NumberedItem
+                | Token::Heading
+                | Token::Equals
+                | Token::TripleDash
+                | Token::TableColumn
+                | Token::TableColumnRight
+                | Token::TableColumnCenter
+                | Token::TableColumnTitle
+                | Token::ClearFloatLeft
+                | Token::ClearFloatRight
+                | Token::ClearFloatBoth => return false,
+                _ => return true,
+            }
+        }
+        false
+    }
+
     /// BF79 (e-residual): classify the first content after a stash-formed
     /// list's close for anchor-chrome emission (saved-page probes
     /// muse-probe-bf79-*). Live keeps the stash chrome CLOSED before an

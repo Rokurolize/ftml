@@ -1372,7 +1372,7 @@ fn try_consume_fn<'r, 't>(
             };
         if tail_line_is_row_content {
             parser.set_native_blockquote_depth(Some(absolute_depth));
-            let tail = collect_native_blockquote_line(parser, close);
+            let tail = collect_native_blockquote_line(parser, close, Some(depth));
             parser.set_native_blockquote_depth(original_depth);
             let ParseSuccess {
                 item: tail_line,

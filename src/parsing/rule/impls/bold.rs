@@ -482,7 +482,14 @@ pub(super) fn bold_body_crosses_flow_block(elements: &Elements<'_>) -> bool {
             PartialElement::WikidotBlockOpen(WikidotBlockShell::Div { .. })
             | PartialElement::WikidotBlockClose(WikidotBlockCloseKind::Div { .. })
             | PartialElement::WikidotBlockOpen(WikidotBlockShell::Align { .. })
-            | PartialElement::WikidotBlockClose(WikidotBlockCloseKind::Align { .. }),
+            | PartialElement::WikidotBlockClose(WikidotBlockCloseKind::Align { .. })
+            | PartialElement::WikidotBlockClose(WikidotBlockCloseKind::Note { .. })
+            | PartialElement::WikidotBlockClose(WikidotBlockCloseKind::Collapsible {
+                ..
+            })
+            | PartialElement::WikidotBlockClose(
+                WikidotBlockCloseKind::CollapsibleCrossedBottom { .. },
+            ),
         ) => true,
         _ => false,
     })

@@ -4,7 +4,7 @@ use crate::parsing::rule::impls::{
 use crate::tree::{
     AnchorTarget, AttributeMap, Bibliography, Container, ContainerType, Element,
     InlineFormatKind, LinkLabel, LinkLocation, ListItem, PartialElement, TableType,
-    WikidotBlockShell,
+    WikidotBlockCloseKind, WikidotBlockShell,
 };
 use std::borrow::Cow;
 use std::mem;
@@ -3015,6 +3015,11 @@ fn pairing_barrier(element: &Element<'_>) -> bool {
                     WikidotBlockShell::Div { .. }
                         | WikidotBlockShell::Note { .. }
                         | WikidotBlockShell::Collapsible { .. }
+                )
+                | PartialElement::WikidotBlockClose(
+                    WikidotBlockCloseKind::Div { .. }
+                        | WikidotBlockCloseKind::Note { .. }
+                        | WikidotBlockCloseKind::Collapsible { .. }
                 )
         ),
         _ => false,

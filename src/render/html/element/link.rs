@@ -117,7 +117,11 @@ fn render_wikidot_anchor(
         {
             let mut tag = ctx.html().a();
             write_wikidot_anchor_attributes(&mut tag, attributes, target);
-            tag.contents(before);
+            tag.inner(|ctx| {
+                super::container::render_contents_dropping_final_break_newline(
+                    ctx, before,
+                );
+            });
         }
         super::user::render_wikidot_user_bare(ctx, user);
         super::render_elements(ctx, after);
@@ -126,7 +130,9 @@ fn render_wikidot_anchor(
 
     let mut tag = ctx.html().a();
     write_wikidot_anchor_attributes(&mut tag, attributes, target);
-    tag.contents(elements);
+    tag.inner(|ctx| {
+        super::container::render_contents_dropping_final_break_newline(ctx, elements);
+    });
 }
 
 fn write_wikidot_anchor_attributes(

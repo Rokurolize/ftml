@@ -1,0 +1,38 @@
+[
+    {
+        "token": "bold",
+        "rule": "bold",
+        "span": [
+            13,
+            15
+        ],
+        "kind": "rule-failed"
+    },
+    {
+        "token": "bold",
+        "rule": "fallback",
+        "span": [
+            13,
+            15
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "bold",
+        "rule": "bold",
+        "span": [
+            55,
+            57
+        ],
+        "kind": "rule-failed"
+    },
+    {
+        "token": "bold",
+        "rule": "fallback",
+        "span": [
+            55,
+            57
+        ],
+        "kind": "no-rules-match"
+    }
+]

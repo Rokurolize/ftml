@@ -1,0 +1,75 @@
+{
+    "elements": [
+        {
+            "element": "tab-view",
+            "data": [
+                {
+                    "label": "A",
+                    "elements": [
+                        {
+                            "element": "table",
+                            "data": {
+                                "type": "simple",
+                                "attributes": {},
+                                "rows": [
+                                    {
+                                        "attributes": {},
+                                        "cells": [
+                                            {
+                                                "header": false,
+                                                "column-span": 1,
+                                                "align": null,
+                                                "attributes": {},
+                                                "elements": []
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "attributes": {},
+                                        "cells": [
+                                            {
+                                                "header": false,
+                                                "column-span": 1,
+                                                "align": null,
+                                                "attributes": {},
+                                                "elements": []
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "table-of-contents": [
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "link",
+                                "data": {
+                                    "type": "table-of-contents",
+                                    "link": "#toc0",
+                                    "label": {
+                                        "text": "h"
+                                    },
+                                    "target": null
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -21,6 +21,7 @@
 use super::block::blocks::BLOCK_TABLE;
 use super::prelude::*;
 use crate::parsing::collect::{SegmentCtx, TokenWindow, split_delimiter_end};
+use crate::parsing::parser::RowSuffixCut;
 use crate::parsing::parser::block_pairs::WikidotBlockKind;
 use crate::tree::{
     Alignment, AttributeMap, Container, ContainerType, PartialElement, Table, TableCell,
@@ -588,6 +589,49 @@ fn simple_table_row_block_interior<'t>(
         }
         other => Err(other),
     }
+}
+
+fn is_collapsible_row_block(element: &Element<'_>) -> bool {
+    matches!(element, Element::Collapsible { .. })
+}
+
+fn is_note_row_block(element: &Element<'_>) -> bool {
+    matches!(
+        element,
+        Element::Container(container) if container.ctype() == ContainerType::Note
+    )
+}
+
+fn simple_row_block_cut(elements: &Elements<'_>) -> RowSuffixCut {
+    match elements {
+        Elements::Single(element) if is_collapsible_row_block(element) => {
+            RowSuffixCut::Collapsible
+        }
+        Elements::Single(element) if is_note_row_block(element) => RowSuffixCut::Note,
+        Elements::Multiple(items) => {
+            if items.iter().any(is_collapsible_row_block) {
+                RowSuffixCut::Collapsible
+            } else if items.iter().any(is_note_row_block) {
+                RowSuffixCut::Note
+            } else {
+                RowSuffixCut::None
+            }
+        }
+        _ => RowSuffixCut::None,
+    }
+}
+
+pub(crate) fn eject_wikidot_row_cut_marker<'t>(
+    elements: &mut Vec<Element<'t>>,
+) -> Option<Vec<Element<'t>>> {
+    let index = elements.iter().position(|element| {
+        matches!(
+            element,
+            Element::Partial(PartialElement::WikidotFoster(foster)) if foster.is_empty()
+        )
+    })?;
+    elements.remove(index);
+    Some(elements.split_off(index))
 }
 
 fn element_is_row_suffix(element: &Element<'_>) -> bool {
@@ -1993,11 +2037,14 @@ fn try_consume_inner<'r, 't>(
                                 row_block_byte,
                                 end_byte,
                             ) {
+                            let row_cut = simple_row_block_cut(&new_items);
                             match simple_table_row_block_interior(new_items) {
                                 Ok(mut interior) => {
+                                    parser.set_wikidot_render_interior_row_cut(row_cut);
                                     if !parser.in_wikidot_span_body() {
                                         let suffix_at = parser.current().span.start;
                                         let suffix = take_simple_row_line_suffix(parser)?;
+                                        let suffix_empty = suffix.is_empty();
                                         if parser.in_wikidot_advanced_table_cell_body()
                                             && !suffix.is_empty()
                                             && parser.wikidot_flat_ancestor_wraps_table(
@@ -2008,7 +2055,7 @@ fn try_consume_inner<'r, 't>(
                                                 PartialElement::WikidotFoster(suffix),
                                             ));
                                         } else {
-                                            if !suffix.is_empty() {
+                                            if !suffix_empty {
                                                 let mut suffix = suffix;
                                                 let glued = suffix
                                                     .iter()
@@ -2032,6 +2079,13 @@ fn try_consume_inner<'r, 't>(
                                             {
                                                 parser
                                                     .set_wikidot_row_suffix_at(suffix_at);
+                                                parser.set_wikidot_row_suffix_cut(row_cut);
+                                            } else if row_cut == RowSuffixCut::Collapsible
+                                                && suffix_empty
+                                            {
+                                                interior.push(Element::Partial(
+                                                    PartialElement::WikidotFoster(Vec::new()),
+                                                ));
                                             }
                                         }
                                     }

@@ -49,6 +49,7 @@ pub(crate) mod inline_pairs;
 mod wikidot_state;
 use self::closer_scan::CloserScanCache;
 use self::wikidot_state::WikidotState;
+pub(crate) use self::wikidot_state::RowSuffixCut;
 
 pub(crate) const DEFAULT_MAX_RECURSION_DEPTH: usize = 100;
 pub(crate) const DEEP_MAX_RECURSION_DEPTH: usize = 1024;

@@ -1705,6 +1705,43 @@ fn standalone_named_block_marker(line: &str, prefix: &str, name: &str) -> Option
     }
 }
 
+/// Whether the line after a swallowed list closer keeps a crossed flat
+/// frame's post-close break (BRIEF-RM83 shapes 2/3, probes
+/// muse-probe-rm83-u2* / muse-probe-rm83r2-*): EOF, a blank line, a
+/// heading line, `----`, or a block head other than a list head keeps it;
+/// plain text, a block closer, a list head, and table rows continue on the
+/// frame's line and drop it.
+fn crossed_tail_keeps_break(line: &str) -> bool {
+    let (body, _) = split_line(line);
+    let trimmed = body.trim_matches([' ', '\t']);
+    if trimmed.is_empty() {
+        return true;
+    }
+    let plus_run = trimmed
+        .as_bytes()
+        .iter()
+        .take_while(|byte| **byte == b'+')
+        .count();
+    if (1..=6).contains(&plus_run) && trimmed[plus_run..].starts_with([' ', '\t']) {
+        return true;
+    }
+    if trimmed.len() >= 4 && trimmed.bytes().all(|byte| byte == b'-') {
+        return true;
+    }
+    // Block heads (other than a list head) keep the break; joining one onto
+    // the frame's line would literalize it.
+    if let Some(inner) = trimmed.strip_prefix("[[")
+        && !inner.starts_with('/')
+    {
+        let name_end = inner
+            .find(|ch: char| ch.is_whitespace() || ch == ']')
+            .unwrap_or(inner.len());
+        let name = &inner[..name_end];
+        return !(name.eq_ignore_ascii_case("ul") || name.eq_ignore_ascii_case("ol"));
+    }
+    false
+}
+
 fn formed_collapsible_open_before(lines: &[String], literal_lines: &[bool]) -> Vec<bool> {
     let mut open: std::collections::HashMap<String, bool> =
         std::collections::HashMap::new();
@@ -1737,6 +1774,12 @@ fn canonicalize_crossed_outer_owner_closers(
         ("div", "ol", true),
         ("collapsible", "ul", true),
         ("collapsible", "ol", true),
+        // BRIEF-RM83 shape 3 (u2note): a note frame crossed by its closer
+        // with the inner list's closer on the next line canonicalizes the
+        // same way; live swallows that list closer and drops the post-frame
+        // break (probes muse-probe-rm83-u2b / u2h).
+        ("note", "ul", true),
+        ("note", "ol", true),
     ];
 
     for &(outer, inner, retain_outer_break) in PAIRS {
@@ -1800,10 +1843,32 @@ fn canonicalize_crossed_outer_owner_closers(
                             } else {
                                 WIKIDOT_CROSSED_LIST_BREAK_SENTINEL
                             };
-                            lines[cursor] = format!(
-                                "{prefix}[[/{inner}]][[/{outer}]]{sentinel}{inner_ending}"
-                            );
-                            lines[cursor + 1].clear();
+                            // BRIEF-RM83 shapes 2/3 (probes
+                            // muse-probe-rm83-u2* and muse-probe-rm83r2-*):
+                            // live keeps the crossed frame's post-close break
+                            // only when the line after the swallowed list
+                            // closer is EOF, blank, or starts block flow
+                            // (heading, `----`, flat-pair head). A text /
+                            // closer / list-head / table follower continues on
+                            // the frame's own line with no break, so join it.
+                            let keep_break = prefix.is_empty()
+                                && lines
+                                    .get(cursor + 2)
+                                    .is_none_or(|line| crossed_tail_keeps_break(line));
+                            if keep_break {
+                                lines[cursor] = format!(
+                                    "{prefix}[[/{inner}]][[/{outer}]]{sentinel}{inner_ending}"
+                                );
+                                lines[cursor + 1].clear();
+                            } else {
+                                let (follower_body, follower_ending) =
+                                    split_line(&lines[cursor + 2]);
+                                lines[cursor] = format!(
+                                    "{prefix}[[/{inner}]][[/{outer}]]{follower_body}{follower_ending}"
+                                );
+                                lines[cursor + 1].clear();
+                                lines[cursor + 2].clear();
+                            }
                         } else {
                             lines[cursor] = format!("{prefix}[[/{inner}]]{outer_ending}");
                             lines[cursor + 1] =

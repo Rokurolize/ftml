@@ -588,7 +588,8 @@ fn collect_page_references(
                 | PartialElement::InlineColorOpen(..)
                 | PartialElement::InlineColorClose
                 | PartialElement::InlineAnchorOpen(..)
-                | PartialElement::InlineAnchorClose(_) => {}
+                | PartialElement::InlineAnchorClose(_)
+                | PartialElement::WikidotEquationNumber(..) => {}
             },
             _ => {}
         }
@@ -699,7 +700,8 @@ fn collect_user_references(
                 | PartialElement::InlineColorOpen(..)
                 | PartialElement::InlineColorClose
                 | PartialElement::InlineAnchorOpen(..)
-                | PartialElement::InlineAnchorClose(_) => {}
+                | PartialElement::InlineAnchorClose(_)
+                | PartialElement::WikidotEquationNumber(..) => {}
             },
             _ => {}
         }

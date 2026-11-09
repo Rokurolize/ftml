@@ -37,6 +37,7 @@ fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create monospace container");
+    let in_anchor_body = parser.in_wikidot_anchor_body();
     validate_reachable_close(
         parser,
         Token::RightMonospace,
@@ -88,7 +89,19 @@ fn try_consume_fn<'r, 't>(
     } else {
         false
     };
+    // A closer on its own quote row still pairs across an explicit list in
+    // the Wikidot layout (live mirror of the own-line opener rule): let the
+    // body collect cross quote rows exactly like `collect_container` does.
+    // No-op off-quote and off-legacy.
+    let quote_cursor = parser
+        .settings()
+        .layout
+        .legacy()
+        .then(|| QuoteBodyCursorInstallation::install(parser));
     let collected = collect_consume_keep(parser, RULE_MONOSPACE, &close, &invalid, None);
+    if let Some(quote_cursor) = quote_cursor {
+        quote_cursor.uninstall(parser);
+    }
     if preserve_empty_lists {
         parser.set_wikidot_preserve_empty_lists(previous_preserve);
     }
@@ -253,8 +266,11 @@ fn try_consume_fn<'r, 't>(
         output.push(text!("--"));
         output.push(text!("}}"));
     }
-    let elements =
-        super::bold::mark_format_stop_at_list(parser, Elements::Multiple(output));
+    let elements = super::bold::mark_format_stop_at_list(
+        parser,
+        in_anchor_body,
+        Elements::Multiple(output),
+    );
     ok!(paragraph_safe; elements, errors)
 }
 

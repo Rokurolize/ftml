@@ -331,6 +331,7 @@ where
             .rfind('\n')
             .map_or(0, |offset| offset + 1);
         let line_started_after_physical_newline = line_start > 0
+            && !parser.wikidot_format_collection_body()
             && source[line_start..owner_start]
                 .trim_matches([' ', '\t'])
                 .is_empty();
@@ -502,10 +503,10 @@ where
             }
             // L85 scope-5: in item bodies the newline after a literal div
             // is left for the real break token (e25/e18/e32 trail it bare);
-            // elsewhere the old text newline is kept.
             if literal_end > owner_end
                 && parser.current().span.start == owner_end
                 && !parser.wikidot_li_inside_item_body()
+                && !parser.wikidot_format_collection_body()
             {
                 elements.push(text!("\n"));
             }

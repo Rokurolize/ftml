@@ -687,6 +687,17 @@ where
             }
 
             Token::ParagraphBreak => {
+                // g10res: a blank after the vanished list close of a
+                // crossed tail stays in the paragraph as its own break
+                // (t-blank-in-tail probe) instead of splitting it.
+                if parser.settings().layout.legacy()
+                    && parser.wikidot_li_cross_tail_blank_at(parser.current().span.start)
+                {
+                    push_element(&mut stack, Element::LineBreak, true);
+                    parser.step()?;
+                    line_prefix_whitespace_only = true;
+                    continue;
+                }
                 if stack.wikidot_complete_raw_line_occupied() {
                     stack.clear_wikidot_complete_raw_line_occupancy();
                 }

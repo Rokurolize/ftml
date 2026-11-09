@@ -6,10 +6,10 @@ use crate::tree::{
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER,
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, WIKIDOT_HEADING_REOPEN_MARKER,
-    WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER, WIKIDOT_QUOTE_BLANK_ANCHOR_MARKER,
-    WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER,
-    WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
-    WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
+    WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER, WIKIDOT_LIST_POST_BLANK_GAP_MARKER,
+    WIKIDOT_QUOTE_BLANK_ANCHOR_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
+    WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
+    WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BARE_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BLANK_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BREAK_MARKER,
@@ -2147,6 +2147,38 @@ fn clear_format_label_inside_marker(element: &mut Element<'_>) {
 /// next item text reopens it. The paired container is that pre-tidy shape.
 /// Returns the replacement elements when the foster applies (a marked prefix
 /// chunk for the own-line opener, then the fostered list).
+fn crossed_list_is_poisoned(element: &Element<'_>) -> bool {
+    if subtree_contains_native_list(element) {
+        return true;
+    }
+    let Element::Container(container) = element else {
+        return false;
+    };
+    container.elements().iter().any(|child| {
+        matches!(
+            child,
+            Element::List {
+                wikidot_explicit_block: true,
+                ..
+            }
+        ) && (subtree_contains_flow_block(child)
+            || subtree_contains_blank_line_item(child)
+            || subtree_contains_early_pairing_block(child))
+    })
+}
+
+fn take_post_blank_gap_mark(list: &mut Element<'_>) -> bool {
+    if let Element::List { attributes, .. } = list
+        && attributes
+            .get()
+            .contains_key(WIKIDOT_LIST_POST_BLANK_GAP_MARKER)
+    {
+        attributes.remove(WIKIDOT_LIST_POST_BLANK_GAP_MARKER);
+        return true;
+    }
+    false
+}
+
 fn foster_sole_explicit_list<'t>(element: &mut Element<'t>) -> Option<Vec<Element<'t>>> {
     let Element::Container(container) = &element else {
         return None;
@@ -2169,6 +2201,57 @@ fn foster_sole_explicit_list<'t>(element: &mut Element<'t>) -> Option<Vec<Elemen
     }
     if !saw_list {
         return None;
+    }
+    if crossed_list_is_poisoned(element) {
+        let kind = format_kind_of(ctype)?;
+        let Element::Container(container) = element else {
+            unreachable!("foster candidate checked above");
+        };
+        let tail_mark = span_list_close_tail_of(container.attributes());
+        let children = mem::take(container.elements_mut());
+        let mut orphaned = Vec::with_capacity(children.len());
+        let mut rest = children.into_iter().peekable();
+        while let Some(element) = rest.next() {
+            let is_list = matches!(
+                &element,
+                Element::List {
+                    wikidot_explicit_block: true,
+                    ..
+                }
+            );
+            orphaned.push(element);
+            if is_list {
+                while matches!(
+                    rest.peek(),
+                    Some(Element::LineBreak | Element::LineBreaks(_))
+                ) {
+                    rest.next();
+                }
+            }
+        }
+        if let Some(tail_mark) = tail_mark {
+            let marker = match tail_mark {
+                SpanListCloseTail::Break => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
+                SpanListCloseTail::Bare => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
+                SpanListCloseTail::Lead => WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
+                SpanListCloseTail::Blank => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER,
+                SpanListCloseTail::Fold => WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
+            };
+            for element in orphaned.iter_mut() {
+                if let Element::List { attributes, .. } = element {
+                    attributes.insert(marker, Cow::Borrowed(""));
+                }
+            }
+        }
+        let (open_marker, close_marker) = match kind {
+            InlineFormatKind::Strikethrough => ("—", "—"),
+            _ => (kind.open_marker(), kind.close_marker()),
+        };
+        let mut output = Vec::with_capacity(orphaned.len() + 2);
+        output.push(Element::Text(Cow::Borrowed(open_marker)));
+        output.extend(orphaned);
+        output.push(Element::Text(Cow::Borrowed(close_marker)));
+        return Some(output);
     }
     let Element::Container(container) = element else {
         unreachable!("foster candidate checked above");
@@ -2263,7 +2346,15 @@ fn foster_sole_explicit_list<'t>(element: &mut Element<'t>) -> Option<Vec<Elemen
             Cow::Borrowed(""),
         );
     }
+    let post_blank_gap = take_post_blank_gap_mark(&mut list);
     output.push(list);
+    if post_blank_gap {
+        output.push(Element::Container(Container::new(
+            ctype,
+            vec![Element::LineBreak],
+            AttributeMap::new(),
+        )));
+    }
     Some(output)
 }
 
@@ -3087,6 +3178,7 @@ fn segment_format_run<'t>(
     // A run seeded by a code block keeps its leading break(s); live keeps
     // the break between the code div and the following content.
     let mut run_starts_after_code = false;
+    let mut prev_list_post_blank = false;
     for element in elements {
         if matches!(
             element,
@@ -3095,6 +3187,18 @@ fn segment_format_run<'t>(
                 ..
             }
         ) {
+            let keep_all = mem::replace(&mut run_starts_after_code, false);
+            if prev_list_post_blank && !keep_all {
+                let leading = run
+                    .iter()
+                    .take_while(|element| {
+                        matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                    })
+                    .count();
+                if leading > 1 {
+                    run.drain(..leading - 1);
+                }
+            }
             seal_format_segment(
                 &mut output,
                 &mut run,
@@ -3102,13 +3206,14 @@ fn segment_format_run<'t>(
                 formed,
                 stop_at_list,
                 seen_list,
-                mem::replace(&mut run_starts_after_code, false),
+                keep_all || prev_list_post_blank,
                 !seen_list
                     && !stop_at_list
                     && formed_chunk_wraps(&element)
                     && !format_close_inside_list(&element, ctype),
             );
             let mut list = element;
+            prev_list_post_blank = take_post_blank_gap_mark(&mut list);
             segment_format_list_items(
                 &mut list,
                 ctype,
@@ -3143,7 +3248,18 @@ fn segment_format_run<'t>(
             run.push(element);
         }
     }
-    if !run_starts_after_code {
+    let post_blank_gap = prev_list_post_blank && !run_starts_after_code;
+    if post_blank_gap {
+        let leading = run
+            .iter()
+            .take_while(|element| {
+                matches!(element, Element::LineBreak | Element::LineBreaks(_))
+            })
+            .count();
+        if leading > 1 {
+            run.drain(..leading - 1);
+        }
+    } else if !run_starts_after_code {
         while matches!(
             run.first(),
             Some(Element::LineBreak | Element::LineBreaks(_))
@@ -3157,6 +3273,7 @@ fn segment_format_run<'t>(
         output.extend(run);
     } else if format_segment_has_content(&run)
         || (run_starts_after_code && !run.is_empty())
+        || (post_blank_gap && !run.is_empty())
     {
         *formed = true;
         output.push(Element::Container(Container::new(

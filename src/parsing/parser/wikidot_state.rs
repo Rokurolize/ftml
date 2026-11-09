@@ -346,6 +346,11 @@ impl Parser<'_, '_> {
     }
 
     #[inline]
+    pub(crate) fn wikidot_size_body_depth(&self) -> u8 {
+        self.wikidot.size_body_depth
+    }
+
+    #[inline]
     pub(crate) fn enter_wikidot_anchor_body(&mut self) {
         self.wikidot.anchor_body_depth = self.wikidot.anchor_body_depth.saturating_add(1);
     }
@@ -573,8 +578,12 @@ impl Parser<'_, '_> {
             cache
                 .advanced_cell_span_depths
                 .push(self.wikidot_span_body_depth());
+            cache
+                .advanced_cell_size_depths
+                .push(self.wikidot_size_body_depth().into());
         } else {
             cache.advanced_cell_span_depths.pop();
+            cache.advanced_cell_size_depths.pop();
         }
     }
 
@@ -588,6 +597,14 @@ impl Parser<'_, '_> {
             .advanced_cell_span_depths
             .last()
             .is_some_and(|depth| self.wikidot_span_body_depth() > *depth)
+    }
+
+    pub(crate) fn wikidot_size_opened_inside_cell(&self) -> bool {
+        let cache = self.block_end_scan_cache.borrow();
+        cache
+            .advanced_cell_size_depths
+            .last()
+            .is_some_and(|depth| u16::from(self.wikidot_size_body_depth()) > *depth)
     }
 
     pub(crate) fn arm_wikidot_advanced_cell_paragraph(&mut self) {

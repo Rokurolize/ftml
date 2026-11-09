@@ -42,6 +42,7 @@ fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create color container");
+    let in_anchor_body = parser.in_wikidot_anchor_body();
     let starts_line = parser.start_of_line();
     let head_start = parser.current().span.start;
     assert_step(parser, Token::Color)?;
@@ -294,7 +295,11 @@ fn try_consume_fn<'r, 't>(
         output.push(text!("##"));
     }
 
-    let elements = super::bold::mark_format_stop_at_list(parser, Elements::Multiple(output));
+    let elements = super::bold::mark_format_stop_at_list(
+        parser,
+        in_anchor_body,
+        Elements::Multiple(output),
+    );
     ok!(paragraph_safe; elements, errors)
 }
 

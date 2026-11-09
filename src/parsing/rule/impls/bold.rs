@@ -149,6 +149,22 @@ fn classify_tail_gap(
                 }
                 break_seen = true;
             }
+            Token::LeftBlockEnd => {
+                let is_close_head = |name: &str| {
+                    if cursor == 1 {
+                        rest.first().is_some_and(|t| {
+                            t.token == Token::Identifier
+                                && t.slice.eq_ignore_ascii_case(name)
+                        }) && rest.get(1).is_some_and(|t| t.token == Token::RightBlock)
+                    } else {
+                        block_head_is(rest, cursor - 2, name, true)
+                    }
+                };
+                if close_names.iter().any(|name| is_close_head(name)) {
+                    return Some(SpanListCloseTail::Fold);
+                }
+                return None;
+            }
             Token::RuntimeText | Token::Identifier | Token::Raw
                 if !token.slice.trim().is_empty() =>
             {
@@ -197,7 +213,7 @@ fn understrike_tail_marker(tail: SpanListCloseTail) -> &'static str {
             crate::tree::WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_LEAD_MARKER
         }
         SpanListCloseTail::Fold => {
-            unreachable!("the gap classifier never yields fold")
+            crate::tree::WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_FOLD_MARKER
         }
     }
 }
@@ -514,6 +530,9 @@ pub(super) fn mark_span_list_close_tail<'r, 't>(
         let Some(gap) = classify_tail_gap(current, rest, &["span", "size"]) else {
             return elements;
         };
+        if matches!(gap, SpanListCloseTail::Fold) {
+            return elements;
+        }
         span_tail_marker(gap)
     } else {
         if !crate::parsing::inline_scope::label_scope_straddles_list(container.elements())

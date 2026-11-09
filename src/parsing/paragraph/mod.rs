@@ -183,6 +183,8 @@ where
     }
 
     let mut finished = false;
+    let scored_close_single_step =
+        std::env::var_os("FTML_WIKIDOT_SCORED_CLOSE_STEP").is_some();
     let mut walk_visited: Vec<(usize, BodyWalkKey)> = Vec::new();
     let mut walk_started = false;
     let mut literal_gallery_pending = false;
@@ -515,8 +517,8 @@ where
                 parser.current().token,
                 Token::LineBreak | Token::ParagraphBreak
             )
-            && stack.wikidot_current_ends_with_scored_alias()
-            && let Some(steps) = wikidot_scored_close_joins_late_line(parser)
+            && let Some(steps) =
+                wikidot_scored_close_join_steps(parser, &stack, scored_close_single_step)
         {
             for _ in 0..steps {
                 parser.step()?;
@@ -1380,6 +1382,39 @@ where
 /// line start. Returns the tokens to skip when the next line begins one of
 /// those constructs; earlier line rules (quote, heading, rule lines) and
 /// plain text keep their existing handling.
+fn wikidot_scored_close_join_steps<'r, 't>(
+    parser: &Parser<'r, 't>,
+    stack: &ParagraphStack<'t>,
+    single_step: bool,
+) -> Option<usize>
+where
+    'r: 't,
+{
+    if single_step {
+        return wikidot_scored_close_chain_step(parser, stack);
+    }
+    if !stack.wikidot_current_ends_with_scored_alias() {
+        return None;
+    }
+    wikidot_scored_close_joins_late_line(parser)
+}
+
+fn wikidot_scored_close_chain_step<'r, 't>(
+    parser: &Parser<'r, 't>,
+    stack: &ParagraphStack<'t>,
+) -> Option<usize>
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy() {
+        return None;
+    }
+    if !stack.wikidot_current_ends_with_scored_alias() {
+        return None;
+    }
+    wikidot_scored_close_joins_late_line(parser)
+}
+
 fn wikidot_scored_close_joins_late_line(parser: &Parser<'_, '_>) -> Option<usize> {
     let source = parser.full_text().inner();
     let start = parser.current().span.start;

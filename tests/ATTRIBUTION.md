@@ -1,0 +1,7 @@
+# Attribution: wiki content in `tests/`
+
+The test code in this directory is project code, covered by the project license (the GNU Affero General Public License, see `LICENSE.md` in the repository root). Some of the data the tests run on is not project material. Fixtures under `tests/fixtures/` include material taken from pages on the SCP Foundation wiki (scp-wiki, https://scp-wiki.wikidot.com/) and the SCP-JP wiki (https://scp-jp.wikidot.com/): the `tests/fixtures/scp8980/` inputs reduced from the SCP-8980 page, cases under `tests/fixtures/parity-gaps/` reduced from real pages, and the `*-live-*.json` / `*-live-*.jsonl` evidence files, which record wikitext and rendered output captured from the live wikis. Page-shaped inputs embedded directly in some integration tests (for example `tests/scp8980_wikidot_syntax.rs` and `tests/scp9506_wikidot_syntax.rs`) come from the same sources.
+
+Content on those wikis is published by their contributor communities under the Creative Commons Attribution-ShareAlike 3.0 Unported license (CC BY-SA 3.0, https://creativecommons.org/licenses/by-sa/3.0/), and the material derived from wiki pages is licensed under CC BY-SA 3.0 rather than the project license. The full license text is in [`LICENSES/CC-BY-SA-3.0.txt`](../LICENSES/CC-BY-SA-3.0.txt).
+
+Fixtures derived from wiki pages were adapted for testing: page sources were cut down to the fragments that exercise the behaviour under test, and the recorded outputs capture how the live Wikidot renderer renders those fragments.

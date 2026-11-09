@@ -1785,6 +1785,15 @@ fn foster_sole_explicit_list<'t>(element: &mut Element<'t>) -> Option<Vec<Elemen
     if !prefix.is_empty() {
         let mut attributes = AttributeMap::new();
         attributes.insert(WIKIDOT_BLOCK_CHUNK_PREFIX_MARKER, Cow::Borrowed(""));
+        if stops_at_list {
+            // The fostered prefix is this stopped pair's pre-list segment, so
+            // lowering must leave the enclosing span/size scope's istack entry
+            // in place (see `stopped_pre_segment`): live re-opens that scope
+            // inside the list items. Without the marker the prefix lowering
+            // pops the entry it shares with the enclosing scope and the scope
+            // is dropped at the list.
+            attributes.insert(WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, Cow::Borrowed(""));
+        }
         output.push(Element::Container(Container::new(
             ctype, prefix, attributes,
         )));
@@ -1792,6 +1801,12 @@ fn foster_sole_explicit_list<'t>(element: &mut Element<'t>) -> Option<Vec<Elemen
     let mut list = children.remove(0);
     if !stops_at_list {
         wrap_explicit_list_items(&mut list, ctype);
+    } else if let Element::List { attributes, .. } = &mut list {
+        // The foster applies only when the pair holds nothing but breaks and
+        // the list, so a stopped pair here has no post-list segment: live
+        // retires the enclosing span/size scope right after the item reopen
+        // (the continuation is first-list-only).
+        attributes.insert(WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, Cow::Borrowed(""));
     }
     if let Some(tail_mark) = tail_mark
         && !matches!(tail_mark, SpanListCloseTail::Fold)
@@ -5213,12 +5228,21 @@ fn lower_sequence<'t>(
             }
             saw_block = true;
             let list_legacy = matches!(element, Element::List { .. });
-            if list_legacy {
+            let stopped_pair_ends_at_list = if list_legacy {
                 if let Element::List { attributes, .. } = &mut element {
                     strip_span_list_close_tail_markers(attributes);
                     strip_understrike_list_close_tail_markers(attributes);
                     strip_format_label_list_close_tail_markers(attributes);
+                    attributes
+                        .remove(WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER)
+                        .is_some()
+                } else {
+                    false
                 }
+            } else {
+                false
+            };
+            if list_legacy {
                 flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
                 if matches!(
                     element,
@@ -5243,6 +5267,15 @@ fn lower_sequence<'t>(
                     segment,
                     bib,
                 );
+                if stopped_pair_ends_at_list {
+                    // A stopped pair whose body is only breaks + the list ends
+                    // at the list: live retires the enclosing span/size scopes
+                    // there (and drops any anchor), so only the item reopen
+                    // carries them; later content is unstyled.
+                    active.retire_span_scopes();
+                    active.retire_size_scopes();
+                    active.drop_anchor_scopes();
+                }
             } else {
                 let block_boundary = is_block_boundary(&element);
                 // 62(b) defect 2 (align-div-in-item): a break-only scope segment
@@ -6508,8 +6541,13 @@ fn end_anchor_at_explicit_list<'t>(
     let Some(position) = active.anchor_position() else {
         return;
     };
-    active.kill_from(position);
+    // Retract the anchor stack entries BEFORE the scope kill: `kill_from`
+    // drops the killed anchor own istack entry, so a pop-through-anchor
+    // afterwards finds no Anchor to stop at and drains the entries of every
+    // enclosing scope (span/size) opened outside the anchor - live keeps
+    // those open across the list.
     active.pop_istack_through_anchor();
+    active.kill_from(position);
 }
 
 fn close_live_anchor<'t>(

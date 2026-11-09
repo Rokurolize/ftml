@@ -2953,8 +2953,10 @@ fn trim_post_list_leading_breaks<'t>(
                 ..
             }
         );
-        output.push(element);
-        if is_list {
+        // A list whose item carries an align/div block has its tail break
+        // ownership decided by the rejected-bold attach machinery after
+        // lowering; leave that run untouched.
+        if is_list && !list_tail_attaches(&element) {
             while matches!(
                 iter.peek(),
                 Some(Element::LineBreak | Element::LineBreaks(_))
@@ -2962,6 +2964,7 @@ fn trim_post_list_leading_breaks<'t>(
                 iter.next();
             }
         }
+        output.push(element);
     }
     output
 }

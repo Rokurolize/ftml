@@ -216,7 +216,6 @@ fn is_format_event(element: &Element<'_>) -> bool {
     )
 }
 
-/// The literal text of a paragraph that holds exactly one format marker.
 fn marker_only_paragraph_text<'t>(element: &Element<'t>) -> Option<Cow<'t, str>> {
     let Element::Container(paragraph) = element else {
         return None;
@@ -233,8 +232,6 @@ fn marker_only_paragraph_text<'t>(element: &Element<'t>) -> Option<Cow<'t, str>>
         .then(|| text.clone())
 }
 
-/// A frame block that renders: an attribute-less empty div is dropped, so a
-/// marker in front of one is not on a rendered block head line.
 fn is_rendered_frame_block(element: &Element<'_>) -> bool {
     match element {
         Element::Collapsible { .. } => true,
@@ -250,11 +247,6 @@ fn is_rendered_frame_block(element: &Element<'_>) -> bool {
     }
 }
 
-/// Live keeps a format marker run on a block head line bare, never
-/// paragraph-wrapped. A crossing pair rejected by a div/note/collapsible
-/// frame literalises both markers, but the repair leaves the pre-block
-/// marker in a paragraph; unwrap it when its matching closer follows the
-/// frame (the literalised pair), which is exactly the crossed shape.
 pub(crate) fn unwrap_frame_cut_marker_paragraphs(elements: &mut [Element<'_>]) {
     let mut index = 0;
     while index + 2 < elements.len() {

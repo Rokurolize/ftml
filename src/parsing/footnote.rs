@@ -247,10 +247,6 @@ pub(crate) fn normalize_wikidot_blocks(
             *elements = output;
             break;
         };
-        // Live resolves the footnoteblock away before div assembly, so a div
-        // whose only body is an empty one is source-empty and is not emitted
-        // (saved-page probes muse-probe-pool7071-d1/d4); an empty one inside a
-        // note keeps the note's wrapper.
         if footnotes_empty && parent.ctype() == ContainerType::Div {
             output.retain(|element| !matches!(element, Element::FootnoteBlock { .. }));
         }

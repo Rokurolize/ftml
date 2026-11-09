@@ -6956,7 +6956,8 @@ fn lowered_row_suffix_split(elements: &[Element<'_>]) -> Option<usize> {
     let table_pos = elements
         .iter()
         .rposition(|element| matches!(element, Element::Table(_)))?;
-    (table_pos + 1..elements.len()).find(|&index| subtree_contains_row_suffix(&elements[index]))
+    (table_pos + 1..elements.len())
+        .find(|&index| subtree_contains_row_suffix(&elements[index]))
 }
 
 fn is_scope_wrapper_element(element: &Element<'_>) -> bool {

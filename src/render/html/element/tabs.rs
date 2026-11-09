@@ -844,14 +844,18 @@ fn wikidot_tabview_row_suffix_run(elements: &[Element<'_>]) -> bool {
 /// Whether the tab above position `pos` held a top-level cut table: only
 /// then is the row-suffix tail kept inside `yui-content`.
 fn wikidot_tabview_row_tail_is_direct(items: &[TabViewItem<'_>], pos: usize) -> bool {
-    items[..pos].iter().rev().find_map(|item| match item {
-        TabViewItem::Tab(tab) | TabViewItem::Remote(tab) => Some(
-            tab.elements
-                .iter()
-                .any(|element| matches!(element, Element::Table(_))),
-        ),
-        _ => None,
-    }).unwrap_or(false)
+    items[..pos]
+        .iter()
+        .rev()
+        .find_map(|item| match item {
+            TabViewItem::Tab(tab) | TabViewItem::Remote(tab) => Some(
+                tab.elements
+                    .iter()
+                    .any(|element| matches!(element, Element::Table(_))),
+            ),
+            _ => None,
+        })
+        .unwrap_or(false)
 }
 
 /// Find the row-suffix tail that ends `yui-content`, if any: a raw Content
@@ -993,7 +997,9 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                     }
                     let prefix_end = match (&break_point, &yui_tail) {
                         (Some(point), _) => point.item_index + 1,
-                        (None, Some(ytail)) => ytail.index.saturating_add(1).min(items.len()),
+                        (None, Some(ytail)) => {
+                            ytail.index.saturating_add(1).min(items.len())
+                        }
                         (None, None) => items.len(),
                     };
                     for (position, item) in items[..prefix_end].iter().enumerate() {
@@ -1051,7 +1057,10 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                     if let (None, Some(ytail)) = (&break_point, &yui_tail)
                         && ytail.wrapper
                     {
-                        render_elements(ctx, wikidot_tabview_row_tail_run(ytail.elements));
+                        render_elements(
+                            ctx,
+                            wikidot_tabview_row_tail_run(ytail.elements),
+                        );
                     }
                 });
             if let Some(point) = &break_point {
@@ -1094,8 +1103,8 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                 }
             }
             if let Some(tail) = tail {
-                let rendered_in_yui = break_point.is_none()
-                    && yui_tail.is_some_and(|ytail| ytail.wrapper);
+                let rendered_in_yui =
+                    break_point.is_none() && yui_tail.is_some_and(|ytail| ytail.wrapper);
                 if !rendered_in_yui {
                     let tail = wikidot_tabview_row_tail_run(tail);
                     render_elements(ctx, tail);

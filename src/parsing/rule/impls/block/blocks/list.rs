@@ -1499,10 +1499,12 @@ fn unowned_dissolve_unwrap<'t>(
             .collect();
         return if out.is_empty() { None } else { Some(out) };
     }
-    // Mixed: find a dissolved run list element and split around it.
-    // The dissolve marker was taken for this body range, so a
-    // non-explicit run-formed list here is the dissolution product.
-    let pos = elements.iter().rposition(|e| {
+    // Mixed: find a dissolved run list element and split around it. The
+    // dissolve marker was taken for this body range, so the FIRST
+    // non-explicit run-formed list here is the dissolution product; a
+    // later run list is ordinary body content that must not be mistaken
+    // for it (muse-probe-x88f-g1-hash-after-item).
+    let pos = elements.iter().position(|e| {
         matches!(
             e,
             Element::List {
@@ -1515,7 +1517,7 @@ fn unowned_dissolve_unwrap<'t>(
     let Element::List { items, .. } = elements.remove(pos) else {
         return None;
     };
-    let dissolved: Vec<Vec<Element<'t>>> = items
+    let mut dissolved: Vec<Vec<Element<'t>>> = items
         .into_iter()
         .map(|item| match item {
             ListItem::Elements { elements, .. } => elements,
@@ -1525,16 +1527,44 @@ fn unowned_dissolve_unwrap<'t>(
     if dissolved.is_empty() {
         return None;
     }
-    // Everything before the dissolved list stays in this li (possibly
-    // mixed with trailing content after `pos` which is rare; keep it).
-    // For the after-text shape, preceding bare text in the li body
-    // becomes this li's content, and dissolved items follow as siblings.
+    // Content BEFORE the dissolved formation stays in this li: live keeps
+    // it as the leading item and the dissolved items follow as siblings
+    // (harvest-c1live probes after-text/after-item).
+    // Content AFTER the dissolved formation continues the LAST dissolved
+    // item in place instead of opening a new sibling (item 88 follow-up,
+    // saved-page probes muse-probe-x88f-g1-*): uafter<br> for plain text,
+    // u<ul>...</ul> for a following run, etc.
+    let trailing: Vec<Element<'t>> = elements.split_off(pos);
+    let before = std::mem::take(elements);
+    if !trailing.is_empty()
+        && let Some(last) = dissolved.last_mut()
+    {
+        // Live separates a following formed block from the dissolved
+        // item's text with one break (probes muse-probe-x88f-g1-hash-
+        // after-heading/-div/-quote); a following run, code block, or
+        // inline content joins with no break (after-item/-itemtext/
+        // -after-code/-after-inline).
+        let block_follower = matches!(
+            trailing.first(),
+            Some(Element::Container(container))
+                if matches!(
+                    container.ctype(),
+                    ContainerType::Div
+                        | ContainerType::Header(_)
+                        | ContainerType::Blockquote
+                        | ContainerType::Note
+                        | ContainerType::Align(_)
+                )
+        );
+        if block_follower && !matches!(last.last(), Some(Element::LineBreak)) {
+            last.push(Element::LineBreak);
+        }
+        last.extend(trailing);
+    }
     let mut result = Vec::with_capacity(1 + dissolved.len());
-    let mut first = std::mem::take(elements);
-    // If `before` content is just bare text/inline that should form its
-    // own li, keep it as-is (the li's attributes apply). The dissolved
-    // items become sibling lis.
-    result.push(first);
+    if !before.is_empty() {
+        result.push(before);
+    }
     result.extend(dissolved);
     Some(result)
 }

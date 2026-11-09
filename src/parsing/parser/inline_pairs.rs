@@ -309,6 +309,10 @@ pub(crate) fn compute_wikidot_inline_markers(
     let mut after_image = false;
     let mut prev_list_clean = false;
     let mut index = 0;
+    // (chunk start token, clean explicit-list barrier head token) pairs; the
+    // cross-list padded-opener rescue runs over them after the chunk scans so
+    // it cannot be overwritten by a later chunk's role assignments.
+    let mut list_barriers: Vec<(usize, usize)> = Vec::new();
     while index < tokens.len() {
         let line_start = index == start || tokens[index - 1].token == Token::LineBreak;
         match classify(tokens, index, line_start, pairs) {
@@ -329,6 +333,15 @@ pub(crate) fn compute_wikidot_inline_markers(
                         Token::LeftBlock | Token::LeftBlockEnd | Token::InputEnd
                     );
                 let list_clean = clean_list_barrier(tokens, index);
+                if !opaque
+                    && list_clean
+                    && matches!(
+                        tokens[index].token,
+                        Token::LeftBlock | Token::LeftBlockStar
+                    )
+                {
+                    list_barriers.push((start, index));
+                }
                 if !opaque {
                     scan_chunk(
                         tokens,
@@ -363,7 +376,181 @@ pub(crate) fn compute_wikidot_inline_markers(
             );
         }
     }
+    for (chunk_start, barrier) in list_barriers {
+        rescue_padded_opener_across_list(tokens, &mut markers, chunk_start, barrier);
+    }
     markers
+}
+
+/// A same-kind format pair whose only in-chunk close candidates are padded (a
+/// space before the marker, so live's first-fit skips them as closers) pairs
+/// across a following clean explicit list on live: Text_Wiki substitutes the
+/// list block with a token before the inline rules run, so the padded closer is
+/// not fatal and the opener takes the first valid marker after the list.
+///
+/// The recursive rules cannot express that: the pre-list opener fails at the
+/// padded candidate and the padded marker opens a pair of its own that closes
+/// after the list, so the literal placement (which marker is literal, where the
+/// pre-list break falls) is wrong. Here the pre-list opener is given its live
+/// role assignment directly: an open role on the opener, literal roles on every
+/// same-kind marker the fit skips (the padded ones), and a close role on the
+/// first valid later marker, which may sit in a list item's body (live pairs
+/// the opener with the first valid same-kind marker there). Consume emits these
+/// as flat events and ActiveScopes nests and reopens them per list chunk,
+/// exactly like the libtidy inline stack.
+///
+/// The rescue is deliberately narrow: it needs at least two same-kind markers
+/// in the chunk, at least one of them padded, a first marker that can open
+/// (not preceded by whitespace), no pair from the normal in-chunk first-fit,
+/// and a closer before the next hard barrier (paragraph break, input end, or a
+/// block outside the list's own nesting).
+fn rescue_padded_opener_across_list(
+    tokens: &[ExtractedToken<'_>],
+    markers: &mut WikidotInlineMarkers,
+    chunk_start: usize,
+    barrier: usize,
+) {
+    let Some(name) = block_name(tokens, barrier) else {
+        return;
+    };
+    if !(name.eq_ignore_ascii_case("ul") || name.eq_ignore_ascii_case("ol")) {
+        return;
+    }
+    const KINDS: [(Token, InlineFormatKind); 6] = [
+        (Token::Bold, InlineFormatKind::Bold),
+        (Token::Italics, InlineFormatKind::Italics),
+        (Token::Underline, InlineFormatKind::Underline),
+        (Token::DoubleDash, InlineFormatKind::Strikethrough),
+        (Token::Superscript, InlineFormatKind::Superscript),
+        (Token::Subscript, InlineFormatKind::Subscript),
+    ];
+    // Live pairs one construct at a time in this order; the rescue only needs
+    // the kinds that leave the chunk unpaired with padded candidates.
+    for (token, kind) in KINDS {
+        let positions: Vec<usize> = (chunk_start..barrier)
+            .filter(|&index| tokens[index].token == token)
+            .collect();
+        if positions.len() < 2 {
+            continue;
+        }
+        // A role already assigned by the chunk scan (an interleaved or
+        // unpaired-marker emission) means the normal path owns this kind.
+        if positions
+            .iter()
+            .any(|&index| markers.roles.contains_key(&tokens[index].span.start))
+        {
+            continue;
+        }
+        let first = positions[0];
+        if first > 0 && tokens[first - 1].token == Token::Whitespace {
+            continue;
+        }
+        // Live's opener needs content after it; a marker followed by a space
+        // cannot open, so the padded marker after it is the real opener
+        // (opener-padded family) and this rescue must not claim the pair.
+        if tokens.get(first + 1).is_some_and(|next| {
+            matches!(
+                next.token,
+                Token::Whitespace | Token::LineBreak | Token::ParagraphBreak
+            )
+        }) {
+            continue;
+        }
+        if !positions[1..]
+            .iter()
+            .any(|&index| tokens[index - 1].token == Token::Whitespace)
+        {
+            continue;
+        }
+        if chunk_scan_pairs(tokens, chunk_start, barrier, token, kind) {
+            continue;
+        }
+        // Walk the list structure and the run after it with the list's own
+        // block markers transparent: live substitutes them before the inline
+        // rules run, so a marker inside an item is a valid closer too (live
+        // pairs the pre-list opener with the first valid same-kind marker in
+        // the item body). Padded markers are skipped as literals. A hard
+        // barrier ends the walk: paragraph break, input end, comment, or a
+        // block head/close that is not part of this list's nesting.
+        let mut list_depth = 0usize;
+        let mut skipped: Vec<usize> = Vec::new();
+        let mut close = None;
+        let mut index = barrier;
+        while index < tokens.len() {
+            match tokens[index].token {
+                Token::ParagraphBreak | Token::InputEnd | Token::LeftComment => break,
+                Token::LeftBlock | Token::LeftBlockStar => {
+                    if list_name_at(tokens, index) {
+                        list_depth += 1;
+                    } else if list_depth == 0 {
+                        break;
+                    }
+                }
+                Token::LeftBlockEnd => {
+                    if list_name_at(tokens, index) {
+                        list_depth -= 1;
+                    } else if list_depth == 0 {
+                        break;
+                    }
+                }
+                current if current == token => {
+                    if index > 0 && tokens[index - 1].token == Token::Whitespace {
+                        skipped.push(index);
+                    } else {
+                        close = Some(index);
+                        break;
+                    }
+                }
+                _ => {}
+            }
+            index += 1;
+        }
+        let Some(close) = close else {
+            continue;
+        };
+        if markers.roles.contains_key(&tokens[close].span.start)
+            || skipped
+                .iter()
+                .any(|&index| markers.roles.contains_key(&tokens[index].span.start))
+        {
+            continue;
+        }
+        for &index in &positions[1..] {
+            markers
+                .roles
+                .insert(tokens[index].span.start, InlineMarkerRole::Literal);
+        }
+        for &index in &skipped {
+            markers
+                .roles
+                .insert(tokens[index].span.start, InlineMarkerRole::Literal);
+        }
+        markers
+            .roles
+            .insert(tokens[first].span.start, InlineMarkerRole::Open(kind));
+        markers
+            .roles
+            .insert(tokens[close].span.start, InlineMarkerRole::Close(kind));
+    }
+}
+
+/// Whether the normal in-chunk first-fit would pair (or consume an empty pair
+/// of) this kind, in which case the rescue must not touch the chunk.
+fn chunk_scan_pairs(
+    tokens: &[ExtractedToken<'_>],
+    chunk_start: usize,
+    barrier: usize,
+    token: Token,
+    kind: InlineFormatKind,
+) -> bool {
+    let mut scan = ChunkScan {
+        tokens,
+        removed: vec![false; barrier - chunk_start],
+        range: chunk_start..barrier,
+        pairs: Vec::new(),
+    };
+    pair_symmetric(&mut scan, token, kind);
+    !scan.pairs.is_empty() || scan.removed.iter().any(|removed| *removed)
 }
 
 struct Pair {

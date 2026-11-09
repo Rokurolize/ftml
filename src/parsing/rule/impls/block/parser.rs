@@ -8073,6 +8073,110 @@ where
         }
     }
 
+    /// Whether a quote row deeper than the list's own level that carries no
+    /// content precedes the degraded head (BRIEF-CB91, item 91(c) residual):
+    /// a blank deeper row (`>>> ` with trailing whitespace) leaves no element
+    /// in the tree, so the first-element predicate cannot see it, but live
+    /// still renders the degraded none-item with `display: inline`.
+    ///
+    /// First-event-wins over the rows strictly between the list-head row and
+    /// the degraded head (saved-page probes `muse-probe-cb91-*`): TRUE iff a
+    /// deeper blank-spaced row precedes the first content row. A same-depth
+    /// content row (text, `[[li]]` head, list close) terminates with the
+    /// sighted value; a deeper content or close row (the element predicate or
+    /// the surplus-close family owns those), a shallower row, a blank
+    /// physical line, or input end terminate FALSE. Same-depth blank rows and
+    /// nospace deeper rows are invisible and skipped, as on live. Only a
+    /// `LineBreak`-terminated blank counts (every probed trigger shape uses
+    /// one); `ParagraphBreak` after the space, comments, and other odd
+    /// content are conservative FALSE.
+    /// Peeks only; call with the parser sitting past the list head (the same
+    /// position the shallower-text gate scans from).
+    pub(crate) fn has_deeper_blank_row_before_content(
+        &self,
+        block_rule: &BlockRule,
+        required_depth: usize,
+    ) -> bool {
+        if !self.settings().layout.legacy()
+            || !matches!(
+                block_rule.name,
+                "block-list-unordered" | "block-list-ordered"
+            )
+        {
+            return false;
+        }
+        let mut parser = self.clone();
+        // The head line's own break still separates us from the first body
+        // line (same position the shallower-text gate scans from).
+        if matches!(
+            parser.current().token,
+            Token::LineBreak | Token::ParagraphBreak
+        ) && parser.step().is_err()
+        {
+            return false;
+        }
+        let mut sighted = false;
+        loop {
+            if parser.current().token == Token::InputEnd {
+                return false;
+            }
+            // A blank physical line is shallower than any quoted level and
+            // ends the walk conservatively (unprobed live family).
+            if parser.current().token == Token::ParagraphBreak {
+                return false;
+            }
+            // Depth of this line's quote-marker run (first Quote token, like
+            // the row scan's physical depth).
+            let mut depth = 0usize;
+            let mut probe = parser.clone();
+            if probe.current().token == Token::Quote {
+                depth = probe.current().slice.len();
+                if probe.step().is_err() {
+                    return false;
+                }
+            }
+            let spaced_after_marker =
+                probe.current().token == Token::Whitespace;
+            if spaced_after_marker && probe.get_optional_space().is_err() {
+                return false;
+            }
+            if probe.current().token == Token::LineBreak {
+                if depth < required_depth {
+                    // A shallower blank row ends the walk conservatively.
+                    return false;
+                }
+                if depth > required_depth && spaced_after_marker {
+                    sighted = true;
+                }
+                // Same-depth blanks and nospace rows of any depth are
+                // invisible on live: skip without deciding.
+            } else if depth != required_depth {
+                // Deeper content/close rows belong to the element predicate
+                // (content) or the surplus-close family (closes); shallower
+                // rows end the run. All conservative FALSE.
+                return false;
+            } else {
+                // Same-depth content (text, `[[li]]` head, list close):
+                // the first event decides.
+                return sighted;
+            }
+            while !token_is_body_boundary(parser.current().token) {
+                if parser.step().is_err() {
+                    return false;
+                }
+            }
+            if parser.current().token == Token::LineBreak {
+                if parser.step().is_err() {
+                    return false;
+                }
+            } else {
+                // ParagraphBreak terminator or input end: the walk ends
+                // here (blank-physical-line and EOF families stay FALSE).
+                return false;
+            }
+        }
+    }
+
     /// Whether a UL/OL body dissolves entirely in live (BRIEF-UE57b):
     /// the body's FIRST line is shallower than the required native
     /// blockquote depth — no `[[li]]` head and no same-depth content was

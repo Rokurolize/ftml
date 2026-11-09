@@ -365,10 +365,15 @@ where
     {
         return None;
     }
+    // g10res: mark the crossed-tail terminator so the frame assembly
+    // keeps the body's trailing break (u-second-frame probe).
+    let keep_trailing_break =
+        parser.wikidot_li_cross_tail_terminator() == Some(closer_byte);
     Some(match pair.kind {
         WikidotBlockKind::Div => WikidotBlockCloseKind::Div {
             head: pair.head_byte,
             scored: pair.scored,
+            keep_trailing_break,
         },
         WikidotBlockKind::Collapsible => WikidotBlockCloseKind::Collapsible {
             head: pair.head_byte,
@@ -1615,8 +1620,12 @@ where
     // g10: the swallowed last tail `[[/ul]]`/`[[/ol]]` eats the break before
     // it when its preceding source line is literal text, so the follower
     // joins that text line (g10b `z[[/div]]`, g10x1 `w[[/div]]`).
+    // g10res: the vanished tail `[[/li]]` ending a 3+ own-line run eats the
+    // break before it too (q-three-li, four-li probes).
     if parser.settings().layout.legacy()
-        && parser.wikidot_li_cross_tail_join_break_at(parser.current().span.end)
+        && (parser.wikidot_li_cross_tail_join_break_at(parser.current().span.end)
+            || parser
+                .wikidot_li_cross_tail_li_pre_join_break_at(parser.current().span.end))
     {
         parser.step()?;
         return Ok(Some(ParseSuccess::new(
@@ -2019,11 +2028,77 @@ fn try_consume_discarded_row_closer<'r, 't>(
     if eats_following_break && parser.current().token == Token::LineBreak {
         parser.step().ok()?;
     }
+    if parser.wikidot_discarded_row_closer(position)
+        && discarded_row_tail_follows_list_item(parser, position)
+    {
+        while parser.current().token == Token::Whitespace {
+            parser.step().ok()?;
+        }
+        let mut tail = Vec::new();
+        while !matches!(
+            parser.current().token,
+            Token::LineBreak
+                | Token::ParagraphBreak
+                | Token::InputEnd
+                | Token::LeftBlock
+                | Token::LeftBlockStar
+                | Token::LeftBlockEnd
+        ) {
+            let slice = parser.current().slice;
+            if !slice.is_empty() {
+                tail.push(text!(slice));
+            }
+            parser.step().ok()?;
+        }
+        if !tail.is_empty() {
+            return Some(Ok(crate::parsing::ParseSuccess::new(
+                Elements::Multiple(tail),
+                Vec::new(),
+                false,
+            )));
+        }
+    }
     Some(Ok(crate::parsing::ParseSuccess::new(
         Elements::None,
         Vec::new(),
         true,
     )))
+}
+
+pub(crate) fn wikidot_discarded_closer_has_same_line_remainder(
+    parser: &Parser<'_, '_>,
+    position: usize,
+) -> bool {
+    let source = parser.full_text().inner();
+    let start = position.min(source.len());
+    let Some(line_end) = source[start..].find('\n').map(|offset| start + offset) else {
+        return !source[start..].trim_matches([' ', '\t', '\r']).is_empty();
+    };
+    let Some(close_end) = source[start..line_end].find("]]") else {
+        return false;
+    };
+    !source[start + close_end + 2..line_end]
+        .trim_matches([' ', '\t', '\r'])
+        .is_empty()
+}
+
+fn discarded_row_tail_follows_list_item(
+    parser: &Parser<'_, '_>,
+    position: usize,
+) -> bool {
+    let source = parser.full_text().inner();
+    let line_start = source[..position.min(source.len())]
+        .rfind('\n')
+        .map_or(0, |offset| offset + 1);
+    if line_start == 0 {
+        return false;
+    }
+    let previous = source[..line_start - 1]
+        .rfind('\n')
+        .map_or(0, |offset| offset + 1);
+    let line = source[previous..line_start - 1].trim_end_matches('\r');
+    let trimmed = line.trim_start_matches([' ', '\t']);
+    trimmed.starts_with("* ") || trimmed.starts_with("# ")
 }
 
 fn try_consume_wikidot_row_absorb_div_close<'r, 't>(
@@ -2089,7 +2164,17 @@ fn try_consume_wikidot_li_listbody_silent_close<'r, 't>(
     if !parser.wikidot_li_listbody_close_silent(position) {
         return None;
     }
+    // g10res: a vanished tail `[[/li]]` also swallows its following line
+    // break and one following blank line (blank-before-ul probe). Other
+    // silent closes keep the old behavior.
+    let is_tail_li = parser.wikidot_li_cross_tail_li_at(position);
     step_over_wikidot_designated_end(parser)?;
+    if is_tail_li && parser.current().token == Token::LineBreak {
+        let _ = parser.step();
+        if parser.current().token == Token::ParagraphBreak {
+            let _ = parser.step();
+        }
+    }
     Some(Ok(crate::parsing::ParseSuccess::new(
         Elements::None,
         Vec::new(),
@@ -2127,6 +2212,158 @@ fn try_consume_wikidot_li_cross_implicit_list<'r, 't>(
 /// L85: silently drop a scan-redundant list closer (`l-ul-li-closein` keeps
 /// `EG` joined: the redundant `[[/li]]`/`[[/ul]]` vanish with one following
 /// line break each).
+/// g10res: the degraded trailing shell an ordered crossed tail leaves live
+/// (gtr3-ol family probes): after the vanished `[[/ol]]`, the whole
+/// remainder parses into a fresh bullet list holding one
+/// `list-style: none` item. An empty remainder still shells with a single
+/// break (ol-eof, ol-then-block probes).
+fn wikidot_crossed_ol_tail_shell<'t>(
+    item_elements: Vec<Element<'t>>,
+    unclosed: bool,
+) -> Element<'t> {
+    let mut item_attributes = crate::tree::AttributeMap::new();
+    item_attributes.insert("style", cow!("list-style: none"));
+    let item_elements = if item_elements.is_empty() {
+        vec![Element::LineBreak]
+    } else {
+        item_elements
+    };
+    Element::List {
+        ltype: crate::tree::ListType::Bullet,
+        items: vec![crate::tree::ListItem::Elements {
+            elements: item_elements,
+            attributes: item_attributes,
+        }],
+        attributes: crate::tree::AttributeMap::new(),
+        wikidot_explicit_block: false,
+        wikidot_unclosed: unclosed,
+    }
+}
+
+/// g10res: collect the remainder of a crossed `ol` tail after its vanished
+/// `[[/ol]]` (the caller consumed the closer and its following break).
+/// Mirrors the scan's tail-branch termination: `[[li]]` heads and
+/// `[[/li]]`/`[[/ul]]`/`[[/ol]]` closers consume normally (redundant ones
+/// still vanish), blanks become breaks, block heads and headings/tables/
+/// quotes/bullets end the remainder unconsumed, a paired other-closer ends
+/// it unconsumed (a real frame close, u shape), and an orphan other-closer
+/// is consumed once as literal text (the gtr3-ol `[[/div]]`).
+fn wikidot_crossed_ol_tail_remainder<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<(Vec<Element<'t>>, Vec<ParseError>), ParseError>
+where
+    'r: 't,
+{
+    let mut item: Vec<Element<'t>> = Vec::new();
+    let mut errors: Vec<ParseError> = Vec::new();
+    loop {
+        match parser.current().token {
+            Token::InputEnd => break,
+            Token::ParagraphBreak => {
+                item.push(Element::LineBreak);
+                parser.step()?;
+            }
+            Token::LeftBlock => {
+                let mut probe = parser.clone();
+                let is_li = matches!(
+                    probe.get_block_name(false),
+                    Ok((name, _, _))
+                        if name
+                            .strip_suffix('_')
+                            .unwrap_or(&name)
+                            .eq_ignore_ascii_case("li")
+                );
+                if !is_li {
+                    break;
+                }
+                let before = parser.current().span.start;
+                let consumed = consume(parser)?;
+                errors.extend(consumed.errors);
+                extend_consumed(&mut item, consumed.item);
+                if parser.current().span.start == before {
+                    break;
+                }
+            }
+            Token::LeftBlockEnd => {
+                let byte = parser.current().span.start;
+                let mut probe = parser.clone();
+                let is_list_close = matches!(
+                    probe.get_end_block(),
+                    Ok(raw_name)
+                        if {
+                            let name = raw_name.strip_suffix('_').unwrap_or(&raw_name);
+                            name.eq_ignore_ascii_case("li")
+                                || name.eq_ignore_ascii_case("ul")
+                                || name.eq_ignore_ascii_case("ol")
+                        }
+                );
+                if !is_list_close {
+                    if parser.wikidot_block_pair_at_closer_byte(byte).is_some() {
+                        break;
+                    }
+                    // An orphan closer arrives split across tokens (`[[/`,
+                    // `div`, `]]`); consume it plus the rest of its own
+                    // line into the item, then end the remainder there
+                    // (the scan ends the tail at this closer).
+                    let before = parser.current().span.start;
+                    let consumed = consume(parser)?;
+                    errors.extend(consumed.errors);
+                    extend_consumed(&mut item, consumed.item);
+                    if parser.current().span.start == before {
+                        break;
+                    }
+                    let source = parser.full_text().inner();
+                    let line_end = source[byte..]
+                        .find('\n')
+                        .map_or(source.len(), |offset| byte + offset);
+                    while parser.current().span.start < line_end {
+                        let line_before = parser.current().span.start;
+                        let consumed = consume(parser)?;
+                        errors.extend(consumed.errors);
+                        extend_consumed(&mut item, consumed.item);
+                        if parser.current().span.start == line_before {
+                            break;
+                        }
+                    }
+                    if parser.current().token == Token::LineBreak {
+                        let consumed = consume(parser)?;
+                        errors.extend(consumed.errors);
+                        extend_consumed(&mut item, consumed.item);
+                    }
+                    break;
+                }
+                let before = parser.current().span.start;
+                let consumed = consume(parser)?;
+                errors.extend(consumed.errors);
+                extend_consumed(&mut item, consumed.item);
+                if parser.current().span.start == before {
+                    break;
+                }
+            }
+            Token::Heading
+            | Token::TripleDash
+            | Token::TableColumn
+            | Token::TableColumnRight
+            | Token::TableColumnCenter
+            | Token::TableColumnTitle
+            | Token::BulletItem
+            | Token::NumberedItem
+            | Token::Quote
+            | Token::Equals => break,
+            _ => {
+                let before = parser.current().span.start;
+                let consumed = consume(parser)?;
+                errors.extend(consumed.errors);
+                extend_consumed(&mut item, consumed.item);
+                if parser.current().span.start == before {
+                    break;
+                }
+            }
+        }
+    }
+    Ok((item, errors))
+}
+
 fn try_consume_wikidot_li_cross_redundant_close<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> Option<ParseResult<'r, 't, Elements<'t>>> {
@@ -2143,6 +2380,10 @@ fn try_consume_wikidot_li_cross_redundant_close<'r, 't>(
     if !parser.wikidot_li_cross_redundant_at(position) {
         return None;
     }
+    // g10res: only the ordered tail wraps its remainder; the unordered
+    // tail stays bare (gtr3-ol vs g10a probes).
+    let is_tail_ol = parser.wikidot_li_cross_tail_ol_at(position);
+    let is_tail_li = parser.wikidot_li_cross_tail_li_at(position);
     let mut close = parser.clone();
     if close.get_end_block().is_err() {
         return None;
@@ -2150,16 +2391,50 @@ fn try_consume_wikidot_li_cross_redundant_close<'r, 't>(
     parser.update(&close);
     if parser.current().token == Token::LineBreak {
         let _ = parser.step();
+    }
+    // g10res: a vanished tail `[[/li]]` also swallows one following blank
+    // line (blank-before-ul probe), whether or not its own following
+    // break took the branch above (the closer parse may eat it first).
+    // A vanished `[[/ul]]`/`[[/ol]]` never takes this (t-blank-in-tail
+    // keeps its blank as a break via the paragraph hook instead).
+    if is_tail_li && parser.current().token == Token::ParagraphBreak {
+        let _ = parser.step();
     } else if parser.wikidot_li_cross_tail_list_at(position)
+        && parser.current().token == Token::InputEnd
         && parser.current().token == Token::InputEnd
     {
         // g10: the swallowed tail `[[/ul]]` at EOF leaves one break
         // (g10e: `z<br />\n<br />`).
+        if is_tail_ol {
+            // g10res: the ordered tail shells even at EOF, unclosed
+            // (ol-eof probe: live emits no `</li></ul>` there).
+            return Some(Ok(crate::parsing::ParseSuccess::new(
+                wikidot_crossed_ol_tail_shell(Vec::new(), true).into(),
+                Vec::new(),
+                false,
+            )));
+        }
         return Some(Ok(crate::parsing::ParseSuccess::new(
             Element::LineBreak.into(),
             Vec::new(),
             true,
         )));
+    }
+    if is_tail_ol {
+        match wikidot_crossed_ol_tail_remainder(parser) {
+            Ok((item, errors)) => {
+                // g10res: a remainder running to EOF stays unclosed (live
+                // emits no `</li></ul>`); a block/paired-close-terminated
+                // remainder closes (ol-then-block probe).
+                let unclosed = parser.current().token == Token::InputEnd;
+                return Some(Ok(crate::parsing::ParseSuccess::new(
+                    wikidot_crossed_ol_tail_shell(item, unclosed).into(),
+                    errors,
+                    false,
+                )));
+            }
+            Err(error) => return Some(Err(error)),
+        }
     }
     Some(Ok(crate::parsing::ParseSuccess::new(
         Elements::None,

@@ -314,6 +314,7 @@ pub(super) struct BlockScanCache<'t> {
     consumed_li_close_at: Option<usize>,
     wikidot_explicit_list_ends: std::collections::BTreeSet<usize>,
     wikidot_preserve_empty_lists: Cell<bool>,
+    wikidot_format_collection_body: Cell<bool>,
     gate_items_allowed: Cell<bool>,
     title_footnote_fused_end: Cell<bool>,
     degraded_title_records: Vec<usize>,
@@ -2204,6 +2205,22 @@ impl<'r, 't> Parser<'r, 't> {
         self.block_end_scan_cache
             .borrow()
             .wikidot_preserve_empty_lists
+            .replace(value)
+    }
+
+    #[inline]
+    pub(crate) fn wikidot_format_collection_body(&self) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_format_collection_body
+            .get()
+    }
+
+    #[inline]
+    pub(crate) fn set_wikidot_format_collection_body(&self, value: bool) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_format_collection_body
             .replace(value)
     }
 

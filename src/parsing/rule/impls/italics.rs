@@ -39,6 +39,7 @@ fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create italics (emphasis) container");
+    let in_anchor_body = parser.in_wikidot_anchor_body();
 
     if parser.current().token != Token::Italics {
         return try_consume_split_delimiter(parser);
@@ -68,7 +69,6 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::SplitClose(SplitDelimiter::Italics),
     ];
     let invalid = [
-        ParseCondition::current(Token::ParagraphBreak),
         ParseCondition::token_pair(Token::Italics, Token::Whitespace),
         ParseCondition::token_pair(Token::Whitespace, Token::Italics),
         ParseCondition::PaddedSplitClose(SplitDelimiter::Italics),
@@ -78,7 +78,7 @@ fn try_consume_fn<'r, 't>(
         || parser.wikidot_note_pair_encloses(parser.current().span.start);
     let collected =
         collect_container(parser, RULE_ITALICS, ctype, &close, &invalid, None)?;
-    finish_collected(parser, collected, inside_note)
+    finish_collected(parser, in_anchor_body, collected, inside_note)
 }
 
 /// The two `/`s of an italics opener can be split by elided source
@@ -91,6 +91,7 @@ fn try_consume_fn<'r, 't>(
 fn try_consume_split_delimiter<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    let in_anchor_body = parser.in_wikidot_anchor_body();
     let Some(split_match) = split_delimiter_end(
         TokenWindow::at(parser),
         SegmentCtx::from_parser(parser),
@@ -139,11 +140,12 @@ fn try_consume_split_delimiter<'r, 't>(
         }
         None => collected,
     };
-    finish_collected(parser, collected, inside_note)
+    finish_collected(parser, in_anchor_body, collected, inside_note)
 }
 
 fn finish_collected<'r, 't>(
     parser: &mut Parser<'r, 't>,
+    in_anchor_body: bool,
     collected: ParseSuccess<Elements<'t>>,
     inside_note: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
@@ -197,8 +199,8 @@ fn finish_collected<'r, 't>(
         Some(leftover) => append_split_close_leftover(elements, leftover),
         None => elements,
     };
-    let elements = super::bold::mark_format_stop_at_list(parser, elements);
-    let elements = super::bold::mark_span_list_close_tail(parser, elements);
+    let elements = super::bold::mark_format_stop_at_list(parser, in_anchor_body, elements);
+    let elements = super::bold::mark_span_list_close_tail(parser, in_anchor_body, elements);
     ok!(paragraph_safe; elements, errors)
 }
 

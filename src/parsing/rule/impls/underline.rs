@@ -35,6 +35,7 @@ fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create underline container");
+    let in_anchor_body = parser.in_wikidot_anchor_body();
     validate_reachable_close(
         parser,
         Token::Underline,
@@ -44,7 +45,6 @@ fn try_consume_fn<'r, 't>(
     assert_unpadded_open(parser, Token::Underline)?;
     let close = [ParseCondition::current(Token::Underline)];
     let invalid = [
-        ParseCondition::current(Token::ParagraphBreak),
         ParseCondition::token_pair(Token::Underline, Token::Whitespace),
         ParseCondition::token_pair(Token::Whitespace, Token::Underline),
     ];
@@ -90,7 +90,7 @@ fn try_consume_fn<'r, 't>(
     {
         return ok!(paragraph_safe; Elements::None, errors);
     }
-    let elements = super::bold::mark_format_stop_at_list(parser, elements);
+    let elements = super::bold::mark_format_stop_at_list(parser, in_anchor_body, elements);
     let elements =
         append_wikidot_line_close_space(elements, parser.settings().layout.legacy());
     ok!(paragraph_safe; elements, errors)

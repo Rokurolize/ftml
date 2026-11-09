@@ -43,6 +43,7 @@ fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create bold (strong) container");
+    let in_anchor_body = parser.in_wikidot_anchor_body();
     if parser.current().token == Token::BulletItem {
         return try_consume_split_delimiter(parser);
     }
@@ -62,7 +63,6 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::SplitClose(SplitDelimiter::Bold),
     ];
     let invalid = [
-        ParseCondition::current(Token::ParagraphBreak),
         ParseCondition::token_pair(Token::Bold, Token::Whitespace),
         ParseCondition::token_pair(Token::Whitespace, Token::Bold),
         ParseCondition::PaddedSplitClose(SplitDelimiter::Bold),
@@ -71,7 +71,7 @@ fn try_consume_fn<'r, 't>(
     let inside_note = parser.in_note()
         || parser.wikidot_note_pair_encloses(parser.current().span.start);
     let collected = collect_container(parser, RULE_BOLD, ctype, &close, &invalid, None)?;
-    finish_collected(parser, collected, inside_note)
+    finish_collected(parser, in_anchor_body, collected, inside_note)
 }
 
 fn is_break_token(token: Token) -> bool {
@@ -415,6 +415,7 @@ fn empty_list_bold_after(parser: &Parser<'_, '_>) -> Option<usize> {
 fn try_consume_split_delimiter<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    let in_anchor_body = parser.in_wikidot_anchor_body();
     let inside_note = parser.in_note()
         || parser.wikidot_note_pair_encloses(parser.current().span.start);
     let Some(split_match) = split_delimiter_end(
@@ -463,7 +464,7 @@ fn try_consume_split_delimiter<'r, 't>(
         }
         None => collected,
     };
-    finish_collected(parser, collected, inside_note)
+    finish_collected(parser, in_anchor_body, collected, inside_note)
 }
 
 pub(super) fn bold_body_crosses_flow_block(elements: &Elements<'_>) -> bool {
@@ -497,6 +498,7 @@ pub(super) fn bold_body_crosses_flow_block(elements: &Elements<'_>) -> bool {
 
 fn finish_collected<'r, 't>(
     parser: &mut Parser<'r, 't>,
+    in_anchor_body: bool,
     collected: ParseSuccess<Elements<'t>>,
     inside_note: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
@@ -548,8 +550,8 @@ fn finish_collected<'r, 't>(
         Some(leftover) => append_split_close_leftover(elements, leftover),
         None => elements,
     };
-    let elements = super::bold::mark_format_stop_at_list(parser, elements);
-    let elements = mark_span_list_close_tail(parser, elements);
+    let elements = super::bold::mark_format_stop_at_list(parser, in_anchor_body, elements);
+    let elements = mark_span_list_close_tail(parser, in_anchor_body, elements);
     ok!(paragraph_safe; elements, errors)
 }
 
@@ -699,6 +701,7 @@ fn stampable_container_mut<'e, 't>(
 /// Scopeless crossings are handled by `mark_scopeless_span_list_close_tail`.
 pub(super) fn mark_span_list_close_tail<'r, 't>(
     parser: &Parser<'r, 't>,
+    in_anchor_body: bool,
     mut elements: Elements<'t>,
 ) -> Elements<'t> {
     if !parser.settings().layout.legacy() {
@@ -707,7 +710,7 @@ pub(super) fn mark_span_list_close_tail<'r, 't>(
     let in_span_body = parser.in_wikidot_span_body();
     let in_size_body = parser.in_wikidot_size_body();
     if !(in_span_body || in_size_body) {
-        return mark_scopeless_span_list_close_tail(parser, elements);
+        return mark_scopeless_span_list_close_tail(parser, in_anchor_body, elements);
     }
     let Some(index) = stampable_container_index(&elements) else {
         return elements;
@@ -785,6 +788,7 @@ pub(super) fn mark_span_list_close_tail<'r, 't>(
 /// to the post-list run.
 fn mark_scopeless_span_list_close_tail<'r, 't>(
     parser: &Parser<'r, 't>,
+    in_anchor_body: bool,
     mut elements: Elements<'t>,
 ) -> Elements<'t> {
     let Some(index) = stampable_container_index(&elements) else {
@@ -806,7 +810,7 @@ fn mark_scopeless_span_list_close_tail<'r, 't>(
         crate::parsing::inline_scope::label_scope_straddles_list(container.elements());
     let current = parser.current();
     let rest = parser.remaining();
-    if !parser.in_wikidot_anchor_body() && !label_straddles {
+    if !in_anchor_body && !label_straddles {
         if let Some(gap) = classify_tail_gap(current, rest, &[])
             && matches!(
                 gap,
@@ -868,16 +872,15 @@ fn mark_scopeless_span_list_close_tail<'r, 't>(
 /// the first token after the close.
 pub(super) fn mark_format_stop_at_list<'r, 't>(
     parser: &Parser<'r, 't>,
+    in_anchor_body: bool,
     mut elements: Elements<'t>,
 ) -> Elements<'t> {
     if !parser.settings().layout.legacy()
         || !(parser.in_wikidot_span_body()
             || parser.in_wikidot_size_body()
-            || parser.in_wikidot_anchor_body())
+            || in_anchor_body)
     {
         // Scopeless underline/strikethrough crossing (page root or a block
-        // envelope): the pair crosses like bold on live (the item keeps its
-        // styling), and the after-list tail follows the same bare/lead rule.
         // Only the tail marker is stamped — no stop marker — so lowering
         // keeps the styling across the list and only unwraps the tail.
         if parser.settings().layout.legacy()
@@ -891,10 +894,7 @@ pub(super) fn mark_format_stop_at_list<'r, 't>(
                 .iter()
                 .any(crate::parsing::inline_scope::subtree_contains_explicit_list)
                 && !container.elements().iter().any(|child| {
-                    crate::parsing::inline_scope::subtree_contains_flow_block(child)
-                        || crate::parsing::inline_scope::subtree_contains_native_list(
-                            child,
-                        )
+                    crate::parsing::inline_scope::subtree_contains_native_list(child)
                 });
             if crossing {
                 let current = parser.current();
@@ -914,7 +914,7 @@ pub(super) fn mark_format_stop_at_list<'r, 't>(
         }
         return elements;
     }
-    let in_anchor = parser.in_wikidot_anchor_body();
+    let in_anchor = in_anchor_body;
 
     // Check for Element::Color
     if let Some(color_info) = find_color_stop_at_list_info(&elements, in_anchor) {

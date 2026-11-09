@@ -638,6 +638,23 @@ where
                 }
             }
         }
+        if parser.settings().layout.legacy()
+            && parser.current().token == Token::LineBreak
+            && !stack.current_empty()
+            && parser.look_ahead(0).is_some_and(|token| {
+                token.token == Token::LeftBlockEnd
+                    && parser.wikidot_discarded_row_closer(token.span.start)
+                    && crate::parsing::rule::impls::wikidot_discarded_closer_has_same_line_remainder(
+                        parser,
+                        token.span.start,
+                    )
+            })
+        {
+            stack.push_element(Element::Text(Cow::Borrowed(" ")), true);
+            parser.step()?;
+            line_prefix_whitespace_only = true;
+            continue;
+        }
         // The line-break rule drops this newline because a closer follows it.
         // Live still emits the break, outside the paragraph that the closer ends.
         if parser.settings().layout.legacy()
@@ -645,6 +662,10 @@ where
             && parser.look_ahead(0).is_some_and(|token| {
                 token.token == Token::LeftBlockEnd
                     && parser.wikidot_discarded_row_closer(token.span.start)
+                    && !crate::parsing::rule::impls::wikidot_discarded_closer_has_same_line_remainder(
+                        parser,
+                        token.span.start,
+                    )
             })
         {
             stack.end_paragraph();
@@ -687,6 +708,17 @@ where
             }
 
             Token::ParagraphBreak => {
+                // g10res: a blank after the vanished list close of a
+                // crossed tail stays in the paragraph as its own break
+                // (t-blank-in-tail probe) instead of splitting it.
+                if parser.settings().layout.legacy()
+                    && parser.wikidot_li_cross_tail_blank_at(parser.current().span.start)
+                {
+                    push_element(&mut stack, Element::LineBreak, true);
+                    parser.step()?;
+                    line_prefix_whitespace_only = true;
+                    continue;
+                }
                 if stack.wikidot_complete_raw_line_occupied() {
                     stack.clear_wikidot_complete_raw_line_occupancy();
                 }
@@ -738,7 +770,10 @@ where
                     && parser.current().token == Token::LineBreak
                     && stack.current_empty()
                     && stack.wikidot_finished_ends_with_explicit_list()
-                    && parser.wikidot_next_line_has_content()
+                    && (parser.wikidot_next_line_has_content()
+                        || crate::parsing::rule::impls::wikidot_spill_closer_drops_post_list_break(
+                            parser,
+                        ))
                     && !parser.body_end_boundary_accepts("iftags")
                     && !parser.has_pending_iftags_end_ahead()
                 {
@@ -1003,6 +1038,11 @@ where
                         Elements::None => Vec::new(),
                     };
                     let seam_bounded = batch_is_seam_bounded(&elements);
+                    stack.arm_wikidot_seam_wrap_paragraph(&elements);
+                    if stack.wikidot_shown_seam_keeps_post_list_break(&elements) {
+                        stack.arm_wikidot_seam_keep_post_list_break(true);
+                        stack.arm_wikidot_seam_keep_pending_unwrap(true);
+                    }
                     let mut elements = elements.into_iter();
                     let last_index = counts.len() - 1;
                     for (index, (count, segment_safe, _)) in counts.iter().enumerate() {
@@ -2077,10 +2117,23 @@ fn defer_suppression_seams<'t>(
 ) -> bool {
     let mut deferred = false;
     let original = std::mem::replace(elements, Elements::None);
+    let keep = match &original {
+        Elements::Multiple(items) => {
+            stack.wikidot_shown_seam_keeps_post_list_break(items)
+        }
+        _ => false,
+    };
+    match &original {
+        Elements::Multiple(items) => stack.arm_wikidot_seam_wrap_paragraph(items),
+        _ => stack.arm_wikidot_seam_wrap_paragraph(&[]),
+    }
+    if keep {
+        stack.arm_wikidot_seam_keep_pending_unwrap(true);
+    }
     *elements = match original {
         Elements::Single(element) if matches!(&element, Element::Delayed(delayed) if delayed.is_suppression_seam()) =>
         {
-            stack.defer_suppression_seam(element);
+            stack.defer_suppression_seam(element, keep);
             deferred = true;
             Elements::None
         }
@@ -2102,7 +2155,7 @@ fn defer_suppression_seams<'t>(
             for element in items {
                 if matches!(&element, Element::Delayed(delayed) if delayed.is_suppression_seam())
                 {
-                    stack.defer_suppression_seam(element);
+                    stack.defer_suppression_seam(element, keep);
                     deferred = true;
                 } else {
                     retained.push(element);

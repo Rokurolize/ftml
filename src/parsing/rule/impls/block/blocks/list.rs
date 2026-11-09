@@ -361,10 +361,12 @@ fn parse_list_block_impl<'r, 't>(
         WikidotListWrapGates {
             wrap_enclosing: false,
             mid_join_enclosed: false,
+            head_is_own_line: false,
         }
     };
     let li_wrap_enclosing = wrap_gates.wrap_enclosing;
     let mid_join_enclosed = wrap_gates.mid_join_enclosed;
+    let head_is_own_line = wrap_gates.head_is_own_line;
 
     if flag_score {
         strip_newlines(&mut elements);
@@ -446,16 +448,18 @@ fn parse_list_block_impl<'r, 't>(
                 // muse-probe-pu81-*): each blank-separated run wraps as one
                 // paragraph (MIDBLANK probes muse-probe-midblank-*), formed
                 // blocks join as-is. DIVMID: the same join runs inside an
-                // enclosing flat frame or table cell when mid_join_enclosed
-                // (saved-page probes muse-probe-divmid-*). The arriving list
-                // then joins the same item through the ordinary push below.
+                // enclosing flat frame or table cell (saved-page probes
+                // muse-probe-divmid-*); F7PROBE: it also runs at page root
+                // under any follower (saved-page probes
+                // muse-probe-f7probe-root-mid-*). The arriving list then
+                // joins the same item through the ordinary push below.
                 // Whitespace-only gaps keep the old merge path. Explicit
-                // [[li]] partials and scored/nested lists keep the old
-                // behavior (unprobed there).
+                // [[li]] partials, scored/nested lists, and hoisted heads
+                // keep the old behavior (unprobed or live-split there).
                 if wikidot
                     && !flag_score
                     && !nested
-                    && (!li_wrap_enclosing || mid_join_enclosed)
+                    && (!li_wrap_enclosing || head_is_own_line)
                     && partial_count == 0
                     && literal_elements
                         .iter()
@@ -985,7 +989,10 @@ fn parse_list_block_impl<'r, 't>(
     let stash_formed = !anchor_chromes.is_empty();
     let follower_wrap = closer_line_marker.is_some() || stash_formed;
     let content_after_list = (parser.wikidot_next_line_has_content()
-        || (follower_wrap && parser.wikidot_next_line_has_content_skipping_blanks()))
+        || (follower_wrap && parser.wikidot_next_line_has_content_skipping_blanks())
+        || crate::parsing::rule::impls::wikidot_spill_closer_drops_post_list_break(
+            parser,
+        ))
         && !parser.body_end_boundary_accepts("iftags")
         && !parser.has_pending_iftags_end_ahead();
     // BF79 (e-residual): the stash anchor chrome varies by follower type on
@@ -1145,12 +1152,15 @@ struct WikidotListWrapGates {
     /// advanced table cell (BRIEF-DIVMID). Live keeps text between two
     /// native lists joined into one inline-styled item inside
     /// div/note/collapsible/align bodies and table cells exactly as at page
-    /// root; only the F7 frame-veto followers opt back out. Only an ordinary
-    /// list block qualifies: a head hoisted off a list or quote item line is
-    /// a lost-owner formation whose items are emitted at the owner level,
-    /// where live keeps the inter-list text unjoined (frozen pin
-    /// list/hoisted-between-lazy-line).
+    /// root; the frame-veto followers still opt the frame tail back out
+    /// (BRIEF-RM83 shape 4).
     mid_join_enclosed: bool,
+    /// Whether the list head starts its own line (only indentation before
+    /// it). A head hoisted off a list or quote item line is a lost-owner
+    /// formation whose items are emitted at the owner level, where live
+    /// keeps the inter-list text unjoined (frozen pin
+    /// list/hoisted-between-lazy-line).
+    head_is_own_line: bool,
 }
 
 fn wikidot_list_wrap_gates(
@@ -1165,13 +1175,15 @@ fn wikidot_list_wrap_gates(
     let follower_vetoes_frame =
         follower.is_some_and(WikidotListFollower::suppresses_frame);
     let frame_open = parser.wikidot_flat_pair_open_at(from_byte);
-    let mid_join_enclosed =
-        wikidot_list_head_is_own_line(parser.full_text().inner(), from_byte)
-            && (frame_open || parser.in_wikidot_advanced_table_cell_body())
-            && !follower_vetoes_frame;
+    let head_is_own_line =
+        wikidot_list_head_is_own_line(parser.full_text().inner(), from_byte);
+    let mid_join_enclosed = head_is_own_line
+        && (frame_open || parser.in_wikidot_advanced_table_cell_body())
+        && !follower_vetoes_frame;
     WikidotListWrapGates {
         wrap_enclosing: follower_wraps || (frame_open && !follower_vetoes_frame),
         mid_join_enclosed,
+        head_is_own_line,
     }
 }
 
@@ -3740,11 +3752,9 @@ fn assemble_wikidot_li_segments<'t>(
             .is_some_and(|element| matches!(element, Element::List { .. }));
     let last_plain_run_is_paragraph = match kept.as_slice() {
         [.., penultimate, last]
-            if body_before_close.ends_with('\n')
+            if (body_before_close.ends_with('\n') || !doc_final.literal)
                 && segment_is_inline_content(last)
-                && !segment_has_block_marker(last)
-                && segment_is_inline_content(penultimate)
-                && !segment_has_block_marker(penultimate) =>
+                && segment_is_inline_content(penultimate) =>
         {
             true
         }
@@ -3761,11 +3771,9 @@ fn assemble_wikidot_li_segments<'t>(
             // empty-text marker is consumed there and never renders.
             elements.push(Element::Text(std::borrow::Cow::Borrowed("")));
         }
-        // A blank line between two plain inline runs, with the closer on the
-        // next line, is a paragraph. A run on the closer's own line stays put,
-        // and so does a run beside a literal block marker. BRIEF-TB74: the
-        // trailing run merges bare when it sits in the document-final
-        // paragraph chunk (probes muse-probe-tb74-*).
+        // Live merges this run bare only in the document-final paragraph chunk
+        // (probes muse-probe-tb74-*); elsewhere it wraps even with the closer on
+        // the run's line and literal block markers in the run.
         let middle_inline =
             index > 0 && index < kept_last && segment_is_inline_content(&segment);
         let closing_paragraph = index == kept_last
@@ -4004,57 +4012,43 @@ fn wrap_post_heading_segments<'t>(
         CodeOrAlign,
         /// End of the item body.
         End,
+        BeforeMath,
     }
 
     let mut out: Vec<Element<'t>> = Vec::with_capacity(elements.len() + 4);
     let mut chunk: Vec<Element<'t>> = Vec::new();
     let mut after_heading = false;
-    // A math or table block inside the item: the inline run after it is
-    // paragraph-wrapped at the end of the item body when the enclosing
-    // list carries a content follower (or an enclosing block frame is
-    // open), and stays bare otherwise (muse-probe-ad75-*; m2/t2 sit at
-    // EOF so they stay bare, m3/t3 and the adi4/scope forms carry a
-    // follower or a span scope after the list close and wrap).
-    // Headings keep the wider Soft/SegmentGap family; this flag feeds
-    // only the end-of-item flush, where enclosing_block decides.
+    let mut after_blank_boundary = false;
     let mut after_ref_block = false;
     let mut latched = false;
     let flush = |chunk: &mut Vec<Element<'t>>,
                  out: &mut Vec<Element<'t>>,
                  after_heading: bool,
                  after_ref_block: bool,
+                 after_blank_boundary: bool,
                  latched: bool,
                  enclosing_block: bool,
                  kind: Flush| {
         if chunk.is_empty() {
             return;
         }
-        // The math/table trailing flag wraps a free inline run; a chunk
-        // owned by an inline scope inside the item (span/size partials in
-        // it) belongs to the scope's segment flow, not to this wrap:
-        // live keeps it bare (test/span/same-line-div-text-has-no-leading-
-        // space pins `**||` in a span after its table; the heading family's
-        // scope wraps are unaffected since headings set after_heading).
         let chunk_has_partial = chunk
             .iter()
             .any(|element| matches!(element, Element::Partial(_)));
-        // Headings drive the Soft/SegmentGap families unconditionally. A
-        // math/table trail wraps only the trailing run at the end of the
-        // item body (probes muse-probe-ad75-*) and only when the chunk is
-        // free of inline-scope partials.
-        let wrap = (!latched
+        let wrap = !latched
             && has_content(chunk)
             && ((after_heading
                 && match kind {
                     Flush::BeforeTable => false,
                     Flush::SegmentGap | Flush::End => enclosing_block,
-                    Flush::Soft | Flush::CodeOrAlign => true,
+                    Flush::Soft | Flush::CodeOrAlign | Flush::BeforeMath => true,
                 })
+                || (after_blank_boundary && matches!(kind, Flush::Soft))
                 || (after_ref_block
                     && !suppress_trail
                     && !chunk_has_partial
-                    && matches!(kind, Flush::End)
-                    && enclosing_block)));
+                    && (matches!(kind, Flush::BeforeMath)
+                        || (matches!(kind, Flush::End) && enclosing_block))));
         if wrap {
             out.push(Element::Container(Container::new(
                 ContainerType::Paragraph,
@@ -4085,10 +4079,12 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::SegmentGap,
             );
+            after_blank_boundary = true;
             continue;
         }
         if is_heading {
@@ -4097,6 +4093,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::Soft,
@@ -4111,6 +4108,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::BeforeTable,
@@ -4125,6 +4123,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::CodeOrAlign,
@@ -4140,9 +4139,14 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
-                Flush::Soft,
+                if is_math {
+                    Flush::BeforeMath
+                } else {
+                    Flush::Soft
+                },
             );
             out.push(element);
             if is_math {
@@ -4157,6 +4161,7 @@ fn wrap_post_heading_segments<'t>(
         &mut out,
         after_heading,
         after_ref_block,
+        after_blank_boundary,
         latched,
         enclosing_block,
         Flush::End,

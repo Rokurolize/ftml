@@ -390,6 +390,9 @@ fn render_partial(ctx: &mut TextContext, partial: &PartialElement) {
             render_elements(ctx, &tab.elements);
             ctx.add_newline();
         }
+        PartialElement::WikidotEquationNumber(index, _) => {
+            ctx.push_str(&format!("({index})"));
+        }
         PartialElement::RubyText(ruby_text) => {
             ctx.push('(');
             render_elements(ctx, &ruby_text.elements);

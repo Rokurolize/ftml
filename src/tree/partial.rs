@@ -25,6 +25,7 @@ use super::{
 };
 use crate::parsing::ParseErrorKind;
 use std::borrow::Cow;
+use std::num::NonZeroUsize;
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum InlineFormatKind {
@@ -195,6 +196,10 @@ pub enum WikidotBlockCloseKind<'t> {
     Div {
         head: usize,
         scored: bool,
+        /// g10res: a crossed list tail ending at this closer keeps its
+        /// final break (u-second-frame probe); set at emission when the
+        /// closer is the recorded tail terminator.
+        keep_trailing_break: bool,
     },
     Collapsible {
         head: usize,
@@ -227,9 +232,14 @@ impl WikidotBlockCloseKind<'_> {
 
     pub fn to_owned(&self) -> WikidotBlockCloseKind<'static> {
         match self {
-            WikidotBlockCloseKind::Div { head, scored } => WikidotBlockCloseKind::Div {
+            WikidotBlockCloseKind::Div {
+                head,
+                scored,
+                keep_trailing_break,
+            } => WikidotBlockCloseKind::Div {
                 head: *head,
                 scored: *scored,
+                keep_trailing_break: *keep_trailing_break,
             },
             WikidotBlockCloseKind::Collapsible { head } => {
                 WikidotBlockCloseKind::Collapsible { head: *head }
@@ -321,6 +331,9 @@ pub enum PartialElement<'t> {
     Tab(Tab<'t>),
 
     RubyText(RubyText<'t>),
+
+    /// Never produced by the parser; render-time only.
+    WikidotEquationNumber(NonZeroUsize, Vec<Element<'t>>),
 }
 
 impl PartialElement<'_> {
@@ -349,9 +362,9 @@ impl PartialElement<'_> {
             PartialElement::TableCell(_) => "TableCell",
             PartialElement::Tab(_) => "Tab",
             PartialElement::RubyText(_) => "RubyText",
+            PartialElement::WikidotEquationNumber(..) => "WikidotEquationNumber",
         }
     }
-
     #[inline]
     pub fn parse_error_kind(&self) -> ParseErrorKind {
         match self {
@@ -376,6 +389,7 @@ impl PartialElement<'_> {
             PartialElement::TableCell(_) => ParseErrorKind::TableCellOutsideTable,
             PartialElement::Tab(_) => ParseErrorKind::TabOutsideTabView,
             PartialElement::RubyText(_) => ParseErrorKind::RubyTextOutsideRuby,
+            PartialElement::WikidotEquationNumber(..) => ParseErrorKind::NoRulesMatch,
         }
     }
 
@@ -448,6 +462,9 @@ impl PartialElement<'_> {
             }
             PartialElement::Tab(tab) => PartialElement::Tab(tab.to_owned()),
             PartialElement::RubyText(text) => PartialElement::RubyText(text.to_owned()),
+            PartialElement::WikidotEquationNumber(index, elements) => {
+                PartialElement::WikidotEquationNumber(*index, elements_to_owned(elements))
+            }
         }
     }
 

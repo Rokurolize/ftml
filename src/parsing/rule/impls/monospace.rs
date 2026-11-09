@@ -37,6 +37,7 @@ fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create monospace container");
+    let in_anchor_body = parser.in_wikidot_anchor_body();
     validate_reachable_close(
         parser,
         Token::RightMonospace,
@@ -81,7 +82,7 @@ fn try_consume_fn<'r, 't>(
     }
 
     let close = [ParseCondition::current(Token::RightMonospace)];
-    let invalid = [ParseCondition::current(Token::ParagraphBreak)];
+    let invalid: [ParseCondition; 0] = [];
     let preserve_empty_lists = parser.settings().layout.legacy();
     let previous_preserve = if preserve_empty_lists {
         parser.set_wikidot_preserve_empty_lists(true)
@@ -265,8 +266,11 @@ fn try_consume_fn<'r, 't>(
         output.push(text!("--"));
         output.push(text!("}}"));
     }
-    let elements =
-        super::bold::mark_format_stop_at_list(parser, Elements::Multiple(output));
+    let elements = super::bold::mark_format_stop_at_list(
+        parser,
+        in_anchor_body,
+        Elements::Multiple(output),
+    );
     ok!(paragraph_safe; elements, errors)
 }
 

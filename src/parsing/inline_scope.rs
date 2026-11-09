@@ -2,7 +2,7 @@ use crate::tree::{
     AnchorTarget, AttributeMap, Bibliography, BibliographyList, BibliographyScopeWrapper,
     Container, ContainerType, Element, Heading, HeadingReopen, InlineFormatKind,
     ListItem, PartialElement, TabViewItem, TableType, WIKIDOT_BLOCK_CHUNK_PREFIX_MARKER,
-    WIKIDOT_FORMAT_LABEL_INSIDE_LIST_MARKER,
+    WIKIDOT_EMPTY_FOOTNOTE_TAIL_BARE_MARKER, WIKIDOT_FORMAT_LABEL_INSIDE_LIST_MARKER,
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER,
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, WIKIDOT_HEADING_REOPEN_MARKER,
@@ -3496,6 +3496,9 @@ fn lower_root_sequence<'t>(
             let heading_line_ended = paragraph_attributes
                 .remove(crate::tree::WIKIDOT_HEADING_COLLAPSIBLE_LINE_END_MARKER)
                 .is_some();
+            let empty_footnote_tail_bare = paragraph_attributes
+                .remove(WIKIDOT_EMPTY_FOOTNOTE_TAIL_BARE_MARKER)
+                .is_some();
             if previous_heading_collapsible_tail
                 && !collapsible_heading_body
                 && !collapsible_heading_tail
@@ -3598,7 +3601,10 @@ fn lower_root_sequence<'t>(
                         | Element::List { .. }
                 )
             );
-            if label_break && !output.is_empty() && paragraph_group.is_none() {
+            if (empty_footnote_tail_bare || label_break)
+                && !output.is_empty()
+                && paragraph_group.is_none()
+            {
                 container.elements_mut().insert(0, Element::LineBreak);
             } else if tail_lead
                 && !output.is_empty()
@@ -3646,7 +3652,8 @@ fn lower_root_sequence<'t>(
                 flush_paragraph_group(&mut output, &mut paragraph_group);
             }
             let group = paragraph_group.get_or_insert_with(|| ParagraphGroup {
-                wrapped: !collapsible_heading_tail
+                wrapped: !empty_footnote_tail_bare
+                    && !collapsible_heading_tail
                     && !tail_break
                     && !tail_bare
                     && !tail_lead

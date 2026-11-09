@@ -294,10 +294,37 @@ fn drop_post_list_break_before_empty_footnote_block(elements: &mut Vec<Element<'
             && matches!(elements[index + 2], Element::FootnoteBlock { .. });
         if is_post_list_break {
             elements.remove(index + 1);
+            mark_bare_tail_after_empty_footnote_block(elements, index + 1);
         } else {
             index += 1;
         }
     }
+}
+
+fn mark_bare_tail_after_empty_footnote_block(elements: &mut [Element<'_>], footer_index: usize) {
+    if footer_index + 1 >= elements.len() {
+        return;
+    }
+    let bare_tail = matches!(
+        &elements[footer_index],
+        Element::FootnoteBlock {
+            wikidot_tail_attached: true,
+            ..
+        }
+    ) && matches!(
+        &elements[footer_index + 1],
+        Element::Container(container) if container.ctype() == ContainerType::Paragraph
+    );
+    if !bare_tail {
+        return;
+    }
+    let Element::Container(container) = &mut elements[footer_index + 1] else {
+        unreachable!("the marked element was checked as a paragraph");
+    };
+    container.attributes_mut().insert(
+        crate::tree::WIKIDOT_EMPTY_FOOTNOTE_TAIL_BARE_MARKER,
+        Cow::Borrowed(""),
+    );
 }
 
 struct ElementFrame<'t> {
@@ -944,6 +971,7 @@ mod tests {
                     wikidot_wrappers: Vec::new(),
                     wikidot_inline_suffix: false,
                     wikidot_inline_prefix: false,
+                    wikidot_tail_attached: false,
                 },
                 Element::Text(Cow::Borrowed("after")),
             ],

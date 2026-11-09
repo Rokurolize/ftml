@@ -466,6 +466,7 @@ fn text_render_skips_non_textual_elements_and_expands_include_variables() {
                 wikidot_wrappers: Vec::new(),
                 wikidot_inline_suffix: false,
                 wikidot_inline_prefix: false,
+                wikidot_tail_attached: false,
             },
             Element::BibliographyCite {
                 label: cow!("ref"),

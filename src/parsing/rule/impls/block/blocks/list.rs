@@ -3896,6 +3896,7 @@ fn wrap_post_heading_segments<'t>(
     let mut out: Vec<Element<'t>> = Vec::with_capacity(elements.len() + 4);
     let mut chunk: Vec<Element<'t>> = Vec::new();
     let mut after_heading = false;
+    let mut after_blank_boundary = false;
     // A math or table block inside the item: the inline run after it is
     // paragraph-wrapped at the end of the item body when the enclosing
     // list carries a content follower (or an enclosing block frame is
@@ -3910,6 +3911,7 @@ fn wrap_post_heading_segments<'t>(
                  out: &mut Vec<Element<'t>>,
                  after_heading: bool,
                  after_ref_block: bool,
+                 after_blank_boundary: bool,
                  latched: bool,
                  enclosing_block: bool,
                  kind: Flush| {
@@ -3929,7 +3931,7 @@ fn wrap_post_heading_segments<'t>(
         // math/table trail wraps only the trailing run at the end of the
         // item body (probes muse-probe-ad75-*) and only when the chunk is
         // free of inline-scope partials.
-        let wrap = (!latched
+        let wrap = !latched
             && has_content(chunk)
             && ((after_heading
                 && match kind {
@@ -3937,11 +3939,12 @@ fn wrap_post_heading_segments<'t>(
                     Flush::SegmentGap | Flush::End => enclosing_block,
                     Flush::Soft | Flush::CodeOrAlign => true,
                 })
+                || (after_blank_boundary && matches!(kind, Flush::Soft))
                 || (after_ref_block
                     && !suppress_trail
                     && !chunk_has_partial
                     && matches!(kind, Flush::End)
-                    && enclosing_block)));
+                    && enclosing_block));
         if wrap {
             out.push(Element::Container(Container::new(
                 ContainerType::Paragraph,
@@ -3972,10 +3975,12 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::SegmentGap,
             );
+            after_blank_boundary = true;
             continue;
         }
         if is_heading {
@@ -3984,6 +3989,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::Soft,
@@ -3998,6 +4004,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::BeforeTable,
@@ -4012,6 +4019,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::CodeOrAlign,
@@ -4027,6 +4035,7 @@ fn wrap_post_heading_segments<'t>(
                 &mut out,
                 after_heading,
                 after_ref_block,
+                after_blank_boundary,
                 latched,
                 enclosing_block,
                 Flush::Soft,
@@ -4044,6 +4053,7 @@ fn wrap_post_heading_segments<'t>(
         &mut out,
         after_heading,
         after_ref_block,
+        after_blank_boundary,
         latched,
         enclosing_block,
         Flush::End,

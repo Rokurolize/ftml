@@ -4442,7 +4442,6 @@ where
             if self.current().token == Token::ParagraphBreak
                 && !self.discarding_hidden_body()
                 && !self.in_wikidot_literal_alias_body()
-                && !self.in_wikidot_anchor_body()
             {
                 if self.in_wikidot_span_body() {
                     let start = self.current().span.start;
@@ -4483,6 +4482,21 @@ where
                         segments.push(Vec::new());
                     }
                     continue;
+                }
+                if self.in_wikidot_anchor_body() {
+                    let start = self.current().span.start;
+                    let end = self.current().span.end;
+                    let text = self.full_text().inner();
+                    let newlines = text[start..end]
+                        .bytes()
+                        .filter(|&byte| byte == b'\n' || byte == b'\r')
+                        .count();
+                    let segment = segments
+                        .last_mut()
+                        .expect("segments always has a current segment");
+                    for _ in 0..newlines {
+                        segment.push(Element::LineBreak);
+                    }
                 }
                 self.step()?;
                 first = false;

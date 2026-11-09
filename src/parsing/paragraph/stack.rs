@@ -1546,6 +1546,33 @@ impl<'t> ParagraphStack<'t> {
             {
                 self.current_unwrapped = true;
             }
+            // ES79 (e-sub-1): a recovered bare-div literal is
+            // paragraph-unsafe, so it goes straight to `finished` while a
+            // stash-armed `<br />` sitting alone in `current` would flush
+            // as its own paragraph (live merges both into one
+            // `<p><br>[[div]]d[[/div]]</p>`). Carry that lone armed break
+            // past `end_paragraph` and the follower handling below (which
+            // then see the same state as the matching inline-literal
+            // followers) and prepend it to the literal run so the run
+            // close wraps a single paragraph. Gated on no open run so an
+            // in-progress literal run keeps today's behavior.
+            let mut element = element;
+            let mut carried_stash_break = None;
+            if self.pending_wikidot_div_literal
+                && self.wikidot_div_literal_run.is_none()
+                && matches!(self.current.as_slice(), [Element::LineBreak])
+                && matches!(element, Element::Text(_))
+            {
+                carried_stash_break = self.current.pop();
+                // Drop the literal slice's leading newline, mirroring
+                // `close_wikidot_div_literal_run`, so the joined run holds
+                // the same bytes as the inline-literal followers.
+                if let Element::Text(text) = &mut element
+                    && let Some(stripped) = text.strip_prefix('\n')
+                {
+                    *text = Cow::Owned(stripped.to_owned());
+                }
+            }
             self.end_paragraph();
             if !invisible_block_line {
                 if element.paragraph_safe() {
@@ -1561,9 +1588,15 @@ impl<'t> ParagraphStack<'t> {
             }
             if self.pending_wikidot_div_literal {
                 self.pending_wikidot_div_literal = false;
+                let run_start = self.finished.len();
+                if let Some(armed) = carried_stash_break {
+                    self.finished.push(armed);
+                }
                 self.finished.push(element);
-                let index = self.finished.len() - 1;
-                self.register_wikidot_div_literal_range(index, index + 1);
+                self.register_wikidot_div_literal_range(
+                    run_start,
+                    self.finished.len(),
+                );
             } else {
                 let followed_by_div = matches!(
                     &element,

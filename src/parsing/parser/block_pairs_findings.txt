@@ -333,3 +333,5 @@ corpus-test/table/cell-closer-residual-text-before/input.ftml	Cell@18..38 descen
 corpus-test/table/hcell-closer-residual-text-before/input.ftml	Table@0..76 descent-only
 corpus-test/table/hcell-closer-residual-text-before/input.ftml	Row@10..65 descent-only
 corpus-test/table/hcell-closer-residual-text-before/input.ftml	Cell@18..38 descent-only
+corpus-test/table/simple-row-suffix-tabview-span-tail-hoists/input.ftml	Div@35..53 scan-only
+corpus-test/table/simple-row-suffix-tabview-span-tail-hoists/input.ftml	Div@35..43 descent-only

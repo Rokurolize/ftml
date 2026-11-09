@@ -352,7 +352,16 @@ fn parse_list_block_impl<'r, 't>(
     // post-heading wrap gate arrives as a plain bool (frame || follower).
     // BRIEF-RM83 shape 4: the follower can also VETO the frame wrap (a
     // formed flat-pair head / heading / `----` right after the closer).
-    let li_wrap_enclosing = wikidot && wikidot_li_wrap_enclosing(parser, opener_start);
+    let wrap_gates = if wikidot {
+        wikidot_list_wrap_gates(parser, opener_start)
+    } else {
+        WikidotListWrapGates {
+            wrap_enclosing: false,
+            mid_join_enclosed: false,
+        }
+    };
+    let li_wrap_enclosing = wrap_gates.wrap_enclosing;
+    let mid_join_enclosed = wrap_gates.mid_join_enclosed;
 
     if flag_score {
         strip_newlines(&mut elements);
@@ -440,7 +449,7 @@ fn parse_list_block_impl<'r, 't>(
                 if wikidot
                     && !flag_score
                     && !nested
-                    && !li_wrap_enclosing
+                    && (!li_wrap_enclosing || mid_join_enclosed)
                     && partial_count == 0
                     && literal_elements
                         .iter()
@@ -514,17 +523,25 @@ fn parse_list_block_impl<'r, 't>(
     // list joins it as one inline-styled item with the text bare
     // (saved-page probes muse-probe-pu81-after-*). The ordinary append
     // path below then glues the text exactly like the multi-list case.
+    // DIVMID: inside an enclosing flat frame the frame's paragraph flow owns
+    // the tail, so the same text joins as a paragraph instead
+    // (saved-page probes muse-probe-divmid-div-after-ul/-div-mid-tail).
     if wikidot
         && !flag_score
         && !nested
-        && !li_wrap_enclosing
         && partial_count == 0
         && literal_elements
             .iter()
             .any(|element| !element.is_whitespace())
-        && matches!(items.last(), Some(ListItem::SubList { .. }))
     {
-        inline_wikidot_sublist_item(&mut items);
+        let joined_frame_tail = mid_join_enclosed
+            && join_wikidot_frame_tail_literals(&mut items, &mut literal_elements);
+        if !joined_frame_tail
+            && !li_wrap_enclosing
+            && matches!(items.last(), Some(ListItem::SubList { .. }))
+        {
+            inline_wikidot_sublist_item(&mut items);
+        }
     }
     push_literal_list_item(
         &mut items,
@@ -1031,6 +1048,29 @@ fn parse_list_block_impl<'r, 't>(
 /// Probes: muse-probe-f7r-* (follower classes without a frame) and
 /// muse-probe-rm83-fda1..fda17 (frame open, one probe per follower class).
 fn wikidot_li_wrap_enclosing(parser: &Parser<'_, '_>, from_byte: usize) -> bool {
+    wikidot_list_wrap_gates(parser, from_byte).wrap_enclosing
+}
+
+/// The two item-assembly gates that share the enclosing-list follower scan.
+struct WikidotListWrapGates {
+    /// Whether the items paragraph-wrap their post-heading trailing chunk.
+    wrap_enclosing: bool,
+    /// Whether the PU81 mid join also runs inside an enclosing flat frame or
+    /// advanced table cell (BRIEF-DIVMID). Live keeps text between two
+    /// native lists joined into one inline-styled item inside
+    /// div/note/collapsible/align bodies and table cells exactly as at page
+    /// root; only the F7 frame-veto followers opt back out. Only an ordinary
+    /// list block qualifies: a head hoisted off a list or quote item line is
+    /// a lost-owner formation whose items are emitted at the owner level,
+    /// where live keeps the inter-list text unjoined (frozen pin
+    /// list/hoisted-between-lazy-line).
+    mid_join_enclosed: bool,
+}
+
+fn wikidot_list_wrap_gates(
+    parser: &Parser<'_, '_>,
+    from_byte: usize,
+) -> WikidotListWrapGates {
     use crate::parsing::rule::impls::line_owner::{
         WikidotListFollower, wikidot_list_follower_kind,
     };
@@ -1038,8 +1078,15 @@ fn wikidot_li_wrap_enclosing(parser: &Parser<'_, '_>, from_byte: usize) -> bool 
     let follower_wraps = follower.is_some_and(WikidotListFollower::wraps);
     let follower_vetoes_frame =
         follower.is_some_and(WikidotListFollower::suppresses_frame);
-    follower_wraps
-        || (parser.wikidot_flat_pair_open_at(from_byte) && !follower_vetoes_frame)
+    let frame_open = parser.wikidot_flat_pair_open_at(from_byte);
+    let mid_join_enclosed =
+        wikidot_list_head_is_own_line(parser.full_text().inner(), from_byte)
+            && (frame_open || parser.in_wikidot_advanced_table_cell_body())
+            && !follower_vetoes_frame;
+    WikidotListWrapGates {
+        wrap_enclosing: follower_wraps || (frame_open && !follower_vetoes_frame),
+        mid_join_enclosed,
+    }
 }
 
 fn record_wikidot_explicit_list_end(parser: &Parser) {
@@ -1062,6 +1109,39 @@ fn inline_wikidot_sublist_item<'t>(items: &mut Vec<ListItem<'t>>) {
             attributes,
         });
     }
+}
+
+/// Whether the list head token starts its own line (only indentation before
+/// it). A head after a list/quote marker belongs to a lost-owner formation.
+fn wikidot_list_head_is_own_line(source: &str, head_byte: usize) -> bool {
+    let line_start = source[..head_byte]
+        .rfind('\n')
+        .map_or(0, |offset| offset + 1);
+    source[line_start..head_byte]
+        .trim_matches([' ', '\t'])
+        .is_empty()
+}
+
+/// DIVMID: inside an enclosing flat frame, item-trailing literal content
+/// after a native list joins the open item as paragraphs (the frame's
+/// paragraph flow owns the tail; live renders `<p>text</p>`, saved-page
+/// probes muse-probe-divmid-div-after-ul and -div-mid-tail). Returns
+/// whether the content joined an item that ends with a native list.
+fn join_wikidot_frame_tail_literals<'t>(
+    items: &mut Vec<ListItem<'t>>,
+    pending: &mut Vec<Element<'t>>,
+) -> bool {
+    if matches!(items.last(), Some(ListItem::SubList { .. })) {
+        inline_wikidot_sublist_item(items);
+    }
+    let Some(ListItem::Elements { elements, .. }) = items.last_mut() else {
+        return false;
+    };
+    if !matches!(elements.last(), Some(Element::List { .. })) {
+        return false;
+    }
+    join_wikidot_mid_list_literals(elements, pending);
+    true
 }
 
 /// PU81 (plainul-text-mid): appends pending literal content between two

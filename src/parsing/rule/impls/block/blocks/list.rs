@@ -26,7 +26,8 @@ use crate::parsing::rule::impls::block::parser::{
 use crate::parsing::{ParagraphSplitKind, ParserWrap, strip_newlines};
 use crate::tree::{
     AcceptsPartial, AttributeMap, Container, ContainerType, ListItem, ListType,
-    PartialElement, WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER, WikidotBlockCloseKind,
+    PartialElement, WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER,
+    WIKIDOT_LIST_TAIL_LEAD_SPACE_MARKER, WikidotBlockCloseKind,
 };
 use std::borrow::Cow;
 
@@ -812,6 +813,15 @@ fn parse_list_block_impl<'r, 't>(
         wikidot_explicit_block: parser.settings().layout.legacy(),
         wikidot_unclosed: false,
     };
+    // Live's inline pairing sees the source whitespace before the first tail
+    // content: a marker that opens the post-list tail is padded, which the
+    // segment join must know (paragraph gathering trims the space first).
+    if parser.settings().layout.legacy()
+        && wikidot_tail_lead_space(parser)
+        && let Element::List { attributes, .. } = &mut element
+    {
+        attributes.insert(WIKIDOT_LIST_TAIL_LEAD_SPACE_MARKER, Cow::Borrowed(""));
+    }
     // s7 (65d): run items after a matching closer rejoin the list item
     // set. A `* [[/ul]]` closer on a Bullet list absorbs following `*`
     // run items; a `# [[/ol]]` closer on a Numbered list absorbs `#`
@@ -1155,6 +1165,25 @@ fn wikidot_list_wrap_gates(
         wrap_enclosing: follower_wraps || (frame_open && !follower_vetoes_frame),
         mid_join_enclosed,
     }
+}
+
+/// Whether the first content of the list's post-list tail is preceded by
+/// source whitespace on its own line. Live's inline pairing sees that pad (the
+/// marker cannot close a symmetric format pair), while paragraph gathering
+/// trims it before FTML's inline pairing runs. A line break reset matters:
+/// `[[/ul]] \n__ d` keeps the pad on the close line but the closer sits on the
+/// next line, so live pairs it.
+fn wikidot_tail_lead_space(parser: &Parser) -> bool {
+    let mut padding = false;
+    for token in std::iter::once(parser.current()).chain(parser.remaining()) {
+        match token.token {
+            Token::Whitespace => padding = true,
+            Token::LineBreak | Token::ParagraphBreak => padding = false,
+            Token::InputEnd => return false,
+            _ => return padding,
+        }
+    }
+    false
 }
 
 fn record_wikidot_explicit_list_end(parser: &Parser) {

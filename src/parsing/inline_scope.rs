@@ -8299,6 +8299,15 @@ impl<'t> WikidotFrameAssembly<'t> {
 ///   wrapper entirely after the list: every post-list segment span dissolves
 ///   to bare content (closer literal, break, trail text, following
 ///   paragraph/list content) and R2's added block-end breaks do not exist.
+/// - Cancellation without a list (color-no-list follow-up): the same signal
+///   drops the wrapper layer on the paragraphs after the barrier heading even
+///   when no explicit list follows. The paragraph shell and every nested
+///   user element (span/bold/color) survive; only the outer wrapper span
+///   layer goes (saved pages muse-probe-fu82-cnl-*, cnl2-*, cnl3-*).
+/// - Crossing anchor (anchor-wrap follow-up): an inline anchor scope that
+///   crosses the frame close adds one break to the plain post-list wrapper
+///   (2 -> 3 after the closer literal); an outer span/size scope absorbs it
+///   back to 2. See `fix_crossing_anchor_breaks`.
 fn fix_outer_close_eof_breaks<'t>(children: &mut Vec<Element<'t>>) {
     let signals = outer_close_eof_signals(children);
     if let Some(anchor) = children
@@ -8309,9 +8318,15 @@ fn fix_outer_close_eof_breaks<'t>(children: &mut Vec<Element<'t>>) {
             dissolve_post_list_segments(children, anchor, signals.outer_scope);
             return;
         }
+        if fix_crossing_anchor_breaks(children, anchor, signals.outer_scope) {
+            return;
+        }
         if let Some(attrs) = &signals.outer_size {
             restyle_post_list_segments(children, anchor, attrs);
         }
+    } else if signals.cancelled {
+        dissolve_post_heading_wrapper_spans(children);
+        return;
     }
     // Find the closer-literal span: a plain Span container whose leading text
     // forms `[[/div]]`, `[[/note]]`, or `[[/collapsible]]`. Prefer the one
@@ -8597,6 +8612,168 @@ fn restyle_list_items<'t>(items: &mut Vec<ListItem<'t>>, attrs: &AttributeMap<'t
             }
         }
     }
+}
+
+/// No-list cancellation (color-no-list follow-up): the heading label's
+/// completed span-rendered scope close also kills the heading wrapper when no
+/// explicit list follows the barrier heading. Live keeps the paragraph and
+/// every nested user element; only the outer wrapper span layer is dropped
+/// (saved pages: `cnl-color` `<p>[[/div]]</p>`, `cnl2-color-userspan`
+/// `<p><span>z</span><br>[[/div]]</p>`, `cnl-color-trail`
+/// `<p>t<br>[[/div]]</p>`, `cnl-color-outerspan`
+/// `<p>[[/div]]<br></p>`). Bold/italic/anchor/plain labels keep the wrapper,
+/// so this runs only under the cancellation signal.
+fn dissolve_post_heading_wrapper_spans<'t>(children: &mut [Element<'t>]) {
+    let Some(heading) = children.iter().position(|element| {
+        matches!(
+            element,
+            Element::Container(container)
+                if matches!(container.ctype(), ContainerType::Header(_))
+                    && container
+                        .attributes()
+                        .get()
+                        .contains_key(crate::tree::WIKIDOT_HEADING_BARRIER_MARKER)
+        )
+    }) else {
+        return;
+    };
+    for element in children[heading + 1..].iter_mut() {
+        let Element::Container(paragraph) = element else {
+            continue;
+        };
+        if paragraph.ctype() != ContainerType::Paragraph {
+            continue;
+        }
+        let elements = paragraph.elements_mut();
+        if let [Element::Container(span)] = elements.as_mut_slice()
+            && span.ctype() == ContainerType::Span
+            && span.attributes().get().is_empty()
+        {
+            *elements = mem::take(span.elements_mut());
+        }
+    }
+}
+
+/// Anchor-wrap follow-up (item 82): when an inline anchor scope crosses the
+/// `outer_close_eof` frame close, live's post-list wrapper carries one break
+/// more than the plain shape — closer line + block end + the anchor's
+/// continuation — i.e. 3 breaks after the closer literal (saved pages
+/// `muse-probe-fu82-aw-anchor-wrap` div and note, `aw2-cross-second-list`,
+/// `aw3-cross-h2`, and the literal-trail forms `aw2-cross-trail`,
+/// `aw2-cross-blank`, `aw3-cross-blankfollower`, `aw3-cross-second-trail`
+/// — all with one break as lowered). An outer span/size scope open over the
+/// heading absorbs the anchor break back to 2 (`aw3-cross-outerspan`,
+/// `aw3-cross-outersize`, already lowered correctly), so this no-ops under
+/// `outer_scope`.
+///
+/// The crossing anchor is recognised structurally: libtidy keeps the inline
+/// stack across block boundaries, and the block boundary at the frame drops
+/// the anchor scope into a continuation element ahead of the reduced list
+/// (directly for a pre-frame anchor, or in the frame's leading paragraph for
+/// an anchor opened inside the frame). Shapes where the anchor closes inside
+/// the frame do not carry an anchor ahead of the list (the close is at or
+/// after the list). The gate is additionally limited to the lowered wrapper
+/// state of exactly one trailing break, which is the shape whose block-end
+/// break the anchor continuation has already consumed; other lowered counts
+/// are left to R2 and recorded as residuals (see RESULTS).
+fn fix_crossing_anchor_breaks<'t>(
+    children: &mut [Element<'t>],
+    anchor: usize,
+    outer_scope: bool,
+) -> bool {
+    if outer_scope {
+        return false;
+    }
+    // The anchor scope crossed into the barriered frame before the list: its
+    // continuation is materialised ahead of the list (directly, or inside the
+    // frame's leading paragraph).
+    let crossing_anchor = children[..anchor].iter().any(tree_contains_anchor_element);
+    if !crossing_anchor {
+        return false;
+    }
+    const TARGET: usize = 3;
+    let Some(index) = children[anchor + 1..].iter().rposition(|element| {
+        matches!(
+            element,
+            Element::Container(container)
+                if matches!(container.ctype(), ContainerType::Span | ContainerType::Size)
+                    && closer_literal_end_index(container.elements()).is_some()
+        )
+    }) else {
+        return false;
+    };
+    let index = anchor + 1 + index;
+    let Element::Container(container) = &mut children[index] else {
+        return false;
+    };
+    let elements = container.elements_mut();
+    let Some(literal_end) = closer_literal_end_index(elements) else {
+        return false;
+    };
+    let mut breaks = 0usize;
+    for element in &elements[literal_end..] {
+        match element {
+            Element::LineBreak => breaks += 1,
+            Element::LineBreaks(count) => breaks += count.get() as usize,
+            Element::Text(text) if text.trim().is_empty() => {}
+            // Content after the literal or other structure: leave as lowered.
+            _ => return false,
+        }
+    }
+    // Exactly one trailing break is the lowered state whose block-end break
+    // the anchor continuation has already consumed. Two breaks are either the
+    // anchor-close-inside-frame shape (live dissolves the wrapper) or the
+    // content-after-frame shape; both are recorded as residuals, not forced.
+    if breaks != 1 {
+        return false;
+    }
+    for _ in breaks..TARGET {
+        elements.push(Element::LineBreak);
+    }
+    true
+}
+
+/// Whether an inline anchor element occurs anywhere in this subtree.
+fn tree_contains_anchor_element(element: &Element<'_>) -> bool {
+    if matches!(element, Element::Anchor { .. }) {
+        return true;
+    }
+    let mut found = false;
+    visit_children(element, &mut |children| {
+        if !found && children.iter().any(tree_contains_anchor_element) {
+            found = true;
+        }
+    });
+    found
+}
+
+/// The element index just past any complete block-closer literal
+/// (`[[/div]]`, `[[/note]]`, `[[/collapsible]]`) formed by a run of direct
+/// Text children starting anywhere in `elements`; trail content can come
+/// before the literal, unlike `closer_literal_text_len`'s leading check.
+fn closer_literal_end_index(elements: &[Element<'_>]) -> Option<usize> {
+    for (start, element) in elements.iter().enumerate() {
+        if !matches!(element, Element::Text(_)) {
+            continue;
+        }
+        let mut text = String::new();
+        for (offset, element) in elements[start..].iter().enumerate() {
+            let Element::Text(piece) = element else {
+                break;
+            };
+            text.push_str(piece);
+            if text == "[[/div]]" || text == "[[/note]]" || text == "[[/collapsible]]" {
+                return Some(start + offset + 1);
+            }
+            if !("[[/div]]".starts_with(&text)
+                || "[[/note]]".starts_with(&text)
+                || "[[/collapsible]]".starts_with(&text))
+            {
+                break;
+            }
+        }
+    }
+    None
 }
 
 /// The wrapper died on live: splice every post-list segment span's content

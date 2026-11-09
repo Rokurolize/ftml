@@ -29,6 +29,10 @@ Development happens on this fork, `Rokurolize/ftml`. Open pull requests against 
 - Narration of what the code does, restatements of the code, and step or phase narration in code, tests, fixtures, and scripts are not kept. Write the code, the assertion, or the log string so it says the thing itself.
 - When your diff touches code carrying such comments from earlier work, remove them in the same change.
 
+## Writing prose
+
+- Do not hard-wrap prose. In pull-request and issue bodies, comments, commit-message bodies, and Markdown documents, write each paragraph as a single line and let the renderer wrap it; a line break in the middle of a sentence fragments the text for machine translation and for anyone copying it. Lists, code blocks, and tables keep their own line structure.
+
 ## Code Review Rules
 
 - Treat observable Wikidot behavior as the compatibility specification for `Layout::Wikidot` even when that behavior is insecure, unsafe, obsolete, or contrary to modern web best practices. A review objection based only on modern hardening is not a compatibility justification.

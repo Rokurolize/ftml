@@ -44,6 +44,7 @@ pub fn render_math_block(
     environment: Option<&str>,
     open_elements: &[Element],
     label_spans: &[AttributeMap],
+    capture_eq: bool,
 ) {
     debug!(
         "Rendering math block (name '{}', source '{}')",
@@ -63,6 +64,7 @@ pub fn render_math_block(
             latex_source,
             open_elements,
             label_spans,
+            capture_eq,
         );
         return;
     }
@@ -164,6 +166,7 @@ fn render_wikidot_math_block(
     latex_source: &str,
     open_elements: &[Element],
     label_spans: &[AttributeMap],
+    capture_eq: bool,
 ) {
     let source = join_wikidot_math_source(latex_source);
     match resolve_wikidot_math_environment(environment, &source) {
@@ -195,12 +198,23 @@ fn render_wikidot_math_block(
             };
             let id = format!("equation-{index}");
 
-            render_wikidot_equation_number_with_spans(
-                ctx,
-                index,
-                open_elements,
-                label_spans,
-            );
+            if capture_eq {
+                ctx.push_raw_str("<ul>\n<li style=\"list-style: none\">");
+                render_wikidot_equation_number_with_spans(
+                    ctx,
+                    index,
+                    open_elements,
+                    label_spans,
+                );
+                ctx.push_raw_str("</li>\n</ul>");
+            } else {
+                render_wikidot_equation_number_with_spans(
+                    ctx,
+                    index,
+                    open_elements,
+                    label_spans,
+                );
+            }
             ctx.push_raw('\n');
             ctx.html()
                 .div()

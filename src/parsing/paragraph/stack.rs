@@ -52,6 +52,16 @@ pub(crate) fn collapsible_has_direct_literal_nested_opener(
 }
 
 #[derive(Debug, Default)]
+pub(crate) struct WikidotAnchorCapture<'t> {
+    /// The anchor chrome to re-emit with the captured run as its item;
+    /// `None` for an equation-number capture (the math block renders the
+    /// chrome markup itself).
+    chrome: Option<Element<'t>>,
+    blank: bool,
+    equation: bool,
+}
+
+#[derive(Debug, Default)]
 pub struct ParagraphStack<'t> {
     wikidot: bool,
 
@@ -99,6 +109,15 @@ pub struct ParagraphStack<'t> {
     /// 1 armed (no blank seen yet), 2 armed after a blank line. Consumed by
     /// the next inline/block element push.
     wikidot_stash_br: u8,
+    /// BRIEF-O4TAKE: an armed anchor capture, armed right after a
+    /// stash-formed explicit numbered list's elements push. The stashed
+    /// anchor chrome is owed the follower's inline run (paragraph-safe
+    /// elements accumulate in `current` exactly like a wrapped paragraph);
+    /// `blank` renders a leading `<br />` inside the anchor item,
+    /// `equation` marks an armed equation-number capture instead (the
+    /// following math block renders the chrome around its eq number; the
+    /// stack never emits this chrome itself).
+    wikidot_anchor_capture: Option<WikidotAnchorCapture<'t>>,
     wikidot_explicit_pre_candidate: bool,
     wikidot_suppress_explicit_pre_dissolve: bool,
     wikidot_dissolved_pre_candidate: bool,
@@ -593,6 +612,40 @@ impl<'t> ParagraphStack<'t> {
         if self.wikidot {
             self.wikidot_stash_br = 1;
         }
+    }
+
+    /// BRIEF-O4TAKE: arms an anchor capture. The next paragraph-safe run is
+    /// captured as the anchor item's content instead of forming a
+    /// paragraph; a blank separator renders a leading `<br />`. An equation
+    /// capture leaves the stash-break unarmed (an eq-number capture owns no
+    /// leading break) and waits for the following math block.
+    pub(crate) fn arm_wikidot_anchor_capture(
+        &mut self,
+        chrome: Option<Element<'t>>,
+        blank: bool,
+        equation: bool,
+    ) {
+        if !self.wikidot {
+            return;
+        }
+        if equation {
+            self.wikidot_stash_br = 0;
+        } else if blank {
+            self.wikidot_stash_br = 2;
+        } else {
+            self.wikidot_stash_br = 1;
+        }
+        self.wikidot_anchor_capture = Some(WikidotAnchorCapture {
+            chrome,
+            blank,
+            equation,
+        });
+    }
+
+    /// BRIEF-O4TAKE: whether an anchor capture armed right after a
+    /// just-closed explicit list is pending.
+    pub(crate) fn wikidot_anchor_capture_armed(&self) -> bool {
+        self.wikidot_anchor_capture.is_some()
     }
 
     /// pw65a: a blank line seen while the stash break is armed promotes it
@@ -1104,7 +1157,88 @@ impl<'t> ParagraphStack<'t> {
     }
 
     #[inline]
-    pub fn push_element(&mut self, element: Element<'t>, paragraph_safe: bool) {
+    pub fn push_element(&mut self, mut element: Element<'t>, paragraph_safe: bool) {
+        // BRIEF-O4TAKE (anchor capture): an armed equation capture waits
+        // for the following math block (which the renderer wraps in the
+        // anchor chrome); any other element arriving while a capture is
+        // armed first falls back to the lone closed chrome so the follower
+        // block renders normally.
+        if self.wikidot_anchor_capture.is_some() {
+            let inline_ready = self
+                .wikidot_anchor_capture
+                .as_ref()
+                .is_some_and(|capture| !capture.equation)
+                && matches!(
+                    &element,
+                    Element::Text(_) | Element::Raw(_) | Element::LineBreak
+                );
+            if inline_ready {
+                if self.wikidot_stash_br != 0 {
+                    if self.wikidot_stash_br == 2 && self.current.is_empty() {
+                        self.current.push(Element::LineBreak);
+                    }
+                    self.wikidot_stash_br = 0;
+                }
+                self.pending_wikidot_div_literal = false;
+                self.current.push(element);
+                return;
+            }
+            let equation = self
+                .wikidot_anchor_capture
+                .as_ref()
+                .is_some_and(|capture| capture.equation);
+            let starts_block = if equation {
+                !matches!(element, Element::Math { .. })
+            } else {
+                !paragraph_safe && self.current.is_empty()
+            };
+            if equation && matches!(element, Element::Math { .. }) {
+                let Element::Math {
+                    wikidot_capture_eq, ..
+                } = &mut element
+                else {
+                    unreachable!()
+                };
+                *wikidot_capture_eq = true;
+                self.wikidot_anchor_capture = None;
+                self.wikidot_stash_br = 0;
+            } else if starts_block {
+                let mut capture = self
+                    .wikidot_anchor_capture
+                    .take()
+                    .expect("capture checked armed above");
+                let mut item_attributes = AttributeMap::new();
+                item_attributes.insert("style", Cow::Borrowed("list-style: none"));
+                if let Some(mut chrome) = capture.chrome.take() {
+                    if let Element::List {
+                        items,
+                        wikidot_unclosed,
+                        ..
+                    } = &mut chrome
+                    {
+                        items.clear();
+                        items.push(ListItem::Elements {
+                            elements: vec![Element::LineBreak],
+                            attributes: item_attributes.clone(),
+                        });
+                        *wikidot_unclosed = false;
+                    }
+                    self.finished.push(chrome);
+                } else {
+                    self.finished.push(Element::List {
+                        ltype: crate::tree::ListType::Bullet,
+                        items: vec![ListItem::Elements {
+                            elements: vec![Element::LineBreak],
+                            attributes: item_attributes,
+                        }],
+                        attributes: AttributeMap::new(),
+                        wikidot_explicit_block: true,
+                        wikidot_unclosed: false,
+                    });
+                }
+                self.wikidot_stash_br = 0;
+            }
+        }
         // A hidden iftags body is invisible content: live drops the attached
         // post-list break before it, even when the frame's shell path already
         // emitted [list, break] into the finished tail (BRIEF-RMRES fda12,
@@ -2250,7 +2384,86 @@ impl<'t> ParagraphStack<'t> {
         }
     }
 
+    /// BRIEF-O4TAKE: completes an armed anchor capture. The stashed anchor
+    /// chrome is emitted with the current run as its single item (the run
+    /// is the follower's inline content, with a leading `<br />` injected
+    /// by the stash-break arm after blank lines); the paragraph that would
+    /// have formed is replaced by it. An empty or equation-only capture
+    /// completes without emitting (equation captures disarm earlier, at the
+    /// math block's push).
+    fn flush_anchor_capture(&mut self) {
+        let Some(mut capture) = self.wikidot_anchor_capture.take() else {
+            return;
+        };
+        let mut run = std::mem::take(&mut self.current);
+        if !capture.blank {
+            while matches!(run.first(), Some(Element::LineBreak)) {
+                run.remove(0);
+            }
+            if let Some(Element::Text(first)) = run.first_mut()
+                && first.starts_with('\n')
+            {
+                *first = Cow::Owned(first[1..].to_owned());
+            }
+        }
+        if run.is_empty() {
+            self.finished.append(&mut self.pending_suppression_seams);
+        } else {
+            let index = run
+                .iter()
+                .rposition(|element| *element != Element::LineBreak)
+                .map_or(0, |index| index + 1);
+            run.splice(index..index, self.pending_suppression_seams.drain(..));
+        }
+        if let Some(mut chrome) = capture.chrome.take() {
+            let mut item_attributes = AttributeMap::new();
+            item_attributes.insert("style", Cow::Borrowed("list-style: none"));
+            let item = ListItem::Elements {
+                elements: run,
+                attributes: item_attributes,
+            };
+            if let Element::List {
+                items,
+                wikidot_unclosed,
+                ..
+            } = &mut chrome
+            {
+                items.clear();
+                items.push(item);
+                *wikidot_unclosed = false;
+            }
+            self.finished.push(chrome);
+        }
+        self.current_unwrapped = false;
+        self.current_has_discarded_control = false;
+        self.wikidot_stash_br = 0;
+        self.wikidot_complete_raw_line_occupied = false;
+        self.wikidot_complete_raw_run_after_block = false;
+        self.wikidot_demoted_comment_break = false;
+        self.pending_unwrapped_separator = false;
+        self.unwrapped_after_block_line = false;
+        self.wikidot_footnote_joined_math_break = false;
+        self.wikidot_literal_iftags_line = false;
+        self.wikidot_literal_div_line = false;
+        self.wikidot_embed_error_residual = false;
+        self.trim_unwrapped_trailing_line_break = false;
+        self.suppress_next_line_break = false;
+        self.suppressed_line_break_restarts_paragraph = false;
+    }
+
     pub fn end_paragraph(&mut self) {
+        if self.wikidot_anchor_capture.is_some() {
+            if self.current.is_empty() {
+                // A paragraph boundary with no content yet (a blank line
+                // before the follower's inline run, or the gathered tail
+                // right after the block): nothing to capture, so do
+                // nothing; the blank-line arm comes from the gather's
+                // paragraph-break note.
+                return;
+            }
+            self.flush_anchor_capture();
+            return;
+        }
         if self.wikidot_bare_after_explicit_list && !self.current.is_empty() {
             self.current_unwrapped = true;
             self.unwrapped_after_block_line = true;

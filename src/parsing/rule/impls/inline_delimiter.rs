@@ -534,7 +534,14 @@ pub(super) fn body_crosses_item_boundary(parser: &Parser<'_, '_>, close: Token) 
     if parser.accepts_partial() != AcceptsPartial::ListItem {
         return false;
     }
-    let tokens = parser.remaining();
+    // The body's first token can itself be the explicit-list close when the
+    // opener ends an item ("a ##red|[[/li]]"): that token decides the
+    // deferral exactly like a later explicit-list close, so the walk starts at
+    // the current token instead of skipping it.
+    let remaining = parser.remaining();
+    let mut tokens = Vec::with_capacity(remaining.len() + 1);
+    tokens.push(parser.current().clone());
+    tokens.extend_from_slice(remaining);
     let mut blocks: Vec<String> = Vec::new();
     let mut raw = false;
     let mut monospace = 0usize;
@@ -558,13 +565,13 @@ pub(super) fn body_crosses_item_boundary(parser: &Parser<'_, '_>, close: Token) 
         }
         match token.token {
             Token::LeftBlock | Token::LeftBlockStar => {
-                let name = block_name_at(tokens, index);
+                let name = block_name_at(&tokens, index);
                 if !name.is_empty() && name != "li" {
                     blocks.push(name);
                 }
             }
             Token::LeftBlockEnd => {
-                let name = block_name_at(tokens, index);
+                let name = block_name_at(&tokens, index);
                 if blocks.is_empty() {
                     if matches!(name.as_str(), "li" | "ul" | "ol") {
                         return true;

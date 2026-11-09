@@ -35,6 +35,19 @@ enum IfTagsMarker {
 pub(crate) const WIKIDOT_CROSSED_LIST_BREAK_SENTINEL: &str =
     "[!--ftml-crossed-list-break--]";
 pub(crate) const WIKIDOT_CROSSED_OL_TAIL_SENTINEL: &str = "[!--ftml-crossed-ol-tail--]";
+pub(crate) const WIKIDOT_CROSSED_OL_OPEN_SENTINEL: &str = "[!--ftml-crossed-ol-open--]";
+
+/// The crossed-tail sentinel kinds the preprocessor may place after a flat
+/// crossed owner close (BRIEF-RM83 shapes 2/3, BRIEF-RMRES u2r-ol).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum WikidotCrossedCloseSentinel {
+    /// Keep the crossed frame's post-close break.
+    Break,
+    /// Emit the closed bullet anchor item before a keep-class block follower.
+    OlTail,
+    /// Emit the unclosed bullet anchor list that absorbs the remaining tail.
+    OlOpen,
+}
 
 fn split_line(line: &str) -> (&str, &str) {
     line.strip_suffix('\n')
@@ -1742,6 +1755,139 @@ fn crossed_tail_keeps_break(line: &str) -> bool {
     false
 }
 
+/// The first non-blank line index at or after 'from', or null at input end.
+/// Blank lines between a crossed owner closer and the swallowed list closer
+/// are invisible to live (BRIEF-RMRES blank grid: every j* row renders as its
+/// unblanked twin), so the canonicalizer skips them.
+fn first_nonblank_line_after(lines: &[String], from: usize) -> Option<usize> {
+    lines
+        .iter()
+        .enumerate()
+        .skip(from)
+        .find_map(|(index, line)| {
+            let (body, _) = split_line(line);
+            (!body.trim_matches([' ', '\t']).is_empty()).then_some(index)
+        })
+}
+
+/// Whether a blank line between the swallowed list closer and the follower
+/// drops the crossed frame's post-close break. Live keeps the break before
+/// prose, a plain closer, or EOF, and drops it before a heading, a rule line,
+/// or a block head (BRIEF-RMRES blank grid: b1/b2/b3/b7 keep, b4/b5/b6 drop).
+fn blank_separated_follower_drops_break(line: &str) -> bool {
+    let (body, _) = split_line(line);
+    let trimmed = body.trim_matches([' ', '\t']);
+    if trimmed.is_empty() {
+        return false;
+    }
+    let plus_run = trimmed
+        .as_bytes()
+        .iter()
+        .take_while(|byte| **byte == b'+')
+        .count();
+    if (1..=6).contains(&plus_run) && trimmed[plus_run..].starts_with([' ', '\t']) {
+        return true;
+    }
+    if trimmed.len() >= 4 && trimmed.bytes().all(|byte| byte == b'-') {
+        return true;
+    }
+    if let Some(inner) = trimmed.strip_prefix("[[")
+        && !inner.starts_with('/')
+    {
+        let name_end = inner
+            .find(|ch: char| ch.is_whitespace() || ch == ']')
+            .unwrap_or(inner.len());
+        let name = &inner[..name_end];
+        return !(name.eq_ignore_ascii_case("ul") || name.eq_ignore_ascii_case("ol"));
+    }
+    false
+}
+
+/// Whether the line is an explicit list opener (a list-head follower).
+fn crossed_tail_list_head(line: &str, prefix: &str) -> bool {
+    standalone_named_block_marker(line, prefix, "ul") == Some(true)
+        || standalone_named_block_marker(line, prefix, "ol") == Some(true)
+}
+
+/// BRIEF-RMRES u2d: a crossed align frame ([[=]], [[>]], [[<]], [[==]]) takes
+/// the same swallowed-list tail accounting as the div frame on live (probes
+/// muse-probe-rmres-align-a1..a10 are the div rows with the frame tag
+/// swapped). Lower the crossed frame's own markers to the equivalent div
+/// frame so the single crossed-owner path handles it; only a frame whose
+/// closer crosses an inner list is rewritten, so ordinary align blocks keep
+/// the alignment rule's own break accounting (and the sibling li-closed pin
+/// list/wikidot-li-align-cross-heading-close is not touched: its crossed
+/// closer is followed by a li closer, not a list closer).
+fn lower_crossed_align_frames(lines: &mut [String], literal_lines: &[bool]) {
+    const HEADS: &[(&str, &str)] = &[
+        ("=", "center"),
+        (">", "right"),
+        ("<", "left"),
+        ("==", "justify"),
+    ];
+    for &(symbol, align) in HEADS {
+        let mut index = 0;
+        while index + 1 < lines.len() {
+            if literal_lines[index] || literal_lines[index + 1] {
+                index += 1;
+                continue;
+            }
+            let (body, _) = split_line(&lines[index]);
+            let Some(marker_start) = body.find("[[") else {
+                index += 1;
+                continue;
+            };
+            let prefix = body[..marker_start].to_owned();
+            if standalone_named_block_marker(&lines[index], &prefix, symbol) != Some(true)
+                || !crossed_tail_list_head(&lines[index + 1], &prefix)
+            {
+                index += 1;
+                continue;
+            }
+            let mut crossed = None;
+            let mut cursor = index + 2;
+            while cursor + 1 < lines.len() {
+                if literal_lines[cursor] {
+                    break;
+                }
+                if standalone_named_block_marker(&lines[cursor], &prefix, symbol)
+                    == Some(false)
+                {
+                    let inner_at = first_nonblank_line_after(lines, cursor + 1)
+                        .filter(|&inner_at| !literal_lines[inner_at]);
+                    if let Some(inner_at) = inner_at
+                        && !crossed_tail_list_head(&lines[inner_at], &prefix)
+                        && (standalone_named_block_marker(
+                            &lines[inner_at],
+                            &prefix,
+                            "ul",
+                        ) == Some(false)
+                            || standalone_named_block_marker(
+                                &lines[inner_at],
+                                &prefix,
+                                "ol",
+                            ) == Some(false))
+                    {
+                        crossed = Some(cursor);
+                    }
+                    break;
+                }
+                cursor += 1;
+            }
+            let Some(cursor) = crossed else {
+                index += 1;
+                continue;
+            };
+            let opener_ending = split_line(&lines[index]).1.to_owned();
+            lines[index] =
+                format!("{prefix}[[div style=\"text-align: {align};\"]]{opener_ending}");
+            let closer_ending = split_line(&lines[cursor]).1.to_owned();
+            lines[cursor] = format!("{prefix}[[/div]]{closer_ending}");
+            index = cursor + 1;
+        }
+    }
+}
+
 fn formed_collapsible_open_before(lines: &[String], literal_lines: &[bool]) -> Vec<bool> {
     let mut open: std::collections::HashMap<String, bool> =
         std::collections::HashMap::new();
@@ -1768,6 +1914,8 @@ fn canonicalize_crossed_outer_owner_closers(
     lines: &mut [String],
     literal_lines: &[bool],
 ) {
+    lower_crossed_align_frames(lines, literal_lines);
+
     const PAIRS: &[(&str, &str, bool)] = &[
         ("div", "collapsible", false),
         ("div", "ul", true),
@@ -1816,6 +1964,7 @@ fn canonicalize_crossed_outer_owner_closers(
             let mut inner_depth = 1usize;
             let mut cursor = index + 2;
             let mut rewritten = false;
+            let mut next_index = index + 1;
             while cursor + 1 < lines.len() {
                 if literal_lines[cursor] {
                     break;
@@ -1827,52 +1976,140 @@ fn canonicalize_crossed_outer_owner_closers(
                         outer_depth += 1;
                     } else if outer_depth > 1 {
                         outer_depth -= 1;
-                    } else if inner_depth == 1
-                        && !literal_lines[cursor + 1]
-                        && standalone_named_block_marker(
-                            &lines[cursor + 1],
-                            &prefix,
-                            inner,
-                        ) == Some(false)
-                    {
+                    } else if inner_depth == 1 {
+                        let inner_at = first_nonblank_line_after(lines, cursor + 1)
+                            .filter(|&inner_at| !literal_lines[inner_at])
+                            .filter(|&inner_at| {
+                                standalone_named_block_marker(
+                                    &lines[inner_at],
+                                    &prefix,
+                                    inner,
+                                ) == Some(false)
+                            });
+                        let Some(inner_at) = inner_at else {
+                            break;
+                        };
+                        let follower_at = first_nonblank_line_after(lines, inner_at + 1)
+                            .filter(|&follower_at| !literal_lines[follower_at]);
+                        let blank_after_inner = follower_at
+                            .is_some_and(|follower_at| follower_at > inner_at + 1);
                         let outer_ending = split_line(&lines[cursor]).1.to_owned();
-                        let inner_ending = split_line(&lines[cursor + 1]).1.to_owned();
+                        let inner_ending = split_line(&lines[inner_at]).1.to_owned();
                         if retain_outer_break {
-                            let sentinel = if inner == "ol" {
-                                WIKIDOT_CROSSED_OL_TAIL_SENTINEL
+                            let follower_line = follower_at.map(|f| lines[f].as_str());
+                            // BRIEF-RM83 shapes 2/3 plus the BRIEF-RMRES
+                            // blank grid: live keeps the crossed frame's
+                            // post-close break before EOF, prose, a plain
+                            // closer, a heading, a rule line or a block head.
+                            // Blanks before the swallowed list closer are
+                            // invisible; after it they keep the break before
+                            // prose/closers and drop it before block heads.
+                            let keeps = if blank_after_inner {
+                                follower_line.is_none_or(|line| {
+                                    !blank_separated_follower_drops_break(line)
+                                })
                             } else {
-                                WIKIDOT_CROSSED_LIST_BREAK_SENTINEL
+                                follower_line.is_none_or(crossed_tail_keeps_break)
                             };
-                            // BRIEF-RM83 shapes 2/3 (probes
-                            // muse-probe-rm83-u2* and muse-probe-rm83r2-*):
-                            // live keeps the crossed frame's post-close break
-                            // only when the line after the swallowed list
-                            // closer is EOF, blank, or starts block flow
-                            // (heading, `----`, flat-pair head). A text /
-                            // closer / list-head / table follower continues on
-                            // the frame's own line with no break, so join it.
-                            let keep_break = prefix.is_empty()
-                                && lines
-                                    .get(cursor + 2)
-                                    .is_none_or(|line| crossed_tail_keeps_break(line));
+                            let keep_break = prefix.is_empty() && keeps;
                             if keep_break {
+                                let follower_is_block_head = follower_line
+                                    .is_some_and(blank_separated_follower_drops_break);
+                                let sentinel = if inner == "ol" {
+                                    if follower_is_block_head {
+                                        WIKIDOT_CROSSED_OL_TAIL_SENTINEL
+                                    } else {
+                                        WIKIDOT_CROSSED_OL_OPEN_SENTINEL
+                                    }
+                                } else {
+                                    WIKIDOT_CROSSED_LIST_BREAK_SENTINEL
+                                };
                                 lines[cursor] = format!(
                                     "{prefix}[[/{inner}]][[/{outer}]]{sentinel}{inner_ending}"
                                 );
-                                lines[cursor + 1].clear();
-                            } else {
+                                for line in
+                                    lines.iter_mut().take(inner_at + 1).skip(cursor + 1)
+                                {
+                                    line.clear();
+                                }
+                                // A blank after a UL list closer is absorbed
+                                // into the kept break; an OL tail keeps it so
+                                // the open anchor item sees the break.
+                                if inner == "ul"
+                                    && let Some(follower_at) = follower_at
+                                {
+                                    for line in lines
+                                        .iter_mut()
+                                        .take(follower_at)
+                                        .skip(inner_at + 1)
+                                    {
+                                        line.clear();
+                                    }
+                                }
+                                next_index = follower_at.unwrap_or(inner_at + 1);
+                            } else if blank_after_inner
+                                && follower_at.is_some()
+                                && prefix.is_empty()
+                            {
+                                // Blank-separated block head: live drops the
+                                // break and keeps the blank (b4/b5/b6); the
+                                // swapped closer order reproduces that shape
+                                // without a sentinel.
+                                lines[cursor] =
+                                    format!("{prefix}[[/{inner}]]{outer_ending}");
+                                lines[inner_at] =
+                                    format!("{prefix}[[/{outer}]]{inner_ending}");
+                                for line in
+                                    lines.iter_mut().take(inner_at).skip(cursor + 1)
+                                {
+                                    line.clear();
+                                }
+                                next_index = inner_at + 1;
+                            } else if inner == "ol"
+                                && prefix.is_empty()
+                                && follower_at.is_some_and(|f| {
+                                    !crossed_tail_list_head(&lines[f], &prefix)
+                                })
+                            {
+                                // Numbered-list anchor tail (BRIEF-RMRES
+                                // u2r-ol): live wraps the remaining tail in an
+                                // unclosed bullet anchor list; the flat-close
+                                // consumer emits it and the follower lines
+                                // nest inside its open item.
+                                lines[cursor] = format!(
+                                    "{prefix}[[/{inner}]][[/{outer}]]{WIKIDOT_CROSSED_OL_OPEN_SENTINEL}{inner_ending}"
+                                );
+                                for line in
+                                    lines.iter_mut().take(inner_at + 1).skip(cursor + 1)
+                                {
+                                    line.clear();
+                                }
+                                next_index = follower_at.unwrap_or(inner_at + 1);
+                            } else if let Some(follower_at) = follower_at {
                                 let (follower_body, follower_ending) =
-                                    split_line(&lines[cursor + 2]);
+                                    split_line(&lines[follower_at]);
                                 lines[cursor] = format!(
                                     "{prefix}[[/{inner}]][[/{outer}]]{follower_body}{follower_ending}"
                                 );
-                                lines[cursor + 1].clear();
-                                lines[cursor + 2].clear();
+                                for line in lines
+                                    .iter_mut()
+                                    .take(follower_at + 1)
+                                    .skip(cursor + 1)
+                                {
+                                    line.clear();
+                                }
+                                next_index = follower_at + 1;
+                            } else {
+                                break;
                             }
                         } else {
                             lines[cursor] = format!("{prefix}[[/{inner}]]{outer_ending}");
-                            lines[cursor + 1] =
+                            lines[inner_at] =
                                 format!("{prefix}[[/{outer}]]{inner_ending}");
+                            for line in lines.iter_mut().take(inner_at).skip(cursor + 1) {
+                                line.clear();
+                            }
+                            next_index = inner_at + 1;
                         }
                         rewritten = true;
                         break;
@@ -1893,7 +2130,7 @@ fn canonicalize_crossed_outer_owner_closers(
                 cursor += 1;
             }
             if rewritten {
-                index = cursor + 2;
+                index = next_index;
             } else {
                 index += 1;
             }

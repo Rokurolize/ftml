@@ -1,0 +1,66 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "blockquote",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "anchor",
+                        "data": {
+                            "target": null,
+                            "attributes": {
+                                "href": "#x"
+                            },
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "##"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "red"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "|"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "a"
+                                },
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "blockquote",
+                                        "attributes": {},
+                                        "elements": [
+                                            {
+                                                "element": "container",
+                                                "data": {
+                                                    "type": "paragraph",
+                                                    "attributes": {},
+                                                    "elements": [
+                                                        {
+                                                            "element": "text",
+                                                            "data": "b"
+                                                        },
+                                                        {
+                                                            "element": "text",
+                                                            "data": "##"
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

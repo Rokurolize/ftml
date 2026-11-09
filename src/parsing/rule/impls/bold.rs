@@ -43,6 +43,7 @@ fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create bold (strong) container");
+    let in_anchor_body = parser.in_wikidot_anchor_body();
     if parser.current().token == Token::BulletItem {
         return try_consume_split_delimiter(parser);
     }
@@ -71,7 +72,7 @@ fn try_consume_fn<'r, 't>(
     let inside_note = parser.in_note()
         || parser.wikidot_note_pair_encloses(parser.current().span.start);
     let collected = collect_container(parser, RULE_BOLD, ctype, &close, &invalid, None)?;
-    finish_collected(parser, collected, inside_note)
+    finish_collected(parser, in_anchor_body, collected, inside_note)
 }
 
 fn is_break_token(token: Token) -> bool {
@@ -415,6 +416,7 @@ fn empty_list_bold_after(parser: &Parser<'_, '_>) -> Option<usize> {
 fn try_consume_split_delimiter<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    let in_anchor_body = parser.in_wikidot_anchor_body();
     let inside_note = parser.in_note()
         || parser.wikidot_note_pair_encloses(parser.current().span.start);
     let Some(split_match) = split_delimiter_end(
@@ -463,7 +465,7 @@ fn try_consume_split_delimiter<'r, 't>(
         }
         None => collected,
     };
-    finish_collected(parser, collected, inside_note)
+    finish_collected(parser, in_anchor_body, collected, inside_note)
 }
 
 pub(super) fn bold_body_crosses_flow_block(elements: &Elements<'_>) -> bool {
@@ -497,6 +499,7 @@ pub(super) fn bold_body_crosses_flow_block(elements: &Elements<'_>) -> bool {
 
 fn finish_collected<'r, 't>(
     parser: &mut Parser<'r, 't>,
+    in_anchor_body: bool,
     collected: ParseSuccess<Elements<'t>>,
     inside_note: bool,
 ) -> ParseResult<'r, 't, Elements<'t>> {
@@ -548,8 +551,8 @@ fn finish_collected<'r, 't>(
         Some(leftover) => append_split_close_leftover(elements, leftover),
         None => elements,
     };
-    let elements = super::bold::mark_format_stop_at_list(parser, elements);
-    let elements = mark_span_list_close_tail(parser, elements);
+    let elements = super::bold::mark_format_stop_at_list(parser, in_anchor_body, elements);
+    let elements = mark_span_list_close_tail(parser, in_anchor_body, elements);
     ok!(paragraph_safe; elements, errors)
 }
 
@@ -619,20 +622,75 @@ fn literal_note_head_at(lower: &str) -> Option<usize> {
     None
 }
 
+/// The format container a spanin tail verdict applies to, as an index into
+/// `elements`: the collector returns the pair as a single element, or in a
+/// `Multiple` alongside the line-close space when the closer sits on its own
+/// line (spadj cell 1: matching only the single-container shape skipped
+/// stamping those tails entirely). The stopped family's
+/// `find_stop_at_list_container` already sees through that shape; this is
+/// the shared lookup for the bold/italics/superscript/subscript tail
+/// families.
+fn stampable_container_index(elements: &Elements<'_>) -> Option<usize> {
+    let at = |element: &Element<'_>| {
+        matches!(
+            element,
+            Element::Container(container)
+                if matches!(
+                    container.ctype(),
+                    ContainerType::Bold
+                        | ContainerType::Italics
+                        | ContainerType::Superscript
+                        | ContainerType::Subscript
+                )
+        )
+    };
+    match elements {
+        Elements::Single(element) if at(element) => Some(0),
+        Elements::Multiple(elements) => elements.iter().position(at),
+        _ => None,
+    }
+}
+
+fn stampable_container<'e, 't>(
+    elements: &'e Elements<'t>,
+    index: usize,
+) -> &'e Container<'t> {
+    match elements {
+        Elements::Single(Element::Container(container)) => container,
+        Elements::Multiple(elements) => match &elements[index] {
+            Element::Container(container) => container,
+            _ => unreachable!("stampable container index checked by the caller"),
+        },
+        _ => unreachable!("stampable container index checked by the caller"),
+    }
+}
+
+fn stampable_container_mut<'e, 't>(
+    elements: &'e mut Elements<'t>,
+    index: usize,
+) -> &'e mut Container<'t> {
+    match elements {
+        Elements::Single(Element::Container(container)) => container,
+        Elements::Multiple(elements) => match &mut elements[index] {
+            Element::Container(container) => container,
+            _ => unreachable!("stampable container index checked by the caller"),
+        },
+        _ => unreachable!("stampable container index checked by the caller"),
+    }
+}
+
 /// A bold, italics, superscript or subscript pair that closed beyond an
 /// explicit list inside a span or size body leaves live shapes on the
 /// following scope-content paragraph (spanin family). The syntax tree loses
-/// the newline-count distinction
-/// there, so the gap after the close marker is classified here, from the
-/// token stream, and stamped on the format container as an internal marker
-/// for inline-scope lowering:
-/// a single newline then `[[/span]]`/`[[/size]]` (break-only tail segment
-/// materialises
-/// after the list), adjacent content text (the after-list paragraph is
-/// bare with no inserted leading break), or content on the line after the
-/// close (the after-list paragraph keeps the scope's inline run, renders
-/// bare inside the scope with an inserted leading break). At this point the
-/// parser sits on the first token after the pair close.
+/// the newline-count distinction there, so the gap after the close marker is
+/// classified here, from the token stream, and stamped on the format
+/// container as an internal marker for inline-scope lowering: a single
+/// newline then `[[/span]]`/`[[/size]]` (break-only tail segment
+/// materialises after the list), adjacent content text (the after-list
+/// paragraph is bare with no inserted leading break), or content on the line
+/// after the close (the after-list paragraph keeps the scope's inline run,
+/// renders bare inside the scope with an inserted leading break). At this
+/// point the parser sits on the first token after the pair close.
 ///
 /// The inverse shape (strong-x family) stamps the same markers: a span or
 /// size scope inside the format pair closes beyond the explicit list (its
@@ -640,8 +698,11 @@ fn literal_note_head_at(lower: &str) -> Option<usize> {
 /// is likewise bare — with a leading break when the close is followed by a
 /// newline (`<br>[[/hidden]]`), and no leading break when content follows
 /// the pair close directly (`tail<br>...`).
+///
+/// Scopeless crossings are handled by `mark_scopeless_span_list_close_tail`.
 pub(super) fn mark_span_list_close_tail<'r, 't>(
     parser: &Parser<'r, 't>,
+    in_anchor_body: bool,
     mut elements: Elements<'t>,
 ) -> Elements<'t> {
     if !parser.settings().layout.legacy() {
@@ -649,19 +710,14 @@ pub(super) fn mark_span_list_close_tail<'r, 't>(
     }
     let in_span_body = parser.in_wikidot_span_body();
     let in_size_body = parser.in_wikidot_size_body();
-    let in_inline_scope_body = in_span_body || in_size_body;
-    let Elements::Single(Element::Container(container)) = &elements else {
+    if !(in_span_body || in_size_body) {
+        return mark_scopeless_span_list_close_tail(parser, in_anchor_body, elements);
+    }
+    let Some(index) = stampable_container_index(&elements) else {
         return elements;
     };
-    if !matches!(
-        container.ctype(),
-        ContainerType::Bold
-            | ContainerType::Italics
-            | ContainerType::Superscript
-            | ContainerType::Subscript
-    ) {
-        return elements;
-    }
+    let container = stampable_container(&elements, index);
+    let ctype = container.ctype();
     let crosses_explicit_list = container
         .elements()
         .iter()
@@ -678,97 +734,124 @@ pub(super) fn mark_span_list_close_tail<'r, 't>(
     }
     let current = parser.current();
     let rest = parser.remaining();
-    let marker = if in_inline_scope_body {
-        match classify_tail_gap(current, rest, &["span", "size"]) {
-            Some(gap) => {
-                // The fold gap (pair closer immediately followed by the
-                // enclosing scope close) is the pw90 frozen shape: live
-                // closes the scope right after the pair's post-list segment,
-                // so that segment carries no trailing break. Only the
-                // bold/italics pair family is evidenced; superscript/
-                // subscript keep the previous (unmarked) behaviour.
-                if matches!(gap, SpanListCloseTail::Fold)
-                    && !matches!(
-                        container.ctype(),
-                        ContainerType::Bold | ContainerType::Italics
-                    )
-                {
-                    return elements;
-                }
-                span_tail_marker(gap)
+    let marker = match classify_tail_gap(current, rest, &["span", "size"]) {
+        Some(gap) => {
+            // The fold gap (pair closer immediately followed by the enclosing
+            // scope close) is the pw90 frozen shape: live closes the scope right
+            // after the pair's post-list segment, so that segment carries no
+            // trailing break. Only the bold/italics pair family is evidenced;
+            // superscript/subscript keep the previous (unmarked) behaviour.
+            if matches!(gap, SpanListCloseTail::Fold)
+                && !matches!(ctype, ContainerType::Bold | ContainerType::Italics)
+            {
+                return elements;
             }
-            None => {
-                // Unclassifiable gap (non-list follower: scope close, EOF,
-                // prose — list-after-blank classifies as Blank above): stamp
-                // the blank mark only when the gap holds a blank line
-                // (sptail: the post-list tail then keeps the blank break
-                // inside the scope). Bold/italics only, mirroring the fold
-                // restriction above.
-                if gap_has_blank(current, rest)
-                    && matches!(
-                        container.ctype(),
-                        ContainerType::Bold | ContainerType::Italics
-                    )
-                {
-                    crate::tree::WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER
-                } else {
-                    return elements;
-                }
+            span_tail_marker(gap)
+        }
+        None => {
+            // Unclassifiable gap (non-list follower: scope close, EOF,
+            // prose — list-after-blank classifies as Blank above): stamp
+            // the blank mark only when the gap holds a blank line
+            // (sptail: the post-list tail then keeps the blank break
+            // inside the scope). Bold/italics only, mirroring the fold
+            // restriction above.
+            if gap_has_blank(current, rest)
+                && matches!(ctype, ContainerType::Bold | ContainerType::Italics)
+            {
+                crate::tree::WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER
+            } else {
+                return elements;
             }
         }
-    } else {
-        // Scopeless list-crossing pair (page root or a block envelope such
-        // as div/note/collapsible, including unclosed openers that render
-        // literally): live applies the same bare/lead tail rule as the
-        // spanin family, with no scope to retire. Anchor bodies are owned
-        // by the stopped path in mark_format_stop_at_list; label-straddling
-        // pairs keep the inverse-shape handling below.
-        if !parser.in_wikidot_anchor_body()
-            && !crate::parsing::inline_scope::label_scope_straddles_list(
-                container.elements(),
+    };
+    stamp_tail_marker(
+        parser,
+        stampable_container_mut(&mut elements, index).attributes_mut(),
+        marker,
+    );
+    elements
+}
+
+/// Scopeless list-crossing pair (page root or a block envelope such as
+/// div/note/collapsible, including unclosed openers that render literally):
+/// live applies the same bare/lead tail rule as the spanin family, with no
+/// scope to retire. Anchor bodies are owned by the stopped path in
+/// `mark_format_stop_at_list`; label-straddling pairs keep the
+/// inverse-shape handling.
+///
+/// The pair is looked up through the line-close space
+/// (`stampable_container_index`): an own-line closer leaves the body ending
+/// in a line break, so the collector returns
+/// `Multiple([Container, Text(" ")])` — the m3x3 root shape closes the pair
+/// on a line after the crossed list. A flow-block-crossed pair is rejected
+/// later by inline-scope lowering and its markers are re-emitted literally;
+/// the tail verdict is still stamped so the literalised output can carry it
+/// to the post-list run.
+fn mark_scopeless_span_list_close_tail<'r, 't>(
+    parser: &Parser<'r, 't>,
+    in_anchor_body: bool,
+    mut elements: Elements<'t>,
+) -> Elements<'t> {
+    let Some(index) = stampable_container_index(&elements) else {
+        return elements;
+    };
+    let container = stampable_container(&elements, index);
+    let crosses_explicit_list = container
+        .elements()
+        .iter()
+        .any(crate::parsing::inline_scope::subtree_contains_explicit_list);
+    if !crosses_explicit_list {
+        return elements;
+    }
+    let crosses_flow_block = container
+        .elements()
+        .iter()
+        .any(|child| crate::parsing::inline_scope::subtree_contains_flow_block(child));
+    let label_straddles =
+        crate::parsing::inline_scope::label_scope_straddles_list(container.elements());
+    let current = parser.current();
+    let rest = parser.remaining();
+    if !in_anchor_body && !label_straddles {
+        if let Some(gap) = classify_tail_gap(current, rest, &[])
+            && matches!(
+                gap,
+                SpanListCloseTail::Bare
+                    | SpanListCloseTail::Lead
+                    | SpanListCloseTail::Blank
             )
         {
-            if let Some(gap) = classify_tail_gap(current, rest, &[])
-                && matches!(
-                    gap,
-                    SpanListCloseTail::Bare
-                        | SpanListCloseTail::Lead
-                        | SpanListCloseTail::Blank
-                )
-            {
-                let Elements::Single(Element::Container(container)) = &mut elements
-                else {
-                    unreachable!("single bold element checked above");
-                };
-                stamp_tail_marker(
-                    parser,
-                    container.attributes_mut(),
-                    span_tail_marker(gap),
-                );
-            }
-            return elements;
+            stamp_tail_marker(
+                parser,
+                stampable_container_mut(&mut elements, index).attributes_mut(),
+                span_tail_marker(gap),
+            );
         }
-        if current.token == Token::LineBreak {
-            crate::tree::WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER
-        } else if matches!(current.token, Token::RuntimeText | Token::Identifier)
-            && !current.slice.trim().is_empty()
-        {
-            crate::tree::WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER
-        } else if current.token == Token::Whitespace
-            && rest.first().is_some_and(|next| {
-                matches!(next.token, Token::RuntimeText | Token::Identifier)
-                    && !next.slice.trim().is_empty()
-            })
-        {
-            crate::tree::WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER
-        } else {
-            return elements;
-        }
+        return elements;
+    }
+    if crosses_flow_block {
+        return elements;
+    }
+    let marker = if current.token == Token::LineBreak {
+        crate::tree::WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER
+    } else if matches!(current.token, Token::RuntimeText | Token::Identifier)
+        && !current.slice.trim().is_empty()
+    {
+        crate::tree::WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER
+    } else if current.token == Token::Whitespace
+        && rest.first().is_some_and(|next| {
+            matches!(next.token, Token::RuntimeText | Token::Identifier)
+                && !next.slice.trim().is_empty()
+        })
+    {
+        crate::tree::WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER
+    } else {
+        return elements;
     };
-    let Elements::Single(Element::Container(container)) = &mut elements else {
-        unreachable!("single bold element checked above")
-    };
-    stamp_tail_marker(parser, container.attributes_mut(), marker);
+    stamp_tail_marker(
+        parser,
+        stampable_container_mut(&mut elements, index).attributes_mut(),
+        marker,
+    );
     elements
 }
 
@@ -790,12 +873,13 @@ pub(super) fn mark_span_list_close_tail<'r, 't>(
 /// the first token after the close.
 pub(super) fn mark_format_stop_at_list<'r, 't>(
     parser: &Parser<'r, 't>,
+    in_anchor_body: bool,
     mut elements: Elements<'t>,
 ) -> Elements<'t> {
     if !parser.settings().layout.legacy()
         || !(parser.in_wikidot_span_body()
             || parser.in_wikidot_size_body()
-            || parser.in_wikidot_anchor_body())
+            || in_anchor_body)
     {
         // Scopeless underline/strikethrough crossing (page root or a block
         // envelope): the pair crosses like bold on live (the item keeps its
@@ -836,7 +920,7 @@ pub(super) fn mark_format_stop_at_list<'r, 't>(
         }
         return elements;
     }
-    let in_anchor = parser.in_wikidot_anchor_body();
+    let in_anchor = in_anchor_body;
 
     // Check for Element::Color
     if let Some(color_info) = find_color_stop_at_list_info(&elements, in_anchor) {

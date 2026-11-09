@@ -242,6 +242,14 @@ where
         {
             return Ok(false);
         }
+        if parser.wikidot_format_collection_body()
+            && parser.current().token == Token::LeftBlock
+            && parser
+                .block_head_name_here()
+                .is_some_and(|name| name == "div")
+        {
+            return Ok(false);
+        }
         let rules = own_line_rules(parser.current().token);
         Ok(rules.iter().any(|rule| rule.try_consume(parser).is_ok()))
     });

@@ -103,6 +103,10 @@ pub(crate) const WIKIDOT_TABVIEW_TAIL_MARKER: &str = "data-ftml-tabview-tail";
 /// live's libtidy repair leaves a stray unclosed `<ul>` opener after the
 /// quote. On the last body element only; stripped when rendered.
 pub(crate) const WIKIDOT_QUOTE_LIST_REPAIR_MARKER: &str = "data-ftml-quote-list-repair";
+/// Marks the explicit list a blank quoted line reopened an anchor before, so
+/// the inline lowering repeats the empty anchor paragraph; stripped when
+/// rendered.
+pub(crate) const WIKIDOT_QUOTE_BLANK_ANCHOR_MARKER: &str = "data-ftml-quote-blank-anchor";
 /// Lists the attributes whose Wikidot head value evaluated to empty, so the
 /// renderer emits `key=""` for them the way live does; stripped when rendered.
 pub(crate) const WIKIDOT_EMPTY_VALUE_ATTRIBUTE_MARKER: &str = "data-ftml-empty-value";
@@ -185,6 +189,15 @@ pub(crate) const WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER: &str =
     "data-ftml-list-item-blank-line";
 pub(crate) const WIKIDOT_POST_LIST_BLANK_GAP_MARKER: &str =
     "data-ftml-post-list-blank-gap";
+/// Marks an explicit list whose post-list tail content is preceded by source
+/// whitespace (`[[/ul]] __ d`, or a leading space on the next line). Live's
+/// inline pairing sees that pad, so a closer sitting at the first tail content
+/// cannot close a symmetric format pair; FTML's paragraph gathering trims the
+/// space before inline pairing, so the segment join carries the fact here.
+/// Consumed by the inline-format join; never rendered (all `data-ftml-*` keys
+/// are omitted by the HTML builder).
+pub(crate) const WIKIDOT_LIST_TAIL_LEAD_SPACE_MARKER: &str =
+    "data-ftml-list-tail-lead-space";
 /// Marks the first pre-list segment of an inline format pair that was
 /// segmented around an explicit list (the own-line opener of the pair sits on
 /// a line of its own before the list). Live renders that leading chunk as a
@@ -577,7 +590,8 @@ fn collect_page_references(
                 | PartialElement::InlineColorOpen(..)
                 | PartialElement::InlineColorClose
                 | PartialElement::InlineAnchorOpen(..)
-                | PartialElement::InlineAnchorClose(_) => {}
+                | PartialElement::InlineAnchorClose(_)
+                | PartialElement::WikidotEquationNumber(..) => {}
             },
             _ => {}
         }
@@ -688,7 +702,8 @@ fn collect_user_references(
                 | PartialElement::InlineColorOpen(..)
                 | PartialElement::InlineColorClose
                 | PartialElement::InlineAnchorOpen(..)
-                | PartialElement::InlineAnchorClose(_) => {}
+                | PartialElement::InlineAnchorClose(_)
+                | PartialElement::WikidotEquationNumber(..) => {}
             },
             _ => {}
         }

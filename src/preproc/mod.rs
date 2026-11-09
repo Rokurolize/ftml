@@ -26,8 +26,9 @@ mod compatibility;
 mod parser_functions;
 
 pub(crate) use self::compatibility::{
-    WIKIDOT_CROSSED_LIST_BREAK_SENTINEL, WIKIDOT_CROSSED_OL_TAIL_SENTINEL,
-    quote_depth_and_body, wikidot_outer_div_still_open_at_collapsible_close,
+    WIKIDOT_CROSSED_LIST_BREAK_SENTINEL, WIKIDOT_CROSSED_OL_OPEN_SENTINEL,
+    WIKIDOT_CROSSED_OL_TAIL_SENTINEL, WikidotCrossedCloseSentinel, quote_depth_and_body,
+    wikidot_outer_div_still_open_at_collapsible_close,
 };
 pub(crate) use self::parser_functions::LiteralRegionIndex;
 pub use self::parser_functions::{

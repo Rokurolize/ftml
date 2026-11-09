@@ -24,6 +24,7 @@ use super::footnote_first::{
 use super::line_owner::{LineOwner, LostOwnerBlock, try_consume_lost_owner_block};
 use super::prelude::*;
 use crate::parsing::ParseSuccess;
+use crate::parsing::inline_scope::visit_children;
 use crate::parsing::paragraph::{
     ParagraphStack, collapsible_has_direct_literal_nested_opener,
 };
@@ -507,7 +508,8 @@ where
             ParseCondition::current(Token::InputEnd),
             ParseCondition::current(Token::LeftBlock),
         ];
-        let Ok(result) = collect_native_blockquote_line(&mut collect_parser, &close)
+        let Ok(result) =
+            collect_native_blockquote_line(&mut collect_parser, &close, None)
         else {
             return None;
         };
@@ -1103,7 +1105,7 @@ fn try_consume_fn<'r, 't>(
         parser.clear_wikidot_quote_boundary_list_close();
         let _ = parser.take_wikidot_quote_boundary_li_auto_close();
         parser.set_native_blockquote_depth(Some(absolute_depth));
-        let result = collect_native_blockquote_line(parser, close);
+        let result = collect_native_blockquote_line(parser, close, Some(physical_depth));
         parser.set_native_blockquote_depth(original_depth);
         let errors_before = errors.len();
         let ParseSuccess {
@@ -1347,6 +1349,69 @@ fn try_consume_fn<'r, 't>(
             && parser.current().token == Token::ParagraphBreak
         {
             quote_run_active = false;
+        }
+        // A crossed inline container keeps consuming past this row's line
+        // end; the remainder of the line it ran into still belongs to this
+        // quote row. Collect it here so a closer does not escape to the page
+        // root as an orphaned inline-scope partial. Only the rest of a
+        // *quoted* line at this row's depth is row content; a following
+        // unquoted (or shallower) line belongs to the outer parse.
+        let tail_line_is_row_content = parser.settings().layout.legacy()
+            && consumed_past_line
+            && !matches!(
+                parser.current().token,
+                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd | Token::Quote
+            )
+            && {
+                let source = parser.full_text().inner();
+                let position = parser.current().span.start.min(source.len());
+                let line_start =
+                    source[..position].rfind('\n').map_or(0, |index| index + 1);
+                let prefix = &source[line_start..position];
+                !prefix.trim().is_empty() && quote_line_marker_count(prefix) == depth
+            };
+        if tail_line_is_row_content {
+            parser.set_native_blockquote_depth(Some(absolute_depth));
+            let tail = collect_native_blockquote_line(parser, close, Some(depth));
+            parser.set_native_blockquote_depth(original_depth);
+            let ParseSuccess {
+                item: tail_line,
+                errors: tail_errors,
+                paragraph_safe: tail_safe,
+                ..
+            } = tail?;
+            errors.extend(tail_errors);
+            paragraph_safe &= tail_safe;
+            let tail_len = tail_line.elements.len();
+            if tail_len > 0 {
+                match (&mut paragraph_split, tail_line.paragraph_split) {
+                    (None, Some(counts)) => paragraph_split = Some(counts),
+                    (Some(counts), Some(mut tail_counts)) => {
+                        let last = counts.last_mut().expect("split is non-empty");
+                        let joined = tail_counts.remove(0);
+                        last.0 += joined.0;
+                        last.1 &= joined.1;
+                        counts.extend(tail_counts);
+                    }
+                    (Some(counts), None) => {
+                        let last = counts.last_mut().expect("split is non-empty");
+                        last.0 += tail_len;
+                        last.1 &= tail_safe;
+                    }
+                    (None, None) => {}
+                }
+            }
+            for unit in tail_line.escaped_units {
+                match unit {
+                    QuoteEscapedUnit::Elements(unit_elements, safe) => {
+                        gate_escaped_segments.push((unit_elements, safe));
+                    }
+                    QuoteEscapedUnit::Row(depth, unit_elements, safe) => {
+                        pending_rows.push((depth, unit_elements, safe));
+                    }
+                }
+            }
+            elements.extend(tail_line.elements);
         }
         let empty_spaced_row =
             row_is_empty && spaced_after_marker && single_space_after_marker;
@@ -2027,9 +2092,83 @@ fn form_quote_row_unit<'t>(
     formed
 }
 
+/// Whether the row collecter's line-end stop found the parser stranded
+/// past its row: a nested collect (a format pair closing on a later quote
+/// row) consumed that row's prefix and closer, leaving same-line content
+/// behind. Live keeps the remainder in the quote paragraph, with the row's
+/// prefix space as separator when no list intervened; stopping here would
+/// strand it outside the quote (parsed as root content). Resume it as this
+/// row's content when it sits on a same-depth quote row carrying
+/// non-structural content. Returns whether to continue, and whether to
+/// prepend the eaten prefix space (not when the row already holds a list:
+/// live drops the separator after a list).
+fn crossed_row_remainder(
+    parser: &Parser<'_, '_>,
+    elements: &[Element<'_>],
+    row_depth: Option<usize>,
+) -> Option<bool> {
+    if !parser.settings().layout.legacy() {
+        return None;
+    }
+    let row_depth = row_depth?;
+    match parser.current().token {
+        Token::LineBreak
+        | Token::ParagraphBreak
+        | Token::InputEnd
+        | Token::LeftBlock
+        | Token::LeftBlockEnd
+        | Token::LeftBlockStar
+        | Token::Quote
+        | Token::BulletItem
+        | Token::NumberedItem
+        | Token::Heading
+        | Token::TableColumn
+        | Token::TableColumnTitle
+        | Token::TableColumnCenter
+        | Token::TableColumnRight => return None,
+        _ => {}
+    }
+    // The closer the nested collect just consumed may sit between the row
+    // prefix and the remainder (`> __tail`), so scan the prefix forward
+    // from the line start instead: quote markers at this depth, then a
+    // space. Anything else (deeper rows, non-quote lines, `>x` without a
+    // prefix space) stays stranded as today.
+    let source = parser.full_text().inner();
+    let pos = parser.current().span.start.min(source.len());
+    let line_start = source[..pos].rfind('\n').map_or(0, |offset| offset + 1);
+    let rest = &source[line_start..];
+    let quotes = rest.bytes().take_while(|byte| *byte == b'>').count();
+    if quotes != row_depth {
+        return None;
+    }
+    if !rest[quotes..].starts_with(' ') {
+        return None;
+    }
+    if matches!(parser.current().token, Token::Whitespace) {
+        return Some(false);
+    }
+    let crossed_list = elements.iter().any(subtree_has_list);
+    Some(!crossed_list)
+}
+
+/// Whether a crossed row's collected elements hold an explicit list: the
+/// pair closed beyond one, so live drops the resumed remainder's separator
+/// space after it.
+fn subtree_has_list(element: &Element<'_>) -> bool {
+    if matches!(element, Element::List { .. }) {
+        return true;
+    }
+    let mut found = false;
+    visit_children(element, &mut |children| {
+        found |= children.iter().any(subtree_has_list);
+    });
+    found
+}
+
 fn collect_native_blockquote_line<'r, 't>(
     parser: &mut Parser<'r, 't>,
     close: &[ParseCondition],
+    resume_crossed_row: Option<usize>,
 ) -> ParseResult<'r, 't, NativeQuoteLine<'t>> {
     let line_end_token = std::iter::once(parser.current())
         .chain(parser.remaining().iter())
@@ -2092,10 +2231,63 @@ fn collect_native_blockquote_line<'r, 't>(
         elements.extend(chunk);
         escaped_units.extend(parser.take_quote_escaped_units());
 
+        // A rule (a color body on a quote cursor) can step past this row's
+        // line break and stop before consuming the rest of the deeper line.
+        // When that deeper line is itself a quote row whose marker the rule
+        // already stepped over, the remaining tokens are still this row's
+        // content; collect them instead of stranding them for the outer
+        // parser. Anything else (a break, the next quote row's marker, or an
+        // unquoted follower line) ends the row as before.
         if parser.current().span.start >= line_end {
-            return ok!(paragraph_safe; native_quote_line(elements, layout, layout_live, escaped_units), errors);
+            let at_break = matches!(
+                parser.current().token,
+                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+            );
+            let row_marker_ahead = parser.current().token == Token::Quote;
+            let source = parser.full_text().inner();
+            let here = parser.current().span.start.min(source.len());
+            let line_start = source[..here].rfind('\n').map_or(0, |index| index + 1);
+            let quoted_line = source[line_start..].starts_with('>');
+            // A closer that paired across an explicit list ate this row's
+            // prefix: resume the same-depth remainder with the prefix space
+            // as separator (live-verified; no separator after a list).
+            if let Some(prepend_space) =
+                crossed_row_remainder(parser, &elements, resume_crossed_row)
+            {
+                if prepend_space {
+                    let separator = vec![Element::Text(std::borrow::Cow::Borrowed(" "))];
+                    merge_quote_line_chunk(
+                        &mut layout,
+                        &mut layout_live,
+                        &separator,
+                        true,
+                        None,
+                    );
+                    elements.extend(separator);
+                }
+                continue;
+            }
+            // A rule (a color body on a quote cursor) can step past this
+            // row's line break and stop before consuming the rest of the
+            // deeper line (rbqres #1365): collect it rather than stranding
+            // it for the outer parser.
+            if at_break || row_marker_ahead || !quoted_line {
+                return ok!(paragraph_safe; native_quote_line(elements, layout, layout_live, escaped_units), errors);
+            }
         }
     }
+}
+
+fn quote_line_marker_count(prefix: &str) -> usize {
+    let mut markers = 0;
+    for byte in prefix.bytes() {
+        match byte {
+            b' ' | b'\t' => continue,
+            b'>' => markers += 1,
+            _ => break,
+        }
+    }
+    markers
 }
 
 fn quote_row_line_ends_with_marker(source: &str, start: usize, end: usize) -> bool {
@@ -2134,18 +2326,60 @@ fn build_blockquote_element(
         ParagraphStack::new()
     };
 
+    let tail_fused_list = quote_tail_is_fused_explicit_list(&list);
     let mut keep_trailing_break = false;
     let mut marker_final = false;
     let mut residual_chunk = false;
+    let mut open_quote_anchor = false;
+    let mut blank_after_open_anchor = false;
     for item in list {
         match item {
-            DepthItem::Item(row) => {
+            DepthItem::Item(mut row) => {
                 keep_trailing_break = row.keep_trailing_break;
                 marker_final = row.marker_final;
                 residual_chunk |= row.residual_block
                     || row_has_residual_div(&row)
                     || row_has_residual_list(&row);
-                push_native_quote_row(&mut stack, row, wikidot);
+                for element in &row.elements {
+                    match element {
+                        Element::Partial(PartialElement::InlineAnchorOpen(..)) => {
+                            open_quote_anchor = true;
+                        }
+                        Element::Partial(PartialElement::InlineAnchorClose(_)) => {
+                            open_quote_anchor = false;
+                            blank_after_open_anchor = false;
+                        }
+                        _ => {}
+                    }
+                }
+                if row.empty_spaced {
+                    if open_quote_anchor {
+                        blank_after_open_anchor = true;
+                    }
+                } else if blank_after_open_anchor {
+                    blank_after_open_anchor = false;
+                    // A blank quoted line reopens the anchor it closed: live
+                    // renders an extra empty anchor paragraph before the
+                    // explicit list that follows the blank line.
+                    if wikidot && open_quote_anchor {
+                        for element in &mut row.elements {
+                            if let Element::List {
+                                wikidot_explicit_block: true,
+                                attributes,
+                                ..
+                            } = element
+                            {
+                                attributes.insert(
+                                    crate::tree::WIKIDOT_QUOTE_BLANK_ANCHOR_MARKER,
+                                    std::borrow::Cow::Borrowed(""),
+                                );
+                            }
+                        }
+                    }
+                }
+                let wrap_fused_leading =
+                    wikidot && quote_row_fused_explicit_list(&row.elements);
+                push_native_quote_row(&mut stack, row, wikidot, wrap_fused_leading);
             }
             DepthItem::List(_, list) => {
                 keep_trailing_break = false;
@@ -2170,7 +2404,7 @@ fn build_blockquote_element(
     let mut elements = stack.into_elements();
     if wikidot {
         elements = unwrap_scored_alias_quote_paragraphs(elements);
-        if marker_final {
+        if marker_final || tail_fused_list {
             elements = unwrap_all_quote_paragraphs(elements);
         }
         if residual_chunk {
@@ -2619,7 +2853,7 @@ fn build_flattened_quote_rows(
         ParagraphStack::new()
     };
     for row in rows {
-        push_native_quote_row(&mut stack, row, wikidot);
+        push_native_quote_row(&mut stack, row, wikidot, false);
     }
     stack.pop_line_break();
     stack.into_elements()
@@ -2662,6 +2896,39 @@ fn quote_row_explicit_list_leaves_residue_bare(
                 }
             )
         })
+}
+
+fn quote_row_fused_explicit_list(elements: &[Element<'_>]) -> bool {
+    elements
+        .iter()
+        .position(|element| {
+            matches!(
+                element,
+                Element::List {
+                    wikidot_explicit_block: true,
+                    ..
+                }
+            )
+        })
+        .is_some_and(|position| {
+            position > 0
+                && !elements[..position]
+                    .iter()
+                    .any(|element| quote_residue_text(element, false))
+        })
+}
+
+fn quote_tail_is_fused_explicit_list(list: &[DepthItem<(), NativeQuoteRow<'_>>]) -> bool {
+    for item in list.iter().rev() {
+        match item {
+            DepthItem::Item(row) if row.empty_spaced => continue,
+            DepthItem::Item(row) => {
+                return quote_row_fused_explicit_list(&row.elements);
+            }
+            DepthItem::List(_, _) => return false,
+        }
+    }
+    false
 }
 
 fn row_has_quote_residue(elements: &[Element<'_>]) -> bool {
@@ -2745,6 +3012,7 @@ fn push_native_quote_row<'t>(
     stack: &mut ParagraphStack<'t>,
     row: NativeQuoteRow<'t>,
     wikidot: bool,
+    wrap_fused_leading: bool,
 ) {
     if row.empty_spaced {
         stack.pop_line_break();
@@ -2953,16 +3221,22 @@ fn push_native_quote_row<'t>(
     let keep_quote_paragraph =
         quote_row_explicit_list_leaves_residue_bare(wikidot, &row.elements)
             && row_has_quote_residue(&row.elements);
+    let mut before_fused_list = wrap_fused_leading;
     for element in row.elements {
         let paragraph_safe = if note_block && element == Element::LineBreak {
             true
-        } else if per_element {
+        } else if per_element
+            || (before_fused_list && !matches!(element, Element::List { .. }))
+        {
             element.paragraph_safe()
         } else if keep_quote_paragraph && quote_residue_text(&element, true) {
             true
         } else {
             row.paragraph_safe
         };
+        if matches!(element, Element::List { .. }) {
+            before_fused_list = false;
+        }
         stack.push_element(element, paragraph_safe);
     }
     if row.cut_boundary {

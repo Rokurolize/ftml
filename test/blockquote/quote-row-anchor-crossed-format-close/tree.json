@@ -1,0 +1,61 @@
+{
+  "elements": [
+    {
+      "element": "container",
+      "data": {
+        "type": "blockquote",
+        "attributes": {},
+        "elements": [
+          {
+            "element": "anchor",
+            "data": {
+              "target": null,
+              "attributes": {
+                "href": "#x"
+              },
+              "elements": [
+                {
+                  "element": "container",
+                  "data": {
+                    "type": "blockquote",
+                    "attributes": {},
+                    "elements": [
+                      {
+                        "element": "container",
+                        "data": {
+                          "type": "paragraph",
+                          "attributes": {},
+                          "elements": [
+                            {
+                              "element": "text",
+                              "data": "__"
+                            },
+                            {
+                              "element": "text",
+                              "data": "x"
+                            },
+                            {
+                              "element": "line-break"
+                            },
+                            {
+                              "element": "text",
+                              "data": "b"
+                            },
+                            {
+                              "element": "text",
+                              "data": "__"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

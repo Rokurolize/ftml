@@ -1,0 +1,7 @@
+[[div]]
+x
++ h##red|y##[[/div]] [[span]]z[[/span]]
+[[div]]
+[[span]]y[[/span]]
+[[/div]]
+[[/div]]

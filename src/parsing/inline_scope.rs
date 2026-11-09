@@ -7,6 +7,7 @@ use crate::tree::{
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, WIKIDOT_HEADING_REOPEN_MARKER,
     WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER, WIKIDOT_POST_LIST_BLANK_GAP_MARKER,
+    WIKIDOT_QUOTE_BLANK_ANCHOR_MARKER,
     WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER,
     WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
     WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
@@ -149,6 +150,7 @@ struct ActiveScope<'t> {
     pending: bool,
     materialized: bool,
     origin: usize,
+    afterlife: bool,
     previous_active: Option<usize>,
     next_active: Option<usize>,
 }
@@ -208,6 +210,11 @@ struct ActiveScopes<'t> {
     /// enclosing outer_close_eof frame consumes it and dissolves the post-list
     /// wrapper span (fix_outer_close_eof_breaks).
     post_list_crossed_close: bool,
+    /// A heading barrier pended the crossing scopes ((`pend_all` after the
+    /// label) and none of them has been closed since: the item end must
+    /// materialise the reopened empty copy in its own paragraph
+    /// (aw-anchor-close-on-heading: `<p><a></a></p>` after the h1).
+    heading_barrier_pended: bool,
     /// Positions of the span/size scopes that were active when a frame
     /// element's children lowering began (d8-44). While set, a tabview
     /// adjacent to a frame edge or another block inside those children
@@ -256,6 +263,7 @@ impl<'t> ActiveScopes<'t> {
             pending: false,
             materialized: false,
             origin,
+            afterlife: false,
             previous_active,
             next_active: None,
         });
@@ -1917,6 +1925,41 @@ fn push_post_list_blank_break(output: &mut Vec<Element<'_>>) {
     tail.elements_mut().push(Element::LineBreak);
 }
 
+fn strip_crossed_close_tail_leading_space(tail: &mut Container<'_>) {
+    let mut drop_elements = 0usize;
+    let mut trim_first = 0usize;
+    let mut found_content = false;
+    for element in tail.elements().iter() {
+        match element {
+            Element::Text(text) => {
+                let rest = text.trim_start_matches([' ', '\t']);
+                if rest.is_empty() {
+                    drop_elements += 1;
+                } else {
+                    trim_first = text.len() - rest.len();
+                    found_content = true;
+                    break;
+                }
+            }
+            _ => {
+                found_content = true;
+                break;
+            }
+        }
+    }
+    if !found_content {
+        return;
+    }
+    let elements = tail.elements_mut();
+    elements.drain(..drop_elements);
+    if trim_first > 0
+        && let Some(Element::Text(text)) = elements.first_mut()
+    {
+        let rest = text[trim_first..].to_owned();
+        *text = Cow::Owned(rest);
+    }
+}
+
 /// The inverse strong-x sibling of the spanin tail: a span/size scope
 /// inside a format pair closed beyond the list the pair crosses. `Break`
 /// renders the following paragraph bare with a leading break; `Bare`
@@ -2607,6 +2650,30 @@ fn pending_starts_with_format_marker(pending: &[Element<'_>]) -> bool {
     })
 }
 
+/// Whether a pending pre-list run is the content-led head of a rejected
+/// crossed format pair: it ends with a bare format marker run (the pair's
+/// closer) after visible content, and contains no format container of its
+/// own. Live p-wraps these before a warranting explicit list
+/// (`span-cross-align-notable` family) exactly like marker-first heads.
+fn pending_ends_with_bare_marker(pending: &[Element<'_>]) -> bool {
+    let mut rest = pending.iter().rev().filter(|element| {
+        !matches!(element, Element::LineBreak | Element::LineBreaks(_))
+    });
+    match rest.next() {
+        Some(Element::Text(text)) if format_open_marker(text.as_ref()) => {}
+        _ => return false,
+    }
+    pending.iter().any(|element| {
+        matches!(element, Element::Text(text)
+            if !text.trim().is_empty() && !format_open_marker(text.as_ref()))
+    }) && !pending.iter().any(|element| {
+        matches!(
+            element,
+            Element::Container(container) if format_kind_of(container.ctype()).is_some()
+        )
+    })
+}
+
 fn subtree_has_break(element: &Element<'_>) -> bool {
     if matches!(element, Element::LineBreak | Element::LineBreaks(_)) {
         return true;
@@ -2959,7 +3026,10 @@ fn segment_format_run<'t>(
                 stop_at_list,
                 seen_list,
                 mem::replace(&mut run_starts_after_code, false),
-                !seen_list && !stop_at_list && formed_chunk_wraps(&element),
+                !seen_list
+                    && !stop_at_list
+                    && formed_chunk_wraps(&element)
+                    && !format_close_inside_list(&element, ctype),
                 mem::replace(&mut run_follows_blank_gap, false),
             );
             let mut list = element;
@@ -3166,6 +3236,28 @@ fn segment_color_run<'t>(
     output
 }
 
+/// Whether the pair a format container of `ctype` opens closes inside `list`
+/// (an item subtree holds the pair's close partial). Live keeps the pre-list
+/// chunk of such a pair bare; only a pair closing beyond the list earns the
+/// paragraph wrapper.
+fn format_close_inside_list(list: &Element<'_>, ctype: ContainerType) -> bool {
+    let Some(kind) = format_kind_of(ctype) else {
+        return false;
+    };
+    let mut found = false;
+    let mut visitor = |children: &[Element<'_>]| {
+        for element in children {
+            if let Element::Partial(PartialElement::InlineFormatClose(k)) = element
+                && *k == kind
+            {
+                found = true;
+            }
+        }
+    };
+    visit_children(list, &mut visitor);
+    found
+}
+
 /// Whether an explicit list in a crossing color body carries the pair's close
 /// marker inside one of its items (the shape the lowering already styles).
 fn color_close_inside_list(list: &Element<'_>) -> bool {
@@ -3273,6 +3365,89 @@ fn literalised_color<'t>(
     output.extend(trim_post_list_leading_breaks(children));
     output.push(Element::Text(Cow::Borrowed("##")));
     output
+}
+
+/// Whether a format container's explicit-list crossing runs through an
+/// anchor's scope controls: an anchor open stranded on one side of the
+/// list with its close on the other. Segmenting such a container freezes
+/// it as an element outside the scope nesting live rebuilds at the
+/// boundary (the items reopen scopes in chain order while the pre/post
+/// segments nest the container outside them). Balanced anchor pairs
+/// wholly inside one run segment normally. A span/size/color scope
+/// opening inside the runs means the format is (at least partly) outer
+/// in source order, which segmentation already nests correctly, so those
+/// shapes keep the segmented path.
+fn anchor_straddles_explicit_list(children: &[Element<'_>]) -> bool {
+    fn is_scope_open(element: &Element<'_>) -> bool {
+        match element {
+            Element::Partial(
+                PartialElement::InlineSpanOpen(..)
+                | PartialElement::InlineSizeOpen(..)
+                | PartialElement::InlineColorOpen(..),
+            ) => true,
+            Element::Container(container) => {
+                matches!(container.ctype(), ContainerType::Span | ContainerType::Size)
+            }
+            Element::Color { .. } => true,
+            _ => false,
+        }
+    }
+    fn count_controls(
+        element: &Element<'_>,
+        opens: &mut usize,
+        closes: &mut usize,
+        scope_opens: &mut usize,
+    ) {
+        if is_scope_open(element) {
+            *scope_opens += 1;
+        }
+        match element {
+            Element::Partial(PartialElement::InlineAnchorOpen(..)) => *opens += 1,
+            Element::Partial(PartialElement::InlineAnchorClose(_)) => *closes += 1,
+            Element::Anchor { elements, .. } => {
+                for child in elements {
+                    count_controls(child, opens, closes, scope_opens);
+                }
+            }
+            _ => {
+                if let Some(nested) = subtree_children(element) {
+                    for child in nested {
+                        count_controls(child, opens, closes, scope_opens);
+                    }
+                }
+            }
+        }
+    }
+    let mut open_before = 0;
+    let mut close_before = 0;
+    let mut open_after = 0;
+    let mut close_after = 0;
+    let mut scope_opens_in_runs = 0;
+    let mut seen_list = false;
+    for child in children {
+        if matches!(
+            child,
+            Element::List {
+                wikidot_explicit_block: true,
+                ..
+            }
+        ) {
+            seen_list = true;
+            continue;
+        }
+        let (mut opens, mut closes, mut scope_opens) = (0, 0, 0);
+        count_controls(child, &mut opens, &mut closes, &mut scope_opens);
+        scope_opens_in_runs += scope_opens;
+        if seen_list {
+            open_after += opens;
+            close_after += closes;
+        } else {
+            open_before += opens;
+            close_before += closes;
+        }
+    }
+    scope_opens_in_runs == 0
+        && ((open_before > 0 && close_after > 0) || (close_before > 0 && open_after > 0))
 }
 
 fn format_explicit_list_segments<'t>(
@@ -3557,7 +3732,73 @@ fn format_explicit_list_segments<'t>(
         // The post-list run attaches to the list on live (never
         // `</ul><br>c**`): drop the source newline that follows each
         // crossed list before re-emitting the body under literal markers.
-        return Some(literalised(trim_post_list_leading_breaks(children)));
+        // The pair's classified tail shape rides the crossed lists to the
+        // post-list run: root lowering unwraps the run's paragraph when the
+        // literalised close marker sits between it and the list
+        // (m3x3 `</ul>**y`, not `</ul>**<p>y</p>`).
+        let mut orphaned = trim_post_list_leading_breaks(children);
+        if let Some(tail_mark) = tail_mark {
+            let marker = match tail_mark {
+                SpanListCloseTail::Break => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
+                SpanListCloseTail::Bare => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
+                SpanListCloseTail::Lead => WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
+                SpanListCloseTail::Blank => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER,
+                SpanListCloseTail::Fold => WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
+            };
+            for element in orphaned.iter_mut() {
+                if let Element::List { attributes, .. } = element {
+                    attributes.insert(marker, Cow::Borrowed(""));
+                }
+            }
+        }
+        return Some(literalised(orphaned));
+    }
+    if !stops_at_list
+        && anchor_straddles_explicit_list(&children)
+        && !subtree_contains_flow_block(element)
+    {
+        // A format pair whose list crossing runs through an anchor's scope
+        // controls (open stranded on one side, close on the other):
+        // segmenting it would freeze the container as an element outside
+        // the scope nesting live rebuilds at the boundary, while the items
+        // reopen scopes in chain order (spadj cell 3: pre/tail
+        // `<strong><span>` vs live `<span><strong>`, item already right).
+        // Flatten to scope partials so boundary sync governs the order in
+        // every segment; the anchor still dies at the list in lowering.
+        // The pair's post-list tail shape rides to the list exactly like
+        // the segmented path below. (A stopped pair keeps its unstyled
+        // segmented handling; poisoned shapes literalise above.)
+        let mut flattened = Vec::with_capacity(children.len() + 2);
+        flattened.push(Element::Partial(PartialElement::InlineFormatOpen(kind)));
+        // Mirror `seal_format_segment`'s post-boundary strip: a newline
+        // between the list and the pair's continuation is intra-pair
+        // spacing, not a gap break (the gap break, if any, sits after the
+        // pair's closer and is owned by the tail path).
+        let tail_marker = tail_mark.map(|tail_mark| match tail_mark {
+            SpanListCloseTail::Break => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
+            SpanListCloseTail::Bare => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
+            SpanListCloseTail::Lead => WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
+            SpanListCloseTail::Blank => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER,
+            SpanListCloseTail::Fold => WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
+        });
+        let mut run_start = false;
+        for mut child in children {
+            if let Element::List { attributes, .. } = &mut child {
+                if let Some(marker) = tail_marker {
+                    attributes.insert(marker, Cow::Borrowed(""));
+                }
+                run_start = true;
+            } else if run_start
+                && matches!(child, Element::LineBreak | Element::LineBreaks(_))
+            {
+                continue;
+            } else {
+                run_start = false;
+            }
+            flattened.push(child);
+        }
+        flattened.push(Element::Partial(PartialElement::InlineFormatClose(kind)));
+        return Some(flattened);
     }
     let mut formed = false;
     let mut segmented = segment_format_run(children, ctype, &mut formed, stops_at_list);
@@ -4574,7 +4815,20 @@ fn flush_root_pending<'t>(
             && !subtree_contains_quoted_native_list(next)
     });
     let wrap_crossed_head = crossed_head_warrants && pending_is_marker_run;
+    // Content-led rejected head with no table foster: pending ends with the
+    // pair's bare closer marker after visible content. The table branch below
+    // already wraps these shapes; this covers the bare-boundary remainder.
+    let content_led_marker_head = crossed_head_warrants
+        && !pending_is_marker_run
+        && pending_ends_with_bare_marker(pending);
     let mut sequence = mem::take(pending);
+    let crossed_close_abuts_list = output_ends_with_explicit_list(output)
+        && active.has_span_or_size_scope()
+        && matches!(
+            sequence.first(),
+            Some(Element::Partial(PartialElement::InlineFormatClose(kind)))
+            if matches!(kind, InlineFormatKind::Bold | InlineFormatKind::Italics)
+        );
     // Rejected-bold closer attach (item 92): after an align/div-item list,
     // live drops the closer chunk's separator break (`</ul>**`, never
     // `</ul><br>**`). Decided pre-lowering: lowering stamps the chunk into
@@ -4632,6 +4886,12 @@ fn flush_root_pending<'t>(
         !table_foster_precedes,
     );
     drop_segment_trailing_space(&mut sequence);
+    if crossed_close_abuts_list
+        && let Some(Element::Container(tail)) = sequence.first_mut()
+        && matches!(tail.ctype(), ContainerType::Span | ContainerType::Size)
+    {
+        strip_crossed_close_tail_leading_space(tail);
+    }
     // Post-list inverse-tail break (item 84(e)): the rejected crossing
     // pair's closer chunk follows an explicit list with a bare leading
     // break (the inter-block newline materialised as an element); live
@@ -4672,6 +4932,20 @@ fn flush_root_pending<'t>(
             // re-wrap (item 80: the combination is live-verified — live
             // emits a single <p>).
             strip_leading_line_break(&mut sequence);
+        } else if at_explicit_list && sequence_has_formed_format(&sequence) {
+            // Formed head after a table/bib foster (plain-item bold cross):
+            // live keeps the opener-line break inside the styled segment and
+            // wraps the run (`span-table-cross-plain` family). The trim above
+            // now stops at the format segment, so only scope-level breaks go.
+            // Anchor never styles these heads (live `anchor-table-cross-plain`
+            // is bare strong); span/size stay applied.
+            strip_leading_line_break(&mut sequence);
+            strip_anchor_containers(&mut sequence);
+            sequence = vec![Element::Container(Container::new(
+                ContainerType::Paragraph,
+                sequence,
+                AttributeMap::new(),
+            ))];
         } else {
             strip_leading_line_break(&mut sequence);
             // fw92: a bare-marker run before a non-warranting explicit list
@@ -4691,6 +4965,16 @@ fn flush_root_pending<'t>(
                 }
             }
         }
+    } else if content_led_marker_head && !sequence.is_empty() {
+        // Content-led rejected head before a warranting explicit list with no
+        // table foster: live p-wraps it exactly like a marker-first head
+        // (`span-cross-align-notable` family). Scope styling is kept — live
+        // keeps the span/size/anchor wrapper on content-led heads.
+        sequence = vec![Element::Container(Container::new(
+            ContainerType::Paragraph,
+            sequence,
+            AttributeMap::new(),
+        ))];
     }
     // A pre-list inline chunk cut by an explicit list re-joins a
     // just-flushed paragraph on live, and a chunk with no preceding
@@ -4757,11 +5041,34 @@ fn strip_leading_line_break(elements: &mut Vec<Element<'_>>) -> bool {
             true
         }
         Some(Element::Container(container)) => {
-            strip_leading_line_break(container.elements_mut())
+            // A formed or stopped format segment owns its breaks; live keeps
+            // the opener-line break inside the styled head (`span-table-cross-
+            // plain` family), so the table-foster trim stops above it.
+            if format_kind_of(container.ctype()).is_some() {
+                false
+            } else {
+                strip_leading_line_break(container.elements_mut())
+            }
         }
         Some(Element::Color { elements, .. }) => strip_leading_line_break(elements),
         _ => false,
     }
+}
+
+/// Whether the lowered run holds a formed (non-stopped) format segment: a
+/// format-kind container without the stops-at-list marker, at any depth
+/// (scope and anchor wrappers aside). Rejected marker runs and stopped
+/// pre-segments never match.
+fn sequence_has_formed_format(elements: &[Element<'_>]) -> bool {
+    elements.iter().any(|element| match element {
+        Element::Container(container) => {
+            (format_kind_of(container.ctype()).is_some() && !stopped_pre_segment(element))
+                || sequence_has_formed_format(container.elements())
+        }
+        Element::Color { elements, .. } => sequence_has_formed_format(elements),
+        Element::Anchor { elements, .. } => sequence_has_formed_format(elements),
+        _ => false,
+    })
 }
 
 /// Unwraps every anchor container in place, splicing its children: live
@@ -5015,13 +5322,20 @@ fn merge_frame_prelist_chunks<'t>(children: &mut Vec<Element<'t>>) {
         )
     };
     // Fresh wrap: a formatted scope chunk at the frame head cut by an
-    // explicit list, with no paragraph before it.
+    // explicit list, with no paragraph before it. A format segment whose
+    // pair closed inside the list (no markers on it any more) keeps the
+    // bare placement live renders.
+    let initem_close_segment = !children.is_empty() && matches!(&children[0], Element::Container(container)
+        if format_kind_of(container.ctype()).is_some()
+            && !container.attributes().get().contains_key(WIKIDOT_BLOCK_CHUNK_PREFIX_MARKER)
+            && !container.attributes().get().contains_key(WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER));
     if children.len() > 1
         && is_explicit_block_list(&children[1])
         && !matches!(&children[0], Element::Container(paragraph)
             if paragraph.ctype() == ContainerType::Paragraph)
         && sequence_contains_format_container(std::slice::from_ref(&children[0]))
         && sequence_has_inline_content(std::slice::from_ref(&children[0]))
+        && !initem_close_segment
     {
         let chunk = children.remove(0);
         children.insert(
@@ -5751,6 +6065,7 @@ fn lower_sequence<'t>(
                     &mut run,
                     active,
                     &mut last_run_outer_scope,
+                    true,
                 );
                 let leading_space =
                     matches!(source.peek(), Some(Element::Text(text)) if text == " ");
@@ -5784,6 +6099,24 @@ fn lower_sequence<'t>(
         if let Element::Partial(PartialElement::InlineAnchorClose(close_source)) = element
         {
             let resolved = active.peek_close(InlineTag::Anchor);
+            // The heading barrier's post-closer tail: the heading block already
+            // closed the open element on live, so this closer finds nothing to
+            // close. It is consumed and the anchor stays on the inline stack,
+            // reopening on later content (aw-anchor-close-on-heading:
+            // <p><a></a></p> after the heading, then the post-list wrapper
+            // inside the anchor). A scope the tail opened itself closes
+            // normally (resolved position is at or above the watermark).
+            if valid.contains(&*ordinal)
+                && active.suppress_scope_wrap
+                && active
+                    .suppress_scope_wrap_watermark
+                    .is_some_and(|watermark| {
+                        resolved.is_some_and(|position| position < watermark)
+                    })
+            {
+                *ordinal += 1;
+                continue;
+            }
             // B2 (item 82 residual): an anchor whose scope crossed an explicit
             // list and closes inside the frame after it pops the post-list
             // heading wrapper on live (the post-list content lands bare). Only
@@ -6110,6 +6443,7 @@ fn lower_sequence<'t>(
                     &mut run,
                     active,
                     &mut last_run_outer_scope,
+                    false,
                 );
                 if closed && let Element::Footnote(reference) = &mut element {
                     reference.broke_anchor = true;
@@ -6132,8 +6466,12 @@ fn lower_sequence<'t>(
             // (fr73 consumes crossed-pair tails lowering never sees; the
             // rewrite strips leftovers, so none reaches the tree). Stopped
             // lists are cleaned here with the stops marker.
+            let mut blank_anchor_reopen = false;
             let stopped_pair_ends_at_list = if list_legacy {
                 if let Element::List { attributes, .. } = &mut element {
+                    blank_anchor_reopen = attributes
+                        .remove(WIKIDOT_QUOTE_BLANK_ANCHOR_MARKER)
+                        .is_some();
                     let stopped = attributes
                         .remove(WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER)
                         .is_some();
@@ -6183,6 +6521,7 @@ fn lower_sequence<'t>(
                         &mut run,
                         active,
                         &mut last_run_outer_scope,
+                        blank_anchor_reopen,
                     );
                 }
                 lower_children(
@@ -7416,22 +7755,49 @@ fn wikidot_close_anchor_scope<'t>(
     run: &mut Vec<Element<'t>>,
     active: &mut ActiveScopes<'t>,
     last_run_outer_scope: &mut RunMergeState,
+    // Set by the crossed-anchor close (a second anchor open): the caller has
+    // already flushed the pending run into the closed copy.
+    hoist_flushed_break: bool,
 ) -> bool {
     let Some(position) = active.anchor_position() else {
         return false;
     };
-    let trailing_break = matches!(run.last(), Some(Element::LineBreak));
+    // The caller flushes the run before a crossed-anchor close (the next
+    // anchor open), so the pending break already sits inside the emitted copy.
+    // libtidy moves a closing element's trailing whitespace out to the next
+    // text, so live leaves one separating space between the two closed copies
+    // (saved pages muse-probe-fu82b-li-cross-anchor-two-anchors and
+    // muse-probe-awb2-li-cross-anchor-two-anchors-text:
+    // `<a><br></a> <a><br><br></a>`); a same-line pair keeps none
+    // (muse-probe-awb2-li-cross-anchor-two-anchors-same-line).
+    let flushed_copy_break = hoist_flushed_break
+        && run.is_empty()
+        && output.last().is_some_and(|last| {
+            matches!(
+                last,
+                Element::Anchor { elements, .. }
+                    if matches!(
+                        elements.last(),
+                        Some(Element::LineBreak | Element::LineBreaks(_))
+                    )
+            )
+        });
+    let trailing_break =
+        matches!(run.last(), Some(Element::LineBreak)) || flushed_copy_break;
     let trailing_space = trim_run_trailing_space(run) || trailing_break;
     let empty =
         !active.scope_has_content(position) && run.iter().all(element_is_whitespace_only);
     if empty {
-        let wrapper = active.scope_wrapper(position).clone();
-        active.kill_from(position);
+        // Retract the anchor stack entry BEFORE the scope kill (spcont
+        // #1335 rule): `kill_from` drops the killed anchor's own istack
+        // entry, so a pop afterwards drains every enclosing scope opened
+        // outside the anchor. The empty wrapper flushes through the active
+        // scopes so an enclosing span/size wraps it (spadj cell 2: live
+        // `<span><a></a>...`, and the span must survive for the list).
         active.pop_istack_through_anchor();
-        output.push(wrapper.wrap(vec![Element::Partial(
-            PartialElement::WikidotEmptyInlineOwner,
-        )]));
-        last_run_outer_scope.reset();
+        run.push(Element::Partial(PartialElement::WikidotEmptyInlineOwner));
+        flush_run(output, run, active, last_run_outer_scope);
+        active.kill_from(position);
         return true;
     }
     if run.iter().all(element_is_whitespace_only)
@@ -7447,14 +7813,14 @@ fn wikidot_close_anchor_scope<'t>(
         && elements.iter().all(element_is_whitespace_only)
     {
         *elements = vec![Element::Partial(PartialElement::WikidotEmptyInlineOwner)];
-        active.kill_from(position);
         active.pop_istack_through_anchor();
+        active.kill_from(position);
         last_run_outer_scope.reset();
         return true;
     }
     flush_run(output, run, active, last_run_outer_scope);
-    active.kill_from(position);
     active.pop_istack_through_anchor();
+    active.kill_from(position);
     if trailing_space {
         output.push(text!(" "));
     }
@@ -7466,12 +7832,28 @@ fn end_anchor_at_explicit_list<'t>(
     run: &mut Vec<Element<'t>>,
     active: &mut ActiveScopes<'t>,
     last_run_outer_scope: &mut RunMergeState,
+    blank_anchor_reopen: bool,
 ) {
     let Some(position) = active.anchor_position() else {
         return;
     };
+    if active.scope_is_pending(position) && active.scopes[position].afterlife {
+        return;
+    }
     if !active.scope_is_pending(position) {
         close_live_anchor(output, run, active, last_run_outer_scope);
+    } else if blank_anchor_reopen && !active.scope_materialized(position) {
+        // A blank quoted line closes the anchor in place and reopens it: live
+        // repeats the empty anchor paragraph before the explicit list.
+        let wrapper = active.scope_wrapper(position).clone();
+        let owner = wrapper.wrap(vec![Element::Partial(
+            PartialElement::WikidotEmptyInlineOwner,
+        )]);
+        output.push(Element::Container(Container::new(
+            ContainerType::Paragraph,
+            vec![owner],
+            AttributeMap::new(),
+        )));
     }
     let Some(position) = active.anchor_position() else {
         return;
@@ -7562,6 +7944,44 @@ fn emit_heading_inline_closure<'t>(
     }
     output.extend(closed);
     last_run_outer_scope.reset();
+}
+
+/// A list item's block end reopens the inline stack (Wikidot keeps it across
+/// block boundaries), so a scope the heading barrier pended is materialised as
+/// an empty copy in its own paragraph after the h1 — live
+/// aw-anchor-close-on-heading: `<li>x<br><a><br><br></a><h1>…</h1><p><a></a></p></li>`.
+/// The heading wrapper span is the heading's own label layer and closes with
+/// the heading, so it is not part of the reopened copy (the post-list segment
+/// reopens it separately). Items whose pended scope was closed again in the
+/// item (a closer line after the heading) emit nothing: nothing is pending.
+fn emit_item_end_reopened_copy<'t>(
+    children: &mut Vec<Element<'t>>,
+    active: &mut ActiveScopes<'t>,
+) {
+    let positions = active.active_positions();
+    let crossing: Vec<usize> = positions
+        .iter()
+        .copied()
+        .filter(|position| {
+            Some(*position) != active.heading_wrapper
+                && active.scope_is_pending(*position)
+        })
+        .collect();
+    if crossing.is_empty() {
+        return;
+    }
+    let mut copy: Vec<Element<'t>> = Vec::new();
+    for entry in crossing.iter().rev() {
+        copy = vec![active.scopes[*entry].wrapper.wrap(copy)];
+    }
+    for position in crossing {
+        active.scopes[position].afterlife = true;
+    }
+    children.push(Element::Container(Container::new(
+        ContainerType::Paragraph,
+        copy,
+        AttributeMap::new(),
+    )));
 }
 
 /// The inline tag of a scope-wrapper element, if it is one.
@@ -8218,6 +8638,15 @@ fn lower_wikidot_heading_barrier<'t>(
         false,
     );
     active.pend_all();
+    for position in active.active_positions() {
+        if Some(position) != active.heading_wrapper {
+            active.scopes[position].afterlife = false;
+        }
+    }
+    active.heading_barrier_pended = active
+        .active_positions()
+        .iter()
+        .any(|position| Some(*position) != active.heading_wrapper);
     let outer_suppress = active.suppress_scope_wrap;
     let outer_watermark = active.suppress_scope_wrap_watermark;
     active.suppress_scope_wrap = true;
@@ -8557,6 +8986,11 @@ fn lower_children<'t>(
         // break). Without this the frame close lost the tail break and kept
         // the enclosing scope wrapped around the post-list segment (live:
         // `<span>b</span><br></div>`, `<span>b</span><br></blockquote>`).
+        // The heading-barrier pended-copy flag is per-sequence: a nested
+        // sequence (an item body) must not inherit the outer one, and only a
+        // list item's own sequence reads it back (aw-anchor-close-on-heading).
+        let barrier_pended_outer = active.heading_barrier_pended;
+        active.heading_barrier_pended = false;
         if root_tail_vehicle
             && frame_children_need_root_tail_assembly(
                 children,
@@ -8577,6 +9011,11 @@ fn lower_children<'t>(
                 bib,
                 false,
             );
+        }
+        let barrier_pended_here =
+            mem::replace(&mut active.heading_barrier_pended, barrier_pended_outer);
+        if truncate_at_entry && barrier_pended_here {
+            emit_item_end_reopened_copy(children, active);
         }
         if segment {
             active.pend_all();
@@ -8786,7 +9225,8 @@ pub(crate) fn visit_children<'t>(
             | PartialElement::InlineColorOpen(..)
             | PartialElement::InlineColorClose
             | PartialElement::InlineAnchorOpen(..)
-            | PartialElement::InlineAnchorClose(_) => {}
+            | PartialElement::InlineAnchorClose(_)
+            | PartialElement::WikidotEquationNumber(..) => {}
         },
         _ => {}
     }
@@ -8859,7 +9299,8 @@ pub(crate) fn visit_children_mut<'t>(
             | PartialElement::InlineColorOpen(..)
             | PartialElement::InlineColorClose
             | PartialElement::InlineAnchorOpen(..)
-            | PartialElement::InlineAnchorClose(_) => {}
+            | PartialElement::InlineAnchorClose(_)
+            | PartialElement::WikidotEquationNumber(..) => {}
         },
         _ => {}
     }
@@ -8979,6 +9420,9 @@ struct WikidotFrameAssembly<'t> {
     forced_collapsible_closes: BTreeSet<usize>,
     swallow_orphan_div_break: bool,
     swallow_orphan_note_break: bool,
+    /// g10res: the next popped frame keeps its trailing break (set by a
+    /// crossed-tail-terminator div close, consumed by `pop_frame`).
+    keep_popped_frame_break: bool,
     at_root: bool,
     row_suffix: bool,
 }
@@ -8996,6 +9440,7 @@ impl<'t> WikidotFrameAssembly<'t> {
             forced_collapsible_closes: BTreeSet::new(),
             swallow_orphan_div_break: false,
             swallow_orphan_note_break: false,
+            keep_popped_frame_break: false,
             at_root,
             row_suffix,
         }
@@ -9299,7 +9744,11 @@ impl<'t> WikidotFrameAssembly<'t> {
 
     fn close_kind(&mut self, kind: WikidotBlockCloseKind<'_>) {
         match kind {
-            WikidotBlockCloseKind::Div { scored, .. } => {
+            WikidotBlockCloseKind::Div {
+                scored,
+                keep_trailing_break,
+                ..
+            } => {
                 if !scored && self.stack.is_empty() {
                     self.strip_paragraph_before_close();
                     self.swallow_orphan_div_break =
@@ -9317,6 +9766,9 @@ impl<'t> WikidotFrameAssembly<'t> {
                 if let Some(head) = self.stack.last().and_then(|frame| frame.note_head) {
                     self.div_crossed_notes.insert(head);
                 }
+                // g10res: a crossed-tail terminator keeps the frame's
+                // trailing break (u-second-frame probe).
+                self.keep_popped_frame_break = keep_trailing_break;
                 self.pop_frame();
             }
             WikidotBlockCloseKind::CollapsibleCrossedBottom { head, .. } => {
@@ -9482,12 +9934,19 @@ impl<'t> WikidotFrameAssembly<'t> {
     }
 
     fn pop_frame(&mut self) {
+        let keep_break = mem::replace(&mut self.keep_popped_frame_break, false);
         let Some(mut frame) = self.stack.pop() else {
             return;
         };
         if frame.scored_div {
             unwrap_scored_frame_edges(&mut frame.children);
         }
+        // g10res: a crossed-tail terminator keeps the frame's trailing
+        // break (u-second-frame probe). Pop it first so the paragraph
+        // forming and row-suffix logic see the usual shape, then put it
+        // back unchanged.
+        let kept_break =
+            keep_break && matches!(frame.children.last(), Some(Element::LineBreak));
         if matches!(frame.children.last(), Some(Element::LineBreak)) {
             frame.children.pop();
         }
@@ -9495,6 +9954,9 @@ impl<'t> WikidotFrameAssembly<'t> {
         let suffix = self.take_row_suffix(&mut frame);
         if frame.link.is_none() {
             form_wikidot_frame_paragraphs(&mut frame.children);
+        }
+        if kept_break {
+            frame.children.push(Element::LineBreak);
         }
         self.top().push(Element::WikidotBlockFrame {
             attributes: frame.attributes,
@@ -9663,7 +10125,9 @@ fn fix_outer_close_eof_breaks<'t>(children: &mut Vec<Element<'t>>, post_list_cro
     // forms `[[/div]]`, `[[/note]]`, or `[[/collapsible]]`. Prefer the one
     // that is the heading wrapper's post-list emission (after a list, in this
     // frame). A split case puts the closer span before a following List.
-    let closer_idx = children.iter().rposition(|el| is_closer_literal_span(el));
+    let closer_idx = children
+        .iter()
+        .rposition(|el| is_closer_literal_segment(el));
     let Some(idx) = closer_idx else {
         return;
     };
@@ -9675,13 +10139,9 @@ fn fix_outer_close_eof_breaks<'t>(children: &mut Vec<Element<'t>>, post_list_cro
     }
     // Terminal closer span (possibly followed by a Paragraph, e.g. blank-text).
     let followed_by_paragraph = matches!(children.get(idx + 1), Some(Element::Container(c)) if c.ctype() == ContainerType::Paragraph);
-    let Element::Container(container) = &mut children[idx] else {
+    let Some(elements) = post_list_segment_elements_mut(&mut children[idx]) else {
         return;
     };
-    if !matches!(container.ctype(), ContainerType::Span | ContainerType::Size) {
-        return;
-    }
-    let elements = container.elements_mut();
     let literal_end = closer_literal_text_len(elements);
     if literal_end == 0 {
         return;
@@ -9990,7 +10450,7 @@ fn restyle_list_items<'t>(items: &mut Vec<ListItem<'t>>, attrs: &AttributeMap<'t
 /// `<p>t<br>[[/div]]</p>`, `cnl-color-outerspan`
 /// `<p>[[/div]]<br></p>`). Bold/italic/anchor/plain labels keep the wrapper,
 /// so this runs only under the cancellation signal.
-fn dissolve_post_heading_wrapper_spans<'t>(children: &mut [Element<'t>]) {
+fn dissolve_post_heading_wrapper_spans<'t>(children: &mut Vec<Element<'t>>) {
     let Some(heading) = children.iter().position(|element| {
         matches!(
             element,
@@ -10004,20 +10464,52 @@ fn dissolve_post_heading_wrapper_spans<'t>(children: &mut [Element<'t>]) {
     }) else {
         return;
     };
-    for element in children[heading + 1..].iter_mut() {
-        let Element::Container(paragraph) = element else {
-            continue;
-        };
-        if paragraph.ctype() != ContainerType::Paragraph {
-            continue;
+    let tail: Vec<Element<'t>> = children.split_off(heading + 1);
+    let mut out = Vec::with_capacity(tail.len());
+    for element in tail {
+        dissolve_post_heading_wrapper_element(element, &mut out);
+    }
+    children.extend(out);
+}
+
+/// One post-heading element under a cancelled barrier heading. The implicit
+/// heading wrapper span reopens around every post-heading block on live and
+/// then dissolves, layer by layer: inside a nested block frame's paragraph
+/// (cnl4-nested-frame-tail-span renders the nested div body as `<p>y</p>`), in
+/// its own tail segment (`<br>[[/div]]` bare after the nested block), and in
+/// direct paragraphs. User elements carry attributes and survive; only the
+/// bare wrapper span layer goes.
+fn dissolve_post_heading_wrapper_element<'t>(
+    element: Element<'t>,
+    out: &mut Vec<Element<'t>>,
+) {
+    let Element::Container(mut container) = element else {
+        out.push(element);
+        return;
+    };
+    match container.ctype() {
+        ContainerType::Paragraph => {
+            let elements = container.elements_mut();
+            if let [Element::Container(span)] = elements.as_mut_slice()
+                && span.ctype() == ContainerType::Span
+                && span.attributes().get().is_empty()
+            {
+                *elements = mem::take(span.elements_mut());
+            }
+            out.push(Element::Container(container));
         }
-        let elements = paragraph.elements_mut();
-        if let [Element::Container(span)] = elements.as_mut_slice()
-            && span.ctype() == ContainerType::Span
-            && span.attributes().get().is_empty()
-        {
-            *elements = mem::take(span.elements_mut());
+        ContainerType::Span if container.attributes().get().is_empty() => {
+            out.extend(Vec::<Element<'t>>::from(container));
         }
+        ContainerType::Div | ContainerType::Note | ContainerType::Blockquote => {
+            let mut nested = Vec::with_capacity(container.elements().len());
+            for child in mem::take(container.elements_mut()) {
+                dissolve_post_heading_wrapper_element(child, &mut nested);
+            }
+            *container.elements_mut() = nested;
+            out.push(Element::Container(container));
+        }
+        _ => out.push(Element::Container(container)),
     }
 }
 
@@ -10154,13 +10646,10 @@ fn closer_literal_end_index(elements: &[Element<'_>]) -> Option<usize> {
 /// muse-probe-fu82-aw4-anchor-postlist-open, muse-probe-b2-p-*,
 /// muse-probe-b2-s-span-postlist-pair, muse-probe-b2-a-close-inside-li2.
 fn fix_post_list_wrapper_tail<'t>(children: &mut [Element<'t>], anchor: usize) -> bool {
-    let Some(index) = children[anchor + 1..].iter().position(|element| {
-        matches!(
-            element,
-            Element::Container(container)
-                if matches!(container.ctype(), ContainerType::Span | ContainerType::Size)
-        )
-    }) else {
+    let Some(index) = children[anchor + 1..]
+        .iter()
+        .position(|element| post_list_segment_elements(element).is_some())
+    else {
         return false;
     };
     let index = anchor + 1 + index;
@@ -10170,10 +10659,9 @@ fn fix_post_list_wrapper_tail<'t>(children: &mut [Element<'t>], anchor: usize) -
             if container.ctype() == ContainerType::Paragraph
                 && elements_have_closer_literal(container.elements())
     );
-    let Element::Container(container) = &mut children[index] else {
+    let Some(elements) = post_list_segment_elements_mut(&mut children[index]) else {
         return false;
     };
-    let elements = container.elements_mut();
     if closer_literal_text_len(elements) > 0 {
         // Literal-leading: R2 owns this shape.
         return false;
@@ -10353,6 +10841,66 @@ fn dissolve_list_items(items: &mut Vec<ListItem<'_>>) {
             }
         }
     }
+}
+
+/// The elements of a post-list wrapper segment: a direct Span/Size container,
+/// or the Span/Size wrapper an inline anchor carries. Live nests
+/// `<a><span>[[/div]]<br><br></span></a>` when a crossing anchor holds the
+/// heading wrapper into the post-list tail
+/// (aw-anchor-close-on-heading, li-close-on-heading-postlist-trail).
+fn post_list_segment_elements<'a, 't>(
+    element: &'a Element<'t>,
+) -> Option<&'a [Element<'t>]> {
+    match element {
+        Element::Container(container)
+            if matches!(container.ctype(), ContainerType::Span | ContainerType::Size) =>
+        {
+            Some(container.elements())
+        }
+        Element::Anchor { elements, .. } => match elements.as_slice() {
+            [Element::Container(container)]
+                if matches!(
+                    container.ctype(),
+                    ContainerType::Span | ContainerType::Size
+                ) =>
+            {
+                Some(container.elements())
+            }
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn post_list_segment_elements_mut<'a, 't>(
+    element: &'a mut Element<'t>,
+) -> Option<&'a mut Vec<Element<'t>>> {
+    match element {
+        Element::Container(container)
+            if matches!(container.ctype(), ContainerType::Span | ContainerType::Size) =>
+        {
+            Some(container.elements_mut())
+        }
+        Element::Anchor { elements, .. } => match elements.as_mut_slice() {
+            [Element::Container(container)]
+                if matches!(
+                    container.ctype(),
+                    ContainerType::Span | ContainerType::Size
+                ) =>
+            {
+                Some(container.elements_mut())
+            }
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+/// A post-list wrapper segment whose text content starts with a block closer
+/// literal, including the anchor-carried wrapper.
+fn is_closer_literal_segment(el: &Element<'_>) -> bool {
+    post_list_segment_elements(el)
+        .is_some_and(|elements| closer_literal_text_len(elements) > 0)
 }
 
 /// Is this a Span (or, after R3 restyling, Size) container whose text content

@@ -263,10 +263,36 @@ pub(crate) struct WikidotLiCrossScan {
     /// structural list closer live consumes (g10a/g10b/g10j, aa probe). Its
     /// closer byte is also in `redundant`.
     pub(crate) tail_list_close: Option<usize>,
+    /// g10res: the nearest `[[/li]]` BEFORE `tail_list_close`, the one live
+    /// consumes (ol-li-after probe: a later `[[/li]]` stays literal). Its
+    /// closer byte is also in `redundant`.
+    pub(crate) tail_li_close: Option<usize>,
     /// g10: byte at which the line following `tail_list_close` starts, when
     /// that closer's preceding line is literal text. The vanished closer then
     /// eats the break before it (g10b `z[[/div]]`, g10x1 `w[[/div]]`).
     pub(crate) tail_join_line: Option<usize>,
+    /// g10res: the vanished `[[/ol]]` of the tail, when the list kind is
+    /// ordered. Live wraps the whole remainder after it in a fresh degraded
+    /// `<ul><li style="list-style: none">` (gtr3-ol family); a vanished
+    /// `[[/ul]]` leaves the remainder bare. Subset of `tail_list_close`.
+    pub(crate) tail_ol_close: Option<usize>,
+    /// g10res: byte at which the line of the vanished tail `[[/li]]` starts,
+    /// when that closer ends a run of 3+ consecutive own-line `[[/li]]`s
+    /// (q-three-li, four-li probes). The vanished closer then also eats the
+    /// break before it (after the last literal `[[/li]]`); shorter runs and
+    /// non-adjacent closers keep it (g10i, three-li-spread probes).
+    pub(crate) tail_li_pre_join: Option<usize>,
+    /// g10res: `ParagraphBreak` positions stepped over in the literal tail
+    /// AFTER `tail_list_close` was set (t-blank-in-tail probe). Live keeps
+    /// the tail in one paragraph with the blank as its own `<br />`; blanks
+    /// at or before the list close are swallowed by the closer eats (or
+    /// split normally when before the li).
+    pub(crate) tail_br_blanks: Vec<usize>,
+    /// g10res: the first non-list closer ending the literal tail (u probe:
+    /// the outer div's real closer). The div rule keeps its body's trailing
+    /// break when this pairs with its own opener; the ol remainder loop
+    /// leaves a paired closer unconsumed and consumes an orphan once.
+    pub(crate) tail_terminator: Option<usize>,
 }
 
 #[derive(Debug, Clone, Default)]

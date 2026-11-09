@@ -638,9 +638,6 @@ where
                 }
             }
         }
-        // A discarded row closer with a same-line remainder is transparent
-        // mid-paragraph: live continues the paragraph through it with a
-        // space (probe muse-probe-advcell-list-mid-notail-list).
         if parser.settings().layout.legacy()
             && parser.current().token == Token::LineBreak
             && !stack.current_empty()

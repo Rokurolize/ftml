@@ -3487,17 +3487,17 @@ fn format_explicit_list_segments<'t>(
         // between the list and the pair's continuation is intra-pair
         // spacing, not a gap break (the gap break, if any, sits after the
         // pair's closer and is owned by the tail path).
+        let tail_marker = tail_mark.map(|tail_mark| match tail_mark {
+            SpanListCloseTail::Break => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
+            SpanListCloseTail::Bare => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
+            SpanListCloseTail::Lead => WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
+            SpanListCloseTail::Blank => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER,
+            SpanListCloseTail::Fold => WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
+        });
         let mut run_start = false;
         for mut child in children {
             if let Element::List { attributes, .. } = &mut child {
-                if let Some(tail_mark) = tail_mark {
-                    let marker = match tail_mark {
-                        SpanListCloseTail::Break => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
-                        SpanListCloseTail::Bare => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
-                        SpanListCloseTail::Lead => WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
-                        SpanListCloseTail::Blank => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER,
-                        SpanListCloseTail::Fold => WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
-                    };
+                if let Some(marker) = tail_marker {
                     attributes.insert(marker, Cow::Borrowed(""));
                 }
                 run_start = true;
@@ -7117,9 +7117,7 @@ fn wikidot_close_anchor_scope<'t>(
         // scopes so an enclosing span/size wraps it (spadj cell 2: live
         // `<span><a></a>...`, and the span must survive for the list).
         active.pop_istack_through_anchor();
-        run.push(Element::Partial(
-            PartialElement::WikidotEmptyInlineOwner,
-        ));
+        run.push(Element::Partial(PartialElement::WikidotEmptyInlineOwner));
         flush_run(output, run, active, last_run_outer_scope);
         active.kill_from(position);
         return true;

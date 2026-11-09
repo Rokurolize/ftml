@@ -695,10 +695,12 @@ pub(super) fn mark_span_list_close_tail<'r, 't>(
             {
                 let container = match &mut elements {
                     Elements::Single(Element::Container(container)) => container,
-                    Elements::Multiple(elements) => match &mut elements[container_index] {
-                        Element::Container(container) => container,
-                        _ => unreachable!("container index checked above"),
-                    },
+                    Elements::Multiple(elements) => {
+                        match &mut elements[container_index] {
+                            Element::Container(container) => container,
+                            _ => unreachable!("container index checked above"),
+                        }
+                    }
                     _ => unreachable!("container index checked above"),
                 };
                 stamp_tail_marker(

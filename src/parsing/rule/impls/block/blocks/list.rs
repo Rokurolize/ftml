@@ -2311,20 +2311,28 @@ fn parse_list_item<'r, 't>(
             );
         }
         // A run formation that never fused (no complete explicit list pair)
-        // leaves its lone list-closer line as an escaped paragraph; live
+        // leaves its lone list-closer line escaped after the run list; live
         // keeps the closer as an item of the run list instead (lihoist
-        // p19). Reattach it when the escaped element right after a plain
-        // native list is a paragraph holding one literal list closer.
-        if elements.len() == 2
-            && let [
-                Element::List {
-                    items,
-                    wikidot_explicit_block: false,
-                    ..
-                },
-                Element::Container(closer),
-            ] = &elements[..]
-            && closer.ctype() == ContainerType::Paragraph
+        // p19). Reattach it when the escaped tail right after a plain native
+        // list holds exactly one literal list closer — whether the tail was
+        // paragraph-wrapped or stayed bare (item 88 G3 keeps the bare run:
+        // probes muse-probe-x88f-g3-*).
+        if let [
+            Element::List {
+                items,
+                wikidot_explicit_block: false,
+                ..
+            },
+            rest @ ..,
+        ] = &elements[..]
+            && !rest.is_empty()
+            && rest.iter().all(|element| match element {
+                Element::Text(_) | Element::LineBreak => true,
+                Element::Container(container) => {
+                    container.ctype() == ContainerType::Paragraph
+                }
+                other => other.is_whitespace(),
+            })
             && items.iter().all(|item| {
                 matches!(
                     item,
@@ -2336,27 +2344,23 @@ fn parse_list_item<'r, 't>(
                 )
             })
         {
-            let text: String = closer
-                .elements()
+            let closer_text: String = rest
                 .iter()
-                .filter_map(|element| match element {
-                    Element::Text(text) => Some(text.as_ref()),
-                    _ => None,
+                .flat_map(|element| match element {
+                    Element::Text(text) => vec![text.as_ref()],
+                    Element::Container(container) => container
+                        .elements()
+                        .iter()
+                        .filter_map(|element| match element {
+                            Element::Text(text) => Some(text.as_ref()),
+                            _ => None,
+                        })
+                        .collect(),
+                    _ => Vec::new(),
                 })
                 .collect();
-            if matches!(text.as_str(), "[[/li]]" | "[[/ul]]" | "[[/ol]]") {
-                let paragraph = elements.pop().expect("paragraph just matched");
-                let Element::Container(paragraph) = paragraph else {
-                    unreachable!()
-                };
-                let closer_text: String = paragraph
-                    .elements()
-                    .iter()
-                    .filter_map(|element| match element {
-                        Element::Text(text) => Some(text.as_ref()),
-                        _ => None,
-                    })
-                    .collect();
+            if matches!(closer_text.as_str(), "[[/li]]" | "[[/ul]]" | "[[/ol]]") {
+                elements.truncate(1);
                 if let Some(Element::List { items: target, .. }) = elements.last_mut() {
                     target.push(ListItem::Elements {
                         attributes: AttributeMap::new(),
@@ -2665,6 +2669,8 @@ fn wrap_inline_line_after_list(
     segment: &mut Vec<Element>,
     formation_present: bool,
     in_cell: bool,
+    last_run_is_doc_final: bool,
+    segment_is_last: bool,
 ) {
     let mut index = 0;
     while index < segment.len() {
@@ -2687,6 +2693,13 @@ fn wrap_inline_line_after_list(
         while end < segment.len() && segment[end].paragraph_safe() {
             end += 1;
         }
+        // A post-list run is live-bare only when nothing else follows it
+        // in the item (the run reaches the end of the final segment) and
+        // the item's trailing chunk is the document-final chunk (probes
+        // muse-probe-g3x*: trailing text after the enclosing close, or a
+        // further list line in the body, flips the same cell to a
+        // paragraph).
+        let run_is_item_final = segment_is_last && end == segment.len();
         let mut run: Vec<Element> = segment.drain(start..end).collect();
         let deep_paragraph = !run.is_empty()
             && deep_marker_head(&run[0])
@@ -2699,16 +2712,6 @@ fn wrap_inline_line_after_list(
                         ..
                     })
                 ));
-        if !deep_paragraph
-            && ((!in_cell && !segment_has_block_marker(&run))
-                || !run.iter().any(
-                    |element| matches!(element, Element::Text(text) if !text.trim().is_empty()),
-                ))
-        {
-            segment.splice(start..start, run);
-            index = start + 1;
-            continue;
-        }
         if !deep_paragraph && !in_cell && post_list_run_is_bare_literal_pair(&run) {
             // Live glues consecutive literal lines (bl-two has no inner
             // break), keeping only the trailing break.
@@ -2737,6 +2740,18 @@ fn wrap_inline_line_after_list(
                 bare.remove(0);
             }
             segment.splice(start..start, bare);
+            index = start + 1;
+            continue;
+        }
+        if !deep_paragraph
+            && ((!in_cell
+                && (!segment_has_block_marker(&run)
+                    || (last_run_is_doc_final && run_is_item_final)))
+                || !run.iter().any(
+                    |element| matches!(element, Element::Text(text) if !text.trim().is_empty()),
+                ))
+        {
+            segment.splice(start..start, run);
             index = start + 1;
             continue;
         }
@@ -3035,7 +3050,8 @@ fn assemble_wikidot_li_segments<'t>(
         segments.remove(0);
         had_leading_empty = true;
     }
-    for segment in &mut segments {
+    let segment_count = segments.len();
+    for (segment_index, segment) in segments.iter_mut().enumerate() {
         let mut index = 1;
         let mut frame_depth = segment.first().map_or(0, wikidot_li_frame_depth_delta);
         while index < segment.len() {
@@ -3081,6 +3097,8 @@ fn assemble_wikidot_li_segments<'t>(
                 source,
             ),
             in_cell,
+            last_run_is_doc_final,
+            segment_index + 1 == segment_count,
         );
     }
     if let Some(first) = segments.first_mut() {

@@ -3822,6 +3822,18 @@ where
             return WikidotLiCloseDisposition::End;
         };
         if record.depth != head_depth {
+            // A closer recorded deeper than the open item is only the
+            // item's end when it pairs back to this item's head; a deeper
+            // closer paired to a deeper head (a list head that never
+            // formed, inside the literal frame) stays literal so both
+            // markers render (item 88 G3: probes muse-probe-x88f-g3-*).
+            if record.depth > head_depth
+                && self
+                    .wikidot_li_head_depth(pair)
+                    .is_some_and(|pair_depth| pair_depth > head_depth)
+            {
+                return WikidotLiCloseDisposition::Literal;
+            }
             return WikidotLiCloseDisposition::End;
         }
         let Some(pair_depth) = self.wikidot_li_head_depth(pair) else {

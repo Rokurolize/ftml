@@ -1,0 +1,71 @@
+{
+    "elements": [
+        {
+            "element": "list",
+            "data": {
+                "type": "numbered",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {
+                            "style": "list-style: none"
+                        },
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "[["
+                            },
+                            {
+                                "element": "text",
+                                "data": "li"
+                            },
+                            {
+                                "element": "text",
+                                "data": "]]"
+                            }
+                        ]
+                    },
+                    {
+                        "item-type": "sub-list",
+                        "element": "list",
+                        "data": {
+                            "type": "numbered",
+                            "attributes": {},
+                            "items": [
+                                {
+                                    "item-type": "elements",
+                                    "attributes": {},
+                                    "elements": [
+                                        {
+                                            "element": "text",
+                                            "data": "[["
+                                        },
+                                        {
+                                            "element": "text",
+                                            "data": "ul"
+                                        },
+                                        {
+                                            "element": "text",
+                                            "data": "]]"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "u"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

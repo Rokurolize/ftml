@@ -7775,7 +7775,11 @@ where
                 return;
             }
         }
-        if depth < 2 || depth < required {
+        // BRIEF-NB69 Round 2: the surplus counts only when the close is
+        // strictly deeper than this run. A close AT the run depth (e.g.
+        // the rbqrow nested-quote `>> [[/ul]]` at required depth 2)
+        // contributes nothing — its prefix is the run's own marker.
+        if depth < 2 || depth <= required {
             return;
         }
         let is_list_close = probe.get_end_block().is_ok_and(|name| {

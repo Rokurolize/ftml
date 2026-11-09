@@ -5606,6 +5606,7 @@ fn paragraph_scope_tail_continues<'t>(tail: &Element<'t>, next: &Element<'t>) ->
     matches!(tail, Element::Anchor { .. })
 }
 
+
 /// Whether a frame child is a scope chunk that live joins into a preceding
 /// paragraph across a quote/div row break: an anchor, a color scope, or an
 /// inline-scope container (span/size/format). R-bq-para-join probes cover
@@ -5642,15 +5643,34 @@ fn join_scope_chunk_into_paragraph<'t>(
     paragraph.elements_mut().push(next);
 }
 
-/// Frame-context pre-list chunk placement (item 60): inside a `[[div]]`,
-/// `[[note]]`, or blockquote frame, a segmentation-produced pre chunk cut
-/// by an explicit list keeps the enclosing scope's first paragraph, exactly
-/// as at block root. When the paragraph precedes, the chunk merges into the
-/// paragraph tail (anchor/span/size); when no paragraph precedes, a
-/// formatted scope chunk cut by the list takes a fresh `<p>` (the fused
-/// `[[span]]` shape, which has no break-only segment for the group flush
-/// to merge). Gate: the chunk is directly followed by an explicit-block
-/// list. Other frames (align/collapsible/...) are unprobed and untouched.
+fn prelist_inline_element(element: &Element<'_>) -> bool {
+    match element {
+        Element::Text(_) | Element::LineBreak | Element::LineBreaks(_) => true,
+        Element::Anchor { .. } | Element::Color { .. } => true,
+        Element::Container(container) => {
+            container.ctype() != ContainerType::Paragraph && element.paragraph_safe()
+        }
+        _ => false,
+    }
+}
+
+fn trim_prelist_scope_tail_space(element: &mut Element<'_>) {
+    let children = match element {
+        Element::Container(container) => container.elements_mut(),
+        Element::Anchor { elements, .. } | Element::Color { elements, .. } => elements,
+        _ => return,
+    };
+    while matches!(
+        children.last(),
+        Some(Element::Text(text)) if text.trim().is_empty()
+    ) {
+        children.pop();
+    }
+    if let Some(last) = children.last_mut() {
+        trim_prelist_scope_tail_space(last);
+    }
+}
+
 fn merge_frame_prelist_chunks<'t>(children: &mut Vec<Element<'t>>) {
     let is_explicit_block_list = |element: &Element<'_>| {
         matches!(
@@ -5661,28 +5681,33 @@ fn merge_frame_prelist_chunks<'t>(children: &mut Vec<Element<'t>>) {
             }
         )
     };
-    // Fresh wrap: a formatted scope chunk at the frame head cut by an
-    // explicit list, with no paragraph before it. A format segment whose
-    // pair closed inside the list (no markers on it any more) keeps the
-    // bare placement live renders.
-    let initem_close_segment = !children.is_empty() && matches!(&children[0], Element::Container(container)
-        if format_kind_of(container.ctype()).is_some()
-            && !container.attributes().get().contains_key(WIKIDOT_BLOCK_CHUNK_PREFIX_MARKER)
-            && !container.attributes().get().contains_key(WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER));
-    if children.len() > 1
-        && is_explicit_block_list(&children[1])
-        && !matches!(&children[0], Element::Container(paragraph)
-            if paragraph.ctype() == ContainerType::Paragraph)
-        && sequence_contains_format_container(std::slice::from_ref(&children[0]))
-        && sequence_has_inline_content(std::slice::from_ref(&children[0]))
+    let initem_close_segment = !children.is_empty()
+        && matches!(&children[0], Element::Container(container)
+            if format_kind_of(container.ctype()).is_some()
+                && !container
+                    .attributes()
+                    .get()
+                    .contains_key(WIKIDOT_BLOCK_CHUNK_PREFIX_MARKER)
+                && !container
+                    .attributes()
+                    .get()
+                    .contains_key(WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER));
+    if let Some(list_index) = children.iter().position(is_explicit_block_list)
+        && list_index > 0
+        && children[..list_index].iter().all(prelist_inline_element)
+        && sequence_contains_format_container(&children[..list_index])
+        && sequence_has_inline_content(&children[..list_index])
         && !initem_close_segment
     {
-        let chunk = children.remove(0);
+        let mut chunk: Vec<Element<'t>> = children.drain(..list_index).collect();
+        if let Some(last) = chunk.last_mut() {
+            trim_prelist_scope_tail_space(last);
+        }
         children.insert(
             0,
             Element::Container(Container::new(
                 ContainerType::Paragraph,
-                vec![chunk],
+                chunk,
                 AttributeMap::new(),
             )),
         );

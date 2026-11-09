@@ -30,7 +30,8 @@ pub fn collect_container<'r, 't>(
     invalids: &[ParseCondition],
     kind: Option<ParseErrorKind>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
-    let quote_cursor = QuoteBodyCursorInstallation::install(parser);
+    let quote_cursor =
+        QuoteBodyCursorInstallation::install_for_container(parser, container_type);
     let preserve_empty_lists = parser.settings().layout.legacy()
         && matches!(
             container_type,
@@ -88,6 +89,26 @@ impl QuoteBodyCursorInstallation {
             && let Some(required_depth) = parser.native_blockquote_depth()
         {
             parser.install_quote_body_cursor_at_current_line(required_depth);
+            true
+        } else {
+            false
+        };
+        QuoteBodyCursorInstallation { installed }
+    }
+
+    pub(crate) fn install_for_container(
+        parser: &mut Parser<'_, '_>,
+        container_type: ContainerType,
+    ) -> Self {
+        if container_type != ContainerType::Underline {
+            return Self::install(parser);
+        }
+        let installed = if parser.quote_body_cursor().is_none()
+            && let Some(required_depth) = parser.native_blockquote_depth()
+        {
+            parser.install_quote_body_cursor_at_current_line_with_literal_residuals(
+                required_depth,
+            );
             true
         } else {
             false

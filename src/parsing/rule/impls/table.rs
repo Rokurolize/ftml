@@ -751,9 +751,12 @@ fn cell_boundary<'r, 't>(
 }
 
 /// Wikidot keeps a single line break before a simple (unbracketed) table when
-/// that break directly follows a div or code closer. In every other setting
-/// (start of input, blank line, quote or paragraph content) the break is
-/// dropped or absorbed by the surrounding paragraph. Reports whether the
+/// that break directly follows a div, code or align closer. The align closer
+/// covers a collapsible whose content closed early (`[[/=]]`): live ends the
+/// content div, emits the closer line's break, and only then starts the table
+/// in the unfolded tail. In every other setting (start of input, blank line,
+/// quote or paragraph content) the break is dropped or absorbed by the
+/// surrounding paragraph. Reports whether the
 /// table at the current position is in the break-preserving setting.
 fn wikidot_simple_table_preserves_break(parser: &Parser<'_, '_>) -> bool {
     if !parser.settings().layout.legacy() {
@@ -773,7 +776,9 @@ fn wikidot_simple_table_preserves_break(parser: &Parser<'_, '_>) -> bool {
         None => return false,
     };
     let line = line.strip_suffix('\r').unwrap_or(line);
-    line.eq_ignore_ascii_case("[[/div]]") || line.eq_ignore_ascii_case("[[/code]]")
+    line.eq_ignore_ascii_case("[[/div]]")
+        || line.eq_ignore_ascii_case("[[/code]]")
+        || line.eq_ignore_ascii_case("[[/=]]")
 }
 
 pub(crate) fn wikidot_simple_table_markers_literal_on_line_after_explicit_li(

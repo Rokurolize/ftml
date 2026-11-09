@@ -813,6 +813,7 @@ fn tabview_wrapper_tail<'t>(items: &'t [TabViewItem<'t>]) -> Option<&'t [Element
 /// `muse-probe-ft84-t-*`). When an inner block (align/div/note/…) ejected
 /// the suffix instead, the tail stays after `yui-content` (the pinned
 /// `simple-row-suffix-tabview-tail` shape).
+#[derive(Debug, Clone, Copy)]
 struct WikidotTabviewRowTail<'t> {
     /// Index of the tail's item in `items`; `items.len()` when the tail is
     /// the marked wrapper div that `tabview_wrapper_tail` extracted (its
@@ -822,6 +823,9 @@ struct WikidotTabviewRowTail<'t> {
     /// Whether the tail is that marked wrapper div (rather than a raw
     /// Content run between tabs).
     wrapper: bool,
+    /// Whether the tab above the tail held a top-level cut table (direct)
+    /// rather than one nested in a vehicle element.
+    direct: bool,
 }
 
 /// Whether `elements` is the run produced by a table row-suffix ejection:
@@ -861,7 +865,7 @@ fn wikidot_tabview_row_tail_is_direct(items: &[TabViewItem<'_>], pos: usize) -> 
 /// Find the row-suffix tail that ends `yui-content`, if any: a raw Content
 /// run between tabs with the `||` head, or the marked wrapper tail at the
 /// end — in both cases only when the tab above it held a top-level table.
-fn wikidot_tabview_yui_row_tail<'t>(
+fn wikidot_tabview_row_tail_like<'t>(
     items: &'t [TabViewItem<'t>],
     wrapper_tail: Option<&'t [Element<'t>]>,
 ) -> Option<WikidotTabviewRowTail<'t>> {
@@ -869,35 +873,117 @@ fn wikidot_tabview_yui_row_tail<'t>(
         let TabViewItem::Content(elements) = item else {
             continue;
         };
-        if wikidot_tabview_row_suffix_run(elements)
-            && wikidot_tabview_row_tail_is_direct(items, index)
-        {
+        if wikidot_tabview_row_suffix_run(elements) {
             return Some(WikidotTabviewRowTail {
                 index,
                 elements,
                 wrapper: false,
+                direct: wikidot_tabview_row_tail_is_direct(items, index),
             });
         }
     }
-    if let Some(elements) = wrapper_tail
-        && wikidot_tabview_row_tail_is_direct(items, items.len())
-    {
+    if let Some(elements) = wrapper_tail {
         return Some(WikidotTabviewRowTail {
             index: items.len(),
             elements,
             wrapper: true,
+            direct: wikidot_tabview_row_tail_is_direct(items, items.len()),
         });
     }
     None
 }
 
+/// Whether any nested tabview inside these elements ended its own
+/// `yui-content` on a row-suffix tail (live propagates that break to every
+/// enclosing view, probes `muse-probe-ft84r-p4-b9/-b10/-b11`).
+fn elements_contain_row_tail_run(elements: &[Element<'_>]) -> bool {
+    elements.iter().any(element_contains_row_tail_view)
+}
+
+fn element_contains_row_tail_view(element: &Element<'_>) -> bool {
+    match element {
+        Element::TabView(items) => items_contain_row_tail(items),
+        Element::Container(container) => {
+            elements_contain_row_tail_run(container.elements())
+        }
+        Element::WikidotBlockFrame { children, .. }
+        | Element::Collapsible {
+            elements: children, ..
+        }
+        | Element::Anchor {
+            elements: children, ..
+        }
+        | Element::Color {
+            elements: children, ..
+        }
+        | Element::Include {
+            elements: children, ..
+        } => elements_contain_row_tail_run(children),
+        Element::Table(table) => table.rows.iter().any(|row| {
+            row.cells
+                .iter()
+                .any(|cell| elements_contain_row_tail_run(&cell.elements))
+        }),
+        Element::List { items, .. } => items.iter().any(|item| match item {
+            ListItem::Elements { elements, .. } => {
+                elements_contain_row_tail_run(elements)
+            }
+            ListItem::SubList { element } => element_contains_row_tail_view(element),
+        }),
+        Element::DefinitionList(items) => items.iter().any(|item| {
+            elements_contain_row_tail_run(&item.key_elements)
+                || elements_contain_row_tail_run(&item.value_elements)
+        }),
+        Element::Partial(partial) => match partial {
+            PartialElement::Tab(tab) => elements_contain_row_tail_run(&tab.elements),
+            PartialElement::ListItem(ListItem::Elements { elements, .. }) => {
+                elements_contain_row_tail_run(elements)
+            }
+            PartialElement::ListItem(ListItem::SubList { element }) => {
+                element_contains_row_tail_view(element)
+            }
+            PartialElement::TableRow(row) => row
+                .cells
+                .iter()
+                .any(|cell| elements_contain_row_tail_run(&cell.elements)),
+            PartialElement::TableCell(cell) => {
+                elements_contain_row_tail_run(&cell.elements)
+            }
+            PartialElement::WikidotFoster(elements)
+            | PartialElement::WikidotCollapsibleTail(elements) => {
+                elements_contain_row_tail_run(elements)
+            }
+            PartialElement::RubyText(ruby) => {
+                elements_contain_row_tail_run(&ruby.elements)
+            }
+            _ => false,
+        },
+        _ => false,
+    }
+}
+
+fn items_contain_row_tail(items: &[TabViewItem<'_>]) -> bool {
+    items.iter().any(|item| match item {
+        TabViewItem::Content(elements) => wikidot_tabview_row_suffix_run(elements),
+        TabViewItem::Tab(tab) | TabViewItem::Remote(tab) => {
+            elements_contain_row_tail_run(&tab.elements)
+        }
+    })
+}
+
 /// Drop a trailing line break from a row-tail run (live's `yui-content`
 /// ends at the tail without it, e.g. `**` with no trailing break).
 fn wikidot_tabview_row_tail_run<'t>(elements: &'t [Element<'t>]) -> &'t [Element<'t>] {
-    match elements {
-        [head @ .., Element::LineBreak] => head,
-        elements => elements,
+    let mut end = elements.len();
+    while end > 0
+        && matches!(
+            elements[end - 1],
+            Element::LineBreak | Element::LineBreaks { .. }
+        )
+    {
+        end -= 1;
     }
+    &elements[..end]
 }
 
 fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
@@ -914,6 +1000,14 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
     ctx.require_wikidot_tab_view(id.clone());
 
     let nav_override = ctx.wikidot_tabview_nav(items.as_ptr() as usize).cloned();
+    let tab_count = items
+        .iter()
+        .filter(|item| matches!(item, TabViewItem::Tab(_) | TabViewItem::Remote(_)))
+        .count();
+    let multi_tab_recovery = tab_count > 1;
+    let mut tab_index = 0usize;
+    let mut navset_spill_from = items.len();
+    let mut navset_spill_break: Option<(usize, Option<usize>)> = None;
     ctx.html()
         .div()
         .attr(attr!("id" => &id, "class" => "yui-navset"))
@@ -959,12 +1053,6 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                     }
                 });
 
-            let tab_count = items
-                .iter()
-                .filter(|item| {
-                    matches!(item, TabViewItem::Tab(_) | TabViewItem::Remote(_))
-                })
-                .count();
             // A stray escaped `[[/tab]]` inside a nested view's Content run
             // ends that view's `yui-content` at the marker (live leaves the
             // marker in the outermost view's content; see
@@ -976,16 +1064,48 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
             } else {
                 None
             };
-            // A row-suffix tail of a table cut directly in one of this view's
-            // tabs ends `yui-content` (item 84(c); probes `muse-probe-ft84-t-*`):
-            // live ejects it out of the tab's panel but keeps it inside
-            // `yui-content`, with every later item spilled into the navset.
+            // A row-suffix tail of a table cut in one of this view's tabs
+            // (item 84(c); probes `muse-probe-ft84-t-*`). Direct: the cut
+            // table sat at the tab body's top level, so live ejects the tail
+            // out of the panel but keeps it inside `yui-content`, with every
+            // later item spilled into the navset. Nested in a vehicle
+            // (div/note/align): live ends `yui-content` before the tail,
+            // emits the tail in the navset and the later panels after the
+            // navset closes (saved-page probes `muse-probe-ft84r-a-*`).
             // Suppressed when a stray-lift break already ends the content.
-            let yui_tail = (break_point.is_none() && tab_count > 0)
-                .then(|| wikidot_tabview_yui_row_tail(items, tail))
+            let any_row_tail = (tab_count > 0)
+                .then(|| wikidot_tabview_row_tail_like(items, tail))
                 .flatten();
-            let multi_tab_recovery = tab_count > 1;
-            let mut tab_index = 0usize;
+            // A view that holds both a stray escaped `[[/tab]]` and a
+            // row-suffix tail closes its own navset before the post items
+            // (saved-page probes `muse-probe-ft84r-p4-b10/-b12`).
+            let navset_break_spill = depth >= 1
+                && break_point.as_ref().is_some_and(|point| {
+                    any_row_tail.is_some_and(|tail| tail.index <= point.item_index)
+                });
+            let row_tail = (break_point.is_none() && tab_count > 0)
+                .then_some(any_row_tail)
+                .flatten();
+            let (yui_tail, navset_tail) = match row_tail {
+                Some(row_tail) if row_tail.direct => (Some(row_tail), None),
+                Some(row_tail) => (None, Some(row_tail)),
+                None => (None, None),
+            };
+            // A nested view that ended its own `yui-content` on a row tail
+            // ends this view's content after the item holding it, at every
+            // depth including the outermost (probes
+            // `muse-probe-ft84r-p4-b9/-b10/-b11`).
+            let nested_break = items
+                .iter()
+                .position(|item| match item {
+                    TabViewItem::Tab(tab) | TabViewItem::Remote(tab) => {
+                        elements_contain_row_tail_run(&tab.elements)
+                    }
+                    TabViewItem::Content(_) => false,
+                })
+                .filter(|index| *index + 1 < items.len());
+            let navset_tail =
+                navset_tail.filter(|_| nested_break.is_none() && break_point.is_none());
             let mut deferred_lift_break = false;
             ctx.html()
                 .div()
@@ -995,14 +1115,18 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                         render_wikidot_tabview_content_only(ctx, items);
                         return;
                     }
-                    let prefix_end = match (&break_point, &yui_tail) {
-                        (Some(point), _) => point.item_index + 1,
-                        (None, Some(ytail)) => {
-                            ytail.index.saturating_add(1).min(items.len())
-                        }
-                        (None, None) => items.len(),
+                    let content_end = if let Some(index) = nested_break {
+                        index + 1
+                    } else if let Some(point) = &break_point {
+                        point.item_index + 1
+                    } else if let Some(ytail) = &yui_tail {
+                        ytail.index.saturating_add(1).min(items.len())
+                    } else if let Some(tail) = &navset_tail {
+                        tail.index.min(items.len())
+                    } else {
+                        items.len()
                     };
-                    for (position, item) in items[..prefix_end].iter().enumerate() {
+                    for (position, item) in items[..content_end].iter().enumerate() {
                         if depth == 0 {
                             if deferred_lift_break {
                                 ctx.push_raw_str("<br>");
@@ -1049,12 +1173,14 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                                 depth,
                             );
                         }
-                        if depth == 0 {
+                        // A propagation break ends the content after this
+                        // item, so its lifted marker flushes past the close.
+                        if depth == 0 && Some(position) != nested_break {
                             deferred_lift_break =
                                 flush_wikidot_tabview_lifts(ctx, deferred_lift_break);
                         }
                     }
-                    if let (None, Some(ytail)) = (&break_point, &yui_tail)
+                    if let Some(ytail) = &yui_tail
                         && ytail.wrapper
                     {
                         render_elements(
@@ -1063,21 +1189,18 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                         );
                     }
                 });
-            if let Some(point) = &break_point {
-                if let (Some((_, post_start)), Some(item)) =
-                    (point.run_split, items.get(point.item_index))
-                    && let TabViewItem::Content(elements) = item
-                {
-                    render_wikidot_tabview_yui_item(
-                        ctx,
-                        item,
-                        &mut tab_index,
-                        multi_tab_recovery,
-                        Some(&elements[post_start..]),
-                        depth,
-                    );
+            // Lifted markers queued by a nested item that ended this content
+            // flush after the content div (live: `<br>[[/tab]]<br>` before
+            // the spilled panels).
+            if depth == 0 && nested_break.is_some() {
+                deferred_lift_break =
+                    flush_wikidot_tabview_lifts(ctx, deferred_lift_break);
+                if deferred_lift_break {
+                    ctx.push_raw_str("<br>");
                 }
-                for item in &items[point.item_index + 1..] {
+            }
+            if let Some(index) = nested_break {
+                for item in &items[index + 1..] {
                     render_wikidot_tabview_yui_item(
                         ctx,
                         item,
@@ -1087,8 +1210,37 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                         depth,
                     );
                 }
+            } else if let Some(point) = &break_point {
+                if navset_break_spill {
+                    navset_spill_break =
+                        Some((point.item_index, point.run_split.map(|(_, post)| post)));
+                } else {
+                    if let (Some((_, post_start)), Some(item)) =
+                        (point.run_split, items.get(point.item_index))
+                        && let TabViewItem::Content(elements) = item
+                    {
+                        render_wikidot_tabview_yui_item(
+                            ctx,
+                            item,
+                            &mut tab_index,
+                            multi_tab_recovery,
+                            Some(&elements[post_start..]),
+                            depth,
+                        );
+                    }
+                    for item in &items[point.item_index + 1..] {
+                        render_wikidot_tabview_yui_item(
+                            ctx,
+                            item,
+                            &mut tab_index,
+                            multi_tab_recovery,
+                            None,
+                            depth,
+                        );
+                    }
+                }
             }
-            if let (None, Some(ytail)) = (&break_point, &yui_tail)
+            if let Some(ytail) = &yui_tail
                 && !ytail.wrapper
             {
                 for item in &items[ytail.index + 1..] {
@@ -1102,10 +1254,14 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                     );
                 }
             }
+            if let Some(tail) = &navset_tail {
+                render_elements(ctx, wikidot_tabview_row_tail_run(tail.elements));
+                navset_spill_from = tail.index.saturating_add(1).min(items.len());
+            }
             if let Some(tail) = tail {
-                let rendered_in_yui =
-                    break_point.is_none() && yui_tail.is_some_and(|ytail| ytail.wrapper);
-                if !rendered_in_yui {
+                let rendered = yui_tail.is_some_and(|ytail| ytail.wrapper)
+                    || navset_tail.is_some_and(|tail| tail.wrapper);
+                if !rendered {
                     let tail = wikidot_tabview_row_tail_run(tail);
                     render_elements(ctx, tail);
                 }
@@ -1114,6 +1270,42 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                 render_element(ctx, element);
             }
         });
+    if let Some((index, post_start)) = navset_spill_break {
+        if let (Some(post_start), Some(item)) = (post_start, items.get(index))
+            && let TabViewItem::Content(elements) = item
+        {
+            render_wikidot_tabview_yui_item(
+                ctx,
+                item,
+                &mut tab_index,
+                multi_tab_recovery,
+                Some(&elements[post_start.min(elements.len())..]),
+                depth,
+            );
+        }
+        for item in &items[index + 1..] {
+            render_wikidot_tabview_yui_item(
+                ctx,
+                item,
+                &mut tab_index,
+                multi_tab_recovery,
+                None,
+                depth,
+            );
+        }
+    }
+    // A vehicle-nested row tail ends the whole navset in live: the later
+    // panels render after it (saved-page probes `muse-probe-ft84r-a-*`).
+    for item in &items[navset_spill_from.min(items.len())..] {
+        render_wikidot_tabview_yui_item(
+            ctx,
+            item,
+            &mut tab_index,
+            multi_tab_recovery,
+            None,
+            depth,
+        );
+    }
     ctx.set_wikidot_tabview_depth(depth);
 }
 

@@ -208,6 +208,11 @@ struct ActiveScopes<'t> {
     /// enclosing outer_close_eof frame consumes it and dissolves the post-list
     /// wrapper span (fix_outer_close_eof_breaks).
     post_list_crossed_close: bool,
+    /// A heading barrier pended the crossing scopes ((`pend_all` after the
+    /// label) and none of them has been closed since: the item end must
+    /// materialise the reopened empty copy in its own paragraph
+    /// (aw-anchor-close-on-heading: `<p><a></a></p>` after the h1).
+    heading_barrier_pended: bool,
     /// Positions of the span/size scopes that were active when a frame
     /// element's children lowering began (d8-44). While set, a tabview
     /// adjacent to a frame edge or another block inside those children
@@ -5754,6 +5759,7 @@ fn lower_sequence<'t>(
                     &mut run,
                     active,
                     &mut last_run_outer_scope,
+                    true,
                 );
                 let leading_space =
                     matches!(source.peek(), Some(Element::Text(text)) if text == " ");
@@ -5787,6 +5793,24 @@ fn lower_sequence<'t>(
         if let Element::Partial(PartialElement::InlineAnchorClose(close_source)) = element
         {
             let resolved = active.peek_close(InlineTag::Anchor);
+            // The heading barrier's post-closer tail: the heading block already
+            // closed the open element on live, so this closer finds nothing to
+            // close. It is consumed and the anchor stays on the inline stack,
+            // reopening on later content (aw-anchor-close-on-heading:
+            // <p><a></a></p> after the heading, then the post-list wrapper
+            // inside the anchor). A scope the tail opened itself closes
+            // normally (resolved position is at or above the watermark).
+            if valid.contains(&*ordinal)
+                && active.suppress_scope_wrap
+                && active
+                    .suppress_scope_wrap_watermark
+                    .is_some_and(|watermark| {
+                        resolved.is_some_and(|position| position < watermark)
+                    })
+            {
+                *ordinal += 1;
+                continue;
+            }
             // B2 (item 82 residual): an anchor whose scope crossed an explicit
             // list and closes inside the frame after it pops the post-list
             // heading wrapper on live (the post-list content lands bare). Only
@@ -6113,6 +6137,7 @@ fn lower_sequence<'t>(
                     &mut run,
                     active,
                     &mut last_run_outer_scope,
+                    false,
                 );
                 if closed && let Element::Footnote(reference) = &mut element {
                     reference.broke_anchor = true;
@@ -7404,11 +7429,35 @@ fn wikidot_close_anchor_scope<'t>(
     run: &mut Vec<Element<'t>>,
     active: &mut ActiveScopes<'t>,
     last_run_outer_scope: &mut RunMergeState,
+    // Set by the crossed-anchor close (a second anchor open): the caller has
+    // already flushed the pending run into the closed copy.
+    hoist_flushed_break: bool,
 ) -> bool {
     let Some(position) = active.anchor_position() else {
         return false;
     };
-    let trailing_break = matches!(run.last(), Some(Element::LineBreak));
+    // The caller flushes the run before a crossed-anchor close (the next
+    // anchor open), so the pending break already sits inside the emitted copy.
+    // libtidy moves a closing element's trailing whitespace out to the next
+    // text, so live leaves one separating space between the two closed copies
+    // (saved pages muse-probe-fu82b-li-cross-anchor-two-anchors and
+    // muse-probe-awb2-li-cross-anchor-two-anchors-text:
+    // `<a><br></a> <a><br><br></a>`); a same-line pair keeps none
+    // (muse-probe-awb2-li-cross-anchor-two-anchors-same-line).
+    let flushed_copy_break = hoist_flushed_break
+        && run.is_empty()
+        && output.last().is_some_and(|last| {
+            matches!(
+                last,
+                Element::Anchor { elements, .. }
+                    if matches!(
+                        elements.last(),
+                        Some(Element::LineBreak | Element::LineBreaks(_))
+                    )
+            )
+        });
+    let trailing_break =
+        matches!(run.last(), Some(Element::LineBreak)) || flushed_copy_break;
     let trailing_space = trim_run_trailing_space(run) || trailing_break;
     let empty =
         !active.scope_has_content(position) && run.iter().all(element_is_whitespace_only);
@@ -7566,6 +7615,41 @@ fn emit_heading_inline_closure<'t>(
     }
     output.extend(closed);
     last_run_outer_scope.reset();
+}
+
+/// A list item's block end reopens the inline stack (Wikidot keeps it across
+/// block boundaries), so a scope the heading barrier pended is materialised as
+/// an empty copy in its own paragraph after the h1 — live
+/// aw-anchor-close-on-heading: `<li>x<br><a><br><br></a><h1>…</h1><p><a></a></p></li>`.
+/// The heading wrapper span is the heading's own label layer and closes with
+/// the heading, so it is not part of the reopened copy (the post-list segment
+/// reopens it separately). Items whose pended scope was closed again in the
+/// item (a closer line after the heading) emit nothing: nothing is pending.
+fn emit_item_end_reopened_copy<'t>(
+    children: &mut Vec<Element<'t>>,
+    active: &mut ActiveScopes<'t>,
+) {
+    let positions = active.active_positions();
+    let crossing: Vec<usize> = positions
+        .iter()
+        .copied()
+        .filter(|position| {
+            Some(*position) != active.heading_wrapper
+                && active.scope_is_pending(*position)
+        })
+        .collect();
+    if crossing.is_empty() {
+        return;
+    }
+    let mut copy: Vec<Element<'t>> = Vec::new();
+    for entry in crossing.iter().rev() {
+        copy = vec![active.scopes[*entry].wrapper.wrap(copy)];
+    }
+    children.push(Element::Container(Container::new(
+        ContainerType::Paragraph,
+        copy,
+        AttributeMap::new(),
+    )));
 }
 
 /// The inline tag of a scope-wrapper element, if it is one.
@@ -8191,6 +8275,10 @@ fn lower_wikidot_heading_barrier<'t>(
         false,
     );
     active.pend_all();
+    active.heading_barrier_pended = active
+        .active_positions()
+        .iter()
+        .any(|position| Some(*position) != active.heading_wrapper);
     let outer_suppress = active.suppress_scope_wrap;
     let outer_watermark = active.suppress_scope_wrap_watermark;
     active.suppress_scope_wrap = true;
@@ -8530,6 +8618,11 @@ fn lower_children<'t>(
         // break). Without this the frame close lost the tail break and kept
         // the enclosing scope wrapped around the post-list segment (live:
         // `<span>b</span><br></div>`, `<span>b</span><br></blockquote>`).
+        // The heading-barrier pended-copy flag is per-sequence: a nested
+        // sequence (an item body) must not inherit the outer one, and only a
+        // list item's own sequence reads it back (aw-anchor-close-on-heading).
+        let barrier_pended_outer = active.heading_barrier_pended;
+        active.heading_barrier_pended = false;
         if root_tail_vehicle
             && frame_children_need_root_tail_assembly(
                 children,
@@ -8550,6 +8643,11 @@ fn lower_children<'t>(
                 bib,
                 false,
             );
+        }
+        let barrier_pended_here =
+            mem::replace(&mut active.heading_barrier_pended, barrier_pended_outer);
+        if truncate_at_entry && barrier_pended_here {
+            emit_item_end_reopened_copy(children, active);
         }
         if segment {
             active.pend_all();
@@ -9625,7 +9723,9 @@ fn fix_outer_close_eof_breaks<'t>(children: &mut Vec<Element<'t>>, post_list_cro
     // forms `[[/div]]`, `[[/note]]`, or `[[/collapsible]]`. Prefer the one
     // that is the heading wrapper's post-list emission (after a list, in this
     // frame). A split case puts the closer span before a following List.
-    let closer_idx = children.iter().rposition(|el| is_closer_literal_span(el));
+    let closer_idx = children
+        .iter()
+        .rposition(|el| is_closer_literal_segment(el));
     let Some(idx) = closer_idx else {
         return;
     };
@@ -9637,13 +9737,9 @@ fn fix_outer_close_eof_breaks<'t>(children: &mut Vec<Element<'t>>, post_list_cro
     }
     // Terminal closer span (possibly followed by a Paragraph, e.g. blank-text).
     let followed_by_paragraph = matches!(children.get(idx + 1), Some(Element::Container(c)) if c.ctype() == ContainerType::Paragraph);
-    let Element::Container(container) = &mut children[idx] else {
+    let Some(elements) = post_list_segment_elements_mut(&mut children[idx]) else {
         return;
     };
-    if !matches!(container.ctype(), ContainerType::Span | ContainerType::Size) {
-        return;
-    }
-    let elements = container.elements_mut();
     let literal_end = closer_literal_text_len(elements);
     if literal_end == 0 {
         return;
@@ -9952,7 +10048,7 @@ fn restyle_list_items<'t>(items: &mut Vec<ListItem<'t>>, attrs: &AttributeMap<'t
 /// `<p>t<br>[[/div]]</p>`, `cnl-color-outerspan`
 /// `<p>[[/div]]<br></p>`). Bold/italic/anchor/plain labels keep the wrapper,
 /// so this runs only under the cancellation signal.
-fn dissolve_post_heading_wrapper_spans<'t>(children: &mut [Element<'t>]) {
+fn dissolve_post_heading_wrapper_spans<'t>(children: &mut Vec<Element<'t>>) {
     let Some(heading) = children.iter().position(|element| {
         matches!(
             element,
@@ -9966,20 +10062,52 @@ fn dissolve_post_heading_wrapper_spans<'t>(children: &mut [Element<'t>]) {
     }) else {
         return;
     };
-    for element in children[heading + 1..].iter_mut() {
-        let Element::Container(paragraph) = element else {
-            continue;
-        };
-        if paragraph.ctype() != ContainerType::Paragraph {
-            continue;
+    let tail: Vec<Element<'t>> = children.split_off(heading + 1);
+    let mut out = Vec::with_capacity(tail.len());
+    for element in tail {
+        dissolve_post_heading_wrapper_element(element, &mut out);
+    }
+    children.extend(out);
+}
+
+/// One post-heading element under a cancelled barrier heading. The implicit
+/// heading wrapper span reopens around every post-heading block on live and
+/// then dissolves, layer by layer: inside a nested block frame's paragraph
+/// (cnl4-nested-frame-tail-span renders the nested div body as `<p>y</p>`), in
+/// its own tail segment (`<br>[[/div]]` bare after the nested block), and in
+/// direct paragraphs. User elements carry attributes and survive; only the
+/// bare wrapper span layer goes.
+fn dissolve_post_heading_wrapper_element<'t>(
+    element: Element<'t>,
+    out: &mut Vec<Element<'t>>,
+) {
+    let Element::Container(mut container) = element else {
+        out.push(element);
+        return;
+    };
+    match container.ctype() {
+        ContainerType::Paragraph => {
+            let elements = container.elements_mut();
+            if let [Element::Container(span)] = elements.as_mut_slice()
+                && span.ctype() == ContainerType::Span
+                && span.attributes().get().is_empty()
+            {
+                *elements = mem::take(span.elements_mut());
+            }
+            out.push(Element::Container(container));
         }
-        let elements = paragraph.elements_mut();
-        if let [Element::Container(span)] = elements.as_mut_slice()
-            && span.ctype() == ContainerType::Span
-            && span.attributes().get().is_empty()
-        {
-            *elements = mem::take(span.elements_mut());
+        ContainerType::Span if container.attributes().get().is_empty() => {
+            out.extend(Vec::<Element<'t>>::from(container));
         }
+        ContainerType::Div | ContainerType::Note | ContainerType::Blockquote => {
+            let mut nested = Vec::with_capacity(container.elements().len());
+            for child in mem::take(container.elements_mut()) {
+                dissolve_post_heading_wrapper_element(child, &mut nested);
+            }
+            *container.elements_mut() = nested;
+            out.push(Element::Container(container));
+        }
+        _ => out.push(Element::Container(container)),
     }
 }
 
@@ -10116,13 +10244,10 @@ fn closer_literal_end_index(elements: &[Element<'_>]) -> Option<usize> {
 /// muse-probe-fu82-aw4-anchor-postlist-open, muse-probe-b2-p-*,
 /// muse-probe-b2-s-span-postlist-pair, muse-probe-b2-a-close-inside-li2.
 fn fix_post_list_wrapper_tail<'t>(children: &mut [Element<'t>], anchor: usize) -> bool {
-    let Some(index) = children[anchor + 1..].iter().position(|element| {
-        matches!(
-            element,
-            Element::Container(container)
-                if matches!(container.ctype(), ContainerType::Span | ContainerType::Size)
-        )
-    }) else {
+    let Some(index) = children[anchor + 1..]
+        .iter()
+        .position(|element| post_list_segment_elements(element).is_some())
+    else {
         return false;
     };
     let index = anchor + 1 + index;
@@ -10132,10 +10257,9 @@ fn fix_post_list_wrapper_tail<'t>(children: &mut [Element<'t>], anchor: usize) -
             if container.ctype() == ContainerType::Paragraph
                 && elements_have_closer_literal(container.elements())
     );
-    let Element::Container(container) = &mut children[index] else {
+    let Some(elements) = post_list_segment_elements_mut(&mut children[index]) else {
         return false;
     };
-    let elements = container.elements_mut();
     if closer_literal_text_len(elements) > 0 {
         // Literal-leading: R2 owns this shape.
         return false;
@@ -10315,6 +10439,66 @@ fn dissolve_list_items(items: &mut Vec<ListItem<'_>>) {
             }
         }
     }
+}
+
+/// The elements of a post-list wrapper segment: a direct Span/Size container,
+/// or the Span/Size wrapper an inline anchor carries. Live nests
+/// `<a><span>[[/div]]<br><br></span></a>` when a crossing anchor holds the
+/// heading wrapper into the post-list tail
+/// (aw-anchor-close-on-heading, li-close-on-heading-postlist-trail).
+fn post_list_segment_elements<'a, 't>(
+    element: &'a Element<'t>,
+) -> Option<&'a [Element<'t>]> {
+    match element {
+        Element::Container(container)
+            if matches!(container.ctype(), ContainerType::Span | ContainerType::Size) =>
+        {
+            Some(container.elements())
+        }
+        Element::Anchor { elements, .. } => match elements.as_slice() {
+            [Element::Container(container)]
+                if matches!(
+                    container.ctype(),
+                    ContainerType::Span | ContainerType::Size
+                ) =>
+            {
+                Some(container.elements())
+            }
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn post_list_segment_elements_mut<'a, 't>(
+    element: &'a mut Element<'t>,
+) -> Option<&'a mut Vec<Element<'t>>> {
+    match element {
+        Element::Container(container)
+            if matches!(container.ctype(), ContainerType::Span | ContainerType::Size) =>
+        {
+            Some(container.elements_mut())
+        }
+        Element::Anchor { elements, .. } => match elements.as_mut_slice() {
+            [Element::Container(container)]
+                if matches!(
+                    container.ctype(),
+                    ContainerType::Span | ContainerType::Size
+                ) =>
+            {
+                Some(container.elements_mut())
+            }
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+/// A post-list wrapper segment whose text content starts with a block closer
+/// literal, including the anchor-carried wrapper.
+fn is_closer_literal_segment(el: &Element<'_>) -> bool {
+    post_list_segment_elements(el)
+        .is_some_and(|elements| closer_literal_text_len(elements) > 0)
 }
 
 /// Is this a Span (or, after R3 restyling, Size) container whose text content

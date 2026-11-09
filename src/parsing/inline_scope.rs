@@ -3804,6 +3804,8 @@ fn merge_frame_prelist_chunks<'t>(children: &mut Vec<Element<'t>>) {
     // explicit list, with no paragraph before it.
     if children.len() > 1
         && is_explicit_block_list(&children[1])
+        && !matches!(&children[0], Element::Container(paragraph)
+            if paragraph.ctype() == ContainerType::Paragraph)
         && sequence_contains_format_container(std::slice::from_ref(&children[0]))
         && sequence_has_inline_content(std::slice::from_ref(&children[0]))
     {
@@ -6720,6 +6722,45 @@ fn lower_wikidot_heading_barrier<'t>(
     *container.elements_mut() = label;
 }
 
+/// An explicit list carrying a post-list inline-scope tail mark
+/// (`data-ftml-{span,understrike,format-label}-list-close-tail-*`): the parse
+/// layer's record of where live closes (or keeps) the enclosing inline scope
+/// after a format pair crossing the list, and where the tail line's break lands.
+fn is_tail_marked_list(element: &Element<'_>) -> bool {
+    let Element::List { attributes, .. } = element else {
+        return false;
+    };
+    span_list_close_tail_of(attributes).is_some()
+        || understrike_list_close_tail_of(attributes).is_some()
+        || format_label_list_close_tail_of(attributes).is_some()
+}
+
+/// Whether a frame's direct children need the root block pass: only that pass
+/// (`lower_root_sequence`) acts on the post-list tail marks; `lower_sequence`
+/// strips them without acting, so a marked frame close lost the tail break and
+/// kept the scope wrapping the post-list segment (ledger item 60 residual
+/// R-frame; saved-page probes `muse-probe-fr60-x-u-*`, `x-bold-*`,
+/// `x-ital-*`, `x-strike-*`, `x-u-size/anchor`, `x-u-2tail`, `x-u-note-*`).
+fn frame_children_need_root_tail_assembly(elements: &[Element<'_>]) -> bool {
+    elements.iter().any(is_tail_marked_list)
+}
+
+/// Frame vehicles whose direct children are block-assembled like page root
+/// content on live: div, note and collapsible bodies (probed). Blockquote and
+/// align bodies assemble differently (their own residual families) and other
+/// contexts (list items, table cells) are unprobed, so they keep the legacy
+/// frame lowering.
+fn frame_uses_root_tail_assembly(element: &Element<'_>) -> bool {
+    matches!(
+        element,
+        Element::Collapsible { .. } | Element::WikidotBlockFrame { .. }
+    ) || matches!(
+        element,
+        Element::Container(container)
+            if matches!(container.ctype(), ContainerType::Div | ContainerType::Note)
+    )
+}
+
 fn lower_children<'t>(
     element: &mut Element<'t>,
     valid: &BTreeSet<usize>,
@@ -6848,6 +6889,9 @@ fn lower_children<'t>(
                 ContainerType::Div | ContainerType::Note | ContainerType::Blockquote
             )
     );
+    // R-frame (ledger item 60 residual): compute before the visit closure borrows
+    // `element`; see the delegation comment inside the closure.
+    let root_tail_vehicle = frame_uses_root_tail_assembly(element);
     let mut visit = |children: &mut Vec<Element<'t>>| {
         lowered = true;
         if truncate_at_entry {
@@ -6861,17 +6905,27 @@ fn lower_children<'t>(
         if frame_children {
             active.frame_entry = Some(active.active_positions());
         }
-        lower_sequence(
-            children,
-            valid,
-            ordinal,
-            active,
-            trim_next_break,
-            false,
-            segment,
-            bib,
-            false,
-        );
+        // R-frame (ledger item 60 residual): a div/note/collapsible body whose
+        // explicit list carries a post-list inline-scope tail mark is assembled
+        // by the root block pass, which owns that tail accounting (scope
+        // retirement + tail break). Without this the frame close lost the tail
+        // break and kept the enclosing scope wrapped around the post-list
+        // segment (live: `<span>b</span><br></div>`).
+        if root_tail_vehicle && frame_children_need_root_tail_assembly(children) {
+            lower_root_sequence(children, valid, ordinal, active, trim_next_break, bib);
+        } else {
+            lower_sequence(
+                children,
+                valid,
+                ordinal,
+                active,
+                trim_next_break,
+                false,
+                segment,
+                bib,
+                false,
+            );
+        }
         if segment {
             active.pend_all();
         }

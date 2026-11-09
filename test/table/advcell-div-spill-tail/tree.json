@@ -1,0 +1,96 @@
+{
+    "elements": [
+        {
+            "element": "table",
+            "data": {
+                "type": "simple",
+                "attributes": {},
+                "rows": [
+                    {
+                        "attributes": {},
+                        "cells": [
+                            {
+                                "header": false,
+                                "column-span": 1,
+                                "align": null,
+                                "attributes": {},
+                                "elements": [
+                                    {
+                                        "element": "container",
+                                        "data": {
+                                            "type": "div",
+                                            "attributes": {},
+                                            "elements": [
+                                                {
+                                                    "element": "list",
+                                                    "data": {
+                                                        "type": "bullet",
+                                                        "attributes": {},
+                                                        "items": [
+                                                            {
+                                                                "item-type": "sub-list",
+                                                                "element": "list",
+                                                                "data": {
+                                                                    "type": "bullet",
+                                                                    "attributes": {},
+                                                                    "items": [
+                                                                        {
+                                                                            "item-type": "elements",
+                                                                            "attributes": {},
+                                                                            "elements": [
+                                                                                {
+                                                                                    "element": "text",
+                                                                                    "data": "a"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            },
+                                                            {
+                                                                "item-type": "elements",
+                                                                "attributes": {
+                                                                    "style": "list-style: none"
+                                                                },
+                                                                "elements": [
+                                                                    {
+                                                                        "element": "text",
+                                                                        "data": "text"
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                "item-type": "sub-list",
+                                                                "element": "list",
+                                                                "data": {
+                                                                    "type": "bullet",
+                                                                    "attributes": {},
+                                                                    "items": [
+                                                                        {
+                                                                            "item-type": "elements",
+                                                                            "attributes": {},
+                                                                            "elements": [
+                                                                                {
+                                                                                    "element": "text",
+                                                                                    "data": "b"
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

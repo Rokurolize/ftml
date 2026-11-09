@@ -275,6 +275,39 @@ fn closer_bare_before(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
         }
     }
     true
+fn paragraph_break_after_list_close(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
+    if tokens
+        .get(index)
+        .is_none_or(|token| token.token != Token::ParagraphBreak)
+    {
+        return false;
+    }
+    let mut cursor = index;
+    while cursor > 0 {
+        let Some(previous) = tokens.get(cursor - 1) else {
+            break;
+        };
+        if matches!(previous.token, Token::LineBreak | Token::ParagraphBreak) {
+            cursor -= 1;
+            continue;
+        }
+        break;
+    }
+    if cursor < 3 {
+        return false;
+    }
+    let (Some(close), Some(name), Some(open)) = (
+        tokens.get(cursor - 1),
+        tokens.get(cursor - 2),
+        tokens.get(cursor - 3),
+    ) else {
+        return false;
+    };
+    close.token == Token::RightBlock
+        && open.token == Token::LeftBlockEnd
+        && name.token == Token::Identifier
+        && (name.slice.eq_ignore_ascii_case("ul")
+            || name.slice.eq_ignore_ascii_case("ol"))
 }
 
 pub(super) fn validate_reachable_close(
@@ -406,16 +439,21 @@ pub(super) fn validate_reachable_close(
             Token::ParagraphBreak => {
                 last_paragraph_break = Some(scan_start + index);
                 saw_break = true;
+                let post_list_gap = parser.settings().layout.legacy()
+                    && pb_stack.is_empty()
+                    && !parser.in_wikidot_span_body()
+                    && !parser.in_wikidot_size_body()
+                    && !parser.in_wikidot_anchor_body()
+                    && paragraph_break_after_list_close(tokens, index);
                 if gap_forgiveness
                     && pb_stack.is_empty()
                     && !opener_bare
                     && post_list_gap_before(tokens, index)
                 {
                     forgave_post_list_gap = true;
-                } else if !suppress_breaks || pb_stack.is_empty() {
-                    paragraph_error.get_or_insert_with(|| {
-                        parser.make_err(ParseErrorKind::RuleFailed)
-                    });
+                } else if !post_list_gap && (!suppress_breaks || pb_stack.is_empty()) {
+                    paragraph_error
+                        .get_or_insert_with(|| parser.make_err(ParseErrorKind::RuleFailed));
                 }
             }
             Token::LeftBlock | Token::LeftBlockStar if blocks_can_reject => {

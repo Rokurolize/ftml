@@ -63,7 +63,6 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::SplitClose(SplitDelimiter::Bold),
     ];
     let invalid = [
-        ParseCondition::current(Token::ParagraphBreak),
         ParseCondition::token_pair(Token::Bold, Token::Whitespace),
         ParseCondition::token_pair(Token::Whitespace, Token::Bold),
         ParseCondition::PaddedSplitClose(SplitDelimiter::Bold),
@@ -882,8 +881,6 @@ pub(super) fn mark_format_stop_at_list<'r, 't>(
             || in_anchor_body)
     {
         // Scopeless underline/strikethrough crossing (page root or a block
-        // envelope): the pair crosses like bold on live (the item keeps its
-        // styling), and the after-list tail follows the same bare/lead rule.
         // Only the tail marker is stamped — no stop marker — so lowering
         // keeps the styling across the list and only unwraps the tail.
         if parser.settings().layout.legacy()
@@ -897,10 +894,7 @@ pub(super) fn mark_format_stop_at_list<'r, 't>(
                 .iter()
                 .any(crate::parsing::inline_scope::subtree_contains_explicit_list)
                 && !container.elements().iter().any(|child| {
-                    crate::parsing::inline_scope::subtree_contains_flow_block(child)
-                        || crate::parsing::inline_scope::subtree_contains_native_list(
-                            child,
-                        )
+                    crate::parsing::inline_scope::subtree_contains_native_list(child)
                 });
             if crossing {
                 let current = parser.current();

@@ -1207,6 +1207,7 @@ fn wikidot_list_closer_residual_is_blank(parser: &Parser<'_, '_>) -> bool {
 ///     frame wrap (only a formed flat-pair head, a heading line, or `----`
 ///     veto; a list head vetoes only the follower wrap, and EOF vetoes
 ///     nothing).
+///
 /// Probes: muse-probe-f7r-* (follower classes without a frame) and
 /// muse-probe-rm83-fda1..fda17 (frame open, one probe per follower class).
 fn wikidot_li_wrap_enclosing(parser: &Parser<'_, '_>, from_byte: usize) -> bool {

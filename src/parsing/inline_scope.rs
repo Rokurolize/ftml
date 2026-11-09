@@ -6,7 +6,8 @@ use crate::tree::{
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER,
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, WIKIDOT_HEADING_REOPEN_MARKER,
-    WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER, WIKIDOT_QUOTE_BLANK_ANCHOR_MARKER,
+    WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER, WIKIDOT_LIST_POST_BLANK_GAP_MARKER,
+    WIKIDOT_POST_LIST_BLANK_GAP_MARKER, WIKIDOT_QUOTE_BLANK_ANCHOR_MARKER,
     WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER,
     WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
     WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
@@ -149,6 +150,7 @@ struct ActiveScope<'t> {
     pending: bool,
     materialized: bool,
     origin: usize,
+    afterlife: bool,
     previous_active: Option<usize>,
     next_active: Option<usize>,
 }
@@ -261,6 +263,7 @@ impl<'t> ActiveScopes<'t> {
             pending: false,
             materialized: false,
             origin,
+            afterlife: false,
             previous_active,
             next_active: None,
         });
@@ -841,6 +844,20 @@ impl<'t> ActiveScopes<'t> {
         });
     }
 
+    fn retire_innermost_color_scope(&mut self) {
+        let mut current = self.active_tail;
+        while let Some(position) = current {
+            if matches!(
+                self.scopes[position].wrapper,
+                ScopeWrapper::Color { .. }
+            ) {
+                self.kill_scope(position);
+                return;
+            }
+            current = self.scopes[position].previous_active;
+        }
+    }
+
     fn retire_size_scopes(&mut self) {
         let mut retired = Vec::new();
         let mut current = self.active_tail;
@@ -1052,6 +1069,7 @@ pub(crate) fn lower_wikidot_inline_size_scopes_with_bibliographies<'t>(
     );
     drop_empty_inline_scopes(elements);
     drop_vanished_paragraphs(elements);
+    split_lists_out_of_paragraphs(elements);
     splice_wikidot_foster(elements);
     rewrite_block_chunk_prefix(elements, BlockChunkCtx::Block);
     lowered
@@ -1606,6 +1624,86 @@ fn format_kind_of(ctype: ContainerType) -> Option<InlineFormatKind> {
     }
 }
 
+fn subtree_contains_foster_block(element: &Element<'_>) -> bool {
+    if matches!(
+        element,
+        Element::Table { .. } | Element::BibliographyBlock { .. }
+    ) {
+        return true;
+    }
+    let mut found = false;
+    visit_children(element, &mut |children| {
+        found |= children.iter().any(subtree_contains_foster_block);
+    });
+    found
+}
+
+fn anchor_scope_dead_by_foster(output: &[Element<'_>]) -> bool {
+    match (
+        output.iter().position(subtree_contains_anchor_open),
+        output.iter().position(subtree_contains_foster_block),
+    ) {
+        (Some(open), Some(foster)) => open < foster,
+        _ => false,
+    }
+}
+
+fn stopped_plain_item(elements: &[Element<'_>]) -> bool {
+    elements.iter().all(|element| {
+        !matches!(
+            element,
+            Element::List { .. }
+                | Element::Table { .. }
+                | Element::BibliographyBlock { .. }
+                | Element::Anchor { .. }
+                | Element::Partial(
+                    PartialElement::InlineAnchorOpen(..)
+                        | PartialElement::InlineAnchorClose(_)
+                )
+        ) && !is_wikidot_flow_block(element)
+            && {
+                let mut nested = true;
+                visit_children(element, &mut |children| {
+                    nested &= stopped_plain_item(children);
+                });
+                nested
+            }
+    })
+}
+
+fn stopped_container_ctype(element: &Element<'_>) -> Option<ContainerType> {
+    match element {
+        Element::Container(container)
+            if format_kind_of(container.ctype()).is_some()
+                && stopped_pre_segment(element) =>
+        {
+            Some(container.ctype())
+        }
+        _ => None,
+    }
+}
+
+fn wrap_stopped_plain_items(segments: &mut [Element<'_>], ctype: ContainerType) {
+    for segment in segments.iter_mut() {
+        let Element::List { items, .. } = segment else {
+            continue;
+        };
+        for item in items.iter_mut() {
+            let ListItem::Elements { elements, .. } = item else {
+                continue;
+            };
+            if stopped_plain_item(elements) {
+                let inner = mem::take(elements);
+                *elements = vec![Element::Container(Container::new(
+                    ctype,
+                    inner,
+                    AttributeMap::new(),
+                ))];
+            }
+        }
+    }
+}
+
 fn flatten_crossing_inline_containers<'t>(elements: &mut Vec<Element<'t>>) {
     for element in elements.iter_mut() {
         let mut visit = |children: &mut Vec<Element<'t>>| {
@@ -1615,11 +1713,22 @@ fn flatten_crossing_inline_containers<'t>(elements: &mut Vec<Element<'t>>) {
     }
     let mut output = Vec::with_capacity(elements.len());
     for mut element in mem::take(elements) {
-        if let Some(replacement) = foster_sole_explicit_list(&mut element) {
+        let stopped_ctype = stopped_container_ctype(&element);
+        if let Some(mut replacement) = foster_sole_explicit_list(&mut element) {
+            if let Some(ctype) = stopped_ctype
+                && anchor_scope_dead_by_foster(&output)
+            {
+                wrap_stopped_plain_items(&mut replacement, ctype);
+            }
             output.extend(replacement);
             continue;
         }
-        if let Some(replacement) = format_explicit_list_segments(&mut element) {
+        if let Some(mut replacement) = format_explicit_list_segments(&mut element) {
+            if let Some(ctype) = stopped_ctype
+                && anchor_scope_dead_by_foster(&output)
+            {
+                wrap_stopped_plain_items(&mut replacement, ctype);
+            }
             output.extend(replacement);
             continue;
         }
@@ -2040,6 +2149,38 @@ fn clear_format_label_inside_marker(element: &mut Element<'_>) {
 /// next item text reopens it. The paired container is that pre-tidy shape.
 /// Returns the replacement elements when the foster applies (a marked prefix
 /// chunk for the own-line opener, then the fostered list).
+fn crossed_list_is_poisoned(element: &Element<'_>) -> bool {
+    if subtree_contains_native_list(element) {
+        return true;
+    }
+    let Element::Container(container) = element else {
+        return false;
+    };
+    container.elements().iter().any(|child| {
+        matches!(
+            child,
+            Element::List {
+                wikidot_explicit_block: true,
+                ..
+            }
+        ) && (subtree_contains_flow_block(child)
+            || subtree_contains_blank_line_item(child)
+            || subtree_contains_early_pairing_block(child))
+    })
+}
+
+fn take_post_blank_gap_mark(list: &mut Element<'_>) -> bool {
+    if let Element::List { attributes, .. } = list
+        && attributes
+            .get()
+            .contains_key(WIKIDOT_LIST_POST_BLANK_GAP_MARKER)
+    {
+        attributes.remove(WIKIDOT_LIST_POST_BLANK_GAP_MARKER);
+        return true;
+    }
+    false
+}
+
 fn foster_sole_explicit_list<'t>(element: &mut Element<'t>) -> Option<Vec<Element<'t>>> {
     let Element::Container(container) = &element else {
         return None;
@@ -2062,6 +2203,57 @@ fn foster_sole_explicit_list<'t>(element: &mut Element<'t>) -> Option<Vec<Elemen
     }
     if !saw_list {
         return None;
+    }
+    if crossed_list_is_poisoned(element) {
+        let kind = format_kind_of(ctype)?;
+        let Element::Container(container) = element else {
+            unreachable!("foster candidate checked above");
+        };
+        let tail_mark = span_list_close_tail_of(container.attributes());
+        let children = mem::take(container.elements_mut());
+        let mut orphaned = Vec::with_capacity(children.len());
+        let mut rest = children.into_iter().peekable();
+        while let Some(element) = rest.next() {
+            let is_list = matches!(
+                &element,
+                Element::List {
+                    wikidot_explicit_block: true,
+                    ..
+                }
+            );
+            orphaned.push(element);
+            if is_list {
+                while matches!(
+                    rest.peek(),
+                    Some(Element::LineBreak | Element::LineBreaks(_))
+                ) {
+                    rest.next();
+                }
+            }
+        }
+        if let Some(tail_mark) = tail_mark {
+            let marker = match tail_mark {
+                SpanListCloseTail::Break => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
+                SpanListCloseTail::Bare => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
+                SpanListCloseTail::Lead => WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
+                SpanListCloseTail::Blank => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER,
+                SpanListCloseTail::Fold => WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
+            };
+            for element in orphaned.iter_mut() {
+                if let Element::List { attributes, .. } = element {
+                    attributes.insert(marker, Cow::Borrowed(""));
+                }
+            }
+        }
+        let (open_marker, close_marker) = match kind {
+            InlineFormatKind::Strikethrough => ("—", "—"),
+            _ => (kind.open_marker(), kind.close_marker()),
+        };
+        let mut output = Vec::with_capacity(orphaned.len() + 2);
+        output.push(Element::Text(Cow::Borrowed(open_marker)));
+        output.extend(orphaned);
+        output.push(Element::Text(Cow::Borrowed(close_marker)));
+        return Some(output);
     }
     let Element::Container(container) = element else {
         unreachable!("foster candidate checked above");
@@ -2156,7 +2348,15 @@ fn foster_sole_explicit_list<'t>(element: &mut Element<'t>) -> Option<Vec<Elemen
             Cow::Borrowed(""),
         );
     }
+    let post_blank_gap = take_post_blank_gap_mark(&mut list);
     output.push(list);
+    if post_blank_gap {
+        output.push(Element::Container(Container::new(
+            ctype,
+            vec![Element::LineBreak],
+            AttributeMap::new(),
+        )));
+    }
     Some(output)
 }
 
@@ -2442,7 +2642,6 @@ enum PreListFlowBlock {
     /// An align block: live p-wraps the pre-list run unconditionally.
     Align,
     /// A blockquote block: live p-wraps the pre-list run when the blockquote
-    /// subtree carries visible content; an empty one swallows the list on
     /// live (quoted-plain residual family).
     BlockquoteVisible(bool),
     /// Any other flow block: live p-wraps only when visible inline content
@@ -2459,7 +2658,7 @@ impl PreListFlowBlock {
     fn verdict(&self, seen_inline: bool) -> bool {
         match self {
             PreListFlowBlock::Align => true,
-            PreListFlowBlock::BlockquoteVisible(visible) => *visible,
+            PreListFlowBlock::BlockquoteVisible(visible) => *visible && seen_inline,
             PreListFlowBlock::Other => seen_inline,
             PreListFlowBlock::Table => false,
         }
@@ -2624,7 +2823,7 @@ fn items_opens_with_visible_text(elements: &[Element<'_>]) -> bool {
         )
 }
 
-fn format_open_marker(text: &str) -> bool {
+pub(crate) fn format_open_marker(text: &str) -> bool {
     // `—` is the typographed strikethrough opener a rejected pair emits.
     matches!(text, "**" | "//" | "__" | "^^" | ",," | "--" | "{{" | "—")
         // A literalised color opener carries its spec: `##red|` / `###fff|`.
@@ -2879,6 +3078,26 @@ fn strip_leading_breaks<'t>(run: &mut Vec<Element<'t>>) {
     }
 }
 
+fn keep_single_leading_break(run: &mut Vec<Element<'_>>) {
+    while matches!(
+        run.first(),
+        Some(Element::LineBreak | Element::LineBreaks(_))
+    ) && matches!(
+        run.get(1),
+        Some(Element::LineBreak | Element::LineBreaks(_))
+    ) {
+        run.remove(0);
+    }
+    if !run.is_empty()
+        && !matches!(
+            run.first(),
+            Some(Element::LineBreak | Element::LineBreaks(_))
+        )
+    {
+        run.insert(0, Element::LineBreak);
+    }
+}
+
 /// Flush the collected run for a segmented format crossing an explicit list
 /// or a `[[code]]` block. Leading breaks are trimmed except for the
 /// own-line opener of the pair (live renders that leading chunk as a
@@ -2890,6 +3109,7 @@ fn strip_leading_breaks<'t>(run: &mut Vec<Element<'t>>) {
 /// boundary (emitted as a format segment); otherwise it becomes a format
 /// segment (formed), tagged for the stopped-pair family and the own-line
 /// opener family when applicable.
+#[allow(clippy::too_many_arguments)]
 fn seal_format_segment<'t>(
     output: &mut Vec<Element<'t>>,
     run: &mut Vec<Element<'t>>,
@@ -2899,6 +3119,7 @@ fn seal_format_segment<'t>(
     boundary_seen: bool,
     keep_leading_breaks: bool,
     wrap_lead: bool,
+    keep_one_leading_break: bool,
 ) {
     let first_list = !boundary_seen;
     // Only runs after a boundary lose their leading breaks. The first
@@ -2906,11 +3127,15 @@ fn seal_format_segment<'t>(
     // opener-line break(s) inside its format span
     // (`__\na` renders `<span style="text-decoration: underline;"><br>a<br></span>`).
     if !first_list && !keep_leading_breaks {
-        while matches!(
-            run.first(),
-            Some(Element::LineBreak | Element::LineBreaks(_))
-        ) {
-            run.remove(0);
+        if keep_one_leading_break {
+            keep_single_leading_break(run);
+        } else {
+            while matches!(
+                run.first(),
+                Some(Element::LineBreak | Element::LineBreaks(_))
+            ) {
+                run.remove(0);
+            }
         }
     }
     if stop_at_list && boundary_seen {
@@ -2980,6 +3205,8 @@ fn segment_format_run<'t>(
     // A run seeded by a code block keeps its leading break(s); live keeps
     // the break between the code div and the following content.
     let mut run_starts_after_code = false;
+    let mut run_follows_blank_gap = false;
+    let mut prev_list_post_blank = false;
     for element in elements {
         if matches!(
             element,
@@ -2988,6 +3215,18 @@ fn segment_format_run<'t>(
                 ..
             }
         ) {
+            let keep_all = mem::replace(&mut run_starts_after_code, false);
+            if prev_list_post_blank && !keep_all {
+                let leading = run
+                    .iter()
+                    .take_while(|element| {
+                        matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                    })
+                    .count();
+                if leading > 1 {
+                    run.drain(..leading - 1);
+                }
+            }
             seal_format_segment(
                 &mut output,
                 &mut run,
@@ -2995,13 +3234,22 @@ fn segment_format_run<'t>(
                 formed,
                 stop_at_list,
                 seen_list,
-                mem::replace(&mut run_starts_after_code, false),
+                keep_all || prev_list_post_blank,
                 !seen_list
                     && !stop_at_list
                     && formed_chunk_wraps(&element)
                     && !format_close_inside_list(&element, ctype),
+                mem::replace(&mut run_follows_blank_gap, false),
             );
             let mut list = element;
+            if let Element::List { attributes, .. } = &mut list
+                && attributes
+                    .remove(WIKIDOT_POST_LIST_BLANK_GAP_MARKER)
+                    .is_some()
+            {
+                run_follows_blank_gap = true;
+            }
+            prev_list_post_blank = take_post_blank_gap_mark(&mut list);
             segment_format_list_items(
                 &mut list,
                 ctype,
@@ -3025,6 +3273,7 @@ fn segment_format_run<'t>(
                 seen_list,
                 mem::replace(&mut run_starts_after_code, false),
                 true,
+                mem::replace(&mut run_follows_blank_gap, false),
             );
             if let Some(kind) = format_kind_of(ctype) {
                 code.wikidot_code_format_wrappers.push(kind);
@@ -3036,12 +3285,27 @@ fn segment_format_run<'t>(
             run.push(element);
         }
     }
-    if !run_starts_after_code {
-        while matches!(
-            run.first(),
-            Some(Element::LineBreak | Element::LineBreaks(_))
-        ) {
-            run.remove(0);
+    let post_blank_gap = prev_list_post_blank && !run_starts_after_code;
+    if post_blank_gap {
+        let leading = run
+            .iter()
+            .take_while(|element| {
+                matches!(element, Element::LineBreak | Element::LineBreaks(_))
+            })
+            .count();
+        if leading > 1 {
+            run.drain(..leading - 1);
+        }
+    } else if !run_starts_after_code {
+        if run_follows_blank_gap {
+            keep_single_leading_break(&mut run);
+        } else {
+            while matches!(
+                run.first(),
+                Some(Element::LineBreak | Element::LineBreaks(_))
+            ) {
+                run.remove(0);
+            }
         }
     }
     if stop_at_list && seen_list {
@@ -3050,6 +3314,7 @@ fn segment_format_run<'t>(
         output.extend(run);
     } else if format_segment_has_content(&run)
         || (run_starts_after_code && !run.is_empty())
+        || (post_blank_gap && !run.is_empty())
     {
         *formed = true;
         output.push(Element::Container(Container::new(
@@ -3306,6 +3571,32 @@ fn trim_post_list_leading_breaks<'t>(children: Vec<Element<'t>>) -> Vec<Element<
     output
 }
 
+fn split_trailing_breaks_after_anchor_close<'t>(
+    elements: &mut Vec<Element<'t>>,
+) -> Vec<Element<'t>> {
+    if !elements.iter().any(|element| {
+        matches!(
+            element,
+            Element::Partial(PartialElement::InlineAnchorClose(_))
+        )
+    }) {
+        return Vec::new();
+    }
+    let mut split = 0usize;
+    for element in elements.iter().rev() {
+        if matches!(element, Element::LineBreak | Element::LineBreaks(_)) {
+            split += 1;
+        } else {
+            break;
+        }
+    }
+    if split == 0 {
+        Vec::new()
+    } else {
+        elements.split_off(elements.len() - split)
+    }
+}
+
 /// Re-emit a rejected crossing color pair as its literal marker bytes.
 fn literalised_color<'t>(
     color: &Cow<'t, str>,
@@ -3489,6 +3780,37 @@ fn format_explicit_list_segments<'t>(
             let children = std::mem::take(elements);
             return Some(literalised_color(&color_clone, bg_clone, children));
         }
+        if !stops_at_list {
+            let Element::Color { elements, attributes, .. } = element else {
+                unreachable!("color element checked above")
+            };
+            strip_span_list_close_tail_markers(attributes);
+            strip_understrike_list_close_tail_markers(attributes);
+            strip_format_label_list_close_tail_markers(attributes);
+            let mut replacement = Vec::with_capacity(elements.len() + 2);
+            replacement.push(Element::Partial(PartialElement::InlineColorOpen(
+                color_clone,
+                bg_clone,
+            )));
+            replacement.extend(std::mem::take(elements));
+            replacement.push(Element::Partial(PartialElement::InlineColorClose));
+            let mut cleaned = Vec::with_capacity(replacement.len());
+            for element in replacement {
+                if matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                    && matches!(
+                        cleaned.last(),
+                        Some(Element::List {
+                            wikidot_explicit_block: true,
+                            ..
+                        })
+                    )
+                {
+                    continue;
+                }
+                cleaned.push(element);
+            }
+            return Some(cleaned);
+        }
         if let Element::Color { elements, .. } = element {
             let children = std::mem::take(elements);
             let mut segmented: Vec<Element<'t>> = Vec::new();
@@ -3521,12 +3843,19 @@ fn format_explicit_list_segments<'t>(
                                 // Post-list segment in stopped case - don't re-wrap in color
                                 segmented.append(&mut current_run);
                             } else {
+                                let mut segment_children = std::mem::take(&mut current_run);
+                                let trailing = if stops_at_list {
+                                    split_trailing_breaks_after_anchor_close(&mut segment_children)
+                                } else {
+                                    Vec::new()
+                                };
                                 segmented.push(Element::Color {
                                     color: color_clone.clone(),
                                     background: bg_clone,
-                                    elements: std::mem::take(&mut current_run),
+                                    elements: segment_children,
                                     attributes: seg_attrs,
                                 });
+                                segmented.extend(trailing);
                                 current_run.clear();
                             }
                             if !(stops_at_list && seen_list) {
@@ -3937,6 +4266,78 @@ fn split_code_children_of_format_containers<'t>(elements: &mut Vec<Element<'t>>)
     *elements = output;
 }
 
+fn post_span_ends_with_literal_color_close(output: &[Element<'_>]) -> bool {
+    matches!(output.last(), Some(Element::Container(container))
+        if matches!(
+            container.ctype(),
+            ContainerType::Span | ContainerType::Size
+        ) && matches!(container.elements().last(), Some(Element::Text(text)) if text.as_ref() == "##"))
+}
+
+fn split_lists_out_of_paragraphs(elements: &mut Vec<Element<'_>>) {
+    for element in elements.iter_mut() {
+        visit_children_mut(element, &mut split_lists_out_of_paragraphs);
+    }
+    let mut index = 0;
+    while index < elements.len() {
+        let splits = match &elements[index] {
+            Element::Container(container)
+                if container.ctype() == ContainerType::Paragraph
+                    && container.elements().iter().any(|child| {
+                        matches!(
+                            child,
+                            Element::List {
+                                wikidot_explicit_block: true,
+                                ..
+                            }
+                        )
+                    }) =>
+            {
+                let mut taken = mem::replace(
+                    &mut elements[index],
+                    Element::LineBreak,
+                );
+                let children = match &mut taken {
+                    Element::Container(container) => mem::take(container.elements_mut()),
+                    _ => unreachable!("paragraph checked above"),
+                };
+                let mut replacement = Vec::new();
+                let mut run = Vec::new();
+                for child in children {
+                    if matches!(
+                        child,
+                        Element::List {
+                            wikidot_explicit_block: true,
+                            ..
+                        }
+                    ) {
+                        if !run.is_empty() {
+                            replacement.push(Element::Container(Container::new(
+                                ContainerType::Paragraph,
+                                mem::take(&mut run),
+                                AttributeMap::new(),
+                            )));
+                        }
+                        replacement.push(child);
+                    } else {
+                        run.push(child);
+                    }
+                }
+                replacement.extend(run);
+                Some(replacement)
+            }
+            _ => None,
+        };
+        if let Some(replacement) = splits {
+            let width = replacement.len();
+            elements.splice(index..=index, replacement);
+            index += width;
+        } else {
+            index += 1;
+        }
+    }
+}
+
 fn lower_root_sequence<'t>(
     elements: &mut Vec<Element<'t>>,
     valid: &BTreeSet<usize>,
@@ -4297,6 +4698,8 @@ fn lower_root_sequence<'t>(
                 && (!previous_is_own_chunk_block || tail_break)
                 && !output.is_empty()
                 && paragraph_group.is_none()
+                && !(close_only_paragraph
+                    && post_span_ends_with_literal_color_close(&output))
             {
                 container.elements_mut().insert(0, Element::LineBreak);
             }
@@ -4321,7 +4724,7 @@ fn lower_root_sequence<'t>(
                 previous_scored_close || effects.scored_span_opened_at_start;
 
             if !joins_previous {
-                flush_paragraph_group(&mut output, &mut paragraph_group);
+                flush_paragraph_group(&mut output, &mut paragraph_group, false);
             }
             let group = paragraph_group.get_or_insert_with(|| ParagraphGroup {
                 wrapped: !empty_footnote_tail_bare
@@ -4362,7 +4765,7 @@ fn lower_root_sequence<'t>(
         {
             group.ends_at_advanced_table = true;
         }
-        flush_paragraph_group(&mut output, &mut paragraph_group);
+        flush_paragraph_group(&mut output, &mut paragraph_group, false);
         if align_head_joins_previous_chunk(&output, &element, active)
             && let Some(position) = active.anchor_position()
         {
@@ -4436,8 +4839,37 @@ fn lower_root_sequence<'t>(
         None,
         scope_closed_in_last_list,
     );
-    flush_paragraph_group(&mut output, &mut paragraph_group);
+    flush_paragraph_group(&mut output, &mut paragraph_group, false);
+    top_up_crossing_anchor_color_breaks(&mut output);
     *elements = output;
+}
+
+fn top_up_crossing_anchor_color_breaks<'t>(output: &mut [Element<'t>]) {
+    let Some(last) = output.last_mut() else {
+        return;
+    };
+    let Element::Color { elements, .. } = last else {
+        return;
+    };
+    if !elements.iter().any(tree_contains_anchor_element) {
+        return;
+    }
+    for _ in count_trailing_breaks(elements)..2 {
+        elements.push(Element::LineBreak);
+    }
+}
+
+fn count_trailing_breaks(elements: &[Element<'_>]) -> usize {
+    let mut breaks = 0usize;
+    for element in elements.iter().rev() {
+        match element {
+            Element::LineBreak => breaks += 1,
+            Element::LineBreaks(count) => breaks += count.get() as usize,
+            Element::Text(text) if text.trim().is_empty() => {}
+            _ => break,
+        }
+    }
+    breaks
 }
 
 fn scope_tail_ends_with_break(elements: &[Element<'_>]) -> bool {
@@ -4660,7 +5092,13 @@ fn flush_root_pending<'t>(
         return false;
     }
     let group_flushed = paragraph_group.is_some();
-    let pending_has_format = sequence_contains_format_container(pending);
+    let pending_has_format = sequence_contains_format_container(pending)
+        || pending.iter().any(|element| {
+            matches!(
+                element,
+                Element::Partial(PartialElement::InlineColorOpen(..))
+            )
+        });
     let at_explicit_list = next.is_some_and(|next| {
         matches!(
             next,
@@ -4670,7 +5108,13 @@ fn flush_root_pending<'t>(
             }
         )
     });
-    flush_paragraph_group(output, paragraph_group);
+    let keep_trailing_space = group_flushed
+        && at_explicit_list
+        && pending_has_format
+        && sequence_has_inline_content(pending)
+        && pending.iter().all(Element::paragraph_safe)
+        && next.is_some_and(formed_chunk_wraps);
+    flush_paragraph_group(output, paragraph_group, keep_trailing_space);
     if !(at_explicit_list && pending_has_format) {
         active.sync_chain_to_istack();
     }
@@ -4704,6 +5148,19 @@ fn flush_root_pending<'t>(
     let content_led_marker_head = crossed_head_warrants
         && !pending_is_marker_run
         && pending_ends_with_bare_marker(pending);
+    let post_list_anchor_close = matches!(
+        output.last(),
+        Some(Element::List {
+            wikidot_explicit_block: true,
+            ..
+        })
+    ) && matches!(
+        pending.first(),
+        Some(Element::Partial(PartialElement::InlineAnchorClose(_)))
+    );
+    if post_list_anchor_close {
+        active.retire_innermost_color_scope();
+    }
     let mut sequence = mem::take(pending);
     let crossed_close_abuts_list = output_ends_with_explicit_list(output)
         && active.has_span_or_size_scope()
@@ -5324,6 +5781,7 @@ fn paragraph_tail_deep_scope_sibling_merge<'t>(
 fn flush_paragraph_group<'t>(
     output: &mut Vec<Element<'t>>,
     paragraph_group: &mut Option<ParagraphGroup<'t>>,
+    keep_trailing_space: bool,
 ) {
     let Some(ParagraphGroup {
         wrapped,
@@ -5346,7 +5804,9 @@ fn flush_paragraph_group<'t>(
         return;
     }
     eject_segment_trailing_space(&mut elements);
-    strip_trailing_run_before_newline_tail(&mut elements);
+    if !keep_trailing_space {
+        strip_trailing_run_before_newline_tail(&mut elements);
+    }
     if elements.is_empty() {
         return;
     }
@@ -5459,6 +5919,38 @@ fn collect_valid_pairs(
     }
 }
 
+fn span_blank_split_has_content(element: &Element<'_>) -> bool {
+    match element {
+        Element::LineBreak | Element::LineBreaks(_) => false,
+        Element::Text(text) => !text.trim().is_empty(),
+        _ => true,
+    }
+}
+
+fn split_run_at_blank_break<'t>(
+    run: &[Element<'t>],
+) -> Option<(Vec<Element<'t>>, Vec<Element<'t>>)> {
+    if !run
+        .first()
+        .is_some_and(span_blank_split_has_content)
+        || !run.last().is_some_and(span_blank_split_has_content)
+    {
+        return None;
+    }
+    let mut index = 0;
+    while index + 1 < run.len() {
+        if matches!(run[index], Element::LineBreak)
+            && matches!(run[index + 1], Element::LineBreak)
+            && run[..index].iter().any(span_blank_split_has_content)
+            && run[index + 2..].iter().any(span_blank_split_has_content)
+        {
+            return Some((run[..index + 2].to_vec(), run[index + 2..].to_vec()));
+        }
+        index += 1;
+    }
+    None
+}
+
 fn lower_sequence<'t>(
     elements: &mut Vec<Element<'t>>,
     valid: &BTreeSet<usize>,
@@ -5482,6 +5974,7 @@ fn lower_sequence<'t>(
     // inline flow after its fostered cell content (live keeps the
     // seam space).
     let mut saw_table_block = false;
+    let mut stopped_anchor_commit = false;
     let mut saw_block = bare_root;
     let mut effects = SequenceEffects::default();
     let mut last_run_outer_scope = RunMergeState::default();
@@ -6185,6 +6678,8 @@ fn lower_sequence<'t>(
             None
         };
         let is_stopped_pre = stopped_pre_segment(&element);
+        let stopped_carries_anchor_close = is_stopped_pre
+            && subtree_contains_anchor_close_partial(&element);
         if active.has_active_scope()
             && element.paragraph_safe()
             && contains_inline_scope_control(&element)
@@ -6270,6 +6765,7 @@ fn lower_sequence<'t>(
                 }
                 run.push(element);
                 run_has_content = true;
+                stopped_anchor_commit = stopped_carries_anchor_close;
             } else {
                 flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
                 output.push(element);
@@ -6280,6 +6776,19 @@ fn lower_sequence<'t>(
             && !contains_inline_scope_control(&element)
             && !format_label_inside_segment(&element)
         {
+            if stopped_anchor_commit
+                && matches!(element, Element::LineBreak | Element::LineBreaks(_))
+            {
+                stopped_anchor_commit = false;
+                flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
+                if let Some(position) = active.anchor_position() {
+                    active.commit_close_no_reopen(position);
+                    active.pop_istack_through_anchor();
+                }
+                output.push(element);
+                last_run_outer_scope.reset();
+                continue;
+            }
             if matches!(element, Element::LineBreak | Element::LineBreaks(_))
                 && matches!(run.last(), Some(Element::Text(text)) if text == " ")
             {
@@ -6339,6 +6848,26 @@ fn lower_sequence<'t>(
                 false
             };
             if list_legacy {
+                let native_list_takes_run_breaks = matches!(
+                    element,
+                    Element::List {
+                        wikidot_explicit_block: false,
+                        ..
+                    }
+                ) && active.has_span_or_size_scope()
+                    && !matches!(
+                        run.last(),
+                        Some(Element::LineBreak | Element::LineBreaks(_))
+                    )
+                    && run.iter().any(|run_element| match run_element {
+                        Element::LineBreak | Element::LineBreaks(_) => false,
+                        Element::Text(text) => !text.trim().is_empty(),
+                        _ => true,
+                    });
+                if native_list_takes_run_breaks {
+                    run.push(Element::LineBreak);
+                    run.push(Element::LineBreak);
+                }
                 flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
                 if matches!(
                     element,
@@ -7536,6 +8065,22 @@ fn subtree_contains_anchor_producer(element: &Element<'_>) -> bool {
     found
 }
 
+fn subtree_contains_anchor_close_partial(element: &Element<'_>) -> bool {
+    if matches!(
+        element,
+        Element::Partial(PartialElement::InlineAnchorClose(_))
+    ) {
+        return true;
+    }
+    let mut found = false;
+    visit_children(element, &mut |children| {
+        found |= children
+            .iter()
+            .any(subtree_contains_anchor_close_partial);
+    });
+    found
+}
+
 fn subtree_contains_anchor_open(element: &Element<'_>) -> bool {
     if matches!(
         element,
@@ -7668,6 +8213,9 @@ fn end_anchor_at_explicit_list<'t>(
     let Some(position) = active.anchor_position() else {
         return;
     };
+    if active.scope_is_pending(position) && active.scopes[position].afterlife {
+        return;
+    }
     if !active.scope_is_pending(position) {
         close_live_anchor(output, run, active, last_run_outer_scope);
     } else if blank_anchor_reopen && !active.scope_materialized(position) {
@@ -7801,6 +8349,9 @@ fn emit_item_end_reopened_copy<'t>(
     let mut copy: Vec<Element<'t>> = Vec::new();
     for entry in crossing.iter().rev() {
         copy = vec![active.scopes[*entry].wrapper.wrap(copy)];
+    }
+    for position in crossing {
+        active.scopes[position].afterlife = true;
     }
     children.push(Element::Container(Container::new(
         ContainerType::Paragraph,
@@ -7994,6 +8545,37 @@ fn deep_scope_merge<'t>(
 }
 
 fn flush_run<'t>(
+    output: &mut Vec<Element<'t>>,
+    run: &mut Vec<Element<'t>>,
+    active: &mut ActiveScopes<'t>,
+    last_run_outer_scope: &mut RunMergeState,
+) {
+    if run.is_empty() {
+        return;
+    }
+    if active.has_span_or_size_scope()
+        && active.active_scopes_all_span_size()
+        && let Some((head, tail)) = split_run_at_blank_break(run)
+    {
+        mem::take(run);
+        let mut head = head;
+        flush_run_wrapped(output, &mut head, active, last_run_outer_scope);
+        let mut tail_out = Vec::new();
+        let mut tail = tail;
+        let mut tail_merge = RunMergeState::default();
+        flush_run_wrapped(&mut tail_out, &mut tail, active, &mut tail_merge);
+        output.push(Element::Container(Container::new(
+            ContainerType::Paragraph,
+            tail_out,
+            AttributeMap::new(),
+        )));
+        last_run_outer_scope.reset();
+        return;
+    }
+    flush_run_wrapped(output, run, active, last_run_outer_scope);
+}
+
+fn flush_run_wrapped<'t>(
     output: &mut Vec<Element<'t>>,
     run: &mut Vec<Element<'t>>,
     active: &mut ActiveScopes<'t>,
@@ -8432,6 +9014,11 @@ fn lower_wikidot_heading_barrier<'t>(
         false,
     );
     active.pend_all();
+    for position in active.active_positions() {
+        if Some(position) != active.heading_wrapper {
+            active.scopes[position].afterlife = false;
+        }
+    }
     active.heading_barrier_pended = active
         .active_positions()
         .iter()
@@ -8748,6 +9335,7 @@ fn lower_children<'t>(
     // R-frame (ledger item 60 residual): compute before the visit closure borrows
     // `element`; see the delegation comment inside the closure.
     let root_tail_vehicle = frame_uses_root_tail_assembly(element);
+    let top_up_frame_tail = root_tail_vehicle;
     // B2 (item 82 residual): the post-list crossing-anchor-close signal is
     // scoped to the element whose children are being lowered; a nested frame
     // consumes its own, and only the outer_close_eof frame at the end of this
@@ -8846,6 +9434,9 @@ fn lower_children<'t>(
             && let Some(wrapper) = tabview_frame_wrapper(active)
         {
             children.extend(wrap_scope_elements(&[wrapper], vec![text!(" ")]));
+        }
+        if top_up_frame_tail {
+            top_up_crossing_anchor_color_breaks(children);
         }
         frame_post_list_close = active.post_list_crossed_close;
         active.post_list_crossed_close = outer_post_list_close;
@@ -9014,7 +9605,8 @@ pub(crate) fn visit_children<'t>(
             | PartialElement::InlineColorOpen(..)
             | PartialElement::InlineColorClose
             | PartialElement::InlineAnchorOpen(..)
-            | PartialElement::InlineAnchorClose(_) => {}
+            | PartialElement::InlineAnchorClose(_)
+            | PartialElement::WikidotEquationNumber(..) => {}
         },
         _ => {}
     }
@@ -9087,9 +9679,21 @@ pub(crate) fn visit_children_mut<'t>(
             | PartialElement::InlineColorOpen(..)
             | PartialElement::InlineColorClose
             | PartialElement::InlineAnchorOpen(..)
-            | PartialElement::InlineAnchorClose(_) => {}
+            | PartialElement::InlineAnchorClose(_)
+            | PartialElement::WikidotEquationNumber(..) => {}
         },
         _ => {}
+    }
+}
+
+pub(crate) fn strip_post_list_blank_gap_markers<'t>(elements: &mut Vec<Element<'t>>) {
+    for element in elements.iter_mut() {
+        if let Element::List { attributes, .. } = element {
+            attributes.remove(WIKIDOT_POST_LIST_BLANK_GAP_MARKER);
+        }
+        visit_children_mut(element, &mut |children| {
+            strip_post_list_blank_gap_markers(children);
+        });
     }
 }
 

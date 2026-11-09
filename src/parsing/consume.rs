@@ -2028,11 +2028,77 @@ fn try_consume_discarded_row_closer<'r, 't>(
     if eats_following_break && parser.current().token == Token::LineBreak {
         parser.step().ok()?;
     }
+    if parser.wikidot_discarded_row_closer(position)
+        && discarded_row_tail_follows_list_item(parser, position)
+    {
+        while parser.current().token == Token::Whitespace {
+            parser.step().ok()?;
+        }
+        let mut tail = Vec::new();
+        while !matches!(
+            parser.current().token,
+            Token::LineBreak
+                | Token::ParagraphBreak
+                | Token::InputEnd
+                | Token::LeftBlock
+                | Token::LeftBlockStar
+                | Token::LeftBlockEnd
+        ) {
+            let slice = parser.current().slice;
+            if !slice.is_empty() {
+                tail.push(text!(slice));
+            }
+            parser.step().ok()?;
+        }
+        if !tail.is_empty() {
+            return Some(Ok(crate::parsing::ParseSuccess::new(
+                Elements::Multiple(tail),
+                Vec::new(),
+                false,
+            )));
+        }
+    }
     Some(Ok(crate::parsing::ParseSuccess::new(
         Elements::None,
         Vec::new(),
         true,
     )))
+}
+
+pub(crate) fn wikidot_discarded_closer_has_same_line_remainder(
+    parser: &Parser<'_, '_>,
+    position: usize,
+) -> bool {
+    let source = parser.full_text().inner();
+    let start = position.min(source.len());
+    let Some(line_end) = source[start..].find('\n').map(|offset| start + offset) else {
+        return !source[start..].trim_matches([' ', '\t', '\r']).is_empty();
+    };
+    let Some(close_end) = source[start..line_end].find("]]") else {
+        return false;
+    };
+    !source[start + close_end + 2..line_end]
+        .trim_matches([' ', '\t', '\r'])
+        .is_empty()
+}
+
+fn discarded_row_tail_follows_list_item(
+    parser: &Parser<'_, '_>,
+    position: usize,
+) -> bool {
+    let source = parser.full_text().inner();
+    let line_start = source[..position.min(source.len())]
+        .rfind('\n')
+        .map_or(0, |offset| offset + 1);
+    if line_start == 0 {
+        return false;
+    }
+    let previous = source[..line_start - 1]
+        .rfind('\n')
+        .map_or(0, |offset| offset + 1);
+    let line = source[previous..line_start - 1].trim_end_matches('\r');
+    let trimmed = line.trim_start_matches([' ', '\t']);
+    trimmed.starts_with("* ") || trimmed.starts_with("# ")
 }
 
 fn try_consume_wikidot_row_absorb_div_close<'r, 't>(

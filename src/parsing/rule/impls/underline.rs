@@ -45,7 +45,6 @@ fn try_consume_fn<'r, 't>(
     assert_unpadded_open(parser, Token::Underline)?;
     let close = [ParseCondition::current(Token::Underline)];
     let invalid = [
-        ParseCondition::current(Token::ParagraphBreak),
         ParseCondition::token_pair(Token::Underline, Token::Whitespace),
         ParseCondition::token_pair(Token::Whitespace, Token::Underline),
     ];

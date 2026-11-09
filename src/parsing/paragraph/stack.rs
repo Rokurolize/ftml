@@ -52,10 +52,19 @@ pub(crate) fn collapsible_has_direct_literal_nested_opener(
 }
 
 #[derive(Debug, Default)]
+pub(crate) struct WikidotAnchorCapture<'t> {
+    chrome: Option<Element<'t>>,
+    blank: bool,
+    equation: bool,
+}
+
+#[derive(Debug, Default)]
 pub struct ParagraphStack<'t> {
     wikidot: bool,
 
     current: Vec<Element<'t>>,
+
+    wikidot_keep_chunk_trailing_space: bool,
 
     pending_suppression_seams: Vec<Element<'t>>,
 
@@ -75,6 +84,9 @@ pub struct ParagraphStack<'t> {
     /// paragraph gather also drops the seam batch's own leading break
     /// (BRIEF-RMRES fda12).
     wikidot_seam_dropped_post_list_break: bool,
+    wikidot_seam_keep_post_list_break: bool,
+    wikidot_seam_keep_pending_unwrap: bool,
+    wikidot_seam_wrap_paragraph: bool,
     crossed_collapsible_tail: bool,
     wikidot_footnote_joined_math_break: bool,
     wikidot_literal_iftags_line: bool,
@@ -83,6 +95,7 @@ pub struct ParagraphStack<'t> {
     wikidot_div_literal_run: Option<(usize, usize)>,
     wikidot_div_literal_run_bare: bool,
     pending_wikidot_div_literal: bool,
+    wikidot_post_list_follower_wrap_armed: bool,
     trim_unwrapped_trailing_line_break: bool,
     suppress_next_line_break: bool,
     suppressed_line_break_restarts_paragraph: bool,
@@ -99,9 +112,12 @@ pub struct ParagraphStack<'t> {
     /// 1 armed (no blank seen yet), 2 armed after a blank line. Consumed by
     /// the next inline/block element push.
     wikidot_stash_br: u8,
+    wikidot_anchor_capture: Option<WikidotAnchorCapture<'t>>,
     wikidot_explicit_pre_candidate: bool,
     wikidot_suppress_explicit_pre_dissolve: bool,
     wikidot_dissolved_pre_candidate: bool,
+    wikidot_run_started_at_line_start: bool,
+    wikidot_explicit_pre_started_line: bool,
     wikidot_post_empty_list_break: bool,
     /// After `[[/math]]`, some closer-line whitespace tails make live's next
     /// wrapped paragraph start with `<br />` before the following text.
@@ -458,6 +474,7 @@ impl<'t> ParagraphStack<'t> {
 
     fn wikidot_dissolve_explicit_pre_candidate(&mut self) {
         self.wikidot_explicit_pre_candidate = false;
+        self.wikidot_explicit_pre_started_line = false;
         if self.wikidot_suppress_explicit_pre_dissolve {
             return;
         }
@@ -568,12 +585,15 @@ impl<'t> ParagraphStack<'t> {
                 if container.ctype() == ContainerType::Paragraph
         ) {
             self.wikidot_explicit_pre_candidate = true;
+            self.wikidot_explicit_pre_started_line =
+                self.wikidot_run_started_at_line_start;
         }
     }
 
     fn wikidot_clear_post_explicit_list_state(&mut self) {
         self.wikidot_bare_after_explicit_list = false;
         self.wikidot_explicit_pre_candidate = false;
+        self.wikidot_explicit_pre_started_line = false;
         self.wikidot_dissolved_pre_candidate = false;
         self.wikidot_post_empty_list_break = false;
     }
@@ -593,6 +613,33 @@ impl<'t> ParagraphStack<'t> {
         if self.wikidot {
             self.wikidot_stash_br = 1;
         }
+    }
+
+    pub(crate) fn arm_wikidot_anchor_capture(
+        &mut self,
+        chrome: Option<Element<'t>>,
+        blank: bool,
+        equation: bool,
+    ) {
+        if !self.wikidot {
+            return;
+        }
+        if equation {
+            self.wikidot_stash_br = 0;
+        } else if blank {
+            self.wikidot_stash_br = 2;
+        } else {
+            self.wikidot_stash_br = 1;
+        }
+        self.wikidot_anchor_capture = Some(WikidotAnchorCapture {
+            chrome,
+            blank,
+            equation,
+        });
+    }
+
+    pub(crate) fn wikidot_anchor_capture_armed(&self) -> bool {
+        self.wikidot_anchor_capture.is_some()
     }
 
     /// pw65a: a blank line seen while the stash break is armed promotes it
@@ -722,6 +769,17 @@ impl<'t> ParagraphStack<'t> {
         false
     }
 
+    fn wikidot_element_is_content(element: &Element<'_>) -> bool {
+        match element {
+            Element::Delayed(_) => false,
+            Element::LineBreak | Element::LineBreaks(_) => false,
+            Element::Text(text) | Element::Raw(text) => {
+                text.chars().any(|character| !character.is_whitespace())
+            }
+            _ => true,
+        }
+    }
+
     fn wikidot_element_has_run_content(element: &Element<'_>) -> bool {
         match element {
             Element::LineBreak | Element::LineBreaks(_) | Element::Delayed(_) => false,
@@ -742,11 +800,100 @@ impl<'t> ParagraphStack<'t> {
         if !self.wikidot {
             return;
         }
+        let dissolve = self.wikidot_explicit_pre_candidate
+            && !self.wikidot_explicit_pre_is_bold_marker()
+            && self.wikidot_explicit_pre_is_plain_text()
+            && !self.wikidot_explicit_pre_is_pair_marker()
+            && self.wikidot_explicit_pre_is_sameline()
+            && self.wikidot_explicit_pre_started_line;
         if attached {
             self.wikidot_pop_post_list_break();
         }
+        if dissolve {
+            self.wikidot_dissolve_explicit_pre_candidate();
+        }
         self.wikidot_explicit_pre_candidate = false;
+        self.wikidot_explicit_pre_started_line = false;
         self.wikidot_dissolved_pre_candidate = false;
+    }
+
+    fn wikidot_explicit_pre_paragraph(&self) -> Option<&Container<'t>> {
+        let len = self.finished.len();
+        let paragraph_index = if matches!(
+            self.finished.last(),
+            Some(Element::LineBreak | Element::LineBreaks(_))
+        ) {
+            len.checked_sub(3)?
+        } else {
+            len.checked_sub(2)?
+        };
+        match self.finished.get(paragraph_index) {
+            Some(Element::Container(container))
+                if container.ctype() == ContainerType::Paragraph =>
+            {
+                Some(container)
+            }
+            _ => None,
+        }
+    }
+
+    fn wikidot_explicit_pre_is_sameline(&self) -> bool {
+        self.wikidot_explicit_pre_paragraph()
+            .is_some_and(|container| {
+                container
+                    .elements()
+                    .iter()
+                    .rev()
+                    .find_map(|element| match element {
+                        Element::Delayed(delayed) if delayed.is_suppression_seam() => {
+                            None
+                        }
+                        Element::LineBreak | Element::LineBreaks(_) => Some(false),
+                        _ => Some(true),
+                    })
+                    .unwrap_or(false)
+            })
+    }
+
+    fn wikidot_explicit_pre_is_bold_marker(&self) -> bool {
+        self.wikidot_explicit_pre_paragraph()
+            .is_some_and(|container| {
+                paragraph_is_only_marker(container, "**")
+                    || paragraph_starts_with_glued_bold_block(container)
+            })
+    }
+
+    fn wikidot_explicit_pre_is_plain_text(&self) -> bool {
+        self.wikidot_explicit_pre_paragraph()
+            .is_some_and(|container| {
+                container.elements().iter().all(|element| match element {
+                    Element::Text(_) | Element::Raw(_) => true,
+                    Element::LineBreak | Element::LineBreaks(_) => true,
+                    Element::Delayed(delayed) => delayed.is_suppression_seam(),
+                    _ => false,
+                })
+            })
+    }
+
+    fn wikidot_explicit_pre_is_pair_marker(&self) -> bool {
+        self.wikidot_explicit_pre_paragraph()
+            .is_some_and(|container| {
+                let mut text = String::new();
+                for element in container.elements() {
+                    match element {
+                        Element::Text(content) | Element::Raw(content) => {
+                            text.push_str(content);
+                        }
+                        Element::LineBreak | Element::LineBreaks(_) => {}
+                        Element::Delayed(delayed) if delayed.is_suppression_seam() => {}
+                        _ => return false,
+                    }
+                }
+                let trimmed = text.trim();
+                !trimmed.is_empty()
+                    && (trimmed == "@@"
+                        || crate::parsing::inline_scope::format_open_marker(trimmed))
+            })
     }
 
     fn wikidot_handle_post_list_block_follower(
@@ -927,6 +1074,13 @@ impl<'t> ParagraphStack<'t> {
         }
     }
 
+    #[inline]
+    pub(crate) fn set_wikidot_post_list_follower_wrap_armed(&mut self, armed: bool) {
+        if self.wikidot {
+            self.wikidot_post_list_follower_wrap_armed = armed;
+        }
+    }
+
     fn register_wikidot_div_literal_range(&mut self, start: usize, end: usize) {
         if !self.wikidot_div_literal_run_wrap || start >= end {
             return;
@@ -947,11 +1101,12 @@ impl<'t> ParagraphStack<'t> {
             }
         } else {
             let bare = start > 0
-                && matches!(
+                && (matches!(
                     self.finished.get(start - 1),
                     Some(Element::Container(container))
                         if container.ctype() == ContainerType::Div
-                );
+                ) || (self.wikidot_finished_before_is_explicit_list(start)
+                    && !self.wikidot_post_list_follower_wrap_armed));
             self.wikidot_div_literal_run = Some((start, end));
             self.wikidot_div_literal_run_bare = bare;
         }
@@ -993,6 +1148,22 @@ impl<'t> ParagraphStack<'t> {
             AttributeMap::new(),
         ));
         self.finished.insert(start, paragraph);
+    }
+
+    fn wikidot_finished_before_is_explicit_list(&self, start: usize) -> bool {
+        let mut index = start;
+        while index > 0 {
+            index -= 1;
+            match &self.finished[index] {
+                Element::LineBreak | Element::LineBreaks(_) => {}
+                Element::List {
+                    wikidot_explicit_block: true,
+                    ..
+                } => return true,
+                _ => return false,
+            }
+        }
+        false
     }
 
     fn shift_wikidot_div_literal_run_before(&mut self, removed: usize) {
@@ -1104,11 +1275,96 @@ impl<'t> ParagraphStack<'t> {
     }
 
     #[inline]
-    pub fn push_element(&mut self, element: Element<'t>, paragraph_safe: bool) {
+    pub fn push_element(&mut self, mut element: Element<'t>, paragraph_safe: bool) {
+        let keep_prose_absorb = self.wikidot
+            && self.wikidot_seam_keep_pending_unwrap
+            && Self::wikidot_element_is_content(&element);
+        if keep_prose_absorb {
+            self.wikidot_seam_keep_pending_unwrap = false;
+            self.mark_next_unwrapped_after_block();
+        }
+        if self.wikidot_anchor_capture.is_some() {
+            let inline_ready = self
+                .wikidot_anchor_capture
+                .as_ref()
+                .is_some_and(|capture| !capture.equation)
+                && matches!(
+                    &element,
+                    Element::Text(_) | Element::Raw(_) | Element::LineBreak
+                );
+            if inline_ready {
+                if self.wikidot_stash_br != 0 {
+                    if self.wikidot_stash_br == 2 && self.current.is_empty() {
+                        self.current.push(Element::LineBreak);
+                    }
+                    self.wikidot_stash_br = 0;
+                }
+                self.pending_wikidot_div_literal = false;
+                self.current.push(element);
+                return;
+            }
+            let equation = self
+                .wikidot_anchor_capture
+                .as_ref()
+                .is_some_and(|capture| capture.equation);
+            let starts_block = if equation {
+                !matches!(element, Element::Math { .. })
+            } else {
+                !paragraph_safe && self.current.is_empty()
+            };
+            if equation && matches!(element, Element::Math { .. }) {
+                let Element::Math {
+                    wikidot_capture_eq, ..
+                } = &mut element
+                else {
+                    unreachable!()
+                };
+                *wikidot_capture_eq = true;
+                self.wikidot_anchor_capture = None;
+                self.wikidot_stash_br = 0;
+            } else if starts_block {
+                let mut capture = self
+                    .wikidot_anchor_capture
+                    .take()
+                    .expect("capture checked armed above");
+                let mut item_attributes = AttributeMap::new();
+                item_attributes.insert("style", Cow::Borrowed("list-style: none"));
+                if let Some(mut chrome) = capture.chrome.take() {
+                    if let Element::List {
+                        items,
+                        wikidot_unclosed,
+                        ..
+                    } = &mut chrome
+                    {
+                        items.clear();
+                        items.push(ListItem::Elements {
+                            elements: vec![Element::LineBreak],
+                            attributes: item_attributes.clone(),
+                        });
+                        *wikidot_unclosed = false;
+                    }
+                    self.finished.push(chrome);
+                } else {
+                    self.finished.push(Element::List {
+                        ltype: crate::tree::ListType::Bullet,
+                        items: vec![ListItem::Elements {
+                            elements: vec![Element::LineBreak],
+                            attributes: item_attributes,
+                        }],
+                        attributes: AttributeMap::new(),
+                        wikidot_explicit_block: true,
+                        wikidot_unclosed: false,
+                    });
+                }
+                self.wikidot_stash_br = 0;
+            }
+        }
         // A hidden iftags body is invisible content: live drops the attached
         // post-list break before it, even when the frame's shell path already
         // emitted [list, break] into the finished tail (BRIEF-RMRES fda12,
         // saved-page probes muse-probe-rmres-fda-f7 / fda-f10).
+        let keep_post_list_break =
+            std::mem::take(&mut self.wikidot_seam_keep_post_list_break);
         if self.wikidot
             && matches!(
                 &element,
@@ -1120,6 +1376,7 @@ impl<'t> ParagraphStack<'t> {
                 self.finished.get(self.finished.len().saturating_sub(2)),
                 Some(Element::List { .. })
             )
+            && !keep_post_list_break
         {
             self.finished.pop();
         }
@@ -1457,15 +1714,13 @@ impl<'t> ParagraphStack<'t> {
                 self.mark_next_unwrapped_after_block();
             }
             // A chunk-leading single space is indentation at a line start and
-            // keeps the historical drop everywhere except directly after an
-            // inline container flat lowering will literalise: its closer
-            // ended the previous chunk mid-line, so the space is content the
-            // rejoined run must keep.
-            let chunk_leading_line_start = self.current.is_empty()
-                && (self.next_element_started_line
-                    || !self.wikidot_finished_is_literalise_bound_container());
+            let mid_line_format_container = !self.next_element_started_line
+                && self.wikidot_finished_ends_with_inline_container();
+            let chunk_leading_line_start =
+                self.current.is_empty() && self.next_element_started_line;
             if self.wikidot
                 && matches!(element, Element::Text(ref text) if text == " ")
+                && !mid_line_format_container
                 && (chunk_leading_line_start
                     || self.current.iter().all(|element| {
                         matches!(
@@ -1488,7 +1743,9 @@ impl<'t> ParagraphStack<'t> {
             if Self::wikidot_element_has_run_content(&element)
                 && !self.wikidot_current_has_run_content()
                 && !Self::wikidot_post_list_keep_block(&element)
+                && !keep_prose_absorb
             {
+                self.wikidot_run_started_at_line_start = self.next_element_started_line;
                 self.wikidot_absorb_post_list_break_for_prose(!paragraph_break_separated);
             }
             if self.wikidot && Self::wikidot_element_contains_unaligned_image(&element) {
@@ -1656,7 +1913,24 @@ impl<'t> ParagraphStack<'t> {
                     *text = Cow::Owned(stripped.to_owned());
                 }
             }
+            if matches!(
+                &element,
+                Element::Container(container)
+                    if matches!(
+                        container.ctype(),
+                        ContainerType::Bold
+                            | ContainerType::Italics
+                            | ContainerType::Underline
+                            | ContainerType::Superscript
+                            | ContainerType::Subscript
+                            | ContainerType::Strikethrough
+                            | ContainerType::Monospace
+                    )
+            ) {
+                self.wikidot_keep_chunk_trailing_space = true;
+            }
             self.end_paragraph();
+            self.wikidot_keep_chunk_trailing_space = false;
             if !invisible_block_line {
                 if element.paragraph_safe() {
                     self.wikidot_absorb_post_list_break_for_prose(
@@ -2074,6 +2348,13 @@ impl<'t> ParagraphStack<'t> {
     }
 
     pub fn push_paragraph_safe_elements(&mut self, mut elements: Vec<Element<'t>>) {
+        let keep_prose_absorb = self.wikidot
+            && self.wikidot_seam_keep_pending_unwrap
+            && elements.iter().any(Self::wikidot_element_is_content);
+        if keep_prose_absorb {
+            self.wikidot_seam_keep_pending_unwrap = false;
+            self.mark_next_unwrapped_after_block();
+        }
         if self.wikidot
             && elements
                 .iter()
@@ -2082,6 +2363,7 @@ impl<'t> ParagraphStack<'t> {
             self.current_unwrapped = true;
         }
         if self.wikidot
+            && !keep_prose_absorb
             && !self.wikidot_current_has_run_content()
             && elements.iter().any(Self::wikidot_element_has_run_content)
         {
@@ -2159,7 +2441,9 @@ impl<'t> ParagraphStack<'t> {
     }
 
     pub fn build_paragraph(&mut self) -> Option<Element<'t>> {
-        self.trim_trailing_ascii_space();
+        if !self.wikidot_keep_chunk_trailing_space {
+            self.trim_trailing_ascii_space();
+        }
         if self.current.is_empty() {
             return None;
         }
@@ -2190,11 +2474,11 @@ impl<'t> ParagraphStack<'t> {
         Some(element)
     }
 
-    fn wikidot_finished_is_literalise_bound_container(&self) -> bool {
+    fn wikidot_finished_ends_with_inline_container(&self) -> bool {
         let Some(Element::Container(container)) = self.finished.last() else {
             return false;
         };
-        if !matches!(
+        matches!(
             container.ctype(),
             ContainerType::Bold
                 | ContainerType::Italics
@@ -2203,18 +2487,7 @@ impl<'t> ParagraphStack<'t> {
                 | ContainerType::Subscript
                 | ContainerType::Strikethrough
                 | ContainerType::Monospace
-        ) {
-            return false;
-        }
-        container.elements().iter().any(|element| {
-            matches!(
-                element,
-                Element::Partial(
-                    PartialElement::WikidotBlockOpen(_)
-                        | PartialElement::WikidotBlockClose(_)
-                )
-            )
-        })
+        )
     }
 
     fn trim_trailing_ascii_space(&mut self) {
@@ -2250,13 +2523,84 @@ impl<'t> ParagraphStack<'t> {
         }
     }
 
+    fn flush_anchor_capture(&mut self) {
+        let Some(mut capture) = self.wikidot_anchor_capture.take() else {
+            return;
+        };
+        let mut run = std::mem::take(&mut self.current);
+        if !capture.blank {
+            while matches!(run.first(), Some(Element::LineBreak)) {
+                run.remove(0);
+            }
+            if let Some(Element::Text(first)) = run.first_mut()
+                && first.starts_with('\n')
+            {
+                *first = Cow::Owned(first[1..].to_owned());
+            }
+        }
+        if run.is_empty() {
+            self.finished.append(&mut self.pending_suppression_seams);
+        } else {
+            let index = run
+                .iter()
+                .rposition(|element| *element != Element::LineBreak)
+                .map_or(0, |index| index + 1);
+            run.splice(index..index, self.pending_suppression_seams.drain(..));
+        }
+        if let Some(mut chrome) = capture.chrome.take() {
+            let mut item_attributes = AttributeMap::new();
+            item_attributes.insert("style", Cow::Borrowed("list-style: none"));
+            let item = ListItem::Elements {
+                elements: run,
+                attributes: item_attributes,
+            };
+            if let Element::List {
+                items,
+                wikidot_unclosed,
+                ..
+            } = &mut chrome
+            {
+                items.clear();
+                items.push(item);
+                *wikidot_unclosed = false;
+            }
+            self.finished.push(chrome);
+        }
+        self.current_unwrapped = false;
+        self.current_has_discarded_control = false;
+        self.wikidot_stash_br = 0;
+        self.wikidot_complete_raw_line_occupied = false;
+        self.wikidot_complete_raw_run_after_block = false;
+        self.wikidot_demoted_comment_break = false;
+        self.pending_unwrapped_separator = false;
+        self.unwrapped_after_block_line = false;
+        self.wikidot_footnote_joined_math_break = false;
+        self.wikidot_literal_iftags_line = false;
+        self.wikidot_literal_div_line = false;
+        self.wikidot_embed_error_residual = false;
+        self.trim_unwrapped_trailing_line_break = false;
+        self.suppress_next_line_break = false;
+        self.suppressed_line_break_restarts_paragraph = false;
+    }
+
     pub fn end_paragraph(&mut self) {
-        if self.wikidot_bare_after_explicit_list && !self.current.is_empty() {
+        if self.wikidot_anchor_capture.is_some() {
+            if self.current.is_empty() {
+                return;
+            }
+            self.flush_anchor_capture();
+            return;
+        }
+        if self.wikidot_bare_after_explicit_list
+            && !self.current.is_empty()
+            && !self.wikidot_seam_wrap_paragraph
+        {
             self.current_unwrapped = true;
             self.unwrapped_after_block_line = true;
             self.wikidot_bare_after_explicit_list = false;
             self.trim_unwrapped_trailing_line_break = false;
         }
+        self.wikidot_seam_wrap_paragraph = false;
         let finished_before = self.finished.len();
         if self.pending_aligned_image_separator.is_some() && !self.current.is_empty() {
             if self.current_unwrapped {
@@ -2324,20 +2668,77 @@ impl<'t> ParagraphStack<'t> {
     }
 
     #[inline]
-    pub(crate) fn defer_suppression_seam(&mut self, element: Element<'t>) {
+    pub(crate) fn defer_suppression_seam(&mut self, element: Element<'t>, keep: bool) {
         debug_assert!(
             matches!(&element, Element::Delayed(delayed) if delayed.is_suppression_seam())
         );
         // A deferred suppression seam is invisible content: live drops the
         // attached post-list break before a hidden iftags body (BRIEF-RMRES
         // fda12, saved-page muse-probe-rmres-fda-f7). At page root the seam
-        // is not poppable, so this is a nested-frame-only correction.
-        let popped = self.wikidot && self.wikidot_poppable_post_list_break();
+        // is not poppable, so this is a nested-frame-only correction. A
+        // shown body whose first content is prose or a list keeps the break
+        // (saved-page muse-probe-fda89-*: r1, r7, r8, f4, f6, f7, f9).
+        let popped = self.wikidot && !keep && self.wikidot_poppable_post_list_break();
         if popped {
             self.wikidot_pop_post_list_break();
             self.wikidot_seam_dropped_post_list_break = true;
         }
         self.pending_suppression_seams.push(element);
+    }
+
+    pub(crate) fn arm_wikidot_seam_keep_post_list_break(&mut self, keep: bool) {
+        self.wikidot_seam_keep_post_list_break = keep;
+    }
+
+    pub(crate) fn arm_wikidot_seam_keep_pending_unwrap(&mut self, keep: bool) {
+        self.wikidot_seam_keep_pending_unwrap = keep;
+    }
+
+    pub(crate) fn wikidot_shown_seam_keeps_post_list_break(
+        &self,
+        items: &[Element<'t>],
+    ) -> bool {
+        if !self.wikidot || self.paragraph_break_since_element {
+            return false;
+        }
+        let Some(first) = items.first() else {
+            return false;
+        };
+        if !matches!(first, Element::Delayed(delayed) if delayed.is_typography_boundary())
+        {
+            return false;
+        }
+        let Some(content) = items.iter().skip(1).find(|element| {
+            !matches!(element, Element::Delayed(delayed) if delayed.is_suppression_seam())
+                && !matches!(element, Element::LineBreak | Element::LineBreaks(_))
+        }) else {
+            return false;
+        };
+        let keeps = matches!(
+            content,
+            Element::Text(_)
+                | Element::Raw(_)
+                | Element::LineBreak
+                | Element::List { .. }
+        );
+        keeps && self.wikidot_poppable_post_list_break()
+    }
+
+    pub(crate) fn arm_wikidot_seam_wrap_paragraph(&mut self, items: &[Element<'t>]) {
+        let wrap = self.wikidot
+            && self.paragraph_break_since_element
+            && items.first().is_some_and(|element| {
+                matches!(
+                    element,
+                    Element::Delayed(delayed) if delayed.is_typography_boundary()
+                )
+            })
+            && items.iter().skip(1).find(|element| {
+                !matches!(element, Element::Delayed(delayed) if delayed.is_suppression_seam())
+                    && !matches!(element, Element::LineBreak | Element::LineBreaks(_))
+            })
+            .is_some_and(|element| matches!(element, Element::Text(_) | Element::Raw(_)));
+        self.wikidot_seam_wrap_paragraph = wrap;
     }
 
     /// Consume the "seam dropped the post-list break" signal.
@@ -2346,6 +2747,17 @@ impl<'t> ParagraphStack<'t> {
     }
 
     pub fn end_paragraph_at_break(&mut self) {
+        if !self.current.is_empty()
+            && self.current_unwrapped
+            && self.current.iter().all(|element| match element {
+                Element::Delayed(delayed) => delayed.is_suppression_seam(),
+                Element::Text(text) => text.trim().is_empty(),
+                _ => false,
+            })
+        {
+            self.pending_suppression_seams.append(&mut self.current);
+            return;
+        }
         if self.current.is_empty() {
             self.wikidot_toc_next_paragraph_leads_with_br = false;
         }
@@ -2753,9 +3165,10 @@ mod tests {
 
         stack.push_element(text!("alpha"), true);
         stack.end_paragraph_at_break();
-        stack.defer_suppression_seam(Element::Delayed(
-            crate::delayed::DelayedElement::typography_boundary(),
-        ));
+        stack.defer_suppression_seam(
+            Element::Delayed(crate::delayed::DelayedElement::typography_boundary()),
+            false,
+        );
         stack.end_paragraph();
         stack.push_element(Element::Footnote(0.into()), true);
 

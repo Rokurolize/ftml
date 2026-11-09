@@ -69,7 +69,6 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::SplitClose(SplitDelimiter::Italics),
     ];
     let invalid = [
-        ParseCondition::current(Token::ParagraphBreak),
         ParseCondition::token_pair(Token::Italics, Token::Whitespace),
         ParseCondition::token_pair(Token::Whitespace, Token::Italics),
         ParseCondition::PaddedSplitClose(SplitDelimiter::Italics),

@@ -343,12 +343,15 @@ where
                 // returned tree.
                 inline_scope::strip_list_item_blank_line_markers(&mut elements);
                 inline_format::unwrap_frame_cut_marker_paragraphs(&mut elements);
+                inline_scope::strip_post_list_blank_gap_markers(&mut elements);
                 for footnote in &mut footnotes {
                     inline_scope::strip_list_item_blank_line_markers(footnote);
+                    inline_scope::strip_post_list_blank_gap_markers(footnote);
                 }
                 for bibliography in bibliographies.slice_mut() {
                     for (_, items) in bibliography.slice_mut() {
                         inline_scope::strip_list_item_blank_line_markers(items);
+                        inline_scope::strip_post_list_blank_gap_markers(items);
                     }
                 }
             }

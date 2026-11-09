@@ -290,6 +290,7 @@ pub(crate) fn own_line_li_close_after(source: &str, from_byte: usize) -> Option<
 pub(crate) enum WikidotListFollower {
     /// Content that lets the items' post-heading chunk wrap.
     Wrap,
+    Quote,
     /// EOF after the closer (nothing follows): no follower wrap.
     Eof,
     /// `+ h` heading line: suppresses both wraps.
@@ -306,7 +307,7 @@ pub(crate) enum WikidotListFollower {
 impl WikidotListFollower {
     /// Whether the follower line allows the post-heading wrap.
     pub(crate) fn wraps(self) -> bool {
-        matches!(self, Self::Wrap)
+        matches!(self, Self::Wrap | Self::Quote)
     }
 
     /// Whether the follower also suppresses the enclosing-frame wrap
@@ -316,6 +317,233 @@ impl WikidotListFollower {
     pub(crate) fn suppresses_frame(self) -> bool {
         matches!(self, Self::Heading | Self::Hr | Self::FormedFlatHead)
     }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum WikidotAnchorFollower {
+    EndOfInput,
+    InlineRun { blank: bool },
+    CodeBlock { blank: bool },
+    MathBlock { blank: bool },
+    ListHead { blank: bool },
+    BlockKeep,
+    BlockBlank { blank: bool },
+    TableBlank,
+}
+
+impl WikidotAnchorFollower {
+    pub(crate) fn wraps(self) -> bool {
+        !matches!(
+            self,
+            Self::EndOfInput | Self::BlockKeep | Self::TableBlank
+        )
+    }
+}
+
+pub(crate) fn deep_formation_in_source(source: &str) -> bool {
+    source.lines().any(|line| {
+        let trimmed = line.trim_start_matches([' ', '\t', '>']);
+        let Some(rest) = trimmed
+            .strip_prefix('*')
+            .or_else(|| trimmed.strip_prefix('#'))
+        else {
+            return false;
+        };
+        let rest = rest.trim_start_matches([' ', '\t']).to_ascii_lowercase();
+        rest.starts_with("[[ul")
+            || rest.starts_with("[[ol")
+            || rest.starts_with("[[li")
+            || rest.starts_with("[[/ul")
+            || rest.starts_with("[[/ol")
+            || rest.starts_with("[[/li")
+    })
+}
+
+pub(crate) fn strict_item_marker_line(source: &str) -> bool {
+    source.lines().any(|line| {
+        let trimmed = line.trim_start_matches([' ', '\t', '>']);
+        let mut chars = trimmed.chars();
+        let Some(first) = chars.next() else {
+            return false;
+        };
+        if !matches!(first, '*' | '#' | '-') {
+            return false;
+        }
+        let after_marker = &trimmed[first.len_utf8()..];
+        if !after_marker.starts_with([' ', '\t']) {
+            return false;
+        }
+        let low = after_marker.trim_start_matches([' ', '\t']).to_ascii_lowercase();
+        if low.starts_with("[[") {
+            let Some(head_end) = low.find("]]") else {
+                return false;
+            };
+            let after = &low[head_end + 2..];
+            return after
+                .bytes()
+                .any(|byte| !matches!(byte, b' ' | b'\t'));
+        }
+        !low.is_empty() && !low.starts_with('#') && !low.starts_with('*')
+    })
+}
+
+pub(crate) fn wikidot_anchor_follower_kind(
+    source: &str,
+    from_byte: usize,
+) -> Option<WikidotAnchorFollower> {
+    let from_byte = from_byte.min(source.len());
+    let line_start = source[..from_byte]
+        .rfind('\n')
+        .map_or(0, |offset| offset + 1);
+    let mut depth = 1usize;
+    let mut pos = line_start;
+    while pos < source.len() {
+        let line_end = source[pos..]
+            .find('\n')
+            .map_or(source.len(), |offset| pos + offset);
+        let raw = &source[pos..line_end];
+        let lower = raw.to_ascii_lowercase();
+        let opens = lower.matches("[[ul]]").count() + lower.matches("[[ol]]").count();
+        let closes = lower.matches("[[/ul]]").count() + lower.matches("[[/ol]]").count();
+        depth += opens;
+        depth = depth.saturating_sub(closes);
+        if depth == 0 {
+            return Some(wikidot_anchor_follower_after_close(
+                source,
+                line_end.saturating_add(1),
+                false,
+                false,
+            ));
+        }
+        pos = line_end + 1;
+    }
+    None
+}
+
+pub(crate) fn wikidot_anchor_follower_after_close(
+    source: &str,
+    after_close: usize,
+    gap_has_blank: bool,
+    closer_newline_at_pos: bool,
+) -> WikidotAnchorFollower {
+    let mut pos = after_close.min(source.len());
+    let mut blank = usize::from(gap_has_blank);
+    if gap_has_blank {
+        let line_end = source[pos..]
+            .find('\n')
+            .map_or(source.len(), |offset| pos + offset);
+        pos = if line_end >= source.len() {
+            source.len()
+        } else {
+            line_end + 1
+        };
+    } else if closer_newline_at_pos
+        && source.as_bytes().get(pos) == Some(&b'\n')
+    {
+        pos += 1;
+    }
+    loop {
+        if pos >= source.len() {
+            return WikidotAnchorFollower::EndOfInput;
+        }
+        let line_end = source[pos..]
+            .find('\n')
+            .map_or(source.len(), |offset| pos + offset);
+        let raw = &source[pos..line_end];
+        let trimmed = raw.trim_matches([' ', '\t', '\r']);
+        if trimmed.is_empty() {
+            blank += 1;
+            if line_end >= source.len() {
+                return WikidotAnchorFollower::EndOfInput;
+            }
+            pos = line_end + 1;
+            continue;
+        }
+        return classify_anchor_follower_line(raw, blank > 0);
+    }
+}
+
+fn classify_anchor_follower_line(line: &str, blank: bool) -> WikidotAnchorFollower {
+    let low = line.to_ascii_lowercase();
+    let trimmed = low.trim_matches([' ', '\t', '\r']);
+    let marker_head = trimmed
+        .split_once([' ', '\t'])
+        .map_or(trimmed, |(head, _)| head);
+    if matches!(marker_head, "*" | "#" | "-") && trimmed[marker_head.len()..].starts_with([' ', '\t']) {
+        return WikidotAnchorFollower::ListHead { blank };
+    }
+    if trimmed.len() >= 4 && trimmed.bytes().all(|byte| byte == b'-') {
+        return if blank {
+            WikidotAnchorFollower::BlockBlank { blank }
+        } else {
+            WikidotAnchorFollower::BlockKeep
+        };
+    }
+    let plus_run = trimmed.as_bytes().iter().take_while(|byte| **byte == b'+').count();
+    if (1..=6).contains(&plus_run) && trimmed[plus_run..].starts_with([' ', '\t']) {
+        return if blank {
+            WikidotAnchorFollower::BlockBlank { blank }
+        } else {
+            WikidotAnchorFollower::BlockKeep
+        };
+    }
+    if trimmed.starts_with('>') {
+        return if blank {
+            WikidotAnchorFollower::BlockBlank { blank }
+        } else {
+            WikidotAnchorFollower::BlockKeep
+        };
+    }
+    if let Some(stripped) = trimmed.strip_prefix("[[") {
+        let tag = stripped.to_ascii_lowercase();
+        let name_end = tag.find([' ', '\t', ']']).unwrap_or(tag.len());
+        let name = tag[..name_end].trim();
+        match name {
+            "code" | "raw" => return WikidotAnchorFollower::CodeBlock { blank },
+            "math" | "math_" => return WikidotAnchorFollower::MathBlock { blank },
+            "div" | "note" | "collapsible" | "align" | "size" | "center" | "span" => {
+                if wikidot_single_line_pair(trimmed) {
+                    return WikidotAnchorFollower::InlineRun { blank };
+                }
+                return if blank {
+                    WikidotAnchorFollower::BlockBlank { blank }
+                } else {
+                    WikidotAnchorFollower::BlockKeep
+                };
+            }
+            _ => {
+                return if blank {
+                    WikidotAnchorFollower::BlockBlank { blank }
+                } else {
+                    WikidotAnchorFollower::BlockKeep
+                };
+            }
+        }
+    }
+    if trimmed.contains("||") {
+        return if blank {
+            WikidotAnchorFollower::TableBlank
+        } else {
+            WikidotAnchorFollower::InlineRun { blank }
+        };
+    }
+    WikidotAnchorFollower::InlineRun { blank }
+}
+
+fn wikidot_single_line_pair(trimmed: &str) -> bool {
+    let Some(open_end) = trimmed.find("]]") else {
+        return false;
+    };
+    let inner = trimmed[2..open_end].trim().to_ascii_lowercase();
+    let name_end = inner.find([' ', '\t']).unwrap_or(inner.len());
+    let name = inner[..name_end].trim();
+    if name.is_empty() {
+        return false;
+    }
+    let closer = format!("[[/{}]]", name);
+    trimmed[open_end + 2..]
+        .to_ascii_lowercase()
+        .contains(&closer)
 }
 
 /// The follower classification for the list enclosing `from_byte`, or
@@ -479,6 +707,9 @@ fn wikidot_list_follower_line_kind(
     // `----` (FTML's TripleDash token) suppresses; `====` does not.
     if trimmed.len() >= 4 && trimmed.bytes().all(|byte| byte == b'-') {
         return WikidotListFollower::Hr;
+    }
+    if trimmed.starts_with('>') {
+        return WikidotListFollower::Quote;
     }
     if trimmed.eq_ignore_ascii_case("[[ul]]") || trimmed.eq_ignore_ascii_case("[[ol]]") {
         return WikidotListFollower::ListHead;
@@ -1587,6 +1818,8 @@ where
                 }
             )
         });
+    let formation_unstarred = !starred_list_closer_in_source(&parser.full_text().inner()
+        [entry.current().span.start..parser.current().span.start]);
     if stash_anchor && let Some(Element::List { attributes, .. }) = elements.first() {
         let anchor = Element::List {
             ltype: ListType::Bullet,
@@ -1607,7 +1840,7 @@ where
         } else {
             parser.wikidot_li_pairing_depth()
         };
-        parser.stash_wikidot_list_anchor_chrome(stash_depth, anchor);
+        parser.stash_wikidot_list_anchor_chrome(stash_depth, anchor, formation_unstarred);
     }
     // Item 88 follow-up: an unflipped (bullet) formation closed on a
     // hash-marked line anchors like a numbered item close, so stash the
@@ -1633,7 +1866,7 @@ where
             wikidot_explicit_block: true,
             wikidot_unclosed: true,
         };
-        parser.stash_wikidot_list_anchor_chrome(1, anchor);
+        parser.stash_wikidot_list_anchor_chrome(1, anchor, formation_unstarred);
     }
     // Unowned dissolution (item 65c, c1 shapes): a numbered lost-owner
     // list whose body is unowned (explicit [[li]] lines, not sibling

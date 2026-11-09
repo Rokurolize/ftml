@@ -25,6 +25,10 @@
                     {
                         "element": "text",
                         "data": "b"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
                     }
                 ]
             }

@@ -160,10 +160,6 @@ fn join_wikidot_math_source(source: &str) -> String {
         .join(" ")
 }
 
-/// Whether the Wikidot math block emits an equation number at all. Rejected
-/// environments render the error block without a number; a caller deciding
-/// where the number is placed needs this to stay in sync with
-/// `render_wikidot_math_block`.
 pub(crate) fn wikidot_math_number_will_render(
     environment: Option<&str>,
     latex_source: &str,
@@ -184,11 +180,7 @@ fn render_wikidot_math_block(
     let source = join_wikidot_math_source(latex_source);
     match resolve_wikidot_math_environment(environment, &source) {
         Err(bad) => {
-            // Live Wikidot escapes `&`, `<` and `>` in the rejected name
-            // but leaves both quote characters verbatim, so the message is
-            // assembled with raw pushes instead of escaped contents. The
-            // open inline scopes re-open around the message inside the
-            // error block, mirroring the equation number.
+            // Live leaves both quote characters verbatim in the rejected name; the raw pushes are deliberate.
             ctx.html()
                 .div()
                 .attr(attr!("class" => "error-block"))
@@ -221,8 +213,6 @@ fn render_wikidot_math_block(
     }
 }
 
-/// Wrap the rejected-environment message in the open inline scopes, the
-/// same re-open live performs around the equation number.
 fn render_wikidot_error_message_with_spans(
     ctx: &mut HtmlContext,
     bad: &str,

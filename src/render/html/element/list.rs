@@ -25,10 +25,6 @@ use crate::tree::{
     AttributeMap, Container, ContainerType, ListItem, ListType, PartialElement,
 };
 
-/// A `[[math]]` block directly following an inline scope segment in an item
-/// renders its equation number inside that same segment on live, preceded by
-/// exactly two line breaks. Foreign scopes (a formed bold, a crossed pair
-/// that literalises) and unnumbered failures keep the split layout.
 fn render_scope_math_pair(
     ctx: &mut HtmlContext,
     elements: &[Element],

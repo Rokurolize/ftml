@@ -332,9 +332,7 @@ pub enum PartialElement<'t> {
 
     RubyText(RubyText<'t>),
 
-    /// Render-time marker minted by the list-item lowering for a `[[math]]`
-    /// block whose equation number rides the enclosing inline scope segment.
-    /// Never produced by the parser, so it never appears in parse output.
+    /// Never produced by the parser; render-time only.
     WikidotEquationNumber(NonZeroUsize, Vec<Element<'t>>),
 }
 

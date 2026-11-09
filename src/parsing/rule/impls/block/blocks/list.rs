@@ -3891,19 +3891,12 @@ fn wrap_post_heading_segments<'t>(
         CodeOrAlign,
         /// End of the item body.
         End,
-        /// The chunk directly before a `[[math]]` block.
         BeforeMath,
     }
 
     let mut out: Vec<Element<'t>> = Vec::with_capacity(elements.len() + 4);
     let mut chunk: Vec<Element<'t>> = Vec::new();
     let mut after_heading = false;
-    // A math or table block inside the item: the inline run after it is
-    // paragraph-wrapped when the next math boundary terminates it, and at
-    // the end of the item body under an enclosing block frame; it stays
-    // bare otherwise (muse-probe-ad75-*; muse-probe-adi3take-no-scope-midrun
-    // for the math boundary). Headings keep the wider Soft family; this
-    // flag feeds only the math-boundary and end-of-item flushes.
     let mut after_ref_block = false;
     let mut latched = false;
     let flush = |chunk: &mut Vec<Element<'t>>,
@@ -3916,21 +3909,9 @@ fn wrap_post_heading_segments<'t>(
         if chunk.is_empty() {
             return;
         }
-        // The math/table trailing flag wraps a free inline run; a chunk
-        // owned by an inline scope inside the item (span/size partials in
-        // it) belongs to the scope's segment flow, not to this wrap:
-        // live keeps it bare (test/span/same-line-div-text-has-no-leading-
-        // space pins `**||` in a span after its table; the heading family's
-        // scope wraps are unaffected since headings set after_heading).
         let chunk_has_partial = chunk
             .iter()
             .any(|element| matches!(element, Element::Partial(_)));
-        // Headings drive the Soft/SegmentGap families unconditionally. A
-        // math/table trail wraps a free inline run flushed against the next
-        // math block, or against the end of the item body under an
-        // enclosing block frame (`End`; probes muse-probe-ad75-*;
-        // muse-probe-adi3take-no-scope-midrun for the math boundary).
-        // The chunk must be free of inline-scope partials.
         let wrap = !latched
             && has_content(chunk)
             && ((after_heading

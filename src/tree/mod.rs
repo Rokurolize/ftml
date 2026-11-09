@@ -187,6 +187,8 @@ pub(crate) const WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER: &str =
 /// inline-scope lowering; the tree cleanup strips it before output.
 pub(crate) const WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER: &str =
     "data-ftml-list-item-blank-line";
+pub(crate) const WIKIDOT_LIST_POST_BLANK_GAP_MARKER: &str =
+    "data-ftml-list-post-blank-gap";
 /// Marks an explicit list whose post-list tail content is preceded by source
 /// whitespace (`[[/ul]] __ d`, or a leading space on the next line). Live's
 /// inline pairing sees that pad, so a closer sitting at the first tail content

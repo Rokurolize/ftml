@@ -51,7 +51,6 @@ fn try_consume_fn<'r, 't>(
     }
     let close = [ParseCondition::current(Token::Superscript)];
     let invalid = [
-        ParseCondition::current(Token::ParagraphBreak),
         ParseCondition::token_pair(Token::Superscript, Token::Whitespace),
         ParseCondition::token_pair(Token::Whitespace, Token::Superscript),
     ];

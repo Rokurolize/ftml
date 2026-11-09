@@ -2489,6 +2489,107 @@ fn segment_format_list_items<'t>(
     }
 }
 
+/// Re-open a bare color scope inside the items of an explicit list it
+/// crosses. Live styles each item's content with the continuing color
+/// (exactly like the container formats' `segment_format_list_items`); the
+/// hand-rolled Color segmentation below only split the runs around the list.
+/// A pair that closes inside an item is left alone: that shape is already
+/// resolved by the inline-scope lowering (its close partial lives in the
+/// item), and re-wrapping here would double the scope.
+fn segment_color_list_items<'t>(
+    list: &mut Element<'t>,
+    color: &Cow<'t, str>,
+    background: bool,
+) {
+    let Element::List { items, .. } = list else {
+        return;
+    };
+    for item in items.iter_mut() {
+        match item {
+            ListItem::Elements { elements, .. } => {
+                let inner = mem::take(elements);
+                *elements = segment_color_run(inner, color, background);
+            }
+            ListItem::SubList { element } => {
+                segment_color_list_items(element, color, background);
+            }
+        }
+    }
+}
+
+/// Split one item body around the explicit lists nested inside it, wrapping
+/// every run in the crossing color (mirrors `segment_format_run` without the
+/// container-specific own-line/code handling). Leading breaks on post-list
+/// runs are trimmed like `seal_format_segment`.
+fn segment_color_run<'t>(
+    elements: Vec<Element<'t>>,
+    color: &Cow<'t, str>,
+    background: bool,
+) -> Vec<Element<'t>> {
+    let mut output = Vec::with_capacity(elements.len());
+    let mut run: Vec<Element<'t>> = Vec::new();
+    let mut seen_list = false;
+    for element in elements {
+        if matches!(
+            element,
+            Element::List {
+                wikidot_explicit_block: true,
+                ..
+            }
+        ) {
+            if seen_list {
+                strip_leading_breaks(&mut run);
+            }
+            if format_segment_has_content(&run) {
+                output.push(Element::Color {
+                    color: color.clone(),
+                    background,
+                    elements: mem::take(&mut run),
+                    attributes: AttributeMap::new(),
+                });
+            } else {
+                run.clear();
+            }
+            let mut list = element;
+            segment_color_list_items(&mut list, color, background);
+            output.push(list);
+            seen_list = true;
+        } else {
+            run.push(element);
+        }
+    }
+    if seen_list {
+        strip_leading_breaks(&mut run);
+    }
+    if format_segment_has_content(&run) {
+        output.push(Element::Color {
+            color: color.clone(),
+            background,
+            elements: run,
+            attributes: AttributeMap::new(),
+        });
+    }
+    output
+}
+
+/// Whether an explicit list in a crossing color body carries the pair's close
+/// marker inside one of its items (the shape the lowering already styles).
+fn color_close_inside_list(list: &Element<'_>) -> bool {
+    let Element::List { items, .. } = list else {
+        return false;
+    };
+    items.iter().any(|item| match item {
+        ListItem::Elements { elements, .. } => {
+            elements.iter().any(|element| match element {
+                Element::Partial(PartialElement::InlineColorClose) => true,
+                Element::List { .. } => color_close_inside_list(element),
+                _ => false,
+            })
+        }
+        ListItem::SubList { element } => color_close_inside_list(element),
+    })
+}
+
 /// Whether an inline format container will be re-emitted as literal markers
 /// around the explicit list it crosses: a format container with a direct
 /// explicit-list child, no flow block of its own, and a native list nested
@@ -2614,7 +2715,11 @@ fn format_explicit_list_segments<'t>(
                                 current_run.clear();
                             }
                         }
-                        segmented.push(child);
+                        let mut list = child;
+                        if !stops_at_list && !color_close_inside_list(&list) {
+                            segment_color_list_items(&mut list, &color_clone, bg_clone);
+                        }
+                        segmented.push(list);
                         seen_list = true;
                     }
                     _ => {

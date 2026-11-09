@@ -3502,10 +3502,7 @@ fn format_explicit_list_segments<'t>(
                 }
                 run_start = true;
             } else if run_start
-                && matches!(
-                    child,
-                    Element::LineBreak | Element::LineBreaks(_)
-                )
+                && matches!(child, Element::LineBreak | Element::LineBreaks(_))
             {
                 continue;
             } else {

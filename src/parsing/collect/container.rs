@@ -96,9 +96,6 @@ impl QuoteBodyCursorInstallation {
         QuoteBodyCursorInstallation { installed }
     }
 
-    // Underline only: with the literal flag, a bold/italics body that crosses
-    // a flow block matches live less well (pool idx 3753), so those keep the
-    // plain cursor.
     pub(crate) fn install_for_container(
         parser: &mut Parser<'_, '_>,
         container_type: ContainerType,

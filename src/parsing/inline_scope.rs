@@ -5197,7 +5197,6 @@ fn prelist_inline_element(element: &Element<'_>) -> bool {
     }
 }
 
-// Live drops the space at the explicit-list edge.
 fn trim_prelist_scope_tail_space(element: &mut Element<'_>) {
     let children = match element {
         Element::Container(container) => container.elements_mut(),
@@ -5236,7 +5235,6 @@ fn merge_frame_prelist_chunks<'t>(children: &mut Vec<Element<'t>>) {
                     .attributes()
                     .get()
                     .contains_key(WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER));
-    // Live keeps one paragraph over the whole pre-list run, including a quote-row's literal > residue.
     if let Some(list_index) = children.iter().position(is_explicit_block_list)
         && list_index > 0
         && children[..list_index].iter().all(prelist_inline_element)

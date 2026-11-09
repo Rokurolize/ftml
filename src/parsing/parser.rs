@@ -314,12 +314,6 @@ pub(super) struct BlockScanCache<'t> {
     consumed_li_close_at: Option<usize>,
     wikidot_explicit_list_ends: std::collections::BTreeSet<usize>,
     wikidot_preserve_empty_lists: Cell<bool>,
-    /// Inside a bold/italics/underline collection whose pair may span this
-    /// position (BRIEF-PADRES div transparency): a [[div]] head here stays
-    /// literal text (live pairs across it) instead of running the div
-    /// rule's newline-fusing literal recovery, which would split the
-    /// paragraph and defeat the later repair pass. Set and restored around
-    /// those collections in collect_container.
     wikidot_format_collection_body: Cell<bool>,
     gate_items_allowed: Cell<bool>,
     title_footnote_fused_end: Cell<bool>,

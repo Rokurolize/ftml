@@ -47,9 +47,6 @@ pub fn collect_container<'r, 't>(
     } else {
         false
     };
-    // A [[div]] head inside these collections stays literal (live pairs
-    // across it); the div rule's recovery consults this instead of fusing
-    // the preceding newline into the literal.
     let format_body = parser.settings().layout.legacy()
         && matches!(
             container_type,

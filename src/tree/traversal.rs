@@ -172,7 +172,8 @@ fn tree_stack_depth_reaches_threshold<'a>(
                 | PartialElement::InlineColorOpen(..)
                 | PartialElement::InlineColorClose
                 | PartialElement::InlineAnchorOpen(..)
-                | PartialElement::InlineAnchorClose(_) => {}
+                | PartialElement::InlineAnchorClose(_)
+                | PartialElement::WikidotEquationNumber(..) => {}
             },
             _ => {}
         }

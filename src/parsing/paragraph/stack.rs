@@ -1459,11 +1459,6 @@ impl<'t> ParagraphStack<'t> {
                 self.mark_next_unwrapped_after_block();
             }
             // A chunk-leading single space is indentation at a line start and
-            // keeps the historical drop, except directly after an inline
-            // container closed mid-line (a format pair crossing a list closes
-            // on the same line): its closer ended the previous chunk mid-line,
-            // so the space is content of the run that continues after it, not
-            // line-start indentation.
             let mid_line_format_container = !self.next_element_started_line
                 && self.wikidot_finished_ends_with_inline_container();
             let chunk_leading_line_start =
@@ -1675,9 +1670,6 @@ impl<'t> ParagraphStack<'t> {
                             | ContainerType::Monospace
                     )
             ) {
-                // A format pair crossing a block closes mid-line: the chunk
-                // before it resumes inline content at the same line position,
-                // so its trailing single space is content, not a line ending.
                 self.wikidot_keep_chunk_trailing_space = true;
             }
             self.end_paragraph();

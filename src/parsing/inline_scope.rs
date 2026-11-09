@@ -4645,10 +4645,6 @@ fn flush_root_pending<'t>(
             }
         )
     });
-    // A crossed pair's pre-list chunk flushes into a paragraph that live
-    // re-joins with the pair's head segment on the same line: the chunk's
-    // trailing single space survives on live. The merge below fires under
-    // these same conditions, so the flush must not trim it away first.
     let keep_trailing_space = group_flushed
         && at_explicit_list
         && pending_has_format

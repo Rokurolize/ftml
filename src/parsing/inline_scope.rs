@@ -1606,6 +1606,86 @@ fn format_kind_of(ctype: ContainerType) -> Option<InlineFormatKind> {
     }
 }
 
+fn subtree_contains_foster_block(element: &Element<'_>) -> bool {
+    if matches!(
+        element,
+        Element::Table { .. } | Element::BibliographyBlock { .. }
+    ) {
+        return true;
+    }
+    let mut found = false;
+    visit_children(element, &mut |children| {
+        found |= children.iter().any(subtree_contains_foster_block);
+    });
+    found
+}
+
+fn anchor_scope_dead_by_foster(output: &[Element<'_>]) -> bool {
+    match (
+        output.iter().position(subtree_contains_anchor_open),
+        output.iter().position(subtree_contains_foster_block),
+    ) {
+        (Some(open), Some(foster)) => open < foster,
+        _ => false,
+    }
+}
+
+fn stopped_plain_item(elements: &[Element<'_>]) -> bool {
+    elements.iter().all(|element| {
+        !matches!(
+            element,
+            Element::List { .. }
+                | Element::Table { .. }
+                | Element::BibliographyBlock { .. }
+                | Element::Anchor { .. }
+                | Element::Partial(
+                    PartialElement::InlineAnchorOpen(..)
+                        | PartialElement::InlineAnchorClose(_)
+                )
+        ) && !is_wikidot_flow_block(element)
+            && {
+                let mut nested = true;
+                visit_children(element, &mut |children| {
+                    nested &= stopped_plain_item(children);
+                });
+                nested
+            }
+    })
+}
+
+fn stopped_container_ctype(element: &Element<'_>) -> Option<ContainerType> {
+    match element {
+        Element::Container(container)
+            if format_kind_of(container.ctype()).is_some()
+                && stopped_pre_segment(element) =>
+        {
+            Some(container.ctype())
+        }
+        _ => None,
+    }
+}
+
+fn wrap_stopped_plain_items(segments: &mut [Element<'_>], ctype: ContainerType) {
+    for segment in segments.iter_mut() {
+        let Element::List { items, .. } = segment else {
+            continue;
+        };
+        for item in items.iter_mut() {
+            let ListItem::Elements { elements, .. } = item else {
+                continue;
+            };
+            if stopped_plain_item(elements) {
+                let inner = mem::take(elements);
+                *elements = vec![Element::Container(Container::new(
+                    ctype,
+                    inner,
+                    AttributeMap::new(),
+                ))];
+            }
+        }
+    }
+}
+
 fn flatten_crossing_inline_containers<'t>(elements: &mut Vec<Element<'t>>) {
     for element in elements.iter_mut() {
         let mut visit = |children: &mut Vec<Element<'t>>| {
@@ -1615,11 +1695,22 @@ fn flatten_crossing_inline_containers<'t>(elements: &mut Vec<Element<'t>>) {
     }
     let mut output = Vec::with_capacity(elements.len());
     for mut element in mem::take(elements) {
-        if let Some(replacement) = foster_sole_explicit_list(&mut element) {
+        let stopped_ctype = stopped_container_ctype(&element);
+        if let Some(mut replacement) = foster_sole_explicit_list(&mut element) {
+            if let Some(ctype) = stopped_ctype
+                && anchor_scope_dead_by_foster(&output)
+            {
+                wrap_stopped_plain_items(&mut replacement, ctype);
+            }
             output.extend(replacement);
             continue;
         }
-        if let Some(replacement) = format_explicit_list_segments(&mut element) {
+        if let Some(mut replacement) = format_explicit_list_segments(&mut element) {
+            if let Some(ctype) = stopped_ctype
+                && anchor_scope_dead_by_foster(&output)
+            {
+                wrap_stopped_plain_items(&mut replacement, ctype);
+            }
             output.extend(replacement);
             continue;
         }

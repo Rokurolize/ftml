@@ -427,13 +427,15 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
             ..
         } => render_math_block(
             ctx,
-            ctx.wikidot_equation_number(std::ptr::from_ref(element) as usize),
-            ref_cow!(name),
-            latex_source,
-            ref_cow!(environment),
-            wikidot_block_open_elements,
-            wikidot_label_spans,
-            *wikidot_capture_eq,
+            crate::render::html::element::math::MathBlockArgs {
+                assigned_index: ctx.wikidot_equation_number(std::ptr::from_ref(element) as usize),
+                name: ref_cow!(name),
+                latex_source,
+                environment: ref_cow!(environment),
+                open_elements: wikidot_block_open_elements,
+                label_spans: wikidot_label_spans,
+                capture_eq: *wikidot_capture_eq,
+            },
         ),
         Element::MathInline { latex_source } => render_math_inline(ctx, latex_source),
         Element::EquationReference(name) => render_equation_reference(ctx, name),

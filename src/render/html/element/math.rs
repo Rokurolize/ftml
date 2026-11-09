@@ -36,16 +36,41 @@ cfg_if! {
     }
 }
 
+/// Arguments for rendering a Wikidot math block; grouped so the renderer's
+/// footgun list stays legible at the dispatch call site.
+pub struct MathBlockArgs<'a, 't> {
+    /// Equation-number assignment for the block, or `None` for generated indices.
+    pub assigned_index: Option<NonZeroUsize>,
+    /// The `[[math]]` block's name argument.
+    pub name: Option<&'a str>,
+    /// Math body source the renderer normalises and emits verbatim.
+    pub latex_source: &'a str,
+    /// Explicit `type="…"` override; `None` for auto-detection.
+    pub environment: Option<&'a str>,
+    /// Inline span/size scopes that cross this block; used to wrap the
+    /// equation number with the same compatibility spans.
+    pub open_elements: &'a [Element<'t>],
+    /// Rich-attribute wrapping of the equation number label.
+    pub label_spans: &'a [AttributeMap<'t>],
+    /// BRIEF-O4TAKE: render the equation number wrapped in the stashed
+    /// anchor-chrome markup (`<ul><li style="list-style: none">`) instead
+    /// of a bare span; the display renders after the chrome.
+    pub capture_eq: bool,
+}
+
 pub fn render_math_block(
     ctx: &mut HtmlContext,
-    assigned_index: Option<NonZeroUsize>,
-    name: Option<&str>,
-    latex_source: &str,
-    environment: Option<&str>,
-    open_elements: &[Element],
-    label_spans: &[AttributeMap],
-    capture_eq: bool,
+    args: MathBlockArgs<'_, '_>,
 ) {
+    let MathBlockArgs {
+        assigned_index,
+        name,
+        latex_source,
+        environment,
+        open_elements,
+        label_spans,
+        capture_eq,
+    } = args;
     debug!(
         "Rendering math block (name '{}', source '{}')",
         name.unwrap_or("<none>"),

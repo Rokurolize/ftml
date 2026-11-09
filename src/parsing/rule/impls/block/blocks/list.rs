@@ -1037,13 +1037,12 @@ fn parse_list_block_impl<'r, 't>(
             F::InlineRun { blank } if list_type == ListType::Numbered && !fused_close => {
                 let mut chromes = anchor_chromes;
                 let mut chrome = chromes.first_mut().cloned();
-                if let Some(first) = chrome.as_mut() {
-                    if let Element::List {
-                        wikidot_unclosed, ..
-                    } = first
-                    {
-                        *wikidot_unclosed = false;
-                    }
+                if let Some(Element::List {
+                    wikidot_unclosed,
+                    ..
+                }) = chrome.as_mut()
+                {
+                    *wikidot_unclosed = false;
                 }
                 parser.arm_wikidot_anchor_capture(chrome, blank, false);
                 let mut output = vec![element];

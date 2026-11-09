@@ -546,8 +546,8 @@ fn classify_anchor_follower_line(line: &str, blank: bool) -> WikidotAnchorFollow
     // Block open lines: classify by the tag, keeping single-line pairs
     // inline (they render as literal text) and routing formed blocks to
     // their classes.
-    if trimmed.starts_with("[[") {
-        let tag = trimmed[2..].to_ascii_lowercase();
+    if let Some(stripped) = trimmed.strip_prefix("[[") {
+        let tag = stripped.to_ascii_lowercase();
         let name_end = tag.find([' ', '\t', ']']).unwrap_or(tag.len());
         let name = tag[..name_end].trim();
         match name {

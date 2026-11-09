@@ -602,18 +602,43 @@ pub(super) fn mark_span_list_close_tail<'r, 't>(
     let in_span_body = parser.in_wikidot_span_body();
     let in_size_body = parser.in_wikidot_size_body();
     let in_inline_scope_body = in_span_body || in_size_body;
-    let Elements::Single(Element::Container(container)) = &elements else {
+    // A pair whose closer sits on its own line carries the line-close
+    // space as a trailing sibling (`Elements::Multiple`), exactly like the
+    // stopped family `find_stop_at_list_container` already sees through;
+    // matching only the single-container shape would skip stamping its
+    // tail entirely (spadj cell 1: own-line closers never materialised
+    // their post-list break tail).
+    fn stampable_container_index(elements: &Elements<'_>) -> Option<usize> {
+        let at = |element: &Element<'_>| {
+            matches!(
+                element,
+                Element::Container(container)
+                    if matches!(
+                        container.ctype(),
+                        ContainerType::Bold
+                            | ContainerType::Italics
+                            | ContainerType::Superscript
+                            | ContainerType::Subscript
+                    )
+            )
+        };
+        match elements {
+            Elements::Single(element) if at(element) => Some(0),
+            Elements::Multiple(elements) => elements.iter().position(at),
+            _ => None,
+        }
+    }
+    let Some(container_index) = stampable_container_index(&elements) else {
         return elements;
     };
-    if !matches!(
-        container.ctype(),
-        ContainerType::Bold
-            | ContainerType::Italics
-            | ContainerType::Superscript
-            | ContainerType::Subscript
-    ) {
-        return elements;
-    }
+    let container = match &elements {
+        Elements::Single(Element::Container(container)) => container,
+        Elements::Multiple(elements) => match &elements[container_index] {
+            Element::Container(container) => container,
+            _ => unreachable!("container index checked above"),
+        },
+        _ => unreachable!("container index checked above"),
+    };
     let crosses_explicit_list = container
         .elements()
         .iter()
@@ -668,9 +693,13 @@ pub(super) fn mark_span_list_close_tail<'r, 't>(
                         | SpanListCloseTail::Blank
                 )
             {
-                let Elements::Single(Element::Container(container)) = &mut elements
-                else {
-                    unreachable!("single bold element checked above");
+                let container = match &mut elements {
+                    Elements::Single(Element::Container(container)) => container,
+                    Elements::Multiple(elements) => match &mut elements[container_index] {
+                        Element::Container(container) => container,
+                        _ => unreachable!("container index checked above"),
+                    },
+                    _ => unreachable!("container index checked above"),
                 };
                 stamp_tail_marker(
                     parser,
@@ -697,8 +726,13 @@ pub(super) fn mark_span_list_close_tail<'r, 't>(
             return elements;
         }
     };
-    let Elements::Single(Element::Container(container)) = &mut elements else {
-        unreachable!("single bold element checked above")
+    let container = match &mut elements {
+        Elements::Single(Element::Container(container)) => container,
+        Elements::Multiple(elements) => match &mut elements[container_index] {
+            Element::Container(container) => container,
+            _ => unreachable!("container index checked above"),
+        },
+        _ => unreachable!("container index checked above"),
     };
     stamp_tail_marker(parser, container.attributes_mut(), marker);
     elements

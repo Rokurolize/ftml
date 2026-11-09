@@ -3123,6 +3123,89 @@ fn literalised_color<'t>(
     output
 }
 
+/// Whether a format container's explicit-list crossing runs through an
+/// anchor's scope controls: an anchor open stranded on one side of the
+/// list with its close on the other. Segmenting such a container freezes
+/// it as an element outside the scope nesting live rebuilds at the
+/// boundary (the items reopen scopes in chain order while the pre/post
+/// segments nest the container outside them). Balanced anchor pairs
+/// wholly inside one run segment normally. A span/size/color scope
+/// opening inside the runs means the format is (at least partly) outer
+/// in source order, which segmentation already nests correctly, so those
+/// shapes keep the segmented path.
+fn anchor_straddles_explicit_list(children: &[Element<'_>]) -> bool {
+    fn is_scope_open(element: &Element<'_>) -> bool {
+        match element {
+            Element::Partial(
+                PartialElement::InlineSpanOpen(..)
+                | PartialElement::InlineSizeOpen(..)
+                | PartialElement::InlineColorOpen(..),
+            ) => true,
+            Element::Container(container) => {
+                matches!(container.ctype(), ContainerType::Span | ContainerType::Size)
+            }
+            Element::Color { .. } => true,
+            _ => false,
+        }
+    }
+    fn count_controls(
+        element: &Element<'_>,
+        opens: &mut usize,
+        closes: &mut usize,
+        scope_opens: &mut usize,
+    ) {
+        if is_scope_open(element) {
+            *scope_opens += 1;
+        }
+        match element {
+            Element::Partial(PartialElement::InlineAnchorOpen(..)) => *opens += 1,
+            Element::Partial(PartialElement::InlineAnchorClose(_)) => *closes += 1,
+            Element::Anchor { elements, .. } => {
+                for child in elements {
+                    count_controls(child, opens, closes, scope_opens);
+                }
+            }
+            _ => {
+                if let Some(nested) = subtree_children(element) {
+                    for child in nested {
+                        count_controls(child, opens, closes, scope_opens);
+                    }
+                }
+            }
+        }
+    }
+    let mut open_before = 0;
+    let mut close_before = 0;
+    let mut open_after = 0;
+    let mut close_after = 0;
+    let mut scope_opens_in_runs = 0;
+    let mut seen_list = false;
+    for child in children {
+        if matches!(
+            child,
+            Element::List {
+                wikidot_explicit_block: true,
+                ..
+            }
+        ) {
+            seen_list = true;
+            continue;
+        }
+        let (mut opens, mut closes, mut scope_opens) = (0, 0, 0);
+        count_controls(child, &mut opens, &mut closes, &mut scope_opens);
+        scope_opens_in_runs += scope_opens;
+        if seen_list {
+            open_after += opens;
+            close_after += closes;
+        } else {
+            open_before += opens;
+            close_before += closes;
+        }
+    }
+    scope_opens_in_runs == 0
+        && ((open_before > 0 && close_after > 0) || (close_before > 0 && open_after > 0))
+}
+
 fn format_explicit_list_segments<'t>(
     element: &mut Element<'t>,
 ) -> Option<Vec<Element<'t>>> {
@@ -3382,6 +3465,56 @@ fn format_explicit_list_segments<'t>(
         // `</ul><br>c**`): drop the source newline that follows each
         // crossed list before re-emitting the body under literal markers.
         return Some(literalised(trim_post_list_leading_breaks(children)));
+    }
+    if !stops_at_list
+        && anchor_straddles_explicit_list(&children)
+        && !subtree_contains_flow_block(element)
+    {
+        // A format pair whose list crossing runs through an anchor's scope
+        // controls (open stranded on one side, close on the other):
+        // segmenting it would freeze the container as an element outside
+        // the scope nesting live rebuilds at the boundary, while the items
+        // reopen scopes in chain order (spadj cell 3: pre/tail
+        // `<strong><span>` vs live `<span><strong>`, item already right).
+        // Flatten to scope partials so boundary sync governs the order in
+        // every segment; the anchor still dies at the list in lowering.
+        // The pair's post-list tail shape rides to the list exactly like
+        // the segmented path below. (A stopped pair keeps its unstyled
+        // segmented handling; poisoned shapes literalise above.)
+        let mut flattened = Vec::with_capacity(children.len() + 2);
+        flattened.push(Element::Partial(PartialElement::InlineFormatOpen(kind)));
+        // Mirror `seal_format_segment`'s post-boundary strip: a newline
+        // between the list and the pair's continuation is intra-pair
+        // spacing, not a gap break (the gap break, if any, sits after the
+        // pair's closer and is owned by the tail path).
+        let mut run_start = false;
+        for mut child in children {
+            if let Element::List { attributes, .. } = &mut child {
+                if let Some(tail_mark) = tail_mark {
+                    let marker = match tail_mark {
+                        SpanListCloseTail::Break => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
+                        SpanListCloseTail::Bare => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
+                        SpanListCloseTail::Lead => WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
+                        SpanListCloseTail::Blank => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER,
+                        SpanListCloseTail::Fold => WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
+                    };
+                    attributes.insert(marker, Cow::Borrowed(""));
+                }
+                run_start = true;
+            } else if run_start
+                && matches!(
+                    child,
+                    Element::LineBreak | Element::LineBreaks(_)
+                )
+            {
+                continue;
+            } else {
+                run_start = false;
+            }
+            flattened.push(child);
+        }
+        flattened.push(Element::Partial(PartialElement::InlineFormatClose(kind)));
+        return Some(flattened);
     }
     let mut formed = false;
     let mut segmented = segment_format_run(children, ctype, &mut formed, stops_at_list);
@@ -6980,13 +7113,18 @@ fn wikidot_close_anchor_scope<'t>(
     let empty =
         !active.scope_has_content(position) && run.iter().all(element_is_whitespace_only);
     if empty {
-        let wrapper = active.scope_wrapper(position).clone();
-        active.kill_from(position);
+        // Retract the anchor stack entry BEFORE the scope kill (spcont
+        // #1335 rule): `kill_from` drops the killed anchor's own istack
+        // entry, so a pop afterwards drains every enclosing scope opened
+        // outside the anchor. The empty wrapper flushes through the active
+        // scopes so an enclosing span/size wraps it (spadj cell 2: live
+        // `<span><a></a>...`, and the span must survive for the list).
         active.pop_istack_through_anchor();
-        output.push(wrapper.wrap(vec![Element::Partial(
+        run.push(Element::Partial(
             PartialElement::WikidotEmptyInlineOwner,
-        )]));
-        last_run_outer_scope.reset();
+        ));
+        flush_run(output, run, active, last_run_outer_scope);
+        active.kill_from(position);
         return true;
     }
     if run.iter().all(element_is_whitespace_only)
@@ -7002,14 +7140,14 @@ fn wikidot_close_anchor_scope<'t>(
         && elements.iter().all(element_is_whitespace_only)
     {
         *elements = vec![Element::Partial(PartialElement::WikidotEmptyInlineOwner)];
-        active.kill_from(position);
         active.pop_istack_through_anchor();
+        active.kill_from(position);
         last_run_outer_scope.reset();
         return true;
     }
     flush_run(output, run, active, last_run_outer_scope);
-    active.kill_from(position);
     active.pop_istack_through_anchor();
+    active.kill_from(position);
     if trailing_space {
         output.push(text!(" "));
     }

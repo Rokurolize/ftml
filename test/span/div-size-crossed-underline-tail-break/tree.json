@@ -1,0 +1,69 @@
+{
+  "elements": [
+    {
+      "element": "container",
+      "data": {
+        "type": "div",
+        "attributes": {},
+        "elements": [
+          {
+            "element": "container",
+            "data": {
+              "type": "size",
+              "attributes": {
+                "style": "font-size: 200%;"
+              },
+              "elements": [
+                {
+                  "element": "line-break"
+                },
+                {
+                  "element": "container",
+                  "data": {
+                    "type": "underline",
+                    "attributes": {},
+                    "elements": [
+                      {
+                        "element": "text",
+                        "data": "a"
+                      },
+                      {
+                        "element": "list",
+                        "data": {
+                          "type": "bullet",
+                          "attributes": {},
+                          "items": [
+                            {
+                              "item-type": "elements",
+                              "attributes": {},
+                              "elements": [
+                                {
+                                  "element": "text",
+                                  "data": "b"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "element": "line-break"
+                      },
+                      {
+                        "element": "text",
+                        "data": "b"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "element": "line-break"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -281,6 +281,8 @@ pub enum Element<'t> {
         wikidot_inline_suffix: bool,
         #[serde(skip)]
         wikidot_inline_prefix: bool,
+        #[serde(skip)]
+        wikidot_tail_attached: bool,
     },
 
     /// A citation of a bibliography element, invoked via `((bibcite ...))`.
@@ -820,6 +822,7 @@ impl Element<'_> {
                 wikidot_wrappers,
                 wikidot_inline_suffix,
                 wikidot_inline_prefix,
+                wikidot_tail_attached,
             } => Element::FootnoteBlock {
                 title: option_string_to_owned(title),
                 hide: *hide,
@@ -829,6 +832,7 @@ impl Element<'_> {
                     .collect(),
                 wikidot_inline_suffix: *wikidot_inline_suffix,
                 wikidot_inline_prefix: *wikidot_inline_prefix,
+                wikidot_tail_attached: *wikidot_tail_attached,
             },
             Element::BibliographyCite {
                 label,

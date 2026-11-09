@@ -191,6 +191,13 @@ pub(crate) const WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BARE_MARKER: &str =
 /// inline-scope lowering; never rendered.
 pub(crate) const WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_LEAD_MARKER: &str =
     "data-ftml-understrike-list-close-tail-lead";
+/// Marks the root paragraph that continues the line of an empty
+/// `[[footnoteblock]]` after an explicit list (no blank line between them):
+/// live renders that tail bare, with the block's own line break in front of
+/// it, instead of wrapping it in a paragraph. Consumed by inline-scope
+/// lowering; never rendered.
+pub(crate) const WIKIDOT_EMPTY_FOOTNOTE_TAIL_BARE_MARKER: &str =
+    "data-ftml-empty-footnote-tail-bare";
 /// Marks a segmented format wrapper around explicit-list item content when
 /// a span/size scope opened INSIDE that format pair and closes beyond the
 /// list (strong-x family: `**[[span]]` over a list). Live nests that scope

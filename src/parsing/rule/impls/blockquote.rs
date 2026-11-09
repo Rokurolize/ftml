@@ -1424,7 +1424,7 @@ fn try_consume_fn<'r, 't>(
         // none). The paired (LI closed) family keeps it (BRIEF-UQ57d).
         absorb_unquoted_close_break |= text_hoist && !li_closed;
         let quote_end_list_break =
-            quote_end_list_row && !boundary_list_close && !li_auto_close;
+            quote_end_list_row && !boundary_list_close && !li_auto_close && !text_hoist;
         if quote_end_list_row && boundary_list_close {
             append_unquoted_close_break = true;
             append_from_list_boundary = true;

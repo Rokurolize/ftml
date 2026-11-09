@@ -116,19 +116,29 @@ where
             Token::Quote => return false,
             Token::LeftBlockEnd => {
                 let mut end = probe.clone();
-                let matches = end.get_end_block().is_ok_and(|name| {
-                    name.strip_suffix('_')
-                        .unwrap_or(&name)
-                        .eq_ignore_ascii_case(want)
-                });
-                if !matches {
+                let Ok(raw_name) = end.get_end_block() else {
                     return false;
+                };
+                let name = raw_name.strip_suffix('_').unwrap_or(&raw_name);
+                if name.eq_ignore_ascii_case(want) {
+                    let _ = end.get_optional_space();
+                    return matches!(
+                        end.current().token,
+                        Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                    );
                 }
-                let _ = end.get_optional_space();
-                return matches!(
-                    end.current().token,
-                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
-                );
+                if name.eq_ignore_ascii_case("li") {
+                    while !matches!(
+                        probe.current().token,
+                        Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                    ) {
+                        if probe.step().is_err() {
+                            return false;
+                        }
+                    }
+                    continue;
+                }
+                return false;
             }
             _ => {}
         }
@@ -178,6 +188,7 @@ where
     let mut literal_gallery_pending = false;
     let mut absorb_stray_break_neutralized = false;
     let mut line_prefix_whitespace_only = true;
+    let mut saw_post_head_hoisted_row = false;
     while !finished {
         // BRIEF-BH57a: when an earlier list body hoisted shallow text before
         // its unquoted `[[/li]]` close and the next reachable row is
@@ -246,6 +257,7 @@ where
                     }
                     stack.push_element(Element::Text(Cow::Borrowed(text)), false);
                     first_line = false;
+                    saw_post_head_hoisted_row = true;
                     if matches!(
                         parser.current().token,
                         Token::LineBreak | Token::ParagraphBreak
@@ -281,11 +293,41 @@ where
             let kind = parser.wikidot_pending_unquoted_evaporation_close();
             let want = if kind == 2 { "ol" } else { "ul" };
             let mut probe = parser.clone();
-            let name_matches = probe.get_end_block().is_ok_and(|name| {
-                name.strip_suffix('_')
-                    .unwrap_or(&name)
-                    .eq_ignore_ascii_case(want)
-            });
+            let Ok(raw_name) = probe.get_end_block() else {
+                parser.take_wikidot_pending_unquoted_evaporation_close();
+                continue;
+            };
+            let end_name = raw_name.strip_suffix('_').unwrap_or(&raw_name);
+            if end_name.eq_ignore_ascii_case("li") {
+                let mut after = probe.clone();
+                let _ = after.get_optional_space();
+                if matches!(
+                    after.current().token,
+                    Token::LineBreak | Token::ParagraphBreak
+                ) && after.step().is_ok() {
+                    let mut after_probe = after.clone();
+                    let next_is_want = after_probe.get_end_block().is_ok_and(|name| {
+                        name.strip_suffix('_')
+                            .unwrap_or(&name)
+                            .eq_ignore_ascii_case(want)
+                    });
+                    if next_is_want {
+                        parser.get_end_block()?;
+                        parser.get_optional_space()?;
+                        if matches!(
+                            parser.current().token,
+                            Token::LineBreak | Token::ParagraphBreak
+                        ) {
+                            parser.step()?;
+                        }
+                        if saw_post_head_hoisted_row {
+                            stack.push_element(Element::LineBreak, false);
+                        }
+                        continue;
+                    }
+                }
+            }
+            let name_matches = end_name.eq_ignore_ascii_case(want);
             if name_matches {
                 let _ = probe.get_optional_space();
                 if matches!(

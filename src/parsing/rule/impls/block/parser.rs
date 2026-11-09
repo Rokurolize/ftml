@@ -3868,6 +3868,18 @@ where
                     // BRIEF-UQ57d: shallow text was hoisted bare and any
                     // blanks absorbed; the unquoted closer is next.
                     continue;
+                } else if block_rule.name == "block-list-item"
+                    && self.wikidot_quote_boundary_shallower_text()
+                    && self
+                        .wikidot_li_collect_head()
+                        .is_some_and(|head| self.wikidot_li_head_paired(head))
+                {
+                    self.set_wikidot_quote_boundary_quoted_li_close();
+                    return Ok(crate::parsing::ParseSuccess::new(
+                        segments,
+                        all_errors,
+                        paragraph_safe,
+                    ));
                 } else if self.quote_body_literal_residuals() == Some(true)
                     && self.current().token == Token::LineBreak
                     && !self.wikidot_quote_boundary_shallower_text()
@@ -5347,7 +5359,6 @@ where
         let has_blank_in_li_close = !has_close
             && !has_later_close
             && !has_surplus_list_close
-            && !has_shallower_close
             && !has_shallower_li_close
             && !has_shallower_text_line
             && literal_residual_quotes
@@ -6672,7 +6683,15 @@ where
                         )))
             {
                 self.set_wikidot_quote_boundary_li_auto_close();
-                if self.wikidot_quote_boundary_blank_in_li_body()
+                if self.shallower_text_list_close_depth_ahead(block_rule) == Some(0) {
+                    self.set_wikidot_pending_unquoted_evaporation_close(
+                        if block_rule.name == "block-list-ordered" {
+                            2
+                        } else {
+                            1
+                        },
+                    );
+                } else if self.wikidot_quote_boundary_blank_in_li_body()
                     && matches!(
                         self.current().token,
                         Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
@@ -7839,9 +7858,10 @@ where
         block_rule: &BlockRule,
         required_depth: usize,
         start: &Parser<'r, 't>,
+        initial_saw_li_head: bool,
     ) -> bool {
         let mut probe = start.clone();
-        let mut saw_li_head = false;
+        let mut saw_li_head = initial_saw_li_head;
         loop {
             if probe.current().token == Token::InputEnd {
                 return false;
@@ -7908,9 +7928,10 @@ where
         block_rule: &BlockRule,
         required_depth: usize,
         start: &Parser<'r, 't>,
+        initial_saw_li_head: bool,
     ) -> Option<(usize, bool)> {
         let mut probe = start.clone();
-        let mut saw_li_head = false;
+        let mut saw_li_head = initial_saw_li_head;
         loop {
             if probe.current().token == Token::InputEnd {
                 return None;
@@ -7933,7 +7954,18 @@ where
                 }
             }
             if Self::bare_line_is_li_close_after_quotes(&content) {
-                return None;
+                // BRIEF-QC89: a bare `[[/li]]` close at depth 0 or at the
+                // required depth before the quoted list close does not
+                // disqualify the region. A deeper bare `[[/li]]` still aborts.
+                if depth != 0 && depth != required_depth {
+                    return None;
+                }
+                while !token_is_body_boundary(probe.current().token) {
+                    if probe.step().is_err() {
+                        return None;
+                    }
+                }
+                continue;
             }
             if Self::bare_line_is_list_close(&content, block_rule) {
                 return Some((depth, saw_li_head));
@@ -7989,6 +8021,7 @@ where
                     block_rule,
                     required_depth,
                     &parser.clone(),
+                    saw_li_head,
                 );
             }
             let mut depth = 0usize;
@@ -8026,6 +8059,7 @@ where
                         block_rule,
                         required_depth,
                         &probe,
+                        saw_li_head,
                     );
                 }
             }
@@ -8086,6 +8120,7 @@ where
                     block_rule,
                     required_depth,
                     &self.clone(),
+                    false,
                 )
                 .is_some_and(|(depth, saw_li_head)| {
                     depth == required_depth || (depth == 0 && saw_li_head)
@@ -8117,7 +8152,7 @@ where
             // follows before any same-depth content does.
             return self.evaporation_blank_prefix_armed(block_rule, required_depth);
         }
-        self.shallower_text_region_list_close_depth(block_rule, required_depth, &probe)
+        self.shallower_text_region_list_close_depth(block_rule, required_depth, &probe, false)
             .is_some_and(|(depth, saw_li_head)| {
                 depth == required_depth || (depth == 0 && saw_li_head)
             })
@@ -8214,7 +8249,7 @@ where
         // The first line after this break may itself be the shallow line;
         // if it is at required depth already, the region scan handles it.
         // Otherwise scan onward for the quoted close.
-        self.shallower_text_region_has_quoted_list_close(block_rule, required, &probe)
+        self.shallower_text_region_has_quoted_list_close(block_rule, required, &probe, true)
     }
 
     /// Depth-aware soft-end probe (BRIEF-SA89): like
@@ -8246,7 +8281,7 @@ where
         {
             return None;
         }
-        self.shallower_text_region_list_close_depth(block_rule, required, &probe)
+        self.shallower_text_region_list_close_depth(block_rule, required, &probe, true)
             .and_then(|(depth, saw_li_head)| {
                 (depth == required || (depth == 0 && saw_li_head)).then_some(depth)
             })
@@ -8282,7 +8317,7 @@ where
         {
             return None;
         }
-        self.shallower_text_region_list_close_depth(block_rule, required, &probe)
+        self.shallower_text_region_list_close_depth(block_rule, required, &probe, false)
             .and_then(|(depth, saw_li_head)| {
                 (depth == required || (depth == 0 && saw_li_head)).then_some(depth)
             })
@@ -8432,7 +8467,15 @@ where
                 }
             }
             if Self::bare_line_is_li_close_after_quotes(&content) {
-                return false;
+                if depth != 0 {
+                    return false;
+                }
+                while !token_is_body_boundary(probe.current().token) {
+                    if probe.step().is_err() {
+                        return false;
+                    }
+                }
+                continue;
             }
             let mut end = content.clone();
             if let Ok(name) = end.get_end_block() {

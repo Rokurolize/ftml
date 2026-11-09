@@ -1,0 +1,69 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "span",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "__"
+                    },
+                    {
+                        "element": "text",
+                        "data": "a"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "underline",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "b"
+                                },
+                                {
+                                    "element": "list",
+                                    "data": {
+                                        "type": "bullet",
+                                        "attributes": {},
+                                        "items": [
+                                            {
+                                                "item-type": "elements",
+                                                "attributes": {},
+                                                "elements": [
+                                                    {
+                                                        "element": "text",
+                                                        "data": "i"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "d"
+                    },
+                    {
+                        "element": "text",
+                        "data": "__"
+                    }
+                ]
+            }
+        }
+    ]
+}

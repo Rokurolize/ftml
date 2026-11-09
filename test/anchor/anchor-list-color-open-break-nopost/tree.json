@@ -1,0 +1,53 @@
+{
+    "elements": [
+        {
+            "element": "anchor",
+            "data": {
+                "target": null,
+                "attributes": {
+                    "href": "http://x"
+                },
+                "elements": [
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "color",
+                        "data": {
+                            "color": "red",
+                            "background": false,
+                            "elements": [
+                                {
+                                    "element": "list",
+                                    "data": {
+                                        "type": "bullet",
+                                        "attributes": {},
+                                        "items": [
+                                            {
+                                                "item-type": "elements",
+                                                "attributes": {},
+                                                "elements": [
+                                                    {
+                                                        "element": "text",
+                                                        "data": "x"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "element": "line-break"
+                                }
+                            ],
+                            "attributes": {}
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    }
+                ]
+            }
+        }
+    ]
+}

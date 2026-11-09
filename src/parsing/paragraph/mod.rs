@@ -916,6 +916,9 @@ where
                 );
             let ends_with_explicit_list = elements_end_with_explicit_list(&elements);
             let list_follower_wrap = parser.take_wikidot_post_list_follower_wrap();
+            if ends_with_explicit_list {
+                stack.set_wikidot_post_list_follower_wrap_armed(list_follower_wrap != 0);
+            }
             let embed_error_has_same_line_residual = embed_opener
                 && !paragraph_safe
                 && active_div

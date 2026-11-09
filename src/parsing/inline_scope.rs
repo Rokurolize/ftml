@@ -9116,6 +9116,9 @@ struct WikidotFrameAssembly<'t> {
     forced_collapsible_closes: BTreeSet<usize>,
     swallow_orphan_div_break: bool,
     swallow_orphan_note_break: bool,
+    /// g10res: the next popped frame keeps its trailing break (set by a
+    /// crossed-tail-terminator div close, consumed by `pop_frame`).
+    keep_popped_frame_break: bool,
     at_root: bool,
     row_suffix: bool,
 }
@@ -9133,6 +9136,7 @@ impl<'t> WikidotFrameAssembly<'t> {
             forced_collapsible_closes: BTreeSet::new(),
             swallow_orphan_div_break: false,
             swallow_orphan_note_break: false,
+            keep_popped_frame_break: false,
             at_root,
             row_suffix,
         }
@@ -9436,7 +9440,11 @@ impl<'t> WikidotFrameAssembly<'t> {
 
     fn close_kind(&mut self, kind: WikidotBlockCloseKind<'_>) {
         match kind {
-            WikidotBlockCloseKind::Div { scored, .. } => {
+            WikidotBlockCloseKind::Div {
+                scored,
+                keep_trailing_break,
+                ..
+            } => {
                 if !scored && self.stack.is_empty() {
                     self.strip_paragraph_before_close();
                     self.swallow_orphan_div_break =
@@ -9454,6 +9462,9 @@ impl<'t> WikidotFrameAssembly<'t> {
                 if let Some(head) = self.stack.last().and_then(|frame| frame.note_head) {
                     self.div_crossed_notes.insert(head);
                 }
+                // g10res: a crossed-tail terminator keeps the frame's
+                // trailing break (u-second-frame probe).
+                self.keep_popped_frame_break = keep_trailing_break;
                 self.pop_frame();
             }
             WikidotBlockCloseKind::CollapsibleCrossedBottom { head, .. } => {
@@ -9619,12 +9630,19 @@ impl<'t> WikidotFrameAssembly<'t> {
     }
 
     fn pop_frame(&mut self) {
+        let keep_break = mem::replace(&mut self.keep_popped_frame_break, false);
         let Some(mut frame) = self.stack.pop() else {
             return;
         };
         if frame.scored_div {
             unwrap_scored_frame_edges(&mut frame.children);
         }
+        // g10res: a crossed-tail terminator keeps the frame's trailing
+        // break (u-second-frame probe). Pop it first so the paragraph
+        // forming and row-suffix logic see the usual shape, then put it
+        // back unchanged.
+        let kept_break =
+            keep_break && matches!(frame.children.last(), Some(Element::LineBreak));
         if matches!(frame.children.last(), Some(Element::LineBreak)) {
             frame.children.pop();
         }
@@ -9632,6 +9650,9 @@ impl<'t> WikidotFrameAssembly<'t> {
         let suffix = self.take_row_suffix(&mut frame);
         if frame.link.is_none() {
             form_wikidot_frame_paragraphs(&mut frame.children);
+        }
+        if kept_break {
+            frame.children.push(Element::LineBreak);
         }
         self.top().push(Element::WikidotBlockFrame {
             attributes: frame.attributes,

@@ -8054,13 +8054,23 @@ where
     /// then absorbs the head line into the close: no `<ul>`/`<ol>`/`<li>`
     /// element and no head text are emitted.
     ///
-    /// A first line at the required depth or deeper (quoted text, a
-    /// quoted blank, block markup) consumes normally and the list forms
-    /// degraded, so it never qualifies; same-depth content followed by a
-    /// shallow line is likewise out of scope (y-then-x live evidence:
-    /// the list forms with the consumed content). Blank lines arrive as
-    /// the `ParagraphBreak` line terminator and are always depth 0, so
+    /// A first line at the required depth or deeper (quoted text, block
+    /// markup) consumes normally and the list forms degraded, so it
+    /// never qualifies; same-depth content followed by a shallow line is
+    /// likewise out of scope (y-then-x live evidence: the list forms
+    /// with the consumed content). Blank lines arrive as the
+    /// `ParagraphBreak` line terminator and are always depth 0, so
     /// `> [[ul]]` / blank / … evaporates too.
+    ///
+    /// A `>`-only first line (BRIEF-EV91) is blank, not same-depth
+    /// content: it enters the same search from the next row, where
+    /// further blank-only lines (any depth) stay transparent, the first
+    /// same-or-deeper line with visible content — a `[[li]]` head no
+    /// less than plain text (h1 splits with the head consumed: live
+    /// does not strand a pre-shallow head) — blocks (live forms or
+    /// splits instead: b1/b2/b3/h1), and the first shallow line with
+    /// visible text arms (qblank/c1/d3/e1). A bare close reached with
+    /// no shallow text seen keeps today's break rendering (a1/d1).
     pub(crate) fn has_shallower_quote_evaporation(
         &self,
         block_rule: &BlockRule,
@@ -8089,15 +8099,88 @@ where
                 return false;
             }
         }
-        if depth >= required_depth {
-            // Same-depth or deeper first line: content is consumed and
-            // the list forms; no evaporation.
+        if depth >= required_depth
+            && !matches!(
+                probe.current().token,
+                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+            )
+        {
+            // Same-depth or deeper first line with visible content:
+            // content is consumed and the list forms; no evaporation.
+            // A `>`-only line has no content, so it falls through to
+            // the armed search below instead.
             return false;
+        }
+        if depth >= required_depth {
+            // `>`-only first line (possibly deeper, e.g. `>>`): the
+            // blank prefix evaporates exactly when a shallow text line
+            // follows before any same-depth content does.
+            return self.evaporation_blank_prefix_armed(block_rule, required_depth);
         }
         self.shallower_text_region_list_close_depth(block_rule, required_depth, &probe)
             .is_some_and(|(depth, saw_li_head)| {
                 depth == required_depth || (depth == 0 && saw_li_head)
             })
+    }
+
+    /// Armed search for a `>`-only blank prefix (BRIEF-EV91): from the
+    /// body start, blank-only lines (quoted-blank at any depth,
+    /// physical blanks) are transparent; the first same-or-deeper line
+    /// with visible content — head or text — blocks; the first shallow
+    /// line with visible text arms, and the region scan then decides
+    /// close eligibility. A bare close reached unarmed is the no-item
+    /// break shape. Peeks only.
+    fn evaporation_blank_prefix_armed(
+        &self,
+        block_rule: &BlockRule,
+        required_depth: usize,
+    ) -> bool {
+        let mut scan = self.clone();
+        loop {
+            if scan.current().token == Token::InputEnd {
+                return false;
+            }
+            if matches!(
+                scan.current().token,
+                Token::LineBreak | Token::ParagraphBreak
+            ) {
+                if scan.step().is_err() {
+                    return false;
+                }
+                continue;
+            }
+            let mut depth = 0usize;
+            let mut content = scan.clone();
+            while content.current().token == Token::Quote {
+                depth += content.current().slice.len();
+                if content.step().is_err() || content.get_optional_space().is_err() {
+                    return false;
+                }
+            }
+            if matches!(
+                content.current().token,
+                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+            ) {
+                while !token_is_body_boundary(scan.current().token) {
+                    if scan.step().is_err() {
+                        return false;
+                    }
+                }
+                continue;
+            }
+            if Self::bare_line_is_li_close_after_quotes(&content) {
+                return false;
+            }
+            if Self::bare_line_is_list_close(&content, block_rule) {
+                return false;
+            }
+            if depth >= required_depth {
+                // Same-or-deeper visible content — head or text — is
+                // consumed into the list; live forms or splits instead.
+                return false;
+            }
+            return true;
+        }
     }
 
     /// Whether the fresh quote run's quoted `[[ /ul]]`/`[[ /ol]]` close is

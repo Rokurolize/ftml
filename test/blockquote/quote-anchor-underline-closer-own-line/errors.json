@@ -1,0 +1,20 @@
+[
+    {
+        "token": "underline",
+        "rule": "underline",
+        "span": [
+            17,
+            19
+        ],
+        "kind": "rule-failed"
+    },
+    {
+        "token": "underline",
+        "rule": "fallback",
+        "span": [
+            17,
+            19
+        ],
+        "kind": "no-rules-match"
+    }
+]

@@ -841,6 +841,20 @@ impl<'t> ActiveScopes<'t> {
         });
     }
 
+    fn retire_innermost_color_scope(&mut self) {
+        let mut current = self.active_tail;
+        while let Some(position) = current {
+            if matches!(
+                self.scopes[position].wrapper,
+                ScopeWrapper::Color { .. }
+            ) {
+                self.kill_scope(position);
+                return;
+            }
+            current = self.scopes[position].previous_active;
+        }
+    }
+
     fn retire_size_scopes(&mut self) {
         let mut retired = Vec::new();
         let mut current = self.active_tail;
@@ -3306,6 +3320,35 @@ fn trim_post_list_leading_breaks<'t>(children: Vec<Element<'t>>) -> Vec<Element<
     output
 }
 
+/// A stopped pair's pre-list segment ends at the pair's line end; on live
+/// a break following an anchor close inside the segment renders after the
+/// close, outside the segment.
+fn split_trailing_breaks_after_anchor_close<'t>(
+    elements: &mut Vec<Element<'t>>,
+) -> Vec<Element<'t>> {
+    if !elements.iter().any(|element| {
+        matches!(
+            element,
+            Element::Partial(PartialElement::InlineAnchorClose(_))
+        )
+    }) {
+        return Vec::new();
+    }
+    let mut split = 0usize;
+    for element in elements.iter().rev() {
+        if matches!(element, Element::LineBreak | Element::LineBreaks(_)) {
+            split += 1;
+        } else {
+            break;
+        }
+    }
+    if split == 0 {
+        Vec::new()
+    } else {
+        elements.split_off(elements.len() - split)
+    }
+}
+
 /// Re-emit a rejected crossing color pair as its literal marker bytes.
 fn literalised_color<'t>(
     color: &Cow<'t, str>,
@@ -3489,6 +3532,37 @@ fn format_explicit_list_segments<'t>(
             let children = std::mem::take(elements);
             return Some(literalised_color(&color_clone, bg_clone, children));
         }
+        if !stops_at_list {
+            let Element::Color { elements, attributes, .. } = element else {
+                unreachable!("color element checked above")
+            };
+            strip_span_list_close_tail_markers(attributes);
+            strip_understrike_list_close_tail_markers(attributes);
+            strip_format_label_list_close_tail_markers(attributes);
+            let mut replacement = Vec::with_capacity(elements.len() + 2);
+            replacement.push(Element::Partial(PartialElement::InlineColorOpen(
+                color_clone,
+                bg_clone,
+            )));
+            replacement.extend(std::mem::take(elements));
+            replacement.push(Element::Partial(PartialElement::InlineColorClose));
+            let mut cleaned = Vec::with_capacity(replacement.len());
+            for element in replacement {
+                if matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                    && matches!(
+                        cleaned.last(),
+                        Some(Element::List {
+                            wikidot_explicit_block: true,
+                            ..
+                        })
+                    )
+                {
+                    continue;
+                }
+                cleaned.push(element);
+            }
+            return Some(cleaned);
+        }
         if let Element::Color { elements, .. } = element {
             let children = std::mem::take(elements);
             let mut segmented: Vec<Element<'t>> = Vec::new();
@@ -3521,12 +3595,19 @@ fn format_explicit_list_segments<'t>(
                                 // Post-list segment in stopped case - don't re-wrap in color
                                 segmented.append(&mut current_run);
                             } else {
+                                let mut segment_children = std::mem::take(&mut current_run);
+                                let trailing = if stops_at_list {
+                                    split_trailing_breaks_after_anchor_close(&mut segment_children)
+                                } else {
+                                    Vec::new()
+                                };
                                 segmented.push(Element::Color {
                                     color: color_clone.clone(),
                                     background: bg_clone,
-                                    elements: std::mem::take(&mut current_run),
+                                    elements: segment_children,
                                     attributes: seg_attrs,
                                 });
+                                segmented.extend(trailing);
                                 current_run.clear();
                             }
                             if !(stops_at_list && seen_list) {
@@ -4437,7 +4518,38 @@ fn lower_root_sequence<'t>(
         scope_closed_in_last_list,
     );
     flush_paragraph_group(&mut output, &mut paragraph_group);
+    top_up_crossing_anchor_color_breaks(&mut output);
     *elements = output;
+}
+
+/// Live tops a scope wrapper carrying an anchor continuation to two
+/// trailing block-edge breaks.
+fn top_up_crossing_anchor_color_breaks<'t>(output: &mut [Element<'t>]) {
+    let Some(last) = output.last_mut() else {
+        return;
+    };
+    let Element::Color { elements, .. } = last else {
+        return;
+    };
+    if !elements.iter().any(tree_contains_anchor_element) {
+        return;
+    }
+    for _ in count_trailing_breaks(elements)..2 {
+        elements.push(Element::LineBreak);
+    }
+}
+
+fn count_trailing_breaks(elements: &[Element<'_>]) -> usize {
+    let mut breaks = 0usize;
+    for element in elements.iter().rev() {
+        match element {
+            Element::LineBreak => breaks += 1,
+            Element::LineBreaks(count) => breaks += count.get() as usize,
+            Element::Text(text) if text.trim().is_empty() => {}
+            _ => break,
+        }
+    }
+    breaks
 }
 
 fn scope_tail_ends_with_break(elements: &[Element<'_>]) -> bool {
@@ -4660,7 +4772,13 @@ fn flush_root_pending<'t>(
         return false;
     }
     let group_flushed = paragraph_group.is_some();
-    let pending_has_format = sequence_contains_format_container(pending);
+    let pending_has_format = sequence_contains_format_container(pending)
+        || pending.iter().any(|element| {
+            matches!(
+                element,
+                Element::Partial(PartialElement::InlineColorOpen(..))
+            )
+        });
     let at_explicit_list = next.is_some_and(|next| {
         matches!(
             next,
@@ -4704,6 +4822,21 @@ fn flush_root_pending<'t>(
     let content_led_marker_head = crossed_head_warrants
         && !pending_is_marker_run
         && pending_ends_with_bare_marker(pending);
+    // Live dissolves the crossed pair at an anchor close adjacent to the
+    // crossed list: the pair's scope does not reopen for the tail.
+    let post_list_anchor_close = matches!(
+        output.last(),
+        Some(Element::List {
+            wikidot_explicit_block: true,
+            ..
+        })
+    ) && matches!(
+        pending.first(),
+        Some(Element::Partial(PartialElement::InlineAnchorClose(_)))
+    );
+    if post_list_anchor_close {
+        active.retire_innermost_color_scope();
+    }
     let mut sequence = mem::take(pending);
     let crossed_close_abuts_list = output_ends_with_explicit_list(output)
         && active.has_span_or_size_scope()
@@ -5482,6 +5615,7 @@ fn lower_sequence<'t>(
     // inline flow after its fostered cell content (live keeps the
     // seam space).
     let mut saw_table_block = false;
+    let mut stopped_anchor_commit = false;
     let mut saw_block = bare_root;
     let mut effects = SequenceEffects::default();
     let mut last_run_outer_scope = RunMergeState::default();
@@ -6185,6 +6319,8 @@ fn lower_sequence<'t>(
             None
         };
         let is_stopped_pre = stopped_pre_segment(&element);
+        let stopped_carries_anchor_close = is_stopped_pre
+            && subtree_contains_anchor_close_partial(&element);
         if active.has_active_scope()
             && element.paragraph_safe()
             && contains_inline_scope_control(&element)
@@ -6270,6 +6406,7 @@ fn lower_sequence<'t>(
                 }
                 run.push(element);
                 run_has_content = true;
+                stopped_anchor_commit = stopped_carries_anchor_close;
             } else {
                 flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
                 output.push(element);
@@ -6280,6 +6417,19 @@ fn lower_sequence<'t>(
             && !contains_inline_scope_control(&element)
             && !format_label_inside_segment(&element)
         {
+            if stopped_anchor_commit
+                && matches!(element, Element::LineBreak | Element::LineBreaks(_))
+            {
+                stopped_anchor_commit = false;
+                flush_run(&mut output, &mut run, active, &mut last_run_outer_scope);
+                if let Some(position) = active.anchor_position() {
+                    active.commit_close_no_reopen(position);
+                    active.pop_istack_through_anchor();
+                }
+                output.push(element);
+                last_run_outer_scope.reset();
+                continue;
+            }
             if matches!(element, Element::LineBreak | Element::LineBreaks(_))
                 && matches!(run.last(), Some(Element::Text(text)) if text == " ")
             {
@@ -7536,6 +7686,22 @@ fn subtree_contains_anchor_producer(element: &Element<'_>) -> bool {
     found
 }
 
+fn subtree_contains_anchor_close_partial(element: &Element<'_>) -> bool {
+    if matches!(
+        element,
+        Element::Partial(PartialElement::InlineAnchorClose(_))
+    ) {
+        return true;
+    }
+    let mut found = false;
+    visit_children(element, &mut |children| {
+        found |= children
+            .iter()
+            .any(subtree_contains_anchor_close_partial);
+    });
+    found
+}
+
 fn subtree_contains_anchor_open(element: &Element<'_>) -> bool {
     if matches!(
         element,
@@ -8748,6 +8914,7 @@ fn lower_children<'t>(
     // R-frame (ledger item 60 residual): compute before the visit closure borrows
     // `element`; see the delegation comment inside the closure.
     let root_tail_vehicle = frame_uses_root_tail_assembly(element);
+    let top_up_frame_tail = root_tail_vehicle;
     // B2 (item 82 residual): the post-list crossing-anchor-close signal is
     // scoped to the element whose children are being lowered; a nested frame
     // consumes its own, and only the outer_close_eof frame at the end of this
@@ -8846,6 +9013,9 @@ fn lower_children<'t>(
             && let Some(wrapper) = tabview_frame_wrapper(active)
         {
             children.extend(wrap_scope_elements(&[wrapper], vec![text!(" ")]));
+        }
+        if top_up_frame_tail {
+            top_up_crossing_anchor_color_breaks(children);
         }
         frame_post_list_close = active.post_list_crossed_close;
         active.post_list_crossed_close = outer_post_list_close;

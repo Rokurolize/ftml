@@ -1041,6 +1041,15 @@ where
         && normalized.eq_ignore_ascii_case("span")
         && parser.wikidot_span_alias_close_is_scored(start);
     parser.update(&close);
+    // BRIEF-RM83 shapes 2/3: a flat block close that a crossed-list
+    // canonicalization paired with the inner list's closer carries the
+    // crossed-tail sentinel right after it; the preprocessor keeps that
+    // sentinel only where live keeps the crossed frame's post-close break
+    // (probes muse-probe-rm83-u2g, muse-probe-rm83r2-u2r-div-follower).
+    let crossed_tail_break = matches!(
+        &element,
+        Element::Partial(PartialElement::WikidotBlockClose(_))
+    ) && parser.take_wikidot_crossed_close_sentinel()?;
     if !scored_close
         && normalized.eq_ignore_ascii_case("collapsible")
         && !parser.in_wikidot_collapsible()
@@ -1080,10 +1089,17 @@ where
         parser.clear_fused_name_residual();
         true
     };
-    Ok(Some(if residual_close_bracket || fused_residual {
-        Elements::Multiple(vec![element, text!("]")])
+    let mut output = vec![element];
+    if residual_close_bracket || fused_residual {
+        output.push(text!("]"));
+    }
+    if crossed_tail_break {
+        output.push(Element::LineBreak);
+    }
+    Ok(Some(if output.len() == 1 {
+        output.pop().expect("one element").into()
     } else {
-        element.into()
+        Elements::Multiple(output)
     }))
 }
 

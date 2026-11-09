@@ -1415,6 +1415,10 @@ fn parse_fn<'r, 't>(
         if fused_close {
             output.push(text!("]"));
         }
+        // BRIEF-RM83 shape 2: the preprocessor keeps this sentinel only
+        // when live keeps the crossed frame's post-close break (EOF, blank,
+        // heading, `----`, or a block follower; probes
+        // muse-probe-rm83-u2* / muse-probe-rm83r2-*).
         output.push(Element::LineBreak);
         output.extend(row_suffix);
         ok!(false; output, errors)

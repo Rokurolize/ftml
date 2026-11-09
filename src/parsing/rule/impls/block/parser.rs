@@ -1571,6 +1571,33 @@ where
         )
     }
 
+    /// Consume a crossed-tail sentinel that follows a FLAT block close (the
+    /// closer of a flat-pair shell, consumed by `consume` rather than by the
+    /// block rule). The preprocessor keeps the sentinel only where live keeps
+    /// the crossed frame's post-close break, so the caller emits a break
+    /// (BRIEF-RM83 shapes 2/3: probes muse-probe-rm83-u2g and
+    /// muse-probe-rm83r2-*). Returns whether a sentinel was consumed.
+    pub(crate) fn take_wikidot_crossed_close_sentinel(
+        &mut self,
+    ) -> Result<bool, ParseError> {
+        if !self.settings().layout.legacy() || self.current().token != Token::LeftComment
+        {
+            return Ok(false);
+        }
+        let mut candidate = self.clone();
+        let range = match consume_valid_comment(&mut candidate) {
+            Ok(range) => range,
+            Err(_) => return Ok(false),
+        };
+        if &self.full_text().inner()[range]
+            != crate::preproc::WIKIDOT_CROSSED_LIST_BREAK_SENTINEL
+        {
+            return Ok(false);
+        }
+        self.update(&candidate);
+        Ok(true)
+    }
+
     fn take_wikidot_crossed_tail_sentinel(
         &mut self,
         expected: &str,

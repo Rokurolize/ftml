@@ -273,21 +273,59 @@ pub(crate) fn own_line_li_close_after(source: &str, from_byte: usize) -> Option<
     None
 }
 
-/// Post-list follower for the f7 post-heading wrap (BRIEF-F7R83 (c),
-/// probes muse-probe-f7r-* / muse-probe-f7r2-* / f7r3-* / f7r4-*): the
-/// saved-page verdict is that a list's items paragraph-wrap their
-/// post-heading trailing chunk when the physical line IMMEDIATELY after the
-/// enclosing list's own-line closer is content that does not start a
-/// sibling block: plain text, inline content (`[[span]]`...), a stray
-/// block closer, an unformed/paired code/math/align/blockquote block, or a
-/// blank line. It stays bare when that line is `+ h` style heading, `----`
-///, a list head, or a FORMED flat-pair head (`[[div]]`/`[[note]]`/
-/// `[[collapsible]]` with a later matching closer). The predicate returns
-/// whether that follower allows wrapping; it finds the enclosing list's
-/// closer by depth-counting own-line ul/ol heads/closers from
-/// `from_byte` (the position after the item being assembled).
-pub(crate) fn wikidot_list_follower_wraps_items(source: &str, from_byte: usize) -> bool {
-    let from_byte = from_byte.min(source.len());
+/// Classification of the physical line IMMEDIATELY after an enclosing
+/// list's own-line closer (BRIEF-F7R83 (c) probes muse-probe-f7r-* /
+/// f7r2-* / f7r3-* / f7r4-*, extended by BRIEF-RM83 shape 4 probes
+/// muse-probe-rm83-fda*).
+///
+/// The follower decides two independent things:
+///   * whether the list's items paragraph-wrap their post-heading chunk
+///     (`wraps`: plain text, inline content, a stray block closer, an
+///     unformed/paired code/math/align/blockquote block, or a blank line);
+///   * whether it also suppresses the ENCLOSING-FRAME wrap
+///     (`suppresses_frame`: only a formed flat-pair head, a heading line,
+///     or `----`; a list head suppresses only the follower wrap, and EOF
+///     suppresses nothing).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum WikidotListFollower {
+    /// Content that lets the items' post-heading chunk wrap.
+    Wrap,
+    /// EOF after the closer (nothing follows): no follower wrap.
+    Eof,
+    /// `+ h` heading line: suppresses both wraps.
+    Heading,
+    /// `----` horizontal rule: suppresses both wraps.
+    Hr,
+    /// A `[[ul]]`/`[[ol]]` head: suppresses the follower wrap only.
+    ListHead,
+    /// A formed flat-pair head (`[[div]]`/`[[note]]`/`[[collapsible]]`
+    /// with a later matching closer): suppresses both wraps.
+    FormedFlatHead,
+}
+
+impl WikidotListFollower {
+    /// Whether the follower line allows the post-heading wrap.
+    pub(crate) fn wraps(self) -> bool {
+        matches!(self, Self::Wrap)
+    }
+
+    /// Whether the follower also suppresses the enclosing-frame wrap
+    /// (BRIEF-RM83 shape 4: a formed flat-pair head / heading / `----`
+    /// right after the enclosing list's closer keeps the item's trailing
+    /// run bare even when a flat-pair frame spans the item).
+    pub(crate) fn suppresses_frame(self) -> bool {
+        matches!(self, Self::Heading | Self::Hr | Self::FormedFlatHead)
+    }
+}
+
+/// The follower classification for the list enclosing `from_byte`, or
+/// `None` when no own-line ul/ol closer is found ahead. It finds the
+/// enclosing list's closer by depth-counting own-line ul/ol heads/closers
+/// from `from_byte` (the position after the item being assembled).
+pub(crate) fn wikidot_list_follower_kind(
+    source: &str,
+    from_byte: usize,
+) -> Option<WikidotListFollower> {
     // `from_byte` sits inside the target list's region (an assembled item's
     // end, or the list-rule entry right after the head). Scanning starts at
     // the next line: the line containing `from_byte` belongs to the current
@@ -317,13 +355,13 @@ pub(crate) fn wikidot_list_follower_wraps_items(source: &str, from_byte: usize) 
         {
             depth = depth.saturating_sub(1);
             if depth == 0 {
-                return wikidot_list_follower_line_wraps(source, line_end);
+                return Some(wikidot_list_follower_line_kind(source, line_end));
             }
         }
         pos = line_end + 1;
         line_start = pos;
     }
-    false
+    None
 }
 
 /// Whether a `[[footnote]]` opening appears inside the innermost
@@ -410,13 +448,15 @@ fn contains_footnote_open(line: &str) -> bool {
     })
 }
 
-/// Whether the line following a list-closer line allows the post-heading
-/// wrap: every content line except the block-start classes named in
-/// `wikidot_list_follower_wraps_items`. EOF and contentless lines other
-/// than blank lines do not wrap.
-fn wikidot_list_follower_line_wraps(source: &str, closer_line_end: usize) -> bool {
+/// Classify the line following a list-closer line. Every content line
+/// wraps except the block-start classes named on
+/// `WikidotListFollower`; EOF does not wrap.
+fn wikidot_list_follower_line_kind(
+    source: &str,
+    closer_line_end: usize,
+) -> WikidotListFollower {
     if closer_line_end >= source.len() {
-        return false;
+        return WikidotListFollower::Eof;
     }
     let next_start = closer_line_end + 1;
     let next_end = source[next_start..]
@@ -425,7 +465,7 @@ fn wikidot_list_follower_line_wraps(source: &str, closer_line_end: usize) -> boo
     let next = &source[next_start..next_end];
     let trimmed = next.trim_matches([' ', '\t']);
     if trimmed.is_empty() {
-        return true;
+        return WikidotListFollower::Wrap;
     }
     // A heading line (1-6 `+` + whitespace) suppresses the wrap.
     let plus_run = trimmed
@@ -434,14 +474,14 @@ fn wikidot_list_follower_line_wraps(source: &str, closer_line_end: usize) -> boo
         .take_while(|byte| **byte == b'+')
         .count();
     if (1..=6).contains(&plus_run) && trimmed[plus_run..].starts_with([' ', '\t']) {
-        return false;
+        return WikidotListFollower::Heading;
     }
     // `----` (FTML's TripleDash token) suppresses; `====` does not.
     if trimmed.len() >= 4 && trimmed.bytes().all(|byte| byte == b'-') {
-        return false;
+        return WikidotListFollower::Hr;
     }
     if trimmed.eq_ignore_ascii_case("[[ul]]") || trimmed.eq_ignore_ascii_case("[[ol]]") {
-        return false;
+        return WikidotListFollower::ListHead;
     }
     // A FORMED flat-pair head (div/note/collapsible) suppresses; an
     // unclosed one (no later closer) is text content and wraps.
@@ -454,9 +494,13 @@ fn wikidot_list_follower_line_wraps(source: &str, closer_line_end: usize) -> boo
         let after = source[next_end..]
             .lines()
             .any(|line| line.trim_matches([' ', '\t']).eq_ignore_ascii_case(closer));
-        return !after;
+        return if after {
+            WikidotListFollower::FormedFlatHead
+        } else {
+            WikidotListFollower::Wrap
+        };
     }
-    true
+    WikidotListFollower::Wrap
 }
 
 /// The flat-pair kind of a head line: a lone `[[div]]`/`[[note]]`/

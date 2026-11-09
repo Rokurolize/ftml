@@ -166,6 +166,20 @@ fn parse_note_block<'r, 't>(
         arguments.to_attribute_map(parser.settings()),
     ));
 
+    // BRIEF-RM83 shape 3 (u2note): a crossed outer note closer plus the
+    // inner list's closer canonicalize onto one line (preproc); the note
+    // rule consumes the sentinel like div/collapsible (probes
+    // muse-probe-rm83-u2b / u2h / u2g).
+    if legacy && parser.take_wikidot_crossed_list_break_sentinel()? {
+        let mut output = vec![element];
+        output.extend(ejected);
+        // The preprocessor keeps the sentinel only where live keeps the
+        // crossed note frame's post-close break (see div.rs).
+        output.push(Element::LineBreak);
+        output.extend(row_suffix);
+        return ok!(false; output, errors);
+    }
+
     // In the Wikidot layout the note stays paragraph-unsafe: text following
     // the closer is a bare continuation with no fresh paragraph, exactly like
     // the generic div block.

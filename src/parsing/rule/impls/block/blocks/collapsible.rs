@@ -652,6 +652,8 @@ fn parse_fn<'r, 't>(
         return ok!(false; output, errors);
     }
     if parser.take_wikidot_crossed_list_break_sentinel()? {
+        // BRIEF-RM83 shape 2: see div.rs — the preprocessor keeps the
+        // sentinel only where live keeps the post-frame break.
         output.push(Element::LineBreak);
         return ok!(false; output, errors);
     }

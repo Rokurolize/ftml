@@ -213,7 +213,11 @@ where
             && wikidot_plain_text_row(parser)
         {
             let kind = parser.wikidot_pending_unquoted_evaporation_close();
-            let want = if kind == 2 { "ol" } else { "ul" };
+            let want = if kind == 2 || kind == 4 || kind == 6 {
+                "ol"
+            } else {
+                "ul"
+            };
             if plain_rows_then_unquoted_close(parser, want) {
                 let mut first_line = true;
                 loop {
@@ -279,7 +283,11 @@ where
             && parser.current().token == Token::LeftBlockEnd
         {
             let kind = parser.wikidot_pending_unquoted_evaporation_close();
-            let want = if kind == 2 { "ol" } else { "ul" };
+            let want = if kind == 2 || kind == 4 || kind == 6 {
+                "ol"
+            } else {
+                "ul"
+            };
             let mut probe = parser.clone();
             let name_matches = probe.get_end_block().is_ok_and(|name| {
                 name.strip_suffix('_')
@@ -327,18 +335,34 @@ where
                     let follower_text = peek.current().token != Token::InputEnd
                         && peek.current().token != Token::Quote
                         && wikidot_plain_text_row(&peek);
-                    if kind == 1 && follower_text && !crossed_blank {
+                    // BRIEF-NI91: `3` is defensive-only (the divert consumes
+                    // the hoisted close, or clears the arm): vanish
+                    // silently, since the hoisted run already provides
+                    // the break.
+                    if kind == 3 {
+                        continue;
+                    }
+                    // BRIEF-NI91: `5` (UL headless-empty) behaves exactly
+                    // like `1` (empty `y` vanishes bare, like the
+                    // evaporated follower; otherwise a bare break).
+                    if (kind == 1 || kind == 5) && follower_text && !crossed_blank {
                         // UL: the close vanishes; the text row renders
                         // bare on the following iterations (live leaves
                         // it unwrapped, not paragraphed). The hoisted
                         // run's paragraph ends at the close line first.
                         stack.end_paragraph();
                         stack.mark_next_unwrapped();
-                    } else if kind == 1 {
+                    } else if kind == 1 || kind == 5 {
                         stack.end_paragraph();
                         stack.mark_next_unwrapped();
                         stack.push_element(Element::LineBreak, true);
-                    } else if follower_text {
+                    // BRIEF-NI91: `6` (OL headless-empty) collects exactly
+                    // like `2` (empty `y` joins the shell item, blank
+                    // keeps a leading break). `4` (OL headless-hoisted)
+                    // never takes this arm: merged followers dissolve
+                    // silently at the divert, so only shell followers
+                    // reach the consumer.
+                    } else if (kind == 2 || kind == 6) && follower_text {
                         // OL: the follower run becomes the shell item
                         // (live: `y<br />z `, blank-then-text keeps a
                         // leading break inside the item).

@@ -262,6 +262,12 @@ pub(super) struct BlockScanCache<'t> {
     /// shell), `0` = none. The top-level paragraph gather consumes
     /// the close line when it reaches it and emits the aftermath.
     wikidot_pending_unquoted_evaporation_close: Cell<u8>,
+    /// BRIEF-NI91: byte offset of the depth-0 close token the headless
+    /// aftermath was armed for (`None` = none). The divert fires only
+    /// at that exact close line, so a stale arm can never dissolve the
+    /// wrong list. Lives in the scan cache, not the parser, so the
+    /// parser size budget is unaffected.
+    wikidot_ni91_headless_close_span: Cell<Option<usize>>,
     wikidot_inline_markers: inline_pairs::WikidotInlineMarkers,
     wikidot_heading_barrier: Option<usize>,
     wikidot_heading_reopen: Option<(usize, crate::tree::HeadingReopen<'t>)>,
@@ -1689,8 +1695,15 @@ impl<'r, 't> Parser<'r, 't> {
     /// Arm the depth-0 evaporation aftermath (`1` = UL break, `2` = OL
     /// shell). Set only at the evaporation soft-end when the paired
     /// close ahead is at depth 0.
+    /// BRIEF-NI91 extends the encoding with headless values (`3` = UL
+    /// with hoisted text, `4` = OL with hoisted text, `5` = UL empty,
+    /// `6` = OL empty). The divert consumes the close silently whenever
+    /// the hoisted run already provides the break (`3`, merged/list `4`)
+    /// and leaves it for the consumer otherwise; the consumer maps `5`
+    /// to the `1` arms and `6`/`4` to the `2` arms (`3` only arrives
+    /// defensively and vanishes silently).
     pub(crate) fn set_wikidot_pending_unquoted_evaporation_close(&self, kind: u8) {
-        debug_assert!(matches!(kind, 1 | 2));
+        debug_assert!(matches!(kind, 1 | 2 | 3 | 4 | 5 | 6));
         self.block_end_scan_cache
             .borrow()
             .wikidot_pending_unquoted_evaporation_close
@@ -1708,6 +1721,28 @@ impl<'r, 't> Parser<'r, 't> {
         self.block_end_scan_cache
             .borrow()
             .wikidot_pending_unquoted_evaporation_close
+            .take()
+    }
+
+    /// BRIEF-NI91: record / read / clear the armed headless close span.
+    pub(crate) fn set_wikidot_ni91_headless_close_span(&self, span: usize) {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_ni91_headless_close_span
+            .set(Some(span));
+    }
+
+    pub(crate) fn wikidot_ni91_headless_close_span(&self) -> Option<usize> {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_ni91_headless_close_span
+            .get()
+    }
+
+    pub(crate) fn take_wikidot_ni91_headless_close_span(&self) -> Option<usize> {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_ni91_headless_close_span
             .take()
     }
 

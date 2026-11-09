@@ -102,6 +102,19 @@ enum UnquotedCloseTerminator {
     QuotedLiClose,
 }
 
+/// Follower classification for the BRIEF-NI91 headless divert: the row
+/// after the depth-0 close decides whether the divert fires. Blank
+/// lines are transparent only before text and end-of-input; a blank
+/// before a quoted, list, or block row keeps the shell path, as does
+/// any block row itself (unprobed territory).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum HeadlessCloseFollower {
+    Eof,
+    Text,
+    Quoted,
+    List,
+}
+
 /// Token window the `[[iftags]]` pairing scan may look at, matching the
 /// window the previous pairing dynamic program was built over.
 const IFTAGS_PAIRING_WINDOW: usize = 8192;
@@ -6630,6 +6643,37 @@ where
         let mut first = true;
 
         loop {
+            // BRIEF-NI91 arm: at the first body line, a headless region
+            // ending at an exact-type depth-0 list close arms the
+            // headless aftermath (`3`/`4` with shallow text, `5`/`6`
+            // empty) and records the close span. Any head, content
+            // (including mid-depth quoted rows, which the hoist skips as
+            // body rows), block marker, or other first close leaves the
+            // existing paths untouched; never overwrites a pending flag.
+            // Runs at loop top (not only at Boundary lines) so a leading
+            // blank row does not hide the region from the scan.
+            if first
+                && self.wikidot_pending_unquoted_evaporation_close() == 0
+                && !self.discarding_hidden_body()
+                && self.settings().layout.legacy()
+                && matches!(
+                    block_rule.name,
+                    "block-list-unordered" | "block-list-ordered"
+                )
+                && let Some((has_text, close_span)) =
+                    self.headless_unquoted_close_region(block_rule)
+            {
+                self.set_wikidot_pending_unquoted_evaporation_close(
+                    if block_rule.name == "block-list-unordered" {
+                        if has_text { 3 } else { 5 }
+                    } else if has_text {
+                        4
+                    } else {
+                        6
+                    },
+                );
+                self.set_wikidot_ni91_headless_close_span(close_span);
+            }
             // BRIEF-QR45 part (a): a UL/OL whose body contains a shallower
             // bare `[[/li]]` auto-closes before its quoted `[[ /ul]]`/`[[ /ol]]`
             // row. Soft-end here without consuming that row; blockquote ends
@@ -6723,6 +6767,87 @@ where
                 }
             }
             if self.prepare_quote_body_line()? == QuoteBodyLineStatus::Boundary {
+                // BRIEF-NI91 divert: a headless list at its armed exact
+                // depth-0 close (span-matched, so a stale arm can never
+                // dissolve the wrong list) dissolves on live: the empty
+                // list leaves no shell, and the close is handled silently
+                // (the hoisted run already provides the break, or the
+                // close merges/vanishes) or by the top-level gather
+                // aftermath (bare break / shell). No `first` gate: the
+                // scan verified every line up to the recorded close, so
+                // only blanks (legitimately consumed) can intervene.
+                if !self.discarding_hidden_body()
+                    && self.settings().layout.legacy()
+                    && matches!(
+                        block_rule.name,
+                        "block-list-unordered" | "block-list-ordered"
+                    )
+                    && matches!(
+                        self.wikidot_pending_unquoted_evaporation_close(),
+                        3 | 4 | 5 | 6
+                    )
+                    && ((block_rule.name == "block-list-unordered"
+                        && matches!(
+                            self.wikidot_pending_unquoted_evaporation_close(),
+                            3 | 5
+                        ))
+                        || (block_rule.name == "block-list-ordered"
+                            && matches!(
+                                self.wikidot_pending_unquoted_evaporation_close(),
+                                4 | 6
+                            )))
+                    && let Some((follower, close_span)) =
+                        self.headless_depth0_close_follower(block_rule)
+                {
+                    if Some(close_span) != self.wikidot_ni91_headless_close_span() {
+                        // Stale arm at a different close: clear both and
+                        // keep the shell path.
+                        self.take_wikidot_pending_unquoted_evaporation_close();
+                        self.take_wikidot_ni91_headless_close_span();
+                    } else if let Some(follower) = follower {
+                        let flag = self.wikidot_pending_unquoted_evaporation_close();
+                        // UL-hoisted always dissolves silently; OL-hoisted
+                        // dissolves silently on merge (the close stays
+                        // invisible to the gather so the run joins) and on
+                        // a native-list follower (no shell on live);
+                        // empty shapes only vanish silently before a
+                        // native list (bare list on live).
+                        let consume = match (flag, follower) {
+                            (3, _) => true,
+                            (4, HeadlessCloseFollower::Text) => {
+                                self.wikidot_merge_follow()
+                            }
+                            (4, HeadlessCloseFollower::List) => true,
+                            (4, _) => false,
+                            (_, HeadlessCloseFollower::List) => true,
+                            _ => false,
+                        };
+                        self.set_wikidot_quote_boundary_li_auto_close();
+                        self.set_wikidot_evaporated_list(true);
+                        if consume {
+                            // Silent consume: live appends no break here
+                            // (the hoisted run provides the break, or the
+                            // merge swallows the close entirely), so the
+                            // close is consumed WITHOUT stamping
+                            // `quote_boundary_list_close` (which would make
+                            // the quote run append the close's break).
+                            if self.current().token == Token::LineBreak {
+                                self.step()?;
+                            }
+                            debug_assert!(self.current().token == Token::LeftBlockEnd);
+                            self.get_end_block()?;
+                            self.get_optional_space()?;
+                            self.take_wikidot_pending_unquoted_evaporation_close();
+                            self.take_wikidot_ni91_headless_close_span();
+                        }
+                        return Ok(());
+                    } else {
+                        // Block follower: keep the shell path (unprobed)
+                        // and clear the arm so it cannot leak.
+                        self.take_wikidot_pending_unquoted_evaporation_close();
+                        self.take_wikidot_ni91_headless_close_span();
+                    }
+                }
                 if self.quote_boundary_starts_body_end(block_rule) {
                     return self.consume_quote_boundary_body_end(block_rule);
                 }
@@ -7949,6 +8074,232 @@ where
         }
     }
 
+    /// BRIEF-NI91: whether the list body from the cursor is headless and
+    /// ends at an exact-type depth-0 list close. Every line before that
+    /// close must be blank (physical or quote-only) or depth-0 text with
+    /// no block markers (mid-depth quoted rows become body content — the
+    /// hoist skips them — so they disqualify); any `[[li]]` or `[[/li]]`
+    /// line at any depth, any same-depth-or-deeper content line, any
+    /// block-marker row, and any first close that is quoted, an li-close,
+    /// or cross-type disqualifies (`None`). Returns whether the region
+    /// held shallow text (the hoisted variant) or was empty, plus the
+    /// close token's byte offset for the divert's span match.
+    fn headless_unquoted_close_region(
+        &self,
+        block_rule: &BlockRule,
+    ) -> Option<(bool, usize)> {
+        let mut probe = self.clone();
+        let mut has_text = false;
+        loop {
+            if probe.current().token == Token::InputEnd {
+                return None;
+            }
+            if matches!(
+                probe.current().token,
+                Token::LineBreak | Token::ParagraphBreak
+            ) {
+                if probe.step().is_err() {
+                    return None;
+                }
+                continue;
+            }
+            let mut depth = 0usize;
+            let mut content = probe.clone();
+            while content.current().token == Token::Quote {
+                depth += content.current().slice.len();
+                if content.step().is_err() || content.get_optional_space().is_err() {
+                    return None;
+                }
+            }
+            if token_is_body_boundary(content.current().token) {
+                // Quote-only (blank) row: ignored, like the hoist scan.
+            } else if Self::bare_line_is_li_close_after_quotes(&content) {
+                return None;
+            } else if Self::bare_line_is_list_close(&content, block_rule) {
+                if depth != 0 {
+                    // A quoted list close is the QT52/evaporation family.
+                    return None;
+                }
+                // `bare_line_is_list_close` already exact-matches the
+                // rule's own close name (`accepts_names` is `["ul"]` /
+                // `["ol"]`), so a cross-type close never reaches here.
+                return Some((has_text, content.current().span.start));
+            } else if Self::line_contains_li_head(&content) {
+                // Any `[[li]]` head (quoted, or depth-0 like the 89(a2)
+                // shape) means the construction is headed, not headless.
+                return None;
+            } else if depth > 0 {
+                // A mid-depth quoted row (deeper content, or shallower
+                // text the hoist skips as body rows): real list content,
+                // not hoist text. The list genuinely forms.
+                return None;
+            } else if Self::row_has_block_marker(&content) {
+                // Native lists, explicit blocks, stray closers: unprobed
+                // territory, keep the shell path.
+                return None;
+            } else {
+                has_text = true;
+            }
+            while !token_is_body_boundary(probe.current().token) {
+                if probe.step().is_err() {
+                    return None;
+                }
+            }
+        }
+    }
+
+    /// Whether the row at `content` (already stepped past its quote
+    /// prefix) carries a block-level marker before its line end: an
+    /// explicit block bound, a native list marker, or any other
+    /// block-start token. Plain (inline) text rows return false.
+    fn row_has_block_marker(content: &Parser<'r, 't>) -> bool {
+        let mut scan = content.clone();
+        while !token_is_body_boundary(scan.current().token) {
+            if matches!(
+                scan.current().token,
+                Token::LeftBlock
+                    | Token::LeftBlockStar
+                    | Token::LeftBlockEnd
+                    | Token::BulletItem
+                    | Token::NumberedItem
+            ) {
+                return true;
+            }
+            if scan.step().is_err() {
+                return false;
+            }
+        }
+        false
+    }
+
+    /// The follower after a depth-0 list close at the cursor (probe only):
+    /// verifies the exact-type close, then classifies the next row. The
+    /// outer `None` means no exact close here; the inner `None` means an
+    /// unclassified follower (the shell path keeps its rendering). The
+    /// `usize` is the close token's byte offset for the divert's span
+    /// match.
+    fn headless_depth0_close_follower(
+        &self,
+        block_rule: &BlockRule,
+    ) -> Option<(Option<HeadlessCloseFollower>, usize)> {
+        let unordered = block_rule.name == "block-list-unordered";
+        let mut probe = self.clone();
+        if probe.current().token == Token::LineBreak && probe.step().is_err() {
+            return None;
+        }
+        if probe.current().token == Token::Quote {
+            return None;
+        }
+        let close_span = probe.current().span.start;
+        let matching_close = probe.get_end_block().is_ok_and(|name| {
+            let name = name.strip_suffix('_').unwrap_or(&name);
+            if unordered {
+                name.eq_ignore_ascii_case("ul")
+            } else {
+                name.eq_ignore_ascii_case("ol")
+            }
+        });
+        if !matching_close {
+            return None;
+        }
+        let _ = probe.get_optional_space();
+        if !token_is_body_boundary(probe.current().token) {
+            return None;
+        }
+        let mut crossed_blank = false;
+        loop {
+            match probe.current().token {
+                Token::LineBreak => {
+                    if probe.step().is_err() {
+                        return None;
+                    }
+                }
+                Token::ParagraphBreak => {
+                    crossed_blank = true;
+                    if probe.step().is_err() {
+                        return None;
+                    }
+                }
+                _ => break,
+            }
+        }
+        if probe.current().token == Token::InputEnd {
+            return Some((Some(HeadlessCloseFollower::Eof), close_span));
+        }
+        if probe.current().token == Token::Quote {
+            return Some((
+                if crossed_blank {
+                    None
+                } else {
+                    Some(HeadlessCloseFollower::Quoted)
+                },
+                close_span,
+            ));
+        }
+        if matches!(
+            probe.current().token,
+            Token::BulletItem | Token::NumberedItem
+        ) {
+            return Some((
+                if crossed_blank {
+                    None
+                } else {
+                    Some(HeadlessCloseFollower::List)
+                },
+                close_span,
+            ));
+        }
+        // A directly following plain-text row diverts; after a blank
+        // line only text still diverts (live merges the run, or the
+        // shell/break stays for EOF). Block rows keep the shell path.
+        // (`InputEnd` is already handled above; blank-then-EOF reaches
+        // it after the blank-skipping loop.)
+        if crossed_blank {
+            let mut text_probe = probe.clone();
+            let mut has_text = false;
+            while !token_is_body_boundary(text_probe.current().token) {
+                if matches!(
+                    text_probe.current().token,
+                    Token::LeftBlock
+                        | Token::LeftBlockStar
+                        | Token::LeftBlockEnd
+                        | Token::BulletItem
+                        | Token::NumberedItem
+                ) {
+                    return Some((None, close_span));
+                }
+                if !matches!(text_probe.current().token, Token::Whitespace) {
+                    has_text = true;
+                }
+                if text_probe.step().is_err() {
+                    return Some((None, close_span));
+                }
+            }
+            return Some((has_text.then_some(HeadlessCloseFollower::Text), close_span));
+        }
+        let mut text_probe = probe.clone();
+        let mut has_text = false;
+        while !token_is_body_boundary(text_probe.current().token) {
+            if matches!(
+                text_probe.current().token,
+                Token::LeftBlock
+                    | Token::LeftBlockStar
+                    | Token::LeftBlockEnd
+                    | Token::BulletItem
+                    | Token::NumberedItem
+            ) {
+                return Some((None, close_span));
+            }
+            if !matches!(text_probe.current().token, Token::Whitespace) {
+                has_text = true;
+            }
+            if text_probe.step().is_err() {
+                return Some((None, close_span));
+            }
+        }
+        Some((has_text.then_some(HeadlessCloseFollower::Text), close_span))
+    }
+
     /// Whether the UL/OL body belongs to the shallower-text family
     /// (BRIEF-QT52): some `[[li]]` head line — or, since BRIEF-MB91(91b),
     /// any same-depth line with visible content (quoted text, a bare
@@ -8871,7 +9222,32 @@ where
                 UnquotedCloseTerminator::UlListClose
                     | UnquotedCloseTerminator::OlListClose
             );
-            if terminator == UnquotedCloseTerminator::OlListClose && !merge {
+            // BRIEF-NI91: a headless hoisted run followed directly by a
+            // native list renders paragraph-wrapped on live (`<p>x</p>`
+            // before the list), not bare. Only the plain single-unit
+            // emission wraps; blank-segment runs keep their semantics
+            // (unprobed with list followers).
+            let headless_list_follow = !merge
+                && !segment_emission
+                && is_list_close_term
+                && matches!(
+                    block_rule.name,
+                    "block-list-unordered" | "block-list-ordered"
+                )
+                && matches!(self.wikidot_pending_unquoted_evaporation_close(), 3 | 4)
+                && matches!(
+                    self.headless_depth0_close_follower(block_rule),
+                    Some((Some(HeadlessCloseFollower::List), _))
+                );
+            if headless_list_follow {
+                if matches!(
+                    combined.last(),
+                    Some(Element::LineBreak | Element::LineBreaks(_))
+                ) {
+                    combined.pop();
+                }
+                self.push_quote_escaped_unit(QuoteEscapedUnit::Elements(combined, true));
+            } else if terminator == UnquotedCloseTerminator::OlListClose && !merge {
                 // Ordered unpaired, no merge: drop the extra `<br>` but keep
                 // the line separation before the unclosed shell (live: `x\n<ul>`).
                 if matches!(

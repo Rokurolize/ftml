@@ -397,13 +397,24 @@ fn parse_list_block_impl<'r, 't>(
                     li_wrap_enclosing,
                 );
                 partial_count += 1;
-                if !matches!(&list_item, ListItem::Elements { elements, .. } if elements.is_empty())
-                    || cross_keep_empty
-                {
+                let empty_partial = matches!(
+                    &list_item,
+                    ListItem::Elements { elements, .. } if elements.is_empty()
+                );
+                if empty_partial {
+                    // NLFG (G): still shields the b5 gate below exactly as
+                    // when the empty partial was skipped.
+                    skipped_empty_partial = true;
+                }
+                if !empty_partial || cross_keep_empty || wikidot {
+                    // NLFG (G): in the Wikidot layout an empty explicit item
+                    // is kept as a plain-item boundary: following literal
+                    // content starts (or joins) a plain item, never a
+                    // none-styled degraded item (saved-page probes
+                    // muse-probe-nlfg-g*). Still-empty items are removed
+                    // after the loop.
                     partial_item_indices.push(items.len());
                     items.push(list_item);
-                } else {
-                    skipped_empty_partial = true;
                 }
             }
 
@@ -460,6 +471,20 @@ fn parse_list_block_impl<'r, 't>(
         content_follows,
         li_wrap_enclosing,
     );
+
+    // NLFG (G): drop the still-empty boundary items kept above; an
+    // all-empty list dissolves through the `items.is_empty()` path below,
+    // exactly as when the empty items were skipped during the loop. When
+    // the cross-li splice is armed the kept empties are the splice's own
+    // bookkeeping and are left in place.
+    if wikidot && !flag_score && !cross_keep_empty {
+        items.retain(|item| {
+            !matches!(
+                item,
+                ListItem::Elements { elements, .. } if elements.is_empty()
+            )
+        });
+    }
 
     let mut b5_escaped: Option<Vec<Element<'t>>> = None;
     if wikidot
@@ -942,8 +967,13 @@ fn push_literal_list_item<'t>(
     {
         // Live joins an un-item'd line after a list with a break: the
         // newline after the list's last line shows as `<br>` before the
-        // text, while a following list stays glued to it.
-        if matches!(item_elements.last(), Some(Element::List { .. }))
+        // text, while a following list stays glued to it. NLFG: inside an
+        // explicit [[li]] item or at page root live glues the text directly
+        // (saved-page probes muse-probe-nlfg7-*); the break holds when the
+        // list sits inside an enclosing flat block (the hoisted-between
+        // lazy-line pin), which is the `f7_enclosing` flag.
+        if f7_enclosing
+            && matches!(item_elements.last(), Some(Element::List { .. }))
             && elements
                 .first()
                 .is_some_and(|element| !element.is_whitespace())
@@ -1374,29 +1404,103 @@ fn unowned_dissolve_unwrap<'t>(
     Some(result)
 }
 
-fn wikidot_li_body_ends_with_flat_block_close(source: &str) -> bool {
+/// NLFG (F): does the li body end with a bare flat pair (div, note, or
+/// collapsible) whose close is the body's last line and whose bare open
+/// appears earlier? Live keeps the item trailing break after a trailing
+/// nested list for a dissolved bare div pair (lihoist p5) or a formed
+/// note/collapsible pair; pairs with text in their lines, inline pairs,
+/// and code/html pairs do not count (saved-page probes muse-probe-nlfg*).
+fn wikidot_li_body_ends_with_dissolved_bare_div(source: &str) -> bool {
+    fn bare_marker_line(line: &str) -> Option<&str> {
+        let mut text = line.trim();
+        // Strip quote and native-list prefixes.
+        loop {
+            let trimmed = text.trim_start_matches([' ', '\t', '>']);
+            if trimmed == text {
+                break;
+            }
+            text = trimmed;
+        }
+        // Strip repeated native-list markers (`* * [[/div]]` is a bare
+        // marker line too).
+        loop {
+            let mut stripped = false;
+            for marker in ["* ", "# "] {
+                if let Some(rest) = text.strip_prefix(marker) {
+                    text = rest.trim();
+                    stripped = true;
+                    break;
+                }
+            }
+            if !stripped {
+                break;
+            }
+        }
+        if text == "*" || text == "#" {
+            return None;
+        }
+        if !text.starts_with("[[") || !text.ends_with("]]") {
+            return None;
+        }
+        let inner = &text[2..text.len() - 2];
+        if inner.is_empty() || inner.chars().any(|c| c.is_whitespace()) {
+            return None;
+        }
+        Some(inner)
+    }
+
     let lowered = source.to_ascii_lowercase();
     let body = lowered
         .rfind("[[/li")
         .map(|index| &source[..index])
         .unwrap_or(source);
-    let Some(line) = body.lines().rev().find(|line| !line.trim().is_empty()) else {
+    let Some(close_line) = body.lines().rev().find(|line| !line.trim().is_empty()) else {
         return false;
     };
-    let line = line.trim_end_matches([' ', '\t']);
-    if !line.ends_with("]]") {
+    let Some(close_inner) = bare_marker_line(close_line) else {
+        return false;
+    };
+    let Some(name) = close_inner.strip_prefix('/') else {
+        return false;
+    };
+    // Only pairs whose formation actually forms (note, collapsible) or
+    // dissolves (bare div) keep the break; code/html pairs stay literal.
+    if !matches!(name, "div" | "note" | "collapsible") {
         return false;
     }
-    let Some(head) = line.rfind("[[") else {
-        return false;
-    };
-    let Some(close) = line[head..].strip_prefix("[[") else {
-        return false;
-    };
-    let name = close.strip_prefix('/').unwrap_or(close);
-    let name = name.strip_suffix("]]").unwrap_or(name);
-    let name = name.split_whitespace().next().unwrap_or(name);
-    !matches!(name, "ul" | "ol" | "li")
+    body.lines()
+        .any(|line| bare_marker_line(line).is_some_and(|inner| inner == name))
+}
+
+/// NLFG (F): does this element tree hold a formed flat block (div, note,
+/// or collapsible)? Live keeps the item trailing break after a trailing
+/// nested list when a flat-block formation actually formed in the item
+/// body (saved-page probes muse-probe-nlfg*).
+fn wikidot_li_element_has_formed_flat_container(element: &Element<'_>) -> bool {
+    match element {
+        Element::Container(container) => {
+            matches!(container.ctype(), ContainerType::Div | ContainerType::Note)
+                || container
+                    .elements()
+                    .iter()
+                    .any(wikidot_li_element_has_formed_flat_container)
+        }
+        Element::Collapsible { elements, .. } => elements
+            .iter()
+            .any(wikidot_li_element_has_formed_flat_container),
+        // Note/collapsible formations land as wikidot block frames at this
+        // stage (note-x-between, coll-x-between probes).
+        Element::WikidotBlockFrame { .. } => true,
+        Element::List { items, .. } => items.iter().any(|item| match item {
+            ListItem::Elements { elements, .. } => elements
+                .iter()
+                .any(wikidot_li_element_has_formed_flat_container),
+            ListItem::SubList { element } => {
+                wikidot_li_element_has_formed_flat_container(element)
+            }
+        }),
+        _ => false,
+    }
 }
 
 /// NL81 (D): an empty native marker line (`* ` / `# ` with no content)
@@ -2762,8 +2866,18 @@ fn assemble_wikidot_li_segments<'t>(
         });
         match effective {
             Some(Element::List { .. }) => {
-                marker_only_trailing_nested_list
-                    || !wikidot_li_body_ends_with_flat_block_close(source)
+                // NLFG (F): live keeps the item trailing break after a
+                // trailing nested list only when a bare div pair dissolved
+                // at the body tail (lihoist p5) or a flat block (div/note/
+                // collapsible) formed anywhere in the item body;
+                // span/size/anchor/code/html content and bare non-div pairs
+                // drop it (saved-page probes muse-probe-nlfg*). The
+                // marker-only pop below still drops the frozen dissolved
+                // bare pair.
+                !(wikidot_li_body_ends_with_dissolved_bare_div(source)
+                    || elements
+                        .iter()
+                        .any(wikidot_li_element_has_formed_flat_container))
             }
             _ => false,
         }

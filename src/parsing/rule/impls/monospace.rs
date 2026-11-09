@@ -19,7 +19,8 @@
  */
 
 use super::inline_delimiter::{
-    ReachableCloseMode, container_closes_at_line_start, validate_reachable_close,
+    ReachableCloseMode, body_crosses_item_boundary, container_closes_at_line_start,
+    validate_reachable_close,
 };
 use super::prelude::*;
 use crate::parsing::inline_format::{element_contains_link, monospace_close_split};
@@ -71,6 +72,12 @@ fn try_consume_fn<'r, 't>(
             }
             leading_padding = true;
         }
+    }
+
+    if parser.settings().layout.legacy()
+        && body_crosses_item_boundary(parser, Token::RightMonospace)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
     let close = [ParseCondition::current(Token::RightMonospace)];

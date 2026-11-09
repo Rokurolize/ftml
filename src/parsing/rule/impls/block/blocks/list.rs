@@ -244,6 +244,17 @@ fn parse_list_block_impl<'r, 't>(
         None
     };
 
+    // BRIEF-CB91 (item 91(c) residual): a blank deeper quote row between the
+    // list head and the degraded head triggers `display: inline` on live but
+    // leaves no element, so the sighting is scanned here (head position, like
+    // the shallower-text gate) and carried to the item pushes below as a
+    // plain bool — no new parser state.
+    let deeper_blank_before_content = wikidot
+        && parser.has_deeper_blank_row_before_content(
+            block_rule,
+            parser.native_blockquote_depth().unwrap_or(0),
+        );
+
     let body = if wikidot
         && let Some(depth) = parser.native_blockquote_depth()
         && (parser.has_native_blockquote_body_end(block_rule, depth)
@@ -395,6 +406,7 @@ fn parse_list_block_impl<'r, 't>(
                     flag_score,
                     content_follows,
                     li_wrap_enclosing,
+                    deeper_blank_before_content,
                 );
                 partial_count += 1;
                 let empty_partial = matches!(
@@ -460,6 +472,9 @@ fn parse_list_block_impl<'r, 't>(
                         flag_score,
                         content_follows,
                         li_wrap_enclosing,
+                        // CB91: blank-deeper-row sighting rides the ordinary
+                        // push; the PU81 join path above takes no style.
+                        deeper_blank_before_content,
                     );
                 }
                 if wikidot
@@ -521,6 +536,7 @@ fn parse_list_block_impl<'r, 't>(
         flag_score,
         content_follows,
         li_wrap_enclosing,
+        deeper_blank_before_content,
     );
 
     // NLFG (G): drop the still-empty boundary items kept above; an
@@ -1067,6 +1083,7 @@ fn push_literal_list_item<'t>(
     outer_list_is_scored: bool,
     content_follows: bool,
     f7_enclosing: bool,
+    deeper_blank_before_content: bool,
 ) {
     while elements.last().is_some_and(Element::is_whitespace) {
         elements.pop();
@@ -1116,14 +1133,19 @@ fn push_literal_list_item<'t>(
         // children (e.g. a formed table first) do not trigger it. The
         // gate keeps the Wikijump-layout degraded trees (which form such
         // items for shapes Wikidot pairs cleanly) byte-identical to base.
+        // BRIEF-CB91: a BLANK deeper quote row also triggers inline on
+        // live but leaves no element, so the first-element test cannot see
+        // it; the head-time region scan (`deeper_blank_before_content`,
+        // saved-page probes muse-probe-cb91-*) carries that sighting here.
         let style = if append_to_last
-            && elements.first().is_some_and(|element| {
+            && (elements.first().is_some_and(|element| {
                 matches!(
                     element,
                     Element::Container(container)
                         if container.ctype() == ContainerType::Blockquote
                 )
-            }) {
+            }) || deeper_blank_before_content)
+        {
             "list-style: none; display: inline"
         } else {
             "list-style: none"

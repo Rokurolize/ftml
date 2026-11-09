@@ -422,6 +422,12 @@ pub(super) struct BlockScanCache<'t> {
     /// Item 78 (A2 crossed): 0 = none, 1 = bare follower (no `<br />`),
     /// 2 = `<br />` + bare follower (inline/text, no blank line).
     wikidot_a2_crossed_follower_bare: Cell<u8>,
+    /// Item 73 (fr73): a crossed-pair tail (bare/lead) was just stamped at
+    /// the pair's rule exit and the gap's break may still be pending: the
+    /// next explicit list keeps it (live renders one bare break before the
+    /// second list) instead of the L85 lone-break pop. Cleared by any
+    /// content/blank/block between the stamp and that list.
+    wikidot_crossed_pair_tail_pending: Cell<bool>,
     /// Monotone "no closer ahead" memos for forward closer scans in parser
     /// rules; see `parser/closer_scan.rs`.
     closer_scan: CloserScanCache,
@@ -2946,6 +2952,27 @@ impl<'r, 't> Parser<'r, 't> {
             .borrow()
             .wikidot_a2_crossed_follower_bare
             .replace(0)
+    }
+
+    pub(crate) fn record_wikidot_crossed_pair_tail_pending(&self) {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_crossed_pair_tail_pending
+            .set(true);
+    }
+
+    pub(crate) fn take_wikidot_crossed_pair_tail_pending(&self) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_crossed_pair_tail_pending
+            .replace(false)
+    }
+
+    pub(crate) fn wikidot_crossed_pair_tail_pending_is_set(&self) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_crossed_pair_tail_pending
+            .get()
     }
 
     /// Takes every anchor stamped for `depth`, dropping deeper strays

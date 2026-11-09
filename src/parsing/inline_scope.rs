@@ -7,8 +7,8 @@ use crate::tree::{
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, WIKIDOT_HEADING_REOPEN_MARKER,
     WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
-    WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
-    WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
+    WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
+    WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BARE_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_FOLD_MARKER,
@@ -1251,6 +1251,129 @@ fn rewrite_block_chunk_prefix<'t>(
             }
         }
     }
+    rewrite_list_close_tail_paragraphs(elements);
+}
+
+/// Whether a tail paragraph holds nothing but breaks (and whitespace):
+/// such a run renders bare after its list on live, never wrapped.
+fn tail_paragraph_is_break_only(elements: &[Element<'_>]) -> bool {
+    elements.iter().all(|element| match element {
+        Element::LineBreak | Element::LineBreaks(_) => true,
+        Element::Text(text) if text.trim().is_empty() => true,
+        Element::Delayed(delayed) if delayed.is_suppression_seam() => true,
+        Element::Container(container)
+            if matches!(container.ctype(), ContainerType::Span | ContainerType::Size) =>
+        {
+            tail_paragraph_is_break_only(container.elements())
+        }
+        _ => false,
+    })
+}
+
+/// Consume a crossed-pair tail marker carried on an explicit list. The
+/// paragraph right after the list renders bare on live: a break-only run
+/// unwraps as-is (its break is already in place), a content paragraph
+/// unwraps with the Lead break inserted ahead. This pass covers what the
+/// root loop never sees — a second list's leading chunk (the run stays
+/// attached to the following list through lowering) and frame bodies
+/// (which lower without the root loop's tail state). The root loop owns
+/// Break tails and close-only paragraphs; those markers are only stripped
+/// here. Runs after scope lowering, like the chunk-prefix rewrite above.
+fn rewrite_list_close_tail_paragraphs<'t>(elements: &mut Vec<Element<'t>>) {
+    let mut index = 0usize;
+    while index < elements.len() {
+        let tail = match &elements[index] {
+            Element::List { attributes, .. } => span_list_close_tail_of(attributes),
+            _ => None,
+        };
+        let Some(tail) = tail else {
+            if let Element::List { attributes, .. } = &mut elements[index] {
+                strip_span_list_close_tail_markers(attributes);
+                strip_understrike_list_close_tail_markers(attributes);
+                strip_format_label_list_close_tail_markers(attributes);
+            }
+            index += 1;
+            continue;
+        };
+        let paragraph_at = index + 1;
+        if matches!(tail, SpanListCloseTail::Blank) {
+            // A blank gap then an explicit list: live drops the tail
+            // entirely. The trapped break-only post-run renders as the
+            // paragraph right after this list; remove it. Anything else
+            // stays (the marker is still stripped below).
+            let drop = matches!(
+                elements.get(paragraph_at),
+                Some(Element::Container(paragraph))
+                    if paragraph.ctype() == ContainerType::Paragraph
+                        && !paragraph.elements().is_empty()
+                        && tail_paragraph_is_break_only(paragraph.elements())
+            );
+            if let Element::List { attributes, .. } = &mut elements[index] {
+                strip_span_list_close_tail_markers(attributes);
+                strip_understrike_list_close_tail_markers(attributes);
+                strip_format_label_list_close_tail_markers(attributes);
+            }
+            if drop {
+                elements.remove(paragraph_at);
+            } else {
+                index += 1;
+            }
+            continue;
+        }
+        if !matches!(tail, SpanListCloseTail::Bare | SpanListCloseTail::Lead) {
+            if let Element::List { attributes, .. } = &mut elements[index] {
+                strip_span_list_close_tail_markers(attributes);
+                strip_understrike_list_close_tail_markers(attributes);
+                strip_format_label_list_close_tail_markers(attributes);
+            }
+            index += 1;
+            continue;
+        }
+        let consume = matches!(
+            elements.get(paragraph_at),
+            Some(Element::Container(paragraph))
+                if paragraph.ctype() == ContainerType::Paragraph
+                    && !matches!(
+                        paragraph.elements(),
+                        [Element::Partial(
+                            PartialElement::InlineSpanClose(_)
+                                | PartialElement::InlineSizeClose(_)
+                        )]
+                    )
+        );
+        if !consume {
+            if let Element::List { attributes, .. } = &mut elements[index] {
+                strip_span_list_close_tail_markers(attributes);
+                strip_understrike_list_close_tail_markers(attributes);
+                strip_format_label_list_close_tail_markers(attributes);
+            }
+            index += 1;
+            continue;
+        }
+        let Element::Container(mut paragraph) =
+            mem::replace(&mut elements[paragraph_at], Element::LineBreak)
+        else {
+            unreachable!("tail paragraph checked above");
+        };
+        let mut replacement = mem::take(paragraph.elements_mut());
+        if matches!(tail, SpanListCloseTail::Lead)
+            && !tail_paragraph_is_break_only(&replacement)
+            && !matches!(replacement.first(), Some(Element::LineBreak))
+        {
+            // The gap break may already sit at the head of the tail
+            // paragraph (pushed directly so a following list keeps it);
+            // inserting again would render a doubled `<br><br>`.
+            replacement.insert(0, Element::LineBreak);
+        }
+        let replacement_len = replacement.len();
+        elements.splice(paragraph_at..=paragraph_at, replacement);
+        if let Element::List { attributes, .. } = &mut elements[index] {
+            strip_span_list_close_tail_markers(attributes);
+            strip_understrike_list_close_tail_markers(attributes);
+            strip_format_label_list_close_tail_markers(attributes);
+        }
+        index = paragraph_at + replacement_len;
+    }
 }
 
 fn rewrite_block_chunk_prefix_element<'t>(
@@ -1630,6 +1753,10 @@ pub(crate) enum SpanListCloseTail {
     /// renders inside the scope and everything after it outside — live
     /// closes the scope at the pair's close marker.
     Fold,
+    /// A blank gap then an explicit list follows the close: live drops
+    /// the tail entirely (no break, no paragraph). The rewrite pass
+    /// removes the trapped break-only run.
+    Blank,
 }
 
 fn span_list_close_tail_of(attributes: &AttributeMap<'_>) -> Option<SpanListCloseTail> {
@@ -1642,6 +1769,8 @@ fn span_list_close_tail_of(attributes: &AttributeMap<'_>) -> Option<SpanListClos
         Some(SpanListCloseTail::Bare)
     } else if map.contains_key(WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER) {
         Some(SpanListCloseTail::Fold)
+    } else if map.contains_key(WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER) {
+        Some(SpanListCloseTail::Blank)
     } else {
         None
     }
@@ -1652,6 +1781,7 @@ fn strip_span_list_close_tail_markers(attributes: &mut AttributeMap<'_>) {
     attributes.remove(WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER);
     attributes.remove(WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER);
     attributes.remove(WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER);
+    attributes.remove(WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER);
 }
 
 /// The stopped underline/strikethrough sibling of the spanin tail: which
@@ -1855,6 +1985,7 @@ fn foster_sole_explicit_list<'t>(element: &mut Element<'t>) -> Option<Vec<Elemen
             SpanListCloseTail::Break => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
             SpanListCloseTail::Bare => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
             SpanListCloseTail::Lead => WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
+            SpanListCloseTail::Blank => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER,
             SpanListCloseTail::Fold => unreachable!("fold skipped above"),
         };
         attributes.insert(marker, Cow::Borrowed(""));
@@ -1867,6 +1998,9 @@ fn foster_sole_explicit_list<'t>(element: &mut Element<'t>) -> Option<Vec<Elemen
             SpanListCloseTail::Bare => WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BARE_MARKER,
             SpanListCloseTail::Lead => WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_LEAD_MARKER,
             SpanListCloseTail::Fold => WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_FOLD_MARKER,
+            SpanListCloseTail::Blank => {
+                unreachable!("blank tails only stamp the span family")
+            }
         };
         attributes.insert(marker, Cow::Borrowed(""));
     }
@@ -3139,6 +3273,9 @@ fn format_explicit_list_segments<'t>(
                     SpanListCloseTail::Bare => WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BARE_MARKER,
                     SpanListCloseTail::Lead => WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_LEAD_MARKER,
                     SpanListCloseTail::Fold => WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_FOLD_MARKER,
+                    SpanListCloseTail::Blank => {
+                        unreachable!("blank tails only stamp the span family")
+                    }
                 };
                 for elem in segmented.iter_mut() {
                     if let Element::List { attributes, .. } = elem {
@@ -3265,6 +3402,7 @@ fn format_explicit_list_segments<'t>(
             SpanListCloseTail::Break => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
             SpanListCloseTail::Bare => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
             SpanListCloseTail::Lead => WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
+            SpanListCloseTail::Blank => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER,
             SpanListCloseTail::Fold => WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
         };
         for element in segmented.iter_mut() {
@@ -3281,6 +3419,9 @@ fn format_explicit_list_segments<'t>(
             SpanListCloseTail::Bare => WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BARE_MARKER,
             SpanListCloseTail::Lead => WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_LEAD_MARKER,
             SpanListCloseTail::Fold => WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_FOLD_MARKER,
+            SpanListCloseTail::Blank => {
+                unreachable!("blank tails only stamp the span family")
+            }
         };
         for element in segmented.iter_mut() {
             if let Element::List { attributes, .. } = element {
@@ -3299,6 +3440,9 @@ fn format_explicit_list_segments<'t>(
             SpanListCloseTail::Bare => WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER,
             SpanListCloseTail::Lead => WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_LEAD_MARKER,
             SpanListCloseTail::Fold => WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_FOLD_MARKER,
+            SpanListCloseTail::Blank => {
+                unreachable!("blank tails only stamp the span family")
+            }
         };
         for element in segmented.iter_mut() {
             if let Element::List { attributes, .. } = element {
@@ -3507,6 +3651,16 @@ fn lower_root_sequence<'t>(
             // a format pair of the span content closed beyond carries the
             // pair's tail shape from the list element's marker.
             let span_tail = list_close_tail.take();
+            // A Break tail consumes the gap break sitting ahead of the
+            // scope close (the break is the break tail's single newline,
+            // not content): drop leading breaks first so a pushed gap
+            // break cannot defeat the close-only gate below or render
+            // an extra break.
+            if matches!(span_tail, Some(SpanListCloseTail::Break)) {
+                while matches!(container.elements().first(), Some(Element::LineBreak)) {
+                    container.elements_mut().remove(0);
+                }
+            }
             let close_only_paragraph = matches!(
                 container.elements(),
                 [Element::Partial(
@@ -3514,8 +3668,18 @@ fn lower_root_sequence<'t>(
                         | PartialElement::InlineSizeClose(_)
                 )]
             );
+            // A close-led paragraph (the scope close opens it, with content
+            // after: live `<span><br></span>y`) carries the break tail like
+            // a close-only one: bare, with no inserted lead break.
+            let close_led_paragraph = matches!(
+                container.elements().first(),
+                Some(Element::Partial(
+                    PartialElement::InlineSpanClose(_)
+                        | PartialElement::InlineSizeClose(_)
+                ))
+            );
             let tail_break = matches!(span_tail, Some(SpanListCloseTail::Break))
-                && close_only_paragraph;
+                && (close_only_paragraph || close_led_paragraph);
             let tail_bare = matches!(span_tail, Some(SpanListCloseTail::Bare))
                 && !close_only_paragraph;
             let tail_lead = matches!(span_tail, Some(SpanListCloseTail::Lead))
@@ -3563,7 +3727,12 @@ fn lower_root_sequence<'t>(
                 active.retire_span_scopes();
                 active.retire_size_scopes();
                 active.drop_anchor_scopes();
-                if understrike_break || understrike_lead {
+                // Like the spanin lead insert below: the gap break may
+                // already lead the paragraph (pushed directly so a
+                // following list keeps it); inserting again doubles it.
+                if (understrike_break || understrike_lead)
+                    && !matches!(container.elements().first(), Some(Element::LineBreak))
+                {
                     container.elements_mut().insert(0, Element::LineBreak);
                 }
             }
@@ -3599,17 +3768,24 @@ fn lower_root_sequence<'t>(
                 )
             );
             if label_break && !output.is_empty() && paragraph_group.is_none() {
-                container.elements_mut().insert(0, Element::LineBreak);
-            } else if tail_lead
-                && !output.is_empty()
-                && paragraph_group.is_none()
-                && starts_in_inline_scope
-            {
+                // The gap break may already lead the paragraph (pushed
+                // directly so a following list keeps it); inserting again
+                // would render a doubled `<br><br>`.
+                if !matches!(container.elements().first(), Some(Element::LineBreak)) {
+                    container.elements_mut().insert(0, Element::LineBreak);
+                }
+            } else if tail_lead && !output.is_empty() && paragraph_group.is_none() {
+                // Scopeless leads (crossing pairs outside any inline scope)
+                // keep the gap break inside the paragraph itself, so only
+                // insert when no break leads yet: otherwise the pushed
+                // gap break and the insert render a doubled `<br><br>`.
                 // Content paragraph continuing the scope's inline run after
                 // a line break: it stays bare inside the scope and carries
                 // the break verbatim (the insert renders as `<br>` ahead
                 // of the content's own newline).
-                container.elements_mut().insert(0, Element::LineBreak);
+                if !matches!(container.elements().first(), Some(Element::LineBreak)) {
+                    container.elements_mut().insert(0, Element::LineBreak);
+                }
             } else if starts_in_inline_scope
                 && !collapsible_heading_tail
                 && !reopens_paragraph_after_separator
@@ -3703,9 +3879,10 @@ fn lower_root_sequence<'t>(
                 list_close_tail = span_list_close_tail_of(attributes);
                 understrike_list_close_tail = understrike_list_close_tail_of(attributes);
                 label_list_close_tail = format_label_list_close_tail_of(attributes);
-                strip_span_list_close_tail_markers(attributes);
-                strip_understrike_list_close_tail_markers(attributes);
-                strip_format_label_list_close_tail_markers(attributes);
+                // Tail markers stay on the list: the rewrite pass consumes
+                // tails the root loop never sees (a second list's leading
+                // chunk, frame bodies) and strips every leftover there, so
+                // none reaches the tree.
                 scope_closed_in_last_list = list_items_close_inline_scope(&element);
             }
             _ => {
@@ -5527,14 +5704,21 @@ fn lower_sequence<'t>(
             }
             saw_block = true;
             let list_legacy = matches!(element, Element::List { .. });
+            // Tail markers stay on non-stopped lists for the rewrite pass
+            // (fr73 consumes crossed-pair tails lowering never sees; the
+            // rewrite strips leftovers, so none reaches the tree). Stopped
+            // lists are cleaned here with the stops marker.
             let stopped_pair_ends_at_list = if list_legacy {
                 if let Element::List { attributes, .. } = &mut element {
-                    strip_span_list_close_tail_markers(attributes);
-                    strip_understrike_list_close_tail_markers(attributes);
-                    strip_format_label_list_close_tail_markers(attributes);
-                    attributes
+                    let stopped = attributes
                         .remove(WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER)
-                        .is_some()
+                        .is_some();
+                    if stopped {
+                        strip_span_list_close_tail_markers(attributes);
+                        strip_understrike_list_close_tail_markers(attributes);
+                        strip_format_label_list_close_tail_markers(attributes);
+                    }
+                    stopped
                 } else {
                     false
                 }

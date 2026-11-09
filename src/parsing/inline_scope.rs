@@ -4090,6 +4090,42 @@ fn paragraph_scope_tail_continues<'t>(tail: &Element<'t>, next: &Element<'t>) ->
     matches!(tail, Element::Anchor { .. })
 }
 
+/// Whether a frame child is a scope chunk that live joins into a preceding
+/// paragraph across a quote/div row break: an anchor, a color scope, or an
+/// inline-scope container (span/size/format). R-bq-para-join probes cover
+/// anchor (every carried format), span, size, and bare format heads;
+/// monospace/super/sub ride the same predicate unprobed.
+fn is_joinable_prelist_scope_chunk(element: &Element<'_>) -> bool {
+    match element {
+        Element::Anchor { .. } | Element::Color { .. } => true,
+        Element::Container(container) => {
+            is_inline_scope_ctype(container.ctype())
+        }
+        _ => false,
+    }
+}
+
+/// Splice a scope chunk into a preceding paragraph with the row break live
+/// keeps between them. The chunk keeps its block-chunk-prefix marker when it
+/// has one: the tree-wide rewrite later strips it to a bare inner with
+/// paragraph context.
+fn join_scope_chunk_into_paragraph<'t>(
+    previous: &mut Element<'t>,
+    next: Element<'t>,
+) {
+    let Element::Container(paragraph) = previous else {
+        return;
+    };
+    let ends_with_break = paragraph
+        .elements()
+        .last()
+        .is_some_and(|tail| matches!(tail, Element::LineBreak | Element::LineBreaks(_)));
+    if !ends_with_break {
+        paragraph.elements_mut().push(Element::LineBreak);
+    }
+    paragraph.elements_mut().push(next);
+}
+
 /// Frame-context pre-list chunk placement (item 60): inside a `[[div]]`,
 /// `[[note]]`, or blockquote frame, a segmentation-produced pre chunk cut
 /// by an explicit list keeps the enclosing scope's first paragraph, exactly
@@ -4142,6 +4178,23 @@ fn merge_frame_prelist_chunks<'t>(children: &mut Vec<Element<'t>>) {
         if mergeable {
             let next = children.remove(index + 1);
             paragraph_tail_scope_sibling_merge(&mut children[index], next);
+        } else {
+            // R-bq-para-join: a text row followed by a row carrying a scope
+            // chunk cut by an explicit list renders one paragraph on live
+            // (row break between), for any preceding-row content and any
+            // carried scope (anchor/span/size/format). Row assembly splits
+            // them — the scope chunk is paragraph-unsafe — so splice the
+            // chunk into the paragraph here. Same-scope tails belong to the
+            // arm above; this arm is the cross-scope join.
+            let joinable = paragraph_tail
+                && is_explicit_block_list(&children[index + 2])
+                && is_joinable_prelist_scope_chunk(&children[index + 1])
+                && matches!(&children[index], Element::Container(paragraph)
+                    if paragraph.elements().last().is_some_and(|tail| !same_scope_wrapper(tail, &children[index + 1])));
+            if joinable {
+                let next = children.remove(index + 1);
+                join_scope_chunk_into_paragraph(&mut children[index], next);
+            }
         }
         index += 1;
     }

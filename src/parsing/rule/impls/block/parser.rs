@@ -2924,6 +2924,18 @@ where
         let mut pairs: BTreeMap<usize, (WikidotLiCrossKind, bool)> = BTreeMap::new();
         let mut redundant: BTreeSet<usize> = BTreeSet::new();
         let mut implicit: BTreeSet<usize> = BTreeSet::new();
+        // g10: a frame closer that crosses the open list item literalises the
+        // rest of the list body (see the tail branch in the loop below).
+        // `tail_breach` is that closer's byte; the pending flags record which
+        // force-closed frames still owe a closer, and the `*_close` locals
+        // keep the tail closer live consumes for each kind (LAST `[[/li]]`,
+        // FIRST `[[/ul]]`/`[[/ol]]`).
+        let mut tail_breach: Option<usize> = None;
+        let mut tail_pending_li = false;
+        let mut tail_pending_list = false;
+        let mut tail_li_close: Option<usize> = None;
+        let mut tail_list_close: Option<usize> = None;
+        let mut tail_region_end: Option<usize> = None;
 
         // Pop through `index` (inclusive); inner frames with unseen closers
         // leave pending satisfactions for their later redundant closers.
@@ -2958,6 +2970,92 @@ where
                     }
                     if scan.current().token == Token::InputEnd {
                         break;
+                    }
+                }
+                continue;
+            }
+            // g10: after the crossed frame closer, live literalises the rest
+            // of the list body. The literal tail still consumes the LAST
+            // `[[/li]]` and the FIRST `[[/ul]]`/`[[/ol]]` of that tail (the
+            // other closers stay literal); the tail ends at the next block
+            // construct. Collect those closers here instead of running the
+            // structural scan, which would pair them with the literal tail
+            // heads.
+            if tail_breach.is_some() {
+                let pos = scan.current().span.start;
+                match scan.current().token {
+                    Token::LeftBlock | Token::LeftBlockStar => {
+                        let mut probe = scan.clone();
+                        let is_li = match probe.get_block_name(false) {
+                            Ok((name, _, _)) => name
+                                .strip_suffix('_')
+                                .unwrap_or(&name)
+                                .eq_ignore_ascii_case("li"),
+                            Err(_) => false,
+                        };
+                        if !is_li || scan.step().is_err() {
+                            break;
+                        }
+                    }
+                    Token::LeftBlockEnd => {
+                        let mut probe = scan.clone();
+                        let Ok(raw_name) = probe.get_end_block() else {
+                            break;
+                        };
+                        let name = raw_name.strip_suffix('_').unwrap_or(&raw_name);
+                        if name.eq_ignore_ascii_case("li") {
+                            if !self.wikidot_li_cross_byte_opaque(pos) {
+                                tail_li_close = Some(pos);
+                            }
+                            if scan.step().is_err() {
+                                break;
+                            }
+                        } else if name.eq_ignore_ascii_case("ul")
+                            || name.eq_ignore_ascii_case("ol")
+                        {
+                            if !self.wikidot_li_cross_byte_opaque(pos) {
+                                // The vanished list closer is the FIRST of
+                                // its kind in the tail (aa probe: the
+                                // structural list closer, not a later twin).
+                                if tail_list_close.is_none() {
+                                    tail_list_close = Some(pos);
+                                }
+                                depth = depth.saturating_sub(1);
+                                if depth == 0 && tail_region_end.is_none() {
+                                    tail_region_end = Some(pos);
+                                }
+                            }
+                            if scan.step().is_err() {
+                                break;
+                            }
+                        } else {
+                            // Any other closer (the crossed frame's own
+                            // closer, span/code closes, ...) ends the tail.
+                            break;
+                        }
+                    }
+                    Token::Heading
+                    | Token::TripleDash
+                    | Token::TableColumn
+                    | Token::TableColumnRight
+                    | Token::TableColumnCenter
+                    | Token::TableColumnTitle
+                    | Token::BulletItem
+                    | Token::NumberedItem
+                    | Token::Quote
+                    | Token::Equals => break,
+                    // A blank line does not end the literal tail (t probe:
+                    // the closer search continues and the blank renders as
+                    // its own break).
+                    Token::ParagraphBreak => {
+                        if scan.step().is_err() {
+                            break;
+                        }
+                    }
+                    _ => {
+                        if scan.step().is_err() {
+                            break;
+                        }
                     }
                 }
                 continue;
@@ -3151,6 +3249,15 @@ where
                                     .is_some();
                                 pop_through!(index);
                                 pairs.insert(close_pos, (kind, crossed));
+                                if crossed && tail_breach.is_none() {
+                                    tail_pending_li =
+                                        sat.iter().any(|kind| *kind == CrossFrame::Li);
+                                    tail_pending_list =
+                                        sat.iter().any(|kind| *kind == CrossFrame::List);
+                                    if tail_pending_li || tail_pending_list {
+                                        tail_breach = Some(close_pos);
+                                    }
+                                }
                             } else if sat.front() == Some(&frame) {
                                 sat.pop_front();
                             }
@@ -3173,6 +3280,15 @@ where
                                     }
                                 }
                                 pairs.insert(close_pos, (kind, true));
+                                if tail_breach.is_none() {
+                                    tail_pending_li =
+                                        sat.iter().any(|kind| *kind == CrossFrame::Li);
+                                    tail_pending_list =
+                                        sat.iter().any(|kind| *kind == CrossFrame::List);
+                                    if tail_pending_li || tail_pending_list {
+                                        tail_breach = Some(close_pos);
+                                    }
+                                }
                             }
                         }
                         if clean {
@@ -3191,7 +3307,34 @@ where
                 }
             }
         }
-        let region_end = scan.current().span.start;
+        let mut region_end = scan.current().span.start;
+        if tail_breach.is_some() {
+            // g10: mark the tail closers live consumes; the redundant-close
+            // path drops them (and their following break) exactly like the
+            // older front-of-queue satisfaction did.
+            if tail_pending_li && let Some(close) = tail_li_close {
+                redundant.insert(close);
+            }
+            let mut tail_join_line = None;
+            if tail_pending_list && let Some(close) = tail_list_close {
+                redundant.insert(close);
+                tail_join_line = self.wikidot_tail_join_line(close);
+            }
+            if let Some(end) = tail_region_end {
+                region_end = end;
+            }
+            self.block_end_scan_cache.borrow_mut().wikidot_li_cross_scan =
+                Some(WikidotLiCrossScan {
+                    divcoll_pairs: pairs,
+                    redundant,
+                    implicit_li: implicit,
+                    region_start: scan_start,
+                    region_end,
+                    tail_list_close,
+                    tail_join_line,
+                });
+            return;
+        }
         self.block_end_scan_cache.borrow_mut().wikidot_li_cross_scan =
             Some(WikidotLiCrossScan {
                 divcoll_pairs: pairs,
@@ -3199,7 +3342,57 @@ where
                 implicit_li: implicit,
                 region_start: scan_start,
                 region_end,
+                tail_list_close: None,
+                tail_join_line: None,
             });
+    }
+
+    /// g10: when the swallowed tail `[[/ul]]`/`[[/ol]]` is preceded by a
+    /// literal text line, live joins the following line onto it (the vanished
+    /// closer eats the break before it): g10b `z[[/div]]`, g10x1
+    /// `w[[/div]]`, closein `EG`. A marker line (another closer) and a blank
+    /// line do not join.
+    fn wikidot_tail_join_line(&self, close: usize) -> Option<usize> {
+        let source = self.full_text().inner();
+        let line_start = source[..close.min(source.len())]
+            .rfind('\n')
+            .map_or(0, |index| index + 1);
+        if line_start == 0 {
+            return None;
+        }
+        let prev_end = line_start - 1;
+        let prev_start = source[..prev_end]
+            .rfind('\n')
+            .map_or(0, |index| index + 1);
+        // A closer in the middle of a line eats only its following break
+        // (z probe: `q [[/ul]]` keeps `q `); the join is for an own-line
+        // closer whose preceding physical line is literal text.
+        let mut own_line = source[line_start..close.min(source.len())]
+            .trim_start_matches([' ', '\t']);
+        while let Some(rest) = own_line.strip_prefix('>') {
+            own_line = rest.trim_start_matches([' ', '\t']);
+        }
+        if !own_line.is_empty() {
+            return None;
+        }
+        let prev = source[prev_start..prev_end].trim_matches([' ', '\t', '\r']);
+        if prev.is_empty() {
+            return None;
+        }
+        // Drop any quote prefix before deciding whether the line is a
+        // standalone block marker (a closer line is not literal text).
+        let mut marker = prev;
+        while let Some(rest) = marker.strip_prefix('>') {
+            marker = rest.trim_start_matches([' ', '\t']);
+        }
+        if let Some(inner) = marker.strip_prefix("[[")
+            && let Some(inner) = inner.strip_suffix("]]")
+            && !inner.contains("[[")
+            && !inner.contains("]]")
+        {
+            return None;
+        }
+        Some(line_start)
     }
 
     fn wikidot_li_cross_byte_opaque(&self, byte: usize) -> bool {
@@ -3255,6 +3448,27 @@ where
             .wikidot_li_cross_scan
             .as_ref()
             .is_some_and(|scan| scan.implicit_li.contains(&byte))
+    }
+
+    /// g10: whether `byte` is the swallowed `[[/ul]]`/`[[/ol]]` of a crossed
+    /// list tail (consumed by the redundant-close path).
+    pub(crate) fn wikidot_li_cross_tail_list_at(&self, byte: usize) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_li_cross_scan
+            .as_ref()
+            .is_some_and(|scan| scan.tail_list_close == Some(byte))
+    }
+
+    /// g10: whether the line break ending at `end` is the one the swallowed
+    /// tail list closer eats, joining its follower onto the literal text line
+    /// before it (g10b `z[[/div]]`).
+    pub(crate) fn wikidot_li_cross_tail_join_break_at(&self, end: usize) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_li_cross_scan
+            .as_ref()
+            .is_some_and(|scan| scan.tail_join_line == Some(end))
     }
 
     pub(crate) fn wikidot_li_cross_clear(&self) {

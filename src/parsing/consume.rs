@@ -1584,6 +1584,20 @@ where
         )));
     }
 
+    // g10: the swallowed last tail `[[/ul]]`/`[[/ol]]` eats the break before
+    // it when its preceding source line is literal text, so the follower
+    // joins that text line (g10b `z[[/div]]`, g10x1 `w[[/div]]`).
+    if parser.settings().layout.legacy()
+        && parser.wikidot_li_cross_tail_join_break_at(parser.current().span.end)
+    {
+        parser.step()?;
+        return Ok(Some(ParseSuccess::new(
+            Elements::None,
+            Vec::new(),
+            true,
+        )));
+    }
+
     if parser.quote_body_cursor().is_some() {
         let mut next = parser.clone();
         next.step()?;
@@ -2108,6 +2122,16 @@ fn try_consume_wikidot_li_cross_redundant_close<'r, 't>(
     parser.update(&close);
     if parser.current().token == Token::LineBreak {
         let _ = parser.step();
+    } else if parser.wikidot_li_cross_tail_list_at(position)
+        && parser.current().token == Token::InputEnd
+    {
+        // g10: the swallowed tail `[[/ul]]` at EOF leaves one break
+        // (g10e: `z<br />\n<br />`).
+        return Some(Ok(crate::parsing::ParseSuccess::new(
+            Element::LineBreak.into(),
+            Vec::new(),
+            true,
+        )));
     }
     Some(Ok(crate::parsing::ParseSuccess::new(
         Elements::None,

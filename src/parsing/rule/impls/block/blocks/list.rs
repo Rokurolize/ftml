@@ -2500,6 +2500,87 @@ fn split_mixed_deep_marker_list<'t>(list: Element<'t>) -> Option<Vec<Element<'t>
     (!segments.is_empty()).then_some(segments)
 }
 
+/// BLFOL: a post-list run made solely of single-line literal `[[div]]` /
+/// `[[note]]` pair lines stays bare beside a native nested list on live
+/// (probes muse-probe-blfol-bl-ref/-note/-div-attr/-hash/-quote-native/-two),
+/// while other marker runs (e.g. a lone `[[/hidden]]` closer) still wrap.
+/// Collapsible pairs form (bl-coll-lit matches), multiline pairs form, plain
+/// text was already bare, and page-root runs wrap under a different path —
+/// so this gate is narrow to failed-to-form div/note single-line pairs.
+/// Inside advanced table cells every run still wraps (LP42).
+fn line_is_single_literal_div_note_pair(line: &str) -> bool {
+    let line = line.trim();
+    if line.is_empty() {
+        return false;
+    }
+    let lower = line.to_ascii_lowercase();
+    let rest = match lower.strip_prefix("[[") {
+        Some(rest) => rest,
+        None => return false,
+    };
+    let opener_end = match rest.find("]]") {
+        Some(index) => index,
+        None => return false,
+    };
+    let opener_inner = match rest.get(..opener_end) {
+        Some(inner) => inner,
+        None => return false,
+    };
+    let tag = opener_inner.split_whitespace().next().unwrap_or("");
+    if tag != "div" && tag != "note" {
+        return false;
+    }
+    if opener_inner.contains('[') || opener_inner.contains(']') {
+        return false;
+    }
+    let after_opener = match rest.get(opener_end + 2..) {
+        Some(after) => after,
+        None => return false,
+    };
+    let closer = format!("[[/{tag}]]");
+    let closer_rel = match after_opener.find(&closer) {
+        Some(index) => index,
+        None => return false,
+    };
+    let between = match after_opener.get(..closer_rel) {
+        Some(between) => between,
+        None => return false,
+    };
+    if between.contains("[[") || between.contains("]]") {
+        return false;
+    }
+    let after = match after_opener.get(closer_rel + closer.len()..) {
+        Some(after) => after,
+        None => return false,
+    };
+    after.trim().is_empty()
+}
+
+fn post_list_run_is_bare_literal_pair(run: &[Element]) -> bool {
+    let mut text = String::new();
+    for element in run {
+        match element {
+            Element::Text(content) | Element::Raw(content) => {
+                text.push_str(content);
+            }
+            Element::LineBreak | Element::LineBreaks(_) => text.push('\n'),
+            Element::Delayed(delayed) if delayed.is_suppression_seam() => {}
+            _ => return false,
+        }
+    }
+    let mut saw_pair = false;
+    for line in text.split('\n') {
+        if line.trim().is_empty() {
+            continue;
+        }
+        if !line_is_single_literal_div_note_pair(line) {
+            return false;
+        }
+        saw_pair = true;
+    }
+    saw_pair
+}
+
 /// lihoist p23: a depth-2+ marker line (e.g. `** deep`) becomes its own
 /// paragraph segment when a list follows it in the segment or a starred
 /// list pair formation closes inside the body; otherwise it stays a bare
@@ -2549,6 +2630,37 @@ fn wrap_inline_line_after_list(
                 ))
         {
             segment.splice(start..start, run);
+            index = start + 1;
+            continue;
+        }
+        if !deep_paragraph && !in_cell && post_list_run_is_bare_literal_pair(&run) {
+            // Live glues consecutive literal lines (bl-two has no inner
+            // break), keeping only the trailing break.
+            let mut trailing = 0;
+            for element in run.iter().rev() {
+                if matches!(element, Element::LineBreak | Element::LineBreaks(_)) {
+                    trailing += 1;
+                } else {
+                    break;
+                }
+            }
+            let keep_from = run.len().saturating_sub(trailing);
+            let mut bare: Vec<Element> = Vec::with_capacity(run.len());
+            for (offset, element) in run.into_iter().enumerate() {
+                if offset < keep_from
+                    && matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                {
+                    continue;
+                }
+                bare.push(element);
+            }
+            while matches!(
+                bare.first(),
+                Some(Element::LineBreak | Element::LineBreaks(_))
+            ) {
+                bare.remove(0);
+            }
+            segment.splice(start..start, bare);
             index = start + 1;
             continue;
         }

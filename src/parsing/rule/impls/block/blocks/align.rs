@@ -269,16 +269,17 @@ pub fn parse_alignment_block<'r, 't>(
 }
 
 fn align_span_keeps_head_breaks(parser: &Parser<'_, '_>, _opener_start: usize) -> bool {
-    if !parser.settings().layout.legacy() || !parser.in_wikidot_span_body() {
+    if !parser.settings().layout.legacy() {
         return false;
     }
-    // A table cell absorbs the align's restored newlines when the open span
-    // started outside the cell (p4/idx3748 saved-page probes); a span
-    // opened inside the cell keeps them (q1/idx3706). Note/collapsible/
-    // div/tabview/list contexts always keep.
-    if parser.in_wikidot_advanced_table_cell_body()
-        && !parser.wikidot_span_opened_inside_cell()
-    {
+    let in_span = parser.in_wikidot_span_body();
+    let in_size = parser.in_wikidot_size_body();
+    if !in_span && !in_size {
+        return false;
+    }
+    let span_absorbs = in_span && !parser.wikidot_span_opened_inside_cell();
+    let size_absorbs = in_size && !parser.wikidot_size_opened_inside_cell();
+    if parser.in_wikidot_advanced_table_cell_body() && (span_absorbs || size_absorbs) {
         return false;
     }
     if matches!(

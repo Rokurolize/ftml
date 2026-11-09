@@ -23,6 +23,12 @@ Development happens on this fork, `Rokurolize/ftml`. Open pull requests against 
 - Remove task-owned branches, worktrees, target directories, and build artifacts when they are no longer useful.
 - Cargo targets: normal development uses the canonical `target/` and compact profiles in `Cargo.toml`; candidate and one-shot CI builds use revision/role-specific `CARGO_TARGET_DIR` with `CARGO_INCREMENTAL=0`. Read `docs/development/cargo-target-policy.md` before changing build or cleanup behavior.
 
+## Comments in code
+
+- Do not add explanatory comments to code you write. Keep a comment only when it states a reason the code itself cannot show: a constraint imposed from outside the code, or measured behavior that looks wrong but is deliberate.
+- Narration of what the code does, restatements of the code, and step or phase narration in code, tests, fixtures, and scripts are not kept. Write the code, the assertion, or the log string so it says the thing itself.
+- When your diff touches code carrying such comments from earlier work, remove them in the same change.
+
 ## Code Review Rules
 
 - Treat observable Wikidot behavior as the compatibility specification for `Layout::Wikidot` even when that behavior is insecure, unsafe, obsolete, or contrary to modern web best practices. A review objection based only on modern hardening is not a compatibility justification.

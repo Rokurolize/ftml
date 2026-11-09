@@ -419,14 +419,49 @@ fn parse_list_block_impl<'r, 't>(
             }
 
             element @ Element::List { .. } => {
-                push_literal_list_item(
-                    &mut items,
-                    &mut literal_elements,
-                    wikidot,
-                    flag_score,
-                    content_follows,
-                    li_wrap_enclosing,
-                );
+                // PU81 (plainul-text-mid): literal content between two
+                // native lists joins the open list-derived item instead of
+                // starting a degraded none-styled item (saved-page probes
+                // muse-probe-pu81-*): inline runs wrap as one paragraph
+                // each, formed blocks join as-is. The arriving list then
+                // joins the same item through the ordinary push below.
+                // Whitespace-only gaps keep the old merge path. Explicit
+                // [[li]] partials, scored/nested/flat-enclosed lists keep
+                // the old behavior (unprobed there).
+                if wikidot
+                    && !flag_score
+                    && !nested
+                    && !li_wrap_enclosing
+                    && partial_count == 0
+                    && literal_elements
+                        .iter()
+                        .any(|element| !element.is_whitespace())
+                    && matches!(
+                        items.last(),
+                        Some(ListItem::SubList { .. } | ListItem::Elements { .. }),
+                    )
+                {
+                    inline_wikidot_sublist_item(&mut items);
+                    if let Some(ListItem::Elements {
+                        elements: item_elements,
+                        ..
+                    }) = items.last_mut()
+                    {
+                        join_wikidot_mid_list_literals(
+                            item_elements,
+                            &mut literal_elements,
+                        );
+                    }
+                } else {
+                    push_literal_list_item(
+                        &mut items,
+                        &mut literal_elements,
+                        wikidot,
+                        flag_score,
+                        content_follows,
+                        li_wrap_enclosing,
+                    );
+                }
                 if wikidot
                     && !flag_score
                     && matches!(items.last(), Some(ListItem::SubList { .. }))
@@ -462,6 +497,22 @@ fn parse_list_block_impl<'r, 't>(
 
             element => literal_elements.push(element),
         }
+    }
+    // PU81 (plainul-text-mid): trailing literal content after a lone native
+    // list joins it as one inline-styled item with the text bare
+    // (saved-page probes muse-probe-pu81-after-*). The ordinary append
+    // path below then glues the text exactly like the multi-list case.
+    if wikidot
+        && !flag_score
+        && !nested
+        && !li_wrap_enclosing
+        && partial_count == 0
+        && literal_elements
+            .iter()
+            .any(|element| !element.is_whitespace())
+        && matches!(items.last(), Some(ListItem::SubList { .. }))
+    {
+        inline_wikidot_sublist_item(&mut items);
     }
     push_literal_list_item(
         &mut items,
@@ -942,6 +993,71 @@ fn record_wikidot_explicit_list_end(parser: &Parser) {
     if parser.settings().layout.legacy() {
         parser.record_wikidot_explicit_list_end(parser.current().span.start);
     }
+}
+
+/// PU81 (plainul-text-mid): turns a trailing lone native sub-list into the
+/// open inline-styled item the sibling-list merge below produces, so
+/// pending literal content (or the arriving list) can join it.
+fn inline_wikidot_sublist_item<'t>(items: &mut Vec<ListItem<'t>>) {
+    if matches!(items.last(), Some(ListItem::SubList { .. }))
+        && let Some(ListItem::SubList { element: sub }) = items.pop()
+    {
+        let mut attributes = AttributeMap::new();
+        assert!(attributes.insert("style", cow!("list-style: none; display: inline")));
+        items.push(ListItem::Elements {
+            elements: vec![*sub],
+            attributes,
+        });
+    }
+}
+
+/// PU81 (plainul-text-mid): appends pending literal content between two
+/// native lists to the open item. Maximal paragraph-safe runs wrap as one
+/// paragraph each (saved-page probes muse-probe-pu81-mid-*: a blank-free
+/// run is one `<p>`, inner line breaks stay inside it); anything else
+/// (e.g. a formed div, probe muse-probe-pu81b-mid-div) joins as-is.
+fn join_wikidot_mid_list_literals<'t>(
+    item_elements: &mut Vec<Element<'t>>,
+    pending: &mut Vec<Element<'t>>,
+) {
+    while pending.first().is_some_and(Element::is_whitespace) {
+        pending.remove(0);
+    }
+    while pending.last().is_some_and(Element::is_whitespace) {
+        pending.pop();
+    }
+    let mut run: Vec<Element<'t>> = Vec::new();
+    for element in std::mem::take(pending) {
+        if element.paragraph_safe() {
+            run.push(element);
+            continue;
+        }
+        push_wikidot_mid_list_paragraph(item_elements, &mut run);
+        item_elements.push(element);
+    }
+    push_wikidot_mid_list_paragraph(item_elements, &mut run);
+}
+
+/// Wraps one pending paragraph-safe run as a paragraph, dropping the
+/// run's trailing breaks (they belong to line separation, not the
+/// paragraph body).
+fn push_wikidot_mid_list_paragraph<'t>(
+    item_elements: &mut Vec<Element<'t>>,
+    run: &mut Vec<Element<'t>>,
+) {
+    while run.last().is_some_and(|element| {
+        matches!(element, Element::LineBreak | Element::LineBreaks(_))
+    }) {
+        run.pop();
+    }
+    if run.is_empty() {
+        return;
+    }
+    item_elements.push(Element::Container(Container::new(
+        ContainerType::Paragraph,
+        std::mem::take(run),
+        AttributeMap::new(),
+    )));
 }
 
 fn push_literal_list_item<'t>(

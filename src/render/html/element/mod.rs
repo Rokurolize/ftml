@@ -85,7 +85,7 @@ use self::link::{render_anchor, render_anchor_target, render_link};
 use self::list::render_list;
 pub(crate) use self::math::{
     preregister_wikidot_equations, render_equation_reference, render_math_block,
-    render_math_inline,
+    render_math_inline, render_wikidot_equation_number,
 };
 use self::module::render_module;
 use self::social::render_social_buttons;
@@ -432,6 +432,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
             ref_cow!(environment),
             wikidot_block_open_elements,
             wikidot_label_spans,
+            false,
         ),
         Element::MathInline { latex_source } => render_math_inline(ctx, latex_source),
         Element::EquationReference(name) => render_equation_reference(ctx, name),
@@ -554,6 +555,9 @@ fn render_partial(ctx: &mut HtmlContext, partial: &PartialElement) {
         | PartialElement::InlineColorClose
         | PartialElement::InlineAnchorOpen(..)
         | PartialElement::InlineAnchorClose(_) => {}
+        PartialElement::WikidotEquationNumber(index, open_elements) => {
+            render_wikidot_equation_number(ctx, *index, open_elements)
+        }
         PartialElement::ListItem(ListItem::Elements { elements, .. }) => {
             render_elements(ctx, elements)
         }

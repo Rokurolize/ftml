@@ -602,7 +602,6 @@ fn is_note_row_block(element: &Element<'_>) -> bool {
     )
 }
 
-/// The block kind that cut the row.
 fn simple_row_block_cut(elements: &Elements<'_>) -> RowSuffixCut {
     match elements {
         Elements::Single(element) if is_collapsible_row_block(element) => {
@@ -622,7 +621,6 @@ fn simple_row_block_cut(elements: &Elements<'_>) -> RowSuffixCut {
     }
 }
 
-/// Split off and return the tail after an empty-suffix cut boundary marker.
 pub(crate) fn eject_wikidot_row_cut_marker<'t>(
     elements: &mut Vec<Element<'t>>,
 ) -> Option<Vec<Element<'t>>> {
@@ -2054,7 +2052,6 @@ fn try_consume_inner<'r, 't>(
                                             } else if row_cut == RowSuffixCut::Collapsible
                                                 && suffix_empty
                                             {
-                                                // Boundary for a cut that continues past the closer line.
                                                 interior.push(Element::Partial(
                                                     PartialElement::WikidotFoster(Vec::new()),
                                                 ));

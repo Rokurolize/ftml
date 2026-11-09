@@ -30,7 +30,6 @@ const LIST_DEPTH_AT_FOOTNOTE_NONE: u32 = u32::MAX;
 /// Sentinel for "no row suffix recorded" in the packed field.
 const ROW_SUFFIX_INACTIVE: u32 = u32::MAX;
 
-/// The block kind that cut the row a recorded suffix belongs to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) enum RowSuffixCut {
     None,

@@ -829,7 +829,6 @@ struct WikidotTabviewRowTail<'a, 't> {
     /// Whether the tab above the tail held a top-level cut table (direct)
     /// rather than one nested in a vehicle element.
     direct: bool,
-    /// The block kind that cut the row, when parse-time state recorded it.
     cut: Option<WikidotRowCut>,
 }
 
@@ -850,9 +849,6 @@ fn wikidot_tabview_row_suffix_run(elements: &[Element<'_>]) -> bool {
     }
 }
 
-/// Whether the tab above position `pos` held a top-level cut table (only
-/// then is the row-suffix tail kept inside `yui-content`) and which block cut
-/// that row.
 fn wikidot_tabview_row_tail_context(
     items: &[TabViewItem<'_>],
     pos: usize,
@@ -883,8 +879,6 @@ fn wikidot_tabview_row_tail_like<'a, 't>(
         let TabViewItem::Content(elements) = item else {
             continue;
         };
-        // A collapsible cut can eject a continuation run that does not start
-        // with the row-suffix text; the owning tab's cut kind identifies it.
         let post_collapsible_cut = !wikidot_tabview_row_suffix_run(elements)
             && !elements.is_empty()
             && matches!(
@@ -1026,10 +1020,6 @@ enum NestedTabviewLift<'a, 't> {
     },
 }
 
-/// The rows of a nested view that its enclosing view emits instead: the row
-/// tail of a collapsible cut ends the inner navset, so the inner view's later
-/// panels and trailing tail are hoisted one level out (saved-page probes
-/// `muse-probe-ft84r-b2..b8`).
 fn row_tail_elements<'a, 't>(elements: &'a [Element<'t>]) -> &'a [Element<'t>] {
     if let [Element::Container(container)] = elements
         && container
@@ -1258,8 +1248,6 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                 && (break_point.is_none() || lift_splits_content))
                 .then_some(any_row_tail)
                 .flatten();
-            // Live ends the navset at a collapsible cut; nested views keep the tail
-            // after their own content close.
             let (yui_tail, navset_tail, close_tail) = match row_tail {
                 Some(_) if matches!(
                     own_lift,
@@ -1559,7 +1547,6 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                 render_element(ctx, element);
             }
         });
-    // Live emits the tail and later panels after the navset close.
     if let Some(tail) = &navset_close_tail {
         render_elements(ctx, tail);
     }

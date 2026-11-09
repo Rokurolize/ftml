@@ -275,6 +275,8 @@ fn closer_bare_before(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
         }
     }
     true
+}
+
 fn paragraph_break_after_list_close(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
     if tokens
         .get(index)

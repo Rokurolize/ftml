@@ -152,6 +152,15 @@ pub(crate) const WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER: &str =
 /// never rendered.
 pub(crate) const WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER: &str =
     "data-ftml-span-list-close-tail-lead";
+/// Fold sibling mark for the same close: the format pair's closer is
+/// immediately followed by the enclosing span/size close (no newline
+/// between them, pw90's frozen item-21 remainder). Live closes the scope
+/// right after the pair's post-list segment, so that segment carries no
+/// trailing break (`<span><strong>c</strong></span>`). Travels on the list
+/// like the other spanin tails; root lowering suppresses the synthetic
+/// post-list continuation break when it fires. Never rendered.
+pub(crate) const WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER: &str =
+    "data-ftml-span-list-close-tail-fold";
 /// Marks an underline or strikethrough pair that closed beyond an explicit
 /// list inside a Wikidot inline scope (`[[span]]`, `[[size]]`, `[[a]]`):
 /// live carries its styling only up to the list (see

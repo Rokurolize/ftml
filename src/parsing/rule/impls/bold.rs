@@ -195,9 +195,7 @@ fn span_tail_marker(tail: SpanListCloseTail) -> &'static str {
         }
         SpanListCloseTail::Bare => crate::tree::WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
         SpanListCloseTail::Lead => crate::tree::WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
-        SpanListCloseTail::Fold => {
-            unreachable!("the gap classifier never yields fold")
-        }
+        SpanListCloseTail::Fold => crate::tree::WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
     }
 }
 
@@ -530,7 +528,17 @@ pub(super) fn mark_span_list_close_tail<'r, 't>(
         let Some(gap) = classify_tail_gap(current, rest, &["span", "size"]) else {
             return elements;
         };
-        if matches!(gap, SpanListCloseTail::Fold) {
+        // The fold gap (pair closer immediately followed by the enclosing
+        // scope close) is the pw90 frozen shape: live closes the scope right
+        // after the pair's post-list segment, so that segment carries no
+        // trailing break. Only the bold/italics pair family is evidenced;
+        // superscript/subscript keep the previous (unmarked) behaviour.
+        if matches!(gap, SpanListCloseTail::Fold)
+            && !matches!(
+                container.ctype(),
+                ContainerType::Bold | ContainerType::Italics
+            )
+        {
             return elements;
         }
         span_tail_marker(gap)

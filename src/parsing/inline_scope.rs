@@ -7,7 +7,7 @@ use crate::tree::{
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, WIKIDOT_HEADING_REOPEN_MARKER,
     WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
-    WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
+    WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BARE_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_FOLD_MARKER,
@@ -1601,6 +1601,8 @@ fn span_list_close_tail_of(attributes: &AttributeMap<'_>) -> Option<SpanListClos
         Some(SpanListCloseTail::Lead)
     } else if map.contains_key(WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER) {
         Some(SpanListCloseTail::Bare)
+    } else if map.contains_key(WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER) {
+        Some(SpanListCloseTail::Fold)
     } else {
         None
     }
@@ -1610,6 +1612,7 @@ fn strip_span_list_close_tail_markers(attributes: &mut AttributeMap<'_>) {
     attributes.remove(WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER);
     attributes.remove(WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER);
     attributes.remove(WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER);
+    attributes.remove(WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER);
 }
 
 /// The stopped underline/strikethrough sibling of the spanin tail: which
@@ -1791,15 +1794,14 @@ fn foster_sole_explicit_list<'t>(element: &mut Element<'t>) -> Option<Vec<Elemen
         wrap_explicit_list_items(&mut list, ctype);
     }
     if let Some(tail_mark) = tail_mark
+        && !matches!(tail_mark, SpanListCloseTail::Fold)
         && let Element::List { attributes, .. } = &mut list
     {
         let marker = match tail_mark {
             SpanListCloseTail::Break => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
             SpanListCloseTail::Bare => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
             SpanListCloseTail::Lead => WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
-            SpanListCloseTail::Fold => {
-                unreachable!("span tail family has no fold marker")
-            }
+            SpanListCloseTail::Fold => unreachable!("fold skipped above"),
         };
         attributes.insert(marker, Cow::Borrowed(""));
     }
@@ -2835,14 +2837,16 @@ fn format_explicit_list_segments<'t>(
     {
         // The closed format pair beyond this explicit list (spanin family)
         // hands its post-list tail shape to the list, so root lowering can
-        // apply it to the span-content paragraph that follows the list.
+        // apply it to the span-content paragraph that follows the list. The
+        // fold shape (pair closer immediately followed by the enclosing
+        // scope close, pw90's frozen item-21 remainder) rides the same
+        // channel: root lowering suppresses the synthetic post-list
+        // continuation break for it.
         let marker = match tail_mark {
             SpanListCloseTail::Break => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
             SpanListCloseTail::Bare => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
             SpanListCloseTail::Lead => WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
-            SpanListCloseTail::Fold => {
-                unreachable!("span tail family has no fold marker")
-            }
+            SpanListCloseTail::Fold => WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
         };
         for element in segmented.iter_mut() {
             if let Element::List { attributes, .. } = element {
@@ -3097,6 +3101,13 @@ fn lower_root_sequence<'t>(
                 && !close_only_paragraph;
             let tail_lead = matches!(span_tail, Some(SpanListCloseTail::Lead))
                 && !close_only_paragraph;
+            // pw90 frozen shape (item-21 l2 remainder): the pair's closer is
+            // immediately followed by the enclosing span/size close. Live
+            // closes the scope right after the pair's post-list segment, so
+            // no continuation break is materialised inside the closing
+            // segment (`<span><strong>c</strong></span>`).
+            let tail_fold = matches!(span_tail, Some(SpanListCloseTail::Fold))
+                && close_only_paragraph;
             // Inverse strong-x tail: the following paragraph renders bare
             // (with a leading break for the `Break` shape; see the insert
             // below). The spanin `Break` gate above keys on a close-only
@@ -3185,6 +3196,7 @@ fn lower_root_sequence<'t>(
                 && !reopens_paragraph_after_separator
                 && (!follows_table || tail_break)
                 && !tail_bare
+                && !tail_fold
                 && (!previous_is_own_chunk_block || tail_break)
                 && !output.is_empty()
                 && paragraph_group.is_none()
@@ -3219,6 +3231,7 @@ fn lower_root_sequence<'t>(
                     && !tail_break
                     && !tail_bare
                     && !tail_lead
+                    && !tail_fold
                     && !label_break
                     && !label_bare
                     && !understrike_break

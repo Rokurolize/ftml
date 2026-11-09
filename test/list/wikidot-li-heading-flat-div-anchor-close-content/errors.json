@@ -1,0 +1,65 @@
+[
+  {
+    "token": "input-end",
+    "rule": "block-anchor",
+    "span": [
+      100,
+      100
+    ],
+    "kind": "end-of-input"
+  },
+  {
+    "token": "left-block",
+    "rule": "fallback",
+    "span": [
+      0,
+      2
+    ],
+    "kind": "no-rules-match"
+  },
+  {
+    "token": "right-block",
+    "rule": "fallback",
+    "span": [
+      29,
+      31
+    ],
+    "kind": "no-rules-match"
+  },
+  {
+    "token": "left-block-end",
+    "rule": "fallback",
+    "span": [
+      59,
+      62
+    ],
+    "kind": "no-rules-match"
+  },
+  {
+    "token": "right-block",
+    "rule": "fallback",
+    "span": [
+      65,
+      67
+    ],
+    "kind": "no-rules-match"
+  },
+  {
+    "token": "left-block-end",
+    "rule": "fallback",
+    "span": [
+      84,
+      87
+    ],
+    "kind": "no-rules-match"
+  },
+  {
+    "token": "right-block",
+    "rule": "fallback",
+    "span": [
+      88,
+      90
+    ],
+    "kind": "no-rules-match"
+  }
+]

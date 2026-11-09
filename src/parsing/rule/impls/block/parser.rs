@@ -5733,6 +5733,8 @@ where
             return Err(error);
         }
 
+        let previous_format_body = self.set_wikidot_format_collection_body(false);
+
         let track_boundary = self.discarding_hidden_body();
         if track_boundary {
             self.push_hidden_body_boundary(
@@ -5765,6 +5767,8 @@ where
         if track_boundary {
             self.pop_hidden_body_boundary();
         }
+
+        self.set_wikidot_format_collection_body(previous_format_body);
 
         result
     }

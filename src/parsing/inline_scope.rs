@@ -1921,6 +1921,41 @@ fn push_post_list_blank_break(output: &mut Vec<Element<'_>>) {
     tail.elements_mut().push(Element::LineBreak);
 }
 
+fn strip_crossed_close_tail_leading_space(tail: &mut Container<'_>) {
+    let mut drop_elements = 0usize;
+    let mut trim_first = 0usize;
+    let mut found_content = false;
+    for element in tail.elements().iter() {
+        match element {
+            Element::Text(text) => {
+                let rest = text.trim_start_matches([' ', '\t']);
+                if rest.is_empty() {
+                    drop_elements += 1;
+                } else {
+                    trim_first = text.len() - rest.len();
+                    found_content = true;
+                    break;
+                }
+            }
+            _ => {
+                found_content = true;
+                break;
+            }
+        }
+    }
+    if !found_content {
+        return;
+    }
+    let elements = tail.elements_mut();
+    elements.drain(..drop_elements);
+    if trim_first > 0
+        && let Some(Element::Text(text)) = elements.first_mut()
+    {
+        let rest = text[trim_first..].to_owned();
+        *text = Cow::Owned(rest);
+    }
+}
+
 /// The inverse strong-x sibling of the spanin tail: a span/size scope
 /// inside a format pair closed beyond the list the pair crosses. `Break`
 /// renders the following paragraph bare with a leading break; `Bare`
@@ -4645,6 +4680,13 @@ fn flush_root_pending<'t>(
         && !pending_is_marker_run
         && pending_ends_with_bare_marker(pending);
     let mut sequence = mem::take(pending);
+    let crossed_close_abuts_list = output_ends_with_explicit_list(output)
+        && active.has_span_or_size_scope()
+        && matches!(
+            sequence.first(),
+            Some(Element::Partial(PartialElement::InlineFormatClose(kind)))
+            if matches!(kind, InlineFormatKind::Bold | InlineFormatKind::Italics)
+        );
     // Rejected-bold closer attach (item 92): after an align/div-item list,
     // live drops the closer chunk's separator break (`</ul>**`, never
     // `</ul><br>**`). Decided pre-lowering: lowering stamps the chunk into
@@ -4702,6 +4744,12 @@ fn flush_root_pending<'t>(
         !table_foster_precedes,
     );
     drop_segment_trailing_space(&mut sequence);
+    if crossed_close_abuts_list
+        && let Some(Element::Container(tail)) = sequence.first_mut()
+        && matches!(tail.ctype(), ContainerType::Span | ContainerType::Size)
+    {
+        strip_crossed_close_tail_leading_space(tail);
+    }
     // Post-list inverse-tail break (item 84(e)): the rejected crossing
     // pair's closer chunk follows an explicit list with a bare leading
     // break (the inter-block newline materialised as an element); live

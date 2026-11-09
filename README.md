@@ -215,3 +215,13 @@ let html_output = HtmlRender.render(&tree, &page_info, &settings);
 ### JSON Serialization
 
 See [`Serialization.md`](docs/Serialization.md).
+
+### Third-party content
+
+Most of this repository is licensed under the GNU Affero General Public License (see `LICENSE.md`), but some test and verification material is derived from wiki pages and is licensed separately, under the Creative Commons Attribution-ShareAlike 3.0 Unported license (CC BY-SA 3.0; full text in [`LICENSES/CC-BY-SA-3.0.txt`](LICENSES/CC-BY-SA-3.0.txt)). The declared areas are:
+
+* The parser fixture corpus in `test/` — see [`LICENSES/ATTRIBUTION-test-corpus.md`](LICENSES/ATTRIBUTION-test-corpus.md) (the notice lives outside `test/` because the fixture loader rejects any entry in that directory that is not a test case).
+* Page-derived data in `tests/` — see [`tests/ATTRIBUTION.md`](tests/ATTRIBUTION.md).
+* Live-measured evidence in `verification/` — see [`verification/ATTRIBUTION.md`](verification/ATTRIBUTION.md).
+
+Bulk verbatim wiki content (such as full page sources) is not stored in this repository; it is managed outside version control.

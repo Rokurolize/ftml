@@ -83,9 +83,6 @@ pub struct ParagraphStack<'t> {
     wikidot_div_literal_run: Option<(usize, usize)>,
     wikidot_div_literal_run_bare: bool,
     pending_wikidot_div_literal: bool,
-    /// Whether the most recent explicit-list batch armed a post-list
-    /// follower wrap (marker closer or stashed anchor chrome): a literal
-    /// div follower then keeps live's paragraph instead of staying bare.
     wikidot_post_list_follower_wrap_armed: bool,
     trim_unwrapped_trailing_line_break: bool,
     suppress_next_line_break: bool,
@@ -106,13 +103,7 @@ pub struct ParagraphStack<'t> {
     wikidot_explicit_pre_candidate: bool,
     wikidot_suppress_explicit_pre_dissolve: bool,
     wikidot_dissolved_pre_candidate: bool,
-    /// Whether the current run started at its line start (latched at every
-    /// run start; read when an explicit list notes its pre-candidate).
     wikidot_run_started_at_line_start: bool,
-    /// Whether the armed pre-list run started at its line start: a
-    /// line-initial text run glued to an explicit list head dissolves,
-    /// while a run after a `>` quote prefix does not (pin
-    /// test/blockquote/quote-row-fused-list-start-paragraph).
     wikidot_explicit_pre_started_line: bool,
     wikidot_post_empty_list_break: bool,
     /// After `[[/math]]`, some closer-line whitespace tails make live's next
@@ -758,20 +749,6 @@ impl<'t> ParagraphStack<'t> {
         if !self.wikidot {
             return;
         }
-        // A line-initial same-line plain-text lead (`xx[[ol]]`) dissolves
-        // (probes muse-probe-g3xres-s2-leadxx-literal-trail,
-        // muse-probe-g3xres-s4-sameline-lead-nextline-trail); a run after
-        // a `>` quote prefix does not (pin
-        // test/blockquote/quote-row-fused-list-start-paragraph). An
-        // own-line lead stays wrapped before a next-line trailer (pin
-        // test/list/explicit-pre-kept-before-prose, probe
-        // muse-probe-g3x3-q7-min-plaintext-lead). Formatted leads
-        // (`<strong>`, `<span>`, `<a>`) always stay wrapped, and
-        // marker-only leads (`**`) stay under the shield unwrap instead
-        // (probe muse-probe-g3x2-p7-bold-cross-basic), and a lead that is
-        // only a pair/monospace opener (`@@`, the `format_open_marker`
-        // set) stays wrapped so the later pairing pass still sees it
-        // (pool idx 3457: live keeps `<p>@@</p>` before the list).
         let dissolve = self.wikidot_explicit_pre_candidate
             && !self.wikidot_explicit_pre_is_bold_marker()
             && self.wikidot_explicit_pre_is_plain_text()
@@ -789,9 +766,6 @@ impl<'t> ParagraphStack<'t> {
         self.wikidot_dissolved_pre_candidate = false;
     }
 
-    /// The armed pre-list paragraph, if the finished tail still has the
-    /// `[Paragraph, List]` (or `[Paragraph, List, break]`) shape the
-    /// pre-candidate note recorded.
     fn wikidot_explicit_pre_paragraph(&self) -> Option<&Container<'t>> {
         let len = self.finished.len();
         let paragraph_index = if matches!(
@@ -812,9 +786,6 @@ impl<'t> ParagraphStack<'t> {
         }
     }
 
-    /// Whether the armed pre-list paragraph sat on the list's own line
-    /// (`xx[[ol]]`): its last content element is not a line break (an
-    /// own-line lead (`xx\n[[ol]]`) ends with one).
     fn wikidot_explicit_pre_is_sameline(&self) -> bool {
         self.wikidot_explicit_pre_paragraph()
             .is_some_and(|container| {
@@ -833,9 +804,6 @@ impl<'t> ParagraphStack<'t> {
             })
     }
 
-    /// Whether the armed pre-list paragraph is a bold-marker lead (`**`,
-    /// glued or not): those stay under the shield unwrap
-    /// (`unwrap_bare_bold_before_explicit_list`) instead of dissolving here.
     fn wikidot_explicit_pre_is_bold_marker(&self) -> bool {
         self.wikidot_explicit_pre_paragraph()
             .is_some_and(|container| {
@@ -844,9 +812,6 @@ impl<'t> ParagraphStack<'t> {
             })
     }
 
-    /// Whether the armed pre-list paragraph is plain text (only text and
-    /// line breaks): formatted leads (`<strong>`, `<span>`, `<a>`, …)
-    /// always stay wrapped.
     fn wikidot_explicit_pre_is_plain_text(&self) -> bool {
         self.wikidot_explicit_pre_paragraph()
             .is_some_and(|container| {
@@ -859,9 +824,6 @@ impl<'t> ParagraphStack<'t> {
             })
     }
 
-    /// Whether the armed pre-list paragraph is only a pair/monospace
-    /// opener (`@@`, or one of the `format_open_marker` tokens): not
-    /// prose, so it stays wrapped for the later pairing pass.
     fn wikidot_explicit_pre_is_pair_marker(&self) -> bool {
         self.wikidot_explicit_pre_paragraph()
             .is_some_and(|container| {
@@ -1087,13 +1049,6 @@ impl<'t> ParagraphStack<'t> {
                 *text = Cow::Owned(text[1..].to_owned());
             }
         } else {
-            // A literal `[[div]]…[[/div]]` run directly after a plain
-            // explicit list stays bare (probes muse-probe-g3x4-r3-g3-far-div,
-            // muse-probe-g3xres-v1-far-div-blank); a blank line between
-            // still keeps the break, only the paragraph goes. A marker
-            // closer or stashed anchor chrome arms the follower wrap
-            // instead (pins test/list/wikidot-li-run-stash-chrome-sl-div*,
-            // test/list/wikidot-marker-closer-hash-block-follower-sl-div).
             let bare = start > 0
                 && (matches!(
                     self.finished.get(start - 1),
@@ -1144,9 +1099,6 @@ impl<'t> ParagraphStack<'t> {
         self.finished.insert(start, paragraph);
     }
 
-    /// Whether the finished stream just before `start` ends with an
-    /// explicit list, skipping single line breaks (an attached or
-    /// blank-separated literal-div follower stays bare after the list).
     fn wikidot_finished_before_is_explicit_list(&self, start: usize) -> bool {
         let mut index = start;
         while index > 0 {

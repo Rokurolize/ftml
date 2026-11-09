@@ -290,12 +290,6 @@ fn parse_list_block_impl<'r, 't>(
     };
     let fused_close = parser.wikidot_body_closed_with_fused_close(block_rule);
     let list_end = parser.current().span.start;
-    // A closer line carrying only trailing spaces or tabs keeps live's
-    // post-list break (probes muse-probe-g3x4-r6-min-closer-trailspace,
-    // muse-probe-g3x4-r7-g3-closer-trailspace,
-    // muse-probe-g3xres-u2-closer-trailtab); other same-line content is a
-    // real residual (probes muse-probe-g3x3-q7-min-plaintext-lead,
-    // muse-probe-g3x3-q10-g3-trail2).
     let closer_has_same_line_residual =
         !matches!(
             parser.current().token,
@@ -1122,8 +1116,6 @@ fn parse_list_block_impl<'r, 't>(
     }
 }
 
-/// Whether the source line from `parser`'s current position holds only
-/// spaces or tabs (a blank same-line residual after a list closer).
 fn wikidot_list_closer_residual_is_blank(parser: &Parser<'_, '_>) -> bool {
     let inner = parser.full_text().inner();
     let rest = inner.get(parser.current().span.start..).unwrap_or("");
@@ -2392,13 +2384,6 @@ fn parse_list_item<'r, 't>(
             && parser.take_wikidot_li_shadowed_div_region_at(body_start, source_end);
         // BRIEF-TB74 (ledger item 74(e)): the trailing plain run after a
         // blank line merges bare into the item flow when it sits in the
-        // BRIEF-TB74 (ledger item 74(e)): the trailing plain run after a
-        // blank line merges bare into the item flow when it sits in the
-        // document-final paragraph chunk (probes muse-probe-tb74-*). A
-        // quote follower leaves the run document-final (probes
-        // muse-probe-g3x4-r9-g3-far-quote, muse-probe-g3xres-w1-*, y1-*)
-        // even though it counts as enclosing content for the post-heading
-        // wrap.
         let remainder = &parser.full_text().inner()[source_end..];
         let chunk_is_doc_final = wikidot_li_last_run_is_doc_final(remainder);
         let quote_follower =
@@ -3126,16 +3111,6 @@ fn line_is_single_literal_div_note_pair(line: &str) -> bool {
     after.trim().is_empty()
 }
 
-/// Whether a post-table run is itself a spanning pair: a `**…**` envelope
-/// or a same-name `[[x]]…[[/x]]` block pair. Live leaves such a run bare
-/// so the pair can span (pin
-/// test/span/same-line-div-text-has-no-leading-space); only
-/// trailing-closer runs wrap (probes muse-probe-g3x2-p11-pin-nolist,
-/// muse-probe-g3xres-t2-table-markronly-trail).
-/// Collect the literal text of a paragraph-safe run for pair detection,
-/// recursing into inline containers (a failed `**` pair literalises as
-/// `<span>**</span>`, pin
-/// test/span/same-line-div-text-has-no-leading-space).
 fn collect_pair_span_text(element: &Element, out: &mut String) -> bool {
     match element {
         Element::Text(content) | Element::Raw(content) => {
@@ -3155,7 +3130,6 @@ fn collect_pair_span_text(element: &Element, out: &mut String) -> bool {
 }
 
 fn post_table_run_is_pair_span(segment: &[Element], from: usize) -> bool {
-    // Mirror the paragraph-safe run the wrap below would take.
     let mut text = String::new();
     let mut index = from;
     while index < segment.len() && segment[index].paragraph_safe() {
@@ -3171,8 +3145,6 @@ fn post_table_run_is_pair_span(segment: &[Element], from: usize) -> bool {
     contains_same_name_block_pair(&text)
 }
 
-/// Whether `text` holds a `[[name]]…[[/name]]` block pair (single-line
-/// literal spans count; lone closers do not).
 fn contains_same_name_block_pair(text: &str) -> bool {
     let mut index = 0;
     while let Some(found) = text[index..].find("[[") {
@@ -3243,17 +3215,6 @@ fn wrap_inline_line_after_list(
 ) {
     let mut index = 0;
     while index < segment.len() {
-        // A run after a simple (`||`-row) table follows the same
-        // document-final gate as a post-list run: live wraps a
-        // marker-carrying run after a `||` table row when later content
-        // follows (probes muse-probe-g3x2-p11-pin-nolist,
-        // muse-probe-g3xres-t2-table-markronly-trail), and leaves it bare
-        // at document end (probe muse-probe-g3xres-t1-table-docfinal).
-        // Runs after an advanced (`[[table]]`) block stay bare either
-        // way (pool idx 3760, 3784) — the same simple/advanced split the
-        // pre-list dissolver (`wikidot_explicit_pre_dissolver`) and the
-        // quote/table helpers apply to table-adjacent runs.
-        // Plain runs stay bare either way (residual 1, another lane).
         let after_table = matches!(
             segment[index],
             Element::Table(ref table) if table.table_type == TableType::Simple
@@ -3271,10 +3232,6 @@ fn wrap_inline_line_after_list(
             continue;
         }
         if after_table {
-            // A run cut off by a following block in its segment stays
-            // bare (pin test/span/same-line-div-text-has-no-leading-space);
-            // only a run reaching its segment end takes the doc-final
-            // gate, and a spanning pair stays bare so the pair can span.
             let mut run_end = index + 1;
             while run_end < segment.len() && segment[run_end].paragraph_safe() {
                 run_end += 1;
@@ -3461,14 +3418,6 @@ fn wikidot_li_trailing_break_dropped_after_block_always(element: &Element) -> bo
     }
 }
 
-/// A blockquote (`>`) or heading (`+`) line after the list close starts a
-/// formed block, not later paragraph content (probes
-/// muse-probe-g3x4-r9-g3-far-quote, muse-probe-g3xres-w2-far-heading); even
-/// prose past such a line does not flip the run (probe
-/// muse-probe-g3xres-w1-quote-then-text). Returns the byte offset cutting
-/// the stream before the first such line, or `None` when absent. Tables
-/// and literal text still count as content (probes
-/// muse-probe-g3xres-x1-far-table, muse-probe-g3x4-r3-g3-far-div).
 fn wikidot_li_doc_final_block_follower_cut(stream: &str) -> Option<usize> {
     let mut pos = 0;
     for line in stream.split_inclusive('\n') {
@@ -3496,8 +3445,6 @@ fn wikidot_li_doc_final_block_follower_cut(stream: &str) -> Option<usize> {
 /// content. The caller gates this on `!enclosing_block` (items inside a
 /// div always wrap).
 fn wikidot_li_last_run_is_doc_final(remainder: &str) -> bool {
-    // A blockquote or heading follower (incl. any prose past it) is not
-    // later paragraph content — cut it before the chunk scan.
     let mut stream = remainder.to_string();
     if let Some(cut) = wikidot_li_doc_final_block_follower_cut(&stream) {
         stream.truncate(cut);

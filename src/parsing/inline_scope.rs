@@ -2177,6 +2177,120 @@ fn pending_starts_with_format_marker(pending: &[Element<'_>]) -> bool {
     })
 }
 
+fn subtree_has_break(element: &Element<'_>) -> bool {
+    if matches!(element, Element::LineBreak | Element::LineBreaks(_)) {
+        return true;
+    }
+    let mut found = false;
+    visit_children(element, &mut |children| {
+        for child in children {
+            if !found && subtree_has_break(child) {
+                found = true;
+            }
+        }
+    });
+    found
+}
+
+fn subtree_has_attach_block(element: &Element<'_>) -> bool {
+    if matches!(
+        element,
+        Element::Container(container)
+            if matches!(container.ctype(), ContainerType::Align(_) | ContainerType::Div)
+    ) {
+        return true;
+    }
+    let mut found = false;
+    visit_children(element, &mut |children| {
+        for child in children {
+            if !found && subtree_has_attach_block(child) {
+                found = true;
+            }
+        }
+    });
+    found
+}
+
+/// Whether the just-closed explicit list takes a following closer chunk
+/// onto itself on live (the chunk's separator break is dropped): probed for
+/// items carrying align/div flow blocks (item 92 grid `muse-probe-fw92-*`,
+/// plus the 84(e) div shape). Plain-item lists keep the break (the
+/// `native-list-item-literalises-crossed-bold` pin), as do blockquote-led
+/// lists (the `literalised-post-list-breaks-collapse` pin drops through its
+/// own break-free path).
+fn list_tail_attaches(list: &Element<'_>) -> bool {
+    let Element::List {
+        items,
+        wikidot_explicit_block: true,
+        ..
+    } = list
+    else {
+        return false;
+    };
+    items.iter().any(|item| match item {
+        ListItem::Elements { elements, .. } => {
+            elements.iter().any(subtree_has_attach_block)
+        }
+        ListItem::SubList { element } => subtree_has_attach_block(element),
+    })
+}
+
+/// Whether a pending run flushed right after an explicit list is a rejected
+/// bold pair's closer chunk: it opens with the separator break and carries
+/// the `**` closer as bare marker text — first, or after one text run
+/// (`y**`). A marker-first chunk with a later break is blank-line-separated
+/// and keeps its break on live (`span-table-cross-align-blanksep`); so does
+/// a text-first chunk across a blank separation, hence the blank guard on
+/// that arm too. Restricted to bold: the other formats' twins are unprobed.
+fn pending_is_attached_bold_tail(sequence: &[Element<'_>]) -> bool {
+    if !matches!(sequence.first(), Some(Element::LineBreak)) {
+        return false;
+    }
+    match sequence.get(1) {
+        Some(Element::Text(marker)) if marker.as_ref() == "**" => {
+            !sequence[2..].iter().any(subtree_has_break)
+        }
+        Some(Element::Text(first)) if !format_open_marker(first.as_ref()) => {
+            matches!(sequence.get(2), Some(Element::Text(marker)) if marker.as_ref() == "**")
+                && !chunk_has_blank_break(sequence)
+        }
+        _ => false,
+    }
+}
+
+/// Whether an element is a close-only anchor-close paragraph (`[[/a]]`
+/// alone on its line after the anchor scope died, e.g. behind a list).
+fn is_close_only_anchor_close_paragraph(element: &Element<'_>) -> bool {
+    matches!(
+        element,
+        Element::Container(container)
+            if container.ctype() == ContainerType::Paragraph
+                && matches!(
+                    container.elements(),
+                    [Element::Partial(PartialElement::InlineAnchorClose(_))]
+                )
+    )
+}
+
+/// Whether the chunk holds a blank-line separation (a multi-break element
+/// or two adjacent breaks); live keeps the closer chunk's break then.
+fn chunk_has_blank_break(sequence: &[Element<'_>]) -> bool {
+    let mut previous_break = false;
+    for element in sequence {
+        match element {
+            Element::LineBreaks(_) => return true,
+            Element::LineBreak => {
+                if previous_break {
+                    return true;
+                }
+                previous_break = true;
+            }
+            _ => previous_break = false,
+        }
+    }
+    false
+}
+
 fn format_segment_has_content(elements: &[Element<'_>]) -> bool {
     elements.iter().any(|element| match element {
         Element::LineBreak | Element::LineBreaks(_) => false,
@@ -3583,10 +3697,41 @@ fn flush_root_pending<'t>(
     // exactly when the crossed list's items warrant it (the align/
     // text-before-block/blockquote shapes; see `crossed_pre_list_head_should_wrap`).
     // Quoted-native poisons keep the bare head (d832-full).
-    let wrap_crossed_head = next.is_some_and(|next| {
+    // fw92 head-shape gates: whether the pending run is a bare-marker run
+    // (a rejected crossed pair's head) and whether the crossed list warrants
+    // a head wrap, independent of each other.
+    let pending_is_marker_run = pending_starts_with_format_marker(pending);
+    let crossed_head_warrants = next.is_some_and(|next| {
         crossed_pre_list_head_should_wrap(next) && !subtree_contains_native_list(next)
-    }) && pending_starts_with_format_marker(pending);
+    });
+    let wrap_crossed_head = crossed_head_warrants && pending_is_marker_run;
     let mut sequence = mem::take(pending);
+    // Rejected-bold closer attach (item 92): after an align/div-item list,
+    // live drops the closer chunk's separator break (`</ul>**`, never
+    // `</ul><br>**`). Decided pre-lowering: lowering stamps the chunk into
+    // the open scope, hiding the bare break. The 84(e) gate below covers the
+    // scope-close-inside variant; this arm covers the open-scope and
+    // scopeless variants. Plain-item lists keep the break.
+    if matches!(sequence.first(), Some(Element::LineBreak))
+        && sequence_has_content(&sequence[1..])
+        && pending_is_attached_bold_tail(&sequence)
+        && output.last().is_some_and(list_tail_attaches)
+    {
+        sequence.remove(0);
+        // fw92 anchor tail: live keeps the trailing break (`**<br>`). The
+        // bare closer's newline glue would otherwise render empty while the
+        // orphaned `[[/a]]` close paragraph emits nothing (span/size closes
+        // re-add their break in the paragraph arm because those scopes are
+        // still alive; the anchor died at the list). Gated to the exact
+        // probed shape: attach-drop fired, a close-only anchor-close
+        // paragraph follows, and the chunk ends in the space glue.
+        if next.is_some_and(is_close_only_anchor_close_paragraph)
+            && let Some(Element::Text(space)) = sequence.last()
+            && space.as_ref() == " "
+        {
+            *sequence.last_mut().expect("checked last above") = Element::LineBreak;
+        }
+    }
     // Table-fostered span tail at root (item 84(b)) and the note-nested
     // companion (84(c), note/collapsible/tab nestings probed at page root):
     // a pending run right after a block whose subtree contains a Table
@@ -3640,6 +3785,11 @@ fn flush_root_pending<'t>(
             sequence,
             AttributeMap::new(),
         ))];
+        // fw92: live never styles a bare-marker head with the anchor scope
+        // (`a-table-cross-align` is `<p>**<br></p>`); span/size stay applied.
+        if pending_is_marker_run {
+            strip_anchor_containers(&mut sequence);
+        }
     }
     if scope_open_at_start
         && matches!(
@@ -3655,12 +3805,21 @@ fn flush_root_pending<'t>(
             strip_leading_line_break(&mut sequence);
         } else {
             strip_leading_line_break(&mut sequence);
-            if sequence_has_content(&sequence) {
+            // fw92: a bare-marker run before a non-warranting explicit list
+            // stays bare on live (`span-table-cross-div-noscopeclose`);
+            // ordinary content still wraps here as before.
+            let wraps = sequence_has_content(&sequence)
+                && !(at_explicit_list && pending_is_marker_run && !crossed_head_warrants);
+            if wraps {
                 sequence = vec![Element::Container(Container::new(
                     ContainerType::Paragraph,
                     sequence,
                     AttributeMap::new(),
                 ))];
+                // Same anchor rule as the crossed-head arm above.
+                if pending_is_marker_run {
+                    strip_anchor_containers(&mut sequence);
+                }
             }
         }
     }
@@ -3733,6 +3892,38 @@ fn strip_leading_line_break(elements: &mut Vec<Element<'_>>) -> bool {
         }
         Some(Element::Color { elements, .. }) => strip_leading_line_break(elements),
         _ => false,
+    }
+}
+
+/// Unwraps every anchor container in place, splicing its children: live
+/// never styles a bare-marker pre-list head with the anchor scope. Only the
+/// stamped container goes; scope state is untouched, so items, tails, and
+/// the scope close itself lower exactly as before.
+fn strip_anchor_containers(elements: &mut Vec<Element<'_>>) {
+    let mut index = 0;
+    while index < elements.len() {
+        if matches!(elements[index], Element::Anchor { .. }) {
+            let Element::Anchor {
+                elements: mut inner,
+                ..
+            } = mem::replace(&mut elements[index], Element::LineBreak)
+            else {
+                unreachable!()
+            };
+            strip_anchor_containers(&mut inner);
+            let count = inner.len();
+            elements.splice(index..=index, inner);
+            index += count;
+        } else {
+            match &mut elements[index] {
+                Element::Container(container) => {
+                    strip_anchor_containers(container.elements_mut());
+                }
+                Element::Color { elements, .. } => strip_anchor_containers(elements),
+                _ => {}
+            }
+            index += 1;
+        }
     }
 }
 

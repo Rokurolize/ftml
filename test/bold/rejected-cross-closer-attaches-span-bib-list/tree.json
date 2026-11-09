@@ -1,0 +1,88 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "span",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "bibliography-block",
+                        "data": {
+                            "index": 0,
+                            "title": null,
+                            "hide": false
+                        }
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "bold",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "list",
+                                    "data": {
+                                        "type": "bullet",
+                                        "attributes": {},
+                                        "items": [
+                                            {
+                                                "item-type": "elements",
+                                                "attributes": {},
+                                                "elements": [
+                                                    {
+                                                        "element": "container",
+                                                        "data": {
+                                                            "type": {
+                                                                "align": "center"
+                                                            },
+                                                            "attributes": {},
+                                                            "elements": [
+                                                                {
+                                                                    "element": "container",
+                                                                    "data": {
+                                                                        "type": "paragraph",
+                                                                        "attributes": {},
+                                                                        "elements": [
+                                                                            {
+                                                                                "element": "text",
+                                                                                "data": "x"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "element": "line-break"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    }
+                ]
+            }
+        }
+    ],
+    "bibliographies": [
+        [
+            [
+                "a",
+                [
+                    {
+                        "element": "text",
+                        "data": "b"
+                    }
+                ]
+            ]
+        ]
+    ]
+}

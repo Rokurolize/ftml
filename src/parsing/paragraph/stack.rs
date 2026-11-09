@@ -324,10 +324,37 @@ impl<'t> ParagraphStack<'t> {
         self.wikidot_post_empty_list_break = false;
     }
 
+    /// HMFOL: block followers whose rules report paragraph-safe content yet
+    /// live keeps the attached post-list break before (heading, hr, quote;
+    /// saved-page probes `muse-probe-hmfol-ul/ol-adj-h1/h2/h6/hr/quote`).
+    /// The prose absorb must not pop the pending break for these; the break
+    /// then travels the same pending path as the kept `[[`-led followers.
+    fn wikidot_post_list_keep_block(element: &Element<'_>) -> bool {
+        match element {
+            Element::HorizontalRule => true,
+            Element::Container(container) => matches!(
+                container.ctype(),
+                ContainerType::Header(_) | ContainerType::Blockquote
+            ),
+            _ => false,
+        }
+    }
+
     fn wikidot_post_list_break_absorber(element: &Element<'_>) -> bool {
         match element {
-            Element::List { .. } | Element::Code(_) | Element::TabView(_) => true,
+            // HMFOL: live drops the attached post-list break before math and
+            // align (saved-page probes `muse-probe-hmfol-ul/ol-adj-math` and
+            // `-adj-align`); every other `[[`-block follower keeps it.
+            Element::List { .. }
+            | Element::Code(_)
+            | Element::TabView(_)
+            | Element::Math { .. } => true,
             Element::Table(table) => table.table_type != TableType::Simple,
+            Element::Container(container)
+                if matches!(container.ctype(), ContainerType::Align(_)) =>
+            {
+                true
+            }
             _ => false,
         }
     }
@@ -356,12 +383,14 @@ impl<'t> ParagraphStack<'t> {
                 alignment: Some(_), ..
             } => true,
             Element::Table(table) => table.table_type != TableType::Simple,
+            // HMFOL: align no longer swallows here — live keeps the
+            // blank-separated post-list break before align (saved-page probes
+            // `muse-probe-hmfol-ul/ol-blank-align`), routing it like prose.
             Element::Container(container) => matches!(
                 container.ctype(),
                 ContainerType::Div
                     | ContainerType::Note
                     | ContainerType::Blockquote
-                    | ContainerType::Align(_)
                     | ContainerType::Header(_)
             ),
             _ => false,
@@ -1405,6 +1434,7 @@ impl<'t> ParagraphStack<'t> {
             }
             if Self::wikidot_element_has_run_content(&element)
                 && !self.wikidot_current_has_run_content()
+                && !Self::wikidot_post_list_keep_block(&element)
             {
                 self.wikidot_absorb_post_list_break_for_prose(!paragraph_break_separated);
             }

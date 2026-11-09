@@ -3563,6 +3563,31 @@ where
         false
     }
 
+    /// HMFOL: whether the line starting at the current line break is led by
+    /// a keep-class block head (heading, quote, `----`). Live keeps the
+    /// post-list break before these (saved-page probes `muse-probe-hmfol-*`:
+    /// `ul/ol-adj-h1/h2/h6/hr/quote`), so the L85 same-para drop in
+    /// `gather_paragraphs` must not fire for them. The taxonomy mirrors the
+    /// stash-chrome keep class (`wikidot_stash_follower_chrome`); `=`-led
+    /// lines stay on the drop path (an `= x` line is a centered paragraph,
+    /// not a keep-class block, and is unprobed).
+    pub(crate) fn wikidot_next_line_is_post_list_keep_head(&self) -> bool {
+        if self.current().token != Token::LineBreak {
+            return false;
+        }
+        for extracted in self.remaining() {
+            match extracted.token {
+                Token::Whitespace => {}
+                Token::LineBreak | Token::ParagraphBreak | Token::InputEnd => {
+                    return false;
+                }
+                Token::Heading | Token::Quote | Token::TripleDash => return true,
+                _ => return false,
+            }
+        }
+        false
+    }
+
     /// BF79 (e-residual): classify the first content after a stash-formed
     /// list's close for anchor-chrome emission (saved-page probes
     /// muse-probe-bf79-*). Live keeps the stash chrome CLOSED before an

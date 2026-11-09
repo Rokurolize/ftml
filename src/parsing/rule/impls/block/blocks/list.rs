@@ -342,9 +342,6 @@ fn parse_list_block_impl<'r, 't>(
     } else {
         Vec::new()
     };
-    // BRIEF-O4TAKE: whether any taken chrome came from a bare (unstarred)
-    // lost-owner formation (live hands the follower to the anchor
-    // chrome's item instead of the pw65a paragraph wrap).
     let anchor_unstarred = if wikidot {
         parser.take_wikidot_anchor_unstarred_at(parser.wikidot_li_pairing_depth())
     } else {
@@ -993,11 +990,6 @@ fn parse_list_block_impl<'r, 't>(
     // in live — even across blank lines (probe rounds pw65a-1/2/3, o5/r3c/
     // r3e with blank-separated prose). The blank-tolerant peek applies only
     // to those shapes; plain/degraded lists keep the untolerant check.
-    // A stash formed by an unstarred lost-owner formation (BRIEF-O4TAKE:
-    // bare `[[/li]]`/`[[/ol]]` closers) instead hands the follower to the
-    // stash: inline-flow content becomes the anchor item's content, or the
-    // chrome drops (code/raw blocks, blank-separated heading-like blocks)
-    // or is kept closed (adjacent heading-like blocks, blank-formed tables).
     let stash_formed = !anchor_chromes.is_empty();
     let stash_o4 = wikidot && !nested && stash_formed && anchor_unstarred;
     let follower_wrap = closer_line_marker.is_some() || (stash_formed && !stash_o4);
@@ -1016,15 +1008,6 @@ fn parse_list_block_impl<'r, 't>(
     } else {
         WikidotStashFollowerChrome::EndOfInput
     };
-    // BRIEF-O4TAKE: unstarred lost-owner formation stashes; live gives the
-    // follower to the anchor chrome (or drops it before blocks). Inline-flow
-    // follower content becomes the anchor item's content (the following
-    // paragraph-safe run is captured by the paragraph gather); an equation
-    // number item becomes the anchor item (the math block's renderer then
-    // emits the chrome around its eq number); a blank-formed table keeps the
-    // chrome closed with a lone `<br />`. Code/raw blocks, native list
-    // heads, and blocks after a blank line take the ordinary drop/keep
-    // arms, with the pw65a record suppressed above.
     if stash_o4 {
         use crate::parsing::rule::impls::line_owner::WikidotAnchorFollower as F;
         let class = crate::parsing::rule::impls::line_owner::wikidot_anchor_follower_after_close(
@@ -1052,8 +1035,6 @@ fn parse_list_block_impl<'r, 't>(
                 return ok!(false; output, errors);
             }
             F::MathBlock { blank } if list_type == ListType::Numbered && !fused_close => {
-                // The equation-number segment emits the chrome markup from
-                // the math block's renderer; the stashed chrome is dropped.
                 let _ = anchor_chromes;
                 parser.arm_wikidot_anchor_capture(None, blank, true);
                 let mut output = vec![element];
@@ -3022,14 +3003,6 @@ fn deep_marker_head(element: &Element) -> bool {
     matches!(element, Element::Text(text) if text.starts_with("**") || text.starts_with("##"))
 }
 
-/// BRIEF-O4TAKE: the dissolved deeper lost-owner formation can leave a
-/// single native run list of pure text/break items at the body's tail; live
-/// dissolves it into the inline flow. Splices the tail run's items into
-/// place, keeping any prefix text bare. Skips when the body carries a
-/// native item-head line (`* x`): such an item is a genuinely nested
-/// native list and stays. Returns the index at which the run starts (the
-/// first spliced item's position in the pre-splice body), for the tail
-/// wrap.
 fn splice_dissolved_formation_run<'t>(
     elements: &mut Vec<Element<'t>>,
     body_source: &str,
@@ -3081,9 +3054,6 @@ fn splice_dissolved_formation_run<'t>(
     }
 }
 
-/// BRIEF-O4TAKE: wraps the trailing inline tail of a dissolved formation
-/// into a paragraph when an inline-flow follower forms after the enclosing
-/// list; at end of input or before structural blocks the tail stays bare.
 fn wrap_dissolved_formation_tail<'t>(
     elements: &mut Vec<Element<'t>>,
     body_source: &str,

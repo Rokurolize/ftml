@@ -362,17 +362,7 @@ pub(super) struct BlockScanCache<'t> {
     /// own depth's anchors. Keeps the anchor out of the decompose
     /// discarded on the floor.
     wikidot_list_anchor_chromes: Vec<(usize, Element<'t>)>,
-    /// BRIEF-O4TAKE: parallel to `wikidot_list_anchor_chromes`, whether each
-    /// stashed anchor chrome came from a lost-owner formation whose closers
-    /// were bare (unstarred) item lines. Unstarred formations hand the
-    /// follower to the anchor chrome instead of the pw65a wrap.
     wikidot_list_anchor_unstarred: Vec<(usize, bool)>,
-    /// BRIEF-O4TAKE: an armed anchor capture, taken by the paragraph gather
-    /// right after the just-closed list's elements push. The stashed anchor
-    /// chrome (when `Some`) is owed the follower's inline content (folded
-    /// into a paragraph): `blank` renders a leading `<br />`, `equation`
-    /// marks the armed run for an inline `<span class="equation-number">`
-    /// capture from a following math block instead.
     wikidot_anchor_capture: Option<(Option<Element<'t>>, bool, bool)>,
     /// Set when a numbered lost-owner formation closes its enclosing
     /// numbered explicit list (the multi-formation escape). Own-line stray
@@ -2979,10 +2969,6 @@ impl<'r, 't> Parser<'r, 't> {
         cache.wikidot_list_anchor_unstarred.push((depth, unstarred));
     }
 
-    /// BRIEF-O4TAKE: whether any chrome stamped at `depth` came from a bare
-    /// (unstarred) lost-owner formation. Mirrors
-    /// `take_wikidot_list_anchor_chromes_at`'s retain semantics (deeper
-    /// dropped, shallower kept).
     pub(crate) fn take_wikidot_anchor_unstarred_at(&self, depth: usize) -> bool {
         let mut cache = self.block_end_scan_cache.borrow_mut();
         let mut any = false;
@@ -2999,12 +2985,6 @@ impl<'r, 't> Parser<'r, 't> {
         any
     }
 
-    /// BRIEF-O4TAKE: arms the anchor capture taken by the paragraph gather
-    /// after the just-closed list's elements push. `chrome` is the stashed
-    /// anchor chrome (with its synthetic item replaced by the follower's
-    /// run) when the follower forms an inline run; `None` with `equation`
-    /// marks an armed equation-number capture instead (the following math
-    /// block's renderer emits the chrome markup).
     pub(crate) fn arm_wikidot_anchor_capture(
         &self,
         chrome: Option<Element<'t>>,
@@ -3016,7 +2996,6 @@ impl<'r, 't> Parser<'r, 't> {
             .wikidot_anchor_capture = Some((chrome, blank, equation));
     }
 
-    /// BRIEF-O4TAKE: takes the armed anchor capture, leaving it disarmed.
     pub(crate) fn take_wikidot_anchor_capture(
         &self,
     ) -> Option<(Option<Element<'t>>, bool, bool)> {

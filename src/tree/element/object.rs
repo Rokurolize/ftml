@@ -341,9 +341,6 @@ pub enum Element<'t> {
         /// compatibility wrappers, not authored math attributes.
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         wikidot_label_spans: Vec<AttributeMap<'t>>,
-        /// BRIEF-O4TAKE: the stashed anchor chrome of an enclosing explicit
-        /// numbered list absorbs this block's equation number; the block
-        /// renders the chrome around its eq number instead of a bare span.
         #[serde(default, skip_serializing_if = "is_false")]
         wikidot_capture_eq: bool,
     },

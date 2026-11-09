@@ -318,46 +318,19 @@ impl WikidotListFollower {
     }
 }
 
-/// BRIEF-O4TAKE: classification of the content following an explicit list
-/// whose body held a deeper lost-owner formation. Live folds the follower
-/// into the stashed anchor chrome when it forms inline content, drops the
-/// chrome before blocks that cannot fold inline, keeps it closed (lone
-/// `<br />`) before heading-like blocks and formed tables separated by a
-/// blank, and leaves it unclosed at end of input. The dissolve of the
-/// lost-owner formation into inline text paragraph-wraps when (and only
-/// when) a follower wraps by these classes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum WikidotAnchorFollower {
-    /// Nothing (or only blank lines) follows the list close.
     EndOfInput,
-    /// An inline-flow chunk forms right after the close: the chunk's inline
-    /// content becomes the anchor item's content. `blank`: a blank line
-    /// separates the close from the chunk, which renders a leading `<br />`.
     InlineRun { blank: bool },
-    /// A formed `[[code]]`/`[[raw]]`-style block follows: the anchor chrome
-    /// drops; the dissolved item body wraps.
     CodeBlock { blank: bool },
-    /// A formed `[[math]]` block follows: the equation-number span becomes
-    /// the anchor item's content; the dissolved item body wraps; the math
-    /// div renders after.
     MathBlock { blank: bool },
-    /// A native list-head line follows: the anchor chrome drops and the
-    /// dissolved item body wraps.
     ListHead { blank: bool },
-    /// A heading/quote/hr/flat-block follows on the very next line (or a
-    /// text-free block): the anchor chrome is kept closed with a lone
-    /// `<br />` and the dissolved item body stays bare.
     BlockKeep,
-    /// The same block follows after a blank line: the anchor chrome drops;
-    /// the item body wraps.
     BlockBlank { blank: bool },
-    /// A table row after a blank line: the table forms, the anchor chrome
-    /// is kept closed with a lone `<br />`, and the item body stays bare.
     TableBlank,
 }
 
 impl WikidotAnchorFollower {
-    /// Whether the dissolved item body wraps in a paragraph.
     pub(crate) fn wraps(self) -> bool {
         !matches!(
             self,
@@ -366,9 +339,6 @@ impl WikidotAnchorFollower {
     }
 }
 
-/// Whether the item body source carries a marker line that belongs to a
-/// deeper lost-owner formation (an item line opening or closing ul/ol/li).
-/// A bare `[[li]]` item line always qualifies; starred or not.
 pub(crate) fn deep_formation_in_source(source: &str) -> bool {
     source.lines().any(|line| {
         let trimmed = line.trim_start_matches([' ', '\t', '>']);
@@ -388,13 +358,6 @@ pub(crate) fn deep_formation_in_source(source: &str) -> bool {
     })
 }
 
-/// Whether the source carries a native item-head line whose content is not
-/// a block head (`* x`, `# x`): a genuinely nested native item, which live
-/// keeps as a list instead of dissolving into inline text. Marker lines
-/// carrying a block head (`* [[ol]]`, `* [[/ol]]`), a block head with
-/// substantive content on the same line (`# [[li]]x[[/li]]`), lines
-/// starting with another marker char, and lines whose content is not
-/// separated from the marker by whitespace do not qualify.
 pub(crate) fn strict_item_marker_line(source: &str) -> bool {
     source.lines().any(|line| {
         let trimmed = line.trim_start_matches([' ', '\t', '>']);
@@ -423,10 +386,6 @@ pub(crate) fn strict_item_marker_line(source: &str) -> bool {
     })
 }
 
-/// The follower classification for the list enclosing `from_byte`, from a
-/// position inside the list's body. Counts ul/ol opens and closes anywhere
-/// in the line (marker-led formation lines included) to find the enclosing
-/// list's own closer, then reads the following line.
 pub(crate) fn wikidot_anchor_follower_kind(
     source: &str,
     from_byte: usize,
@@ -460,10 +419,6 @@ pub(crate) fn wikidot_anchor_follower_kind(
     None
 }
 
-/// The follower classification starting right after an explicit list's
-/// closer line. Blank lines before the follower add to `blank`; end of
-/// input (after blanks) reports `EndOfInput`. `after_close` is where the
-/// gap begins; a leading blank line (if any) is consumed by `gap_has_blank`.
 pub(crate) fn wikidot_anchor_follower_after_close(
     source: &str,
     after_close: usize,
@@ -473,7 +428,6 @@ pub(crate) fn wikidot_anchor_follower_after_close(
     let mut pos = after_close.min(source.len());
     let mut blank = usize::from(gap_has_blank);
     if gap_has_blank {
-        // The gap's first (empty) line IS the blank paragraph line.
         let line_end = source[pos..]
             .find('\n')
             .map_or(source.len(), |offset| pos + offset);
@@ -485,7 +439,6 @@ pub(crate) fn wikidot_anchor_follower_after_close(
     } else if closer_newline_at_pos
         && source.as_bytes().get(pos) == Some(&b'\n')
     {
-        // The closer's own newline was not consumed by the gather.
         pos += 1;
     }
     loop {
@@ -518,7 +471,6 @@ fn classify_anchor_follower_line(line: &str, blank: bool) -> WikidotAnchorFollow
     if matches!(marker_head, "*" | "#" | "-") && trimmed[marker_head.len()..].starts_with([' ', '\t']) {
         return WikidotAnchorFollower::ListHead { blank };
     }
-    // Horizontal rule: four or more dashes on the line.
     if trimmed.len() >= 4 && trimmed.bytes().all(|byte| byte == b'-') {
         return if blank {
             WikidotAnchorFollower::BlockBlank { blank }
@@ -526,7 +478,6 @@ fn classify_anchor_follower_line(line: &str, blank: bool) -> WikidotAnchorFollow
             WikidotAnchorFollower::BlockKeep
         };
     }
-    // Heading line: one to six pluses, a whitespace gap, then content.
     let plus_run = trimmed.as_bytes().iter().take_while(|byte| **byte == b'+').count();
     if (1..=6).contains(&plus_run) && trimmed[plus_run..].starts_with([' ', '\t']) {
         return if blank {
@@ -535,7 +486,6 @@ fn classify_anchor_follower_line(line: &str, blank: bool) -> WikidotAnchorFollow
             WikidotAnchorFollower::BlockKeep
         };
     }
-    // Quote line.
     if trimmed.starts_with('>') {
         return if blank {
             WikidotAnchorFollower::BlockBlank { blank }
@@ -543,9 +493,6 @@ fn classify_anchor_follower_line(line: &str, blank: bool) -> WikidotAnchorFollow
             WikidotAnchorFollower::BlockKeep
         };
     }
-    // Block open lines: classify by the tag, keeping single-line pairs
-    // inline (they render as literal text) and routing formed blocks to
-    // their classes.
     if let Some(stripped) = trimmed.strip_prefix("[[") {
         let tag = stripped.to_ascii_lowercase();
         let name_end = tag.find([' ', '\t', ']']).unwrap_or(tag.len());
@@ -572,7 +519,6 @@ fn classify_anchor_follower_line(line: &str, blank: bool) -> WikidotAnchorFollow
             }
         }
     }
-    // A table row: a formed table after a blank; a literal line otherwise.
     if trimmed.contains("||") {
         return if blank {
             WikidotAnchorFollower::TableBlank
@@ -583,9 +529,6 @@ fn classify_anchor_follower_line(line: &str, blank: bool) -> WikidotAnchorFollow
     WikidotAnchorFollower::InlineRun { blank }
 }
 
-/// Whether a flat-pair head on one line closes on the same line
-/// (`[[div]]x[[/div]]`), which live renders as literal paragraph text
-/// instead of a formed block.
 fn wikidot_single_line_pair(trimmed: &str) -> bool {
     let Some(open_end) = trimmed.find("]]") else {
         return false;

@@ -1072,9 +1072,6 @@ where
             if list_follower_wrap == 2 {
                 stack.arm_wikidot_stash_br();
             }
-            // BRIEF-O4TAKE: adopt an armed anchor capture after this
-            // block's elements have flushed: the follower's inline run
-            // becomes the stashed anchor item's content.
             if let Some((chrome, blank, equation)) = parser.take_wikidot_anchor_capture() {
                 stack.arm_wikidot_anchor_capture(chrome, blank, equation);
             }

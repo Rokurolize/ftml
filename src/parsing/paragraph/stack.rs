@@ -53,9 +53,6 @@ pub(crate) fn collapsible_has_direct_literal_nested_opener(
 
 #[derive(Debug, Default)]
 pub(crate) struct WikidotAnchorCapture<'t> {
-    /// The anchor chrome to re-emit with the captured run as its item;
-    /// `None` for an equation-number capture (the math block renders the
-    /// chrome markup itself).
     chrome: Option<Element<'t>>,
     blank: bool,
     equation: bool,
@@ -109,14 +106,6 @@ pub struct ParagraphStack<'t> {
     /// 1 armed (no blank seen yet), 2 armed after a blank line. Consumed by
     /// the next inline/block element push.
     wikidot_stash_br: u8,
-    /// BRIEF-O4TAKE: an armed anchor capture, armed right after a
-    /// stash-formed explicit numbered list's elements push. The stashed
-    /// anchor chrome is owed the follower's inline run (paragraph-safe
-    /// elements accumulate in `current` exactly like a wrapped paragraph);
-    /// `blank` renders a leading `<br />` inside the anchor item,
-    /// `equation` marks an armed equation-number capture instead (the
-    /// following math block renders the chrome around its eq number; the
-    /// stack never emits this chrome itself).
     wikidot_anchor_capture: Option<WikidotAnchorCapture<'t>>,
     wikidot_explicit_pre_candidate: bool,
     wikidot_suppress_explicit_pre_dissolve: bool,
@@ -614,11 +603,6 @@ impl<'t> ParagraphStack<'t> {
         }
     }
 
-    /// BRIEF-O4TAKE: arms an anchor capture. The next paragraph-safe run is
-    /// captured as the anchor item's content instead of forming a
-    /// paragraph; a blank separator renders a leading `<br />`. An equation
-    /// capture leaves the stash-break unarmed (an eq-number capture owns no
-    /// leading break) and waits for the following math block.
     pub(crate) fn arm_wikidot_anchor_capture(
         &mut self,
         chrome: Option<Element<'t>>,
@@ -642,8 +626,6 @@ impl<'t> ParagraphStack<'t> {
         });
     }
 
-    /// BRIEF-O4TAKE: whether an anchor capture armed right after a
-    /// just-closed explicit list is pending.
     pub(crate) fn wikidot_anchor_capture_armed(&self) -> bool {
         self.wikidot_anchor_capture.is_some()
     }
@@ -1158,11 +1140,6 @@ impl<'t> ParagraphStack<'t> {
 
     #[inline]
     pub fn push_element(&mut self, mut element: Element<'t>, paragraph_safe: bool) {
-        // BRIEF-O4TAKE (anchor capture): an armed equation capture waits
-        // for the following math block (which the renderer wraps in the
-        // anchor chrome); any other element arriving while a capture is
-        // armed first falls back to the lone closed chrome so the follower
-        // block renders normally.
         if self.wikidot_anchor_capture.is_some() {
             let inline_ready = self
                 .wikidot_anchor_capture
@@ -2384,13 +2361,6 @@ impl<'t> ParagraphStack<'t> {
         }
     }
 
-    /// BRIEF-O4TAKE: completes an armed anchor capture. The stashed anchor
-    /// chrome is emitted with the current run as its single item (the run
-    /// is the follower's inline content, with a leading `<br />` injected
-    /// by the stash-break arm after blank lines); the paragraph that would
-    /// have formed is replaced by it. An empty or equation-only capture
-    /// completes without emitting (equation captures disarm earlier, at the
-    /// math block's push).
     fn flush_anchor_capture(&mut self) {
         let Some(mut capture) = self.wikidot_anchor_capture.take() else {
             return;
@@ -2454,11 +2424,6 @@ impl<'t> ParagraphStack<'t> {
     pub fn end_paragraph(&mut self) {
         if self.wikidot_anchor_capture.is_some() {
             if self.current.is_empty() {
-                // A paragraph boundary with no content yet (a blank line
-                // before the follower's inline run, or the gathered tail
-                // right after the block): nothing to capture, so do
-                // nothing; the blank-line arm comes from the gather's
-                // paragraph-break note.
                 return;
             }
             self.flush_anchor_capture();

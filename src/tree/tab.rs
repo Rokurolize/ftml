@@ -22,10 +22,8 @@ use super::clone::{elements_to_owned, string_to_owned};
 use super::{AttributeMap, Element};
 use std::borrow::Cow;
 
-/// The block kind that cut the simple-table row a tab's body carried in the
-/// legacy wikidot layout. Live places the ejected row-suffix tail relative to
-/// the tabview depending on the cutting block, so parse-time state records the
-/// kind on the tab that owned the cut and the renderer consumes it.
+/// The block kind that cut a simple-table row in this tab's body; live places
+/// the ejected row-suffix tail differently for a collapsible cut.
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub enum WikidotRowCut {

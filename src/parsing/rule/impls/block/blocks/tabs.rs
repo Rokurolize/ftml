@@ -438,10 +438,6 @@ fn tabview_tail_element<'t>(mut tail: Vec<Element<'t>>) -> Element<'t> {
     Element::Container(Container::new(ContainerType::Div, tail, attributes))
 }
 
-/// A collapsible cut whose row suffix stayed nested in the trailing paragraph
-/// of the scope that straddled the cut (the bold/span straddle shape). Live
-/// hoists the leftover run out of the panel, so the tab body ejects the
-/// paragraph's children as the row suffix instead of keeping them in the panel.
 fn eject_collapsible_row_suffix_paragraph<'t>(
     elements: &mut Vec<Element<'t>>,
 ) -> Option<Vec<Element<'t>>> {
@@ -461,17 +457,6 @@ fn eject_collapsible_row_suffix_paragraph<'t>(
     Some(tail)
 }
 
-fn element_debug_tag(element: &Element<'_>) -> String {
-    match element {
-        Element::Text(text) => format!("T({:?})", text.as_ref()),
-        Element::LineBreak => "BR".to_owned(),
-        Element::LineBreaks(_) => "BRn".to_owned(),
-        Element::Table(_) => "TABLE".to_owned(),
-        Element::Container(container) => format!("C({:?})", container.ctype()),
-        Element::Partial(partial) => format!("P({})", partial.name()),
-        _ => "E".to_owned(),
-    }
-}
 
 fn div_closer_line<'r, 't>(parser: &Parser<'r, 't>) -> bool
 where
@@ -2577,14 +2562,6 @@ fn parse_tab<'r, 't>(
     } else {
         None
     };
-    if std::env::var_os("FTML_DEBUG_COLLCUT").is_some() {
-        eprintln!(
-            "TABRULE rowcut={row_cut:?} interior={interior_cut:?} suffix_at={:?} suffix_len={} els={:?}",
-            parser.wikidot_row_suffix_at(),
-            row_suffix.len(),
-            elements.iter().map(element_debug_tag).collect::<Vec<_>>(),
-        );
-    }
 
     // A tab whose opener sits in a later quote segment (after an ejection in
     // this view) renders its panel as a bare div in that segment, not inside

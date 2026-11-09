@@ -45,6 +45,7 @@ pub use self::consume::{
     CollectSplitEscape, collect_consume, collect_consume_before, collect_consume_keep,
     collect_consume_keep_split,
 };
+pub(crate) use self::container::QuoteBodyCursorInstallation;
 pub use self::container::collect_container;
 pub use self::generic::collect;
 pub(crate) use self::iftags::{

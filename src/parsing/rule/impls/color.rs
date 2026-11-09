@@ -149,6 +149,14 @@ fn try_consume_fn<'r, 't>(
     };
     let invalid = [ParseCondition::current(Token::ParagraphBreak)];
     let body_start = parser.current().span.start;
+    // A quote row's body is offered to the inline rules the same way the
+    // container formats' is: the quote body cursor lets the collection step
+    // over the next row's `>` prefix instead of ending the pair at the row.
+    let quote_cursor =
+        (legacy && !table_owned).then(|| QuoteBodyCursorInstallation::install(parser));
+    let quote_row_body = quote_cursor
+        .as_ref()
+        .is_some_and(QuoteBodyCursorInstallation::installed);
     // The no-nesting flag is set around body collection only; it is reset
     // before `body?` so an abandoned color never leaks into siblings.
     parser.set_color_flag(legacy && !table_owned);
@@ -159,10 +167,25 @@ fn try_consume_fn<'r, 't>(
     } else {
         collect_consume_keep(parser, RULE_COLOR, close, &invalid, None)
     };
+    if let Some(cursor) = quote_cursor {
+        cursor.uninstall(parser);
+    }
     parser.set_color_flag(false);
     let body = body_result?;
     let ((mut elements, terminator), errors, paragraph_safe) = body.into();
     if legacy && !table_owned && elements.iter().any(wikidot_flow_block_element) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    // A native bullet/numbered list is a stop for a color pair on live: the
+    // markers stay literal when the body holds one at any depth. Inside a
+    // quote row the cursor is what lets the collection reach the list, so the
+    // pair is rejected here; at the root the collection already reached it
+    // before this pass and the element stays for the lowering path.
+    if quote_row_body
+        && elements
+            .iter()
+            .any(crate::parsing::inline_scope::subtree_contains_native_list)
+    {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     let unformed_dash = legacy

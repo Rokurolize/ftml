@@ -65,12 +65,12 @@ pub fn collect_container<'r, 't>(
     Ok(success)
 }
 
-struct QuoteBodyCursorInstallation {
+pub(crate) struct QuoteBodyCursorInstallation {
     installed: bool,
 }
 
 impl QuoteBodyCursorInstallation {
-    fn install(parser: &mut Parser<'_, '_>) -> Self {
+    pub(crate) fn install(parser: &mut Parser<'_, '_>) -> Self {
         let installed = if parser.quote_body_cursor().is_none()
             && let Some(required_depth) = parser.native_blockquote_depth()
         {
@@ -82,7 +82,11 @@ impl QuoteBodyCursorInstallation {
         QuoteBodyCursorInstallation { installed }
     }
 
-    fn uninstall(self, parser: &mut Parser<'_, '_>) {
+    pub(crate) fn installed(&self) -> bool {
+        self.installed
+    }
+
+    pub(crate) fn uninstall(self, parser: &mut Parser<'_, '_>) {
         if self.installed {
             parser.set_quote_body_cursor(None);
         }

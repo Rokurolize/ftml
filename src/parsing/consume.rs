@@ -20,6 +20,7 @@
 
 use super::Parser;
 use super::parser::QuoteBodyLineStatus;
+use super::parser::RowSuffixCut;
 use super::parser::block_pairs::WikidotBlockKind;
 use super::parser::inline_pairs::InlineMarkerRole;
 use super::parser::{wikidot_own_line_prefix, wikidot_quoted_own_line_prefix};
@@ -391,6 +392,19 @@ where
     })
 }
 
+fn wikidot_row_suffix_cut(kind: &WikidotBlockCloseKind<'_>) -> RowSuffixCut {
+    match kind {
+        WikidotBlockCloseKind::Div { .. } => RowSuffixCut::Div,
+        WikidotBlockCloseKind::Collapsible { .. }
+        | WikidotBlockCloseKind::CollapsibleCrossedBottom { .. } => {
+            RowSuffixCut::Collapsible
+        }
+        WikidotBlockCloseKind::Note { .. } => RowSuffixCut::Note,
+        WikidotBlockCloseKind::Align { .. } => RowSuffixCut::Align,
+        WikidotBlockCloseKind::BibliographyCrossed { .. } => RowSuffixCut::Div,
+    }
+}
+
 fn render_interior_line_prefix(source: &str, byte: usize) -> &str {
     let line_start = source[..byte.min(source.len())]
         .rfind('\n')
@@ -401,7 +415,7 @@ fn render_interior_line_prefix(source: &str, byte: usize) -> &str {
 fn wikidot_render_interior_close_kind_at<'r, 't>(
     parser: &Parser<'r, 't>,
     closer_byte: usize,
-) -> Option<WikidotBlockCloseKind<'t>>
+) -> Option<(WikidotBlockCloseKind<'t>, bool)>
 where
     'r: 't,
 {
@@ -410,9 +424,8 @@ where
         return None;
     }
     let kind = wikidot_flat_close_kind_at_byte(parser, closer_byte)?;
-    if !parser.wikidot_head_on_table_row_line(pair.head_byte)
-        && !parser.wikidot_byte_on_list_item_line(pair.head_byte)
-    {
+    let on_table_row = parser.wikidot_head_on_table_row_line(pair.head_byte);
+    if !on_table_row && !parser.wikidot_byte_on_list_item_line(pair.head_byte) {
         return None;
     }
     if parser.wikidot_byte_on_list_item_line(closer_byte)
@@ -426,7 +439,7 @@ where
     {
         return None;
     }
-    Some(kind)
+    Some((kind, on_table_row))
 }
 
 fn render_interior_close_line_is_quoted(source: &str, closer_byte: usize) -> bool {
@@ -681,9 +694,15 @@ where
         return Ok(None);
     }
     let closer_byte = parser.current().span.start;
-    let Some(kind) = wikidot_render_interior_close_kind_at(parser, closer_byte) else {
+    let Some((kind, on_table_row)) =
+        wikidot_render_interior_close_kind_at(parser, closer_byte)
+    else {
         return Ok(None);
     };
+    let row_suffix_cut = wikidot_row_suffix_cut(&kind);
+    if on_table_row {
+        parser.set_wikidot_render_interior_row_cut(row_suffix_cut);
+    }
     let source = parser.full_text().inner();
     if render_interior_close_line_is_quoted(source, closer_byte) {
         return Ok(None);
@@ -700,6 +719,7 @@ where
         let line = rest.split(['\n', '\r']).next().unwrap_or("");
         let trimmed = line.trim_start_matches([' ', '\t']);
         parser.set_wikidot_row_suffix_at(at + line.len() - trimmed.len());
+        parser.set_wikidot_row_suffix_cut(row_suffix_cut);
         return Ok(Some(ok!(false; close_element, Vec::new())));
     }
     while parser.current().token == Token::Whitespace {

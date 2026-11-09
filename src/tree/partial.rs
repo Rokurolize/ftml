@@ -557,6 +557,7 @@ mod tests {
                     label: cow!("tab"),
                     elements: vec![text!("contents")],
                     wikidot_label_spans: Vec::new(),
+                    wikidot_row_cut: None,
                 }),
                 "Tab",
                 ParseErrorKind::TabOutsideTabView,

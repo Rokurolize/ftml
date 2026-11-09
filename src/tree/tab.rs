@@ -22,12 +22,28 @@ use super::clone::{elements_to_owned, string_to_owned};
 use super::{AttributeMap, Element};
 use std::borrow::Cow;
 
+/// The block kind that cut the simple-table row a tab's body carried in the
+/// legacy wikidot layout. Live places the ejected row-suffix tail relative to
+/// the tabview depending on the cutting block, so parse-time state records the
+/// kind on the tab that owned the cut and the renderer consumes it.
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum WikidotRowCut {
+    Div,
+    Collapsible,
+    Note,
+    Align,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
 pub struct Tab<'t> {
     pub label: Cow<'t, str>,
     pub elements: Vec<Element<'t>>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub wikidot_label_spans: Vec<AttributeMap<'t>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wikidot_row_cut: Option<WikidotRowCut>,
 }
 
 impl Tab<'_> {
@@ -40,6 +56,7 @@ impl Tab<'_> {
                 .iter()
                 .map(AttributeMap::to_owned)
                 .collect(),
+            wikidot_row_cut: self.wikidot_row_cut,
         }
     }
 }

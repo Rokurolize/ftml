@@ -30,6 +30,18 @@ const LIST_DEPTH_AT_FOOTNOTE_NONE: u32 = u32::MAX;
 /// Sentinel for "no row suffix recorded" in the packed field.
 const ROW_SUFFIX_INACTIVE: u32 = u32::MAX;
 
+/// The block kind that cut the row a row suffix belongs to. The kind is
+/// recorded next to the suffix byte by the render-interior close consumer and
+/// read by the tab rule, which carries it on the owning tab.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub(crate) enum RowSuffixCut {
+    None,
+    Div,
+    Collapsible,
+    Note,
+    Align,
+}
+
 /// Bits 0..=4 of `crossed_closes` are the per-kind closer slots.
 const CROSSED_CLOSE_SLOTS: u16 = 0b1_1111;
 const CROSSED_COLLAPSIBLE_TAIL: u16 = 1 << 5;
@@ -98,6 +110,8 @@ pub(super) struct WikidotState {
     crossed_closes: u16,
     list_depth_at_footnote: u32,
     row_suffix_at: u32,
+    row_suffix_cut: RowSuffixCut,
+    render_interior_row_cut: RowSuffixCut,
 }
 
 impl Default for WikidotState {
@@ -119,6 +133,8 @@ impl Default for WikidotState {
             crossed_closes: 0,
             list_depth_at_footnote: LIST_DEPTH_AT_FOOTNOTE_NONE,
             row_suffix_at: ROW_SUFFIX_INACTIVE,
+            row_suffix_cut: RowSuffixCut::None,
+            render_interior_row_cut: RowSuffixCut::None,
         }
     }
 }
@@ -128,6 +144,8 @@ impl WikidotState {
         Self {
             div_body_depth: self.div_body_depth.min(1),
             row_suffix_at: ROW_SUFFIX_INACTIVE,
+            row_suffix_cut: RowSuffixCut::None,
+            render_interior_row_cut: RowSuffixCut::None,
             ..self
         }
     }
@@ -516,6 +534,26 @@ impl Parser<'_, '_> {
             u32::try_from(byte).unwrap_or(ROW_SUFFIX_INACTIVE - 1);
     }
 
+    pub(crate) fn set_wikidot_row_suffix_cut(&mut self, cut: RowSuffixCut) {
+        self.wikidot.row_suffix_cut = cut;
+    }
+
+    pub(crate) fn wikidot_row_suffix_cut(&self) -> RowSuffixCut {
+        self.wikidot.row_suffix_cut
+    }
+
+    pub(crate) fn set_wikidot_render_interior_row_cut(&mut self, cut: RowSuffixCut) {
+        self.wikidot.render_interior_row_cut = cut;
+    }
+
+    pub(crate) fn wikidot_render_interior_row_cut(&self) -> RowSuffixCut {
+        self.wikidot.render_interior_row_cut
+    }
+
+    pub(crate) fn clear_wikidot_render_interior_row_cut(&mut self) {
+        self.wikidot.render_interior_row_cut = RowSuffixCut::None;
+    }
+
     pub(crate) fn wikidot_row_suffix_at(&self) -> Option<usize> {
         match self.wikidot.row_suffix_at {
             ROW_SUFFIX_INACTIVE => None,
@@ -525,6 +563,7 @@ impl Parser<'_, '_> {
 
     pub(crate) fn clear_wikidot_row_suffix_at(&mut self) {
         self.wikidot.row_suffix_at = ROW_SUFFIX_INACTIVE;
+        self.wikidot.row_suffix_cut = RowSuffixCut::None;
     }
 
     pub(crate) fn set_wikidot_collapsible_closed_at_deeper_quote(&mut self, value: bool) {

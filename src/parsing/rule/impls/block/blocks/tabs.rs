@@ -28,11 +28,11 @@ use crate::parsing::collect::{
 use crate::parsing::consume::consume;
 use crate::parsing::paragraph::{ParagraphStack, gather_paragraphs};
 use crate::parsing::parser::block_pairs::WikidotBlockKind;
-use crate::parsing::parser::{QuoteBodyLineStatus, QuoteEscapedUnit};
+use crate::parsing::parser::{QuoteBodyLineStatus, QuoteEscapedUnit, RowSuffixCut};
 use crate::parsing::rule::impls::block::parser::WikidotHeadSpaceRegion;
 use crate::tree::{
     AcceptsPartial, AttributeMap, Container, ContainerType, LinkLabel, LinkLocation,
-    PartialElement, Tab, TabViewItem,
+    PartialElement, Tab, TabViewItem, WikidotRowCut,
 };
 
 pub const BLOCK_TABVIEW: BlockRule = BlockRule {
@@ -436,6 +436,41 @@ fn tabview_tail_element<'t>(mut tail: Vec<Element<'t>>) -> Element<'t> {
     let mut attributes = AttributeMap::new();
     attributes.insert_raw(cow!(crate::tree::WIKIDOT_TABVIEW_TAIL_MARKER), cow!(""));
     Element::Container(Container::new(ContainerType::Div, tail, attributes))
+}
+
+/// A collapsible cut whose row suffix stayed nested in the trailing paragraph
+/// of the scope that straddled the cut (the bold/span straddle shape). Live
+/// hoists the leftover run out of the panel, so the tab body ejects the
+/// paragraph's children as the row suffix instead of keeping them in the panel.
+fn eject_collapsible_row_suffix_paragraph<'t>(
+    elements: &mut Vec<Element<'t>>,
+) -> Option<Vec<Element<'t>>> {
+    let Some(Element::Container(paragraph)) = elements.last_mut() else {
+        return None;
+    };
+    if paragraph.ctype() != ContainerType::Paragraph {
+        return None;
+    }
+    let split = paragraph.elements().iter().position(
+        |element| matches!(element, Element::Text(text) if text.as_ref() == "||"),
+    )?;
+    let tail = paragraph.elements_mut().split_off(split);
+    if paragraph.elements().is_empty() {
+        elements.pop();
+    }
+    Some(tail)
+}
+
+fn element_debug_tag(element: &Element<'_>) -> String {
+    match element {
+        Element::Text(text) => format!("T({:?})", text.as_ref()),
+        Element::LineBreak => "BR".to_owned(),
+        Element::LineBreaks(_) => "BRn".to_owned(),
+        Element::Table(_) => "TABLE".to_owned(),
+        Element::Container(container) => format!("C({:?})", container.ctype()),
+        Element::Partial(partial) => format!("P({})", partial.name()),
+        _ => "E".to_owned(),
+    }
 }
 
 fn div_closer_line<'r, 't>(parser: &Parser<'r, 't>) -> bool
@@ -2491,11 +2526,65 @@ fn parse_tab<'r, 't>(
     if legacy {
         trim_wikidot_trailing_explicit_list_break(&mut elements);
     }
-    let row_suffix = if legacy {
+    let row_cut = if legacy {
+        parser.wikidot_row_suffix_cut()
+    } else {
+        RowSuffixCut::None
+    };
+    let interior_cut = if legacy {
+        parser.wikidot_render_interior_row_cut()
+    } else {
+        RowSuffixCut::None
+    };
+    let mut row_suffix = if legacy {
         crate::parsing::rule::impls::eject_wikidot_row_suffix(parser, &mut elements)
     } else {
         Vec::new()
     };
+    let collapsible_cut = row_cut == RowSuffixCut::Collapsible
+        || interior_cut == RowSuffixCut::Collapsible;
+    if legacy
+        && row_suffix.is_empty()
+        && collapsible_cut
+        && let Some(tail) = eject_collapsible_row_suffix_paragraph(&mut elements)
+    {
+        row_suffix = tail;
+    }
+    if legacy
+        && row_suffix.is_empty()
+        && collapsible_cut
+        && let Some(mut tail) = crate::parsing::rule::impls::eject_wikidot_row_cut_marker(
+            &mut elements,
+        )
+    {
+        if !matches!(
+            tail.first(),
+            Some(Element::LineBreak | Element::LineBreaks(_))
+        ) {
+            tail.insert(0, Element::LineBreak);
+        }
+        tail.insert(0, Element::Partial(PartialElement::WikidotFoster(Vec::new())));
+        row_suffix = tail;
+    }
+    if legacy {
+        parser.clear_wikidot_render_interior_row_cut();
+    }
+    let tab_has_top_level_table = elements
+        .iter()
+        .any(|element| matches!(element, Element::Table(_)));
+    let tab_row_cut = if collapsible_cut && tab_has_top_level_table {
+        Some(WikidotRowCut::Collapsible)
+    } else {
+        None
+    };
+    if std::env::var_os("FTML_DEBUG_COLLCUT").is_some() {
+        eprintln!(
+            "TABRULE rowcut={row_cut:?} interior={interior_cut:?} suffix_at={:?} suffix_len={} els={:?}",
+            parser.wikidot_row_suffix_at(),
+            row_suffix.len(),
+            elements.iter().map(element_debug_tag).collect::<Vec<_>>(),
+        );
+    }
 
     // A tab whose opener sits in a later quote segment (after an ejection in
     // this view) renders its panel as a bare div in that segment, not inside
@@ -2526,6 +2615,7 @@ fn parse_tab<'r, 't>(
         label,
         elements,
         wikidot_label_spans: Vec::new(),
+        wikidot_row_cut: tab_row_cut,
     }));
 
     if row_suffix.is_empty() {

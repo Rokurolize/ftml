@@ -70,7 +70,8 @@ mod subscript;
 mod superscript;
 mod table;
 pub(crate) use self::table::{
-    eject_wikidot_row_suffix, keep_wikidot_row_suffix, wikidot_row_suffix_start_index,
+    eject_wikidot_row_cut_marker, eject_wikidot_row_suffix, keep_wikidot_row_suffix,
+    wikidot_row_suffix_start_index,
 };
 mod text;
 mod underline;

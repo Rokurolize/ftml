@@ -21,6 +21,7 @@
 use super::prelude::*;
 use crate::tree::{
     AttributeMap, ContainerType, ListItem, PartialElement, SyntaxTree, TabViewItem,
+    WikidotRowCut,
 };
 use std::iter;
 
@@ -826,6 +827,9 @@ struct WikidotTabviewRowTail<'t> {
     /// Whether the tab above the tail held a top-level cut table (direct)
     /// rather than one nested in a vehicle element.
     direct: bool,
+    /// The block kind that cut the row, when parse-time state recorded it.
+    /// The collapsible kind changes where live emits the tail.
+    cut: Option<WikidotRowCut>,
 }
 
 /// Whether `elements` is the run produced by a table row-suffix ejection:
@@ -845,21 +849,26 @@ fn wikidot_tabview_row_suffix_run(elements: &[Element<'_>]) -> bool {
     }
 }
 
-/// Whether the tab above position `pos` held a top-level cut table: only
-/// then is the row-suffix tail kept inside `yui-content`.
-fn wikidot_tabview_row_tail_is_direct(items: &[TabViewItem<'_>], pos: usize) -> bool {
+/// Whether the tab above position `pos` held a top-level cut table (only
+/// then is the row-suffix tail kept inside `yui-content`) and which block cut
+/// that row.
+fn wikidot_tabview_row_tail_context(
+    items: &[TabViewItem<'_>],
+    pos: usize,
+) -> (bool, Option<WikidotRowCut>) {
     items[..pos]
         .iter()
         .rev()
         .find_map(|item| match item {
-            TabViewItem::Tab(tab) | TabViewItem::Remote(tab) => Some(
+            TabViewItem::Tab(tab) | TabViewItem::Remote(tab) => Some((
                 tab.elements
                     .iter()
                     .any(|element| matches!(element, Element::Table(_))),
-            ),
+                tab.wikidot_row_cut,
+            )),
             _ => None,
         })
-        .unwrap_or(false)
+        .unwrap_or((false, None))
 }
 
 /// Find the row-suffix tail that ends `yui-content`, if any: a raw Content
@@ -873,21 +882,36 @@ fn wikidot_tabview_row_tail_like<'t>(
         let TabViewItem::Content(elements) = item else {
             continue;
         };
-        if wikidot_tabview_row_suffix_run(elements) {
+        // A collapsible cut can eject the tab body's remaining elements as the
+        // tail run, which then does not start with the row-suffix text (the
+        // closer ended the line and a fresh table followed). The owning tab's
+        // recorded cut kind identifies that run.
+        let post_collapsible_cut = !wikidot_tabview_row_suffix_run(elements)
+            && !elements.is_empty()
+            && matches!(
+                index.checked_sub(1).and_then(|prior| items.get(prior)),
+                Some(TabViewItem::Tab(tab) | TabViewItem::Remote(tab))
+                    if tab.wikidot_row_cut == Some(WikidotRowCut::Collapsible)
+            );
+        if wikidot_tabview_row_suffix_run(elements) || post_collapsible_cut {
+            let (direct, cut) = wikidot_tabview_row_tail_context(items, index);
             return Some(WikidotTabviewRowTail {
                 index,
                 elements,
                 wrapper: false,
-                direct: wikidot_tabview_row_tail_is_direct(items, index),
+                direct,
+                cut,
             });
         }
     }
     if let Some(elements) = wrapper_tail {
+        let (direct, cut) = wikidot_tabview_row_tail_context(items, items.len());
         return Some(WikidotTabviewRowTail {
             index: items.len(),
             elements,
             wrapper: true,
-            direct: wikidot_tabview_row_tail_is_direct(items, items.len()),
+            direct,
+            cut,
         });
     }
     None
@@ -1008,6 +1032,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
     let mut tab_index = 0usize;
     let mut navset_spill_from = items.len();
     let mut navset_spill_break: Option<(usize, Option<usize>)> = None;
+    let mut navset_close_tail: Option<Vec<Element<'_>>> = None;
     ctx.html()
         .div()
         .attr(attr!("id" => &id, "class" => "yui-navset"))
@@ -1086,11 +1111,31 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
             let row_tail = (break_point.is_none() && tab_count > 0)
                 .then_some(any_row_tail)
                 .flatten();
-            let (yui_tail, navset_tail) = match row_tail {
-                Some(row_tail) if row_tail.direct => (Some(row_tail), None),
-                Some(row_tail) => (None, Some(row_tail)),
-                None => (None, None),
+            // A collapsible cut ends the navset differently from a flat block
+            // cut: live emits the tail (and every later panel of the view)
+            // after the navset close for a top-level view (probes
+            // `muse-probe-ft84r-a-bare-*`, `a-span-*`, `p2-collcut-*`,
+            // `p3-tab-collcut-*`), while a nested view keeps the tail just
+            // after its own content close (probes `muse-probe-ft84r-b2..b8`).
+            let (yui_tail, navset_tail, close_tail) = match row_tail {
+                Some(row_tail)
+                    if row_tail.cut == Some(WikidotRowCut::Collapsible) =>
+                {
+                    if row_tail.direct && depth == 0 {
+                        (None, None, Some(row_tail))
+                    } else {
+                        (None, Some(row_tail), None)
+                    }
+                }
+                Some(row_tail) if row_tail.direct => (Some(row_tail), None, None),
+                Some(row_tail) => (None, Some(row_tail), None),
+                None => (None, None, None),
             };
+            if let Some(tail) = close_tail {
+                navset_close_tail =
+                    Some(wikidot_tabview_row_tail_run(tail.elements).to_vec());
+                navset_spill_from = tail.index.saturating_add(1).min(items.len());
+            }
             // A nested view that ended its own `yui-content` on a row tail
             // ends this view's content after the item holding it, at every
             // depth including the outermost (probes
@@ -1119,6 +1164,8 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                         index + 1
                     } else if let Some(point) = &break_point {
                         point.item_index + 1
+                    } else if let Some(tail) = &close_tail {
+                        tail.index.min(items.len())
                     } else if let Some(ytail) = &yui_tail {
                         ytail.index.saturating_add(1).min(items.len())
                     } else if let Some(tail) = &navset_tail {
@@ -1260,7 +1307,8 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
             }
             if let Some(tail) = tail {
                 let rendered = yui_tail.is_some_and(|ytail| ytail.wrapper)
-                    || navset_tail.is_some_and(|tail| tail.wrapper);
+                    || navset_tail.is_some_and(|tail| tail.wrapper)
+                    || close_tail.is_some_and(|tail| tail.wrapper);
                 if !rendered {
                     let tail = wikidot_tabview_row_tail_run(tail);
                     render_elements(ctx, tail);
@@ -1270,6 +1318,13 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                 render_element(ctx, element);
             }
         });
+    // A collapsible cut in a top-level view ends the navset itself: live emits
+    // the tail and every later panel after the navset close (probes
+    // `muse-probe-ft84r-a-bare-*`, `a-span-*`, `p2-collcut-*`,
+    // `p3-tab-collcut-*`).
+    if let Some(tail) = &navset_close_tail {
+        render_elements(ctx, tail);
+    }
     if let Some((index, post_start)) = navset_spill_break {
         if let (Some(post_start), Some(item)) = (post_start, items.get(index))
             && let TabViewItem::Content(elements) = item
@@ -1758,11 +1813,13 @@ mod tests {
                     label: cow!("Apple"),
                     elements: vec![text!("one")],
                     wikidot_label_spans: Vec::new(),
+                    wikidot_row_cut: None,
                 }),
                 TabViewItem::Tab(Tab {
                     label: cow!("Banana"),
                     elements: vec![text!("two")],
                     wikidot_label_spans: Vec::new(),
+                    wikidot_row_cut: None,
                 }),
             ])],
             ..SyntaxTree::default()
@@ -1814,11 +1871,13 @@ mod tests {
                     label: cow!("A"),
                     elements: vec![text!("one")],
                     wikidot_label_spans: Vec::new(),
+                    wikidot_row_cut: None,
                 })]),
                 Element::TabView(vec![TabViewItem::Tab(Tab {
                     label: cow!("B"),
                     elements: vec![text!("two")],
                     wikidot_label_spans: Vec::new(),
+                    wikidot_row_cut: None,
                 })]),
             ],
             ..SyntaxTree::default()
@@ -1855,6 +1914,7 @@ mod tests {
                 label: cow!("</em><script>alert(1)</script>"),
                 elements: vec![text!(attack)],
                 wikidot_label_spans: Vec::new(),
+                    wikidot_row_cut: None,
             })])],
             ..SyntaxTree::default()
         };
@@ -1883,6 +1943,7 @@ mod tests {
                 label: cow!("Empty"),
                 elements: Vec::new(),
                 wikidot_label_spans: Vec::new(),
+                    wikidot_row_cut: None,
             })])],
             ..SyntaxTree::default()
         };

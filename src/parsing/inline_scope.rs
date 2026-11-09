@@ -6901,6 +6901,23 @@ fn lower_children<'t>(
         active.frame_entry = outer_entry;
     };
     visit_children_mut(element, &mut visit);
+    // Item 84(c): `unfolded_tail_start` is computed by the table cut on the
+    // pre-lowering body (`keep_wikidot_row_suffix`), but frame assembly and
+    // inline-scope lowering rewrite the body — a straddling scope wraps the
+    // suffix run (and elements before the cut may merge) so the stored
+    // index lands inside the scope tail and the tail renders inside the
+    // content div instead of outside it (live hoists the tail out of
+    // `collapsible-block-content` but keeps it inside the unfolded wrapper).
+    // Re-derive the split from the lowered children.
+    if let Element::Collapsible {
+        elements,
+        unfolded_tail_start: start_slot @ Some(_),
+        ..
+    } = element
+        && let Some(split) = lowered_row_suffix_split(elements)
+    {
+        *start_slot = Some(split);
+    }
     if let Element::WikidotBlockFrame {
         outer_close_eof: true,
         children,
@@ -6910,6 +6927,36 @@ fn lower_children<'t>(
         fix_outer_close_eof_breaks(children);
     }
     lowered
+}
+
+/// Whether `element`'s subtree holds the row-suffix `||` left behind by a
+/// cut table row (the suffix the `keep_wikidot_row_suffix` split names).
+fn subtree_contains_row_suffix(element: &Element<'_>) -> bool {
+    let mut found = matches!(element, Element::Text(text) if text.as_ref() == "||");
+    if !found {
+        visit_children(element, &mut |children| {
+            if !found {
+                for child in children {
+                    if subtree_contains_row_suffix(child) {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        });
+    }
+    found
+}
+
+/// The lowered index at which a cut table's row-suffix tail starts: the
+/// first element after the last table whose subtree carries the suffix
+/// (either the text itself, or the scroll scope the straddling span's
+/// post-foster tail lowered into).
+fn lowered_row_suffix_split(elements: &[Element<'_>]) -> Option<usize> {
+    let table_pos = elements
+        .iter()
+        .rposition(|element| matches!(element, Element::Table(_)))?;
+    (table_pos + 1..elements.len()).find(|&index| subtree_contains_row_suffix(&elements[index]))
 }
 
 fn is_scope_wrapper_element(element: &Element<'_>) -> bool {

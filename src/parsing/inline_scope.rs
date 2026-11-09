@@ -6,9 +6,10 @@ use crate::tree::{
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER,
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, WIKIDOT_HEADING_REOPEN_MARKER,
-    WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
-    WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
-    WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
+    WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER, WIKIDOT_QUOTE_BLANK_ANCHOR_MARKER,
+    WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER,
+    WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
+    WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BARE_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BLANK_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BREAK_MARKER,
@@ -6115,8 +6116,12 @@ fn lower_sequence<'t>(
             // (fr73 consumes crossed-pair tails lowering never sees; the
             // rewrite strips leftovers, so none reaches the tree). Stopped
             // lists are cleaned here with the stops marker.
+            let mut blank_anchor_reopen = false;
             let stopped_pair_ends_at_list = if list_legacy {
                 if let Element::List { attributes, .. } = &mut element {
+                    blank_anchor_reopen = attributes
+                        .remove(WIKIDOT_QUOTE_BLANK_ANCHOR_MARKER)
+                        .is_some();
                     let stopped = attributes
                         .remove(WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER)
                         .is_some();
@@ -6146,6 +6151,7 @@ fn lower_sequence<'t>(
                         &mut run,
                         active,
                         &mut last_run_outer_scope,
+                        blank_anchor_reopen,
                     );
                 }
                 lower_children(
@@ -7432,12 +7438,25 @@ fn end_anchor_at_explicit_list<'t>(
     run: &mut Vec<Element<'t>>,
     active: &mut ActiveScopes<'t>,
     last_run_outer_scope: &mut RunMergeState,
+    blank_anchor_reopen: bool,
 ) {
     let Some(position) = active.anchor_position() else {
         return;
     };
     if !active.scope_is_pending(position) {
         close_live_anchor(output, run, active, last_run_outer_scope);
+    } else if blank_anchor_reopen && !active.scope_materialized(position) {
+        // A blank quoted line closes the anchor in place and reopens it: live
+        // repeats the empty anchor paragraph before the explicit list.
+        let wrapper = active.scope_wrapper(position).clone();
+        let owner = wrapper.wrap(vec![Element::Partial(
+            PartialElement::WikidotEmptyInlineOwner,
+        )]);
+        output.push(Element::Container(Container::new(
+            ContainerType::Paragraph,
+            vec![owner],
+            AttributeMap::new(),
+        )));
     }
     let Some(position) = active.anchor_position() else {
         return;

@@ -47,7 +47,6 @@ pub use self::consume::{
 };
 pub(crate) use self::container::QuoteBodyCursorInstallation;
 pub use self::container::collect_container;
-pub(crate) use self::container::QuoteBodyCursorInstallation;
 pub use self::generic::collect;
 pub(crate) use self::iftags::{
     SegmentCtx, TokenWindow, complete_fused_bracket_close, consume_iftags_segment,

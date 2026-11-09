@@ -2107,6 +2107,9 @@ fn crossed_row_remainder(
     elements: &[Element<'_>],
     row_depth: Option<usize>,
 ) -> Option<bool> {
+    if !parser.settings().layout.legacy() {
+        return None;
+    }
     let row_depth = row_depth?;
     match parser.current().token {
         Token::LineBreak
@@ -2252,8 +2255,7 @@ fn collect_native_blockquote_line<'r, 't>(
                 crossed_row_remainder(parser, &elements, resume_crossed_row)
             {
                 if prepend_space {
-                    let separator =
-                        vec![Element::Text(std::borrow::Cow::Borrowed(" "))];
+                    let separator = vec![Element::Text(std::borrow::Cow::Borrowed(" "))];
                     merge_quote_line_chunk(
                         &mut layout,
                         &mut layout_live,

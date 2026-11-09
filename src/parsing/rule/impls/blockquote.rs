@@ -876,6 +876,10 @@ fn try_consume_fn<'r, 't>(
     // paired-[[/ul]] close lines, heading for the next content row of
     // this run (live merges them into the follower paragraph).
     let mut pending_paired_close_remnant_elements: Vec<Element> = Vec::new();
+    // BRIEF-N1ROW: depth of a bare literal `[[/li]]` row awaiting a merge
+    // with the next row, plus the `depths` length when armed (the paired
+    // close row must be the only row pushed since), or `None`.
+    let mut pending_literal_close_merge: Option<(usize, usize)> = None;
 
     if parser.settings().layout.legacy()
         && let Some(gate_quote) = virtual_gate_quote_leader(parser)
@@ -1203,6 +1207,21 @@ fn try_consume_fn<'r, 't>(
                 elements = rem;
             }
             paragraph_safe = false;
+        }
+        // BRIEF-N1ROW: arm the literal-closer merge when the row this
+        // paired close follows is a bare literal `[[/li]]` row at this
+        // depth and the close came from the plain pending flag (no
+        // quoted-follower paragraph, no surplus remnants). The next row
+        // consumes the arm (merge, demote, or drop).
+        if is_paired_close_row
+            && !pending_paired_close_quoted_follower_paragraph
+            && paired_close_remnant_quotes == 0
+            && pending_paired_close_remnant_elements.is_empty()
+            && let Some((prev_depth, _, prev_row)) = depths.last()
+            && *prev_depth + 1 == depth
+            && row_is_bare_literal_li_close(prev_row)
+        {
+            pending_literal_close_merge = Some((depth, depths.len()));
         }
         let marker_row = parser.settings().layout.legacy()
             && quote_row_line_ends_with_marker(
@@ -1615,6 +1634,71 @@ fn try_consume_fn<'r, 't>(
             let mut rem = std::mem::take(&mut pending_paired_close_remnant_elements);
             rem.append(&mut elements);
             elements = rem;
+        }
+        // BRIEF-N1ROW: consume the literal-closer arm set at the paired
+        // close row. A same-depth all-text row merges into the closer's
+        // paragraph with a space join (live `<p>[[/li]] y</p>`); a deeper
+        // all-text row demotes the closer to bare instead (live keeps
+        // `[[/li]]<br />` before the nested run). Anything else drops the
+        // arm and keeps current behavior. The #1273 follower path wins on
+        // conflict (its pins own that shape).
+        // NOTE: `!is_paired_close_row` comes first so the row that armed
+        // this flag does not consume it in the same iteration.
+        if !is_paired_close_row
+            && let Some((merge_depth, merge_len)) = pending_literal_close_merge.take()
+            && !quoted_close_paragraph_follower
+            && pending_rows.is_empty()
+            && depths.len() == merge_len + 1
+            && row_elements_are_plain_text(&elements)
+            && depth >= merge_depth
+            && depths.last().is_some_and(|(paired_tag, _, paired_row)| {
+                *paired_tag + 1 == merge_depth
+                    && paired_row.elements.iter().all(|element| {
+                        matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                    })
+            })
+            && depths
+                .iter()
+                .rev()
+                .nth(1)
+                .is_some_and(|(closer_tag, _, closer_row)| {
+                    *closer_tag + 1 == merge_depth
+                        && closer_row.paragraph_safe
+                        && row_is_bare_literal_li_close(closer_row)
+                })
+        {
+            if depth == merge_depth && paragraph_safe {
+                // Merge: closer text + space + follower content, one row.
+                // (Both pops verified by the stack-top checks above.)
+                let _ = depths.pop();
+                if let Some((_, _, closer_row)) = depths.pop() {
+                    let mut merged = Vec::new();
+                    for element in closer_row.elements {
+                        if !matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                        {
+                            merged.push(element);
+                        }
+                    }
+                    merged.push(Element::Text(std::borrow::Cow::Borrowed(" ")));
+                    merged.extend(elements);
+                    elements = merged;
+                    paragraph_split = None;
+                }
+            } else if depth == merge_depth + 1
+                && let Some((_, _, closer_row)) = depths.iter_mut().rev().nth(1)
+            {
+                // Demote: the closer stays bare before the nested run.
+                // Restore the break the paired-close handling popped
+                // above; the nested push eats the paired row's own break.
+                closer_row.paragraph_safe = false;
+                closer_row.paragraph_split = None;
+                if !matches!(
+                    closer_row.elements.last(),
+                    Some(Element::LineBreak | Element::LineBreaks(_))
+                ) {
+                    closer_row.elements.push(Element::LineBreak);
+                }
+            }
         }
         let paragraph_split = paragraph_split.filter(|counts| {
             counts.len() >= 2
@@ -2310,6 +2394,35 @@ fn remnant_text_elements<'t>(quotes: usize) -> Vec<Element<'t>> {
         elements.push(Element::Text(std::borrow::Cow::Borrowed(">")));
     }
     elements
+}
+
+/// Whether a pushed fresh-run row is a bare literal `[[/li]]` line: its
+/// content is all text spelling exactly the item close (case-insensitive,
+/// tolerant of text splits). The degraded fresh-run closer of BRIEF-N1ROW.
+fn row_is_bare_literal_li_close(row: &NativeQuoteRow<'_>) -> bool {
+    let mut text = String::new();
+    for element in &row.elements {
+        match element {
+            Element::Text(fragment) => text.push_str(fragment),
+            Element::LineBreak | Element::LineBreaks(_) => {}
+            _ => return false,
+        }
+    }
+    text.trim().eq_ignore_ascii_case("[[/li]]")
+}
+
+/// Whether a fresh-run row's elements are plain text (plus trailing
+/// breaks): paragraph formers the N1ROW merge may absorb or demote past.
+fn row_elements_are_plain_text(elements: &[Element<'_>]) -> bool {
+    let mut saw_text = false;
+    for element in elements {
+        match element {
+            Element::Text(_) => saw_text = true,
+            Element::LineBreak | Element::LineBreaks(_) => {}
+            _ => return false,
+        }
+    }
+    saw_text
 }
 
 fn demote_indented_list_row(row: &mut NativeQuoteRow<'_>) {

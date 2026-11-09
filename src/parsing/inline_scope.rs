@@ -3600,7 +3600,26 @@ fn format_explicit_list_segments<'t>(
         // The post-list run attaches to the list on live (never
         // `</ul><br>c**`): drop the source newline that follows each
         // crossed list before re-emitting the body under literal markers.
-        return Some(literalised(trim_post_list_leading_breaks(children)));
+        // The pair's classified tail shape rides the crossed lists to the
+        // post-list run: root lowering unwraps the run's paragraph when the
+        // literalised close marker sits between it and the list
+        // (m3x3 `</ul>**y`, not `</ul>**<p>y</p>`).
+        let mut orphaned = trim_post_list_leading_breaks(children);
+        if let Some(tail_mark) = tail_mark {
+            let marker = match tail_mark {
+                SpanListCloseTail::Break => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
+                SpanListCloseTail::Bare => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
+                SpanListCloseTail::Lead => WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
+                SpanListCloseTail::Blank => WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER,
+                SpanListCloseTail::Fold => WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
+            };
+            for element in orphaned.iter_mut() {
+                if let Element::List { attributes, .. } = element {
+                    attributes.insert(marker, Cow::Borrowed(""));
+                }
+            }
+        }
+        return Some(literalised(orphaned));
     }
     if !stops_at_list
         && anchor_straddles_explicit_list(&children)

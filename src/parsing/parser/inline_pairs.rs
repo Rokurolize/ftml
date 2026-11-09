@@ -224,6 +224,14 @@ fn list_name_at(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
     })
 }
 
+/// The [[span]] and [[size]] heads are inline scopes, not block pairs: the
+/// recursive rules reach the color markers inside their bodies.
+fn inline_scope_name_at(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
+    block_name(tokens, index).is_some_and(|name| {
+        name.eq_ignore_ascii_case("span") || name.eq_ignore_ascii_case("size")
+    })
+}
+
 fn clean_list_barrier(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
     if !list_name_at(tokens, index) {
         return false;
@@ -379,7 +387,86 @@ pub(crate) fn compute_wikidot_inline_markers(
     for (chunk_start, barrier) in list_barriers {
         rescue_padded_opener_across_list(tokens, &mut markers, chunk_start, barrier);
     }
+    pair_hidden_color_closer(tokens, &mut markers);
     markers
+}
+
+/// Live's Colortext rule pairs first-fit over the token stream, so the
+/// closer of an open color head is the first later color marker wherever it
+/// sits. When that marker is a nested opener inside an explicit list item,
+/// the recursive rules cannot reach it: the list is consumed whole while the
+/// outer color body is collected, and the item body then forms its own color
+/// pair. Live instead ends the outer pair at that marker (the nested head
+/// bytes stay literal, the item and the post-list tail go bare). Give the
+/// pair the flat roles the in-chunk scan would have assigned without the
+/// barrier: an open role at the outer head and a close role on the hidden
+/// marker. The chunk scans keep every pair whose closer they can see, so a
+/// closer found at the opener's own nesting level is left to the recursive
+/// rules.
+fn pair_hidden_color_closer(
+    tokens: &[ExtractedToken<'_>],
+    markers: &mut WikidotInlineMarkers,
+) {
+    let mut index = 0;
+    while index < tokens.len() {
+        if tokens[index].token != Token::Color
+            || markers.role_at_byte(tokens[index].span.start).is_some()
+        {
+            index += 1;
+            continue;
+        }
+        let Some((color, pipe)) = color_head(tokens, index, tokens.len()) else {
+            index += 1;
+            continue;
+        };
+        let mut depth = 0i32;
+        let mut close = None;
+        let mut blocked = false;
+        let mut scan = pipe + 1;
+        while scan < tokens.len() && !blocked {
+            match tokens[scan].token {
+                Token::ParagraphBreak | Token::InputEnd => break,
+                Token::Color if scan > pipe + 1 => {
+                    if depth > 0
+                        && markers.role_at_byte(tokens[scan].span.start).is_none()
+                    {
+                        close = Some(scan);
+                    }
+                    break;
+                }
+                Token::Color => {}
+                Token::LeftBlock | Token::LeftBlockStar if list_name_at(tokens, scan) => {
+                    depth += 1;
+                }
+                Token::LeftBlockEnd if list_name_at(tokens, scan) => {
+                    depth = depth.saturating_sub(1);
+                }
+                Token::LeftBlock | Token::LeftBlockStar
+                    if inline_scope_name_at(tokens, scan) => {}
+                Token::LeftBlockEnd if inline_scope_name_at(tokens, scan) => {}
+                Token::LeftBlock | Token::LeftBlockStar | Token::LeftBlockEnd => {
+                    blocked = true;
+                }
+                _ => {}
+            }
+            scan += 1;
+        }
+        let Some(close) = close else {
+            index += 1;
+            continue;
+        };
+        markers.roles.insert(
+            tokens[index].span.start,
+            InlineMarkerRole::ColorOpen {
+                color,
+                body_start: tokens[pipe].span.end,
+            },
+        );
+        markers
+            .roles
+            .insert(tokens[close].span.start, InlineMarkerRole::ColorClose);
+        index = close + 1;
+    }
 }
 
 /// A same-kind format pair whose only in-chunk close candidates are padded (a

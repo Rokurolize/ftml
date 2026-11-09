@@ -280,19 +280,14 @@ pub(super) fn validate_reachable_close(
             if let Some(error) = paragraph_error {
                 return Err(error);
             }
-            // A closer after a quote row's own prefix still pairs in the
-            // Wikidot layout (live mirror of the own-line opener rule);
-            // content whitespace does not, and the Wikijump layout keeps
-            // today's behavior.
             if mode == ReachableCloseMode::Standard
                 && index > 0
                 && tokens[index - 1].token == Token::Whitespace
-                && (!parser.settings().layout.legacy()
-                    || !closer_whitespace_is_quote_row_prefix(
-                        parser.full_text().inner(),
-                        tokens[index - 1].span.start,
-                        tokens[index - 1].span.end,
-                    ))
+                && !closer_whitespace_is_quote_row_prefix(
+                    parser.full_text().inner(),
+                    tokens[index - 1].span.start,
+                    tokens[index - 1].span.end,
+                )
             {
                 return Err(parser.make_err(ParseErrorKind::RuleFailed));
             }
@@ -373,19 +368,14 @@ pub(super) fn validate_reachable_close(
                 if let Some(error) = paragraph_error {
                     return Err(error);
                 }
-                // A closer after a quote row's own prefix still pairs in the
-                // Wikidot layout (live mirror of the own-line opener rule);
-                // content whitespace does not, and the Wikijump layout keeps
-                // today's behavior.
                 if mode == ReachableCloseMode::Standard
                     && index > 0
                     && tokens[index - 1].token == Token::Whitespace
-                    && (!parser.settings().layout.legacy()
-                        || !closer_whitespace_is_quote_row_prefix(
-                            parser.full_text().inner(),
-                            tokens[index - 1].span.start,
-                            tokens[index - 1].span.end,
-                        ))
+                    && !closer_whitespace_is_quote_row_prefix(
+                        parser.full_text().inner(),
+                        tokens[index - 1].span.start,
+                        tokens[index - 1].span.end,
+                    )
                 {
                     return Err(parser.make_err(ParseErrorKind::RuleFailed));
                 }

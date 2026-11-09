@@ -9,138 +9,59 @@
                     {
                         "element": "container",
                         "data": {
-                            "type": "paragraph",
+                            "type": "underline",
                             "attributes": {},
                             "elements": [
-                                {
-                                    "element": "text",
-                                    "data": "__"
-                                },
                                 {
                                     "element": "text",
                                     "data": "a"
                                 },
                                 {
                                     "element": "line-break"
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "element": "list",
-                        "data": {
-                            "type": "bullet",
-                            "attributes": {},
-                            "items": [
+                                },
                                 {
-                                    "item-type": "elements",
-                                    "attributes": {
-                                        "style": "list-style: none"
-                                    },
-                                    "elements": [
-                                        {
-                                            "element": "container",
-                                            "data": {
-                                                "type": "blockquote",
+                                    "element": "list",
+                                    "data": {
+                                        "type": "bullet",
+                                        "attributes": {},
+                                        "items": [
+                                            {
+                                                "item-type": "elements",
                                                 "attributes": {},
                                                 "elements": [
                                                     {
-                                                        "element": "partial",
-                                                        "data": {
-                                                            "ListItem": {
-                                                                "item-type": "elements",
-                                                                "attributes": {},
-                                                                "elements": [
-                                                                    {
-                                                                        "element": "text",
-                                                                        "data": "b"
-                                                                    }
-                                                                ]
-                                                            }
-                                                        }
-                                                    },
-                                                    {
-                                                        "element": "line-break"
+                                                        "element": "text",
+                                                        "data": "b"
                                                     }
                                                 ]
                                             }
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "element": "container",
-            "data": {
-                "type": "blockquote",
-                "attributes": {},
-                "elements": [
-                    {
-                        "element": "list",
-                        "data": {
-                            "type": "bullet",
-                            "attributes": {},
-                            "items": [
+                                        ]
+                                    }
+                                },
                                 {
-                                    "item-type": "elements",
-                                    "attributes": {
-                                        "style": "list-style: none"
-                                    },
-                                    "elements": [
-                                        {
-                                            "element": "container",
-                                            "data": {
-                                                "type": "blockquote",
+                                    "element": "line-break"
+                                },
+                                {
+                                    "element": "list",
+                                    "data": {
+                                        "type": "bullet",
+                                        "attributes": {},
+                                        "items": [
+                                            {
+                                                "item-type": "elements",
                                                 "attributes": {},
                                                 "elements": [
                                                     {
-                                                        "element": "partial",
-                                                        "data": {
-                                                            "ListItem": {
-                                                                "item-type": "elements",
-                                                                "attributes": {},
-                                                                "elements": [
-                                                                    {
-                                                                        "element": "text",
-                                                                        "data": "c"
-                                                                    }
-                                                                ]
-                                                            }
-                                                        }
-                                                    },
-                                                    {
-                                                        "element": "line-break"
+                                                        "element": "text",
+                                                        "data": "c"
                                                     }
                                                 ]
                                             }
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "element": "container",
-            "data": {
-                "type": "blockquote",
-                "attributes": {},
-                "elements": [
-                    {
-                        "element": "container",
-                        "data": {
-                            "type": "paragraph",
-                            "attributes": {},
-                            "elements": [
+                                        ]
+                                    }
+                                },
                                 {
-                                    "element": "text",
-                                    "data": "__"
+                                    "element": "line-break"
                                 }
                             ]
                         }

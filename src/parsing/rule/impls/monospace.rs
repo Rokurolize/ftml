@@ -23,7 +23,6 @@ use super::inline_delimiter::{
     validate_reachable_close,
 };
 use super::prelude::*;
-use crate::parsing::collect::QuoteBodyCursorInstallation;
 use crate::parsing::inline_format::{element_contains_link, monospace_close_split};
 use crate::tree::{Container, WIKIDOT_WS_MONO_VANISH_MARKER};
 use std::borrow::Cow;

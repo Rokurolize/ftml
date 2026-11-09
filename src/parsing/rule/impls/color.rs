@@ -23,7 +23,6 @@ use super::inline_delimiter::{
 };
 use super::prelude::*;
 use crate::parsing::ParseSuccess;
-use crate::parsing::collect::QuoteBodyCursorInstallation;
 use crate::tree::{Container, PartialElement, WikidotBlockShell};
 use std::borrow::Cow;
 

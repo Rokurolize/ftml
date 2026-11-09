@@ -15,19 +15,18 @@
                             },
                             "elements": [
                                 {
-                                    "element": "text",
-                                    "data": "__"
-                                },
-                                {
-                                    "element": "text",
-                                    "data": "a"
-                                },
-                                {
                                     "element": "container",
                                     "data": {
-                                        "type": "blockquote",
+                                        "type": "underline",
                                         "attributes": {},
                                         "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": "a"
+                                            },
+                                            {
+                                                "element": "line-break"
+                                            },
                                             {
                                                 "element": "list",
                                                 "data": {
@@ -36,63 +35,19 @@
                                                     "items": [
                                                         {
                                                             "item-type": "elements",
-                                                            "attributes": {
-                                                                "style": "list-style: none"
-                                                            },
+                                                            "attributes": {},
                                                             "elements": [
                                                                 {
-                                                                    "element": "container",
-                                                                    "data": {
-                                                                        "type": "blockquote",
-                                                                        "attributes": {},
-                                                                        "elements": [
-                                                                            {
-                                                                                "element": "partial",
-                                                                                "data": {
-                                                                                    "ListItem": {
-                                                                                        "item-type": "elements",
-                                                                                        "attributes": {},
-                                                                                        "elements": [
-                                                                                            {
-                                                                                                "element": "text",
-                                                                                                "data": "b"
-                                                                                            }
-                                                                                        ]
-                                                                                    }
-                                                                                }
-                                                                            },
-                                                                            {
-                                                                                "element": "line-break"
-                                                                            }
-                                                                        ]
-                                                                    }
+                                                                    "element": "text",
+                                                                    "data": "b"
                                                                 }
                                                             ]
                                                         }
                                                     ]
                                                 }
-                                            }
-                                        ]
-                                    }
-                                },
-                                {
-                                    "element": "container",
-                                    "data": {
-                                        "type": "blockquote",
-                                        "attributes": {},
-                                        "elements": [
+                                            },
                                             {
-                                                "element": "container",
-                                                "data": {
-                                                    "type": "paragraph",
-                                                    "attributes": {},
-                                                    "elements": [
-                                                        {
-                                                            "element": "text",
-                                                            "data": "__"
-                                                        }
-                                                    ]
-                                                }
+                                                "element": "line-break"
                                             }
                                         ]
                                     }

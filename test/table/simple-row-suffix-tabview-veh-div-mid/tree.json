@@ -1,0 +1,140 @@
+{
+    "elements": [
+        {
+            "element": "tab-view",
+            "data": [
+                {
+                    "label": "A",
+                    "elements": [
+                        {
+                            "element": "container",
+                            "data": {
+                                "type": "paragraph",
+                                "attributes": {},
+                                "elements": [
+                                    {
+                                        "element": "text",
+                                        "data": "one"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "label": "B",
+                    "elements": [
+                        {
+                            "element": "container",
+                            "data": {
+                                "type": "div",
+                                "attributes": {},
+                                "elements": [
+                                    {
+                                        "element": "table",
+                                        "data": {
+                                            "type": "simple",
+                                            "attributes": {},
+                                            "rows": [
+                                                {
+                                                    "attributes": {},
+                                                    "cells": [
+                                                        {
+                                                            "header": false,
+                                                            "column-span": 1,
+                                                            "align": null,
+                                                            "attributes": {},
+                                                            "elements": [
+                                                                {
+                                                                    "element": "collapsible",
+                                                                    "data": {
+                                                                        "elements": [
+                                                                            {
+                                                                                "element": "container",
+                                                                                "data": {
+                                                                                    "type": {
+                                                                                        "header": {
+                                                                                            "level": 1,
+                                                                                            "has-toc": true
+                                                                                        }
+                                                                                    },
+                                                                                    "attributes": {},
+                                                                                    "elements": [
+                                                                                        {
+                                                                                            "element": "text",
+                                                                                            "data": "h"
+                                                                                        }
+                                                                                    ]
+                                                                                }
+                                                                            }
+                                                                        ],
+                                                                        "attributes": {},
+                                                                        "start-open": false,
+                                                                        "show-text": null,
+                                                                        "hide-text": null,
+                                                                        "show-top": true,
+                                                                        "show-bottom": false
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "label": "C",
+                    "elements": [
+                        {
+                            "element": "container",
+                            "data": {
+                                "type": "paragraph",
+                                "attributes": {},
+                                "elements": [
+                                    {
+                                        "element": "text",
+                                        "data": "thr"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "table-of-contents": [
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "link",
+                                "data": {
+                                    "type": "table-of-contents",
+                                    "link": "#toc0",
+                                    "label": {
+                                        "text": "h"
+                                    },
+                                    "target": null
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -17,6 +17,8 @@ corpus-test/table/cell-quoted-close-bracket/input.ftml	Table@0..70 scan-only
 corpus-test/table/row-quoted-close-bracket/input.ftml	Row@10..57 scan-only
 corpus-test/table/row-quoted-close-bracket/input.ftml	Table@0..68 scan-only
 corpus-test/table/row-quoted-close-bracket/input.ftml	structural Cell scan=1 tree=0 contained=true
+corpus-test/tabview/stray-then-row-tail-precedence/input.ftml	Div@100..118 scan-only
+corpus-test/tabview/stray-then-row-tail-precedence/input.ftml	Div@100..108 descent-only
 corpus-test/tabview/tab-opener-single-bracket/input.ftml	Tab@12..34 scan-only
 corpus-test/bibliography/f3-m1-e-table-open-in-body/input.ftml	Table@25..107 scan-only
 corpus-test/bibliography/f3-m1-e-table-open-in-body/input.ftml	Table@25..60 descent-only

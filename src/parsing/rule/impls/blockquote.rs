@@ -2106,6 +2106,19 @@ fn quote_row_line_ends_with_marker(source: &str, start: usize, end: usize) -> bo
         .is_some_and(|before| before.ends_with([' ', '\t']))
 }
 
+fn nested_list_first_row_follows_paired_close(
+    list: &DepthList<(), NativeQuoteRow>,
+) -> bool {
+    let mut current = list.as_slice();
+    loop {
+        match current.first() {
+            Some(DepthItem::Item(row)) => return row.quoted_close_paragraph_follower,
+            Some(DepthItem::List(_, inner)) => current = inner.as_slice(),
+            None => return false,
+        }
+    }
+}
+
 fn build_blockquote_element(
     list: DepthList<(), NativeQuoteRow>,
     wikidot: bool,
@@ -2136,8 +2149,11 @@ fn build_blockquote_element(
             }
             DepthItem::List(_, list) => {
                 keep_trailing_break = false;
+                let keep_break = nested_list_first_row_follows_paired_close(&list);
                 if let Some(blockquote) = build_blockquote_element(list, wikidot) {
-                    stack.pop_line_break();
+                    if !keep_break {
+                        stack.pop_line_break();
+                    }
                     stack.push_element(blockquote, false);
                 }
             }
@@ -2785,6 +2801,7 @@ fn push_native_quote_row<'t>(
         && !row.residual_block
         && !empty_list_break_row
         && !explicit_list_row
+        && !row.quoted_close_paragraph_follower
     {
         stack.pop_line_break();
     }
@@ -2891,26 +2908,12 @@ fn push_native_quote_row<'t>(
         }
         return;
     }
-    if wikidot && row.quoted_close_paragraph_follower {
-        let mut elements = row.elements;
-        while matches!(
-            elements.last(),
-            Some(Element::LineBreak | Element::LineBreaks(_))
-        ) {
-            elements.pop();
-        }
-        if !elements.is_empty() {
-            stack.pop_line_break();
-            stack.push_element(
-                Element::Container(Container::new(
-                    ContainerType::Paragraph,
-                    elements,
-                    AttributeMap::new(),
-                )),
-                false,
-            );
-        }
-        return;
+    if wikidot
+        && row.quoted_close_paragraph_follower
+        && row.paragraph_safe
+        && !quote_row_opens_block(&row.elements)
+    {
+        stack.clear_wikidot_paired_close_break_marks();
     }
     let collapsible_row =
         matches!(row.elements.first(), Some(Element::Collapsible { .. }));

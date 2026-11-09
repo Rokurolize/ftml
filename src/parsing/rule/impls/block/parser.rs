@@ -7120,6 +7120,13 @@ where
                     && self.wikidot_quote_boundary_blank_in_li_body_quoted_close()
                 {
                     self.set_wikidot_pending_paired_list_close_quoted_follower();
+                } else if self.peek_wikidot_quote_boundary_quoted_li_close()
+                    && self.shallower_text_list_close_ahead(block_rule)
+                    && self
+                        .shallower_text_list_close_depth_ahead(block_rule)
+                        .is_some_and(|depth| depth != 0)
+                {
+                    self.set_wikidot_pending_paired_list_close_quoted_follower();
                 } else {
                     self.set_wikidot_pending_paired_list_close();
                 }

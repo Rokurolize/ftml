@@ -3579,9 +3579,14 @@ fn flush_root_pending<'t>(
     // exactly when the crossed list's items warrant it (the align/
     // text-before-block/blockquote shapes; see `crossed_pre_list_head_should_wrap`).
     // Quoted-native poisons keep the bare head (d832-full).
-    let wrap_crossed_head = next.is_some_and(|next| {
+    // fw92 head-shape gates: whether the pending run is a bare-marker run
+    // (a rejected crossed pair's head) and whether the crossed list warrants
+    // a head wrap, independent of each other.
+    let pending_is_marker_run = pending_starts_with_format_marker(pending);
+    let crossed_head_warrants = next.is_some_and(|next| {
         crossed_pre_list_head_should_wrap(next) && !subtree_contains_native_list(next)
-    }) && pending_starts_with_format_marker(pending);
+    });
+    let wrap_crossed_head = crossed_head_warrants && pending_is_marker_run;
     let mut sequence = mem::take(pending);
     // Rejected-bold closer attach (item 92): after an align/div-item list,
     // live drops the closer chunk's separator break (`</ul>**`, never
@@ -3662,6 +3667,11 @@ fn flush_root_pending<'t>(
             sequence,
             AttributeMap::new(),
         ))];
+        // fw92: live never styles a bare-marker head with the anchor scope
+        // (`a-table-cross-align` is `<p>**<br></p>`); span/size stay applied.
+        if pending_is_marker_run {
+            strip_anchor_containers(&mut sequence);
+        }
     }
     if scope_open_at_start
         && matches!(
@@ -3677,12 +3687,21 @@ fn flush_root_pending<'t>(
             strip_leading_line_break(&mut sequence);
         } else {
             strip_leading_line_break(&mut sequence);
-            if sequence_has_content(&sequence) {
+            // fw92: a bare-marker run before a non-warranting explicit list
+            // stays bare on live (`span-table-cross-div-noscopeclose`);
+            // ordinary content still wraps here as before.
+            let wraps = sequence_has_content(&sequence)
+                && !(at_explicit_list && pending_is_marker_run && !crossed_head_warrants);
+            if wraps {
                 sequence = vec![Element::Container(Container::new(
                     ContainerType::Paragraph,
                     sequence,
                     AttributeMap::new(),
                 ))];
+                // Same anchor rule as the crossed-head arm above.
+                if pending_is_marker_run {
+                    strip_anchor_containers(&mut sequence);
+                }
             }
         }
     }
@@ -3755,6 +3774,38 @@ fn strip_leading_line_break(elements: &mut Vec<Element<'_>>) -> bool {
         }
         Some(Element::Color { elements, .. }) => strip_leading_line_break(elements),
         _ => false,
+    }
+}
+
+/// Unwraps every anchor container in place, splicing its children: live
+/// never styles a bare-marker pre-list head with the anchor scope. Only the
+/// stamped container goes; scope state is untouched, so items, tails, and
+/// the scope close itself lower exactly as before.
+fn strip_anchor_containers(elements: &mut Vec<Element<'_>>) {
+    let mut index = 0;
+    while index < elements.len() {
+        if matches!(elements[index], Element::Anchor { .. }) {
+            let Element::Anchor {
+                elements: mut inner,
+                ..
+            } = mem::replace(&mut elements[index], Element::LineBreak)
+            else {
+                unreachable!()
+            };
+            strip_anchor_containers(&mut inner);
+            let count = inner.len();
+            elements.splice(index..=index, inner);
+            index += count;
+        } else {
+            match &mut elements[index] {
+                Element::Container(container) => {
+                    strip_anchor_containers(container.elements_mut());
+                }
+                Element::Color { elements, .. } => strip_anchor_containers(elements),
+                _ => {}
+            }
+            index += 1;
+        }
     }
 }
 

@@ -638,6 +638,26 @@ where
                 }
             }
         }
+        // A discarded row closer with a same-line remainder is transparent
+        // mid-paragraph: live continues the paragraph through it with a
+        // space (probe muse-probe-advcell-list-mid-notail-list).
+        if parser.settings().layout.legacy()
+            && parser.current().token == Token::LineBreak
+            && !stack.current_empty()
+            && parser.look_ahead(0).is_some_and(|token| {
+                token.token == Token::LeftBlockEnd
+                    && parser.wikidot_discarded_row_closer(token.span.start)
+                    && crate::parsing::rule::impls::wikidot_discarded_closer_has_same_line_remainder(
+                        parser,
+                        token.span.start,
+                    )
+            })
+        {
+            stack.push_element(Element::Text(Cow::Borrowed(" ")), true);
+            parser.step()?;
+            line_prefix_whitespace_only = true;
+            continue;
+        }
         // The line-break rule drops this newline because a closer follows it.
         // Live still emits the break, outside the paragraph that the closer ends.
         if parser.settings().layout.legacy()
@@ -645,6 +665,10 @@ where
             && parser.look_ahead(0).is_some_and(|token| {
                 token.token == Token::LeftBlockEnd
                     && parser.wikidot_discarded_row_closer(token.span.start)
+                    && !crate::parsing::rule::impls::wikidot_discarded_closer_has_same_line_remainder(
+                        parser,
+                        token.span.start,
+                    )
             })
         {
             stack.end_paragraph();
@@ -749,7 +773,10 @@ where
                     && parser.current().token == Token::LineBreak
                     && stack.current_empty()
                     && stack.wikidot_finished_ends_with_explicit_list()
-                    && parser.wikidot_next_line_has_content()
+                    && (parser.wikidot_next_line_has_content()
+                        || crate::parsing::rule::impls::wikidot_spill_closer_drops_post_list_break(
+                            parser,
+                        ))
                     && !parser.body_end_boundary_accepts("iftags")
                     && !parser.has_pending_iftags_end_ahead()
                 {

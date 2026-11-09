@@ -988,7 +988,10 @@ fn parse_list_block_impl<'r, 't>(
     let stash_formed = !anchor_chromes.is_empty();
     let follower_wrap = closer_line_marker.is_some() || stash_formed;
     let content_after_list = (parser.wikidot_next_line_has_content()
-        || (follower_wrap && parser.wikidot_next_line_has_content_skipping_blanks()))
+        || (follower_wrap && parser.wikidot_next_line_has_content_skipping_blanks())
+        || crate::parsing::rule::impls::wikidot_spill_closer_drops_post_list_break(
+            parser,
+        ))
         && !parser.body_end_boundary_accepts("iftags")
         && !parser.has_pending_iftags_end_ahead();
     // BF79 (e-residual): the stash anchor chrome varies by follower type on

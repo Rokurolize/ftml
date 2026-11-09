@@ -2612,6 +2612,30 @@ fn pending_starts_with_format_marker(pending: &[Element<'_>]) -> bool {
     })
 }
 
+/// Whether a pending pre-list run is the content-led head of a rejected
+/// crossed format pair: it ends with a bare format marker run (the pair's
+/// closer) after visible content, and contains no format container of its
+/// own. Live p-wraps these before a warranting explicit list
+/// (`span-cross-align-notable` family) exactly like marker-first heads.
+fn pending_ends_with_bare_marker(pending: &[Element<'_>]) -> bool {
+    let mut rest = pending.iter().rev().filter(|element| {
+        !matches!(element, Element::LineBreak | Element::LineBreaks(_))
+    });
+    match rest.next() {
+        Some(Element::Text(text)) if format_open_marker(text.as_ref()) => {}
+        _ => return false,
+    }
+    pending.iter().any(|element| {
+        matches!(element, Element::Text(text)
+            if !text.trim().is_empty() && !format_open_marker(text.as_ref()))
+    }) && !pending.iter().any(|element| {
+        matches!(
+            element,
+            Element::Container(container) if format_kind_of(container.ctype()).is_some()
+        )
+    })
+}
+
 fn subtree_has_break(element: &Element<'_>) -> bool {
     if matches!(element, Element::LineBreak | Element::LineBreaks(_)) {
         return true;
@@ -4614,6 +4638,12 @@ fn flush_root_pending<'t>(
             && !subtree_contains_quoted_native_list(next)
     });
     let wrap_crossed_head = crossed_head_warrants && pending_is_marker_run;
+    // Content-led rejected head with no table foster: pending ends with the
+    // pair's bare closer marker after visible content. The table branch below
+    // already wraps these shapes; this covers the bare-boundary remainder.
+    let content_led_marker_head = crossed_head_warrants
+        && !pending_is_marker_run
+        && pending_ends_with_bare_marker(pending);
     let mut sequence = mem::take(pending);
     // Rejected-bold closer attach (item 92): after an align/div-item list,
     // live drops the closer chunk's separator break (`</ul>**`, never
@@ -4712,6 +4742,20 @@ fn flush_root_pending<'t>(
             // re-wrap (item 80: the combination is live-verified — live
             // emits a single <p>).
             strip_leading_line_break(&mut sequence);
+        } else if at_explicit_list && sequence_has_formed_format(&sequence) {
+            // Formed head after a table/bib foster (plain-item bold cross):
+            // live keeps the opener-line break inside the styled segment and
+            // wraps the run (`span-table-cross-plain` family). The trim above
+            // now stops at the format segment, so only scope-level breaks go.
+            // Anchor never styles these heads (live `anchor-table-cross-plain`
+            // is bare strong); span/size stay applied.
+            strip_leading_line_break(&mut sequence);
+            strip_anchor_containers(&mut sequence);
+            sequence = vec![Element::Container(Container::new(
+                ContainerType::Paragraph,
+                sequence,
+                AttributeMap::new(),
+            ))];
         } else {
             strip_leading_line_break(&mut sequence);
             // fw92: a bare-marker run before a non-warranting explicit list
@@ -4731,6 +4775,16 @@ fn flush_root_pending<'t>(
                 }
             }
         }
+    } else if content_led_marker_head && !sequence.is_empty() {
+        // Content-led rejected head before a warranting explicit list with no
+        // table foster: live p-wraps it exactly like a marker-first head
+        // (`span-cross-align-notable` family). Scope styling is kept — live
+        // keeps the span/size/anchor wrapper on content-led heads.
+        sequence = vec![Element::Container(Container::new(
+            ContainerType::Paragraph,
+            sequence,
+            AttributeMap::new(),
+        ))];
     }
     // A pre-list inline chunk cut by an explicit list re-joins a
     // just-flushed paragraph on live, and a chunk with no preceding
@@ -4797,11 +4851,34 @@ fn strip_leading_line_break(elements: &mut Vec<Element<'_>>) -> bool {
             true
         }
         Some(Element::Container(container)) => {
-            strip_leading_line_break(container.elements_mut())
+            // A formed or stopped format segment owns its breaks; live keeps
+            // the opener-line break inside the styled head (`span-table-cross-
+            // plain` family), so the table-foster trim stops above it.
+            if format_kind_of(container.ctype()).is_some() {
+                false
+            } else {
+                strip_leading_line_break(container.elements_mut())
+            }
         }
         Some(Element::Color { elements, .. }) => strip_leading_line_break(elements),
         _ => false,
     }
+}
+
+/// Whether the lowered run holds a formed (non-stopped) format segment: a
+/// format-kind container without the stops-at-list marker, at any depth
+/// (scope and anchor wrappers aside). Rejected marker runs and stopped
+/// pre-segments never match.
+fn sequence_has_formed_format(elements: &[Element<'_>]) -> bool {
+    elements.iter().any(|element| match element {
+        Element::Container(container) => {
+            (format_kind_of(container.ctype()).is_some() && !stopped_pre_segment(element))
+                || sequence_has_formed_format(container.elements())
+        }
+        Element::Color { elements, .. } => sequence_has_formed_format(elements),
+        Element::Anchor { elements, .. } => sequence_has_formed_format(elements),
+        _ => false,
+    })
 }
 
 /// Unwraps every anchor container in place, splicing its children: live

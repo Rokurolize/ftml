@@ -1162,6 +1162,7 @@ impl<'t> ParagraphStack<'t> {
         if keep_prose_absorb {
             self.wikidot_seam_keep_pending_unwrap = false;
             self.mark_next_unwrapped_after_block();
+        }
         if self.wikidot_anchor_capture.is_some() {
             let inline_ready = self
                 .wikidot_anchor_capture

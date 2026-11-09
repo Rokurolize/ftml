@@ -1479,9 +1479,18 @@ where
     // outer list's close (no inner list closer of any kind: [`# [[ul]]`
     // with only the outer `[[/ol]]` after the li close) and must not
     // dissolve (live leaves it literal there).
+    let mut closer_hash_marker = false;
     if dissolve_run.is_some() {
         let source = parser.full_text().inner();
         let end = candidate.current().span.start.min(source.len());
+        // Item 88 follow-up (closer-line anchor): a hash marker on the
+        // consumed closer's line anchors like a numbered item close on
+        // live, so the enclosing numbered list re-emits an anchor chrome
+        // (saved-page probes muse-probe-x88f-g2-*).
+        let lowered = source[..end].to_ascii_lowercase();
+        closer_hash_marker = lowered
+            .rfind("[[/")
+            .is_some_and(|head| list_item_line_marker(source, head) == Some('#'));
         let li_bound = entry.wikidot_li_collect_head().and_then(|head| {
             own_line_li_close_after(source, head)
                 .or_else(|| entry.wikidot_li_body_end_by_head(head))
@@ -1599,6 +1608,32 @@ where
             parser.wikidot_li_pairing_depth()
         };
         parser.stash_wikidot_list_anchor_chrome(stash_depth, anchor);
+    }
+    // Item 88 follow-up: an unflipped (bullet) formation closed on a
+    // hash-marked line anchors like a numbered item close, so stash the
+    // anchor chrome for the enclosing numbered list to re-emit after its
+    // own close (live renders the unclosed none-item shell for
+    // muse-probe-x88f-g2-hash-ul-hash-olclose and its same-name twin).
+    if !stash_anchor
+        && !flipped_numbered
+        && dissolve_run.is_some()
+        && closer_hash_marker
+    {
+        let anchor = Element::List {
+            ltype: ListType::Bullet,
+            items: vec![ListItem::Elements {
+                elements: vec![Element::LineBreak],
+                attributes: {
+                    let mut item_attributes = AttributeMap::new();
+                    item_attributes.insert("style", cow!("list-style: none"));
+                    item_attributes
+                },
+            }],
+            attributes: AttributeMap::new(),
+            wikidot_explicit_block: true,
+            wikidot_unclosed: true,
+        };
+        parser.stash_wikidot_list_anchor_chrome(1, anchor);
     }
     // Unowned dissolution (item 65c, c1 shapes): a numbered lost-owner
     // list whose body is unowned (explicit [[li]] lines, not sibling

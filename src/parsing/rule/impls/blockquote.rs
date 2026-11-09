@@ -24,6 +24,7 @@ use super::footnote_first::{
 use super::line_owner::{LineOwner, LostOwnerBlock, try_consume_lost_owner_block};
 use super::prelude::*;
 use crate::parsing::ParseSuccess;
+use crate::parsing::inline_scope::visit_children;
 use crate::parsing::paragraph::{
     ParagraphStack, collapsible_has_direct_literal_nested_opener,
 };
@@ -507,7 +508,8 @@ where
             ParseCondition::current(Token::InputEnd),
             ParseCondition::current(Token::LeftBlock),
         ];
-        let Ok(result) = collect_native_blockquote_line(&mut collect_parser, &close)
+        let Ok(result) =
+            collect_native_blockquote_line(&mut collect_parser, &close, None)
         else {
             return None;
         };
@@ -1103,7 +1105,7 @@ fn try_consume_fn<'r, 't>(
         parser.clear_wikidot_quote_boundary_list_close();
         let _ = parser.take_wikidot_quote_boundary_li_auto_close();
         parser.set_native_blockquote_depth(Some(absolute_depth));
-        let result = collect_native_blockquote_line(parser, close);
+        let result = collect_native_blockquote_line(parser, close, Some(physical_depth));
         parser.set_native_blockquote_depth(original_depth);
         let errors_before = errors.len();
         let ParseSuccess {
@@ -2090,9 +2092,80 @@ fn form_quote_row_unit<'t>(
     formed
 }
 
+/// Whether the row collecter's line-end stop found the parser stranded
+/// past its row: a nested collect (a format pair closing on a later quote
+/// row) consumed that row's prefix and closer, leaving same-line content
+/// behind. Live keeps the remainder in the quote paragraph, with the row's
+/// prefix space as separator when no list intervened; stopping here would
+/// strand it outside the quote (parsed as root content). Resume it as this
+/// row's content when it sits on a same-depth quote row carrying
+/// non-structural content. Returns whether to continue, and whether to
+/// prepend the eaten prefix space (not when the row already holds a list:
+/// live drops the separator after a list).
+fn crossed_row_remainder(
+    parser: &Parser<'_, '_>,
+    elements: &[Element<'_>],
+    row_depth: Option<usize>,
+) -> Option<bool> {
+    let row_depth = row_depth?;
+    match parser.current().token {
+        Token::LineBreak
+        | Token::ParagraphBreak
+        | Token::InputEnd
+        | Token::LeftBlock
+        | Token::LeftBlockEnd
+        | Token::LeftBlockStar
+        | Token::Quote
+        | Token::BulletItem
+        | Token::NumberedItem
+        | Token::Heading
+        | Token::TableColumn
+        | Token::TableColumnTitle
+        | Token::TableColumnCenter
+        | Token::TableColumnRight => return None,
+        _ => {}
+    }
+    // The closer the nested collect just consumed may sit between the row
+    // prefix and the remainder (`> __tail`), so scan the prefix forward
+    // from the line start instead: quote markers at this depth, then a
+    // space. Anything else (deeper rows, non-quote lines, `>x` without a
+    // prefix space) stays stranded as today.
+    let source = parser.full_text().inner();
+    let pos = parser.current().span.start.min(source.len());
+    let line_start = source[..pos].rfind('\n').map_or(0, |offset| offset + 1);
+    let rest = &source[line_start..];
+    let quotes = rest.bytes().take_while(|byte| *byte == b'>').count();
+    if quotes != row_depth {
+        return None;
+    }
+    if !rest[quotes..].starts_with(' ') {
+        return None;
+    }
+    if matches!(parser.current().token, Token::Whitespace) {
+        return Some(false);
+    }
+    let crossed_list = elements.iter().any(subtree_has_list);
+    Some(!crossed_list)
+}
+
+/// Whether a crossed row's collected elements hold an explicit list: the
+/// pair closed beyond one, so live drops the resumed remainder's separator
+/// space after it.
+fn subtree_has_list(element: &Element<'_>) -> bool {
+    if matches!(element, Element::List { .. }) {
+        return true;
+    }
+    let mut found = false;
+    visit_children(element, &mut |children| {
+        found |= children.iter().any(subtree_has_list);
+    });
+    found
+}
+
 fn collect_native_blockquote_line<'r, 't>(
     parser: &mut Parser<'r, 't>,
     close: &[ParseCondition],
+    resume_crossed_row: Option<usize>,
 ) -> ParseResult<'r, 't, NativeQuoteLine<'t>> {
     let line_end_token = std::iter::once(parser.current())
         .chain(parser.remaining().iter())
@@ -2172,6 +2245,30 @@ fn collect_native_blockquote_line<'r, 't>(
             let here = parser.current().span.start.min(source.len());
             let line_start = source[..here].rfind('\n').map_or(0, |index| index + 1);
             let quoted_line = source[line_start..].starts_with('>');
+            // A closer that paired across an explicit list ate this row's
+            // prefix: resume the same-depth remainder with the prefix space
+            // as separator (live-verified; no separator after a list).
+            if let Some(prepend_space) =
+                crossed_row_remainder(parser, &elements, resume_crossed_row)
+            {
+                if prepend_space {
+                    let separator =
+                        vec![Element::Text(std::borrow::Cow::Borrowed(" "))];
+                    merge_quote_line_chunk(
+                        &mut layout,
+                        &mut layout_live,
+                        &separator,
+                        true,
+                        None,
+                    );
+                    elements.extend(separator);
+                }
+                continue;
+            }
+            // A rule (a color body on a quote cursor) can step past this
+            // row's line break and stop before consuming the rest of the
+            // deeper line (rbqres #1365): collect it rather than stranding
+            // it for the outer parser.
             if at_break || row_marker_ahead || !quoted_line {
                 return ok!(paragraph_safe; native_quote_line(elements, layout, layout_live, escaped_units), errors);
             }

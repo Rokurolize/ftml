@@ -1,0 +1,67 @@
+{
+    "elements": [
+        {
+            "element": "list",
+            "data": {
+                "type": "numbered",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "a"
+                            },
+                            {
+                                "element": "text",
+                                "data": " "
+                            },
+                            {
+                                "element": "text",
+                                "data": "##"
+                            },
+                            {
+                                "element": "text",
+                                "data": "red"
+                            },
+                            {
+                                "element": "text",
+                                "data": "|"
+                            },
+                            {
+                                "element": "text",
+                                "data": "b"
+                            }
+                        ]
+                    },
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "c"
+                            }
+                        ]
+                    },
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "d"
+                            },
+                            {
+                                "element": "text",
+                                "data": "##"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

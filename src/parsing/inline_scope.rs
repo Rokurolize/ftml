@@ -149,6 +149,7 @@ struct ActiveScope<'t> {
     pending: bool,
     materialized: bool,
     origin: usize,
+    afterlife: bool,
     previous_active: Option<usize>,
     next_active: Option<usize>,
 }
@@ -261,6 +262,7 @@ impl<'t> ActiveScopes<'t> {
             pending: false,
             materialized: false,
             origin,
+            afterlife: false,
             previous_active,
             next_active: None,
         });
@@ -2996,7 +2998,10 @@ fn segment_format_run<'t>(
                 stop_at_list,
                 seen_list,
                 mem::replace(&mut run_starts_after_code, false),
-                !seen_list && !stop_at_list && formed_chunk_wraps(&element),
+                !seen_list
+                    && !stop_at_list
+                    && formed_chunk_wraps(&element)
+                    && !format_close_inside_list(&element, ctype),
             );
             let mut list = element;
             segment_format_list_items(
@@ -3188,6 +3193,28 @@ fn segment_color_run<'t>(
         });
     }
     output
+}
+
+/// Whether the pair a format container of `ctype` opens closes inside `list`
+/// (an item subtree holds the pair's close partial). Live keeps the pre-list
+/// chunk of such a pair bare; only a pair closing beyond the list earns the
+/// paragraph wrapper.
+fn format_close_inside_list(list: &Element<'_>, ctype: ContainerType) -> bool {
+    let Some(kind) = format_kind_of(ctype) else {
+        return false;
+    };
+    let mut found = false;
+    let mut visitor = |children: &[Element<'_>]| {
+        for element in children {
+            if let Element::Partial(PartialElement::InlineFormatClose(k)) = element
+                && *k == kind
+            {
+                found = true;
+            }
+        }
+    };
+    visit_children(list, &mut visitor);
+    found
 }
 
 /// Whether an explicit list in a crossing color body carries the pair's close
@@ -5186,13 +5213,20 @@ fn merge_frame_prelist_chunks<'t>(children: &mut Vec<Element<'t>>) {
         )
     };
     // Fresh wrap: a formatted scope chunk at the frame head cut by an
-    // explicit list, with no paragraph before it.
+    // explicit list, with no paragraph before it. A format segment whose
+    // pair closed inside the list (no markers on it any more) keeps the
+    // bare placement live renders.
+    let initem_close_segment = !children.is_empty() && matches!(&children[0], Element::Container(container)
+        if format_kind_of(container.ctype()).is_some()
+            && !container.attributes().get().contains_key(WIKIDOT_BLOCK_CHUNK_PREFIX_MARKER)
+            && !container.attributes().get().contains_key(WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER));
     if children.len() > 1
         && is_explicit_block_list(&children[1])
         && !matches!(&children[0], Element::Container(paragraph)
             if paragraph.ctype() == ContainerType::Paragraph)
         && sequence_contains_format_container(std::slice::from_ref(&children[0]))
         && sequence_has_inline_content(std::slice::from_ref(&children[0]))
+        && !initem_close_segment
     {
         let chunk = children.remove(0);
         children.insert(
@@ -7645,6 +7679,9 @@ fn end_anchor_at_explicit_list<'t>(
     let Some(position) = active.anchor_position() else {
         return;
     };
+    if active.scope_is_pending(position) && active.scopes[position].afterlife {
+        return;
+    }
     if !active.scope_is_pending(position) {
         close_live_anchor(output, run, active, last_run_outer_scope);
     } else if blank_anchor_reopen && !active.scope_materialized(position) {
@@ -7778,6 +7815,9 @@ fn emit_item_end_reopened_copy<'t>(
     let mut copy: Vec<Element<'t>> = Vec::new();
     for entry in crossing.iter().rev() {
         copy = vec![active.scopes[*entry].wrapper.wrap(copy)];
+    }
+    for position in crossing {
+        active.scopes[position].afterlife = true;
     }
     children.push(Element::Container(Container::new(
         ContainerType::Paragraph,
@@ -8409,6 +8449,11 @@ fn lower_wikidot_heading_barrier<'t>(
         false,
     );
     active.pend_all();
+    for position in active.active_positions() {
+        if Some(position) != active.heading_wrapper {
+            active.scopes[position].afterlife = false;
+        }
+    }
     active.heading_barrier_pended = active
         .active_positions()
         .iter()
@@ -8991,7 +9036,8 @@ pub(crate) fn visit_children<'t>(
             | PartialElement::InlineColorOpen(..)
             | PartialElement::InlineColorClose
             | PartialElement::InlineAnchorOpen(..)
-            | PartialElement::InlineAnchorClose(_) => {}
+            | PartialElement::InlineAnchorClose(_)
+            | PartialElement::WikidotEquationNumber(..) => {}
         },
         _ => {}
     }
@@ -9064,7 +9110,8 @@ pub(crate) fn visit_children_mut<'t>(
             | PartialElement::InlineColorOpen(..)
             | PartialElement::InlineColorClose
             | PartialElement::InlineAnchorOpen(..)
-            | PartialElement::InlineAnchorClose(_) => {}
+            | PartialElement::InlineAnchorClose(_)
+            | PartialElement::WikidotEquationNumber(..) => {}
         },
         _ => {}
     }

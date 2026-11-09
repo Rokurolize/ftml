@@ -6700,13 +6700,13 @@ where
                 && self.unquoted_list_close_ahead(block_rule)
             {
                 self.set_wikidot_quote_boundary_li_auto_close();
-                self.set_wikidot_pending_unquoted_evaporation_close(if block_rule.name
-                    == "block-list-ordered"
-                {
-                    2
-                } else {
-                    1
-                });
+                self.set_wikidot_pending_unquoted_evaporation_close(
+                    if block_rule.name == "block-list-ordered" {
+                        2
+                    } else {
+                        1
+                    },
+                );
                 return Ok(());
             }
             if block_rule.name.starts_with("block-list-")
@@ -8308,7 +8308,9 @@ where
                     | Token::LeftBlockStar
                     | Token::LeftBlockEnd
                     | Token::BulletItem
-                    | Token::NumberedItem => return (false, crossed_blank, saw_vanishing),
+                    | Token::NumberedItem => {
+                        return (false, crossed_blank, saw_vanishing);
+                    }
                     _ => {
                         if line.step().is_err() {
                             return (false, crossed_blank, saw_vanishing);
@@ -8382,7 +8384,14 @@ where
     fn scan_unquoted_close_shallow_lines(
         parser: &Parser<'r, 't>,
         list_body: bool,
-    ) -> Option<(Vec<Vec<(usize, usize)>>, bool, bool, UnquotedCloseTerminator, bool, bool)> {
+    ) -> Option<(
+        Vec<Vec<(usize, usize)>>,
+        bool,
+        bool,
+        UnquotedCloseTerminator,
+        bool,
+        bool,
+    )> {
         let item_body = !list_body;
         let mut scan = parser.clone();
         let mut segments: Vec<Vec<(usize, usize)>> = vec![Vec::new()];
@@ -8476,12 +8485,10 @@ where
                 // a paragraph.
                 let mut end = probe.clone();
                 if end.get_end_block().is_ok() {
-                    let is_quoted_li_close = Self::bare_line_is_li_close_after_quotes(&probe);
+                    let is_quoted_li_close =
+                        Self::bare_line_is_li_close_after_quotes(&probe);
                     let required_depth = parser.quote_body_required_depth();
-                    if item_body
-                        && is_quoted_li_close
-                        && Some(depth) == required_depth
-                    {
+                    if item_body && is_quoted_li_close && Some(depth) == required_depth {
                         return Some((
                             segments,
                             blank_after_text,
@@ -8747,7 +8754,8 @@ where
                 let mut unit: Vec<Element<'t>> =
                     combined.drain(..take.min(combined.len())).collect();
                 boundary += take;
-                if index == 0 && first_para
+                if index == 0
+                    && first_para
                     && matches!(
                         unit.last(),
                         Some(Element::LineBreak | Element::LineBreaks(_))

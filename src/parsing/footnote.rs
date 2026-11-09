@@ -239,7 +239,9 @@ pub(crate) fn normalize_wikidot_blocks(
             normalize_block_sequence(&mut output);
         }
         let Some(mut parent) = parent else {
-            if !footnotes_empty && needs_footnote_block_hoist(&output) {
+            if footnotes_empty {
+                drop_post_list_break_before_empty_footnote_block(&mut output);
+            } else if needs_footnote_block_hoist(&output) {
                 hoist_wikidot_footnote_blocks(&mut output);
             }
             *elements = output;
@@ -251,6 +253,50 @@ pub(crate) fn normalize_wikidot_blocks(
             .expect("nested normalization frame has a parent")
             .output
             .push(Element::Container(parent));
+    }
+}
+
+/// Live renders a `[[footnoteblock]]` with no footnotes as nothing, and the
+/// post-list trailing break FTML's explicit-list rule emits in front of it never
+/// appears on the saved page (probes `muse-probe-fb75-fn-attached-empty-v2` and
+/// the ad75 matrix's a1/b1/b2/b3/b4/b5/a3/a5/a6/a7/a9/b6/c6 cells; the blank-line
+/// gap `fn-blank-empty-v2` already drops the break for both trees). The break is
+/// kept whenever the footer does render, including when the only footnote is
+/// defined after the block (`fn-attached-ref-in-item-v2`, `fn-ref-before-v2`,
+/// `fn-ref-after-v2`), so the decision belongs to this post-parse pass: it is the
+/// first point where the whole page's footnote list is known and non-empty
+/// footnotes are exactly the footer's render condition
+/// (`Element::FootnoteBlock` renders only when `footnotes` is non-empty; the
+/// Wikidot layout ignores `hide`).
+///
+/// The signature matched is the one the divergence actually takes in the tree —
+/// `[List, LineBreak, FootnoteBlock]` in the root block sequence, the explicit
+/// list's post-list break — so no other break-before-block shape changes. Only the
+/// root sequence is touched: a nested explicit list never emits that break
+/// (`!nested` in the list rule), and live's empty footer emits nothing at any
+/// depth.
+///
+/// The swallow is unconditional, not only at end of input: `muse-probe-fb75-*`
+/// shows live dropping the break for every empty-footer follower shape —
+/// `fn-empty-then-div` (`</ul><div>`, no break), `fn-empty-blank-after`
+/// (`</ul><p>x</p>`, no break) and `fn-empty-then-text` (`</ul><br>x`: no
+/// post-list break; the `<br>` there is the prose line after the block, and the
+/// tail is bare). Dropping the break fixes the first two outright; the third
+/// keeps a single residual — the post-block bare tail with its leading break —
+/// which is the after-list tail-gap family recorded on the m3x3 residual (live:
+/// adjacent content → bare tail with a leading break; blank line → wrapped
+/// paragraph), not a break-drop question.
+fn drop_post_list_break_before_empty_footnote_block(elements: &mut Vec<Element<'_>>) {
+    let mut index = 0;
+    while index + 2 < elements.len() {
+        let is_post_list_break = matches!(elements[index], Element::List { .. })
+            && matches!(elements[index + 1], Element::LineBreak)
+            && matches!(elements[index + 2], Element::FootnoteBlock { .. });
+        if is_post_list_break {
+            elements.remove(index + 1);
+        } else {
+            index += 1;
+        }
     }
 }
 

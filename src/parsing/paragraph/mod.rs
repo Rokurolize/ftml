@@ -690,6 +690,11 @@ where
                 if stack.wikidot_complete_raw_line_occupied() {
                     stack.clear_wikidot_complete_raw_line_occupancy();
                 }
+                // fr73: a blank line ends any stamped crossed-pair tail —
+                // live drops the tail there (blank gap yields no tail).
+                if parser.settings().layout.legacy() {
+                    parser.take_wikidot_crossed_pair_tail_pending();
+                }
                 stack.wikidot_note_stash_br_blank();
                 let demote_chain_end =
                     if parser.settings().layout.legacy() && !stack.current_empty() {
@@ -820,8 +825,32 @@ where
                 parser.take_wikidot_quote_boundary_break_leads_paragraph();
             let mut consumed = consumed;
             let paragraph_split = consumed.paragraph_split.take();
-            let (elements, mut errors, paragraph_safe) = consumed.into();
-            let mut elements = elements;
+            let (mut elements, mut errors, paragraph_safe) = consumed.into();
+            // fr73: a stamped crossed-pair tail keeps the gap break before
+            // the next explicit list (live renders one bare break before a
+            // second list). Content between the stamp and that list ends
+            // it; bare breaks, whitespace, seams and block-head partials
+            // carry it (the stamping batch itself carries it).
+            if parser.settings().layout.legacy()
+                && parser.wikidot_crossed_pair_tail_pending_is_set()
+                && !batch_contains_tail_stamp(&elements)
+            {
+                if batch_ends_with_kept_list(&elements) && !paragraph_safe {
+                    parser.take_wikidot_crossed_pair_tail_pending();
+                    stack.mark_keep_lone_break_before_list();
+                } else if !batch_keeps_tail_pending(&elements) {
+                    parser.take_wikidot_crossed_pair_tail_pending();
+                } else if matches!(elements, Elements::Single(Element::LineBreak))
+                    && paragraph_safe
+                    && stack.current_empty()
+                    && !stack.wikidot_line_break_follows_block()
+                {
+                    // The gap break would be skipped as a paragraph-start
+                    // break; push it directly so the list keeps it.
+                    stack.push_element(Element::LineBreak, paragraph_safe);
+                    elements = Elements::None;
+                }
+            }
             // Any produced element other than the absorbed stray itself
             // ends the absorb neighborhood's paragraph-merge window.
             if parser.settings().layout.legacy() && !matches!(elements, Elements::None) {
@@ -1711,6 +1740,113 @@ fn elements_end_with_explicit_list(elements: &Elements<'_>) -> bool {
         Elements::Single(element) => is_explicit(element),
         Elements::Multiple(elements) => elements.last().is_some_and(is_explicit),
         Elements::None => false,
+    }
+}
+
+/// fr73: whether a consumed batch is (or contains) the pair whose rule
+/// exit just stamped the crossed-pair tail — the stamping batch itself
+/// carries the signal forward.
+fn batch_contains_tail_stamp(elements: &Elements<'_>) -> bool {
+    fn element_contains(element: &Element<'_>) -> bool {
+        let has_marker = |attributes: &AttributeMap<'_>| {
+            let map = attributes.get();
+            map.contains_key(crate::tree::WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER)
+                || map.contains_key(crate::tree::WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER)
+                || map.contains_key(crate::tree::WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER)
+                || map
+                    .contains_key(crate::tree::WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER)
+                || map.contains_key(
+                    crate::tree::WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BREAK_MARKER,
+                )
+                || map.contains_key(
+                    crate::tree::WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BARE_MARKER,
+                )
+                || map.contains_key(
+                    crate::tree::WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_LEAD_MARKER,
+                )
+                || map.contains_key(
+                    crate::tree::WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_FOLD_MARKER,
+                )
+                || map.contains_key(
+                    crate::tree::WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER,
+                )
+                || map.contains_key(
+                    crate::tree::WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER,
+                )
+        };
+        match element {
+            Element::Container(container) => {
+                has_marker(container.attributes())
+                    || container.elements().iter().any(element_contains)
+            }
+            Element::Color { attributes, .. } => has_marker(attributes),
+            _ => false,
+        }
+    }
+    match elements {
+        Elements::Single(element) => element_contains(element),
+        Elements::Multiple(elements) => elements.iter().any(element_contains),
+        Elements::None => false,
+    }
+}
+
+/// fr73: whether a consumed batch ends with the following explicit list
+/// (the list rule keeps the list's own trailing line break in the batch,
+/// so trailing bare breaks are skipped over).
+fn batch_ends_with_kept_list(elements: &Elements<'_>) -> bool {
+    let is_kept_trailing = |element: &Element<'_>| {
+        matches!(element, Element::LineBreak | Element::LineBreaks(_))
+            || matches!(element, Element::Text(text) if text.trim().is_empty())
+            || matches!(
+                element,
+                Element::Delayed(delayed) if delayed.is_suppression_seam()
+            )
+    };
+    let is_kept_list = |element: &Element<'_>| {
+        matches!(
+            element,
+            Element::List {
+                wikidot_explicit_block: true,
+                ..
+            }
+        )
+    };
+    match elements {
+        Elements::Single(element) => is_kept_list(element),
+        Elements::Multiple(elements) => {
+            let mut rest = elements.as_slice();
+            while let Some((last, head)) = rest.split_last() {
+                if is_kept_list(last) {
+                    return true;
+                }
+                if !is_kept_trailing(last) {
+                    return false;
+                }
+                rest = head;
+            }
+            false
+        }
+        Elements::None => false,
+    }
+}
+
+/// fr73: whether a consumed batch carries a stamped crossed-pair tail
+/// forward (bare breaks, whitespace-only text, suppression seams and
+/// block-head partials) rather than ending it with content.
+fn batch_keeps_tail_pending(elements: &Elements<'_>) -> bool {
+    let keeps = |element: &Element<'_>| {
+        matches!(
+            element,
+            Element::LineBreak | Element::LineBreaks(_) | Element::Partial(_)
+        ) || matches!(
+            element,
+            Element::Delayed(delayed) if delayed.is_suppression_seam()
+        ) || matches!(element, Element::Text(text) if text.trim().is_empty())
+    };
+    match elements {
+        Elements::Single(element) => keeps(element),
+        Elements::Multiple(elements) => elements.iter().all(keeps),
+        Elements::None => true,
     }
 }
 

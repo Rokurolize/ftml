@@ -161,6 +161,12 @@ pub(crate) const WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER: &str =
 /// post-list continuation break when it fires. Never rendered.
 pub(crate) const WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER: &str =
     "data-ftml-span-list-close-tail-fold";
+/// Sibling mark for the same close when a blank gap then an explicit list
+/// follows it (live drops the tail entirely: no break, no paragraph).
+/// Consumed by the rewrite pass, which removes the trapped break-only run;
+/// never rendered.
+pub(crate) const WIKIDOT_SPAN_LIST_CLOSE_TAIL_BLANK_MARKER: &str =
+    "data-ftml-span-list-close-tail-blank";
 /// Marks an underline or strikethrough pair that closed beyond an explicit
 /// list inside a Wikidot inline scope (`[[span]]`, `[[size]]`, `[[a]]`):
 /// live carries its styling only up to the list (see

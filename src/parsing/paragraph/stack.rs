@@ -102,6 +102,11 @@ pub struct ParagraphStack<'t> {
     /// After `[[/math]]`, some closer-line whitespace tails make live's next
     /// wrapped paragraph start with `<br />` before the following text.
     wikidot_math_next_paragraph_leads_with_br: bool,
+    /// fr73: a stamped crossed-pair tail is pending at the next explicit
+    /// list: keep the lone gap break instead of the L85 pop. Set from the
+    /// paragraph driver (which reads the parser signal); consumed by the
+    /// next explicit-list push.
+    keep_lone_break_before_list: bool,
     wikidot_toc_next_paragraph_leads_with_br: bool,
     wikidot_quote_boundary_next_paragraph_leads_with_br: bool,
     wikidot_row_suffix_break: bool,
@@ -141,6 +146,20 @@ impl<'t> ParagraphStack<'t> {
         self.wikidot_row_suffix_break
     }
 
+    /// fr73: arm keeping the lone gap break before the next explicit list
+    /// (a stamped crossed-pair tail). Consumed by that list's push; any
+    /// other push leaves it armed (only explicit-list batches arm it, and
+    /// the next explicit list consumes it).
+    pub(crate) fn mark_keep_lone_break_before_list(&mut self) {
+        if self.wikidot {
+            self.keep_lone_break_before_list = true;
+        }
+    }
+
+    /// fr73: an explicit list arriving via the paragraph-safe bulk path
+    /// (which appends without per-element pushes, so the L85 gate never
+    /// sees it). Applies the blank-separated tail drop and consumes any
+    /// pending keep: bulk appends never pop, so keeping is automatic.
     pub(crate) fn clear_wikidot_row_suffix_break(&mut self) {
         self.wikidot_row_suffix_break = false;
     }
@@ -1120,6 +1139,8 @@ impl<'t> ParagraphStack<'t> {
         // keeps real breaks only with content: R1 keeps, para-start drops).
         // Except: a break after a break-kept block is content, not a para-start
         // (live o-top/o-cell-ol keep it), and stays bare like the cell rule.
+        // Except: a stamped crossed-pair tail keeps the gap break (fr73: live
+        // renders one bare break before a second list after a pair close).
         if self.wikidot
             && matches!(
                 &element,
@@ -1136,7 +1157,9 @@ impl<'t> ParagraphStack<'t> {
                 )
             })
         {
-            if self.finished_ends_with_break_kept_block() {
+            if self.keep_lone_break_before_list {
+                self.keep_lone_break_before_list = false;
+            } else if self.finished_ends_with_break_kept_block() {
                 self.current_unwrapped = true;
             } else {
                 self.current.pop();

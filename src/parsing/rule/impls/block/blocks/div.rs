@@ -104,7 +104,9 @@ fn wikidot_line_head_resolves_to_div(line: &str) -> bool {
             let inner = &rest[2..];
             let keyword = ["iftags", "ifcategory"].into_iter().find(|kw| {
                 inner.len() > kw.len()
-                    && inner[..kw.len()].eq_ignore_ascii_case(kw)
+                    && inner
+                        .get(..kw.len())
+                        .is_some_and(|prefix| prefix.eq_ignore_ascii_case(kw))
                     && !matches!(inner.as_bytes()[kw.len()], b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'-' | b'.')
             });
             let Some(keyword) = keyword else {

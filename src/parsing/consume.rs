@@ -642,10 +642,10 @@ where
     }
     let start = parser.current().span.start;
     let source = parser.full_text().inner();
-    if !source.get(start..).is_some_and(|rest| {
-        rest.len() >= "[[/span]]".len()
-            && rest[.."[[/span]]".len()].eq_ignore_ascii_case("[[/span]]")
-    }) {
+    if !source
+        .get(start..start + "[[/span]]".len())
+        .is_some_and(|rest| rest.eq_ignore_ascii_case("[[/span]]"))
+    {
         return Ok(None);
     }
     let mut probe = parser.clone();
@@ -3234,5 +3234,25 @@ mod tests {
                 .expect("Wikijump layout fallback should not fail")
                 .is_none(),
         );
+    }
+
+    #[test]
+    fn wikidot_fused_span_close_probe_respects_multibyte_char_boundaries() {
+        let mut source = String::from("[[span]]\n[[/>]]\n\n“\n[[/span]]");
+        crate::preprocess_for_layout(&mut source, Layout::Wikidot);
+        let tokens = crate::tokenize(&source);
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let _ = crate::parse(&tokens, &page_info, &settings);
+    }
+
+    #[test]
+    fn wikidot_list_b5_ignores_degraded_list_without_partial_items() {
+        let mut source = String::from("[[ul]][[ul]]_[[/ul]][[div]]\n+ h\n[[/div]]");
+        crate::preprocess_for_layout(&mut source, Layout::Wikidot);
+        let tokens = crate::tokenize(&source);
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let _ = crate::parse(&tokens, &page_info, &settings);
     }
 }

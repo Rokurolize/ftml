@@ -122,6 +122,30 @@ fn skip_breaks(tokens: &[ExtractedToken<'_>], mut index: usize) -> usize {
 /// content after one line break yields `Lead`; anything else (a blank
 /// line, and so on) yields no tail, so the following paragraph wraps the
 /// way a normal after-list paragraph does.
+///
+/// Inside a blockquote the tail line's break and the scope-close row keep
+/// the same shape, only the next row's `>` marker intervenes in the token
+/// stream (`LineBreak, Quote, Whitespace, LeftBlockEnd, …`). A quote-row
+/// prefix there (and before post-break content) is transparent too: live
+/// keeps the tail break before `</blockquote>` exactly as at page root
+/// (saved-page probes `muse-probe-bqftail-bq-*`).
+fn quote_row_prefix_end(rest: &[ExtractedToken<'_>], mut index: usize) -> Option<usize> {
+    let mut saw_quote = false;
+    loop {
+        match rest.get(index) {
+            Some(token) if token.token == Token::Quote => {
+                saw_quote = true;
+                index += 1;
+            }
+            Some(token) if saw_quote && token.token == Token::Whitespace => {
+                index += 1;
+            }
+            _ => break,
+        }
+    }
+    saw_quote.then_some(index)
+}
+
 fn classify_tail_gap(
     current: &ExtractedToken<'_>,
     rest: &[ExtractedToken<'_>],
@@ -144,11 +168,20 @@ fn classify_tail_gap(
                 if close_names
                     .iter()
                     .any(|name| block_head_is(rest, cursor - 1, name, true))
+                    || quote_row_prefix_end(rest, cursor - 1).is_some_and(|after| {
+                        close_names
+                            .iter()
+                            .any(|name| block_head_is(rest, after, name, true))
+                    })
                 {
                     return Some(SpanListCloseTail::Break);
                 }
                 break_seen = true;
             }
+            // A quote-row prefix after the gap's line break (the `>` marker
+            // of the row carrying the scope close or the tail content).
+            // Before any break it is content, not a row prefix.
+            Token::Quote if break_seen => continue,
             Token::LeftBlockEnd => {
                 let is_close_head = |name: &str| {
                     if cursor == 1 {

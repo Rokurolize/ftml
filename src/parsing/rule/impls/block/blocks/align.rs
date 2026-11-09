@@ -493,7 +493,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:?}");
         assert_eq!(
             html,
-            "<div style=\"text-align: center;\"><div style=\"text-align: center;\"><p><span><br></span></p><div style=\"text-align: center;\"><span><br>\n<br>\n</span><h1 id=\"toc0\"><span><span>h</span></span></h1></div><br>\n</div></div>",
+            "<div style=\"text-align: center;\"><div style=\"text-align: center;\"><p><span><br></span></p><div style=\"text-align: center;\"><span><br>\n<br></span><h1 id=\"toc0\"><span><span>h</span></span></h1></div><br>\n</div></div>",
         );
     }
 }

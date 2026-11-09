@@ -104,7 +104,7 @@ fn inline_scope_list_line_break_ownership_matches_live_proper_and_crossed_closes
         (
             "[[size 120%]]\n[[ol]]\nX\n[[/ol]]\n[[/size]]\n",
             concat!(
-                "<p><span style=\"font-size:120%;\"><br>\n</span></p>",
+                "<p><span style=\"font-size:120%;\"><br></span></p>",
                 "<ol>\n<li style=\"list-style: none\"><span style=\"font-size:120%;\">X</span></li>\n</ol>",
             ),
         ),
@@ -118,8 +118,8 @@ fn inline_scope_list_line_break_ownership_matches_live_proper_and_crossed_closes
         (
             "[[size 120%]]\n[[ul]]\nX\n[[/size]]\n[[/ul]]\n",
             concat!(
-                "<span style=\"font-size:120%;\"><br>\n</span>",
-                "<ul>\n<li style=\"list-style: none\"><span style=\"font-size:120%;\">X<br>\n</span></li>\n</ul><br>\n",
+                "<span style=\"font-size:120%;\"><br></span>",
+                "<ul>\n<li style=\"list-style: none\"><span style=\"font-size:120%;\">X<br></span></li>\n</ul><br>\n",
             ),
         ),
     ] {

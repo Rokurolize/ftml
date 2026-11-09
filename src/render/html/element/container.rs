@@ -276,17 +276,9 @@ pub fn render_container_internal(ctx: &mut HtmlContext, container: &Container) {
         tag.contents(elements);
     } else if layout.legacy() && container_trailing_break_drops_newline(container.ctype())
     {
-        match container.elements().split_last() {
-            Some((Element::LineBreak, rest)) => {
-                tag.inner(|ctx| {
-                    render_elements(ctx, rest);
-                    ctx.html().br();
-                });
-            }
-            _ => {
-                tag.contents(container.elements());
-            }
-        }
+        tag.inner(|ctx| {
+            render_contents_dropping_final_break_newline(ctx, container.elements());
+        });
     } else {
         tag.contents(container.elements());
     }
@@ -320,12 +312,46 @@ fn wikidot_inline_container_folds_html(container: &Container) -> bool {
             .any(|element| matches!(element, Element::Html { .. }))
 }
 
+/// Render `elements` into the already-open tag, dropping the newline that
+/// `render_line_break()` appends after a break when that break is the run's
+/// final element. Live writes `<br />\n` only when content follows the break,
+/// and never between a break and the closing tag that ends the run; the inline
+/// containers that mirror live's byte strip it through this helper.
+pub(super) fn render_contents_dropping_final_break_newline(
+    ctx: &mut HtmlContext,
+    elements: &[Element],
+) {
+    let (final_break, rest) = match elements.split_last() {
+        Some((Element::LineBreak, rest)) => (1, rest),
+        Some((Element::LineBreaks(amount), rest)) => (amount.get(), rest),
+        _ => {
+            render_elements(ctx, elements);
+            return;
+        }
+    };
+
+    render_elements(ctx, rest);
+
+    for _ in 1..final_break {
+        super::render_line_break(ctx);
+    }
+
+    ctx.html().br();
+}
+
+/// Inline containers whose content mirrors live's trailing-break byte. Live
+/// writes `<br />` with no following newline immediately before a closing tag,
+/// while FTML's break emitter always appends `\n`; these containers strip it.
+/// Verified per container on saved pages (harvest-szbyte): size joins the
+/// existing eight. Block containers and document-final breaks keep FTML's
+/// block formatting by corpus convention (mapped separately).
 fn container_trailing_break_drops_newline(ctype: ContainerType) -> bool {
     matches!(
         ctype,
         ContainerType::Bold
             | ContainerType::Italics
             | ContainerType::Monospace
+            | ContainerType::Size
             | ContainerType::Span
             | ContainerType::Strikethrough
             | ContainerType::Superscript

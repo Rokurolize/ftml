@@ -3588,9 +3588,7 @@ where
                 }
                 Token::Heading | Token::TripleDash => return true,
                 Token::Quote => {
-                    return Self::wikidot_post_list_quote_head_is_leaf(
-                        remaining,
-                    );
+                    return Self::wikidot_post_list_quote_head_is_leaf(remaining);
                 }
                 _ => return false,
             }

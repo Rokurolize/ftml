@@ -91,3 +91,46 @@ impl ParseCondition {
         ParseCondition::TokenPair(current, next)
     }
 }
+
+/// Whether the byte offset of a paragraph break sits in a post-explicit-list
+/// gap: the closest non-whitespace source before it is an explicit
+/// `[[/ul]]` or `[[/ol]]` close, with only spaces, tabs, carriage returns,
+/// and newlines between the close and the break.
+///
+/// This is the source-level twin of the token-level post-list gap check in
+/// `inline_delimiter::validate_reachable_close`. The collect loop
+/// (`collect::generic`) has no backward token access, so it re-derives the
+/// same shape from byte spans. It is an approximation: source text that
+/// merely spells `[[/ul]]` without tokenizing as a block close (a literal
+/// inside code, for example) also matches. That overreach is contained
+/// because the collect only consults this after `validate_reachable_close`
+/// already vetted the same region at token level, and both call sites are
+/// scoped to bold pairs in the legacy layout.
+pub(crate) fn paragraph_break_in_post_list_gap(source: &str, break_byte: usize) -> bool {
+    let bytes = source.as_bytes();
+    let mut pos = break_byte.min(bytes.len());
+    let skip_gap = |pos: &mut usize| {
+        while *pos > 0 && matches!(bytes[*pos - 1], b' ' | b'\t' | b'\r' | b'\n') {
+            *pos -= 1;
+        }
+    };
+    skip_gap(&mut pos);
+    if pos < 2 || &bytes[pos - 2..pos] != b"]]" {
+        return false;
+    }
+    pos -= 2;
+    skip_gap(&mut pos);
+    let name_end = pos;
+    while pos > 0 && bytes[pos - 1].is_ascii_alphabetic() {
+        pos -= 1;
+    }
+    let name = &bytes[pos..name_end];
+    if !(name.eq_ignore_ascii_case(b"ul") || name.eq_ignore_ascii_case(b"ol")) {
+        return false;
+    }
+    skip_gap(&mut pos);
+    if pos < 3 || &bytes[pos - 3..pos] != b"[[/" {
+        return false;
+    }
+    true
+}

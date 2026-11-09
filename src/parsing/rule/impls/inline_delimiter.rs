@@ -221,6 +221,69 @@ pub(super) enum ReachableCloseMode {
     BlockBarrier,
 }
 
+/// Whether the paragraph break at `index` sits in a post-explicit-list gap:
+/// walking back over whitespace and line breaks lands on a `RightBlock`,
+/// then an `ul`/`ol` identifier, then a `LeftBlockEnd`. Only a single blank
+/// line qualifies: an earlier paragraph break between the close and this one
+/// is not skipped, so a second blank still rejects the pair.
+fn post_list_gap_before(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
+    let mut pos = index;
+    loop {
+        if pos == 0 {
+            return false;
+        }
+        pos -= 1;
+        match tokens[pos].token {
+            Token::Whitespace | Token::LineBreak => {}
+            Token::RightBlock => break,
+            _ => return false,
+        }
+    }
+    loop {
+        if pos == 0 {
+            return false;
+        }
+        pos -= 1;
+        match tokens[pos].token {
+            Token::Whitespace | Token::LineBreak => {}
+            Token::Identifier
+                if tokens[pos].slice.eq_ignore_ascii_case("ul")
+                    || tokens[pos].slice.eq_ignore_ascii_case("ol") =>
+            {
+                break;
+            }
+            _ => return false,
+        }
+    }
+    loop {
+        if pos == 0 {
+            return false;
+        }
+        pos -= 1;
+        match tokens[pos].token {
+            Token::Whitespace | Token::LineBreak => {}
+            Token::LeftBlockEnd => break,
+            _ => return false,
+        }
+    }
+    true
+}
+
+/// Whether the closer at `index` is bare: only whitespace, then a line or
+/// paragraph break (or the token-stream start), precedes it on its side.
+fn closer_bare_before(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
+    let mut pos = index;
+    while pos > 0 {
+        pos -= 1;
+        match tokens[pos].token {
+            Token::Whitespace => {}
+            Token::LineBreak | Token::ParagraphBreak => return true,
+            _ => return false,
+        }
+    }
+    true
+}
+
 pub(super) fn validate_reachable_close(
     parser: &Parser<'_, '_>,
     token: Token,
@@ -258,6 +321,23 @@ pub(super) fn validate_reachable_close(
 
     let mut paragraph_error = None;
     let suppress_breaks = parser.settings().layout.legacy();
+    // R8: forgive one blank line in a post-explicit-list gap for bold pairs
+    // only. The opener must carry same-line content (a bare own-line opener
+    // like the crossed-closer pin keeps the pair literal), and the closer
+    // must too (checked at the close site below).
+    let gap_forgiveness = token == Token::Bold && suppress_breaks;
+    // `tokens` is `parser.remaining()`, which starts after the opener, so
+    // the token after the opener is `tokens[0]`.
+    let opener_bare = !tokens.first().is_some_and(|next| {
+        !matches!(
+            next.token,
+            Token::Whitespace
+                | Token::LineBreak
+                | Token::ParagraphBreak
+                | Token::InputEnd
+        )
+    });
+    let mut forgave_post_list_gap = false;
     let mut open_blocks: Vec<String> = Vec::new();
     let mut pb_stack: Vec<String> = Vec::new();
     let mut saw_break = false;
@@ -289,6 +369,9 @@ pub(super) fn validate_reachable_close(
                     tokens[index - 1].span.end,
                 )
             {
+                return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
+            if forgave_post_list_gap {
                 return Err(parser.make_err(ParseErrorKind::RuleFailed));
             }
             return Ok(());
@@ -336,9 +419,16 @@ pub(super) fn validate_reachable_close(
             Token::ParagraphBreak => {
                 last_paragraph_break = Some(scan_start + index);
                 saw_break = true;
-                if !suppress_breaks || pb_stack.is_empty() {
-                    paragraph_error
-                        .get_or_insert_with(|| parser.make_err(ParseErrorKind::RuleFailed));
+                if gap_forgiveness
+                    && pb_stack.is_empty()
+                    && !opener_bare
+                    && post_list_gap_before(tokens, index)
+                {
+                    forgave_post_list_gap = true;
+                } else if !suppress_breaks || pb_stack.is_empty() {
+                    paragraph_error.get_or_insert_with(|| {
+                        parser.make_err(ParseErrorKind::RuleFailed)
+                    });
                 }
             }
             Token::LeftBlock | Token::LeftBlockStar if blocks_can_reject => {
@@ -377,6 +467,9 @@ pub(super) fn validate_reachable_close(
                         tokens[index - 1].span.end,
                     )
                 {
+                    return Err(parser.make_err(ParseErrorKind::RuleFailed));
+                }
+                if forgave_post_list_gap && closer_bare_before(tokens, index) {
                     return Err(parser.make_err(ParseErrorKind::RuleFailed));
                 }
                 return Ok(());

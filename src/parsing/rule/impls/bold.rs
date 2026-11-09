@@ -844,10 +844,17 @@ pub(super) fn mark_format_stop_at_list<'r, 't>(
             .elements_ref()
             .iter()
             .any(crate::parsing::inline_scope::subtree_contains_explicit_list);
+        // A blank line inside the item rejects the nested color exactly like
+        // a native list does (probe muse-probe-bcolr2-bd-span-color-stopped-bl:
+        // live literalises `##red|`/`##` while the span keeps forming); the
+        // unstamped color then takes the literalise branch at lowering. Only
+        // the blank-line poison is added here: blockquote/heading poison in a
+        // stopped-color item has no live evidence.
         if !crosses_list
             || color_info.elements_ref().iter().any(|child| {
                 crate::parsing::inline_scope::subtree_contains_flow_block(child)
                     || crate::parsing::inline_scope::subtree_contains_native_list(child)
+                    || crate::parsing::inline_scope::subtree_contains_blank_line_item(child)
             })
         {
             return elements;

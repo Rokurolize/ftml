@@ -21,6 +21,7 @@
 use super::consume_valid_comment;
 use super::iftags::{SegmentCtx, SplitDelimiterMatch, TokenWindow, split_delimiter_end};
 use super::prelude::*;
+use crate::parsing::condition::paragraph_break_in_post_list_gap;
 use crate::parsing::parser::QuoteBodyLineStatus;
 use crate::parsing::rule::impls::line_break_skipped_for_own_line_block;
 
@@ -196,7 +197,32 @@ where
         }
 
         if parser.evaluate_any(invalid_conditions) {
-            return Err(parser.make_err(error_kind.unwrap_or(ParseErrorKind::RuleFailed)));
+            // R8: skip one blank line in a post-explicit-list gap for bold
+            // pairs. `validate_reachable_close` already vetted this region at
+            // token level (non-bare opener and closer), so the collect only
+            // re-derives the gap shape from source bytes because it has no
+            // backward token access. The list rule left its own post-list
+            // break in the stream (path (a)) or the pair segmenter restores
+            // the blank as a single leading break (path (c)); the skipped
+            // break itself leaves no element.
+            let forgiven_post_list_gap = parser.current().token == Token::ParagraphBreak
+                && matches!(_rule.name(), "bold")
+                && parser.settings().layout.legacy()
+                && invalid_conditions.iter().any(|condition| {
+                    matches!(
+                        condition,
+                        ParseCondition::CurrentToken(Token::ParagraphBreak)
+                    )
+                })
+                && paragraph_break_in_post_list_gap(
+                    parser.full_text().inner(),
+                    parser.current().span.start,
+                );
+            if !forgiven_post_list_gap {
+                return Err(
+                    parser.make_err(error_kind.unwrap_or(ParseErrorKind::RuleFailed))
+                );
+            }
         }
 
         if parser.current().token == Token::InputEnd {

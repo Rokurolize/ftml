@@ -6,9 +6,9 @@ use crate::tree::{
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER,
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, WIKIDOT_HEADING_REOPEN_MARKER,
-    WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER,
-    WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER,
-    WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
+    WIKIDOT_LIST_ITEM_BLANK_LINE_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_BARE_MARKER,
+    WIKIDOT_SPAN_LIST_CLOSE_TAIL_BREAK_MARKER, WIKIDOT_SPAN_LIST_CLOSE_TAIL_FOLD_MARKER,
+    WIKIDOT_SPAN_LIST_CLOSE_TAIL_LEAD_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BARE_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_FOLD_MARKER,
@@ -2310,7 +2310,9 @@ fn crossed_pre_list_head_should_wrap(list: &Element<'_>) -> bool {
     // text (the blank line stands where the item's first flow block would).
     if subtree_contains_blank_line_item(list)
         && items.iter().any(|item| match item {
-            ListItem::Elements { elements, .. } => items_opens_with_visible_text(elements),
+            ListItem::Elements { elements, .. } => {
+                items_opens_with_visible_text(elements)
+            }
             ListItem::SubList { element } => {
                 items_opens_with_visible_text(std::slice::from_ref(element))
             }
@@ -2331,7 +2333,9 @@ fn items_opens_with_visible_text(elements: &[Element<'_>]) -> bool {
     elements
         .iter()
         .find(|element| !matches!(element, Element::LineBreak | Element::LineBreaks(_)))
-        .is_some_and(|element| matches!(element, Element::Text(text) if !text.trim().is_empty()))
+        .is_some_and(
+            |element| matches!(element, Element::Text(text) if !text.trim().is_empty()),
+        )
 }
 
 fn format_open_marker(text: &str) -> bool {
@@ -2940,9 +2944,7 @@ pub(crate) fn literalises_around_explicit_list(element: &Element<'_>) -> bool {
 /// to the list (`</ul>c**`), never `</ul><br>c**`. A blank line cannot sit
 /// there (it would have stopped the pair's collection), so only the single
 /// source newline is removed.
-fn trim_post_list_leading_breaks<'t>(
-    children: Vec<Element<'t>>,
-) -> Vec<Element<'t>> {
+fn trim_post_list_leading_breaks<'t>(children: Vec<Element<'t>>) -> Vec<Element<'t>> {
     let mut output = Vec::with_capacity(children.len());
     let mut iter = children.into_iter().peekable();
     while let Some(element) = iter.next() {

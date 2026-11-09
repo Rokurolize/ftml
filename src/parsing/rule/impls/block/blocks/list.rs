@@ -998,6 +998,24 @@ fn parse_list_block_impl<'r, 't>(
         output.extend(anchor_chromes);
         success_elements_with_paragraph_safety(false, output, errors)
     } else {
+        // HMFOL: live keeps the attached post-list break before a keep-class
+        // block head (heading, leaf quote, `----`; saved-page probes
+        // `muse-probe-hmfol-ul/ol-adj-h1/h2/h6/hr/quote`). Emit it here with
+        // the break token consumed, so the downstream own-line skip never
+        // sees it; the stack routes the pending break past the follower's
+        // prose absorb (see `wikidot_post_list_keep_block`). Scoped to plain
+        // root lists: stash-formed and marker-closer lists keep their
+        // established routing (bf79 pins), and blank separation or EOF never
+        // reaches the helper (it requires a current line break).
+        if wikidot
+            && !nested
+            && !follower_wrap
+            && parser.current().token == Token::LineBreak
+            && parser.wikidot_next_line_is_post_list_keep_head()
+        {
+            parser.step()?;
+            return ok!(false; vec![element, Element::LineBreak], errors);
+        }
         success_elements_with_paragraph_safety(false, element, errors)
     }
 }

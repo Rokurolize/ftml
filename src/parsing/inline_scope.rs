@@ -3781,16 +3781,15 @@ fn paragraph_scope_tail_continues<'t>(tail: &Element<'t>, next: &Element<'t>) ->
     matches!(tail, Element::Anchor { .. })
 }
 
-/// Frame-context pre-list chunk placement (item 60): inside a `[[div]]`
-/// (or `[[note]]`) frame, a segmentation-produced pre chunk cut by an
-/// explicit list keeps the enclosing scope's first paragraph, exactly as
-/// at block root. When the paragraph precedes, the chunk merges into the
+/// Frame-context pre-list chunk placement (item 60): inside a `[[div]]`,
+/// `[[note]]`, or blockquote frame, a segmentation-produced pre chunk cut
+/// by an explicit list keeps the enclosing scope's first paragraph, exactly
+/// as at block root. When the paragraph precedes, the chunk merges into the
 /// paragraph tail (anchor/span/size); when no paragraph precedes, a
 /// formatted scope chunk cut by the list takes a fresh `<p>` (the fused
 /// `[[span]]` shape, which has no break-only segment for the group flush
 /// to merge). Gate: the chunk is directly followed by an explicit-block
-/// list. Other frames (blockquote/align/collapsible/...) are unprobed
-/// and untouched.
+/// list. Other frames (align/collapsible/...) are unprobed and untouched.
 fn merge_frame_prelist_chunks<'t>(children: &mut Vec<Element<'t>>) {
     let is_explicit_block_list = |element: &Element<'_>| {
         matches!(
@@ -6841,10 +6840,13 @@ fn lower_children<'t>(
         );
     let mut lowered = false;
     let truncate_at_entry = matches!(element, Element::List { .. });
-    let is_div_frame = matches!(
+    let is_prelist_chunk_frame = matches!(
         element,
         Element::Container(container)
-            if matches!(container.ctype(), ContainerType::Div | ContainerType::Note)
+            if matches!(
+                container.ctype(),
+                ContainerType::Div | ContainerType::Note | ContainerType::Blockquote
+            )
     );
     let mut visit = |children: &mut Vec<Element<'t>>| {
         lowered = true;
@@ -6892,13 +6894,15 @@ fn lower_children<'t>(
             eject_segment_trailing_space(children);
             strip_trailing_space_from_vec(children);
         }
-        // Item 60 frame-context: inside a [[div]] (and [[note]]) frame, a
-        // segmentation-produced pre-list chunk keeps the enclosing scope's
-        // first paragraph (merging into it, or taking a fresh `<p>` when
-        // it is the frame's head chunk) instead of re-materializing the
-        // scope as a sibling. Other eject frames (blockquote/align/
-        // collapsible) are unprobed and stay ungated.
-        if is_div_frame {
+        // Item 60 frame-context: inside a [[div]], [[note]], or blockquote
+        // frame, a segmentation-produced pre-list chunk keeps the enclosing
+        // scope's first paragraph (merging into it, or taking a fresh `<p>`
+        // when it is the frame's head chunk) instead of re-materializing the
+        // scope as a sibling. Blockquote rows were the R-bq residual of
+        // PR #1297; saved-page probes (muse-probe-bq60-*) show the same
+        // paragraph placement inside a quote body. Other eject frames
+        // (align/collapsible) are unprobed and stay ungated.
+        if is_prelist_chunk_frame {
             merge_frame_prelist_chunks(children);
         }
         // Trailing frame-edge segment (d8-44): emitted after the eject

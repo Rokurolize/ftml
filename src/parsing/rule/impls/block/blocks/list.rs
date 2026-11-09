@@ -3622,11 +3622,9 @@ fn assemble_wikidot_li_segments<'t>(
             .is_some_and(|element| matches!(element, Element::List { .. }));
     let last_plain_run_is_paragraph = match kept.as_slice() {
         [.., penultimate, last]
-            if body_before_close.ends_with('\n')
+            if (body_before_close.ends_with('\n') || !doc_final.literal)
                 && segment_is_inline_content(last)
-                && !segment_has_block_marker(last)
-                && segment_is_inline_content(penultimate)
-                && !segment_has_block_marker(penultimate) =>
+                && segment_is_inline_content(penultimate) =>
         {
             true
         }
@@ -3643,11 +3641,9 @@ fn assemble_wikidot_li_segments<'t>(
             // empty-text marker is consumed there and never renders.
             elements.push(Element::Text(std::borrow::Cow::Borrowed("")));
         }
-        // A blank line between two plain inline runs, with the closer on the
-        // next line, is a paragraph. A run on the closer's own line stays put,
-        // and so does a run beside a literal block marker. BRIEF-TB74: the
-        // trailing run merges bare when it sits in the document-final
-        // paragraph chunk (probes muse-probe-tb74-*).
+        // Live merges this run bare only in the document-final paragraph chunk
+        // (probes muse-probe-tb74-*); elsewhere it wraps even with the closer on
+        // the run's line and literal block markers in the run.
         let middle_inline =
             index > 0 && index < kept_last && segment_is_inline_content(&segment);
         let closing_paragraph = index == kept_last

@@ -1,0 +1,90 @@
+{
+    "elements": [
+        {
+            "element": "list",
+            "data": {
+                "type": "numbered",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "list",
+                                "data": {
+                                    "type": "numbered",
+                                    "attributes": {},
+                                    "items": [
+                                        {
+                                            "item-type": "elements",
+                                            "attributes": {},
+                                            "elements": [
+                                                {
+                                                    "element": "text",
+                                                    "data": "[["
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "ul"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "]]"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "element": "text",
+                                "data": "[[/"
+                            },
+                            {
+                                "element": "text",
+                                "data": "hidden"
+                            },
+                            {
+                                "element": "text",
+                                "data": "]]"
+                            }
+                        ]
+                    },
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "container",
+                                "data": {
+                                    "type": "blockquote",
+                                    "attributes": {},
+                                    "elements": [
+                                        {
+                                            "element": "container",
+                                            "data": {
+                                                "type": "paragraph",
+                                                "attributes": {},
+                                                "elements": [
+                                                    {
+                                                        "element": "text",
+                                                        "data": "q"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "element": "text",
+                                "data": "zz"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

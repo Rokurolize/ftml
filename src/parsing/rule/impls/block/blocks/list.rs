@@ -2107,10 +2107,16 @@ fn parse_list_item<'r, 't>(
         // BRIEF-TB74 (ledger item 74(e)): the trailing plain run after a
         // blank line merges bare into the item flow when it sits in the
         // document-final paragraph chunk (probes muse-probe-tb74-*).
-        let last_run_is_doc_final = !enclosing_block
-            && wikidot_li_last_run_is_doc_final(
-                &parser.full_text().inner()[source_end..],
-            );
+        let remainder = &parser.full_text().inner()[source_end..];
+        let chunk_is_doc_final = wikidot_li_last_run_is_doc_final(remainder);
+        let last_run_is_doc_final = !enclosing_block && chunk_is_doc_final;
+        // A nested item's chunk ends at its own enclosing list close:
+        // content the outer item carries afterwards does not flip the run
+        // (probes muse-probe-plainrun-2-a/c and -27). A flat block spanning
+        // the item still forces the paragraph (probe -2-b).
+        let plain_run_is_doc_final = !parser.wikidot_flat_pair_open_at(body_start)
+            && (chunk_is_doc_final || parser.wikidot_li_collect_inside_item());
+
         let mut elements = assemble_wikidot_li_segments(
             segments,
             source,
@@ -2121,7 +2127,10 @@ fn parse_list_item<'r, 't>(
             parser.in_wikidot_advanced_table_cell_body(),
             enclosing_block,
             shadowed_div_region,
-            last_run_is_doc_final,
+            DocFinalSignals {
+                literal: last_run_is_doc_final,
+                plain: plain_run_is_doc_final,
+            },
             parser.in_footnote()
                 || crate::parsing::rule::impls::line_owner::wikidot_list_contains_footnote_open(
                     &parser.full_text().inner(),
@@ -2625,6 +2634,26 @@ fn segment_has_block_marker(segment: &[Element]) -> bool {
         .any(|element| matches!(element, Element::Text(text) if text.contains("[[")))
 }
 
+/// Whether a post-list run carries visible content. Inline-format
+/// containers count; bare breaks and inline-format control partials do not.
+fn post_list_run_has_content(run: &[Element]) -> bool {
+    run.iter().any(|element| match element {
+        Element::LineBreak | Element::LineBreaks(_) => false,
+        Element::Delayed(delayed) if delayed.is_suppression_seam() => false,
+        Element::Text(text) => !text.trim().is_empty(),
+        Element::Partial(_) => false,
+        _ => true,
+    })
+}
+
+/// Document-final chunk flags for a post-list run assembly: the literal
+/// (marker-carrying) signal and the narrower plain-run signal.
+#[derive(Clone, Copy)]
+struct DocFinalSignals {
+    literal: bool,
+    plain: bool,
+}
+
 fn deep_marker_head(element: &Element) -> bool {
     matches!(element, Element::Text(text) if text.starts_with("**") || text.starts_with("##"))
 }
@@ -2827,8 +2856,10 @@ fn wrap_inline_line_after_list(
     segment: &mut Vec<Element>,
     formation_present: bool,
     in_cell: bool,
-    last_run_is_doc_final: bool,
+    doc_final: DocFinalSignals,
     segment_is_last: bool,
+    terminated_at_cross_close: bool,
+    run_followed_by_blank: bool,
 ) {
     let mut index = 0;
     while index < segment.len() {
@@ -2858,6 +2889,15 @@ fn wrap_inline_line_after_list(
         // further list line in the body, flips the same cell to a
         // paragraph).
         let run_is_item_final = segment_is_last && end == segment.len();
+        // A plain run in a cross-terminated item is not the item's real
+        // final run: live keeps it bare (probe
+        // muse-probe-x88f-g1-hash-after-text). A blank line between the
+        // run and the item closer flips it to a paragraph even when the
+        // chunk is document-final (probes muse-probe-plainrun-*).
+        let plain_run_gate = doc_final.plain
+            && run_is_item_final
+            && !terminated_at_cross_close
+            && !run_followed_by_blank;
         let mut run: Vec<Element> = segment.drain(start..end).collect();
         let deep_paragraph = !run.is_empty()
             && deep_marker_head(&run[0])
@@ -2901,13 +2941,13 @@ fn wrap_inline_line_after_list(
             index = start + 1;
             continue;
         }
+        let bare_run = if segment_has_block_marker(&run) {
+            doc_final.literal && run_is_item_final
+        } else {
+            plain_run_gate
+        };
         if !deep_paragraph
-            && ((!in_cell
-                && (!segment_has_block_marker(&run)
-                    || (last_run_is_doc_final && run_is_item_final)))
-                || !run.iter().any(
-                    |element| matches!(element, Element::Text(text) if !text.trim().is_empty()),
-                ))
+            && ((!in_cell && bare_run) || !post_list_run_has_content(&run))
         {
             segment.splice(start..start, run);
             index = start + 1;
@@ -2920,11 +2960,12 @@ fn wrap_inline_line_after_list(
                 run.pop();
             }
         }
-        // Outside a table cell, only an inline run carrying a literal block
-        // marker (e.g. a lone `[[/hidden]]` line after a list) is
-        // paragraph-wrapped; a plain continuation line stays bare beside
-        // the list. Inside an advanced table cell, live paragraph-wraps
-        // every post-list text run (LP42: tail/zzz/pre**/midlexer shapes).
+        // Outside a table cell, a post-list run that is not the item's
+        // final run in the document-final chunk is paragraph-wrapped,
+        // whether or not it carries a literal block marker (e.g. a lone
+        // `[[/hidden]]` line, or a plain continuation line after a list).
+        // Inside an advanced table cell, live paragraph-wraps every
+        // post-list text run (LP42: tail/zzz/pre**/midlexer shapes).
         segment.insert(
             start,
             Element::Container(Container::new(
@@ -3188,7 +3229,7 @@ fn assemble_wikidot_li_segments<'t>(
     in_cell: bool,
     enclosing_block: bool,
     shadowed_div_region: bool,
-    last_run_is_doc_final: bool,
+    doc_final: DocFinalSignals,
     suppress_trail: bool,
     quoted_li_close_hoisted: bool,
 ) -> Vec<Element<'t>> {
@@ -3255,8 +3296,10 @@ fn assemble_wikidot_li_segments<'t>(
                 source,
             ),
             in_cell,
-            last_run_is_doc_final,
+            doc_final,
             segment_index + 1 == segment_count,
+            terminated_at_cross_close,
+            had_trailing_empty,
         );
     }
     if let Some(first) = segments.first_mut() {
@@ -3293,6 +3336,20 @@ fn assemble_wikidot_li_segments<'t>(
         .rfind("[[/li")
         .map(|index| &source[..index])
         .unwrap_or(source);
+    // A blank line between a post-list run and the item closer flips the
+    // run to a paragraph even when nothing follows the enclosing list
+    // (probes muse-probe-plainrun-29/36/41-44/46).
+    let trailing_blank_post_list_run = had_trailing_empty
+        && kept.len() >= 2
+        && segment_is_inline_content(&kept[kept.len() - 1])
+        && !segment_has_block_marker(&kept[kept.len() - 1])
+        && kept[kept.len() - 2]
+            .iter()
+            .rev()
+            .find(|element| {
+                !matches!(element, Element::LineBreak | Element::LineBreaks(_))
+            })
+            .is_some_and(|element| matches!(element, Element::List { .. }));
     let last_plain_run_is_paragraph = match kept.as_slice() {
         [.., penultimate, last]
             if body_before_close.ends_with('\n')
@@ -3323,8 +3380,10 @@ fn assemble_wikidot_li_segments<'t>(
         // paragraph chunk (probes muse-probe-tb74-*).
         let middle_inline =
             index > 0 && index < kept_last && segment_is_inline_content(&segment);
-        let closing_paragraph =
-            last_plain_run_is_paragraph && index == kept_last && !last_run_is_doc_final;
+        let closing_paragraph = index == kept_last
+            && ((last_plain_run_is_paragraph
+                && (!doc_final.literal || had_trailing_empty))
+                || trailing_blank_post_list_run);
         if middle_inline || closing_paragraph {
             elements.push(Element::Container(Container::new(
                 ContainerType::Paragraph,
@@ -3409,9 +3468,14 @@ fn assemble_wikidot_li_segments<'t>(
         && wikidot_li_body_ends_with_empty_native_marker(source);
     if !terminated_at_cross_close
         && had_trailing_empty
-        && elements
-            .last()
-            .is_some_and(|element| !element.paragraph_safe())
+        && elements.last().is_some_and(|element| {
+            !element.paragraph_safe()
+                && !matches!(
+                    element,
+                    Element::Container(container)
+                        if container.ctype() == ContainerType::Paragraph
+                )
+        })
         && !trailing_nested_list
         && !trailing_line_block
         && !trailing_table
@@ -3783,10 +3847,16 @@ pub(crate) fn parse_wikidot_implicit_list_block<'r, 't>(
         let enclosing_block = parser.wikidot_flat_pair_open_at(body_start);
         let shadowed_div_region = parser.take_wikidot_li_shadowed_div_region_at(body_start, source_end);
         // BRIEF-TB74 (ledger item 74(e)): see the explicit-item call site.
-        let last_run_is_doc_final = !enclosing_block
-            && wikidot_li_last_run_is_doc_final(
-                &parser.full_text().inner()[source_end..],
-            );
+        let remainder = &parser.full_text().inner()[source_end..];
+        let chunk_is_doc_final = wikidot_li_last_run_is_doc_final(remainder);
+        let last_run_is_doc_final = !enclosing_block && chunk_is_doc_final;
+        // A nested item's chunk ends at its own enclosing list close:
+        // content the outer item carries afterwards does not flip the run
+        // (probes muse-probe-plainrun-2-a/c and -27). A flat block spanning
+        // the item still forces the paragraph (probe -2-b).
+        let plain_run_is_doc_final = !parser.wikidot_flat_pair_open_at(body_start)
+            && (chunk_is_doc_final || parser.wikidot_li_collect_inside_item());
+
         let mut elements = assemble_wikidot_li_segments(
             segments,
             source,
@@ -3797,7 +3867,10 @@ pub(crate) fn parse_wikidot_implicit_list_block<'r, 't>(
             parser.in_wikidot_advanced_table_cell_body(),
             enclosing_block,
             shadowed_div_region,
-            last_run_is_doc_final,
+            DocFinalSignals {
+                literal: last_run_is_doc_final,
+                plain: plain_run_is_doc_final,
+            },
             parser.in_footnote()
                 || crate::parsing::rule::impls::line_owner::wikidot_list_contains_footnote_open(
                     &parser.full_text().inner(),

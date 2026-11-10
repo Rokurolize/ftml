@@ -2178,4 +2178,6 @@ mod tests {
         );
         assert_eq!(output.resource_requirements.len(), 1);
     }
+
+    include!("../../../../verification/render/walk/tab_nav.rs");
 }

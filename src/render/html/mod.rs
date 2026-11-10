@@ -30,6 +30,9 @@ mod random;
 mod render;
 #[cfg(test)]
 mod test_utils;
+#[cfg(test)]
+#[path = "../../../verification/render/walk/trees.rs"]
+mod verify_walks;
 
 pub use self::meta::{HtmlMeta, HtmlMetaType};
 pub use self::output::{

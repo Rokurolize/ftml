@@ -890,4 +890,6 @@ mod tests {
         ));
         assert!(sanitized.contains("&lt;script&gt;alert(1)&lt;/script&gt;"));
     }
+
+    include!("../../../../verification/render/emission/mathml.rs");
 }

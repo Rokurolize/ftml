@@ -124,6 +124,7 @@ fn render_plain_div_chain(ctx: &mut HtmlContext, container: &Container) -> bool 
 
 pub fn render_container_internal(ctx: &mut HtmlContext, container: &Container) {
     let layout = ctx.layout();
+    let wikidot_prev_sibling_is_table = ctx.wikidot_prev_sibling_is_table();
     let tag_spec = container.ctype().html_tag(layout, ctx);
 
     let random_id = choose_id(ctx, &tag_spec);
@@ -274,6 +275,14 @@ pub fn render_container_internal(ctx: &mut HtmlContext, container: &Container) {
         && let Some(elements) = wikidot_break_only_paragraph(container.elements())
     {
         tag.contents(elements);
+    } else if layout.legacy()
+        && container.ctype() == ContainerType::Paragraph
+        && let Some(elements) = wikidot_peel_break_only_span_paragraph(
+            container.elements(),
+            wikidot_prev_sibling_is_table,
+        )
+    {
+        tag.contents(elements);
     } else if layout.legacy() && container_trailing_break_drops_newline(container.ctype())
     {
         tag.inner(|ctx| {
@@ -302,6 +311,41 @@ fn wikidot_break_only_paragraph<'a, 't>(
             matches!(element, Element::LineBreak | Element::LineBreaks(_))
         }))
     .then_some(elements)
+}
+
+fn wikidot_peel_break_only_span_paragraph<'a, 't>(
+    elements: &'a [Element<'t>],
+    prev_sibling_is_table: bool,
+) -> Option<&'a [Element<'t>]> {
+    if !prev_sibling_is_table {
+        return None;
+    }
+    if elements.len() != 1 {
+        return None;
+    }
+    let Element::Container(span) = &elements[0] else {
+        return None;
+    };
+    if span.ctype() != ContainerType::Span || !wikidot_break_only_span_tree(&elements[0])
+    {
+        return None;
+    }
+    Some(span.elements())
+}
+
+fn wikidot_break_only_span_tree(element: &Element<'_>) -> bool {
+    let Element::Container(container) = element else {
+        return false;
+    };
+    if container.ctype() != ContainerType::Span {
+        return false;
+    }
+    let elements = container.elements();
+    !elements.is_empty()
+        && elements.iter().all(|child| {
+            matches!(child, Element::LineBreak | Element::LineBreaks(_))
+                || wikidot_break_only_span_tree(child)
+        })
 }
 
 fn wikidot_inline_container_folds_html(container: &Container) -> bool {

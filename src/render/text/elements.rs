@@ -437,6 +437,7 @@ fn text_render_skips_non_textual_elements_and_expands_include_variables() {
                 ltype: ListType::Bullet,
                 attributes: AttributeMap::new(),
                 wikidot_explicit_block: false,
+                wikidot_marker_head_spawn: false,
                 wikidot_unclosed: false,
                 items: vec![
                     ListItem::Elements {

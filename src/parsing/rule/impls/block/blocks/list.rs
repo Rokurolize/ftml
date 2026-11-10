@@ -392,6 +392,7 @@ fn parse_list_block_impl<'r, 't>(
                         items: Vec::new(),
                         attributes: attributes.clone(),
                         wikidot_explicit_block: true,
+                        wikidot_marker_head_spawn: false,
                         wikidot_unclosed: false,
                     }, errors)
                 } else {
@@ -757,6 +758,7 @@ fn parse_list_block_impl<'r, 't>(
                         items: std::mem::take(&mut items),
                         attributes: attributes.clone(),
                         wikidot_explicit_block: true,
+                        wikidot_marker_head_spawn: false,
                         wikidot_unclosed: false,
                     };
                     parser.set_wikidot_cross_li_outer(outer);
@@ -808,6 +810,7 @@ fn parse_list_block_impl<'r, 't>(
                         items: Vec::new(),
                         attributes: attributes.clone(),
                         wikidot_explicit_block: true,
+                        wikidot_marker_head_spawn: false,
                         wikidot_unclosed: false,
                     }, errors)
                 } else {
@@ -823,6 +826,7 @@ fn parse_list_block_impl<'r, 't>(
         items,
         attributes,
         wikidot_explicit_block: parser.settings().layout.legacy(),
+        wikidot_marker_head_spawn: false,
         wikidot_unclosed: false,
     };
     // Live's inline pairing sees the source whitespace before the first tail
@@ -1109,6 +1113,7 @@ fn parse_list_block_impl<'r, 't>(
                     items: Vec::new(),
                     attributes: AttributeMap::new(),
                     wikidot_explicit_block: true,
+                    wikidot_marker_head_spawn: false,
                     wikidot_unclosed: true,
                 });
             }
@@ -1854,6 +1859,7 @@ fn wikidot_li_apply_b5<'t>(
                 items: inner_list_items,
                 attributes: crate::tree::AttributeMap::new(),
                 wikidot_explicit_block: true,
+                wikidot_marker_head_spawn: false,
                 wikidot_unclosed: false,
             });
         }
@@ -2042,6 +2048,7 @@ fn unowned_dissolve_unwrap<'t>(
         && let Some(Element::List {
             items,
             wikidot_explicit_block: false,
+            wikidot_marker_head_spawn: _,
             wikidot_unclosed: false,
             ..
         }) = elements.first()
@@ -2066,6 +2073,7 @@ fn unowned_dissolve_unwrap<'t>(
             e,
             Element::List {
                 wikidot_explicit_block: false,
+                wikidot_marker_head_spawn: _,
                 wikidot_unclosed: false,
                 ..
             }
@@ -2943,6 +2951,7 @@ fn parse_list_item<'r, 't>(
                 items: vec![list_item],
                 attributes: AttributeMap::new(),
                 wikidot_explicit_block: true,
+                wikidot_marker_head_spawn: false,
                 wikidot_unclosed: false,
             }
         };
@@ -3225,6 +3234,7 @@ fn split_mixed_deep_marker_list<'t>(list: Element<'t>) -> Option<Vec<Element<'t>
                 items: std::mem::take(group),
                 attributes: attributes.clone(),
                 wikidot_explicit_block: false,
+                wikidot_marker_head_spawn: false,
                 wikidot_unclosed: false,
             });
         }
@@ -4566,6 +4576,7 @@ pub(crate) fn parse_wikidot_implicit_list_block<'r, 't>(
         items,
         attributes: AttributeMap::new(),
         wikidot_explicit_block: true,
+        wikidot_marker_head_spawn: false,
         wikidot_unclosed: false,
     };
     success_elements_with_paragraph_safety(false, element, errors)
@@ -5183,6 +5194,7 @@ fn multi_formation_escaped_tail<'t>(
             items: std::mem::take(pending),
             attributes: AttributeMap::new(),
             wikidot_explicit_block: false,
+            wikidot_marker_head_spawn: false,
             wikidot_unclosed: false,
         });
     }
@@ -5194,6 +5206,7 @@ fn multi_formation_escaped_tail<'t>(
                 items,
                 attributes,
                 wikidot_explicit_block,
+                wikidot_marker_head_spawn,
                 wikidot_unclosed,
             } => {
                 flush(&mut pending, &mut hoists, text_seen, &mut out);
@@ -5208,6 +5221,7 @@ fn multi_formation_escaped_tail<'t>(
                     items,
                     attributes,
                     wikidot_explicit_block,
+                    wikidot_marker_head_spawn,
                     wikidot_unclosed,
                 });
             }

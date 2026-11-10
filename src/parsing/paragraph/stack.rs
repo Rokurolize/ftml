@@ -404,6 +404,10 @@ impl<'t> ParagraphStack<'t> {
                 wikidot_explicit_block: false,
                 ..
             }
+            | Element::List {
+                wikidot_marker_head_spawn: true,
+                ..
+            }
             | Element::Code(_)
             | Element::Collapsible { .. }
             | Element::HorizontalRule
@@ -1353,6 +1357,7 @@ impl<'t> ParagraphStack<'t> {
                         }],
                         attributes: AttributeMap::new(),
                         wikidot_explicit_block: true,
+                        wikidot_marker_head_spawn: false,
                         wikidot_unclosed: false,
                     });
                 }

@@ -30,7 +30,7 @@ use crate::parsing::{
     DepthItem, DepthList, ParagraphSplitEntry, ParagraphSplitKind, ParseSuccess,
     process_depths,
 };
-use crate::tree::{AttributeMap, Element, ListItem, ListType, PartialElement};
+use crate::tree::{AttributeMap, ContainerType, Element, ListItem, ListType, PartialElement};
 
 const MAX_LIST_DEPTH: usize = 128;
 
@@ -138,7 +138,7 @@ fn try_consume_fn<'r, 't>(
             }
             ListItemStep::Split {
                 control,
-                escaped,
+                mut escaped,
                 escaped_split,
                 escaped_safe,
                 run_leaf,
@@ -149,6 +149,7 @@ fn try_consume_fn<'r, 't>(
                 if let Some(leaf) = run_leaf {
                     run_leaf_body = Some(leaf);
                 }
+                mark_wikidot_marker_head_spawned_lists(&mut escaped);
                 escaped_elements.extend(escaped);
                 if escaped_split.is_some() {
                     gate_escape = escaped_split.map(|split| (split, escaped_safe));
@@ -164,7 +165,8 @@ fn try_consume_fn<'r, 't>(
                     depths.push(control);
                 }
                 depths.extend(items);
-                if let Some((escaped, split, safe)) = trailing {
+                if let Some((mut escaped, split, safe)) = trailing {
+                    mark_wikidot_marker_head_spawned_lists(&mut escaped);
                     escaped_elements.extend(escaped);
                     gate_escape = Some((split, safe));
                     ended = true;
@@ -460,12 +462,34 @@ fn wikidot_escape_batches(escaped: &[Element]) -> Vec<ParagraphSplitEntry> {
     entries
 }
 
-/// The split point for a native item whose whole content is a lone `>`
-/// followed by an explicit list: live ends the item at the `>` and renders
-/// the list as a sibling. Returns the index of the list element when the
-/// item elements have exactly that shape.
-fn mid_item_explicit_list_split(elements: &[Element]) -> Option<usize> {
-    let split_at = elements.iter().position(|element| {
+fn mark_wikidot_marker_head_spawned_lists<'t>(elements: &mut [Element<'t>]) {
+    for element in elements {
+        if let Element::List {
+            wikidot_marker_head_spawn,
+            ..
+        } = element
+        {
+            *wikidot_marker_head_spawn = true;
+        }
+    }
+}
+
+/// The split point for a native item with an explicit list after a text
+/// prefix: live ends the item at the explicit head and renders the list as
+/// a sibling. A format pair that spans the list is literalised on both
+/// sides of it.
+enum MidItemExplicitListSplit {
+    Direct {
+        split_at: usize,
+    },
+    FormatWrap {
+        markers: (&'static str, &'static str),
+        list_at: usize,
+    },
+}
+
+fn explicit_list_at(elements: &[Element]) -> Option<usize> {
+    elements.iter().position(|element| {
         matches!(
             element,
             Element::List {
@@ -474,19 +498,56 @@ fn mid_item_explicit_list_split(elements: &[Element]) -> Option<usize> {
                 ..
             }
         )
-    })?;
-    if split_at == 0
-        || !elements[split_at + 1..]
-            .iter()
-            .all(|element| matches!(element, Element::LineBreak))
+    })
+}
+
+fn format_markers(ctype: ContainerType) -> Option<(&'static str, &'static str)> {
+    match ctype {
+        ContainerType::Bold => Some(("**", "**")),
+        ContainerType::Italics => Some(("//", "//")),
+        ContainerType::Underline => Some(("__", "__")),
+        ContainerType::Superscript => Some(("^^", "^^")),
+        ContainerType::Subscript => Some((",,", ",,")),
+        ContainerType::Strikethrough => Some(("--", "--")),
+        ContainerType::Monospace => Some(("{{", "}}")),
+        _ => None,
+    }
+}
+
+fn item_span_has_frame_barrier(
+    parser: &Parser<'_, '_>,
+    start: usize,
+    end: usize,
+) -> bool {
+    let source = parser.full_text().inner();
+    let start = start.min(source.len());
+    let end = end.min(source.len());
+    let lower = source[start..end].to_ascii_lowercase();
+    ["[[div", "[[note", "[[collapsible"]
+        .into_iter()
+        .any(|marker| lower.contains(marker))
+}
+
+fn mid_item_explicit_list_split(
+    elements: &[Element],
+) -> Option<MidItemExplicitListSplit> {
+    if let [Element::Container(container)] = elements
+        && let Some(markers) = format_markers(container.ctype())
+        && let Some(list_at) = explicit_list_at(&container.elements())
     {
+        return Some(MidItemExplicitListSplit::FormatWrap { markers, list_at });
+    }
+    let split_at = explicit_list_at(elements)?;
+    if split_at == 0 {
         return None;
     }
     let mut prefix = elements[..split_at].iter().filter(|element| {
         !matches!(element, Element::Text(text) if text.chars().all(|c| c.is_whitespace()))
     });
     match (prefix.next(), prefix.next()) {
-        (Some(Element::Text(text)), None) if text.as_ref() == ">" => Some(split_at),
+        (Some(Element::Text(_)), None) => {
+            Some(MidItemExplicitListSplit::Direct { split_at })
+        }
         _ => None,
     }
 }
@@ -511,10 +572,20 @@ fn item_line_list_body_is_unowned(parser: &Parser<'_, '_>, content_start: usize)
     if !view.eq_ignore_ascii_case("ul") && !view.eq_ignore_ascii_case("ol") {
         return false;
     }
-    rest[line_end + 1..]
-        .lines()
-        .next()
-        .is_some_and(|line| line.trim_start().starts_with("[["))
+    rest[line_end + 1..].lines().next().is_some_and(|line| {
+        let mut line = line.trim_start();
+        loop {
+            let stripped = line.strip_prefix('>').map(str::trim_start).or_else(|| {
+                (line.starts_with("* ") || line.starts_with("# "))
+                    .then(|| line[2..].trim_start())
+            });
+            match stripped {
+                Some(next) => line = next,
+                None => break,
+            }
+        }
+        line.starts_with("[[")
+    })
 }
 
 fn find_wikidot_flat_boundary(elements: &[Element]) -> Option<(usize, bool)> {
@@ -693,15 +764,41 @@ where
     }
     if escape.is_none()
         && parser.settings().layout.legacy()
-        && let Some(split_at) = mid_item_explicit_list_split(&elements)
         && item_line_list_body_is_unowned(parser, content_start)
+        && let Some(split) = mid_item_explicit_list_split(&elements)
+        && match &split {
+            MidItemExplicitListSplit::Direct { .. } => true,
+            MidItemExplicitListSplit::FormatWrap { .. } => {
+                item_span_has_frame_barrier(parser, content_start, content_end)
+            }
+        }
     {
         errors.append(&mut item_errors);
         *paragraph_safe &= item_paragraph_safe;
         parser.update(&sub_parser);
-        let mut rest = elements.split_off(split_at);
-        let mut prefix = std::mem::replace(&mut elements, Vec::new());
-        while matches!(prefix.last(), Some(Element::Text(text)) if text.chars().all(|c| c.is_whitespace())) {
+        let (mut prefix, mut rest) = match split {
+            MidItemExplicitListSplit::Direct { split_at } => {
+                let rest = elements.split_off(split_at);
+                let prefix = std::mem::replace(&mut elements, Vec::new());
+                (prefix, rest)
+            }
+            MidItemExplicitListSplit::FormatWrap { markers, list_at } => {
+                let children = match elements.pop() {
+                    Some(Element::Container(container)) => container.elements().to_vec(),
+                    _ => unreachable!("single container"),
+                };
+                let mut children = children;
+                let mut post = children.split_off(list_at + 1);
+                let mut list = children.split_off(list_at);
+                let mut pre = children;
+                pre.insert(0, Element::Text(markers.0.into()));
+                post.push(Element::Text(markers.1.into()));
+                list.append(&mut post);
+                (pre, list)
+            }
+        };
+        while matches!(prefix.last(), Some(Element::Text(text)) if text.chars().all(|c| c.is_whitespace()))
+        {
             prefix.pop();
         }
         if let Some(Element::LineBreak) = rest.last() {
@@ -1249,6 +1346,7 @@ fn fuse_run_leaf_list<'t>(
         items: leaf_items,
         attributes: leaf_attributes,
         wikidot_explicit_block: false,
+        wikidot_marker_head_spawn: _,
         wikidot_unclosed: false,
     } = leaf
     else {
@@ -1266,6 +1364,7 @@ fn fuse_run_leaf_list<'t>(
                 ltype: own_ltype,
                 attributes: own_attributes,
                 wikidot_explicit_block: false,
+                wikidot_marker_head_spawn: _,
                 wikidot_unclosed: false,
                 ..
             } if *own_ltype == leaf_ltype && *own_attributes == AttributeMap::new()
@@ -1278,6 +1377,7 @@ fn fuse_run_leaf_list<'t>(
                 items: leaf_items,
                 attributes: leaf_attributes,
                 wikidot_explicit_block: false,
+                wikidot_marker_head_spawn: false,
                 wikidot_unclosed: false,
             },
         );
@@ -1303,6 +1403,7 @@ fn collapse_wikidot_run_element_in<'t>(element: Element<'t>, in_run: bool) -> El
             items,
             attributes,
             wikidot_explicit_block,
+            wikidot_marker_head_spawn,
             wikidot_unclosed,
         } => {
             let child_in_run = in_run || !wikidot_explicit_block;
@@ -1329,6 +1430,7 @@ fn collapse_wikidot_run_element_in<'t>(element: Element<'t>, in_run: bool) -> El
                 items,
                 attributes,
                 wikidot_explicit_block,
+                wikidot_marker_head_spawn,
                 wikidot_unclosed,
             };
             if wikidot_explicit_block && in_run {
@@ -1384,6 +1486,7 @@ fn collapse_wikidot_run_list<'t>(element: Element<'t>) -> Element<'t> {
         mut items,
         attributes,
         wikidot_explicit_block,
+        wikidot_marker_head_spawn,
         wikidot_unclosed,
     } = element
     else {
@@ -1415,6 +1518,7 @@ fn collapse_wikidot_run_list<'t>(element: Element<'t>) -> Element<'t> {
             items,
             attributes,
             wikidot_explicit_block,
+            wikidot_marker_head_spawn,
             wikidot_unclosed,
         };
     }
@@ -1430,6 +1534,7 @@ fn collapse_wikidot_run_list<'t>(element: Element<'t>) -> Element<'t> {
             items,
             attributes,
             wikidot_explicit_block,
+            wikidot_marker_head_spawn,
             wikidot_unclosed,
         };
     }
@@ -1468,6 +1573,7 @@ fn collapse_wikidot_run_list<'t>(element: Element<'t>) -> Element<'t> {
                 items,
                 attributes,
                 wikidot_explicit_block,
+                wikidot_marker_head_spawn,
                 wikidot_unclosed,
             };
         }
@@ -1482,6 +1588,7 @@ fn hoist_wikidot_run_list<'t>(native_ltype: ListType, inner: Element<'t>) -> Ele
         items,
         attributes,
         wikidot_explicit_block,
+        wikidot_marker_head_spawn,
         wikidot_unclosed,
     } = inner
     else {
@@ -1493,6 +1600,7 @@ fn hoist_wikidot_run_list<'t>(native_ltype: ListType, inner: Element<'t>) -> Ele
             items,
             attributes,
             wikidot_explicit_block,
+            wikidot_marker_head_spawn,
             wikidot_unclosed,
         });
     }
@@ -1502,6 +1610,7 @@ fn hoist_wikidot_run_list<'t>(native_ltype: ListType, inner: Element<'t>) -> Ele
         items,
         attributes,
         wikidot_explicit_block,
+        wikidot_marker_head_spawn,
         wikidot_unclosed,
     }
 }
@@ -1512,6 +1621,7 @@ fn hoist_fuse_wikidot_run_items<'t>(list: Element<'t>) -> Element<'t> {
         items,
         attributes,
         wikidot_explicit_block,
+        wikidot_marker_head_spawn,
         wikidot_unclosed,
     } = list
     else {
@@ -1522,6 +1632,7 @@ fn hoist_fuse_wikidot_run_items<'t>(list: Element<'t>) -> Element<'t> {
         items: items.into_iter().flat_map(fuse_wikidot_run_item).collect(),
         attributes,
         wikidot_explicit_block,
+        wikidot_marker_head_spawn,
         wikidot_unclosed,
     }
 }
@@ -1717,6 +1828,7 @@ pub(crate) fn build_list_element(
         items,
         attributes,
         wikidot_explicit_block: false,
+        wikidot_marker_head_spawn: false,
         wikidot_unclosed: false,
     })
 }

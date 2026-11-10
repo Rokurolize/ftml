@@ -841,6 +841,7 @@ fn ordered_boundary_close_shell(closed: bool) -> Element<'static> {
         }],
         attributes: AttributeMap::new(),
         wikidot_explicit_block: false,
+        wikidot_marker_head_spawn: false,
         wikidot_unclosed: !closed,
     }
 }
@@ -2759,6 +2760,7 @@ fn insert_native_list_item<'t>(
             items: Vec::new(),
             attributes: AttributeMap::new(),
             wikidot_explicit_block: false,
+            wikidot_marker_head_spawn: false,
             wikidot_unclosed: false,
         });
     }

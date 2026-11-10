@@ -2249,6 +2249,7 @@ fn wikidot_crossed_ol_tail_shell<'t>(
         }],
         attributes: crate::tree::AttributeMap::new(),
         wikidot_explicit_block: false,
+        wikidot_marker_head_spawn: false,
         wikidot_unclosed: unclosed,
     }
 }

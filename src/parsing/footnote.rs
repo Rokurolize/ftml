@@ -185,6 +185,7 @@ fn merge_trailing_one_item_list<'t>(elements: &mut Vec<Element<'t>>) -> bool {
                 Element::List { items, ltype, .. },
                 Some(Element::List {
                     ltype: previous,
+                    wikidot_explicit_block: true,
                     ..
                 })
             ) if items.len() == 1 && ltype == previous
@@ -776,6 +777,7 @@ fn hoist_block_sequence<'t>(elements: Vec<Element<'t>>) -> Vec<Element<'t>> {
                 attributes,
                 items,
                 wikidot_explicit_block,
+                wikidot_marker_head_spawn,
                 wikidot_unclosed,
             } => {
                 let (list, hoisted) = hoist_list_footnote_block(
@@ -783,6 +785,7 @@ fn hoist_block_sequence<'t>(elements: Vec<Element<'t>>) -> Vec<Element<'t>> {
                     attributes,
                     items,
                     wikidot_explicit_block,
+                    wikidot_marker_head_spawn,
                     wikidot_unclosed,
                 );
                 if let Some(list) = list {
@@ -831,6 +834,7 @@ fn hoist_list_footnote_block<'t>(
     attributes: AttributeMap<'t>,
     mut items: Vec<ListItem<'t>>,
     wikidot_explicit_block: bool,
+    wikidot_marker_head_spawn: bool,
     wikidot_unclosed: bool,
 ) -> (Option<Element<'t>>, Option<(Element<'t>, Vec<Element<'t>>)>) {
     let rebuild =
@@ -839,6 +843,7 @@ fn hoist_list_footnote_block<'t>(
             attributes,
             items,
             wikidot_explicit_block,
+            wikidot_marker_head_spawn,
             wikidot_unclosed,
         };
 

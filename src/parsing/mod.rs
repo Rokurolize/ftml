@@ -1152,6 +1152,7 @@ fn build_toc_list_element(
         items,
         attributes,
         wikidot_explicit_block: false,
+        wikidot_marker_head_spawn: false,
         wikidot_unclosed: false,
     }
 }

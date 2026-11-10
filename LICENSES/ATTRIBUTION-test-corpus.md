@@ -7,3 +7,5 @@ Some fixtures are instead derived from pages on the SCP Foundation wiki (scp-wik
 Fixtures derived from wiki pages were adapted for testing: page sources were cut down to the fragments that exercise the behaviour under test, and the expected outputs record how the live Wikidot renderer renders those fragments.
 
 This notice lives outside `test/` because the fixture loader enumerates that directory and rejects any entry that is not a test case (see `src/test/ast/loader.rs`), so the corpus cannot carry the notice itself.
+
+The fixtures `list/explicit-item-ends-at-barrier`, `table/quote-row-cell-blank-item-merge`, `footnote/explicit-list-ends-body-run` and `list/explicit-list-before-marker-list-no-break` are reduced from the same pool of live-measured Wikidot pages (records 6a23608dcca5, 9f5d4ae61d25, 94756254068f and 058cd6dbf85e): only structural marker syntax was kept, no page prose was carried into the fixtures; the expected outputs were captured via saved-page probes on the sandbox (probes muse-probe-f3rem-d-div-alone, muse-probe-f3rem-foot-list-boundary, muse-probe-f3rem-e2e-quote-marker-head).

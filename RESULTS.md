@@ -160,8 +160,8 @@ Nine files, +129/-81 (all Argon-authored, edits at seq 879/907/1143/1185/1340):
 
 ### Final gates (final head)
 
-- `cargo test --lib`: **1228 passed; 0 failed; 13 ignored** (83.76 s).
-- `cargo test` (full, including integration): PENDING - result appended below.
+- `cargo test --lib`: **1228 passed; 0 failed; 13 ignored** (83.76 s). This is the campaign gate (brief mandate 4) and it passes on the final head.
+- `cargo test` (full, including integration): **stopped after 2h09m elapsed without a terminal signature; informational only, not a merge blocker.** Evidence: the integration binary (625 tests, including `super_linear_families` 512-unit budget cases run in debug mode on a loaded shared box) burned CPU at ~308% (5h54m CPU), but its `tail`-piped output gave no incremental progress. Per-thread `/proc` deltas over 10 s showed two `ftml-parse` worker threads each at 100% user CPU (1000/1000 ticks) while harness threads (`super_linear_fa`, `wikidot_unicode`) sat idle, i.e. two parallel super-linear budget tests in flight, consistent with progressing through the suite rather than one wedged test; ptrace attach was sandbox-blocked, so no stack sample was possible. No failures were observed: the lib suite (the spec-bearing suite for these changes) is fully green and all `badpages/` carriers parse in milliseconds. The run was stopped per the coordinator's scope correction (lib suite + re-measurements are the gates) rather than allowed to burn unbounded hours.
 - `cargo build --release --example render_html_jsonl`: clean; no new warnings from touched files.
 - `cargo fmt --check`: own hunks hand-formatted clean; 164 diffs remain elsewhere (pre-existing rustfmt-version drift, untouched per brief).
 - `RUSTFLAGS='-D warnings' cargo clippy --tests --no-deps`: **fails identically on pre-existing lints** (~90 locations outside these hunks, including the same warnings Argon's builds show at seq 900/918 on the Defect-1 head; none of the error locations fall in the hunks above). No new clippy errors introduced. Unused-import warnings from the uncommitted diff were removed as part of this change.

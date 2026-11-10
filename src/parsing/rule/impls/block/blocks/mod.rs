@@ -423,15 +423,34 @@ pub(crate) fn unwrap_wikidot_paragraph_after_explicit_list(elements: &mut Vec<El
 /// footnote body, unlike the other paragraph bodies.
 pub(crate) fn append_wikidot_footnote_trailing_list_break(
     elements: &mut Vec<Element<'_>>,
+    top_level: bool,
 ) {
+    if top_level
+        && matches!(
+            elements.last(),
+            Some(Element::List {
+                wikidot_explicit_block: true,
+                ..
+            })
+        )
+    {
+        elements.push(Element::LineBreak);
+    }
+    let Some(Element::Container(container)) = elements.last_mut() else {
+        return;
+    };
+    if container.ctype() != crate::tree::ContainerType::Blockquote {
+        return;
+    }
+    let children = container.elements_mut();
     if matches!(
-        elements.last(),
+        children.last(),
         Some(Element::List {
             wikidot_explicit_block: true,
             ..
         })
     ) {
-        elements.push(Element::LineBreak);
+        children.push(Element::LineBreak);
     }
 }
 

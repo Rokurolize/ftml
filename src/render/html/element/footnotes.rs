@@ -20,7 +20,7 @@
 
 use super::prelude::*;
 use crate::render::text::TextRender;
-use crate::tree::{BibliographyScopeWrapper, ContainerType, HtmlTag};
+use crate::tree::{BibliographyScopeWrapper, ContainerType, HtmlTag, ListItem};
 use std::num::NonZeroUsize;
 
 pub fn render_footnote(ctx: &mut HtmlContext, index: usize, broke_anchor: bool) {
@@ -164,6 +164,17 @@ pub fn render_footnote_block(
 
     if ctx.layout() == Layout::Wikidot {
         let title = (explicit_empty_title || !title.is_empty()).then_some(title);
+        let tiers: Vec<Vec<u8>> = ctx
+            .footnotes()
+            .iter()
+            .map(|contents| {
+                if wrappers.is_empty() {
+                    wikidot_footnote_tiers(contents)
+                } else {
+                    vec![0; contents.len()]
+                }
+            })
+            .collect();
         ctx.html()
             .div()
             .attr(attr!("class" => "footnotes-footer"))
@@ -186,6 +197,7 @@ pub fn render_footnote_block(
                     }
                 }
                 for (index, contents) in ctx.footnotes().iter().enumerate() {
+                    let tiers = &tiers[index];
                     let index = index + 1;
                     let id = index.to_string();
                     let footnote_id = format!("footnote-{index}");
@@ -208,10 +220,10 @@ pub fn render_footnote_block(
                                     ))
                                     .contents(&id);
                                 ctx.push_raw('.');
-                                if !contents.is_empty() {
+                                if tiers.contains(&0) {
                                     ctx.push_raw(' ');
                                 }
-                                render_wikidot_footnote_contents(ctx, contents);
+                                render_wikidot_footnote_tier(ctx, contents, tiers, 0);
                             };
                             if wrappers.is_empty() {
                                 body(ctx);
@@ -219,8 +231,12 @@ pub fn render_footnote_block(
                                 render_wikidot_wrapped(ctx, wrappers, &mut body);
                             }
                         });
+                    render_wikidot_footnote_tier(ctx, contents, tiers, 1);
                 }
             });
+        for (index, contents) in ctx.footnotes().iter().enumerate() {
+            render_wikidot_footnote_tier(ctx, contents, &tiers[index], 2);
+        }
         return;
     }
 
@@ -271,8 +287,16 @@ pub fn render_footnote_block(
         });
 }
 
-fn render_wikidot_footnote_contents(ctx: &mut HtmlContext, contents: &[Element]) {
-    for element in contents {
+fn render_wikidot_footnote_tier(
+    ctx: &mut HtmlContext,
+    contents: &[Element],
+    tiers: &[u8],
+    tier: u8,
+) {
+    for (element, element_tier) in contents.iter().zip(tiers) {
+        if *element_tier != tier {
+            continue;
+        }
         if matches!(
             element,
             Element::Container(container) if container.ctype() == ContainerType::Paragraph
@@ -281,6 +305,104 @@ fn render_wikidot_footnote_contents(ctx: &mut HtmlContext, contents: &[Element])
         }
         render_element(ctx, element);
     }
+}
+
+fn wikidot_footnote_tiers(contents: &[Element]) -> Vec<u8> {
+    let mut tiers = vec![0u8; contents.len()];
+    let list_positions: Vec<usize> = contents
+        .iter()
+        .enumerate()
+        .filter(|(_, element)| matches!(element, Element::List { .. }))
+        .map(|(index, _)| index)
+        .collect();
+    let Some(frame_order) = list_positions
+        .iter()
+        .position(|&index| footnote_list_contains_frame(&contents[index]))
+    else {
+        return tiers;
+    };
+    let frame_index = list_positions[frame_order];
+    let Element::List { items, .. } = &contents[frame_index] else {
+        return tiers;
+    };
+    let close_in_frame =
+        items.len() == 1 || items.last().is_some_and(footnote_item_is_bare_marker);
+    if close_in_frame {
+        let mut order = 0usize;
+        let mut preceding = 0u8;
+        for (index, element) in contents.iter().enumerate().skip(frame_index + 1) {
+            if matches!(element, Element::List { .. }) {
+                order += 1;
+                let tier = order.min(2) as u8;
+                tiers[index] = tier;
+                preceding = tier;
+            } else {
+                tiers[index] = preceding.clamp(1, 2);
+            }
+        }
+    } else {
+        let Some(&following_index) = list_positions.get(frame_order + 1) else {
+            return tiers;
+        };
+        let mut tier = 0u8;
+        let mut preceding = 0u8;
+        for (index, element) in contents.iter().enumerate().skip(following_index + 1) {
+            if let Element::List { items, .. } = element {
+                if !footnote_list_is_all_bare(items) {
+                    tier = (tier + 1).min(2);
+                }
+                tiers[index] = tier;
+                preceding = tier;
+            } else {
+                tiers[index] = preceding.clamp(1, 2);
+            }
+        }
+    }
+    tiers
+}
+
+fn footnote_list_contains_frame(element: &Element) -> bool {
+    let Element::List { items, .. } = element else {
+        return false;
+    };
+    items.iter().any(|item| match item {
+        ListItem::Elements { elements, .. } => footnote_elements_contain_frame(elements),
+        ListItem::SubList { element } => footnote_element_contains_frame(element),
+    })
+}
+
+fn footnote_element_contains_frame(element: &Element) -> bool {
+    match element {
+        Element::WikidotBlockFrame { .. } => true,
+        Element::Container(container) => {
+            footnote_elements_contain_frame(container.elements())
+        }
+        Element::List { items, .. } => items.iter().any(|item| match item {
+            ListItem::Elements { elements, .. } => footnote_elements_contain_frame(elements),
+            ListItem::SubList { element } => footnote_element_contains_frame(element),
+        }),
+        Element::Color { elements, .. }
+        | Element::Anchor { elements, .. }
+        | Element::Collapsible { elements, .. }
+        | Element::Include { elements, .. } => footnote_elements_contain_frame(elements),
+        _ => false,
+    }
+}
+
+fn footnote_elements_contain_frame(elements: &[Element]) -> bool {
+    elements.iter().any(footnote_element_contains_frame)
+}
+
+fn footnote_item_is_bare_marker(item: &ListItem) -> bool {
+    let ListItem::Elements { elements, .. } = item else {
+        return false;
+    };
+    elements.len() == 1
+        && matches!(&elements[0], Element::Text(text) if text.as_ref() == "*" || text.as_ref() == "#")
+}
+
+fn footnote_list_is_all_bare(items: &[ListItem]) -> bool {
+    !items.is_empty() && items.iter().all(footnote_item_is_bare_marker)
 }
 
 fn render_wikidot_wrapped(

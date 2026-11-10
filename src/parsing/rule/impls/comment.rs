@@ -179,6 +179,42 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_dash_brackets_pair_strikethrough_across_soft_break() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = "raw ---]\nraw ----]";
+        let mut text = source.to_owned();
+        crate::preprocess_for_layout(&mut text, Layout::Wikidot);
+        let tokenization = crate::tokenize(&text);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!(
+            html,
+            "<p>raw <span style=\"text-decoration: line-through;\">-]<br>\nraw -</span>-]</p>"
+        );
+    }
+
+    #[test]
+    fn wikidot_dash_brackets_stay_literal_across_paragraph_break() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = "raw ---]\n\nraw ----]";
+        let mut text = source.to_owned();
+        crate::preprocess_for_layout(&mut text, Layout::Wikidot);
+        let tokenization = crate::tokenize(&text);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!(
+            html,
+            "<p>raw \u{2014}-]</p><p>raw \u{2014}\u{2014}]</p>"
+        );
+    }
+
+    #[test]
     fn wikidot_comment_closer_accepts_extra_leading_hyphens() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);

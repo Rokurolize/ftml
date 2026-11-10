@@ -122,45 +122,45 @@ pub fn render_list(
                     elements,
                     attributes,
                 } => {
-                  {
-                    let mut li = ctx.html().li();
-                    li.attr(attr!(;; attributes));
-                    if unclosed
-                        && list_items
-                            .iter()
-                            .filter(|item| matches!(item, ListItem::Elements { .. }))
-                            .last()
-                            .is_some_and(|last| std::ptr::eq(last, list_item))
                     {
-                        li.omit_close();
-                    }
-                    li.inner(|ctx| {
-                        let mut index = 0;
-                        while index < elements.len() {
-                            if ctx.layout().legacy()
-                                && render_scope_math_pair(ctx, elements, index)
-                            {
-                                index += 2;
-                                continue;
-                            }
-                            let element = &elements[index];
-                            let nested_list = matches!(element, Element::List { .. });
-                            let paragraph = matches!(
-                                element,
-                                Element::Container(container)
-                                    if container.ctype() == ContainerType::Paragraph
-                            );
-                            if ctx.layout().legacy() && (nested_list || paragraph) {
-                                ctx.push_raw('\n');
-                            }
-                            render_element(ctx, element);
-                            if ctx.layout().legacy() && (nested_list || paragraph) {
-                                ctx.push_raw('\n');
-                            }
-                            index += 1;
+                        let mut li = ctx.html().li();
+                        li.attr(attr!(;; attributes));
+                        if unclosed
+                            && list_items
+                                .iter()
+                                .filter(|item| matches!(item, ListItem::Elements { .. }))
+                                .last()
+                                .is_some_and(|last| std::ptr::eq(last, list_item))
+                        {
+                            li.omit_close();
                         }
-                    });
-                  }
+                        li.inner(|ctx| {
+                            let mut index = 0;
+                            while index < elements.len() {
+                                if ctx.layout().legacy()
+                                    && render_scope_math_pair(ctx, elements, index)
+                                {
+                                    index += 2;
+                                    continue;
+                                }
+                                let element = &elements[index];
+                                let nested_list = matches!(element, Element::List { .. });
+                                let paragraph = matches!(
+                                    element,
+                                    Element::Container(container)
+                                        if container.ctype() == ContainerType::Paragraph
+                                );
+                                if ctx.layout().legacy() && (nested_list || paragraph) {
+                                    ctx.push_raw('\n');
+                                }
+                                render_element(ctx, element);
+                                if ctx.layout().legacy() && (nested_list || paragraph) {
+                                    ctx.push_raw('\n');
+                                }
+                                index += 1;
+                            }
+                        });
+                    }
                     if ctx.layout().legacy() {
                         ctx.push_raw('\n');
                     }

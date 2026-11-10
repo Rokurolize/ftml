@@ -362,12 +362,11 @@ fn collect_split_wikidot_heading<'r, 't>(
         }
     }
 
-
     if let Some(head) = collapsible_head {
         crate::delayed::trim_trailing_ascii_space(&mut label);
-        let label_empty = label.iter().all(|element| {
-            matches!(element, Element::Text(text) if text.trim().is_empty())
-        });
+        let label_empty = label.iter().all(
+            |element| matches!(element, Element::Text(text) if text.trim().is_empty()),
+        );
         let id = heading
             .has_toc
             .then(|| Cow::Owned(format!("toc{}", parser.table_of_contents_len())));

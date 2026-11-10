@@ -247,8 +247,9 @@ fn clean_list_barrier(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
     //     mid-item (the tags render literal inside the strong).
     // Item 85 / 84a (harvest-markwrap).
     let transparent = |j: usize| {
-        block_name(tokens, j)
-            .is_some_and(|n| n.eq_ignore_ascii_case("code") || n.eq_ignore_ascii_case("blockquote"))
+        block_name(tokens, j).is_some_and(|n| {
+            n.eq_ignore_ascii_case("code") || n.eq_ignore_ascii_case("blockquote")
+        })
     };
     match tokens[index].token {
         Token::LeftBlock | Token::LeftBlockStar => {
@@ -726,10 +727,9 @@ fn scan_chunk(
                     .enumerate()
                     .any(|(i, token)| token.token == Token::Bold && i != lone);
             if !partner_elsewhere {
-                markers.roles.insert(
-                    tokens[lone].span.start,
-                    InlineMarkerRole::Literal,
-                );
+                markers
+                    .roles
+                    .insert(tokens[lone].span.start, InlineMarkerRole::Literal);
                 return;
             }
         }
@@ -1115,5 +1115,5 @@ mod tests {
             bold_bytes[0],
             markers.role_at_byte(bold_bytes[0])
         );
-}
+    }
 }

@@ -21,9 +21,9 @@
 use super::append_wikidot_footnote_trailing_list_break;
 use super::prelude::*;
 use crate::parsing::parse_boolean;
+use crate::parsing::rule::impls::comment_closer_token_count;
 use crate::tree::AttributeMap;
 use crate::tree::{InlineFormatKind, PartialElement};
-use crate::parsing::rule::impls::comment_closer_token_count;
 use std::borrow::Cow;
 use std::ops::{Deref, DerefMut};
 
@@ -131,7 +131,27 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
         && !sole_dissolved_list_break
         && matches!(elements.last(), Some(Element::LineBreak))
     {
-        elements.pop();
+        let keep_after_block = elements
+            .get(elements.len().saturating_sub(2))
+            .is_some_and(|element| {
+                matches!(
+                    element,
+                    Element::Container(container)
+                        if matches!(
+                            container.ctype(),
+                            ContainerType::Blockquote | ContainerType::Div
+                        )
+                ) || matches!(
+                    element,
+                    Element::List {
+                        wikidot_explicit_block: true,
+                        ..
+                    }
+                )
+            });
+        if !keep_after_block {
+            elements.pop();
+        }
     }
     if parser.settings().layout.legacy() {
         let repaired =
@@ -298,17 +318,22 @@ fn wikidot_scope_open_at(elements: &[Element<'_>]) -> bool {
                     }
                 }
                 Element::Partial(PartialElement::InlineFormatClose(kind)) => {
-                    if let Some((_, count)) =
-                        formats.iter_mut().find(|(k, _)| k == kind)
+                    if let Some((_, count)) = formats.iter_mut().find(|(k, _)| k == kind)
                     {
                         *count -= 1;
                     }
                 }
                 Element::Partial(PartialElement::WikidotBlockOpen(_)) => *block += 1,
                 Element::Partial(PartialElement::WikidotBlockClose(_)) => *block -= 1,
-                Element::Container(container) => {
-                    scan(container.elements(), span, size, color, anchor, block, formats)
-                }
+                Element::Container(container) => scan(
+                    container.elements(),
+                    span,
+                    size,
+                    color,
+                    anchor,
+                    block,
+                    formats,
+                ),
                 Element::WikidotBlockFrame { children, .. } => {
                     scan(children, span, size, color, anchor, block, formats)
                 }

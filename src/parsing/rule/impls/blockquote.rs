@@ -874,6 +874,7 @@ fn try_consume_fn<'r, 't>(
     let mut flat_split: Option<QuoteFlatSplit<'t>> = None;
     let mut first_row_depth: Option<usize> = None;
     let mut pending_paired_close_quoted_follower_paragraph = false;
+    let mut post_anchor_explicit_list_row = false;
     // BRIEF-BL69b: surplus quote markers carried from the paired-[[/li]] /
     // paired-[[/ul]] close lines, heading for the next content row of
     // this run (live merges them into the follower paragraph).
@@ -1519,6 +1520,7 @@ fn try_consume_fn<'r, 't>(
         // migrated break (or the ordered degraded shell) lands between the
         // two blockquotes.
         let boundary_list_row = parser.settings().layout.legacy()
+            && parser.quote_body_literal_residuals() != Some(true)
             && !quote_end_list_row
             && boundary_list_close
             && parser.current().token == Token::Quote
@@ -1789,6 +1791,24 @@ fn try_consume_fn<'r, 't>(
                     .all(|element| quote_residue_text(element, true)),
                 _ => false,
             };
+        if parser.settings().layout.legacy()
+            && parser.quote_body_literal_residuals() == Some(true)
+            && elements.iter().any(|element| {
+                matches!(
+                    element,
+                    Element::List {
+                        wikidot_explicit_block: true,
+                        ..
+                    }
+                )
+            })
+        {
+            post_anchor_explicit_list_row = true;
+        }
+        if parser.settings().layout.legacy() && post_anchor_explicit_list_row {
+            ensure_anchor_list_follower_break_in_row(&mut elements);
+            ensure_post_list_quote_follower_break(&mut elements);
+        }
         let row = NativeQuoteRow {
             elements,
             paragraph_safe,
@@ -2311,6 +2331,167 @@ fn nested_list_first_row_follows_paired_close(
     }
 }
 
+fn subtree_has_anchor(element: &Element<'_>) -> bool {
+    match element {
+        Element::Anchor { .. } => true,
+        Element::Partial(PartialElement::InlineAnchorOpen { .. }) => true,
+        Element::Container(container) => {
+            container.elements().iter().any(subtree_has_anchor)
+        }
+        _ => false,
+    }
+}
+
+fn walk_quote_anchor_list(
+    items: &[DepthItem<(), NativeQuoteRow<'_>>],
+    saw_anchor: &mut bool,
+) -> bool {
+    for item in items {
+        match item {
+            DepthItem::Item(row) => {
+                if !*saw_anchor {
+                    *saw_anchor = row.elements.iter().any(subtree_has_anchor);
+                }
+                if row.elements.iter().any(|element| {
+                    matches!(
+                        element,
+                        Element::List {
+                            wikidot_explicit_block: true,
+                            ..
+                        }
+                    )
+                }) {
+                    return *saw_anchor;
+                }
+            }
+            DepthItem::List(_, inner) => {
+                if walk_quote_anchor_list(inner.as_slice(), saw_anchor) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+fn subtree_has_underline(element: &Element<'_>) -> bool {
+    match element {
+        Element::Container(container)
+            if container.ctype() == ContainerType::Underline =>
+        {
+            true
+        }
+        Element::Container(container) => {
+            container.elements().iter().any(subtree_has_underline)
+        }
+        _ => false,
+    }
+}
+
+fn walk_quote_underline_list(
+    items: &[DepthItem<(), NativeQuoteRow<'_>>],
+    saw_underline: &mut bool,
+) -> bool {
+    for item in items {
+        match item {
+            DepthItem::Item(row) => {
+                if !*saw_underline {
+                    *saw_underline = row.elements.iter().any(subtree_has_underline);
+                }
+                if row.elements.iter().any(|element| {
+                    matches!(
+                        element,
+                        Element::List {
+                            wikidot_explicit_block: true,
+                            ..
+                        }
+                    )
+                }) {
+                    return *saw_underline;
+                }
+            }
+            DepthItem::List(_, inner) => {
+                if walk_quote_underline_list(inner.as_slice(), saw_underline) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+fn quote_has_anchor_before_explicit_list(
+    list: &[DepthItem<(), NativeQuoteRow<'_>>],
+) -> bool {
+    walk_quote_anchor_list(list, &mut false)
+        || walk_quote_underline_list(list, &mut false)
+}
+
+fn ensure_post_list_quote_follower_break(elements: &mut Vec<Element<'_>>) {
+    let marker_positions: Vec<usize> = elements
+        .iter()
+        .enumerate()
+        .filter_map(|(index, element)| {
+            matches!(element, Element::Text(text) if text == ">").then_some(index)
+        })
+        .collect();
+    if marker_positions.len() < 2 {
+        return;
+    }
+    let second = marker_positions[1];
+    if elements[..second]
+        .iter()
+        .any(|element| matches!(element, Element::LineBreak | Element::LineBreaks(_)))
+    {
+        return;
+    }
+    if matches!(
+        elements.get(second.saturating_sub(1)),
+        Some(Element::LineBreak | Element::LineBreaks(_))
+    ) {
+        return;
+    }
+    elements.insert(second, Element::LineBreak);
+}
+
+fn ensure_anchor_list_follower_break_in_row(elements: &mut Vec<Element<'_>>) {
+    let Some(close_index) = elements.iter().rposition(|element| {
+        matches!(
+            element,
+            Element::Partial(PartialElement::InlineAnchorClose(_))
+        )
+    }) else {
+        return;
+    };
+    let tail = &elements[close_index + 1..];
+    if tail.is_empty() {
+        return;
+    }
+    if matches!(
+        tail.first(),
+        Some(Element::LineBreak | Element::LineBreaks(_))
+    ) {
+        return;
+    }
+    if matches!(tail.first(), Some(Element::Text(text)) if text == ">") {
+        elements.insert(close_index + 1, Element::LineBreak);
+    }
+}
+
+fn quote_row_is_inline_follower(row: &NativeQuoteRow<'_>) -> bool {
+    !row.empty_spaced
+        && !row.elements.iter().any(|element| {
+            matches!(
+                element,
+                Element::List {
+                    wikidot_explicit_block: true,
+                    ..
+                }
+            )
+        })
+        && !quote_row_opens_block(&row.elements)
+}
+
 fn build_blockquote_element(
     list: DepthList<(), NativeQuoteRow>,
     wikidot: bool,
@@ -2332,9 +2513,48 @@ fn build_blockquote_element(
     let mut residual_chunk = false;
     let mut open_quote_anchor = false;
     let mut blank_after_open_anchor = false;
+    let quote_anchor_before_list = walk_quote_anchor_list(list.as_slice(), &mut false);
+    let quote_anchor_list_run = quote_has_anchor_before_explicit_list(list.as_slice());
+    enum PostAnchorListTail {
+        None,
+        AfterList,
+        AfterBridge,
+    }
+    let mut post_anchor_list_tail = PostAnchorListTail::None;
+    let mut saw_explicit_list_in_anchor_run = false;
     for item in list {
         match item {
             DepthItem::Item(mut row) => {
+                if wikidot && quote_anchor_list_run && saw_explicit_list_in_anchor_run {
+                    ensure_anchor_list_follower_break_in_row(&mut row.elements);
+                    if !row.elements.iter().any(|element| {
+                        matches!(
+                            element,
+                            Element::Partial(PartialElement::InlineAnchorClose(_))
+                        )
+                    }) {
+                        ensure_post_list_quote_follower_break(&mut row.elements);
+                    }
+                }
+                let list_row = row.elements.iter().any(|element| {
+                    matches!(
+                        element,
+                        Element::List {
+                            wikidot_explicit_block: true,
+                            ..
+                        }
+                    )
+                });
+                let follower = wikidot && quote_row_is_inline_follower(&row);
+                if quote_anchor_list_run
+                    && matches!(post_anchor_list_tail, PostAnchorListTail::AfterBridge)
+                    && follower
+                {
+                    stack.ensure_wikidot_trailing_line_break();
+                    stack.end_paragraph();
+                    stack.push_element(Element::LineBreak, true);
+                    post_anchor_list_tail = PostAnchorListTail::None;
+                }
                 keep_trailing_break = row.keep_trailing_break;
                 marker_final = row.marker_final;
                 residual_chunk |= row.residual_block
@@ -2380,6 +2600,14 @@ fn build_blockquote_element(
                 let wrap_fused_leading =
                     wikidot && quote_row_fused_explicit_list(&row.elements);
                 push_native_quote_row(&mut stack, row, wikidot, wrap_fused_leading);
+                if list_row && quote_anchor_list_run {
+                    saw_explicit_list_in_anchor_run = true;
+                    post_anchor_list_tail = PostAnchorListTail::AfterList;
+                } else if matches!(post_anchor_list_tail, PostAnchorListTail::AfterList)
+                    && !list_row
+                {
+                    post_anchor_list_tail = PostAnchorListTail::AfterBridge;
+                }
             }
             DepthItem::List(_, list) => {
                 keep_trailing_break = false;
@@ -2390,6 +2618,7 @@ fn build_blockquote_element(
                     }
                     stack.push_element(blockquote, false);
                 }
+                post_anchor_list_tail = PostAnchorListTail::None;
             }
         }
     }

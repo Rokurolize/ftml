@@ -1051,9 +1051,7 @@ fn nested_tabview_lift<'a, 't>(
         (None, None) => return None,
     };
     let stray_index = items.iter().position(|item| match item {
-        TabViewItem::Content(elements) => {
-            wikidot_tabview_stray_split(elements).is_some()
-        }
+        TabViewItem::Content(elements) => wikidot_tabview_stray_split(elements).is_some(),
         TabViewItem::Tab(tab) | TabViewItem::Remote(tab) => {
             elements_contain_stray_tab_close(&tab.elements)
         }
@@ -1062,9 +1060,7 @@ fn nested_tabview_lift<'a, 't>(
         .iter()
         .rev()
         .find_map(|item| match item {
-            TabViewItem::Tab(tab) | TabViewItem::Remote(tab) => {
-                Some(tab.wikidot_row_cut)
-            }
+            TabViewItem::Tab(tab) | TabViewItem::Remote(tab) => Some(tab.wikidot_row_cut),
             _ => None,
         })
         .flatten();
@@ -1090,9 +1086,9 @@ fn nested_tabview_lift<'a, 't>(
     let trailing_tail = later
         .get(panels_len)
         .and_then(|item| match item {
-            TabViewItem::Content(elements) => Some(row_tail_elements(
-                wikidot_tabview_row_tail_run(elements),
-            )),
+            TabViewItem::Content(elements) => {
+                Some(row_tail_elements(wikidot_tabview_row_tail_run(elements)))
+            }
             _ => None,
         })
         .filter(|elements| !elements.is_empty());
@@ -1124,8 +1120,6 @@ fn tab_elements_nested_lift<'a, 't>(
     })
 }
 
-
-
 fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
     let depth = ctx.wikidot_tabview_depth();
     ctx.set_wikidot_tabview_depth(depth + 1);
@@ -1147,10 +1141,8 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
         })
         .collect();
     let lift_splits_content = own_lift.is_some();
-    let lift_hoists_tail = matches!(
-        own_lift,
-        Some(NestedTabviewLift::PanelsToNavset { .. })
-    );
+    let lift_hoists_tail =
+        matches!(own_lift, Some(NestedTabviewLift::PanelsToNavset { .. }));
     let id = ctx.random().generate_wikidot_tabview_id();
     ctx.require_wikidot_tab_view(id.clone());
 
@@ -1247,16 +1239,15 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                 .then_some(any_row_tail)
                 .flatten();
             let (yui_tail, navset_tail, close_tail) = match row_tail {
-                Some(_) if matches!(
-                    own_lift,
-                    Some(NestedTabviewLift::TailToContent { .. })
-                ) =>
+                Some(_)
+                    if matches!(
+                        own_lift,
+                        Some(NestedTabviewLift::TailToContent { .. })
+                    ) =>
                 {
                     (None, None, None)
                 }
-                Some(row_tail)
-                    if row_tail.cut == Some(WikidotRowCut::Collapsible) =>
-                {
+                Some(row_tail) if row_tail.cut == Some(WikidotRowCut::Collapsible) => {
                     if row_tail.direct && (depth == 0 || own_lift.is_some()) {
                         (None, None, Some(row_tail))
                     } else {
@@ -1281,8 +1272,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                     }
                     _ => tail.elements,
                 };
-                navset_close_tail =
-                    Some(wikidot_tabview_row_tail_run(elements).to_vec());
+                navset_close_tail = Some(wikidot_tabview_row_tail_run(elements).to_vec());
                 navset_spill_from = if own_lift.is_some() {
                     items.len()
                 } else {
@@ -1303,8 +1293,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                 })
                 .filter(|index| *index + 1 < items.len());
             let navset_tail = navset_tail.filter(|_| {
-                nested_break.is_none()
-                    && (break_point.is_none() || lift_hoists_tail)
+                nested_break.is_none() && (break_point.is_none() || lift_hoists_tail)
             });
             ctx.html()
                 .div()
@@ -1401,8 +1390,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                                 } => {
                                     content_end = position + 1;
                                     navset_spill_from = content_end;
-                                    navset_post_lift_panels =
-                                        panels.iter().collect();
+                                    navset_post_lift_panels = panels.iter().collect();
                                     navset_post_lift_literals = literals;
                                     if let Some(tail) = tail_after_navset {
                                         after_navset_lift_tail = Some(tail);
@@ -1553,8 +1541,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
             render_elements(ctx, tail);
         }
         if depth == 0 {
-            deferred_lift_break =
-                flush_wikidot_tabview_lifts(ctx, deferred_lift_break);
+            deferred_lift_break = flush_wikidot_tabview_lifts(ctx, deferred_lift_break);
             if deferred_lift_break {
                 ctx.push_raw_str("<br>");
             }
@@ -2149,7 +2136,7 @@ mod tests {
                 label: cow!("</em><script>alert(1)</script>"),
                 elements: vec![text!(attack)],
                 wikidot_label_spans: Vec::new(),
-                    wikidot_row_cut: None,
+                wikidot_row_cut: None,
             })])],
             ..SyntaxTree::default()
         };
@@ -2178,7 +2165,7 @@ mod tests {
                 label: cow!("Empty"),
                 elements: Vec::new(),
                 wikidot_label_spans: Vec::new(),
-                    wikidot_row_cut: None,
+                wikidot_row_cut: None,
             })])],
             ..SyntaxTree::default()
         };

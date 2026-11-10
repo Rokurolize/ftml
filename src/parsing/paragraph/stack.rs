@@ -1950,10 +1950,7 @@ impl<'t> ParagraphStack<'t> {
                     self.finished.push(armed);
                 }
                 self.finished.push(element);
-                self.register_wikidot_div_literal_range(
-                    run_start,
-                    self.finished.len(),
-                );
+                self.register_wikidot_div_literal_range(run_start, self.finished.len());
             } else {
                 let followed_by_div = matches!(
                     &element,

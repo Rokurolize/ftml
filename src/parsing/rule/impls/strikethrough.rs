@@ -96,7 +96,8 @@ fn try_consume_strikethrough<'r, 't>(
     {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
-    let elements = super::bold::mark_format_stop_at_list(parser, in_anchor_body, elements);
+    let elements =
+        super::bold::mark_format_stop_at_list(parser, in_anchor_body, elements);
     let elements =
         append_wikidot_line_close_space(elements, parser.settings().layout.legacy());
     ok!(paragraph_safe; elements, errors)

@@ -635,7 +635,10 @@ where
     }
     if parser.settings().layout.legacy()
         && !parser.discarding_hidden_body()
-        && matches!(block.name, "block-table-cell-regular" | "block-table-cell-header")
+        && matches!(
+            block.name,
+            "block-table-cell-regular" | "block-table-cell-header"
+        )
         && parser.in_wikidot_advanced_table_cell_body()
         && !parser.accepts_partial_here(crate::tree::AcceptsPartial::TableCell)
     {

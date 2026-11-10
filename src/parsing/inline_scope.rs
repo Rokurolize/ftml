@@ -847,10 +847,7 @@ impl<'t> ActiveScopes<'t> {
     fn retire_innermost_color_scope(&mut self) {
         let mut current = self.active_tail;
         while let Some(position) = current {
-            if matches!(
-                self.scopes[position].wrapper,
-                ScopeWrapper::Color { .. }
-            ) {
+            if matches!(self.scopes[position].wrapper, ScopeWrapper::Color { .. }) {
                 self.kill_scope(position);
                 return;
             }
@@ -3770,8 +3767,15 @@ fn format_explicit_list_segments<'t>(
             ),
             _ => return None,
         };
-        if (subtree_contains_native_list(element) || crosses_poison_list) && !stops_at_list {
-            let Element::Color { elements, attributes, .. } = element else {
+        if (subtree_contains_native_list(element) || crosses_poison_list)
+            && !stops_at_list
+        {
+            let Element::Color {
+                elements,
+                attributes,
+                ..
+            } = element
+            else {
                 unreachable!("color element checked above")
             };
             strip_span_list_close_tail_markers(attributes);
@@ -3781,7 +3785,12 @@ fn format_explicit_list_segments<'t>(
             return Some(literalised_color(&color_clone, bg_clone, children));
         }
         if !stops_at_list {
-            let Element::Color { elements, attributes, .. } = element else {
+            let Element::Color {
+                elements,
+                attributes,
+                ..
+            } = element
+            else {
                 unreachable!("color element checked above")
             };
             strip_span_list_close_tail_markers(attributes);
@@ -3837,15 +3846,21 @@ fn format_explicit_list_segments<'t>(
                         if !current_run.is_empty() {
                             let mut seg_attrs = AttributeMap::new();
                             if stops_at_list && !seen_list {
-                                seg_attrs.insert(WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, Cow::Borrowed(""));
+                                seg_attrs.insert(
+                                    WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER,
+                                    Cow::Borrowed(""),
+                                );
                             }
                             if stops_at_list && seen_list {
                                 // Post-list segment in stopped case - don't re-wrap in color
                                 segmented.append(&mut current_run);
                             } else {
-                                let mut segment_children = std::mem::take(&mut current_run);
+                                let mut segment_children =
+                                    std::mem::take(&mut current_run);
                                 let trailing = if stops_at_list {
-                                    split_trailing_breaks_after_anchor_close(&mut segment_children)
+                                    split_trailing_breaks_after_anchor_close(
+                                        &mut segment_children,
+                                    )
                                 } else {
                                     Vec::new()
                                 };
@@ -3892,12 +3907,22 @@ fn format_explicit_list_segments<'t>(
                     });
                 }
             }
-            if let Some(tail_mark) = understrike_tail_mark && stops_at_list {
+            if let Some(tail_mark) = understrike_tail_mark
+                && stops_at_list
+            {
                 let marker = match tail_mark {
-                    SpanListCloseTail::Break => WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BREAK_MARKER,
-                    SpanListCloseTail::Bare => WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BARE_MARKER,
-                    SpanListCloseTail::Lead => WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_LEAD_MARKER,
-                    SpanListCloseTail::Fold => WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_FOLD_MARKER,
+                    SpanListCloseTail::Break => {
+                        WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BREAK_MARKER
+                    }
+                    SpanListCloseTail::Bare => {
+                        WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BARE_MARKER
+                    }
+                    SpanListCloseTail::Lead => {
+                        WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_LEAD_MARKER
+                    }
+                    SpanListCloseTail::Fold => {
+                        WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_FOLD_MARKER
+                    }
                     SpanListCloseTail::Blank => {
                         unreachable!("blank tails only stamp the span family")
                     }
@@ -4293,10 +4318,7 @@ fn split_lists_out_of_paragraphs(elements: &mut Vec<Element<'_>>) {
                         )
                     }) =>
             {
-                let mut taken = mem::replace(
-                    &mut elements[index],
-                    Element::LineBreak,
-                );
+                let mut taken = mem::replace(&mut elements[index], Element::LineBreak);
                 let children = match &mut taken {
                     Element::Container(container) => mem::take(container.elements_mut()),
                     _ => unreachable!("paragraph checked above"),
@@ -5606,7 +5628,6 @@ fn paragraph_scope_tail_continues<'t>(tail: &Element<'t>, next: &Element<'t>) ->
     matches!(tail, Element::Anchor { .. })
 }
 
-
 /// Whether a frame child is a scope chunk that live joins into a preceding
 /// paragraph across a quote/div row break: an anchor, a color scope, or an
 /// inline-scope container (span/size/format). R-bq-para-join probes cover
@@ -5615,9 +5636,7 @@ fn paragraph_scope_tail_continues<'t>(tail: &Element<'t>, next: &Element<'t>) ->
 fn is_joinable_prelist_scope_chunk(element: &Element<'_>) -> bool {
     match element {
         Element::Anchor { .. } | Element::Color { .. } => true,
-        Element::Container(container) => {
-            is_inline_scope_ctype(container.ctype())
-        }
+        Element::Container(container) => is_inline_scope_ctype(container.ctype()),
         _ => false,
     }
 }
@@ -5626,10 +5645,7 @@ fn is_joinable_prelist_scope_chunk(element: &Element<'_>) -> bool {
 /// keeps between them. The chunk keeps its block-chunk-prefix marker when it
 /// has one: the tree-wide rewrite later strips it to a bare inner with
 /// paragraph context.
-fn join_scope_chunk_into_paragraph<'t>(
-    previous: &mut Element<'t>,
-    next: Element<'t>,
-) {
+fn join_scope_chunk_into_paragraph<'t>(previous: &mut Element<'t>, next: Element<'t>) {
     let Element::Container(paragraph) = previous else {
         return;
     };
@@ -5955,9 +5971,7 @@ fn span_blank_split_has_content(element: &Element<'_>) -> bool {
 fn split_run_at_blank_break<'t>(
     run: &[Element<'t>],
 ) -> Option<(Vec<Element<'t>>, Vec<Element<'t>>)> {
-    if !run
-        .first()
-        .is_some_and(span_blank_split_has_content)
+    if !run.first().is_some_and(span_blank_split_has_content)
         || !run.last().is_some_and(span_blank_split_has_content)
     {
         return None;
@@ -6495,7 +6509,9 @@ fn lower_sequence<'t>(
             // sequence (a list item) never see a list in their own output.
             if valid.contains(&*ordinal) && !pending_block_closer_literal(&output, &run) {
                 let crosses_list = match resolved {
-                    Some(position) => active.scopes[position].origin < active.last_list_ordinal,
+                    Some(position) => {
+                        active.scopes[position].origin < active.last_list_ordinal
+                    }
                     // The scope was already ended at the explicit list; the
                     // continuation anchor ahead of the list is its residue.
                     None => true,
@@ -6703,8 +6719,8 @@ fn lower_sequence<'t>(
             None
         };
         let is_stopped_pre = stopped_pre_segment(&element);
-        let stopped_carries_anchor_close = is_stopped_pre
-            && subtree_contains_anchor_close_partial(&element);
+        let stopped_carries_anchor_close =
+            is_stopped_pre && subtree_contains_anchor_close_partial(&element);
         if active.has_active_scope()
             && element.paragraph_safe()
             && contains_inline_scope_control(&element)
@@ -7471,7 +7487,10 @@ fn scope_sibling_merge<'t>(previous: &mut Element<'t>, next: Element<'t>) -> boo
                 elements: next_elements,
                 attributes: next_attributes,
             },
-        ) if previous_color == &next_color && previous_background == &next_background && previous_attributes == &next_attributes => {
+        ) if previous_color == &next_color
+            && previous_background == &next_background
+            && previous_attributes == &next_attributes =>
+        {
             previous_elements.extend(next_elements);
             true
         }
@@ -8099,9 +8118,7 @@ fn subtree_contains_anchor_close_partial(element: &Element<'_>) -> bool {
     }
     let mut found = false;
     visit_children(element, &mut |children| {
-        found |= children
-            .iter()
-            .any(subtree_contains_anchor_close_partial);
+        found |= children.iter().any(subtree_contains_anchor_close_partial);
     });
     found
 }
@@ -10495,7 +10512,10 @@ impl<'t> WikidotFrameAssembly<'t> {
 ///   crosses the frame close adds one break to the plain post-list wrapper
 ///   (2 -> 3 after the closer literal); an outer span/size scope absorbs it
 ///   back to 2. See `fix_crossing_anchor_breaks`.
-fn fix_outer_close_eof_breaks<'t>(children: &mut Vec<Element<'t>>, post_list_crossed_close: bool) {
+fn fix_outer_close_eof_breaks<'t>(
+    children: &mut Vec<Element<'t>>,
+    post_list_crossed_close: bool,
+) {
     let signals = outer_close_eof_signals(children);
     if let Some(anchor) = children
         .iter()
@@ -10539,7 +10559,10 @@ fn fix_outer_close_eof_breaks<'t>(children: &mut Vec<Element<'t>>, post_list_cro
     // Split by a second list: the closer span is followed by a List element
     // somewhere after it in the frame — the split structure is already
     // correct (second-list case). Leave it.
-    if children[idx + 1..].iter().any(|el| matches!(el, Element::List { .. })) {
+    if children[idx + 1..]
+        .iter()
+        .any(|el| matches!(el, Element::List { .. }))
+    {
         return;
     }
     // Terminal closer span (possibly followed by a Paragraph, e.g. blank-text).
@@ -10593,7 +10616,9 @@ fn fix_outer_close_eof_breaks<'t>(children: &mut Vec<Element<'t>>, post_list_cro
         let mut content: Vec<Element<'t>> = Vec::new();
         for el in rest {
             // skip leading breaks (we added the closer-line break)
-            if matches!(el, Element::LineBreak | Element::LineBreaks(_)) && content.is_empty() {
+            if matches!(el, Element::LineBreak | Element::LineBreaks(_))
+                && content.is_empty()
+            {
                 continue;
             }
             content.push(el);
@@ -11113,12 +11138,15 @@ fn push_wrapper_tail_breaks<'t>(elements: &mut Vec<Element<'t>>) {
 }
 
 fn elements_have_closer_literal(elements: &[Element<'_>]) -> bool {
-    closer_literal_end_index(elements).is_some() || elements.iter().any(subtree_has_closer_literal)
+    closer_literal_end_index(elements).is_some()
+        || elements.iter().any(subtree_has_closer_literal)
 }
 
 fn subtree_has_closer_literal(element: &Element<'_>) -> bool {
     match element {
-        Element::Container(container) => elements_have_closer_literal(container.elements()),
+        Element::Container(container) => {
+            elements_have_closer_literal(container.elements())
+        }
         Element::Anchor { elements, .. } => elements_have_closer_literal(elements),
         Element::Color { elements, .. } => elements_have_closer_literal(elements),
         _ => false,

@@ -103,13 +103,18 @@ impl QuoteBodyCursorInstallation {
         if container_type != ContainerType::Underline {
             return Self::install(parser);
         }
-        let installed = if parser.quote_body_cursor().is_none()
-            && let Some(required_depth) = parser.native_blockquote_depth()
-        {
-            parser.install_quote_body_cursor_at_current_line_with_literal_residuals(
-                required_depth,
-            );
-            true
+        let installed = if let Some(required_depth) = parser.native_blockquote_depth() {
+            if parser.quote_body_cursor().is_none() {
+                parser.install_quote_body_cursor_at_current_line_with_literal_residuals(
+                    required_depth,
+                );
+                true
+            } else if parser.quote_body_literal_residuals() != Some(true) {
+                parser.set_quote_body_literal_residuals(true);
+                false
+            } else {
+                false
+            }
         } else {
             false
         };

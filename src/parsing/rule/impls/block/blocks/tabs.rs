@@ -457,7 +457,6 @@ fn eject_collapsible_row_suffix_paragraph<'t>(
     Some(tail)
 }
 
-
 fn div_closer_line<'r, 't>(parser: &Parser<'r, 't>) -> bool
 where
     'r: 't,
@@ -2526,8 +2525,8 @@ fn parse_tab<'r, 't>(
     } else {
         Vec::new()
     };
-    let collapsible_cut = row_cut == RowSuffixCut::Collapsible
-        || interior_cut == RowSuffixCut::Collapsible;
+    let collapsible_cut =
+        row_cut == RowSuffixCut::Collapsible || interior_cut == RowSuffixCut::Collapsible;
     if legacy
         && row_suffix.is_empty()
         && collapsible_cut
@@ -2538,9 +2537,8 @@ fn parse_tab<'r, 't>(
     if legacy
         && row_suffix.is_empty()
         && collapsible_cut
-        && let Some(mut tail) = crate::parsing::rule::impls::eject_wikidot_row_cut_marker(
-            &mut elements,
-        )
+        && let Some(mut tail) =
+            crate::parsing::rule::impls::eject_wikidot_row_cut_marker(&mut elements)
     {
         if !matches!(
             tail.first(),
@@ -2548,7 +2546,10 @@ fn parse_tab<'r, 't>(
         ) {
             tail.insert(0, Element::LineBreak);
         }
-        tail.insert(0, Element::Partial(PartialElement::WikidotFoster(Vec::new())));
+        tail.insert(
+            0,
+            Element::Partial(PartialElement::WikidotFoster(Vec::new())),
+        );
         row_suffix = tail;
     }
     if legacy {

@@ -951,7 +951,10 @@ fn same_line_div_drops_tail_after_wrapped_center(
     wrapped
 }
 
-fn wikidot_div_head_line_quote_depth(parser: &Parser<'_, '_>, opener_start: usize) -> usize {
+fn wikidot_div_head_line_quote_depth(
+    parser: &Parser<'_, '_>,
+    opener_start: usize,
+) -> usize {
     let source = parser.full_text().inner();
     let line_start = source[..opener_start]
         .rfind('\n')

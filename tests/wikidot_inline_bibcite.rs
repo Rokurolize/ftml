@@ -303,8 +303,7 @@ fn wikidot_anchor_closes_before_bibcite() {
         "text after the cite should sit outside the outer anchor: {html}"
     );
 
-    let literal_source =
-        "[[a href=\"/A\"]]x[[bibcite b1]]y[[/a]]\n\n[[bibliography]]\n: b1 : Title\n[[/bibliography]]\n";
+    let literal_source = "[[a href=\"/A\"]]x[[bibcite b1]]y[[/a]]\n\n[[bibliography]]\n: b1 : Title\n[[/bibliography]]\n";
     let page_info = page_info();
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let mut literal_text = literal_source.to_owned();

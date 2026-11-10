@@ -22,8 +22,9 @@ use super::prelude::*;
 use super::{
     consume_wikidot_flat_head_break, drop_wikidot_trailing_vanish_breaks,
     merge_adjacent_native_lists, restore_crossed_li_terminated_body_break,
-    trim_wikidot_trailing_explicit_list_break, unwrap_wikidot_paragraph_after_explicit_list,
-    wikidot_block_pair_for_block_head_byte, wikidot_flat_pair_for_head,
+    trim_wikidot_trailing_explicit_list_break,
+    unwrap_wikidot_paragraph_after_explicit_list, wikidot_block_pair_for_block_head_byte,
+    wikidot_flat_pair_for_head,
 };
 use crate::parsing::condition::ParseCondition;
 use crate::parsing::consume::consume;
@@ -613,10 +614,8 @@ fn parse_fn<'r, 't>(
     };
     if unfolded_tail_start.is_none()
         && parser.settings().layout.legacy()
-        && let Some(index) = crate::parsing::rule::impls::keep_wikidot_row_suffix(
-            parser,
-            &mut elements,
-        )
+        && let Some(index) =
+            crate::parsing::rule::impls::keep_wikidot_row_suffix(parser, &mut elements)
     {
         unfolded_tail_start = Some(index);
     }

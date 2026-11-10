@@ -758,7 +758,6 @@ where
     }
 }
 
-
 /// Item 78: the crossed block close comes directly after the list close with
 /// no intervening content, so the follower break must be emitted. Intervening
 /// content (e.g. `E` before `[[/div]]` in closeout) already produced the break.
@@ -820,9 +819,7 @@ where
             parser.update(&close);
             parser.set_pending_wikidot_collapsible_closer(false);
             parser.take_wikidot_cross_list_terminated_body();
-            if cross_list_terminated
-                && unquoted_close
-                && !parser.discarding_hidden_body()
+            if cross_list_terminated && unquoted_close && !parser.discarding_hidden_body()
             {
                 let closer_own_line =
                     wikidot_own_line_prefix(parser.full_text().inner(), close_pos);
@@ -870,9 +867,7 @@ where
             parser.update(&close);
             parser.set_pending_wikidot_div_closer(false);
             parser.take_wikidot_cross_list_terminated_body();
-            if cross_list_terminated
-                && unquoted_close
-                && !parser.discarding_hidden_body()
+            if cross_list_terminated && unquoted_close && !parser.discarding_hidden_body()
             {
                 let closer_own_line =
                     wikidot_own_line_prefix(parser.full_text().inner(), close_pos);
@@ -1623,11 +1618,7 @@ where
             .is_some_and(|token| token.token == Token::InputEnd)
     {
         parser.step()?;
-        return Ok(Some(ParseSuccess::new(
-            Elements::None,
-            Vec::new(),
-            true,
-        )));
+        return Ok(Some(ParseSuccess::new(Elements::None, Vec::new(), true)));
     }
 
     // g10: the swallowed last tail `[[/ul]]`/`[[/ol]]` eats the break before
@@ -1641,11 +1632,7 @@ where
                 .wikidot_li_cross_tail_li_pre_join_break_at(parser.current().span.end))
     {
         parser.step()?;
-        return Ok(Some(ParseSuccess::new(
-            Elements::None,
-            Vec::new(),
-            true,
-        )));
+        return Ok(Some(ParseSuccess::new(Elements::None, Vec::new(), true)));
     }
 
     if parser.quote_body_cursor().is_some() {
@@ -1692,11 +1679,7 @@ where
             )
         {
             parser.step()?;
-            return Ok(Some(ParseSuccess::new(
-            Elements::None,
-            Vec::new(),
-            true,
-        )));
+            return Ok(Some(ParseSuccess::new(Elements::None, Vec::new(), true)));
         }
     }
 

@@ -229,7 +229,11 @@ fn is_deep_marker_line(line: &str) -> bool {
 }
 
 /// Whether any line in `source[from_byte..to_byte]` is a deep marker line.
-pub(crate) fn body_has_deep_marker(source: &str, from_byte: usize, to_byte: usize) -> bool {
+pub(crate) fn body_has_deep_marker(
+    source: &str,
+    from_byte: usize,
+    to_byte: usize,
+) -> bool {
     let from = from_byte.min(source.len());
     let to = to_byte.min(source.len());
     if from >= to {
@@ -255,7 +259,9 @@ pub(crate) fn body_has_deep_marker(source: &str, from_byte: usize, to_byte: usiz
 /// also does not qualify.
 pub(crate) fn own_line_li_close_after(source: &str, from_byte: usize) -> Option<usize> {
     let from_byte = from_byte.min(source.len());
-    let mut line_start = source[..from_byte].rfind('\n').map_or(0, |offset| offset + 1);
+    let mut line_start = source[..from_byte]
+        .rfind('\n')
+        .map_or(0, |offset| offset + 1);
     let mut pos = from_byte;
     while pos < source.len() {
         let line_end = source[pos..]
@@ -333,10 +339,7 @@ pub(crate) enum WikidotAnchorFollower {
 
 impl WikidotAnchorFollower {
     pub(crate) fn wraps(self) -> bool {
-        !matches!(
-            self,
-            Self::EndOfInput | Self::BlockKeep | Self::TableBlank
-        )
+        !matches!(self, Self::EndOfInput | Self::BlockKeep | Self::TableBlank)
     }
 }
 
@@ -373,15 +376,15 @@ pub(crate) fn strict_item_marker_line(source: &str) -> bool {
         if !after_marker.starts_with([' ', '\t']) {
             return false;
         }
-        let low = after_marker.trim_start_matches([' ', '\t']).to_ascii_lowercase();
+        let low = after_marker
+            .trim_start_matches([' ', '\t'])
+            .to_ascii_lowercase();
         if low.starts_with("[[") {
             let Some(head_end) = low.find("]]") else {
                 return false;
             };
             let after = &low[head_end + 2..];
-            return after
-                .bytes()
-                .any(|byte| !matches!(byte, b' ' | b'\t'));
+            return after.bytes().any(|byte| !matches!(byte, b' ' | b'\t'));
         }
         !low.is_empty() && !low.starts_with('#') && !low.starts_with('*')
     })
@@ -437,9 +440,7 @@ pub(crate) fn wikidot_anchor_follower_after_close(
         } else {
             line_end + 1
         };
-    } else if closer_newline_at_pos
-        && source.as_bytes().get(pos) == Some(&b'\n')
-    {
+    } else if closer_newline_at_pos && source.as_bytes().get(pos) == Some(&b'\n') {
         pos += 1;
     }
     loop {
@@ -469,7 +470,9 @@ fn classify_anchor_follower_line(line: &str, blank: bool) -> WikidotAnchorFollow
     let marker_head = trimmed
         .split_once([' ', '\t'])
         .map_or(trimmed, |(head, _)| head);
-    if matches!(marker_head, "*" | "#" | "-") && trimmed[marker_head.len()..].starts_with([' ', '\t']) {
+    if matches!(marker_head, "*" | "#" | "-")
+        && trimmed[marker_head.len()..].starts_with([' ', '\t'])
+    {
         return WikidotAnchorFollower::ListHead { blank };
     }
     if trimmed.len() >= 4 && trimmed.bytes().all(|byte| byte == b'-') {
@@ -479,7 +482,11 @@ fn classify_anchor_follower_line(line: &str, blank: bool) -> WikidotAnchorFollow
             WikidotAnchorFollower::BlockKeep
         };
     }
-    let plus_run = trimmed.as_bytes().iter().take_while(|byte| **byte == b'+').count();
+    let plus_run = trimmed
+        .as_bytes()
+        .iter()
+        .take_while(|byte| **byte == b'+')
+        .count();
     if (1..=6).contains(&plus_run) && trimmed[plus_run..].starts_with([' ', '\t']) {
         return if blank {
             WikidotAnchorFollower::BlockBlank { blank }
@@ -602,7 +609,10 @@ pub(crate) fn wikidot_list_follower_kind(
 /// becomes a paragraph. The match is a source-level opening-token scan;
 /// a literal `[[footnote]]` inside the list also suppresses, which is
 /// live's own behavior for the assembled shapes.
-pub(crate) fn wikidot_list_contains_footnote_open(source: &str, from_byte: usize) -> bool {
+pub(crate) fn wikidot_list_contains_footnote_open(
+    source: &str,
+    from_byte: usize,
+) -> bool {
     let from_byte = from_byte.min(source.len());
     // Locate the innermost enclosing list head: the nearest own-line
     // `[[ul]]`/`[[ol]]` at or before `from_byte` (fall back to the start
@@ -611,9 +621,7 @@ pub(crate) fn wikidot_list_contains_footnote_open(source: &str, from_byte: usize
     let mut list_start = 0usize;
     let mut pos = from_byte;
     loop {
-        let line_start = source[..pos]
-            .rfind('\n')
-            .map_or(0, |offset| offset + 1);
+        let line_start = source[..pos].rfind('\n').map_or(0, |offset| offset + 1);
         let line_end = source[line_start..]
             .find('\n')
             .map_or(source.len(), |offset| line_start + offset);
@@ -793,8 +801,8 @@ where
         let has_deep = li_end.is_some_and(|end| {
             body_has_deep_marker(entry_parser.full_text().inner(), head_byte, end)
         });
-        let head_in_body = li_head.is_none()
-            || li_end.map_or(true, |end| head_byte < end);
+        let head_in_body =
+            li_head.is_none() || li_end.map_or(true, |end| head_byte < end);
         if !has_deep
             && head_in_body
             && !list_closer_in_range(
@@ -847,9 +855,7 @@ where
         // [[li]] body (pairing depth > 0). At top level / marker runs the
         // formation is a hoisted/degraded lost-owner block, not dissolved.
         let dissolve_run = match owner {
-            LineOwner::List { depth, ltype }
-                if parser.wikidot_li_pairing_depth() > 0 =>
-            {
+            LineOwner::List { depth, ltype } if parser.wikidot_li_pairing_depth() > 0 => {
                 Some((depth, ltype))
             }
             _ => None,
@@ -865,7 +871,12 @@ where
             parser.wikidot_li_pairing_depth(),
             view.eq_ignore_ascii_case("ol"),
         );
-        return parse_lost_owner_list_block(entry_parser, parser, Some(sibling_ltype), None);
+        return parse_lost_owner_list_block(
+            entry_parser,
+            parser,
+            Some(sibling_ltype),
+            None,
+        );
     }
 
     let (head, close_name, body_start) = if name.eq_ignore_ascii_case("div") {
@@ -917,9 +928,7 @@ where
     }
     if matches!(head, BlockHead::Collapsible(_))
         && parser.settings().layout.legacy()
-        && parser
-            .wikidot_block_pair_at_head_byte(head_byte)
-            .is_none()
+        && parser.wikidot_block_pair_at_head_byte(head_byte).is_none()
         && (parser.discarding_hidden_body()
             || parser.wikidot_scan_shows_stolen_head(
                 crate::parsing::parser::block_pairs::WikidotBlockKind::Collapsible,
@@ -1225,7 +1234,14 @@ pub(crate) fn consumed_closer_line_marker(
     let names: [&str; 2] = if parser.wikidot_li_cross_list_close()
         && (name.eq_ignore_ascii_case("ul") || name.eq_ignore_ascii_case("ol"))
     {
-        [name, if name.eq_ignore_ascii_case("ul") { "ol" } else { "ul" }]
+        [
+            name,
+            if name.eq_ignore_ascii_case("ul") {
+                "ol"
+            } else {
+                "ul"
+            },
+        ]
     } else {
         [name, name]
     };
@@ -1550,7 +1566,9 @@ fn hoisted_item_contains_collapsible(item: &ListItem<'_>) -> bool {
             elements.iter().any(hoisted_element_contains_collapsible)
         }
         ListItem::SubList { element } => match &**element {
-            Element::List { items, .. } => items.iter().any(hoisted_item_contains_collapsible),
+            Element::List { items, .. } => {
+                items.iter().any(hoisted_item_contains_collapsible)
+            }
             other => hoisted_element_contains_collapsible(other),
         },
     }
@@ -1559,8 +1577,12 @@ fn hoisted_item_contains_collapsible(item: &ListItem<'_>) -> bool {
 fn hoisted_element_contains_collapsible(element: &Element<'_>) -> bool {
     match element {
         Element::Collapsible { .. } => true,
-        Element::Partial(PartialElement::ListItem(item)) => hoisted_item_contains_collapsible(item),
-        Element::List { items, .. } => items.iter().any(hoisted_item_contains_collapsible),
+        Element::Partial(PartialElement::ListItem(item)) => {
+            hoisted_item_contains_collapsible(item)
+        }
+        Element::List { items, .. } => {
+            items.iter().any(hoisted_item_contains_collapsible)
+        }
         Element::Container(container) => container
             .elements()
             .iter()
@@ -1624,9 +1646,7 @@ fn partition_hoisted_elements<'t>(
                 elements,
                 ..
             })) => partition_hoisted_elements(elements, lists, rest),
-            Element::Partial(PartialElement::ListItem(ListItem::SubList {
-                element,
-            })) => {
+            Element::Partial(PartialElement::ListItem(ListItem::SubList { element })) => {
                 if let Element::List { .. } = *element {
                     lists.push(*element);
                 }
@@ -1672,8 +1692,9 @@ where
     // body — probed identically on saved pages for both paths
     // (muse-probe-cl88 owned/unowned). Other candidates stay strict.
     // Save/restore around the probe so nested candidates nest correctly.
-    let prev_cross =
-        parser.set_wikidot_li_cross_list_close(dissolve_run.is_some() || decompose_siblings.is_some());
+    let prev_cross = parser.set_wikidot_li_cross_list_close(
+        dissolve_run.is_some() || decompose_siblings.is_some(),
+    );
     let mut candidate = entry.clone_with_rule(super::RULE_BLOCK);
     let previous_depth = candidate.native_blockquote_depth();
     let previous_cursor = candidate.quote_body_cursor();
@@ -1818,8 +1839,10 @@ where
                 }
             )
         });
-    let formation_unstarred = !starred_list_closer_in_source(&parser.full_text().inner()
-        [entry.current().span.start..parser.current().span.start]);
+    let formation_unstarred = !starred_list_closer_in_source(
+        &parser.full_text().inner()
+            [entry.current().span.start..parser.current().span.start],
+    );
     if stash_anchor && let Some(Element::List { attributes, .. }) = elements.first() {
         let anchor = Element::List {
             ltype: ListType::Bullet,
@@ -1847,10 +1870,7 @@ where
     // anchor chrome for the enclosing numbered list to re-emit after its
     // own close (live renders the unclosed none-item shell for
     // muse-probe-x88f-g2-hash-ul-hash-olclose and its same-name twin).
-    if !stash_anchor
-        && !flipped_numbered
-        && dissolve_run.is_some()
-        && closer_hash_marker
+    if !stash_anchor && !flipped_numbered && dissolve_run.is_some() && closer_hash_marker
     {
         let anchor = Element::List {
             ltype: ListType::Bullet,
@@ -1895,9 +1915,9 @@ where
             _ => Vec::new(),
         };
         items.retain(|item| match item {
-            ListItem::Elements { elements, .. } => !elements
-                .iter()
-                .all(|e| matches!(e, Element::LineBreak)),
+            ListItem::Elements { elements, .. } => {
+                !elements.iter().all(|e| matches!(e, Element::LineBreak))
+            }
             ListItem::SubList { element } => match &**element {
                 Element::List { items, .. } => !items.is_empty(),
                 _ => true,

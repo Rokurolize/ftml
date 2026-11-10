@@ -380,7 +380,9 @@ pub(crate) fn drop_wikidot_trailing_vanish_breaks(elements: &mut Vec<Element<'_>
 /// line between the list and the text already lands as [LineBreak, Text]
 /// and needs no unwrap; a block predecessor keeps following text wrapped
 /// (hr/table), so only an immediately preceding list unwraps its paragraph.
-pub(crate) fn unwrap_wikidot_paragraph_after_explicit_list(elements: &mut Vec<Element<'_>>) {
+pub(crate) fn unwrap_wikidot_paragraph_after_explicit_list(
+    elements: &mut Vec<Element<'_>>,
+) {
     let mut index = 0;
     while index < elements.len() {
         let explicit_list = matches!(
@@ -391,20 +393,18 @@ pub(crate) fn unwrap_wikidot_paragraph_after_explicit_list(elements: &mut Vec<El
             }
         );
         let next = index + 1;
-        let paragraph = elements
-            .get(next)
-            .is_some_and(|element| {
-                matches!(
-                    element,
-                    Element::Container(container)
-                        if container.ctype() == crate::tree::ContainerType::Paragraph
-                            && !matches!(
-                                container.elements().first(),
-                                Some(Element::Delayed(delayed))
-                                    if delayed.is_typography_boundary()
-                            )
-                )
-            });
+        let paragraph = elements.get(next).is_some_and(|element| {
+            matches!(
+                element,
+                Element::Container(container)
+                    if container.ctype() == crate::tree::ContainerType::Paragraph
+                        && !matches!(
+                            container.elements().first(),
+                            Some(Element::Delayed(delayed))
+                                if delayed.is_typography_boundary()
+                        )
+            )
+        });
         if explicit_list && paragraph {
             let Element::Container(container) = elements.remove(next) else {
                 unreachable!("the following element was a paragraph");

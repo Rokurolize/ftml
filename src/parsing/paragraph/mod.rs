@@ -312,7 +312,8 @@ where
                 if matches!(
                     after.current().token,
                     Token::LineBreak | Token::ParagraphBreak
-                ) && after.step().is_ok() {
+                ) && after.step().is_ok()
+                {
                     let mut after_probe = after.clone();
                     let next_is_want = after_probe.get_end_block().is_ok_and(|name| {
                         name.strip_suffix('_')
@@ -1104,7 +1105,8 @@ where
             if list_follower_wrap == 2 {
                 stack.arm_wikidot_stash_br();
             }
-            if let Some((chrome, blank, equation)) = parser.take_wikidot_anchor_capture() {
+            if let Some((chrome, blank, equation)) = parser.take_wikidot_anchor_capture()
+            {
                 stack.arm_wikidot_anchor_capture(chrome, blank, equation);
             }
             if parser.take_crossed_collapsible_tail() {

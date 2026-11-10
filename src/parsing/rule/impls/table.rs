@@ -263,7 +263,9 @@ fn wikidot_flat_tag_at(source: &str, index: usize, name: &[u8]) -> Option<bool> 
     {
         let after = 3 + name.len();
         if rest.get(after..after + 2).is_some_and(|tail| tail == b"]]")
-            || rest.get(after..after + 3).is_some_and(|tail| tail == b"_]]")
+            || rest
+                .get(after..after + 3)
+                .is_some_and(|tail| tail == b"_]]")
         {
             return Some(false);
         }
@@ -312,11 +314,7 @@ fn wikidot_flat_scope_closer_byte(
     None
 }
 
-fn register_cut_scope_closers(
-    parser: &mut Parser,
-    heads: &mut Vec<usize>,
-    name: &[u8],
-) {
+fn register_cut_scope_closers(parser: &mut Parser, heads: &mut Vec<usize>, name: &[u8]) {
     for head in heads.drain(..) {
         let closer_byte = parser
             .wikidot_block_pair_at_head_byte(head)
@@ -346,7 +344,8 @@ fn rollback_discarded_cell_scopes(
         for element in elements {
             match element {
                 Element::Partial(PartialElement::InlineSpanOpen(attributes, ..)) => {
-                    span_stack.push(attributes.get().contains_key("data-ftml-score-span"));
+                    span_stack
+                        .push(attributes.get().contains_key("data-ftml-score-span"));
                 }
                 Element::Partial(PartialElement::InlineSpanClose(_)) => {
                     span_stack.pop();
@@ -869,9 +868,8 @@ pub(crate) fn wikidot_simple_table_markers_literal_on_line_after_explicit_li(
         return false;
     }
     let lower = prev_line.to_ascii_lowercase();
-    let explicit_marker = lower == "[[li]]"
-        || lower.starts_with("[[li ")
-        || lower.starts_with("[[li\t");
+    let explicit_marker =
+        lower == "[[li]]" || lower.starts_with("[[li ") || lower.starts_with("[[li\t");
     explicit_marker && parser.accepts_partial() == crate::tree::AcceptsPartial::ListItem
 }
 
@@ -1689,12 +1687,12 @@ fn try_consume_inner<'r, 't>(
 
                 if !parser.discarding_hidden_body() && parser.at_body_end_boundary() {
                     rollback_discarded_cell_scopes(
-                                parser,
-                                &elements,
-                                &mut span_open_heads,
-                                &mut size_open_heads,
-                                &mut anchor_open_heads,
-                            );
+                        parser,
+                        &elements,
+                        &mut span_open_heads,
+                        &mut size_open_heads,
+                        &mut anchor_open_heads,
+                    );
                     if cells.is_empty() {
                         elements.clear();
                         push_cell(
@@ -1808,12 +1806,12 @@ fn try_consume_inner<'r, 't>(
                             if saw_open {
                                 parser.set_wikidot_table_cut_boundary();
                                 rollback_discarded_cell_scopes(
-                                parser,
-                                &elements,
-                                &mut span_open_heads,
-                                &mut size_open_heads,
-                                &mut anchor_open_heads,
-                            );
+                                    parser,
+                                    &elements,
+                                    &mut span_open_heads,
+                                    &mut size_open_heads,
+                                    &mut anchor_open_heads,
+                                );
                                 elements.clear();
                                 let empty_cell_start = TableCellStart {
                                     align: None,
@@ -1857,12 +1855,12 @@ fn try_consume_inner<'r, 't>(
                             parser.set_wikidot_table_cut_boundary();
                         }
                         rollback_discarded_cell_scopes(
-                                parser,
-                                &elements,
-                                &mut span_open_heads,
-                                &mut size_open_heads,
-                                &mut anchor_open_heads,
-                            );
+                            parser,
+                            &elements,
+                            &mut span_open_heads,
+                            &mut size_open_heads,
+                            &mut anchor_open_heads,
+                        );
                         elements.clear();
                         let empty_cell_start = TableCellStart {
                             align: None,
@@ -1951,7 +1949,8 @@ fn try_consume_inner<'r, 't>(
                             parser.set_in_wikidot_simple_table_cell(true);
                             let consumed = consume(parser);
                             parser.set_in_wikidot_simple_table_cell(false);
-                            let abandoned = consumed?.chain(&mut errors, &mut paragraph_break);
+                            let abandoned =
+                                consumed?.chain(&mut errors, &mut paragraph_break);
                             let (abandoned_spans, abandoned_sizes, abandoned_anchors) =
                                 count_inline_scope_opens(&abandoned);
                             let mut abandoned_span_heads = if abandoned_spans > 0 {
@@ -2079,23 +2078,26 @@ fn try_consume_inner<'r, 't>(
                                             {
                                                 parser
                                                     .set_wikidot_row_suffix_at(suffix_at);
-                                                parser.set_wikidot_row_suffix_cut(row_cut);
+                                                parser
+                                                    .set_wikidot_row_suffix_cut(row_cut);
                                             } else if row_cut == RowSuffixCut::Collapsible
                                                 && suffix_empty
                                             {
                                                 interior.push(Element::Partial(
-                                                    PartialElement::WikidotFoster(Vec::new()),
+                                                    PartialElement::WikidotFoster(
+                                                        Vec::new(),
+                                                    ),
                                                 ));
                                             }
                                         }
                                     }
                                     rollback_discarded_cell_scopes(
-                                parser,
-                                &elements,
-                                &mut span_open_heads,
-                                &mut size_open_heads,
-                                &mut anchor_open_heads,
-                            );
+                                        parser,
+                                        &elements,
+                                        &mut span_open_heads,
+                                        &mut size_open_heads,
+                                        &mut anchor_open_heads,
+                                    );
                                     elements.clear();
                                     push_cell(
                                         &mut cells,
@@ -2131,12 +2133,12 @@ fn try_consume_inner<'r, 't>(
                             {
                                 if cells.is_empty() {
                                     rollback_discarded_cell_scopes(
-                                parser,
-                                &elements,
-                                &mut span_open_heads,
-                                &mut size_open_heads,
-                                &mut anchor_open_heads,
-                            );
+                                        parser,
+                                        &elements,
+                                        &mut span_open_heads,
+                                        &mut size_open_heads,
+                                        &mut anchor_open_heads,
+                                    );
                                     elements.clear();
                                     let empty_cell_start = TableCellStart {
                                         align: None,

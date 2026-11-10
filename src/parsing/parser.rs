@@ -48,8 +48,8 @@ pub(crate) mod closer_scan;
 pub(crate) mod inline_pairs;
 mod wikidot_state;
 use self::closer_scan::CloserScanCache;
-use self::wikidot_state::WikidotState;
 pub(crate) use self::wikidot_state::RowSuffixCut;
+use self::wikidot_state::WikidotState;
 
 pub(crate) const DEFAULT_MAX_RECURSION_DEPTH: usize = 100;
 pub(crate) const DEEP_MAX_RECURSION_DEPTH: usize = 1024;
@@ -1796,7 +1796,8 @@ impl<'r, 't> Parser<'r, 't> {
             .wikidot_block_pairs
             .heads_between(0, byte)
             .any(|pair| {
-                pair.kind == block_pairs::WikidotBlockKind::Note && pair.closer_byte > byte
+                pair.kind == block_pairs::WikidotBlockKind::Note
+                    && pair.closer_byte > byte
             })
     }
 
@@ -2148,7 +2149,10 @@ impl<'r, 't> Parser<'r, 't> {
     /// Item 88: cross-type list close acceptance for an unowned-dissolve
     /// candidate probe (live any-list-close behavior).
     pub(crate) fn wikidot_li_cross_list_close(&self) -> bool {
-        self.block_end_scan_cache.borrow().wikidot_li_cross_list_close.get()
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_li_cross_list_close
+            .get()
     }
 
     /// Set cross-type list close acceptance; returns the previous value.
@@ -2976,16 +2980,18 @@ impl<'r, 't> Parser<'r, 't> {
     pub(crate) fn take_wikidot_anchor_unstarred_at(&self, depth: usize) -> bool {
         let mut cache = self.block_end_scan_cache.borrow_mut();
         let mut any = false;
-        cache.wikidot_list_anchor_unstarred.retain(|(stamp, unstarred)| {
-            if *stamp >= depth {
-                if *stamp == depth {
-                    any |= *unstarred;
+        cache
+            .wikidot_list_anchor_unstarred
+            .retain(|(stamp, unstarred)| {
+                if *stamp >= depth {
+                    if *stamp == depth {
+                        any |= *unstarred;
+                    }
+                    false
+                } else {
+                    true
                 }
-                false
-            } else {
-                true
-            }
-        });
+            });
         any
     }
 
@@ -3201,7 +3207,9 @@ impl<'r, 't> Parser<'r, 't> {
 
     pub(crate) fn drop_wikidot_list_anchor_chromes_at(&self, depth: usize) {
         let mut cache = self.block_end_scan_cache.borrow_mut();
-        cache.wikidot_list_anchor_chromes.retain(|(stamp, _)| *stamp < depth);
+        cache
+            .wikidot_list_anchor_chromes
+            .retain(|(stamp, _)| *stamp < depth);
         cache
             .wikidot_list_anchor_unstarred
             .retain(|(stamp, _)| *stamp < depth);

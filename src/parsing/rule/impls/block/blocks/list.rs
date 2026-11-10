@@ -969,8 +969,7 @@ fn parse_list_block_impl<'r, 't>(
         let stash_formed = list_type == ListType::Numbered && !anchor_chromes.is_empty();
         let follower_wrap = closer_line_marker.is_some() || stash_formed;
         let content_after_list = (parser.wikidot_next_line_has_content()
-            || (follower_wrap
-                && parser.wikidot_next_line_has_content_skipping_blanks()))
+            || (follower_wrap && parser.wikidot_next_line_has_content_skipping_blanks()))
             && !parser.body_end_boundary_accepts("iftags")
             && !parser.has_pending_iftags_end_ahead();
         if wikidot && !nested && follower_wrap {
@@ -1016,19 +1015,19 @@ fn parse_list_block_impl<'r, 't>(
     };
     if stash_o4 {
         use crate::parsing::rule::impls::line_owner::WikidotAnchorFollower as F;
-        let class = crate::parsing::rule::impls::line_owner::wikidot_anchor_follower_after_close(
-            parser.full_text().inner(),
-            list_end,
-            parser.current().token == Token::ParagraphBreak,
-            parser.current().token == Token::LineBreak,
-        );
+        let class =
+            crate::parsing::rule::impls::line_owner::wikidot_anchor_follower_after_close(
+                parser.full_text().inner(),
+                list_end,
+                parser.current().token == Token::ParagraphBreak,
+                parser.current().token == Token::LineBreak,
+            );
         match class {
             F::InlineRun { blank } if list_type == ListType::Numbered && !fused_close => {
                 let mut chromes = anchor_chromes;
                 let mut chrome = chromes.first_mut().cloned();
                 if let Some(Element::List {
-                    wikidot_unclosed,
-                    ..
+                    wikidot_unclosed, ..
                 }) = chrome.as_mut()
                 {
                     *wikidot_unclosed = false;
@@ -2480,7 +2479,9 @@ fn parse_list_item<'r, 't>(
         && parser.wikidot_explicit_list_yield_tail_peek();
 
     if wikidot
-        && (parser.wikidot_li_pairing_depth() > 0 || post_yield_scope || pending_list_scope)
+        && (parser.wikidot_li_pairing_depth() > 0
+            || post_yield_scope
+            || pending_list_scope)
         && !parser.discarding_hidden_body()
     {
         parser.push_wikidot_li_collect(Some(opener_start));
@@ -2488,7 +2489,8 @@ fn parse_list_item<'r, 't>(
         let installed = if previous_cursor.is_none()
             && let Some(depth) = parser.native_blockquote_depth()
         {
-            parser.install_quote_body_cursor_at_current_line_with_literal_residuals(depth);
+            parser
+                .install_quote_body_cursor_at_current_line_with_literal_residuals(depth);
             true
         } else {
             false
@@ -2675,7 +2677,13 @@ fn parse_list_item<'r, 't>(
         if wikidot && !post_yield_scope {
             let full = parser.full_text().inner();
             let splice_from = splice_dissolved_formation_run(&mut elements, source);
-            wrap_dissolved_formation_tail(&mut elements, source, full, body_start, splice_from);
+            wrap_dissolved_formation_tail(
+                &mut elements,
+                source,
+                full,
+                body_start,
+                splice_from,
+            );
         }
         // lihoist p23: a body folding to a single native run list whose only
         // items are depth-2+ marker lines is no formation in live — the
@@ -3138,11 +3146,11 @@ fn splice_dissolved_formation_run<'t>(
         }
         let spliceable = items.iter().all(|item| {
             matches!(item, ListItem::Elements { elements: inner, .. }
-                if !inner.is_empty()
-                    && inner.iter().all(|element| matches!(
-                        element,
-                        Element::Text(_) | Element::LineBreak
-                    )))
+            if !inner.is_empty()
+                && inner.iter().all(|element| matches!(
+                    element,
+                    Element::Text(_) | Element::LineBreak
+                )))
         });
         if !spliceable {
             return splice_from;
@@ -3154,7 +3162,10 @@ fn splice_dissolved_formation_run<'t>(
             return splice_from;
         };
         for item in items {
-            if let ListItem::Elements { elements: inner, .. } = item {
+            if let ListItem::Elements {
+                elements: inner, ..
+            } = item
+            {
                 elements.extend(inner);
             }
         }
@@ -3568,8 +3579,7 @@ fn wrap_inline_line_after_list(
         } else {
             plain_run_gate
         };
-        if !deep_paragraph
-            && ((!in_cell && bare_run) || !post_list_run_has_content(&run))
+        if !deep_paragraph && ((!in_cell && bare_run) || !post_list_run_has_content(&run))
         {
             segment.splice(start..start, run);
             index = start + 1;
@@ -4502,7 +4512,8 @@ pub(crate) fn parse_wikidot_implicit_list_block<'r, 't>(
                 .is_some_and(|(_, crossed)| crossed))
             || consumed.is_some();
         let enclosing_block = parser.wikidot_flat_pair_open_at(body_start);
-        let shadowed_div_region = parser.take_wikidot_li_shadowed_div_region_at(body_start, source_end);
+        let shadowed_div_region =
+            parser.take_wikidot_li_shadowed_div_region_at(body_start, source_end);
         // BRIEF-TB74 (ledger item 74(e)): see the explicit-item call site.
         let remainder = &parser.full_text().inner()[source_end..];
         let chunk_is_doc_final = wikidot_li_last_run_is_doc_final(remainder);
@@ -5068,10 +5079,8 @@ Alpha
                 items.as_slice(),
                 [ListItem::Elements { .. }, ListItem::SubList { .. }]
             ));
-
         });
     }
-
 }
 /// BRIEF-MF65b: performs the multi-formation escape restructure.
 /// Returns the elements that render at top level after this list's close,

@@ -618,7 +618,16 @@ fn parse_fn<'r, 't>(
             &mut elements,
         )
     {
-        unfolded_tail_start = Some(index);
+        let suffix_follows_align = elements.get(index.wrapping_sub(1)).is_some_and(|element| {
+            matches!(
+                element,
+                Element::Container(container)
+                    if matches!(container.ctype(), ContainerType::Align(_))
+            )
+        });
+        if !suffix_follows_align {
+            unfolded_tail_start = Some(index);
+        }
     }
     let fused_close = parser.wikidot_body_closed_with_fused_close(&BLOCK_COLLAPSIBLE);
     parser.set_in_wikidot_collapsible(previous_collapsible_context);

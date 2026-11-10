@@ -1,0 +1,9 @@
+n[[footnote]]
+* * x
+* * a
+* * [[note]]
+* * 
+* * [[/note]]
+* * b
+[[/footnote]]
+[[footnoteblock]]

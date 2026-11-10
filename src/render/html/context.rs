@@ -88,6 +88,7 @@ where
     wikidot_tabview_lift_armed: bool,
     bibliography_render_stack: Vec<String>,
     footnote_render_stack: Vec<usize>,
+    wikidot_prev_sibling_is_table: bool,
 }
 
 impl fmt::Debug for HtmlContext<'_, '_, '_, '_> {
@@ -189,7 +190,18 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
             wikidot_tabview_lift_armed: false,
             bibliography_render_stack: Vec::new(),
             footnote_render_stack: Vec::new(),
+            wikidot_prev_sibling_is_table: false,
         }
+    }
+
+    #[inline]
+    pub fn set_wikidot_prev_sibling_is_table(&mut self, prev: bool) {
+        self.wikidot_prev_sibling_is_table = prev;
+    }
+
+    #[inline]
+    pub fn wikidot_prev_sibling_is_table(&self) -> bool {
+        self.wikidot_prev_sibling_is_table
     }
 
     fn initial_metadata(info: &PageInfo<'i>, layout: Layout) -> Vec<HtmlMeta> {

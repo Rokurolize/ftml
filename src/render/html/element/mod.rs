@@ -175,6 +175,11 @@ pub fn render_elements(ctx: &mut HtmlContext, elements: &[Element]) {
                 continue;
             }
             element => {
+                let prev_is_table = index
+                    .checked_sub(1)
+                    .and_then(|i| elements.get(i))
+                    .is_some_and(|e| matches!(e, Element::Table(_)));
+                ctx.set_wikidot_prev_sibling_is_table(prev_is_table);
                 render_element(ctx, element);
                 index += 1;
                 if ctx.layout().legacy()

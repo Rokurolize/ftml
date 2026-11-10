@@ -144,6 +144,20 @@ pub fn render_list(
                                 continue;
                             }
                             let element = &elements[index];
+                            let is_last = index + 1 == elements.len();
+                            if ctx.layout().legacy()
+                                && is_last
+                                && matches!(
+                                    element,
+                                    Element::LineBreak | Element::LineBreaks(_)
+                                )
+                            {
+                                super::container::render_contents_dropping_final_break_newline(
+                                    ctx,
+                                    &elements[index..],
+                                );
+                                break;
+                            }
                             let nested_list = matches!(element, Element::List { .. });
                             let paragraph = matches!(
                                 element,

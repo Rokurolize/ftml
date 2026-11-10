@@ -66,7 +66,7 @@ fn wikidot_literal_gallery_close_preserves_the_next_physical_line() {
         assert_eq!(
             html,
             format!(
-                "<p>{rendered_prefix}[[gallery]]<br>\n{label}_BODY<br>\n</p>\
+                "<p>{rendered_prefix}[[gallery]]<br>\n{label}_BODY<br></p>\
                  <p>[[/gallery]]</p><p>{label}_NEXT</p>"
             ),
             "{label}",

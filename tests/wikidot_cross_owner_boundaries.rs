@@ -37,7 +37,7 @@ fn crossed_div_and_collapsible_explicit_lists_match_live_owner_order() {
             "[[div]]\n[[ol]]\nX\n[[/div]]\n[[/ol]]\n",
             concat!(
                 "<div><ol>\n<li style=\"list-style: none\">X</li>\n</ol></div>",
-                "<ul>\n<li style=\"list-style: none\"><br>\n</li>\n</ul>",
+                "<ul>\n<li style=\"list-style: none\"><br></li>\n</ul>",
             ),
         ),
         (
@@ -60,7 +60,7 @@ fn crossed_div_and_collapsible_explicit_lists_match_live_owner_order() {
                 "<div class=\"collapsible-block-unfolded-link\"><a class=\"collapsible-block-link\" href=\"javascript:;\">",
                 "–&nbsp;hide&nbsp;block</a></div><div class=\"collapsible-block-content\">",
                 "<ol>\n<li style=\"list-style: none\">X</li>\n</ol></div></div></div>",
-                "<ul>\n<li style=\"list-style: none\"><br>\n</li>\n</ul>",
+                "<ul>\n<li style=\"list-style: none\"><br></li>\n</ul>",
             ),
         ),
     ] {

@@ -454,7 +454,7 @@ fn wikidot_raw_space_lines_keep_both_physical_breaks_at_block_boundaries() {
             "OMEGA_A\n@@ @@\n[[=]]\nOMEGA_CENTER\n[[/=]]",
             concat!(
                 "<p>OMEGA_A<br>\n",
-                "<span style=\"white-space: pre-wrap;\">&#32;</span><br>\n</p>",
+                "<span style=\"white-space: pre-wrap;\">&#32;</span><br></p>",
                 "<div style=\"text-align: center;\"><p>OMEGA_CENTER</p></div>",
             ),
         ),
@@ -485,7 +485,7 @@ fn wikidot_consecutive_empty_raw_lines_before_a_heading_keep_a_paragraph() {
     assert_eq!(
         html,
         concat!(
-            "<p><br>\n</p>",
+            "<p><br></p>",
             "<h2><span><span style=\"color: crimson\">",
             "OMEGA_HEADING",
             "</span></span></h2>",
@@ -503,7 +503,7 @@ fn wikidot_complete_empty_raw_lines_preserve_their_physical_breaks() {
         (
             "@@@@\n[[=]]\nOMEGA_CENTER\n[[/=]]",
             concat!(
-                "<p><br>\n</p>",
+                "<p><br></p>",
                 "<div style=\"text-align: center;\"><p>OMEGA_CENTER</p></div>",
             ),
         ),

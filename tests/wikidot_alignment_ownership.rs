@@ -91,7 +91,7 @@ A
             "residual-alignment-block-nested-other",
             "[[=]]\nA\n[[>]]\nB\n[[/>]]\nC\n[[/=]]",
             concat!(
-                "<div style=\"text-align: center;\"><p>A<br>\n</p>",
+                "<div style=\"text-align: center;\"><p>A<br></p>",
                 "<div style=\"text-align: right;\"><p>B</p></div><br>\nC</div>",
             ),
         ),
@@ -99,7 +99,7 @@ A
             "residual-alignment-block-nested-same",
             "[[=]]\nA\n[[=]]\nB\n[[/=]]\nC\n[[/=]]",
             concat!(
-                "<div style=\"text-align: center;\"><p>A<br>\n</p>",
+                "<div style=\"text-align: center;\"><p>A<br></p>",
                 "<div style=\"text-align: center;\"><p>B</p></div><br>\nC</div>",
             ),
         ),
@@ -112,7 +112,7 @@ A
             "residual-alignment-block-prose",
             "BEFORE\n[[=]]\nA\n[[/=]]\nAFTER",
             concat!(
-                "<p>BEFORE<br>\n</p>",
+                "<p>BEFORE<br></p>",
                 "<div style=\"text-align: center;\"><p>A</p></div><br>\nAFTER",
             ),
         ),

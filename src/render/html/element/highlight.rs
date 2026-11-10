@@ -1089,3 +1089,10 @@ fn table_for(language: &str) -> Option<&'static HlLang> {
         _ => None,
     }
 }
+
+#[cfg(test)]
+mod emission_properties {
+    use super::{compiled, preprocess, table_for, tokenize};
+
+    include!("../../../../verification/render/emission/highlight.rs");
+}

@@ -823,8 +823,7 @@ impl BlockFailureMemoization {
             && page_mode
             && visible_body
             && !parser.in_footnote()
-            && parser.native_blockquote_depth().is_none()
-            && !parser.in_wikidot_center_body();
+            && parser.native_blockquote_depth().is_none();
         BlockFailureMemoization {
             wikijump_deterministic: !parser.settings().layout.legacy() && visible_body,
             wikidot_tabview: wikidot_cache_context && block.name == BLOCK_TABVIEW.name,

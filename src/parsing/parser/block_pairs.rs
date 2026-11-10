@@ -548,8 +548,9 @@ struct Scanner<'t> {
     module_skip_memo: std::cell::RefCell<std::collections::HashMap<usize, Option<usize>>>,
     table_measure_memo:
         std::cell::RefCell<std::collections::HashMap<(usize, usize), Option<Measure>>>,
-    tabview_measure_memo:
-        std::cell::RefCell<std::collections::HashMap<(usize, usize), Option<Measure>>>,
+    tabview_measure_memo: std::cell::RefCell<
+        std::collections::HashMap<(usize, usize, bool), Option<Measure>>,
+    >,
     measure_guard: std::cell::Cell<usize>,
     measure_guard_trips: std::cell::Cell<usize>,
     /// Number of enclosing `find_tab_end` scans. Greater than zero means the
@@ -3126,16 +3127,13 @@ impl<'t> Scanner<'t> {
         if depth > MAX_SCAN_DEPTH {
             return None;
         }
-        // A view measured inside a tab body gets the enclosing-tab tail
-        // constraint (see `measure_tabview_inner`), which a result cached
-        // from an unnested measure must not mask; keep nested measures out
-        // of the memo.
-        if self.tab_body_scan_depth.get() == 0 {
-            if let Some(cached) =
-                self.tabview_measure_memo.borrow().get(&(head_index, limit))
-            {
-                return cached.clone();
-            }
+        let nested_in_tab = self.tab_body_scan_depth.get() > 0;
+        if let Some(cached) =
+            self.tabview_measure_memo
+                .borrow()
+                .get(&(head_index, limit, nested_in_tab))
+        {
+            return cached.clone();
         }
         if self.measure_guard.get() >= MAX_SCAN_DEPTH {
             self.measure_guard_trips
@@ -3146,12 +3144,10 @@ impl<'t> Scanner<'t> {
         let trips_before = self.measure_guard_trips.get();
         let result = self.measure_tabview_inner(head_index, head, limit, 0);
         self.measure_guard.set(self.measure_guard.get() - 1);
-        if self.measure_guard_trips.get() == trips_before
-            && self.tab_body_scan_depth.get() == 0
-        {
+        if self.measure_guard_trips.get() == trips_before {
             self.tabview_measure_memo
                 .borrow_mut()
-                .insert((head_index, limit), result.clone());
+                .insert((head_index, limit, nested_in_tab), result.clone());
         }
         result
     }

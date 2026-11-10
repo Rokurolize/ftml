@@ -89,15 +89,22 @@ impl<'r, 't> Parser<'r, 't> {
         };
         let mut sum = 0u64;
         let mut xor = 0u64;
-        for boundary in ancestors {
+        let mut unique = 0u64;
+        for (index, boundary) in ancestors.iter().enumerate() {
             let mixed = mix(boundary);
+            if ancestors[..index]
+                .iter()
+                .any(|earlier| mix(earlier) == mixed)
+            {
+                continue;
+            }
             sum = sum.wrapping_add(mixed);
             xor ^= mixed;
+            unique += 1;
         }
-        let mut combined = mix(innermost)
-            .wrapping_add(sum.rotate_left(7))
+        let mut combined = mix(innermost).wrapping_add(sum.rotate_left(7))
             ^ xor.rotate_left(31)
-            ^ (ancestors.len() as u64).wrapping_mul(0xD1B5_4A32_D192_ED03);
+            ^ unique.wrapping_mul(0xD1B5_4A32_D192_ED03);
         combined ^= combined >> 32;
         combined
     }

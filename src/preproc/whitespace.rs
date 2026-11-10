@@ -526,7 +526,10 @@ fn wikidot_html_closer_at(source: &str, from: usize) -> Option<usize> {
     while let Some(relative) = source[cursor..].find("[[/") {
         let at = cursor + relative;
         let rest = &source[at..];
-        if rest.len() >= 9 && rest[..9].eq_ignore_ascii_case("[[/html]]") {
+        if rest
+            .get(..9)
+            .is_some_and(|prefix| prefix.eq_ignore_ascii_case("[[/html]]"))
+        {
             let next = rest.as_bytes().get(9).copied();
             if next.is_none_or(|byte| byte.is_ascii_whitespace()) {
                 return Some(at);

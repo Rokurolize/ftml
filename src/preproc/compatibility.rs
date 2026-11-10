@@ -107,20 +107,15 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
     collapsible_head_byte: usize,
     collapsible_close_byte: usize,
 ) -> (bool, bool) {
-    let mut scan_from = 0usize;
-    let mut head_line_start = 0usize;
-    let mut line_start = 0usize;
-    while line_start < source.len() {
-        let line_end = source[line_start..]
-            .find('\n')
-            .map_or(source.len(), |i| line_start + i + 1);
-        if collapsible_head_byte >= line_start && collapsible_head_byte < line_end {
-            head_line_start = line_start;
-            scan_from = line_end;
-            break;
-        }
-        line_start = line_end;
+    if collapsible_head_byte >= source.len() {
+        return (false, false);
     }
+    let head_line_start = source[..collapsible_head_byte]
+        .rfind('\n')
+        .map_or(0, |i| i + 1);
+    let scan_from = source[collapsible_head_byte..]
+        .find('\n')
+        .map_or(source.len(), |i| collapsible_head_byte + i + 1);
     if scan_from >= collapsible_close_byte {
         return (false, false);
     }
@@ -199,7 +194,6 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
         Some(after_prefix + close_rel + 2)
     }
 
-    let lower = source.to_ascii_lowercase();
     let limit = collapsible_close_byte.min(source.len());
 
     let mut enclosing_div = 0usize;
@@ -210,31 +204,31 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
         if before >= head_line_start {
             break;
         }
-        let Some(rel) = lower[before..head_line_start].find("[[") else {
+        let Some(rel) = source[before..head_line_start].find("[[") else {
             break;
         };
         before += rel;
         if before >= head_line_start {
             break;
         }
-        if marker_extent_ignore_case(&lower, before, b"[[/collapsible]]") {
+        if marker_extent_ignore_case(source, before, b"[[/collapsible]]") {
             before_collapsible = before_collapsible.saturating_sub(1);
             before += "[[/collapsible]]".len();
             continue;
         }
-        if marker_extent_ignore_case(&lower, before, b"[[/div]]") {
+        if marker_extent_ignore_case(source, before, b"[[/div]]") {
             if before_collapsible == 0 {
                 enclosing_div = enclosing_div.saturating_sub(1);
             }
             before += "[[/div]]".len();
             continue;
         }
-        if let Some(end) = collapsible_open_extent(&lower, before, head_line_start) {
+        if let Some(end) = collapsible_open_extent(source, before, head_line_start) {
             before_collapsible += 1;
             before = end;
             continue;
         }
-        if let Some(end) = div_open_extent(&lower, before, head_line_start) {
+        if let Some(end) = div_open_extent(source, before, head_line_start) {
             if before_collapsible == 0 {
                 enclosing_div += 1;
             }
@@ -257,31 +251,31 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
         if pos >= limit {
             break;
         }
-        let Some(rel) = lower[pos..limit].find("[[") else {
+        let Some(rel) = source[pos..limit].find("[[") else {
             break;
         };
         pos += rel;
 
-        if marker_extent_ignore_case(&lower, pos, b"[[/collapsible]]") {
+        if marker_extent_ignore_case(source, pos, b"[[/collapsible]]") {
             collapsible_depth = collapsible_depth.saturating_sub(1);
             pos += "[[/collapsible]]".len();
             continue;
         }
-        if marker_extent_ignore_case(&lower, pos, b"[[/iftags]]") {
+        if marker_extent_ignore_case(source, pos, b"[[/iftags]]") {
             if collapsible_depth == 1 {
                 iftags_depth = iftags_depth.saturating_sub(1);
             }
             pos += "[[/iftags]]".len();
             continue;
         }
-        if marker_extent_ignore_case(&lower, pos, b"[[/=]]") {
+        if marker_extent_ignore_case(source, pos, b"[[/=]]") {
             if collapsible_depth == 1 {
                 saw_center_close = true;
             }
             pos += "[[/=]]".len();
             continue;
         }
-        if marker_extent_ignore_case(&lower, pos, b"[[/div]]") {
+        if marker_extent_ignore_case(source, pos, b"[[/div]]") {
             if collapsible_depth == 1 && iftags_depth == 0 {
                 if div_depth > 0 {
                     div_depth -= 1;
@@ -291,26 +285,29 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
             pos += "[[/div]]".len();
             continue;
         }
-        if let Some(end) = collapsible_open_extent(&lower, pos, limit) {
+        if let Some(end) = collapsible_open_extent(source, pos, limit) {
             collapsible_depth += 1;
             pos = end;
             continue;
         }
-        if let Some(end) = iftags_open_extent(&lower, pos, limit) {
+        if let Some(end) = iftags_open_extent(source, pos, limit) {
             if collapsible_depth == 1 {
                 iftags_depth += 1;
             }
             pos = end;
             continue;
         }
-        if let Some(end) = div_open_extent(&lower, pos, limit) {
+        if let Some(end) = div_open_extent(source, pos, limit) {
             if collapsible_depth == 1 && iftags_depth == 0 {
                 div_depth += 1;
                 open_divs += 1;
-                let line_limit = lower[end..limit]
+                let line_limit = source[end..limit]
                     .find('\n')
                     .map_or(limit, |newline| end + newline);
-                if lower[end..line_limit].contains("[[/div]]") {
+                if source[end..line_limit]
+                    .to_ascii_lowercase()
+                    .contains("[[/div]]")
+                {
                     saw_same_line_div = true;
                 }
             }
@@ -339,12 +336,12 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
             if pos >= tail_limit {
                 break;
             }
-            let Some(rel) = lower[pos..tail_limit].find("[[") else {
+            let Some(rel) = source[pos..tail_limit].find("[[") else {
                 break;
             };
             pos += rel;
 
-            if marker_extent_ignore_case(&lower, pos, b"[[/div]]") {
+            if marker_extent_ignore_case(source, pos, b"[[/div]]") {
                 if depth == div_depth {
                     // Settles one of the span's own openers.
                     crossing = true;
@@ -355,7 +352,7 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
                 pos += "[[/div]]".len();
                 continue;
             }
-            if let Some(end) = div_open_extent(&lower, pos, tail_limit) {
+            if let Some(end) = div_open_extent(source, pos, tail_limit) {
                 depth += 1;
                 pos = end;
                 continue;

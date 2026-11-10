@@ -32,9 +32,6 @@ use super::rule::{
         starts_wikidot_only_scheme_url, try_consume_wikidot_end_block_link, url_elements,
     },
 };
-use crate::preproc::{
-    LiteralRegionIndex, wikidot_outer_div_still_open_at_collapsible_close,
-};
 use crate::tree::{
     LinkLabel, LinkLocation, LinkType, PartialElement, WikidotBlockCloseKind,
 };
@@ -642,10 +639,10 @@ where
     }
     let start = parser.current().span.start;
     let source = parser.full_text().inner();
-    if !source.get(start..).is_some_and(|rest| {
-        rest.len() >= "[[/span]]".len()
-            && rest[.."[[/span]]".len()].eq_ignore_ascii_case("[[/span]]")
-    }) {
+    if !source
+        .get(start..start + "[[/span]]".len())
+        .is_some_and(|rest| rest.eq_ignore_ascii_case("[[/span]]"))
+    {
         return Ok(None);
     }
     let mut probe = parser.clone();
@@ -1087,17 +1084,13 @@ where
         && parser
             .wikidot_block_pair_at_closer_byte(start)
             .is_some_and(|pair| {
-                pair.kind == WikidotBlockKind::Collapsible && {
-                    let source = parser.full_text().inner();
-                    let literal = LiteralRegionIndex::new(source);
-                    wikidot_outer_div_still_open_at_collapsible_close(
-                        source,
-                        &literal,
-                        pair.head_byte,
-                        pair.closer_byte,
-                    )
-                    .1
-                }
+                pair.kind == WikidotBlockKind::Collapsible
+                    && parser
+                        .wikidot_outer_div_still_open_at_collapsible_close(
+                            pair.head_byte,
+                            pair.closer_byte,
+                        )
+                        .1
             })
     {
         if parser.current().token == Token::LineBreak {
@@ -3234,5 +3227,25 @@ mod tests {
                 .expect("Wikijump layout fallback should not fail")
                 .is_none(),
         );
+    }
+
+    #[test]
+    fn wikidot_fused_span_close_probe_respects_multibyte_char_boundaries() {
+        let mut source = String::from("[[span]]\n[[/>]]\n\n“\n[[/span]]");
+        crate::preprocess_for_layout(&mut source, Layout::Wikidot);
+        let tokens = crate::tokenize(&source);
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let _ = crate::parse(&tokens, &page_info, &settings);
+    }
+
+    #[test]
+    fn wikidot_list_b5_ignores_degraded_list_without_partial_items() {
+        let mut source = String::from("[[ul]][[ul]]_[[/ul]][[div]]\n+ h\n[[/div]]");
+        crate::preprocess_for_layout(&mut source, Layout::Wikidot);
+        let tokens = crate::tokenize(&source);
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let _ = crate::parse(&tokens, &page_info, &settings);
     }
 }

@@ -178,8 +178,11 @@ pub(super) struct BlockScanCache<'t> {
     deterministic_block_failures: BTreeMap<(&'static str, usize), ParseError>,
     recursion_depth_failures: HashMap<RecursionDepthFailureKey, ParseError>,
     partial_rejections: BTreeMap<PartialRejectionKey, ParseError>,
-    wikidot_tabview_failures: BTreeMap<(usize, bool), ParseError>,
-    wikidot_collapsible_failures: BTreeMap<usize, ParseError>,
+    wikidot_tabview_failures: BTreeMap<(usize, bool, bool), ParseError>,
+    wikidot_collapsible_failures: BTreeMap<(usize, bool), ParseError>,
+    literal_region_index: Option<crate::preproc::LiteralRegionIndex>,
+    raw_escapes_cache: Option<Vec<crate::wikidot_raw_escape::RawEscape>>,
+    wikidot_collapsible_outer_div_memo: BTreeMap<(usize, usize), (bool, bool)>,
     wikidot_div_bounded_span: BTreeMap<usize, bool>,
     wikidot_div_stream_marks: BTreeMap<usize, (u32, u32)>,
     wikidot_block_pairs: block_pairs::WikidotBlockPairs,
@@ -3949,7 +3952,7 @@ impl<'r, 't> Parser<'r, 't> {
         self.start_of_line = success.start_of_line;
         self.native_blockquote_depth = success.native_blockquote_depth;
         self.quote_body_cursor = success.quote_body_cursor;
-        self.wikidot = success.wikidot;
+        self.wikidot.apply_cached_success(success.wikidot);
     }
 
     pub(crate) fn deterministic_block_failure(
@@ -4023,7 +4026,11 @@ impl<'r, 't> Parser<'r, 't> {
         self.block_end_scan_cache
             .borrow()
             .wikidot_tabview_failures
-            .get(&(owner_start, self.in_wikidot_collapsible()))
+            .get(&(
+                owner_start,
+                self.in_wikidot_collapsible(),
+                self.in_wikidot_center_body(),
+            ))
             .cloned()
     }
 
@@ -4035,7 +4042,14 @@ impl<'r, 't> Parser<'r, 't> {
         self.block_end_scan_cache
             .borrow_mut()
             .wikidot_tabview_failures
-            .insert((owner_start, self.in_wikidot_collapsible()), error.clone());
+            .insert(
+                (
+                    owner_start,
+                    self.in_wikidot_collapsible(),
+                    self.in_wikidot_center_body(),
+                ),
+                error.clone(),
+            );
     }
 
     pub(crate) fn wikidot_collapsible_failure(
@@ -4045,7 +4059,7 @@ impl<'r, 't> Parser<'r, 't> {
         self.block_end_scan_cache
             .borrow()
             .wikidot_collapsible_failures
-            .get(&owner_start)
+            .get(&(owner_start, self.in_wikidot_center_body()))
             .cloned()
     }
 
@@ -4057,7 +4071,52 @@ impl<'r, 't> Parser<'r, 't> {
         self.block_end_scan_cache
             .borrow_mut()
             .wikidot_collapsible_failures
-            .insert(owner_start, error.clone());
+            .insert((owner_start, self.in_wikidot_center_body()), error.clone());
+    }
+
+    pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
+        &self,
+        collapsible_head_byte: usize,
+        collapsible_close_byte: usize,
+    ) -> (bool, bool) {
+        if let Some(&cached) = self
+            .block_end_scan_cache
+            .borrow()
+            .wikidot_collapsible_outer_div_memo
+            .get(&(collapsible_head_byte, collapsible_close_byte))
+        {
+            return cached;
+        }
+        let source = self.full_text().inner();
+        let mut cache = self.block_end_scan_cache.borrow_mut();
+        let literal = cache
+            .literal_region_index
+            .get_or_insert_with(|| crate::preproc::LiteralRegionIndex::new(source));
+        let outcome = crate::preproc::wikidot_outer_div_still_open_at_collapsible_close(
+            source,
+            literal,
+            collapsible_head_byte,
+            collapsible_close_byte,
+        );
+        cache
+            .wikidot_collapsible_outer_div_memo
+            .insert((collapsible_head_byte, collapsible_close_byte), outcome);
+        outcome
+    }
+
+    pub(crate) fn raw_escapes(&self) -> Vec<crate::wikidot_raw_escape::RawEscape> {
+        if let Some(escapes) = self
+            .block_end_scan_cache
+            .borrow()
+            .raw_escapes_cache
+            .as_ref()
+        {
+            return escapes.clone();
+        }
+        let source = self.full_text().inner();
+        let escapes = crate::wikidot_raw_escape::raw_escapes(source);
+        self.block_end_scan_cache.borrow_mut().raw_escapes_cache = Some(escapes.clone());
+        escapes
     }
 
     pub(crate) fn wikidot_div_bounded_span_outcome(

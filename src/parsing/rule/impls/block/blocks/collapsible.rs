@@ -31,9 +31,6 @@ use crate::parsing::parser::block_pairs::WikidotBlockKind;
 use crate::parsing::rule::impls::RULE_BLOCK;
 use crate::parsing::rule::impls::block::parser::BlockBodyStart;
 use crate::parsing::{ParseError, ParseErrorKind};
-use crate::preproc::{
-    LiteralRegionIndex, wikidot_outer_div_still_open_at_collapsible_close,
-};
 use crate::tree::{
     AttributeMap, Container, ContainerType, ListItem, ListType, PartialElement,
     WIKIDOT_HEADING_COLLAPSIBLE_BODY_MARKER, WIKIDOT_HEADING_COLLAPSIBLE_LINE_END_MARKER,
@@ -329,11 +326,8 @@ fn parse_fn<'r, 't>(
         && let Some(pair) = wikidot_block_pair_for_block_head_byte(parser, opener_start)
         && pair.kind == WikidotBlockKind::Collapsible
     {
-        let literal = LiteralRegionIndex::new(parser.full_text().inner());
-        let (crossed_div, wrapped_center) =
-            wikidot_outer_div_still_open_at_collapsible_close(
-                parser.full_text().inner(),
-                &literal,
+        let (crossed_div, wrapped_center) = parser
+            .wikidot_outer_div_still_open_at_collapsible_close(
                 pair.head_byte,
                 pair.closer_byte,
             );

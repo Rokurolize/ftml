@@ -1049,8 +1049,9 @@ fn has_explicit_closer<'r: 't, 't>(
     }
     if probe.settings().layout.legacy() && !probe.discarding_hidden_body() {
         const BIB: &str = "[[/bibliography]]";
-        if end + BIB.len() <= full.len()
-            && full[end..end + BIB.len()].eq_ignore_ascii_case(BIB)
+        if full
+            .get(end..end + BIB.len())
+            .is_some_and(|slice| slice.eq_ignore_ascii_case(BIB))
             && let Some(tail) = full.get(end + BIB.len()..)
         {
             return accepted.iter().any(|name| {

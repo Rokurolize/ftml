@@ -657,7 +657,8 @@ fn parse_list_block_impl<'r, 't>(
     {
         let pairing_depth = parser.wikidot_li_pairing_depth();
         let (heads, closes) = parser.wikidot_li_items_at_depth(pairing_depth);
-        if heads.len() == partial_count
+        if partial_count > 0
+            && heads.len() == partial_count
             && closes.len() == partial_count
             && partial_item_indices.len() == partial_count
             && partial_item_indices
@@ -1774,7 +1775,11 @@ fn wikidot_li_apply_b5<'t>(
         items.drain(..).collect();
     let mut hi = 0usize;
     while let Some(outer) = partials.pop_front() {
-        let dropped = wikidot_li_span_covers(&spans, closes[hi]);
+        let Some(&close_pos) = closes.get(hi) else {
+            merged.push(outer);
+            continue;
+        };
+        let dropped = wikidot_li_span_covers(&spans, close_pos);
         let mut inner_count = 0usize;
         while hi + inner_count + 1 < heads.len()
             && wikidot_li_span_covers(&spans, heads[hi + inner_count + 1])

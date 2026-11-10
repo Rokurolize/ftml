@@ -94,8 +94,8 @@ fn parse_fn<'r, 't>(
         // A complete raw inline construct anywhere in the opener head makes
         // live reject the image block, leaving the whole opener literal.
         let head_end = parser.current().span.start;
-        let source_text = parser.full_text().inner();
-        if crate::wikidot_raw_escape::raw_escapes(source_text)
+        if parser
+            .raw_escapes()
             .iter()
             .any(|escape| escape.start >= opener_start && escape.end <= head_end)
         {

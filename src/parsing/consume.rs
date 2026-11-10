@@ -409,6 +409,22 @@ fn render_interior_line_prefix(source: &str, byte: usize) -> &str {
     &source[line_start..byte.min(source.len())]
 }
 
+fn wikidot_flat_align_head_in_quote_row(source: &str, head_byte: usize) -> bool {
+    let line_start = source[..head_byte.min(source.len())]
+        .rfind('\n')
+        .map_or(0, |offset| offset + 1);
+    let prefix = &source[line_start..head_byte.min(source.len())];
+    let mut rest = prefix;
+    loop {
+        let trimmed = rest.trim_start_matches('>').trim_start_matches(' ');
+        if trimmed.len() == rest.len() {
+            break;
+        }
+        rest = trimmed;
+    }
+    rest.is_empty()
+}
+
 fn wikidot_render_interior_close_kind_at<'r, 't>(
     parser: &Parser<'r, 't>,
     closer_byte: usize,
@@ -1054,6 +1070,13 @@ where
     {
         Element::Text(close_source_cow.clone())
     } else if let Some(kind) = wikidot_flat_close_kind_at_byte(parser, start) {
+        if let WikidotBlockCloseKind::Align { head } = &kind
+            && parser.wikidot_in_scored_div_direct_body()
+            && wikidot_flat_align_head_in_quote_row(parser.full_text().inner(), *head)
+        {
+            parser.update(&close);
+            return Ok(Some(Element::Text(close_source_cow).into()));
+        }
         Element::Partial(PartialElement::WikidotBlockClose(kind))
     } else {
         return Ok(None);

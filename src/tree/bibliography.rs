@@ -74,6 +74,7 @@ pub struct Bibliography<'t> {
     citations: Vec<usize>,
     reopened_wrappers: Vec<Vec<BibliographyScopeWrapper<'t>>>,
     title_wrappers: Vec<BibliographyScopeWrapper<'t>>,
+    wikidot_block_open_elements: Vec<Element<'t>>,
     split_tail_next: usize,
 }
 
@@ -125,6 +126,7 @@ impl<'t> Bibliography<'t> {
             citations: Vec::new(),
             reopened_wrappers: Vec::new(),
             title_wrappers: Vec::new(),
+            wikidot_block_open_elements: Vec::new(),
             split_tail_next: 0,
         };
         bibliography.rebuild_label_index();
@@ -182,6 +184,24 @@ impl<'t> Bibliography<'t> {
             self.entries
                 .push((Cow::Borrowed(RESIDUAL_LABEL), vec![element]));
         }
+    }
+
+    pub(crate) fn insert_residual_at(
+        &mut self,
+        position: usize,
+        elements: Vec<Element<'t>>,
+    ) {
+        self.citations.insert(position, 0);
+        self.entries
+            .insert(position, (Cow::Borrowed(RESIDUAL_LABEL), elements));
+    }
+
+    pub(crate) fn wikidot_block_open_elements(&self) -> &[Element<'t>] {
+        &self.wikidot_block_open_elements
+    }
+
+    pub(crate) fn set_wikidot_block_open_elements(&mut self, elements: Vec<Element<'t>>) {
+        self.wikidot_block_open_elements = elements;
     }
 
     pub(crate) fn is_residual(label: &str) -> bool {
@@ -307,6 +327,8 @@ impl<'t> Bibliography<'t> {
             .iter()
             .map(BibliographyScopeWrapper::to_owned)
             .collect();
+        bibliography.wikidot_block_open_elements =
+            elements_to_owned(&self.wikidot_block_open_elements);
         bibliography
     }
 }

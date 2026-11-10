@@ -500,6 +500,10 @@ fn render_wikidot_bibliography_shell(
             bibitems.omit_close();
         }
         bibitems.inner(|ctx| {
+            let open_elements = bibliography.wikidot_block_open_elements();
+            if !open_elements.is_empty() {
+                render_elements(ctx, open_elements);
+            }
             let title_wrappers = bibliography.title_wrappers();
             if title_wrappers.is_empty() {
                 ctx.html()

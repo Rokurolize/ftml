@@ -60,6 +60,13 @@ enum ListItemStep<'t> {
     },
 }
 
+fn wikidot_native_item_has_no_visible_body(elements: &[Element]) -> bool {
+    !elements.is_empty()
+        && elements
+            .iter()
+            .all(|element| matches!(element, Element::LineBreak))
+}
+
 pub const RULE_LIST: Rule = Rule {
     name: "list",
     position: LineRequirement::StartOfLine,
@@ -1694,7 +1701,9 @@ pub(crate) fn build_list_element(
     }
 
     items.retain(|item| match item {
-        ListItem::Elements { elements, .. } => !elements.is_empty(),
+        ListItem::Elements { elements, .. } => {
+            !elements.is_empty() && !wikidot_native_item_has_no_visible_body(elements)
+        }
         ListItem::SubList { .. } => true,
     });
     if items.is_empty() {

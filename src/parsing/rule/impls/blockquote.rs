@@ -1356,8 +1356,12 @@ fn try_consume_fn<'r, 't>(
         // root as an orphaned inline-scope partial. Only the rest of a
         // *quoted* line at this row's depth is row content; a following
         // unquoted (or shallower) line belongs to the outer parse.
+        let row_ended_anchor_close = parser.settings().layout.legacy()
+            && (row_has_inline_anchor_close(&elements)
+                || quoted_line_ends_with_anchor_close(parser.full_text().inner(), physical_line_end));
         let tail_line_is_row_content = parser.settings().layout.legacy()
             && consumed_past_line
+            && !row_ended_anchor_close
             && !matches!(
                 parser.current().token,
                 Token::LineBreak | Token::ParagraphBreak | Token::InputEnd | Token::Quote
@@ -1476,6 +1480,9 @@ fn try_consume_fn<'r, 't>(
                 || matches!(elements.last(), Some(Element::LineBreaks(_))))
         {
             keep_line_break = false;
+        }
+        if row_ended_anchor_close && parser.current().token == Token::Quote {
+            keep_line_break = true;
         }
         let quote_end_list_row = parser.settings().layout.legacy()
             && parser.current().token != Token::Quote
@@ -2165,6 +2172,87 @@ fn subtree_has_list(element: &Element<'_>) -> bool {
     found
 }
 
+fn subtree_has_inline_anchor_close(element: &Element<'_>) -> bool {
+    if matches!(
+        element,
+        Element::Partial(PartialElement::InlineAnchorClose(_))
+    ) {
+        return true;
+    }
+    let mut found = false;
+    visit_children(element, &mut |children| {
+        found |= children.iter().any(subtree_has_inline_anchor_close);
+    });
+    found
+}
+
+fn row_has_inline_anchor_close(elements: &[Element<'_>]) -> bool {
+    elements.iter().any(subtree_has_inline_anchor_close)
+}
+
+fn quoted_line_ends_with_anchor_close(source: &str, line_end: usize) -> bool {
+    let line_end = line_end.min(source.len());
+    let line_start = source[..line_end.saturating_sub(1)]
+        .rfind('\n')
+        .map_or(0, |index| index + 1);
+    let line = source[line_start..line_end].trim_end();
+    line.ends_with("[[/a]]")
+}
+
+fn subtree_has_anchor_opener(element: &Element<'_>) -> bool {
+    match element {
+        Element::Anchor { .. }
+        | Element::Partial(PartialElement::InlineAnchorOpen(..)) => true,
+        Element::Container(container) => container
+            .elements()
+            .iter()
+            .any(subtree_has_anchor_opener),
+        _ => false,
+    }
+}
+
+fn ensure_post_list_anchor_follower_break(elements: &mut Vec<Element<'_>>) {
+    let Some(list_idx) = elements.iter().rposition(|element| {
+        matches!(
+            element,
+            Element::List {
+                wikidot_explicit_block: true,
+                ..
+            }
+        )
+    }) else {
+        return;
+    };
+    let tail = &elements[list_idx + 1..];
+    if tail.is_empty() {
+        return;
+    }
+    if tail.iter().any(|element| {
+        matches!(element, Element::LineBreak | Element::LineBreaks(_))
+    }) {
+        return;
+    }
+    let mut quote_markers = 0usize;
+    for (offset, element) in tail.iter().enumerate() {
+        if matches!(element, Element::Text(text) if text == ">") {
+            quote_markers += 1;
+            if quote_markers == 2 {
+                elements.insert(list_idx + 1 + offset, Element::LineBreak);
+                return;
+            }
+        }
+    }
+    if quote_markers == 1 && tail.len() > 3 {
+        let insert_at = elements.len() - 1;
+        if !matches!(
+            &elements[insert_at],
+            Element::Text(text) if text == ">" || text == " "
+        ) {
+            elements.insert(insert_at, Element::LineBreak);
+        }
+    }
+}
+
 fn collect_native_blockquote_line<'r, 't>(
     parser: &mut Parser<'r, 't>,
     close: &[ParseCondition],
@@ -2274,6 +2362,14 @@ fn collect_native_blockquote_line<'r, 't>(
             if at_break || row_marker_ahead || !quoted_line {
                 return ok!(paragraph_safe; native_quote_line(elements, layout, layout_live, escaped_units), errors);
             }
+            let anchor_closed_row = row_has_inline_anchor_close(&elements)
+                || quoted_line_ends_with_anchor_close(source, line_end);
+            let row_line_start = source[..line_end.saturating_sub(1).min(source.len())]
+                .rfind('\n')
+                .map_or(0, |index| index + 1);
+            if anchor_closed_row && line_start > row_line_start {
+                return ok!(paragraph_safe; native_quote_line(elements, layout, layout_live, escaped_units), errors);
+            }
         }
     }
 }
@@ -2332,9 +2428,34 @@ fn build_blockquote_element(
     let mut residual_chunk = false;
     let mut open_quote_anchor = false;
     let mut blank_after_open_anchor = false;
+    let mut anchor_opened_in_run = false;
+    let mut post_anchor_explicit_list = false;
     for item in list {
         match item {
             DepthItem::Item(mut row) => {
+                if wikidot {
+                    if row.elements.iter().any(subtree_has_anchor_opener) {
+                        anchor_opened_in_run = true;
+                    }
+                    let list_row = row.elements.iter().any(|element| {
+                        matches!(
+                            element,
+                            Element::List {
+                                wikidot_explicit_block: true,
+                                ..
+                            }
+                        )
+                    });
+                    if list_row && anchor_opened_in_run {
+                        ensure_post_list_anchor_follower_break(&mut row.elements);
+                        post_anchor_explicit_list = true;
+                    } else if post_anchor_explicit_list {
+                        ensure_post_list_anchor_follower_break(&mut row.elements);
+                    }
+                    if list_row {
+                        post_anchor_explicit_list = anchor_opened_in_run;
+                    }
+                }
                 keep_trailing_break = row.keep_trailing_break;
                 marker_final = row.marker_final;
                 residual_chunk |= row.residual_block

@@ -17,7 +17,7 @@ Files changed or added:
 
 * `Cargo.toml`: added Criterion dev-dependency and `[[bench]]` target with `harness = false`.
 * `benches/performance.rs`: added deterministic corpus builder and Criterion benchmarks for preprocess, tokenize, parse, render HTML, and full pipeline.
-* `PERF_BASELINE.md`: this working note.
+* `docs/PerformanceBaseline.md`: this working note.
 
 Corpus notes:
 

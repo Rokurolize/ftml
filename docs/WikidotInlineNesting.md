@@ -35,8 +35,8 @@ Rule 3 is why tag names decide the output at depth. In `--a##red|xb**//,,--c##--
 
 ## How FTML maps to this
 
-- `parser/inline_pairs.rs` is stage 1. It runs over the tokens and assigns each marker a role in a chunk whose pairs interleave, or that holds an unpaired marker beside a pair of another kind. Any other chunk keeps its normal parse, and so does a chunk with text the scan cannot see through, such as a link.
-- `ActiveScopes` in `inline_scope.rs` is stage 2. `tidy_close` is the close rule, and `sync_chain_to_istack` is the paragraph and block boundary.
+- `parsing/parser/inline_pairs.rs` is stage 1. It runs over the tokens and assigns each marker a role in a chunk whose pairs interleave, or that holds an unpaired marker beside a pair of another kind. Any other chunk keeps its normal parse, and so does a chunk with text the scan cannot see through, such as a link.
+- `ActiveScopes` in `parsing/inline_scope.rs` is stage 2. `tidy_close` is the close rule, and `sync_chain_to_istack` is the paragraph and block boundary.
 
 No pass outside lowering simulates nesting. A new stream shape belongs in stage 1, not in another repair pass.
 

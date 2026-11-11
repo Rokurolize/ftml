@@ -274,7 +274,9 @@ pub fn render_container_internal(ctx: &mut HtmlContext, container: &Container) {
         && container.ctype() == ContainerType::Blockquote
         && let Some(elements) = wikidot_break_only_paragraph(container.elements())
     {
-        tag.contents(elements);
+        tag.inner(|ctx| {
+            render_contents_dropping_final_break_newline(ctx, elements);
+        });
     } else if layout.legacy()
         && container.ctype() == ContainerType::Paragraph
         && let Some(elements) = wikidot_peel_break_only_span_paragraph(
@@ -401,6 +403,11 @@ fn container_trailing_break_drops_newline(ctype: ContainerType) -> bool {
             | ContainerType::Superscript
             | ContainerType::Subscript
             | ContainerType::Underline
+            | ContainerType::Paragraph
+            | ContainerType::Blockquote
+            | ContainerType::Div
+            | ContainerType::Note
+            | ContainerType::Align(_)
     )
 }
 

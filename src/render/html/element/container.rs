@@ -385,12 +385,11 @@ pub(super) fn render_contents_dropping_final_break_newline(
     ctx.html().br();
 }
 
-/// Inline containers whose content mirrors live's trailing-break byte. Live
+/// Containers whose content mirrors live's trailing-break byte. Live
 /// writes `<br />` with no following newline immediately before a closing tag,
 /// while FTML's break emitter always appends `\n`; these containers strip it.
-/// Verified per container on saved pages (harvest-szbyte): size joins the
-/// existing eight. Block containers and document-final breaks keep FTML's
-/// block formatting by corpus convention (mapped separately).
+/// Verified per container on saved pages (harvest-szbyte for the inline set;
+/// the item-93 confirmation pass for paragraph, blockquote, div, note, align).
 fn container_trailing_break_drops_newline(ctype: ContainerType) -> bool {
     matches!(
         ctype,

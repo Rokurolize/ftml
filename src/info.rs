@@ -62,9 +62,9 @@ pub static FULL_VERSION: LazyLock<String> = LazyLock::new(|| {
 pub static FULL_VERSION_WITH_NAME: LazyLock<String> =
     LazyLock::new(|| format!("{PKG_NAME} {}", *FULL_VERSION));
 
-// The last 8 characters of the commit hash for this version.
+// The first 8 characters of the commit hash for this version.
 pub static GIT_COMMIT_HASH_SHORT: LazyLock<Option<&'static str>> =
-    LazyLock::new(|| GIT_COMMIT_HASH.map(|s| &s[..8]));
+    LazyLock::new(|| GIT_COMMIT_HASH.and_then(|hash| hash.get(..8)));
 
 #[test]
 fn info() {

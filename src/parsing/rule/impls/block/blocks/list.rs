@@ -4943,7 +4943,7 @@ Alpha
                 "<ul>\n",
                 "<li>Alpha<br>\n",
                 r#"<span style="white-space: pre-wrap;">&#32;</span><br>"#,
-                "\n</li>\n",
+                "</li>\n",
                 "</ul>",
             ),
         );

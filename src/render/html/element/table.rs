@@ -98,7 +98,15 @@ fn render_rows(
                     };
                     let mut table_cell = ctx.html().table_cell(cell.header);
                     table_cell.attr(attributes);
-                    table_cell.contents(elements);
+                    table_cell.inner(|ctx| {
+                        if layout.legacy() {
+                            super::container::render_contents_dropping_final_break_newline(
+                                ctx, elements,
+                            );
+                        } else {
+                            render_elements(ctx, elements);
+                        }
+                    });
                     drop(table_cell);
                     if layout.legacy() {
                         ctx.push_raw('\n');

@@ -463,7 +463,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:?}");
         assert_eq!(
             html,
-            "<div style=\"text-align: right;\"><p>Right</p></div><div style=\"text-align: left;\"><p>Left</p></div><div style=\"text-align: center;\"><p>Center</p></div><div style=\"text-align: justify;\"><p>Justify</p></div><p>Deep align blocks:<br>\n</p><div style=\"text-align: center;\"><p>Apple<br>\n</p><div style=\"text-align: right;\"><p>Banana<br>\n</p><div style=\"text-align: justify;\"><p>Cherry<br>\n</p><div style=\"text-align: left;\"><p>Blueberry</p></div></div></div></div>",
+            "<div style=\"text-align: right;\"><p>Right</p></div><div style=\"text-align: left;\"><p>Left</p></div><div style=\"text-align: center;\"><p>Center</p></div><div style=\"text-align: justify;\"><p>Justify</p></div><p>Deep align blocks:<br></p><div style=\"text-align: center;\"><p>Apple<br></p><div style=\"text-align: right;\"><p>Banana<br></p><div style=\"text-align: justify;\"><p>Cherry<br></p><div style=\"text-align: left;\"><p>Blueberry</p></div></div></div></div>",
         );
     }
 

@@ -429,7 +429,7 @@ fn wikidot_embed_unmatched_body_renders_error_block() {
         html,
         concat!(
             "<div class=\"error-block\">Sorry, no match for the embedded content.</div>",
-            "<p>text<br>\n</p>",
+            "<p>text<br></p>",
             "<div class=\"error-block\">Sorry, no match for the embedded content.</div>",
             "<p>x</p>",
             "<div class=\"error-block\">Sorry, no match for the embedded content.</div>",
@@ -481,7 +481,7 @@ fn wikidot_embed_error_block_keeps_the_preceding_line_break() {
     assert_eq!(
         html,
         concat!(
-            "<p>text<br>\n</p>",
+            "<p>text<br></p>",
             "<div class=\"error-block\">Sorry, no match for the embedded content.</div>",
         ),
     );
@@ -610,7 +610,7 @@ fn wikidot_embed_error_block_inside_a_div_keeps_the_line_break() {
     assert_eq!(
         html,
         concat!(
-            "<div><p>text<br>\n</p>",
+            "<div><p>text<br></p>",
             "<div class=\"error-block\">Sorry, no match for the embedded content.</div>",
             "</div>",
         ),

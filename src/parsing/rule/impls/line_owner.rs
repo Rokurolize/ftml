@@ -1336,6 +1336,7 @@ fn hoisted_split_lists<'t>(element: Element<'t>, ltype: ListType) -> Vec<Element
                 attributes: attributes.clone(),
                 items,
                 wikidot_explicit_block: false,
+                wikidot_marker_head_spawn: false,
                 wikidot_unclosed: false,
             }]),
             HoistPart::Bare(elements) => Some(elements),
@@ -1813,6 +1814,7 @@ where
                 element,
                 Element::List {
                     ltype: ListType::Bullet,
+                    wikidot_marker_head_spawn: _,
                     wikidot_unclosed: true,
                     ..
                 }
@@ -1833,6 +1835,7 @@ where
             }],
             attributes: attributes.clone(),
             wikidot_explicit_block: true,
+            wikidot_marker_head_spawn: false,
             wikidot_unclosed: true,
         };
         let stash_depth = if dissolve_run.is_some() {
@@ -1864,6 +1867,7 @@ where
             }],
             attributes: AttributeMap::new(),
             wikidot_explicit_block: true,
+            wikidot_marker_head_spawn: false,
             wikidot_unclosed: true,
         };
         parser.stash_wikidot_list_anchor_chrome(1, anchor, formation_unstarred);

@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::merge_adjacent_native_lists;
 use super::prelude::*;
 use super::unwrap_wikidot_paragraph_after_explicit_list;
 use crate::parsing::ParserWrap;
@@ -325,6 +326,7 @@ fn cross_li_wrap_outer<'t>(
         mut items,
         attributes,
         wikidot_explicit_block,
+        wikidot_marker_head_spawn,
         wikidot_unclosed,
     }) = outer
     else {
@@ -358,6 +360,7 @@ fn cross_li_wrap_outer<'t>(
         items,
         attributes,
         wikidot_explicit_block,
+        wikidot_marker_head_spawn,
         wikidot_unclosed,
     }]
 }
@@ -486,6 +489,7 @@ fn extract_table_cells<'r, 't>(
                                 items,
                                 attributes,
                                 wikidot_explicit_block,
+                                wikidot_marker_head_spawn,
                                 wikidot_unclosed,
                             },
                         ) if head_type == ltype => {
@@ -495,6 +499,7 @@ fn extract_table_cells<'r, 't>(
                                 attributes,
                                 items: head_items,
                                 wikidot_explicit_block,
+                                wikidot_marker_head_spawn,
                                 wikidot_unclosed,
                             };
                             let fostered =
@@ -1641,6 +1646,9 @@ fn parse_cell_regular<'r, 't>(
     }
     let (mut cell_elements, foster, had_foster) =
         split_wikidot_foster(parser, parsed.elements);
+    if legacy && parser.native_blockquote_depth().is_some() {
+        merge_adjacent_native_lists(&mut cell_elements);
+    }
     if legacy {
         cross_relocate_div_break(parser, &mut cell_elements);
     }
@@ -1720,6 +1728,9 @@ fn parse_cell_header<'r, 't>(
     }
     let (mut cell_elements, foster, had_foster) =
         split_wikidot_foster(parser, parsed.elements);
+    if legacy && parser.native_blockquote_depth().is_some() {
+        merge_adjacent_native_lists(&mut cell_elements);
+    }
     if legacy {
         cross_relocate_div_break(parser, &mut cell_elements);
     }

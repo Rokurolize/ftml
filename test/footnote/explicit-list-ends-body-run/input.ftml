@@ -1,0 +1,10 @@
+a[[footnote]]
+* x
+* [[ul]]
+* [[li]]
+* z
+* [[/li]]
+* [[/ul]]
+* w
+[[/footnote]]
+[[footnoteblock]]

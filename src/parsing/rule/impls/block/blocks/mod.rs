@@ -88,6 +88,7 @@ pub(crate) fn wikidot_crossed_ol_tail_element<'t>() -> Element<'t> {
         }],
         attributes: AttributeMap::new(),
         wikidot_explicit_block: false,
+        wikidot_marker_head_spawn: false,
         wikidot_unclosed: false,
     }
 }
@@ -110,6 +111,7 @@ pub(crate) fn wikidot_crossed_ol_open_element<'t>(with_break: bool) -> Element<'
         }],
         attributes: AttributeMap::new(),
         wikidot_explicit_block: false,
+        wikidot_marker_head_spawn: false,
         wikidot_unclosed: true,
     }
 }

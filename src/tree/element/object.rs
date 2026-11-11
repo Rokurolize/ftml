@@ -196,6 +196,8 @@ pub enum Element<'t> {
         wikidot_explicit_block: bool,
         #[serde(skip)]
         wikidot_unclosed: bool,
+        #[serde(skip)]
+        wikidot_marker_head_spawn: bool,
     },
 
     DefinitionList(Vec<DefinitionListItem<'t>>),
@@ -714,12 +716,14 @@ impl Element<'_> {
                 items,
                 wikidot_explicit_block,
                 wikidot_unclosed,
+                wikidot_marker_head_spawn,
             } => Element::List {
                 ltype: *ltype,
                 attributes: attributes.to_owned(),
                 items: list_items_to_owned(items),
                 wikidot_explicit_block: *wikidot_explicit_block,
                 wikidot_unclosed: *wikidot_unclosed,
+                wikidot_marker_head_spawn: *wikidot_marker_head_spawn,
             },
             Element::Image {
                 source,

@@ -1488,8 +1488,10 @@ impl<'t> ParagraphStack<'t> {
             self.suppress_next_line_break = false;
             if element == Element::LineBreak {
                 if self.suppressed_line_break_restarts_paragraph {
-                    self.current_unwrapped = false;
-                    self.unwrapped_after_block_line = false;
+                    // Live keeps the segment after a quote-row collapsible
+                    // bare, not as a restarted paragraph.
+                    self.current_unwrapped = true;
+                    self.unwrapped_after_block_line = true;
                     self.suppressed_line_break_restarts_paragraph = false;
                 }
                 return;
@@ -1997,8 +1999,7 @@ impl<'t> ParagraphStack<'t> {
                 self.wikidot_note_explicit_pre_candidate(!paragraph_break_separated);
             }
             if wikidot_collapsible {
-                self.unwrapped_after_block_line =
-                    !wikidot_collapsible_ends_with_blockquote;
+                self.unwrapped_after_block_line = true;
                 if wikidot_collapsible_ends_with_blockquote {
                     self.suppress_next_line_break = true;
                     self.suppressed_line_break_restarts_paragraph = true;

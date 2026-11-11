@@ -354,6 +354,43 @@ impl<'t> ActiveScopes<'t> {
         });
     }
 
+    // Live closes every open inline element at a block boundary; a nested
+    // same-tag pair does not survive it at all (bis-e/bis-d/bis-f peel the
+    // tail span even when the tail is plain text). A lone span survives
+    // (bis-c keeps the tail span), so only a tag with two or more active
+    // scopes drops them.
+    fn drop_nested_same_tag_scopes(&mut self) {
+        let mut counts: BTreeMap<InlineTag, usize> = BTreeMap::new();
+        for position in self.active_positions() {
+            let scope = &self.scopes[position];
+            if !matches!(scope.kind, ScopeKind::Span | ScopeKind::Size) {
+                continue;
+            }
+            *counts.entry(scope.wrapper.tag()).or_default() += 1;
+        }
+        let repeated: Vec<InlineTag> = counts
+            .into_iter()
+            .filter(|(_, count)| *count >= 2)
+            .map(|(tag, _)| tag)
+            .collect();
+        if repeated.is_empty() {
+            return;
+        }
+        let drops: Vec<usize> = self
+            .active_positions()
+            .into_iter()
+            .filter(|&position| {
+                matches!(
+                    self.scopes[position].kind,
+                    ScopeKind::Span | ScopeKind::Size
+                ) && repeated.contains(&self.scopes[position].wrapper.tag())
+            })
+            .collect();
+        for &position in &drops {
+            self.kill_scope(position);
+        }
+    }
+
     /// A paragraph or block boundary closes every open inline element but
     /// leaves the inline stack alone, and the content after it reopens exactly
     /// what the stack holds. A close that popped another element's entry can
@@ -7108,6 +7145,7 @@ fn lower_sequence<'t>(
                 if let Some(watermark) = watermark {
                     let completed = active.end_watch();
                     active.drop_block_boundary_scopes(watermark, &completed);
+                    active.drop_nested_same_tag_scopes();
                 }
                 if matches!(element, Element::Math { .. })
                     || (matches!(element, Element::TabView(_))

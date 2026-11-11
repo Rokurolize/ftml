@@ -1,0 +1,34 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "blockquote",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "paragraph",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "日"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "本"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "語"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

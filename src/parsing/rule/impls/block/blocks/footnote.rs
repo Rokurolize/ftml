@@ -151,8 +151,8 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
                 }
                 elements.push(text!(marker));
             }
-        } else if !repaired && !note_took_the_list_break {
-            append_wikidot_footnote_trailing_list_break(&mut elements);
+        } else if !note_took_the_list_break {
+            append_wikidot_footnote_trailing_list_break(&mut elements, !repaired);
         }
     }
 

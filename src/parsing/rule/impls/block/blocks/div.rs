@@ -720,6 +720,36 @@ fn only_footnote_block<'t>(elements: &[Element<'t>]) -> Option<Element<'t>> {
     }
 }
 
+fn unwrap_wikidot_scored_div_paragraph_after_blockquote(elements: &mut Vec<Element<'_>>) {
+    let mut index = 0usize;
+    while index < elements.len() {
+        let blockquote = matches!(
+            elements.get(index),
+            Some(Element::Container(container))
+                if container.ctype() == ContainerType::Blockquote
+        );
+        if blockquote
+            && matches!(
+                elements.get(index + 1),
+                Some(Element::Container(container))
+                    if container.ctype() == ContainerType::Paragraph
+            )
+        {
+            let Element::Container(container) = elements.remove(index + 1) else {
+                unreachable!();
+            };
+            let inner: Vec<Element<'_>> = container.into();
+            let added = inner.len();
+            for (offset, child) in inner.into_iter().enumerate() {
+                elements.insert(index + 1 + offset, child);
+            }
+            index += 1 + added;
+        } else {
+            index += 1;
+        }
+    }
+}
+
 fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: bool) {
     if flag_score {
         let item_count = elements.len();
@@ -792,6 +822,7 @@ fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: b
         }
         *elements = cleaned;
         flatten_div_failed_align_marker_runs(elements);
+        unwrap_wikidot_scored_div_paragraph_after_blockquote(elements);
         return;
     }
 

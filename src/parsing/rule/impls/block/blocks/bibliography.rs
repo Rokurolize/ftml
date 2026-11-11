@@ -39,6 +39,32 @@ pub const BLOCK_BIBLIOGRAPHY: BlockRule = BlockRule {
     parse_fn,
 };
 
+const BIBLIOGRAPHY_CLOSER: &str = "[[/bibliography]]";
+
+/// Finds the bibliography closer at or after `start`, ignoring ASCII case.
+///
+/// The search anchors on the closer's case-invariant `[[/` prefix, so it
+/// does not copy the rest of the document the way a lowercased copy of
+/// the tail would.
+fn find_bibliography_closer(source: &str, start: usize) -> Option<usize> {
+    let mut offset = start;
+
+    while let Some(rel) = source[offset..].find("[[/") {
+        let candidate = offset + rel;
+        offset = candidate + 3;
+        let end = candidate + BIBLIOGRAPHY_CLOSER.len();
+
+        if end <= source.len()
+            && source.as_bytes()[candidate..end]
+                .eq_ignore_ascii_case(BIBLIOGRAPHY_CLOSER.as_bytes())
+        {
+            return Some(candidate);
+        }
+    }
+
+    None
+}
+
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &str,
@@ -89,12 +115,8 @@ fn parse_fn<'r, 't>(
         }
         elements.insert(0, Element::LineBreak);
         elements.insert(0, Element::Text(cow!(&source[opener_start..opener_end])));
-        if let Some(rel) = source[body_start..]
-            .to_ascii_lowercase()
-            .find("[[/bibliography]]")
-        {
-            let closer_start = body_start + rel;
-            let closer_end = closer_start + "[[/bibliography]]".len();
+        if let Some(closer_start) = find_bibliography_closer(source, body_start) {
+            let closer_end = closer_start + BIBLIOGRAPHY_CLOSER.len();
             let mut probe = parser.clone();
             while probe.current().span.start < closer_end && probe.step().is_ok() {}
             parser.update(&probe);
@@ -874,6 +896,27 @@ mod tests {
         assert!(html.contains("<dl>"), "{html}");
         assert!(html.contains("<p>[[/bibliography]]</p>"), "{html}");
         let _ = tree;
+    }
+
+    #[test]
+    fn bibliography_closer_search_matches_a_lowercased_tail() {
+        for source in [
+            "body[[/bibliography]]tail",
+            "body[[/BIBLIOGRAPHY]]tail",
+            "body[[/Bibliography]]tail",
+            "body[[/bibliography",
+            "body[[/other]][[/bibliography]]",
+            "body[[/bibliographyx]]",
+            "no closer here",
+            "",
+        ] {
+            let expected = source.to_ascii_lowercase().find("[[/bibliography]]");
+            assert_eq!(
+                find_bibliography_closer(source, 0),
+                expected,
+                "closer search differs for {source:?}",
+            );
+        }
     }
 
     #[test]

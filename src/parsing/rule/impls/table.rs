@@ -2007,7 +2007,6 @@ fn try_consume_inner<'r, 't>(
                                 &mut anchor_open_heads,
                             );
                             elements.clear();
-                            saw_open = true;
                             if cells.is_empty() {
                                 let empty_cell_start = TableCellStart {
                                     align: None,

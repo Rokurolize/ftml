@@ -95,7 +95,7 @@ High-risk parser scanners expose test-only token-visit counters. Their tests run
 
 `comparison-normalization` is not a general escape hatch. Every such binding must appear exactly once in `tests/fixtures/wikidot-parity/comparison-normalization-contracts.json`, with an explicit difference class, Wikijump feature ID, and review. Only browser-reviewed root/serialization/rendering-whitespace classes are permitted. Semantic codepoint differences, element/attribute differences, interaction-hook differences, or caller-state differences must be fixed or classified elsewhere. This rule promoted the former `test--math--inline` U+0020/U+00A0 difference back to an ordinary exact match instead of preserving it as normalization.
 
-The eight current normalization cases are also verified by a real Chrome DOM pass:
+The 43 current normalization cases are also verified by a real Chrome DOM pass:
 
 ```sh
 python3 scripts/check_comparison_normalization_browser.py \
@@ -103,15 +103,15 @@ python3 scripts/check_comparison_normalization_browser.py \
   --build-renderer
 ```
 
-`page-preview-root-whitespace` and `html-serialization` cases must become the exact same parsed DOM after trimming only ASCII whitespace at the fragment boundaries. `browser-rendering-whitespace` cases may retain formatting whitespace text nodes only when Chrome reports identical element/attribute topology, per-element direct text after normal HTML whitespace collapsing, rendered `innerText`, and exact preformatted/textarea text. The current set has five strict root-equivalent cases and three browser-render-equivalent formatting-whitespace cases. Any future case that fails those checks is not eligible for normalization.
+`page-preview-root-whitespace` and `html-serialization` cases must become the exact same parsed DOM after trimming only ASCII whitespace at the fragment boundaries. `browser-rendering-whitespace` cases may retain formatting whitespace text nodes only when Chrome reports identical element/attribute topology, per-element direct text after normal HTML whitespace collapsing, rendered `innerText`, and exact preformatted/textarea text. The current set has six strict root-equivalent cases and 37 browser-render-equivalent formatting-whitespace cases. Any future case that fails those checks is not eligible for normalization.
 
 ### Standing live differential rotation
 
 Committed references remain the merge authority, but they cannot by themselves detect a later Wikidot behavior change or an FTML regression outside a touched fixture. `.github/workflows/wikidot-live-rotation.yml` therefore selects eight currently exact-match, preview-compatible cases per run with `scripts/select_live_parity_rotation.py`, captures fresh anonymous read-only `edit/PagePreviewModule` observations, and compares the current FTML renderer against them. The deterministic rotation advances through the exact-match population instead of repeatedly sampling the same popular features. Fresh cases, references, and verdicts are uploaded as temporary CI evidence only; they never rewrite committed references automatically.
 
-### Wikijump feature-ledger linkage
+### Wikijump feature-catalog linkage
 
-`tests/fixtures/wikidot-parity/wikijump-feature-contracts.json` accounts for every canonical `syntax-*` feature in Wikijump's `docs/wikidot-specifications/implementation-ledger.json`. Each feature names representative stable FTML cases and assigns every compatibility property axis P1-P8 to `ftml`, `wikijump`, `shared`, or `not-applicable`. Verify the adjacent ledger with:
+`tests/fixtures/wikidot-parity/wikijump-feature-contracts.json` accounts for every canonical `syntax-*` feature in Wikijump's `docs/wikidot-specifications/catalog.json`. Each feature names representative stable FTML cases and assigns every compatibility property axis P1-P8 to `ftml`, `wikijump`, `shared`, or `not-applicable`. Verify the adjacent catalog with:
 
 ```sh
 python3 scripts/check_wikijump_feature_contracts.py --wikijump-root ../wikijump

@@ -10,10 +10,10 @@ class WikijumpFeatureContractsTest(unittest.TestCase):
     def test_missing_feature_is_reported(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            ledger = root / "docs/wikidot-specifications/implementation-ledger.json"
+            ledger = root / "docs/wikidot-specifications/catalog.json"
             ledger.parent.mkdir(parents=True)
             ledger.write_text(
-                json.dumps({"features": {"syntax-comments": {}}}), encoding="utf-8"
+                json.dumps({"features": [{"id": "syntax-comments"}]}), encoding="utf-8"
             )
             contract = root / "contracts.json"
             contract.write_text(
@@ -40,10 +40,10 @@ class WikijumpFeatureContractsTest(unittest.TestCase):
     def test_missing_property_axis_is_reported(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            ledger = root / "docs/wikidot-specifications/implementation-ledger.json"
+            ledger = root / "docs/wikidot-specifications/catalog.json"
             ledger.parent.mkdir(parents=True)
             ledger.write_text(
-                json.dumps({"features": {"syntax-comments": {}}}), encoding="utf-8"
+                json.dumps({"features": [{"id": "syntax-comments"}]}), encoding="utf-8"
             )
             contract = root / "contracts.json"
             contract.write_text(

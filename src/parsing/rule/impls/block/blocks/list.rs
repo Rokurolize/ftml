@@ -3823,9 +3823,8 @@ fn wikidot_li_last_run_is_doc_final(remainder: &str) -> bool {
     let Some(&first) = separators.first() else {
         return true;
     };
-    let mut chunk_start = first;
     // Skip the separator itself: advance past its end.
-    let mut rest = &stream[first..];
+    let rest = &stream[first..];
     // Determine separator end: list close or blank line's second newline.
     let lower_rest = rest.to_ascii_lowercase();
     // Blank separators are stored at the second newline's index, so the
@@ -3836,7 +3835,7 @@ fn wikidot_li_last_run_is_doc_final(remainder: &str) -> bool {
         } else {
             1
         };
-    chunk_start = first + sep_end.min(rest.len());
+    let mut chunk_start = first + sep_end.min(rest.len());
     while chunk_start < stream.len() {
         // Find next separator at/after chunk_start (excluding `first`).
         let next_sep = separators

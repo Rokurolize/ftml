@@ -11387,7 +11387,7 @@ fn is_closer_literal_span(el: &Element<'_>) -> bool {
 /// or `[[/collapsible]]` by concatenating direct Text children, or 0.
 fn closer_literal_text_len(elements: &[Element<'_>]) -> usize {
     let mut s = String::new();
-    let mut end = 0usize;
+    let mut end;
     for (i, el) in elements.iter().enumerate() {
         if let Element::Text(t) = el {
             s.push_str(t);

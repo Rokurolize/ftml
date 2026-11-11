@@ -53,6 +53,31 @@ class WikijumpCandidateTest(unittest.TestCase):
             self.assertIn('ftml = { path = "/tmp/candidate" }', updated)
             self.assertIn('serde = "1"', updated)
 
+    def test_patch_rewrites_every_ftml_dependency_line(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "Cargo.toml"
+            path.write_text(
+                '[dependencies]\nftml = { git = "x", rev = "y" }\n'
+                '[dev-dependencies]\n'
+                'ftml = { git = "x", rev = "y", features = ["test-support"] }\n',
+                encoding="utf-8",
+            )
+            patch_ftml_dependency(path, Path("/tmp/candidate"))
+            updated = path.read_text(encoding="utf-8")
+            self.assertNotIn("git =", updated)
+            self.assertIn('ftml = { path = "/tmp/candidate" }', updated)
+            self.assertIn(
+                'ftml = { path = "/tmp/candidate" , features = ["test-support"] }',
+                updated,
+            )
+
+    def test_patch_rejects_a_manifest_without_ftml(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "Cargo.toml"
+            path.write_text('[dependencies]\nserde = "1"\n', encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "no FTML dependency"):
+                patch_ftml_dependency(path, Path("/tmp/candidate"))
+
     def test_test_path_resolution_covers_service_and_nested_modules(self):
         root = Path("/tmp/wikijump")
         self.assertEqual(

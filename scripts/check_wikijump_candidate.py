@@ -79,13 +79,14 @@ def patch_ftml_dependency(cargo_toml: Path, ftml_root: Path) -> str:
         raw = line.rstrip("\r\n")
         if re.match(r"^\s*ftml\s*=", raw):
             hits.append(index)
-    if len(hits) != 1:
-        raise ValueError(
-            f"expected exactly one FTML dependency in {cargo_toml}, found {len(hits)}"
-        )
-    index = hits[0]
-    ending = "\r\n" if lines[index].endswith("\r\n") else "\n"
-    lines[index] = local_ftml_dependency_line(lines[index].rstrip("\r\n"), ftml_root) + ending
+    if not hits:
+        raise ValueError(f"no FTML dependency in {cargo_toml}")
+    # Deepwell names FTML in both [dependencies] and [dev-dependencies].
+    # Every line has to name the candidate, or Cargo resolves FTML from two
+    # sources and the metadata check below sees more than one package.
+    for index in hits:
+        ending = "\r\n" if lines[index].endswith("\r\n") else "\n"
+        lines[index] = local_ftml_dependency_line(lines[index].rstrip("\r\n"), ftml_root) + ending
     cargo_toml.write_text("".join(lines), encoding="utf-8")
     return source
 

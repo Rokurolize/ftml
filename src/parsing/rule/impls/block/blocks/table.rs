@@ -299,7 +299,7 @@ fn extract_table_rows<'r, 't>(
 
             element if element.is_whitespace() => {}
 
-            element => {
+            _element => {
                 return Err(parser.make_err(ParseErrorKind::TableContainsNonRow));
             }
         }
@@ -732,7 +732,7 @@ fn extract_table_cells<'r, 't>(
                 }
             }
 
-            element => {
+            _element => {
                 return Err(parser.make_err(ParseErrorKind::TableRowContainsNonCell));
             }
         }

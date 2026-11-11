@@ -1770,7 +1770,6 @@ fn flatten_wikidot_run_partial<'t>(partial: &Element<'t>) -> Option<Element<'t>>
             ListItem::SubList { element } => {
                 elements = vec![(**element).clone()];
             }
-            _ => break,
         }
     }
     if elements == *inner_elements {

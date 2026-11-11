@@ -76,21 +76,36 @@ fn scan_raw_at_escapes(source: &str, html: &[RawEscape]) -> Vec<RawEscape> {
     let bytes = source.as_bytes();
     let mut escapes = Vec::new();
     let mut index = 0;
+    // The html ranges are sorted and disjoint, and both scans only move
+    // forward, so a cursor answers "is this position inside an html range"
+    // without walking the whole list at every byte.
+    let mut html_at = 0;
+
     while index + 1 < bytes.len() {
-        if let Some(range) = html
-            .iter()
-            .find(|escape| index >= escape.start && index < escape.end)
+        while html_at < html.len() && html[html_at].end <= index {
+            html_at += 1;
+        }
+
+        if let Some(escape) = html.get(html_at)
+            && index >= escape.start
+            && index < escape.end
         {
-            index = range.end;
+            index = escape.end;
+            html_at += 1;
             continue;
         }
         if bytes[index] == b'@' && bytes[index + 1] == b'@' {
             let mut cursor = index + 2;
+            let mut cursor_html = html_at;
             let mut closed = None;
             while cursor + 1 < bytes.len() {
-                if html
-                    .iter()
-                    .any(|escape| cursor >= escape.start && cursor < escape.end)
+                while cursor_html < html.len() && html[cursor_html].end <= cursor {
+                    cursor_html += 1;
+                }
+
+                if let Some(escape) = html.get(cursor_html)
+                    && cursor >= escape.start
+                    && cursor < escape.end
                 {
                     break;
                 }
@@ -197,6 +212,85 @@ mod tests {
                 RawEscape { start: 7, end: 12 },
             ],
         );
+    }
+
+    #[test]
+    fn html_and_at_escapes_do_not_overlap() {
+        // The cursor-based scan has to agree with a scan that tests every
+        // html range at every byte.
+        fn reference(source: &str) -> Vec<RawEscape> {
+            let bytes = source.as_bytes();
+            let html = scan_raw_html_escapes(source);
+            let mut escapes = Vec::new();
+            let mut index = 0;
+
+            while index + 1 < bytes.len() {
+                if let Some(range) = html
+                    .iter()
+                    .find(|escape| index >= escape.start && index < escape.end)
+                {
+                    index = range.end;
+                    continue;
+                }
+                if bytes[index] == b'@' && bytes[index + 1] == b'@' {
+                    let mut cursor = index + 2;
+                    let mut closed = None;
+
+                    while cursor + 1 < bytes.len() {
+                        if html
+                            .iter()
+                            .any(|escape| cursor >= escape.start && cursor < escape.end)
+                        {
+                            break;
+                        }
+                        if matches!(bytes[cursor], b'\n' | b'\r') {
+                            break;
+                        }
+                        if bytes[cursor] == b'@' && bytes[cursor + 1] == b'@' {
+                            closed = Some(cursor);
+                            break;
+                        }
+                        cursor += 1;
+                    }
+
+                    if let Some(close) = closed {
+                        escapes.push(RawEscape {
+                            start: index,
+                            end: close + 2,
+                        });
+                        index = close + 2;
+                        while index + 1 < bytes.len()
+                            && bytes[index] == b'@'
+                            && bytes[index + 1] == b'@'
+                        {
+                            index += 2;
+                        }
+                        continue;
+                    }
+                }
+                index += 1;
+            }
+
+            escapes
+        }
+
+        for source in [
+            "@<x>@ @@a@@",
+            "@@a@@@<x>@",
+            "@@a@<x>@b@@",
+            "@@a@<x>@",
+            "@@a@@@<x>@@@b@@",
+            "no escapes at all",
+            "@@",
+            "@",
+        ] {
+            let html = scan_raw_html_escapes(source);
+            assert_eq!(
+                scan_raw_at_escapes(source, &html),
+                reference(source),
+                "at-escape scan differs for {source:?}",
+            );
+        }
     }
 
     #[test]

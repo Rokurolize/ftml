@@ -108,6 +108,7 @@ body = "none"
 html-output = "html,div,wj-embed"
 
 [embedaudio]
+accepts-newlines = true
 head = "none"
 body = "raw"
 html-output = "html,div"
@@ -174,7 +175,7 @@ body = "elements"
 html-output = "other"
 
 [iframe]
-accepts-newlines = true
+accepts-newlines = false
 head = "value+map"
 body = "none"
 html-output = "html,iframe"

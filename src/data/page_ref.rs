@@ -43,10 +43,19 @@ pub fn canonical_include_site(raw: &str) -> Cow<'_, str> {
     let trimmed = raw.trim();
     let trimmed = trimmed.strip_suffix('.').unwrap_or(trimmed);
     const SUFFIX: &str = ".wikidot.com";
-    if trimmed.len() < SUFFIX.len() {
+
+    let Some(index) = trimmed.len().checked_sub(SUFFIX.len()) else {
         return Cow::Borrowed(raw);
-    }
-    let (prefix, suffix) = trimmed.split_at(trimmed.len() - SUFFIX.len());
+    };
+
+    // The suffix is ASCII, so a segment that ends with it splits at a
+    // character boundary; one that does not is not a host form and must
+    // not be split at all.
+    let Some(prefix) = trimmed.get(..index) else {
+        return Cow::Borrowed(raw);
+    };
+
+    let suffix = &trimmed[index..];
     if !suffix.eq_ignore_ascii_case(SUFFIX) {
         return Cow::Borrowed(raw);
     }
@@ -387,6 +396,36 @@ fn canonical_include_site_strips_host_form_before_normalization() {
 }
 
 #[test]
+fn canonical_include_site_leaves_non_ascii_segments_alone() {
+    use std::borrow::Cow;
+
+    // A multibyte segment whose byte length reaches the suffix length
+    // must not be split inside a character.
+    for input in [
+        "ああああx",
+        "ああああx.wikidot.com",
+        "éwikidot.com",
+        "日本語のサイト",
+    ] {
+        assert_eq!(
+            canonical_include_site(input),
+            Cow::Borrowed(input),
+            "non-ASCII site must pass through: {input:?}",
+        );
+    }
+
+    // A host form whose prefix is not ASCII-alphanumeric is still not
+    // a host form.
+    assert_eq!(
+        canonical_include_site("ああああx.wikidot.com"),
+        Cow::Borrowed("ああああx.wikidot.com"),
+    );
+
+    // The public include path reaches the same code.
+    assert!(PageRef::parse_include(":ああああx:page").is_ok());
+}
+
+#[test]
 fn parse_include_canonicalizes_dotted_site_segments() {
     assert_eq!(
         PageRef::parse_include(":scp-jp.wikidot.com:component:jstyles"),
@@ -436,6 +475,11 @@ mod prop {
         #[test]
         fn page_ref_parse_prop(s in page_ref_input()) {
             let _ = PageRef::parse(&s);
+        }
+
+        #[test]
+        fn canonical_include_site_prop(s in page_ref_input()) {
+            let _ = canonical_include_site(&s);
         }
     }
 }

@@ -31,7 +31,7 @@ use crate::parsing::condition::ParseCondition;
 use crate::parsing::consume::consume;
 use crate::parsing::parser::{
     QuoteBodyLineStatus, QuoteEscapedUnit, QuoteScanOutcome, WikidotLiClose,
-    WikidotLiHead, wikidot_first_block_close_after_from_heads,
+    WikidotLiHead,
 };
 use crate::parsing::{
     ExtractedToken, ParagraphSplitEntry, ParagraphSplitKind, ParseError, ParseErrorKind,
@@ -184,9 +184,10 @@ impl<'r, 't> IftagsPairingWindow<'r, 't> {
             self.tokens.push(token);
             #[cfg(test)]
             count_iftags_pairing_scan_step();
-            if at_end || self.tokens.len() >= IFTAGS_PAIRING_WINDOW {
-                self.done = true;
-            } else if self.scan.step().is_err() {
+            if at_end
+                || self.tokens.len() >= IFTAGS_PAIRING_WINDOW
+                || self.scan.step().is_err()
+            {
                 self.done = true;
             }
         }
@@ -749,7 +750,6 @@ fn wikidot_body_requires_end_head(block_rule: &BlockRule) -> bool {
 
 /// The next `\r` or `\n` at or after `start`, with the same monotone reuse as
 /// the block-close scan.
-
 fn find_line_break_marker(
     source: &str,
     slot: &mut Option<(usize, Option<usize>)>,
@@ -2598,7 +2598,6 @@ where
                     {
                         if !on_list_line && list_depth == 1 {
                             found.push(start);
-                            list_depth = 0;
                             scan.update(&probe);
                             break;
                         }
@@ -7311,13 +7310,11 @@ where
                         Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
                     )
                     && self.wikidot_quote_boundary_blank_in_li_body_quoted_close()
-                {
-                    self.set_wikidot_pending_paired_list_close_quoted_follower();
-                } else if self.peek_wikidot_quote_boundary_quoted_li_close()
-                    && self.shallower_text_list_close_ahead(block_rule)
-                    && self
-                        .shallower_text_list_close_depth_ahead(block_rule)
-                        .is_some_and(|depth| depth != 0)
+                    || self.peek_wikidot_quote_boundary_quoted_li_close()
+                        && self.shallower_text_list_close_ahead(block_rule)
+                        && self
+                            .shallower_text_list_close_depth_ahead(block_rule)
+                            .is_some_and(|depth| depth != 0)
                 {
                     self.set_wikidot_pending_paired_list_close_quoted_follower();
                 } else {
@@ -11558,6 +11555,7 @@ mod tests {
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::parsing::ParseErrorKind;
+    use crate::parsing::parser::wikidot_first_block_close_after_from_heads;
     use crate::parsing::rule::impls::block::blocks::{
         BLOCK_COLLAPSIBLE, BLOCK_DIV, BLOCK_IFTAGS,
     };

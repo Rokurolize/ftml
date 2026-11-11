@@ -74,7 +74,7 @@ See [Modules](Modules.md) for information on each module currently implemented.
 
 ## List of Blocks
 
-A list of all blocks and their attributes is available at [`conf/blocks.toml`](../conf/blocks.toml) (with an explanation of the format in [`conf/blocks.schema.toml`](../conf/blocks.schema.toml). The local configuration check enforces that it is up to date.
+A list of all blocks and their attributes is available at [`conf/blocks.toml`](../conf/blocks.toml) (with an explanation of the format in [`conf/blocks.schema.toml`](../conf/blocks.schema.toml). The local configuration check keeps its block names and aliases in step with the rule registry.
 
 In `Layout::Wikidot`, `bibliography`, `code`, `gallery`, `math`, `module`, and `toc` own a physical line only when their opener starts at column zero. A space, tab, or text prefix keeps the syntax literal. `Layout::Wikijump` retains its whitespace-prefixed behavior.
 
@@ -99,6 +99,7 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | [Deletion](#deletion)                           | `del`, `deletion`                | No    | No     | No        | Map           | Elements  |
 | [Div](#div)                                     | `div`                            | No    | Yes    | Yes       | Map           | Elements  |
 | [Embed](#embed)                                 | `embed`                          | No    | No     | Yes       | Value + Map   | None      |
+| EmbedAudio                                      | `embedaudio`                     | No    | No     | Yes       | None          | Raw       |
 | EmbedVideo                                      | `embedvideo`                     | No    | No     | No        | None          | Raw       |
 | [Equation Reference](#equation-ref)             | `equation`, `eref`, `eqref`      | No    | No     | No        | Value         | None      |
 | [File](#file)                                   | `file`                           | No    | No     | No        | Value         | None      |
@@ -109,7 +110,7 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | [HTML](#html)                                   | `html`                           | No    | No     | Yes       | Map           | Raw       |
 | [IfCategory](#ifcategory)                       | `ifcategory`                     | No    | No     | Yes       | Value         | Elements  |
 | [IfTags](#iftags)                               | `iftags`                         | No    | No     | Yes       | Value         | Elements  |
-| [Iframe](#iframe)                               | `iframe`                         | No    | No     | Yes       | Value + Map   | None      |
+| [Iframe](#iframe)                               | `iframe`                         | No    | No     | No        | Value + Map   | None      |
 | [Image](#image)                                 | `image`                          | No    | No     | No        | Value + Map   | None      |
 | [Include (Elements)](#include-elements)         | `include-elements`               | No    | No     | Yes       | Value + Map   | None      |
 | [Include (Wikidot)](#include-wikidot)           | `include`                        | No    | No     | Yes       | Value + Map   | None      |
@@ -117,7 +118,7 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | [Invisible](#invisible)                         | `invisible`                      | No    | No     | Yes       | Map           | Elements  |
 | [Italics](#italics)                             | `i`, `italics`, `em`, `emphasis` | No    | No     | No        | Map           | Elements  |
 | [Lines](#lines)                                 | `lines`, `newlines`              | No    | No     | Yes       | Value         | None      |
-| [List Blocks](#list)                            | `ul`, `ol`, `li`                 | No    | Yes    | Yes       | Map           | Elements  |
+| [List Blocks](#list-blocks)                            | `ul`, `ol`, `li`                 | No    | Yes    | Yes       | Map           | Elements  |
 | [Mark](#mark)                                   | `mark`, `highlight`              | No    | No     | No        | Map           | Elements  |
 | [Math](#math)                                   | `math`                           | No    | No     | Yes       | Value         | Raw       |
 | [Math (Inline)](#math-inline)                   | (See below)                      | No    | No     | No        | (See below)   | (See below) |
@@ -126,7 +127,7 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | [Note](#note)                                   | `note`                           | No    | No     | Yes       | Map           | Elements  |
 | [Paragraph](#paragraph)                         | `p`, `paragraph`                 | No    | No     | Yes       | Map           | Elements  |
 | [Radio](#radio)                                 | `radio`, `radio-button`          | Yes   | No     | No        | Value + Map   | None      |
-| [Raw](#raw)                                     | `raw`                            | No    | No     | Yes       | None          | Raw       |
+| [Raw](#raw)                                     | `raw`                            | No    | No     | No        | None          | Raw       |
 | [Ruby](#ruby)                                   | `ruby`                           | No    | No     | Yes       | Map           | Elements  |
 | [Ruby text](#ruby-text)                         | `rt`, `rubytext`                 | No    | No     | Yes       | Map           | Elements  |
 | [Ruby (short)](#ruby-short)                     | `rb`, `ruby2`                    | No    | No     | Yes       | Value         | None      |
@@ -537,8 +538,6 @@ Output: `Element::Iframe` / `<iframe>`
 
 Body: None
 
-Accepts newline separation.
-
 Arguments:
 * All accepted attributes
 
@@ -881,8 +880,6 @@ Favorite kind of music:
 Outputs: `Element::Raw` / `<span class="wj-raw">`
 
 Body: Raw
-
-Accepts newline separation.
 
 Arguments:
 * None

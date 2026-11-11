@@ -31,8 +31,9 @@ If a coverage refactor changes parser or renderer behavior, include either a fix
 
 ## Local Validation
 
-Run and record the checks below before opening the pull request. GitHub Actions does not repeat them.
+Run and record the checks below before opening the pull request. The nightly robustness workflow repeats the cross-repository ones against Wikijump `develop`; none of them runs on a pull request.
 
+- [ ] `python3 -m unittest discover -s scripts -p '*_test.py'`
 - [ ] `python3 scripts/check_wikijump_feature_contracts.py --wikijump-root ../wikijump`
 - [ ] `python3 scripts/check_wikijump_full_pages.py --wikijump-root ../wikijump --build-renderer`
 - [ ] `python3 scripts/check_wikijump_candidate.py --wikijump-root ../wikijump --ftml-root . --run-tests`

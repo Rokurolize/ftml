@@ -2,7 +2,7 @@
 
 ## JSON Serialization
 
-All exposed fields are serializable with [`serde`](https://crates.io/crates/serde). If you use [`serde_json`](https://crates.io/crates/serde_json) to store syntax trees (as is used in `src/test.rs` and the `/test` directory), it is helpful to understand the basics of how these data types will be serialized. These principles will apply to other formats as well, but this section will focus on JSON.
+All exposed fields are serializable with [`serde`](https://crates.io/crates/serde). If you use [`serde_json`](https://crates.io/crates/serde_json) to store syntax trees (as is used in `src/test/mod.rs` and the `/test` directory), it is helpful to understand the basics of how these data types will be serialized. These principles will apply to other formats as well, but this section will focus on JSON.
 
 The top level of a syntax tree contains two fields, `elements` and `styles`. The latter is simple, just a list of strings, each representing on CSS style within the wikitext. The first is of more interest, and more complex.
 
@@ -81,4 +81,4 @@ For instance:
 ```
 
 This should hopefully help with understanding how these structures are represented, permitting library consumers not written in Rust to interpret the data.
-For a full list of the fields of all elements, see the rustdoc. Particular files of interest are [`src/tree/element.rs`](https://github.com/Nu-SCPTheme/ftml/blob/master/src/tree/element.rs) and [`src/tree/container.rs`](https://github.com/Nu-SCPTheme/ftml/blob/master/src/tree/container.rs).
+For a full list of the fields of all elements, see the rustdoc. Particular files of interest are [`src/tree/element/mod.rs`](../src/tree/element/mod.rs) and [`src/tree/container.rs`](../src/tree/container.rs).

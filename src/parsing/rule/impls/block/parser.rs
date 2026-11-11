@@ -2483,6 +2483,7 @@ where
                 && block_rule.name == "block-collapsible"
                 && parser.in_wikidot_center_body()
                 && name == "="
+                && parser.wikidot_row_suffix_at().is_none()
             {
                 if restrict_quote_close {
                     parser.get_optional_space()?;

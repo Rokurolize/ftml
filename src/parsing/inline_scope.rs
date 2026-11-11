@@ -9468,14 +9468,6 @@ fn lower_children<'t>(
         active.frame_entry = outer_entry;
     };
     visit_children_mut(element, &mut visit);
-    // Item 84(c): `unfolded_tail_start` is computed by the table cut on the
-    // pre-lowering body (`keep_wikidot_row_suffix`), but frame assembly and
-    // inline-scope lowering rewrite the body — a straddling scope wraps the
-    // suffix run (and elements before the cut may merge) so the stored
-    // index lands inside the scope tail and the tail renders inside the
-    // content div instead of outside it (live hoists the tail out of
-    // `collapsible-block-content` but keeps it inside the unfolded wrapper).
-    // Re-derive the split from the lowered children.
     if let Element::Collapsible {
         elements,
         unfolded_tail_start: start_slot @ Some(_),
@@ -9519,7 +9511,40 @@ fn subtree_contains_row_suffix(element: &Element<'_>) -> bool {
 /// first element after the last table whose subtree carries the suffix
 /// (either the text itself, or the scroll scope the straddling span's
 /// post-foster tail lowered into).
+fn lowered_is_center_align_element(element: &Element<'_>) -> bool {
+    match element {
+        Element::Container(container) => {
+            matches!(container.ctype(), ContainerType::Align(_))
+        }
+        Element::WikidotBlockFrame { attributes, .. } => attributes.get().iter().any(|(key, value)| {
+            key.eq_ignore_ascii_case("style") && value.contains("text-align: center")
+        }),
+        _ => false,
+    }
+}
+
 fn lowered_row_suffix_split(elements: &[Element<'_>]) -> Option<usize> {
+    for (index, element) in elements.iter().enumerate() {
+        if !subtree_contains_row_suffix(element) {
+            continue;
+        }
+        if lowered_is_center_align_element(element) {
+            return Some(elements.len());
+        }
+        let mut pred = index;
+        while pred > 0 {
+            pred -= 1;
+            if lowered_is_center_align_element(&elements[pred]) {
+                return Some(elements.len());
+            }
+            if !matches!(
+                elements.get(pred),
+                Some(Element::Container(container)) if container.elements().is_empty()
+            ) {
+                break;
+            }
+        }
+    }
     let table_pos = elements
         .iter()
         .rposition(|element| matches!(element, Element::Table(_)))?;
@@ -10383,6 +10408,11 @@ impl<'t> WikidotFrameAssembly<'t> {
             return Vec::new();
         };
         if index + 1 != frame.children.len() {
+            return Vec::new();
+        }
+        if frame.attributes.get().get("class").is_some_and(|class| class == "collapsible-block-content")
+            && collapsible_content_retains_row_suffix(&frame.children[..index])
+        {
             return Vec::new();
         }
         frame.children.split_off(index)
@@ -11429,6 +11459,55 @@ fn form_wikidot_frame_paragraphs<'t>(children: &mut Vec<Element<'t>>) {
     flush(&mut run, &mut out);
     out.extend(rest);
     *children = out;
+}
+
+fn frame_subtree_has_table(element: &Element<'_>) -> bool {
+    match element {
+        Element::Table(_) => true,
+        Element::Container(container) => container
+            .elements()
+            .iter()
+            .any(frame_subtree_has_table),
+        Element::WikidotBlockFrame { children, .. } => {
+            children.iter().any(frame_subtree_has_table)
+        }
+        Element::Collapsible { elements, .. } => {
+            elements.iter().any(frame_subtree_has_table)
+        }
+        _ => false,
+    }
+}
+
+fn frame_is_center_align(element: &Element<'_>) -> bool {
+    match element {
+        Element::Container(container) => {
+            matches!(container.ctype(), ContainerType::Align(_))
+        }
+        Element::WikidotBlockFrame { attributes, .. } => attributes.get().iter().any(|(key, value)| {
+            key.eq_ignore_ascii_case("style") && value.contains("text-align: center")
+        }),
+        _ => false,
+    }
+}
+
+fn collapsible_content_retains_row_suffix(elements: &[Element<'_>]) -> bool {
+    elements.iter().any(|element| {
+        if frame_is_center_align(element) && frame_subtree_has_table(element) {
+            return true;
+        }
+        match element {
+            Element::Container(container) => {
+                collapsible_content_retains_row_suffix(container.elements())
+            }
+            Element::Collapsible { elements, .. } => {
+                collapsible_content_retains_row_suffix(elements)
+            }
+            Element::WikidotBlockFrame { children, .. } => {
+                collapsible_content_retains_row_suffix(children)
+            }
+            _ => false,
+        }
+    })
 }
 
 fn frame_ejects_row_suffix(attributes: &AttributeMap<'_>) -> bool {

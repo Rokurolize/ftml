@@ -47,6 +47,67 @@ pub const BLOCK_COLLAPSIBLE: BlockRule = BlockRule {
     parse_fn,
 };
 
+fn trim_empty_containers_before_row_suffix(elements: &mut Vec<Element<'_>>) {
+    let Some(mut suffix_idx) = elements
+        .iter()
+        .rposition(|element| matches!(element, Element::Text(text) if text.as_ref() == "||"))
+    else {
+        return;
+    };
+    while suffix_idx > 0
+        && matches!(
+            elements.get(suffix_idx - 1),
+            Some(Element::Container(container))
+                if container.elements().is_empty()
+        )
+    {
+        elements.remove(suffix_idx - 1);
+        suffix_idx -= 1;
+    }
+}
+
+fn subtree_has_table(element: &Element<'_>) -> bool {
+    match element {
+        Element::Table(_) => true,
+        Element::Container(container) => container
+            .elements()
+            .iter()
+            .any(subtree_has_table),
+        Element::WikidotBlockFrame { children, .. } => {
+            children.iter().any(subtree_has_table)
+        }
+        Element::Collapsible { elements, .. } => elements.iter().any(subtree_has_table),
+        _ => false,
+    }
+}
+
+fn frame_is_center_align(attributes: &AttributeMap<'_>) -> bool {
+    attributes.get().iter().any(|(key, value)| {
+        key.eq_ignore_ascii_case("style") && value.contains("text-align: center")
+    })
+}
+
+fn subtree_has_align_simple_table(elements: &[Element<'_>]) -> bool {
+    elements.iter().any(|element| {
+        let align = match element {
+            Element::Container(container) => {
+                matches!(container.ctype(), ContainerType::Align(_))
+            }
+            Element::WikidotBlockFrame { attributes, .. } => frame_is_center_align(attributes),
+            _ => false,
+        };
+        if align && subtree_has_table(element) {
+            return true;
+        }
+        match element {
+            Element::Container(container) => subtree_has_align_simple_table(container.elements()),
+            Element::Collapsible { elements, .. } => subtree_has_align_simple_table(elements),
+            Element::WikidotBlockFrame { children, .. } => subtree_has_align_simple_table(children),
+            _ => false,
+        }
+    })
+}
+
 pub(crate) struct CollapsibleHead<'t> {
     attributes: AttributeMap<'t>,
     start_open: bool,
@@ -618,7 +679,19 @@ fn parse_fn<'r, 't>(
             &mut elements,
         )
     {
-        unfolded_tail_start = Some(index);
+        let align_row_suffix_in_content =
+            subtree_has_align_simple_table(&elements[..index]);
+        if !align_row_suffix_in_content {
+            unfolded_tail_start = Some(index);
+        }
+    }
+    if let Some(start) = unfolded_tail_start
+        && let Some(suffix_at) =
+            crate::parsing::rule::impls::wikidot_row_suffix_start_index(&elements)
+                .filter(|index| *index >= start)
+        && subtree_has_align_simple_table(&elements[..suffix_at])
+    {
+        unfolded_tail_start = None;
     }
     let fused_close = parser.wikidot_body_closed_with_fused_close(&BLOCK_COLLAPSIBLE);
     parser.set_in_wikidot_collapsible(previous_collapsible_context);
@@ -635,6 +708,9 @@ fn parse_fn<'r, 't>(
         parser.step()?;
     }
 
+    if parser.settings().layout.legacy() {
+        trim_empty_containers_before_row_suffix(&mut elements);
+    }
     let element = head.into_element_with_unfolded_tail(elements, unfolded_tail_start);
 
     let mut output = vec![element];

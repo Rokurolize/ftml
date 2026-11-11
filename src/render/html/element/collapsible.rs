@@ -19,7 +19,70 @@
  */
 
 use super::prelude::*;
-use crate::tree::{AttributeMap, Element};
+use crate::tree::{AttributeMap, ContainerType, Element};
+
+fn wikidot_subtree_has_row_suffix(elements: &[Element]) -> bool {
+    elements.iter().any(|element| match element {
+        Element::Text(text) if text.as_ref() == "||" => true,
+        Element::Container(container) => wikidot_subtree_has_row_suffix(container.elements()),
+        Element::Collapsible { elements, .. } => wikidot_subtree_has_row_suffix(elements),
+        Element::WikidotBlockFrame { children, .. } => wikidot_subtree_has_row_suffix(children),
+        Element::Table(table) => table.rows.iter().any(|row| {
+            row.cells
+                .iter()
+                .any(|cell| wikidot_subtree_has_row_suffix(&cell.elements))
+        }),
+        _ => false,
+    })
+}
+
+fn wikidot_frame_is_center_align(attributes: &AttributeMap) -> bool {
+    attributes.get().iter().any(|(key, value)| {
+        key.eq_ignore_ascii_case("style") && value.contains("text-align: center")
+    })
+}
+
+fn wikidot_element_has_simple_table(element: &Element) -> bool {
+    match element {
+        Element::Table(_) => true,
+        Element::Container(container) => container
+            .elements()
+            .iter()
+            .any(wikidot_element_has_simple_table),
+        Element::WikidotBlockFrame { children, .. } => children
+            .iter()
+            .any(wikidot_element_has_simple_table),
+        Element::Collapsible { elements, .. } => {
+            elements.iter().any(wikidot_element_has_simple_table)
+        }
+        _ => false,
+    }
+}
+
+fn wikidot_subtree_has_align_table(elements: &[Element]) -> bool {
+    elements.iter().any(|element| {
+        let align = match element {
+            Element::Container(container) => {
+                matches!(container.ctype(), ContainerType::Align(_))
+            }
+            Element::WikidotBlockFrame { attributes, .. } => {
+                wikidot_frame_is_center_align(attributes)
+            }
+            _ => false,
+        };
+        if align && wikidot_element_has_simple_table(element) {
+            return true;
+        }
+        match element {
+            Element::Container(container) => wikidot_subtree_has_align_table(container.elements()),
+            Element::Collapsible { elements, .. } => wikidot_subtree_has_align_table(elements),
+            Element::WikidotBlockFrame { children, .. } => {
+                wikidot_subtree_has_align_table(children)
+            }
+            _ => false,
+        }
+    })
+}
 
 #[derive(Debug, Copy, Clone)]
 pub struct Collapsible<'a> {
@@ -160,12 +223,29 @@ fn render_collapsible_wikidot(
                         render_wikidot_hide_link(ctx, hide_text, label_spans);
                     }
 
+                    let mut frame_scoped = elements.to_vec();
+                    frame_scoped.extend_from_slice(unfolded_tail);
+                    let merge_row_suffix_tail = wikidot_subtree_has_row_suffix(unfolded_tail)
+                        && wikidot_subtree_has_align_table(&frame_scoped);
                     ctx.html()
                         .div()
                         .attr(attr!("class" => "collapsible-block-content"))
-                        .contents(elements);
-
-                    render_elements(ctx, unfolded_tail);
+                        .inner(|ctx| {
+                            render_elements(ctx, elements);
+                            if merge_row_suffix_tail {
+                                for element in unfolded_tail {
+                                    if matches!(
+                                        element,
+                                        Element::Text(text) if text.as_ref() == "||"
+                                    ) {
+                                        render_element(ctx, element);
+                                    }
+                                }
+                            }
+                        });
+                    if !merge_row_suffix_tail {
+                        render_elements(ctx, unfolded_tail);
+                    }
 
                     if show_bottom {
                         render_wikidot_hide_link(ctx, hide_text, label_spans);

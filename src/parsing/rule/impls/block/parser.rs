@@ -6214,6 +6214,14 @@ where
                 return Ok(true);
             }
 
+            if block_rule.name == "block-footnote"
+                && parser.settings().layout.legacy()
+                && !parser.discarding_hidden_body()
+                && parser.wikidot_footnote_at_enclosing_closer()
+            {
+                return Ok(true);
+            }
+
             Ok(result.is_some())
         };
         gather_paragraphs(self, rule, Some(is_end))

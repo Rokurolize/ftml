@@ -395,6 +395,7 @@ pub(super) struct BlockScanCache<'t> {
     bare_div_literal: Cell<bool>,
     inline_container_body_names: Vec<&'static str>,
     pub(super) body_end_boundaries: Vec<BodyEndBoundary>,
+    pub(super) spent_frame_boundaries: Vec<usize>,
     /// `span_body_depth` snapshot taken at each advanced-table-cell body
     /// entry. A span opened after the innermost cell entry is inside the
     /// cell; one already open there predates the cell (align head-break

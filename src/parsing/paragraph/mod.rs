@@ -696,6 +696,13 @@ where
                         finished = true;
                         continue;
                     }
+                    if close_condition_fn
+                        .as_mut()
+                        .expect("body parser must have a close condition")(parser)?
+                    {
+                        finished = true;
+                        continue;
+                    }
 
                     warn!("Hit the end of input, producing an error");
                     parser.cache_body_walk_failure(&walk_visited);
@@ -760,6 +767,9 @@ where
                 // bodies and re-check the end condition after it (cross
                 // shapes continue across the dropped closer).
                 if parser.wikidot_li_cross_skip_redundant_here(rule.name()) {
+                    continue;
+                }
+                if parser.wikidot_panel_frame_spent_skip(rule.name()) {
                     continue;
                 }
                 // L85: drop the post-list break token before same-para

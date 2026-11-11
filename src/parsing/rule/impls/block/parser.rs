@@ -4047,6 +4047,41 @@ where
         true
     }
 
+    pub(crate) fn wikidot_panel_frame_spent_skip(&mut self, rule_name: &str) -> bool {
+        if !self.settings().layout.legacy() || self.discarding_hidden_body() {
+            return false;
+        }
+        if !matches!(rule_name, "block-tabview" | "block-tab") {
+            return false;
+        }
+        if self.current().token != Token::LeftBlockEnd {
+            return false;
+        }
+        let mut probe = self.clone();
+        let Ok(raw_name) = probe.get_end_block() else {
+            return false;
+        };
+        let name = raw_name.strip_suffix('_').unwrap_or(&raw_name);
+        if !matches!(
+            name.to_ascii_lowercase().as_str(),
+            "note" | "div" | "collapsible" | "=" | "==" | "<" | ">"
+        ) {
+            return false;
+        }
+        let Some(ancestor) = self.wikidot_innermost_ancestor_boundary(name) else {
+            return false;
+        };
+        if self.wikidot_frame_spent(ancestor) {
+            return false;
+        }
+        self.update(&probe);
+        if self.current().token == Token::LineBreak {
+            let _ = self.step();
+        }
+        self.record_wikidot_spent_frame(ancestor);
+        true
+    }
+
     pub(crate) fn wikidot_li_close_disposition_for_item(
         &self,
         head_pos: usize,
@@ -6130,6 +6165,9 @@ where
 
         let is_end = move |parser: &mut Parser<'r, 't>| {
             let first_iteration = first;
+            if parser.wikidot_consume_own_spent_frame() {
+                return Ok(true);
+            }
             let result = parser.verify_end_block(
                 first,
                 block_rule,
@@ -7539,6 +7577,10 @@ where
                 return Err(self.make_err(ParseErrorKind::EndOfInput));
             }
 
+            if self.wikidot_consume_own_spent_frame() {
+                return Ok(());
+            }
+
             let result = self.verify_end_block(
                 first,
                 block_rule,
@@ -7547,6 +7589,10 @@ where
             );
             if result.is_some() {
                 return Ok(());
+            }
+
+            if self.wikidot_panel_frame_spent_skip(block_rule.name) {
+                continue;
             }
 
             if self.wikidot_li_cross_skip_redundant_here(block_rule.name) {

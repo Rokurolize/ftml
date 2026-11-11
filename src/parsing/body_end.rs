@@ -64,10 +64,67 @@ impl<'r, 't> Parser<'r, 't> {
     }
 
     pub(crate) fn pop_body_end_boundary(&mut self) {
+        let mut cache = self.block_end_scan_cache.borrow_mut();
+        let popped = cache.body_end_boundaries.len().checked_sub(1);
+        cache.body_end_boundaries.pop();
+        if let Some(index) = popped {
+            cache
+                .spent_frame_boundaries
+                .retain(|&spent| spent != index);
+        }
+    }
+
+    pub(crate) fn wikidot_innermost_ancestor_boundary(&self, name: &str) -> Option<usize> {
+        let cache = self.block_end_scan_cache.borrow();
+        let len = cache.body_end_boundaries.len();
+        if len <= 1 {
+            return None;
+        }
+        let mut start = 0;
+        for index in (0..len - 1).rev() {
+            if cache.body_end_boundaries[index].accepts("footnote") {
+                start = index;
+                break;
+            }
+        }
+        for index in (start..len - 1).rev() {
+            let boundary = &cache.body_end_boundaries[index];
+            if !boundary.confined && boundary.accepts(name) {
+                return Some(index);
+            }
+        }
+        None
+    }
+
+    pub(crate) fn wikidot_frame_spent(&self, index: usize) -> bool {
         self.block_end_scan_cache
-            .borrow_mut()
-            .body_end_boundaries
-            .pop();
+            .borrow()
+            .spent_frame_boundaries
+            .contains(&index)
+    }
+
+    pub(crate) fn wikidot_consume_own_spent_frame(&self) -> bool {
+        let len = self.block_end_scan_cache.borrow().body_end_boundaries.len();
+        let Some(own) = len.checked_sub(1) else {
+            return false;
+        };
+        let mut cache = self.block_end_scan_cache.borrow_mut();
+        let Some(position) = cache
+            .spent_frame_boundaries
+            .iter()
+            .position(|&spent| spent == own)
+        else {
+            return false;
+        };
+        cache.spent_frame_boundaries.swap_remove(position);
+        true
+    }
+
+    pub(crate) fn record_wikidot_spent_frame(&self, index: usize) {
+        let mut cache = self.block_end_scan_cache.borrow_mut();
+        if !cache.spent_frame_boundaries.contains(&index) {
+            cache.spent_frame_boundaries.push(index);
+        }
     }
 
     /// Identifies what can end a body walk here: the innermost boundary, plus

@@ -830,6 +830,17 @@ fn wikidot_simple_table_preserves_break(parser: &Parser<'_, '_>) -> bool {
         || line.eq_ignore_ascii_case("[[/=]]")
 }
 
+fn strip_wikidot_quote_prefix(line: &str) -> &str {
+    let mut rest = line;
+    loop {
+        let trimmed = rest.trim_start_matches([' ', '\t']);
+        let Some(tail) = trimmed.strip_prefix('>') else {
+            return trimmed;
+        };
+        rest = tail;
+    }
+}
+
 pub(crate) fn wikidot_simple_table_markers_literal_on_line_after_explicit_li(
     parser: &Parser<'_, '_>,
     table_token_start: usize,
@@ -852,7 +863,7 @@ pub(crate) fn wikidot_simple_table_markers_literal_on_line_after_explicit_li(
         .find(['\r', '\n'])
         .map(|offset| table_token_start + offset)
         .unwrap_or(text.len());
-    let line = text[line_start..line_end].trim_start();
+    let line = strip_wikidot_quote_prefix(&text[line_start..line_end]);
     if !line.starts_with("||") {
         return false;
     }
@@ -865,11 +876,13 @@ pub(crate) fn wikidot_simple_table_markers_literal_on_line_after_explicit_li(
         .map(|index| index + 1)
         .unwrap_or(0);
     let prev_raw = &text[prev_line_start..prev_nl];
-    let prev_line = prev_raw
-        .trim_start()
-        .strip_suffix('\r')
-        .unwrap_or(prev_raw)
-        .trim_end();
+    let prev_line = strip_wikidot_quote_prefix(
+        prev_raw
+            .trim_start()
+            .strip_suffix('\r')
+            .unwrap_or(prev_raw)
+            .trim_end(),
+    );
     if prev_line.is_empty() {
         return false;
     }

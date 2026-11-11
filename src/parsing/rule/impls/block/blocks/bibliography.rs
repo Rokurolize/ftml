@@ -74,6 +74,39 @@ fn parse_fn<'r, 't>(
             .expect("parsed bibliography opener has closing brackets")
         + "]]".len();
 
+    if parser.settings().layout.legacy() && parser.in_footnote() {
+        let body_start = parser.current().span.start;
+        let body = parser.get_body_elements(&BLOCK_BIBLIOGRAPHY, true)?;
+        let (mut elements, errors, _) = body.into();
+        if let Some(Element::Container(container)) = elements.first()
+            && container.ctype() == ContainerType::Paragraph
+        {
+            let first = elements.remove(0);
+            let Element::Container(container) = first else {
+                unreachable!();
+            };
+            elements.splice(0..0, Vec::from(container));
+        }
+        elements.insert(0, Element::LineBreak);
+        elements.insert(0, Element::Text(cow!(&source[opener_start..opener_end])));
+        if let Some(rel) = source[body_start..]
+            .to_ascii_lowercase()
+            .find("[[/bibliography]]")
+        {
+            let closer_start = body_start + rel;
+            let closer_end = closer_start + "[[/bibliography]]".len();
+            let mut probe = parser.clone();
+            while probe.current().span.start < closer_end && probe.step().is_ok() {}
+            parser.update(&probe);
+            elements.push(Element::Container(Container::new(
+                ContainerType::Paragraph,
+                vec![Element::Text(cow!(&source[closer_start..closer_end]))],
+                AttributeMap::new(),
+            )));
+        }
+        return ok!(false; elements, errors);
+    }
+
     if nested_wikidot_opener {
         let opener = &source[opener_start..opener_end];
         if opener != "[[bibliography]]" {
@@ -818,5 +851,53 @@ mod tests {
         let footer = html.find("footnotes-footer").expect("footer");
         assert!(bibitems_close < after && after < footer, "{html}");
         assert!(tree.needs_footnote_block);
+    }
+
+    #[test]
+    fn wikidot_bibliography_does_not_form_inside_footnote_body() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = concat!(
+            "[[footnote]]\n",
+            "[[bibliography]]\n",
+            ": a : A\n",
+            "[[/bibliography]]\n",
+            "[[/footnote]]\n",
+            "after",
+        );
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:#?}");
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert!(!html.contains("bibitems"), "{html}");
+        assert!(html.contains("[[bibliography]]"), "{html}");
+        assert!(html.contains("<dl>"), "{html}");
+        assert!(html.contains("<p>[[/bibliography]]</p>"), "{html}");
+        let _ = tree;
+    }
+
+    #[test]
+    fn wikidot_anchor_spanning_bibliography_closes_with_ghost() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = concat!(
+            "[[a href=\"/x\"]]\n",
+            "[[bibliography]]\n",
+            ": a : A\n",
+            "[[/bibliography]]\n",
+            "[[/a]]\n",
+            "after",
+        );
+        let tokenization = crate::tokenize(source);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:#?}");
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert!(html.contains("<p><a href=\"/x\"></a></p>"), "{html}");
+        assert!(
+            html.contains("<div class=\"bibitems\"><a href=\"/x\"></a>"),
+            "{html}"
+        );
+        assert!(html.contains("1. A</div>"), "{html}");
+        assert!(!html.contains("1. <a href=\"/x\">A</a>"), "{html}");
     }
 }

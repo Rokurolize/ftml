@@ -791,6 +791,7 @@ fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: b
             }
         }
         *elements = cleaned;
+        flatten_div_failed_align_marker_runs(elements);
         return;
     }
 
@@ -823,6 +824,83 @@ fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: b
         }
     }
     unwrap_wikidot_paragraph_after_explicit_list(elements);
+}
+
+fn flatten_div_failed_align_marker_runs(elements: &mut Vec<Element<'_>>) {
+    let mut flattened = Vec::with_capacity(elements.len());
+    let mut index = 0;
+    while index < elements.len() {
+        if !matches!(
+            elements.get(index),
+            Some(Element::Text(text)) if text.starts_with("[[")
+        ) {
+            flattened.push(elements[index].clone());
+            index += 1;
+            continue;
+        }
+        let mut run = String::new();
+        let mut end = index;
+        while end < elements.len() {
+            match &elements[end] {
+                Element::Text(text) => run.push_str(text),
+                Element::LineBreak | Element::LineBreaks(_) => {}
+                _ => break,
+            }
+            if run.contains("]]") {
+                end += 1;
+                break;
+            }
+            end += 1;
+        }
+        if end > index + 1 {
+            let compact = collapse_wikidot_div_literal_marker_whitespace(&run);
+            let bare = compact
+                .chars()
+                .filter(|ch| !ch.is_whitespace())
+                .collect::<String>();
+            if bare.eq_ignore_ascii_case("[[=]]") || bare.eq_ignore_ascii_case("[[/=]]") {
+                flattened.push(Element::Text(Cow::Owned(compact)));
+                index = end;
+                continue;
+            }
+        }
+        flattened.push(elements[index].clone());
+        index += 1;
+    }
+    *elements = flattened;
+}
+
+fn collapse_wikidot_div_literal_marker_whitespace(text: &str) -> String {
+    let mut out = text.to_owned();
+    let mut index = 0;
+    while let Some(start) = out[index..].find("[[") {
+        let abs = index + start;
+        let Some(close) = out[abs..].find("]]") else {
+            break;
+        };
+        let end = abs + close + 2;
+        let marker = &out[abs..end];
+        if marker
+            .chars()
+            .filter(|ch| !ch.is_whitespace())
+            .collect::<String>()
+            .eq_ignore_ascii_case("[[=]]")
+        {
+            out.replace_range(abs..end, "[[=]]");
+            index = abs + 5;
+        } else if marker
+            .chars()
+            .filter(|ch| !ch.is_whitespace())
+            .collect::<String>()
+            .eq_ignore_ascii_case("[[/=]]")
+        {
+            out.replace_range(abs..end, "[[/=]]");
+            index = abs + 6;
+        } else {
+            index = end;
+        }
+    }
+    out
 }
 
 fn skip_trailing_head_space<'r, 't>(
@@ -951,7 +1029,10 @@ fn same_line_div_drops_tail_after_wrapped_center(
     wrapped
 }
 
-fn wikidot_div_head_line_quote_depth(parser: &Parser<'_, '_>, opener_start: usize) -> usize {
+fn wikidot_div_head_line_quote_depth(
+    parser: &Parser<'_, '_>,
+    opener_start: usize,
+) -> usize {
     let source = parser.full_text().inner();
     let line_start = source[..opener_start]
         .rfind('\n')
@@ -2114,6 +2195,29 @@ mod tests {
         let div_end = html.find("</div>").expect("div close missing");
         let following = html.find("following page").expect("following text missing");
         assert!(div_end < following, "{html}");
+    }
+
+    #[test]
+    fn wikidot_div_underscore_failed_align_head_stays_byte_contiguous() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let source = concat!(
+            "[[div_]]\n",
+            "[[note]]\n",
+            "n\n",
+            "[[/note]]\n",
+            "[[=]]\n",
+            "m\n",
+            "[[/=]]\n",
+            "[[/div]]",
+        );
+        let tokenization = crate::tokenize(source);
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert!(!html.contains("[[\n"), "{html}");
+        assert!(html.contains("[[=]]"), "{html}");
+        assert!(html.contains("[[/=]]"), "{html}");
+        let _ = tree;
     }
 
     #[test]

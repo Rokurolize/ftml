@@ -20,12 +20,31 @@ def load_case_ids() -> set[str]:
     return corpus_case_ids(ROOT)
 
 
+def wikijump_feature_ids(wikijump_root: Path) -> tuple[set[str], str]:
+    """The canonical feature ids of the adjacent Wikijump specification tree.
+
+    The catalog lists every feature as an object with an `id`; the older
+    ledger shape listed them as the keys of a map.
+    """
+    catalog_path = wikijump_root / "docs/wikidot-specifications/catalog.json"
+    if not catalog_path.is_file():
+        return set(), str(catalog_path)
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    features = catalog.get("features", [])
+    if isinstance(features, dict):
+        return set(features), str(catalog_path)
+    ids = set()
+    for feature in features:
+        identifier = feature.get("id") if isinstance(feature, dict) else feature
+        if isinstance(identifier, str):
+            ids.add(identifier)
+    return ids, str(catalog_path)
+
+
 def check(wikijump_root: Path, contracts_path: Path = CONTRACTS) -> list[str]:
-    ledger_path = wikijump_root / "docs/wikidot-specifications/implementation-ledger.json"
-    if not ledger_path.is_file():
-        return [f"missing Wikijump implementation ledger: {ledger_path}"]
-    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
-    features = ledger["features"]
+    features, catalog_path = wikijump_feature_ids(wikijump_root)
+    if not features:
+        return [f"missing Wikijump feature catalog: {catalog_path}"]
     syntax_features = {feature for feature in features if feature.startswith("syntax-")}
     cases = load_case_ids()
     manifest = json.loads(contracts_path.read_text(encoding="utf-8"))
@@ -45,7 +64,7 @@ def check(wikijump_root: Path, contracts_path: Path = CONTRACTS) -> list[str]:
             errors.append(f"duplicate Wikijump syntax feature contract: {feature}")
         seen_features.add(feature)
         if feature not in features:
-            errors.append(f"{cid}: Wikijump feature {feature} is absent from the ledger")
+            errors.append(f"{cid}: Wikijump feature {feature} is absent from the catalog")
         case_ids = contract.get("cases", [])
         if not case_ids:
             errors.append(f"{cid}: feature contract needs at least one stable FTML case")
@@ -68,7 +87,7 @@ def check(wikijump_root: Path, contracts_path: Path = CONTRACTS) -> list[str]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Verify FTML parity property families against the adjacent Wikijump compatibility ledger."
+        description="Verify FTML parity property families against the adjacent Wikijump feature catalog."
     )
     parser.add_argument("--wikijump-root", required=True, type=Path)
     args = parser.parse_args()

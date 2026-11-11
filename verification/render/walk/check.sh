@@ -125,7 +125,7 @@ if [[ "${1:-}" == "mutations" ]]; then
 fi
 
 scratch_tree() {
-  local name="$1" file="$2" old="$3" new="$4" filter="$5"
+  local name="$1" file="$2" old="$3" new="$4" name_filter="$5"
   local bak rc
   bak="$(mktemp)"
   cp "$file" "$bak"
@@ -147,9 +147,9 @@ PY
   fi
   local -a cmd
   if [[ -f "$HEAVY" ]]; then
-    cmd=(bash "$HEAVY" cargo test --manifest-path "$REPO/Cargo.toml" --lib -- --test-threads=8 "$filter")
+    cmd=(bash "$HEAVY" cargo test --manifest-path "$REPO/Cargo.toml" --lib -- --test-threads=8 "$name_filter")
   else
-    cmd=(cargo test --manifest-path "$REPO/Cargo.toml" --lib -- --test-threads=8 "$filter")
+    cmd=(cargo test --manifest-path "$REPO/Cargo.toml" --lib -- --test-threads=8 "$name_filter")
   fi
   if timeout --signal=KILL 120 "${cmd[@]}"; then
     rc=0

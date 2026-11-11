@@ -9391,6 +9391,8 @@ fn lower_children<'t>(
                 if container.ctype() == ContainerType::Note
         );
     let mut lowered = false;
+    let preserve_frame_entry = matches!(element, Element::List { .. } | Element::TabView(_));
+    let panel_edge = preserve_frame_entry && matches!(element, Element::TabView(_));
     let truncate_at_entry = matches!(element, Element::List { .. });
     let is_prelist_chunk_frame = matches!(
         element,
@@ -9423,6 +9425,8 @@ fn lower_children<'t>(
         let outer_entry = active.frame_entry.take();
         if frame_children {
             active.frame_entry = Some(active.active_positions());
+        } else if preserve_frame_entry && outer_entry.is_some() {
+            active.frame_entry = outer_entry.clone();
         }
         // R-frame (ledger item 60 residual) + R-bq-frame-br: a
         // div/note/collapsible/blockquote body whose explicit list carries a
@@ -9497,7 +9501,11 @@ fn lower_children<'t>(
         }
         // Trailing frame-edge segment (d8-44): emitted after the eject
         // passes above, which would eat a trailing space-only segment.
-        if frame_children
+        // A tab panel is not a frame; a preserved outer frame entry counts
+        // the same there (probes muse-probe-f8g3793-span-min3 and
+        // muse-probe-f8g3793-div-nested-tabview).
+        let panel_edge = panel_edge && active.frame_entry.is_some();
+        if (frame_children || panel_edge)
             && matches!(children.last(), Some(Element::TabView(_)))
             && let Some(wrapper) = tabview_frame_wrapper(active)
         {

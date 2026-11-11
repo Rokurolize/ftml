@@ -3611,8 +3611,10 @@ fn wrap_inline_line_after_list(
 }
 
 /// L85 scope-5: live keeps a single break after these formed blocks in
-/// item bodies (li-div/align/code/coll/note-contained); every other
-/// paragraph-unsafe element (tables, rules, lists) still drops it.
+/// item bodies (li-div/align/code/coll/note-contained; li-tabview per
+/// probes muse-probe-f8g3793-span-min2/table-min3/table-min4/span-min1 and
+/// muse-probe-f8g3793-div-nested-tabview); every other paragraph-unsafe
+/// element (tables, rules, lists) still drops it.
 fn tabview_break_stays_in_open_span(segment: &[Element<'_>], index: usize) -> bool {
     if !matches!(
         segment.get(index.wrapping_sub(1)),
@@ -3645,7 +3647,7 @@ fn wikidot_li_break_kept_after_block(element: &Element) -> bool {
             container.ctype(),
             ContainerType::Div | ContainerType::Align(_) | ContainerType::Note
         ),
-        Element::Collapsible { .. } | Element::Code { .. } => true,
+        Element::Collapsible { .. } | Element::Code { .. } | Element::TabView(_) => true,
         _ => false,
     }
 }
@@ -4137,6 +4139,11 @@ fn assemble_wikidot_li_segments<'t>(
             .unwrap_or(source);
         let quote_prefix_saves_item = wikidot_li_closer_line_is_quote_prefix(body)
             && wikidot_li_break_saves_vanishing_item(&elements);
+        // Live keeps the trailing break after a formed block at the end of a
+        // quoted item (probes muse-probe-f8g3793-span-min2/span-min1/qdiv-li);
+        // a quote-prefixed closer line ends the body slice like a newline
+        let quote_block_tail_saves_item = wikidot_li_closer_line_is_quote_prefix(body)
+            && elements.last().is_some_and(wikidot_li_break_kept_after_block);
         let deep_trailing_paragraph = elements.last().is_some_and(|element| {
             matches!(
                 element,
@@ -4148,7 +4155,7 @@ fn assemble_wikidot_li_segments<'t>(
                             .is_some_and(deep_marker_head)
             )
         });
-        if (body.ends_with('\n') || quote_prefix_saves_item)
+        if (body.ends_with('\n') || quote_prefix_saves_item || quote_block_tail_saves_item)
             && !matches!(elements.last(), Some(Element::LineBreak))
             && !trailing_nested_list
             && !trailing_table
@@ -4294,12 +4301,14 @@ fn wrap_post_heading_segments<'t>(
     let mut after_heading = false;
     let mut after_blank_boundary = false;
     let mut after_ref_block = false;
+    let mut after_blockquote = false;
     let mut latched = false;
     let flush = |chunk: &mut Vec<Element<'t>>,
                  out: &mut Vec<Element<'t>>,
                  after_heading: bool,
                  after_ref_block: bool,
                  after_blank_boundary: bool,
+                 after_blockquote: bool,
                  latched: bool,
                  enclosing_block: bool,
                  kind: Flush| {
@@ -4309,21 +4318,65 @@ fn wrap_post_heading_segments<'t>(
         let chunk_has_partial = chunk
             .iter()
             .any(|element| matches!(element, Element::Partial(_)));
+        let tail_breaks_and_closes = chunk.iter().all(|element| {
+            matches!(
+                element,
+                Element::LineBreak
+                    | Element::LineBreaks(_)
+                    | Element::Partial(
+                        PartialElement::InlineSpanClose(_)
+                            | PartialElement::InlineSizeClose(_)
+                            | PartialElement::InlineAnchorClose(_)
+                            | PartialElement::InlineFormatClose(_)
+                            | PartialElement::InlineColorClose
+                    )
+            )
+        }) && chunk
+            .iter()
+            .any(|element| matches!(element, Element::LineBreak | Element::LineBreaks(_)));
+        // live p-wraps a break-only tail after a blockquote in a framed item
+        // body (probes muse-probe-f8g3793-tail-note-span and
+        // muse-probe-f8g3793-tail-span-only); unframed items keep the bare
+        // break. Trailing scope closes stay bare out in front of the
+        // paragraph
+        let after_blockquote_tail = matches!(kind, Flush::End)
+            && after_blockquote
+            && !suppress_trail
+            && !latched
+            && enclosing_block
+            && tail_breaks_and_closes;
         let wrap = !latched
-            && has_content(chunk)
-            && ((after_heading
-                && match kind {
-                    Flush::BeforeTable => false,
-                    Flush::SegmentGap | Flush::End => enclosing_block,
-                    Flush::Soft | Flush::CodeOrAlign | Flush::BeforeMath => true,
-                })
-                || (after_blank_boundary && matches!(kind, Flush::Soft))
-                || (after_ref_block
-                    && !suppress_trail
-                    && !chunk_has_partial
-                    && (matches!(kind, Flush::BeforeMath)
-                        || (matches!(kind, Flush::End) && enclosing_block))));
-        if wrap {
+            && ((has_content(chunk)
+                && ((after_heading
+                    && match kind {
+                        Flush::BeforeTable => false,
+                        Flush::SegmentGap | Flush::End => enclosing_block,
+                        Flush::Soft | Flush::CodeOrAlign | Flush::BeforeMath => true,
+                    })
+                    || (after_blank_boundary && matches!(kind, Flush::Soft))
+                    || (after_ref_block
+                        && !suppress_trail
+                        && !chunk_has_partial
+                        && (matches!(kind, Flush::BeforeMath)
+                            || (matches!(kind, Flush::End) && enclosing_block)))))
+                || after_blockquote_tail);
+        if after_blockquote_tail {
+            let mut breaks: Vec<Element<'t>> = Vec::new();
+            let mut closes: Vec<Element<'t>> = Vec::new();
+            for element in std::mem::take(chunk) {
+                if matches!(element, Element::LineBreak | Element::LineBreaks(_)) {
+                    breaks.push(element);
+                } else {
+                    closes.push(element);
+                }
+            }
+            out.extend(closes);
+            out.push(Element::Container(Container::new(
+                ContainerType::Paragraph,
+                breaks,
+                AttributeMap::new(),
+            )));
+        } else if wrap {
             out.push(Element::Container(Container::new(
                 ContainerType::Paragraph,
                 std::mem::take(chunk),
@@ -4354,11 +4407,13 @@ fn wrap_post_heading_segments<'t>(
                 after_heading,
                 after_ref_block,
                 after_blank_boundary,
+                after_blockquote,
                 latched,
                 enclosing_block,
                 Flush::SegmentGap,
             );
             after_blank_boundary = true;
+            after_blockquote = false;
             continue;
         }
         if is_heading {
@@ -4368,12 +4423,14 @@ fn wrap_post_heading_segments<'t>(
                 after_heading,
                 after_ref_block,
                 after_blank_boundary,
+                after_blockquote,
                 latched,
                 enclosing_block,
                 Flush::Soft,
             );
             out.push(element);
             after_heading = true;
+            after_blockquote = false;
             continue;
         }
         if is_table {
@@ -4383,12 +4440,14 @@ fn wrap_post_heading_segments<'t>(
                 after_heading,
                 after_ref_block,
                 after_blank_boundary,
+                after_blockquote,
                 latched,
                 enclosing_block,
                 Flush::BeforeTable,
             );
             out.push(element);
             after_ref_block = true;
+            after_blockquote = false;
             continue;
         }
         if is_code_or_align {
@@ -4398,22 +4457,30 @@ fn wrap_post_heading_segments<'t>(
                 after_heading,
                 after_ref_block,
                 after_blank_boundary,
+                after_blockquote,
                 latched,
                 enclosing_block,
                 Flush::CodeOrAlign,
             );
             out.push(element);
             latched = true;
+            after_blockquote = false;
             continue;
         }
         if !element.paragraph_safe() {
             let is_math = matches!(element, Element::Math { .. });
+            let is_blockquote = matches!(
+                &element,
+                Element::Container(container)
+                    if container.ctype() == ContainerType::Blockquote
+            );
             flush(
                 &mut chunk,
                 &mut out,
                 after_heading,
                 after_ref_block,
                 after_blank_boundary,
+                after_blockquote,
                 latched,
                 enclosing_block,
                 if is_math {
@@ -4426,6 +4493,7 @@ fn wrap_post_heading_segments<'t>(
             if is_math {
                 after_ref_block = true;
             }
+            after_blockquote = is_blockquote;
             continue;
         }
         chunk.push(element);
@@ -4436,6 +4504,7 @@ fn wrap_post_heading_segments<'t>(
         after_heading,
         after_ref_block,
         after_blank_boundary,
+        after_blockquote,
         latched,
         enclosing_block,
         Flush::End,

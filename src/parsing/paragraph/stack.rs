@@ -99,6 +99,7 @@ pub struct ParagraphStack<'t> {
     trim_unwrapped_trailing_line_break: bool,
     suppress_next_line_break: bool,
     suppressed_line_break_restarts_paragraph: bool,
+    wikidot_suppress_post_block_break: bool,
     wikidot_empty_list_break: bool,
     wikidot_embed_error_residual: bool,
     next_element_started_line: bool,
@@ -989,6 +990,70 @@ impl<'t> ParagraphStack<'t> {
     pub(crate) fn mark_next_unwrapped_after_block(&mut self) {
         self.current_unwrapped = true;
         self.unwrapped_after_block_line = true;
+    }
+
+    pub(crate) fn clear_wikidot_orphan_closer_paragraph_lead(&mut self) {
+        if !self.wikidot {
+            return;
+        }
+        self.current_unwrapped = false;
+        self.unwrapped_after_block_line = false;
+        self.wikidot_complete_raw_run_after_block = false;
+        if !self.current.is_empty() {
+            self.end_paragraph();
+        }
+    }
+
+    pub(crate) fn arm_wikidot_orphan_closer_paragraph(&mut self) {
+        if !self.wikidot {
+            return;
+        }
+        self.wikidot_suppress_post_block_break = true;
+        self.clear_wikidot_orphan_closer_paragraph_lead();
+    }
+
+    pub(crate) fn take_wikidot_suppress_post_block_break(&mut self) -> bool {
+        std::mem::take(&mut self.wikidot_suppress_post_block_break)
+    }
+
+    pub(crate) fn pop_wikidot_trailing_post_block_break(&mut self) {
+        loop {
+            match self.finished.last() {
+                Some(Element::LineBreak) => {
+                    self.finished.pop();
+                }
+                Some(Element::Text(text)) if text.as_ref() == "\n" => {
+                    self.finished.pop();
+                }
+                _ => break,
+            }
+        }
+    }
+
+    pub(crate) fn wikidot_page_root_stray_closer_after_formed_block_tail(
+        &self,
+        closer_name: &str,
+    ) -> bool {
+        let base = closer_name.strip_suffix('_').unwrap_or(closer_name);
+        if base.eq_ignore_ascii_case("note") {
+            return self.finished.iter().any(|element| {
+                matches!(
+                    element,
+                    Element::Container(container)
+                        if container.ctype() == ContainerType::Note
+                )
+            });
+        }
+        if base.eq_ignore_ascii_case("div") {
+            return self.finished.iter().rev().take(4).any(|element| {
+                matches!(
+                    element,
+                    Element::Container(container)
+                        if container.ctype() == ContainerType::Div
+                )
+            });
+        }
+        false
     }
 
     pub(crate) fn mark_crossed_collapsible_tail(&mut self) {

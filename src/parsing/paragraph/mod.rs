@@ -68,6 +68,38 @@ fn evaporation_aftermath_shell<'t>(
 
 /// Whether the row at the cursor (depth 0, no quote prefix) is plain
 /// text: no block markers before the line end, and non-empty content.
+fn wikidot_next_line_block_closer_name<'r, 't>(
+    parser: &Parser<'r, 't>,
+) -> Option<Cow<'t, str>>
+where
+    'r: 't,
+{
+    if !matches!(
+        parser.current().token,
+        Token::LineBreak | Token::ParagraphBreak
+    ) {
+        return None;
+    }
+    let mut probe = parser.clone();
+    if probe.step().is_err() {
+        return None;
+    }
+    loop {
+        match probe.current().token {
+            Token::Whitespace => {
+                if probe.step().is_err() {
+                    return None;
+                }
+            }
+            Token::LeftBlockEnd => {
+                let mut close = probe.clone();
+                return close.get_end_block().ok();
+            }
+            _ => return None,
+        }
+    }
+}
+
 fn wikidot_plain_text_row(parser: &Parser<'_, '_>) -> bool {
     let mut scan = parser.clone();
     let mut has_text = false;
@@ -490,6 +522,21 @@ where
             line_prefix_whitespace_only = true;
             continue;
         }
+        if parser.settings().layout.legacy()
+            && close_condition_fn.is_none()
+            && rule.name() == "page"
+            && parser.current().token == Token::LeftBlockEnd
+        {
+            let mut probe = parser.clone();
+            if let Ok(name) = probe.get_end_block()
+                && stack.wikidot_page_root_stray_closer_after_formed_block_tail(
+                    name.as_ref(),
+                )
+            {
+                stack.pop_wikidot_trailing_post_block_break();
+                stack.clear_wikidot_orphan_closer_paragraph_lead();
+            }
+        }
         let quote_line_status = parser.prepare_quote_body_line()?;
         if quote_line_status == QuoteBodyLineStatus::Boundary {
             if parser.quote_boundary_closes_body() {
@@ -655,6 +702,24 @@ where
             line_prefix_whitespace_only = true;
             continue;
         }
+        if parser.settings().layout.legacy()
+            && close_condition_fn.is_none()
+            && rule.name() == "page"
+            && matches!(
+                parser.current().token,
+                Token::LineBreak | Token::ParagraphBreak
+            )
+            && parser.look_ahead(0).is_some_and(|token| token.token == Token::LeftBlockEnd)
+            && let Some(closer_name) = wikidot_next_line_block_closer_name(parser)
+            && stack.wikidot_page_root_stray_closer_after_formed_block_tail(
+                closer_name.as_ref(),
+            )
+        {
+            stack.clear_wikidot_orphan_closer_paragraph_lead();
+            parser.step()?;
+            line_prefix_whitespace_only = true;
+            continue;
+        }
         // The line-break rule drops this newline because a closer follows it.
         // Live still emits the break, outside the paragraph that the closer ends.
         if parser.settings().layout.legacy()
@@ -668,9 +733,19 @@ where
                     )
             })
         {
-            stack.end_paragraph();
-            stack.mark_next_unwrapped();
-            stack.push_element(Element::LineBreak, true);
+            if close_condition_fn.is_none()
+                && rule.name() == "page"
+                && let Some(closer_name) = wikidot_next_line_block_closer_name(parser)
+                && stack.wikidot_page_root_stray_closer_after_formed_block_tail(
+                    closer_name.as_ref(),
+                )
+            {
+                stack.clear_wikidot_orphan_closer_paragraph_lead();
+            } else {
+                stack.end_paragraph();
+                stack.mark_next_unwrapped();
+                stack.push_element(Element::LineBreak, true);
+            }
             parser.step()?;
             line_prefix_whitespace_only = true;
             continue;
@@ -1086,6 +1161,18 @@ where
                         push_element(&mut stack, element, true);
                     }
                 } else {
+                    if parser.settings().layout.legacy()
+                        && close_condition_fn.is_none()
+                        && rule.name() == "page"
+                        && (active_note || active_div)
+                        && let Some(closer_name) =
+                            wikidot_next_line_block_closer_name(parser)
+                        && stack.wikidot_page_root_stray_closer_after_formed_block_tail(
+                            closer_name.as_ref(),
+                        )
+                    {
+                        stack.arm_wikidot_orphan_closer_paragraph();
+                    }
                     let toc_spaced_tail = parser.settings().layout.legacy()
                         && elements_contain_toc(&elements)
                         && wikidot_toc_spaced_tail(parser);
@@ -1154,6 +1241,17 @@ where
             }
             if note_has_same_line_residual {
                 stack.mark_wikidot_same_line_note_residual();
+            }
+            if parser.settings().layout.legacy()
+                && close_condition_fn.is_none()
+                && rule.name() == "page"
+                && (active_note || active_div)
+                && let Some(closer_name) = wikidot_next_line_block_closer_name(parser)
+                && stack.wikidot_page_root_stray_closer_after_formed_block_tail(
+                    closer_name.as_ref(),
+                )
+            {
+                stack.arm_wikidot_orphan_closer_paragraph();
             }
             if code_has_same_line_residual {
                 stack.mark_wikidot_same_line_code_residual();
@@ -2197,6 +2295,9 @@ fn push_element<'t>(
             && element == Element::LineBreak
             && stack.wikidot_line_break_follows_block()
         {
+            if stack.take_wikidot_suppress_post_block_break() {
+                return;
+            }
             stack.clear_crossed_collapsible_tail();
             stack.mark_next_unwrapped_after_block();
             stack.clear_wikidot_row_suffix_break();

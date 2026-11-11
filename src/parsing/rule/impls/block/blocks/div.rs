@@ -1006,6 +1006,10 @@ fn parse_fn<'r, 't>(
     let before_head_break = parser.clone();
     let head = parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;
     let (mut arguments, mut body_start) = head;
+    if std::env::var("F8Q_DEBUG").is_ok() {
+        eprintln!("F8Q div opener={opener_start} body_start={body_start:?} args_empty={} head_had_segment={} in_quote_line={} start_of_line={} fmt_collection={}",
+            arguments.is_empty(), parser.head_had_segment(), parser.in_native_blockquote_line(), parser.start_of_line(), parser.wikidot_format_collection_body());
+    }
     let source_bytes = parser.full_text().inner().as_bytes();
     let mut head_end = parser.current().span.start;
     while head_end > opener_start
@@ -1275,6 +1279,9 @@ fn parse_fn<'r, 't>(
         && parser.in_native_blockquote_line()
         && wikidot_div_head_line_quote_depth(parser, opener_start)
             > parser.native_blockquote_depth().unwrap_or(0);
+    if std::env::var("F8Q_DEBUG").is_ok() {
+        eprintln!("F8Q pre-body opener={opener_start} body_start={body_start:?} residual_depth_head={residual_depth_head} in_quote_rows={in_quote_rows}");
+    }
     let body = if residual_depth_head {
         parser.get_body_elements_with_literal_quote_context(
             &BLOCK_DIV,
@@ -1300,6 +1307,10 @@ fn parse_fn<'r, 't>(
         parser.leave_wikidot_div_body();
     }
     let body_end_byte = parser.current().span.start;
+    if std::env::var("F8Q_DEBUG").is_ok() {
+        eprintln!("F8Q body-done current={:?}@{}..{} cursor={:?}",
+            parser.current().token, parser.current().span.start, parser.current().span.end, parser.quote_body_cursor());
+    }
     let greedy = parser.settings().layout.legacy()
         && parser.wikidot_greedy_tail_within(
             body_start_byte,
@@ -1389,7 +1400,11 @@ fn parse_fn<'r, 't>(
             parser.current().token,
             Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
         ) {
-            let suffix = consume(parser)?.chain(&mut errors, &mut suffix_safe);
+            if std::env::var("F8Q_DEBUG").is_ok() {
+        eprintln!("F8Q suffix-iter current={:?}@{}..{}",
+            parser.current().token, parser.current().span.start, parser.current().span.end);
+    }
+    let suffix = consume(parser)?.chain(&mut errors, &mut suffix_safe);
             row_suffix.extend(suffix);
         }
         if parser.current().token == Token::LineBreak {

@@ -2248,6 +2248,11 @@ where
         restrict_quote_close: bool,
         allow_inline_quote_close: bool,
     ) -> Option<&'r ExtractedToken<'t>> {
+        let dbg = block_rule.name == "block-div" && std::env::var("F8Q_DEBUG").is_ok();
+        if dbg {
+            eprintln!("F8Q verify start first={first_iteration} restrict={restrict_quote_close} allow={allow_inline_quote_close} cur={:?}@{:?} cursor={:?} close_allowed={}",
+                self.current().token, self.current().span, self.quote_body_cursor(), self.quote_body_close_allowed_here());
+        }
         if block_rule.name == "block-iftags"
             && let Some(designated) = self.wikidot_iftags_body_end()
             && !self.at_designated_iftags_end(designated)

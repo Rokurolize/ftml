@@ -254,7 +254,7 @@ pub use self::user::BLOCK_USER;
 use crate::parsing::parser::Parser;
 use crate::parsing::parser::block_pairs::{WikidotBlockKind, WikidotBlockPair};
 use crate::parsing::{ParseError, Token};
-use crate::tree::{AttributeMap, Element, ListItem, ListType, PartialElement};
+use crate::tree::{AttributeMap, ContainerType, Element, ListItem, ListType, PartialElement};
 
 /// Live Wikidot renders one native list for a quote-row block body whose
 /// rows were collected in per-row fragments: the native list rule ends after
@@ -454,6 +454,67 @@ pub(crate) fn append_wikidot_footnote_trailing_list_break(
     ) {
         children.push(Element::LineBreak);
     }
+}
+
+pub(crate) fn wikidot_eject_note_post_list_orphan_closer<'t>(
+    elements: &mut Vec<Element<'t>>,
+) -> Option<Vec<Element<'t>>> {
+    if !wikidot_elements_contain_marker(elements, "[[hidden]]") {
+        return None;
+    }
+    let list_idx = elements
+        .iter()
+        .rposition(|element| matches!(element, Element::List { .. }))?;
+    if list_idx + 1 >= elements.len() {
+        return None;
+    }
+    let tail = elements.split_off(list_idx + 1);
+    if !wikidot_elements_contain_marker(&tail, "[[/hidden]]") {
+        elements.extend(tail);
+        return None;
+    }
+    let mut ejected = vec![Element::LineBreak];
+    ejected.extend(wikidot_flatten_element_text_runs(&tail));
+    Some(ejected)
+}
+
+fn wikidot_elements_contain_marker(elements: &[Element<'_>], marker: &str) -> bool {
+    let marker = marker.to_ascii_lowercase();
+    elements.iter().any(|element| {
+        wikidot_collect_element_text(element)
+            .to_ascii_lowercase()
+            .contains(&marker)
+    })
+}
+
+fn wikidot_collect_element_text(element: &Element<'_>) -> String {
+    match element {
+        Element::Text(text) | Element::Raw(text) => text.to_string(),
+        Element::Container(container) => container
+            .elements()
+            .iter()
+            .map(wikidot_collect_element_text)
+            .collect(),
+        _ => String::new(),
+    }
+}
+
+fn wikidot_flatten_element_text_runs<'t>(elements: &[Element<'t>]) -> Vec<Element<'t>> {
+    let mut out = Vec::new();
+    for element in elements {
+        match element {
+            Element::Text(text) | Element::Raw(text) => out.push(Element::Text(text.clone())),
+            Element::Container(container) if container.ctype() == ContainerType::Paragraph => {
+                for inner in container.elements() {
+                    if let Element::Text(text) | Element::Raw(text) = inner {
+                        out.push(Element::Text(text.clone()));
+                    }
+                }
+            }
+            other => out.push(other.clone()),
+        }
+    }
+    out
 }
 
 /// Live Wikidot closes a div or note at the closer line of a collapsible

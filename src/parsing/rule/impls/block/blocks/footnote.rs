@@ -270,6 +270,61 @@ fn footnote_row_tail<'r, 't>(
     crate::parsing::rule::impls::eject_wikidot_row_suffix(parser, elements)
 }
 
+fn wikidot_scope_scan_elements(
+    elements: &[Element<'_>],
+    span: &mut i32,
+    size: &mut i32,
+    color: &mut i32,
+    anchor: &mut i32,
+    block: &mut i32,
+    formats: &mut Vec<(InlineFormatKind, i32)>,
+) {
+    for element in elements {
+        match element {
+            Element::Partial(PartialElement::InlineSpanOpen(..)) => *span += 1,
+            Element::Partial(PartialElement::InlineSpanClose(..)) => *span -= 1,
+            Element::Partial(PartialElement::InlineSizeOpen(..)) => *size += 1,
+            Element::Partial(PartialElement::InlineSizeClose(..)) => *size -= 1,
+            Element::Partial(PartialElement::InlineColorOpen(..)) => *color += 1,
+            Element::Partial(PartialElement::InlineColorClose) => *color -= 1,
+            Element::Partial(PartialElement::InlineAnchorOpen(..)) => *anchor += 1,
+            Element::Partial(PartialElement::InlineAnchorClose(..)) => *anchor -= 1,
+            Element::Partial(PartialElement::InlineFormatOpen(kind)) => {
+                match formats.iter_mut().find(|(k, _)| k == kind) {
+                    Some((_, count)) => *count += 1,
+                    None => formats.push((*kind, 1)),
+                }
+            }
+            Element::Partial(PartialElement::InlineFormatClose(kind)) => {
+                if let Some((_, count)) = formats.iter_mut().find(|(k, _)| k == kind) {
+                    *count -= 1;
+                }
+            }
+            Element::Partial(PartialElement::WikidotBlockOpen(_)) => *block += 1,
+            Element::Partial(PartialElement::WikidotBlockClose(_)) => *block -= 1,
+            Element::Container(container) => {
+                wikidot_scope_scan_elements(
+                    container.elements(),
+                    span,
+                    size,
+                    color,
+                    anchor,
+                    block,
+                    formats,
+                );
+            }
+            Element::WikidotBlockFrame { children, .. } => {
+                wikidot_scope_scan_elements(children, span, size, color, anchor, block, formats);
+            }
+            Element::Partial(PartialElement::WikidotFoster(children))
+            | Element::Partial(PartialElement::WikidotCollapsibleTail(children)) => {
+                wikidot_scope_scan_elements(children, span, size, color, anchor, block, formats);
+            }
+            _ => {}
+        }
+    }
+}
+
 fn wikidot_scope_open_at(elements: &[Element<'_>]) -> bool {
     let mut span = 0;
     let mut size = 0;
@@ -277,55 +332,7 @@ fn wikidot_scope_open_at(elements: &[Element<'_>]) -> bool {
     let mut anchor = 0;
     let mut block = 0;
     let mut formats: Vec<(InlineFormatKind, i32)> = Vec::new();
-    fn scan(
-        elements: &[Element<'_>],
-        span: &mut i32,
-        size: &mut i32,
-        color: &mut i32,
-        anchor: &mut i32,
-        block: &mut i32,
-        formats: &mut Vec<(InlineFormatKind, i32)>,
-    ) {
-        for element in elements {
-            match element {
-                Element::Partial(PartialElement::InlineSpanOpen(..)) => *span += 1,
-                Element::Partial(PartialElement::InlineSpanClose(..)) => *span -= 1,
-                Element::Partial(PartialElement::InlineSizeOpen(..)) => *size += 1,
-                Element::Partial(PartialElement::InlineSizeClose(..)) => *size -= 1,
-                Element::Partial(PartialElement::InlineColorOpen(..)) => *color += 1,
-                Element::Partial(PartialElement::InlineColorClose) => *color -= 1,
-                Element::Partial(PartialElement::InlineAnchorOpen(..)) => *anchor += 1,
-                Element::Partial(PartialElement::InlineAnchorClose(..)) => *anchor -= 1,
-                Element::Partial(PartialElement::InlineFormatOpen(kind)) => {
-                    match formats.iter_mut().find(|(k, _)| k == kind) {
-                        Some((_, count)) => *count += 1,
-                        None => formats.push((*kind, 1)),
-                    }
-                }
-                Element::Partial(PartialElement::InlineFormatClose(kind)) => {
-                    if let Some((_, count)) =
-                        formats.iter_mut().find(|(k, _)| k == kind)
-                    {
-                        *count -= 1;
-                    }
-                }
-                Element::Partial(PartialElement::WikidotBlockOpen(_)) => *block += 1,
-                Element::Partial(PartialElement::WikidotBlockClose(_)) => *block -= 1,
-                Element::Container(container) => {
-                    scan(container.elements(), span, size, color, anchor, block, formats)
-                }
-                Element::WikidotBlockFrame { children, .. } => {
-                    scan(children, span, size, color, anchor, block, formats)
-                }
-                Element::Partial(PartialElement::WikidotFoster(children))
-                | Element::Partial(PartialElement::WikidotCollapsibleTail(children)) => {
-                    scan(children, span, size, color, anchor, block, formats)
-                }
-                _ => {}
-            }
-        }
-    }
-    scan(
+    wikidot_scope_scan_elements(
         elements,
         &mut span,
         &mut size,
@@ -866,5 +873,21 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert!(html.contains("class=\"footnotes-footer\""), "{html}");
         assert!(html.contains(">1</a>. Banana</div>"), "{html}");
+    }
+
+    #[test]
+    fn wikidot_footnote_nested_span_single_wrap_after_table() {
+        let (html, _errors) = render_wikidot(
+            "n[[footnote]]\n[[span]]\n[[span]]\n||[[div]]\n[[hidden]]\nx\n[[/hidden]]\n[[/div]]||\n[[/span]]\n[[/span]]\n[[/footnote]]\n[[footnoteblock]]",
+        );
+
+        assert!(
+            html.contains(
+                "<p><span>[[hidden]]<br>\nx<br>\n[[/hidden]]</span></p>"
+            ),
+            "{html}",
+        );
+        assert!(!html.contains("<p><span><span>[[hidden]]"), "{html}");
+        assert!(html.contains("</div><span>||<br>"), "{html}");
     }
 }

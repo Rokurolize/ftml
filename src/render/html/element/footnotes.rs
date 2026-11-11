@@ -307,8 +307,26 @@ fn render_wikidot_footnote_tier(
     }
 }
 
+fn footnote_element_has_row_suffix(element: &Element<'_>) -> bool {
+    match element {
+        Element::Text(text) if text.as_ref() == "||" => true,
+        Element::Container(container) => container.elements().iter().any(|child| {
+            matches!(child, Element::Text(text) if text.as_ref() == "||")
+        }),
+        _ => false,
+    }
+}
+
 fn wikidot_footnote_tiers(contents: &[Element]) -> Vec<u8> {
     let mut tiers = vec![0u8; contents.len()];
+    if let Some(index) = contents
+        .iter()
+        .position(footnote_element_has_row_suffix)
+    {
+        for tier in &mut tiers[index..] {
+            *tier = 1;
+        }
+    }
     let list_positions: Vec<usize> = contents
         .iter()
         .enumerate()

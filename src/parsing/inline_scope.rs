@@ -886,6 +886,22 @@ impl<'t> ActiveScopes<'t> {
         }
     }
 
+    fn collapse_materialized_inner_span_scopes(&mut self) {
+        let spans: Vec<usize> = self
+            .active_positions()
+            .into_iter()
+            .filter(|position| self.scopes[*position].kind == ScopeKind::Span)
+            .collect();
+        if spans.len() <= 1 {
+            return;
+        }
+        for &position in &spans[1..] {
+            if self.scopes[position].materialized {
+                self.kill_scope(position);
+            }
+        }
+    }
+
     fn nested_empty_copies(&self) -> Vec<Element<'t>> {
         let mut copies: Vec<Element<'t>> = Vec::new();
         for position in self.active_positions() {
@@ -7108,6 +7124,7 @@ fn lower_sequence<'t>(
                 if let Some(watermark) = watermark {
                     let completed = active.end_watch();
                     active.drop_block_boundary_scopes(watermark, &completed);
+                    active.collapse_materialized_inner_span_scopes();
                 }
                 if matches!(element, Element::Math { .. })
                     || (matches!(element, Element::TabView(_))

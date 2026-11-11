@@ -51,7 +51,7 @@ fn find_bibliography_closer(source: &str, start: usize) -> Option<usize> {
 
     while let Some(rel) = source[offset..].find("[[/") {
         let candidate = offset + rel;
-        offset = candidate + 3;
+        offset = candidate + 1;
         let end = candidate + BIBLIOGRAPHY_CLOSER.len();
 
         if end <= source.len()
@@ -909,12 +909,38 @@ mod tests {
             "body[[/bibliographyx]]",
             "no closer here",
             "",
+            // Overlapping anchors: a failed candidate must not hide a
+            // closer that starts inside the window it rejected.
+            "[[[/bibliography]]",
+            "x[[/[/BIBLIOGRAPHY]]",
+            "[[/[[/bibliography]]",
+            "[[[[/bibliography]]",
+            "[[/x[[/bibliography]]",
+            "[[/[[/[[/bibliography]]",
+            "[[/[[/[[/[[/BIBLIOGRAPHY]]]]",
         ] {
             let expected = source.to_ascii_lowercase().find("[[/bibliography]]");
             assert_eq!(
                 find_bibliography_closer(source, 0),
                 expected,
                 "closer search differs for {source:?}",
+            );
+        }
+
+        for (source, start) in [
+            ("body[[/bibliography]]tail", 5),
+            ("[[[/bibliography]]", 1),
+            ("x[[/[/BIBLIOGRAPHY]]", 2),
+            ("[[/[[/bibliography]]", 3),
+        ] {
+            let expected = source[start..]
+                .to_ascii_lowercase()
+                .find("[[/bibliography]]")
+                .map(|index| index + start);
+            assert_eq!(
+                find_bibliography_closer(source, start),
+                expected,
+                "closer search differs for {source:?} at {start}",
             );
         }
     }

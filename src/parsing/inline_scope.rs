@@ -9478,12 +9478,21 @@ fn lower_children<'t>(
     // Re-derive the split from the lowered children.
     if let Element::Collapsible {
         elements,
-        unfolded_tail_start: start_slot @ Some(_),
+        unfolded_tail_start: start_slot,
         ..
     } = element
-        && let Some(split) = lowered_row_suffix_split(elements)
     {
-        *start_slot = Some(split);
+        if let Some(old) = *start_slot {
+            match lowered_row_suffix_split(elements) {
+                Some(split) => {
+                    eprintln!("F8FRAME-DEBUG old={old} new={split} len={}", elements.len());
+                    *start_slot = Some(split);
+                }
+                None => {
+                    eprintln!("F8FRAME-DEBUG NONE old={old} len={}", elements.len());
+                }
+            }
+        }
     }
     if let Element::WikidotBlockFrame {
         outer_close_eof: true,

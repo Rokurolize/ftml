@@ -1243,6 +1243,13 @@ fn rewrite_block_chunk_prefix<'t>(
                     }
                 }
             }
+            Element::Table(table) => {
+                for row in &mut table.rows {
+                    for cell in &mut row.cells {
+                        rewrite_block_chunk_prefix(&mut cell.elements, BlockChunkCtx::Item);
+                    }
+                }
+            }
             _ => {
                 let child_ctx = if matches!(
                     element,
@@ -1285,6 +1292,8 @@ fn rewrite_block_chunk_prefix<'t>(
             BlockChunkCtx::Item | BlockChunkCtx::Paragraph => {
                 // A list item body renders the leading chunk bare; a chunk
                 // already inside a paragraph is that paragraph's content.
+                let mut inner = inner;
+                trim_prelist_scope_tail_space(&mut inner);
                 *element = inner;
             }
             BlockChunkCtx::Block => {

@@ -27,6 +27,8 @@ const SCORED_DIV_DIRECT_INACTIVE: u32 = u32::MAX;
 /// Sentinel for "no list depth recorded at a footnote" in the packed field.
 const LIST_DEPTH_AT_FOOTNOTE_NONE: u32 = u32::MAX;
 
+const FOOTNOTE_BODY_HEAD_NONE: u32 = u32::MAX;
+
 /// Sentinel for "no row suffix recorded" in the packed field.
 const ROW_SUFFIX_INACTIVE: u32 = u32::MAX;
 
@@ -106,6 +108,7 @@ pub(super) struct WikidotState {
     /// (BRIEF-UE57b, cleared in the list rule of the same attempt).
     crossed_closes: u16,
     list_depth_at_footnote: u32,
+    footnote_body_head_byte: u32,
     row_suffix_at: u32,
     row_suffix_cut: RowSuffixCut,
     render_interior_row_cut: RowSuffixCut,
@@ -129,6 +132,7 @@ impl Default for WikidotState {
             flags: 0,
             crossed_closes: 0,
             list_depth_at_footnote: LIST_DEPTH_AT_FOOTNOTE_NONE,
+            footnote_body_head_byte: FOOTNOTE_BODY_HEAD_NONE,
             row_suffix_at: ROW_SUFFIX_INACTIVE,
             row_suffix_cut: RowSuffixCut::None,
             render_interior_row_cut: RowSuffixCut::None,
@@ -757,6 +761,20 @@ impl Parser<'_, '_> {
             Some(depth) => {
                 u32::try_from(depth).unwrap_or(LIST_DEPTH_AT_FOOTNOTE_NONE - 1)
             }
+        };
+    }
+
+    pub(crate) fn wikidot_footnote_body_head_byte(&self) -> Option<usize> {
+        match self.wikidot.footnote_body_head_byte {
+            FOOTNOTE_BODY_HEAD_NONE => None,
+            byte => Some(byte as usize),
+        }
+    }
+
+    pub(crate) fn set_wikidot_footnote_body_head_byte(&mut self, value: Option<usize>) {
+        self.wikidot.footnote_body_head_byte = match value {
+            None => FOOTNOTE_BODY_HEAD_NONE,
+            Some(byte) => u32::try_from(byte).unwrap_or(FOOTNOTE_BODY_HEAD_NONE - 1),
         };
     }
 

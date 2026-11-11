@@ -20,6 +20,7 @@
 
 use super::append_wikidot_footnote_trailing_list_break;
 use super::prelude::*;
+use crate::parsing::body_end::wikidot_footnote_yields_enclosing_closer;
 use crate::parsing::parse_boolean;
 use crate::tree::AttributeMap;
 use crate::tree::{InlineFormatKind, PartialElement};
@@ -48,7 +49,7 @@ pub const BLOCK_FOOTNOTE_BLOCK: BlockRule = BlockRule {
 pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &str,
-    _opener_start: usize,
+    opener_start: usize,
     flag_star: bool,
     flag_score: bool,
     in_head: bool,
@@ -68,6 +69,7 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
     }
 
     let parser = &mut ParserWrap::new(parser);
+    parser.set_wikidot_footnote_body_head_byte(Some(opener_start));
 
     assert!(!flag_star, "Footnote reference doesn't allow star flag");
     assert!(!flag_score, "Footnote reference doesn't allow score flag");
@@ -81,6 +83,11 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
     }
 
     let body = parser.get_body_elements(&BLOCK_FOOTNOTE, true)?;
+    if parser.settings().layout.legacy()
+        && wikidot_leave_enclosing_closer_for_parent(parser)?
+    {
+        wikidot_consume_pending_footnote_ref_closer(parser)?;
+    }
     let fused_close = parser.wikidot_body_closed_with_fused_close(&BLOCK_FOOTNOTE);
     let (mut elements, errors, _) = body.into();
     let sole_dissolved_list_break = parser.settings().layout.legacy()
@@ -175,6 +182,56 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
     } else {
         ok!(Element::Footnote(index.into()), errors)
     }
+}
+
+fn wikidot_leave_enclosing_closer_for_parent<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<bool, ParseError>
+where
+    'r: 't,
+{
+    if !parser.wikidot_footnote_at_enclosing_closer() {
+        return Ok(false);
+    }
+    let close_start = parser.current().span.start;
+    let mut probe = parser.clone();
+    let Ok(name) = probe.get_end_block() else {
+        return Ok(false);
+    };
+    if !wikidot_footnote_yields_enclosing_closer(parser, close_start, &name) {
+        return Ok(false);
+    }
+    let bare = name.strip_suffix('_').unwrap_or(name.as_ref());
+    let close_token = format!("[[/{bare}]]");
+    let end_byte = close_start + close_token.len();
+    while parser.current().span.start < end_byte {
+        parser.step()?;
+    }
+    if parser.current().token == Token::LineBreak {
+        parser.step()?;
+    }
+    Ok(true)
+}
+
+fn wikidot_consume_pending_footnote_ref_closer<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<(), ParseError>
+where
+    'r: 't,
+{
+    if parser.current().token != Token::LeftBlockEnd {
+        return Ok(());
+    }
+    let mut probe = parser.clone();
+    let Ok(name) = probe.get_end_block() else {
+        return Ok(());
+    };
+    if !name.eq_ignore_ascii_case("footnote") {
+        return Ok(());
+    }
+    parser.update(&probe);
+    let _ = parser.get_end_block();
+    Ok(())
 }
 
 fn wikidot_footnote_closer_line_list_marker(
@@ -574,6 +631,7 @@ impl<'r, 't> DerefMut for ParserWrap<'_, 'r, 't> {
 impl Drop for ParserWrap<'_, '_, '_> {
     fn drop(&mut self) {
         self.parser.set_footnote_flag(false);
+        self.parser.set_wikidot_footnote_body_head_byte(None);
         if let Some(previous) = self.zone_restore {
             self.parser.set_wikidot_footnote_zone_until(previous);
         }
@@ -795,6 +853,36 @@ mod tests {
             "{html}",
         );
         assert!(!html.contains("\">1</a>. <p>first line</p>"), "{html}");
+    }
+
+    #[test]
+    fn wikidot_footnote_body_enclosing_div_closer_pool_7024() {
+        let source =
+            "[[div]]\nx[[footnote]]n\n[[/div]]\n[[/footnote]]\n[[footnoteblock]]";
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(source);
+        let parser = Parser::new(&tokenization, &page_info, &settings);
+        let close_pos = source.find("[[/div]]").unwrap();
+        let footnote_pos = source.find("[[footnote]]").unwrap();
+        assert!(footnote_pos > 0);
+        assert!(
+            parser
+                .wikidot_block_pair_at_closer_byte(close_pos)
+                .is_none(),
+            "closer pair should be absent when footnote sits between div ends",
+        );
+
+        let (html, errors) = render_wikidot(source);
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert!(!html.contains("[[/div]]"), "{html}");
+        assert_eq!(html.matches("class=\"footnotes-footer\"").count(), 1);
+        let footer_start = html.find("footnotes-footer").unwrap();
+        let after_ref = html.find("</sup>").unwrap();
+        assert!(
+            html[after_ref..footer_start].find("</div>").is_none(),
+            "{html}",
+        );
     }
 
     #[test]

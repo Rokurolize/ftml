@@ -19,6 +19,7 @@
  */
 
 use super::{Parser, Token};
+use crate::parsing::parser::block_pairs::{WikidotBlockKind, WikidotBlockPair};
 
 /// What an absorb-armed stray line looks like after a leading break run.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -329,6 +330,24 @@ impl<'r, 't> Parser<'r, 't> {
         self.at_body_end_boundary_in(true, true)
     }
 
+    pub(crate) fn wikidot_footnote_at_enclosing_closer(&self) -> bool
+    where
+        'r: 't,
+    {
+        if !self.in_footnote() || !self.settings().layout.legacy() {
+            return false;
+        }
+        if self.current().token != Token::LeftBlockEnd {
+            return false;
+        }
+        let start = self.current().span.start;
+        let mut probe = self.clone();
+        let Ok(name) = probe.get_end_block() else {
+            return false;
+        };
+        wikidot_footnote_yields_enclosing_closer(self, start, &name)
+    }
+
     fn at_body_end_boundary_in(&self, ancestors_only: bool, hard_only: bool) -> bool
     where
         'r: 't,
@@ -357,19 +376,27 @@ impl<'r, 't> Parser<'r, 't> {
 
         let mut probe = self.clone();
         let parsed_name = probe.get_end_block().ok();
-        let accepted = {
+        let footnote_enclosing = ancestors_only
+            && self.in_footnote()
+            && self.settings().layout.legacy()
+            && !self.discarding_hidden_body()
+            && parsed_name.as_deref().is_some_and(|name| {
+                wikidot_footnote_yields_enclosing_closer(self, start, name)
+            });
+        let accepted = footnote_enclosing || {
             let cache = self.block_end_scan_cache.borrow();
-            footnote_shadowed_boundaries(considered_boundaries(
+            let boundaries = footnote_shadowed_boundaries(considered_boundaries(
                 &cache.body_end_boundaries,
                 ancestors_only,
-            ))
-            .iter()
-            .filter(|boundary| boundary_qualifies(boundary, hard_only))
-            .any(|boundary| {
-                parsed_name
-                    .as_deref()
-                    .is_some_and(|name| boundary.accepts(name))
-            })
+            ));
+            boundaries
+                .iter()
+                .filter(|boundary| boundary_qualifies(boundary, hard_only))
+                .any(|boundary| {
+                    parsed_name
+                        .as_deref()
+                        .is_some_and(|name| boundary.accepts(name))
+                })
         };
         if accepted {
             if let Some(name) = parsed_name.as_deref() {
@@ -386,22 +413,27 @@ impl<'r, 't> Parser<'r, 't> {
             return false;
         }
 
+        if footnote_enclosing {
+            return true;
+        }
+
         let ahead = self.full_text().inner().get(start..).unwrap_or("");
         let cache = self.block_end_scan_cache.borrow();
-        footnote_shadowed_boundaries(considered_boundaries(
+        let boundaries = footnote_shadowed_boundaries(considered_boundaries(
             &cache.body_end_boundaries,
             ancestors_only,
-        ))
-        .iter()
-        .filter(|boundary| boundary_qualifies(boundary, hard_only))
-        .any(|boundary| {
-            boundary.accepts_names.iter().any(|name| {
-                let fused = format!("[[/{name}]]]");
-                ahead
-                    .get(..fused.len())
-                    .is_some_and(|head| head.eq_ignore_ascii_case(&fused))
+        ));
+        boundaries
+            .iter()
+            .filter(|boundary| boundary_qualifies(boundary, hard_only))
+            .any(|boundary| {
+                boundary.accepts_names.iter().any(|name| {
+                    let fused = format!("[[/{name}]]]");
+                    ahead
+                        .get(..fused.len())
+                        .is_some_and(|head| head.eq_ignore_ascii_case(&fused))
+                })
             })
-        })
     }
 
     fn qualifying_body_end_boundary_exists(
@@ -436,6 +468,131 @@ fn footnote_shadowed_boundaries(boundaries: &[BodyEndBoundary]) -> &[BodyEndBoun
         }
     }
     boundaries
+}
+
+pub(crate) fn wikidot_footnote_yields_enclosing_closer(
+    parser: &Parser<'_, '_>,
+    closer_byte: usize,
+    close_name: &str,
+) -> bool {
+    let Some(footnote_head) = parser.wikidot_footnote_body_head_byte() else {
+        return false;
+    };
+    let bare = close_name.strip_suffix('_').unwrap_or(close_name);
+    if !wikidot_footnote_enclosing_close_kind(bare) {
+        return false;
+    }
+    let source = parser.full_text().inner();
+    if wikidot_unclosed_block_opener_before_byte(source, closer_byte, bare)
+        .is_some_and(|opener_byte| opener_byte >= footnote_head)
+    {
+        return false;
+    }
+    let Some(opener_byte) =
+        wikidot_unclosed_block_opener_before_byte(source, footnote_head, bare)
+    else {
+        return false;
+    };
+    if opener_byte >= footnote_head {
+        return false;
+    }
+    if !wikidot_footnote_enclosing_opener_on_prior_line(
+        source,
+        opener_byte,
+        footnote_head,
+    ) {
+        return false;
+    }
+    if let Some(pair) = parser.wikidot_block_pair_at_closer_byte(closer_byte) {
+        return pair.head_byte == opener_byte
+            && wikidot_pair_accepts_close_name(&pair, bare)
+            && parser.wikidot_pair_goes_flat(&pair);
+    }
+    parser
+        .wikidot_block_pair_at_head_byte(opener_byte)
+        .is_none_or(|pair| {
+            pair.head_byte == opener_byte
+                && wikidot_pair_accepts_close_name(&pair, bare)
+                && parser.wikidot_pair_goes_flat(&pair)
+        })
+}
+
+fn wikidot_footnote_enclosing_opener_on_prior_line(
+    source: &str,
+    opener_byte: usize,
+    footnote_head: usize,
+) -> bool {
+    let line_start = source[..=opener_byte.min(source.len().saturating_sub(1))]
+        .rfind('\n')
+        .map_or(0, |index| index + 1);
+    let line_end = source[opener_byte..]
+        .find(['\n', '\r'])
+        .map_or(source.len(), |index| opener_byte + index);
+    footnote_head >= line_end && opener_byte >= line_start
+}
+
+fn wikidot_footnote_enclosing_close_kind(bare: &str) -> bool {
+    bare.eq_ignore_ascii_case("div")
+        || bare.eq_ignore_ascii_case("collapsible")
+        || bare.eq_ignore_ascii_case("note")
+        || bare == "="
+}
+
+fn wikidot_unclosed_block_opener_before_byte(
+    source: &str,
+    before: usize,
+    name: &str,
+) -> Option<usize> {
+    let region = source.get(..before)?;
+    let open = format!("[[{name}");
+    let close = format!("[[/{name}");
+    let open_bytes = open.as_bytes();
+    let close_bytes = close.as_bytes();
+    let bytes = region.as_bytes();
+    let mut depth = 0i32;
+    let mut last_open: Option<usize> = None;
+    let mut pos = 0usize;
+    while pos < bytes.len() {
+        if bytes
+            .get(pos..)
+            .is_some_and(|tail| tail.len() >= close_bytes.len())
+            && bytes[pos..pos + close_bytes.len()].eq_ignore_ascii_case(close_bytes)
+        {
+            depth -= 1;
+            pos += close_bytes.len();
+            continue;
+        }
+        if bytes
+            .get(pos..)
+            .is_some_and(|tail| tail.len() >= open_bytes.len())
+            && bytes[pos..pos + open_bytes.len()].eq_ignore_ascii_case(open_bytes)
+            && bytes
+                .get(pos + open_bytes.len())
+                .is_none_or(|next| !next.is_ascii_alphanumeric())
+        {
+            depth += 1;
+            if depth > 0 {
+                last_open = Some(pos);
+            }
+            pos += open_bytes.len();
+            continue;
+        }
+        pos += 1;
+    }
+    if depth > 0 { last_open } else { None }
+}
+
+fn wikidot_pair_accepts_close_name(pair: &WikidotBlockPair, bare: &str) -> bool {
+    match pair.kind {
+        WikidotBlockKind::Div => bare.eq_ignore_ascii_case("div") || bare == "=",
+        WikidotBlockKind::Collapsible => bare.eq_ignore_ascii_case("collapsible"),
+        WikidotBlockKind::Note => bare.eq_ignore_ascii_case("note"),
+        WikidotBlockKind::AlignCenter
+        | WikidotBlockKind::AlignRight
+        | WikidotBlockKind::AlignLeft
+        | WikidotBlockKind::AlignJustify => bare == "=",
+        _ => false,
+    }
 }
 
 fn boundary_qualifies(boundary: &BodyEndBoundary, hard_only: bool) -> bool {

@@ -2010,7 +2010,7 @@ fn canonicalize_crossed_outer_owner_closers(
                                 let follower_is_block_head = follower_line
                                     .is_some_and(blank_separated_follower_drops_break);
                                 let sentinel = if inner == "ol" {
-                                    if follower_is_block_head {
+                                    if follower_is_block_head || follower_line.is_none() {
                                         WIKIDOT_CROSSED_OL_TAIL_SENTINEL
                                     } else {
                                         WIKIDOT_CROSSED_OL_OPEN_SENTINEL

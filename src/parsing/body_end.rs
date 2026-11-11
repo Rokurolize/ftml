@@ -383,24 +383,21 @@ impl<'r, 't> Parser<'r, 't> {
             && parsed_name.as_deref().is_some_and(|name| {
                 wikidot_footnote_yields_enclosing_closer(self, start, name)
             });
-        let accepted = footnote_enclosing
-            || {
-                let cache = self.block_end_scan_cache.borrow();
-                let ancestors = considered_boundaries(&cache.body_end_boundaries, ancestors_only);
-                let boundaries = if ancestors_only && self.in_footnote() {
-                    ancestors
-                } else {
-                    footnote_shadowed_boundaries(ancestors)
-                };
-                boundaries
-                    .iter()
-                    .filter(|boundary| boundary_qualifies(boundary, hard_only))
-                    .any(|boundary| {
-                        parsed_name
-                            .as_deref()
-                            .is_some_and(|name| boundary.accepts(name))
-                    })
-            };
+        let accepted = footnote_enclosing || {
+            let cache = self.block_end_scan_cache.borrow();
+            let boundaries = footnote_shadowed_boundaries(considered_boundaries(
+                &cache.body_end_boundaries,
+                ancestors_only,
+            ));
+            boundaries
+                .iter()
+                .filter(|boundary| boundary_qualifies(boundary, hard_only))
+                .any(|boundary| {
+                    parsed_name
+                        .as_deref()
+                        .is_some_and(|name| boundary.accepts(name))
+                })
+        };
         if accepted {
             if let Some(name) = parsed_name.as_deref() {
                 let bare = name.strip_suffix('_').unwrap_or(name);
@@ -422,12 +419,10 @@ impl<'r, 't> Parser<'r, 't> {
 
         let ahead = self.full_text().inner().get(start..).unwrap_or("");
         let cache = self.block_end_scan_cache.borrow();
-        let ancestors = considered_boundaries(&cache.body_end_boundaries, ancestors_only);
-        let boundaries = if ancestors_only && self.in_footnote() {
-            ancestors
-        } else {
-            footnote_shadowed_boundaries(ancestors)
-        };
+        let boundaries = footnote_shadowed_boundaries(considered_boundaries(
+            &cache.body_end_boundaries,
+            ancestors_only,
+        ));
         boundaries
             .iter()
             .filter(|boundary| boundary_qualifies(boundary, hard_only))

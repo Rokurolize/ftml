@@ -83,8 +83,9 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
     }
 
     let body = parser.get_body_elements(&BLOCK_FOOTNOTE, true)?;
-    if parser.settings().layout.legacy() {
-        wikidot_leave_enclosing_closer_for_parent(parser)?;
+    if parser.settings().layout.legacy()
+        && wikidot_leave_enclosing_closer_for_parent(parser)?
+    {
         wikidot_consume_pending_footnote_ref_closer(parser)?;
     }
     let fused_close = parser.wikidot_body_closed_with_fused_close(&BLOCK_FOOTNOTE);
@@ -185,20 +186,20 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
 
 fn wikidot_leave_enclosing_closer_for_parent<'r, 't>(
     parser: &mut Parser<'r, 't>,
-) -> Result<(), ParseError>
+) -> Result<bool, ParseError>
 where
     'r: 't,
 {
     if !parser.wikidot_footnote_at_enclosing_closer() {
-        return Ok(());
+        return Ok(false);
     }
     let close_start = parser.current().span.start;
     let mut probe = parser.clone();
     let Ok(name) = probe.get_end_block() else {
-        return Ok(());
+        return Ok(false);
     };
     if !wikidot_footnote_yields_enclosing_closer(parser, close_start, &name) {
-        return Ok(());
+        return Ok(false);
     }
     let bare = name.strip_suffix('_').unwrap_or(name.as_ref());
     let close_token = format!("[[/{bare}]]");
@@ -209,7 +210,7 @@ where
     if parser.current().token == Token::LineBreak {
         parser.step()?;
     }
-    Ok(())
+    Ok(true)
 }
 
 fn wikidot_consume_pending_footnote_ref_closer<'r, 't>(
@@ -856,7 +857,8 @@ mod tests {
 
     #[test]
     fn wikidot_footnote_body_enclosing_div_closer_pool_7024() {
-        let source = "[[div]]\nx[[footnote]]n\n[[/div]]\n[[/footnote]]\n[[footnoteblock]]";
+        let source =
+            "[[div]]\nx[[footnote]]n\n[[/div]]\n[[/footnote]]\n[[footnoteblock]]";
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         let tokenization = crate::tokenize(source);

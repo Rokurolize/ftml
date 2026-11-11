@@ -655,6 +655,30 @@ where
             line_prefix_whitespace_only = true;
             continue;
         }
+        if parser.settings().layout.legacy()
+            && matches!(
+                parser.current().token,
+                Token::LineBreak | Token::ParagraphBreak
+            )
+            && close_condition_fn.is_some()
+            && parser.in_wikidot_div_body()
+            && (parser.quote_body_cursor().is_some()
+                || wikidot_next_line_has_quote_prefix(parser))
+            && let Some(closer_start) = wikidot_quote_line_closer_after_break(parser)
+            && !crate::parsing::rule::impls::wikidot_discarded_closer_has_same_line_remainder(
+                parser,
+                closer_start,
+            )
+            && wikidot_stray_non_div_closer_at(parser, closer_start)
+        {
+            parser.push_wikidot_discarded_row_closer(closer_start);
+            stack.end_paragraph();
+            stack.mark_next_unwrapped();
+            stack.push_element(Element::LineBreak, true);
+            parser.step()?;
+            line_prefix_whitespace_only = true;
+            continue;
+        }
         // The line-break rule drops this newline because a closer follows it.
         // Live still emits the break, outside the paragraph that the closer ends.
         if parser.settings().layout.legacy()
@@ -904,6 +928,31 @@ where
                 if !absorb_stray_break_neutralized {
                     stack.push_element(Element::LineBreak, true);
                 }
+            }
+            if parser.settings().layout.legacy()
+                && matches!(elements, Elements::None)
+                && matches!(
+                    parser.current().token,
+                    Token::LineBreak | Token::ParagraphBreak
+                )
+                && close_condition_fn.is_some()
+                && parser.in_wikidot_div_body()
+                && (parser.quote_body_cursor().is_some()
+                    || wikidot_next_line_has_quote_prefix(parser))
+                && let Some(closer_start) = wikidot_quote_line_closer_after_break(parser)
+                && !crate::parsing::rule::impls::wikidot_discarded_closer_has_same_line_remainder(
+                    parser,
+                    closer_start,
+                )
+                && wikidot_stray_non_div_closer_at(parser, closer_start)
+            {
+                parser.push_wikidot_discarded_row_closer(closer_start);
+                stack.end_paragraph();
+                stack.mark_next_unwrapped();
+                stack.push_element(Element::LineBreak, true);
+                parser.step()?;
+                line_prefix_whitespace_only = true;
+                continue;
             }
             absorb_stray_break_neutralized = false;
             let a2_crossed = parser.take_wikidot_a2_crossed_follower_bare();
@@ -1481,6 +1530,66 @@ where
 /// formation closed its enclosing numbered list), a bare `[[/li]]`,
 /// `[[/ol]]` or `[[/ul]]` alone on its line is a silent no-op in live.
 /// Returns the byte one past the line's `]]` when the current line is one.
+pub(crate) fn wikidot_next_line_has_quote_prefix(parser: &Parser<'_, '_>) -> bool {
+    let source = parser.full_text().inner();
+    let mut pos = parser.current().span.end.min(source.len());
+    while pos < source.len() && matches!(source.as_bytes()[pos], b'\n' | b'\r') {
+        pos += 1;
+    }
+    if pos >= source.len() {
+        return false;
+    }
+    let (depth, _) = crate::preproc::quote_depth_and_body(&source[pos..]);
+    depth > 0
+}
+
+pub(crate) fn wikidot_quote_line_closer_after_break<'r, 't>(
+    parser: &Parser<'r, 't>,
+) -> Option<usize>
+where
+    'r: 't,
+{
+    if !matches!(
+        parser.current().token,
+        Token::LineBreak | Token::ParagraphBreak
+    ) {
+        return None;
+    }
+    let mut offset = 0usize;
+    loop {
+        let token = parser.look_ahead(offset)?;
+        offset += 1;
+        match token.token {
+            Token::Whitespace | Token::Quote => {}
+            Token::LeftBlockEnd => return Some(token.span.start),
+            Token::LineBreak | Token::ParagraphBreak => return None,
+            _ => return None,
+        }
+    }
+}
+
+pub(crate) fn wikidot_stray_non_div_closer_at<'r, 't>(
+    parser: &Parser<'r, 't>,
+    closer_start: usize,
+) -> bool
+where
+    'r: 't,
+{
+    let mut probe = parser.clone();
+    while probe.current().span.start < closer_start {
+        if probe.step().is_err() {
+            return false;
+        }
+    }
+    probe.current().token == Token::LeftBlockEnd
+        && probe.current().span.start == closer_start
+        && !probe.at_body_end_boundary()
+        && probe.get_end_block().is_ok_and(|raw_name| {
+            let bare = raw_name.strip_suffix('_').unwrap_or(raw_name.as_ref());
+            !bare.eq_ignore_ascii_case("div")
+        })
+}
+
 fn wikidot_tail_stray_closer_line<'r, 't>(parser: &Parser<'r, 't>) -> Option<usize>
 where
     'r: 't,
@@ -2524,5 +2633,20 @@ mod tests {
         assert!(wikidot.contains("</div><br>\nafter"), "{wikidot}");
         assert!(!wikidot.contains("<p>after</p>"), "{wikidot}");
         assert!(wikijump.contains("</div><p>after</p>"), "{wikijump}");
+    }
+
+    #[test]
+    fn wikidot_quote_div_stray_hidden_closer_break_outside_paragraph() {
+        let html = render_wikidot(
+            "> [[div]]\n> [[hidden]]\n> [[div]]\n> [[/div]]\n> [[/hidden]]\n> [[/div]]",
+        );
+        assert!(
+            html.contains("<p>[[hidden]]</p><br>"),
+            "{html}"
+        );
+        assert!(
+            !html.contains("<p>[[hidden]]<br>"),
+            "{html}"
+        );
     }
 }

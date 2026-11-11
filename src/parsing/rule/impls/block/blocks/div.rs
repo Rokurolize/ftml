@@ -25,6 +25,7 @@ use super::{
     consume_wikidot_flat_head_break, merge_adjacent_native_lists,
     restore_crossed_li_terminated_body_break, trim_wikidot_trailing_explicit_list_break,
     unwrap_wikidot_paragraph_after_explicit_list,
+    unwrap_wikidot_paragraph_after_tabview_orphan_blockquote_closer,
     wikidot_eject_after_lost_owner_collapsible, wikidot_flat_pair_for_head,
     wikidot_scan_pairs_head,
 };
@@ -823,6 +824,7 @@ fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: b
         }
     }
     unwrap_wikidot_paragraph_after_explicit_list(elements);
+    unwrap_wikidot_paragraph_after_tabview_orphan_blockquote_closer(elements);
 }
 
 fn skip_trailing_head_space<'r, 't>(
@@ -1576,6 +1578,35 @@ mod tests {
         assert_eq!(
             render(input, Layout::Wikijump),
             "<div class=\"box \"><p>body</p></div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_quoted_div_tabview_orphan_blockquote_closer_bare() {
+        let source = concat!(
+            "> [[div]]\n",
+            "> [[tabview]]\n",
+            "> [[tab A]]\n",
+            "> x\n",
+            "> [[/tab]]\n",
+            "> [[/tabview]]\n",
+            "> [[/blockquote]]\n",
+            "> [[/div]]",
+        );
+        let html = render_preprocessed_wikidot_allowing_errors(source);
+        assert!(
+            !html.contains("<p>[[/blockquote]]</p>"),
+            "got: {html}"
+        );
+        assert!(
+            html.contains("[[/blockquote]]"),
+            "got: {html}"
+        );
+        let anchor = html.find("[[/blockquote]]").expect("closer literal");
+        let before = &html[anchor.saturating_sub(12)..anchor];
+        assert!(
+            before.contains("<br"),
+            "expected bare break before closer, before={before:?} full={html}"
         );
     }
 

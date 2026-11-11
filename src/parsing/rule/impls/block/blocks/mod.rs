@@ -380,6 +380,89 @@ pub(crate) fn drop_wikidot_trailing_vanish_breaks(elements: &mut Vec<Element<'_>
 /// line between the list and the text already lands as [LineBreak, Text]
 /// and needs no unwrap; a block predecessor keeps following text wrapped
 /// (hr/table), so only an immediately preceding list unwraps its paragraph.
+fn wikidot_paragraph_orphan_blockquote_closer_unwrap<'t>(
+    container: &crate::tree::Container<'t>,
+) -> Option<Vec<Element<'t>>> {
+    use crate::tree::ContainerType;
+    if container.ctype() != ContainerType::Paragraph {
+        return None;
+    }
+    let children: Vec<Element<'t>> = container.elements().to_vec();
+    let mut text_runs = Vec::new();
+    for child in &children {
+        match child {
+            Element::LineBreak | Element::LineBreaks(_) => {}
+            Element::Text(text) => text_runs.push(text.as_ref().trim()),
+            _ => return None,
+        }
+    }
+    let concat: String = text_runs.concat();
+    if concat != "[[/blockquote]]" {
+        return None;
+    }
+    let mut out = vec![Element::LineBreak];
+    for child in children {
+        match child {
+            Element::LineBreak | Element::LineBreaks(_) => {}
+            other => out.push(other.clone()),
+        }
+    }
+    Some(out)
+}
+
+fn unwrap_wikidot_paragraph_after_tabview_orphan_blockquote_closer_level(
+    elements: &mut Vec<Element<'_>>,
+) {
+    let mut index = 0;
+    while index < elements.len() {
+        let unwrapped = match &elements[index] {
+            Element::Container(container) => {
+                wikidot_paragraph_orphan_blockquote_closer_unwrap(container)
+            }
+            _ => None,
+        };
+        let Some(unwrapped) = unwrapped else {
+            index += 1;
+            continue;
+        };
+        let mut tabview_at = None;
+        for look in (0..index).rev() {
+            match &elements[look] {
+                Element::LineBreak | Element::LineBreaks(_) => {}
+                Element::Text(text) if text.trim() == "[[blockquote]]" => {}
+                Element::TabView(_) => {
+                    tabview_at = Some(look);
+                    break;
+                }
+                _ => break,
+            }
+        }
+        if tabview_at.is_none() {
+            index += 1;
+            continue;
+        }
+        elements.remove(index);
+        for (offset, element) in unwrapped.into_iter().enumerate() {
+            elements.insert(index + offset, element);
+        }
+        index = tabview_at.unwrap() + 1;
+    }
+}
+
+pub(crate) fn unwrap_wikidot_paragraph_after_tabview_orphan_blockquote_closer(
+    elements: &mut Vec<Element<'_>>,
+) {
+    fn walk(elements: &mut Vec<Element<'_>>) {
+        unwrap_wikidot_paragraph_after_tabview_orphan_blockquote_closer_level(elements);
+        for element in elements.iter_mut() {
+            if let Element::Container(container) = element {
+                walk(container.elements_mut());
+            }
+        }
+    }
+    walk(elements);
+}
+
 pub(crate) fn unwrap_wikidot_paragraph_after_explicit_list(elements: &mut Vec<Element<'_>>) {
     let mut index = 0;
     while index < elements.len() {

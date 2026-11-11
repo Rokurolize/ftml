@@ -29,6 +29,7 @@ use crate::parsing::paragraph::{
     ParagraphStack, collapsible_has_direct_literal_nested_opener,
 };
 use crate::parsing::parser::{QuoteBodyLineStatus, QuoteEscapedUnit};
+use crate::parsing::rule::impls::block::blocks::unwrap_wikidot_paragraph_after_tabview_orphan_blockquote_closer;
 use crate::parsing::{
     DepthItem, DepthList, ParagraphSplitEntry, ParagraphSplitKind, process_depths,
 };
@@ -2410,6 +2411,7 @@ fn build_blockquote_element(
         if residual_chunk {
             elements = unwrap_residual_run_paragraphs(elements);
         }
+        unwrap_wikidot_paragraph_after_tabview_orphan_blockquote_closer(&mut elements);
     }
     if elements.is_empty() {
         return None;

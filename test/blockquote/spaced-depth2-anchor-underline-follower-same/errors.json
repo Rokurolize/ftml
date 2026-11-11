@@ -1,0 +1,20 @@
+[
+  {
+    "token": "line-break",
+    "rule": "underline",
+    "span": [
+      64,
+      65
+    ],
+    "kind": "end-of-input"
+  },
+  {
+    "token": "underline",
+    "rule": "fallback",
+    "span": [
+      19,
+      21
+    ],
+    "kind": "no-rules-match"
+  }
+]

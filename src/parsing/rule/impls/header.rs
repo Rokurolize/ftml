@@ -85,8 +85,7 @@ fn consume_header_once<'r, 't>(
     } else {
         None
     };
-    let mut collected =
-        collect_wikidot_heading_with_barriers(parser, ctype, heading, &close);
+    let collected = collect_wikidot_heading_with_barriers(parser, ctype, heading, &close);
     if let Some((single_line, heading_line)) = restore_line {
         parser.set_in_wikidot_single_line_content(single_line);
         parser.set_in_wikidot_heading_line(heading_line);

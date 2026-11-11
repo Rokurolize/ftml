@@ -128,8 +128,7 @@ pub fn render_list(
                     if unclosed
                         && list_items
                             .iter()
-                            .filter(|item| matches!(item, ListItem::Elements { .. }))
-                            .last()
+                            .rfind(|item| matches!(item, ListItem::Elements { .. }))
                             .is_some_and(|last| std::ptr::eq(last, list_item))
                     {
                         li.omit_close();

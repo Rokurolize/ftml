@@ -142,7 +142,7 @@ fn build_flat_split_segments<'t>(
             }
             let run = std::mem::take(quote_run);
             let depth_lists = process_depths((), run);
-            let mut elements: Vec<Element> = depth_lists
+            let elements: Vec<Element> = depth_lists
                 .into_iter()
                 .filter_map(|(_, depth_list)| {
                     build_blockquote_element(depth_list, wikidot)

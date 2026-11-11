@@ -277,9 +277,7 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
         }
         if marker_extent_ignore_case(source, pos, b"[[/div]]") {
             if collapsible_depth == 1 && iftags_depth == 0 {
-                if div_depth > 0 {
-                    div_depth -= 1;
-                }
+                div_depth = div_depth.saturating_sub(1);
                 open_divs = open_divs.saturating_sub(1);
             }
             pos += "[[/div]]".len();
@@ -1381,8 +1379,7 @@ fn remove_tight_quote_lines(lines: &mut [String], literal_lines: &[bool]) {
         if trimmed[marker_depth..].starts_with(FOOTNOTE_HEAD) {
             let depth = marker_depth
                 .max(active_quote_depth)
-                .max(1)
-                .min(MAX_SYNTHESIZED_QUOTE_DEPTH);
+                .clamp(1, MAX_SYNTHESIZED_QUOTE_DEPTH);
             *line = format!(
                 "{indentation}{} {}{ending}",
                 ">".repeat(depth),

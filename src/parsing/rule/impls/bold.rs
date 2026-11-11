@@ -834,13 +834,11 @@ fn mark_scopeless_span_list_close_tail<'r, 't>(
         crate::tree::WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER
     } else if matches!(current.token, Token::RuntimeText | Token::Identifier)
         && !current.slice.trim().is_empty()
-    {
-        crate::tree::WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER
-    } else if current.token == Token::Whitespace
-        && rest.first().is_some_and(|next| {
-            matches!(next.token, Token::RuntimeText | Token::Identifier)
-                && !next.slice.trim().is_empty()
-        })
+        || current.token == Token::Whitespace
+            && rest.first().is_some_and(|next| {
+                matches!(next.token, Token::RuntimeText | Token::Identifier)
+                    && !next.slice.trim().is_empty()
+            })
     {
         crate::tree::WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER
     } else {

@@ -650,7 +650,12 @@ pub(crate) fn wikidot_row_suffix_start_index(elements: &[Element<'_>]) -> Option
             return Some(start);
         }
     }
-    elements.iter().rposition(element_is_row_suffix)
+    let last = elements.iter().rposition(element_is_row_suffix)?;
+    let mut start = last;
+    while start > 0 && element_is_row_suffix(&elements[start - 1]) {
+        start -= 1;
+    }
+    Some(start)
 }
 
 fn row_suffix_index<'r, 't>(
@@ -2097,10 +2102,12 @@ fn try_consume_inner<'r, 't>(
                                 &mut anchor_open_heads,
                             );
                                     elements.clear();
+                                    let mut hoist_cell = cell_start;
+                                    hoist_cell.column_span = NonZeroU32::new(1).unwrap();
                                     push_cell(
                                         &mut cells,
                                         &mut elements,
-                                        cell_start,
+                                        hoist_cell,
                                         &mut pending_inline_scopes,
                                     );
                                     push_row(&mut rows, &mut cells);

@@ -1,0 +1,83 @@
+{
+    "elements": [
+        {
+            "element": "collapsible",
+            "data": {
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": {
+                                "align": "center"
+                            },
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "table",
+                                    "data": {
+                                        "type": "simple",
+                                        "attributes": {},
+                                        "rows": [
+                                            {
+                                                "attributes": {},
+                                                "cells": [
+                                                    {
+                                                        "header": false,
+                                                        "column-span": 2,
+                                                        "align": null,
+                                                        "attributes": {},
+                                                        "elements": [
+                                                            {
+                                                                "element": "container",
+                                                                "data": {
+                                                                    "type": "note",
+                                                                    "attributes": {},
+                                                                    "elements": [
+                                                                        {
+                                                                            "element": "text",
+                                                                            "data": "a"
+                                                                        },
+                                                                        {
+                                                                            "element": "footnote",
+                                                                            "data": 1
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        "header": false,
+                                                        "column-span": 2,
+                                                        "align": null,
+                                                        "attributes": {},
+                                                        "elements": []
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "attributes": {},
+                "start-open": false,
+                "show-text": null,
+                "hide-text": null,
+                "show-top": true,
+                "show-bottom": false
+            }
+        }
+    ],
+    "footnotes": [
+        [
+            {
+                "element": "text",
+                "data": "f"
+            }
+        ]
+    ],
+    "needs-footnote-block": true
+}

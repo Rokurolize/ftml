@@ -1,0 +1,11 @@
+{
+    "elements": [
+        {
+            "element": "math",
+            "data": {
+                "name": null,
+                "latex-source": "X"
+            }
+        }
+    ]
+}

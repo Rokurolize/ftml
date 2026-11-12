@@ -1,0 +1,20 @@
+{
+    "elements": [
+        {
+            "element": "image",
+            "data": {
+                "source": {
+                    "type": "direct",
+                    "data": {
+                        "type": "url",
+                        "data": "https://example.com/x.png"
+                    }
+                },
+                "link": null,
+                "alignment": null,
+                "attributes": {},
+                "target": null
+            }
+        }
+    ]
+}

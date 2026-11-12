@@ -1,0 +1,15 @@
+{
+    "elements": [
+        {
+            "element": "gallery",
+            "data": {
+                "source": "[[GALLERY]]",
+                "arguments": [],
+                "selection": {
+                    "type": "current-page-files"
+                },
+                "source-sha256": "b7e48732b6722fe59c8242a0e306dee367eadb66265b674e9ac143564cd7026a"
+            }
+        }
+    ]
+}

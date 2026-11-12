@@ -39,6 +39,18 @@ pub fn escape(buffer: &mut String, s: &str) {
     }
 }
 
+pub fn escape_wikidot_raw(buffer: &mut String, s: &str) {
+    for ch in s.chars() {
+        match ch {
+            ' ' => buffer.push_str("&#32;"),
+            _ => match escape_char(ch) {
+                Some(s) => buffer.push_str(s),
+                None => buffer.push(ch),
+            },
+        }
+    }
+}
+
 #[test]
 fn test() {
     macro_rules! test {
@@ -61,4 +73,17 @@ fn test() {
         "S & C Plastic's location",
         "S &amp; C Plastic&#39;s location",
     );
+
+    macro_rules! test_raw {
+        ($input:expr, $expected:expr $(,)?) => {{
+            let mut buffer = String::new();
+            escape_wikidot_raw(&mut buffer, $input);
+
+            assert_eq!(&buffer, $expected, "Escaped HTML doesn't match expected");
+        }};
+    }
+
+    test_raw!("a 0 2px", "a&#32;0&#32;2px");
+    test_raw!(" a ", "&#32;a&#32;");
+    test_raw!("a&b <c>", "a&amp;b&#32;&lt;c&gt;");
 }

@@ -163,6 +163,15 @@ impl<'r, 't> Parser<'r, 't> {
         false
     }
 
+    pub(crate) fn body_end_boundary_names(&self) -> Vec<&'static str> {
+        let cache = self.block_end_scan_cache.borrow();
+        let mut names = Vec::new();
+        for boundary in &cache.body_end_boundaries {
+            names.extend_from_slice(boundary.accepts_names);
+        }
+        names
+    }
+
     pub(crate) fn body_end_boundary_accepts(&self, name: &str) -> bool {
         self.block_end_scan_cache
             .borrow()

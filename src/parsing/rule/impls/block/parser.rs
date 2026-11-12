@@ -1554,14 +1554,33 @@ where
             .is_some()
     }
 
+    /// Whether an end head that could terminate this block's body occurs at
+    /// or after the current position: one of the block's own end names, or a
+    /// name any enclosing body boundary accepts.
+    fn block_end_head_ahead(&self, block_rule: &BlockRule) -> bool {
+        let start = self.current().span.start;
+        let source = self.full_text().inner();
+        let mut names: Vec<&'static str> =
+            block_rule_end_names(block_rule, self.settings().layout.legacy()).to_vec();
+        names.extend(self.body_end_boundary_names());
+        let mut cache = self.block_end_scan_cache.borrow_mut();
+        names.iter().any(|name| {
+            cache
+                .first_block_close_named_after(source, name, start)
+                .is_some()
+        })
+    }
+
     /// The error an unclosed Wikidot body would produce after scanning to the
     /// end of input, or `None` when the body can still close or the rule may
     /// legitimately end at a boundary. Skipping the doomed scan keeps
     /// repeated unclosed openers linear instead of quadratic.
     fn wikidot_unclosed_body_error(&self, block_rule: &BlockRule) -> Option<ParseError> {
-        if self.discarding_hidden_body() || self.wikidot_block_close_marker_ahead() {
+        if self.discarding_hidden_body() {
             return None;
         }
+        let native_tab =
+            !self.settings().layout.legacy() && block_rule.name == "block-tab";
         let requires_end_head = if self.settings().layout.legacy() {
             wikidot_body_requires_end_head(block_rule)
         } else {
@@ -1574,9 +1593,23 @@ where
             // fixture corpus shows their unclosed diagnostics differ (tabview
             // can end at a boundary, embed and ifcategory report their own head
             // errors first).
-            block_rule.name == "block-div"
+            block_rule.name == "block-div" || native_tab
         };
         if !requires_end_head {
+            return None;
+        }
+        if native_tab {
+            // A tab inside a tabview may end at the next tab head instead of
+            // an end head, so the preflight only applies to a standalone tab,
+            // and it must rule out every end head that could terminate the
+            // body, including enclosing bodies' closers: other blocks'
+            // closers ahead do not end a tab body.
+            if self.accepts_partial() == crate::tree::AcceptsPartial::Tab
+                || self.block_end_head_ahead(block_rule)
+            {
+                return None;
+            }
+        } else if self.wikidot_block_close_marker_ahead() {
             return None;
         }
         Some(self.make_end_of_input_err())

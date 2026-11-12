@@ -329,6 +329,8 @@ pub(super) struct BlockScanCache<'t> {
     /// preprocessed source; the end name is `source[close_start+3..name_end]`.
     pub(super) wikidot_source_end_heads: Vec<(usize, usize)>,
     pub(super) wikidot_end_head_scan: Option<(usize, Option<usize>)>,
+    pub(super) block_close_named_scans:
+        std::collections::HashMap<&'static str, (usize, Option<usize>)>,
     pub(super) wikidot_line_break_scan: Option<(usize, Option<usize>)>,
     pub(super) wikidot_lf_line_bounds: Option<(usize, usize)>,
     wikidot_tab_quote_ejection: Cell<bool>,
@@ -477,6 +479,34 @@ impl BlockScanCache<'_> {
             &mut self.wikidot_end_head_scan,
             start,
         )
+    }
+
+    pub(super) fn first_block_close_named_after(
+        &mut self,
+        source: &str,
+        name: &'static str,
+        start: usize,
+    ) -> Option<usize> {
+        if let Some((scanned_from, found)) =
+            self.block_close_named_scans.get(name).copied()
+            && scanned_from <= start
+            && found.is_none_or(|found| found >= start)
+        {
+            return found;
+        }
+        let heads = &self.wikidot_source_end_heads;
+        let index = heads.partition_point(|(close_start, _)| *close_start < start);
+        let mut found = None;
+        for (close_start, name_end) in &heads[index..] {
+            let head_name = &source[close_start + 3..*name_end];
+            let bare = head_name.strip_suffix('_').unwrap_or(head_name);
+            if bare.eq_ignore_ascii_case(name) {
+                found = Some(*close_start);
+                break;
+            }
+        }
+        self.block_close_named_scans.insert(name, (start, found));
+        found
     }
 }
 

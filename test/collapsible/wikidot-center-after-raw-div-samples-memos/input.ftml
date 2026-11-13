@@ -1,0 +1,98 @@
+[[=]]
+
+[[div class="blockquote"]]
+**{{@@[[div class="blockquote"]]@@}}**
+[[/div]]
+
+[[div class="notation"]]
+**{{@@[[div class="notation"]]@@}}**
+[[/div]]
+
+[[div class="jotting"]]
+**{{@@[[div class="jotting"]]@@}}**
+[[/div]]
+
+[[div class="modal"]]
+**{{@@[[div class="modal"]]@@}}**
+[[/div]]
+
+[[div class="smallmodal"]]
+**{{@@[[div class="smallmodal"]]@@}}**
+[[/div]]
+
+[[div class="papernote"]]
+**{{@@[[div class="papernote"]]@@}}**
+[[/div]]
+
+[[/=]]
+
+@@ @@
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec pellentesque felis eu vulputate suscipit. Vestibulum dui elit, ornare eget eros ut, gravida finibus velit. Pellentesque et diam vel turpis semper ullamcorper. Integer scelerisque malesuada enim, a semper risus molestie eget. Fusce luctus ex in ante feugiat fermentum. In nec sodales nibh. Suspendisse potenti. Aenean in volutpat turpis, in dictum sapien. Quisque vehicula turpis nec ligula feugiat commodo. Maecenas ornare lorem vel commodo mattis. Sed egestas dignissim sapien nec pulvinar. In ligula ipsum, posuere sit amet turpis in, cursus euismod tellus.
+
+[[div class="floatbox"]]
+**{{@@[[div class="floatbox"]]@@}}**
+
+This is a floatbox. You can put all kinds of content inside them (except BetterFootnotes, for now). They'll float at one side of the page relative to what's around them.
+
+[[/div]]
+
+Maecenas vestibulum nunc in euismod auctor. Donec ultrices tempor felis sit amet ornare. Nam nec lectus sit amet nisl bibendum condimentum. Morbi eu arcu quis mi pulvinar fringilla. Ut fringilla interdum urna, at porta sapien vulputate quis. Integer eu scelerisque urna. Morbi luctus, justo eget viverra feugiat, leo quam egestas velit, sit amet feugiat nisi nibh molestie metus. Phasellus ut blandit ex. Ut aliquam, nisl ut aliquam volutpat, sem lorem tempor mi, sit amet ultricies nunc ante eu libero. Aenean lacinia porta nisi, in finibus quam. Aliquam erat volutpat. Aliquam malesuada libero id dapibus efficitur. Cras bibendum, dolor sit amet sagittis scelerisque, lorem magna ornare purus, vel accumsan leo tortor sit amet dolor. Maecenas finibus ante eget purus ullamcorper, vel elementum purus auctor. Quisque sagittis, leo et pretium efficitur, orci nulla interdum enim, in dignissim enim quam in neque.
+
+[[div class="floatbox right"]]
+**{{@@[[div class="floatbox right"]]@@}}**
+[[/div]]
+
+Curabitur sed dui nec libero fringilla placerat. Pellentesque imperdiet ac dolor et sagittis. Vestibulum rhoncus justo magna, vel ornare eros iaculis et. Praesent suscipit massa eu urna convallis molestie. Vestibulum molestie faucibus eleifend. Nullam ut felis ac sapien aliquet consequat a sit amet ipsum. Sed rutrum diam quis urna ullamcorper, sit amet tristique lacus faucibus. Cras facilisis consequat sem, et egestas elit blandit ut. Cras sagittis velit ut posuere semper. Vestibulum in ipsum orci.
+
+@@ @@
+
+[[div style="display: flex; flex-flow: row wrap; justify-content: space-between; gap: 2.5rem;"]]
+
+[[div class="document" style="padding-bottom: 23rem; flex-grow: 1;"]]
+**{{@@[[div class="document"]]@@}}**
+[[/div]]
+
+[[div class="darkdocument" style="padding-bottom: 23rem; flex-grow: 1;"]]
+**{{@@[[div class="darkdocument"]]@@}}**
+[[/div]]
+
+[[/div]]
+
+@@ @@
+
+[[div class="raisa_memo"]]
+**{{@@[[div class="raisa_memo"]]@@}}**
+[[/div]]
+
+[[=]]
+[[collapsible show="+ More memos" hide="- Hide"]]
+
+With icons by [[*user EstrellaYoshte]] ([[[https://scp-wiki.wikidot.com/desk-of-junior-designer-s-yvonne|see here]]])
+
+[[div class="classification_memo"]]
+**{{@@[[div class="classification_memo"]]@@}}**
+[[/div]]
+
+[[div class="ettra_memo"]]
+**{{@@[[div class="ettra_memo"]]@@}}**
+[[/div]]
+
+[[div class="ethics_memo"]]
+**{{@@[[div class="ethics_memo"]]@@}}**
+[[/div]]
+
+[[div class="temporal_memo"]]
+**{{@@[[div class="temporal_memo"]]@@}}**
+[[/div]]
+
+[[div class="overwatch_memo"]]
+**{{@@[[div class="overwatch_memo"]]@@}}**
+[[/div]]
+
+[[div class="miscomm_memo"]]
+**{{@@[[div class="miscomm_memo"]]@@}}**
+[[/div]]
+
+[[/collapsible]]
+[[/=]]

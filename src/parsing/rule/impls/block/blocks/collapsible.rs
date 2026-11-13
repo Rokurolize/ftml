@@ -1346,4 +1346,21 @@ mod tests {
         );
         assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
     }
+
+    #[test]
+    fn wikidot_center_memos_after_raw_div_samples_renders_collapsible() {
+        let input = include_str!(
+            "../../../../../../test/collapsible/wikidot-center-after-raw-div-samples-memos/input.ftml"
+        );
+        let (html, _, _errors) = render(input);
+        assert!(
+            !html.contains("[[collapsible"),
+            "collapsible opener should not render literally: {html}"
+        );
+        assert!(
+            html.contains("More&nbsp;memos"),
+            "expected folded label: {html}"
+        );
+        assert!(html.contains("class=\"collapsible-block\""));
+    }
 }

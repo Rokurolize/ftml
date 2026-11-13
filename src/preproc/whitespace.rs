@@ -21,6 +21,7 @@
 use super::Replacer;
 use super::parser_functions::LiteralRegionIndex;
 use regex::{Regex, RegexBuilder};
+use std::cell::Cell;
 use std::collections::BTreeSet;
 use std::mem;
 use std::ops::Range;
@@ -58,6 +59,28 @@ static LEADING_DOCUMENT_WHITESPACE: LazyLock<Replacer> =
         regex: Regex::new(r"^[ \t\n]+").unwrap(),
         replacement: "",
     });
+
+thread_local! {
+    static STRIP_DOCUMENT_LEADING_WHITESPACE: Cell<bool> = const { Cell::new(true) };
+}
+
+pub(super) fn note_document_leading_whitespace_trim_from_source(text: &str) {
+    let strip = text
+        .as_bytes()
+        .first()
+        .is_some_and(|byte| matches!(byte, b' ' | b'\t' | b'\n'));
+    STRIP_DOCUMENT_LEADING_WHITESPACE.set(strip);
+}
+
+fn strip_document_leading_whitespace(
+    text: &mut String,
+    buffer: &mut String,
+    gated: bool,
+) {
+    if !gated || STRIP_DOCUMENT_LEADING_WHITESPACE.get() {
+        LEADING_DOCUMENT_WHITESPACE.replace(text, buffer);
+    }
+}
 static TRAILING_NEWLINES: LazyLock<Replacer> = LazyLock::new(|| Replacer::RegexReplace {
     regex: Regex::new(r"\n+$").unwrap(),
     replacement: "",
@@ -358,7 +381,7 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
     if wikidot_compatibility {
         preserve_document_leading_indentation_barrier(text);
     }
-    replace!(LEADING_DOCUMENT_WHITESPACE);
+    strip_document_leading_whitespace(text, &mut buffer, wikidot_compatibility);
 
     if wikidot_compatibility {
         replace!(WIKIDOT_WHITESPACE_ONLY_LINE);
@@ -1350,7 +1373,7 @@ pub(super) fn filter_characters(text: &mut String, preserve_terminal_marker: boo
         text.push_str("\u{fffd}\\");
     }
     let mut buffer = String::new();
-    LEADING_DOCUMENT_WHITESPACE.replace(text, &mut buffer);
+    strip_document_leading_whitespace(text, &mut buffer, true);
 }
 
 fn join_continued_lines(
@@ -1816,6 +1839,21 @@ fn preserves_indentation_after_non_whitespace_content() {
     substitute(&mut text);
 
     assert_eq!(text, "[!-- comment --]\n  > literal");
+}
+
+#[test]
+fn preserves_indented_markers_exposed_by_document_leading_comment_elision() {
+    let mut literal = "[!-- c --]\n * a".to_owned();
+    crate::preprocess_for_layout(&mut literal, crate::layout::Layout::Wikidot);
+    assert_eq!(literal, " * a");
+
+    let mut list = "[!-- c --]\n* a".to_owned();
+    crate::preprocess_for_layout(&mut list, crate::layout::Layout::Wikidot);
+    assert_eq!(list, "* a");
+
+    let mut native = " * a".to_owned();
+    crate::preprocess(&mut native);
+    assert_eq!(native, "* a");
 }
 
 #[test]

@@ -117,11 +117,13 @@ impl Test {
 
         if let Some(expected_tree) = &self.tree {
             let actual_tree = &tree;
-            if actual_tree != expected_tree {
+            let expected_json = json(expected_tree);
+            let actual_json = json(actual_tree);
+            if expected_json != actual_json {
                 result = TestResult::Fail;
                 eprintln!("AST did not match:");
-                eprintln!("Expected: {}", json(&expected_tree));
-                eprintln!("Actual:   {}", json(&actual_tree));
+                eprintln!("Expected: {}", expected_json);
+                eprintln!("Actual:   {}", actual_json);
             }
         }
 
@@ -211,7 +213,7 @@ impl Test {
 
         if let Some(expected_tree) = &self.tree {
             let actual_tree = &tree;
-            if actual_tree != expected_tree {
+            if json(actual_tree) != json(expected_tree) {
                 update!(write_json, actual_tree, "tree.json");
             }
         }

@@ -1065,7 +1065,8 @@ impl<'r, 't> Parser<'r, 't> {
         if let Some(lowered) = &cache.full_text_lowered {
             return std::rc::Rc::clone(lowered);
         }
-        let lowered: std::rc::Rc<str> = self.full_text().inner().to_ascii_lowercase().into();
+        let lowered: std::rc::Rc<str> =
+            self.full_text().inner().to_ascii_lowercase().into();
         cache.full_text_lowered = Some(std::rc::Rc::clone(&lowered));
         lowered
     }

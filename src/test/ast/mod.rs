@@ -226,14 +226,52 @@ fn ast() {
 #[test]
 fn ast_elements_exercise_surface_helpers() {
     let tests = test_universe();
-    let mut element_count = 0;
-
-    for test in tests.tests.values() {
-        if let Some(tree) = &test.tree {
-            let _owned_tree = tree.to_owned();
-            element_count += exercise_syntax_tree_helpers(tree);
-        }
-    }
+    let items: Vec<&Test> = tests.tests.values().collect();
+    let element_count = if items.is_empty() {
+        0
+    } else {
+        let worker_count = std::thread::available_parallelism()
+            .map(|value| value.get())
+            .unwrap_or(1)
+            .min(items.len());
+        const GRAB_SIZE: usize = 16;
+        let chunk_count = items.len().div_ceil(GRAB_SIZE);
+        let next = std::sync::atomic::AtomicUsize::new(0);
+        let counts: Vec<usize> = std::thread::scope(|scope| {
+            let handles: Vec<_> = (0..worker_count)
+                .map(|_| {
+                    std::thread::Builder::new()
+                        .name("ast-helpers-worker".to_owned())
+                        .stack_size(crate::parsing::DEEP_PARSE_STACK_BYTES)
+                        .spawn_scoped(scope, || {
+                            let mut local = 0_usize;
+                            loop {
+                                let index = next
+                                    .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                                if index >= chunk_count {
+                                    break;
+                                }
+                                let start = index * GRAB_SIZE;
+                                let end = (start + GRAB_SIZE).min(items.len());
+                                for test in &items[start..end] {
+                                    if let Some(tree) = &test.tree {
+                                        let _owned_tree = tree.to_owned();
+                                        local += exercise_syntax_tree_helpers(tree);
+                                    }
+                                }
+                            }
+                            local
+                        })
+                        .expect("unable to start AST helpers worker")
+                })
+                .collect();
+            handles
+                .into_iter()
+                .map(|handle| handle.join().expect("AST helpers worker panicked"))
+                .collect()
+        });
+        counts.into_iter().sum()
+    };
 
     assert!(
         element_count > 0,

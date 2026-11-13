@@ -2,4 +2,22 @@
 path = "junit.xml"
 
 [profile.default]
-slow-timeout = { period = "60s", terminate-after = 10 }
+slow-timeout = { period = "15s", terminate-after = 1 }
+
+# Corpus-scale fixtures: the corpus AST comparison, the surface-helpers walk and
+# the differential block-pair scan each parse the full fixture corpus (2,796
+# fixtures). Their cost is intrinsic to what they verify; a tighter bound would
+# kill correct runs on slower machines. Bounded at 90s, far below the 600s
+# binary backstop. Measured on the 2026-11-14 before-capture: 16.1s / 6.3s /
+# 44.4s (contended), 6.7s / 5.1s / 12.8s after the same lane's parallelization.
+[[profile.default.overrides]]
+filter = 'test(=test::ast::ast)'
+slow-timeout = { period = "90s", terminate-after = 1 }
+
+[[profile.default.overrides]]
+filter = 'test(=test::ast::ast_elements_exercise_surface_helpers)'
+slow-timeout = { period = "90s", terminate-after = 1 }
+
+[[profile.default.overrides]]
+filter = 'test(=parsing::parser::block_pairs::tests::block_pairs_differential)'
+slow-timeout = { period = "90s", terminate-after = 1 }

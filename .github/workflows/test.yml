@@ -3,15 +3,13 @@ name: Full test suite
 # The full test suite runs here as an informational signal only:
 # nightly on main and on manual dispatch. Merge evidence is targeted
 # tests on the changed part, run locally; nothing here is a merge gate.
-# The known-red tests are deliberate and documented in the test-efficiency
-# lane record: the eight live-capture pins diverged when #1419 dropped the
-# newline before a closing tag (item 93), and three super-linear
-# corpus/adversarial fixtures (super_linear_families::crossed_list_collapsible_prefix_stays_bounded,
-# wikidot_blockquote_boundaries::repeated_lost_owner_sections_stay_bounded,
-# wikidot_unicode_robustness::stable_corpus_sources_survive_rotating_unicode_boundary_mutations)
-# never return, so nextest terminates them at ten minutes with the test
-# name attached. Both classes are routed for the parser/parity campaigns;
-# this workflow reports them, it does not adjudicate them.
+# The suite is deliberately red: the six live-capture pins diverged when #1419
+# dropped the newline before a closing tag (item 93); one footnote-normalization
+# case (explicit_block_normalization_handles_deep_container_trees_iteratively) is
+# product-cost on an accidental O(n^3) dissolve path (issue #1442); and the three
+# super-linear corpus/adversarial fixtures never return, so they are terminated
+# at the per-test 15s bound with the test name attached. All are routed for the
+# parser/parity campaigns; this workflow reports them, it does not adjudicate them.
 
 on:
   schedule:

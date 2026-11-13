@@ -21,7 +21,7 @@
 use super::prelude::*;
 use crate::tree::VariableMap;
 #[cfg(test)]
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::convert::Infallible;
 use std::fmt::{self, Display};
 
@@ -121,7 +121,7 @@ fn map_wrap() {
 
             let input = {
                 let original = $input;
-                let mut map = HashMap::new();
+                let mut map = BTreeMap::new();
 
                 for (key, value) in original {
                     let key = Cow::Borrowed(key);

@@ -20,9 +20,9 @@
 
 use super::clone::string_map_to_owned;
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
-pub type VariableMap<'t> = HashMap<Cow<'t, str>, Cow<'t, str>>;
+pub type VariableMap<'t> = BTreeMap<Cow<'t, str>, Cow<'t, str>>;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct VariableScopes {
@@ -52,4 +52,18 @@ impl VariableScopes {
     pub fn pop_scope(&mut self) {
         self.scopes.pop().expect("Scope stack was empty");
     }
+}
+
+#[test]
+fn variables_serialize_in_canonical_order() {
+    let mut variables = VariableMap::new();
+    variables.insert(Cow::Borrowed("name"), Cow::Borrowed("peanut.png"));
+    variables.insert(Cow::Borrowed("caption"), Cow::Borrowed("haha funi!"));
+    variables.insert(Cow::Borrowed("width"), Cow::Borrowed("100"));
+
+    let serialized = serde_json::to_string(&variables).expect("serialize variables");
+    let caption = serialized.find("\"caption\"").unwrap();
+    let name = serialized.find("\"name\"").unwrap();
+    let width = serialized.find("\"width\"").unwrap();
+    assert!(caption < name && name < width);
 }

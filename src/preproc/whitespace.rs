@@ -65,11 +65,32 @@ thread_local! {
 }
 
 pub(super) fn note_document_leading_whitespace_trim_from_source(text: &str) {
-    let strip = text
-        .as_bytes()
-        .first()
-        .is_some_and(|byte| matches!(byte, b' ' | b'\t' | b'\n'));
-    STRIP_DOCUMENT_LEADING_WHITESPACE.set(strip);
+    STRIP_DOCUMENT_LEADING_WHITESPACE.set(!leading_comment_elision_exposes_indent(text));
+}
+
+fn leading_comment_elision_exposes_indent(text: &str) -> bool {
+    let bytes = text.as_bytes();
+    let mut pos = 0usize;
+    let mut elided = false;
+    loop {
+        if !text[pos..].starts_with("[!--") {
+            break;
+        }
+        let Some(close) = text[pos + 4..].find("--]") else {
+            break;
+        };
+        let mut end = pos + 4 + close + 3;
+        if bytes.get(end) == Some(&b'\r') {
+            end += 1;
+        }
+        if bytes.get(end) == Some(&b'\n') {
+            pos = end + 1;
+            elided = true;
+        } else {
+            break;
+        }
+    }
+    elided && matches!(bytes.get(pos), Some(b' ' | b'\t'))
 }
 
 fn strip_document_leading_whitespace(

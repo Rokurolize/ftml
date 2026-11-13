@@ -36,7 +36,10 @@ pub const RULE_RAW: Rule = Rule {
     try_consume_fn,
 };
 
-fn wikidot_raw_has_preceding_content(parser: &Parser<'_, '_>, opener_start: usize) -> bool {
+fn wikidot_raw_has_preceding_content(
+    parser: &Parser<'_, '_>,
+    opener_start: usize,
+) -> bool {
     let source = parser.full_text().inner();
     let before = &source[..opener_start.min(source.len())];
     let bytes = before.as_bytes();

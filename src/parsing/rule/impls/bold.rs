@@ -550,7 +550,8 @@ fn finish_collected<'r, 't>(
         Some(leftover) => append_split_close_leftover(elements, leftover),
         None => elements,
     };
-    let elements = super::bold::mark_format_stop_at_list(parser, in_anchor_body, elements);
+    let elements =
+        super::bold::mark_format_stop_at_list(parser, in_anchor_body, elements);
     let elements = mark_span_list_close_tail(parser, in_anchor_body, elements);
     ok!(paragraph_safe; elements, errors)
 }
@@ -924,13 +925,17 @@ pub(super) fn mark_format_stop_at_list<'r, 't>(
             || color_info.elements_ref().iter().any(|child| {
                 crate::parsing::inline_scope::subtree_contains_flow_block(child)
                     || crate::parsing::inline_scope::subtree_contains_native_list(child)
-                    || crate::parsing::inline_scope::subtree_contains_blank_line_item(child)
+                    || crate::parsing::inline_scope::subtree_contains_blank_line_item(
+                        child,
+                    )
             })
         {
             return elements;
         }
         let post_has_content =
-            crate::parsing::inline_scope::post_list_subtree_has_content(color_info.elements_ref());
+            crate::parsing::inline_scope::post_list_subtree_has_content(
+                color_info.elements_ref(),
+            );
         let current = parser.current();
         let rest = parser.remaining();
         let (tail_marker, blank_companion) = if post_has_content {

@@ -454,8 +454,9 @@ pub(super) fn validate_reachable_close(
                 {
                     forgave_post_list_gap = true;
                 } else if !post_list_gap && (!suppress_breaks || pb_stack.is_empty()) {
-                    paragraph_error
-                        .get_or_insert_with(|| parser.make_err(ParseErrorKind::RuleFailed));
+                    paragraph_error.get_or_insert_with(|| {
+                        parser.make_err(ParseErrorKind::RuleFailed)
+                    });
                 }
             }
             Token::LeftBlock | Token::LeftBlockStar if blocks_can_reject => {

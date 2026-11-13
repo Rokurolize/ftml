@@ -481,7 +481,7 @@ fn repair_bracket_run_tokenization<'t>(
                 repaired = true;
                 index += 2;
                 head_gate.reset(index);
-            name_gate.reset();
+                name_gate.reset();
                 continue;
             }
         }
@@ -498,7 +498,11 @@ fn repair_bracket_run_tokenization<'t>(
             continue;
         }
         if !name_gate.head_name_may_form(&tokens, source, index + 2, settings.layout)
-            && !bracket_run_residual_opener_may_form(source, tokens[index].span.start, settings.layout)
+            && !bracket_run_residual_opener_may_form(
+                source,
+                tokens[index].span.start,
+                settings.layout,
+            )
         {
             index += 1;
             continue;
@@ -667,12 +671,10 @@ fn bracket_run_lookup_may_match(name: &str, layout: crate::layout::Layout) -> bo
         return true;
     }
     match name.strip_suffix('_') {
-        Some(stripped) => {
-            self::rule::impls::block::get_block_rule_with_name_for_layout(
-                stripped, layout,
-            )
-            .is_some()
-        }
+        Some(stripped) => self::rule::impls::block::get_block_rule_with_name_for_layout(
+            stripped, layout,
+        )
+        .is_some(),
         None => false,
     }
 }
@@ -799,12 +801,12 @@ fn bracket_run_residual_opener_may_form(
         let Some(rest) = source.get(*at..) else {
             return false;
         };
-        ["[[embedvideo]]]", "[[gallery]]]", "[[span_]]]"].iter().any(
-            |literal| {
+        ["[[embedvideo]]]", "[[gallery]]]", "[[span_]]]"]
+            .iter()
+            .any(|literal| {
                 rest.get(..literal.len())
                     .is_some_and(|head| head.eq_ignore_ascii_case(literal))
-            },
-        )
+            })
     })
 }
 
@@ -840,8 +842,7 @@ impl BracketRunNameGate {
                         Some(byte) if byte >= head_start => return true,
                         _ => {}
                     }
-                } else if let Some(collected) =
-                    source.get(head_start..stretch.window_end)
+                } else if let Some(collected) = source.get(head_start..stretch.window_end)
                 {
                     return bracket_run_collected_may_match(collected, layout);
                 }

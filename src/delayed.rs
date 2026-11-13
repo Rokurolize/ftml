@@ -18,8 +18,8 @@ use crate::render::{PageExistenceResolver, Render};
 use crate::settings::{WikitextMode, WikitextSettings};
 use crate::tokenizer::{Tokenization, tokenize_delayed_segments};
 use crate::tree::{
-    AnchorTarget, AttributeMap, Element, FloatAlignment, ImageSource,
-    LinkLabel, LinkLocation, LinkType, ListItem, PartialElement, SyntaxTree,
+    AnchorTarget, AttributeMap, Element, FloatAlignment, ImageSource, LinkLabel,
+    LinkLocation, LinkType, ListItem, PartialElement, SyntaxTree,
     run_on_bounded_tree_stack, tree_requires_bounded_tree_stack,
 };
 use std::borrow::Cow;

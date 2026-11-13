@@ -842,7 +842,9 @@ mod tests {
     fn wikidot_color_stop_at_list_in_span() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize("[[span]]##red|a\n[[ul]]\n[[li]]b[[/li]]\n[[/ul]]\nc##[[/span]]");
+        let tokenization = crate::tokenize(
+            "[[span]]##red|a\n[[ul]]\n[[li]]b[[/li]]\n[[/ul]]\nc##[[/span]]",
+        );
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
         assert!(errors.is_empty(), "{errors:#?}");
         let html = HtmlRender.render(&tree, &page_info, &settings).body;

@@ -534,7 +534,6 @@ fn triple_links_still_render_as_links() {
     );
 }
 
-
 #[test]
 fn crossed_list_collapsible_prefix_stays_bounded() {
     let source = r####"[[collapsible show="+ŉ" #FF0000𐐀𐐀

@@ -199,8 +199,10 @@ fn finish_collected<'r, 't>(
         Some(leftover) => append_split_close_leftover(elements, leftover),
         None => elements,
     };
-    let elements = super::bold::mark_format_stop_at_list(parser, in_anchor_body, elements);
-    let elements = super::bold::mark_span_list_close_tail(parser, in_anchor_body, elements);
+    let elements =
+        super::bold::mark_format_stop_at_list(parser, in_anchor_body, elements);
+    let elements =
+        super::bold::mark_span_list_close_tail(parser, in_anchor_body, elements);
     ok!(paragraph_safe; elements, errors)
 }
 

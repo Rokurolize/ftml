@@ -1,0 +1,81 @@
+name: Full test suite
+
+# The full test suite runs here as an informational signal only:
+# nightly on main and on manual dispatch. Merge evidence is targeted
+# tests on the changed part, run locally; nothing here is a merge gate.
+# The known-red tests are deliberate and documented in the test-efficiency
+# lane record: the eight live-capture pins diverged when #1419 dropped the
+# newline before a closing tag (item 93), and three super-linear
+# corpus/adversarial fixtures (super_linear_families::crossed_list_collapsible_prefix_stays_bounded,
+# wikidot_blockquote_boundaries::repeated_lost_owner_sections_stay_bounded,
+# wikidot_unicode_robustness::stable_corpus_sources_survive_rotating_unicode_boundary_mutations)
+# never return, so nextest terminates them at ten minutes with the test
+# name attached. Both classes are routed for the parser/parity campaigns;
+# this workflow reports them, it does not adjudicate them.
+
+on:
+  schedule:
+    # Nightly on main (03:23 JST). Informational only.
+    - cron: "23 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Nightly runs serialize per ref; a manual dispatch is an intentional
+  # separate run and gets its own group, so dispatching one informational
+  # run never cancels another.
+  group: test-suite-${{ github.ref_name }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || 'nightly' }}
+  cancel-in-progress: true
+
+jobs:
+  full-suite:
+    name: Full test suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out the head
+        uses: actions/checkout@v4
+
+      - name: Install the pinned Rust toolchain
+        run: |
+          channel="$(sed -n 's/^channel = "\([0-9.]*\)"/\1/p' rust-toolchain.toml)"
+          test -n "$channel"
+          rustup toolchain install "$channel"
+          rustup default "$channel"
+          rustup show active-toolchain
+
+      - name: Start sccache
+        uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
+
+      - name: Cache the Cargo registry
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-registry-${{ hashFiles('rust-toolchain.toml') }}
+          restore-keys: cargo-registry-
+
+      - name: Install cargo-nextest
+        run: |
+          set -euo pipefail
+          nextest="cargo-nextest-0.9.150-x86_64-unknown-linux-gnu"
+          curl -fsSLO "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.150/${nextest}.tar.gz"
+          curl -fsSLO "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.150/${nextest}.sha256"
+          test "$(cut -d ' ' -f 1 < "${nextest}.sha256")" = "$(sha256sum "${nextest}.tar.gz" | cut -d ' ' -f 1)"
+          mkdir -p /tmp/nextest-bin
+          tar -xzf "${nextest}.tar.gz" -C /tmp/nextest-bin
+          install -m 0755 "$(find /tmp/nextest-bin -name cargo-nextest -type f | head -1)" "$HOME/.cargo/bin/cargo-nextest"
+          cargo nextest --version
+
+      - name: Run the full test suite
+        env:
+          RUSTC_WRAPPER: sccache
+        run: cargo nextest run --tests
+
+      - name: Run the doc tests
+        env:
+          RUSTC_WRAPPER: sccache
+        run: cargo test --doc

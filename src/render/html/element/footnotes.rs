@@ -378,7 +378,9 @@ fn footnote_element_contains_frame(element: &Element) -> bool {
             footnote_elements_contain_frame(container.elements())
         }
         Element::List { items, .. } => items.iter().any(|item| match item {
-            ListItem::Elements { elements, .. } => footnote_elements_contain_frame(elements),
+            ListItem::Elements { elements, .. } => {
+                footnote_elements_contain_frame(elements)
+            }
             ListItem::SubList { element } => footnote_element_contains_frame(element),
         }),
         Element::Color { elements, .. }

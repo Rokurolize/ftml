@@ -254,7 +254,9 @@ pub use self::user::BLOCK_USER;
 use crate::parsing::parser::Parser;
 use crate::parsing::parser::block_pairs::{WikidotBlockKind, WikidotBlockPair};
 use crate::parsing::{ParseError, Token};
-use crate::tree::{AttributeMap, ContainerType, Element, ListItem, ListType, PartialElement};
+use crate::tree::{
+    AttributeMap, ContainerType, Element, ListItem, ListType, PartialElement,
+};
 
 /// Live Wikidot renders one native list for a quote-row block body whose
 /// rows were collected in per-row fragments: the native list rule ends after
@@ -382,7 +384,9 @@ pub(crate) fn drop_wikidot_trailing_vanish_breaks(elements: &mut Vec<Element<'_>
 /// line between the list and the text already lands as [LineBreak, Text]
 /// and needs no unwrap; a block predecessor keeps following text wrapped
 /// (hr/table), so only an immediately preceding list unwraps its paragraph.
-pub(crate) fn unwrap_wikidot_paragraph_after_explicit_list(elements: &mut Vec<Element<'_>>) {
+pub(crate) fn unwrap_wikidot_paragraph_after_explicit_list(
+    elements: &mut Vec<Element<'_>>,
+) {
     let mut index = 0;
     while index < elements.len() {
         let explicit_list = matches!(
@@ -393,20 +397,18 @@ pub(crate) fn unwrap_wikidot_paragraph_after_explicit_list(elements: &mut Vec<El
             }
         );
         let next = index + 1;
-        let paragraph = elements
-            .get(next)
-            .is_some_and(|element| {
-                matches!(
-                    element,
-                    Element::Container(container)
-                        if container.ctype() == crate::tree::ContainerType::Paragraph
-                            && !matches!(
-                                container.elements().first(),
-                                Some(Element::Delayed(delayed))
-                                    if delayed.is_typography_boundary()
-                            )
-                )
-            });
+        let paragraph = elements.get(next).is_some_and(|element| {
+            matches!(
+                element,
+                Element::Container(container)
+                    if container.ctype() == crate::tree::ContainerType::Paragraph
+                        && !matches!(
+                            container.elements().first(),
+                            Some(Element::Delayed(delayed))
+                                if delayed.is_typography_boundary()
+                        )
+            )
+        });
         if explicit_list && paragraph {
             let Element::Container(container) = elements.remove(next) else {
                 unreachable!("the following element was a paragraph");
@@ -503,8 +505,12 @@ fn wikidot_flatten_element_text_runs<'t>(elements: &[Element<'t>]) -> Vec<Elemen
     let mut out = Vec::new();
     for element in elements {
         match element {
-            Element::Text(text) | Element::Raw(text) => out.push(Element::Text(text.clone())),
-            Element::Container(container) if container.ctype() == ContainerType::Paragraph => {
+            Element::Text(text) | Element::Raw(text) => {
+                out.push(Element::Text(text.clone()))
+            }
+            Element::Container(container)
+                if container.ctype() == ContainerType::Paragraph =>
+            {
                 for inner in container.elements() {
                     if let Element::Text(text) | Element::Raw(text) = inner {
                         out.push(Element::Text(text.clone()));

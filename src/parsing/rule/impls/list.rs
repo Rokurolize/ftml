@@ -30,7 +30,9 @@ use crate::parsing::{
     DepthItem, DepthList, ParagraphSplitEntry, ParagraphSplitKind, ParseSuccess,
     process_depths,
 };
-use crate::tree::{AttributeMap, ContainerType, Element, ListItem, ListType, PartialElement};
+use crate::tree::{
+    AttributeMap, ContainerType, Element, ListItem, ListType, PartialElement,
+};
 
 const MAX_LIST_DEPTH: usize = 128;
 
@@ -289,11 +291,9 @@ fn try_consume_fn<'r, 't>(
                         .filter(|inner| !matches!(inner, Element::LineBreak))
                         .count()
                         >= 2
-                    && body_elements
-                        .iter()
-                        .all(|inner| {
-                            matches!(inner, Element::List { .. } | Element::LineBreak)
-                        })
+                    && body_elements.iter().all(|inner| {
+                        matches!(inner, Element::List { .. } | Element::LineBreak)
+                    })
                 {
                     return body_elements
                         .iter()
@@ -1324,7 +1324,6 @@ fn footnote_block_in<'t>(elements: &[Element<'t>]) -> Option<Element<'t>> {
     None
 }
 
-
 fn fuse_run_leaf_list<'t>(
     elements: &mut Vec<Element<'t>>,
     list_count: usize,
@@ -1396,7 +1395,10 @@ fn collapse_wikidot_run_element<'t>(element: Element<'t>) -> Element<'t> {
     collapse_wikidot_run_element_in(element, true)
 }
 
-fn collapse_wikidot_run_element_in<'t>(element: Element<'t>, in_run: bool) -> Element<'t> {
+fn collapse_wikidot_run_element_in<'t>(
+    element: Element<'t>,
+    in_run: bool,
+) -> Element<'t> {
     match element {
         Element::List {
             ltype,
@@ -1417,11 +1419,16 @@ fn collapse_wikidot_run_element_in<'t>(element: Element<'t>, in_run: bool) -> El
                         attributes,
                         elements: elements
                             .into_iter()
-                            .map(|element| collapse_wikidot_run_element_in(element, child_in_run))
+                            .map(|element| {
+                                collapse_wikidot_run_element_in(element, child_in_run)
+                            })
                             .collect(),
                     },
                     ListItem::SubList { element } => ListItem::SubList {
-                        element: Box::new(collapse_wikidot_run_element_in(*element, child_in_run)),
+                        element: Box::new(collapse_wikidot_run_element_in(
+                            *element,
+                            child_in_run,
+                        )),
                     },
                 })
                 .collect();
@@ -1459,7 +1466,6 @@ fn collapse_wikidot_run_element_in<'t>(element: Element<'t>, in_run: bool) -> El
     }
 }
 
-
 fn wikidot_run_formation_present(element: &Element) -> bool {
     match element {
         Element::List {
@@ -1472,7 +1478,9 @@ fn wikidot_run_formation_present(element: &Element) -> bool {
                     ListItem::Elements { elements, .. } => {
                         elements.iter().any(wikidot_run_formation_present)
                     }
-                    ListItem::SubList { element } => wikidot_run_formation_present(element),
+                    ListItem::SubList { element } => {
+                        wikidot_run_formation_present(element)
+                    }
                 })
         }
         Element::Partial(PartialElement::ListItem(_)) => true,
@@ -1523,9 +1531,9 @@ fn collapse_wikidot_run_list<'t>(element: Element<'t>) -> Element<'t> {
         };
     }
     let formation_present = match &items[0] {
-        ListItem::Elements { elements, .. } => elements
-            .first()
-            .is_some_and(wikidot_run_formation_present),
+        ListItem::Elements { elements, .. } => {
+            elements.first().is_some_and(wikidot_run_formation_present)
+        }
         ListItem::SubList { element } => wikidot_run_formation_present(element),
     };
     if !formation_present {
@@ -1580,7 +1588,6 @@ fn collapse_wikidot_run_list<'t>(element: Element<'t>) -> Element<'t> {
     };
     hoist_wikidot_run_list(ltype, inner)
 }
-
 
 fn hoist_wikidot_run_list<'t>(native_ltype: ListType, inner: Element<'t>) -> Element<'t> {
     let Element::List {
@@ -1776,10 +1783,7 @@ fn flatten_wikidot_run_partial<'t>(partial: &Element<'t>) -> Option<Element<'t>>
         return None;
     }
     let mut inner = inner.clone();
-    if let ListItem::Elements {
-        elements: slot, ..
-    } = &mut inner
-    {
+    if let ListItem::Elements { elements: slot, .. } = &mut inner {
         *slot = elements;
     }
     Some(Element::Partial(PartialElement::ListItem(inner)))

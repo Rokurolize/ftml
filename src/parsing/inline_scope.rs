@@ -9391,7 +9391,8 @@ fn lower_children<'t>(
                 if container.ctype() == ContainerType::Note
         );
     let mut lowered = false;
-    let preserve_frame_entry = matches!(element, Element::List { .. } | Element::TabView(_));
+    let preserve_frame_entry =
+        matches!(element, Element::List { .. } | Element::TabView(_));
     let panel_edge = preserve_frame_entry && matches!(element, Element::TabView(_));
     let truncate_at_entry = matches!(element, Element::List { .. });
     let is_prelist_chunk_frame = matches!(

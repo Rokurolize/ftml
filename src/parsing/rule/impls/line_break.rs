@@ -74,7 +74,6 @@ fn own_line_rules(token: Token) -> &'static [Rule] {
     }
 }
 
-
 fn fuse_own_line_kind(token: Token) -> bool {
     matches!(token, Token::BulletItem | Token::NumberedItem)
 }

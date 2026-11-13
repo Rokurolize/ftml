@@ -23,8 +23,8 @@ use super::{
     consume_wikidot_flat_head_break, drop_wikidot_trailing_vanish_breaks,
     restore_crossed_li_terminated_body_break, trim_wikidot_trailing_explicit_list_break,
     unwrap_wikidot_paragraph_after_explicit_list,
-    wikidot_eject_after_lost_owner_collapsible, wikidot_eject_note_post_list_orphan_closer,
-    wikidot_flat_pair_for_head,
+    wikidot_eject_after_lost_owner_collapsible,
+    wikidot_eject_note_post_list_orphan_closer, wikidot_flat_pair_for_head,
 };
 use crate::parsing::parser::block_pairs::WikidotBlockKind;
 use crate::tree::{PartialElement, WikidotBlockShell};

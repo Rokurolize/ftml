@@ -669,13 +669,16 @@ fn extract_table_cells<'r, 't>(
                 }
             }
 
-            Element::Text(text) if !cells.is_empty() && is_cell_closer_residual(&text) => {
+            Element::Text(text)
+                if !cells.is_empty() && is_cell_closer_residual(&text) =>
+            {
                 if pending_break && !foster.is_empty() && foster.len() != yield_foster_len
                 {
                     foster.push(Element::LineBreak);
                 }
                 pending_break = false;
-                let closer_exact = is_cell_closer(text.trim_end_matches([' ', '\t', '\n', '\r']));
+                let closer_exact =
+                    is_cell_closer(text.trim_end_matches([' ', '\t', '\n', '\r']));
                 let same_line_prefix = !straddle_tail.is_empty()
                     && !straddle_tail
                         .iter()
@@ -690,7 +693,8 @@ fn extract_table_cells<'r, 't>(
                             prefix.push_str(&t);
                         }
                     }
-                    residuals.push(std::borrow::Cow::Owned(format!("{}{}", prefix, text)));
+                    residuals
+                        .push(std::borrow::Cow::Owned(format!("{}{}", prefix, text)));
                 } else {
                     residuals.push(text);
                 }

@@ -22,9 +22,9 @@ use super::append_wikidot_footnote_trailing_list_break;
 use super::prelude::*;
 use crate::parsing::body_end::wikidot_footnote_yields_enclosing_closer;
 use crate::parsing::parse_boolean;
+use crate::parsing::rule::impls::comment_closer_token_count;
 use crate::tree::AttributeMap;
 use crate::tree::{InlineFormatKind, PartialElement};
-use crate::parsing::rule::impls::comment_closer_token_count;
 use std::borrow::Cow;
 use std::ops::{Deref, DerefMut};
 
@@ -360,17 +360,22 @@ fn wikidot_scope_open_at(elements: &[Element<'_>]) -> bool {
                     }
                 }
                 Element::Partial(PartialElement::InlineFormatClose(kind)) => {
-                    if let Some((_, count)) =
-                        formats.iter_mut().find(|(k, _)| k == kind)
+                    if let Some((_, count)) = formats.iter_mut().find(|(k, _)| k == kind)
                     {
                         *count -= 1;
                     }
                 }
                 Element::Partial(PartialElement::WikidotBlockOpen(_)) => *block += 1,
                 Element::Partial(PartialElement::WikidotBlockClose(_)) => *block -= 1,
-                Element::Container(container) => {
-                    scan(container.elements(), span, size, color, anchor, block, formats)
-                }
+                Element::Container(container) => scan(
+                    container.elements(),
+                    span,
+                    size,
+                    color,
+                    anchor,
+                    block,
+                    formats,
+                ),
                 Element::WikidotBlockFrame { children, .. } => {
                     scan(children, span, size, color, anchor, block, formats)
                 }

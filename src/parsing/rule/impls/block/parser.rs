@@ -3481,14 +3481,12 @@ where
             return None;
         }
         let prev_end = line_start - 1;
-        let prev_start = source[..prev_end]
-            .rfind('\n')
-            .map_or(0, |index| index + 1);
+        let prev_start = source[..prev_end].rfind('\n').map_or(0, |index| index + 1);
         // A closer in the middle of a line eats only its following break
         // (z probe: `q [[/ul]]` keeps `q `); the join is for an own-line
         // closer whose preceding physical line is literal text.
-        let mut own_line = source[line_start..close.min(source.len())]
-            .trim_start_matches([' ', '\t']);
+        let mut own_line =
+            source[line_start..close.min(source.len())].trim_start_matches([' ', '\t']);
         while let Some(rest) = own_line.strip_prefix('>') {
             own_line = rest.trim_start_matches([' ', '\t']);
         }
@@ -7506,7 +7504,7 @@ where
                     && let Some(close_depth) =
                         self.evaporation_list_close_ahead_depth(block_rule)
                 {
-                self.set_wikidot_quote_boundary_li_auto_close();
+                    self.set_wikidot_quote_boundary_li_auto_close();
                     self.set_wikidot_pending_paired_list_close();
                     self.set_wikidot_evaporated_list(true);
                     if close_depth == 0 {
@@ -7538,7 +7536,7 @@ where
                 if self.wikidot_quote_boundary_shallower_text()
                     && self.shallower_text_list_close_ahead(block_rule)
                 {
-                self.set_wikidot_quote_boundary_li_auto_close();
+                    self.set_wikidot_quote_boundary_li_auto_close();
                     self.set_wikidot_pending_paired_list_close();
                     // BRIEF-SA89: a depth-0 (unquoted) close after the
                     // quoted head sits outside every quote run; arm the
@@ -9182,8 +9180,7 @@ where
                     return false;
                 }
             }
-            let spaced_after_marker =
-                probe.current().token == Token::Whitespace;
+            let spaced_after_marker = probe.current().token == Token::Whitespace;
             if spaced_after_marker && probe.get_optional_space().is_err() {
                 return false;
             }
@@ -9296,10 +9293,15 @@ where
             // follows before any same-depth content does.
             return self.evaporation_blank_prefix_armed(block_rule, required_depth);
         }
-        self.shallower_text_region_list_close_depth(block_rule, required_depth, &probe, false)
-            .is_some_and(|(depth, saw_li_head)| {
-                depth == required_depth || (depth == 0 && saw_li_head)
-            })
+        self.shallower_text_region_list_close_depth(
+            block_rule,
+            required_depth,
+            &probe,
+            false,
+        )
+        .is_some_and(|(depth, saw_li_head)| {
+            depth == required_depth || (depth == 0 && saw_li_head)
+        })
     }
 
     /// Armed search for a `>`-only blank prefix (BRIEF-EV91): from the
@@ -9393,7 +9395,9 @@ where
         // The first line after this break may itself be the shallow line;
         // if it is at required depth already, the region scan handles it.
         // Otherwise scan onward for the quoted close.
-        self.shallower_text_region_has_quoted_list_close(block_rule, required, &probe, true)
+        self.shallower_text_region_has_quoted_list_close(
+            block_rule, required, &probe, true,
+        )
     }
 
     /// Depth-aware soft-end probe (BRIEF-SA89): like

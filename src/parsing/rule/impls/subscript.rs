@@ -85,8 +85,10 @@ fn try_consume_fn<'r, 't>(
     }
     let elements =
         append_wikidot_line_close_space(elements, parser.settings().layout.legacy());
-    let elements = super::bold::mark_format_stop_at_list(parser, in_anchor_body, elements);
-    let elements = super::bold::mark_span_list_close_tail(parser, in_anchor_body, elements);
+    let elements =
+        super::bold::mark_format_stop_at_list(parser, in_anchor_body, elements);
+    let elements =
+        super::bold::mark_span_list_close_tail(parser, in_anchor_body, elements);
     ok!(paragraph_safe; elements, errors)
 }
 

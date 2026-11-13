@@ -90,7 +90,8 @@ fn try_consume_fn<'r, 't>(
     {
         return ok!(paragraph_safe; Elements::None, errors);
     }
-    let elements = super::bold::mark_format_stop_at_list(parser, in_anchor_body, elements);
+    let elements =
+        super::bold::mark_format_stop_at_list(parser, in_anchor_body, elements);
     let elements =
         append_wikidot_line_close_space(elements, parser.settings().layout.legacy());
     ok!(paragraph_safe; elements, errors)
@@ -252,7 +253,8 @@ mod tests {
     fn wikidot_underline_stop_at_list_in_span_explicit() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let tokenization = crate::tokenize("[[span]]__a\n[[ul]]\n[[li]]b[[/li]]\n[[/ul]]\nc__[[/span]]");
+        let tokenization =
+            crate::tokenize("[[span]]__a\n[[ul]]\n[[li]]b[[/li]]\n[[/ul]]\nc__[[/span]]");
         let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
         println!("{}", html);

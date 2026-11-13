@@ -305,7 +305,10 @@ fn drop_post_list_break_before_empty_footnote_block(elements: &mut Vec<Element<'
     }
 }
 
-fn mark_bare_tail_after_empty_footnote_block(elements: &mut [Element<'_>], footer_index: usize) {
+fn mark_bare_tail_after_empty_footnote_block(
+    elements: &mut [Element<'_>],
+    footer_index: usize,
+) {
     if footer_index + 1 >= elements.len() {
         return;
     }

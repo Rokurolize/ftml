@@ -156,8 +156,14 @@ fn a2_div_crossing_list_closers() {
     let ul_end = html.find("</ul>").expect("ul close");
     let after_at = html.find("after").expect("after");
     let between = &html[ul_end..after_at];
-    assert!(between.contains("<br"), "expected <br before bare after: {html}");
-    assert!(!html.contains("<p>after</p>"), "follower must stay bare: {html}");
+    assert!(
+        between.contains("<br"),
+        "expected <br before bare after: {html}"
+    );
+    assert!(
+        !html.contains("<p>after</p>"),
+        "follower must stay bare: {html}"
+    );
 }
 
 #[test]
@@ -183,7 +189,10 @@ fn a2_collapsible_crossing_list_closers() {
         html[ul_end..after_at].contains("<br"),
         "expected <br before bare after: {html}"
     );
-    assert!(!html.contains("<p>after</p>"), "follower must stay bare: {html}");
+    assert!(
+        !html.contains("<p>after</p>"),
+        "follower must stay bare: {html}"
+    );
 }
 
 #[test]
@@ -207,7 +216,10 @@ fn a2_div_crossing_ordered_list_closers() {
         html[ol_end..after_at].contains("<br"),
         "expected <br before bare after: {html}"
     );
-    assert!(!html.contains("<p>after</p>"), "follower must stay bare: {html}");
+    assert!(
+        !html.contains("<p>after</p>"),
+        "follower must stay bare: {html}"
+    );
 }
 
 #[test]

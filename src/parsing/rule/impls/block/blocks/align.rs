@@ -486,7 +486,8 @@ mod tests {
     fn wikidot_span_keeps_align_head_breaks_before_heading() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-        let source = "[[=]]\n[[=]]\n[[span]]\n[[=]]\n+ h\n[[/=]]\n[[/span]]\n[[/=]]\n[[/=]]";
+        let source =
+            "[[=]]\n[[=]]\n[[span]]\n[[=]]\n+ h\n[[/=]]\n[[/span]]\n[[/=]]\n[[/=]]";
         let tokenization = crate::tokenize(source);
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
         let html = HtmlRender.render(&tree, &page_info, &settings).body;

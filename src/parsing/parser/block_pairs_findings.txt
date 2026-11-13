@@ -189,3 +189,8 @@ corpus-test/list/explicit-item-ends-at-barrier/input.ftml	Div@22..44 scan-only
 corpus-test/note/post-list-orphan-hidden-closer/input.ftml	Div@22..75 scan-only
 corpus-test/footnote/enclosing-div-closer-pool-7024/input.ftml	Div@0..64 descent-only
 corpus-test/div/scored-quote-orphan-align-closer-tail/input.ftml	AlignCenter@11..25 scan-only
+replay-en--scp-4612	Table@7313..11647 scan-only
+replay-en--scp-4612	structural Row scan=7 tree=0 contained=true
+replay-en--scp-4612	structural Cell scan=19 tree=0 contained=true
+replay-jp--black-queen-hub	Collapsible@5646..5977 scan-only
+replay-jp--black-queen-hub	Tab@5473..5539 scan-only

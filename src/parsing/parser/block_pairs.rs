@@ -3952,21 +3952,24 @@ mod tests {
             .expect("differential worker panicked");
     }
 
-    fn block_pairs_differential_body() {
-        let findings_set: std::collections::HashSet<(String, String)> = FINDINGS_TEXT
-            .lines()
-            .filter(|line| !line.is_empty())
-            .filter_map(|line| line.split_once('\t'))
-            .map(|(case, detail)| (case.to_string(), detail.to_string()))
-            .collect();
-        let settings = wikidot_settings();
-        let info = PageInfo::dummy();
-        let cases = load_cases();
+    struct DifferentialOutput {
+        violations: Vec<String>,
+        findings: Vec<String>,
+        inexact: Vec<String>,
+        total_pairs: usize,
+    }
+
+    fn run_differential_chunk(
+        cases: &[Case],
+        findings_set: &std::collections::HashSet<(String, String)>,
+        settings: &WikitextSettings,
+        info: &PageInfo,
+    ) -> DifferentialOutput {
         let mut violations: Vec<String> = Vec::new();
         let mut findings: Vec<String> = Vec::new();
         let mut inexact: Vec<String> = Vec::new();
         let mut total_pairs = 0_usize;
-        for case in &cases {
+        for case in cases {
             let tokenization = crate::tokenize(&case.source);
             let repaired = crate::parsing::repaired_tokenization_for_test(
                 &tokenization,
@@ -4123,6 +4126,86 @@ mod tests {
                     }
                 }
             }
+        }
+        DifferentialOutput {
+            violations,
+            findings,
+            inexact,
+            total_pairs,
+        }
+    }
+
+    fn block_pairs_differential_body() {
+        let findings_set: std::collections::HashSet<(String, String)> = FINDINGS_TEXT
+            .lines()
+            .filter(|line| !line.is_empty())
+            .filter_map(|line| line.split_once('\t'))
+            .map(|(case, detail)| (case.to_string(), detail.to_string()))
+            .collect();
+        let settings = wikidot_settings();
+        let info = PageInfo::dummy();
+        let cases = load_cases();
+
+        let worker_count = std::thread::available_parallelism()
+            .map(|value| value.get())
+            .unwrap_or(1)
+            .min(cases.len());
+        const GRAB_SIZE: usize = 16;
+        let chunk_count = cases.len().div_ceil(GRAB_SIZE);
+        let next = std::sync::atomic::AtomicUsize::new(0);
+        let parts: Vec<DifferentialOutput> = std::thread::scope(|scope| {
+            let handles: Vec<_> = (0..worker_count)
+                .map(|_| {
+                    std::thread::Builder::new()
+                        .name("block-pairs-differential-worker".to_owned())
+                        .stack_size(crate::parsing::DEEP_PARSE_STACK_BYTES)
+                        .spawn_scoped(scope, || {
+                            let mut local = DifferentialOutput {
+                                violations: Vec::new(),
+                                findings: Vec::new(),
+                                inexact: Vec::new(),
+                                total_pairs: 0,
+                            };
+                            loop {
+                                let index = next
+                                    .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                                if index >= chunk_count {
+                                    break;
+                                }
+                                let start = index * GRAB_SIZE;
+                                let end = (start + GRAB_SIZE).min(cases.len());
+                                let chunk = &cases[start..end];
+                                let output = run_differential_chunk(
+                                    chunk,
+                                    &findings_set,
+                                    &settings,
+                                    &info,
+                                );
+                                local.violations.extend(output.violations);
+                                local.findings.extend(output.findings);
+                                local.inexact.extend(output.inexact);
+                                local.total_pairs += output.total_pairs;
+                            }
+                            local
+                        })
+                        .expect("unable to start differential worker")
+                })
+                .collect();
+            handles
+                .into_iter()
+                .map(|handle| handle.join().expect("differential worker panicked"))
+                .collect()
+        });
+
+        let mut violations: Vec<String> = Vec::new();
+        let mut findings: Vec<String> = Vec::new();
+        let mut inexact: Vec<String> = Vec::new();
+        let mut total_pairs = 0_usize;
+        for part in parts {
+            violations.extend(part.violations);
+            findings.extend(part.findings);
+            inexact.extend(part.inexact);
+            total_pairs += part.total_pairs;
         }
         println!(
             "differential: {} cases, {} scan pairs, {} inexact entries, {} findings",

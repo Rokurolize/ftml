@@ -45,15 +45,61 @@ macro_rules! settings {
 
 impl TestUniverse {
     pub fn run(&self, skip_tests: &[String], only_tests: &[String]) -> TestStats {
-        let mut stats = TestStats::new();
-        for (test_name, test) in &self.tests {
-            if only_tests.is_empty() || test_applies(test_name, only_tests) {
-                let result = if test_applies(test_name, skip_tests) {
-                    TestResult::Skip
-                } else {
-                    test.run()
-                };
+        let applicable: Vec<&Test> = self
+            .tests
+            .values()
+            .filter(|test| only_tests.is_empty() || test_applies(&test.name, only_tests))
+            .collect();
 
+        if applicable.is_empty() {
+            return TestStats::new();
+        }
+
+        let worker_count = std::thread::available_parallelism()
+            .map(|value| value.get())
+            .unwrap_or(1)
+            .min(applicable.len());
+        const GRAB_SIZE: usize = 16;
+        let chunk_count = applicable.len().div_ceil(GRAB_SIZE);
+        let next = std::sync::atomic::AtomicUsize::new(0);
+        let results: Vec<Vec<TestResult>> = std::thread::scope(|scope| {
+            let handles: Vec<_> = (0..worker_count)
+                .map(|_| {
+                    std::thread::Builder::new()
+                        .name("ast-fixture-worker".to_owned())
+                        .stack_size(crate::parsing::DEEP_PARSE_STACK_BYTES)
+                        .spawn_scoped(scope, || {
+                            let mut local = Vec::new();
+                            loop {
+                                let index = next
+                                    .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                                if index >= chunk_count {
+                                    break;
+                                }
+                                let start = index * GRAB_SIZE;
+                                let end = (start + GRAB_SIZE).min(applicable.len());
+                                for test in &applicable[start..end] {
+                                    local.push(if test_applies(&test.name, skip_tests) {
+                                        TestResult::Skip
+                                    } else {
+                                        test.run()
+                                    });
+                                }
+                            }
+                            local
+                        })
+                        .expect("unable to start AST fixture worker")
+                })
+                .collect();
+            handles
+                .into_iter()
+                .map(|handle| handle.join().expect("AST fixture worker panicked"))
+                .collect()
+        });
+
+        let mut stats = TestStats::new();
+        for chunk in results {
+            for result in chunk {
                 stats.add(result);
             }
         }

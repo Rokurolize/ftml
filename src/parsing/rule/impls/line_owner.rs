@@ -1226,7 +1226,8 @@ pub(crate) fn consumed_closer_line_marker(
     let source = parser.full_text().inner();
     let to = to.min(source.len());
     let range = &source[..to];
-    let lowered = range.to_ascii_lowercase();
+    let lowered = parser.full_text_lowered();
+    let lowered = &lowered[..to];
     // Item 88: a cross-type list close consumes marker semantics the same
     // way (a marked `# [[/ol]]` closer anchors like same-name), so when the
     // cross-close probe is active, scan both list-close names and take the

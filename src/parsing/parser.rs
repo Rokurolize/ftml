@@ -187,6 +187,7 @@ pub(super) struct BlockScanCache<'t> {
     wikidot_div_stream_marks: BTreeMap<usize, (u32, u32)>,
     wikidot_block_pairs: block_pairs::WikidotBlockPairs,
     wikidot_line_runs: block_pairs::WikidotLineRuns,
+    full_text_lowered: Option<Rc<str>>,
     pub(super) wikidot_li_cross_scan: Option<block_pairs::WikidotLiCrossScan>,
     wikidot_li_body_boundaries: Vec<usize>,
     wikidot_table_cut_boundary: Cell<bool>,
@@ -1022,7 +1023,7 @@ impl<'r, 't> Parser<'r, 't> {
         names: &[&str],
     ) -> bool {
         let source = self.full_text().inner();
-        let lower = source.to_ascii_lowercase();
+        let lower = self.full_text_lowered();
         for name in names {
             let needle = format!("[[/{}", name);
             let mut search_from = opener_start;
@@ -1057,6 +1058,16 @@ impl<'r, 't> Parser<'r, 't> {
         self.block_end_scan_cache
             .borrow_mut()
             .wikidot_heading_reopen = value;
+    }
+
+    pub(crate) fn full_text_lowered(&self) -> std::rc::Rc<str> {
+        let mut cache = self.block_end_scan_cache.borrow_mut();
+        if let Some(lowered) = &cache.full_text_lowered {
+            return std::rc::Rc::clone(lowered);
+        }
+        let lowered: std::rc::Rc<str> = self.full_text().inner().to_ascii_lowercase().into();
+        cache.full_text_lowered = Some(std::rc::Rc::clone(&lowered));
+        lowered
     }
 
     pub(crate) fn take_wikidot_heading_reopen(

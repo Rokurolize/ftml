@@ -77,7 +77,8 @@ fn parse_fn<'r, 't>(
     let bibs = &mut bibliographies;
     parser.append_shared_items(html, code, toc, notes, bibs);
 
-    let variables = variables.to_hash_map();
+    let variables: crate::tree::VariableMap<'t> =
+        variables.to_hash_map().into_iter().collect();
     let element = Element::Include {
         paragraph_safe,
         variables,

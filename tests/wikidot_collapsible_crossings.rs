@@ -230,10 +230,11 @@ fn render_includes(source: &str, pages: &[(&'static str, &'static str)]) -> Stri
     let settings = page_settings();
     let pages: std::collections::HashMap<&'static str, &'static str> =
         pages.iter().copied().collect();
-    let (expanded, _) = ftml::include(source, &settings, StaticIncluder { pages }, || {
-        "invalid include result".to_owned()
-    })
-    .expect("include expansion should succeed");
+    let (expanded, _) =
+        ftml::include(source, &settings, StaticIncluder { pages }, || {
+            "invalid include result".to_owned()
+        })
+        .expect("include expansion should succeed");
     let mut text = expanded;
     ftml::preprocess_for_layout(&mut text, Layout::Wikidot);
     let tokenization = ftml::tokenize(&text);

@@ -561,6 +561,7 @@ pub struct Parser<'r, 't> {
     max_recursion_depth: usize,
 
     pub(super) discarding_hidden_body: bool,
+    pub(super) module_line_start_closer: bool,
     pub(super) hidden_body_boundaries: Vec<HiddenBodyBoundary>,
 
     table_of_contents: Rc<RefCell<Vec<(usize, String)>>>,
@@ -895,6 +896,7 @@ impl<'r, 't> Parser<'r, 't> {
             underline_fast_path_visits: Rc::new(Cell::new(0)),
             #[cfg(test)]
             block_end_scan_token_visits: Rc::new(Cell::new(0)),
+            module_line_start_closer: false,
             accepts_partial: AcceptsPartial::None,
             accepts_partial_depth: 0,
             in_footnote: false,

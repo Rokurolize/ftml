@@ -195,3 +195,80 @@ fn quoted_pair_still_uses_native_quote_parsing() {
     assert_clean_pair(&html);
     assert!(html.contains("line one"), "html: {html}");
 }
+
+struct StaticIncluder {
+    pages: std::collections::HashMap<&'static str, &'static str>,
+}
+
+impl<'t> ftml::includes::Includer<'t> for StaticIncluder {
+    type Error = String;
+
+    fn include_pages(
+        &mut self,
+        includes: &[ftml::includes::IncludeRef<'t>],
+    ) -> Result<Vec<ftml::includes::FetchedPage<'t>>, Self::Error> {
+        Ok(includes
+            .iter()
+            .map(|include| {
+                let page_ref = include.page_ref().clone();
+                let content = self.pages.get(page_ref.page()).copied().map(Cow::Borrowed);
+                ftml::includes::FetchedPage { page_ref, content }
+            })
+            .collect())
+    }
+
+    fn no_such_include(
+        &mut self,
+        page_ref: &ftml::data::PageRef,
+    ) -> Result<Cow<'t, str>, Self::Error> {
+        Err(format!("missing include fixture for {page_ref}"))
+    }
+}
+
+fn render_includes(source: &str, pages: &[(&'static str, &'static str)]) -> String {
+    let page_info = page_info();
+    let settings = page_settings();
+    let pages: std::collections::HashMap<&'static str, &'static str> =
+        pages.iter().copied().collect();
+    let (expanded, _) =
+        ftml::include(source, &settings, StaticIncluder { pages }, || {
+            "invalid include result".to_owned()
+        })
+        .expect("include expansion should succeed");
+    let mut text = expanded;
+    ftml::preprocess_for_layout(&mut text, Layout::Wikidot);
+    let tokenization = ftml::tokenize(&text);
+    let (tree, _errors) = ftml::parse(&tokenization, &page_info, &settings).into();
+    HtmlRender.render(&tree, &page_info, &settings).body
+}
+
+fn page_settings() -> WikitextSettings {
+    WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot)
+}
+
+#[test]
+fn included_page_with_escaped_markup_in_nested_div_renders_collapsible() {
+    let page_a = concat!(
+        "[[collapsible show=\"+その他\" hide=\"-隠す\"]]\n",
+        "\n",
+        "アイコン提供\n",
+        "\n",
+        "[[div class=\"classification_memo\"]]\n",
+        "**{{@@[[div class=\"classification_memo\"]]@@}}**\n",
+        "[[/div]]\n",
+        "\n",
+        "[[/collapsible]]\n",
+    );
+    let host = concat!(
+        "[[include probe-p5-bmin-both]]\n",
+        "[[include probe-p5-bmin-div-closer]]\n",
+    );
+    let pages = [
+        ("probe-p5-bmin-both", page_a),
+        ("probe-p5-bmin-div-closer", "plain paragraph\n[[/div]]\n"),
+    ];
+    let html = render_includes(host, &pages);
+    assert_eq!(collapsible_blocks(&html), 1, "html: {html}");
+    assert!(!html.contains("[[collapsible"), "html: {html}");
+    assert!(!html.contains("[[/collapsible]]"), "html: {html}");
+}

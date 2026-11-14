@@ -2166,6 +2166,21 @@ where
             .is_some_and(|before| before.ends_with(b"\n"))
     }
 
+    /// Whether the parser sits at a `[[/module]]` closer that begins its
+    /// physical line, allowing indentation and blockquote prefixes. A closer
+    /// wrapped in inline markup is literal body text on live Wikidot.
+    fn wikidot_module_closer_starts_line(&self) -> bool {
+        if self.current().token != Token::LeftBlockEnd {
+            return false;
+        }
+        let start = self.current().span.start;
+        let source = self.full_text().inner();
+        let line_start = source[..start].rfind('\n').map_or(0, |index| index + 1);
+        source[line_start..start]
+            .bytes()
+            .all(|byte| matches!(byte, b' ' | b'\t' | b'>'))
+    }
+
     fn at_blank_line_remainder(&self) -> bool {
         if self.current().token != Token::Whitespace {
             return false;
@@ -2289,6 +2304,17 @@ where
         }
 
         self.save_evaluate_fn(|parser| {
+            // Live treats an inline-wrapped `[[/module]]` as literal text,
+            // not as the body closer.
+            if parser.settings().layout.legacy()
+                && !parser.discarding_hidden_body()
+                && block_rule.name == "block-module"
+                && parser.module_line_start_closer
+                && !parser.wikidot_module_closer_starts_line()
+            {
+                return Ok(false);
+            }
+
             if restrict_quote_close
                 && allow_inline_quote_close
                 && parser.settings().layout.legacy()
@@ -5397,6 +5423,7 @@ where
             return;
         }
         let mut probe = self.clone();
+        probe.module_line_start_closer = true;
         if let Ok(body) = probe.get_body_text(block_rule)
             && !body.trim().is_empty()
             && !wikidot_body_starts_nested_module(&body)

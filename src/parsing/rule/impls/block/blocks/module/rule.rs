@@ -283,6 +283,26 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_module_closer_inside_inline_markup_stays_literal() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let input = concat!(
+            "[[module Rate]]\n",
+            "line-one\n",
+            "**##var(--c-keyword)|[[/module]]##**\n",
+            "line-two\n",
+        );
+        let tokenization = crate::tokenize(input);
+        let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+
+        assert!(html.contains("TODO: module Rate"), "{html}");
+        assert!(html.contains("line-one"), "{html}");
+        assert!(html.contains("line-two"), "{html}");
+        assert!(html.contains("[[/module]]"), "{html}");
+    }
+
+    #[test]
     fn wikidot_unknown_module_renders_the_live_error_block() {
         let page_info = PageInfo::dummy();
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);

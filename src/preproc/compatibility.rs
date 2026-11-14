@@ -201,6 +201,9 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
     let mut before_collapsible = 0usize;
     while before < head_line_start {
         before = skip_past_literal(literal, before, head_line_start);
+        while !source.is_char_boundary(before) {
+            before += 1;
+        }
         if before >= head_line_start {
             break;
         }
@@ -208,6 +211,7 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
             break;
         };
         before += rel;
+        before = skip_past_literal(literal, before, head_line_start);
         if before >= head_line_start {
             break;
         }
@@ -248,6 +252,9 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
 
     while pos < limit {
         pos = skip_past_literal(literal, pos, limit);
+        while !source.is_char_boundary(pos) {
+            pos += 1;
+        }
         if pos >= limit {
             break;
         }
@@ -255,6 +262,10 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
             break;
         };
         pos += rel;
+        pos = skip_past_literal(literal, pos, limit);
+        if pos >= limit {
+            break;
+        }
 
         if marker_extent_ignore_case(source, pos, b"[[/collapsible]]") {
             collapsible_depth = collapsible_depth.saturating_sub(1);
@@ -331,6 +342,9 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
         let tail_limit = source.len();
         while pos < tail_limit {
             pos = skip_past_literal(literal, pos, tail_limit);
+            while !source.is_char_boundary(pos) {
+                pos += 1;
+            }
             if pos >= tail_limit {
                 break;
             }
@@ -338,6 +352,10 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
                 break;
             };
             pos += rel;
+            pos = skip_past_literal(literal, pos, tail_limit);
+            if pos >= tail_limit {
+                break;
+            }
 
             if marker_extent_ignore_case(source, pos, b"[[/div]]") {
                 if depth == div_depth {

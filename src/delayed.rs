@@ -246,15 +246,15 @@ enum DelayedNode<'t> {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-struct DelayedTagImage<'t> {
-    source: ImageSource<'t>,
-    link: Option<LinkLocation<'t>>,
-    target: Option<AnchorTarget>,
-    alignment: Option<FloatAlignment>,
-    attributes: AttributeMap<'t>,
-    attribute: GeneratedImageAttribute,
-    suffix: Cow<'t, str>,
-    id: SlotId,
+pub(crate) struct DelayedTagImage<'t> {
+    pub(crate) source: ImageSource<'t>,
+    pub(crate) link: Option<LinkLocation<'t>>,
+    pub(crate) target: Option<AnchorTarget>,
+    pub(crate) alignment: Option<FloatAlignment>,
+    pub(crate) attributes: AttributeMap<'t>,
+    pub(crate) attribute: GeneratedImageAttribute,
+    pub(crate) suffix: Cow<'t, str>,
+    pub(crate) id: SlotId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
@@ -344,27 +344,9 @@ impl<'t> DelayedElement<'t> {
         }
     }
 
-    pub(crate) fn tag_image(
-        source: ImageSource<'t>,
-        link: Option<LinkLocation<'t>>,
-        target: Option<AnchorTarget>,
-        alignment: Option<FloatAlignment>,
-        attributes: AttributeMap<'t>,
-        attribute: GeneratedImageAttribute,
-        suffix: &'t str,
-        id: SlotId,
-    ) -> Self {
+    pub(crate) fn tag_image(image: DelayedTagImage<'t>) -> Self {
         Self {
-            node: DelayedNode::TagImage(Box::new(DelayedTagImage {
-                source,
-                link,
-                target,
-                alignment,
-                attributes,
-                attribute,
-                suffix: Cow::Borrowed(suffix),
-                id,
-            })),
+            node: DelayedNode::TagImage(Box::new(image)),
         }
     }
 

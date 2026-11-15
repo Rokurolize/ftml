@@ -444,7 +444,7 @@ mod tests {
     #[test]
     fn wikidot_span_close_after_deep_nesting_stays_structural() {
         let mut source = "[[span]]".repeat(300);
-        source.push_str("x");
+        source.push('x');
         source.push_str(&"[[/span]]".repeat(260));
         source.push_str("[[/span]] label ]");
         source.push_str(&"[[/span]]".repeat(40));
@@ -460,7 +460,7 @@ mod tests {
     #[test]
     fn wikidot_span_unmatched_close_after_full_nesting_becomes_link() {
         let mut source = "[[span]]".repeat(300);
-        source.push_str("x");
+        source.push('x');
         source.push_str(&"[[/span]]".repeat(300));
         source.push_str(" [[/span]] label ]");
         let page_info = PageInfo::dummy();

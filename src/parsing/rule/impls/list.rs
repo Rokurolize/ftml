@@ -533,7 +533,7 @@ fn mid_item_explicit_list_split(
 ) -> Option<MidItemExplicitListSplit> {
     if let [Element::Container(container)] = elements
         && let Some(markers) = format_markers(container.ctype())
-        && let Some(list_at) = explicit_list_at(&container.elements())
+        && let Some(list_at) = explicit_list_at(container.elements())
     {
         return Some(MidItemExplicitListSplit::FormatWrap { markers, list_at });
     }
@@ -779,7 +779,7 @@ where
         let (mut prefix, mut rest) = match split {
             MidItemExplicitListSplit::Direct { split_at } => {
                 let rest = elements.split_off(split_at);
-                let prefix = std::mem::replace(&mut elements, Vec::new());
+                let prefix = std::mem::take(&mut elements);
                 (prefix, rest)
             }
             MidItemExplicitListSplit::FormatWrap { markers, list_at } => {
@@ -944,10 +944,8 @@ where
 
 fn next_line_opens_list(parser: &Parser) -> bool {
     let mut probe = parser.clone();
-    if probe.current().token == Token::Whitespace {
-        if probe.step().is_err() {
-            return false;
-        }
+    if probe.current().token == Token::Whitespace && probe.step().is_err() {
+        return false;
     }
     matches!(
         probe.current().token,
@@ -1658,7 +1656,7 @@ pub(crate) fn fuse_wikidot_run_item<'t>(item: ListItem<'t>) -> Vec<ListItem<'t>>
     {
         return items
             .iter()
-            .map(|inner| {
+            .flat_map(|inner| {
                 let ListItem::Elements { elements, .. } = inner else {
                     unreachable!()
                 };
@@ -1667,7 +1665,6 @@ pub(crate) fn fuse_wikidot_run_item<'t>(item: ListItem<'t>) -> Vec<ListItem<'t>>
                     elements: vec![elements[0].clone()],
                 })
             })
-            .flatten()
             .collect();
     }
     let ListItem::Elements {

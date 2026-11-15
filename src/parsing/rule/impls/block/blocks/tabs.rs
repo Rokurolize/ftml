@@ -366,10 +366,13 @@ fn element_is_plain_prose(element: &Element<'_>) -> bool {
     }
 }
 
+type RelocatedTabProse<'t> =
+    (Vec<TabViewItem<'t>>, usize, Vec<(usize, Vec<Element<'t>>)>);
+
 fn relocate_ejected_tab_prose<'t>(
     items: Vec<TabViewItem<'t>>,
     remote_ordinals: &[usize],
-) -> (Vec<TabViewItem<'t>>, usize, Vec<(usize, Vec<Element<'t>>)>) {
+) -> RelocatedTabProse<'t> {
     let mut kept = Vec::new();
     let mut splices = Vec::new();
     let mut ordinal = 0usize;
@@ -587,7 +590,7 @@ fn parse_tabview<'r, 't>(
     // first fails the whole view even when an attached closer follows later.
     let body_starts_with_tab = quote_ejection
         || !parser.settings().layout.legacy()
-        || wikidot_tabview_body_starts_with_tab_head(&**parser);
+        || wikidot_tabview_body_starts_with_tab_head(parser);
 
     let previous_ejection = parser.wikidot_tab_quote_ejection();
     let previous_split = quote_ejection.then(|| {
@@ -1356,9 +1359,7 @@ where
             if head_only {
                 return tab_title_head_only_fused_unit(parser);
             }
-            if closer_name.is_none() {
-                return None;
-            }
+            closer_name?;
             return tab_title_scoped_block_unit(parser, rule.name);
         }
     };
@@ -1375,9 +1376,7 @@ where
     if tab_title_unit_end(parser, &probe, closer_name) {
         return Some((probe, fused_end));
     }
-    if closer_name.is_none() {
-        return None;
-    }
+    closer_name?;
     tab_title_scoped_block_unit(parser, rule.name)
 }
 

@@ -61,13 +61,15 @@ pub fn render_math_block(
         }
         render_wikidot_math_block(
             ctx,
-            index,
-            environment,
-            latex_source,
-            open_elements,
-            label_spans,
-            suppress_number,
-            capture_eq,
+            WikidotMathBlock {
+                index,
+                environment,
+                latex_source,
+                open_elements,
+                label_spans,
+                suppress_number,
+                capture_eq,
+            },
         );
         return;
     }
@@ -170,16 +172,26 @@ pub(crate) fn wikidot_math_number_will_render(
     resolve_wikidot_math_environment(environment, &source).is_ok()
 }
 
-fn render_wikidot_math_block(
-    ctx: &mut HtmlContext,
+struct WikidotMathBlock<'a, 't> {
     index: NonZeroUsize,
-    environment: Option<&str>,
-    latex_source: &str,
-    open_elements: &[Element],
-    label_spans: &[AttributeMap],
+    environment: Option<&'a str>,
+    latex_source: &'a str,
+    open_elements: &'a [Element<'t>],
+    label_spans: &'a [AttributeMap<'t>],
     suppress_number: bool,
     capture_eq: bool,
-) {
+}
+
+fn render_wikidot_math_block(ctx: &mut HtmlContext, block: WikidotMathBlock<'_, '_>) {
+    let WikidotMathBlock {
+        index,
+        environment,
+        latex_source,
+        open_elements,
+        label_spans,
+        suppress_number,
+        capture_eq,
+    } = block;
     let source = join_wikidot_math_source(latex_source);
     match resolve_wikidot_math_environment(environment, &source) {
         Err(bad) => {

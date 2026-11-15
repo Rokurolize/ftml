@@ -1478,10 +1478,7 @@ impl<'r, 't> Parser<'r, 't> {
                 last_ignore_ascii_case(line, needle).map(|at| at + needle.len())
             })
             .max();
-        match cell_end {
-            Some(after) if line[after..].chars().all(char::is_whitespace) => false,
-            _ => true,
-        }
+        !matches!(cell_end, Some(after) if line[after..].chars().all(char::is_whitespace))
     }
 
     pub(crate) fn wikidot_byte_in_quote_run(&self, byte: usize) -> bool {
@@ -1781,7 +1778,7 @@ impl<'r, 't> Parser<'r, 't> {
     /// to the `1` arms and `6`/`4` to the `2` arms (`3` only arrives
     /// defensively and vanishes silently).
     pub(crate) fn set_wikidot_pending_unquoted_evaporation_close(&self, kind: u8) {
-        debug_assert!(matches!(kind, 1 | 2 | 3 | 4 | 5 | 6));
+        debug_assert!(matches!(kind, 1..=6));
         self.block_end_scan_cache
             .borrow()
             .wikidot_pending_unquoted_evaporation_close
@@ -1822,13 +1819,6 @@ impl<'r, 't> Parser<'r, 't> {
             .borrow()
             .wikidot_ni91_headless_close_span
             .take()
-    }
-
-    pub(crate) fn clear_wikidot_pending_unquoted_evaporation_close(&self) {
-        self.block_end_scan_cache
-            .borrow()
-            .wikidot_pending_unquoted_evaporation_close
-            .set(0);
     }
 
     /// Whether a scanned note pair encloses `byte` (BRIEF-NN84): a bold
@@ -1876,24 +1866,6 @@ impl<'r, 't> Parser<'r, 't> {
             .map(|close| close.pos)
             .collect();
         (heads, closes)
-    }
-
-    pub(crate) fn wikidot_li_straddles_bodies(
-        &self,
-        first: usize,
-        second: usize,
-    ) -> bool {
-        let (lo, hi) = if first < second {
-            (first, second)
-        } else if first > second {
-            (second, first)
-        } else {
-            return false;
-        };
-        let cache = self.block_end_scan_cache.borrow();
-        let boundaries = &cache.wikidot_li_body_boundaries;
-        let index = boundaries.partition_point(|pos| *pos <= lo);
-        boundaries.get(index).is_some_and(|pos| *pos < hi)
     }
 
     pub(crate) fn wikidot_li_cross_head_in_region(&self, byte: usize) -> bool {

@@ -53,7 +53,16 @@ pub fn render_image(
                 .get_file_link(source, ctx.info(), ctx.settings())
             {
                 Some(url) => render_image_element(
-                    ctx, &url, link, None, None, alignment, attributes, target,
+                    ctx,
+                    ImageRenderArgs {
+                        image_url: &url,
+                        link,
+                        attachment_link: None,
+                        attachment_alt: None,
+                        alignment,
+                        attributes,
+                        target,
+                    },
                 ),
                 None => render_image_missing(ctx),
             }
@@ -73,13 +82,15 @@ pub fn render_image(
             ) {
                 Some((display_url, original_url)) => render_image_element(
                     ctx,
-                    &display_url,
-                    link,
-                    Some(&original_url),
-                    Some(alt),
-                    alignment,
-                    attributes,
-                    target,
+                    ImageRenderArgs {
+                        image_url: &display_url,
+                        link,
+                        attachment_link: Some(&original_url),
+                        attachment_alt: Some(alt),
+                        alignment,
+                        attributes,
+                        target,
+                    },
                 ),
                 None => render_image_missing(ctx),
             }
@@ -87,30 +98,30 @@ pub fn render_image(
     }
 }
 
-fn render_image_element(
-    ctx: &mut HtmlContext,
-    image_url: &str,
-    link: &Option<LinkLocation>,
-    attachment_link: Option<&str>,
-    attachment_alt: Option<&str>,
+struct ImageRenderArgs<'a, 't> {
+    image_url: &'a str,
+    link: &'a Option<LinkLocation<'t>>,
+    attachment_link: Option<&'a str>,
+    attachment_alt: Option<&'a str>,
     alignment: Option<FloatAlignment>,
-    attributes: &AttributeMap,
+    attributes: &'a AttributeMap<'t>,
     target: Option<AnchorTarget>,
-) {
+}
+
+fn render_image_element(ctx: &mut HtmlContext, args: ImageRenderArgs<'_, '_>) {
+    let ImageRenderArgs {
+        image_url,
+        link,
+        alignment,
+        attributes,
+        target,
+        ..
+    } = args;
     trace!("Found URL, rendering image (value '{image_url}')");
 
     match ctx.layout() {
         Layout::Wikidot => {
-            render_image_element_wikidot(
-                ctx,
-                image_url,
-                link,
-                attachment_link,
-                attachment_alt,
-                alignment,
-                attributes,
-                target,
-            );
+            render_image_element_wikidot(ctx, args);
         }
         Layout::Wikijump => {
             render_image_element_wikijump(
@@ -120,16 +131,16 @@ fn render_image_element(
     }
 }
 
-fn render_image_element_wikidot(
-    ctx: &mut HtmlContext,
-    image_url: &str,
-    link: &Option<LinkLocation>,
-    attachment_link: Option<&str>,
-    attachment_alt: Option<&str>,
-    alignment: Option<FloatAlignment>,
-    attributes: &AttributeMap,
-    target: Option<AnchorTarget>,
-) {
+fn render_image_element_wikidot(ctx: &mut HtmlContext, args: ImageRenderArgs<'_, '_>) {
+    let ImageRenderArgs {
+        image_url,
+        link,
+        attachment_link,
+        attachment_alt,
+        alignment,
+        attributes,
+        target,
+    } = args;
     let target_value = match target {
         Some(target) => target.html_attr(),
         None => "",

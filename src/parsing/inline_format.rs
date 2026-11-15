@@ -3830,10 +3830,11 @@ fn subtree_has_dash_pair(element: &Element<'_>) -> bool {
             container.elements().iter().any(subtree_has_dash_pair)
         }
         Element::Color { elements, .. } => elements.iter().any(subtree_has_dash_pair),
-        Element::Link { label, .. } => match label {
-            LinkLabel::Text(value) | LinkLabel::Slug(value) => value.contains("--"),
-            _ => false,
-        },
+        Element::Link {
+            label: LinkLabel::Text(value) | LinkLabel::Slug(value),
+            ..
+        } => value.contains("--"),
+        Element::Link { .. } => false,
         _ => false,
     }
 }
@@ -4546,14 +4547,13 @@ fn pair_dash_run_stream<'t>(elements: &mut Vec<Element<'t>>) -> bool {
             continue;
         }
         let pairs = dash_stream_pairs(&scan.stream);
-        if dash_stream_has_unmatched_opener(&scan.stream, &pairs) {
-            if let Some(next) =
+        if dash_stream_has_unmatched_opener(&scan.stream, &pairs)
+            && let Some(next) =
                 expand_dash_strike_container(&mut input, index, &scan, &mut output)
-            {
-                changed = true;
-                index = next;
-                continue;
-            }
+        {
+            changed = true;
+            index = next;
+            continue;
         }
         if pairs.is_empty() {
             for element_index in index..scan.end {

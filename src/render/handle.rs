@@ -121,11 +121,7 @@ impl Handle {
     pub fn get_page_exists(&self, _site: &str, _page: &str) -> bool {
         debug!("Checking page existence");
 
-        if cfg!(test) && _page == "missing" {
-            return false;
-        }
-
-        true
+        !(cfg!(test) && _page == "missing")
     }
 
     pub fn get_user_info(&self, name: &str) -> Option<UserInfo<'static>> {

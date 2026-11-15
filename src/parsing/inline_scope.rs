@@ -3381,7 +3381,7 @@ fn segment_format_list_items<'t>(
 /// item), and re-wrapping here would double the scope.
 fn segment_color_list_items<'t>(
     list: &mut Element<'t>,
-    color: &Cow<'t, str>,
+    color: Cow<'t, str>,
     background: bool,
 ) {
     let Element::List { items, .. } = list else {
@@ -3391,10 +3391,10 @@ fn segment_color_list_items<'t>(
         match item {
             ListItem::Elements { elements, .. } => {
                 let inner = mem::take(elements);
-                *elements = segment_color_run(inner, color, background);
+                *elements = segment_color_run(inner, &color, background);
             }
             ListItem::SubList { element } => {
-                segment_color_list_items(element, color, background);
+                segment_color_list_items(element, color.clone(), background);
             }
         }
     }
@@ -3434,7 +3434,7 @@ fn segment_color_run<'t>(
                 run.clear();
             }
             let mut list = element;
-            segment_color_list_items(&mut list, color, background);
+            segment_color_list_items(&mut list, color.clone(), background);
             output.push(list);
             seen_list = true;
         } else {
@@ -3879,7 +3879,11 @@ fn format_explicit_list_segments<'t>(
                         }
                         let mut list = child;
                         if !stops_at_list && !color_close_inside_list(&list) {
-                            segment_color_list_items(&mut list, &color_clone, bg_clone);
+                            segment_color_list_items(
+                                &mut list,
+                                color_clone.clone(),
+                                bg_clone,
+                            );
                         }
                         segmented.push(list);
                         seen_list = true;
@@ -3951,9 +3955,7 @@ fn format_explicit_list_segments<'t>(
     let Element::Container(container) = &element else {
         return None;
     };
-    let Some(kind) = format_kind_of(container.ctype()) else {
-        return None;
-    };
+    let kind = format_kind_of(container.ctype())?;
     let ctype = container.ctype();
     let crosses_list = container.elements().iter().any(|child| {
         matches!(
@@ -5052,7 +5054,7 @@ fn fold_scope_break_unit<'t>(
     // break unit at its deep tail. On live that pre-list chunk is a
     // paragraph (joining a preceding paragraph when there is one), so
     // fold the unit away and place the chunk accordingly.
-    if output.len() >= 1
+    if !output.is_empty()
         && output.last().is_some_and(|element| {
             matches!(
                 element,
@@ -5062,7 +5064,7 @@ fn fold_scope_break_unit<'t>(
         })
     {
         let chunk = output.pop().expect("last element checked above");
-        if output.len() >= 1
+        if !output.is_empty()
             && let Some(Element::Container(paragraph)) = output.last_mut()
             && paragraph.ctype() == ContainerType::Paragraph
         {
@@ -5090,6 +5092,7 @@ fn fold_scope_break_unit<'t>(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn flush_root_pending<'t>(
     output: &mut Vec<Element<'t>>,
     paragraph_group: &mut Option<ParagraphGroup<'t>>,
@@ -5780,9 +5783,9 @@ fn paragraph_tail_scope_sibling_merge<'t>(
 fn deep_scope_sibling_merge<'t>(
     previous: &mut Element<'t>,
     next: Element<'t>,
-) -> Result<(), Element<'t>> {
+) -> Result<(), Box<Element<'t>>> {
     if !same_scope_wrapper(previous, &next) {
-        return Err(next);
+        return Err(Box::new(next));
     }
     let next_children = match next {
         Element::Container(c) => Vec::from(c),
@@ -5812,7 +5815,7 @@ fn paragraph_tail_deep_scope_sibling_merge<'t>(
 ) {
     if let Some(tail) = paragraph.elements_mut().last_mut() {
         if let Err(elem) = deep_scope_sibling_merge(tail, next) {
-            paragraph.elements_mut().push(elem);
+            paragraph.elements_mut().push(*elem);
         }
     } else {
         paragraph.elements_mut().push(next);
@@ -5990,6 +5993,7 @@ fn split_run_at_blank_break<'t>(
     None
 }
 
+#[allow(clippy::too_many_arguments)]
 fn lower_sequence<'t>(
     elements: &mut Vec<Element<'t>>,
     valid: &BTreeSet<usize>,
@@ -7121,12 +7125,11 @@ fn lower_sequence<'t>(
                     && output.len() >= 2
                     && is_break_only_span(output.last().unwrap())
                     && is_block_boundary(&output[output.len() - 2])
+                    && let Element::Container(c) = &mut element
                 {
-                    if let Element::Container(c) = &mut element {
-                        while matches!(c.elements().first(), Some(e) if is_break_only_span(e))
-                        {
-                            c.elements_mut().remove(0);
-                        }
+                    while matches!(c.elements().first(), Some(e) if is_break_only_span(e))
+                    {
+                        c.elements_mut().remove(0);
                     }
                 }
                 clear_format_label_inside_marker(&mut element);
@@ -7885,23 +7888,24 @@ fn ends_with_ignore_ascii_case(haystack: &str, needle: &str) -> bool {
 fn strip_trailing_space_from_vec_preserving_residual_newline(
     elements: &mut Vec<Element<'_>>,
 ) {
-    if let Some(Element::Text(text)) = elements.last() {
-        if text.ends_with('\n') && is_cell_closer_residual_text(text) {
-            let t = text.as_ref();
-            let without_final_nl = t
-                .strip_suffix("\r\n")
-                .or_else(|| t.strip_suffix('\n'))
-                .unwrap_or(t);
-            let trimmed = without_final_nl.trim_end_matches([' ', '\t', '\r']);
-            let suffix = &t[without_final_nl.len()..];
-            let new_text = format!("{}{}", trimmed, suffix);
-            if new_text != t {
-                if let Some(Element::Text(text)) = elements.last_mut() {
-                    *text = std::borrow::Cow::Owned(new_text);
-                }
-            }
-            return;
+    if let Some(Element::Text(text)) = elements.last()
+        && text.ends_with('\n')
+        && is_cell_closer_residual_text(text)
+    {
+        let t = text.as_ref();
+        let without_final_nl = t
+            .strip_suffix("\r\n")
+            .or_else(|| t.strip_suffix('\n'))
+            .unwrap_or(t);
+        let trimmed = without_final_nl.trim_end_matches([' ', '\t', '\r']);
+        let suffix = &t[without_final_nl.len()..];
+        let new_text = format!("{}{}", trimmed, suffix);
+        if new_text != t
+            && let Some(Element::Text(text)) = elements.last_mut()
+        {
+            *text = std::borrow::Cow::Owned(new_text);
         }
+        return;
     }
     strip_trailing_space_from_vec(elements);
 }
@@ -8051,6 +8055,7 @@ fn parent_is_block_segment(element: &Element<'_>) -> bool {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn close_flattened_scope<'t>(
     output: &mut Vec<Element<'t>>,
     run: &mut Vec<Element<'t>>,
@@ -10473,20 +10478,20 @@ impl<'t> WikidotFrameAssembly<'t> {
     }
 
     fn finish(mut self) -> Vec<Element<'t>> {
-        if let Some(state) = self.reopen.take() {
-            if let Some(frame) = self.heading_frame.take() {
-                let element = Element::Container(Container::new(
-                    ContainerType::Header(Heading {
-                        level: state.heading.level,
-                        has_toc: false,
-                    }),
-                    frame.children,
-                    frame.attributes,
-                ));
-                match self.stack.last_mut() {
-                    Some(frame) => frame.children.push(element),
-                    None => self.output.push(element),
-                }
+        if let Some(state) = self.reopen.take()
+            && let Some(frame) = self.heading_frame.take()
+        {
+            let element = Element::Container(Container::new(
+                ContainerType::Header(Heading {
+                    level: state.heading.level,
+                    has_toc: false,
+                }),
+                frame.children,
+                frame.attributes,
+            ));
+            match self.stack.last_mut() {
+                Some(frame) => frame.children.push(element),
+                None => self.output.push(element),
             }
         }
         while let Some(frame) = self.stack.pop() {
@@ -10680,20 +10685,11 @@ fn fix_outer_close_eof_breaks<'t>(
 /// any) styles them. Derived from saved-page live probes
 /// (`muse-probe-r382-*`): a completed span-rendered scope close inside the
 /// label (color/span/size) kills the wrapper; bold/italic/anchor do not.
+#[derive(Default)]
 struct R3HeadingSignals<'t> {
     cancelled: bool,
     outer_scope: bool,
     outer_size: Option<AttributeMap<'t>>,
-}
-
-impl Default for R3HeadingSignals<'_> {
-    fn default() -> Self {
-        R3HeadingSignals {
-            cancelled: false,
-            outer_scope: false,
-            outer_size: None,
-        }
-    }
 }
 
 fn outer_close_eof_signals<'t>(children: &[Element<'t>]) -> R3HeadingSignals<'t> {
@@ -10850,7 +10846,7 @@ fn subtree_has_span_rendered<'t>(elements: &[Element<'t>]) -> bool {
 /// first list: the closer span, blank-follower paragraph spans, second-list
 /// item spans) as `Size` containers carrying the outer size scope's style.
 fn restyle_post_list_segments<'t>(
-    children: &mut Vec<Element<'t>>,
+    children: &mut [Element<'t>],
     anchor: usize,
     attrs: &AttributeMap<'t>,
 ) {

@@ -558,7 +558,7 @@ fn finish_simple_table_then<'r, 't>(
 
 fn simple_table_row_block_interior<'t>(
     elements: Elements<'t>,
-) -> Result<Vec<Element<'t>>, Elements<'t>> {
+) -> Result<Vec<Element<'t>>, Box<Elements<'t>>> {
     fn is_row_block(element: &Element<'_>) -> bool {
         match element {
             Element::Container(container) => container.ctype() == ContainerType::Note,
@@ -586,7 +586,7 @@ fn simple_table_row_block_interior<'t>(
             }
             Ok(out)
         }
-        other => Err(other),
+        other => Err(Box::new(other)),
     }
 }
 
@@ -1009,9 +1009,7 @@ fn glued_source_list_cells(
     text = apply_collapsible(&text);
     text = apply_bullet_list(&text);
     text = apply_ullist(&text);
-    let Some((row, rest)) = first_unclosed_table_row(&text) else {
-        return None;
-    };
+    let (row, rest) = first_unclosed_table_row(&text)?;
     let parts: Vec<&str> = row.split("||").collect();
     if parts.len() < 2 {
         return None;
@@ -2130,7 +2128,7 @@ fn try_consume_inner<'r, 't>(
                                         rows, interior, errors,
                                     );
                                 }
-                                Err(items) => items,
+                                Err(items) => *items,
                             }
                         } else {
                             new_items

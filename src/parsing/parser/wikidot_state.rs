@@ -480,12 +480,6 @@ impl Parser<'_, '_> {
             .cross_li_terminated_at = Some(closer_byte);
     }
 
-    /// The closer byte recorded by the innermost crossed `[[/li]]`
-    /// termination, if any (u10).
-    pub(crate) fn wikidot_cross_li_terminated_at(&self) -> Option<usize> {
-        self.block_end_scan_cache.borrow().cross_li_terminated_at
-    }
-
     pub(crate) fn take_wikidot_cross_li_terminated_at(&mut self) -> Option<usize> {
         self.block_end_scan_cache
             .borrow_mut()

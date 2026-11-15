@@ -23,7 +23,7 @@ pub mod php {
             (6, HlEnd::Pattern("(?i)`")),
             (7, HlEnd::Pattern("(?mi)^%1%;?$")),
             (8, HlEnd::Pattern("(?i)'")),
-            (9, HlEnd::Custom(HlCustomEnd::PhpCodeEnd)),
+            (9, HlEnd::Custom(HlCustomEnd::PhpCode)),
             (10, HlEnd::Pattern("(?i)<\\?(php|=)?")),
         ],
         states: &[
@@ -1104,8 +1104,8 @@ pub mod cpp {
             (2, HlEnd::Pattern("(?i)\\)")),
             (3, HlEnd::Pattern("(?i)\\]")),
             (4, HlEnd::Pattern("(?i)>")),
-            (5, HlEnd::Custom(HlCustomEnd::CppLineEnd)),
-            (6, HlEnd::Custom(HlCustomEnd::CppLineEnd)),
+            (5, HlEnd::Custom(HlCustomEnd::CppLine)),
+            (6, HlEnd::Custom(HlCustomEnd::CppLine)),
             (7, HlEnd::Pattern("(?i)\\*\\/")),
             (8, HlEnd::Pattern("(?mi)$")),
         ],
@@ -1478,7 +1478,7 @@ pub mod diff {
         ],
         disabled: &[],
         ends: &[
-            (0, HlEnd::Custom(HlCustomEnd::DiffNormEnd)),
+            (0, HlEnd::Custom(HlCustomEnd::DiffNorm)),
             (1, HlEnd::Pattern("(?m)^(\\.)$")),
             (2, HlEnd::Pattern("(?m)^(\\.)$")),
             (3, HlEnd::Pattern("(?m)^(\\.)$")),
@@ -3223,7 +3223,7 @@ pub mod css {
         ],
         disabled: &[],
         ends: &[
-            (0, HlEnd::Custom(HlCustomEnd::CssPropEnd)),
+            (0, HlEnd::Custom(HlCustomEnd::CssProp)),
             (1, HlEnd::Pattern("(?i)\\]")),
             (2, HlEnd::Pattern("(?i)\\}")),
             (3, HlEnd::Pattern("(?i)\\)")),

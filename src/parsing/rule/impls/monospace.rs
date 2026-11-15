@@ -108,41 +108,41 @@ fn try_consume_fn<'r, 't>(
     let collected = collected?;
     let ((mut elements, terminator), errors, paragraph_safe) = collected.into();
 
-    if parser.settings().layout.legacy() && terminator.token == Token::RightMonospace {
-        if let Some((shed_index, prefix, suffix, trailing_space)) =
+    if parser.settings().layout.legacy()
+        && terminator.token == Token::RightMonospace
+        && let Some((shed_index, prefix, suffix, trailing_space)) =
             wikidot_shed_close(&elements)
-        {
-            let mut container_elements: Vec<Element<'t>> =
-                elements.drain(..shed_index).collect();
-            if !prefix.is_empty() {
-                container_elements.push(Element::Text(Cow::Owned(prefix)));
-            }
-            let container = Element::Container(Container::new(
-                ContainerType::Monospace,
-                container_elements,
-                AttributeMap::new(),
-            ));
-            let mut output = Vec::with_capacity(4);
-            let leading_separator = leading_padding
-                && parser
-                    .full_text()
-                    .inner()
-                    .as_bytes()
-                    .get(opening_start.wrapping_sub(1))
-                    .is_some_and(|byte| !byte.is_ascii_whitespace());
-            if leading_separator {
-                output.push(text!(" "));
-            }
-            output.push(container);
-            if !suffix.is_empty() {
-                output.push(Element::Text(Cow::Owned(suffix)));
-            }
-            if trailing_space {
-                output.push(text!(" "));
-            }
-            output.push(text!("}}"));
-            return ok!(paragraph_safe; output, errors);
+    {
+        let mut container_elements: Vec<Element<'t>> =
+            elements.drain(..shed_index).collect();
+        if !prefix.is_empty() {
+            container_elements.push(Element::Text(Cow::Owned(prefix)));
         }
+        let container = Element::Container(Container::new(
+            ContainerType::Monospace,
+            container_elements,
+            AttributeMap::new(),
+        ));
+        let mut output = Vec::with_capacity(4);
+        let leading_separator = leading_padding
+            && parser
+                .full_text()
+                .inner()
+                .as_bytes()
+                .get(opening_start.wrapping_sub(1))
+                .is_some_and(|byte| !byte.is_ascii_whitespace());
+        if leading_separator {
+            output.push(text!(" "));
+        }
+        output.push(container);
+        if !suffix.is_empty() {
+            output.push(Element::Text(Cow::Owned(suffix)));
+        }
+        if trailing_space {
+            output.push(text!(" "));
+        }
+        output.push(text!("}}"));
+        return ok!(paragraph_safe; output, errors);
     }
 
     let unformed_dash = parser.settings().layout.legacy()

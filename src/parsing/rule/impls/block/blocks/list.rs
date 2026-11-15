@@ -728,7 +728,7 @@ fn parse_list_block_impl<'r, 't>(
             .collect();
         if heads.len() == items.len() {
             if let Some(ordinal) = this_list_ordinal
-                && heads.iter().any(|head| *head == div_opener)
+                && heads.contains(&div_opener)
             {
                 parser.record_wikidot_div_list_ordinal(ordinal);
             }
@@ -1907,9 +1907,7 @@ fn wikidot_li_split_external_close<'t>(
             })
             .map(|at| (item_index, at))
     });
-    let Some((item_index, at)) = found else {
-        return None;
-    };
+    let (item_index, at) = found?;
     let mut escaped = match &mut items[item_index] {
         ListItem::Elements { elements, .. } => elements.split_off(at),
         _ => return None,
@@ -2578,23 +2576,26 @@ fn parse_list_item<'r, 't>(
         let mut elements = assemble_wikidot_li_segments(
             segments,
             source,
-            parser.in_wikidot_bibliography_body(),
-            parser.pending_note_list_closer()
-                || parser.wikidot_cross_list_terminated_body(),
-            terminated_at_cross_close,
-            parser.in_wikidot_advanced_table_cell_body(),
-            enclosing_block,
-            shadowed_div_region,
+            LiSegmentFlags {
+                in_bibliography_body: parser.in_wikidot_bibliography_body(),
+                note_yielded_list_closer: parser.pending_note_list_closer()
+                    || parser.wikidot_cross_list_terminated_body(),
+                terminated_at_cross_close,
+                in_cell: parser.in_wikidot_advanced_table_cell_body(),
+                enclosing_block,
+                shadowed_div_region,
+                suppress_trail: parser.in_footnote()
+                    || crate::parsing::rule::impls::line_owner::wikidot_list_contains_footnote_open(
+                        parser.full_text().inner(),
+                        body_start,
+                    ),
+                quoted_li_close_hoisted: parser
+                    .peek_wikidot_quote_boundary_quoted_li_close(),
+            },
             DocFinalSignals {
                 literal: last_run_is_doc_final,
                 plain: plain_run_is_doc_final,
             },
-            parser.in_footnote()
-                || crate::parsing::rule::impls::line_owner::wikidot_list_contains_footnote_open(
-                    &parser.full_text().inner(),
-                    body_start,
-                ),
-            parser.peek_wikidot_quote_boundary_quoted_li_close(),
         );
         // NL81 (E, all-linebreaks-body): no content survived inside the
         // shadowed region — the region-end break goes before any content
@@ -2653,34 +2654,33 @@ fn parse_list_item<'r, 't>(
         // Item 65(c): an unowned lost-owner list formation dissolved its
         // content into this explicit li. Unwrap the dissolved run list so
         // its items become this li's content / split into sibling items.
-        if parser.take_wikidot_li_unowned_dissolve_at(body_start, source_end) {
-            if let Some(mut output) = unowned_dissolve_unwrap(&mut elements, &attributes)
-            {
-                // output[0] replaces this li's elements; rest are sibling partials
-                if output.len() == 1 {
-                    elements = output.pop().unwrap();
-                } else {
-                    let first = output.remove(0);
-                    let element =
-                        Element::Partial(PartialElement::ListItem(ListItem::Elements {
-                            elements: first,
-                            attributes: attributes.clone(),
-                        }));
-                    let mut result = vec![element];
-                    for elems in output {
-                        result.push(Element::Partial(PartialElement::ListItem(
-                            ListItem::Elements {
-                                elements: elems,
-                                attributes: AttributeMap::new(),
-                            },
-                        )));
-                    }
-                    return success_elements_with_paragraph_safety(
-                        false,
-                        Elements::Multiple(result),
-                        errors,
-                    );
+        if parser.take_wikidot_li_unowned_dissolve_at(body_start, source_end)
+            && let Some(mut output) = unowned_dissolve_unwrap(&mut elements, &attributes)
+        {
+            // output[0] replaces this li's elements; rest are sibling partials
+            if output.len() == 1 {
+                elements = output.pop().unwrap();
+            } else {
+                let first = output.remove(0);
+                let element =
+                    Element::Partial(PartialElement::ListItem(ListItem::Elements {
+                        elements: first,
+                        attributes: attributes.clone(),
+                    }));
+                let mut result = vec![element];
+                for elems in output {
+                    result.push(Element::Partial(PartialElement::ListItem(
+                        ListItem::Elements {
+                            elements: elems,
+                            attributes: AttributeMap::new(),
+                        },
+                    )));
                 }
+                return success_elements_with_paragraph_safety(
+                    false,
+                    Elements::Multiple(result),
+                    errors,
+                );
             }
         }
         if wikidot && !post_yield_scope {
@@ -3663,15 +3663,6 @@ fn wikidot_li_break_kept_after_block(element: &Element) -> bool {
     }
 }
 
-/// L85: live emits no break after a trailing block in an item body
-/// L85: live emits no break after a trailing math block in an item body
-/// (saved-page probes muse-probe-mi6x2-item-math). Formed blocks drop
-/// the trailing break with a trailing blank before [[/li]] (divblank/noteblank/codeblank/collblank/alignblank; probes muse-probe-mi74-*),
-/// and [[toc]] drops it in both cases (item-toc/tocblank; probes muse-probe-mi74-toc-*).
-fn wikidot_li_trailing_break_dropped_after_math(element: &Element) -> bool {
-    matches!(element, Element::Math { .. })
-}
-
 fn wikidot_li_trailing_break_dropped_after_block_blank(element: &Element) -> bool {
     match element {
         Element::Math { .. } => true,
@@ -3687,11 +3678,10 @@ fn wikidot_li_trailing_break_dropped_after_block_blank(element: &Element) -> boo
 
 /// Drop trailing break in normal case (no trailing blank)
 fn wikidot_li_trailing_break_dropped_after_block_always(element: &Element) -> bool {
-    match element {
-        Element::Math { .. } => true,
-        Element::TableOfContents { .. } => true,
-        _ => false,
-    }
+    matches!(
+        element,
+        Element::Math { .. } | Element::TableOfContents { .. }
+    )
 }
 
 fn wikidot_li_doc_final_block_follower_cut(stream: &str) -> Option<usize> {
@@ -3730,7 +3720,7 @@ fn wikidot_li_last_run_is_doc_final(remainder: &str) -> bool {
     for name in ["div", "note", "code", "math", "collapsible"] {
         loop {
             let lower = stream.to_ascii_lowercase();
-            let open_pat = format!("[[").to_string() + name;
+            let open_pat = "[[".to_string().to_string() + name;
             let Some(open_rel) = lower.find(&open_pat) else {
                 break;
             };
@@ -3883,18 +3873,22 @@ fn wikidot_li_last_run_is_doc_final(remainder: &str) -> bool {
     true
 }
 
-fn assemble_wikidot_li_segments<'t>(
-    mut segments: Vec<Vec<Element<'t>>>,
-    source: &str,
+struct LiSegmentFlags {
     in_bibliography_body: bool,
     note_yielded_list_closer: bool,
     terminated_at_cross_close: bool,
     in_cell: bool,
     enclosing_block: bool,
     shadowed_div_region: bool,
-    doc_final: DocFinalSignals,
     suppress_trail: bool,
     quoted_li_close_hoisted: bool,
+}
+
+fn assemble_wikidot_li_segments<'t>(
+    mut segments: Vec<Vec<Element<'t>>>,
+    source: &str,
+    flags: LiSegmentFlags,
+    doc_final: DocFinalSignals,
 ) -> Vec<Element<'t>> {
     let mut had_trailing_empty = false;
     while segments
@@ -3927,12 +3921,12 @@ fn assemble_wikidot_li_segments<'t>(
                     .is_some_and(|element| element.paragraph_safe());
             // NL81 (E): a shadowed div region's end break (live puts <br>
             // where the region ended, before text after the region).
-            let shadowed_region_end_break = shadowed_div_region
+            let shadowed_region_end_break = flags.shadowed_div_region
                 && matches!(segment[index - 1], Element::List { .. })
                 && segment
                     .get(index + 1)
                     .is_some_and(|element| element.paragraph_safe());
-            let shadowed_insert_break = shadowed_div_region
+            let shadowed_insert_break = flags.shadowed_div_region
                 && matches!(segment[index - 1], Element::List { .. })
                 && segment[index] != Element::LineBreak
                 && segment[index].paragraph_safe();
@@ -3958,10 +3952,10 @@ fn assemble_wikidot_li_segments<'t>(
             crate::parsing::rule::impls::line_owner::starred_list_closer_in_source(
                 source,
             ),
-            in_cell,
+            flags.in_cell,
             doc_final,
             segment_index + 1 == segment_count,
-            terminated_at_cross_close,
+            flags.terminated_at_cross_close,
             had_trailing_empty,
         );
     }
@@ -4013,16 +4007,13 @@ fn assemble_wikidot_li_segments<'t>(
                 !matches!(element, Element::LineBreak | Element::LineBreaks(_))
             })
             .is_some_and(|element| matches!(element, Element::List { .. }));
-    let last_plain_run_is_paragraph = match kept.as_slice() {
+    let last_plain_run_is_paragraph = matches!(
+        kept.as_slice(),
         [.., penultimate, last]
             if (body_before_close.ends_with('\n') || !doc_final.literal)
                 && segment_is_inline_content(last)
-                && segment_is_inline_content(penultimate) =>
-        {
-            true
-        }
-        _ => false,
-    };
+                && segment_is_inline_content(penultimate)
+    );
     let mut elements: Vec<Element<'t>> = Vec::new();
     let kept_last = kept.len().saturating_sub(1);
     for (index, segment) in kept.into_iter().enumerate() {
@@ -4123,9 +4114,9 @@ fn assemble_wikidot_li_segments<'t>(
         elements.last(),
         Some(Element::HorizontalRule | Element::ContentSeparator)
     );
-    let empty_marker_takes_break = !terminated_at_cross_close
+    let empty_marker_takes_break = !flags.terminated_at_cross_close
         && wikidot_li_body_ends_with_empty_native_marker(source);
-    if !terminated_at_cross_close
+    if !flags.terminated_at_cross_close
         && had_trailing_empty
         && elements.last().is_some_and(|element| {
             !element.paragraph_safe()
@@ -4141,7 +4132,7 @@ fn assemble_wikidot_li_segments<'t>(
         && !trailing_block_drops_break_blank
     {
         elements.push(Element::LineBreak);
-    } else if !had_trailing_empty && !terminated_at_cross_close {
+    } else if !had_trailing_empty && !flags.terminated_at_cross_close {
         let body = source
             .to_ascii_lowercase()
             .rfind("[[/li")
@@ -4176,8 +4167,8 @@ fn assemble_wikidot_li_segments<'t>(
             && !trailing_blockquote
             && !trailing_line_block
             && !trailing_block_drops_break_always
-            && !note_yielded_list_closer
-            && !in_bibliography_body
+            && !flags.note_yielded_list_closer
+            && !flags.in_bibliography_body
             && !trailing_wikidot_bibliography(&elements)
             && !deep_trailing_paragraph
             && !empty_marker_takes_break
@@ -4197,7 +4188,7 @@ fn assemble_wikidot_li_segments<'t>(
         elements.pop();
     }
     if marker_only_trailing_nested_list
-        && !terminated_at_cross_close
+        && !flags.terminated_at_cross_close
         && matches!(elements.last(), Some(Element::LineBreak))
     {
         elements.pop();
@@ -4231,7 +4222,7 @@ fn assemble_wikidot_li_segments<'t>(
     // BRIEF-QC89 quoted-closer pairing: shallow text hoisted out before
     // the quoted `[[/li]]` close takes the item's trailing break with
     // it on live (a directly closed quoted item keeps its `<br />`).
-    if quoted_li_close_hoisted {
+    if flags.quoted_li_close_hoisted {
         while matches!(
             elements.last(),
             Some(Element::LineBreak | Element::LineBreaks(_))
@@ -4239,7 +4230,11 @@ fn assemble_wikidot_li_segments<'t>(
             elements.pop();
         }
     }
-    wrap_post_heading_segments(&mut elements, enclosing_block, suppress_trail);
+    wrap_post_heading_segments(
+        &mut elements,
+        flags.enclosing_block,
+        flags.suppress_trail,
+    );
     elements
 }
 
@@ -4611,23 +4606,26 @@ pub(crate) fn parse_wikidot_implicit_list_block<'r, 't>(
         let mut elements = assemble_wikidot_li_segments(
             segments,
             source,
-            parser.in_wikidot_bibliography_body(),
-            parser.pending_note_list_closer()
-                || parser.wikidot_cross_list_terminated_body(),
-            terminated_at_cross_close,
-            parser.in_wikidot_advanced_table_cell_body(),
-            enclosing_block,
-            shadowed_div_region,
+            LiSegmentFlags {
+                in_bibliography_body: parser.in_wikidot_bibliography_body(),
+                note_yielded_list_closer: parser.pending_note_list_closer()
+                    || parser.wikidot_cross_list_terminated_body(),
+                terminated_at_cross_close,
+                in_cell: parser.in_wikidot_advanced_table_cell_body(),
+                enclosing_block,
+                shadowed_div_region,
+                suppress_trail: parser.in_footnote()
+                    || crate::parsing::rule::impls::line_owner::wikidot_list_contains_footnote_open(
+                        parser.full_text().inner(),
+                        body_start,
+                    ),
+                quoted_li_close_hoisted: parser
+                    .peek_wikidot_quote_boundary_quoted_li_close(),
+            },
             DocFinalSignals {
                 literal: last_run_is_doc_final,
                 plain: plain_run_is_doc_final,
             },
-            parser.in_footnote()
-                || crate::parsing::rule::impls::line_owner::wikidot_list_contains_footnote_open(
-                    &parser.full_text().inner(),
-                    body_start,
-                ),
-            parser.peek_wikidot_quote_boundary_quoted_li_close(),
         );
         if parser.take_wikidot_li_swallowed_block_at(body_start, source_end) {
             if elements.is_empty() {
@@ -4664,6 +4662,157 @@ pub(crate) fn parse_wikidot_implicit_list_block<'r, 't>(
         wikidot_unclosed: false,
     };
     success_elements_with_paragraph_safety(false, element, errors)
+}
+/// BRIEF-MF65b: performs the multi-formation escape restructure.
+/// Returns the elements that render at top level after this list's close,
+/// or `None` when the restructure does not apply (no numbered lost-owner
+/// hoist, or nothing follows the first one).
+fn multi_formation_escape<'t>(
+    parser: &Parser<'_, 't>,
+    items: &mut Vec<ListItem<'t>>,
+    hoists: usize,
+) -> Option<Vec<Element<'t>>> {
+    if hoists == 0 {
+        return None;
+    }
+    // The escape fires only when the FIRST list formation in this body is a
+    // numbered lost-owner formation (live closes the enclosing numbered
+    // list there). A leading bullet formation or explicit list keeps the
+    // choreography nested.
+    if parser.wikidot_first_formation_numbered_at(parser.wikidot_li_pairing_depth())
+        != Some(true)
+    {
+        return None;
+    }
+    // The first numbered lost-owner formation sits inside the first item;
+    // its flipped list is the item's first non-explicit list.
+    let first_list = match items.first() {
+        Some(ListItem::Elements { elements, .. }) => {
+            elements.iter().position(|element| {
+                matches!(
+                    element,
+                    Element::List {
+                        wikidot_explicit_block: false,
+                        ..
+                    }
+                )
+            })
+        }
+        _ => return None,
+    };
+    let first_list = first_list?;
+    let split = first_list + 1;
+    let kept_len = match &items[0] {
+        ListItem::Elements { elements, .. } => elements.len(),
+        _ => return None,
+    };
+    if kept_len == split && items.len() == 1 {
+        // Nothing follows the first formation.
+        return None;
+    }
+    let (elements, attributes) = match std::mem::replace(
+        &mut items[0],
+        ListItem::Elements {
+            elements: Vec::new(),
+            attributes: AttributeMap::new(),
+        },
+    ) {
+        ListItem::Elements {
+            elements,
+            attributes,
+        } => (elements, attributes),
+        _ => unreachable!("the split requires elements items"),
+    };
+    let mut elements = elements;
+    let rest_elements = elements.split_off(split);
+    items[0] = ListItem::Elements {
+        elements,
+        attributes,
+    };
+    let rest_items = items.split_off(1);
+    Some(multi_formation_escaped_tail(
+        rest_elements,
+        rest_items,
+        hoists - 1,
+    ))
+}
+
+/// BRIEF-MF65b: regroups the escaped tail into renderable elements.
+/// Nested flipped formation lists render as numbered lists unless a plain
+/// text-like element has already appeared in the tail (then the bullet run
+/// wins, matching live) or every numbered hoist is consumed. Items fused
+/// into the would-be outer list regroup into one escaped list per hoist.
+fn multi_formation_escaped_tail<'t>(
+    rest_elements: Vec<Element<'t>>,
+    rest_items: Vec<ListItem<'t>>,
+    mut hoists: usize,
+) -> Vec<Element<'t>> {
+    let mut out: Vec<Element<'t>> = Vec::new();
+    let mut pending: Vec<ListItem<'t>> = Vec::new();
+    let mut text_seen = false;
+
+    fn flush<'t>(
+        pending: &mut Vec<ListItem<'t>>,
+        hoists: &mut usize,
+        text_seen: bool,
+        out: &mut Vec<Element<'t>>,
+    ) {
+        if pending.is_empty() {
+            return;
+        }
+        let ltype = if *hoists > 0 && !text_seen {
+            *hoists -= 1;
+            ListType::Numbered
+        } else {
+            ListType::Bullet
+        };
+        out.push(Element::List {
+            ltype,
+            items: std::mem::take(pending),
+            attributes: AttributeMap::new(),
+            wikidot_explicit_block: false,
+            wikidot_marker_head_spawn: false,
+            wikidot_unclosed: false,
+        });
+    }
+
+    for element in rest_elements {
+        match element {
+            Element::List {
+                ltype,
+                items,
+                attributes,
+                wikidot_explicit_block,
+                wikidot_marker_head_spawn,
+                wikidot_unclosed,
+            } => {
+                flush(&mut pending, &mut hoists, text_seen, &mut out);
+                let ltype = if hoists > 0 && !text_seen {
+                    hoists -= 1;
+                    ListType::Numbered
+                } else {
+                    ltype
+                };
+                out.push(Element::List {
+                    ltype,
+                    items,
+                    attributes,
+                    wikidot_explicit_block,
+                    wikidot_marker_head_spawn,
+                    wikidot_unclosed,
+                });
+            }
+            other => {
+                text_seen = true;
+                out.push(other);
+            }
+        }
+    }
+    for item in rest_items {
+        pending.push(item);
+    }
+    flush(&mut pending, &mut hoists, text_seen, &mut out);
+    out
 }
 
 #[cfg(test)]
@@ -5165,157 +5314,4 @@ Alpha
             ));
         });
     }
-}
-/// BRIEF-MF65b: performs the multi-formation escape restructure.
-/// Returns the elements that render at top level after this list's close,
-/// or `None` when the restructure does not apply (no numbered lost-owner
-/// hoist, or nothing follows the first one).
-fn multi_formation_escape<'t>(
-    parser: &Parser<'_, 't>,
-    items: &mut Vec<ListItem<'t>>,
-    hoists: usize,
-) -> Option<Vec<Element<'t>>> {
-    if hoists == 0 {
-        return None;
-    }
-    // The escape fires only when the FIRST list formation in this body is a
-    // numbered lost-owner formation (live closes the enclosing numbered
-    // list there). A leading bullet formation or explicit list keeps the
-    // choreography nested.
-    if parser.wikidot_first_formation_numbered_at(parser.wikidot_li_pairing_depth())
-        != Some(true)
-    {
-        return None;
-    }
-    // The first numbered lost-owner formation sits inside the first item;
-    // its flipped list is the item's first non-explicit list.
-    let first_list = match items.first() {
-        Some(ListItem::Elements { elements, .. }) => {
-            elements.iter().position(|element| {
-                matches!(
-                    element,
-                    Element::List {
-                        wikidot_explicit_block: false,
-                        ..
-                    }
-                )
-            })
-        }
-        _ => return None,
-    };
-    let Some(first_list) = first_list else {
-        return None;
-    };
-    let split = first_list + 1;
-    let kept_len = match &items[0] {
-        ListItem::Elements { elements, .. } => elements.len(),
-        _ => return None,
-    };
-    if kept_len == split && items.len() == 1 {
-        // Nothing follows the first formation.
-        return None;
-    }
-    let (elements, attributes) = match std::mem::replace(
-        &mut items[0],
-        ListItem::Elements {
-            elements: Vec::new(),
-            attributes: AttributeMap::new(),
-        },
-    ) {
-        ListItem::Elements {
-            elements,
-            attributes,
-        } => (elements, attributes),
-        _ => unreachable!("the split requires elements items"),
-    };
-    let mut elements = elements;
-    let rest_elements = elements.split_off(split);
-    items[0] = ListItem::Elements {
-        elements,
-        attributes,
-    };
-    let rest_items = items.split_off(1);
-    Some(multi_formation_escaped_tail(
-        rest_elements,
-        rest_items,
-        hoists - 1,
-    ))
-}
-
-/// BRIEF-MF65b: regroups the escaped tail into renderable elements.
-/// Nested flipped formation lists render as numbered lists unless a plain
-/// text-like element has already appeared in the tail (then the bullet run
-/// wins, matching live) or every numbered hoist is consumed. Items fused
-/// into the would-be outer list regroup into one escaped list per hoist.
-fn multi_formation_escaped_tail<'t>(
-    rest_elements: Vec<Element<'t>>,
-    rest_items: Vec<ListItem<'t>>,
-    mut hoists: usize,
-) -> Vec<Element<'t>> {
-    let mut out: Vec<Element<'t>> = Vec::new();
-    let mut pending: Vec<ListItem<'t>> = Vec::new();
-    let mut text_seen = false;
-
-    fn flush<'t>(
-        pending: &mut Vec<ListItem<'t>>,
-        hoists: &mut usize,
-        text_seen: bool,
-        out: &mut Vec<Element<'t>>,
-    ) {
-        if pending.is_empty() {
-            return;
-        }
-        let ltype = if *hoists > 0 && !text_seen {
-            *hoists -= 1;
-            ListType::Numbered
-        } else {
-            ListType::Bullet
-        };
-        out.push(Element::List {
-            ltype,
-            items: std::mem::take(pending),
-            attributes: AttributeMap::new(),
-            wikidot_explicit_block: false,
-            wikidot_marker_head_spawn: false,
-            wikidot_unclosed: false,
-        });
-    }
-
-    for element in rest_elements {
-        match element {
-            Element::List {
-                ltype,
-                items,
-                attributes,
-                wikidot_explicit_block,
-                wikidot_marker_head_spawn,
-                wikidot_unclosed,
-            } => {
-                flush(&mut pending, &mut hoists, text_seen, &mut out);
-                let ltype = if hoists > 0 && !text_seen {
-                    hoists -= 1;
-                    ListType::Numbered
-                } else {
-                    ltype
-                };
-                out.push(Element::List {
-                    ltype,
-                    items,
-                    attributes,
-                    wikidot_explicit_block,
-                    wikidot_marker_head_spawn,
-                    wikidot_unclosed,
-                });
-            }
-            other => {
-                text_seen = true;
-                out.push(other);
-            }
-        }
-    }
-    for item in rest_items {
-        pending.push(item);
-    }
-    flush(&mut pending, &mut hoists, text_seen, &mut out);
-    out
 }

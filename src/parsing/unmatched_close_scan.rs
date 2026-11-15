@@ -38,9 +38,7 @@ use std::cell::Cell;
 
 #[derive(Debug, Clone, Copy)]
 struct LinkHeadScan {
-    tokens_end: usize,
     scanned_from: usize,
-    region_end: usize,
     /// `None` when the scan saw no head at all, which holds in every context.
     context: Option<RuleAttemptKey>,
     claimed_head: Option<usize>,
@@ -396,8 +394,7 @@ impl<'r, 't> Parser<'r, 't> {
         if let Some((scan_from, region_end)) = scan.link_region
             && scan_from <= from
             && from <= region_end
-            && !source[scan_from..from]
-                .as_bytes()
+            && !source.as_bytes()[scan_from..from]
                 .iter()
                 .any(|byte| matches!(byte, b' ' | b'\t'))
             && !source[scan_from..from].contains("[!--")
@@ -468,9 +465,7 @@ impl<'r, 't> Parser<'r, 't> {
         cache.unmatched_close_scan.link_head_scans.insert(
             (tokens_end, region_end, stored_context),
             LinkHeadScan {
-                tokens_end,
                 scanned_from: range.start as usize,
-                region_end,
                 context: stored_context,
                 claimed_head: claimed_index
                     .map(|index| std::ptr::from_ref(&remaining[index]) as usize),

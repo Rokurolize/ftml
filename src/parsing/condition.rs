@@ -115,8 +115,5 @@ pub(crate) fn paragraph_break_in_post_list_gap(source: &str, break_byte: usize) 
         return false;
     }
     skip_gap(&mut pos);
-    if pos < 3 || &bytes[pos - 3..pos] != b"[[/" {
-        return false;
-    }
-    true
+    !(pos < 3 || &bytes[pos - 3..pos] != b"[[/")
 }

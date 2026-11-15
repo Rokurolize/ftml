@@ -129,7 +129,7 @@ pub fn render_elements(ctx: &mut HtmlContext, elements: &[Element]) {
                     let title_default = ctx
                         .handle()
                         .get_message(ctx.language(), "bibliography-block-title");
-                    let title_ref: &str = title.unwrap_or(&title_default);
+                    let title_ref: &str = title.unwrap_or(title_default);
 
                     let trailing =
                         match wikidot_bibliography_residual_crossing(bibliography) {

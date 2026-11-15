@@ -583,11 +583,11 @@ impl<'t> Scanner<'t> {
             let start = tokens.partition_point(|token| token.span.end <= range.start);
             let end = tokens.partition_point(|token| token.span.start < range.end);
             if start < end {
-                if let Some(last) = zones.last_mut() {
-                    if start <= last.1 {
-                        last.1 = last.1.max(end);
-                        continue;
-                    }
+                if let Some(last) = zones.last_mut()
+                    && start <= last.1
+                {
+                    last.1 = last.1.max(end);
+                    continue;
                 }
                 zones.push((start, end));
             }
@@ -655,8 +655,8 @@ impl<'t> Scanner<'t> {
             let mut first_content: Option<usize> = None;
             let mut last_content: Option<usize> = None;
             let mut last_column_end: Option<usize> = None;
-            for t in start..end {
-                let token = &tokens[t];
+            for (offset, token) in tokens[start..end].iter().enumerate() {
+                let t = start + offset;
                 if is_column(token.token) {
                     last_column_end = Some(token.span.end);
                 }
@@ -1087,9 +1087,7 @@ impl<'t> Scanner<'t> {
         let next_closer = self
             .iftags_closers
             .partition_point(|closer| *closer < head_end_index);
-        if self.iftags_closers.get(next_closer).is_none() {
-            return None;
-        }
+        self.iftags_closers.get(next_closer)?;
         let body_start = tokens
             .get(head_end_index)
             .map_or(head_end_byte, |token| token.span.start);
@@ -1100,38 +1098,38 @@ impl<'t> Scanner<'t> {
             match token.token {
                 Token::InputEnd => return None,
                 Token::LeftBlock => {
-                    if let Some((inner, _)) = segment_head_name(tokens, index, true) {
-                        if self.source[inner].eq_ignore_ascii_case("iftags") {
-                            depth += 1;
-                        }
+                    if let Some((inner, _)) = segment_head_name(tokens, index, true)
+                        && self.source[inner].eq_ignore_ascii_case("iftags")
+                    {
+                        depth += 1;
                     }
                 }
                 Token::LeftBlockEnd => {
-                    if let Some((inner, _)) = segment_head_name(tokens, index, true) {
-                        if self.source[inner].eq_ignore_ascii_case("iftags") {
-                            depth -= 1;
-                            if depth == 0 {
-                                let closer_start = token.span.start;
-                                let mut end_index = index;
-                                let closer_end = loop {
-                                    let end_token = tokens.get(end_index)?;
-                                    match end_token.token {
-                                        Token::RightBlock => {
-                                            break end_token.span.end;
-                                        }
-                                        Token::RightLink => {
-                                            break end_token.span.start + 2;
-                                        }
-                                        Token::LineBreak
-                                        | Token::ParagraphBreak
-                                        | Token::InputEnd => {
-                                            return None;
-                                        }
-                                        _ => end_index += 1,
+                    if let Some((inner, _)) = segment_head_name(tokens, index, true)
+                        && self.source[inner].eq_ignore_ascii_case("iftags")
+                    {
+                        depth -= 1;
+                        if depth == 0 {
+                            let closer_start = token.span.start;
+                            let mut end_index = index;
+                            let closer_end = loop {
+                                let end_token = tokens.get(end_index)?;
+                                match end_token.token {
+                                    Token::RightBlock => {
+                                        break end_token.span.end;
                                     }
-                                };
-                                break (closer_start, closer_end);
-                            }
+                                    Token::RightLink => {
+                                        break end_token.span.start + 2;
+                                    }
+                                    Token::LineBreak
+                                    | Token::ParagraphBreak
+                                    | Token::InputEnd => {
+                                        return None;
+                                    }
+                                    _ => end_index += 1,
+                                }
+                            };
+                            break (closer_start, closer_end);
                         }
                     }
                 }
@@ -1535,11 +1533,11 @@ impl<'t> Scanner<'t> {
         let line = self.line_of[index];
         let first = self.line_first[line];
         let mut previous_quote = false;
-        for t in first..index {
-            match self.tokens[t].token {
+        for token in &self.tokens[first..index] {
+            match token.token {
                 Token::Quote => previous_quote = true,
                 Token::InputStart => {}
-                Token::Whitespace if previous_quote && self.tokens[t].slice == " " => {
+                Token::Whitespace if previous_quote && token.slice == " " => {
                     previous_quote = false
                 }
                 _ => return false,
@@ -1552,11 +1550,11 @@ impl<'t> Scanner<'t> {
         let line = self.line_of[index];
         let first = self.line_first[line];
         let mut previous_quote = false;
-        for t in first..index {
-            match self.tokens[t].token {
+        for token in &self.tokens[first..index] {
+            match token.token {
                 Token::Quote => previous_quote = true,
                 Token::InputStart => {}
-                Token::Whitespace if previous_quote && self.tokens[t].slice == " " => {
+                Token::Whitespace if previous_quote && token.slice == " " => {
                     previous_quote = false
                 }
                 Token::Whitespace => return true,
@@ -2468,10 +2466,7 @@ fn pair_nest(evs: &[&Event]) -> Vec<(usize, usize)> {
     let mut out = Vec::new();
     let mut stack: Vec<(usize, usize)> = vec![(0, evs.len())];
     while let Some((mut lo, mut hi)) = stack.pop() {
-        loop {
-            let Some(h) = tree.first_head(lo, hi) else {
-                break;
-            };
+        while let Some(h) = tree.first_head(lo, hi) {
             let heads = tree.range_heads(h, hi);
             let closers = tree.range_closers(h, hi);
             if heads > closers {
@@ -3634,11 +3629,7 @@ mod tests {
     fn naive_pair_nest(events: &[bool]) -> BTreeSet<(usize, usize)> {
         let mut state = vec![0_u8; events.len()];
         let mut pairs = BTreeSet::new();
-        loop {
-            let Some(head) = (0..events.len()).find(|&k| state[k] == 0 && events[k])
-            else {
-                break;
-            };
+        while let Some(head) = (0..events.len()).find(|&k| state[k] == 0 && events[k]) {
             let available: Vec<usize> =
                 (0..events.len()).filter(|&k| state[k] == 0).collect();
             let position = available.iter().position(|&k| k == head).unwrap();
@@ -3891,31 +3882,29 @@ mod tests {
                                     bump(counts, WikidotBlockKind::Tab, tabs);
                                 }
                             }
-                            "table" => {
+                            "table"
                                 if map
                                     .get("data")
                                     .and_then(|d| d.get("type"))
                                     .and_then(|t| t.as_str())
-                                    == Some("advanced")
+                                    == Some("advanced") =>
+                            {
+                                bump(counts, WikidotBlockKind::Table, 1);
+                                if let Some(rows) = map
+                                    .get("data")
+                                    .and_then(|d| d.get("rows"))
+                                    .and_then(|r| r.as_array())
                                 {
-                                    bump(counts, WikidotBlockKind::Table, 1);
-                                    if let Some(rows) = map
-                                        .get("data")
-                                        .and_then(|d| d.get("rows"))
-                                        .and_then(|r| r.as_array())
-                                    {
-                                        bump(counts, WikidotBlockKind::Row, rows.len());
-                                        for row in rows {
-                                            if let Some(cells) = row
-                                                .get("cells")
-                                                .and_then(|c| c.as_array())
-                                            {
-                                                bump(
-                                                    counts,
-                                                    WikidotBlockKind::Cell,
-                                                    cells.len(),
-                                                );
-                                            }
+                                    bump(counts, WikidotBlockKind::Row, rows.len());
+                                    for row in rows {
+                                        if let Some(cells) =
+                                            row.get("cells").and_then(|c| c.as_array())
+                                        {
+                                            bump(
+                                                counts,
+                                                WikidotBlockKind::Cell,
+                                                cells.len(),
+                                            );
                                         }
                                     }
                                 }
@@ -3973,15 +3962,15 @@ mod tests {
             let tokenization = crate::tokenize(&case.source);
             let repaired = crate::parsing::repaired_tokenization_for_test(
                 &tokenization,
-                &info,
-                &settings,
+                info,
+                settings,
             );
             let effective = repaired.as_ref().unwrap_or(&tokenization);
             let tokens = effective.tokens();
             let scan =
-                compute_wikidot_block_pairs(tokens, effective.full_text().inner(), &info);
+                compute_wikidot_block_pairs(tokens, effective.full_text().inner(), info);
             recorder_enable();
-            let outcome = crate::parsing::parse_for_test(effective, &info, &settings);
+            let outcome = crate::parsing::parse_for_test(effective, info, settings);
             let recorded = recorder_take();
             let (tree, _errors) = outcome.into();
             let counts = tree_counts(&tree);

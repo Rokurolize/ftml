@@ -451,9 +451,7 @@ where
             kind => prefix_kinds.push(kind),
         }
     }
-    let Some(head_index) = head_index else {
-        return None;
-    };
+    let head_index = head_index?;
     if head_index == 0 {
         return None;
     }
@@ -2576,25 +2574,6 @@ fn unwrap_residual_run_paragraphs(elements: Vec<Element<'_>>) -> Vec<Element<'_>
                 }
                 output.push(other);
             }
-        }
-    }
-    output
-}
-
-fn unwrap_residue_quote_paragraphs(elements: Vec<Element<'_>>) -> Vec<Element<'_>> {
-    let mut output = Vec::with_capacity(elements.len());
-    for element in elements {
-        match element {
-            Element::Container(mut container)
-                if container.ctype() == ContainerType::Paragraph
-                    && container
-                        .elements()
-                        .iter()
-                        .any(|element| quote_residue_text(element, false)) =>
-            {
-                output.append(container.elements_mut());
-            }
-            other => output.push(other),
         }
     }
     output

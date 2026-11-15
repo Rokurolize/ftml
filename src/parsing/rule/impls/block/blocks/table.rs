@@ -246,11 +246,14 @@ fn rescue_straddle_tail<'t>(
     Ok(elements)
 }
 
-#[allow(clippy::type_complexity)]
+type ExtractedTableRows<'t> = (Vec<TableRow<'t>>, Vec<Cow<'t, str>>, Vec<Element<'t>>);
+
+type ExtractedTableCells<'t> = (Vec<TableCell<'t>>, Vec<Cow<'t, str>>, Vec<Element<'t>>);
+
 fn extract_table_rows<'r, 't>(
     parser: &Parser<'r, 't>,
     elements: Vec<Element<'t>>,
-) -> Result<(Vec<TableRow<'t>>, Vec<Cow<'t, str>>, Vec<Element<'t>>), ParseError> {
+) -> Result<ExtractedTableRows<'t>, ParseError> {
     let mut rows = Vec::new();
     let mut residuals = Vec::new();
     let mut foster = Vec::new();
@@ -421,7 +424,6 @@ fn list_carries_splice_tokens(element: &Element<'_>) -> bool {
     }
 }
 
-#[allow(clippy::type_complexity)]
 fn extract_table_cells<'r, 't>(
     parser: &Parser<'r, 't>,
     elements: Vec<Element<'t>>,
@@ -430,7 +432,7 @@ fn extract_table_cells<'r, 't>(
     li_yield_tail: bool,
     cross_li_eject: Vec<Element<'t>>,
     mut cross_li_outer: Option<Element<'t>>,
-) -> Result<(Vec<TableCell<'t>>, Vec<Cow<'t, str>>, Vec<Element<'t>>), ParseError> {
+) -> Result<ExtractedTableCells<'t>, ParseError> {
     let mut cells = Vec::new();
     let mut residuals = Vec::new();
     let mut foster = Vec::new();
@@ -909,10 +911,10 @@ fn last_cell_closer(haystack: &str) -> Option<(usize, usize)> {
     let lower = haystack.to_ascii_lowercase();
     let mut best: Option<(usize, usize)> = None;
     for needle in ["[[/cell]]", "[[/hcell]]"] {
-        if let Some(pos) = lower.rfind(needle) {
-            if best.is_none_or(|(b, _)| pos > b) {
-                best = Some((pos, needle.len()));
-            }
+        if let Some(pos) = lower.rfind(needle)
+            && best.is_none_or(|(b, _)| pos > b)
+        {
+            best = Some((pos, needle.len()));
         }
     }
     best
@@ -921,10 +923,10 @@ fn last_cell_closer(haystack: &str) -> Option<(usize, usize)> {
 fn next_cell_closer(haystack: &str) -> Option<(usize, usize)> {
     let mut best: Option<(usize, usize)> = None;
     for needle in ["[[/cell]]", "[[/hcell]]"] {
-        if let Some(index) = find_ignore_ascii_case(haystack, needle) {
-            if best.is_none_or(|(at, _)| index < at) {
-                best = Some((index, needle.len()));
-            }
+        if let Some(index) = find_ignore_ascii_case(haystack, needle)
+            && best.is_none_or(|(at, _)| index < at)
+        {
+            best = Some((index, needle.len()));
         }
     }
     best
@@ -1032,7 +1034,7 @@ fn find_ignore_ascii_case(haystack: &str, needle: &str) -> Option<usize> {
     h.windows(n.len()).position(|w| {
         w.iter()
             .zip(n.iter())
-            .all(|(a, b)| a.to_ascii_lowercase() == b.to_ascii_lowercase())
+            .all(|(a, b)| a.eq_ignore_ascii_case(b))
     })
 }
 

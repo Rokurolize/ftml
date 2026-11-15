@@ -57,11 +57,13 @@ pub enum HlCustom {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HlCustomEnd {
-    CppLineEnd,
-    PhpCodeEnd,
-    DiffNormEnd,
-    CssPropEnd,
+    CppLine,
+    PhpCode,
+    DiffNorm,
+    CssProp,
 }
+
+type BestRuleMatch = (usize, usize, usize, Vec<Option<(usize, usize)>>);
 
 #[derive(Debug, Clone, Copy)]
 pub enum HlEnd {
@@ -470,9 +472,7 @@ fn find_perl_qquote(text: &str, pos: usize, two_letter: bool) -> Option<CustomHi
         }
         let mut op_end = search + 1;
         if two_letter {
-            let Some(&second) = bytes.get(op_end) else {
-                return None;
-            };
+            let &second = bytes.get(op_end)?;
             if !matches!(second, b'w' | b'q' | b'W' | b'Q') {
                 search = next_boundary(text, search + 1);
                 continue;
@@ -625,10 +625,10 @@ fn find_css_prop_end(text: &str, pos: usize) -> Option<(usize, usize)> {
 
 fn find_custom_end(id: HlCustomEnd, text: &str, pos: usize) -> Option<(usize, usize)> {
     match id {
-        HlCustomEnd::CppLineEnd => find_cpp_line_end(text, pos),
-        HlCustomEnd::PhpCodeEnd => find_php_code_end(text, pos),
-        HlCustomEnd::DiffNormEnd => find_diff_norm_end(text, pos),
-        HlCustomEnd::CssPropEnd => find_css_prop_end(text, pos),
+        HlCustomEnd::CppLine => find_cpp_line_end(text, pos),
+        HlCustomEnd::PhpCode => find_php_code_end(text, pos),
+        HlCustomEnd::DiffNorm => find_diff_norm_end(text, pos),
+        HlCustomEnd::CssProp => find_css_prop_end(text, pos),
     }
 }
 
@@ -718,7 +718,7 @@ fn find_rule(
     text: &str,
     pos: usize,
 ) -> Option<(usize, RuleHit)> {
-    let mut best: Option<(usize, usize, usize, Vec<Option<(usize, usize)>>)> = None;
+    let mut best: Option<BestRuleMatch> = None;
     let mut consider = |rule_index: usize,
                         start: usize,
                         end: usize,
@@ -738,34 +738,33 @@ fn find_rule(
             best = Some((start, rule_index, end, groups));
         }
     };
-    if let Some(re) = &state.regex {
-        if let Some(caps) = re.captures_at(text.as_bytes(), pos) {
-            let mut offset = 0;
-            for (rule_index, rule) in table_rules.iter().enumerate() {
-                let mut found = None;
-                for group in 1..=rule.groups {
-                    if let Some(m) = caps.get(offset + group) {
-                        found = Some((m, group));
-                        break;
-                    }
-                }
-                if let Some((m, _)) = found {
-                    // Capture layout mirrors the upstream engine: index 0 is
-                    // the rule's whole match, and indexes 1.. are the rule's
-                    // INNER groups (the outer wrapper is not addressable).
-                    // The rule occupies `rule.groups` captures starting at
-                    // `offset + 1` (outer first, then inners).
-                    let mut groups = vec![None; rule.groups + 1];
-                    groups[0] = Some((m.start(), m.end()));
-                    for g in 1..rule.groups {
-                        groups[g] =
-                            caps.get(offset + g + 1).map(|m| (m.start(), m.end()));
-                    }
-                    consider(rule_index, m.start(), m.end(), groups);
+    if let Some(re) = &state.regex
+        && let Some(caps) = re.captures_at(text.as_bytes(), pos)
+    {
+        let mut offset = 0;
+        for (rule_index, rule) in table_rules.iter().enumerate() {
+            let mut found = None;
+            for group in 1..=rule.groups {
+                if let Some(m) = caps.get(offset + group) {
+                    found = Some((m, group));
                     break;
                 }
-                offset += rule.groups;
             }
+            if let Some((m, _)) = found {
+                // Capture layout mirrors the upstream engine: index 0 is
+                // the rule's whole match, and indexes 1.. are the rule's
+                // INNER groups (the outer wrapper is not addressable).
+                // The rule occupies `rule.groups` captures starting at
+                // `offset + 1` (outer first, then inners).
+                let mut groups = vec![None; rule.groups + 1];
+                groups[0] = Some((m.start(), m.end()));
+                for g in 1..rule.groups {
+                    groups[g] = caps.get(offset + g + 1).map(|m| (m.start(), m.end()));
+                }
+                consider(rule_index, m.start(), m.end(), groups);
+                break;
+            }
+            offset += rule.groups;
         }
     }
     for (rule_index, rule) in table_rules.iter().enumerate() {
@@ -936,12 +935,11 @@ fn tokenize(compiled: &CompiledLang, table: &HlLang, text: &str) -> Vec<RawToken
                         if compiled.disabled.iter().any(|d| d == group) {
                             continue;
                         }
-                        if let Some(re) = compiled.keywords.get(&(*group, *pattern)) {
-                            if re.is_match(whole.as_bytes()) {
-                                class =
-                                    compiled.kwmap.get(group).copied().unwrap_or(class);
-                                break;
-                            }
+                        if let Some(re) = compiled.keywords.get(&(*group, *pattern))
+                            && re.is_match(whole.as_bytes())
+                        {
+                            class = compiled.kwmap.get(group).copied().unwrap_or(class);
+                            break;
                         }
                     }
                     emit(class, hit.start, hit.end);

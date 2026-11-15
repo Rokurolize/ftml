@@ -19,7 +19,9 @@
  */
 
 use super::prelude::*;
-use crate::delayed::{DelayedElement, GeneratedImageAttribute, GeneratedKind};
+use crate::delayed::{
+    DelayedElement, DelayedTagImage, GeneratedImageAttribute, GeneratedKind,
+};
 use crate::parsing::discard_wikidot_controls;
 use crate::tree::{
     AnchorTarget, FileSource, FloatAlignment, ImageSize, ImageSource, LinkLocation,
@@ -162,14 +164,16 @@ fn parse_fn<'r, 't>(
             }
         }
         return success_elements(Element::Delayed(DelayedElement::tag_image(
-            source,
-            link,
-            target,
-            alignment,
-            arguments.to_attribute_map(parser.settings()),
-            attribute,
-            suffix,
-            slot.id,
+            DelayedTagImage {
+                source,
+                link,
+                target,
+                alignment,
+                attributes: arguments.to_attribute_map(parser.settings()),
+                attribute,
+                suffix: Cow::Borrowed(suffix),
+                id: slot.id,
+            },
         )));
     }
 

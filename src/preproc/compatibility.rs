@@ -1320,12 +1320,14 @@ fn close_unclosed_divs_before_collapsible_close(lines: &mut Vec<String>) {
                                 standalone_div_marker(body.trim_end(), "") == Some(false)
                             });
                         if tight_tail && let Some(open) = open_line {
-                            for mid in open + 1..index {
+                            for (mid, line) in
+                                lines.iter().enumerate().take(index).skip(open + 1)
+                            {
                                 if literal_lines.get(mid).is_some_and(|literal| *literal)
                                 {
                                     continue;
                                 }
-                                let (body, _) = split_line(&lines[mid]);
+                                let (body, _) = split_line(line);
                                 if standalone_div_marker(body.trim_end(), "")
                                     == Some(false)
                                 {

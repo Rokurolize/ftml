@@ -41,5 +41,5 @@ Run and record the checks below before opening the pull request. The nightly rob
 - [ ] `cargo fmt --all -- --check`
 - [ ] `cargo test --all-features --lib`
 - [ ] `cargo test --all-features --tests`
-- [ ] `RUSTFLAGS="-A unused -D warnings" cargo clippy --tests --no-deps`
+- [ ] `cargo clippy --all-targets -- -D warnings`
 - [ ] Other:

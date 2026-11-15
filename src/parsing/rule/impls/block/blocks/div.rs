@@ -416,7 +416,7 @@ where
         // slice is kept.
         let li_body = parser.wikidot_li_inside_item_body();
         let blank_before = li_body && line_started_after_physical_newline && {
-            let bytes = source[..owner_start].as_bytes();
+            let bytes = &source.as_bytes()[..owner_start];
             let mut i = bytes.len();
             while i > 0 && (bytes[i - 1] == b' ' || bytes[i - 1] == b'\t') {
                 i -= 1;

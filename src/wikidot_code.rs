@@ -124,23 +124,23 @@ pub(crate) fn candidates(source: &str) -> BTreeMap<usize, WikidotCodeCandidate> 
         if let Some(marker_end) =
             code_closer_marker_end(source, marker_start, &mut close_brackets)
         {
-            if code_closer_terminates(source, marker_end) {
-                if let Some(open) = stack.pop() {
-                    let candidate = WikidotCodeCandidate {
-                        body: open.body_start..marker_start,
-                        owner_end: marker_end,
-                        end_blocks_to_skip: open.nested_closes,
-                    };
-                    if !crosses_bold_closer(
-                        &source[candidate.body.clone()],
-                        &source[marker_end..],
-                    ) {
-                        output.insert(open.opener_start, candidate);
-                    }
-                    if let Some(parent) = stack.last_mut() {
-                        parent.nested_closes += 1 + open.nested_closes;
-                        parent.fallback_closer = Some((marker_start, marker_end));
-                    }
+            if code_closer_terminates(source, marker_end)
+                && let Some(open) = stack.pop()
+            {
+                let candidate = WikidotCodeCandidate {
+                    body: open.body_start..marker_start,
+                    owner_end: marker_end,
+                    end_blocks_to_skip: open.nested_closes,
+                };
+                if !crosses_bold_closer(
+                    &source[candidate.body.clone()],
+                    &source[marker_end..],
+                ) {
+                    output.insert(open.opener_start, candidate);
+                }
+                if let Some(parent) = stack.last_mut() {
+                    parent.nested_closes += 1 + open.nested_closes;
+                    parent.fallback_closer = Some((marker_start, marker_end));
                 }
             }
             // A `[[/code]]` not followed by whitespace or the end of the

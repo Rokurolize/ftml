@@ -144,7 +144,7 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
         let repaired =
             crate::parsing::footnote::repair_wikidot_footnote_list_chrome(&mut elements);
         let note_took_the_list_break = parser.take_suppress_footnote_list_break();
-        let closer_marker = wikidot_footnote_closer_line_list_marker(&parser);
+        let closer_marker = wikidot_footnote_closer_line_list_marker(parser);
         if let Some(marker) = closer_marker {
             if matches!(elements.last(), Some(Element::List { .. })) {
                 elements.push(Element::Container(Container::new(

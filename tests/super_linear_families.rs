@@ -199,6 +199,7 @@ fn nested_iftags_gates_keep_their_balanced_end_head() {
     }
 }
 
+#[test]
 fn bracket_run_repair_probes_stay_bounded() {
     // A run of `[` lexes as alternating `[` + `[[[` tokens, so the
     // bracket-run re-split repair probes thousands of candidate pairs. Each

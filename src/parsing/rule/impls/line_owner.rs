@@ -205,11 +205,7 @@ fn first_matching_close_is_unprefixed(
 fn is_deep_marker_line(line: &str) -> bool {
     let mut depth = 0usize;
     let mut rest = line.trim_start_matches([' ', '\t']);
-    loop {
-        let first = match rest.bytes().next() {
-            Some(byte) => byte,
-            None => break,
-        };
+    while let Some(first) = rest.bytes().next() {
         if first != b'*' && first != b'#' {
             break;
         }
@@ -801,8 +797,7 @@ where
         let has_deep = li_end.is_some_and(|end| {
             body_has_deep_marker(entry_parser.full_text().inner(), head_byte, end)
         });
-        let head_in_body =
-            li_head.is_none() || li_end.map_or(true, |end| head_byte < end);
+        let head_in_body = li_head.is_none() || li_end.is_none_or(|end| head_byte < end);
         if !has_deep
             && head_in_body
             && !list_closer_in_range(
@@ -1139,10 +1134,9 @@ pub(crate) fn list_item_line_marker(source: &str, head_byte: usize) -> Option<ch
     let trimmed = prefix.trim_start_matches([' ', '\t', '>', '\r']);
     let (marker, rest) = if let Some(rest) = trimmed.strip_prefix('*') {
         ('*', rest)
-    } else if let Some(rest) = trimmed.strip_prefix('#') {
-        ('#', rest)
     } else {
-        return None;
+        let rest = trimmed.strip_prefix('#')?;
+        ('#', rest)
     };
     rest.chars().all(char::is_whitespace).then_some(marker)
 }
@@ -1292,9 +1286,7 @@ fn lost_owner_list_body_is_unowned(parser: &Parser<'_, '_>) -> bool {
 fn lost_owner_list_body_sibling_items_ltype(parser: &Parser<'_, '_>) -> Option<ListType> {
     let source = parser.full_text().inner();
     let start = parser.current().span.start.min(source.len());
-    let Some(offset) = source[start..].find('\n') else {
-        return None;
-    };
+    let offset = source[start..].find('\n')?;
     let body_start = start + offset + 1;
     let line = source[body_start..].lines().next()?.trim_start();
     // The sibling item must start with `*` or `#` marker followed by

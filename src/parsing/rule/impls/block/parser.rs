@@ -91,15 +91,27 @@ pub(crate) enum WikidotLiCloseDisposition {
     Literal,
 }
 
+type BodyElementSegments<'t> =
+    (Vec<Vec<Element<'t>>>, Vec<bool>, Vec<ParagraphSplitKind>);
+
+type UnquotedCloseScan = (
+    Vec<Vec<(usize, usize)>>,
+    bool,
+    bool,
+    UnquotedCloseTerminator,
+    bool,
+    bool,
+);
+
 /// How the unquoted-close hoist region terminated (BRIEF-UQ67).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum UnquotedCloseTerminator {
-    LiClose,
-    UlListClose,
-    OlListClose,
+    Li,
+    UlList,
+    OlList,
     /// A bare `[[/li]]` line quoted at the required depth
     /// (BRIEF-QC89 quoted-closer pairing family).
-    QuotedLiClose,
+    QuotedLi,
 }
 
 /// Follower classification for the BRIEF-NI91 headless divert: the row
@@ -826,7 +838,7 @@ pub(crate) fn wikidot_physical_line_has_textual_div_closer(
         .rfind('\n')
         .map_or(0, |offset| offset + 1);
     let rest = source.get(line_start..).unwrap_or("");
-    let line_end_rel = rest.find('\n').map_or(rest.len(), |i| i);
+    let line_end_rel = rest.find('\n').unwrap_or(rest.len());
     let line = &rest[..line_end_rel];
     line.as_bytes()
         .windows(9)
@@ -2228,7 +2240,7 @@ where
         }
         let text = self.full_text().inner();
         let tail = text.get(self.current().span.start..).unwrap_or("");
-        let rest_line = tail.split(|c| c == '\n' || c == '\r').next().unwrap_or("");
+        let rest_line = tail.split(['\n', '\r']).next().unwrap_or("");
         let wants_br = !rest_line.is_empty()
             && rest_line.bytes().all(|b| matches!(b, b' ' | b'\t' | b'\r'))
             && rest_line != " ";
@@ -2968,15 +2980,15 @@ where
                                             break;
                                         }
                                         depth -= 1;
-                                    } else if name.eq_ignore_ascii_case("li") {
-                                        if let Some(head) = Self::take_wikidot_li_pair(
+                                    } else if name.eq_ignore_ascii_case("li")
+                                        && let Some(head) = Self::take_wikidot_li_pair(
                                             &mut queue,
                                             &heads,
                                             &name_probe,
                                             depth,
-                                        ) {
-                                            paired.insert(head);
-                                        }
+                                        )
+                                    {
+                                        paired.insert(head);
                                     }
                                     if scan.step().is_err() {
                                         break;
@@ -3637,13 +3649,6 @@ where
         false
     }
 
-    pub(crate) fn wikidot_li_cross_scan_ran(&self) -> bool {
-        self.block_end_scan_cache
-            .borrow()
-            .wikidot_li_cross_scan
-            .is_some()
-    }
-
     pub(crate) fn wikidot_li_cross_pair_at(
         &self,
         closer_byte: usize,
@@ -3958,10 +3963,7 @@ where
                     // becomes literal paragraph text on live: chrome drops.
                     let mut single_line = false;
                     let mut probe = head_end + 1;
-                    loop {
-                        let Some(token) = remaining.get(probe) else {
-                            break;
-                        };
+                    while let Some(token) = remaining.get(probe) {
                         match token.token {
                             Token::LeftBlockEnd => {
                                 single_line = true;
@@ -4074,21 +4076,6 @@ where
             return false;
         }
         true
-    }
-
-    /// L85: whether an implicit-list `[[li]]` stands here inside a
-    /// div/collapsible body (cross shapes).
-    pub(crate) fn wikidot_li_cross_implicit_li_here(&self, rule_name: &str) -> bool {
-        if !self.settings().layout.legacy() || self.discarding_hidden_body() {
-            return false;
-        }
-        if !matches!(rule_name, "block-div" | "block-collapsible") {
-            return false;
-        }
-        if self.current().token != Token::LeftBlock {
-            return false;
-        }
-        self.wikidot_li_cross_implicit_li_at(self.current().span.start)
     }
 
     /// L85: skip (drop) a scan-redundant `[[/li]]` inside div/collapsible
@@ -6533,14 +6520,7 @@ where
     pub(crate) fn get_body_element_segments_iftags(
         &mut self,
         block_rule: &BlockRule,
-    ) -> ParseResult<
-        'r,
-        't,
-        (
-            (Vec<Vec<Element<'t>>>, Vec<bool>, Vec<ParagraphSplitKind>),
-            bool,
-        ),
-    > {
+    ) -> ParseResult<'r, 't, (BodyElementSegments<'t>, bool)> {
         let mut segments: Vec<Vec<Element<'t>>> = vec![Vec::new()];
         let mut segment_safe: Vec<bool> = vec![true];
         let mut segment_kinds: Vec<ParagraphSplitKind> =
@@ -6717,84 +6697,82 @@ where
             let before = self.remaining();
             let before_token = self.current().token;
             self.set_wikidot_line_follows_block(false);
-            match consume(self) {
-                Ok(consumed) => {
-                    self.take_wikidot_mixed_paragraph_ownership();
-                    let crate::parsing::ParseSuccess {
-                        item,
-                        errors,
-                        paragraph_safe: safe,
-                        paragraph_split,
-                        ..
-                    } = consumed;
-                    all_errors.extend(errors);
-                    paragraph_safe &= safe;
-                    let elements = match item {
-                        Elements::Multiple(elements) => elements,
-                        Elements::Single(element) => vec![element],
-                        Elements::None => Vec::new(),
+            {
+                let consumed = consume(self)?;
+                self.take_wikidot_mixed_paragraph_ownership();
+                let crate::parsing::ParseSuccess {
+                    item,
+                    errors,
+                    paragraph_safe: safe,
+                    paragraph_split,
+                    ..
+                } = consumed;
+                all_errors.extend(errors);
+                paragraph_safe &= safe;
+                let elements = match item {
+                    Elements::Multiple(elements) => elements,
+                    Elements::Single(element) => vec![element],
+                    Elements::None => Vec::new(),
+                };
+                let steps = before.len() - self.remaining().len();
+                let absorbed_trailing_break = paragraph_split.is_none()
+                    && match steps {
+                        0 => false,
+                        1 => before_token == Token::ParagraphBreak,
+                        _ => before[steps - 2].token == Token::ParagraphBreak,
                     };
-                    let steps = before.len() - self.remaining().len();
-                    let absorbed_trailing_break = paragraph_split.is_none()
-                        && match steps {
-                            0 => false,
-                            1 => before_token == Token::ParagraphBreak,
-                            _ => before[steps - 2].token == Token::ParagraphBreak,
-                        };
-                    match paragraph_split {
-                        Some(counts) => {
-                            distribute_paragraph_split(
-                                &mut segments,
-                                Some(&mut segment_safe),
-                                Some(&mut segment_kinds),
-                                elements,
-                                &counts,
-                            );
+                match paragraph_split {
+                    Some(counts) => {
+                        distribute_paragraph_split(
+                            &mut segments,
+                            Some(&mut segment_safe),
+                            Some(&mut segment_kinds),
+                            elements,
+                            &counts,
+                        );
+                    }
+                    None => {
+                        if let Some(current) = segment_safe.last_mut() {
+                            *current &= safe;
                         }
-                        None => {
-                            if let Some(current) = segment_safe.last_mut() {
-                                *current &= safe;
-                            }
-                            segments
+                        segments
+                            .last_mut()
+                            .expect("segments always has a current segment")
+                            .extend(elements);
+                        if segments.len() > 1
+                            && self.take_wikidot_div_literal_recovered()
+                            && !segment_safe.last().copied().unwrap_or(true)
+                        {
+                            let segment = segments
                                 .last_mut()
-                                .expect("segments always has a current segment")
-                                .extend(elements);
-                            if segments.len() > 1
-                                && self.take_wikidot_div_literal_recovered()
-                                && !segment_safe.last().copied().unwrap_or(true)
+                                .expect("segments always has a current segment");
+                            if segment.len() == 1
+                                && let Some(Element::Text(text)) = segment.first_mut()
                             {
-                                let segment = segments
-                                    .last_mut()
-                                    .expect("segments always has a current segment");
-                                if segment.len() == 1
-                                    && let Some(Element::Text(text)) = segment.first_mut()
-                                {
-                                    if let Some(stripped) = text.strip_prefix('\n') {
-                                        *text = Cow::Owned(stripped.to_owned());
-                                    }
-                                    if let Some(current) = segment_safe.last_mut() {
-                                        *current = true;
-                                    }
+                                if let Some(stripped) = text.strip_prefix('\n') {
+                                    *text = Cow::Owned(stripped.to_owned());
+                                }
+                                if let Some(current) = segment_safe.last_mut() {
+                                    *current = true;
                                 }
                             }
                         }
                     }
-                    if absorbed_trailing_break {
-                        segments.push(Vec::new());
-                        segment_safe.push(true);
-                        segment_kinds.push(ParagraphSplitKind::Paragraph);
-                    }
-                    if steps >= 1 {
-                        let last_token = if steps == 1 {
-                            before_token
-                        } else {
-                            before[steps - 1].token
-                        };
-                        line_began = last_token == Token::LineBreak
-                            || last_token == Token::ParagraphBreak;
-                    }
                 }
-                Err(error) => return Err(error),
+                if absorbed_trailing_break {
+                    segments.push(Vec::new());
+                    segment_safe.push(true);
+                    segment_kinds.push(ParagraphSplitKind::Paragraph);
+                }
+                if steps >= 1 {
+                    let last_token = if steps == 1 {
+                        before_token
+                    } else {
+                        before[steps - 1].token
+                    };
+                    line_began = last_token == Token::LineBreak
+                        || last_token == Token::ParagraphBreak;
+                }
             }
         }
 
@@ -7079,81 +7057,79 @@ where
             if clear_cursor {
                 self.set_quote_body_cursor(saved_cursor);
             }
-            match consume_result {
-                Ok(consumed) => {
-                    self.take_wikidot_mixed_paragraph_ownership();
-                    let crate::parsing::ParseSuccess {
-                        item,
-                        errors,
-                        paragraph_safe: safe,
-                        paragraph_split,
-                        ..
-                    } = consumed;
-                    all_errors.extend(errors);
-                    paragraph_safe &= safe;
-                    let elements = match item {
-                        Elements::Multiple(elements) => elements,
-                        Elements::Single(element) => vec![element],
-                        Elements::None => Vec::new(),
+            {
+                let consumed = consume_result?;
+                self.take_wikidot_mixed_paragraph_ownership();
+                let crate::parsing::ParseSuccess {
+                    item,
+                    errors,
+                    paragraph_safe: safe,
+                    paragraph_split,
+                    ..
+                } = consumed;
+                all_errors.extend(errors);
+                paragraph_safe &= safe;
+                let elements = match item {
+                    Elements::Multiple(elements) => elements,
+                    Elements::Single(element) => vec![element],
+                    Elements::None => Vec::new(),
+                };
+                let steps = before.len() - self.remaining().len();
+                if steps > 0 || !elements.is_empty() {
+                    consumed_any = true;
+                }
+                let absorbed_trailing_break = paragraph_split.is_none()
+                    && match steps {
+                        0 => false,
+                        1 => before_token == Token::ParagraphBreak,
+                        _ => before[steps - 2].token == Token::ParagraphBreak,
                     };
-                    let steps = before.len() - self.remaining().len();
-                    if steps > 0 || !elements.is_empty() {
-                        consumed_any = true;
+                match paragraph_split {
+                    Some(counts) => {
+                        distribute_quote_gate_split(&mut segments, elements, &counts);
                     }
-                    let absorbed_trailing_break = paragraph_split.is_none()
-                        && match steps {
-                            0 => false,
-                            1 => before_token == Token::ParagraphBreak,
-                            _ => before[steps - 2].token == Token::ParagraphBreak,
-                        };
-                    match paragraph_split {
-                        Some(counts) => {
-                            distribute_quote_gate_split(&mut segments, elements, &counts);
-                        }
-                        None => {
-                            let current = segments
+                    None => {
+                        let current = segments
+                            .last_mut()
+                            .expect("segments always has a current segment");
+                        current.paragraph_safe &= safe;
+                        current.elements.extend(elements);
+                        if segments.len() > 1
+                            && self.take_wikidot_div_literal_recovered()
+                            && !segments
+                                .last()
+                                .expect("segments always has a current segment")
+                                .paragraph_safe
+                        {
+                            let segment = segments
                                 .last_mut()
                                 .expect("segments always has a current segment");
-                            current.paragraph_safe &= safe;
-                            current.elements.extend(elements);
-                            if segments.len() > 1
-                                && self.take_wikidot_div_literal_recovered()
-                                && !segments
-                                    .last()
-                                    .expect("segments always has a current segment")
-                                    .paragraph_safe
+                            if segment.elements.len() == 1
+                                && let Some(Element::Text(text)) =
+                                    segment.elements.first_mut()
                             {
-                                let segment = segments
-                                    .last_mut()
-                                    .expect("segments always has a current segment");
-                                if segment.elements.len() == 1
-                                    && let Some(Element::Text(text)) =
-                                        segment.elements.first_mut()
-                                {
-                                    if let Some(stripped) = text.strip_prefix('\n') {
-                                        *text = Cow::Owned(stripped.to_owned());
-                                    }
-                                    segment.paragraph_safe = true;
+                                if let Some(stripped) = text.strip_prefix('\n') {
+                                    *text = Cow::Owned(stripped.to_owned());
                                 }
+                                segment.paragraph_safe = true;
                             }
                         }
                     }
-                    if absorbed_trailing_break {
-                        if row_depth.is_some() {
-                            self.set_quote_body_cursor(original_cursor);
-                            row_depth = None;
-                        }
-                        resolve_kind = true;
-                        segments.push(QuoteGateSegment {
-                            elements: Vec::new(),
-                            paragraph_safe: true,
-                            kind: QuoteGateSegmentKind::EscapedPlain,
-                            boundary: QuoteGateBoundary::NewRun,
-                            split_kind: ParagraphSplitKind::Paragraph,
-                        });
-                    }
                 }
-                Err(error) => return Err(error),
+                if absorbed_trailing_break {
+                    if row_depth.is_some() {
+                        self.set_quote_body_cursor(original_cursor);
+                        row_depth = None;
+                    }
+                    resolve_kind = true;
+                    segments.push(QuoteGateSegment {
+                        elements: Vec::new(),
+                        paragraph_safe: true,
+                        kind: QuoteGateSegmentKind::EscapedPlain,
+                        boundary: QuoteGateBoundary::NewRun,
+                        split_kind: ParagraphSplitKind::Paragraph,
+                    });
+                }
             }
         }
 
@@ -7462,10 +7438,7 @@ where
                         block_rule.name,
                         "block-list-unordered" | "block-list-ordered"
                     )
-                    && matches!(
-                        self.wikidot_pending_unquoted_evaporation_close(),
-                        3 | 4 | 5 | 6
-                    )
+                    && matches!(self.wikidot_pending_unquoted_evaporation_close(), 3..=6)
                     && ((block_rule.name == "block-list-unordered"
                         && matches!(
                             self.wikidot_pending_unquoted_evaporation_close(),
@@ -9706,14 +9679,7 @@ where
     fn scan_unquoted_close_shallow_lines(
         parser: &Parser<'r, 't>,
         list_body: bool,
-    ) -> Option<(
-        Vec<Vec<(usize, usize)>>,
-        bool,
-        bool,
-        UnquotedCloseTerminator,
-        bool,
-        bool,
-    )> {
+    ) -> Option<UnquotedCloseScan> {
         let item_body = !list_body;
         let mut scan = parser.clone();
         let mut segments: Vec<Vec<(usize, usize)>> = vec![Vec::new()];
@@ -9765,7 +9731,7 @@ where
                         segments,
                         blank_after_text,
                         merge,
-                        UnquotedCloseTerminator::LiClose,
+                        UnquotedCloseTerminator::Li,
                         crossed_blank,
                         saw_vanishing,
                     ));
@@ -9774,9 +9740,9 @@ where
                     probe.clone().get_end_block().ok().and_then(|name| {
                         let name = name.strip_suffix('_').unwrap_or(&name);
                         if name.eq_ignore_ascii_case("ol") {
-                            Some(UnquotedCloseTerminator::OlListClose)
+                            Some(UnquotedCloseTerminator::OlList)
                         } else if name.eq_ignore_ascii_case("ul") {
-                            Some(UnquotedCloseTerminator::UlListClose)
+                            Some(UnquotedCloseTerminator::UlList)
                         } else {
                             None
                         }
@@ -9815,7 +9781,7 @@ where
                             segments,
                             blank_after_text,
                             false,
-                            UnquotedCloseTerminator::QuotedLiClose,
+                            UnquotedCloseTerminator::QuotedLi,
                             false,
                             false,
                         ));
@@ -10002,9 +9968,9 @@ where
             .collect();
         let is_li_term = matches!(
             terminator,
-            UnquotedCloseTerminator::LiClose | UnquotedCloseTerminator::QuotedLiClose
+            UnquotedCloseTerminator::Li | UnquotedCloseTerminator::QuotedLi
         );
-        let first_para = terminator == UnquotedCloseTerminator::QuotedLiClose
+        let first_para = terminator == UnquotedCloseTerminator::QuotedLi
             || (blank_after_text && (is_li_term || segments.len() >= 2));
         let segment_emission = !merge && first_para;
         // Absorption phase: consume exactly the scanned lines. Blank lines
@@ -10107,8 +10073,7 @@ where
             // (the blank renders as the break, live: `<p>x<br />y</p>`).
             let is_list_close_term = matches!(
                 terminator,
-                UnquotedCloseTerminator::UlListClose
-                    | UnquotedCloseTerminator::OlListClose
+                UnquotedCloseTerminator::UlList | UnquotedCloseTerminator::OlList
             );
             // BRIEF-NI91: a headless hoisted run followed directly by a
             // native list renders paragraph-wrapped on live (`<p>x</p>`
@@ -10135,7 +10100,7 @@ where
                     combined.pop();
                 }
                 self.push_quote_escaped_unit(QuoteEscapedUnit::Elements(combined, true));
-            } else if terminator == UnquotedCloseTerminator::OlListClose && !merge {
+            } else if terminator == UnquotedCloseTerminator::OlList && !merge {
                 // Ordered unpaired, no merge: drop the extra `<br>` but keep
                 // the line separation before the unclosed shell (live: `x\n<ul>`).
                 if matches!(
@@ -10160,7 +10125,7 @@ where
             } else if merge
                 && crossed_blank
                 && saw_vanishing
-                && terminator == UnquotedCloseTerminator::LiClose
+                && terminator == UnquotedCloseTerminator::Li
             {
                 // BRIEF-QC89 (89 follow-up i): a li-close merge across a
                 // vanished list close AND a blank carries two breaks on
@@ -10170,7 +10135,7 @@ where
             } else if !merge
                 && crossed_blank
                 && saw_vanishing
-                && terminator == UnquotedCloseTerminator::LiClose
+                && terminator == UnquotedCloseTerminator::Li
             {
                 // BRIEF-QC89 (89 follow-up ii): a blank between the
                 // vanished close and a QUOTED follower wraps the run
@@ -10190,13 +10155,13 @@ where
         }
         if hoisted {
             self.set_wikidot_quote_boundary_unquoted_close_text();
-            if terminator == UnquotedCloseTerminator::QuotedLiClose {
+            if terminator == UnquotedCloseTerminator::QuotedLi {
                 self.set_wikidot_quote_boundary_quoted_li_close();
             }
             let blank_qy_wrap = !merge
                 && crossed_blank
                 && saw_vanishing
-                && terminator == UnquotedCloseTerminator::LiClose;
+                && terminator == UnquotedCloseTerminator::Li;
             if merge || blank_qy_wrap {
                 self.set_wikidot_merge_follow();
             }
@@ -10414,10 +10379,8 @@ where
     /// aftermath consumer instead of consuming it as the list's own.
     pub(crate) fn unquoted_list_close_ahead(&self, block_rule: &BlockRule) -> bool {
         let mut probe = self.clone();
-        if probe.current().token == Token::LineBreak {
-            if probe.step().is_err() {
-                return false;
-            }
+        if probe.current().token == Token::LineBreak && probe.step().is_err() {
+            return false;
         }
         if probe.current().token == Token::Quote {
             return false;
@@ -10443,10 +10406,8 @@ where
             return false;
         }
         let mut probe = self.clone();
-        if probe.current().token == Token::LineBreak {
-            if probe.step().is_err() {
-                return false;
-            }
+        if probe.current().token == Token::LineBreak && probe.step().is_err() {
+            return false;
         }
         let matching_close = probe.get_end_block().is_ok_and(|name| {
             block_rule_accepts_end_name(

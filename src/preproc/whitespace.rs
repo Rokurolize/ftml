@@ -509,14 +509,14 @@ fn wikidot_html_body_ranges(source: &str) -> Vec<Range<usize>> {
     let mut index = 0usize;
     while index < source.len() {
         let line_start = index == 0 || bytes[index - 1] == b'\n';
-        if line_start && bibliography_depth == 0 {
-            if let Some(opener_end) = wikidot_html_opener_end(source, index) {
-                if let Some(closer_at) = wikidot_html_closer_at(source, opener_end) {
-                    ranges.push(opener_end..closer_at);
-                    index = closer_at + "[[/html]]".len();
-                    continue;
-                }
-            }
+        if line_start
+            && bibliography_depth == 0
+            && let Some(opener_end) = wikidot_html_opener_end(source, index)
+            && let Some(closer_at) = wikidot_html_closer_at(source, opener_end)
+        {
+            ranges.push(opener_end..closer_at);
+            index = closer_at + "[[/html]]".len();
+            continue;
         }
         if line_start && wikidot_exact_marker(source, index, "[[bibliography]]") {
             bibliography_depth += 1;
@@ -963,8 +963,7 @@ fn wikidot_user_block_head(head: &str) -> bool {
 }
 
 fn wikidot_math_closer_line_suffix_after_marker(content: &str) -> Option<&str> {
-    let trimmed =
-        content.trim_start_matches(|character: char| matches!(character, ' ' | '\t'));
+    let trimmed = content.trim_start_matches([' ', '\t']);
     const PAT: &[u8] = b"[[/math]]";
     let bytes = trimmed.as_bytes();
     if bytes.len() < PAT.len() {

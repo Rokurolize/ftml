@@ -775,15 +775,14 @@ fn bracket_run_collected_may_match(
     if bracket_run_lookup_may_match(name, layout) {
         return true;
     }
-    if layout.legacy() {
-        if let Some((at, _)) = name
+    if layout.legacy()
+        && let Some((at, _)) = name
             .char_indices()
             .find(|(_, ch)| matches!(ch, '\u{b}' | '\u{c}'))
-        {
-            let prefix = &name[..at];
-            if !prefix.is_empty() && bracket_run_lookup_may_match(prefix, layout) {
-                return true;
-            }
+    {
+        let prefix = &name[..at];
+        if !prefix.is_empty() && bracket_run_lookup_may_match(prefix, layout) {
+            return true;
         }
     }
     false
@@ -834,18 +833,18 @@ impl BracketRunNameGate {
             return false;
         }
         let head_start = first.span.start;
-        if let Some(stretch) = &self.stretch {
-            if index >= stretch.head_index && index <= stretch.terminator {
-                if stretch.skipped_comment {
-                    match stretch.first_letter {
-                        None => return false,
-                        Some(byte) if byte >= head_start => return true,
-                        _ => {}
-                    }
-                } else if let Some(collected) = source.get(head_start..stretch.window_end)
-                {
-                    return bracket_run_collected_may_match(collected, layout);
+        if let Some(stretch) = &self.stretch
+            && index >= stretch.head_index
+            && index <= stretch.terminator
+        {
+            if stretch.skipped_comment {
+                match stretch.first_letter {
+                    None => return false,
+                    Some(byte) if byte >= head_start => return true,
+                    _ => {}
                 }
+            } else if let Some(collected) = source.get(head_start..stretch.window_end) {
+                return bracket_run_collected_may_match(collected, layout);
             }
         }
         let mut window_end = head_start;

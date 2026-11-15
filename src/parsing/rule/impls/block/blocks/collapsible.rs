@@ -571,10 +571,9 @@ fn parse_fn<'r, 't>(
             Some(Element::Container(container))
                 if container.ctype() == ContainerType::Blockquote
         )
+        && let Some(Element::Container(mut container)) = elements.pop()
     {
-        if let Some(Element::Container(mut container)) = elements.pop() {
-            elements.append(container.elements_mut());
-        }
+        elements.append(container.elements_mut());
     }
     if parser.settings().layout.legacy() && in_quote_rows {
         merge_adjacent_native_lists(&mut elements);

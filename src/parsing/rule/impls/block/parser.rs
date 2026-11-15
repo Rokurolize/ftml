@@ -165,6 +165,8 @@ struct IftagsPairingWindow<'r, 't> {
     tokens: Vec<&'r ExtractedToken<'t>>,
     scan: Parser<'r, 't>,
     done: bool,
+    capped: bool,
+    unbounded: bool,
 }
 
 impl<'r, 't> IftagsPairingWindow<'r, 't> {
@@ -173,6 +175,8 @@ impl<'r, 't> IftagsPairingWindow<'r, 't> {
             tokens: Vec::new(),
             scan: parser.clone(),
             done: false,
+            capped: false,
+            unbounded: false,
         }
     }
 
@@ -184,10 +188,10 @@ impl<'r, 't> IftagsPairingWindow<'r, 't> {
             self.tokens.push(token);
             #[cfg(test)]
             count_iftags_pairing_scan_step();
-            if at_end
-                || self.tokens.len() >= IFTAGS_PAIRING_WINDOW
-                || self.scan.step().is_err()
-            {
+            if at_end || self.scan.step().is_err() {
+                self.done = true;
+            } else if !self.unbounded && self.tokens.len() >= IFTAGS_PAIRING_WINDOW {
+                self.capped = true;
                 self.done = true;
             }
         }
@@ -195,6 +199,11 @@ impl<'r, 't> IftagsPairingWindow<'r, 't> {
 
     /// Materialize the rest of the window, for the span probes that scan it.
     fn fill(&mut self) {
+        if self.capped {
+            self.unbounded = true;
+            self.capped = false;
+            self.done = false;
+        }
         self.extend_to(usize::MAX);
     }
 
@@ -202,6 +211,18 @@ impl<'r, 't> IftagsPairingWindow<'r, 't> {
     /// the token is inside the window afterwards.
     fn ensure(&mut self, index: usize) -> bool {
         self.extend_to(index);
+        if self.tokens.get(index).is_some() {
+            return true;
+        }
+        // The fixed window is a lookahead bound, not a correctness bound. A
+        // gate whose closer sits beyond it must still pair, so continue the
+        // walk unbounded rather than failing the whole block literal.
+        if self.capped {
+            self.unbounded = true;
+            self.capped = false;
+            self.done = false;
+            self.extend_to(index);
+        }
         self.tokens.get(index).is_some()
     }
 

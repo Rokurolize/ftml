@@ -1185,8 +1185,29 @@ pub fn check_iftags(info: &PageInfo, conditions: &[ElementCondition]) -> bool {
 mod tests {
     use super::*;
     use crate::layout::Layout;
+    use crate::render::Render;
     use crate::settings::{WikitextMode, WikitextSettings};
     use std::borrow::Cow;
+
+    #[test]
+    fn iftags_gate_body_beyond_the_pairing_window_still_pairs() {
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let info = PageInfo {
+            tags: vec![Cow::Borrowed("テーマ")],
+            ..PageInfo::dummy()
+        };
+        let body = "body line\n".repeat(9000);
+        let source = format!("[[iftags +テーマ]]\n{body}\n[[/iftags]]\nAFTER\n");
+        let tokenization = crate::tokenize(&source);
+        let (tree, _errors) = crate::parse(&tokenization, &info, &settings).into();
+        let html = crate::render::html::HtmlRender
+            .render(&tree, &info, &settings)
+            .body;
+
+        assert!(html.contains("body line"), "{}", html.len());
+        assert!(html.contains("AFTER"));
+        assert!(!html.contains("[[iftags"), "gate fell back to literal text");
+    }
 
     #[test]
     fn iftags_empty_conditions_drop_and_conditions_compare_tags() {

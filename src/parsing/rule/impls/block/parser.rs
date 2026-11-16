@@ -3270,15 +3270,11 @@ where
                                     Token::LeftComment => in_comment = true,
                                     Token::LeftBlockEnd => {
                                         let mut end_probe = walk.clone();
-                                        if let Ok(end_name) =
-                                            end_probe.get_end_block()
-                                        {
+                                        if let Ok(end_name) = end_probe.get_end_block() {
                                             let end_name = end_name
                                                 .strip_suffix('_')
                                                 .unwrap_or(&end_name);
-                                            if end_name
-                                                .eq_ignore_ascii_case("footnote")
-                                            {
+                                            if end_name.eq_ignore_ascii_case("footnote") {
                                                 walk.update(&end_probe);
                                                 break;
                                             }

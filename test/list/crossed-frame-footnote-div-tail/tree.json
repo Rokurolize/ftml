@@ -1,0 +1,152 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "blockquote",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "collapsible",
+                                    "data": {
+                                        "elements": [
+                                            {
+                                                "element": "container",
+                                                "data": {
+                                                    "type": "span",
+                                                    "attributes": {},
+                                                    "elements": [
+                                                        {
+                                                            "element": "list",
+                                                            "data": {
+                                                                "type": "bullet",
+                                                                "attributes": {},
+                                                                "items": [
+                                                                    {
+                                                                        "item-type": "elements",
+                                                                        "attributes": {},
+                                                                        "elements": [
+                                                                            {
+                                                                                "element": "text",
+                                                                                "data": "n"
+                                                                            },
+                                                                            {
+                                                                                "element": "footnote",
+                                                                                "data": 1
+                                                                            },
+                                                                            {
+                                                                                "element": "line-break"
+                                                                            },
+                                                                            {
+                                                                                "element": "text",
+                                                                                "data": "[[/"
+                                                                            },
+                                                                            {
+                                                                                "element": "text",
+                                                                                "data": "div"
+                                                                            },
+                                                                            {
+                                                                                "element": "text",
+                                                                                "data": "]]"
+                                                                            },
+                                                                            {
+                                                                                "element": "line-break"
+                                                                            },
+                                                                            {
+                                                                                "element": "text",
+                                                                                "data": "[[/"
+                                                                            },
+                                                                            {
+                                                                                "element": "text",
+                                                                                "data": "footnote"
+                                                                            },
+                                                                            {
+                                                                                "element": "text",
+                                                                                "data": "]]"
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        {
+                                                            "element": "line-break"
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ],
+                                        "attributes": {},
+                                        "start-open": false,
+                                        "show-text": null,
+                                        "hide-text": null,
+                                        "show-top": true,
+                                        "show-bottom": false
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "element": "footnote-block",
+            "data": {
+                "title": null,
+                "hide": false
+            }
+        }
+    ],
+    "footnotes": [
+        [
+            {
+                "element": "text",
+                "data": "[["
+            },
+            {
+                "element": "text",
+                "data": "div"
+            },
+            {
+                "element": "text",
+                "data": "]]"
+            },
+            {
+                "element": "line-break"
+            },
+            {
+                "element": "text",
+                "data": "n"
+            },
+            {
+                "element": "text",
+                "data": "[["
+            },
+            {
+                "element": "text",
+                "data": "footnote"
+            },
+            {
+                "element": "text",
+                "data": "]]"
+            },
+            {
+                "element": "line-break"
+            },
+            {
+                "element": "text",
+                "data": "x"
+            },
+            {
+                "element": "line-break"
+            }
+        ]
+    ]
+}

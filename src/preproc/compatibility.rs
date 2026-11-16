@@ -2664,6 +2664,16 @@ fn join_wikidot_div_prefilter(text: &mut String) {
                 output.push_str("[[/div]][[div");
                 copied = next + "[[div".len();
                 scanned = copied;
+                // The join consumed the following opener without the scan
+                // visiting it, so record it here: the next closer must pop
+                // this div's own entry, not an ancestor's. Without the push,
+                // every join drains one stack entry, so later sibling closers
+                // inherit an ancestor's standalone flag (or find the stack
+                // empty and skip a join live would make), and the join
+                // pattern cascades irregularly across a sibling series.
+                if is_wikidot_div_opener_at(text, next) {
+                    open_divs.push(wikidot_div_opener_is_standalone(text, next));
+                }
             }
             continue;
         }
@@ -2742,6 +2752,96 @@ mod tests {
         let mut source = "[[div]]\nx\n[[/div]]\n[[div]]\nD".to_owned();
         substitute_wikidot(&mut source);
         assert_eq!(source, "[[div]]\nx\n[[/div]][[div]]\nD");
+    }
+
+    #[test]
+    fn wikidot_div_prefilter_joins_every_sibling_in_a_series() {
+        // Theme-squares shape: a scored container and group holding a series
+        // of scored sibling swatches. Every sibling boundary joins, because
+        // each closer pops its own opener's entry; before the joined opener
+        // was recorded on the stack, the fourth sibling's closer found the
+        // stack drained by the earlier joins and skipped its join.
+        let mut source = concat!(
+            "[[div_ class=\"colors-container\"]]\n",
+            "[[div_ class=\"colors\"]]\n",
+            "[[div_ class=\"color\" data-variable=\"{$color1-variable}\"]]\n",
+            "{$color1-name}\n",
+            "[[/div]]\n",
+            "[[div_ class=\"color\" data-variable=\"{$color2-variable}\"]]\n",
+            "{$color2-name}\n",
+            "[[/div]]\n",
+            "[[div_ class=\"color\" data-variable=\"{$color3-variable}\"]]\n",
+            "{$color3-name}\n",
+            "[[/div]]\n",
+            "[[div_ class=\"color\" data-variable=\"{$color4-variable}\"]]\n",
+            "{$color4-name}\n",
+            "[[/div]]\n",
+            "[[div_ class=\"color\" data-variable=\"{$color5-variable}\"]]\n",
+            "{$color5-name}\n",
+            "[[/div]]\n",
+            "[[/div]]\n",
+            "[[/div]]",
+        )
+        .to_owned();
+        substitute_wikidot(&mut source);
+        assert_eq!(
+            source,
+            concat!(
+                "[[div_ class=\"colors-container\"]]\n",
+                "[[div_ class=\"colors\"]]\n",
+                "[[div_ class=\"color\" data-variable=\"{$color1-variable}\"]]\n",
+                "{$color1-name}\n",
+                "[[/div]][[div_ class=\"color\" data-variable=\"{$color2-variable}\"]]\n",
+                "{$color2-name}\n",
+                "[[/div]][[div_ class=\"color\" data-variable=\"{$color3-variable}\"]]\n",
+                "{$color3-name}\n",
+                "[[/div]][[div_ class=\"color\" data-variable=\"{$color4-variable}\"]]\n",
+                "{$color4-name}\n",
+                "[[/div]][[div_ class=\"color\" data-variable=\"{$color5-variable}\"]]\n",
+                "{$color5-name}\n",
+                "[[/div]]\n",
+                "[[/div]]\n",
+                "[[/div]]",
+            ),
+        );
+    }
+
+    #[test]
+    fn wikidot_div_prefilter_nonstandalone_closer_does_not_borrow_an_ancestor() {
+        // The middle sibling's head does not end its line, so its closer must
+        // not join the next sibling. Before the joined opener was recorded on
+        // the stack, this closer popped the standalone parent's entry and
+        // joined anyway.
+        let mut source = concat!(
+            "[[div_]]\n",
+            "[[div_]]\n",
+            "one\n",
+            "[[/div]]\n",
+            "[[div_]] trailing\n",
+            "two\n",
+            "[[/div]]\n",
+            "[[div_]]\n",
+            "three\n",
+            "[[/div]]\n",
+            "[[/div]]",
+        )
+        .to_owned();
+        substitute_wikidot(&mut source);
+        assert_eq!(
+            source,
+            concat!(
+                "[[div_]]\n",
+                "[[div_]]\n",
+                "one\n",
+                "[[/div]][[div_]] trailing\n",
+                "two\n",
+                "[[/div]]\n",
+                "[[div_]]\n",
+                "three\n",
+                "[[/div]]\n",
+                "[[/div]]",
+            ),
+        );
     }
 
     #[test]

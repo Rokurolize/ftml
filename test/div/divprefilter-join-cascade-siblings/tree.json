@@ -1,0 +1,201 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {
+                    "class": "colors-container"
+                },
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "div",
+                            "attributes": {
+                                "class": "colors"
+                            },
+                            "elements": [
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "div",
+                                        "attributes": {
+                                            "class": "color"
+                                        },
+                                        "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": "{"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "$"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "color1"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "-"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "name"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "div",
+                                        "attributes": {
+                                            "class": "color"
+                                        },
+                                        "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": "{"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "$"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "color2"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "-"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "name"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "div",
+                                        "attributes": {
+                                            "class": "color"
+                                        },
+                                        "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": "{"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "$"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "color3"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "-"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "name"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "div",
+                                        "attributes": {
+                                            "class": "color"
+                                        },
+                                        "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": "{"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "$"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "color4"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "-"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "name"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "div",
+                                        "attributes": {
+                                            "class": "color"
+                                        },
+                                        "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": "{"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "$"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "color5"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "-"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "name"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

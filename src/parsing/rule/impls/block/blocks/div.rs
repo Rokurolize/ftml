@@ -76,7 +76,35 @@ where
 }
 
 fn wikidot_line_head_resolves_to_div(line: &str) -> bool {
-    let trimmed = line.trim_start_matches([' ', '\t']);
+    let mut trimmed = line.trim_start_matches([' ', '\t']);
+    // The Divprefilter emulation joins a `[[/div]]` closer with the `[[div`
+    // opener that follows it, so a joined head sits behind the closer on one
+    // physical line even though it started its own authored line. Strip the
+    // joined closer(s) before deciding what the line's head is. The stripped
+    // head only counts when it also ends its line: a joined head with body
+    // text behind it on the same line stays a mid-line head.
+    let mut stripped_join = false;
+    while trimmed.len() >= 8
+        && trimmed[..8].eq_ignore_ascii_case("[[/div]]")
+        && trimmed[8..].starts_with("[[")
+    {
+        trimmed = &trimmed[8..];
+        stripped_join = true;
+    }
+    if stripped_join {
+        if !trimmed
+            .get(..5)
+            .is_some_and(|head| head.eq_ignore_ascii_case("[[div"))
+        {
+            return false;
+        }
+        let Some(head_end) = trimmed.find("]]") else {
+            return false;
+        };
+        return trimmed[head_end + 2..]
+            .chars()
+            .all(|ch| matches!(ch, ' ' | '\t'));
+    }
     if trimmed
         .get(..5)
         .is_some_and(|head| head.eq_ignore_ascii_case("[[div"))

@@ -1,0 +1,282 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {
+                    "style": "border: 1px;"
+                },
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "paragraph",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "monospace",
+                                        "attributes": {},
+                                        "elements": [
+                                            {
+                                                "element": "raw",
+                                                "data": "[[div class=\"demo\"]]"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "div",
+                            "attributes": {
+                                "class": "demo"
+                            },
+                            "elements": [
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "paragraph",
+                                        "attributes": {},
+                                        "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": "Hello"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {
+                    "style": "border: 1px;"
+                },
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "paragraph",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "monospace",
+                                        "attributes": {},
+                                        "elements": [
+                                            {
+                                                "element": "raw",
+                                                "data": "[[div class=\"demo2\"]]"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "div",
+                            "attributes": {
+                                "class": "demo2"
+                            },
+                            "elements": [
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "paragraph",
+                                        "attributes": {},
+                                        "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": "Hello"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {
+                    "style": "border: 1px;"
+                },
+                "elements": [
+                    {
+                        "element": "code",
+                        "data": {
+                            "contents": ":root { --a: 1; }",
+                            "language": "css",
+                            "name": null
+                        }
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "div",
+                            "attributes": {
+                                "style": "font-size: 85%;"
+                            },
+                            "elements": [
+                                {
+                                    "element": "code",
+                                    "data": {
+                                        "contents": ":root { --b: 2; }",
+                                        "language": "css",
+                                        "name": null
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "horizontal-rule"
+                    },
+                    {
+                        "element": "image",
+                        "data": {
+                            "source": {
+                                "type": "direct",
+                                "data": {
+                                    "type": "url",
+                                    "data": "https://example.com/a.png"
+                                }
+                            },
+                            "link": null,
+                            "alignment": {
+                                "align": "center",
+                                "float": false
+                            },
+                            "attributes": {},
+                            "target": null
+                        }
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "div",
+                            "attributes": {
+                                "style": "font-size: 85%;"
+                            },
+                            "elements": [
+                                {
+                                    "element": "code",
+                                    "data": {
+                                        "contents": ":root { --b: 2; }",
+                                        "language": "css",
+                                        "name": null
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "horizontal-rule"
+                    },
+                    {
+                        "element": "image",
+                        "data": {
+                            "source": {
+                                "type": "direct",
+                                "data": {
+                                    "type": "url",
+                                    "data": "https://example.com/b.png"
+                                }
+                            },
+                            "link": null,
+                            "alignment": {
+                                "align": "center",
+                                "float": false
+                            },
+                            "attributes": {},
+                            "target": null
+                        }
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "div",
+                            "attributes": {
+                                "style": "font-size: 85%;"
+                            },
+                            "elements": [
+                                {
+                                    "element": "code",
+                                    "data": {
+                                        "contents": ":root { --b: 2; }",
+                                        "language": "css",
+                                        "name": null
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "horizontal-rule"
+                    },
+                    {
+                        "element": "image",
+                        "data": {
+                            "source": {
+                                "type": "direct",
+                                "data": {
+                                    "type": "url",
+                                    "data": "https://example.com/c.png"
+                                }
+                            },
+                            "link": null,
+                            "alignment": {
+                                "align": "center",
+                                "float": false
+                            },
+                            "attributes": {},
+                            "target": null
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "code-blocks": [
+        {
+            "contents": ":root { --a: 1; }",
+            "language": "css",
+            "name": null
+        },
+        {
+            "contents": ":root { --b: 2; }",
+            "language": "css",
+            "name": null
+        },
+        {
+            "contents": ":root { --b: 2; }",
+            "language": "css",
+            "name": null
+        },
+        {
+            "contents": ":root { --b: 2; }",
+            "language": "css",
+            "name": null
+        }
+    ]
+}

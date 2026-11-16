@@ -1,0 +1,38 @@
+[[div style="border: 1px;"]]
+{{@@[[div class="demo"]]@@}}
+[[div class="demo"]]
+Hello
+[[/div]]
+[[/div]]
+[[div style="border: 1px;"]]
+{{@@[[div class="demo2"]]@@}}
+[[div class="demo2"]]
+Hello
+[[/div]]
+[[/div]]
+[[div style="border: 1px;"]]
+[[code type="css"]]
+:root { --a: 1; }
+[[/code]]
+[[div style="font-size: 85%;"]]
+[[code type="css"]]
+:root { --b: 2; }
+[[/code]]
+[[/div]]
+----
+[[=image https://example.com/a.png]]
+[[div style="font-size: 85%;"]]
+[[code type="css"]]
+:root { --b: 2; }
+[[/code]]
+[[/div]]
+----
+[[=image https://example.com/b.png]]
+[[div style="font-size: 85%;"]]
+[[code type="css"]]
+:root { --b: 2; }
+[[/code]]
+[[/div]]
+----
+[[=image https://example.com/c.png]]
+[[/div]]

@@ -1,0 +1,268 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {
+                    "class": "templateInfo"
+                },
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": {
+                                "header": {
+                                    "level": 6,
+                                    "has-toc": false
+                                }
+                            },
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "（"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "自"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "分"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "が"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "何"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "を"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "し"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "て"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "い"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "る"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "か"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "理"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "解"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "し"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "て"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "い"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "る"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "場"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "合"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "に"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "の"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "み"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "変"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "更"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "し"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "て"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "く"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "だ"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "さ"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "い"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "）"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "paragraph",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "変"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "数"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "の"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "変"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "更"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "は"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "す"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "べ"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "て"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "CSS"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "モ"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "ジ"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "ュ"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "ー"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "ル"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "{{"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "style",
+                        "data": "}}で囲む必要があります。以下に挙げるものは、さらに{{:root}}セレクタでも囲む必要があります。\n選んだ{{accentColor}}が[*https://www.w3.org/TR/WCAG/#contrast-minimum Web Content Accessibility Guidelines（WCAG）]を満たすか確認するには、[*https://contrast-finder.tanaguru.com/ コントラスト比]を確認してください。[[span class=\"col_box\" style=\"background: var(--bgColor); border-color: hsl(222, 62%, 63%)\"]]\n[[/span]] [[span class=\"wt\"]]**hsl(222, 12%, 21%)**[[/span]]を「Background」欄へ、選んだ{{accentColor}}を「Text color」欄へ入力します。WCAGでは、見出し文字に**3以上**のコントラスト比が求められます。\n[[/div]]\n@@     @@##var(--c-builtin)|@@--@@header-title##: ##var(--c-value)|\"TITLE\"##;\n@@     @@##var(--c-builtin)|@@--@@header-subtitle##: ##var(--c-value)|\"SUBTITLE\"##;\n@@     @@##var(--c-builtin)|@@--@@titleColor##: ##var(--c-value)|title_colour##;\n@@     @@##var(--c-builtin)|@@--@@subtitleColor##: ##var(--c-value)|subtitle_colour##;\n\n##var(--c-comment)|/* Defaults (Do not copy):##\n##var(--c-comment)|@@ *   @@__titleColor:__## [[span class=\"col_box\" style=\"background: var(--accentColor); border-color: hsl(325, 88%, 81%)\"]]\n[[/span]] **Bright Tyrian pink** hsl(325, 80%, 60%)##var(--c-comment)|.##\n##var(--c-comment)|@@ *   @@__subtitleColor:__## [[span class=\"col_box\" style=\"background: var(--accentColor); border-color: hsl(325, 88%, 81%)\"]]\n[[/span]] **Bright Tyrian pink** hsl(325, 80%, 60%)##var(--c-comment)|.##\n##var(--c-comment)|@@**/@@##\n[[/div]]\n[[div class=\"code terminal terminal--dark\"]]\n}\n**##var(--c-keyword)|"
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "paragraph",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "##"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "**"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "[[/"
+                    },
+                    {
+                        "element": "text",
+                        "data": "div"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]"
+                    }
+                ]
+            }
+        }
+    ]
+}

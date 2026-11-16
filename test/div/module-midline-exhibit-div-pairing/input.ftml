@@ -1,0 +1,23 @@
+[[div class="templateInfo"]]
+++++++* （自分が何をしているか理解している場合にのみ変更してください）
+変数の変更はすべてCSSモジュール{{[[module CSS]]}}で囲む必要があります。以下に挙げるものは、さらに{{:root}}セレクタでも囲む必要があります。
+選んだ{{accentColor}}が[*https://www.w3.org/TR/WCAG/#contrast-minimum Web Content Accessibility Guidelines（WCAG）]を満たすか確認するには、[*https://contrast-finder.tanaguru.com/ コントラスト比]を確認してください。[[span class="col_box" style="background: var(--bgColor); border-color: hsl(222, 62%, 63%)"]]
+[[/span]] [[span class="wt"]]**hsl(222, 12%, 21%)**[[/span]]を「Background」欄へ、選んだ{{accentColor}}を「Text color」欄へ入力します。WCAGでは、見出し文字に**3以上**のコントラスト比が求められます。
+[[/div]]
+@@     @@##var(--c-builtin)|@@--@@header-title##: ##var(--c-value)|"TITLE"##;
+@@     @@##var(--c-builtin)|@@--@@header-subtitle##: ##var(--c-value)|"SUBTITLE"##;
+@@     @@##var(--c-builtin)|@@--@@titleColor##: ##var(--c-value)|title_colour##;
+@@     @@##var(--c-builtin)|@@--@@subtitleColor##: ##var(--c-value)|subtitle_colour##;
+
+##var(--c-comment)|/* Defaults (Do not copy):##
+##var(--c-comment)|@@ *   @@__titleColor:__## [[span class="col_box" style="background: var(--accentColor); border-color: hsl(325, 88%, 81%)"]]
+[[/span]] **Bright Tyrian pink** hsl(325, 80%, 60%)##var(--c-comment)|.##
+##var(--c-comment)|@@ *   @@__subtitleColor:__## [[span class="col_box" style="background: var(--accentColor); border-color: hsl(325, 88%, 81%)"]]
+[[/span]] **Bright Tyrian pink** hsl(325, 80%, 60%)##var(--c-comment)|.##
+##var(--c-comment)|@@**/@@##
+[[/div]]
+[[div class="code terminal terminal--dark"]]
+}
+**##var(--c-keyword)|[[/module]]##**
+[[/div]]
+[[/div]]

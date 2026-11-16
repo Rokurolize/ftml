@@ -2007,7 +2007,15 @@ impl<'t> Scanner<'t> {
                 head.head_end
             }
             _ => {
+                // A module head only skips its body when it can actually
+                // form, i.e. it starts its line (modulo quote markers). A
+                // `[[module ...]]` exhibited mid-line (inside a paragraph,
+                // a monospace span or a color span) never forms, so the
+                // text up to the next `[[/module]]` token is ordinary
+                // content: skipping it would swallow real block heads and
+                // closers in between and mis-pair the enclosing blocks.
                 if rule_name == "block-module"
+                    && self.line_prefix_clean(i)
                     && let Some(next) = self.module_skip(i, &head, end)
                 {
                     return next;
@@ -2724,7 +2732,12 @@ impl<'t> Scanner<'t> {
                         Some((_, _, after)) => Some(after),
                         None => Some(head.head_end),
                     }
-                } else if rule_name == "block-module" && skip_module_bodies {
+                } else if rule_name == "block-module"
+                    && skip_module_bodies
+                    && self.line_prefix_clean(j)
+                {
+                    // Same line-start gate as the top-level scan: a
+                    // mid-line module exhibit has no body to skip.
                     self.module_skip(j, &head, limit)
                 } else {
                     Some(head.head_end)

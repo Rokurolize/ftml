@@ -1,0 +1,165 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {
+                    "class": "colmod-block switch"
+                },
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": {
+                                "header": {
+                                    "level": 2,
+                                    "has-toc": true
+                                }
+                            },
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "Power"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "UP"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "!"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "list",
+                        "data": {
+                            "type": "bullet",
+                            "attributes": {},
+                            "items": [
+                                {
+                                    "item-type": "elements",
+                                    "attributes": {
+                                        "class": "folded"
+                                    },
+                                    "elements": [
+                                        {
+                                            "element": "list",
+                                            "data": {
+                                                "type": "bullet",
+                                                "attributes": {},
+                                                "items": [
+                                                    {
+                                                        "item-type": "elements",
+                                                        "attributes": {
+                                                            "style": "list-style: none"
+                                                        },
+                                                        "elements": [
+                                                            {
+                                                                "element": "text",
+                                                                "data": "_"
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "element": "container",
+                                            "data": {
+                                                "type": "div",
+                                                "attributes": {
+                                                    "class": "colmod-link-top"
+                                                },
+                                                "elements": [
+                                                    {
+                                                        "element": "container",
+                                                        "data": {
+                                                            "type": "div",
+                                                            "attributes": {
+                                                                "class": "foldable-list-container"
+                                                            },
+                                                            "elements": [
+                                                                {
+                                                                    "element": "link",
+                                                                    "data": {
+                                                                        "type": "anchor",
+                                                                        "link": "javascript:;",
+                                                                        "label": {
+                                                                            "text": "A"
+                                                                        },
+                                                                        "target": null
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "element": "link",
+                                                                    "data": {
+                                                                        "type": "anchor",
+                                                                        "link": "javascript:;",
+                                                                        "label": {
+                                                                            "text": "B"
+                                                                        },
+                                                                        "target": null
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "table-of-contents": [
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "sub-list",
+                        "element": "list",
+                        "data": {
+                            "type": "bullet",
+                            "attributes": {},
+                            "items": [
+                                {
+                                    "item-type": "elements",
+                                    "attributes": {},
+                                    "elements": [
+                                        {
+                                            "element": "link",
+                                            "data": {
+                                                "type": "table-of-contents",
+                                                "link": "#toc0",
+                                                "label": {
+                                                    "text": "Power UP!"
+                                                },
+                                                "target": null
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

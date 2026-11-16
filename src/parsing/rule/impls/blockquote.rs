@@ -2674,7 +2674,8 @@ fn merge_adjacent_native_list_rows(
         match item {
             DepthItem::Item(mut row) => {
                 if let Some(DepthItem::Item(previous)) = merged.last_mut()
-                    && merge_native_list_rows(previous, &mut row)
+                    && (merge_native_list_rows(previous, &mut row)
+                        || merge_native_definition_list_rows(previous, &mut row))
                 {
                     continue;
                 }
@@ -2811,6 +2812,66 @@ fn merge_native_list_rows<'t>(
         return false;
     };
     insert_native_list_item(previous_list, depth, current_type, elements)
+}
+
+/// Whether a quote row consists solely of a definition list (plus an
+/// optional trailing line break), mirroring `native_list_element`.
+fn row_is_definition_list_row(row: &NativeQuoteRow<'_>) -> bool {
+    matches!(
+        row.elements.as_slice(),
+        [Element::DefinitionList(_)] | [Element::DefinitionList(_), Element::LineBreak]
+    )
+}
+
+/// Merges a definition-list quote row into the previous row when both are
+/// pure definition-list rows at the same indent. Live Wikidot forms one
+/// `<dl>` from consecutive definition lines inside a blockquote, exactly as
+/// it does outside one; the per-line quote rows must therefore be joined
+/// the way `merge_native_list_rows` joins bullet/numbered rows.
+fn merge_native_definition_list_rows<'t>(
+    previous: &mut NativeQuoteRow<'t>,
+    current: &mut NativeQuoteRow<'t>,
+) -> bool {
+    if previous.empty_spaced || current.empty_spaced {
+        return false;
+    }
+    if current.indent != previous.indent {
+        return false;
+    }
+    if !row_is_definition_list_row(previous) || !row_is_definition_list_row(current) {
+        return false;
+    }
+    let previous_ends_with_empty_block = match previous.elements.first() {
+        Some(Element::DefinitionList(items)) => items.last().is_some_and(|item| {
+            item.value_elements.iter().any(|element| {
+                matches!(element, Element::Collapsible { .. })
+                    || matches!(
+                        element,
+                        Element::Container(container)
+                            if container.ctype() == ContainerType::Div
+                    )
+                    || matches!(
+                        element,
+                        Element::Partial(PartialElement::WikidotBlockOpen(_))
+                    )
+            })
+        }),
+        _ => false,
+    };
+    if previous_ends_with_empty_block {
+        return false;
+    }
+    let current_items = match current.elements.first_mut() {
+        Some(Element::DefinitionList(items)) => std::mem::take(items),
+        _ => return false,
+    };
+    match previous.elements.first_mut() {
+        Some(Element::DefinitionList(items)) => {
+            items.extend(current_items);
+            true
+        }
+        _ => false,
+    }
 }
 
 fn native_list_element<'a, 't>(
@@ -3661,5 +3722,35 @@ mod tests {
         assert_eq!(html.matches("</ul>").count(), 3, "{html}");
         assert!(html.contains("<li>One</li>"), "{html}");
         assert!(html.contains("<dt>Term</dt>"), "{html}");
+    }
+
+    #[test]
+    fn native_blockquote_definition_list_items_merge() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        // Real shape (theme:isolated-terminal-jp): consecutive definition
+        // lines inside a blockquote form ONE <dl> on live Wikidot, exactly
+        // as they do outside a blockquote.
+        let mut input = String::from(
+            "> **Credits:**\n> : **Terminus Font** : (c) 2010 X\n> : **Terminus (TTF)** : (c) 2011 Y\n> **License:** zzz\n",
+        );
+        crate::preprocess(&mut input);
+        let tokenization = crate::tokenize(&input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:#?}");
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert_eq!(html.matches("<dl>").count(), 1, "{html}");
+        assert_eq!(html.matches("</dl>").count(), 1, "{html}");
+        assert!(html.contains("<dt><strong>Terminus Font</strong></dt>"), "{html}");
+        assert!(html.contains("<dt><strong>Terminus (TTF)</strong></dt>"), "{html}");
+
+        // A plain text line between definition lines still splits the list.
+        let mut input = String::from("> : **A** : aaa\n> text\n> : **B** : bbb\n");
+        crate::preprocess(&mut input);
+        let tokenization = crate::tokenize(&input);
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+        assert!(errors.is_empty(), "{errors:#?}");
+        let html = HtmlRender.render(&tree, &page_info, &settings).body;
+        assert_eq!(html.matches("<dl>").count(), 2, "{html}");
     }
 }

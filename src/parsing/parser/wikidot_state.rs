@@ -87,6 +87,7 @@ fn crossed_close_slot(name: &str) -> Option<(u16, u16)> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(super) struct WikidotState {
     div_body_depth: u16,
+    exhibited_body_depth: u16,
     scored_div_body_depth: u16,
     scored_div_direct: (u32, u16),
     scored_span_body_depth: u16,
@@ -119,6 +120,7 @@ impl Default for WikidotState {
     fn default() -> Self {
         Self {
             div_body_depth: 0,
+            exhibited_body_depth: 0,
             scored_div_body_depth: 0,
             scored_div_direct: (SCORED_DIV_DIRECT_INACTIVE, 0),
             scored_span_body_depth: 0,
@@ -221,6 +223,23 @@ impl Parser<'_, '_> {
     #[inline]
     pub(crate) fn leave_wikidot_div_body(&mut self) {
         self.wikidot.div_body_depth = self.wikidot.div_body_depth.saturating_sub(1);
+    }
+
+    #[inline]
+    pub(crate) fn in_exhibited_body(&self) -> bool {
+        self.wikidot.exhibited_body_depth > 0
+    }
+
+    #[inline]
+    pub(crate) fn enter_exhibited_body(&mut self) {
+        self.wikidot.exhibited_body_depth =
+            self.wikidot.exhibited_body_depth.saturating_add(1);
+    }
+
+    #[inline]
+    pub(crate) fn leave_exhibited_body(&mut self) {
+        self.wikidot.exhibited_body_depth =
+            self.wikidot.exhibited_body_depth.saturating_sub(1);
     }
 
     #[inline]

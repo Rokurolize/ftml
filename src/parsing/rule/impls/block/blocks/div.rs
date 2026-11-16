@@ -1144,6 +1144,16 @@ fn parse_fn<'r, 't>(
     debug!("Parsing div block (name '{name}', in-head {in_head}, score {flag_score})");
     assert!(!flag_star, "Div doesn't allow star flag");
     assert_block_name(&BLOCK_DIV, name);
+    if parser.settings().layout.legacy() && parser.in_exhibited_body() {
+        // A div head inside an exhibited pair's body never forms on live:
+        // the tag is dropped and its body flows as the exhibited body's
+        // own text (probes muse-probe-exhibit-closer-b7 / -b3).
+        parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;
+        if parser.current().token == Token::LineBreak {
+            parser.step()?;
+        }
+        return ok!(false; Elements::None);
+    }
     if parser.settings().layout.legacy() && parser.in_wikidot_heading_line() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
@@ -1208,6 +1218,46 @@ fn parse_fn<'r, 't>(
             attributes,
         ));
         return ok!(false; element, Vec::new());
+    }
+    if parser.settings().layout.legacy()
+        && let Some(pair) = parser.wikidot_block_pair_at_head_byte(opener_start)
+        && pair.exhibited
+    {
+        // Exhibited opener promoted by the pair scanner (see
+        // `exhibit_surgery` in block_pairs.rs): live consumes the rest of
+        // the opener's paragraph as part of the head, then renders the
+        // remaining body flattened inside the promoted div.
+        let closer_byte = pair.closer_byte;
+        while parser.current().token != Token::InputEnd
+            && parser.current().span.start != closer_byte
+        {
+            let paragraph_break = parser.current().token == Token::ParagraphBreak;
+            if parser.step().is_err() {
+                break;
+            }
+            if paragraph_break {
+                break;
+            }
+        }
+        let mut attributes = wikidot_div_head_attributes(parser, &mut arguments);
+        arguments.insert_explicit_empty_marker(&mut attributes);
+        parser.enter_wikidot_div_body();
+        parser.enter_exhibited_body();
+        let body = parser.get_body_elements_with_context(
+            &BLOCK_DIV,
+            true,
+            BlockBodyStart::NextPhysicalLine,
+            None,
+        );
+        parser.leave_exhibited_body();
+        parser.leave_wikidot_div_body();
+        let (mut elements, errors, _) = body?.into();
+        // Live flattens the exhibited body: a standalone horizontal rule
+        // (the onko themes carry one) does not survive it.
+        elements.retain(|element| !matches!(element, Element::HorizontalRule));
+        let element =
+            Element::Container(Container::new(ContainerType::Div, elements, attributes));
+        return ok!(element, errors);
     }
     if let Some(pair) = wikidot_flat_pair_for_head(parser, opener_start)
         && pair.kind == WikidotBlockKind::Div

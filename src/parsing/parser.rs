@@ -869,6 +869,7 @@ impl<'r, 't> Parser<'r, 't> {
                     wikidot_div_stream_marks: if settings.layout.legacy() {
                         wikidot_state::compute_wikidot_div_stream_marks(
                             tokenization.tokens(),
+                            tokenization.full_text().inner(),
                         )
                     } else {
                         BTreeMap::new()

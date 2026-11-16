@@ -1,6 +1,7 @@
 use super::Parser;
 use crate::parsing::condition::SplitDelimiter;
 use crate::parsing::{ExtractedToken, Token};
+use crate::preproc::LiteralRegionIndex;
 use std::collections::BTreeMap;
 
 const COLLAPSIBLE: u16 = 1 << 0;
@@ -1050,6 +1051,7 @@ fn div_stream_resolved_name<'a>(
 
 pub(super) fn compute_wikidot_div_stream_marks(
     tokens: &[ExtractedToken<'_>],
+    source: &str,
 ) -> BTreeMap<usize, (u32, u32)> {
     fn block_name<'a>(tokens: &[ExtractedToken<'a>], index: usize) -> Option<&'a str> {
         tokens
@@ -1062,13 +1064,95 @@ pub(super) fn compute_wikidot_div_stream_marks(
             .is_some_and(|name| name.eq_ignore_ascii_case("div"))
     }
 
+    // Div heads and closers that only appear as literal text must not move
+    // the balance: exhibits inside @@...@@ raw spans, [[code]] / [[html]] /
+    // [[raw]] bodies, @<...>@ spans and HTML literal regions are covered by
+    // the literal-region index; [!-- ... --] comments and ##color|...##
+    // span bodies are skipped by the token walk below. Counting them made
+    // later, real divs look "excess" and rendered them as literal text.
+    let literal = LiteralRegionIndex::new(source);
+
     let mut marks = BTreeMap::new();
     let mut balance: u32 = 0;
     let mut region: Vec<(usize, u32, u32)> = Vec::new();
     let mut region_ends: u32 = 0;
+    let mut in_color_body = false;
     let mut index = 0;
     while index < tokens.len() {
         let token = &tokens[index];
+        if literal.contains(token.span.start) {
+            index += 1;
+            continue;
+        }
+        if in_color_body {
+            if token.token == Token::Color {
+                in_color_body = false;
+            }
+            index += 1;
+            continue;
+        }
+        if token.token == Token::Color {
+            // A color span opens only when a pipe ends the color value on
+            // the same line; its body runs to the next Color token (live
+            // does not nest colors). A `##` without that shape is plain
+            // text and changes nothing.
+            let mut scan = index + 1;
+            let mut opens = false;
+            while scan < tokens.len() && scan <= index + 32 {
+                match tokens[scan].token {
+                    Token::Pipe => {
+                        opens = true;
+                        break;
+                    }
+                    Token::Color
+                    | Token::LineBreak
+                    | Token::ParagraphBreak
+                    | Token::InputEnd => break,
+                    _ => scan += 1,
+                }
+            }
+            if opens {
+                in_color_body = true;
+                index = scan;
+                continue;
+            }
+            index += 1;
+            continue;
+        }
+        if token.token == Token::LeftComment {
+            // Mirror block_pairs::skip_comment: the comment runs to a
+            // token ending in "--" immediately followed by a "]" token.
+            let mut scan = index + 1;
+            let mut closed = false;
+            while scan < tokens.len() {
+                let current = &tokens[scan];
+                if current.token == Token::InputEnd {
+                    break;
+                }
+                let trailing_hyphens = current
+                    .slice
+                    .bytes()
+                    .rev()
+                    .take_while(|byte| *byte == b'-')
+                    .count();
+                if trailing_hyphens >= 2
+                    && trailing_hyphens < current.slice.len()
+                    && tokens.get(scan + 1).is_some_and(|next| {
+                        next.token == Token::RightBracket && next.slice == "]"
+                    })
+                {
+                    index = scan + 1;
+                    closed = true;
+                    break;
+                }
+                scan += 1;
+            }
+            if !closed {
+                index = scan;
+            }
+            index += 1;
+            continue;
+        }
         if token.token == Token::LeftBlock {
             match block_name(tokens, index) {
                 Some(name)

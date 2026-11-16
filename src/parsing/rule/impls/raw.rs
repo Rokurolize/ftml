@@ -242,6 +242,71 @@ fn try_consume_fn<'r, 't>(
             return success_elements(Element::Raw(Cow::Owned(raw)));
         }
 
+        // Live Wikidot closes a double-at raw at a final `>` when the
+        // `@@` closer overlaps it (`@@ >@@` is raw ` >`): the tokenizer
+        // emits the `>@` as a RightRaw token and the closer's second `@`
+        // as a lone Other, so no Raw token follows. Treat the RightRaw's
+        // `>` as the final content character and the pair as the closer.
+        if parser.settings().layout.legacy()
+            && ending_token == Token::Raw
+            && token == Token::RightRaw
+            && parser.current_generated().is_none()
+            && parser.look_ahead(0).is_some_and(|trailing| {
+                trailing.token == Token::Other
+                    && trailing.slice == "@"
+                    && parser.generated_for(trailing).is_none()
+            })
+        {
+            let slice = parser.full_text().slice_partial(start, parser.current());
+            let content = format!("{slice}>");
+            let content_range = start.span.start..parser.current().span.start + 1;
+            parser.step_n(2)?;
+
+            if saw_nested_raw_pair {
+                return ok!(Elements::None);
+            }
+
+            if !generated.is_empty() {
+                return success_elements(Element::Delayed(DelayedElement::raw(
+                    parser.full_text().inner(),
+                    content_range,
+                    &generated,
+                )));
+            }
+
+            if let Some(inner) = content
+                .strip_prefix("<<")
+                .and_then(|content| content.strip_suffix(">>"))
+            {
+                let raw = format!("<{inner}>");
+                return ok!(Elements::Multiple(vec![
+                    text!("@"),
+                    Element::Raw(Cow::Owned(raw)),
+                    text!("@"),
+                ]));
+            }
+
+            let element = Element::Raw(Cow::Owned(content));
+            let result = finish_double_at_raw(parser, element);
+            return if crossed_break {
+                result.map(|mut success| {
+                    success.item = match success.item {
+                        Elements::None => Elements::None,
+                        Elements::Single(element) => {
+                            Elements::Multiple(vec![element, text!(" ")])
+                        }
+                        Elements::Multiple(mut elements) => {
+                            elements.insert(1, text!(" "));
+                            Elements::Multiple(elements)
+                        }
+                    };
+                    success
+                })
+            } else {
+                result
+            };
+        }
+
         if parser.settings().layout.legacy()
             && ending_token == Token::Raw
             && token == Token::LeftBlock
@@ -572,6 +637,37 @@ mod tests {
                 Elements::Multiple(vec![raw!("alpha>"), text!("@")]),
             );
         });
+    }
+
+    #[test]
+    fn wikidot_raw_span_ending_in_gt_closes_on_the_overlapping_at() {
+        with_raw_elements("@@ >@@", |result| {
+            assert_eq!(result.unwrap(), Elements::Single(raw!(" >")));
+        });
+        with_raw_elements("@@ x >@@", |result| {
+            assert_eq!(result.unwrap(), Elements::Single(raw!(" x >")));
+        });
+    }
+
+    #[test]
+    fn wikidot_raw_span_ending_in_gt_closes_inside_a_table_cell() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("|| @@ >@@ ||\n");
+        let result = crate::parse(&tokenization, &page_info, &settings);
+        let (tree, errors) = result.into();
+
+        assert!(errors.is_empty(), "unexpected parse errors: {errors:?}");
+
+        let [Element::Table(table)] = tree.elements.as_slice() else {
+            panic!("expected one table, got {:?}", tree.elements);
+        };
+        assert_eq!(table.rows.len(), 1);
+        assert_eq!(table.rows[0].cells.len(), 1);
+        assert_eq!(
+            table.rows[0].cells[0].elements,
+            vec![Element::Raw(Cow::Borrowed(" >"))],
+        );
     }
 
     #[test]

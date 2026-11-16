@@ -1,0 +1,83 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "こ"
+                    },
+                    {
+                        "element": "text",
+                        "data": "の"
+                    },
+                    {
+                        "element": "text",
+                        "data": "テ"
+                    },
+                    {
+                        "element": "text",
+                        "data": "ー"
+                    },
+                    {
+                        "element": "text",
+                        "data": "マ"
+                    },
+                    {
+                        "element": "text",
+                        "data": "の"
+                    },
+                    {
+                        "element": "text",
+                        "data": "説"
+                    },
+                    {
+                        "element": "text",
+                        "data": "明"
+                    },
+                    {
+                        "element": "text",
+                        "data": "文"
+                    },
+                    {
+                        "element": "text",
+                        "data": "で"
+                    },
+                    {
+                        "element": "text",
+                        "data": "す"
+                    },
+                    {
+                        "element": "text",
+                        "data": "。"
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "div",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "paragraph",
+                                        "attributes": {},
+                                        "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": "body"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

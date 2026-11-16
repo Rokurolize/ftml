@@ -84,8 +84,13 @@ fn wikidot_line_head_resolves_to_div(line: &str) -> bool {
     // head only counts when it also ends its line: a joined head with body
     // text behind it on the same line stays a mid-line head.
     let mut stripped_join = false;
-    while trimmed.len() >= 8
-        && trimmed[..8].eq_ignore_ascii_case("[[/div]]")
+    // The 8-byte prefix check must go through `get`: a line whose eighth
+    // byte falls inside a multibyte character (e.g. a Japanese text line
+    // that merely contains a div head later on) is not a joined closer,
+    // and slicing it at 8 would panic on the char boundary.
+    while trimmed
+        .get(..8)
+        .is_some_and(|head| head.eq_ignore_ascii_case("[[/div]]"))
         && trimmed[8..].starts_with("[[")
     {
         trimmed = &trimmed[8..];
@@ -1743,6 +1748,32 @@ mod tests {
         let tokenization = crate::tokenize(&source);
         let (tree, _) = crate::parse(&tokenization, &page_info, &settings).into();
         HtmlRender.render(&tree, &page_info, &settings).body
+    }
+
+    #[test]
+    fn wikidot_div_head_check_does_not_panic_on_multibyte_line() {
+        // Regression (stafflab render-ahead panic on theme:blankstyle): the
+        // joined-closer strip in `wikidot_line_head_resolves_to_div` sliced
+        // the line at byte 8, which is inside a multibyte character on a
+        // Japanese text line that merely contains a div head later on.
+        assert_eq!(
+            render_preprocessed_wikidot_allowing_errors(
+                "このテーマの説明文です。[[div]]\nbody\n[[/div]]",
+            ),
+            "このテーマの説明文です。\n<div><p>body</p></div>",
+        );
+        assert_eq!(
+            render_preprocessed_wikidot_allowing_errors(
+                "このテーマの説明文です。[[div_]]\nbody\n[[/div]]",
+            ),
+            "このテーマの説明文です。\n<div>body</div>",
+        );
+        assert_eq!(
+            render_preprocessed_wikidot_allowing_errors(
+                "このテーマの説明文です。{{[[div]]}}\nbody",
+            ),
+            "<p>このテーマの説明文です。<tt>[[div]]</tt><br>\nbody</p>",
+        );
     }
 
     #[test]

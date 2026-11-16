@@ -68,7 +68,10 @@ const JAPANESE: Catalog = &[
     ("audio-context-bad", "このコンテキストには音声がありません"),
     ("video-context-bad", "このコンテキストには動画がありません"),
     ("user-missing-pre", ""),
-    ("user-missing-post", "に合致するユーザーネームは存在しません"),
+    (
+        "user-missing-post",
+        "に合致するユーザーネームは存在しません",
+    ),
 ];
 
 pub(super) fn get(language: &str, key: &str) -> Option<&'static str> {

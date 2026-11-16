@@ -1,0 +1,6 @@
+[[!-- Theme Lab candidate port header. --]]
+[[module CSS]]
+.x { color: red; }
+[[/module]]
+
+Body paragraph.

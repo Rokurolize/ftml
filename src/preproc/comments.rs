@@ -38,6 +38,8 @@ pub(super) fn substitute_wikidot(text: &mut String) {
             break;
         };
         let close = close_search + relative_close + "--]".len();
+        let (span_start, span_end) =
+            double_bracket_comment_span(text, open, close).unwrap_or((open, close));
         if comment_contains_iftags_head(&text[open..close]) {
             scan = close;
             continue;
@@ -52,10 +54,12 @@ pub(super) fn substitute_wikidot(text: &mut String) {
             continue;
         }
         let (remove_start, remove_end) =
-            comment_only_subscript(text, open, close).unwrap_or((open, close));
+            comment_only_subscript(text, open, close).unwrap_or((span_start, span_end));
         push_copied_range(&mut output, text, copied_until..remove_start, &break_drops);
         seams.push(output.len());
-        if remove_start == open && comment_elision_needs_raw_barrier(text, open, close) {
+        if remove_start == span_start
+            && comment_elision_needs_raw_barrier(text, span_start, span_end)
+        {
             output.push('\0');
         }
         copied_until = remove_end;
@@ -97,7 +101,12 @@ fn elide_comment_only_lines(text: &mut String) {
             continue;
         }
         let line_start = text[..open].rfind('\n').map_or(0, |newline| newline + 1);
-        if open != line_start {
+        // A line holding only the double-bracket form `[[!-- ... --]]`
+        // is a comment-only line too: its `[!--` match sits one byte
+        // into the line, behind the extra `[`.
+        let double_bracket_line =
+            open == line_start + 1 && text.as_bytes()[line_start] == b'[';
+        if open != line_start && !double_bracket_line {
             scan = open + "[!--".len();
             continue;
         }
@@ -112,7 +121,11 @@ fn elide_comment_only_lines(text: &mut String) {
         }
 
         let bytes = text.as_bytes();
-        let mut end = close;
+        let mut end = if double_bracket_line && bytes.get(close) == Some(&b']') {
+            close + 1
+        } else {
+            close
+        };
         if bytes.get(end) == Some(&b'\r') {
             end += 1;
         }
@@ -139,6 +152,29 @@ fn elide_comment_only_lines(text: &mut String) {
     if removed {
         output.push_str(&text[copied_until..]);
         *text = output;
+    }
+}
+
+/// The span of a comment in its double-bracket form `[[!-- ... --]]`:
+/// an extra `[` immediately before the `[!--` opener and an extra `]`
+/// immediately after the `--]` closer. Live Wikidot treats the whole
+/// span as one comment (component sources commonly open with this
+/// form), so elision must consume the outer brackets as well;
+/// removing only the inner `[!-- ... --]` leaves the brackets behind
+/// as the literal text `[]`.
+fn double_bracket_comment_span(
+    text: &str,
+    open: usize,
+    close: usize,
+) -> Option<(usize, usize)> {
+    if open == 0 {
+        return None;
+    }
+    let bytes = text.as_bytes();
+    if bytes[open - 1] == b'[' && bytes.get(close) == Some(&b']') {
+        Some((open - 1, close + 1))
+    } else {
+        None
     }
 }
 
@@ -590,6 +626,49 @@ mod tests {
                 "https://example.com",
             ),
         );
+    }
+
+    #[test]
+    fn double_bracket_comments_elide_with_their_outer_brackets() {
+        // Component sources commonly open with the double-bracket
+        // comment form `[[!-- ... --]]` (e.g. the Theme Lab header on
+        // component:fade-in), which live Wikidot treats as one
+        // comment. Eliding only the inner `[!-- ... --]` left the
+        // outer brackets behind as the literal text `[]`, which the
+        // parser then wrapped into a phantom paragraph.
+        let mut source = "[[!-- header --]]\nBody paragraph.\n".to_owned();
+
+        substitute_wikidot(&mut source);
+
+        assert_eq!(source, "Body paragraph.\n");
+
+        let mut source = "Before [[!-- note --]] after.\n".to_owned();
+
+        substitute_wikidot(&mut source);
+
+        assert_eq!(source, "Before after.\n");
+    }
+
+    #[test]
+    fn double_bracket_comment_only_line_elides_like_a_comment_line() {
+        let mut source = "Line one\n[[!-- note --]]\nLine two\n".to_owned();
+
+        substitute_wikidot(&mut source);
+
+        assert_eq!(source, "Line one\nLine two\n");
+    }
+
+    #[test]
+    fn comment_prefix_inside_a_block_head_is_not_a_double_bracket_comment() {
+        // `[[[!--x--]div]]` carries the comment inside the block head,
+        // before the name: the char after the comment closer is a name
+        // byte, not `]`, so the outer-bracket span must not apply and
+        // the established elision (comment removed, name intact) runs.
+        let mut source = "[[[!--x--]div]]\nx\n[[/div]]\n".to_owned();
+
+        substitute_wikidot(&mut source);
+
+        assert_eq!(source, "[[div]]\nx\n[[/div]]\n");
     }
 
     #[test]

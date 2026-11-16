@@ -540,6 +540,15 @@ impl<'t> Arguments<'t> {
             map.insert(name, value);
         }
         if let Some(href) = self.inner.get(&self.key("href")) {
+            // Wikidot's new-window marker is one leading '*' on the href:
+            // live strips it before classifying the value, and a remainder
+            // in the verbatim class also opens in a new tab unless the
+            // author supplied a target attribute of their own.
+            let (starred, href) = match href.strip_prefix('*') {
+                Some(rest) => (true, Cow::Owned(rest.to_owned())),
+                None => (false, href.clone()),
+            };
+            let href = &href;
             if self.explicit_empty.contains(&self.key("href"))
                 && wikidot_anchor_href_is_verbatim(href)
             {
@@ -555,6 +564,9 @@ impl<'t> Arguments<'t> {
                 } else {
                     value
                 });
+                if starred && !map.get().contains_key("target") {
+                    map.insert("target", Cow::Borrowed("_blank"));
+                }
             } else {
                 map.insert_wikidot_relative_href(normalize_wikidot_unsafe_anchor_href(
                     href,

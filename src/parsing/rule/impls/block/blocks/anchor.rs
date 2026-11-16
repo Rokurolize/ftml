@@ -446,6 +446,62 @@ mod tests {
     }
 
     #[test]
+    fn wikidot_anchor_star_href_verbatim_opens_new_tab() {
+        // Live probe (sandbox-for-codex, muse-probe-anchor-star): one
+        // leading '*' on the href is Wikidot's new-window marker. Live
+        // strips it before classifying the href; a remainder in the
+        // verbatim class is kept as-is and gains target="_blank".
+        assert_eq!(
+            render(
+                r#"[[a href="*https://creativecommons.org/licenses/by-sa/3.0/deed.ja" class="cc cc-by-sa"]]@@@@[[/a]]"#,
+            ),
+            r#"<p><a class="cc cc-by-sa" href="https://creativecommons.org/licenses/by-sa/3.0/deed.ja" target="_blank"></a></p>"#,
+        );
+        for (href, expected_href) in [
+            ("*#frag", "#frag"),
+            ("*/some-path", "/some-path"),
+            ("*mailto:someone@example.com", "mailto:someone@example.com"),
+            ("*ftp://example.com/f", "ftp://example.com/f"),
+        ] {
+            assert_eq!(
+                render(&format!(r#"[[a href="{href}"]]click[[/a]]"#)),
+                format!(r#"<p><a href="{expected_href}" target="_blank">click</a></p>"#),
+                "{href}",
+            );
+        }
+    }
+
+    #[test]
+    fn wikidot_anchor_star_href_non_verbatim_gets_no_target() {
+        // Same probe: when the remainder after the stripped '*' is not in
+        // the verbatim class, live runs it through the same normalization
+        // as an unstarred href and adds no target.
+        for (href, expected_href) in [
+            ("*some-page", "some-page"),
+            ("*javascript:alert(1)", "javascript:alert-1"),
+            ("*page name with spaces", "page-name-with-spaces"),
+            ("**https://example.com/", "https:example-com"),
+            ("*", ""),
+        ] {
+            assert_eq!(
+                render(&format!(r#"[[a href="{href}"]]click[[/a]]"#)),
+                format!(r#"<p><a href="{expected_href}">click</a></p>"#),
+                "{href}",
+            );
+        }
+    }
+
+    #[test]
+    fn wikidot_anchor_star_href_yields_to_authored_target() {
+        // Same probe: an authored target attribute takes precedence over
+        // the target implied by the '*' marker.
+        assert_eq!(
+            render(r#"[[a href="*https://example.com/" target="_self"]]click[[/a]]"#),
+            r#"<p><a href="https://example.com/" target="_self">click</a></p>"#,
+        );
+    }
+
+    #[test]
     fn wikidot_score_anchor_consumes_following_newlines() {
         let html = render(concat!(
             "EMPTY [[a_]][[/a]]\n",

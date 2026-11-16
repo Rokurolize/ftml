@@ -792,7 +792,8 @@ fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: b
             match element {
                 Element::Container(container)
                     if container.ctype() == ContainerType::Paragraph
-                        && (index == 0 || index + 1 == item_count) =>
+                        && (index == 0 || index + 1 == item_count)
+                        && !matches!(container.elements(), [Element::LineBreak]) =>
                 {
                     // Live joins the paragraphs of a scored div body with no
                     // separator, so a blank line between runs vanishes.
@@ -1701,6 +1702,53 @@ mod tests {
         let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
         assert!(errors.is_empty(), "{errors:#?}");
         HtmlRender.render(&tree, &page_info, &settings).body
+    }
+
+    #[test]
+    fn wikidot_div_keeps_trailing_raw_pair_paragraph_after_heading() {
+        // A raw-line pair (@@@@ / @@@@) as a div's trailing segment is a
+        // real <p><br></p> on live Wikidot (af2026 card divs); the frame
+        // close must not eat it as a closer-line artifact.
+        assert_eq!(
+            render(
+                "[[div]]\n+* Heading\n\n@@@@\n@@@@\n\n[[/div]]",
+                Layout::Wikidot,
+            ),
+            "<div><h1><span>Heading</span></h1><p><br></p></div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_scored_div_keeps_trailing_raw_pair_paragraph_after_heading() {
+        assert_eq!(
+            render(
+                "[[div_]]\n+* Heading\n\n@@@@\n@@@@\n\n[[/div]]",
+                Layout::Wikidot,
+            ),
+            "<div><h1><span>Heading</span></h1><p><br></p></div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_scored_div_keeps_trailing_raw_pair_paragraph() {
+        assert_eq!(
+            render(
+                "[[div_]]\nsome text\n\n@@@@\n@@@@\n\n[[/div]]",
+                Layout::Wikidot,
+            ),
+            "<div>some text\n<p><br></p></div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_div_strips_closer_break_from_trailing_text_paragraph() {
+        assert_eq!(
+            render(
+                "[[div]]\n+* Heading\n\nsome text\n[[/div]]",
+                Layout::Wikidot,
+            ),
+            "<div><h1><span>Heading</span></h1><p>some text</p></div>",
+        );
     }
 
     #[test]

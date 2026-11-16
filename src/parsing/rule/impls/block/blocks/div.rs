@@ -783,8 +783,14 @@ fn unwrap_wikidot_scored_div_paragraph_after_blockquote(elements: &mut Vec<Eleme
     }
 }
 
-fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: bool) {
+fn normalize_wikidot_div_elements(
+    elements: &mut Vec<Element<'_>>,
+    flag_score: bool,
+    trailing_raw: crate::tree::WikidotTrailingRawShape,
+) {
     if flag_score {
+        let pair_trailing = trailing_raw == crate::tree::WikidotTrailingRawShape::Pair;
+        let mut kept_pair_break = false;
         let item_count = elements.len();
         let mut unwrapped = Vec::with_capacity(item_count.saturating_mul(2));
         let mut previous_unwrapped_paragraph = false;
@@ -793,13 +799,19 @@ fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: b
                 Element::Container(container)
                     if container.ctype() == ContainerType::Paragraph
                         && (index == 0 || index + 1 == item_count)
-                        && !matches!(container.elements(), [Element::LineBreak]) =>
+                        && (!matches!(container.elements(), [Element::LineBreak])
+                            || (pair_trailing && index + 1 == item_count)) =>
                 {
                     // Live joins the paragraphs of a scored div body with no
                     // separator, so a blank line between runs vanishes.
                     if index > 0 && !previous_unwrapped_paragraph {
                         unwrapped.push(text!("\n"));
                     }
+                    // A raw pair's lone-break paragraph unwraps to its
+                    // break, which live keeps as a bare <br> at the close
+                    // (PARA-RAW-PROBE).
+                    kept_pair_break |=
+                        matches!(container.elements(), [Element::LineBreak]);
                     unwrapped.extend(Vec::<Element>::from(container));
                     previous_unwrapped_paragraph = true;
                 }
@@ -813,10 +825,12 @@ fn normalize_wikidot_div_elements(elements: &mut Vec<Element<'_>>, flag_score: b
             }
         }
         *elements = unwrapped;
-        while matches!(
-            elements.last(),
-            Some(Element::LineBreak | Element::LineBreaks(_))
-        ) {
+        while !kept_pair_break
+            && matches!(
+                elements.last(),
+                Some(Element::LineBreak | Element::LineBreaks(_))
+            )
+        {
             elements.pop();
         }
         let mut previous_was_scored_div = false;
@@ -1479,7 +1493,17 @@ fn parse_fn<'r, 't>(
         // (a hidden iftags body) keeps no break on live (BRIEF-RMRES fda12,
         // saved-page probes muse-probe-rmres-fda-f7).
         trim_wikidot_trailing_explicit_list_break(&mut elements);
-        normalize_wikidot_div_elements(&mut elements, flag_score);
+        // The parser sits past the closer here, so classify from the
+        // pair record's closer byte, not the body end.
+        let closer_byte = parser
+            .wikidot_block_pair_at_head_byte(opener_start)
+            .map(|pair| pair.closer_byte)
+            .unwrap_or(body_end_byte);
+        let trailing_raw = crate::parsing::consume::wikidot_trailing_raw_shape(
+            parser.full_text().inner(),
+            closer_byte,
+        );
+        normalize_wikidot_div_elements(&mut elements, flag_score, trailing_raw);
         if parser.wikidot_div_yielded_to_tab() {
             strip_yielded_div_break(&mut elements);
         }
@@ -1719,10 +1743,61 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_scored_div_keeps_trailing_raw_pair_paragraph_after_heading() {
+    fn wikidot_scored_div_keeps_trailing_raw_pair_break_after_heading() {
+        // Live renders a scored div's raw pair as a bare break, the
+        // paragraph unwrapped like any other scored edge paragraph
+        // (probe muse-probe-para-raw-pair-scored). The wrapped
+        // expectation previously pinned here was written without live
+        // evidence for the scored shape and is overturned by that probe
+        // (PARA-RAW-PROBE).
         assert_eq!(
             render(
                 "[[div_]]\n+* Heading\n\n@@@@\n@@@@\n\n[[/div]]",
+                Layout::Wikidot,
+            ),
+            "<div><h1><span>Heading</span></h1><br>\n</div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_div_drops_trailing_single_raw_line_after_heading() {
+        // A single raw line's break is the join to the closer line, a
+        // closer artifact: live renders nothing for it (probe
+        // muse-probe-para-raw-single).
+        assert_eq!(
+            render("[[div]]\n+* Heading\n\n@@@@\n[[/div]]", Layout::Wikidot,),
+            "<div><h1><span>Heading</span></h1></div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_scored_div_drops_trailing_single_raw_line_after_heading() {
+        // Probe muse-probe-para-raw-single-scored.
+        assert_eq!(
+            render("[[div_]]\n+* Heading\n\n@@@@\n[[/div]]", Layout::Wikidot,),
+            "<div><h1><span>Heading</span></h1></div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_div_drops_trailing_single_raw_line_after_text() {
+        // Probe muse-probe-para-raw-single-headtext.
+        assert_eq!(
+            render(
+                "[[div]]\n+* Heading\n\nlead text\n\n@@@@\n[[/div]]",
+                Layout::Wikidot,
+            ),
+            "<div><h1><span>Heading</span></h1><p>lead text</p></div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_div_keeps_trailing_raw_pair_with_adjacent_close() {
+        // The pair keeps its break even when the closer shares its
+        // segment (probe muse-probe-para-raw-pair-adjclose).
+        assert_eq!(
+            render(
+                "[[div]]\n+* Heading\n\n@@@@\n@@@@\n[[/div]]",
                 Layout::Wikidot,
             ),
             "<div><h1><span>Heading</span></h1><p><br></p></div>",
@@ -1730,13 +1805,37 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_scored_div_keeps_trailing_raw_pair_paragraph() {
+    fn wikidot_scored_div_keeps_trailing_raw_pair_break_with_adjacent_close() {
+        // Probe muse-probe-para-raw-pair-adjclose-scored.
+        assert_eq!(
+            render(
+                "[[div_]]\n+* Heading\n\n@@@@\n@@@@\n[[/div]]",
+                Layout::Wikidot,
+            ),
+            "<div><h1><span>Heading</span></h1><br>\n</div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_scored_div_keeps_trailing_raw_pair_break() {
+        // Probe muse-probe-para-raw-pair-scored-text; the wrapped
+        // expectation previously pinned here is overturned by it
+        // (PARA-RAW-PROBE).
         assert_eq!(
             render(
                 "[[div_]]\nsome text\n\n@@@@\n@@@@\n\n[[/div]]",
                 Layout::Wikidot,
             ),
-            "<div>some text\n<p><br></p></div>",
+            "<div>some text<br>\n</div>",
+        );
+    }
+
+    #[test]
+    fn wikidot_scored_div_drops_trailing_single_raw_line() {
+        // Probe muse-probe-para-raw-single-scored-text.
+        assert_eq!(
+            render("[[div_]]\nsome text\n\n@@@@\n[[/div]]", Layout::Wikidot,),
+            "<div>some text</div>",
         );
     }
 

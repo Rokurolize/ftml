@@ -191,6 +191,22 @@ impl<'t> WikidotBlockShell<'t> {
     }
 }
 
+/// How the source lines directly above a div closer form the body's
+/// trailing lone-break paragraph, classified at close formation
+/// (PARA-RAW-PROBE, live probes muse-probe-para-raw-*).
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum WikidotTrailingRawShape {
+    /// Two raw lines (`@@@@` over `@@@@`): the paragraph's sole break is
+    /// the join between them, which live renders as content.
+    Pair,
+    /// One raw line: the paragraph's sole break is the join to the
+    /// closer line, a closer artifact live drops.
+    Single,
+    /// Anything else (quoted raw lines, other empty constructs): the
+    /// classification does not apply.
+    Other,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum WikidotBlockCloseKind<'t> {
     Div {
@@ -200,6 +216,10 @@ pub enum WikidotBlockCloseKind<'t> {
         /// final break (u-second-frame probe); set at emission when the
         /// closer is the recorded tail terminator.
         keep_trailing_break: bool,
+        /// PARA-RAW-PROBE: classification of the body's trailing
+        /// raw-line lone-break paragraph, from the source lines above
+        /// this closer.
+        trailing_raw: WikidotTrailingRawShape,
     },
     Collapsible {
         head: usize,
@@ -236,10 +256,12 @@ impl WikidotBlockCloseKind<'_> {
                 head,
                 scored,
                 keep_trailing_break,
+                trailing_raw,
             } => WikidotBlockCloseKind::Div {
                 head: *head,
                 scored: *scored,
                 keep_trailing_break: *keep_trailing_break,
+                trailing_raw: *trailing_raw,
             },
             WikidotBlockCloseKind::Collapsible { head } => {
                 WikidotBlockCloseKind::Collapsible { head: *head }

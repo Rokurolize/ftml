@@ -211,9 +211,16 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
             break;
         };
         before += rel;
-        before = skip_past_literal(literal, before, head_line_start);
-        if before >= head_line_start {
-            break;
+        let skipped = skip_past_literal(literal, before, head_line_start);
+        if skipped != before {
+            // The `[[` found lies inside a literal region, so it is not
+            // markup: resume the search from the region's end rather than
+            // classifying (and stepping over) whatever follows the region.
+            before = skipped;
+            if before >= head_line_start {
+                break;
+            }
+            continue;
         }
         if marker_extent_ignore_case(source, before, b"[[/collapsible]]") {
             before_collapsible = before_collapsible.saturating_sub(1);
@@ -262,9 +269,16 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
             break;
         };
         pos += rel;
-        pos = skip_past_literal(literal, pos, limit);
-        if pos >= limit {
-            break;
+        let skipped = skip_past_literal(literal, pos, limit);
+        if skipped != pos {
+            // The `[[` found lies inside a literal region, so it is not
+            // markup: resume the search from the region's end rather than
+            // classifying (and stepping over) whatever follows the region.
+            pos = skipped;
+            if pos >= limit {
+                break;
+            }
+            continue;
         }
 
         if marker_extent_ignore_case(source, pos, b"[[/collapsible]]") {
@@ -352,9 +366,17 @@ pub(crate) fn wikidot_outer_div_still_open_at_collapsible_close(
                 break;
             };
             pos += rel;
-            pos = skip_past_literal(literal, pos, tail_limit);
-            if pos >= tail_limit {
-                break;
+            let skipped = skip_past_literal(literal, pos, tail_limit);
+            if skipped != pos {
+                // The `[[` found lies inside a literal region, so it is
+                // not markup: resume the search from the region's end
+                // rather than classifying (and stepping over) whatever
+                // follows the region.
+                pos = skipped;
+                if pos >= tail_limit {
+                    break;
+                }
+                continue;
             }
 
             if marker_extent_ignore_case(source, pos, b"[[/div]]") {

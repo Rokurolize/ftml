@@ -1,0 +1,8 @@
+[[collapsible show="+ T"]]
+[[div class="code"]]
+@@[[module CSS]]@@
+[[/div]]
+[[/collapsible]]
+[[div_ class="x"]]
+body text
+[[/div]]

@@ -34,6 +34,7 @@ use super::rule::{
 };
 use crate::tree::{
     LinkLabel, LinkLocation, LinkType, PartialElement, WikidotBlockCloseKind,
+    WikidotTrailingRawShape,
 };
 use std::{borrow::Cow, mem};
 
@@ -338,6 +339,36 @@ pub(crate) fn line_has_unmatched_wikidot_owner_opener(
     last_open.is_some_and(|open| last_close.is_none_or(|close| open > close))
 }
 
+/// Classify the trailing raw-line shape above a closer from the source
+/// lines (PARA-RAW-PROBE, live probes muse-probe-para-raw-*). A raw line
+/// is exactly `@@@@` modulo trailing spaces/tabs, the same test the
+/// blockquote row scan uses. The closer must be the first non-whitespace
+/// on its line; blank lines between the trailing segment and the closer
+/// are skipped, but the two raw lines of a pair must be adjacent.
+pub(crate) fn wikidot_trailing_raw_shape(
+    source: &str,
+    closer_byte: usize,
+) -> WikidotTrailingRawShape {
+    let before = &source[..closer_byte.min(source.len())];
+    let line_start = before.rfind('\n').map(|index| index + 1).unwrap_or(0);
+    if !before[line_start..].trim().is_empty() {
+        return WikidotTrailingRawShape::Other;
+    }
+    let is_raw_line = |line: &str| line.trim_end_matches([' ', '\t']) == "@@@@";
+    let mut lines = before[..line_start].lines().rev();
+    match lines.by_ref().find(|line| !line.trim().is_empty()) {
+        Some(line) if is_raw_line(line) => {}
+        _ => return WikidotTrailingRawShape::Other,
+    }
+    match lines.next() {
+        Some(line) if is_raw_line(line) => match lines.next() {
+            Some(line) if is_raw_line(line) => WikidotTrailingRawShape::Other,
+            _ => WikidotTrailingRawShape::Pair,
+        },
+        _ => WikidotTrailingRawShape::Single,
+    }
+}
+
 pub(crate) fn wikidot_flat_close_kind_at_byte<'r, 't>(
     parser: &Parser<'r, 't>,
     closer_byte: usize,
@@ -372,6 +403,10 @@ where
             head: pair.head_byte,
             scored: pair.scored,
             keep_trailing_break,
+            trailing_raw: wikidot_trailing_raw_shape(
+                parser.full_text().inner(),
+                closer_byte,
+            ),
         },
         WikidotBlockKind::Collapsible => WikidotBlockCloseKind::Collapsible {
             head: pair.head_byte,

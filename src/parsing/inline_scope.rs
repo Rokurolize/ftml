@@ -16,7 +16,7 @@ use crate::tree::{
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_FOLD_MARKER,
     WIKIDOT_UNDERSTRIKE_LIST_CLOSE_TAIL_LEAD_MARKER, WIKIDOT_WS_MONO_VANISH_MARKER,
-    WikidotBlockCloseKind, WikidotBlockShell, WikidotFrameLink,
+    WikidotBlockCloseKind, WikidotBlockShell, WikidotFrameLink, WikidotTrailingRawShape,
 };
 use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
@@ -10213,18 +10213,24 @@ impl<'t> WikidotFrameAssembly<'t> {
             WikidotBlockCloseKind::Div {
                 scored,
                 keep_trailing_break,
+                trailing_raw,
                 ..
             } => {
                 if !scored && self.stack.is_empty() {
-                    self.strip_paragraph_before_close();
+                    self.strip_paragraph_before_close(trailing_raw);
                     self.swallow_orphan_div_break =
                         matches!(self.top().last(), Some(Element::LineBreak));
                     return;
                 }
+                // PARA-RAW-PROBE: a raw-pair lone-break paragraph keeps
+                // its break at the close (unwrapped first when scored,
+                // with the exposed break protected from the frame pop);
+                // a single raw line's break is a closer artifact.
+                let mut keep_break = keep_trailing_break;
                 if scored {
-                    self.unwrap_paragraph_before_close();
+                    keep_break |= self.unwrap_paragraph_before_close(trailing_raw);
                 } else {
-                    self.strip_paragraph_before_close();
+                    self.strip_paragraph_before_close(trailing_raw);
                 }
                 // A div close that crosses a note frame marks it: the
                 // note's own closer line will arrive orphaned, and live
@@ -10234,11 +10240,11 @@ impl<'t> WikidotFrameAssembly<'t> {
                 }
                 // g10res: a crossed-tail terminator keeps the frame's
                 // trailing break (u-second-frame probe).
-                self.keep_popped_frame_break = keep_trailing_break;
+                self.keep_popped_frame_break = keep_break;
                 self.pop_frame();
             }
             WikidotBlockCloseKind::CollapsibleCrossedBottom { head, .. } => {
-                self.strip_paragraph_before_close();
+                self.strip_paragraph_before_close(WikidotTrailingRawShape::Other);
                 self.pop_frame();
                 let close = self.collapsible_closes.remove(&head);
                 let (show_bottom, hide_text) = close
@@ -10261,7 +10267,7 @@ impl<'t> WikidotFrameAssembly<'t> {
                     self.collapsible_closes.remove(&head);
                     return;
                 }
-                self.strip_paragraph_before_close();
+                self.strip_paragraph_before_close(WikidotTrailingRawShape::Other);
                 self.pop_frame();
                 let close = self.collapsible_closes.remove(&head);
                 let (show_bottom, hide_text) = close
@@ -10279,7 +10285,7 @@ impl<'t> WikidotFrameAssembly<'t> {
                 self.pop_frame();
             }
             WikidotBlockCloseKind::Note { head } => {
-                self.strip_paragraph_before_close();
+                self.strip_paragraph_before_close(WikidotTrailingRawShape::Other);
                 // A note frame that a div close crossed early leaves this
                 // closer line orphaned; live eats its break too — but only
                 // when nothing else is open (a div still open around the
@@ -10295,7 +10301,7 @@ impl<'t> WikidotFrameAssembly<'t> {
                 }
             }
             WikidotBlockCloseKind::Align { .. } => {
-                self.strip_paragraph_before_close();
+                self.strip_paragraph_before_close(WikidotTrailingRawShape::Other);
                 self.pop_frame();
             }
             WikidotBlockCloseKind::BibliographyCrossed { frames, .. } => {
@@ -10311,18 +10317,22 @@ impl<'t> WikidotFrameAssembly<'t> {
         }
     }
 
-    fn strip_paragraph_before_close(&mut self) {
+    fn strip_paragraph_before_close(&mut self, trailing_raw: WikidotTrailingRawShape) {
         let emptied = match self.top().last_mut() {
             Some(Element::Container(container))
                 if container.ctype() == ContainerType::Paragraph =>
             {
                 let elements = container.elements_mut();
-                // A trailing break is the closer line's own separator only
-                // when the paragraph holds other content besides it. A
-                // paragraph whose sole element is a break is a raw-line
-                // pair (@@@@ / @@@@), which live renders as <p><br></p>:
-                // keep it whole.
-                if elements.len() > 1
+                // A trailing break is the closer line's own separator
+                // when the paragraph holds other content besides it, and
+                // also when its sole element is the join break of a
+                // single raw line (@@@@ over the closer). A raw pair's
+                // join break (@@@@ / @@@@) is content: live renders the
+                // paragraph as <p><br></p>, so keep it whole
+                // (PARA-RAW-PROBE).
+                let lone_break = matches!(elements.as_slice(), [Element::LineBreak]);
+                if (elements.len() > 1
+                    || (lone_break && trailing_raw == WikidotTrailingRawShape::Single))
                     && matches!(elements.last(), Some(Element::LineBreak))
                 {
                     elements.pop();
@@ -10336,29 +10346,39 @@ impl<'t> WikidotFrameAssembly<'t> {
         }
     }
 
-    fn unwrap_paragraph_before_close(&mut self) {
+    /// Unwraps the trailing paragraph at a scored close. Returns true
+    /// when the unwrapped paragraph was a raw-pair lone-break paragraph,
+    /// whose exposed break the frame pop must keep (PARA-RAW-PROBE).
+    fn unwrap_paragraph_before_close(
+        &mut self,
+        trailing_raw: WikidotTrailingRawShape,
+    ) -> bool {
         let is_paragraph = matches!(
             self.top().last(),
             Some(Element::Container(container))
                 if container.ctype() == ContainerType::Paragraph
         );
         if !is_paragraph {
-            return;
+            return false;
         }
-        // A lone-break paragraph is a raw-line pair (@@@@ / @@@@), which
-        // live renders as <p><br></p>. Unwrapping it would expose the
-        // break to the frame's trailing-break pop and eat it, so keep the
-        // paragraph intact.
-        if let Some(Element::Container(container)) = self.top().last()
-            && matches!(container.elements(), [Element::LineBreak])
-        {
-            return;
+        let lone_break = matches!(
+            self.top().last(),
+            Some(Element::Container(container))
+                if matches!(container.elements(), [Element::LineBreak])
+        );
+        // An unclassified lone-break paragraph keeps its wrapper: only
+        // a classified raw pair or single unwraps here (the pair's
+        // exposed break is kept by the frame pop, the single's pops as
+        // the closer line's separator).
+        if lone_break && trailing_raw == WikidotTrailingRawShape::Other {
+            return false;
         }
         let paragraph = self.top().pop();
         if let Some(Element::Container(container)) = paragraph {
             let children = container.elements().to_vec();
             self.top().extend(children);
         }
+        lone_break && trailing_raw == WikidotTrailingRawShape::Pair
     }
 
     fn wrap_note_frame_children(

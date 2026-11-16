@@ -358,9 +358,11 @@ fn collect_html_literal_ranges(source: &str, ranges: &mut Vec<Range<usize>>) {
         cursor = tag_end;
     }
 
-    if let Some((_, content_start, _)) = active {
-        ranges.push(content_start..source.len());
-    }
+    // An unterminated tag emits no range: live Wikidot treats these HTML
+    // tags as plain escaped text, so nothing after the opener is a literal
+    // zone and later block heads/closers still pair normally. Extending the
+    // range to EOF made an unclosed <code> in a comment line swallow the
+    // tail of the page (the doap-nvl shape).
 }
 
 fn html_tag_end(source: &str, start: usize) -> Option<usize> {
@@ -503,7 +505,25 @@ mod tests {
         assert!(!index.contains(markers[0]));
         assert!(index.contains(source.find("inside").unwrap()));
         assert!(!index.contains(markers[1]));
-        assert!(index.contains(source.find("body").unwrap()));
+        // The trailing <textarea> is unterminated, so it starts no literal
+        // region and its would-be body stays ordinary text (live rule).
+        assert!(!index.contains(source.find("body").unwrap()));
+    }
+
+    #[test]
+    fn unclosed_html_tag_does_not_zone_out_the_tail() {
+        let source = concat!(
+            "[[div]]\n",
+            "marker <code> unclosed\n",
+            "[[/div]]\n",
+            "after",
+        );
+        let index = LiteralRegionIndex::new(source);
+
+        assert!(index.ranges.is_empty());
+        assert!(!index.contains(source.find("unclosed").unwrap()));
+        assert!(!index.contains(source.find("[[/div]]").unwrap()));
+        assert!(!index.contains(source.find("after").unwrap()));
     }
 
     #[test]

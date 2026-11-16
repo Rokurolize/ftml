@@ -3823,6 +3823,68 @@ where
     /// content. Used for post-list break/bareness decisions. A line led by
     /// a block closer is a structural boundary, not same-para content
     /// (live keeps the break before an orphan closer: div/list-item-end).
+    /// Whether the break token under the cursor spans a blank line
+    /// (two or more newlines) rather than a single line break.
+    pub(crate) fn wikidot_current_break_spans_blank(&self) -> bool {
+        let token = self.current();
+        if !matches!(token.token, Token::LineBreak | Token::ParagraphBreak) {
+            return false;
+        }
+        let text = self.full_text().inner();
+        let run = text.get(token.span.start..token.span.end).unwrap_or("");
+        let bytes = run.as_bytes();
+        let mut index = 0;
+        let mut breaks = 0;
+        while index < bytes.len() {
+            match bytes[index] {
+                b'\r' => {
+                    breaks += 1;
+                    index += 1;
+                    if bytes.get(index) == Some(&b'\n') {
+                        index += 1;
+                    }
+                }
+                b'\n' => {
+                    breaks += 1;
+                    index += 1;
+                }
+                _ => index += 1,
+            }
+        }
+        breaks >= 2
+    }
+
+    /// Whether the line after the current line break opens one of the
+    /// formed blocks live precedes with a break after a nested list in
+    /// an item body: a div, note, or collapsible block head, a heading,
+    /// or a horizontal rule (probes muse-probe-colmod-*). Code, align,
+    /// tabview, and list heads do not qualify.
+    pub(crate) fn wikidot_next_line_opens_list_break_block(&self) -> bool {
+        if !matches!(
+            self.current().token,
+            Token::LineBreak | Token::ParagraphBreak
+        ) {
+            return false;
+        }
+        let mut probe = self.clone();
+        if probe.step().is_err() {
+            return false;
+        }
+        if probe.current().token == Token::Whitespace {
+            let _ = probe.get_optional_space();
+        }
+        match probe.current().token {
+            Token::Heading | Token::TripleDash => true,
+            Token::LeftBlock => probe.block_head_name_here().is_some_and(|name| {
+                matches!(
+                    name.trim_end_matches('_').to_ascii_lowercase().as_str(),
+                    "div" | "note" | "collapsible"
+                )
+            }),
+            _ => false,
+        }
+    }
+
     pub(crate) fn wikidot_next_line_has_content(&self) -> bool {
         if self.current().token != Token::LineBreak {
             return false;
@@ -4597,8 +4659,21 @@ where
                     let segment = segments
                         .last_mut()
                         .expect("segments always has a current segment");
-                    for _ in 0..breaks {
-                        segment.push(Element::LineBreak);
+                    // A blank separator right after a nested explicit
+                    // list carries no break on live (probes
+                    // muse-probe-colmod-*), unlike the single-newline
+                    // break the segment consumer preserves separately.
+                    let after_explicit_list = matches!(
+                        segment.last(),
+                        Some(Element::List {
+                            wikidot_explicit_block: true,
+                            ..
+                        })
+                    );
+                    if !after_explicit_list {
+                        for _ in 0..breaks {
+                            segment.push(Element::LineBreak);
+                        }
                     }
                     self.step()?;
                     first = false;
@@ -4629,6 +4704,68 @@ where
             }
 
             if !self.discarding_hidden_body() && self.wikidot_nested_list_opener_ahead() {
+                self.step()?;
+                first = false;
+                segments
+                    .last_mut()
+                    .expect("segments always has a current segment")
+                    .push(Element::LineBreak);
+                continue;
+            }
+
+            // The blank-line counterpart of the case below: a break
+            // token spanning a blank line right after a nested explicit
+            // list carries no break on live before a following block
+            // either (probes muse-probe-colmod-*), so consume it
+            // without pushing an element.
+            if self.settings().layout.legacy()
+                && !self.discarding_hidden_body()
+                && matches!(
+                    self.current().token,
+                    Token::LineBreak | Token::ParagraphBreak
+                )
+                && self.wikidot_current_break_spans_blank()
+                && segments.last().is_some_and(|segment| {
+                    matches!(
+                        segment.last(),
+                        Some(Element::List {
+                            wikidot_explicit_block: true,
+                            ..
+                        })
+                    )
+                })
+                && self.wikidot_next_line_opens_list_break_block()
+                && !self.body_end_boundary_accepts("iftags")
+                && !self.has_pending_iftags_end_ahead()
+            {
+                self.step()?;
+                first = false;
+                continue;
+            }
+
+            // A break right after a nested explicit list stays when the
+            // next line opens one of the formed blocks live renders with
+            // a leading break there (probes muse-probe-colmod-*). The
+            // line-break rule would skip it as a structural newline
+            // before an own-line block, so push it here and let segment
+            // assembly adjudicate it against the formed follower.
+            if self.settings().layout.legacy()
+                && !self.discarding_hidden_body()
+                && self.current().token == Token::LineBreak
+                && !self.wikidot_current_break_spans_blank()
+                && segments.last().is_some_and(|segment| {
+                    matches!(
+                        segment.last(),
+                        Some(Element::List {
+                            wikidot_explicit_block: true,
+                            ..
+                        })
+                    )
+                })
+                && self.wikidot_next_line_opens_list_break_block()
+                && !self.body_end_boundary_accepts("iftags")
+                && !self.has_pending_iftags_end_ahead()
+            {
                 self.step()?;
                 first = false;
                 segments

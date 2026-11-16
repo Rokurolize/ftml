@@ -677,17 +677,22 @@ fn parse_list_block_impl<'r, 't>(
         }
     }
 
+    // Scored-list items keep the item-final break live renders when
+    // the closer sits on its own line (probes muse-probe-colmod-*:
+    // after a div, after text, after a literal line alike), so the
+    // assembled elements are left as they are. A trailing break after
+    // a trailing nested list is already suppressed during assembly.
+    // The one exception is an item whose last line is an unformed
+    // scored block head rendered as literal text: live treats that
+    // line as a block line and ends the item without the break,
+    // unlike an unformed non-scored head or plain text.
     if wikidot && flag_score {
         for item in &mut items {
-            if let ListItem::Elements { elements, .. } = item {
-                let terminal_inline_raw_line_break = matches!(
-                    elements.as_slice(),
-                    [.., Element::Raw(_), Element::LineBreak]
-                );
-                strip_newlines(elements);
-                if terminal_inline_raw_line_break {
-                    elements.push(Element::LineBreak);
-                }
+            if let ListItem::Elements { elements, .. } = item
+                && matches!(elements.last(), Some(Element::LineBreak))
+                && wikidot_li_trailing_text_is_unformed_scored_head(elements)
+            {
+                elements.pop();
             }
         }
     }
@@ -3652,6 +3657,50 @@ fn wikidot_li_frame_depth_delta(element: &Element) -> i32 {
     }
 }
 
+/// Whether the trailing text run of an assembled item (the text
+/// elements after the last non-text element, ignoring a final line
+/// break) is an unformed scored block head line: literal text
+/// starting with `[[<name>_`, as a single-line `[[div_ ...]]` inside
+/// an item renders on live.
+fn wikidot_li_trailing_text_is_unformed_scored_head(elements: &[Element]) -> bool {
+    let mut run = String::new();
+    for element in elements.iter().rev() {
+        match element {
+            Element::LineBreak | Element::LineBreaks(_) if run.is_empty() => {}
+            // The dissolved close of the unformed head line itself.
+            Element::Partial(crate::tree::PartialElement::WikidotBlockClose(
+                crate::tree::WikidotBlockCloseKind::Div { scored: true, .. },
+            )) if run.is_empty() => {}
+            Element::Text(text) => run.insert_str(0, text),
+            _ => break,
+        }
+    }
+    let Some(rest) = run.strip_prefix("[[") else {
+        return false;
+    };
+    let name_len = rest
+        .bytes()
+        .take_while(|byte| byte.is_ascii_alphanumeric() || *byte == b'-')
+        .count();
+    name_len > 0 && rest.as_bytes().get(name_len) == Some(&b'_')
+}
+
+/// Follower set for the break a nested list leaves before a formed
+/// block in an item body (probes muse-probe-colmod-*). Deliberately not
+/// the same set as `wikidot_li_break_kept_after_block`: live drops the
+/// break before code, align, and tabview blocks, and keeps it before
+/// headings and rules.
+fn wikidot_li_break_kept_before_block(element: &Element) -> bool {
+    match element {
+        Element::Container(container) => matches!(
+            container.ctype(),
+            ContainerType::Div | ContainerType::Note | ContainerType::Header(_)
+        ),
+        Element::Collapsible { .. } | Element::HorizontalRule => true,
+        _ => false,
+    }
+}
+
 fn wikidot_li_break_kept_after_block(element: &Element) -> bool {
     match element {
         Element::Container(container) => matches!(
@@ -3930,6 +3979,15 @@ fn assemble_wikidot_li_segments<'t>(
                 && matches!(segment[index - 1], Element::List { .. })
                 && segment[index] != Element::LineBreak
                 && segment[index].paragraph_safe();
+            // A single break between a nested list and a following formed
+            // block stays (probes muse-probe-colmod-t4/t5/v-*): live keeps
+            // it before div/note containers, collapsibles, headings, and
+            // rules, and drops it before code/align/tabview/lists/inline
+            // content.
+            let list_to_block_break = matches!(segment[index - 1], Element::List { .. })
+                && segment
+                    .get(index + 1)
+                    .is_some_and(wikidot_li_break_kept_before_block);
             if shadowed_insert_break {
                 segment.insert(index, Element::LineBreak);
                 frame_depth += wikidot_li_frame_depth_delta(&segment[index]);
@@ -3940,6 +3998,7 @@ fn assemble_wikidot_li_segments<'t>(
                 && !break_after_outermost_close
                 && !tabview_break_stays_in_open_span(segment, index)
                 && !shadowed_region_end_break
+                && !list_to_block_break
             {
                 segment.remove(index);
             } else {
@@ -5059,7 +5118,10 @@ mod tests {
     }
 
     #[test]
-    fn scored_block_strips_outer_line_breaks() {
+    fn scored_block_keeps_terminal_line_break() {
+        // Live keeps the item-final break when the closer sits on its
+        // own line (probe muse-probe-colmod-w1-loose-text-scored
+        // renders <li>Alpha<br></li>); only the leading break goes.
         with_parse(
             r#"[[ul_]]
 [[li]]
@@ -5075,12 +5137,15 @@ Alpha
                     panic!("expected one list item, got {items:?}");
                 };
 
-                assert!(
-                    !elements
-                        .iter()
-                        .any(|element| matches!(element, Element::LineBreak))
-                );
                 assert_eq!(element_text(elements), "Alpha");
+                assert_eq!(
+                    elements
+                        .iter()
+                        .filter(|element| matches!(element, Element::LineBreak))
+                        .count(),
+                    1,
+                );
+                assert!(matches!(elements.last(), Some(Element::LineBreak)));
             },
         );
     }

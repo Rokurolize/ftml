@@ -2049,8 +2049,7 @@ impl<'t> Scanner<'t> {
             // the promoted body starts.
             let mut spent_closer: Option<usize> = None;
             let mut body_start_byte: Option<usize> = None;
-            for index in insert_at + 1..modified.len() {
-                let event = &modified[index];
+            for (index, event) in modified.iter().enumerate().skip(insert_at + 1) {
                 if !event.is_close {
                     body_start_byte = Some(self.tokens[event.head_end - 1].span.end);
                     break;

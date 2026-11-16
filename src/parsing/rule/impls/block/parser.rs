@@ -3171,6 +3171,18 @@ where
                             if scan.step().is_err() {
                                 break;
                             }
+                        } else if name.eq_ignore_ascii_case("footnote")
+                            && !self.wikidot_li_cross_byte_opaque(pos)
+                        {
+                            // Pool 3810: stage 1 extracts footnote bodies
+                            // before list structure forms, so a stray
+                            // `[[/footnote]]` in a crossed tail is not part
+                            // of the list stream: it must not end the
+                            // closer search before the tail's own
+                            // `[[/li]]`/`[[/ul]]` are collected.
+                            if scan.step().is_err() {
+                                break;
+                            }
                         } else {
                             // Any other closer (the crossed frame's own
                             // closer, span/code closes, ...) ends the tail.
@@ -3227,7 +3239,7 @@ where
                         let name = name.strip_suffix('_').unwrap_or(&name);
                         let opaque = self.wikidot_li_cross_byte_opaque(start);
                         if name.eq_ignore_ascii_case("footnote") {
-                            // E1-EXPERIMENT: stage 1 extracts footnote
+                            // Pool 3810: stage 1 extracts footnote
                             // bodies before list structure forms, so a
                             // block head inside a footnote body must not
                             // claim this region's frames (pool 3810).

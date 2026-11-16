@@ -1,6 +1,8 @@
 corpus-test/definition-list/div-head-keeps-close-tail/input.ftml	Div@2..20 scan-only
 corpus-test/definition-list/div-head-loses-line/input.ftml	Div@2..20 scan-only
 corpus-test/definition-list/note-head-loses-line/input.ftml	Note@2..22 scan-only
+corpus-test/div/closed-html-code-closer-fires/input.ftml	Div@0..62 scan-only
+corpus-test/div/closed-html-code-closer-fires/input.ftml	Div@0..41 descent-only
 corpus-test/div/scored-body-align-stays-suppressed/input.ftml	AlignCenter@11..25 scan-only
 corpus-test/div/scored-body-first-line-center/input.ftml	AlignCenter@9..23 scan-only
 corpus-test/div/scored-body-first-line-left/input.ftml	AlignLeft@9..23 scan-only

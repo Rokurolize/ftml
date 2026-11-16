@@ -3741,8 +3741,14 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
         assert_eq!(html.matches("<dl>").count(), 1, "{html}");
         assert_eq!(html.matches("</dl>").count(), 1, "{html}");
-        assert!(html.contains("<dt><strong>Terminus Font</strong></dt>"), "{html}");
-        assert!(html.contains("<dt><strong>Terminus (TTF)</strong></dt>"), "{html}");
+        assert!(
+            html.contains("<dt><strong>Terminus Font</strong></dt>"),
+            "{html}"
+        );
+        assert!(
+            html.contains("<dt><strong>Terminus (TTF)</strong></dt>"),
+            "{html}"
+        );
 
         // A plain text line between definition lines still splits the list.
         let mut input = String::from("> : **A** : aaa\n> text\n> : **B** : bbb\n");

@@ -92,6 +92,7 @@ pub(crate) struct WikidotBlockPair {
     pub closer_byte: usize,
     pub flat: bool,
     pub exhibited: bool,
+    pub body_start_byte: usize,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -458,6 +459,7 @@ struct Event {
     closer_end: usize,
     is_close: bool,
     exhibited: bool,
+    body_start_byte: usize,
 }
 
 /// Whether the byte range `start..end` lies inside a `{{...}}` span on the
@@ -587,6 +589,10 @@ struct Scanner<'t> {
     /// heading-line). Exhibited-opener surgery in `scan_segment` re-judges
     /// the ones sitting inside a `{{...}}` span.
     rejected_div_heads: Vec<(usize, usize)>,
+    /// Div pairings forced by the exhibited-opener surgery for the
+    /// segment currently being paired: (head token, closer token).
+    /// Drained by `pair_events` for the same segment.
+    forced_div_pairs: Vec<(usize, usize)>,
     module_closers: Vec<usize>,
     iftags_closers: Vec<usize>,
     module_skip_memo: std::cell::RefCell<std::collections::HashMap<usize, Option<usize>>>,
@@ -781,6 +787,7 @@ impl<'t> Scanner<'t> {
             heading_ranges,
             head_dropped,
             rejected_div_heads: Vec::new(),
+            forced_div_pairs: Vec::new(),
             module_closers,
             iftags_closers,
             module_skip_memo: std::cell::RefCell::new(std::collections::HashMap::new()),
@@ -1904,6 +1911,16 @@ impl<'t> Scanner<'t> {
     /// at the last closer. This rewrites the segment's div events to that
     /// pairing, but only when the re-pairing actually binds the exhibited
     /// opener; otherwise the plain events stand.
+    ///
+    /// The promoted pairing follows the promoted-body rule measured on
+    /// live (probes muse-probe-exhibit-res-*): the promoted head consumes
+    /// everything up to the first block head or div closer after it,
+    /// whichever comes first, and that terminator is consumed with the
+    /// head. The promoted div then closes at the first div closer after
+    /// the terminator, so a closer that terminates the head is spent and
+    /// div heads inside the promoted range are flattened rather than
+    /// paired. The byte where the promoted body starts is recorded on
+    /// the pair so the div rule can step the head consumption exactly.
     fn exhibit_surgery(
         &mut self,
         events: &mut Vec<Event>,
@@ -2020,23 +2037,68 @@ impl<'t> Scanner<'t> {
                 closer_end: 0,
                 is_close: false,
                 exhibited: true,
+                body_start_byte: 0,
             };
             let insert_at = modified
                 .iter()
                 .position(|event| event_token(event) > ox_token)
                 .unwrap_or(modified.len());
             modified.insert(insert_at, exhibited_event);
-            let modified_div: Vec<&Event> = modified
-                .iter()
-                .filter(|event| event.kind == WikidotBlockKind::Div)
-                .collect();
-            let modified_pairs = pair_nest(&modified_div);
-            let ox_paired = modified_pairs.iter().any(|(head, _)| {
-                modified_div[*head].head == ox_token && modified_div[*head].exhibited
-            });
-            if ox_paired {
-                *events = modified;
+            // Find the head terminator: the first block head or div
+            // closer after the exhibited opener. Its end byte is where
+            // the promoted body starts.
+            let mut spent_closer: Option<usize> = None;
+            let mut body_start_byte: Option<usize> = None;
+            for (index, event) in modified.iter().enumerate().skip(insert_at + 1) {
+                if !event.is_close {
+                    body_start_byte = Some(self.tokens[event.head_end - 1].span.end);
+                    break;
+                }
+                if event.kind == WikidotBlockKind::Div {
+                    spent_closer = Some(index);
+                    body_start_byte = Some(self.tokens[event.closer_end - 1].span.end);
+                    break;
+                }
             }
+            let Some(body_start_byte) = body_start_byte else {
+                continue;
+            };
+            // The promoted closer is the first div closer after the
+            // terminator; a spent closer is skipped, not taken.
+            let search_from = spent_closer.map_or(insert_at + 1, |index| index + 1);
+            let Some(promoted_closer) = (search_from..modified.len()).find(|&index| {
+                modified[index].kind == WikidotBlockKind::Div && modified[index].is_close
+            }) else {
+                continue;
+            };
+            let promoted_closer_token = modified[promoted_closer].closer;
+            modified[insert_at].body_start_byte = body_start_byte;
+            // Drop the spent closer and the div heads inside the
+            // promoted range: the spent closer is consumed with the
+            // head, and interior div heads are flattened, so neither
+            // may pair.
+            let mut rewritten: Vec<Event> = Vec::with_capacity(modified.len());
+            for (index, event) in modified.into_iter().enumerate() {
+                if Some(index) == spent_closer {
+                    continue;
+                }
+                if index > insert_at
+                    && index < promoted_closer
+                    && !event.is_close
+                    && event.kind == WikidotBlockKind::Div
+                {
+                    continue;
+                }
+                rewritten.push(event);
+            }
+            // The promoted pairing cannot be left to pair_nest: with
+            // the spent closer dropped, the segment has more div heads
+            // than closers, and pair_nest discards the rightmost
+            // surplus head, which is the promoted opener itself. Force
+            // the pairing in pair_events instead.
+            self.forced_div_pairs
+                .push((ox_token, promoted_closer_token));
+            *events = rewritten;
         }
     }
 
@@ -2194,6 +2256,7 @@ impl<'t> Scanner<'t> {
                         closer_end: 0,
                         is_close: false,
                         exhibited: false,
+                        body_start_byte: 0,
                     });
                 } else {
                     // Read but rejected (heading-line, mid-line): the scan
@@ -2282,6 +2345,7 @@ impl<'t> Scanner<'t> {
                 closer_end: head.head_end,
                 is_close: true,
                 exhibited: false,
+                body_start_byte: 0,
             });
         }
         head.head_end
@@ -2451,7 +2515,11 @@ impl<'t> Scanner<'t> {
                 continue;
             }
             let found = if kind.is_nesting() {
-                pair_nest(&evs)
+                if kind == WikidotBlockKind::Div && !self.forced_div_pairs.is_empty() {
+                    pair_div_with_forced(&evs, &mut self.forced_div_pairs)
+                } else {
+                    pair_nest(&evs)
+                }
             } else {
                 pair_first(&evs)
             };
@@ -2468,10 +2536,42 @@ impl<'t> Scanner<'t> {
                     flat: false,
                     exhibited: evs[h].exhibited,
                     closer_byte: 0,
+                    body_start_byte: evs[h].body_start_byte,
                 });
             }
         }
     }
+}
+
+/// Pair div events, honoring the exhibited-opener surgery's forced
+/// pairs: each forced (head token, closer token) pair is emitted
+/// directly, and the remaining events pair by the usual stack rule.
+fn pair_div_with_forced(
+    evs: &[&Event],
+    forced: &mut Vec<(usize, usize)>,
+) -> Vec<(usize, usize)> {
+    let forced = std::mem::take(forced);
+    let mut used = vec![false; evs.len()];
+    let mut out = Vec::new();
+    for (head_token, closer_token) in forced {
+        let head = evs
+            .iter()
+            .position(|event| !event.is_close && event.head == head_token);
+        let closer = evs
+            .iter()
+            .position(|event| event.is_close && event.closer == closer_token);
+        if let (Some(h), Some(c)) = (head, closer) {
+            used[h] = true;
+            used[c] = true;
+            out.push((h, c));
+        }
+    }
+    let rest_indices: Vec<usize> = (0..evs.len()).filter(|index| !used[*index]).collect();
+    let rest: Vec<&Event> = rest_indices.iter().map(|&index| evs[index]).collect();
+    for (h, c) in pair_nest(&rest) {
+        out.push((rest_indices[h], rest_indices[c]));
+    }
+    out
 }
 
 fn pair_first(evs: &[&Event]) -> Vec<(usize, usize)> {
@@ -3148,6 +3248,7 @@ impl<'t> Scanner<'t> {
                     flat: false,
                     exhibited: false,
                     closer_byte: 0,
+                    body_start_byte: 0,
                 });
                 measure.end = close.head_end;
                 return Some(measure);
@@ -3194,6 +3295,7 @@ impl<'t> Scanner<'t> {
                     flat: false,
                     exhibited: false,
                     closer_byte: 0,
+                    body_start_byte: 0,
                 });
                 rpos = cell_closer_end;
             };
@@ -3207,6 +3309,7 @@ impl<'t> Scanner<'t> {
                 closer: row_closer,
                 closer_end: row_closer_end,
                 closer_byte: 0,
+                body_start_byte: 0,
                 flat: false,
                 exhibited: false,
             });
@@ -3563,6 +3666,7 @@ impl<'t> Scanner<'t> {
                                 closer: inner_closer,
                                 closer_end: inner_end,
                                 closer_byte: 0,
+                                body_start_byte: 0,
                                 flat: false,
                                 exhibited: false,
                             });
@@ -3668,6 +3772,7 @@ impl<'t> Scanner<'t> {
                     flat: false,
                     exhibited: false,
                     closer_byte: 0,
+                    body_start_byte: 0,
                 });
                 measure.end = close.head_end;
                 return Some(measure);
@@ -3743,6 +3848,7 @@ impl<'t> Scanner<'t> {
                     closer: tab_closer,
                     closer_end: tab_closer_end,
                     closer_byte: 0,
+                    body_start_byte: 0,
                     flat: false,
                     exhibited: false,
                 });
@@ -3882,6 +3988,7 @@ mod tests {
                 closer_end: index,
                 is_close: !is_head,
                 exhibited: false,
+                body_start_byte: 0,
             })
             .collect();
         let refs: Vec<&Event> = evs.iter().collect();

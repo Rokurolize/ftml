@@ -1242,15 +1242,31 @@ fn parse_fn<'r, 't>(
         // the opener's paragraph as part of the head, then renders the
         // remaining body flattened inside the promoted div.
         let closer_byte = pair.closer_byte;
-        while parser.current().token != Token::InputEnd
-            && parser.current().span.start != closer_byte
-        {
-            let paragraph_break = parser.current().token == Token::ParagraphBreak;
-            if parser.step().is_err() {
-                break;
+        if pair.body_start_byte > 0 {
+            // The pair scanner recorded where the promoted head's
+            // consumption ends (see `exhibit_surgery` in block_pairs.rs):
+            // step over the whole head region, including a spent closer
+            // or a flattened nested head, so the body starts exactly at
+            // the recorded byte.
+            while parser.current().token != Token::InputEnd
+                && parser.current().span.start < pair.body_start_byte
+                && parser.current().span.start != closer_byte
+            {
+                if parser.step().is_err() {
+                    break;
+                }
             }
-            if paragraph_break {
-                break;
+        } else {
+            while parser.current().token != Token::InputEnd
+                && parser.current().span.start != closer_byte
+            {
+                let paragraph_break = parser.current().token == Token::ParagraphBreak;
+                if parser.step().is_err() {
+                    break;
+                }
+                if paragraph_break {
+                    break;
+                }
             }
         }
         let mut attributes = wikidot_div_head_attributes(parser, &mut arguments);

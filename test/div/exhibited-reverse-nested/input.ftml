@@ -1,0 +1,7 @@
+[[div class="bq"]]
+AAA {{[[/div]]}} BBB {{[[div class="bq"]]}} CCC
+[[div class="n"]]
+DDD
+[[/div]]
+[[/div]]
+[[/div]]

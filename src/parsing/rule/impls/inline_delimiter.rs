@@ -312,6 +312,23 @@ fn paragraph_break_after_list_close(tokens: &[ExtractedToken<'_>], index: usize)
             || name.slice.eq_ignore_ascii_case("ol"))
 }
 
+/// Whether the block head at `index` begins its line (only whitespace
+/// before it since the last break). A head inside a `{{...}}` span is
+/// always preceded by the span opener on its line, so it never begins
+/// the line; a real nested block head does.
+fn block_start_at_line_start(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
+    let mut pos = index;
+    while pos > 0 {
+        pos -= 1;
+        match tokens[pos].token {
+            Token::Whitespace => {}
+            Token::LineBreak | Token::ParagraphBreak => return true,
+            _ => return false,
+        }
+    }
+    true
+}
+
 pub(super) fn validate_reachable_close(
     parser: &Parser<'_, '_>,
     token: Token,
@@ -360,7 +377,7 @@ pub(super) fn validate_reachable_close(
         )
     });
     let mut forgave_post_list_gap = false;
-    let mut open_blocks: Vec<String> = Vec::new();
+    let mut open_blocks: Vec<(String, bool)> = Vec::new();
     let mut pb_stack: Vec<String> = Vec::new();
     let mut saw_break = false;
     // Both are only needed to decide whether this walk may be memoized.
@@ -463,20 +480,38 @@ pub(super) fn validate_reachable_close(
                 saw_block_pairing = true;
                 let name = block_name_at(tokens, index);
                 if is_block_name(&name) {
-                    open_blocks.push(name);
+                    let at_line_start = block_start_at_line_start(tokens, index);
+                    open_blocks.push((name, at_line_start));
                 }
             }
             Token::LeftLink if blocks_can_reject => {
                 saw_block_pairing = true;
                 if let Some(name) = link_name_at(tokens, index) {
-                    open_blocks.push(name);
+                    open_blocks.push((name, true));
                 }
             }
             Token::LeftBlockEnd if blocks_can_reject => {
                 saw_block_pairing = true;
                 let name = block_name_at(tokens, index);
                 if !is_block_name(&name) {
-                } else if let Some(pos) = open_blocks.iter().rposition(|n| *n == name) {
+                } else if let Some(pos) =
+                    open_blocks.iter().rposition(|(n, _)| *n == name)
+                {
+                    if name == "note"
+                        && !open_blocks[pos].1
+                        && end_block_fails(parser, &name, mode)
+                    {
+                        // Note bodies are scan-delimited: the pair
+                        // scanner pairs a note head with the first
+                        // closer after it. An exhibited (mid-line) note
+                        // opener inside the span does not shield its
+                        // closer, so the closer fires and the span
+                        // fails (probe
+                        // muse-probe-exhibit-res-n2-balanced-span). A
+                        // note head at a line start is a real nested
+                        // note and keeps the shield.
+                        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+                    }
                     open_blocks.truncate(pos);
                 } else if end_block_fails(parser, &name, mode) {
                     return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -518,11 +553,16 @@ fn block_end_can_reject(parser: &Parser<'_, '_>, mode: ReachableCloseMode) -> bo
         return true;
     }
     match mode {
-        ReachableCloseMode::BlockBarrier => {
-            ["div", "collapsible", "footnote", "center", "bibliography"]
-                .into_iter()
-                .any(|name| end_block_fails(parser, name, mode))
-        }
+        ReachableCloseMode::BlockBarrier => [
+            "div",
+            "collapsible",
+            "footnote",
+            "center",
+            "bibliography",
+            "note",
+        ]
+        .into_iter()
+        .any(|name| end_block_fails(parser, name, mode)),
         ReachableCloseMode::Standard => {
             !parser.body_end_boundaries_is_empty()
                 || parser.in_wikidot_span_body()
@@ -561,7 +601,7 @@ fn end_block_fails(
         ReachableCloseMode::BlockBarrier => {
             matches!(
                 name,
-                "div" | "collapsible" | "footnote" | "center" | "bibliography"
+                "div" | "collapsible" | "footnote" | "center" | "bibliography" | "note"
             ) && (parser.body_end_boundary_accepts(name)
                 || (name == "div" && parser.in_wikidot_div_body())
                 || (name == "center" && parser.in_wikidot_center_body())

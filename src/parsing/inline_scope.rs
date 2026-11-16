@@ -9846,10 +9846,14 @@ fn unwrap_scored_frame_edges<'t>(children: &mut Vec<Element<'t>>) {
     // ones stay); the flat path already carries real breaks, so no newline
     // separators are added.
     let unwrap_at = |children: &mut Vec<Element<'t>>, index: usize| {
+        // A lone-break paragraph is a raw-line pair (@@@@ / @@@@), which
+        // live renders as <p><br></p>: keep it wrapped, since the frame's
+        // trailing-break pop would eat the exposed break.
         let is_paragraph = matches!(
             children.get(index),
             Some(Element::Container(container))
                 if container.ctype() == ContainerType::Paragraph
+                    && !matches!(container.elements(), [Element::LineBreak])
         );
         if is_paragraph {
             let inner = match &mut children[index] {
@@ -10313,7 +10317,14 @@ impl<'t> WikidotFrameAssembly<'t> {
                 if container.ctype() == ContainerType::Paragraph =>
             {
                 let elements = container.elements_mut();
-                if matches!(elements.last(), Some(Element::LineBreak)) {
+                // A trailing break is the closer line's own separator only
+                // when the paragraph holds other content besides it. A
+                // paragraph whose sole element is a break is a raw-line
+                // pair (@@@@ / @@@@), which live renders as <p><br></p>:
+                // keep it whole.
+                if elements.len() > 1
+                    && matches!(elements.last(), Some(Element::LineBreak))
+                {
                     elements.pop();
                 }
                 elements.is_empty()
@@ -10332,6 +10343,15 @@ impl<'t> WikidotFrameAssembly<'t> {
                 if container.ctype() == ContainerType::Paragraph
         );
         if !is_paragraph {
+            return;
+        }
+        // A lone-break paragraph is a raw-line pair (@@@@ / @@@@), which
+        // live renders as <p><br></p>. Unwrapping it would expose the
+        // break to the frame's trailing-break pop and eat it, so keep the
+        // paragraph intact.
+        if let Some(Element::Container(container)) = self.top().last()
+            && matches!(container.elements(), [Element::LineBreak])
+        {
             return;
         }
         let paragraph = self.top().pop();

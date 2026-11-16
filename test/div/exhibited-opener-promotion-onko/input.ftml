@@ -1,0 +1,9 @@
+[[div class="blockquote"]]
+This is a blockquote, created by enclosing its contents with {{[[div class="blockquote"]]}} on the line before and {{[[/div]]}} on the line after.
+
+-----
+
+[[div class="blockquote"]]
+Blockquotes, and all divs, can be nested.
+[[/div]]
+[[/div]]

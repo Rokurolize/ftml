@@ -91,6 +91,7 @@ pub(crate) struct WikidotBlockPair {
     pub closer_end: usize,
     pub closer_byte: usize,
     pub flat: bool,
+    pub exhibited: bool,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -447,6 +448,7 @@ pub(crate) fn compute_wikidot_block_pairs<'t>(
     scanner.finish()
 }
 
+#[derive(Clone)]
 struct Event {
     kind: WikidotBlockKind,
     scored: bool,
@@ -455,6 +457,44 @@ struct Event {
     closer: usize,
     closer_end: usize,
     is_close: bool,
+    exhibited: bool,
+}
+
+/// Whether the byte range `start..end` lies inside a `{{...}}` span on the
+/// given source line. Spans pair sequentially: a `{{` opens a span and the
+/// next `}}` closes it (monospace does not nest).
+fn brace_span_covers(
+    source: &str,
+    line_start: usize,
+    line_end: usize,
+    start: usize,
+    end: usize,
+) -> bool {
+    let line = &source[line_start..line_end];
+    let bytes = line.as_bytes();
+    let rel_start = start - line_start;
+    let rel_end = end - line_start;
+    let mut open: Option<usize> = None;
+    let mut i = 0;
+    while i + 1 < bytes.len() {
+        if &bytes[i..i + 2] == b"{{" {
+            if open.is_none() {
+                open = Some(i);
+            }
+            i += 2;
+        } else if &bytes[i..i + 2] == b"}}" {
+            if let Some(opened) = open.take()
+                && opened <= rel_start
+                && rel_end <= i + 2
+            {
+                return true;
+            }
+            i += 2;
+        } else {
+            i += 1;
+        }
+    }
+    false
 }
 
 fn line_prefix_before(source: &str, byte: usize) -> &str {
@@ -543,6 +583,10 @@ struct Scanner<'t> {
     heading_line_end_bytes: Vec<usize>,
     heading_ranges: Vec<(usize, usize)>,
     head_dropped: Vec<bool>,
+    /// Div heads the scan read but rejected on position (mid-line or
+    /// heading-line). Exhibited-opener surgery in `scan_segment` re-judges
+    /// the ones sitting inside a `{{...}}` span.
+    rejected_div_heads: Vec<(usize, usize)>,
     module_closers: Vec<usize>,
     iftags_closers: Vec<usize>,
     module_skip_memo: std::cell::RefCell<std::collections::HashMap<usize, Option<usize>>>,
@@ -736,6 +780,7 @@ impl<'t> Scanner<'t> {
             heading_line_end_bytes,
             heading_ranges,
             head_dropped,
+            rejected_div_heads: Vec::new(),
             module_closers,
             iftags_closers,
             module_skip_memo: std::cell::RefCell::new(std::collections::HashMap::new()),
@@ -1841,7 +1886,158 @@ impl<'t> Scanner<'t> {
         }
         let mut events = Vec::new();
         self.walk_range(start, end, depth, &mut events);
+        self.exhibit_surgery(&mut events, start, end);
         self.pair_events(events);
+    }
+
+    /// Exhibited-opener surgery (live probes muse-probe-exhibit-closer-*,
+    /// sandbox-for-codex, 2026-11-17).
+    ///
+    /// A div opener exhibited inside a `{{...}}` monospace span on a line
+    /// that also exhibits a `[[/div]]` is normally inert on live: the
+    /// exhibited closer closes the enclosing div and the next closer leaks
+    /// as text. But when the plain parse (exhibited opener excluded) leaves
+    /// an orphan div closer that is at least the second block closer after
+    /// the exhibited one, live instead promotes the exhibited opener to a
+    /// real opener: the exhibited closer is demoted into its body, the
+    /// nested content is flattened into it, and the enclosing div closes
+    /// at the last closer. This rewrites the segment's div events to that
+    /// pairing, but only when the re-pairing actually binds the exhibited
+    /// opener; otherwise the plain events stand.
+    fn exhibit_surgery(
+        &mut self,
+        events: &mut Vec<Event>,
+        seg_start: usize,
+        seg_end: usize,
+    ) {
+        let candidates: Vec<(usize, usize)> = self
+            .rejected_div_heads
+            .iter()
+            .copied()
+            .filter(|(token, _)| *token >= seg_start && *token < seg_end)
+            .collect();
+        if candidates.is_empty() {
+            return;
+        }
+        let div_positions: Vec<usize> = events
+            .iter()
+            .enumerate()
+            .filter(|(_, event)| event.kind == WikidotBlockKind::Div)
+            .map(|(index, _)| index)
+            .collect();
+        if div_positions.is_empty() {
+            return;
+        }
+        let div_events: Vec<&Event> =
+            div_positions.iter().map(|&index| &events[index]).collect();
+        let simple_pairs = pair_nest(&div_events);
+        let mut closer_paired = vec![false; div_events.len()];
+        for (_, closer) in &simple_pairs {
+            closer_paired[*closer] = true;
+        }
+        let orphan_div_closers: Vec<usize> = div_positions
+            .iter()
+            .enumerate()
+            .filter(|(div_index, _)| {
+                div_events[*div_index].is_close && !closer_paired[*div_index]
+            })
+            .map(|(_, &event_index)| event_index)
+            .collect();
+        if orphan_div_closers.is_empty() {
+            return;
+        }
+        let event_token = |event: &Event| {
+            if event.is_close {
+                event.closer
+            } else {
+                event.head
+            }
+        };
+        for (ox_token, ox_end_token) in candidates {
+            let head_byte = self.tokens[ox_token].span.start;
+            let line_start = self.source[..head_byte]
+                .rfind('\n')
+                .map_or(0, |offset| offset + 1);
+            let line_end = self.source[head_byte..]
+                .find('\n')
+                .map_or(self.source.len(), |offset| head_byte + offset);
+            let head_end_byte = self.tokens[ox_end_token - 1].span.end;
+            if !brace_span_covers(
+                self.source,
+                line_start,
+                line_end,
+                head_byte,
+                head_end_byte,
+            ) {
+                continue;
+            }
+            let line = self.line_of[ox_token];
+            let Some((_, cx_event)) = events.iter().enumerate().find(|(_, event)| {
+                event.kind == WikidotBlockKind::Div
+                    && event.is_close
+                    && self.line_of[event.closer] == line
+                    && brace_span_covers(
+                        self.source,
+                        line_start,
+                        line_end,
+                        self.tokens[event.closer].span.start,
+                        self.tokens[event.closer_end - 1].span.end,
+                    )
+            }) else {
+                continue;
+            };
+            let cx_token = cx_event.closer;
+            let activated = orphan_div_closers.iter().any(|&orphan_index| {
+                let orphan_token = events[orphan_index].closer;
+                orphan_token > cx_token
+                    && events
+                        .iter()
+                        .filter(|event| {
+                            event.is_close
+                                && event_token(event) > cx_token
+                                && event_token(event) <= orphan_token
+                        })
+                        .count()
+                        >= 2
+            });
+            if !activated {
+                continue;
+            }
+            let mut modified = events.clone();
+            if cx_token > ox_token {
+                modified.retain(|event| {
+                    !(event.kind == WikidotBlockKind::Div
+                        && event.is_close
+                        && event.closer == cx_token)
+                });
+            }
+            let exhibited_event = Event {
+                kind: WikidotBlockKind::Div,
+                scored: false,
+                head: ox_token,
+                head_end: ox_end_token,
+                closer: 0,
+                closer_end: 0,
+                is_close: false,
+                exhibited: true,
+            };
+            let insert_at = modified
+                .iter()
+                .position(|event| event_token(event) > ox_token)
+                .unwrap_or(modified.len());
+            modified.insert(insert_at, exhibited_event);
+            let modified_div: Vec<&Event> = modified
+                .iter()
+                .filter(|event| event.kind == WikidotBlockKind::Div)
+                .collect();
+            let modified_pairs = pair_nest(&modified_div);
+            let ox_paired = modified_pairs.iter().any(|(head, _)| {
+                modified_div[*head].head == ox_token && modified_div[*head].exhibited
+            });
+            if ox_paired {
+                *events = modified;
+            }
+        }
     }
 
     fn walk_range(
@@ -1997,11 +2193,15 @@ impl<'t> Scanner<'t> {
                         closer: 0,
                         closer_end: 0,
                         is_close: false,
+                        exhibited: false,
                     });
                 } else {
                     // Read but rejected (heading-line, mid-line): the scan
                     // saw this head, so descent may still judge it stolen.
                     self.head_event_bytes.insert(self.tokens[i].span.start);
+                    if kind == WikidotBlockKind::Div {
+                        self.rejected_div_heads.push((i, head.head_end));
+                    }
                     self.reprocess_head_segments(&head, end, depth, events);
                 }
                 head.head_end
@@ -2081,6 +2281,7 @@ impl<'t> Scanner<'t> {
                 closer: i,
                 closer_end: head.head_end,
                 is_close: true,
+                exhibited: false,
             });
         }
         head.head_end
@@ -2265,6 +2466,7 @@ impl<'t> Scanner<'t> {
                     closer: evs[c].closer,
                     closer_end: evs[c].closer_end,
                     flat: false,
+                    exhibited: evs[h].exhibited,
                     closer_byte: 0,
                 });
             }
@@ -2944,6 +3146,7 @@ impl<'t> Scanner<'t> {
                     closer: pos,
                     closer_end: close.head_end,
                     flat: false,
+                    exhibited: false,
                     closer_byte: 0,
                 });
                 measure.end = close.head_end;
@@ -2989,6 +3192,7 @@ impl<'t> Scanner<'t> {
                     closer: cell_closer,
                     closer_end: cell_closer_end,
                     flat: false,
+                    exhibited: false,
                     closer_byte: 0,
                 });
                 rpos = cell_closer_end;
@@ -3004,6 +3208,7 @@ impl<'t> Scanner<'t> {
                 closer_end: row_closer_end,
                 closer_byte: 0,
                 flat: false,
+                exhibited: false,
             });
             pos = row_closer_end;
         }
@@ -3359,6 +3564,7 @@ impl<'t> Scanner<'t> {
                                 closer_end: inner_end,
                                 closer_byte: 0,
                                 flat: false,
+                                exhibited: false,
                             });
                             j = inner_end;
                         }
@@ -3460,6 +3666,7 @@ impl<'t> Scanner<'t> {
                     closer: pos,
                     closer_end: close.head_end,
                     flat: false,
+                    exhibited: false,
                     closer_byte: 0,
                 });
                 measure.end = close.head_end;
@@ -3537,6 +3744,7 @@ impl<'t> Scanner<'t> {
                     closer_end: tab_closer_end,
                     closer_byte: 0,
                     flat: false,
+                    exhibited: false,
                 });
             }
             pos = tab_closer_end;
@@ -3673,6 +3881,7 @@ mod tests {
                 closer: index,
                 closer_end: index,
                 is_close: !is_head,
+                exhibited: false,
             })
             .collect();
         let refs: Vec<&Event> = evs.iter().collect();

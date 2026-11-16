@@ -1,0 +1,321 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {
+                    "class": "blockquote"
+                },
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "paragraph",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "This"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "is"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "a"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "blockquote"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": ","
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "created"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "by"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "enclosing"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "its"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "contents"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "with"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "monospace",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "div",
+                                        "attributes": {
+                                            "class": "blockquote"
+                                        },
+                                        "elements": [
+                                            {
+                                                "element": "container",
+                                                "data": {
+                                                    "type": "paragraph",
+                                                    "attributes": {},
+                                                    "elements": [
+                                                        {
+                                                            "element": "text",
+                                                            "data": "}}"
+                                                        },
+                                                        {
+                                                            "element": "text",
+                                                            "data": " "
+                                                        },
+                                                        {
+                                                            "element": "text",
+                                                            "data": "on"
+                                                        },
+                                                        {
+                                                            "element": "text",
+                                                            "data": " "
+                                                        },
+                                                        {
+                                                            "element": "text",
+                                                            "data": "the"
+                                                        },
+                                                        {
+                                                            "element": "text",
+                                                            "data": " "
+                                                        },
+                                                        {
+                                                            "element": "text",
+                                                            "data": "line"
+                                                        },
+                                                        {
+                                                            "element": "text",
+                                                            "data": " "
+                                                        },
+                                                        {
+                                                            "element": "text",
+                                                            "data": "before"
+                                                        },
+                                                        {
+                                                            "element": "text",
+                                                            "data": " "
+                                                        },
+                                                        {
+                                                            "element": "text",
+                                                            "data": "and"
+                                                        },
+                                                        {
+                                                            "element": "text",
+                                                            "data": " "
+                                                        },
+                                                        {
+                                                            "element": "text",
+                                                            "data": "{{"
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "paragraph",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "on"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "the"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "line"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "after"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "."
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "horizontal-rule"
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "div",
+                            "attributes": {
+                                "class": "blockquote"
+                            },
+                            "elements": [
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "paragraph",
+                                        "attributes": {},
+                                        "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": "Blockquotes"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": ","
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": " "
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "and"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": " "
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "all"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": " "
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "divs"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": ","
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": " "
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "can"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": " "
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "be"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": " "
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "nested"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "."
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,92 @@
+[
+    {
+        "token": "left-block-end",
+        "rule": "block-div",
+        "span": [
+            84,
+            87
+        ],
+        "kind": "block-expected-end"
+    },
+    {
+        "token": "left-block",
+        "rule": "fallback",
+        "span": [
+            60,
+            62
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-block",
+        "rule": "fallback",
+        "span": [
+            65,
+            67
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "line-break",
+        "rule": "block-footnote",
+        "span": [
+            81,
+            82
+        ],
+        "kind": "footnotes-nested"
+    },
+    {
+        "token": "left-block",
+        "rule": "fallback",
+        "span": [
+            69,
+            71
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-block",
+        "rule": "fallback",
+        "span": [
+            79,
+            81
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "left-block-end",
+        "rule": "fallback",
+        "span": [
+            98,
+            101
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-block",
+        "rule": "fallback",
+        "span": [
+            104,
+            106
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "left-block-end",
+        "rule": "fallback",
+        "span": [
+            107,
+            110
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-block",
+        "rule": "fallback",
+        "span": [
+            118,
+            120
+        ],
+        "kind": "no-rules-match"
+    }
+]

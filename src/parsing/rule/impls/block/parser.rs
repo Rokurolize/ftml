@@ -3171,6 +3171,18 @@ where
                             if scan.step().is_err() {
                                 break;
                             }
+                        } else if name.eq_ignore_ascii_case("footnote")
+                            && !self.wikidot_li_cross_byte_opaque(pos)
+                        {
+                            // Pool 3810: stage 1 extracts footnote bodies
+                            // before list structure forms, so a stray
+                            // `[[/footnote]]` in a crossed tail is not part
+                            // of the list stream: it must not end the
+                            // closer search before the tail's own
+                            // `[[/li]]`/`[[/ul]]` are collected.
+                            if scan.step().is_err() {
+                                break;
+                            }
                         } else {
                             // Any other closer (the crossed frame's own
                             // closer, span/code closes, ...) ends the tail.
@@ -3226,6 +3238,54 @@ where
                     if let Ok((name, _, _)) = probe.get_block_name(false) {
                         let name = name.strip_suffix('_').unwrap_or(&name);
                         let opaque = self.wikidot_li_cross_byte_opaque(start);
+                        if name.eq_ignore_ascii_case("footnote") {
+                            // Pool 3810: stage 1 extracts footnote
+                            // bodies before list structure forms, so a
+                            // block head inside a footnote body must not
+                            // claim this region's frames (pool 3810).
+                            // Skip to just after the paired closer:
+                            // first closer wins, nested heads are
+                            // non-events (mirrors footnote_closer_byte).
+                            let mut walk = scan.clone();
+                            let mut in_comment = false;
+                            loop {
+                                if walk.step().is_err() {
+                                    break;
+                                }
+                                let tok = walk.current().token;
+                                if tok == Token::InputEnd {
+                                    break;
+                                }
+                                if in_comment {
+                                    if super::super::comment::comment_closer_token_count(
+                                        &walk,
+                                    )
+                                    .is_some()
+                                    {
+                                        in_comment = false;
+                                    }
+                                    continue;
+                                }
+                                match tok {
+                                    Token::LeftComment => in_comment = true,
+                                    Token::LeftBlockEnd => {
+                                        let mut end_probe = walk.clone();
+                                        if let Ok(end_name) = end_probe.get_end_block() {
+                                            let end_name = end_name
+                                                .strip_suffix('_')
+                                                .unwrap_or(&end_name);
+                                            if end_name.eq_ignore_ascii_case("footnote") {
+                                                walk.update(&end_probe);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            scan.update(&walk);
+                            continue;
+                        }
                         if name.eq_ignore_ascii_case("ul")
                             || name.eq_ignore_ascii_case("ol")
                         {

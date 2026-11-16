@@ -194,3 +194,7 @@ replay-en--scp-4612	structural Row scan=7 tree=0 contained=true
 replay-en--scp-4612	structural Cell scan=19 tree=0 contained=true
 replay-jp--black-queen-hub	Collapsible@5646..5977 scan-only
 replay-jp--black-queen-hub	Tab@5473..5539 scan-only
+corpus-test/div/exhibited-opener-promotion/input.ftml	Div@0..84 descent-only
+corpus-test/div/exhibited-promotion-spent-closer/input.ftml	Div@0..93 descent-only
+corpus-test/note/exhibited-closer-balanced/input.ftml	Note@0..36 scan-only
+corpus-test/note/exhibited-closer-balanced/input.ftml	Note@0..54 descent-only

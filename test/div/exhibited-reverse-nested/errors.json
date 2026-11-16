@@ -1,0 +1,74 @@
+[
+    {
+        "token": "left-monospace",
+        "rule": "monospace",
+        "span": [
+            23,
+            25
+        ],
+        "kind": "rule-failed"
+    },
+    {
+        "token": "left-monospace",
+        "rule": "fallback",
+        "span": [
+            23,
+            25
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-monospace",
+        "rule": "fallback",
+        "span": [
+            33,
+            35
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "input-end",
+        "rule": "monospace",
+        "span": [
+            115,
+            115
+        ],
+        "kind": "end-of-input"
+    },
+    {
+        "token": "left-monospace",
+        "rule": "fallback",
+        "span": [
+            40,
+            42
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-monospace",
+        "rule": "fallback",
+        "span": [
+            60,
+            62
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "left-block-end",
+        "rule": "fallback",
+        "span": [
+            107,
+            110
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-block",
+        "rule": "fallback",
+        "span": [
+            113,
+            115
+        ],
+        "kind": "no-rules-match"
+    }
+]

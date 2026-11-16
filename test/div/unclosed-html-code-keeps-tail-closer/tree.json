@@ -1,0 +1,97 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {
+                    "class": "outer"
+                },
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "div",
+                            "attributes": {
+                                "class": "inner"
+                            },
+                            "elements": [
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "paragraph",
+                                        "attributes": {},
+                                        "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": "inner"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": " "
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "body"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "paragraph",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "marker"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "<"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "code"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": ">"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "unclosed"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "AFTER"
+                    }
+                ]
+            }
+        }
+    ]
+}

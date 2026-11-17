@@ -656,6 +656,8 @@ fn handle_localizes_all_render_messages_to_japanese() {
         ("button-copy-clipboard", "クリップボードにコピー"),
         ("collapsible-open", "+ ブロックを開く"),
         ("collapsible-hide", "- ブロックを隠す"),
+        ("toc-fold", "折り畳む"),
+        ("toc-unfold", "表示"),
         ("table-of-contents", "目次"),
         ("footnote", "脚注"),
         ("footnote-cite-not-found", "脚注項目が見つかりません"),

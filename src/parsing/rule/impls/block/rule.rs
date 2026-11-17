@@ -912,8 +912,7 @@ fn wikidot_block_has_physical_line_ownership(
     opener_start: usize,
 ) -> bool {
     let in_footnote = parser.in_footnote() || parent_rule.name() == "block-footnote";
-    if parser.settings().mode == WikitextMode::List
-        || parser.in_native_blockquote_line()
+    if parser.in_native_blockquote_line()
         || (in_footnote && block.name != "block-tabview")
     {
         return true;
@@ -933,5 +932,23 @@ fn wikidot_block_has_physical_line_ownership(
     }
 
     let source = parser.full_text().inner().as_bytes();
-    opener_start == 0 || source.get(opener_start - 1) == Some(&b'\n')
+    if opener_start == 0 || source.get(opener_start - 1) == Some(&b'\n') {
+        return true;
+    }
+
+    // In a delayed (List) fragment, the input's first line is a partial
+    // line by construction, and a head on it keeps its ownership
+    // (wikidot_code_list_mode_keeps_its_existing_inline_owner). A head
+    // indented on a later, complete line of the fragment is literal text,
+    // exactly as on a page: the fragment is rendered per item as a
+    // document (live shape muse-probe-lp-unc-e9).
+    if parser.settings().mode == WikitextMode::List {
+        let line_start = source[..opener_start]
+            .iter()
+            .rposition(|byte| *byte == b'\n')
+            .map_or(0, |index| index + 1);
+        return line_start == 0;
+    }
+
+    false
 }

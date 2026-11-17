@@ -1918,3 +1918,24 @@ fn many_adjacent_suppressed_delayed_nodes_resolve_within_a_bounded_budget() {
         started.elapsed(),
     );
 }
+
+#[test]
+fn delayed_list_keeps_non_forming_css_openers_in_body_literal() {
+    // Live shape muse-probe-lp-unc-e9: inside a ListPages body, a CSS opener
+    // indented on a complete line never forms a module (the only closer in
+    // the source is the outer ListPages closer), so the per-item render
+    // keeps the whole body literal. List mode used to grant the indented
+    // head line ownership, and its failed module parse dropped the line.
+    let e9 = "BEFORE lpuncprobe:ant\n  [[module CSS]]\n.seg-i { color: rgb(8, 8, 8); }\nAFTER lpuncprobe:ant";
+    assert_eq!(
+        render_authored(e9),
+        "<p>BEFORE lpuncprobe:ant<br>\n[[module CSS]]<br>\n.seg-i { color: rgb(8, 8, 8); }<br>\nAFTER lpuncprobe:ant</p>",
+    );
+    // Sibling shape muse-probe-lp-unc-e16: a tailed opener at a line start
+    // with no closer of its own is literal too.
+    let e16 = "BEFORE lpuncprobe:ant\n[[module CSS]].seg-u { color: rgb(5, 5, 5); }\nAFTER lpuncprobe:ant";
+    assert_eq!(
+        render_authored(e16),
+        "<p>BEFORE lpuncprobe:ant<br>\n[[module CSS]].seg-u { color: rgb(5, 5, 5); }<br>\nAFTER lpuncprobe:ant</p>",
+    );
+}

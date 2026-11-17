@@ -1027,9 +1027,13 @@ where
             }
             // A plain div inside span source text flows inline on
             // live, so it takes the no-separator marks just like a
-            // vanished div.
-            let div_in_span_source =
-                stack.wikidot_current_run_in_span_source() && !div_opener_exhibited;
+            // vanished div. The run scan is gated on the batch
+            // containing a div at all: it rescans the current run, so
+            // running it for every batch is quadratic on long runs
+            // (the dense `))` performance shape).
+            let div_in_span_source = active_div
+                && stack.wikidot_current_run_in_span_source()
+                && !div_opener_exhibited;
             if inline_div_opener && active_div {
                 if vanished_empty_div || div_in_span_source {
                     stack.mark_wikidot_vanished_div_boundary();

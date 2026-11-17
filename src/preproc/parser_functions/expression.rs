@@ -64,7 +64,14 @@ impl ExpressionError {
             Self::TooManyValues => {
                 Some("run-time error: too many values in the stack".to_owned())
             }
-            Self::SyntaxNear(tail) => Some(format!("syntax error near `{tail}`")),
+            Self::SyntaxNear(tail) => {
+                // Live Wikidot reports only the first ten characters of
+                // the offending tail (measured on live pages: the tail
+                // `{$rainy} == (true)` is reported as `{$rainy} =`, and
+                // `{$minimal} == (true)` as `{$minimal}`).
+                let tail: String = tail.chars().take(10).collect();
+                Some(format!("syntax error near `{tail}`"))
+            }
             Self::DivisionByZero => Some("run-time error: division by zero".to_owned()),
             Self::RemainderByZero => {
                 Some("run-time error: rest-division by zero".to_owned())
@@ -706,5 +713,38 @@ mod tests {
             evaluate(&"1+".repeat(129), options),
             Err(ExpressionError::TooFewParameters("+")),
         );
+    }
+
+    #[test]
+    fn syntax_near_message_truncates_tail_to_ten_characters() {
+        let options = WikidotParserFunctionOptions::default();
+        // Live-measured messages: the depth-0 guard of
+        // theme:king-s-palace-jp and the generated-spec gates of
+        // theme:trauma-jp on live Wikidot. The reported tail is cut
+        // to its first ten characters whatever the variable name
+        // length, so the cut lands at different points of the text.
+        for (expression, expected) in [
+            ("{$custom} == 1", "syntax error near `{$custom} `"),
+            ("{$rainy} == (true)", "syntax error near `{$rainy} =`"),
+            ("{$yellow} == (true)", "syntax error near `{$yellow} `"),
+            ("{$blue} == (true)", "syntax error near `{$blue} ==`"),
+            ("{$minimal} == (true)", "syntax error near `{$minimal}`"),
+            // Tails of ten characters or fewer are reported whole
+            // (the `1===1` and `1 ? 2 : 3` shapes are also pinned by
+            // live-captured wikidot-parity fixtures).
+            ("1|YES|NO", "syntax error near `|YES|NO`"),
+            ("1===1", "syntax error near `=1`"),
+            ("1 ? 2 : 3", "syntax error near `? 2 : 3`"),
+            // The same cut applies to a trailing tail after a valid
+            // prefix; the tail is reported at the failure point, not
+            // from the start of the expression.
+            ("1 \"abcdefghijklmnop\"", "syntax error near `\"abcdefghi`"),
+        ] {
+            assert_eq!(
+                evaluate(expression, options).unwrap_err().runtime_message(),
+                Some(expected.to_owned()),
+                "{expression}",
+            );
+        }
     }
 }

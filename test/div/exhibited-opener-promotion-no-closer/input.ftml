@@ -1,0 +1,6 @@
+[[div class="x"]]
+{{[[div class="y"]]}}
+[[/div]]
+[[collapsible show="S" hide="H"]]
+[[/collapsible]]
+[[/div]]

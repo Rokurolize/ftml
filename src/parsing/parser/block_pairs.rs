@@ -2081,6 +2081,13 @@ impl<'t> Scanner<'t> {
         let div_events: Vec<&Event> =
             div_positions.iter().map(|&index| &events[index]).collect();
         let simple_pairs = pair_nest(&div_events);
+        // Owned copy of the plain div pairings (head token -> closer token)
+        // so the promoted terminator search can consult them after `events`
+        // is rewritten without re-borrowing `div_events`.
+        let simple_pair_tokens: Vec<(usize, usize)> = simple_pairs
+            .iter()
+            .map(|&(h, c)| (div_events[h].head, div_events[c].closer))
+            .collect();
         let mut closer_paired = vec![false; div_events.len()];
         for (_, closer) in &simple_pairs {
             closer_paired[*closer] = true;
@@ -2130,29 +2137,43 @@ impl<'t> Scanner<'t> {
                 continue;
             }
             let line = self.line_of[ox_token];
-            let Some((_, cx_event)) = events.iter().enumerate().find(|(_, event)| {
-                event.kind == WikidotBlockKind::Div
-                    && event.is_close
-                    && self.line_of[event.closer] == line
-                    && brace_span_covers(
-                        self.source,
-                        line_start,
-                        line_end,
-                        self.tokens[event.closer].span.start,
-                        self.tokens[event.closer_end - 1].span.end,
-                    )
-            }) else {
-                continue;
-            };
-            let cx_token = cx_event.closer;
+            // An exhibited closer on the same line is the classic shape,
+            // but live also promotes an exhibited opener when no closer
+            // shares its line and a later orphan closer exists (the
+            // DUP-COLL family: `{{[[div]]}}` alone above a div closer,
+            // with a collapsible between them). Model Q's promoted-body
+            // rule applies identically; a later orphan closer is enough.
+            let cx_token = events
+                .iter()
+                .enumerate()
+                .find(|(_, event)| {
+                    event.kind == WikidotBlockKind::Div
+                        && event.is_close
+                        && self.line_of[event.closer] == line
+                        && brace_span_covers(
+                            self.source,
+                            line_start,
+                            line_end,
+                            self.tokens[event.closer].span.start,
+                            self.tokens[event.closer_end - 1].span.end,
+                        )
+                })
+                .map(|(_, event)| event.closer);
+            // Count closers from the exhibited opener when there is no
+            // same-line closer: the "at least a second closer" test below
+            // is relative to whichever anchor starts the promotion.
+            let ref_token = cx_token.unwrap_or(ox_token);
             // A complete div pair lying strictly between the exhibited
-            // head and the exhibited closer is real structure, not
+            // head and an exhibited closer is real structure, not
             // flattenable interior: live forms that pair and the
             // exhibited head stays inert (probe
-            // muse-probe-exhibit-d2-t10-nested-real).
-            let has_inner_pair = segment_kind_pairs(events, WikidotBlockKind::Div)
-                .iter()
-                .any(|(h, c)| ox_token < *h && *c <= cx_token);
+            // muse-probe-exhibit-d2-t10-nested-real). With no same-line
+            // closer there is no bounded interior to protect here.
+            let has_inner_pair = cx_token.is_some_and(|cx| {
+                segment_kind_pairs(events, WikidotBlockKind::Div)
+                    .iter()
+                    .any(|(h, c)| ox_token < *h && *c <= cx)
+            });
             if has_inner_pair {
                 continue;
             }
@@ -2184,12 +2205,12 @@ impl<'t> Scanner<'t> {
                 .collect();
             let activated = orphan_div_closers.iter().any(|&orphan_index| {
                 let orphan_token = events[orphan_index].closer;
-                orphan_token > cx_token
+                orphan_token > ref_token
                     && events
                         .iter()
                         .filter(|event| {
                             event.is_close
-                                && event_token(event) > cx_token
+                                && event_token(event) > ref_token
                                 && event_token(event) <= orphan_token
                         })
                         .count()
@@ -2199,11 +2220,11 @@ impl<'t> Scanner<'t> {
                 continue;
             }
             let mut modified = events.clone();
-            if cx_token > ox_token {
+            if cx_token.is_some_and(|cx| cx > ox_token) {
                 modified.retain(|event| {
                     !(event.kind == WikidotBlockKind::Div
                         && event.is_close
-                        && event.closer == cx_token)
+                        && cx_token.is_some_and(|cx| event.closer == cx))
                 });
             }
             let exhibited_event = Event {
@@ -2222,6 +2243,20 @@ impl<'t> Scanner<'t> {
                 .position(|event| event_token(event) > ox_token)
                 .unwrap_or(modified.len());
             modified.insert(insert_at, exhibited_event);
+            // Div closers already paired with a head BEFORE the promoted
+            // opener belong to an enclosing div (the plain parse pairs
+            // them); they are not the promoted head's terminator. This
+            // matters when the exhibited opener has no same-line closer:
+            // the next closer is typically the enclosing div's own, and
+            // live consumes the following block (e.g. a collapsible) as
+            // the promoted head's junk instead.
+            let mut outer_closers: std::collections::HashSet<usize> =
+                std::collections::HashSet::new();
+            for &(head_token, closer_token) in &simple_pair_tokens {
+                if head_token < ox_token {
+                    outer_closers.insert(closer_token);
+                }
+            }
             // Find the head terminator: the first block head or div
             // closer after the exhibited opener. Its end byte is where
             // the promoted body starts.
@@ -2233,6 +2268,9 @@ impl<'t> Scanner<'t> {
                     break;
                 }
                 if event.kind == WikidotBlockKind::Div {
+                    if cx_token.is_none() && outer_closers.contains(&event.closer) {
+                        continue;
+                    }
                     spent_closer = Some(index);
                     body_start_byte = Some(self.tokens[event.closer_end - 1].span.end);
                     break;
@@ -2245,7 +2283,10 @@ impl<'t> Scanner<'t> {
             // terminator; a spent closer is skipped, not taken.
             let search_from = spent_closer.map_or(insert_at + 1, |index| index + 1);
             let Some(promoted_closer) = (search_from..modified.len()).find(|&index| {
-                modified[index].kind == WikidotBlockKind::Div && modified[index].is_close
+                modified[index].kind == WikidotBlockKind::Div
+                    && modified[index].is_close
+                    && !(cx_token.is_none()
+                        && outer_closers.contains(&modified[index].closer))
             }) else {
                 continue;
             };

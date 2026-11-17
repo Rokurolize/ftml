@@ -1,0 +1,6 @@
+[[div_ class="rateBox" [[iftags fruit]]style="display:none;"[[/iftags]]]]
+shown
+[[/div]]
+[[div_ class="rateBox heritage-wrap" [[iftags -fruit]]style="display:none;"[[/iftags]]]]
+hidden
+[[/div]]

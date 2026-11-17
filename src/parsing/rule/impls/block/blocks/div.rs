@@ -789,6 +789,22 @@ fn normalize_wikidot_div_elements(
     trailing_raw: crate::tree::WikidotTrailingRawShape,
 ) {
     if flag_score {
+        // A literal line recovered token by token arrives as many small
+        // Text elements; as one run it takes exactly one separator below,
+        // like any other body run.
+        let mut coalesced: Vec<Element<'_>> = Vec::with_capacity(elements.len());
+        for element in elements.drain(..) {
+            match (coalesced.last_mut(), element) {
+                (Some(Element::Text(previous)), Element::Text(text))
+                    if previous.chars().any(|c| !c.is_whitespace())
+                        || text.chars().any(|c| !c.is_whitespace()) =>
+                {
+                    previous.to_mut().push_str(&text);
+                }
+                (_, element) => coalesced.push(element),
+            }
+        }
+        *elements = coalesced;
         let pair_trailing = trailing_raw == crate::tree::WikidotTrailingRawShape::Pair;
         let mut kept_pair_break = false;
         let item_count = elements.len();
@@ -1397,6 +1413,22 @@ fn parse_fn<'r, 't>(
         follows_inline_structural_close,
     )? {
         return Ok(recovered);
+    }
+    // Live's Div rule only forms when the opener ends its line. A head
+    // with content behind it on its line never opens a div: with no
+    // closer on the line (class ii) it stays literal unconditionally,
+    // and with a closer on the line (class i) it stays literal unless a
+    // surplus of later closers activates it (the own-line closer belongs
+    // to the ancestors, so the head is excess once those are returned).
+    if parser.settings().layout.legacy()
+        && parser.settings().mode != WikitextMode::List
+        && body_start == BlockBodyStart::Inline
+        && head_started_physical_line
+        && !parser.in_native_blockquote_line()
+        && (!parser.has_body_end_block_on_line(&BLOCK_DIV)
+            || parser.wikidot_div_opener_is_excess_for_inline(opener_start))
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     if parser.settings().layout.legacy()
         && parser.in_wikidot_div_body()

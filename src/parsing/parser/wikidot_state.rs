@@ -212,7 +212,25 @@ impl Parser<'_, '_> {
             .borrow()
             .wikidot_div_stream_marks
             .get(&opener_start)
-            .is_some_and(|&(balance_before, ends_after)| ends_after <= balance_before)
+            .is_some_and(|&(balance_before, ends_after, _, _)| {
+                ends_after <= balance_before
+            })
+    }
+
+    #[inline]
+    pub(crate) fn wikidot_div_opener_is_excess_for_inline(
+        &self,
+        opener_start: usize,
+    ) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_div_stream_marks
+            .get(&opener_start)
+            .is_some_and(
+                |&(balance_before, _, own_line_closers, ends_after_document)| {
+                    ends_after_document.saturating_sub(own_line_closers) <= balance_before
+                },
+            )
     }
 
     #[inline]
@@ -1071,7 +1089,7 @@ fn div_stream_resolved_name<'a>(
 pub(super) fn compute_wikidot_div_stream_marks(
     tokens: &[ExtractedToken<'_>],
     source: &str,
-) -> BTreeMap<usize, (u32, u32)> {
+) -> BTreeMap<usize, (u32, u32, u32, u32)> {
     fn block_name<'a>(tokens: &[ExtractedToken<'a>], index: usize) -> Option<&'a str> {
         tokens
             .get(index + 1)
@@ -1091,7 +1109,9 @@ pub(super) fn compute_wikidot_div_stream_marks(
     // later, real divs look "excess" and rendered them as literal text.
     let literal = LiteralRegionIndex::new(source);
 
-    let mut marks = BTreeMap::new();
+    let mut resolved: Vec<(usize, u32, u32)> = Vec::new();
+    let mut counted_closers: Vec<usize> = Vec::new();
+    let mut all_closers: Vec<usize> = Vec::new();
     let mut balance: u32 = 0;
     let mut region: Vec<(usize, u32, u32)> = Vec::new();
     let mut region_ends: u32 = 0;
@@ -1196,15 +1216,22 @@ pub(super) fn compute_wikidot_div_stream_marks(
                 }
                 _ => {}
             }
-        } else if token.token == Token::LeftBlockEnd
-            && balance > 0
-            && is_div_name(tokens, index)
-        {
+        } else if token.token == Token::LeftBlockEnd && is_div_name(tokens, index) {
+            // Every real closer token is recorded for the document-wide
+            // counts, including ones the balance walk cannot use (an
+            // orphan past a balanced region still counts as surplus on
+            // live). Only balance-moving closers feed the region marks.
+            all_closers.push(token.span.start);
+            if balance == 0 {
+                index += 1;
+                continue;
+            }
             region_ends += 1;
+            counted_closers.push(token.span.start);
             balance -= 1;
             if balance == 0 {
                 for (span, balance_before, ends_before) in region.drain(..) {
-                    marks.insert(span, (balance_before, region_ends - ends_before));
+                    resolved.push((span, balance_before, region_ends - ends_before));
                 }
                 region_ends = 0;
             }
@@ -1212,7 +1239,54 @@ pub(super) fn compute_wikidot_div_stream_marks(
         index += 1;
     }
     for (span, balance_before, ends_before) in region {
-        marks.insert(span, (balance_before, region_ends - ends_before));
+        resolved.push((span, balance_before, region_ends - ends_before));
+    }
+    // A head's own-line closers belong to its ancestors, not to the head
+    // itself: live never lets a single-line div close itself. Record how
+    // many closers share the head's physical line and follow it,
+    // so callers can ask whether the head still closes once those are
+    // given back to the ancestors.
+    let mut line_starts: Vec<usize> = vec![0];
+    for (offset, byte) in source.bytes().enumerate() {
+        if byte == b'\n' {
+            line_starts.push(offset + 1);
+        }
+    }
+    let line_start_of = |byte: usize| -> usize {
+        match line_starts.binary_search(&byte) {
+            Ok(index) => line_starts[index],
+            Err(index) => line_starts[index - 1],
+        }
+    };
+    let mut closers_by_line: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
+    for &closer in &all_closers {
+        closers_by_line
+            .entry(line_start_of(closer))
+            .or_default()
+            .push(closer);
+    }
+    let mut marks = BTreeMap::new();
+    for (span, balance_before, ends_after) in resolved {
+        let own_line_closers = closers_by_line
+            .get(&line_start_of(span))
+            .map_or(0, |closers| {
+                closers.iter().filter(|&&closer| closer > span).count() as u32
+            });
+        // The surplus that can activate a single-line head is counted
+        // document-wide: a closer past the point where this head's own
+        // region balances out still counts on live (probe h1, where the
+        // extra closer sits several lines below the geometry).
+        let closers_after = all_closers.partition_point(|&closer| closer <= span);
+        let ends_after_document = (all_closers.len() - closers_after) as u32;
+        marks.insert(
+            span,
+            (
+                balance_before,
+                ends_after,
+                own_line_closers,
+                ends_after_document,
+            ),
+        );
     }
     marks
 }

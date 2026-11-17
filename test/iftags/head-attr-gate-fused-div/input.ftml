@@ -1,0 +1,3 @@
+[[div class="a" [[iftags +fruit]]style="display:none;"[[/iftags]]]]
+body
+[[/div]]

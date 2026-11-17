@@ -25,7 +25,7 @@ use crate::parsing::collect::{
     CommentElidedText, collect_comment_elided_keep, collect_text_keep,
     collect_text_resolved_fused, collect_text_resolved_fused_tracked,
     collect_text_resolved_fused_tracked_quoted, consume_iftags_segment,
-    consume_valid_comment,
+    consume_iftags_segment_fused, consume_valid_comment, iftags_segment_fused,
 };
 use crate::parsing::condition::ParseCondition;
 use crate::parsing::consume::consume;
@@ -11153,6 +11153,15 @@ where
                             elisions.extend(segment.elisions());
                             continue;
                         }
+                        if !raw_head
+                            && current.token == Token::LeftBlock
+                            && let Some(fused_elisions) =
+                                self.try_consume_fused_iftags_head_segment()?
+                        {
+                            elisions.extend(fused_elisions);
+                            head_terminated = true;
+                            break;
+                        }
                         self.step()?;
                         continue;
                     }
@@ -11192,6 +11201,15 @@ where
                     {
                         elisions.extend(segment.elisions());
                         continue;
+                    }
+                    if !raw_head
+                        && current.token == Token::LeftBlock
+                        && let Some(fused_elisions) =
+                            self.try_consume_fused_iftags_head_segment()?
+                    {
+                        elisions.extend(fused_elisions);
+                        head_terminated = true;
+                        break;
                     }
                     self.step()?;
                 }
@@ -11272,6 +11290,53 @@ where
             in_head && !right_block_consumed,
         )?;
         Ok((arguments, body_start))
+    }
+
+    /// Consumes an iftags segment at the current position whose closer is
+    /// fused with the head's own closing brackets: the segment closer's
+    /// `]]` and the head's `]]` tokenize as a `]]]` RightLink plus a `]`
+    /// RightBracket (`...[[/iftags]]]]`), which the plain segment scan
+    /// cannot match. On success the parser is positioned past the head
+    /// close and the returned ranges are the elisions to record for the
+    /// head: the segment's own elisions plus the fused bracket characters,
+    /// which belong to the two closers rather than to the head text.
+    /// Returns None, leaving the parser untouched, when the segment at the
+    /// current position is not of this shape.
+    fn try_consume_fused_iftags_head_segment(
+        &mut self,
+    ) -> Result<Option<Vec<std::ops::Range<usize>>>, ParseError> {
+        if self.current().token != Token::LeftBlock {
+            return Ok(None);
+        }
+        let Some(segment) = iftags_segment_fused(self) else {
+            return Ok(None);
+        };
+        if !segment.fused_closer {
+            return Ok(None);
+        }
+        // The fused closer lives in the RightLink token whose span contains
+        // segment.range.end; the head close completes only when the token
+        // immediately after it is a single RightBracket.
+        let mut probe = self.clone();
+        while probe.current().span.start < segment.range.end
+            && probe.current().token != Token::InputEnd
+        {
+            probe.step()?;
+        }
+        if probe.current().token != Token::RightBracket
+            || probe.current().span.start != segment.range.end + 1
+        {
+            return Ok(None);
+        }
+        let close_end = probe.current().span.end;
+        let consumed = consume_iftags_segment_fused(self)?;
+        debug_assert!(consumed.is_some());
+        // The parser now sits at the RightBracket; step over it so the
+        // head is fully closed.
+        self.step()?;
+        let mut elisions = segment.elisions();
+        elisions.push(segment.range.end..close_end);
+        Ok(Some(elisions))
     }
 
     fn try_consume_collapsible_head_footnote(

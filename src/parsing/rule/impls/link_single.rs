@@ -1298,8 +1298,20 @@ fn wikidot_link_disposition(url: &str) -> WikidotLinkDisposition {
     if url.is_empty() || url.len() > MAX_WIKIDOT_SINGLE_LINK_TARGET_BYTES {
         return WikidotLinkDisposition::Literal;
     }
-    if url.starts_with('/')
-        || url.starts_with("http://")
+    // Live renders the whole bracket literally when a slash target
+    // contains a quote or an apostrophe ("[/foo\" label]" and
+    // "[/foo'bar label]" stay text; sandbox probes muse-probe-g2enc-lq-*
+    // and muse-probe-g2enc-lc-*, 2026-11-17). Every other probed
+    // character in a slash target still links ("]", "[", "%", "?",
+    // "*", ",", "@", "!", "^", "\\", a backtick, braces, "|", "<",
+    // ">"), and quotes in the label are unrestricted.
+    if url.starts_with('/') {
+        if url.contains('"') || url.contains('\'') {
+            return WikidotLinkDisposition::Literal;
+        }
+        return WikidotLinkDisposition::Link;
+    }
+    if url.starts_with("http://")
         || url.starts_with("https://")
         || url.starts_with("ftp://")
         || url.starts_with("gopher://")
@@ -1516,6 +1528,69 @@ mod tests {
         assert!(html.contains("[data:text/html,alert(2) XSS]"), "{html}");
         assert!(!html.contains("href=\"javascript:"), "{html}");
         assert!(!html.contains("href=\"data:"), "{html}");
+    }
+
+    #[test]
+    fn wikidot_single_link_slash_targets_with_quotes_are_literal() {
+        // Live renders the whole bracket literally when a slash target
+        // contains a quote or an apostrophe, while quotes in the label
+        // and every other probed character in the target still link
+        // (sandbox probes muse-probe-g2enc-lq-* / -lc-*, 2026-11-17).
+        for url in ["/foo\"", "/foo\"bar", "/foo]]\"", "/foo'bar", "/iftags]]\""] {
+            assert_eq!(
+                wikidot_link_disposition(url),
+                WikidotLinkDisposition::Literal,
+                "{url}",
+            );
+        }
+        for url in [
+            "/foo",
+            "/foo]]bar",
+            "/foo]]",
+            "/foo%bar",
+            "/foo?bar",
+            "/foo[bar",
+        ] {
+            assert_eq!(
+                wikidot_link_disposition(url),
+                WikidotLinkDisposition::Link,
+                "{url}",
+            );
+        }
+
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let render = |source: &str| {
+            let tokenization = crate::tokenize(source);
+            let (tree, _) = crate::parse(&tokenization, &page_info, &settings).into();
+            HtmlRender.render(&tree, &page_info, &settings).body
+        };
+
+        // The spilled tail of an enclosed [[image]] head (the G2
+        // credit:start geometry) stays literal, while the gate-pair
+        // chunk still forms its link.
+        assert_eq!(
+            render("[/iftags]]\" style=\"max-width: none;\"]]"),
+            "<p>[/iftags]]&quot; style=&quot;max-width: none;&quot;]]</p>",
+        );
+        assert_eq!(
+            render("[[/iftags]][[iftags +殿堂入り +jp]]"),
+            "<p>[<a href=\"/iftags]][[iftags\">+殿堂入り +jp</a>]</p>",
+        );
+
+        // The full enclosed shape: the image head truncates at the
+        // first exhibited gate, and the rest of the head spills as
+        // literal body text.
+        let html = render(
+            "[[iftags -殿堂入り]]\n[[image http://example.com/x.png link=\"[[iftags +殿堂入り]]archived:heritage-collection[[/iftags]]\" style=\"max-width: none;\"]]\n[[/iftags]]",
+        );
+        assert!(html.contains("<a href=\"/\">"), "{html}");
+        assert!(
+            html.contains(
+                "archived:heritage-collection[[/iftags]]&quot; style=&quot;max-width: none;&quot;]]"
+            ),
+            "{html}"
+        );
     }
 
     #[test]

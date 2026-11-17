@@ -127,6 +127,19 @@ impl<'t> AttributeMap<'t> {
         std::convert::identity(&self.inner)
     }
 
+    /// Whether the map carries no effective attribute: it is empty, or
+    /// every entry is an authored attribute whose value is empty or
+    /// whitespace-only (live treats such a head as attributeless, e.g.
+    /// an empty `[[div class=""]]` pair vanishes like a bare one).
+    /// Internal `data-ftml-` marker entries always count as effective,
+    /// since another mechanism stamped them.
+    #[inline]
+    pub(crate) fn is_effectively_empty(&self) -> bool {
+        self.inner
+            .iter()
+            .all(|(key, value)| !key.starts_with("data-ftml-") && value.trim().is_empty())
+    }
+
     pub fn isolate_id(&mut self, settings: &WikitextSettings) {
         if settings.isolate_user_ids
             && let Some(value) = self.inner.get_mut("id")

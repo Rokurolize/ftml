@@ -7821,7 +7821,7 @@ fn emptied_block_vanishes(element: &Element<'_>) -> bool {
             if matches!(
                 container.ctype(),
                 ContainerType::Paragraph | ContainerType::Div
-            ) && container.attributes().get().is_empty()
+            ) && container.attributes().is_effectively_empty()
                 && container.elements().is_empty()
     ) || matches!(
         element,
@@ -8873,7 +8873,7 @@ fn is_vanished_empty_div(element: &Element<'_>) -> bool {
         element,
         Element::Container(container)
             if container.ctype() == ContainerType::Div
-                && container.attributes().get().is_empty()
+                && container.attributes().is_effectively_empty()
                 && container.elements().is_empty()
     ) || matches!(
         element,

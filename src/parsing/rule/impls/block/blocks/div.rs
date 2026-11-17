@@ -575,11 +575,26 @@ where
     // only unpaired mid-line heads (and single-line ones) recover literal.
     // Inside scored (literal-alias) bodies recovery still wins: those are
     // error-recovery contexts where mid-line heads stay literal.
-    let paired_multiline_head = body_start == BlockBodyStart::NextPhysicalLine
-        && !parser.in_wikidot_literal_alias_body()
-        && parser
-            .wikidot_block_pair_at_head_byte(owner_start)
-            .is_some();
+    // A mid-line head whose pair body is whitespace-only also forms: the
+    // pair scanner only pairs such a head when it sits inside a div body
+    // with nothing but whitespace before the closer (the midline pair
+    // surgery in block_pairs.rs), which is exactly the shape live forms
+    // as a real (usually vanishing) nested div (probes
+    // muse-probe-exhibit-d2-*).
+    let paired_multiline_head = !parser.in_wikidot_literal_alias_body()
+        && match body_start {
+            BlockBodyStart::NextPhysicalLine => parser
+                .wikidot_block_pair_at_head_byte(owner_start)
+                .is_some(),
+            BlockBodyStart::Inline => parser
+                .wikidot_block_pair_at_head_byte(owner_start)
+                .is_some_and(|pair| {
+                    !pair.exhibited
+                        && source[parser.current().span.start..pair.closer_byte]
+                            .chars()
+                            .all(|c| matches!(c, ' ' | '\t' | '\n' | '\r'))
+                }),
+        };
     if parser.in_wikidot_div_body()
         && (!head_started_physical_line
             || inline_scored_line_literal

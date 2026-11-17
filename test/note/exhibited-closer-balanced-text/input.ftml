@@ -1,0 +1,3 @@
+[[note]]
+before {{x [[note]] [[/note]]}} after
+[[/note]]

@@ -984,6 +984,62 @@ impl<'t> ParagraphStack<'t> {
         }
     }
 
+    /// The continued-block boundary for a div that vanishes (empty and
+    /// attributeless): the surrounding text runs merge with no
+    /// separator, so only the unwrapped flag is set.
+    #[inline]
+    pub(crate) fn mark_wikidot_vanished_div_boundary(&mut self) {
+        if self.wikidot && !self.current.is_empty() {
+            self.current_unwrapped = true;
+        }
+    }
+
+    /// Whether the current run's text contains a span opener (`{{`)
+    /// that no span closer in the run has closed yet: a block element
+    /// consumed at this point sits inside span source text, and live
+    /// keeps such an element in the line's inline flow instead of
+    /// giving it paragraph separators (probe
+    /// muse-probe-exhibit-d2-t10-nested-real).
+    pub(crate) fn wikidot_current_run_in_span_source(&self) -> bool {
+        if !self.wikidot {
+            return false;
+        }
+        let mut depth: i32 = 0;
+        for element in &self.current {
+            let Some(text) = (match element {
+                Element::Text(text) | Element::Raw(text) => Some(text.as_ref()),
+                _ => None,
+            }) else {
+                continue;
+            };
+            let bytes = text.as_bytes();
+            let mut i = 0;
+            while i + 1 < bytes.len() {
+                if &bytes[i..i + 2] == b"{{" {
+                    depth += 1;
+                    i += 2;
+                } else if &bytes[i..i + 2] == b"}}" {
+                    depth -= 1;
+                    i += 2;
+                } else {
+                    i += 1;
+                }
+            }
+        }
+        depth > 0
+    }
+
+    /// The same-line residual mark for a div that vanishes: like
+    /// `mark_wikidot_vanished_div_boundary`, the following run stays
+    /// unwrapped but no separator text is emitted.
+    #[inline]
+    pub(crate) fn mark_wikidot_vanished_div_residual(&mut self) {
+        if self.wikidot {
+            self.current_unwrapped = true;
+            self.unwrapped_after_block_line = true;
+        }
+    }
+
     #[inline]
     pub(crate) fn mark_next_unwrapped(&mut self) {
         self.current_unwrapped = true;

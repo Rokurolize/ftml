@@ -312,17 +312,35 @@ fn paragraph_break_after_list_close(tokens: &[ExtractedToken<'_>], index: usize)
             || name.slice.eq_ignore_ascii_case("ol"))
 }
 
-/// Whether the block head at `index` begins its line (only whitespace
-/// before it since the last break). A head inside a `{{...}}` span is
-/// always preceded by the span opener on its line, so it never begins
-/// the line; a real nested block head does.
-fn block_start_at_line_start(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
+/// Whether the block head at byte `span_start` begins its line (only
+/// whitespace before it since the last break). This is judged on the
+/// full source text, not on the walk's remaining-token slice: a head
+/// inside a `{{...}}` span sits at or near the start of that slice yet
+/// is always preceded by the span opener on its line, so it never
+/// begins the line; a real nested block head does.
+/// The slice-based line-start judgment kept for `Standard` walks:
+/// only the walk's remaining tokens are scanned, so a head at the
+/// start of the slice counts as beginning its line.
+fn block_start_at_line_start_slice(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
     let mut pos = index;
     while pos > 0 {
         pos -= 1;
         match tokens[pos].token {
             Token::Whitespace => {}
             Token::LineBreak | Token::ParagraphBreak => return true,
+            _ => return false,
+        }
+    }
+    true
+}
+
+fn block_start_at_line_start(text: &str, span_start: usize) -> bool {
+    let bytes = text.as_bytes();
+    let mut pos = span_start.min(bytes.len());
+    while pos > 0 {
+        match bytes[pos - 1] {
+            b' ' | b'\t' | b'\r' => pos -= 1,
+            b'\n' => return true,
             _ => return false,
         }
     }
@@ -480,7 +498,22 @@ pub(super) fn validate_reachable_close(
                 saw_block_pairing = true;
                 let name = block_name_at(tokens, index);
                 if is_block_name(&name) {
-                    let at_line_start = block_start_at_line_start(tokens, index);
+                    // The full-source judgment (and the wider
+                    // fail-before-pop arm below) applies to
+                    // BlockBarrier walks (monospace and its kin),
+                    // where the exhibited-closer probes pin it.
+                    // Standard walks keep the historical slice-based
+                    // judgment: their pinned error output depends on
+                    // it (the footnote/harvest bold shapes).
+                    let at_line_start = match mode {
+                        ReachableCloseMode::BlockBarrier => block_start_at_line_start(
+                            parser.full_text().inner(),
+                            tokens[index].span.start,
+                        ),
+                        ReachableCloseMode::Standard => {
+                            block_start_at_line_start_slice(tokens, index)
+                        }
+                    };
                     open_blocks.push((name, at_line_start));
                 }
             }
@@ -497,19 +530,28 @@ pub(super) fn validate_reachable_close(
                 } else if let Some(pos) =
                     open_blocks.iter().rposition(|(n, _)| *n == name)
                 {
-                    if name == "note"
+                    let name_in_arm = match mode {
+                        ReachableCloseMode::BlockBarrier => {
+                            name == "note" || name == "collapsible" || name == "div"
+                        }
+                        ReachableCloseMode::Standard => name == "note",
+                    };
+                    if name_in_arm
                         && !open_blocks[pos].1
                         && end_block_fails(parser, &name, mode)
                     {
-                        // Note bodies are scan-delimited: the pair
-                        // scanner pairs a note head with the first
-                        // closer after it. An exhibited (mid-line) note
+                        // Note, collapsible and div bodies are
+                        // scan-delimited for this purpose: the pair
+                        // scanner pairs such a head with the first
+                        // closer after it. An exhibited (mid-line)
                         // opener inside the span does not shield its
                         // closer, so the closer fires and the span
-                        // fails (probe
-                        // muse-probe-exhibit-res-n2-balanced-span). A
-                        // note head at a line start is a real nested
-                        // note and keeps the shield.
+                        // fails (probes
+                        // muse-probe-exhibit-res-n2-balanced-span,
+                        // muse-probe-exhibit-d2-p7-coll-same and the
+                        // muse-probe-exhibit-d2-* family). A head at a
+                        // line start is a real nested block and keeps
+                        // the shield.
                         return Err(parser.make_err(ParseErrorKind::RuleFailed));
                     }
                     open_blocks.truncate(pos);

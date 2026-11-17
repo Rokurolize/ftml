@@ -944,6 +944,13 @@ impl<'r, 't> Parser<'r, 't> {
             .copied()
     }
 
+    pub(crate) fn wikidot_ws_body_pair_covers(&self, byte: usize) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_block_pairs
+            .ws_body_pair_covers(self.full_text().inner(), byte)
+    }
+
     pub(crate) fn wikidot_block_pair_at_closer_byte(
         &self,
         closer_byte: usize,

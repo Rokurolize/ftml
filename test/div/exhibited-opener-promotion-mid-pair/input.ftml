@@ -1,0 +1,37 @@
+[[div class="mox-3line"]]
+
+||~ これは ||~ 表です ||
+
+||三線表は || 次のように ||
+
+|||| _
+
+{{[[div class="mox-3line"]]}}で囲んでください。表がよりすっきり見えます。||||
+
+[[/div]]
+
+
+
+@@@@
+
+
+
+[[div class="mox-modal"]]
+
+
+
+
+[[/div]]
+
+
+
+[[collapsible show="ソースコードを表示" hide="閉じる"]]
+}
+
+[[/code]]
+
+[[/collapsible]]
+
+
+
+[[/div]]

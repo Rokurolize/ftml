@@ -1,0 +1,3 @@
+[[iftags +fruit]]
+[[image http://example.com/x.png link="[[iftags +殿堂入り]]archived:heritage-collection[[/iftags]]" style="max-width: none;"]]
+[[/iftags]]

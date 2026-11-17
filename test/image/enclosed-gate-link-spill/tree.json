@@ -1,0 +1,31 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "image",
+                        "data": {
+                            "source": {
+                                "type": "direct",
+                                "data": {
+                                    "type": "url",
+                                    "data": "http://example.com/x.png"
+                                }
+                            },
+                            "link": "",
+                            "alignment": null,
+                            "attributes": {
+                                "style": "max-width: none;"
+                            },
+                            "target": null
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -2257,21 +2257,63 @@ impl<'t> Scanner<'t> {
                     outer_closers.insert(closer_token);
                 }
             }
+            // Live (muse-probe-dupcollm2-base): a complete inner div pair in
+            // the no-closer promoted head is consumed with the head and the
+            // pair binds the later orphan closer. The same-line-closer path
+            // keeps its q1 sibling behaviour. A bare head stays literal on
+            // live (muse-probe-dupcollm2-bare), so it keeps the old path.
+            let head_has_args = self
+                .read_kind_head(ox_token, WikidotBlockKind::Div)
+                .is_some_and(|head| head.has_args);
+            let m2_path = cx_token.is_none() && head_has_args;
+            let mut inner_div_heads: std::collections::HashSet<usize> =
+                std::collections::HashSet::new();
+            let mut inner_div_closers: std::collections::HashSet<usize> =
+                std::collections::HashSet::new();
+            if m2_path {
+                let positions: Vec<usize> = modified
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, event)| event.kind == WikidotBlockKind::Div)
+                    .map(|(index, _)| index)
+                    .collect();
+                let divs: Vec<&Event> =
+                    positions.iter().map(|&index| &modified[index]).collect();
+                for &(head_index, closer_index) in &pair_nest(&divs) {
+                    let head_token = divs[head_index].head;
+                    if head_token > ox_token {
+                        inner_div_heads.insert(head_token);
+                        inner_div_closers.insert(divs[closer_index].closer);
+                    }
+                }
+            }
             // Find the head terminator: the first block head or div
             // closer after the exhibited opener. Its end byte is where
             // the promoted body starts.
             let mut spent_closer: Option<usize> = None;
             let mut body_start_byte: Option<usize> = None;
+            let mut terminator_index: Option<usize> = None;
             for (index, event) in modified.iter().enumerate().skip(insert_at + 1) {
                 if !event.is_close {
+                    if m2_path
+                        && event.kind == WikidotBlockKind::Div
+                        && inner_div_heads.contains(&event.head)
+                    {
+                        continue;
+                    }
+                    terminator_index = Some(index);
                     body_start_byte = Some(self.tokens[event.head_end - 1].span.end);
                     break;
                 }
                 if event.kind == WikidotBlockKind::Div {
-                    if cx_token.is_none() && outer_closers.contains(&event.closer) {
+                    if cx_token.is_none()
+                        && (outer_closers.contains(&event.closer)
+                            || (m2_path && inner_div_closers.contains(&event.closer)))
+                    {
                         continue;
                     }
                     spent_closer = Some(index);
+                    terminator_index = Some(index);
                     body_start_byte = Some(self.tokens[event.closer_end - 1].span.end);
                     break;
                 }
@@ -2279,19 +2321,39 @@ impl<'t> Scanner<'t> {
             let Some(body_start_byte) = body_start_byte else {
                 continue;
             };
-            // The promoted closer is the first div closer after the
-            // terminator; a spent closer is skipped, not taken.
+            // An inner pair's closer is not a promoted-closer candidate: it
+            // is consumed with the promoted head on live.
             let search_from = spent_closer.map_or(insert_at + 1, |index| index + 1);
             let Some(promoted_closer) = (search_from..modified.len()).find(|&index| {
                 modified[index].kind == WikidotBlockKind::Div
                     && modified[index].is_close
                     && !(cx_token.is_none()
-                        && outer_closers.contains(&modified[index].closer))
+                        && (outer_closers.contains(&modified[index].closer)
+                            || (m2_path
+                                && inner_div_closers.contains(&modified[index].closer))))
             }) else {
                 continue;
             };
             let promoted_closer_token = modified[promoted_closer].closer;
             modified[insert_at].body_start_byte = body_start_byte;
+            // Drop the inner pair events consumed with the promoted head.
+            let mut flattened_tokens: std::collections::HashSet<usize> =
+                std::collections::HashSet::new();
+            if m2_path {
+                let stop = terminator_index.unwrap_or(insert_at);
+                for event in modified.iter().take(stop).skip(insert_at + 1) {
+                    let token = if event.is_close {
+                        event.closer
+                    } else {
+                        event.head
+                    };
+                    if (event.is_close && inner_div_closers.contains(&token))
+                        || (!event.is_close && inner_div_heads.contains(&token))
+                    {
+                        flattened_tokens.insert(token);
+                    }
+                }
+            }
             // Drop the spent closer and the div heads inside the
             // promoted range: the spent closer is consumed with the
             // head, and interior div heads are flattened, so neither
@@ -2299,6 +2361,14 @@ impl<'t> Scanner<'t> {
             let mut rewritten: Vec<Event> = Vec::with_capacity(modified.len());
             for (index, event) in modified.into_iter().enumerate() {
                 if Some(index) == spent_closer {
+                    continue;
+                }
+                let token = if event.is_close {
+                    event.closer
+                } else {
+                    event.head
+                };
+                if flattened_tokens.contains(&token) {
                     continue;
                 }
                 if index > insert_at

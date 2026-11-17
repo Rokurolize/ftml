@@ -1,0 +1,346 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {
+                    "class": "mox-3line"
+                },
+                "elements": [
+                    {
+                        "element": "table",
+                        "data": {
+                            "type": "simple",
+                            "attributes": {},
+                            "rows": [
+                                {
+                                    "attributes": {},
+                                    "cells": [
+                                        {
+                                            "header": true,
+                                            "column-span": 1,
+                                            "align": null,
+                                            "attributes": {},
+                                            "elements": [
+                                                {
+                                                    "element": "text",
+                                                    "data": "こ"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "れ"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "は"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "header": true,
+                                            "column-span": 1,
+                                            "align": null,
+                                            "attributes": {},
+                                            "elements": [
+                                                {
+                                                    "element": "text",
+                                                    "data": "表"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "で"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "す"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "table",
+                        "data": {
+                            "type": "simple",
+                            "attributes": {},
+                            "rows": [
+                                {
+                                    "attributes": {},
+                                    "cells": [
+                                        {
+                                            "header": false,
+                                            "column-span": 1,
+                                            "align": null,
+                                            "attributes": {},
+                                            "elements": [
+                                                {
+                                                    "element": "text",
+                                                    "data": "三"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "線"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "表"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "は"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "header": false,
+                                            "column-span": 1,
+                                            "align": null,
+                                            "attributes": {},
+                                            "elements": [
+                                                {
+                                                    "element": "text",
+                                                    "data": "次"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "の"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "よ"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "う"
+                                                },
+                                                {
+                                                    "element": "text",
+                                                    "data": "に"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "table",
+                        "data": {
+                            "type": "simple",
+                            "attributes": {},
+                            "rows": [
+                                {
+                                    "attributes": {},
+                                    "cells": [
+                                        {
+                                            "header": false,
+                                            "column-span": 1,
+                                            "align": null,
+                                            "attributes": {},
+                                            "elements": []
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "paragraph",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "{{"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "div",
+                            "attributes": {
+                                "class": "mox-3line"
+                            },
+                            "elements": [
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "paragraph",
+                                        "attributes": {},
+                                        "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": "}}"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "で"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "囲"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "ん"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "で"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "く"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "だ"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "さ"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "い"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "。"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "表"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "が"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "よ"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "り"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "す"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "っ"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "き"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "り"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "見"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "え"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "ま"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "す"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "。"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "||"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "||"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "div",
+                            "attributes": {
+                                "class": "mox-modal"
+                            },
+                            "elements": []
+                        }
+                    },
+                    {
+                        "element": "collapsible",
+                        "data": {
+                            "elements": [
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "paragraph",
+                                        "attributes": {},
+                                        "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": "}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "element": "container",
+                                    "data": {
+                                        "type": "paragraph",
+                                        "attributes": {},
+                                        "elements": [
+                                            {
+                                                "element": "text",
+                                                "data": "[[/"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "code"
+                                            },
+                                            {
+                                                "element": "text",
+                                                "data": "]]"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ],
+                            "attributes": {},
+                            "start-open": false,
+                            "show-text": "ソースコードを表示",
+                            "hide-text": "閉じる",
+                            "show-top": true,
+                            "show-bottom": false
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

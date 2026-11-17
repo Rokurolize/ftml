@@ -582,6 +582,13 @@ where
             div_opener && wikidot_div_closes_on_current_line(parser);
         let embed_opener = wikidot_embed_opener(parser);
         let inline_div_opener = div_opener && !parser.start_of_line();
+        // A promoted (exhibited) div is a real block even when its head
+        // sits inside span source text: it keeps its paragraph
+        // separators. Only a plain pair flows inline there.
+        let div_opener_exhibited = div_opener
+            && parser
+                .wikidot_block_pair_at_head_byte(parser.current().span.start)
+                .is_some_and(|pair| pair.exhibited);
         let inline_note_opener = wikidot_note_opener(parser) && !parser.start_of_line();
         stack.record_next_element_line_start(
             parser.start_of_line()
@@ -934,6 +941,11 @@ where
             }
             let fused_block_residual = take_fused_block_residual(&mut elements);
             let active_div = elements_contain_div(&elements);
+            // A div that vanishes (empty and attributeless) leaves no
+            // trace on live, so it earns neither the continued-block
+            // boundary nor the same-line residual separator below
+            // (probes muse-probe-exhibit-d2-*).
+            let vanished_empty_div = elements_contain_vanished_empty_div(&elements);
             let list_has_same_line_residual = explicit_list_opener
                 && !paragraph_safe
                 && elements_end_with_list(&elements)
@@ -1013,8 +1025,17 @@ where
             if complete_raw_line_break && elements_begin_with_wikidot_center(&elements) {
                 stack.push_element(Element::LineBreak, true);
             }
+            // A plain div inside span source text flows inline on
+            // live, so it takes the no-separator marks just like a
+            // vanished div.
+            let div_in_span_source =
+                stack.wikidot_current_run_in_span_source() && !div_opener_exhibited;
             if inline_div_opener && active_div {
-                stack.mark_wikidot_continued_block_boundary();
+                if vanished_empty_div || div_in_span_source {
+                    stack.mark_wikidot_vanished_div_boundary();
+                } else {
+                    stack.mark_wikidot_continued_block_boundary();
+                }
             }
             if inline_note_opener && active_note {
                 stack.mark_wikidot_continued_block_boundary();
@@ -1143,7 +1164,9 @@ where
                 stack.mark_next_unwrapped_after_block();
             }
             if div_has_same_line_residual {
-                if parser.in_wikidot_span_body() {
+                if (vanished_empty_div || div_in_span_source) && inline_div_opener {
+                    stack.mark_wikidot_vanished_div_residual();
+                } else if parser.in_wikidot_span_body() {
                     stack.mark_next_unwrapped_after_block();
                 } else {
                     stack.mark_wikidot_same_line_div_residual();
@@ -1692,6 +1715,23 @@ fn elements_contain_note(elements: &Elements<'_>) -> bool {
         Elements::None => false,
         Elements::Single(element) => is_note(element),
         Elements::Multiple(elements) => elements.iter().any(is_note),
+    }
+}
+
+fn elements_contain_vanished_empty_div(elements: &Elements<'_>) -> bool {
+    let is_vanished = |element: &Element<'_>| {
+        matches!(
+            element,
+            Element::Container(container)
+                if container.ctype() == ContainerType::Div
+                    && container.attributes().is_effectively_empty()
+                    && container.elements().is_empty()
+        )
+    };
+    match elements {
+        Elements::None => false,
+        Elements::Single(element) => is_vanished(element),
+        Elements::Multiple(elements) => elements.iter().any(is_vanished),
     }
 }
 

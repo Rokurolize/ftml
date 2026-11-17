@@ -6096,10 +6096,10 @@ where
             && body_start == BlockBodyStart::Inline
             && wikidot_requires_next_physical_line(block_rule)
             && !(block_rule.name == "block-div"
-                && wikidot_physical_line_has_textual_div_closer(
+                && (wikidot_physical_line_has_textual_div_closer(
                     self.full_text().inner(),
                     opener_for_line,
-                ))
+                ) || self.wikidot_ws_body_pair_covers(opener_for_line)))
         {
             return Err(self.make_err(ParseErrorKind::RuleFailed));
         }

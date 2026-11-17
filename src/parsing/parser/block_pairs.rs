@@ -142,6 +142,24 @@ impl WikidotBlockPairs {
         &self.pairs
     }
 
+    /// Whether a non-exhibited div pair whose recorded body is
+    /// whitespace-only covers `byte` (the byte lies between the pair's
+    /// body start and its closer). Only the midline pair surgery
+    /// records a body start on a non-exhibited pair, so this identifies
+    /// exactly those pairs.
+    pub(crate) fn ws_body_pair_covers(&self, source: &str, byte: usize) -> bool {
+        self.pairs.iter().any(|pair| {
+            pair.kind == WikidotBlockKind::Div
+                && !pair.exhibited
+                && pair.body_start_byte > 0
+                && pair.body_start_byte <= byte
+                && byte <= pair.closer_byte
+                && source[pair.body_start_byte..pair.closer_byte]
+                    .chars()
+                    .all(|c| matches!(c, ' ' | '\t' | '\n' | '\r'))
+        })
+    }
+
     pub(crate) fn pair_at_head_byte(
         &self,
         head_byte: usize,
@@ -1893,6 +1911,7 @@ impl<'t> Scanner<'t> {
         }
         let mut events = Vec::new();
         self.walk_range(start, end, depth, &mut events);
+        self.midline_pair_surgery(&mut events, start, end);
         self.exhibit_surgery(&mut events, start, end);
         self.pair_events(events);
     }
@@ -1921,6 +1940,120 @@ impl<'t> Scanner<'t> {
     /// div heads inside the promoted range are flattened rather than
     /// paired. The byte where the promoted body starts is recorded on
     /// the pair so the div rule can step the head consumption exactly.
+    /// Mid-line pair surgery (live probes muse-probe-exhibit-d2-*,
+    /// sandbox-for-codex, 2026-11-17).
+    ///
+    /// Inside a div body, live does not shield div tokens behind a
+    /// `{{...}}` span (or anything else): a mid-line div head whose
+    /// next div closer is whitespace-adjacent (only whitespace between
+    /// the head's end and the closer's start) forms a real pair with
+    /// that closer, and the enclosing div closes at the following
+    /// closer. The pair then renders by the usual rules (an
+    /// attributeless empty div vanishes; an attributed one stays). A
+    /// head with any non-whitespace content before that closer is
+    /// inert literal text instead and the closer closes the enclosing
+    /// div, which is what the plain events already produce, so only
+    /// the whitespace-adjacent shape is rewritten here.
+    ///
+    /// The head must sit inside a div pair of this segment and not
+    /// inside a nested non-div pair (a pair inside a note or
+    /// collapsible body stays literal). The rewrite is kept only when
+    /// stack pairing then binds the head to that closer and no closer
+    /// paired before loses its pairing.
+    fn midline_pair_surgery(
+        &mut self,
+        events: &mut Vec<Event>,
+        seg_start: usize,
+        seg_end: usize,
+    ) {
+        let candidates: Vec<(usize, usize)> = self
+            .rejected_div_heads
+            .iter()
+            .copied()
+            .filter(|(head, _)| *head >= seg_start && *head < seg_end)
+            .collect();
+        if candidates.is_empty() {
+            return;
+        }
+        for (head_token, head_end) in candidates {
+            if events
+                .iter()
+                .any(|event| !event.is_close && event.head == head_token)
+            {
+                continue;
+            }
+            let Some(head) = self.read_kind_head(head_token, WikidotBlockKind::Div)
+            else {
+                continue;
+            };
+            let head_end_byte = self.tokens[head_end - 1].span.end;
+            let Some(close_pos) = events.iter().position(|event| {
+                event.is_close
+                    && event.kind == WikidotBlockKind::Div
+                    && event.closer > head_token
+            }) else {
+                continue;
+            };
+            let closer_token = events[close_pos].closer;
+            let closer_byte = self.tokens[closer_token].span.start;
+            if head_end_byte > closer_byte
+                || !self.source[head_end_byte..closer_byte]
+                    .chars()
+                    .all(|c| matches!(c, ' ' | '\t' | '\n' | '\r'))
+            {
+                continue;
+            }
+            let div_pairs = segment_kind_pairs(events, WikidotBlockKind::Div);
+            let Some(&(outer_head, _)) = div_pairs
+                .iter()
+                .filter(|(h, c)| *h < head_token && head_token < *c)
+                .max_by_key(|(h, _)| *h)
+            else {
+                continue;
+            };
+            let covered_by_inner_block = [
+                WikidotBlockKind::Collapsible,
+                WikidotBlockKind::Note,
+                WikidotBlockKind::AlignCenter,
+                WikidotBlockKind::AlignRight,
+                WikidotBlockKind::AlignLeft,
+                WikidotBlockKind::AlignJustify,
+            ]
+            .iter()
+            .any(|kind| {
+                segment_kind_pairs(events, *kind)
+                    .iter()
+                    .any(|(h, c)| outer_head < *h && *h < head_token && head_token < *c)
+            });
+            if covered_by_inner_block {
+                continue;
+            }
+            let new_event = Event {
+                kind: WikidotBlockKind::Div,
+                scored: head.flag_score,
+                head: head_token,
+                head_end,
+                closer: 0,
+                closer_end: 0,
+                is_close: false,
+                exhibited: false,
+                body_start_byte: head_end_byte,
+            };
+            let mut trial: Vec<Event> = events.clone();
+            insert_event_in_token_order(&mut trial, new_event.clone());
+            let trial_pairs = segment_kind_pairs(&trial, WikidotBlockKind::Div);
+            let binds = trial_pairs
+                .iter()
+                .any(|(h, c)| *h == head_token && *c == closer_token);
+            let no_closer_lost = div_pairs
+                .iter()
+                .all(|(_, c)| trial_pairs.iter().any(|(_, tc)| tc == c));
+            if binds && no_closer_lost {
+                insert_event_in_token_order(events, new_event);
+            }
+        }
+    }
+
     fn exhibit_surgery(
         &mut self,
         events: &mut Vec<Event>,
@@ -1971,6 +2104,14 @@ impl<'t> Scanner<'t> {
             }
         };
         for (ox_token, ox_end_token) in candidates {
+            // A head the midline pair surgery already paired forms a
+            // real pair; it is not an exhibited opener to promote.
+            if events
+                .iter()
+                .any(|event| !event.is_close && event.head == ox_token)
+            {
+                continue;
+            }
             let head_byte = self.tokens[ox_token].span.start;
             let line_start = self.source[..head_byte]
                 .rfind('\n')
@@ -2004,6 +2145,43 @@ impl<'t> Scanner<'t> {
                 continue;
             };
             let cx_token = cx_event.closer;
+            // A complete div pair lying strictly between the exhibited
+            // head and the exhibited closer is real structure, not
+            // flattenable interior: live forms that pair and the
+            // exhibited head stays inert (probe
+            // muse-probe-exhibit-d2-t10-nested-real).
+            let has_inner_pair = segment_kind_pairs(events, WikidotBlockKind::Div)
+                .iter()
+                .any(|(h, c)| ox_token < *h && *c <= cx_token);
+            if has_inner_pair {
+                continue;
+            }
+            // The orphan set is recomputed per candidate: a promotion
+            // rewrites the segment's events, so indices captured before
+            // the loop would go stale (and out of bounds).
+            let div_positions_now: Vec<usize> = events
+                .iter()
+                .enumerate()
+                .filter(|(_, event)| event.kind == WikidotBlockKind::Div)
+                .map(|(index, _)| index)
+                .collect();
+            let div_events_now: Vec<&Event> = div_positions_now
+                .iter()
+                .map(|&index| &events[index])
+                .collect();
+            let simple_pairs_now = pair_nest(&div_events_now);
+            let mut closer_paired_now = vec![false; div_events_now.len()];
+            for (_, closer) in &simple_pairs_now {
+                closer_paired_now[*closer] = true;
+            }
+            let orphan_div_closers: Vec<usize> = div_positions_now
+                .iter()
+                .enumerate()
+                .filter(|(div_index, _)| {
+                    div_events_now[*div_index].is_close && !closer_paired_now[*div_index]
+                })
+                .map(|(_, &event_index)| event_index)
+                .collect();
             let activated = orphan_div_closers.iter().any(|&orphan_index| {
                 let orphan_token = events[orphan_index].closer;
                 orphan_token > cx_token
@@ -2572,6 +2750,41 @@ fn pair_div_with_forced(
         out.push((rest_indices[h], rest_indices[c]));
     }
     out
+}
+
+/// The (head token, closer token) pairs one kind receives from a
+/// segment's events, mirroring pair_events' per-kind pairing rule.
+fn segment_kind_pairs(events: &[Event], kind: WikidotBlockKind) -> Vec<(usize, usize)> {
+    let evs: Vec<&Event> = events.iter().filter(|event| event.kind == kind).collect();
+    if evs.is_empty() {
+        return Vec::new();
+    }
+    let found = if kind.is_nesting() {
+        pair_nest(&evs)
+    } else {
+        pair_first(&evs)
+    };
+    found
+        .into_iter()
+        .map(|(h, c)| (evs[h].head, evs[c].closer))
+        .collect()
+}
+
+/// Insert an event keeping the segment's events in token order (the
+/// order pair_events' per-kind filters expect).
+fn insert_event_in_token_order(events: &mut Vec<Event>, new_event: Event) {
+    let key = |event: &Event| {
+        if event.is_close {
+            event.closer
+        } else {
+            event.head
+        }
+    };
+    let pos = events
+        .iter()
+        .position(|event| key(event) > key(&new_event))
+        .unwrap_or(events.len());
+    events.insert(pos, new_event);
 }
 
 fn pair_first(evs: &[&Event]) -> Vec<(usize, usize)> {

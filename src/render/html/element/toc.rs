@@ -113,6 +113,9 @@ fn render_wikidot_toc_box(
             "class" => class_value.unwrap_or_default(); if class_value.is_some(),
         ))
         .inner(|ctx| {
+            let fold_label = ctx.handle().get_message(ctx.language(), "toc-fold");
+            let unfold_label = ctx.handle().get_message(ctx.language(), "toc-unfold");
+
             ctx.html()
                 .div()
                 .attr(attr!("id" => "toc-action-bar"))
@@ -123,7 +126,7 @@ fn render_wikidot_toc_box(
                             "href" => "javascript:;",
                             "onclick" => "WIKIDOT.page.listeners.foldToc(event)",
                         ))
-                        .contents("Fold");
+                        .contents(fold_label);
                     ctx.html()
                         .a()
                         .attr(attr!(
@@ -131,7 +134,7 @@ fn render_wikidot_toc_box(
                             "href" => "javascript:;",
                             "onclick" => "WIKIDOT.page.listeners.unfoldToc(event)",
                         ))
-                        .contents("Unfold");
+                        .contents(unfold_label);
                 });
             let title = match attributes.get().get("title") {
                 Some(title) => title.as_ref(),
@@ -229,11 +232,13 @@ mod tests {
         );
     }
 
-    fn wikidot_toc_body(
+    fn wikidot_toc_body_with_language(
         align: Option<Alignment>,
         attributes: &AttributeMap<'_>,
+        language: &str,
     ) -> String {
-        let page_info = PageInfo::dummy();
+        let mut page_info = PageInfo::dummy();
+        page_info.language = cow!(language);
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         let toc_entries: [Element<'static>; 0] = [];
         let footnotes: [Vec<Element<'static>>; 0] = [];
@@ -251,6 +256,13 @@ mod tests {
         HtmlOutput::from(ctx).body
     }
 
+    fn wikidot_toc_body(
+        align: Option<Alignment>,
+        attributes: &AttributeMap<'_>,
+    ) -> String {
+        wikidot_toc_body_with_language(align, attributes, "default")
+    }
+
     #[test]
     fn wikidot_table_of_contents_uses_legacy_controls_and_default_title() {
         let mut attributes = AttributeMap::new();
@@ -266,6 +278,42 @@ mod tests {
                 r#"<a style="display: none" href="javascript:;" onclick="WIKIDOT.page.listeners.unfoldToc(event)">Unfold</a>"#,
                 r#"</div><div class="title">Table of Contents</div><div id="toc-list"></div></div>"#,
             ),
+        );
+    }
+
+    #[test]
+    fn wikidot_table_of_contents_localizes_fold_labels() {
+        // theme:512-onwards shape: a [[toc]] on a JP-language wiki renders the
+        // TOC action-bar fold/unfold links with the localized catalog labels,
+        // matching live Wikidot (折り畳む / 表示), while EN keeps Fold / Unfold.
+        let attributes = AttributeMap::new();
+
+        let ja = wikidot_toc_body_with_language(None, &attributes, "ja");
+        assert!(
+            ja.contains(
+                r#"<a href="javascript:;" onclick="WIKIDOT.page.listeners.foldToc(event)">折り畳む</a>"#
+            ),
+            "{ja}"
+        );
+        assert!(
+            ja.contains(
+                r#"<a style="display: none" href="javascript:;" onclick="WIKIDOT.page.listeners.unfoldToc(event)">表示</a>"#
+            ),
+            "{ja}"
+        );
+
+        let en = wikidot_toc_body_with_language(None, &attributes, "en");
+        assert!(
+            en.contains(
+                r#"<a href="javascript:;" onclick="WIKIDOT.page.listeners.foldToc(event)">Fold</a>"#
+            ),
+            "{en}"
+        );
+        assert!(
+            en.contains(
+                r#"<a style="display: none" href="javascript:;" onclick="WIKIDOT.page.listeners.unfoldToc(event)">Unfold</a>"#
+            ),
+            "{en}"
         );
     }
 

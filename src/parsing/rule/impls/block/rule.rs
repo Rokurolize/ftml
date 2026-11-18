@@ -117,6 +117,14 @@ where
         None => return Err(parser.make_err(ParseErrorKind::NoSuchBlock)),
     };
 
+    if !block
+        .accepts_names
+        .iter()
+        .any(|accepted| accepted.eq_ignore_ascii_case(name))
+    {
+        return Err(parser.make_err(ParseErrorKind::NoSuchBlock));
+    }
+
     // Set block rule for better errors
     parser.set_block(block);
 

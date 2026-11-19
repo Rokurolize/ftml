@@ -139,3 +139,22 @@ impl From<PageRefParseError> for IncludeParseError {
         IncludeParseError
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_include_block_rejects_empty_page_reference() {
+        for input in [
+            "[[include :scp-wiki:/]]",
+            "[[include /]]",
+            "[[include :scp-wiki:#frag]]",
+        ] {
+            let error = parse_include_block(input, 0)
+                .expect_err("empty include page reference should reject");
+
+            assert_eq!(error, IncludeParseError, "{input} should reject");
+        }
+    }
+}

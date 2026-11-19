@@ -21,47 +21,63 @@
                                             "data": "parent"
                                         }
                                     ]
-                                },
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "list",
+                        "data": {
+                            "type": "bullet",
+                            "attributes": {},
+                            "items": [
                                 {
-                                    "item-type": "sub-list",
-                                    "element": "list",
-                                    "data": {
-                                        "type": "bullet",
-                                        "attributes": {},
-                                        "items": [
-                                            {
-                                                "item-type": "elements",
-                                                "attributes": {},
-                                                "elements": [
-                                                    {
-                                                        "element": "text",
-                                                        "data": "child"
-                                                    }
-                                                ]
-                                            },
-                                            {
-                                                "item-type": "sub-list",
-                                                "element": "list",
-                                                "data": {
-                                                    "type": "bullet",
-                                                    "attributes": {},
-                                                    "items": [
-                                                        {
-                                                            "item-type": "elements",
-                                                            "attributes": {},
-                                                            "elements": [
-                                                                {
-                                                                    "element": "text",
-                                                                    "data": "grandchild"
-                                                                }
-                                                            ]
-                                                        }
-                                                    ]
-                                                }
-                                            }
-                                        ]
-                                    }
-                                },
+                                    "item-type": "elements",
+                                    "attributes": {},
+                                    "elements": [
+                                        {
+                                            "element": "text",
+                                            "data": "child"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "list",
+                        "data": {
+                            "type": "bullet",
+                            "attributes": {},
+                            "items": [
+                                {
+                                    "item-type": "elements",
+                                    "attributes": {},
+                                    "elements": [
+                                        {
+                                            "element": "text",
+                                            "data": "grandchild"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "list",
+                        "data": {
+                            "type": "bullet",
+                            "attributes": {},
+                            "items": [
                                 {
                                     "item-type": "elements",
                                     "attributes": {},
@@ -74,6 +90,9 @@
                                 }
                             ]
                         }
+                    },
+                    {
+                        "element": "line-break"
                     },
                     {
                         "element": "container",
@@ -104,37 +123,42 @@
                                                         "data": "parent"
                                                     }
                                                 ]
-                                            },
-                                            {
-                                                "item-type": "sub-list",
-                                                "element": "list",
-                                                "data": {
-                                                    "type": "bullet",
-                                                    "attributes": {},
-                                                    "items": [
-                                                        {
-                                                            "item-type": "elements",
-                                                            "attributes": {},
-                                                            "elements": [
-                                                                {
-                                                                    "element": "text",
-                                                                    "data": "deep"
-                                                                },
-                                                                {
-                                                                    "element": "text",
-                                                                    "data": " "
-                                                                },
-                                                                {
-                                                                    "element": "text",
-                                                                    "data": "child"
-                                                                }
-                                                            ]
-                                                        }
-                                                    ]
-                                                }
                                             }
                                         ]
                                     }
+                                },
+                                {
+                                    "element": "line-break"
+                                },
+                                {
+                                    "element": "list",
+                                    "data": {
+                                        "type": "bullet",
+                                        "attributes": {},
+                                        "items": [
+                                            {
+                                                "item-type": "elements",
+                                                "attributes": {},
+                                                "elements": [
+                                                    {
+                                                        "element": "text",
+                                                        "data": "deep"
+                                                    },
+                                                    {
+                                                        "element": "text",
+                                                        "data": " "
+                                                    },
+                                                    {
+                                                        "element": "text",
+                                                        "data": "child"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "element": "line-break"
                                 }
                             ]
                         }

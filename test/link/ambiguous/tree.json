@@ -14,6 +14,7 @@
                         "element": "color",
                         "data": {
                             "color": "green",
+                            "background": false,
                             "elements": [
                                 {
                                     "element": "text",
@@ -27,7 +28,8 @@
                                     "element": "text",
                                     "data": "PLACE"
                                 }
-                            ]
+                            ],
+                            "attributes": {}
                         }
                     },
                     {
@@ -70,32 +72,15 @@
                         "element": "line-break"
                     },
                     {
-                        "element": "text",
-                        "data": "[#"
-                    },
-                    {
-                        "element": "text",
-                        "data": "bad"
-                    },
-                    {
-                        "element": "text",
-                        "data": "|"
-                    },
-                    {
-                        "element": "text",
-                        "data": "name"
-                    },
-                    {
-                        "element": "text",
-                        "data": " "
-                    },
-                    {
-                        "element": "text",
-                        "data": "label"
-                    },
-                    {
-                        "element": "text",
-                        "data": "]"
+                        "element": "link",
+                        "data": {
+                            "type": "anchor",
+                            "link": "#bad-name",
+                            "label": {
+                                "text": "label"
+                            },
+                            "target": null
+                        }
                     },
                     {
                         "element": "line-break"

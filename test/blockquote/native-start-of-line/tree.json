@@ -25,6 +25,18 @@
                         }
                     },
                     {
+                        "element": "line-break"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "blockquote",
+                "attributes": {},
+                "elements": [
+                    {
                         "element": "container",
                         "data": {
                             "type": {
@@ -51,6 +63,9 @@
                         }
                     },
                     {
+                        "element": "line-break"
+                    },
+                    {
                         "element": "container",
                         "data": {
                             "type": "paragraph",
@@ -67,6 +82,9 @@
                                 {
                                     "element": "text",
                                     "data": "text"
+                                },
+                                {
+                                    "element": "line-break"
                                 }
                             ]
                         }
@@ -86,7 +104,19 @@
                                             "data": "Apple"
                                         }
                                     ]
-                                },
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "list",
+                        "data": {
+                            "type": "bullet",
+                            "attributes": {},
+                            "items": [
                                 {
                                     "item-type": "elements",
                                     "attributes": {},
@@ -99,6 +129,9 @@
                                 }
                             ]
                         }
+                    },
+                    {
+                        "element": "line-break"
                     },
                     {
                         "element": "list",
@@ -115,7 +148,19 @@
                                             "data": "One"
                                         }
                                     ]
-                                },
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "list",
+                        "data": {
+                            "type": "numbered",
+                            "attributes": {},
+                            "items": [
                                 {
                                     "item-type": "elements",
                                     "attributes": {},
@@ -130,7 +175,13 @@
                         }
                     },
                     {
+                        "element": "line-break"
+                    },
+                    {
                         "element": "horizontal-rule"
+                    },
+                    {
+                        "element": "line-break"
                     },
                     {
                         "element": "container",
@@ -146,6 +197,9 @@
                                 }
                             ]
                         }
+                    },
+                    {
+                        "element": "line-break"
                     },
                     {
                         "element": "table",
@@ -181,7 +235,19 @@
                                             ]
                                         }
                                     ]
-                                },
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "table",
+                        "data": {
+                            "type": "simple",
+                            "attributes": {},
+                            "rows": [
                                 {
                                     "attributes": {},
                                     "cells": [
@@ -215,6 +281,9 @@
                         }
                     },
                     {
+                        "element": "line-break"
+                    },
+                    {
                         "element": "definition-list",
                         "data": [
                             {
@@ -233,6 +302,9 @@
                                 ]
                             }
                         ]
+                    },
+                    {
+                        "element": "line-break"
                     },
                     {
                         "element": "container",
@@ -267,6 +339,9 @@
                                     }
                                 },
                                 {
+                                    "element": "line-break"
+                                },
+                                {
                                     "element": "list",
                                     "data": {
                                         "type": "bullet",
@@ -292,6 +367,9 @@
                                             }
                                         ]
                                     }
+                                },
+                                {
+                                    "element": "line-break"
                                 }
                             ]
                         }
@@ -321,6 +399,9 @@
                                 {
                                     "element": "text",
                                     "data": "nested"
+                                },
+                                {
+                                    "element": "line-break"
                                 }
                             ]
                         }

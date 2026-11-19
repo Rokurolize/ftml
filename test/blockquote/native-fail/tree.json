@@ -27,16 +27,10 @@
                                 {
                                     "element": "text",
                                     "data": "class"
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "element": "container",
-                        "data": {
-                            "type": "paragraph",
-                            "attributes": {},
-                            "elements": [
+                                },
+                                {
+                                    "element": "line-break"
+                                },
                                 {
                                     "element": "text",
                                     "data": "text"

@@ -1020,9 +1020,8 @@ fn wikidot_footnote_footer_newlines_before_block_bodies() {
     ));
     assert!(list.contains("</a>. intro\n<ul>"), "{list}");
 
-    let (_, code) = render_text_and_html(concat!(
-        "A[[footnote]]\n[[code]]\nX\n[[/code]]\n[[/footnote]]",
-    ));
+    let (_, code) =
+        render_text_and_html("A[[footnote]]\n[[code]]\nX\n[[/code]]\n[[/footnote]]");
     assert!(code.contains("</a>.\n<div class=\"code\">"), "{code}");
 }
 

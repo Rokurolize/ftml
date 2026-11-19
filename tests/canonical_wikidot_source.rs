@@ -942,3 +942,41 @@ For information on licensing, see the guide.
     assert!(!html.contains("[[collapsible"), "{html}");
     assert!(!html.contains("[[/collapsible]]"), "{html}");
 }
+
+#[test]
+fn wikidot_table_cell_residual_text_keeps_frozen_leading_newline() {
+    let (_, html) = render_text_and_html(concat!(
+        "[[table]]\n[[row]]\n[[cell]]\n[[div]]\nA\n",
+        "[[/cell]]\n[[cell]]\nB[[/div]]E\n[[/cell]]\n[[/row]]\n[[/table]]",
+    ));
+    assert!(html.contains("<td><p>B</p>\nE</td>"), "{html}");
+}
+
+#[test]
+fn wikidot_crossed_table_residual_text_keeps_frozen_trailing_newline() {
+    let (_, html) = render_text_and_html(concat!(
+        "[[div]]\n[[table]]\n[[row]]\n[[cell]]\n[[table]]\n[[row]]\n",
+        "[[cell]]\nB\n[[/div]]\nE\n[[/cell]]\n[[/row]]\n[[/table]]\nG\n",
+        "[[/cell]]\n[[/row]]\n[[/table]]\nF",
+    ));
+    assert!(html.contains("<br>\nE\n<table>"), "{html}");
+}
+
+#[test]
+fn wikidot_crossed_div_table_residual_text_keeps_frozen_trailing_newline() {
+    let (_, html) = render_text_and_html(concat!(
+        "[[div]]\n[[table]]\n[[row]]\n[[cell]]\n[[/div]]E\n",
+        "[[/cell]]\n[[/row]]\n[[/table]]\nF",
+    ));
+    assert!(html.contains("<div>E\n<table>"), "{html}");
+}
+
+#[test]
+fn wikidot_bare_text_after_explicit_list_keeps_frozen_leading_newline() {
+    let (_, html) = render_text_and_html_with_layout_and_errors(
+        "[[ul]]\nX\n[[/ul]]\n|| T ||",
+        Layout::Wikidot,
+        true,
+    );
+    assert!(html.contains("</ul>\n|| T ||"), "{html}");
+}

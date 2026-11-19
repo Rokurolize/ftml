@@ -104,19 +104,63 @@ use crate::tree::{
 };
 use ref_map::*;
 
+fn legacy_bare_text_block(element: &Element) -> bool {
+    match element {
+        Element::Table(_) | Element::List { .. } | Element::TabView(_) => true,
+        Element::Container(container) => matches!(
+            container.ctype(),
+            ContainerType::Paragraph
+                | ContainerType::Div
+                | ContainerType::Blockquote
+                | ContainerType::Note
+                | ContainerType::Align(_)
+                | ContainerType::Header(_)
+        ),
+        _ => false,
+    }
+}
+
 pub fn render_elements(ctx: &mut HtmlContext, elements: &[Element]) {
     debug!("Rendering elements (length {})", elements.len());
 
     let mut index = 0;
     while index < elements.len() {
         match &elements[index] {
-            Element::Text(text) => {
-                ctx.push_escaped(text);
-                index += 1;
-
-                while let Some(Element::Text(text)) = elements.get(index) {
-                    ctx.push_escaped(text);
+            Element::Text(_) => {
+                let legacy = ctx.layout().legacy();
+                let prev_is_block = legacy
+                    && index
+                        .checked_sub(1)
+                        .and_then(|previous| elements.get(previous))
+                        .is_some_and(legacy_bare_text_block);
+                let mut run_end = index;
+                while matches!(elements.get(run_end + 1), Some(Element::Text(_))) {
+                    run_end += 1;
+                }
+                let next_is_table = legacy
+                    && matches!(elements.get(run_end + 1), Some(Element::Table(_)));
+                let starts_with_newline = matches!(
+                    &elements[index],
+                    Element::Text(text) if text.starts_with('\n')
+                );
+                let ends_with_newline = matches!(
+                    &elements[run_end],
+                    Element::Text(text) if text.ends_with('\n')
+                );
+                let run_has_content = elements[index..=run_end].iter().any(
+                    |element| matches!(element, Element::Text(text) if !text.is_empty()),
+                );
+                if prev_is_block && run_has_content && !starts_with_newline {
+                    ctx.push_raw('\n');
+                }
+                while index <= run_end {
+                    if let Element::Text(text) = &elements[index] {
+                        ctx.push_escaped(text);
+                    }
                     index += 1;
+                }
+                if next_is_table && run_has_content && !ends_with_newline {
+                    ctx.push_raw('\n');
                 }
             }
             Element::BibliographyBlock {

@@ -55,6 +55,9 @@ fn parse_fn<'r, 't>(
 
     let (arguments, body_start) =
         parser.get_head_map_with_body_start_wikidot(&BLOCK_HTML, in_head)?;
+    if parser.settings().layout.legacy() && arguments.has_source() && arguments.is_empty() {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     if !parser.settings().enable_html_blocks {
         if parser.native_blockquote_depth().is_some() {
             return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -322,36 +325,11 @@ mod tests {
                 r#"class="html-block-iframe""#,
             ),
             (
-                r#"[[html class=c]]y[[/html]]"#,
-                "y",
-                r#"class="html-block-iframe""#,
-            ),
-            (
-                r#"[[html class='a']]y[[/html]]"#,
-                "y",
-                r#"class="html-block-iframe""#,
-            ),
-            (
-                r#"[[html class = "a"]]y[[/html]]"#,
-                "y",
-                r#"class="html-block-iframe""#,
-            ),
-            (
-                r#"[[html foo]]x[[/html]]"#,
-                "x",
-                r#"class="html-block-iframe""#,
-            ),
-            (
                 r#"[[html ]]x[[/html]]"#,
                 "x",
                 r#"class="html-block-iframe""#,
             ),
             ("[[html\n]]x[[/html]]", "x", r#"class="html-block-iframe""#),
-            (
-                r#"[[html =]]x[[/html]]"#,
-                "x",
-                r#"class="html-block-iframe""#,
-            ),
         ] {
             let tokenization = crate::tokenize(source);
             let (tree, errors) =

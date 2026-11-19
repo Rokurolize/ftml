@@ -2608,14 +2608,24 @@ fn extend_consumed<'t>(body: &mut Vec<Element<'t>>, elements: Elements<'t>) {
 
 /// `,,,a,,,` is a subscript of `,a` plus a leftover comma.
 /// `a,,,b` has no second run, so it stays one literal token.
+/// A lone `,,,,` run is an empty subscript.
 fn try_consume_comma_run_subscript<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Option<(Elements<'t>, bool)>> {
     let miss = || Ok(ParseSuccess::new(None, Vec::new(), true));
-    if !parser.settings().layout.legacy() || comma_run_len(parser.current()).is_none() {
+    let Some(run_len) = comma_run_len(parser.current()) else {
+        return miss();
+    };
+    if !parser.settings().layout.legacy() {
         return miss();
     }
     if !has_later_comma_run(parser) {
+        if run_len == 4 {
+            if parser.step().is_err() {
+                return miss();
+            }
+            return Ok(ParseSuccess::new(Some((Elements::None, true)), Vec::new(), true));
+        }
         return miss();
     }
 

@@ -76,7 +76,7 @@ pub fn parse_include_block<'t>(
 /// Creates an [`IncludeRef`] out of pest [`Pairs`].
 fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError> {
     let page_raw = pairs.next().ok_or(IncludeParseError)?.as_str();
-    let page_ref = PageRef::parse(page_raw)?;
+    let page_ref = validate_include_page_ref(PageRef::parse(page_raw)?)?;
 
     trace!("Got page for include {page_ref:?}");
     let mut arguments = HashMap::new();
@@ -128,6 +128,14 @@ fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError
     }
 
     Ok(IncludeRef::new(page_ref, arguments))
+}
+
+fn validate_include_page_ref(page_ref: PageRef) -> Result<PageRef, IncludeParseError> {
+    if page_ref.page().is_empty() {
+        return Err(IncludeParseError);
+    }
+
+    Ok(page_ref)
 }
 
 #[derive(Debug, PartialEq, Eq)]

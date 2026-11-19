@@ -1009,7 +1009,10 @@ fn wikidot_footnote_footer_newlines_before_block_bodies() {
         "A[[footnote]]intro\n+ Heading[[/footnote]] ",
         "B[[footnote]]plain[[/footnote]]",
     ));
-    assert!(heading.contains("</a>. intro\n<h1 id=\"toc0\">"), "{heading}");
+    assert!(
+        heading.contains("</a>. intro\n<h1 id=\"toc0\">"),
+        "{heading}"
+    );
 
     let (_, list) = render_text_and_html(concat!(
         "A[[footnote]]intro\n* item one\n* item two[[/footnote]] ",

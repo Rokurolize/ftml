@@ -277,23 +277,25 @@ pub(crate) fn normalize_wikidot_blocks(
         if footnotes_empty && parent.ctype() == ContainerType::Div {
             output.retain(|element| !matches!(element, Element::FootnoteBlock { .. }));
         }
-        if !footnotes_empty && frame_contains
-            && let Some((open, close)) = delimiter_markers(parent.ctype()) {
-                let parent_frame = stack
-                    .last_mut()
-                    .expect("nested normalization frame has a parent");
-                parent_frame.output.push(Element::Text(Cow::Borrowed(open)));
-                parent_frame.contains.push(false);
-                for (element, contains) in output.into_iter().zip(contains) {
-                    parent_frame.output.push(element);
-                    parent_frame.contains.push(contains);
-                }
-                parent_frame
-                    .output
-                    .push(Element::Text(Cow::Borrowed(close)));
-                parent_frame.contains.push(false);
-                continue;
+        if !footnotes_empty
+            && frame_contains
+            && let Some((open, close)) = delimiter_markers(parent.ctype())
+        {
+            let parent_frame = stack
+                .last_mut()
+                .expect("nested normalization frame has a parent");
+            parent_frame.output.push(Element::Text(Cow::Borrowed(open)));
+            parent_frame.contains.push(false);
+            for (element, contains) in output.into_iter().zip(contains) {
+                parent_frame.output.push(element);
+                parent_frame.contains.push(contains);
             }
+            parent_frame
+                .output
+                .push(Element::Text(Cow::Borrowed(close)));
+            parent_frame.contains.push(false);
+            continue;
+        }
         *parent.elements_mut() = output;
         let parent_frame = stack
             .last_mut()

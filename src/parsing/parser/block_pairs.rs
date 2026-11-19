@@ -857,8 +857,8 @@ impl<'t> Scanner<'t> {
                 .find('\n')
                 .map_or(source.len(), |offset| token.span.start + offset);
             let mut own_line_closer = None;
-            for closer in index + 1..tokens.len() {
-                if tokens[closer].span.start >= line_end {
+            for (closer, closer_token) in tokens.iter().enumerate().skip(index + 1) {
+                if closer_token.span.start >= line_end {
                     break;
                 }
                 if scanner
@@ -898,8 +898,8 @@ impl<'t> Scanner<'t> {
                 continue;
             }
             scanner.surplus_div_heads.insert(index);
-            for closer in index + 1..tokens.len() {
-                if tokens[closer].span.start >= line_end {
+            for (closer, closer_token) in tokens.iter().enumerate().skip(index + 1) {
+                if closer_token.span.start >= line_end {
                     break;
                 }
                 if scanner
@@ -2446,7 +2446,7 @@ impl<'t> Scanner<'t> {
             let consumed_block = terminator_index.and_then(|index| {
                 let event = &modified[index];
                 (!event.is_close && event.kind != WikidotBlockKind::Div)
-                    .then(|| (event.kind, event.head))
+                    .then_some((event.kind, event.head))
             });
             let consumed_block_closer = consumed_block.and_then(|(kind, head_token)| {
                 (terminator_index.unwrap() + 1..promoted_closer).find_map(|index| {

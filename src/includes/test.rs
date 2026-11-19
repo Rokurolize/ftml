@@ -22,6 +22,46 @@ use super::{DebugIncluder, FetchedPage, IncludeRef, Includer, PageRef, include};
 use crate::layout::Layout;
 use crate::settings::{WikitextMode, WikitextSettings};
 use std::borrow::Cow;
+use std::convert::Infallible;
+
+#[derive(Debug)]
+struct FixedContentIncluder(&'static str);
+
+impl<'t> Includer<'t> for FixedContentIncluder {
+    type Error = Infallible;
+
+    fn include_pages(
+        &mut self,
+        includes: &[IncludeRef<'t>],
+    ) -> Result<Vec<FetchedPage<'t>>, Self::Error> {
+        Ok(includes
+            .iter()
+            .map(|include| FetchedPage {
+                page_ref: include.page_ref().clone(),
+                content: Some(Cow::Borrowed(self.0)),
+            })
+            .collect())
+    }
+
+    fn no_such_include(
+        &mut self,
+        _page_ref: &PageRef,
+    ) -> Result<Cow<'t, str>, Self::Error> {
+        panic!("missing page rendering is not reached for fixed content")
+    }
+}
+
+fn include_with_fixed_content(source: &str, content: &'static str) -> String {
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let (output, _pages) = include(
+        source,
+        &settings,
+        FixedContentIncluder(content),
+        || unreachable!(),
+    )
+    .expect("include failed");
+    output
+}
 
 #[test]
 fn multiline_self_referencing_argument_uses_later_fallback() {
@@ -33,24 +73,73 @@ fn multiline_self_referencing_argument_uses_later_fallback() {
         "|nohide=0\n",
         "]]",
     );
-    let (include, end) =
-        super::parse::parse_include_block(source, 0).expect("valid multiline include");
 
-    assert_eq!(end, source.len());
     assert_eq!(
-        include
-            .variables()
-            .get("ifprot")
-            .map(|value| value.trim_end()),
-        Some("0"),
+        include_with_fixed_content(source, "ifprot={$ifprot} nohide={$nohide}"),
+        "ifprot=0 nohide=true",
     );
-    assert_eq!(
-        include
-            .variables()
-            .get("nohide")
-            .map(|value| value.trim_end()),
-        Some("true"),
-    );
+}
+
+#[test]
+fn include_arguments_substitute_as_a_sequential_fold() {
+    const TARGET: &str = "A is {$a}.\nB is {$b}.\nM is {$marker}.\nTARGET-END";
+
+    for (arguments, expected) in [
+        (
+            "a=HELLO | marker={$a}",
+            "A is HELLO.\nB is {$b}.\nM is {$a}.\nTARGET-END",
+        ),
+        (
+            "marker={$a} | a=LATE",
+            "A is LATE.\nB is {$b}.\nM is LATE.\nTARGET-END",
+        ),
+        ("k=marker | {$k}=KEYVAL", TARGET),
+        ("marker={$marker}", TARGET),
+        (
+            "a={$b} | b={$a} | marker={$a}",
+            "A is {$a}.\nB is {$a}.\nM is {$a}.\nTARGET-END",
+        ),
+        (
+            "marker={$nope}",
+            "A is {$a}.\nB is {$b}.\nM is {$nope}.\nTARGET-END",
+        ),
+        (
+            "a={$b} | b={$c} | c=DEEP | marker={$a}",
+            "A is DEEP.\nB is DEEP.\nM is {$a}.\nTARGET-END",
+        ),
+        ("marker=", TARGET),
+        (
+            "marker=FIRST | marker=SECOND",
+            "A is {$a}.\nB is {$b}.\nM is FIRST.\nTARGET-END",
+        ),
+        (
+            "a=X | marker=pre-{$a}-post",
+            "A is X.\nB is {$b}.\nM is pre-{$a}-post.\nTARGET-END",
+        ),
+        (
+            "a=X | marker={$a}{$a}",
+            "A is X.\nB is {$b}.\nM is {$a}{$a}.\nTARGET-END",
+        ),
+        (
+            "b=B | marker={$b}",
+            "A is {$a}.\nB is B.\nM is {$b}.\nTARGET-END",
+        ),
+        (
+            "marker= | marker=SECOND",
+            "A is {$a}.\nB is {$b}.\nM is SECOND.\nTARGET-END",
+        ),
+        (
+            "marker={$marker}X | marker=SECOND",
+            "A is {$a}.\nB is {$b}.\nM is SECONDX.\nTARGET-END",
+        ),
+    ] {
+        let source = format!("[[include target | {arguments}]]");
+        assert_eq!(
+            include_with_fixed_content(&source, TARGET),
+            expected,
+            "{source}",
+        );
+    }
 }
 
 #[test]

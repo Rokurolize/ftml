@@ -218,27 +218,53 @@ pub(crate) fn normalize_wikidot_blocks(
 
     while let Some(frame) = stack.last_mut() {
         if let Some(element) = frame.input.next() {
-            let Element::Container(mut container) = element else {
-                frame.output.push(element);
-                continue;
-            };
-
-            if container.ctype() == ContainerType::Paragraph {
-                normalize_paragraph(&mut frame.output, container, footnotes_empty);
-                continue;
+            match element {
+                Element::Container(container)
+                    if container.ctype() == ContainerType::Paragraph =>
+                {
+                    let start = frame.output.len();
+                    normalize_paragraph(&mut frame.output, container, footnotes_empty);
+                    frame.contains.extend(
+                        frame.output[start..]
+                            .iter()
+                            .map(subtree_contains_footnote_block),
+                    );
+                    continue;
+                }
+                Element::Container(mut container) => {
+                    let children = std::mem::take(container.elements_mut());
+                    stack.push(ElementFrame::new(Some(container), children));
+                    continue;
+                }
+                element => {
+                    let contains = subtree_contains_footnote_block(&element);
+                    if !footnotes_empty && contains {
+                        for dissolved in dissolve_footnote_block_containers(vec![element])
+                        {
+                            frame
+                                .contains
+                                .push(subtree_contains_footnote_block(&dissolved));
+                            frame.output.push(dissolved);
+                        }
+                    } else {
+                        frame.contains.push(contains);
+                        frame.output.push(element);
+                    }
+                    continue;
+                }
             }
-
-            let children = std::mem::take(container.elements_mut());
-            stack.push(ElementFrame::new(Some(container), children));
-            continue;
         }
 
         let ElementFrame {
-            parent, mut output, ..
+            parent,
+            mut output,
+            mut contains,
+            ..
         } = stack.pop().expect("normalization stack was not empty");
         if !footnotes_empty {
-            normalize_block_sequence(&mut output);
+            normalize_block_sequence(&mut output, &mut contains);
         }
+        let frame_contains = contains.iter().any(|contains| *contains);
         let Some(mut parent) = parent else {
             if footnotes_empty {
                 drop_post_list_break_before_empty_footnote_block(&mut output);
@@ -251,12 +277,31 @@ pub(crate) fn normalize_wikidot_blocks(
         if footnotes_empty && parent.ctype() == ContainerType::Div {
             output.retain(|element| !matches!(element, Element::FootnoteBlock { .. }));
         }
+        if !footnotes_empty
+            && frame_contains
+            && let Some((open, close)) = delimiter_markers(parent.ctype())
+        {
+            let parent_frame = stack
+                .last_mut()
+                .expect("nested normalization frame has a parent");
+            parent_frame.output.push(Element::Text(Cow::Borrowed(open)));
+            parent_frame.contains.push(false);
+            for (element, contains) in output.into_iter().zip(contains) {
+                parent_frame.output.push(element);
+                parent_frame.contains.push(contains);
+            }
+            parent_frame
+                .output
+                .push(Element::Text(Cow::Borrowed(close)));
+            parent_frame.contains.push(false);
+            continue;
+        }
         *parent.elements_mut() = output;
-        stack
+        let parent_frame = stack
             .last_mut()
-            .expect("nested normalization frame has a parent")
-            .output
-            .push(Element::Container(parent));
+            .expect("nested normalization frame has a parent");
+        parent_frame.output.push(Element::Container(parent));
+        parent_frame.contains.push(frame_contains);
     }
 }
 
@@ -338,6 +383,7 @@ struct ElementFrame<'t> {
     parent: Option<Container<'t>>,
     input: IntoIter<Element<'t>>,
     output: Vec<Element<'t>>,
+    contains: Vec<bool>,
 }
 
 impl<'t> ElementFrame<'t> {
@@ -347,6 +393,7 @@ impl<'t> ElementFrame<'t> {
             parent,
             input: input.into_iter(),
             output: Vec::with_capacity(capacity),
+            contains: Vec::with_capacity(capacity),
         }
     }
 }
@@ -584,15 +631,17 @@ fn push_paragraph<'t>(
     )));
 }
 
-fn normalize_block_sequence(elements: &mut Vec<Element<'_>>) {
-    if !elements.iter().any(subtree_contains_footnote_block) {
+fn normalize_block_sequence(elements: &mut Vec<Element<'_>>, contains: &mut Vec<bool>) {
+    if !contains.iter().any(|contains| *contains) {
         return;
     }
 
-    let dissolved = dissolve_footnote_block_containers(std::mem::take(elements));
-    let mut output = Vec::with_capacity(dissolved.len());
-    let mut iter = dissolved.into_iter().peekable();
-    while let Some(element) = iter.next() {
+    let input = std::mem::take(elements);
+    let input_contains = std::mem::take(contains);
+    let mut output = Vec::with_capacity(input.len());
+    let mut output_contains = Vec::with_capacity(input.len());
+    let mut iter = input.into_iter().zip(input_contains).peekable();
+    while let Some((element, contains)) = iter.next() {
         let Element::FootnoteBlock {
             wikidot_inline_prefix,
             wikidot_inline_suffix,
@@ -600,6 +649,7 @@ fn normalize_block_sequence(elements: &mut Vec<Element<'_>>) {
         } = element
         else {
             output.push(element);
+            output_contains.push(contains);
             continue;
         };
 
@@ -608,25 +658,30 @@ fn normalize_block_sequence(elements: &mut Vec<Element<'_>>) {
             && !matches!(output.last(), Some(Element::LineBreak))
         {
             output.push(Element::LineBreak);
+            output_contains.push(false);
         }
         output.push(element);
+        output_contains.push(true);
         if wikidot_inline_suffix
             && iter
                 .peek()
-                .is_some_and(|next| !matches!(next, Element::LineBreak))
+                .is_some_and(|(next, _)| !matches!(next, Element::LineBreak))
         {
             output.push(Element::LineBreak);
+            output_contains.push(false);
         } else if iter
             .peek()
-            .is_some_and(|next| matches!(next, Element::Table(_)))
+            .is_some_and(|(next, _)| matches!(next, Element::Table(_)))
         {
             // Live's injection leaves a single newline between the footer and
             // the fragment after a marker authored on a table line; that
             // newline stays a break in front of the table the fragment forms.
             output.push(Element::LineBreak);
+            output_contains.push(false);
         }
     }
     *elements = output;
+    *contains = output_contains;
 }
 
 fn remove_empty_inline_blocks(elements: &mut Vec<Element<'_>>) {
@@ -1011,5 +1066,98 @@ mod tests {
         assert!(matches!(elements[0], Element::Container(_)));
         assert!(matches!(elements[1], Element::FootnoteBlock { .. }));
         assert!(matches!(elements[2], Element::Container(_)));
+    }
+
+    fn deep_footnote_shape(depth: usize) -> Vec<Element<'static>> {
+        let paragraph = Container::new(
+            ContainerType::Paragraph,
+            vec![
+                Element::Text(Cow::Borrowed("before")),
+                Element::FootnoteBlock {
+                    title: None,
+                    hide: false,
+                    wikidot_wrappers: Vec::new(),
+                    wikidot_inline_suffix: false,
+                    wikidot_inline_prefix: false,
+                    wikidot_tail_attached: false,
+                },
+                Element::Text(Cow::Borrowed("after")),
+            ],
+            AttributeMap::new(),
+        );
+        let mut elements = vec![Element::Container(paragraph)];
+        for _ in 0..depth {
+            elements = vec![Element::Container(Container::new(
+                ContainerType::Div,
+                elements,
+                AttributeMap::new(),
+            ))];
+        }
+        elements
+    }
+
+    #[test]
+    fn footnote_normalization_preserves_exact_deep_tree() {
+        const DEPTH: usize = 32;
+
+        let mut elements = deep_footnote_shape(DEPTH);
+        let mut expected = vec![
+            Element::Container(Container::new(
+                ContainerType::Paragraph,
+                vec![Element::Text(Cow::Borrowed("before"))],
+                AttributeMap::new(),
+            )),
+            Element::FootnoteBlock {
+                title: None,
+                hide: false,
+                wikidot_wrappers: Vec::new(),
+                wikidot_inline_suffix: false,
+                wikidot_inline_prefix: false,
+                wikidot_tail_attached: false,
+            },
+            Element::Container(Container::new(
+                ContainerType::Paragraph,
+                vec![Element::Text(Cow::Borrowed("after"))],
+                AttributeMap::new(),
+            )),
+        ];
+        for _ in 0..DEPTH {
+            expected = vec![Element::Container(Container::new(
+                ContainerType::Div,
+                expected,
+                AttributeMap::new(),
+            ))];
+        }
+
+        normalize_wikidot_blocks(&mut elements, false);
+
+        assert_eq!(elements, expected);
+    }
+
+    #[test]
+    fn footnote_normalization_deep_tree_is_linear() {
+        const DEPTH: usize = 2_048;
+
+        let mut elements = deep_footnote_shape(DEPTH);
+        let start = std::time::Instant::now();
+        normalize_wikidot_blocks(&mut elements, false);
+        let elapsed = start.elapsed();
+
+        for _ in 0..DEPTH {
+            let Element::Container(container) = elements.pop().expect("nested div")
+            else {
+                panic!("expected nested div");
+            };
+            assert_eq!(container.ctype(), ContainerType::Div);
+            elements = container.into();
+        }
+        assert_eq!(elements.len(), 3);
+        assert!(matches!(elements[0], Element::Container(_)));
+        assert!(matches!(elements[1], Element::FootnoteBlock { .. }));
+        assert!(matches!(elements[2], Element::Container(_)));
+        assert!(
+            elapsed < std::time::Duration::from_secs(10),
+            "deep footnote normalization took {elapsed:?}"
+        );
     }
 }

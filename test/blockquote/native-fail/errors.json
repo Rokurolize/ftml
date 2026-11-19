@@ -1,0 +1,20 @@
+[
+    {
+        "token": "line-break",
+        "rule": "block-div",
+        "span": [
+            13,
+            14
+        ],
+        "kind": "block-malformed-arguments"
+    },
+    {
+        "token": "left-block",
+        "rule": "fallback",
+        "span": [
+            2,
+            4
+        ],
+        "kind": "no-rules-match"
+    }
+]

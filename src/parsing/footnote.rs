@@ -277,8 +277,8 @@ pub(crate) fn normalize_wikidot_blocks(
         if footnotes_empty && parent.ctype() == ContainerType::Div {
             output.retain(|element| !matches!(element, Element::FootnoteBlock { .. }));
         }
-        if !footnotes_empty && frame_contains {
-            if let Some((open, close)) = delimiter_markers(parent.ctype()) {
+        if !footnotes_empty && frame_contains
+            && let Some((open, close)) = delimiter_markers(parent.ctype()) {
                 let parent_frame = stack
                     .last_mut()
                     .expect("nested normalization frame has a parent");
@@ -294,7 +294,6 @@ pub(crate) fn normalize_wikidot_blocks(
                 parent_frame.contains.push(false);
                 continue;
             }
-        }
         *parent.elements_mut() = output;
         let parent_frame = stack
             .last_mut()

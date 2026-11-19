@@ -607,6 +607,11 @@ struct Scanner<'t> {
     /// heading-line). Exhibited-opener surgery in `scan_segment` re-judges
     /// the ones sitting inside a `{{...}}` span.
     rejected_div_heads: Vec<(usize, usize)>,
+    /// Div heads a surplus of later closers activates even though the head
+    /// does not end its line. Their own-line closers are consumed with the
+    /// head and must not pair.
+    surplus_div_heads: BTreeSet<usize>,
+    vanishing_div_closers: BTreeSet<usize>,
     /// Div pairings forced by the exhibited-opener surgery for the
     /// segment currently being paired: (head token, closer token).
     /// Drained by `pair_events` for the same segment.
@@ -805,6 +810,8 @@ impl<'t> Scanner<'t> {
             heading_ranges,
             head_dropped,
             rejected_div_heads: Vec::new(),
+            surplus_div_heads: BTreeSet::new(),
+            vanishing_div_closers: BTreeSet::new(),
             forced_div_pairs: Vec::new(),
             module_closers,
             iftags_closers,
@@ -828,6 +835,81 @@ impl<'t> Scanner<'t> {
         };
         scanner.footnote_zones = scanner.compute_footnote_zones();
         scanner.iftags_elisions = scanner.compute_iftags_elisions();
+        // Live forms a single-line div head inside an enclosing div when its
+        // own-line closer is followed by two further closers separated only
+        // by whitespace. The own-line closer is consumed with the head and
+        // the head's body starts on the next physical line.
+        let div_marks =
+            super::wikidot_state::compute_wikidot_div_stream_marks(tokens, source);
+        for (index, token) in tokens.iter().enumerate() {
+            let Some(&(balance_before, _, own_line_closers, _)) =
+                div_marks.get(&token.span.start)
+            else {
+                continue;
+            };
+            if balance_before == 0
+                || own_line_closers == 0
+                || !scanner.line_prefix_clean(index)
+            {
+                continue;
+            }
+            let line_end = source[token.span.start..]
+                .find('\n')
+                .map_or(source.len(), |offset| token.span.start + offset);
+            let mut own_line_closer = None;
+            for closer in index + 1..tokens.len() {
+                if tokens[closer].span.start >= line_end {
+                    break;
+                }
+                if scanner
+                    .read_kind_closer(closer, WikidotBlockKind::Div)
+                    .is_some()
+                {
+                    own_line_closer = Some(closer);
+                    break;
+                }
+            }
+            let Some(first_closer) = own_line_closer else {
+                continue;
+            };
+            let mut cursor = scanner
+                .read_kind_closer(first_closer, WikidotBlockKind::Div)
+                .map_or(first_closer + 1, |head| head.head_end);
+            let mut surplus = 0;
+            while surplus < 2 && cursor < tokens.len() {
+                while cursor < tokens.len()
+                    && matches!(
+                        tokens[cursor].token,
+                        Token::Whitespace | Token::LineBreak | Token::ParagraphBreak
+                    )
+                {
+                    cursor += 1;
+                }
+                if let Some(closer) =
+                    scanner.read_kind_closer(cursor, WikidotBlockKind::Div)
+                {
+                    surplus += 1;
+                    cursor = closer.head_end;
+                } else {
+                    break;
+                }
+            }
+            if surplus < 2 {
+                continue;
+            }
+            scanner.surplus_div_heads.insert(index);
+            for closer in index + 1..tokens.len() {
+                if tokens[closer].span.start >= line_end {
+                    break;
+                }
+                if scanner
+                    .read_kind_closer(closer, WikidotBlockKind::Div)
+                    .is_some()
+                {
+                    scanner.vanishing_div_closers.insert(closer);
+                }
+            }
+        }
         scanner
     }
 
@@ -1584,7 +1666,10 @@ impl<'t> Scanner<'t> {
         }
         match kind {
             WikidotBlockKind::Div | WikidotBlockKind::Note => {
-                !self.on_heading_line(head_index) && self.followed_by_break(head.head_end)
+                !self.on_heading_line(head_index)
+                    && (self.followed_by_break(head.head_end)
+                        || (kind == WikidotBlockKind::Div
+                            && self.surplus_div_heads.contains(&head_index)))
             }
             WikidotBlockKind::Collapsible => true,
             WikidotBlockKind::AlignCenter
@@ -2354,6 +2439,22 @@ impl<'t> Scanner<'t> {
                     }
                 }
             }
+            // A non-div block opener taken as the promoted head's
+            // terminator never forms on live: it is consumed with the head
+            // and its closer leaks as literal body text. Drop both events
+            // so the scan does not predict a pair the descent never forms.
+            let consumed_block = terminator_index.and_then(|index| {
+                let event = &modified[index];
+                (!event.is_close && event.kind != WikidotBlockKind::Div)
+                    .then(|| (event.kind, event.head))
+            });
+            let consumed_block_closer = consumed_block.and_then(|(kind, head_token)| {
+                (terminator_index.unwrap() + 1..promoted_closer).find_map(|index| {
+                    let event = &modified[index];
+                    (event.kind == kind && event.is_close && event.closer > head_token)
+                        .then_some(event.closer)
+                })
+            });
             // Drop the spent closer and the div heads inside the
             // promoted range: the spent closer is consumed with the
             // head, and interior div heads are flattened, so neither
@@ -2363,12 +2464,20 @@ impl<'t> Scanner<'t> {
                 if Some(index) == spent_closer {
                     continue;
                 }
+                if Some(index) == terminator_index && consumed_block.is_some() {
+                    continue;
+                }
                 let token = if event.is_close {
                     event.closer
                 } else {
                     event.head
                 };
                 if flattened_tokens.contains(&token) {
+                    continue;
+                }
+                if consumed_block_closer
+                    .is_some_and(|closer| event.is_close && event.closer == closer)
+                {
                     continue;
                 }
                 if index > insert_at
@@ -2604,6 +2713,9 @@ impl<'t> Scanner<'t> {
         let Some(head) = self.read_head(i, true) else {
             return i + 1;
         };
+        if self.vanishing_div_closers.contains(&i) {
+            return head.head_end;
+        }
         let Some(rule_name) = self.classify(&head) else {
             return i + 1;
         };
@@ -4592,6 +4704,53 @@ mod tests {
             .expect("unable to start differential worker")
             .join()
             .expect("differential worker panicked");
+    }
+
+    #[test]
+    fn block_pairs_single_line_surplus_and_promoted_junk() {
+        let info = PageInfo::dummy();
+        let pair_bytes = |source: &str, kind: WikidotBlockKind| {
+            let tokenization = crate::tokenize(source);
+            let tokens = tokenization.tokens();
+            let pairs = compute_wikidot_block_pairs(
+                tokens,
+                tokenization.full_text().inner(),
+                &info,
+            );
+            pairs
+                .pairs()
+                .iter()
+                .filter(|pair| pair.kind == kind)
+                .map(|pair| {
+                    (
+                        tokens[pair.head].span.start,
+                        tokens[pair.closer_end - 1].span.end,
+                    )
+                })
+                .collect::<BTreeSet<_>>()
+        };
+
+        let surplus = include_str!(
+            "../../../test/div/single-line-div-surplus-forms-empty/input.ftml"
+        );
+        assert_eq!(
+            pair_bytes(surplus, WikidotBlockKind::Div),
+            BTreeSet::from([(0, 62), (18, 53)])
+        );
+
+        for source in [
+            include_str!(
+                "../../../test/div/exhibited-opener-promotion-no-closer/input.ftml"
+            ),
+            include_str!(
+                "../../../test/div/exhibited-opener-promotion-mid-pair/input.ftml"
+            ),
+        ] {
+            assert!(
+                pair_bytes(source, WikidotBlockKind::Collapsible).is_empty(),
+                "a promoted div head consumes its collapsible terminator as junk"
+            );
+        }
     }
 
     struct DifferentialOutput {

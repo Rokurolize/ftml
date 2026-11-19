@@ -10363,7 +10363,7 @@ where
                 self.set_wikidot_merge_follow();
             }
         }
-        Ok(true)
+        Ok(hoisted)
     }
 
     /// Whether the line at the boundary position is an UNQUOTED

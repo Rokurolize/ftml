@@ -147,9 +147,9 @@ pub fn render_elements(ctx: &mut HtmlContext, elements: &[Element]) {
                     &elements[run_end],
                     Element::Text(text) if text.ends_with('\n')
                 );
-                let run_has_content = elements[index..=run_end]
-                    .iter()
-                    .any(|element| matches!(element, Element::Text(text) if !text.is_empty()));
+                let run_has_content = elements[index..=run_end].iter().any(
+                    |element| matches!(element, Element::Text(text) if !text.is_empty()),
+                );
                 if prev_is_block && run_has_content && !starts_with_newline {
                     ctx.push_raw('\n');
                 }

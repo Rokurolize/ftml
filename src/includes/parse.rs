@@ -387,7 +387,7 @@ fn is_static_identifier(value: &str) -> bool {
 }
 
 fn validate_include_page_ref(page_ref: PageRef) -> Result<PageRef, IncludeParseError> {
-    if page_ref.page().is_empty() {
+    if page_ref.site().is_some() && page_ref.page().is_empty() {
         return Err(IncludeParseError);
     }
 
@@ -431,6 +431,18 @@ mod tests {
     }
 
     #[test]
+    fn validate_include_page_ref_accepts_a_siteless_empty_page() {
+        let page_ref = PageRef::page_only(":::");
+
+        assert_eq!(page_ref.page(), "");
+        assert_eq!(
+            validate_include_page_ref(page_ref.clone()),
+            Ok(page_ref),
+            "site-less empty page references should pass through",
+        );
+    }
+
+    #[test]
     fn validate_include_page_ref_accepts_non_empty_page() {
         let page_ref = PageRef::page_only("component:ok");
 
@@ -447,6 +459,15 @@ mod tests {
             .expect_err("empty include page should reject");
 
         assert_eq!(error, IncludeParseError);
+    }
+
+    #[test]
+    fn parse_include_block_accepts_an_empty_normalized_page_name() {
+        let (include, _) = parse_include_block("[[include :::]]", 0)
+            .expect("a colon run should parse as an empty page name");
+
+        assert_eq!(include.page_ref().site(), None);
+        assert_eq!(include.page_ref().page(), "");
     }
 
     #[test]

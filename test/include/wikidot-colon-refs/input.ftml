@@ -1,3 +1,6 @@
 [[include :foo]]
 [[include ::page]]
+[[include :::page]]
+[[include :site:]]
+[[include :::]]
 [[include page]]

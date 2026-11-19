@@ -57,7 +57,8 @@ stray_open_brackets = _{
 // Reference to a page, possibly not on this wiki
 
 page_ref = {
-    (":" ~ site_name ~ ":")? ~ page_name
+    (":" ~ site_name ~ ":")? ~ page_name |
+    ":" ~ site_name ~ ":"
 }
 site_name = _{ (!(" " | "\n" | "\t" | "[" | "|" | "]" | ":" | "\"" | "'") ~ ANY)+ }
 page_name = _{ (!(" " | "\n" | "\t" | "[" | "|" | "]" | "\"" | "'") ~ ANY)+ }

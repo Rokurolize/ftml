@@ -208,53 +208,48 @@ impl PageRef {
     /// Parses an `[[include]]` target, canonicalizing a host-form
     /// `<slug>.wikidot.com` site segment to `<slug>` before normalization.
     ///
-    /// Identical to [`PageRef::parse`] except for the site slice, which goes
-    /// through [`canonical_include_site`]. Both `[[include]]` parsers must
-    /// use this; [`PageRef::parse`] stays untouched for triple-bracket links,
-    /// where Wikidot keeps the dotted spelling in the local slug.
+    /// Live resolves a site pair only when both segments are non-empty and
+    /// the page segment consists of ASCII alphanumerics, `-`, `_`, and `:`;
+    /// any other run resolves as a page name only when the whole run uses
+    /// that same character set, and a run in that set whose normalized form
+    /// is empty still resolves, to the empty page name. [`PageRef::parse`]
+    /// stays untouched for triple-bracket links, where Wikidot keeps the
+    /// dotted spelling in the local slug.
     pub fn parse_include(s: &str) -> Result<PageRef, PageRefParseError> {
+        fn include_target_charset(s: &str) -> bool {
+            s.bytes().all(|byte| {
+                byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b':')
+            })
+        }
+
         let s = s.trim();
         if s.is_empty() {
             return Err(PageRefParseError);
         }
 
-        if let Some(page) = s
-            .strip_prefix("::")
-            .filter(|rest| !rest.contains(':'))
-            .or_else(|| s.strip_prefix(':').filter(|rest| !rest.contains(':')))
+        if let Some(rest) = s.strip_prefix(':')
+            && let Some(idx) = rest.find(':')
         {
-            let page = page.trim();
-            if page.is_empty() {
+            let site = rest[..idx].trim();
+            let page = rest[idx + 1..].trim();
+            if !site.is_empty() && !page.is_empty() {
+                if include_target_charset(page) {
+                    let site = canonical_include_site(site);
+                    let result = PageRef::page_and_site(site.into_owned(), page);
+                    if !result.page().is_empty() {
+                        return Ok(result);
+                    }
+                }
+
                 return Err(PageRefParseError);
             }
-
-            return Ok(PageRef::page_only(page));
         }
 
-        let result = match s.find(':') {
-            Some(0) => {
-                let idx = match s[1..].find(':') {
-                    Some(0) | None => return Err(PageRefParseError),
-
-                    Some(idx) => idx + 1,
-                };
-
-                let site = s[1..idx].trim();
-                let page = s[idx + 1..].trim();
-                let site = canonical_include_site(site);
-                PageRef::page_and_site(site.into_owned(), page)
-            }
-
-            Some(_) => PageRef::page_only(s),
-
-            None => PageRef::page_only(s),
-        };
-
-        if result.page().is_empty() {
+        if !include_target_charset(s) {
             return Err(PageRefParseError);
         }
 
-        Ok(result)
+        Ok(PageRef::page_only(s))
     }
 }
 
@@ -454,6 +449,12 @@ fn parse_include_canonicalizes_dotted_site_segments() {
     );
     assert!(PageRef::parse_include("").is_err());
     assert!(PageRef::parse_include(":scp-jp.wikidot.com:").is_err());
+    assert!(PageRef::parse_include(":foo:bar#frag").is_err());
+    assert!(PageRef::parse_include(":foo:bar/extra").is_err());
+    assert!(PageRef::parse_include("some.page").is_err());
+    assert!(PageRef::parse_include("a/b").is_err());
+    assert!(PageRef::parse_include("other-page#frag").is_err());
+    assert!(PageRef::parse_include("other-page/extra").is_err());
 }
 
 #[test]

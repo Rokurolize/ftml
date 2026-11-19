@@ -441,6 +441,9 @@ fn includes() {
     test!("[[ include]]", vec![]);
     test!("[[include :page]]", vec![PageRef::page_only("page")]);
     test!("[[include ::page]]", vec![PageRef::page_only("page")]);
+    test!("[[include :::page]]", vec![PageRef::page_only("page")]);
+    test!("[[include :site:]]", vec![PageRef::page_only("site")]);
+    test!("[[include :::]]", vec![PageRef::page_only("")]);
 
     test!(
         "[[include component:multi-line | contents= \nSome content here \nMore stuff",

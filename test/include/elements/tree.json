@@ -80,8 +80,8 @@
             "data": {
                 "paragraph-safe": false,
                 "variables": {
-                    "name": "peanut.png",
-                    "caption": "haha funi!"
+                    "caption": "haha funi!",
+                    "name": "peanut.png"
                 },
                 "location": {
                     "site": null,
@@ -148,19 +148,11 @@
                     },
                     {
                         "element": "text",
+                        "data": "site"
+                    },
+                    {
+                        "element": "text",
                         "data": ":"
-                    },
-                    {
-                        "element": "text",
-                        "data": "invalid"
-                    },
-                    {
-                        "element": "text",
-                        "data": "-"
-                    },
-                    {
-                        "element": "text",
-                        "data": "page"
                     },
                     {
                         "element": "text",

@@ -439,7 +439,8 @@ fn includes() {
     test!("[[include]]", vec![]);
     test!("[[include ]]", vec![]);
     test!("[[ include]]", vec![]);
-    test!("[[include ::page]]", vec![]);
+    test!("[[include :page]]", vec![PageRef::page_only("page")]);
+    test!("[[include ::page]]", vec![PageRef::page_only("page")]);
 
     test!(
         "[[include component:multi-line | contents= \nSome content here \nMore stuff",

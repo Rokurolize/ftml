@@ -451,11 +451,20 @@ fn comment_elision_needs_raw_barrier(source: &str, open: usize, close: usize) ->
 
 fn leading_comment_remains_an_owner_barrier(source: &str, open: usize) -> bool {
     let line_start = source[..open].rfind('\n').map_or(0, |newline| newline + 1);
-    // The text after the comment is not consulted: no line-start construct is
-    // exempt, same as `line_remainder_splices`.
-    source[line_start..open]
+    if !source[line_start..open]
         .bytes()
         .all(|byte| matches!(byte, b' ' | b'\t'))
+    {
+        return false;
+    }
+    let close_search = open + "[!--".len();
+    let Some(relative_close) = source[close_search..].find("--]") else {
+        return true;
+    };
+    let rest = &source[close_search + relative_close + "--]".len()..];
+    !["====", "~~~~", "----"]
+        .iter()
+        .any(|marker| rest.starts_with(marker))
 }
 
 fn code_closer_comment_starts(source: &str) -> BTreeSet<usize> {

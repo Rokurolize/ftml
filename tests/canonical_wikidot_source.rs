@@ -980,3 +980,65 @@ fn wikidot_bare_text_after_explicit_list_keeps_frozen_leading_newline() {
     );
     assert!(html.contains("</ul>\n|| T ||"), "{html}");
 }
+
+#[test]
+fn wikidot_suffixed_code_closer_drops_following_leading_space() {
+    let (_, html) = render_text_and_html("[[code]]\nbody\n[[/code]] x\n");
+    assert_eq!(
+        html,
+        "<div class=\"code\"><pre><code>body</code></pre></div>\nx",
+    );
+}
+
+#[test]
+fn wikidot_suffixed_div_closer_drops_following_leading_space() {
+    let (_, html) = render_text_and_html_with_layout_and_errors(
+        concat!(
+            "[[div]]\n* item one\n* item two[[/div]] tail\n[[/div]]\n",
+            "\nAfter",
+        ),
+        Layout::Wikidot,
+        true,
+    );
+    assert!(html.contains("</ul></div>\ntail<br>\n[[/div]]"), "{html}");
+}
+
+#[test]
+fn wikidot_footnote_footer_newlines_before_block_bodies() {
+    let (_, heading) = render_text_and_html(concat!(
+        "A[[footnote]]intro\n+ Heading[[/footnote]] ",
+        "B[[footnote]]plain[[/footnote]]",
+    ));
+    assert!(
+        heading.contains("</a>. intro\n<h1 id=\"toc0\">"),
+        "{heading}"
+    );
+
+    let (_, list) = render_text_and_html(concat!(
+        "A[[footnote]]intro\n* item one\n* item two[[/footnote]] ",
+        "B[[footnote]]plain[[/footnote]]",
+    ));
+    assert!(list.contains("</a>. intro\n<ul>"), "{list}");
+
+    let (_, code) =
+        render_text_and_html("A[[footnote]]\n[[code]]\nX\n[[/code]]\n[[/footnote]]");
+    assert!(code.contains("</a>.\n<div class=\"code\">"), "{code}");
+}
+
+#[test]
+fn wikidot_comment_prefix_keeps_line_start_block_rules() {
+    let (_, rule) = render_text_and_html("[!--x--]----\n");
+    assert_eq!(rule, "<hr>");
+
+    let (_, separator) = render_text_and_html("[!--x--]====\n");
+    assert_eq!(
+        separator,
+        "<div class=\"content-separator\" style=\"display: none:\"></div>",
+    );
+
+    let (_, clear_float) = render_text_and_html("[!--x--]~~~~\n");
+    assert_eq!(
+        clear_float,
+        "<div style=\"clear:both; height: 0px; font-size: 1px\"></div>",
+    );
+}

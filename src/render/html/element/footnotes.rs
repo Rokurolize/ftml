@@ -221,7 +221,14 @@ pub fn render_footnote_block(
                                     .contents(&id);
                                 ctx.push_raw('.');
                                 if tiers.contains(&0) {
-                                    ctx.push_raw(' ');
+                                    let first_is_block = contents
+                                        .iter()
+                                        .zip(tiers)
+                                        .find(|(_, element_tier)| **element_tier == 0)
+                                        .is_some_and(|(element, _)| {
+                                            wikidot_footnote_block(element)
+                                        });
+                                    ctx.push_raw(if first_is_block { '\n' } else { ' ' });
                                 }
                                 render_wikidot_footnote_tier(ctx, contents, tiers, 0);
                             };
@@ -287,23 +294,80 @@ pub fn render_footnote_block(
         });
 }
 
+fn wikidot_footnote_block(element: &Element) -> bool {
+    match element {
+        Element::Code(_)
+        | Element::List { .. }
+        | Element::Table(_)
+        | Element::TabView(_) => true,
+        Element::Container(container) => matches!(
+            container.ctype(),
+            ContainerType::Div
+                | ContainerType::Blockquote
+                | ContainerType::Note
+                | ContainerType::Align(_)
+                | ContainerType::Header(_)
+        ),
+        _ => false,
+    }
+}
+
 fn render_wikidot_footnote_tier(
     ctx: &mut HtmlContext,
     contents: &[Element],
     tiers: &[u8],
     tier: u8,
 ) {
-    for (element, element_tier) in contents.iter().zip(tiers) {
-        if *element_tier != tier {
+    let mut index = 0;
+    let mut has_content = false;
+    let mut prev_is_block = false;
+    while index < contents.len() {
+        if tiers[index] != tier {
+            index += 1;
             continue;
         }
-        if matches!(
-            element,
-            Element::Container(container) if container.ctype() == ContainerType::Paragraph
-        ) {
-            ctx.push_raw('\n');
+        match &contents[index] {
+            Element::Text(_) => {
+                let mut run = String::new();
+                while index < contents.len()
+                    && tiers[index] == tier
+                    && matches!(contents[index], Element::Text(_))
+                {
+                    if let Element::Text(text) = &contents[index] {
+                        run.push_str(text);
+                    }
+                    index += 1;
+                }
+                if prev_is_block {
+                    if let Some(rest) = run.strip_prefix('\n') {
+                        ctx.push_raw('\n');
+                        ctx.push_escaped(rest.trim_start_matches([' ', '\t']));
+                    } else {
+                        ctx.push_raw('\n');
+                        ctx.push_escaped(&run);
+                    }
+                } else {
+                    ctx.push_escaped(&run);
+                }
+                has_content |= !run.is_empty();
+                prev_is_block = false;
+            }
+            element => {
+                let is_block = wikidot_footnote_block(element);
+                let paragraph = matches!(
+                    element,
+                    Element::Container(container)
+                        if container.ctype() == ContainerType::Paragraph
+                );
+                if (is_block && has_content) || paragraph {
+                    ctx.push_raw('\n');
+                }
+                render_element(ctx, element);
+                has_content = true;
+                prev_is_block = is_block;
+                index += 1;
+            }
         }
-        render_element(ctx, element);
     }
 }
 

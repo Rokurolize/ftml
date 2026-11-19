@@ -106,7 +106,10 @@ use ref_map::*;
 
 fn legacy_bare_text_block(element: &Element) -> bool {
     match element {
-        Element::Table(_) | Element::List { .. } | Element::TabView(_) => true,
+        Element::Table(_)
+        | Element::List { .. }
+        | Element::TabView(_)
+        | Element::Code(_) => true,
         Element::Container(container) => matches!(
             container.ctype(),
             ContainerType::Paragraph
@@ -153,11 +156,22 @@ pub fn render_elements(ctx: &mut HtmlContext, elements: &[Element]) {
                 if prev_is_block && run_has_content && !starts_with_newline {
                     ctx.push_raw('\n');
                 }
+                let mut run = String::new();
                 while index <= run_end {
                     if let Element::Text(text) = &elements[index] {
-                        ctx.push_escaped(text);
+                        run.push_str(text);
                     }
                     index += 1;
+                }
+                if prev_is_block && starts_with_newline {
+                    if let Some(rest) = run.strip_prefix('\n') {
+                        ctx.push_raw('\n');
+                        ctx.push_escaped(rest.trim_start_matches([' ', '\t']));
+                    } else {
+                        ctx.push_escaped(&run);
+                    }
+                } else {
+                    ctx.push_escaped(&run);
                 }
                 if next_is_table && run_has_content && !ends_with_newline {
                     ctx.push_raw('\n');

@@ -309,6 +309,14 @@ fn quoted_list_item_holds_only_this_collapsible(
     })
 }
 
+fn wikidot_collapsible_closer_is_bare(source: &str, byte: usize) -> bool {
+    const CLOSER: &[u8] = b"[[/collapsible]]";
+    source
+        .as_bytes()
+        .get(byte..byte.saturating_add(CLOSER.len()))
+        .is_some_and(|slice| slice.eq_ignore_ascii_case(CLOSER))
+}
+
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &str,
@@ -332,7 +340,12 @@ fn parse_fn<'r, 't>(
                 pair.head_byte,
                 pair.closer_byte,
             );
-        if crossed_div && !pair.flat || wrapped_center {
+        if !wikidot_collapsible_closer_is_bare(
+            parser.full_text().inner(),
+            pair.closer_byte,
+        ) || crossed_div && !pair.flat
+            || wrapped_center
+        {
             return Err(parser.make_err(ParseErrorKind::RuleFailed));
         }
     }
@@ -798,6 +811,25 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
         let text = TextRender.render(&tree, &page_info, &settings);
         (html, text, errors)
+    }
+
+    #[test]
+    fn wikidot_crossed_collapsible_with_spaced_closer_stays_literal() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let sources = [
+            "[[collapsible show=\"episode\" hide=\"close\"]]\n[[div class=\"content-panel\"]]\nbody\n[[/collapsible ]]\n[[/div]]\noutside\n",
+            "> [[=]]\n> [[collapsible show=\"poetry\" hide=\"poetry\"]]\n> [[/=]]\n> originally written here\n> [[/collapsible ]]\noutside\n",
+        ];
+        for source in sources {
+            let mut prepared = source.to_owned();
+            crate::preprocess_for_layout(&mut prepared, settings.layout);
+            let tokenization = crate::tokenize(&prepared);
+            let (tree, _) = crate::parse(&tokenization, &page_info, &settings).into();
+            let html = HtmlRender.render(&tree, &page_info, &settings).body;
+            assert!(html.contains("[[collapsible show=&quot;"), "{html}");
+            assert!(!html.contains("collapsible-block"), "{html}");
+        }
     }
 
     #[test]

@@ -1245,12 +1245,12 @@ mod tests {
             &tagged,
             &legacy
         ));
-        assert!(body_rendered(
+        assert!(!body_rendered(
             "[[iftags -]]body[[/iftags]]",
             &tagless,
             &legacy
         ));
-        assert!(body_rendered(
+        assert!(!body_rendered(
             "[[iftags -]]body[[/iftags]]",
             &tagged,
             &legacy

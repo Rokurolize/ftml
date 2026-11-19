@@ -37,25 +37,23 @@ impl<'t> ElementCondition<'t> {
     }
 
     pub fn parse(raw_spec: &'t str) -> Vec<ElementCondition<'t>> {
-        let mut conditions = Vec::new();
-        for spec in raw_spec.split(' ').filter(|s| !s.is_empty()) {
-            let (ctype, value) = Self::split_spec(spec);
-            conditions.push(Self::new(ctype, value));
-        }
-
-        conditions
+        raw_spec
+            .split(' ')
+            .filter(|s| !s.is_empty())
+            .map(Self::new_from_value)
+            .collect()
     }
 
-    fn split_spec(value: &str) -> (ElementConditionType, &str) {
+    fn new_from_value(value: &'t str) -> Self {
         if let Some(value) = value.strip_prefix('+') {
-            return (ElementConditionType::Required, value);
+            return Self::new(ElementConditionType::Required, value);
         }
 
         if let Some(value) = value.strip_prefix('-') {
-            return (ElementConditionType::Prohibited, value);
+            return Self::new(ElementConditionType::Prohibited, value);
         }
 
-        (ElementConditionType::Present, value)
+        Self::new(ElementConditionType::Present, value)
     }
 
     pub fn parse_cow(spec: Cow<'t, str>) -> Vec<ElementCondition<'t>> {
@@ -65,10 +63,23 @@ impl<'t> ElementCondition<'t> {
                 .split(' ')
                 .filter(|s| !s.is_empty())
                 .map(|part| {
-                    let (ctype, value) = Self::split_spec(part);
+                    if let Some(value) = part.strip_prefix('+') {
+                        return ElementCondition {
+                            ctype: ElementConditionType::Required,
+                            value: Cow::Owned(value.to_owned()),
+                        };
+                    }
+
+                    if let Some(value) = part.strip_prefix('-') {
+                        return ElementCondition {
+                            ctype: ElementConditionType::Prohibited,
+                            value: Cow::Owned(value.to_owned()),
+                        };
+                    }
+
                     ElementCondition {
-                        ctype,
-                        value: Cow::Owned(value.to_owned()),
+                        ctype: ElementConditionType::Present,
+                        value: Cow::Owned(part.to_owned()),
                     }
                 })
                 .collect(),
@@ -102,6 +113,10 @@ impl<'t> ElementCondition<'t> {
         let mut had_present = false;
 
         for condition in conditions {
+            if condition.value.is_empty() {
+                return false;
+            }
+
             let has_value = values.iter().any(|value| matches(value, &condition.value));
 
             match condition.ctype {

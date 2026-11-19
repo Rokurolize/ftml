@@ -218,6 +218,19 @@ impl PageRef {
             return Err(PageRefParseError);
         }
 
+        if let Some(page) = s
+            .strip_prefix("::")
+            .filter(|rest| !rest.contains(':'))
+            .or_else(|| s.strip_prefix(':').filter(|rest| !rest.contains(':')))
+        {
+            let page = page.trim();
+            if page.is_empty() {
+                return Err(PageRefParseError);
+            }
+
+            return Ok(PageRef::page_only(page));
+        }
+
         let result = match s.find(':') {
             Some(0) => {
                 let idx = match s[1..].find(':') {
@@ -441,6 +454,12 @@ fn parse_include_canonicalizes_dotted_site_segments() {
     );
     assert!(PageRef::parse_include("").is_err());
     assert!(PageRef::parse_include(":scp-jp.wikidot.com:").is_err());
+}
+
+#[test]
+fn parse_link_form_still_rejects_leading_colons_without_a_site_pair() {
+    assert!(PageRef::parse(":foo").is_err());
+    assert!(PageRef::parse("::page").is_err());
 }
 
 #[test]

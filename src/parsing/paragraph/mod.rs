@@ -983,10 +983,7 @@ where
                     Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
                 );
             let code_has_same_line_residual = elements_end_with_code(&elements)
-                && !matches!(
-                    parser.current().token,
-                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
-                );
+                && wikidot_content_ahead_on_line(parser);
             // A rule can consume the newline after [[/tabview]] and leave the
             // next source line as the current token. Live wraps that line.
             // Only text that still shares the closer's line stays bare.
@@ -999,10 +996,7 @@ where
                 && wikidot_residual_shares_closer_line(parser);
             let div_has_same_line_residual = div_residual_opener
                 && active_div
-                && !matches!(
-                    parser.current().token,
-                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
-                );
+                && wikidot_content_ahead_on_line(parser);
             let literal_iftags_line = parser.settings().layout.legacy()
                 && errors.iter().any(|error| {
                     error.kind() == ParseErrorKind::RuleFailed
@@ -1651,6 +1645,21 @@ fn elements_contain_toc(elements: &Elements<'_>) -> bool {
         Elements::None => false,
         Elements::Single(element) => is_toc(element),
         Elements::Multiple(elements) => elements.iter().any(is_toc),
+    }
+}
+
+fn wikidot_content_ahead_on_line(parser: &Parser<'_, '_>) -> bool {
+    let mut probe = parser.clone();
+    loop {
+        match probe.current().token {
+            Token::Whitespace => {
+                if probe.step().is_err() {
+                    return false;
+                }
+            }
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd => return false,
+            _ => return true,
+        }
     }
 }
 

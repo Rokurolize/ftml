@@ -340,8 +340,10 @@ fn parse_fn<'r, 't>(
                 pair.head_byte,
                 pair.closer_byte,
             );
-        if !wikidot_collapsible_closer_is_bare(parser.full_text().inner(), pair.closer_byte)
-            || crossed_div && !pair.flat
+        if !wikidot_collapsible_closer_is_bare(
+            parser.full_text().inner(),
+            pair.closer_byte,
+        ) || crossed_div && !pair.flat
             || wrapped_center
         {
             return Err(parser.make_err(ParseErrorKind::RuleFailed));

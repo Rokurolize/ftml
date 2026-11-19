@@ -55,7 +55,8 @@ fn parse_fn<'r, 't>(
 
     let (arguments, body_start) =
         parser.get_head_map_with_body_start_wikidot(&BLOCK_HTML, in_head)?;
-    if parser.settings().layout.legacy() && arguments.has_source() && arguments.is_empty() {
+    if parser.settings().layout.legacy() && arguments.has_source() && arguments.is_empty()
+    {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     if !parser.settings().enable_html_blocks {

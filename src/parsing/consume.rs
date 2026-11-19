@@ -2624,7 +2624,11 @@ fn try_consume_comma_run_subscript<'r, 't>(
             if parser.step().is_err() {
                 return miss();
             }
-            return Ok(ParseSuccess::new(Some((Elements::None, true)), Vec::new(), true));
+            return Ok(ParseSuccess::new(
+                Some((Elements::None, true)),
+                Vec::new(),
+                true,
+            ));
         }
         return miss();
     }

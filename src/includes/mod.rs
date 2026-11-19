@@ -27,14 +27,13 @@ mod includer;
 mod parse;
 mod quoted;
 
-pub use self::include_ref::IncludeRef;
+pub use self::include_ref::{IncludeArguments, IncludeRef};
 pub use self::includer::{DebugIncluder, FetchedPage, Includer, NullIncluder};
 
 use self::parse::parse_include_block;
 use self::quoted::parse_quoted_include;
 use crate::data::PageRef;
 use crate::settings::WikitextSettings;
-use crate::tree::VariableMap;
 use regex::{Regex, RegexBuilder};
 use std::sync::LazyLock;
 
@@ -46,8 +45,6 @@ static INCLUDE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
         .build()
         .unwrap()
 });
-static VARIABLE_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\{\$(?P<name>[a-zA-Z0-9_\-]+)\}").unwrap());
 
 /// Replaces the include blocks in a string with the content of the pages referenced by those
 /// blocks.
@@ -178,7 +175,7 @@ where
             output.replace_range(range, "");
             continue;
         };
-        let (page_ref, variables) = include.into();
+        let (page_ref, arguments): (PageRef, IncludeArguments<'t>) = include.into();
 
         let range_start = range.start;
         let range_end = range.end;
@@ -190,7 +187,7 @@ where
 
         let replace_with = match fetched.content {
             Some(mut content) => {
-                replace_variables(content.to_mut(), &variables);
+                replace_variables(content.to_mut(), &arguments);
                 content
             }
 
@@ -259,20 +256,11 @@ fn find_include_end(input: &str, start: usize, end_bound: usize) -> Option<usize
     None
 }
 
-fn replace_variables(content: &mut String, variables: &VariableMap) {
-    let mut matches = Vec::new();
-
-    for capture in VARIABLE_REGEX.captures_iter(content) {
-        let mtch = capture.get(0).unwrap();
-        let name = &capture["name"];
-
-        if let Some(value) = variables.get(name) {
-            matches.push((value, mtch.range()));
+fn replace_variables(content: &mut String, arguments: &IncludeArguments<'_>) {
+    for (key, value) in arguments {
+        let placeholder = format!("{{${key}}}");
+        if content.contains(&placeholder) {
+            *content = content.replace(&placeholder, value);
         }
-    }
-
-    matches.reverse();
-    for (value, range) in matches {
-        content.replace_range(range, value);
     }
 }

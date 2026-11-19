@@ -28,14 +28,12 @@ mod parser {
 }
 
 use self::parser::*;
-use super::{IncludeRef, VARIABLE_REGEX};
+use super::IncludeRef;
 use crate::data::{PageRef, PageRefParseError};
 use crate::tree::VariableMap;
 use pest::Parser;
 use pest::iterators::Pairs;
-use std::collections::HashMap;
-
-const INCLUDE_ARGUMENT_EXPANSION_ALLOWANCE: usize = 64 * 1024;
+use std::borrow::Cow;
 
 /// The character set PHP's default `trim()` strips, which is what live applies
 /// to each include argument value (at both ends).
@@ -98,9 +96,19 @@ fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError
     let spaced_empty_separator = argument_tail.strip_prefix('|').is_some_and(|spacing| {
         !spacing.is_empty() && spacing.bytes().all(|byte| matches!(byte, b' ' | b'\t'))
     });
-    let arguments = resolve_include_arguments(&raw_arguments);
+    let mut arguments = Vec::new();
+    let mut variables = VariableMap::new();
+    for raw in &raw_arguments {
+        if raw.authored_empty_value {
+            continue;
+        }
+        arguments.push((Cow::Borrowed(raw.key), Cow::Borrowed(raw.value)));
+        variables
+            .entry(Cow::Borrowed(raw.key))
+            .or_insert_with(|| Cow::Borrowed(raw.value));
+    }
 
-    Ok(IncludeRef::new(page_ref, arguments)
+    Ok(IncludeRef::with_arguments(page_ref, variables, arguments)
         .with_spaced_empty_separator(spaced_empty_separator))
 }
 
@@ -223,167 +231,6 @@ fn complete_comment_end(bytes: &[u8], start: usize) -> Option<usize> {
         index += 1;
     }
     None
-}
-
-fn resolve_include_arguments(
-    raw_arguments: &[RawIncludeArgument<'_>],
-) -> VariableMap<'static> {
-    let round_limit = raw_arguments.len().saturating_mul(2).clamp(1, 128);
-    let expansion_limit = raw_arguments
-        .iter()
-        .fold(0usize, |size, argument| {
-            size.saturating_add(argument.key.len())
-                .saturating_add(argument.value.len())
-        })
-        .saturating_add(INCLUDE_ARGUMENT_EXPANSION_ALLOWANCE);
-    let mut arguments = HashMap::<String, String>::new();
-
-    for argument in raw_arguments {
-        if argument.authored_empty_value
-            || !is_static_identifier(argument.key)
-            || argument.value.contains("{$")
-        {
-            continue;
-        }
-        arguments
-            .entry(argument.key.to_owned())
-            .or_insert_with(|| argument.value.to_owned());
-    }
-
-    for _ in 0..round_limit {
-        let mut next = HashMap::<String, String>::new();
-        let mut next_size = 0usize;
-        for argument in raw_arguments {
-            if argument.authored_empty_value {
-                continue;
-            }
-            let key = expand_argument_expression(
-                argument.key,
-                &arguments,
-                round_limit,
-                None,
-                expansion_limit,
-            );
-            if !is_static_identifier(&key) {
-                continue;
-            }
-            let self_reference = format!("{{${key}}}");
-            let blocked_name = argument
-                .value
-                .contains(&self_reference)
-                .then_some(key.as_str())
-                .filter(|_| {
-                    arguments
-                        .get(&key)
-                        .is_some_and(|value| value.contains(&self_reference))
-                });
-            let value = expand_argument_expression(
-                argument.value,
-                &arguments,
-                round_limit,
-                blocked_name,
-                expansion_limit,
-            );
-            let fallback_reference = value.trim_end_matches([' ', '\t', '\r', '\n']);
-            if fallback_reference == format!("{{${key}}}") {
-                continue;
-            }
-            if next.contains_key(&key) {
-                continue;
-            }
-            next_size = next_size
-                .saturating_add(key.len())
-                .saturating_add(value.len());
-            if next_size > expansion_limit {
-                return arguments
-                    .into_iter()
-                    .map(|(key, value)| (key.into(), value.into()))
-                    .collect();
-            }
-            next.insert(key, value);
-        }
-        if next == arguments {
-            break;
-        }
-        arguments = next;
-    }
-
-    arguments
-        .into_iter()
-        .map(|(key, value)| (key.into(), value.into()))
-        .collect()
-}
-
-fn expand_argument_expression(
-    expression: &str,
-    arguments: &HashMap<String, String>,
-    round_limit: usize,
-    blocked_name: Option<&str>,
-    expansion_limit: usize,
-) -> String {
-    let mut output = expression.to_owned();
-    for _ in 0..round_limit {
-        let Some(expanded) = expand_argument_expression_once(
-            &output,
-            arguments,
-            blocked_name,
-            expansion_limit,
-        ) else {
-            break;
-        };
-        if expanded == output {
-            break;
-        }
-        output = expanded;
-    }
-    output
-}
-
-fn expand_argument_expression_once(
-    expression: &str,
-    arguments: &HashMap<String, String>,
-    blocked_name: Option<&str>,
-    expansion_limit: usize,
-) -> Option<String> {
-    let mut expanded = String::with_capacity(expression.len().min(expansion_limit));
-    let mut copied_until = 0;
-
-    for capture in VARIABLE_REGEX.captures_iter(expression) {
-        let matched = capture.get(0).expect("variable capture has a full match");
-        let replacement = if blocked_name.is_some_and(|name| name == &capture["name"]) {
-            matched.as_str()
-        } else {
-            arguments
-                .get(&capture["name"])
-                .map(|value| value.trim_end_matches([' ', '\t', '\r', '\n']))
-                .unwrap_or(matched.as_str())
-        };
-        let literal = &expression[copied_until..matched.start()];
-        let new_len = expanded
-            .len()
-            .checked_add(literal.len())?
-            .checked_add(replacement.len())?;
-        if new_len > expansion_limit {
-            return None;
-        }
-        expanded.push_str(literal);
-        expanded.push_str(replacement);
-        copied_until = matched.end();
-    }
-
-    let remainder = &expression[copied_until..];
-    if expanded.len().checked_add(remainder.len())? > expansion_limit {
-        return None;
-    }
-    expanded.push_str(remainder);
-    Some(expanded)
-}
-
-fn is_static_identifier(value: &str) -> bool {
-    !value.is_empty()
-        && value.chars().all(|character| {
-            character.is_ascii_alphanumeric() || matches!(character, '-' | '_')
-        })
 }
 
 fn validate_include_page_ref(page_ref: PageRef) -> Result<PageRef, IncludeParseError> {
@@ -614,7 +461,7 @@ mod tests {
     }
 
     #[test]
-    fn recursive_include_argument_growth_is_bounded() {
+    fn recursive_include_arguments_are_stored_without_expansion() {
         let mut source = String::from("[[include page |a={$a}{$a}|a=x");
         for index in 0..24 {
             source.push_str(&format!("|dummy{index}=x"));
@@ -622,17 +469,24 @@ mod tests {
         source.push_str("]]");
 
         let (include, _) = parse_include_block(&source, 0).expect("include should parse");
-        let value = include.variables().get("a").expect("a should resolve");
+        let total_size = include
+            .arguments()
+            .iter()
+            .map(|(key, value)| key.len() + value.len())
+            .sum::<usize>();
 
+        assert_eq!(
+            include.variables().get("a").map(Cow::as_ref),
+            Some("{$a}{$a}"),
+        );
         assert!(
-            value.len() <= source.len() + INCLUDE_ARGUMENT_EXPANSION_ALLOWANCE,
-            "recursive expansion exceeded its source-relative allowance: {} bytes",
-            value.len(),
+            total_size <= source.len(),
+            "stored arguments exceeded the source size: {total_size} bytes",
         );
     }
 
     #[test]
-    fn mutually_recursive_include_arguments_remain_bounded() {
+    fn mutually_recursive_include_arguments_are_stored_without_expansion() {
         let source = format!(
             "[[include page |a={{$b}}{{$b}}|b={{$a}}{{$a}}|a=x|{}]]",
             (0..24)
@@ -642,28 +496,22 @@ mod tests {
         );
         let (include, _) = parse_include_block(&source, 0).expect("include should parse");
         let total_size = include
-            .variables()
+            .arguments()
             .iter()
             .map(|(key, value)| key.len() + value.len())
             .sum::<usize>();
 
+        assert_eq!(
+            include.variables().get("a").map(Cow::as_ref),
+            Some("{$b}{$b}"),
+        );
+        assert_eq!(
+            include.variables().get("b").map(Cow::as_ref),
+            Some("{$a}{$a}"),
+        );
         assert!(
-            total_size <= source.len() + INCLUDE_ARGUMENT_EXPANSION_ALLOWANCE,
-            "resolved map exceeded its source-relative allowance: {total_size} bytes",
-        );
-    }
-
-    #[test]
-    fn expansion_budget_is_checked_before_copying_a_replacement() {
-        let arguments = HashMap::from([("a".to_owned(), "1234".to_owned())]);
-
-        assert_eq!(
-            expand_argument_expression_once("{$a}", &arguments, None, 4),
-            Some("1234".to_owned()),
-        );
-        assert_eq!(
-            expand_argument_expression_once("{$a}", &arguments, None, 3),
-            None,
+            total_size <= source.len(),
+            "stored arguments exceeded the source size: {total_size} bytes",
         );
     }
 
@@ -722,16 +570,28 @@ mod tests {
     }
 
     #[test]
-    fn ordinary_acyclic_include_argument_expansion_is_unchanged() {
+    fn include_arguments_keep_their_raw_unexpanded_values() {
         let (include, _) =
             parse_include_block("[[include page | a=x | b={$a}{$a} | c=prefix-{$b}]]", 0)
                 .expect("include should parse");
 
         assert_eq!(include.variables().get("a").map(Cow::as_ref), Some("x"));
-        assert_eq!(include.variables().get("b").map(Cow::as_ref), Some("xx"));
+        assert_eq!(
+            include.variables().get("b").map(Cow::as_ref),
+            Some("{$a}{$a}"),
+        );
         assert_eq!(
             include.variables().get("c").map(Cow::as_ref),
-            Some("prefix-xx"),
+            Some("prefix-{$b}"),
+        );
+        assert_eq!(
+            include.arguments().as_slice(),
+            [
+                (Cow::Borrowed("a"), Cow::Borrowed("x")),
+                (Cow::Borrowed("b"), Cow::Borrowed("{$a}{$a}")),
+                (Cow::Borrowed("c"), Cow::Borrowed("prefix-{$b}")),
+            ]
+            .as_slice(),
         );
     }
 }

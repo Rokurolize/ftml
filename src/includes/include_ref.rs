@@ -20,6 +20,9 @@
 
 use crate::data::PageRef;
 use crate::tree::VariableMap;
+use std::borrow::Cow;
+
+pub type IncludeArguments<'t> = Vec<(Cow<'t, str>, Cow<'t, str>)>;
 
 /// Represents an include block before it has been replaced with the fetched page.
 ///
@@ -31,15 +34,37 @@ pub struct IncludeRef<'t> {
     page_ref: PageRef,
     variables: VariableMap<'t>,
     #[serde(default)]
+    arguments: IncludeArguments<'t>,
+    #[serde(default)]
     spaced_empty_separator: bool,
 }
 
 impl<'t> IncludeRef<'t> {
     #[inline]
     pub fn new(page_ref: PageRef, variables: VariableMap<'t>) -> Self {
+        let arguments = variables
+            .iter()
+            .map(|(key, value)| (key.clone(), value.clone()))
+            .collect();
+
         IncludeRef {
             page_ref,
             variables,
+            arguments,
+            spaced_empty_separator: false,
+        }
+    }
+
+    #[inline]
+    pub fn with_arguments(
+        page_ref: PageRef,
+        variables: VariableMap<'t>,
+        arguments: IncludeArguments<'t>,
+    ) -> Self {
+        IncludeRef {
+            page_ref,
+            variables,
+            arguments,
             spaced_empty_separator: false,
         }
     }
@@ -63,6 +88,10 @@ impl<'t> IncludeRef<'t> {
         &self.variables
     }
 
+    pub fn arguments(&self) -> &IncludeArguments<'t> {
+        &self.arguments
+    }
+
     /// Returns whether this include used a single separator followed by horizontal spacing and no arguments.
     pub fn has_spaced_empty_separator(&self) -> bool {
         self.spaced_empty_separator
@@ -72,6 +101,12 @@ impl<'t> IncludeRef<'t> {
 impl<'t> From<IncludeRef<'t>> for (PageRef, VariableMap<'t>) {
     fn from(include: IncludeRef<'t>) -> (PageRef, VariableMap<'t>) {
         (include.page_ref, include.variables)
+    }
+}
+
+impl<'t> From<IncludeRef<'t>> for (PageRef, IncludeArguments<'t>) {
+    fn from(include: IncludeRef<'t>) -> (PageRef, IncludeArguments<'t>) {
+        (include.page_ref, include.arguments)
     }
 }
 
@@ -88,7 +123,7 @@ fn to_owned() {
     assert!(include_ref_1.variables().is_empty());
     assert!(!include_ref_1.has_spaced_empty_separator());
 
-    let (page_ref, variables) = include_ref_2.into();
+    let (page_ref, variables): (PageRef, VariableMap) = include_ref_2.into();
     assert_eq!(page_ref, page_ref_2);
     assert!(variables.is_empty());
 }

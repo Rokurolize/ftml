@@ -155,9 +155,6 @@ fn try_consume_fn<'r, 't>(
     // over the next row's `>` prefix instead of ending the pair at the row.
     let quote_cursor =
         (legacy && !table_owned).then(|| QuoteBodyCursorInstallation::install(parser));
-    let quote_row_body = quote_cursor
-        .as_ref()
-        .is_some_and(QuoteBodyCursorInstallation::installed);
     // The no-nesting flag is set around body collection only; it is reset
     // before `body?` so an abandoned color never leaks into siblings.
     parser.set_color_flag(legacy && !table_owned);
@@ -180,11 +177,10 @@ fn try_consume_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     // A native bullet/numbered list is a stop for a color pair on live: the
-    // markers stay literal when the body holds one at any depth. Inside a
-    // quote row the cursor is what lets the collection reach the list, so the
-    // pair is rejected here; at the root the collection already reached it
-    // before this pass and the element stays for the lowering path.
-    if quote_row_body
+    // markers stay literal when the body holds one at any depth, so the pair
+    // is rejected here once the collection has reached the list.
+    if legacy
+        && !table_owned
         && elements
             .iter()
             .any(crate::parsing::inline_scope::subtree_contains_native_list)

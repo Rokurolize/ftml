@@ -237,6 +237,9 @@ fn render_wikidot_code(
         .div()
         .attr(attr!("class" => "code"))
         .inner(|ctx| {
+            if !contents.is_empty() {
+                ctx.push_raw_str("\n");
+            }
             render_elements(ctx, open_elements);
             if contents.is_empty() {
                 // Live keeps an empty hl-main wrapper (without a <pre>) when
@@ -282,6 +285,7 @@ fn render_wikidot_code(
                         Some(highlighted) => {
                             ctx.html().div().attr(attr!("class" => "hl-main")).inner(
                                 |ctx| {
+                                    ctx.push_raw_str("\n");
                                     ctx.html().pre().inner(|ctx| {
                                         render_wikidot_code_contents(
                                             ctx,
@@ -292,6 +296,7 @@ fn render_wikidot_code(
                                     });
                                 },
                             );
+                            ctx.push_raw_str("\n");
                         }
                         None => render_plain(ctx),
                     }

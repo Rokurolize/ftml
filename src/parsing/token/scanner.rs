@@ -296,7 +296,9 @@ fn scan_literal(
         b'[' if has(bytes, start, b"[[#") && !has(bytes, start, b"[[##") => {
             (Token::LeftBlockAnchor, start + 3)
         }
-        b'[' if has(bytes, start, b"[[*") => (Token::LeftBlockStar, start + 3),
+        b'[' if has(bytes, start, b"[[*") && !has(bytes, start, b"[[**") => {
+            (Token::LeftBlockStar, start + 3)
+        }
         b'[' if has(bytes, start, b"[[/") => (Token::LeftBlockEnd, start + 3),
         b'[' if has(bytes, start, b"[[") => (Token::LeftBlock, start + 2),
         b'[' if has(bytes, start, b"[#") && !has(bytes, start, b"[##") => {

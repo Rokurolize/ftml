@@ -11847,6 +11847,22 @@ where
         }
 
         if block_rule.accepts_newlines_outside_body {
+            if self.settings().layout.legacy() && block_rule.name == "block-module" {
+                let mut probe = self.clone();
+                while probe.current().token == Token::Whitespace {
+                    probe.step()?;
+                }
+                if matches!(
+                    probe.current().token,
+                    Token::LineBreak | Token::ParagraphBreak
+                ) {
+                    self.update(&probe);
+                    if self.current().token == Token::LineBreak {
+                        self.step()?;
+                    }
+                    return Ok(BlockBodyStart::NextPhysicalLine);
+                }
+            }
             if self.current().token == Token::LineBreak {
                 self.step()?;
                 return Ok(BlockBodyStart::NextPhysicalLine);

@@ -23,6 +23,7 @@ pub mod whitespace;
 
 mod comments;
 mod compatibility;
+mod modulepre;
 mod parser_functions;
 
 pub(crate) use self::compatibility::{
@@ -194,6 +195,7 @@ fn preprocess_internal(text: &mut String, wikidot_compatibility: bool) {
 
     debug!("Beginning preprocessing of text ({} bytes)", text.len());
     if wikidot_compatibility {
+        modulepre::rewrite(text);
         whitespace::note_document_leading_whitespace_trim_from_source(text);
         whitespace::remove_wikidot_space_before_footnote(text);
         whitespace::preserve_wikidot_document_indentation_barrier(text);

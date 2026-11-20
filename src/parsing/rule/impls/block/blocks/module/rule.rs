@@ -25,6 +25,7 @@ use crate::parsing::rule::impls::block::parser::BlockBodyStart;
 use crate::tree::{
     AnchorTarget, AttributeMap, LinkLabel, LinkLocation, LinkType, Module,
 };
+use std::borrow::Cow;
 
 pub const BLOCK_MODULE: BlockRule = BlockRule {
     name: "block-module",
@@ -111,7 +112,18 @@ fn parse_fn<'r, 't>(
                 return ok!(true; text!(&source[opener_start..owner_end]));
             }
             if has_body_end && body_start == BlockBodyStart::NextPhysicalLine {
-                let body = parser.get_body_text(&BLOCK_MODULE)?;
+                let mut probe = parser.clone();
+                let mut body = probe.get_body_text(&BLOCK_MODULE)?;
+                if body.is_empty() {
+                    return ok!(false; wikidot_unknown_module_error(subname));
+                }
+                if wikidot_module_body_has_nested_opener(&body) {
+                    while wikidot_module_extra_closer_ahead(&probe) {
+                        let extra = probe.get_body_text(&BLOCK_MODULE)?;
+                        body = Cow::Owned(format!("{body}{extra}"));
+                    }
+                }
+                parser.update(&probe);
                 return ok!(false; Element::Module(Module::Runtime {
                     name: cow!(subname),
                     arguments: arguments.into_raw_vec(),
@@ -159,9 +171,47 @@ fn parse_fn<'r, 't>(
 }
 
 fn wikidot_valid_module_name(name: &str) -> bool {
-    let mut chars = name.bytes();
-    chars.next().is_some_and(|byte| byte.is_ascii_alphabetic())
-        && chars.all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-'))
+    !name.is_empty()
+        && name.bytes().all(|byte| {
+            byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-' | b'/')
+        })
+}
+
+fn wikidot_module_body_has_nested_opener(body: &str) -> bool {
+    body.lines().any(|line| {
+        line.get(.."[[module".len()).is_some_and(|head| {
+            head.eq_ignore_ascii_case("[[module")
+                && line["[[module".len()..].starts_with([' ', '\t', '\u{a0}'])
+        })
+    })
+}
+
+fn wikidot_module_extra_closer_ahead<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    let mut probe = parser.clone();
+    loop {
+        match probe.current().token {
+            Token::Whitespace
+            | Token::LineBreak
+            | Token::ParagraphBreak
+            | Token::Identifier => {}
+            Token::LeftBlockEnd => {
+                let Ok(name) = probe.get_end_block() else {
+                    return false;
+                };
+                return name
+                    .strip_suffix('_')
+                    .unwrap_or(&name)
+                    .eq_ignore_ascii_case("module");
+            }
+            _ => return false,
+        }
+        if probe.step().is_err() {
+            return false;
+        }
+    }
 }
 
 fn wikidot_extra_bracket_css_literal<'t>(

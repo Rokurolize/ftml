@@ -1,0 +1,12 @@
+[[module Aaa]]
+[[module Bbb]]
+body text
+[[/module]]
+tail
+[[/module]]
+
+[[module Aaa]]
+body text
+[[/module]]
+tail
+[[/module]]

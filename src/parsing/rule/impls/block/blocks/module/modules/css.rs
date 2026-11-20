@@ -256,7 +256,9 @@ fn wikidot_css_body_starts_on_new_line(parser: &Parser<'_, '_>) -> bool {
     let Some(opener_close) = source_before_body.rfind("]]") else {
         return false;
     };
-    source[opener_close + 2..].starts_with(['\r', '\n'])
+    source[opener_close + 2..]
+        .trim_start_matches([' ', '\t', '\u{a0}'])
+        .starts_with(['\r', '\n'])
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

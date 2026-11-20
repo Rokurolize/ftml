@@ -1,0 +1,19 @@
+{
+    "elements": [
+        {
+            "element": "code",
+            "data": {
+                "contents": "[[form]]\nx\n---\ny\n[[/form]]",
+                "language": null,
+                "name": null
+            }
+        }
+    ],
+    "code-blocks": [
+        {
+            "contents": "[[form]]\nx\n---\ny\n[[/form]]",
+            "language": null,
+            "name": null
+        }
+    ]
+}

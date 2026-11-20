@@ -144,6 +144,11 @@ head = "map"
 body = "none"
 html-output = "html,div,wj-footnotes-list"
 
+[form]
+head = "map"
+body = "raw"
+html-output = "html,span,wj-raw"
+
 [file]
 head = "value"
 body = "none"

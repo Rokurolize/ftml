@@ -93,7 +93,7 @@ use self::style::render_style;
 use self::table::render_table;
 pub(crate) use self::tabs::preregister_wikidot_tabview_navs;
 use self::tabs::render_tabview;
-use self::text::{render_code, render_email, render_wikitext_raw};
+use self::text::{render_code, render_email, render_form_line, render_wikitext_raw};
 use self::toc::render_table_of_contents;
 use self::user::render_user;
 use self::video::render_video;
@@ -309,6 +309,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         Element::Module(module) => render_module(ctx, module),
         Element::Text(text) => ctx.push_escaped(text),
         Element::Raw(text) => render_wikitext_raw(ctx, text),
+        Element::Form(text) => render_form_line(ctx, text),
         Element::Variable(name) => render_variable(ctx, name),
         Element::Email(email) => render_email(ctx, email),
         Element::Delayed(_) => {

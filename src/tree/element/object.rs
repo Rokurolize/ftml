@@ -95,6 +95,8 @@ pub enum Element<'t> {
     /// produce a `&nbsp;`.
     Raw(Cow<'t, str>),
 
+    Form(Cow<'t, str>),
+
     /// A wikitext variable.
     ///
     /// During rendering, this will be replaced with its actual value,
@@ -445,6 +447,7 @@ impl Element<'_> {
             Element::Module(module) => module.name(),
             Element::Text(_) => "Text",
             Element::Raw(_) => "Raw",
+            Element::Form(_) => "Form",
             Element::Variable(_) => "Variable",
             Element::Email(_) => "Email",
             Element::Delayed(_) => "Delayed",
@@ -600,6 +603,7 @@ impl Element<'_> {
             Element::Module(_) => false,
             Element::Text(_)
             | Element::Raw(_)
+            | Element::Form(_)
             | Element::Variable(_)
             | Element::Email(_) => true,
             Element::Delayed(_) => true,
@@ -669,6 +673,7 @@ impl Element<'_> {
             Element::Module(module) => Element::Module(module.to_owned()),
             Element::Text(text) => Element::Text(string_to_owned(text)),
             Element::Raw(text) => Element::Raw(string_to_owned(text)),
+            Element::Form(text) => Element::Form(string_to_owned(text)),
             Element::Variable(name) => Element::Variable(string_to_owned(name)),
             Element::Email(email) => Element::Email(string_to_owned(email)),
             Element::Delayed(delayed) => Element::Delayed(delayed.to_owned()),

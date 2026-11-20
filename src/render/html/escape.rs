@@ -77,6 +77,42 @@ pub fn escape(buffer: &mut String, s: &str) {
     escape_with_apostrophe(buffer, s, "&#39;");
 }
 
+pub fn escape_wikidot_text_content(buffer: &mut String, s: &str) {
+    let mut start = 0;
+
+    for (index, ch) in s.char_indices() {
+        let escaped = match ch {
+            '>' => "&gt;",
+            '<' => "&lt;",
+            '&' => "&amp;",
+            '"' => "&quot;",
+            '\0' => " ",
+            '\u{ab}' => "&#171;",
+            '\u{bb}' => "&#187;",
+            '\u{a0}' => "&#160;",
+            '\u{2014}' => "&#8212;",
+            '\u{2018}' => "&#8216;",
+            '\u{2019}' => "&#8217;",
+            '\u{201c}' => "&#8220;",
+            '\u{201d}' => "&#8221;",
+            '\u{201e}' => "&#8222;",
+            '\u{2026}' => "&#8230;",
+            _ => continue,
+        };
+
+        if start < index {
+            buffer.push_str(&s[start..index]);
+        }
+
+        buffer.push_str(escaped);
+        start = index + ch.len_utf8();
+    }
+
+    if start < s.len() {
+        buffer.push_str(&s[start..]);
+    }
+}
+
 pub fn escape_wikidot_attribute(buffer: &mut String, s: &str) {
     escape_with_apostrophe(buffer, s, "'");
 }

@@ -125,7 +125,7 @@ where
 
     #[inline]
     pub fn text(&mut self, text: &str) {
-        self.ctx.push_escaped(text);
+        self.ctx.push_escaped_text(text);
     }
 }
 

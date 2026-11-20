@@ -169,12 +169,12 @@ pub fn render_elements(ctx: &mut HtmlContext, elements: &[Element]) {
                 if prev_is_block && starts_with_newline {
                     if let Some(rest) = run.strip_prefix('\n') {
                         ctx.push_raw('\n');
-                        ctx.push_escaped(rest.trim_start_matches([' ', '\t']));
+                        ctx.push_escaped_text(rest.trim_start_matches([' ', '\t']));
                     } else {
-                        ctx.push_escaped(&run);
+                        ctx.push_escaped_text(&run);
                     }
                 } else {
-                    ctx.push_escaped(&run);
+                    ctx.push_escaped_text(&run);
                 }
                 if next_is_table && run_has_content && !ends_with_newline {
                     ctx.push_raw('\n');
@@ -315,7 +315,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
     match element {
         Element::Container(container) => render_container(ctx, container),
         Element::Module(module) => render_module(ctx, module),
-        Element::Text(text) => ctx.push_escaped(text),
+        Element::Text(text) => ctx.push_escaped_text(text),
         Element::Raw(text) => render_wikitext_raw(ctx, text),
         Element::Form(text) => render_form_line(ctx, text),
         Element::Variable(name) => render_variable(ctx, name),
@@ -461,7 +461,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
                     ctx.html()
                         .span()
                         .attr(attr!("class" => "wj-error-inline"))
-                        .inner(|ctx| ctx.push_escaped(message));
+                        .inner(|ctx| ctx.push_escaped_text(message));
                 }
             }
         }
@@ -656,7 +656,7 @@ fn render_partial(ctx: &mut HtmlContext, partial: &PartialElement) {
             if !tab.label.is_empty() {
                 ctx.html().span().contents(&tab.label);
                 if !tab.elements.is_empty() {
-                    ctx.push_escaped(" ");
+                    ctx.push_escaped_text(" ");
                 }
             }
             render_elements(ctx, &tab.elements);

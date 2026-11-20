@@ -202,6 +202,7 @@ fn normalize_sequence_scoped<'t>(
     unwrap_frame_cut_marker_paragraphs(elements);
     lower_dash_runs(elements);
     substitute_number_unit_spaces(elements);
+    substitute_ellipses(elements);
 }
 
 fn is_format_event(element: &Element<'_>) -> bool {
@@ -788,6 +789,118 @@ fn substitute_number_unit_spaces<'t>(elements: &mut [Element<'t>]) {
             }
         }
         start = end;
+    }
+}
+
+fn is_suppression_seam(element: &Element<'_>) -> bool {
+    matches!(element, Element::Delayed(delayed) if delayed.is_suppression_seam())
+}
+
+fn substitute_ellipses(elements: &mut Vec<Element<'_>>) {
+    let mut start = 0;
+    while start < elements.len() {
+        if !matches!(elements[start], Element::Text(_)) {
+            start += 1;
+            continue;
+        }
+        let mut end = start + 1;
+        while end < elements.len() && matches!(elements[end], Element::Text(_)) {
+            end += 1;
+        }
+        let mut joined = String::new();
+        for element in &elements[start..end] {
+            let Element::Text(text) = element else {
+                unreachable!();
+            };
+            joined.push_str(text);
+        }
+        let matches = ellipsis_match_ranges(&joined);
+        let touches_seam = elements[..start].last().is_some_and(is_suppression_seam)
+            || elements[end..].first().is_some_and(is_suppression_seam);
+        if matches.is_empty() || touches_seam {
+            start = end;
+            continue;
+        }
+        let run: Vec<Element> = elements.drain(start..end).collect();
+        let rebuilt = ellipsis_rebuilt_run(run, &matches);
+        let rebuilt_len = rebuilt.len();
+        elements.splice(start..start, rebuilt).for_each(drop);
+        start += rebuilt_len;
+    }
+}
+
+fn ellipsis_match_ranges(text: &str) -> Vec<Range<usize>> {
+    let bytes = text.as_bytes();
+    let mut ranges = Vec::new();
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index] == b'.' {
+            if text[index..].starts_with("...") {
+                ranges.push(index..index + 3);
+                index += 3;
+                continue;
+            }
+            if text[index..].starts_with(". . .") {
+                ranges.push(index..index + 5);
+                index += 5;
+                continue;
+            }
+        }
+        index += 1;
+    }
+    ranges
+}
+
+fn ellipsis_rebuilt_run<'t>(
+    run: Vec<Element<'t>>,
+    matches: &[Range<usize>],
+) -> Vec<Element<'t>> {
+    let mut spans = Vec::with_capacity(run.len());
+    let mut base = 0usize;
+    for element in &run {
+        let Element::Text(text) = element else {
+            unreachable!();
+        };
+        spans.push(base..base + text.len());
+        base += text.len();
+    }
+
+    let mut output = Vec::with_capacity(run.len());
+    let mut cursor = 0usize;
+    for range in matches {
+        push_ellipsis_gap(&mut output, &run, &spans, cursor..range.start);
+        output.push(Element::Text(Cow::Borrowed("\u{2026}")));
+        cursor = range.end;
+    }
+    push_ellipsis_gap(&mut output, &run, &spans, cursor..base);
+    output
+}
+
+fn push_ellipsis_gap<'t>(
+    output: &mut Vec<Element<'t>>,
+    run: &[Element<'t>],
+    spans: &[Range<usize>],
+    gap: Range<usize>,
+) {
+    if gap.is_empty() {
+        return;
+    }
+    for (element, span) in run.iter().zip(spans.iter()) {
+        let overlap_start = gap.start.max(span.start);
+        let overlap_end = gap.end.min(span.end);
+        if overlap_start >= overlap_end {
+            continue;
+        }
+        let Element::Text(text) = element else {
+            unreachable!();
+        };
+        if overlap_start == span.start && overlap_end == span.end {
+            output.push(element.clone());
+        } else {
+            output.push(Element::Text(Cow::Owned(
+                text[overlap_start - span.start..overlap_end - span.start].to_owned(),
+            )));
+        }
     }
 }
 
@@ -2087,6 +2200,7 @@ fn normalize_segments_inner<'t>(
         normalize_sequence_children(segment);
         lower_dash_runs(segment);
         substitute_number_unit_spaces(segment);
+        substitute_ellipses(segment);
     }
 }
 

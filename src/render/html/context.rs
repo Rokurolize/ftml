@@ -21,6 +21,7 @@
 use super::builder::HtmlBuilder;
 use super::escape::{
     escape, escape_wikidot_attribute, escape_wikidot_raw, escape_wikidot_text,
+    escape_wikidot_text_content,
 };
 use super::meta::{HtmlMeta, HtmlMetaType};
 use super::output::{HtmlOutput, HtmlResourceRequirement};
@@ -513,6 +514,15 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     pub fn push_escaped(&mut self, s: &str) {
         if self.layout().legacy() {
             escape_wikidot_text(self.buffer(), s);
+        } else {
+            escape(self.buffer(), s);
+        }
+    }
+
+    #[inline]
+    pub fn push_escaped_text(&mut self, s: &str) {
+        if self.layout().legacy() {
+            escape_wikidot_text_content(self.buffer(), s);
         } else {
             escape(self.buffer(), s);
         }

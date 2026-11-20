@@ -250,18 +250,18 @@ fn render_missing_bibcite(
                 .span()
                 .attr(attr!("class" => "error-inline"))
                 .inner(|ctx| {
-                    ctx.push_escaped("Bibliography item ");
+                    ctx.push_escaped_text("Bibliography item ");
                     ctx.html().em().contents(label);
-                    ctx.push_escaped(" not found.");
+                    ctx.push_escaped_text(" not found.");
                 });
             return;
         } else if brackets {
-            ctx.push_escaped("[[bibcite ");
+            ctx.push_escaped_text("[[bibcite ");
         } else {
-            ctx.push_escaped("[[bibcite_ ");
+            ctx.push_escaped_text("[[bibcite_ ");
         }
-        ctx.push_escaped(label);
-        ctx.push_escaped("]]");
+        ctx.push_escaped_text(label);
+        ctx.push_escaped_text("]]");
         return;
     }
 
@@ -276,9 +276,9 @@ fn render_missing_bibcite(
         .span()
         .attr(attr!("class" => "wj-error-inline"))
         .inner(|ctx| {
-            ctx.push_escaped(message_pre);
+            ctx.push_escaped_text(message_pre);
             ctx.html().em().contents(label);
-            ctx.push_escaped(message_post);
+            ctx.push_escaped_text(message_post);
         });
 }
 

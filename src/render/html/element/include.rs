@@ -48,7 +48,7 @@ pub fn render_variable(ctx: &mut HtmlContext, name: &str) {
         None => format!("{{${name}}}"),
     };
 
-    ctx.push_escaped(&value);
+    ctx.push_escaped_text(&value);
 }
 
 #[test]

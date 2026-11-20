@@ -53,7 +53,7 @@ pub(super) fn render_wikidot_user_bare(ctx: &mut HtmlContext, element: &Element)
 
 fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
     if name.eq_ignore_ascii_case("anonymous") {
-        ctx.push_escaped("Anonymous");
+        ctx.push_escaped_text("Anonymous");
         return;
     }
 
@@ -83,14 +83,14 @@ fn render_user_wikidot(ctx: &mut HtmlContext, name: &str, show_avatar: bool) {
                 (message_pre, message_post)
             };
 
-            ctx.push_escaped(message_pre);
+            ctx.push_escaped_text(message_pre);
 
             ctx.html()
                 .span()
                 .attr(attr!("class" => "error-inline"))
                 .inner(|ctx| {
                     ctx.html().em().contents(name);
-                    ctx.push_escaped(message_post);
+                    ctx.push_escaped_text(message_post);
                 });
         }
     }

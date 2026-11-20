@@ -19,7 +19,9 @@
  */
 
 use super::builder::HtmlBuilder;
-use super::escape::{escape, escape_wikidot_attribute, escape_wikidot_raw};
+use super::escape::{
+    escape, escape_wikidot_attribute, escape_wikidot_raw, escape_wikidot_text,
+};
 use super::meta::{HtmlMeta, HtmlMetaType};
 use super::output::{HtmlOutput, HtmlResourceRequirement};
 use super::random::Random;
@@ -509,7 +511,11 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
 
     #[inline]
     pub fn push_escaped(&mut self, s: &str) {
-        escape(self.buffer(), s);
+        if self.layout().legacy() {
+            escape_wikidot_text(self.buffer(), s);
+        } else {
+            escape(self.buffer(), s);
+        }
     }
 
     #[inline]

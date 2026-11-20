@@ -1568,11 +1568,58 @@ fn end_of_source_list(text: &str, mut index: usize) -> usize {
     index
 }
 
+fn collapse_wikidot_empty_rows(table: &mut Table) {
+    for row in &mut table.rows {
+        if !row.cells.is_empty()
+            && row
+                .cells
+                .iter()
+                .all(|cell| cell.elements.iter().all(|element| element.is_whitespace()))
+        {
+            row.cells = vec![TableCell {
+                elements: Vec::new(),
+                header: false,
+                column_span: NonZeroU32::new(1).unwrap(),
+                align: None,
+                attributes: AttributeMap::new(),
+            }];
+        }
+    }
+}
+
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     let preserve_break = wikidot_simple_table_preserves_break(parser);
+    let legacy = parser.settings().layout.legacy();
     let success = try_consume_inner(parser);
+    let success = if legacy {
+        success.map(|success| {
+            success.map(|elements| match elements {
+                Elements::Single(mut element) => {
+                    if let Element::Table(table) = &mut element
+                        && table.table_type == TableType::Simple
+                    {
+                        collapse_wikidot_empty_rows(table);
+                    }
+                    Elements::Single(element)
+                }
+                Elements::Multiple(mut elements) => {
+                    for element in &mut elements {
+                        if let Element::Table(table) = element
+                            && table.table_type == TableType::Simple
+                        {
+                            collapse_wikidot_empty_rows(table);
+                        }
+                    }
+                    Elements::Multiple(elements)
+                }
+                elements => elements,
+            })
+        })
+    } else {
+        success
+    };
     if !preserve_break {
         return success;
     }

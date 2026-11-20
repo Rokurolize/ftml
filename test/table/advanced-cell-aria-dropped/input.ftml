@@ -1,0 +1,5 @@
+[[table foo="2"]]
+[[row]]
+[[cell foo="1" aria-label="l"]]X[[/cell]]
+[[/row]]
+[[/table]]

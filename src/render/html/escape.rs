@@ -81,6 +81,35 @@ pub fn escape_wikidot_attribute(buffer: &mut String, s: &str) {
     escape_with_apostrophe(buffer, s, "'");
 }
 
+pub fn escape_wikidot_text(buffer: &mut String, s: &str) {
+    let mut start = 0;
+
+    for (index, ch) in s.char_indices() {
+        let escaped = match ch {
+            '>' => "&gt;",
+            '<' => "&lt;",
+            '&' => "&amp;",
+            '\'' => "&#39;",
+            '"' => "&quot;",
+            '\0' => " ",
+            '\u{ab}' => "&#171;",
+            '\u{bb}' => "&#187;",
+            _ => continue,
+        };
+
+        if start < index {
+            buffer.push_str(&s[start..index]);
+        }
+
+        buffer.push_str(escaped);
+        start = index + ch.len_utf8();
+    }
+
+    if start < s.len() {
+        buffer.push_str(&s[start..]);
+    }
+}
+
 #[test]
 fn test() {
     macro_rules! test {

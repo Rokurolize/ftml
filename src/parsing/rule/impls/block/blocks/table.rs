@@ -98,7 +98,12 @@ impl AdvancedTableElement {
         }
 
         match self {
-            AdvancedTableElement::Cell => true,
+            AdvancedTableElement::Cell => {
+                !key.eq_ignore_ascii_case("align")
+                    && !key
+                        .get(..5)
+                        .is_some_and(|head| head.eq_ignore_ascii_case("aria-"))
+            }
             AdvancedTableElement::Table | AdvancedTableElement::Row => {
                 !matches!(key, "colspan" | "rowspan")
             }
@@ -146,14 +151,13 @@ where
     let (arguments, body_start) =
         parser.get_head_map_with_body_start_wikidot(block_rule, in_head)?;
     let has_arguments = arguments.has_source();
-    let mut attributes = if parser.settings().layout.legacy() {
+    let attributes = if parser.settings().layout.legacy() {
         arguments.to_attribute_map_without_bare_where(parser.settings(), |key, value| {
             attribute_owner.accepts_attribute(key, value)
         })
     } else {
         arguments.to_attribute_map(parser.settings())
     };
-    attributes.set_wikidot_ordered(false);
 
     let as_paragraphs = parser.settings().layout.legacy()
         && attribute_owner == AdvancedTableElement::Cell;

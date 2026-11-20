@@ -51,8 +51,8 @@ pub fn render_footnote(ctx: &mut HtmlContext, index: usize, broke_anchor: bool) 
                     "id" => &reference_id,
                     "href" => "javascript:;",
                     "class" => "footnoteref",
-                    "onclick" => &onclick,
                 ))
+                .attr_wikidot_attribute("onclick", &onclick)
                 .contents(&id);
         };
         if broke_anchor {
@@ -216,8 +216,8 @@ pub fn render_footnote_block(
                                     .a()
                                     .attr(attr!(
                                         "href" => "javascript:;",
-                                        "onclick" => &onclick,
                                     ))
+                                    .attr_wikidot_attribute("onclick", &onclick)
                                     .contents(&id);
                                 ctx.push_raw('.');
                                 if tiers.contains(&0) {

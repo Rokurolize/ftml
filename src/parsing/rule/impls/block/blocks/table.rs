@@ -2300,7 +2300,7 @@ mod tests {
     fn attributed_empty_table_without_later_rows_remains_literal() {
         assert_eq!(
             render("[[table bad=1]]\n[[/table]]"),
-            "<p>[[table bad=1]]<br>\n[[/table]]</p>",
+            "<p>[[table bad=1]]<br />\n[[/table]]</p>",
         );
     }
 
@@ -2315,7 +2315,7 @@ mod tests {
         assert_eq!(
             render(source),
             concat!(
-                "<p>[[table]]<br>\n[[/table]]</p>",
+                "<p>[[table]]<br />\n[[/table]]</p>",
                 "<table>\n<tr>\n<td>x</td>\n</tr>\n</table>",
             ),
         );

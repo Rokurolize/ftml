@@ -66,5 +66,5 @@ fn wikidot_plain_text_collapses_and_trims_ascii_space_runs() {
     assert!(errors.is_empty(), "{errors:?}");
 
     let output = HtmlRender.render(&tree, &page_info, &settings);
-    assert_eq!(output.body, "<p>A B<br>\nC</p>");
+    assert_eq!(output.body, "<p>A B<br />\nC</p>");
 }

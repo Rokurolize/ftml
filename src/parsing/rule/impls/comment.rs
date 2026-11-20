@@ -144,7 +144,7 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert!(errors.is_empty(), "{errors:?}");
-        assert_eq!(html, "<p>[!\u{2014} unfinished</p>");
+        assert_eq!(html, "<p>[!&#8212; unfinished</p>");
     }
 
     #[test]
@@ -158,7 +158,7 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert!(errors.is_empty(), "{errors:?}");
-        assert_eq!(html, "<p>raw-comment \u{2014}]</p>");
+        assert_eq!(html, "<p>raw-comment &#8212;]</p>");
     }
 
     #[test]
@@ -167,8 +167,8 @@ mod tests {
         let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
 
         for (source, expected) in [
-            ("raw ---]", "<p>raw \u{2014}-]</p>"),
-            ("raw ----]", "<p>raw \u{2014}\u{2014}]</p>"),
+            ("raw ---]", "<p>raw &#8212;-]</p>"),
+            ("raw ----]", "<p>raw &#8212;&#8212;]</p>"),
         ] {
             let tokenization = crate::tokenize(source);
             let (tree, _) = crate::parse(&tokenization, &page_info, &settings).into();

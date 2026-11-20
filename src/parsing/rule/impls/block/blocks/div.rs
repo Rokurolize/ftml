@@ -1936,14 +1936,14 @@ mod tests {
     #[test]
     fn wikidot_div_keeps_trailing_raw_pair_paragraph_after_heading() {
         // A raw-line pair (@@@@ / @@@@) as a div's trailing segment is a
-        // real <p><br></p> on live Wikidot (af2026 card divs); the frame
+        // real <p><br /></p> on live Wikidot (af2026 card divs); the frame
         // close must not eat it as a closer-line artifact.
         assert_eq!(
             render(
                 "[[div]]\n+* Heading\n\n@@@@\n@@@@\n\n[[/div]]",
                 Layout::Wikidot,
             ),
-            "<div><h1><span>Heading</span></h1><p><br></p></div>",
+            "<div><h1><span>Heading</span></h1><p><br /></p></div>",
         );
     }
 
@@ -1960,7 +1960,7 @@ mod tests {
                 "[[div_]]\n+* Heading\n\n@@@@\n@@@@\n\n[[/div]]",
                 Layout::Wikidot,
             ),
-            "<div><h1><span>Heading</span></h1><br>\n</div>",
+            "<div><h1><span>Heading</span></h1><br />\n</div>",
         );
     }
 
@@ -2005,7 +2005,7 @@ mod tests {
                 "[[div]]\n+* Heading\n\n@@@@\n@@@@\n[[/div]]",
                 Layout::Wikidot,
             ),
-            "<div><h1><span>Heading</span></h1><p><br></p></div>",
+            "<div><h1><span>Heading</span></h1><p><br /></p></div>",
         );
     }
 
@@ -2017,7 +2017,7 @@ mod tests {
                 "[[div_]]\n+* Heading\n\n@@@@\n@@@@\n[[/div]]",
                 Layout::Wikidot,
             ),
-            "<div><h1><span>Heading</span></h1><br>\n</div>",
+            "<div><h1><span>Heading</span></h1><br />\n</div>",
         );
     }
 
@@ -2031,7 +2031,7 @@ mod tests {
                 "[[div_]]\nsome text\n\n@@@@\n@@@@\n\n[[/div]]",
                 Layout::Wikidot,
             ),
-            "<div>some text<br>\n</div>",
+            "<div>some text<br />\n</div>",
         );
     }
 
@@ -2082,13 +2082,13 @@ mod tests {
         let source = "[[div]]\nbody text\n> quoted line [[/div]]\nafter text";
         assert_eq!(
             render_preprocessed_wikidot(source),
-            "<div><p>body text</p><blockquote><p>quoted line</p></blockquote></div><br>\nafter text",
+            "<div><p>body text</p><blockquote><p>quoted line</p></blockquote></div><br />\nafter text",
         );
 
         let source = "[[div]]\nbody text\n> [[/div]]\nafter text";
         assert_eq!(
             render_preprocessed_wikidot(source),
-            "<div><p>body text</p></div><br>\nafter text",
+            "<div><p>body text</p></div><br />\nafter text",
         );
     }
 
@@ -2124,7 +2124,7 @@ mod tests {
             render_preprocessed_wikidot_allowing_errors(
                 "このテーマの説明文です。{{[[div]]}}\nbody",
             ),
-            "<p>このテーマの説明文です。<tt>[[div]]</tt><br>\nbody</p>",
+            "<p>このテーマの説明文です。<tt>[[div]]</tt><br />\nbody</p>",
         );
     }
 
@@ -2159,11 +2159,11 @@ mod tests {
             render_preprocessed_wikidot_allowing_errors(source),
             concat!(
                 "[[div]]inline[[/div]]",
-                "[[div]]inline, closing tag is on a new line<br>\n",
+                "[[div]]inline, closing tag is on a new line<br />\n",
                 "[[/div]]\n",
-                "<div><div><p>div opening tag is missing</p></div></div><br>\n",
+                "<div><div><p>div opening tag is missing</p></div></div><br />\n",
                 "[[/div]]\n",
-                "<div><div><p>[[div]]<br>\n",
+                "<div><div><p>[[div]]<br />\n",
                 "div closing tag is missing</p></div></div>",
             ),
         );
@@ -2191,7 +2191,7 @@ mod tests {
             render_preprocessed_wikidot_allowing_errors(source),
             concat!(
                 "<p>[[div]]inline[[/div]]",
-                "[[div]]inline, closing tag is on a new line<br>\n",
+                "[[div]]inline, closing tag is on a new line<br />\n",
                 "[[/div]]</p>",
             ),
         );
@@ -2200,7 +2200,7 @@ mod tests {
         assert_eq!(
             render_preprocessed_wikidot_allowing_errors(source),
             concat!(
-                "<p>[[div]]inline, closing tag is on a new line<br>\n",
+                "<p>[[div]]inline, closing tag is on a new line<br />\n",
                 "[[/div]]</p>",
             ),
         );
@@ -2215,7 +2215,7 @@ mod tests {
         assert_eq!(
             render_preprocessed_wikidot_allowing_errors(source),
             concat!(
-                "<p>[[div]]inline, closing tag is on a new line<br>\n",
+                "<p>[[div]]inline, closing tag is on a new line<br />\n",
                 "[[/div]][[div]]inline[[/div]]</p>",
             ),
         );
@@ -2274,7 +2274,7 @@ mod tests {
         let source = "[[div]]\n[[div]]\nx\n[[/div]]\n";
         assert_eq!(
             render_preprocessed_wikidot(source),
-            "<div><p>[[div]]<br>\nx</p></div>",
+            "<div><p>[[div]]<br />\nx</p></div>",
         );
     }
 
@@ -2283,7 +2283,7 @@ mod tests {
         let source = "[[div]]\na\n\n[[div]]\nb\n[[/div]]\n";
         assert_eq!(
             render_preprocessed_wikidot(source),
-            "<div><p>a</p><p>[[div]]<br>\nb</p></div>",
+            "<div><p>a</p><p>[[div]]<br />\nb</p></div>",
         );
     }
 
@@ -2292,7 +2292,7 @@ mod tests {
         let source = "[[div]]\nx\n[[/div]]\n[[/div]]\n[[div]]\n[[div]]\ny\n[[/div]]\n";
         assert_eq!(
             render_preprocessed_wikidot_allowing_errors(source),
-            "<div><p>x</p></div><br>\n[[/div]]<div><p>[[div]]<br>\ny</p></div>",
+            "<div><p>x</p></div><br />\n[[/div]]<div><p>[[div]]<br />\ny</p></div>",
         );
     }
 
@@ -2301,7 +2301,7 @@ mod tests {
         let source = "[[div]]\n[[div]]\nx\n[[/div]]\n[[div]]\ny\n[[/div]]\n";
         assert_eq!(
             render_preprocessed_wikidot(source),
-            "<div><div><p>x</p></div>\n[[div]]<br>\ny</div>",
+            "<div><div><p>x</p></div>\n[[div]]<br />\ny</div>",
         );
     }
 
@@ -2365,7 +2365,7 @@ mod tests {
         assert!(!errors.is_empty());
         assert_eq!(
             html,
-            "<p><a href=\"x\">x</a>[[division]]<br>\nx<br>\n[[/div]]</p>",
+            "<p><a href=\"x\">x</a>[[division]]<br />\nx<br />\n[[/div]]</p>",
         );
     }
 
@@ -2374,12 +2374,12 @@ mod tests {
         for (name, normal, continued) in [
             (
                 "div",
-                "<p>before</p><div><p>x</p></div><br>\nafter",
+                "<p>before</p><div><p>x</p></div><br />\nafter",
                 "<a href=\"x\">x</a>\n<div><p>x</p></div>",
             ),
             (
                 "div_",
-                "<p>before</p><div>x</div><br>\nafter",
+                "<p>before</p><div>x</div><br />\nafter",
                 "<a href=\"x\">x</a>\n<div>x</div>",
             ),
         ] {
@@ -2614,7 +2614,7 @@ mod tests {
             }),
             "{errors:#?}",
         );
-        assert_eq!(html, "<p>[[div]]<br>\n[[div]]<br>\n[[div]]</p>");
+        assert_eq!(html, "<p>[[div]]<br />\n[[div]]<br />\n[[div]]</p>");
     }
 
     #[test]
@@ -2672,7 +2672,7 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
 
         assert!(!errors.is_empty());
-        assert_eq!(html, "<p>[[div_]]<br>\nbody<br>\n[[/div_]]</p>");
+        assert_eq!(html, "<p>[[div_]]<br />\nbody<br />\n[[/div_]]</p>");
     }
 
     #[test]

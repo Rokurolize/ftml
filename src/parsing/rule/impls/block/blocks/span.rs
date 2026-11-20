@@ -596,7 +596,7 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
         assert_eq!(
             html,
-            "<p>PREVIOUS</p><p>EMPTY BASIC <span>durian</span>NEWLINES<span>eggplant<br>\nrafflesia</span><span>paragraph</span></p><span>in span</span><span id=\"u-this-thing\">span2</span>",
+            "<p>PREVIOUS</p><p>EMPTY BASIC <span>durian</span>NEWLINES<span>eggplant<br />\nrafflesia</span><span>paragraph</span></p><span>in span</span><span id=\"u-this-thing\">span2</span>",
         );
     }
 
@@ -625,7 +625,7 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
         assert_eq!(
             html,
-            "<p><span>mango</span></p><p><span>pineapple<br></span></p>",
+            "<p><span>mango</span></p><p><span>pineapple<br /></span></p>",
         );
     }
 
@@ -639,7 +639,7 @@ mod tests {
 
         assert!(errors.is_empty(), "{errors:?}");
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
-        assert_eq!(html, "<p>EMPTY<br>\nBASIC <span>apple</span></p>");
+        assert_eq!(html, "<p>EMPTY<br />\nBASIC <span>apple</span></p>");
     }
 
     #[test]
@@ -654,7 +654,7 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
         assert_eq!(
             html,
-            "<p><span style=\"color: rgb(1, 2, 3);\">SPAN_BEFORE</span></p><div class=\"span-scope-block\"><p><span style=\"color: rgb(1, 2, 3);\">SPAN_INSIDE</span></p></div><span style=\"color: rgb(1, 2, 3);\"><br>\nSPAN_AFTER</span>",
+            "<p><span style=\"color: rgb(1, 2, 3);\">SPAN_BEFORE</span></p><div class=\"span-scope-block\"><p><span style=\"color: rgb(1, 2, 3);\">SPAN_INSIDE</span></p></div><span style=\"color: rgb(1, 2, 3);\"><br />\nSPAN_AFTER</span>",
         );
     }
 

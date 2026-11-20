@@ -1624,9 +1624,12 @@ mod tests {
             .body;
 
         assert!(errors.is_empty(), "{errors:#?}");
-        assert!(html.contains("<div class=\"name\">\n\nNFSI<br>"), "{html}");
         assert!(
-            html.contains("NFSI.png\" alt=\"NFSI.png\" class=\"image\"><br>\n<span"),
+            html.contains("<div class=\"name\">\n\nNFSI<br />"),
+            "{html}"
+        );
+        assert!(
+            html.contains("NFSI.png\" alt=\"NFSI.png\" class=\"image\"><br />\n<span"),
             "{html}",
         );
         assert!(!html.contains("<div class=\"name\"><p>"), "{html}");

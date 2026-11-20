@@ -657,8 +657,8 @@ pub fn render_equation_reference(ctx: &mut HtmlContext, name: &str) {
             .attr(attr!(
                 "class" => "eref",
                 "href" => "javascript:;",
-                "onclick" => &onclick,
             ))
+            .attr_wikidot_attribute("onclick", &onclick)
             .inner(|ctx| {
                 if let Some(index) = index {
                     str_write!(ctx, "{index}");

@@ -527,7 +527,7 @@ mod tests {
         let (tree, _errors) = crate::parse(&invalid, &page_info, &settings).into();
         assert_eq!(
             HtmlRender.render(&tree, &page_info, &settings).body,
-            "<p>[[module654 class=&quot;&quot;]]<br>\nv7 body<br>\n[[/module654]]</p>",
+            "<p>[[module654 class=&quot;&quot;]]<br />\nv7 body<br />\n[[/module654]]</p>",
         );
     }
 
@@ -546,8 +546,8 @@ mod tests {
                 HtmlRender.render(&tree, &page_info, &settings).body,
                 concat!(
                     "<p>Before</p>",
-                    "<p>.parity-gap { color: red; }<br>\n",
-                    "[[/module654]]<br>\n",
+                    "<p>.parity-gap { color: red; }<br />\n",
+                    "[[/module654]]<br />\n",
                     "After</p>",
                 ),
                 "{opener}",

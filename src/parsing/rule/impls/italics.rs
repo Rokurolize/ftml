@@ -429,7 +429,7 @@ mod tests {
             (
                 "//**Warsaw Reconstruction Office**//\n**GENIUS LOCI //DEPARTMENT//**",
                 concat!(
-                    "<p><em><strong>Warsaw Reconstruction Office</strong></em><br>\n",
+                    "<p><em><strong>Warsaw Reconstruction Office</strong></em><br />\n",
                     "<strong>GENIUS LOCI <em>DEPARTMENT</em></strong></p>",
                 ),
             ),

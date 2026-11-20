@@ -1255,7 +1255,7 @@ mod tests {
         let tokenization = crate::tokenize("**a\n[!-- c --]\nb**");
         let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
-        assert_eq!(html, "<p><strong>a<br>\nb</strong></p>");
+        assert_eq!(html, "<p><strong>a<br />\nb</strong></p>");
     }
 
     #[test]
@@ -1281,18 +1281,18 @@ mod tests {
         assert_eq!(
             html,
             concat!(
-                "<p><strong>a<br>\nb</strong></p>",
-                "<p><em>a<br>\nb</em></p>",
-                "<p><span style=\"text-decoration: line-through;\">a<br>\nb</span></p>",
-                "<p><sup>a<br>\nb</sup></p>",
-                "<p><sub>a<br>\nb</sub></p>",
-                "<p><tt>a<br>\nb</tt></p>",
-                "<p><span style=\"color: #c00\">a<br>\nb</span></p>",
-                "<p><span style=\"text-decoration: underline;\">a<br>\nb</span></p>",
-                "<p><span style=\"text-decoration: line-through;\">a<br></span></p>",
-                "<p><span style=\"text-decoration: line-through;\">a<br>\nb</span></p>",
-                "<p>\u{2014}a<br>\nb \u{2014}</p>",
-                "<p><strong>a<br>\nb</strong></p>",
+                "<p><strong>a<br />\nb</strong></p>",
+                "<p><em>a<br />\nb</em></p>",
+                "<p><span style=\"text-decoration: line-through;\">a<br />\nb</span></p>",
+                "<p><sup>a<br />\nb</sup></p>",
+                "<p><sub>a<br />\nb</sub></p>",
+                "<p><tt>a<br />\nb</tt></p>",
+                "<p><span style=\"color: #c00\">a<br />\nb</span></p>",
+                "<p><span style=\"text-decoration: underline;\">a<br />\nb</span></p>",
+                "<p><span style=\"text-decoration: line-through;\">a<br /></span></p>",
+                "<p><span style=\"text-decoration: line-through;\">a<br />\nb</span></p>",
+                "<p>&#8212;a<br />\nb &#8212;</p>",
+                "<p><strong>a<br />\nb</strong></p>",
             ),
         );
     }
@@ -1314,7 +1314,7 @@ mod tests {
             html.starts_with("<p>**||[[=]]</p><div class=\"wiki-note\">"),
             "{html}",
         );
-        assert!(html.contains("</div><br>\n[[/=]]||**"), "{html}");
+        assert!(html.contains("</div><br />\n[[/=]]||**"), "{html}");
         assert!(!html.contains("<strong>"), "{html}");
     }
 }

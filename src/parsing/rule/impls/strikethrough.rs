@@ -174,7 +174,7 @@ mod tests {
     fn double_dashes_do_not_form_strikethrough_across_paragraphs() {
         assert_eq!(
             render_html("--\n* item\n\n--"),
-            "<p>—</p><ul>\n<li>item</li>\n</ul><p>—</p>"
+            "<p>&#8212;</p><ul>\n<li>item</li>\n</ul><p>&#8212;</p>"
         );
     }
 

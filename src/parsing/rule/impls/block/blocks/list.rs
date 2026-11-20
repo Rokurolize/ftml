@@ -4936,7 +4936,7 @@ mod tests {
                 .any(|error| error.kind() == ParseErrorKind::ListItemOutsideList),
             "{errors:?}",
         );
-        assert_eq!(html, "<p>[[li]]<br>\nBaz<br>\n[[/li]]</p>");
+        assert_eq!(html, "<p>[[li]]<br />\nBaz<br />\n[[/li]]</p>");
     }
 
     #[test]
@@ -5180,8 +5180,8 @@ Alpha
             html,
             concat!(
                 "<ul>\n",
-                "<li>Alpha<br>\n",
-                r#"<span style="white-space: pre-wrap;">&#32;</span><br>"#,
+                "<li>Alpha<br />\n",
+                r#"<span style="white-space: pre-wrap;">&#32;</span><br />"#,
                 "</li>\n",
                 "</ul>",
             ),

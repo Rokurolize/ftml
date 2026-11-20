@@ -903,11 +903,11 @@ mod tests {
             "<span style=\"text-decoration: line-through;\">see <a href=\"http://example.com/s\">http://example.com/s</a></span>",
             "<tt><a href=\"http://example.com/m\">http://example.com/m</a>}}</tt>",
             "<span style=\"text-decoration: line-through;\"><a href=\"http://example.com/a--b\">http://example.com/a--b</a></span>",
-            "\u{2014}<a href=\"http://example.com/a--b\">http://example.com/a--b</a>",
-            "<a href=\"http://example.com/a\">http://example.com/a</a>\u{2014}",
+            "&#8212;<a href=\"http://example.com/a--b\">http://example.com/a--b</a>",
+            "<a href=\"http://example.com/a\">http://example.com/a</a>&#8212;",
             "<a href=\"http://example.com/a\">http://example.com/a</a>}}",
             "<a href=\"http://example.com/a\">http://example.com/a</a>-",
-            "\u{2014}<a href=\"http://example.com/s--tail\">http://example.com/s--tail</a>",
+            "&#8212;<a href=\"http://example.com/s--tail\">http://example.com/s--tail</a>",
             "{{<a href=\"http://example.com/m}}tail\">http://example.com/m}}tail</a>",
         ] {
             assert!(html.contains(expected), "{expected} missing from {html}");
@@ -990,18 +990,18 @@ mod tests {
         for expected in [
             "<span style=\"text-decoration: line-through;\"><a href=\"https://example.com/a\">https://example.com/a</a></span>.",
             "<span style=\"text-decoration: line-through;\"><a href=\"https://example.com/a\">https://example.com/a</a>.</span>",
-            "<span style=\"text-decoration: line-through;\">note <a href=\"https://example.com/a\">https://example.com/a</a></span> tail\u{2014}",
-            "<span style=\"text-decoration: line-through;\">note <a href=\"https://example.com/a\">https://example.com/a</a></span>. tail\u{2014}",
+            "<span style=\"text-decoration: line-through;\">note <a href=\"https://example.com/a\">https://example.com/a</a></span> tail&#8212;",
+            "<span style=\"text-decoration: line-through;\">note <a href=\"https://example.com/a\">https://example.com/a</a></span>. tail&#8212;",
             "<span style=\"text-decoration: line-through;\">b</span>",
-            "\u{2014}<a href=\"https://example.com/a--tail\">https://example.com/a--tail</a>",
-            "\u{2014} <a href=\"https://example.com/a\">https://example.com/a</a>\u{2014}.",
+            "&#8212;<a href=\"https://example.com/a--tail\">https://example.com/a--tail</a>",
+            "&#8212; <a href=\"https://example.com/a\">https://example.com/a</a>&#8212;.",
         ] {
             assert!(html.contains(expected), "{expected} missing from {html}");
         }
 
         assert!(
             html.contains(
-                "<span style=\"text-decoration: line-through;\"><a href=\"https://example.com/a\">https://example.com/a</a></span>.\u{2014}"
+                "<span style=\"text-decoration: line-through;\"><a href=\"https://example.com/a\">https://example.com/a</a></span>.&#8212;"
             ),
             "double-shed paragraph missing from {html}"
         );

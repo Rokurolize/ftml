@@ -125,7 +125,7 @@ mod tests {
 
     #[test]
     fn wikidot_paragraph_break_after_underscore_emits_two_breaks() {
-        assert_eq!(render("A _\n\nB"), "<p>A<br>\n<br>\nB</p>");
-        assert_eq!(render("A _\nB"), "<p>A<br>\nB</p>");
+        assert_eq!(render("A _\n\nB"), "<p>A<br />\n<br />\nB</p>");
+        assert_eq!(render("A _\nB"), "<p>A<br />\nB</p>");
     }
 }

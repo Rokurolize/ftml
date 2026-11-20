@@ -94,6 +94,14 @@ pub fn escape_wikidot_text(buffer: &mut String, s: &str) {
             '\0' => " ",
             '\u{ab}' => "&#171;",
             '\u{bb}' => "&#187;",
+            '\u{a0}' => "&#160;",
+            '\u{2014}' => "&#8212;",
+            '\u{2018}' => "&#8216;",
+            '\u{2019}' => "&#8217;",
+            '\u{201c}' => "&#8220;",
+            '\u{201d}' => "&#8221;",
+            '\u{201e}' => "&#8222;",
+            '\u{2026}' => "&#8230;",
             _ => continue,
         };
 
@@ -146,4 +154,24 @@ fn test() {
     test_raw!("a 0 2px", "a&#32;0&#32;2px");
     test_raw!(" a ", "&#32;a&#32;");
     test_raw!("a&b <c>", "a&amp;b&#32;&lt;c&gt;");
+
+    macro_rules! test_wikidot_text {
+        ($input:expr, $expected:expr $(,)?) => {{
+            let mut buffer = String::new();
+            escape_wikidot_text(&mut buffer, $input);
+
+            assert_eq!(&buffer, $expected);
+        }};
+    }
+
+    test_wikidot_text!("", "");
+    test_wikidot_text!("a", "a");
+    test_wikidot_text!("\u{a0}", "&#160;");
+    test_wikidot_text!("\u{2014}", "&#8212;");
+    test_wikidot_text!("\u{2018}", "&#8216;");
+    test_wikidot_text!("\u{2019}", "&#8217;");
+    test_wikidot_text!("\u{201c}", "&#8220;");
+    test_wikidot_text!("\u{201d}", "&#8221;");
+    test_wikidot_text!("\u{201e}", "&#8222;");
+    test_wikidot_text!("\u{2026}", "&#8230;");
 }

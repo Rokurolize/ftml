@@ -88,18 +88,33 @@ mod tests {
             render_html("----\nnext", Layout::Wikidot),
             "<hr><p>next</p>",
         );
-        assert_eq!(render_html("---- tail", Layout::Wikidot), "<p>—— tail</p>",);
-        assert_eq!(render_html("----   ", Layout::Wikidot), "<p>——</p>");
-        assert_eq!(render_html("----\t", Layout::Wikidot), "<p>——</p>");
-        assert_eq!(render_html("---- \t", Layout::Wikidot), "<p>——</p>");
+        assert_eq!(
+            render_html("---- tail", Layout::Wikidot),
+            "<p>&#8212;&#8212; tail</p>",
+        );
+        assert_eq!(
+            render_html("----   ", Layout::Wikidot),
+            "<p>&#8212;&#8212;</p>"
+        );
+        assert_eq!(
+            render_html("----\t", Layout::Wikidot),
+            "<p>&#8212;&#8212;</p>"
+        );
+        assert_eq!(
+            render_html("---- \t", Layout::Wikidot),
+            "<p>&#8212;&#8212;</p>"
+        );
         assert_eq!(
             render_html("---- \nnext", Layout::Wikidot),
-            "<p>——<br>\nnext</p>",
+            "<p>&#8212;&#8212;<br />\nnext</p>",
         );
-        assert_eq!(render_html(" ----", Layout::Wikidot), "<p>——</p>");
+        assert_eq!(
+            render_html(" ----", Layout::Wikidot),
+            "<p>&#8212;&#8212;</p>"
+        );
         assert_eq!(
             render_html("alpha\n---- tail", Layout::Wikidot),
-            "<p>alpha<br>\n—— tail</p>",
+            "<p>alpha<br />\n&#8212;&#8212; tail</p>",
         );
     }
 

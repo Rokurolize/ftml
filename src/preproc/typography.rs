@@ -81,8 +81,8 @@ static NUMBER_UNITS: LazyLock<Regex> = LazyLock::new(|| {
         r"(?x)
         (?P<number>[0-9])\x20
         (?P<unit>
-            [pµmcdhkMGT]?
-            (?:mol|rad|Hz|Pa|Wb|lm|lx|Bq|Gy|Sv|kat|cd|Ohm|Ω|&micro;|&\#0*181;|&\#[xX]0*[Bb]5;|&Omega;|&\#0*937;|&\#[xX]0*3[Aa]9;|[mgstAKNJWCVFSTHBL])
+            (?:[pmcdhkMGT]|µ|&micro;|&\#0*181;|&\#[xX]0*[Bb]5;)?
+            (?:mol|rad|Hz|Pa|Wb|lm|lx|Bq|Gy|Sv|kat|cd|Ohm|Ω|&Omega;|&\#0*937;|&\#[xX]0*3[Aa]9;|[mgstAKNJWCVFSTHBL])
             |
             [kKMGT]?(?:[oBb](?:ps)?|flops)
             |

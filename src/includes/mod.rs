@@ -25,20 +25,18 @@ mod test;
 mod include_ref;
 mod includer;
 mod parse;
-mod quoted;
 
 pub use self::include_ref::{IncludeArguments, IncludeRef};
 pub use self::includer::{DebugIncluder, FetchedPage, Includer, NullIncluder};
 
 use self::parse::parse_include_block;
-use self::quoted::parse_quoted_include;
 use crate::data::PageRef;
 use crate::settings::WikitextSettings;
 use regex::{Regex, RegexBuilder};
 use std::sync::LazyLock;
 
 static INCLUDE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    RegexBuilder::new(r"^(?:[ \t]*>)*\[\[include\s+")
+    RegexBuilder::new(r"^[ \t]*\[\[include\s+")
         .case_insensitive(true)
         .multi_line(true)
         .dot_matches_new_line(true)
@@ -78,7 +76,6 @@ where
     debug!("Inserting text for all include blocks in text ({input_len} bytes)");
 
     let mut ranges: Vec<std::ops::Range<usize>> = Vec::new();
-    let mut consumed_quoted_ranges: Vec<std::ops::Range<usize>> = Vec::new();
     let mut includes = Vec::new();
 
     let mut search_start = 0;
@@ -88,11 +85,6 @@ where
 
         let slice = mtch.as_str();
         trace!("Found include regex match (start {start}, slice '{slice}')");
-        let marker_offset = slice
-            .find("[[")
-            .expect("include scanner match must contain a block opener");
-        let marker_start = start + marker_offset;
-        let quote_prefix = &input[start..marker_start];
 
         let Some(candidate_end) = find_include_end(input, mtch.end(), input.len()) else {
             warn!("Unable to find include terminator, skipping remaining input");
@@ -100,24 +92,7 @@ where
             continue;
         };
 
-        let parsed = if quote_prefix.is_empty() {
-            parse_include_block(input, start).ok()
-        } else {
-            let quote_depth = quote_prefix.bytes().filter(|&byte| byte == b'>').count();
-            let parsed = parse_quoted_include(
-                input,
-                start,
-                marker_start,
-                quote_depth,
-                candidate_end,
-            );
-            if let Some(parsed) = parsed {
-                consumed_quoted_ranges.push(start..parsed.end);
-                search_start = parsed.end;
-                continue;
-            }
-            None
-        };
+        let parsed = parse_include_block(input, start).ok();
 
         match parsed {
             Some((include, end)) => {
@@ -140,22 +115,14 @@ where
 
     let mut replacements: Vec<_> = ranges
         .into_iter()
-        .zip(includes.into_iter().zip(fetched_pages).map(Some))
+        .zip(includes.into_iter().zip(fetched_pages))
         .collect();
-    replacements.extend(
-        consumed_quoted_ranges
-            .into_iter()
-            .map(|range| (range, None)),
-    );
     replacements.sort_unstable_by_key(|(range, _)| range.start);
 
     substitute_replacements(input, replacements, &mut includer, invalid_return)
 }
 
-type IncludeReplacement<'t> = (
-    std::ops::Range<usize>,
-    Option<(IncludeRef<'t>, FetchedPage<'t>)>,
-);
+type IncludeReplacement<'t> = (std::ops::Range<usize>, (IncludeRef<'t>, FetchedPage<'t>));
 
 fn substitute_replacements<'t, I, E, F>(
     input: &str,
@@ -170,11 +137,7 @@ where
     let mut output = String::from(input);
     let mut pages = Vec::new();
 
-    for (range, replacement) in replacements.into_iter().rev() {
-        let Some((include, fetched)) = replacement else {
-            output.replace_range(range, "");
-            continue;
-        };
+    for (range, (include, fetched)) in replacements.into_iter().rev() {
         let (page_ref, arguments): (PageRef, IncludeArguments<'t>) = include.into();
 
         let range_start = range.start;

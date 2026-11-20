@@ -240,6 +240,24 @@ fn wikidot_div_is_inline_scored_line_literal(
         .is_empty()
 }
 
+fn wikidot_div_block_follows_break(parser: &Parser<'_, '_>) -> bool {
+    let mut probe = parser.clone();
+    if probe.step().is_err() {
+        return false;
+    }
+    while probe.current().token == Token::Whitespace {
+        if probe.step().is_err() {
+            return false;
+        }
+    }
+    matches!(
+        probe.current().token,
+        Token::LeftBlock | Token::LeftBlockStar
+    ) && probe
+        .wikidot_block_pair_at_head_byte(probe.current().span.start)
+        .is_some()
+}
+
 fn wikidot_next_line_opens_div(source: &str, mut position: usize) -> bool {
     let bytes = source.as_bytes();
     while matches!(bytes.get(position), Some(b'\n' | b'\r')) {
@@ -539,6 +557,8 @@ where
                 && parser.current().span.start == owner_end
                 && !parser.wikidot_li_inside_item_body()
                 && !parser.wikidot_format_collection_body()
+                && !(parser.current().token == Token::ParagraphBreak
+                    && !wikidot_div_block_follows_break(parser))
             {
                 elements.push(text!("\n"));
             }
@@ -2154,7 +2174,7 @@ mod tests {
         let source = "BEFORE\n\n[[div]]inline[[/div]]\n\n\nafter text\n";
         assert_eq!(
             render_preprocessed_wikidot_allowing_errors(source),
-            "<p>BEFORE</p><p>[[div]]inline[[/div]]\n</p><p>after text</p>",
+            "<p>BEFORE</p><p>[[div]]inline[[/div]]</p><p>after text</p>",
         );
     }
 

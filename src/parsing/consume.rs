@@ -1618,6 +1618,9 @@ where
         {
             parser.step()?;
             parser.step()?;
+            if parser.current().token == Token::LineBreak {
+                parser.mark_wikidot_vanished_pair_line();
+            }
             return Ok(Some(Elements::None));
         }
     }
@@ -2540,6 +2543,9 @@ fn try_consume_wikidot_inline_marker<'r, 't>(
         InlineMarkerRole::Literal => text!(parser.current().slice),
         InlineMarkerRole::Removed => {
             parser.step()?;
+            if parser.current().token == Token::LineBreak {
+                parser.mark_wikidot_vanished_pair_line();
+            }
             return Ok(Some(Elements::None));
         }
     };
@@ -2617,6 +2623,46 @@ fn extend_consumed<'t>(body: &mut Vec<Element<'t>>, elements: Elements<'t>) {
     }
 }
 
+fn subscript_close_ahead(parser: &Parser<'_, '_>) -> bool {
+    if parser.current().token != Token::Subscript
+        || matches!(
+            parser.wikidot_inline_marker_role(),
+            Some(
+                InlineMarkerRole::Open(_)
+                    | InlineMarkerRole::Close(_)
+                    | InlineMarkerRole::ColorOpen { .. }
+                    | InlineMarkerRole::ColorClose
+                    | InlineMarkerRole::Removed
+            )
+        )
+    {
+        return false;
+    }
+    let start = parser.current().span.start;
+    start == 0 || !parser.full_text().inner().as_bytes()[start - 1].is_ascii_whitespace()
+}
+
+fn has_later_comma_close(parser: &Parser<'_, '_>) -> bool {
+    let mut probe = parser.clone();
+    loop {
+        if probe.step().is_err() {
+            return false;
+        }
+        if matches!(
+            probe.current().token,
+            Token::ParagraphBreak
+                | Token::InputEnd
+                | Token::LeftBlock
+                | Token::LeftBlockStar
+        ) {
+            return false;
+        }
+        if comma_run_len(probe.current()).is_some() || subscript_close_ahead(&probe) {
+            return true;
+        }
+    }
+}
+
 /// `,,,a,,,` is a subscript of `,a` plus a leftover comma.
 /// `a,,,b` has no second run, so it stays one literal token.
 /// A lone `,,,,` run is an empty subscript.
@@ -2624,16 +2670,32 @@ fn try_consume_comma_run_subscript<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Option<(Elements<'t>, bool)>> {
     let miss = || Ok(ParseSuccess::new(None, Vec::new(), true));
-    let Some(run_len) = comma_run_len(parser.current()) else {
-        return miss();
-    };
-    if !parser.settings().layout.legacy() {
+    if !parser.settings().layout.legacy() || parser.wikidot_in_comma_run_body() {
         return miss();
     }
-    if !has_later_comma_run(parser) {
-        if run_len == 4 {
+    let run_len = comma_run_len(parser.current());
+    let bare_marker = run_len.is_none()
+        && parser.current().token == Token::Subscript
+        && matches!(
+            parser.wikidot_inline_marker_role(),
+            None | Some(InlineMarkerRole::Literal)
+        );
+    if run_len.is_none() && !bare_marker {
+        return miss();
+    }
+
+    let checkpoint = parser.clone();
+    let lead: &'t str = if let Some(run_len) = run_len {
+        let mut remaining = run_len;
+        while remaining >= 4 {
+            remaining -= 4;
+        }
+        if remaining == 0 {
             if parser.step().is_err() {
                 return miss();
+            }
+            if parser.current().token == Token::LineBreak {
+                parser.mark_wikidot_vanished_pair_line();
             }
             return Ok(ParseSuccess::new(
                 Some((Elements::None, true)),
@@ -2641,12 +2703,35 @@ fn try_consume_comma_run_subscript<'r, 't>(
                 true,
             ));
         }
-        return miss();
-    }
-
-    let checkpoint = parser.clone();
-    let lead = parser.current().slice;
-    let lead = &lead[2..];
+        if remaining == 1 {
+            if parser.step().is_err() {
+                return miss();
+            }
+            return Ok(ParseSuccess::new(
+                Some((Elements::Single(text!(",")), true)),
+                Vec::new(),
+                true,
+            ));
+        }
+        if !has_later_comma_close(parser) {
+            if parser.step().is_err() {
+                return miss();
+            }
+            let literal = ",".repeat(remaining);
+            return Ok(ParseSuccess::new(
+                Some((Elements::Single(Element::Text(Cow::Owned(literal))), true)),
+                Vec::new(),
+                true,
+            ));
+        }
+        let slice = parser.current().slice;
+        &slice[slice.len() - (remaining - 2)..]
+    } else {
+        if !has_later_comma_run(parser) {
+            return miss();
+        }
+        ""
+    };
     if parser.step().is_err() {
         parser.update(&checkpoint);
         return miss();
@@ -2658,8 +2743,10 @@ fn try_consume_comma_run_subscript<'r, 't>(
     if !lead.is_empty() {
         body.push(text!(lead));
     }
+    parser.set_wikidot_comma_run_body(true);
     let parsed = loop {
         if comma_run_len(parser.current()).is_some()
+            || subscript_close_ahead(parser)
             || matches!(
                 parser.current().token,
                 Token::ParagraphBreak | Token::InputEnd
@@ -2680,13 +2767,29 @@ fn try_consume_comma_run_subscript<'r, 't>(
             Err(_) => break false,
         }
     };
-    if !parsed || comma_run_len(parser.current()).is_none() {
+    parser.set_wikidot_comma_run_body(false);
+    if !parsed {
         parser.update(&checkpoint);
         return miss();
     }
+    if bare_marker {
+        let start = parser.current().span.start;
+        if start > 0
+            && parser.full_text().inner().as_bytes()[start - 1].is_ascii_whitespace()
+        {
+            parser.update(&checkpoint);
+            return miss();
+        }
+    }
 
-    let tail = parser.current().slice;
-    let tail = &tail[2..];
+    let tail: &'t str = if comma_run_len(parser.current()).is_some() {
+        &parser.current().slice[2..]
+    } else if subscript_close_ahead(parser) {
+        ""
+    } else {
+        parser.update(&checkpoint);
+        return miss();
+    };
     if parser.step().is_err() {
         parser.update(&checkpoint);
         return miss();

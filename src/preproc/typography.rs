@@ -668,6 +668,19 @@ fn replace_unit_spaces(text: &mut String, protected: &[Range<usize>]) {
     }
 }
 
+fn wikidot_url_boundary_space_ranges(text: &str) -> Vec<Range<usize>> {
+    let mut ranges = Vec::new();
+    let tokenization = crate::tokenize(text);
+    for token in tokenization.tokens() {
+        if matches!(token.token, Token::Url | Token::UrlStar)
+            && text.as_bytes().get(token.span.end) == Some(&b' ')
+        {
+            ranges.push(token.span.end..token.span.end + 1);
+        }
+    }
+    ranges
+}
+
 pub(crate) fn wikidot_nbsp_space_positions(text: &str) -> Vec<usize> {
     let mut positions = Vec::new();
     for space_index in digit_space_positions(text) {
@@ -790,8 +803,12 @@ fn substitute_wikidot_impl(text: &mut String, defer_conditionals: bool) {
     if text.bytes().any(|byte| byte.is_ascii_digit()) {
         let digit_spaces = digit_space_positions(text);
         let mut protected_ranges = typography_protected_ranges(text, true);
+        protected_ranges.extend(wikidot_url_boundary_space_ranges(text));
+        protected_ranges = merge_ranges(protected_ranges);
         if replace_number_spaces(text, &protected_ranges, &digit_spaces) {
             protected_ranges = typography_protected_ranges(text, true);
+            protected_ranges.extend(wikidot_url_boundary_space_ranges(text));
+            protected_ranges = merge_ranges(protected_ranges);
         }
         replace_unit_spaces(text, &protected_ranges);
     }
@@ -1540,7 +1557,7 @@ const TEST_CASES: [(&str, &str); 39] = [
         "John laughed. ``You'll never defeat me!''\n``That's where you're wrong...''",
         "John laughed. “You'll never defeat me!”\n“That's where you're wrong…”",
     ),
-    ("``outer ``inner'' outer''", "“outer ‘`inner” outer’'"),
+    ("``outer ``inner'' outer''", "``outer ``inner'' outer''"),
     (
         ",,あんたは馬鹿です！''\n``Ehh?''\n,,本当！''\n[[footnoteblock]]",
         ",,あんたは馬鹿です！''\n“Ehh?”\n,,本当！''\n[[footnoteblock]]",

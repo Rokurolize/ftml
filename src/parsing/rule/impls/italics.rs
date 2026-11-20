@@ -190,7 +190,10 @@ fn finish_collected<'r, 't>(
                 let elements = append_split_close_leftover(Elements::None, leftover);
                 ok!(paragraph_safe; elements, errors)
             }
-            None => ok!(paragraph_safe; Elements::None, errors),
+            None => {
+                super::inline_delimiter::note_vanished_empty_pair(parser);
+                ok!(paragraph_safe; Elements::None, errors)
+            }
         };
     }
     let elements =

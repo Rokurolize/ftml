@@ -201,6 +201,9 @@ fn try_consume_fn<'r, 't>(
         && (elements.is_empty()
             || matches!(elements.as_slice(), [Element::Text(value)] if value.as_ref() == "0"))
     {
+        if elements.is_empty() {
+            super::inline_delimiter::note_vanished_empty_pair(parser);
+        }
         return ok!(paragraph_safe; Elements::None, errors);
     }
 

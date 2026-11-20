@@ -61,9 +61,83 @@ fn block_regular<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     if wikidot_scored_span_residual_opener(parser) {
         parse_wikidot_scored_span_residual(parser)
+    } else if parser.settings().layout.legacy()
+        && let Some(elements) = wikidot_double_bracket_interwiki(parser)
+    {
+        success_elements(elements)
     } else {
         parse_block(parser, false)
     }
+}
+
+fn wikidot_double_bracket_interwiki<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Option<Elements<'t>>
+where
+    'r: 't,
+{
+    if parser.current().token != Token::LeftBlock {
+        return None;
+    }
+    let source = parser.full_text().inner();
+    let rest = source.get(parser.current().span.end..)?;
+    if rest.starts_with('[')
+        || rest.starts_with('/')
+        || rest.starts_with('*')
+        || rest.starts_with('$')
+    {
+        return None;
+    }
+    let mut prefix_len = 0;
+    for byte in rest.bytes().take(64) {
+        if byte == b':' {
+            break;
+        }
+        if !byte.is_ascii_alphabetic() && byte != b'.' {
+            return None;
+        }
+        prefix_len += 1;
+    }
+    if prefix_len == 0 || rest.as_bytes().get(prefix_len) != Some(&b':') {
+        return None;
+    }
+
+    let mut attempt = parser.clone();
+    attempt.step().ok()?;
+    let closes = [ParseCondition::current(Token::RightBlock)];
+    let invalids = [
+        ParseCondition::current(Token::Whitespace),
+        ParseCondition::current(Token::LineBreak),
+        ParseCondition::current(Token::ParagraphBreak),
+    ];
+    let (field, last) =
+        collect_comment_elided_keep(&mut attempt, &closes, &invalids, None, None).ok()?;
+    if last.token != Token::RightBlock {
+        return None;
+    }
+    let url = crate::parsing::discard_wikidot_controls(field.into_cow());
+    if url.is_empty() {
+        return None;
+    }
+    if url
+        .split_once(':')
+        .is_some_and(|(_, path)| path.starts_with(':'))
+    {
+        return None;
+    }
+    let expanded = attempt.settings().interwiki.build(&url)?;
+    let label = url.split_once(':').map_or("", |(_, path)| path);
+    parser.update(&attempt);
+    Some(Elements::Multiple(vec![
+        text!("["),
+        Element::Link {
+            ltype: crate::tree::LinkType::Interwiki,
+            link: crate::tree::LinkLocation::Url(Cow::Owned(expanded)),
+            label: crate::tree::LinkLabel::Text(Cow::Owned(label.to_owned())),
+            target: None,
+        },
+        text!("]"),
+    ]))
 }
 
 fn block_star<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {

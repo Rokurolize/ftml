@@ -1,0 +1,29 @@
+[
+    {
+        "token": "input-end",
+        "rule": "math",
+        "span": [
+            26,
+            26
+        ],
+        "kind": "end-of-input"
+    },
+    {
+        "token": "left-math",
+        "rule": "fallback",
+        "span": [
+            0,
+            3
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-block",
+        "rule": "fallback",
+        "span": [
+            24,
+            26
+        ],
+        "kind": "no-rules-match"
+    }
+]

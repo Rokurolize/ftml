@@ -212,6 +212,12 @@ where
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
+    if target.is_none()
+        && let Some(elements) = wikidot_described_email(parser)
+    {
+        return success_elements(elements);
+    }
+
     if let Some(elements) = wikidot_unlabeled_interwiki(parser, target) {
         return success_elements(elements);
     }
@@ -226,6 +232,34 @@ where
         authored_prefix_has_link_authority,
         false,
     )
+}
+
+fn wikidot_described_email<'r, 't>(parser: &mut Parser<'r, 't>) -> Option<Elements<'t>>
+where
+    'r: 't,
+{
+    if parser.current().token != Token::Email {
+        return None;
+    }
+    let email = cow!(parser.current().slice);
+
+    let mut attempt = parser.clone();
+    attempt.step().ok()?;
+    if attempt.current().token != Token::Whitespace || attempt.current().slice != " " {
+        return None;
+    }
+    attempt.step().ok()?;
+
+    let WikidotLabel {
+        text: label,
+        residual_closer,
+    } = collect_wikidot_label(&mut attempt, false).ok()?;
+    if !residual_closer.is_empty() || label.is_empty() {
+        return None;
+    }
+
+    parser.update(&attempt);
+    Some(Elements::Single(Element::EmailDescribed { email, label }))
 }
 
 // Live's unlabeled form ("[wikipedia:Albert_Einstein]") links the article and
@@ -253,7 +287,7 @@ where
         if byte == b':' {
             break;
         }
-        if !byte.is_ascii_alphabetic() {
+        if !byte.is_ascii_alphabetic() && byte != b'.' {
             return None;
         }
         prefix_len += 1;
@@ -286,6 +320,9 @@ where
         return None;
     }
 
+    if wikidot_interwiki_path_starts_with_colon(&url) {
+        return None;
+    }
     let expanded = attempt.settings().interwiki.build(&url)?;
     let label = wikidot_interwiki_path_label(&url);
     parser.update(&attempt);
@@ -539,10 +576,20 @@ where
     // its interwiki table without regard to ASCII case when a label is
     // authored ("[WIKIPEDIA:Albert_Einstein Upper]" links). The unlabeled form
     // is consumed by wikidot_unlabeled_interwiki before this walk.
+    if disposition == WikidotLinkDisposition::LabelOnly
+        && wikidot_interwiki_path_starts_with_colon(&url)
+    {
+        return Err(parser.make_err(ParseErrorKind::InvalidUrl));
+    }
+
     let interwiki_url = match disposition {
         WikidotLinkDisposition::LabelOnly => wikidot_interwiki_url(parser, &url),
         WikidotLinkDisposition::Link | WikidotLinkDisposition::Literal => None,
     };
+
+    if interwiki_url.is_some() && wikidot_label_has_autolink(parser) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     let empty_label_run_forms = match parser.full_text().inner().get(target_end..) {
         Some(rest) => {
@@ -602,6 +649,42 @@ where
 
 fn wikidot_interwiki_url(parser: &Parser<'_, '_>, url: &str) -> Option<String> {
     parser.settings().interwiki.build_ignore_ascii_case(url)
+}
+
+fn wikidot_interwiki_path_starts_with_colon(url: &str) -> bool {
+    url.split_once(':')
+        .is_some_and(|(_, path)| path.starts_with(':'))
+}
+
+fn wikidot_label_has_autolink<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    let mut scan = parser.clone();
+    loop {
+        match scan.current().token {
+            Token::Url | Token::UrlStar => return true,
+            Token::LeftComment => {
+                let mut comment = scan.clone();
+                if consume_valid_comment(&mut comment).is_err() {
+                    return false;
+                }
+                scan.update(&comment);
+                continue;
+            }
+            Token::RightBracket
+            | Token::RightBlock
+            | Token::RightLink
+            | Token::LineBreak
+            | Token::ParagraphBreak
+            | Token::InputEnd => return false,
+            _ => {
+                if scan.step().is_err() {
+                    return false;
+                }
+            }
+        }
+    }
 }
 
 fn wikidot_interwiki_path_label<'t>(url: &Cow<'t, str>) -> Cow<'t, str> {

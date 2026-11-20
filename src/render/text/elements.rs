@@ -115,6 +115,20 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
                 ctx.push_str(email);
             }
         }
+        Element::EmailDescribed { email, label } => {
+            if ctx.title_mode() && ctx.settings().layout.legacy() {
+                if let Some((local, domain)) = email.split_once('@') {
+                    let local_rev: String = local.chars().rev().collect();
+                    let domain_rev: String = domain.chars().rev().collect();
+                    let label_rev: String = label.chars().rev().collect();
+                    ctx.push_str(&format!("{domain_rev}|{local_rev}#{label_rev}"));
+                } else {
+                    ctx.push_str(label);
+                }
+            } else {
+                ctx.push_str(label);
+            }
+        }
         Element::Delayed(_) => {
             panic!("unbound delayed element reached the text renderer")
         }

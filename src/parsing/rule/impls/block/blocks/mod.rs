@@ -765,6 +765,13 @@ fn scan_element_source_offset<'t>(
                 consider_source_ptr(source_ptr, result, text.as_ptr() as usize);
             }
         }
+        Element::EmailDescribed {
+            email: std::borrow::Cow::Borrowed(email),
+            ..
+        } => {
+            consider_source_ptr(source_ptr, result, email.as_ptr() as usize);
+        }
+        Element::EmailDescribed { .. } => {}
         Element::Container(container) => {
             for child in container.elements() {
                 scan_element_source_offset(source_ptr, child, result);

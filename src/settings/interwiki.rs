@@ -55,8 +55,11 @@ pub static DEFAULT_INTERWIKI: LazyLock<InterwikiSettings> =
 /// The interwiki table the Wikidot layout resolves against.
 ///
 /// Live Wikidot's saved pages resolve exactly these prefixes (saved-page
-/// probes on `sandbox-for-codex`, 2026-11-06, pages `muse-probe-dhiw-*`):
+/// probes on `sandbox-for-codex`, 2026-11-06 pages `muse-probe-dhiw-*` and
+/// 2026-11-20 pages `muse-probe-r2in1-iw-*`):
 /// - `wikipedia:path` => <https://en.wikipedia.org/wiki/path>
+/// - `wikipedia.pl:path` => <https://pl.wikipedia.org/wiki/path>
+/// - `pl.wikipedia:path` => <https://pl.wikipedia.org/wiki/path>
 /// - `google:path` => <https://www.google.com/search?q=path>
 /// - `dictionary:path` => <https://dictionary.reference.com/browse/path>
 ///
@@ -68,6 +71,8 @@ pub static WIKIDOT_INTERWIKI: LazyLock<InterwikiSettings> =
     LazyLock::new(|| InterwikiSettings {
         prefixes: hashmap! {
             cow!("wikipedia") => cow!("https://en.wikipedia.org/wiki/$$"),
+            cow!("wikipedia.pl") => cow!("https://pl.wikipedia.org/wiki/$$"),
+            cow!("pl.wikipedia") => cow!("https://pl.wikipedia.org/wiki/$$"),
             cow!("google") => cow!("https://www.google.com/search?q=$$"),
             cow!("dictionary") => cow!("https://dictionary.reference.com/browse/$$"),
         },

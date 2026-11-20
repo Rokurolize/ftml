@@ -678,14 +678,9 @@ fn include_swallowed_by_multiline_argument_does_not_overlap() {
 }
 
 #[test]
-fn tight_quoted_multiline_include_is_consumed_without_resolving_its_target() {
+fn tight_quoted_include_is_not_consumed_by_the_include_scanner() {
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-    let input = concat!(
-        "before\n",
-        ">[[include :scp-wiki:component:author-label-source start=—\n",
-        ">|name=toadking07]]\n",
-        "after\n",
-    );
+    let input = "BEFORE\n>[[include muse-probe-g14-target |x=1]]\nAFTER\n";
 
     let (output, pages) = include(
         input,
@@ -693,10 +688,10 @@ fn tight_quoted_multiline_include_is_consumed_without_resolving_its_target() {
         DebugIncluder::first_missing(),
         || unreachable!(),
     )
-    .expect("tight quoted include should be consumed");
+    .expect("tight quoted include should reach the parser unconsumed");
 
     assert!(pages.is_empty());
-    assert_eq!(output, "before\n\nafter\n");
+    assert_eq!(output, input);
 }
 
 #[test]
@@ -780,10 +775,10 @@ fn quoted_include_scanner_handles_many_one_line_includes_in_bounded_time() {
         DebugIncluder::first_missing(),
         || unreachable!(),
     )
-    .expect("tight quoted includes should be consumed");
+    .expect("tight quoted includes should reach the parser unconsumed");
 
     assert!(pages.is_empty());
-    assert_eq!(output, "\n".repeat(INCLUDE_LINES));
+    assert_eq!(output, input);
     assert!(
         started.elapsed() < std::time::Duration::from_secs(5),
         "quoted one-line include scan took {:?}",

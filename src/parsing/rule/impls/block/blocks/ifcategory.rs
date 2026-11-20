@@ -45,24 +45,26 @@ fn parse_fn<'r, 't>(
 
     // Parse out tag conditions
     let conditions =
-        parser.get_head_value(&BLOCK_IFCATEGORY, in_head, |parser, spec| match spec {
-            None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
-            Some(spec) => {
-                let mut conditions = ElementCondition::parse(spec);
+        parser.get_head_value(&BLOCK_IFCATEGORY, in_head, |parser, spec| {
+            match spec.map(str::trim).filter(|spec| !spec.is_empty()) {
+                None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
+                Some(spec) => {
+                    let mut conditions = ElementCondition::parse(spec);
 
-                conditions.iter_mut().for_each(|condition| {
-                    // Because a page can be in at most one category,
-                    // the required condition type is not useful here
-                    // beyond a single instance.
-                    //
-                    // Thus, we convert all required -> present,
-                    // effectively making "+" and no prefix the same thing.
-                    if condition.ctype == ElementConditionType::Required {
-                        condition.ctype = ElementConditionType::Present;
-                    }
-                });
+                    conditions.iter_mut().for_each(|condition| {
+                        // Because a page can be in at most one category,
+                        // the required condition type is not useful here
+                        // beyond a single instance.
+                        //
+                        // Thus, we convert all required -> present,
+                        // effectively making "+" and no prefix the same thing.
+                        if condition.ctype == ElementConditionType::Required {
+                            condition.ctype = ElementConditionType::Present;
+                        }
+                    });
 
-                Ok(conditions)
+                    Ok(conditions)
+                }
             }
         })?;
 

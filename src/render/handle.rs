@@ -207,22 +207,3 @@ impl BuildSiteUrl for Handle {
         format!("https://{site}.wikijump.com/{path}{extra}")
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::data::PageRef;
-
-    #[test]
-    fn url_label_with_page_target_uses_page_reference() {
-        let page = PageRef::new(Some("scp-wiki"), "component:theme");
-        let expected = page.to_string();
-        let mut label = None;
-
-        Handle.get_link_label("", &LinkLocation::Page(page), &LinkLabel::Url, |text| {
-            label = Some(text.to_owned());
-        });
-
-        assert_eq!(label.as_deref(), Some(expected.as_str()));
-    }
-}

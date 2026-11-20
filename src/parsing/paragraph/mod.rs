@@ -2525,10 +2525,10 @@ mod tests {
             concat!(
                 "<p>FLOAT RIGHT</p>",
                 "<div class=\"image-container floatright\">",
-                "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/landscape.jpg\" class=\"image\" alt=\"landscape.jpg\">",
+                "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/landscape.jpg\" alt=\"landscape.jpg\" class=\"image\">",
                 "</div>",
                 "\nEXTERNAL ",
-                "<img src=\"https://example.com/some-image.webp\" class=\"image\" alt=\"some-image.webp\">",
+                "<img src=\"https://example.com/some-image.webp\" alt=\"some-image.webp\" class=\"image\">",
             ),
         );
 
@@ -2536,7 +2536,7 @@ mod tests {
             render_wikidot("[[f>image landscape.jpg]]\n\nplain"),
             concat!(
                 "<div class=\"image-container floatright\">",
-                "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/landscape.jpg\" class=\"image\" alt=\"landscape.jpg\">",
+                "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/landscape.jpg\" alt=\"landscape.jpg\" class=\"image\">",
                 "</div>",
                 "<p>plain</p>",
             ),
@@ -2548,10 +2548,10 @@ mod tests {
             ),
             concat!(
                 "<div class=\"image-container floatright\">",
-                "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/landscape.jpg\" class=\"image\" alt=\"landscape.jpg\">",
+                "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/landscape.jpg\" alt=\"landscape.jpg\" class=\"image\">",
                 "</div>",
                 "EXTERNAL ",
-                "<img src=\"https://example.com/some-image.webp\" class=\"image\" alt=\"some-image.webp\">",
+                "<img src=\"https://example.com/some-image.webp\" alt=\"some-image.webp\" class=\"image\">",
             ),
         );
 
@@ -2559,7 +2559,7 @@ mod tests {
             render_wikidot("[[f>image landscape.jpg]]\n\n"),
             concat!(
                 "<div class=\"image-container floatright\">",
-                "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/landscape.jpg\" class=\"image\" alt=\"landscape.jpg\">",
+                "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/landscape.jpg\" alt=\"landscape.jpg\" class=\"image\">",
                 "</div>",
             ),
         );

@@ -35,7 +35,12 @@ pub fn render_table_of_contents(
 
     let class_value = match align {
         None => "",
-        Some(align) => FloatAlignment { align, float: true }.wj_html_class(),
+        Some(align) => FloatAlignment {
+            align,
+            float: true,
+            recognized: true,
+        }
+        .wj_html_class(),
     };
 
     ctx.html()
@@ -104,8 +109,14 @@ fn render_wikidot_toc_box(
     align: Option<Alignment>,
     attributes: &AttributeMap,
 ) {
-    let class_value =
-        align.map(|align| FloatAlignment { align, float: true }.wd_html_class());
+    let class_value = align.map(|align| {
+        FloatAlignment {
+            align,
+            float: true,
+            recognized: true,
+        }
+        .wd_html_class()
+    });
     ctx.html()
         .div()
         .attr(attr!(

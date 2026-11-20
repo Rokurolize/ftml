@@ -81,6 +81,7 @@ fn aligned_image_line_closes_paragraph_without_trailing_break() {
             FloatAlignment {
                 align: Alignment::Left,
                 float: true,
+                recognized: true,
             },
         ),
         (
@@ -88,6 +89,7 @@ fn aligned_image_line_closes_paragraph_without_trailing_break() {
             FloatAlignment {
                 align: Alignment::Right,
                 float: true,
+                recognized: true,
             },
         ),
         (
@@ -95,6 +97,7 @@ fn aligned_image_line_closes_paragraph_without_trailing_break() {
             FloatAlignment {
                 align: Alignment::Left,
                 float: false,
+                recognized: true,
             },
         ),
         (
@@ -102,6 +105,7 @@ fn aligned_image_line_closes_paragraph_without_trailing_break() {
             FloatAlignment {
                 align: Alignment::Right,
                 float: false,
+                recognized: true,
             },
         ),
         (
@@ -109,6 +113,7 @@ fn aligned_image_line_closes_paragraph_without_trailing_break() {
             FloatAlignment {
                 align: Alignment::Center,
                 float: false,
+                recognized: true,
             },
         ),
         (
@@ -116,6 +121,7 @@ fn aligned_image_line_closes_paragraph_without_trailing_break() {
             FloatAlignment {
                 align: Alignment::Center,
                 float: true,
+                recognized: true,
             },
         ),
     ];
@@ -145,7 +151,8 @@ fn aligned_image_after_unaligned_image_drops_separator_break() {
                 image_alignment(&tree.elements[1]),
                 Some(FloatAlignment {
                     align: Alignment::Left,
-                    float: true
+                    float: true,
+                    recognized: true,
                 }),
             );
         },
@@ -202,7 +209,8 @@ fn earlier_breaks_in_paragraph_before_aligned_image_are_kept() {
             image_alignment(image),
             Some(FloatAlignment {
                 align: Alignment::Left,
-                float: true
+                float: true,
+                recognized: true,
             }),
         );
     });
@@ -250,15 +258,18 @@ fn image_paragraphs_fixture_paragraphs_have_no_trailing_breaks() {
                 None,
                 Some(FloatAlignment {
                     align: Alignment::Left,
-                    float: false
+                    float: false,
+                    recognized: true,
                 }),
                 Some(FloatAlignment {
                     align: Alignment::Left,
-                    float: true
+                    float: true,
+                    recognized: true,
                 }),
                 Some(FloatAlignment {
                     align: Alignment::Left,
-                    float: true
+                    float: true,
+                    recognized: true,
                 }),
             ],
         );

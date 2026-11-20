@@ -27,7 +27,7 @@ pub fn escape_wikidot_raw(buffer: &mut String, s: &str) {
             b'>' => "&gt;",
             b'<' => "&lt;",
             b'&' => "&amp;",
-            b'\'' => "&#39;",
+            b'\'' => "'",
             b'"' => "&quot;",
             b'\0' => " ",
             _ => continue,

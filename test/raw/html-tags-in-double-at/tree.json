@@ -1,0 +1,101 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "@@"
+                    },
+                    {
+                        "element": "text",
+                        "data": "<"
+                    },
+                    {
+                        "element": "text",
+                        "data": "b"
+                    },
+                    {
+                        "element": "text",
+                        "data": ">"
+                    },
+                    {
+                        "element": "text",
+                        "data": "bold"
+                    },
+                    {
+                        "element": "text",
+                        "data": "<"
+                    },
+                    {
+                        "element": "text",
+                        "data": "/"
+                    },
+                    {
+                        "element": "text",
+                        "data": "b"
+                    },
+                    {
+                        "element": "text",
+                        "data": ">"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "<"
+                    },
+                    {
+                        "element": "text",
+                        "data": "script"
+                    },
+                    {
+                        "element": "text",
+                        "data": ">"
+                    },
+                    {
+                        "element": "text",
+                        "data": "alert"
+                    },
+                    {
+                        "element": "text",
+                        "data": "("
+                    },
+                    {
+                        "element": "text",
+                        "data": "1"
+                    },
+                    {
+                        "element": "text",
+                        "data": ")"
+                    },
+                    {
+                        "element": "text",
+                        "data": "<"
+                    },
+                    {
+                        "element": "text",
+                        "data": "/"
+                    },
+                    {
+                        "element": "text",
+                        "data": "script"
+                    },
+                    {
+                        "element": "text",
+                        "data": ">@"
+                    },
+                    {
+                        "element": "text",
+                        "data": "@"
+                    }
+                ]
+            }
+        }
+    ]
+}

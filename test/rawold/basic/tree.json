@@ -1,0 +1,268 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "A"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": "raw"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "bold",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "bold"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "B"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "italics",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "italic"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "bold",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "bold"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "[["
+                    },
+                    {
+                        "element": "text",
+                        "data": "link"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]"
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": "old"
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "raw",
+                        "data": "raw"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "A"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "B"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "A"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "‘"
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": "it"
+                    },
+                    {
+                        "element": "text",
+                        "data": "’"
+                    },
+                    {
+                        "element": "text",
+                        "data": "s"
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": "`"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "B"
+                    }
+                ]
+            }
+        }
+    ]
+}

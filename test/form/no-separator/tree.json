@@ -1,0 +1,45 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "form",
+                        "data": "[[form]]"
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "form",
+                        "data": "fields:"
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "form",
+                        "data": "  name:"
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "form",
+                        "data": "    type: text"
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "form",
+                        "data": "[[/form]]"
+                    }
+                ]
+            }
+        }
+    ]
+}

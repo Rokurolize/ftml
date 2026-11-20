@@ -990,6 +990,7 @@ fn element_contains_delayed(element: &Element<'_>) -> bool {
         | Element::ContentSeparator
         | Element::Text(_)
         | Element::Raw(_)
+        | Element::Form(_)
         | Element::Variable(_)
         | Element::Email(_)
         | Element::AnchorName(_)

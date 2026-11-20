@@ -19,7 +19,40 @@
  */
 
 use super::prelude::*;
+use crate::render::html::escape::escape_wikidot_raw;
 use crate::tree::AttributeMap;
+
+pub fn render_form_line(ctx: &mut HtmlContext, text: &str) {
+    match ctx.layout() {
+        Layout::Wikidot => {
+            let mut escaped = String::new();
+            escape_wikidot_raw(&mut escaped, text);
+            let mut rest = escaped.as_str();
+            let mut prefix = String::new();
+            while let Some(remainder) = rest.strip_prefix("&#32;&#32;") {
+                prefix.push_str("&nbsp;&#32;");
+                rest = remainder;
+            }
+            if let Some(remainder) = rest.strip_prefix("&#32;") {
+                prefix.push_str("&#32;");
+                rest = remainder;
+            }
+            ctx.html()
+                .span()
+                .attr(attr!("style" => "white-space: pre-wrap;"))
+                .inner(|ctx| {
+                    ctx.push_raw_str(&prefix);
+                    ctx.push_raw_str(rest);
+                });
+        }
+        Layout::Wikijump => {
+            ctx.html()
+                .span()
+                .attr(attr!("class" => "wj-raw"))
+                .contents(text);
+        }
+    }
+}
 
 pub fn render_wikitext_raw(ctx: &mut HtmlContext, text: &str) {
     debug!("Escaping raw string '{text}'");

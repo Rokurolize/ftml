@@ -91,7 +91,7 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
             ctx.add_newline();
         }
         Element::Module(_) => {}
-        Element::Text(text) | Element::Raw(text) => {
+        Element::Text(text) | Element::Raw(text) | Element::Form(text) => {
             ctx.push_str(text);
         }
         Element::Email(email) => {

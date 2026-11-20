@@ -1,0 +1,8 @@
+[[form]]
+fields:
+  name:
+    type: text
+    label: Name
+---
+name: Alice
+[[/form]]

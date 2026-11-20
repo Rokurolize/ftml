@@ -1,0 +1,6 @@
+[[form]]
+fields:
+  name:
+    type: text
+---
+name: x

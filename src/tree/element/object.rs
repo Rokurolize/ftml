@@ -109,6 +109,11 @@ pub enum Element<'t> {
     /// is up to the render implementation.
     Email(Cow<'t, str>),
 
+    EmailDescribed {
+        email: Cow<'t, str>,
+        label: Cow<'t, str>,
+    },
+
     #[serde(skip)]
     Delayed(DelayedElement<'t>),
 
@@ -450,6 +455,7 @@ impl Element<'_> {
             Element::Form(_) => "Form",
             Element::Variable(_) => "Variable",
             Element::Email(_) => "Email",
+            Element::EmailDescribed { .. } => "EmailDescribed",
             Element::Delayed(_) => "Delayed",
             Element::ContentSeparator => "ContentSeparator",
             Element::Table(_) => "Table",
@@ -605,7 +611,8 @@ impl Element<'_> {
             | Element::Raw(_)
             | Element::Form(_)
             | Element::Variable(_)
-            | Element::Email(_) => true,
+            | Element::Email(_)
+            | Element::EmailDescribed { .. } => true,
             Element::Delayed(_) => true,
             Element::ContentSeparator => false,
             Element::Table(_) => false,
@@ -676,6 +683,10 @@ impl Element<'_> {
             Element::Form(text) => Element::Form(string_to_owned(text)),
             Element::Variable(name) => Element::Variable(string_to_owned(name)),
             Element::Email(email) => Element::Email(string_to_owned(email)),
+            Element::EmailDescribed { email, label } => Element::EmailDescribed {
+                email: string_to_owned(email),
+                label: string_to_owned(label),
+            },
             Element::Delayed(delayed) => Element::Delayed(delayed.to_owned()),
             Element::ContentSeparator => Element::ContentSeparator,
             Element::Table(table) => Element::Table(table.to_owned()),

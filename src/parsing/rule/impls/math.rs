@@ -194,6 +194,25 @@ where
                 parser.step()?;
             }
 
+            Token::RightBlock
+                if comment_elided.is_none()
+                    && parser.current().slice == "]]"
+                    && parser.current().span.start > start
+                    && source.as_bytes()[parser.current().span.start - 1] == b'$' =>
+            {
+                let end = parser.current().span.start;
+                parser.step()?;
+                let latex_source = if suppress_formula {
+                    Cow::Borrowed("")
+                } else {
+                    trim_wikidot_ascii_cow(Cow::Borrowed(&source[start..end - 1]))
+                };
+                return Ok(WikidotMathSource {
+                    latex_source,
+                    residual_closer: "",
+                });
+            }
+
             Token::Raw => {
                 saw_jump = true;
                 let mut raw = parser.clone();

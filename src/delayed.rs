@@ -993,6 +993,7 @@ fn element_contains_delayed(element: &Element<'_>) -> bool {
         | Element::Form(_)
         | Element::Variable(_)
         | Element::Email(_)
+        | Element::EmailDescribed { .. }
         | Element::AnchorName(_)
         | Element::Link { .. }
         | Element::FileLink { .. }

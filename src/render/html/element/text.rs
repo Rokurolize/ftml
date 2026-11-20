@@ -93,6 +93,26 @@ pub fn render_email(ctx: &mut HtmlContext, email: &str) {
     }
 }
 
+pub fn render_email_described(ctx: &mut HtmlContext, email: &str, label: &str) {
+    debug!("Rendering described email address '{email}' with label '{label}'");
+
+    match ctx.layout() {
+        Layout::Wikidot => {
+            let obfuscated = wikidot_obfuscated_email_described(email, label);
+            ctx.html()
+                .span()
+                .attr(attr!("class" => "wiki-email"))
+                .contents(&obfuscated);
+        }
+        Layout::Wikijump => {
+            ctx.html()
+                .span()
+                .attr(attr!("class" => "wj-email"))
+                .contents(email);
+        }
+    }
+}
+
 pub(crate) fn wikidot_obfuscated_email(email: &str) -> String {
     let Some((local, domain)) = email.split_once('@') else {
         return email.to_owned();
@@ -100,6 +120,18 @@ pub(crate) fn wikidot_obfuscated_email(email: &str) -> String {
     let reversed_local = local.chars().rev().collect::<String>();
     let reversed_domain = domain.chars().rev().collect::<String>();
     format!("{reversed_domain}|{reversed_local}#{reversed_domain}|{reversed_local}")
+}
+
+fn wikidot_obfuscated_email_described(email: &str, label: &str) -> String {
+    let Some((local, domain)) = email.split_once('@') else {
+        return format!("{email}#{}", label.chars().rev().collect::<String>());
+    };
+    let reversed_local = local.chars().rev().collect::<String>();
+    let reversed_domain = domain.chars().rev().collect::<String>();
+    format!(
+        "{reversed_domain}|{reversed_local}#{}",
+        label.chars().rev().collect::<String>(),
+    )
 }
 
 pub fn render_code(

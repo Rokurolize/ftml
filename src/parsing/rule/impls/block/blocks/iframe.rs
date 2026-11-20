@@ -206,17 +206,26 @@ fn greedy_tail(rest: &str) -> Option<(String, usize)> {
     let bytes = tail.as_bytes();
     let mut candidates = Vec::new();
     let mut index = 0;
-    while index + 3 <= bytes.len() {
-        if bytes[index] == b'[' && bytes[index + 1] == b'[' && bytes[index + 2] == b'/' {
-            let mut name_end = index + 3;
-            while name_end < bytes.len()
-                && !matches!(bytes[name_end], b' ' | b'\t' | b'\r' | b'\n' | b']' | b'[')
-            {
-                name_end += 1;
-            }
-            if !spans
-                .iter()
-                .any(|&(start, end)| index >= start && index < end)
+    while index + 2 <= bytes.len() {
+        if bytes[index] == b'[' && bytes[index + 1] == b'[' {
+            let candidate = if bytes.get(index + 2) == Some(&b'/') {
+                let mut name_end = index + 3;
+                while name_end < bytes.len()
+                    && !matches!(
+                        bytes[name_end],
+                        b' ' | b'\t' | b'\r' | b'\n' | b']' | b'['
+                    )
+                {
+                    name_end += 1;
+                }
+                Some(name_end)
+            } else {
+                bare_url_close(tail, index)
+            };
+            if let Some(name_end) = candidate
+                && !spans
+                    .iter()
+                    .any(|&(start, end)| index >= start && index < end)
             {
                 candidates.push((index, name_end));
             }
@@ -243,6 +252,20 @@ fn greedy_tail(rest: &str) -> Option<(String, usize)> {
         }
     }
     None
+}
+
+fn bare_url_close(tail: &str, index: usize) -> Option<usize> {
+    let after = tail.get(index + 2..)?;
+    let scheme = WIKIDOT_IFRAME_SCHEMES.iter().any(|prefix| {
+        after
+            .get(..prefix.len())
+            .is_some_and(|value| value.eq_ignore_ascii_case(prefix))
+    });
+    if !scheme {
+        return None;
+    }
+    let close = after.find("]]")?;
+    Some(index + 2 + close)
 }
 
 fn code_spans(tail: &str) -> Vec<(usize, usize)> {
@@ -283,24 +306,26 @@ fn filter_tail(tail: &str) -> String {
         .collect()
 }
 
+const WIKIDOT_IFRAME_SCHEMES: [&str; 7] = [
+    "http://",
+    "https://",
+    "ftp://",
+    "gopher://",
+    "mailto:",
+    "news://",
+    "mms://",
+];
+
 fn wikidot_iframe_url(url: &str) -> bool {
-    // A double quote opens a quoted head field in live's block scanner, so a
-    // URL that contains one never reaches the iframe rule: the whole opener
-    // stays literal. A single quote does not have that effect.
     if url.contains('"') {
         return false;
     }
-    [
-        "http://",
-        "https://",
-        "ftp://",
-        "gopher://",
-        "mailto:",
-        "news://",
-        "mms://",
-    ]
-    .iter()
-    .any(|prefix| {
+    if let Some(quote) = url.find('\'')
+        && url[quote + 1..].contains('/')
+    {
+        return false;
+    }
+    WIKIDOT_IFRAME_SCHEMES.iter().any(|prefix| {
         url.get(..prefix.len())
             .is_some_and(|value| value.eq_ignore_ascii_case(prefix))
     })

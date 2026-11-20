@@ -211,9 +211,7 @@ fn parse_wikidot_math_head(text: &str) -> Option<(Option<&str>, Option<&str>)> {
         }
         let key_length = rest
             .bytes()
-            .take_while(|byte| {
-                byte.is_ascii_alphanumeric() || *byte == b'_' || *byte == b'-'
-            })
+            .take_while(|byte| byte.is_ascii_alphanumeric())
             .count();
         if key_length == 0 {
             return None;

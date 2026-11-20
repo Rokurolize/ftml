@@ -51,7 +51,7 @@ pub(super) fn render_legacy_iframe(
             .map_or("", std::convert::AsRef::as_ref)
     };
     let mut iframe = ctx.html().iframe();
-    iframe.attr_single_quoted("src", &[src.as_ref()]);
+    iframe.attr_wikidot_attribute("src", src.as_ref());
     iframe.attr_single_quoted("align", &[get("align")]);
     iframe.attr_single_quoted("frameborder", &[get("frameborder")]);
     iframe.attr_single_quoted("height", &[get("height")]);

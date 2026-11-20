@@ -1,0 +1,32 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "(("
+                    },
+                    {
+                        "element": "text",
+                        "data": "bibcite"
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "text",
+                        "data": "alpha"
+                    },
+                    {
+                        "element": "text",
+                        "data": "))"
+                    }
+                ]
+            }
+        }
+    ]
+}

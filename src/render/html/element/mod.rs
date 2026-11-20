@@ -223,7 +223,12 @@ pub fn render_elements(ctx: &mut HtmlContext, elements: &[Element]) {
                             None => None,
                         };
 
-                    render_wikidot_bibliography(ctx, title_ref, bibliography, trailing);
+                    let title_arg = if title_ref.is_empty() {
+                        None
+                    } else {
+                        Some(title_ref)
+                    };
+                    render_wikidot_bibliography(ctx, title_arg, bibliography, trailing);
                     index += 1;
                     if trailing.is_some() {
                         index += 1;

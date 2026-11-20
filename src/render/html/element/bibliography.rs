@@ -468,7 +468,7 @@ fn bibliography_merge_into<'t>(
 
 pub(crate) fn render_wikidot_bibliography(
     ctx: &mut HtmlContext,
-    title: &str,
+    title: Option<&str>,
     bibliography: &Bibliography,
     trailing_paragraph: Option<WikidotBibliographyTrailing<'_>>,
 ) {
@@ -480,7 +480,7 @@ pub(crate) fn render_wikidot_bibliography(
 
 fn render_wikidot_bibliography_shell(
     ctx: &mut HtmlContext,
-    title: &str,
+    title: Option<&str>,
     bibliography: &Bibliography,
     trailing_paragraph: Option<WikidotBibliographyTrailing<'_>>,
 ) {
@@ -504,21 +504,23 @@ fn render_wikidot_bibliography_shell(
             if !open_elements.is_empty() {
                 render_elements(ctx, open_elements);
             }
-            let title_wrappers = bibliography.title_wrappers();
-            if title_wrappers.is_empty() {
-                ctx.html()
-                    .div()
-                    .attr(attr!("class" => "title"))
-                    .contents(title);
-            } else {
-                let wrapped = [bibliography_wrap_chain(
-                    title_wrappers,
-                    vec![Element::Text(Cow::Borrowed(title))],
-                )];
-                ctx.html()
-                    .div()
-                    .attr(attr!("class" => "title"))
-                    .inner(|ctx| render_elements(ctx, &wrapped));
+            if let Some(title) = title {
+                let title_wrappers = bibliography.title_wrappers();
+                if title_wrappers.is_empty() {
+                    ctx.html()
+                        .div()
+                        .attr(attr!("class" => "title"))
+                        .contents(title);
+                } else {
+                    let wrapped = [bibliography_wrap_chain(
+                        title_wrappers,
+                        vec![Element::Text(Cow::Borrowed(title))],
+                    )];
+                    ctx.html()
+                        .div()
+                        .attr(attr!("class" => "title"))
+                        .inner(|ctx| render_elements(ctx, &wrapped));
+                }
             }
 
             for (position, (label, elements)) in bibliography.slice().iter().enumerate() {
@@ -605,6 +607,7 @@ pub fn render_bibliography(
     };
 
     if ctx.layout().legacy() {
+        let title = if title.is_empty() { None } else { Some(title) };
         render_wikidot_bibliography(ctx, title, bibliography, None);
         return;
     }

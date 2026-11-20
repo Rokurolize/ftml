@@ -1810,11 +1810,14 @@ where
     });
     // A marker line owns its break only when the list really forms: a list
     // live rejects stays literal, and live keeps the break in front of it.
-    let skip = if looks_skippable
+    let skip = if parser.in_wikidot_bibliography_body() {
+        false
+    } else if looks_skippable
         && matches!(
             parser.look_ahead(next_offset).map(|token| token.token),
             Some(Token::BulletItem | Token::NumberedItem)
-        ) {
+        )
+    {
         if let Some(result) =
             crate::parsing::rule::impls::try_fuse_own_line_consume(parser)
         {

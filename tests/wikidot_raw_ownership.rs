@@ -63,8 +63,8 @@ fn evidenced_raw_delimiter_and_owner_matrix_matches_wikidot() {
         ),
         (
             "@@<b>A&B</b>@@",
-            r#"<p>@<span style="white-space: pre-wrap;">b&gt;A&amp;B&lt;/b</span>@</p>"#,
-            "@b>A&B</b@",
+            r#"<p><span style="white-space: pre-wrap;">&lt;b&gt;A&amp;B&lt;/b&gt;</span></p>"#,
+            "<b>A&B</b>",
             false,
         ),
         (

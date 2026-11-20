@@ -171,36 +171,12 @@ fn try_consume_fn<'r, 't>(
     let mut saw_left_raw = false;
     let mut saw_nested_raw_pair = false;
     let mut generated = Vec::new();
-    let mut saw_non_authored = false;
     let mut crossed_break = false;
 
     loop {
         let token = parser.current().token;
 
         trace!("Received token '{}' inside raw", token.name());
-
-        if parser.settings().layout.legacy()
-            && ending_token == Token::Raw
-            && token == Token::RightRaw
-            && generated.is_empty()
-            && !saw_non_authored
-            && parser.current_generated().is_none()
-            && parser.look_ahead(0).is_some_and(|trailing| {
-                trailing.token == Token::Other
-                    && trailing.slice == "@"
-                    && parser.generated_for(trailing).is_none()
-            })
-        {
-            let slice = parser.full_text().slice_partial(start, end);
-            if let Some(inner) = slice.strip_prefix('<') {
-                parser.step_n(2)?;
-                return ok!(Elements::Multiple(vec![
-                    text!("@"),
-                    raw!(inner),
-                    text!("@"),
-                ]));
-            }
-        }
 
         // Live Wikidot closes an angle-raw at the final `>@` even when that
         // `>` is glued to a preceding `>` run. The tokenizer emits the run
@@ -431,12 +407,6 @@ fn try_consume_fn<'r, 't>(
 
         if let Some(slot) = parser.current_generated() {
             generated.push(slot.clone());
-        }
-        if matches!(
-            token,
-            Token::RuntimeText | Token::GeneratedPageLink | Token::GeneratedTagLinks
-        ) {
-            saw_non_authored = true;
         }
 
         trace!("Appending present token to raw");

@@ -109,6 +109,7 @@ pub fn get_rules_for_token(current: &ExtractedToken) -> &'static [Rule] {
 
         Token::LeftComment => &[RULE_COMMENT],
 
+        Token::Other if current.slice == "`" => &[RULE_RAWOLD, RULE_ITALICS, RULE_TEXT],
         Token::Other if current.slice == "&" => &[RULE_ENTITY, RULE_TEXT],
         Token::RuntimeText => &[RULE_TEXT],
         Token::Other => &[RULE_ITALICS, RULE_TEXT],
@@ -220,5 +221,18 @@ mod tests {
         for (token, expected) in cases {
             assert_eq!(rule_names_for_token(token), expected, "{token:?}");
         }
+
+        let backtick = ExtractedToken {
+            token: Token::Other,
+            slice: "`",
+            span: 0..1,
+        };
+        assert_eq!(
+            get_rules_for_token(&backtick)
+                .iter()
+                .map(|rule| rule.name())
+                .collect::<Vec<_>>(),
+            vec!["rawold", "italics", "text"],
+        );
     }
 }

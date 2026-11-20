@@ -340,7 +340,14 @@ fn wikidot_url_elements_rest<'r, 't>(
 where
     'r: 't,
 {
+    let preceded_by_left_bracket = start
+        .checked_sub(1)
+        .and_then(|index| source.as_bytes().get(index).copied())
+        == Some(b'[');
     loop {
+        if preceded_by_left_bracket && parser.current().token == Token::Pipe {
+            break;
+        }
         if parser.current_generated().is_some()
             || matches!(
                 parser.current().token,

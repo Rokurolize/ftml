@@ -28,8 +28,9 @@ use super::prelude::*;
 use super::rule::{
     get_rules_for_token,
     impls::{
-        RULE_FALLBACK, glued_scheme_url_start, starts_own_line_rule,
-        starts_wikidot_only_scheme_url, try_consume_wikidot_end_block_link, url_elements,
+        RULE_FALLBACK, RULE_RAWOLD, backtick_starts_rawold, glued_scheme_url_start,
+        starts_own_line_rule, starts_wikidot_only_scheme_url,
+        try_consume_wikidot_end_block_link, url_elements,
     },
 };
 use crate::tree::{
@@ -1584,6 +1585,13 @@ fn try_consume_text_token<'r, 't>(
 where
     'r: 't,
 {
+    if parser.current().token == Token::Other
+        && parser.current().slice == "`"
+        && backtick_starts_rawold(parser)
+    {
+        let output = RULE_RAWOLD.try_consume(parser)?;
+        return Ok(Some(output.item));
+    }
     if let Some(elements) = try_consume_wikidot_inline_marker(parser)? {
         return Ok(Some(elements));
     }

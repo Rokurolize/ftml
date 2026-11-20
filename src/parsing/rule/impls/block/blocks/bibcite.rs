@@ -42,14 +42,15 @@ fn parse_fn<'r, 't>(
     assert!(!flag_star, "Bibcite doesn't allow star flag");
     assert_block_name(&BLOCK_BIBCITE, name);
 
-    let label =
-        parser.get_head_value(&BLOCK_BIBCITE, in_head, |parser, value| match value {
-            Some(value) => Ok(value.trim()),
+    let label = parser.get_head_value(&BLOCK_BIBCITE, in_head, |parser, value| {
+        match value.map(str::trim).filter(|value| !value.is_empty()) {
+            Some(value) => Ok(value),
             None => {
                 warn!("No label provided in [[bibcite]], failing rule");
                 Err(parser.make_err(ParseErrorKind::BlockMissingArguments))
             }
-        })?;
+        }
+    })?;
 
     // "bibcite" means we wrap it in brackets
     // "bibcite_" means it's bare, like ((bibcite))

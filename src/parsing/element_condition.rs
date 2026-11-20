@@ -44,6 +44,14 @@ impl<'t> ElementCondition<'t> {
             .collect()
     }
 
+    pub fn parse_with_commas(raw_spec: &'t str) -> Vec<ElementCondition<'t>> {
+        raw_spec
+            .split(|c: char| c == ' ' || c == ',')
+            .filter(|s| !s.is_empty())
+            .map(Self::new_from_value)
+            .collect()
+    }
+
     fn new_from_value(value: &'t str) -> Self {
         if let Some(value) = value.strip_prefix('+') {
             return Self::new(ElementConditionType::Required, value);
@@ -86,23 +94,74 @@ impl<'t> ElementCondition<'t> {
         }
     }
 
+    pub fn parse_cow_with_commas(spec: Cow<'t, str>) -> Vec<ElementCondition<'t>> {
+        match spec {
+            Cow::Borrowed(spec) => Self::parse_with_commas(spec),
+            Cow::Owned(spec) => spec
+                .split(|c: char| c == ' ' || c == ',')
+                .filter(|s| !s.is_empty())
+                .map(|part| {
+                    if let Some(value) = part.strip_prefix('+') {
+                        return ElementCondition {
+                            ctype: ElementConditionType::Required,
+                            value: Cow::Owned(value.to_owned()),
+                        };
+                    }
+
+                    if let Some(value) = part.strip_prefix('-') {
+                        return ElementCondition {
+                            ctype: ElementConditionType::Prohibited,
+                            value: Cow::Owned(value.to_owned()),
+                        };
+                    }
+
+                    ElementCondition {
+                        ctype: ElementConditionType::Present,
+                        value: Cow::Owned(part.to_owned()),
+                    }
+                })
+                .collect(),
+        }
+    }
+
     pub fn check(conditions: &[ElementCondition], values: &[Cow<str>]) -> bool {
-        Self::check_with(conditions, values, |value, condition| value == condition)
+        Self::check_with(
+            conditions,
+            values,
+            |value, condition| value == condition,
+            false,
+        )
+    }
+
+    pub(crate) fn check_for_tags(
+        conditions: &[ElementCondition],
+        values: &[Cow<str>],
+    ) -> bool {
+        Self::check_with(
+            conditions,
+            values,
+            |value, condition| value == condition,
+            true,
+        )
     }
 
     pub(crate) fn check_ignore_ascii_case(
         conditions: &[ElementCondition],
         values: &[Cow<str>],
     ) -> bool {
-        Self::check_with(conditions, values, |value, condition| {
-            value.eq_ignore_ascii_case(condition)
-        })
+        Self::check_with(
+            conditions,
+            values,
+            |value, condition| value.eq_ignore_ascii_case(condition),
+            true,
+        )
     }
 
     fn check_with<F>(
         conditions: &[ElementCondition],
         values: &[Cow<str>],
         matches: F,
+        empty_prohibited_satisfied: bool,
     ) -> bool
     where
         F: Fn(&str, &str) -> bool,
@@ -113,7 +172,10 @@ impl<'t> ElementCondition<'t> {
         let mut had_present = false;
 
         for condition in conditions {
-            if condition.value.is_empty() {
+            if condition.value.is_empty()
+                && !(empty_prohibited_satisfied
+                    && condition.ctype == ElementConditionType::Prohibited)
+            {
                 return false;
             }
 

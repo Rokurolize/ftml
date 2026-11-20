@@ -1,0 +1,3 @@
+A [[iftags +fruit,+component]]KEEP[[/iftags]] B
+C [[iftags +fruit, +component]]KEEP[[/iftags]] D
+E [[iftags +fruit,+absent]]DROP[[/iftags]] F

@@ -11637,6 +11637,7 @@ where
         &mut self,
         block_rule: &BlockRule,
         in_head: bool,
+        reject_linebreaks: bool,
         convert: F,
     ) -> Result<(T, BlockBodyStart, GateHeadClose), ParseError>
     where
@@ -11647,10 +11648,14 @@ where
                 ParseCondition::current(Token::RightBlock),
                 ParseCondition::current(Token::RightLink),
             ];
-            let reject_conditions = [
-                ParseCondition::current(Token::ParagraphBreak),
-                ParseCondition::current(Token::LineBreak),
-            ];
+            let reject_conditions = if reject_linebreaks {
+                vec![
+                    ParseCondition::current(Token::ParagraphBreak),
+                    ParseCondition::current(Token::LineBreak),
+                ]
+            } else {
+                Vec::new()
+            };
             let rule = self.rule();
             let (slice, last) = collect_text_keep(
                 self,

@@ -1,0 +1,8 @@
+{
+    "elements": [
+        {
+            "element": "style",
+            "data": "   \n.blue { color: blue; }"
+        }
+    ]
+}

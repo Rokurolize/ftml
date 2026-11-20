@@ -1,0 +1,8 @@
+[[module 9lives]]
+[[/module]]
+
+[[module _lead]]
+[[/module]]
+
+[[module a/b]]
+[[/module]]

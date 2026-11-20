@@ -28,7 +28,6 @@ pub fn render_module(ctx: &mut HtmlContext, module: &Module<'_>) {
                         .attr(attr!(
                             "href" => "https://www.wikidot.com/doc:modules",
                             "target" => "_blank",
-                            "rel" => "noopener noreferrer",
                         ))
                         .contents("check available modules");
                     ctx.push_escaped(" and fix this page.");

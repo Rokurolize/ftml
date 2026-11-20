@@ -167,6 +167,10 @@ fn parse_list_block<'r, 't>(
         items
     };
 
+    if items.is_empty() {
+        return Err(parser.make_err(ParseErrorKind::ListEmpty));
+    }
+
     let element = Element::List {
         ltype: list_type,
         items,

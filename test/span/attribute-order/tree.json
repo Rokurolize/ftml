@@ -1,0 +1,33 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "span",
+                            "attributes": {
+                                "class": "c",
+                                "data-d": "v",
+                                "id": "i",
+                                "lang": "en",
+                                "style": "color:red",
+                                "title": "T"
+                            },
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "x"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

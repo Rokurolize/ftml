@@ -71,11 +71,10 @@ fn wikidot_size_value(size: &str) -> Option<&str> {
     for suffix in ["%", "px", "em"] {
         if let Some(number) = size.strip_suffix(suffix)
             && !number.is_empty()
-            && number != "."
+            && number.len() <= 5
             && number
                 .bytes()
                 .all(|byte| byte.is_ascii_digit() || byte == b'.')
-            && number.bytes().filter(|byte| *byte == b'.').count() <= 1
         {
             return Some(size);
         }

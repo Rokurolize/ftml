@@ -598,7 +598,23 @@ impl<'t> Arguments<'t> {
     ) -> AttributeMap<'t> {
         let mut attributes = AttributeMap::new();
 
-        for (key, value) in &self.inner {
+        let mut ordered: Vec<(&ArgumentKey<'t>, &Cow<'t, str>)> =
+            Vec::with_capacity(self.inner.len());
+        for raw in &self.raw {
+            let probe = self.key_cow(raw.name.clone());
+            if let Some(pair) = self.inner.get_key_value(&probe)
+                && !ordered.iter().any(|(key, _)| *key == pair.0)
+            {
+                ordered.push(pair);
+            }
+        }
+        for pair in &self.inner {
+            if !ordered.iter().any(|(key, _)| *key == pair.0) {
+                ordered.push(pair);
+            }
+        }
+
+        for (key, value) in ordered {
             if !include(key, value) {
                 continue;
             }
@@ -639,6 +655,7 @@ impl<'t> Arguments<'t> {
             attributes.insert(&key, value);
         }
 
+        attributes.set_wikidot_ordered(true);
         attributes
     }
 }

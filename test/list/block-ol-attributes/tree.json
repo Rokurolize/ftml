@@ -1,0 +1,30 @@
+{
+    "elements": [
+        {
+            "element": "list",
+            "data": {
+                "type": "numbered",
+                "attributes": {
+                    "class": "n",
+                    "id": "num-list",
+                    "reversed": "reversed",
+                    "start": "5",
+                    "style": "color: green;",
+                    "type": "A"
+                },
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "Item"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

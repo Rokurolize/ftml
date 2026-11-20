@@ -1,0 +1,68 @@
+{
+    "elements": [
+        {
+            "element": "table",
+            "data": {
+                "type": "advanced",
+                "attributes": {},
+                "rows": [
+                    {
+                        "attributes": {},
+                        "cells": [
+                            {
+                                "header": false,
+                                "column-span": 1,
+                                "align": null,
+                                "attributes": {},
+                                "elements": [
+                                    {
+                                        "element": "list",
+                                        "data": {
+                                            "type": "bullet",
+                                            "attributes": {},
+                                            "items": [
+                                                {
+                                                    "item-type": "elements",
+                                                    "attributes": {},
+                                                    "elements": [
+                                                        {
+                                                            "element": "text",
+                                                            "data": "one"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "item-type": "elements",
+                                                    "attributes": {},
+                                                    "elements": [
+                                                        {
+                                                            "element": "text",
+                                                            "data": "two"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "x"
+                    }
+                ]
+            }
+        }
+    ]
+}

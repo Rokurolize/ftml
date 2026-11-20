@@ -1,0 +1,30 @@
+{
+    "elements": [
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {
+                    "class": "",
+                    "data-empty": "",
+                    "id": ""
+                },
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {
+                            "class": "a  b",
+                            "id": "u-already"
+                        },
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "norm"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

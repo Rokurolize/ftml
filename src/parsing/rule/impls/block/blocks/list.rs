@@ -169,7 +169,10 @@ fn parse_list_block_impl<'r, 't>(
     }
 
     let arguments = parser.get_head_map_wikidot(block_rule, in_head)?;
-    let attributes = arguments.to_attribute_map(parser.settings());
+    let mut attributes = arguments.to_attribute_map(parser.settings());
+    if wikidot {
+        super::super::arguments::retain_wikidot_html_attributes(&mut attributes);
+    }
     // lihoist p6 (discriminated per LT46 and MF65b probes): a list head on
     // an item line stays literal in live only when the enclosing explicit
     // list is UNORDERED, the head is not an `ol`, and the body has no deep
@@ -2463,6 +2466,9 @@ fn parse_list_item<'r, 't>(
 
     let arguments = parser.get_head_map_wikidot(&BLOCK_LI, in_head)?;
     let mut attributes = arguments.to_attribute_map(parser.settings());
+    if wikidot {
+        super::super::arguments::retain_wikidot_html_attributes(&mut attributes);
+    }
     let body_start = parser.current().span.start;
     if wikidot && parser.wikidot_li_inside_item_body() {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -4631,7 +4637,10 @@ pub(crate) fn parse_wikidot_implicit_list_block<'r, 't>(
             .get_block_name(false)
             .map_err(|_| parser.make_err(ParseErrorKind::RuleFailed))?;
         let arguments = parser.get_head_map_wikidot(&BLOCK_LI, in_head)?;
-        let attributes = arguments.to_attribute_map(parser.settings());
+        let mut attributes = arguments.to_attribute_map(parser.settings());
+        if parser.settings().layout.legacy() {
+            super::super::arguments::retain_wikidot_html_attributes(&mut attributes);
+        }
         let body_start = parser.current().span.start;
         parser.push_wikidot_li_collect(Some(head_pos));
         let body = parser.get_wikidot_li_body_segments(&BLOCK_LI);

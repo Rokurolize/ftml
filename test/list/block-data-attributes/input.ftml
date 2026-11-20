@@ -1,0 +1,3 @@
+[[ul data-z="1" data-a="2" DATA-UPPER="3" data-Mixed="4"]]
+[[li data-k="v" CLASS="upper"]]data-attrs[[/li]]
+[[/ul]]

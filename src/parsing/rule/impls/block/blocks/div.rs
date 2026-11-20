@@ -178,6 +178,51 @@ fn wikidot_line_head_resolves_to_div(line: &str) -> bool {
         .all(|ch| matches!(ch, ' ' | '\t'))
 }
 
+fn wikidot_div_same_line_swallow_end(
+    parser: &Parser<'_, '_>,
+    opener_start: usize,
+) -> Option<usize> {
+    let source = parser.full_text().inner();
+    let bytes = source.as_bytes();
+    if !bytes
+        .get(opener_start + 5)
+        .is_some_and(|byte| byte.is_ascii_whitespace())
+    {
+        return None;
+    }
+    let head_close = source[opener_start + 5..].find("]]")? + opener_start + 5 + 2;
+    let mut rest = head_close;
+    while bytes.get(rest) == Some(&b' ') {
+        rest += 1;
+    }
+    if bytes.get(rest) == Some(&b'\n') || rest == source.len() {
+        return None;
+    }
+    let mut index = parser.current().span.start;
+    let (attrs_end, line_end) = loop {
+        let close = source[index..].find("]]")? + index;
+        let mut end = close + 2;
+        while bytes.get(end) == Some(&b' ') {
+            end += 1;
+        }
+        if bytes.get(end) == Some(&b'\n') {
+            break (close, end + 1);
+        }
+        index = close + 2;
+    };
+    let closer = find_ascii_case_insensitive(&source[line_end..], "[[/div]]")? + line_end;
+    if !source[line_end..closer]
+        .chars()
+        .all(|character| character.is_whitespace())
+    {
+        return None;
+    }
+    if source[opener_start + 5..attrs_end].contains("=\"") {
+        return None;
+    }
+    Some(closer + "[[/div]]".len())
+}
+
 fn find_ascii_case_insensitive(haystack: &str, needle: &str) -> Option<usize> {
     let hay = haystack.as_bytes();
     let needle = needle.as_bytes();
@@ -884,21 +929,34 @@ fn normalize_wikidot_div_elements(
         {
             elements.pop();
         }
-        let mut previous_was_scored_div = false;
-        elements.retain(|element| {
-            if previous_was_scored_div
-                && (matches!(element, Element::LineBreak | Element::LineBreaks(_))
-                    || matches!(element, Element::Text(text) if text == "\n"))
-            {
-                return false;
-            }
-            previous_was_scored_div = matches!(element, Element::Container(container)
+        let is_scored_div = |element: &Element<'_>| {
+            matches!(element, Element::Container(container)
                 if container.ctype() == ContainerType::Div
                     && !container.elements().iter().any(|child| matches!(child,
                         Element::Container(paragraph)
-                            if paragraph.ctype() == ContainerType::Paragraph)));
-            true
-        });
+                            if paragraph.ctype() == ContainerType::Paragraph)))
+        };
+        let is_break = |element: &Element<'_>| {
+            matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                || matches!(element, Element::Text(text) if text == "\n")
+        };
+        let mut kept: Vec<Element<'_>> = Vec::with_capacity(elements.len());
+        let mut previous_was_scored_div = false;
+        for (index, element) in elements.iter().enumerate() {
+            if previous_was_scored_div && is_break(element) {
+                let next_content =
+                    elements[index + 1..].iter().find(|next| !is_break(next));
+                let keep_break =
+                    matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                        && next_content.is_some_and(|next| !is_scored_div(next));
+                if !keep_break {
+                    continue;
+                }
+            }
+            previous_was_scored_div = is_scored_div(element);
+            kept.push(element.clone());
+        }
+        *elements = kept;
         let mut cleaned = Vec::with_capacity(elements.len());
         for element in elements.drain(..) {
             let redundant_newline_after_nested_div =
@@ -1463,6 +1521,20 @@ fn parse_fn<'r, 't>(
         && (!parser.has_body_end_block_on_line(&BLOCK_DIV)
             || parser.wikidot_div_opener_is_excess_for_inline(opener_start))
     {
+        if !flag_score
+            && !parser.has_body_end_block_on_line(&BLOCK_DIV)
+            && let Some(end_byte) =
+                wikidot_div_same_line_swallow_end(parser, opener_start)
+        {
+            while parser.current().token != Token::InputEnd
+                && parser.current().span.start < end_byte
+            {
+                if parser.step().is_err() {
+                    break;
+                }
+            }
+            return ok!(false; Elements::None);
+        }
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     if parser.settings().layout.legacy()
@@ -2361,7 +2433,7 @@ mod tests {
 
         assert_eq!(
             render(input, Layout::Wikidot),
-            "<div class=\"box\" id=\"u-fruit\"><ul>\n<li>1</li>\n<li>2</li>\n</ul></div>",
+            "<div id=\"u-fruit\" class=\"box\"><ul>\n<li>1</li>\n<li>2</li>\n</ul></div>",
         );
         assert_eq!(
             render(input, Layout::Wikijump),

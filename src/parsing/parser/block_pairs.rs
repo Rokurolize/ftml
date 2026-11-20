@@ -1225,15 +1225,15 @@ impl<'t> Scanner<'t> {
             }
         };
         let spec = self.source[spec_start..spec_end].trim();
-        let conditions = if spec == "-" || spec.is_empty() {
+        let conditions = if spec.is_empty() {
             Vec::new()
         } else {
-            crate::parsing::ElementCondition::parse(spec)
+            crate::parsing::ElementCondition::parse_with_commas(spec)
         };
         let include_body = if conditions.is_empty() {
             !self.tags.is_empty()
         } else {
-            crate::parsing::ElementCondition::check(&conditions, &self.tags)
+            crate::parsing::ElementCondition::check_for_tags(&conditions, &self.tags)
         };
         let head_end_index = index + 1;
         let next_closer = self

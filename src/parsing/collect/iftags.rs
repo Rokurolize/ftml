@@ -246,7 +246,7 @@ fn scan_segment_ctx<'a, 't>(
             return None;
         }
     } else {
-        ElementCondition::parse(spec)
+        ElementCondition::parse_with_commas(spec)
     };
     let include_body = iftags_conditions_match(&conditions, ctx.tags);
 

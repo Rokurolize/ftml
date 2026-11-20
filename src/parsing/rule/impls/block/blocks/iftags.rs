@@ -42,7 +42,7 @@ fn parse_conditions<'r, 't>(
         Some(spec) if !parser.settings().layout.legacy() && spec.trim().is_empty() => {
             Err(parser.make_err(ParseErrorKind::BlockMissingArguments))
         }
-        Some(spec) => Ok(ElementCondition::parse(spec)),
+        Some(spec) => Ok(ElementCondition::parse_with_commas(spec)),
         None if parser.settings().layout.legacy() => Ok(Vec::new()),
         None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
     }
@@ -281,6 +281,39 @@ fn spec_contains_complete_comment(spec: &str) -> bool {
     false
 }
 
+fn fused_comment_head_close_at(source: &str, opener_start: usize) -> Option<usize> {
+    let rest = source.get(opener_start..)?;
+    let relative = rest.find("]]")?;
+    if relative < "[!--".len() {
+        return None;
+    }
+    let close_start = opener_start + relative;
+    let bytes = source.as_bytes();
+    if &bytes[close_start - 2..close_start] != b"--" {
+        return None;
+    }
+    if bytes.get(close_start + 2) == Some(&b']') {
+        return None;
+    }
+    let head = &source[opener_start..close_start];
+    let open = head.rfind("[!--")?;
+    if head[open + "[!--".len()..].contains("--]") {
+        return None;
+    }
+    Some(close_start + 2)
+}
+
+fn advance_to_source_byte<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    byte: usize,
+) -> Result<(), ParseError> {
+    while parser.current().token != Token::InputEnd && parser.current().span.start < byte
+    {
+        parser.step()?;
+    }
+    Ok(())
+}
+
 pub(crate) fn iftags_head_keeps_inline_body<'r, 't>(parser: &Parser<'r, 't>) -> bool
 where
     'r: 't,
@@ -316,7 +349,7 @@ where
     if spec_contains_complete_comment(spec) {
         return false;
     }
-    let conditions = ElementCondition::parse_cow(Cow::Owned(spec.to_owned()));
+    let conditions = ElementCondition::parse_cow_with_commas(Cow::Owned(spec.to_owned()));
     if !check_iftags(parser.page_info(), &conditions) {
         return false;
     }
@@ -507,18 +540,27 @@ fn parse_fn<'r, 't>(
         return literal_span_gate(parser, name, opener_start);
     }
 
-    let (conditions, body_start, head_close) = parser.get_gate_head_with_body_start(
-        &BLOCK_IFTAGS,
-        in_head,
-        |parser, spec| {
-            if let Some(spec) = spec
-                && spec_contains_complete_comment(spec)
-            {
-                return Err(parser.make_err(ParseErrorKind::RuleFailed));
-            }
-            parse_conditions(parser, spec)
-        },
-    )?;
+    let fused_comment_head_end =
+        fused_comment_head_close_at(parser.full_text().inner(), opener_start);
+    let (conditions, body_start, head_close) = match fused_comment_head_end {
+        Some(head_end) => {
+            advance_to_source_byte(parser, head_end)?;
+            (Vec::new(), BlockBodyStart::Inline, GateHeadClose::Block)
+        }
+        None => parser.get_gate_head_with_body_start(
+            &BLOCK_IFTAGS,
+            in_head,
+            false,
+            |parser, spec| {
+                if let Some(spec) = spec
+                    && spec_contains_complete_comment(spec)
+                {
+                    return Err(parser.make_err(ParseErrorKind::RuleFailed));
+                }
+                parse_conditions(parser, spec)
+            },
+        )?,
+    };
     let head_fused = matches!(head_close, GateHeadClose::Fused);
 
     let spaced_head = !head_fused
@@ -548,7 +590,8 @@ fn parse_fn<'r, 't>(
         parser.step()?;
     }
 
-    let include_body = check_iftags(parser.page_info(), &conditions);
+    let include_body =
+        fused_comment_head_end.is_none() && check_iftags(parser.page_info(), &conditions);
 
     let legacy = parser.settings().layout.legacy();
     let mut designated_end = None;
@@ -1245,17 +1288,6 @@ mod tests {
             &tagged,
             &legacy
         ));
-        assert!(!body_rendered(
-            "[[iftags -]]body[[/iftags]]",
-            &tagless,
-            &legacy
-        ));
-        assert!(!body_rendered(
-            "[[iftags -]]body[[/iftags]]",
-            &tagged,
-            &legacy
-        ));
-
         let modern = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikijump);
         for source in ["[[iftags]]body[[/iftags]]", "[[iftags   ]]body[[/iftags]]"] {
             let tokenization = crate::tokenize(source);

@@ -742,6 +742,9 @@ fn block_rule_accepts_end_name(
     name: &str,
     wikidot: bool,
 ) -> bool {
+    if wikidot && block_rule.name == "block-footnote" {
+        return block_rule_end_names(block_rule, wikidot).contains(&name);
+    }
     block_rule_end_names(block_rule, wikidot)
         .iter()
         .any(|accepted| name.eq_ignore_ascii_case(accepted))
@@ -2591,7 +2594,14 @@ where
             for end_block_name in
                 block_rule_end_names(block_rule, parser.settings().layout.legacy())
             {
-                if name.eq_ignore_ascii_case(end_block_name) {
+                let name_matches = if parser.settings().layout.legacy()
+                    && block_rule.name == "block-footnote"
+                {
+                    name == *end_block_name
+                } else {
+                    name.eq_ignore_ascii_case(end_block_name)
+                };
+                if name_matches {
                     // Live Wikidot gives code, math, bibliography and the
                     // alignment blocks line-owned closers: trailing text
                     // after the closer voids the block. The alignment

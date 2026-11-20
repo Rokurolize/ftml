@@ -1,0 +1,37 @@
+{
+    "elements": [
+        {
+            "element": "bibliography-block",
+            "data": {
+                "index": 0,
+                "title": "",
+                "hide": false
+            }
+        }
+    ],
+    "bibliographies": [
+        [
+            [
+                "a",
+                [
+                    {
+                        "element": "text",
+                        "data": "Entry"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "A"
+                    },
+                    {
+                        "element": "text",
+                        "data": "."
+                    }
+                ]
+            ]
+        ]
+    ]
+}

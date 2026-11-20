@@ -426,6 +426,7 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
 
     if wikidot_compatibility {
         preserve_wikidot_quote_tab_separator(text);
+        preserve_wikidot_bibcite_tab_separator(text);
         preserve_wikidot_bibliography_tab_gap(text);
         preserve_wikidot_bibliography_tab_prefix(text);
         preserve_wikidot_definition_list_colon_tab(text);
@@ -1103,6 +1104,45 @@ fn preserve_wikidot_quote_tab_separator(text: &mut String) {
             output.push_str(line);
         }
     }
+    *text = output;
+}
+
+fn preserve_wikidot_bibcite_tab_separator(text: &mut String) {
+    if !text.contains('\t') {
+        return;
+    }
+
+    let literal_regions = LiteralRegionIndex::new(text);
+    let mut protected_ranges = literal_regions.ranges().to_vec();
+    protected_ranges.extend(wikidot_comment_ranges(text));
+    let protected_ranges = merge_protected_ranges(protected_ranges);
+
+    let bytes = text.as_bytes();
+    let mut insertions = Vec::new();
+    let mut index = 0usize;
+    while index + 9 < bytes.len() {
+        if bytes[index] == b'('
+            && bytes[index + 1] == b'('
+            && text[index + 2..index + 9].eq_ignore_ascii_case("bibcite")
+            && bytes[index + 9] == b'\t'
+            && !index_in_ranges(&protected_ranges, index)
+        {
+            insertions.push(index + 9);
+        }
+        index += 1;
+    }
+    if insertions.is_empty() {
+        return;
+    }
+
+    let mut output = String::with_capacity(text.len() + insertions.len());
+    let mut cursor = 0usize;
+    for insertion in insertions {
+        output.push_str(&text[cursor..insertion]);
+        output.push(' ');
+        cursor = insertion;
+    }
+    output.push_str(&text[cursor..]);
     *text = output;
 }
 

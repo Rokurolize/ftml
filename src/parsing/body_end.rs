@@ -37,6 +37,7 @@ pub(super) struct BodyEndBoundary {
     accepts_names: &'static [&'static str],
     hard: bool,
     confined: bool,
+    footnote_case_exact: bool,
 }
 
 impl<'r, 't> Parser<'r, 't> {
@@ -57,6 +58,7 @@ impl<'r, 't> Parser<'r, 't> {
             accepts_names,
             hard,
             confined: self.in_wikidot_single_line_content() && !crosses_later_list_line,
+            footnote_case_exact: self.settings().layout.legacy(),
         };
         self.block_end_scan_cache
             .borrow_mut()
@@ -82,6 +84,7 @@ impl<'r, 't> Parser<'r, 't> {
             value ^= (boundary.accepts_names.len() as u64).rotate_left(23);
             value ^= u64::from(boundary.hard) << 41;
             value ^= u64::from(boundary.confined) << 42;
+            value ^= u64::from(boundary.footnote_case_exact) << 43;
             value ^= value >> 29;
             value
         };
@@ -611,9 +614,13 @@ fn boundary_qualifies(boundary: &BodyEndBoundary, hard_only: bool) -> bool {
 
 impl BodyEndBoundary {
     fn accepts(&self, name: &str) -> bool {
-        self.accepts_names
-            .iter()
-            .any(|item| name.eq_ignore_ascii_case(item))
+        self.accepts_names.iter().any(|item| {
+            if self.footnote_case_exact && *item == "footnote" {
+                name == *item
+            } else {
+                name.eq_ignore_ascii_case(item)
+            }
+        })
     }
 }
 

@@ -54,7 +54,17 @@ fn try_consume_fn<'r, 't>(
     }
     parser.step()?;
 
-    if !matches!(parser.current().token, Token::Whitespace) {
+    if parser.settings().layout.legacy() {
+        let separator_ok = match parser.current().token {
+            Token::Whitespace => parser.current().slice == " ",
+            Token::LineBreak => true,
+            _ => false,
+        };
+        if !separator_ok {
+            warn!("'((bibcite' not followed by one space or a newline, failing rule");
+            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+        }
+    } else if !matches!(parser.current().token, Token::Whitespace) {
         warn!("'((bibcite' not followed by a space, failing rule");
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }

@@ -232,6 +232,7 @@ fn parse_fn<'r, 't>(
     if let Some(line) = footnote_tail {
         if !line.is_empty() {
             bibliography.add_residual(Element::Text(line));
+            bibliography.add_residual(text!(" "));
         }
         bibliography.add_residual(Element::FootnoteBlock {
             title: None,

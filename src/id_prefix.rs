@@ -62,16 +62,18 @@ fn test_isolate_ids() {
     test!("", "");
     test!("  ", "");
     test!("apple", "u-apple");
-    test!("apple banana", "u-apple u-banana");
-    test!("apple  banana", "u-apple u-banana");
-    test!(" apple  banana", "u-apple u-banana");
-    test!(" apple   banana ", "u-apple u-banana");
-    test!("apple banana cherry", "u-apple u-banana u-cherry");
-    test!("apple  banana cherry", "u-apple u-banana u-cherry");
-    test!("  apple  banana\tcherry", "u-apple u-banana u-cherry");
-    test!("u-apple banana cherry", "u-apple u-banana u-cherry");
-    test!("u-apple u-banana cherry", "u-apple u-banana u-cherry");
+    test!("apple banana", "u-apple banana");
+    test!("apple  banana", "u-apple banana");
+    test!(" apple  banana", "u-apple banana");
+    test!(" apple   banana ", "u-apple banana");
+    test!("apple banana cherry", "u-apple banana cherry");
+    test!("apple  banana cherry", "u-apple banana cherry");
+    test!("  apple  banana\tcherry", "u-apple banana cherry");
+    test!("u-apple", "u-apple");
+    test!("u-apple banana cherry", "u-apple banana cherry");
+    test!("u-apple u-banana cherry", "u-apple u-banana cherry");
     test!("u-apple u-banana u-cherry", "u-apple u-banana u-cherry");
-    test!("apple u-banana cherry", "u-apple u-banana u-cherry");
+    test!("apple u-banana cherry", "u-apple u-banana cherry");
+    test!("u-", "u-");
     test!("u-u-apple", "u-u-apple");
 }

@@ -64,6 +64,9 @@ fn parse_fn<'r, 't>(
 
     let (value, mut arguments) =
         parser.get_head_name_map_wikidot(&BLOCK_DATE, in_head)?;
+    if parser.settings().layout.legacy() && wikidot_blank_date_head(&value) {
+        return ok!(Elements::None);
+    }
     // A format whose value evaluated to empty through raw inline markup keeps
     // live's escape placeholders; its class serializes as `format_%FF<n>%FF`.
     let authored_format = arguments
@@ -83,16 +86,6 @@ fn parse_fn<'r, 't>(
     };
     let timezone_count = arguments.count_key("tz");
     let arg_timezone = arguments.get("tz");
-
-    // Live Wikidot renders a blank date value with no arguments as nothing
-    // at all, while a missing value is literal text (handled above as a
-    // missing name) and a blank value with arguments is also literal.
-    if parser.settings().layout.legacy()
-        && value.trim().is_empty()
-        && arguments.is_empty()
-    {
-        return ok!(Elements::None);
-    }
 
     if parser.settings().layout.legacy()
         && (value.starts_with('+')
@@ -130,6 +123,17 @@ fn parse_fn<'r, 't>(
         format,
         hover
     })
+}
+
+fn wikidot_blank_date_head(value: &str) -> bool {
+    if value.trim().is_empty() {
+        return true;
+    }
+    let key_end = value
+        .bytes()
+        .take_while(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-'))
+        .count();
+    key_end > 0 && value[key_end..].trim_start().starts_with('=')
 }
 
 fn filter_supported_format<'t>(format: Option<Cow<'t, str>>) -> Option<Cow<'t, str>> {

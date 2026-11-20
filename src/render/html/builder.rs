@@ -218,6 +218,14 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
         self.chain()
     }
 
+    pub fn attr_wikidot_attribute(&mut self, key: &str, value: &str) -> &mut Self {
+        self.attr_key(key, true);
+        self.ctx.push_raw('"');
+        self.ctx.push_escaped_wikidot_attribute(value);
+        self.ctx.push_raw('"');
+        self.chain()
+    }
+
     pub fn attr(&mut self, attributes: AddedAttributes) -> &mut Self {
         let Some(attribute_map) = attributes.map else {
             for (key, value_parts) in filter_attribute_entries(&attributes) {

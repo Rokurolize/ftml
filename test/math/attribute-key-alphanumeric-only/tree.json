@@ -1,0 +1,18 @@
+{
+    "elements": [
+        {
+            "element": "math",
+            "data": {
+                "name": "foo-bar=\"x\"",
+                "latex-source": "x"
+            }
+        },
+        {
+            "element": "math",
+            "data": {
+                "name": "foo_bar=\"x\"",
+                "latex-source": "x"
+            }
+        }
+    ]
+}

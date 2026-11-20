@@ -46,7 +46,7 @@ pub fn escape_wikidot_raw(buffer: &mut String, s: &str) {
     }
 }
 
-pub fn escape(buffer: &mut String, s: &str) {
+fn escape_with_apostrophe(buffer: &mut String, s: &str, apostrophe: &'static str) {
     let mut start = 0;
 
     for (index, byte) in s.bytes().enumerate() {
@@ -54,7 +54,7 @@ pub fn escape(buffer: &mut String, s: &str) {
             b'>' => "&gt;",
             b'<' => "&lt;",
             b'&' => "&amp;",
-            b'\'' => "&#39;",
+            b'\'' => apostrophe,
             b'"' => "&quot;",
             b'\0' => " ",
             _ => continue,
@@ -71,6 +71,14 @@ pub fn escape(buffer: &mut String, s: &str) {
     if start < s.len() {
         buffer.push_str(&s[start..]);
     }
+}
+
+pub fn escape(buffer: &mut String, s: &str) {
+    escape_with_apostrophe(buffer, s, "&#39;");
+}
+
+pub fn escape_wikidot_attribute(buffer: &mut String, s: &str) {
+    escape_with_apostrophe(buffer, s, "'");
 }
 
 #[test]

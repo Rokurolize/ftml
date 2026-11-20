@@ -1,0 +1,7 @@
+[[date  format="%Y"]]
+
+[[date  format="%Y" tz="+8"]]
+
+[[date  foo="bar"]]
+
+[[date  format=%Y]]

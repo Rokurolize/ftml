@@ -1,0 +1,4 @@
+[[iframe https://example.com/a]][[https://example.com/b]]
+
+[[iframe https://example.com/c]]
+[[https://example.com/d]]

@@ -1,0 +1,7 @@
+[[math foo-bar="x"]]
+x
+[[/math]]
+
+[[math foo_bar="x"]]
+x
+[[/math]]

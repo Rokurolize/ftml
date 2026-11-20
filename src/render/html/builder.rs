@@ -332,9 +332,16 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
         self.chain()
     }
 
+    fn close_open_tag(&mut self) {
+        if self.tag == "br" && self.ctx.layout().legacy() {
+            self.ctx.push_raw_str(" /");
+        }
+        self.ctx.push_raw('>');
+    }
+
     fn content_start(&mut self) {
         if self.in_tag {
-            self.ctx.push_raw('>');
+            self.close_open_tag();
             self.in_tag = false;
         }
 
@@ -362,7 +369,7 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
 impl Drop for HtmlBuilderTag<'_, '_, '_, '_, '_> {
     fn drop(&mut self) {
         if self.in_tag && !self.in_contents {
-            self.ctx.push_raw('>');
+            self.close_open_tag();
         }
 
         if !is_solo_html_tag(self.tag) && !self.omit_close {

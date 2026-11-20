@@ -386,7 +386,7 @@ fn runtime_literal_preserves_owner_recovery_without_disabling_link_grammar() {
             "BEGIN|[[code]]\n%%unknown%%\n[[/code]]|END",
             literal,
         ),
-        "<p>BEGIN|[[code]]<br>\n%%unknown%%<br>\n[[/code]]|END</p>",
+        "<p>BEGIN|[[code]]<br />\n%%unknown%%<br />\n[[/code]]|END</p>",
     );
     assert_eq!(
         render_with_runtime_literal(
@@ -448,7 +448,7 @@ fn delayed_runtime_literal_links_use_page_existence_resolver() {
 fn runtime_scalar_still_allows_authored_code_ownership() {
     assert_eq!(
         render_with_runtime_scalar("BEGIN|[[code]]\nRUNTIME\n[[/code]]|END", "RUNTIME",),
-        "<p>BEGIN|[[code]]<br>\nRUNTIME<br>\n[[/code]]|END</p>",
+        "<p>BEGIN|[[code]]<br />\nRUNTIME<br />\n[[/code]]|END</p>",
     );
 }
 
@@ -1510,9 +1510,9 @@ fn delayed_code_shell_keeps_the_parsed_opener() {
             "[[/code]]|END",
         )),
         concat!(
-            "<p>BEGIN|[[code type=&quot;[[probe&quot;]]<br>\n",
+            "<p>BEGIN|[[code type=&quot;[[probe&quot;]]<br />\n",
             "<a href=\"/component:image-block\">Standard Image Block</a>",
-            "<br>\n[[/code]]|END</p>",
+            "<br />\n[[/code]]|END</p>",
         ),
     );
 }
@@ -1541,7 +1541,7 @@ fn delayed_raw_recovery_owns_uninterpreted_heads() {
         concat!(
             "<p>BEGIN|[[raw probe=&quot;",
             "<a href=\"/component:image-block\">Standard Image Block</a>",
-            "&quot;]]<br>\n**AUTHORED**<br>\n[[/raw]]|END</p>",
+            "&quot;]]<br />\n**AUTHORED**<br />\n[[/raw]]|END</p>",
         ),
     );
 
@@ -1553,10 +1553,10 @@ fn delayed_raw_recovery_owns_uninterpreted_heads() {
     assert_eq!(
         render(source),
         concat!(
-            "<p>BEGIN|[[raw malformed=&quot;unterminated]]<br>\n",
+            "<p>BEGIN|[[raw malformed=&quot;unterminated]]<br />\n",
             "**AUTHORED** ",
             "<a href=\"/component:image-block\">Standard Image Block</a>",
-            "<br>\n[[/raw]]|END</p>",
+            "<br />\n[[/raw]]|END</p>",
         ),
     );
 }
@@ -1600,9 +1600,9 @@ fn recovery_source_decodes_semicolon_entities_once() {
             "[[/code]]",
         )),
         concat!(
-            "<p>[[code]]<br>\n&amp; ",
+            "<p>[[code]]<br />\n&amp; ",
             "<a href=\"/component:image-block\">Standard Image Block</a>",
-            "<br>\n[[/code]]</p>",
+            "<br />\n[[/code]]</p>",
         ),
     );
     assert_eq!(
@@ -1652,17 +1652,17 @@ fn delayed_slots_preserve_the_frozen_listpages_owner_boundaries() {
         (
             "BEGIN|[[code]]\n%%title_linked%%\n[[/code]]|END",
             concat!(
-                "<p>BEGIN|[[code]]<br>\n",
+                "<p>BEGIN|[[code]]<br />\n",
                 "<a href=\"/component:image-block\">Standard Image Block</a>",
-                "<br>\n[[/code]]|END</p>",
+                "<br />\n[[/code]]|END</p>",
             ),
         ),
         (
             "BEGIN|[[raw]]\n%%title_linked%%\n[[/raw]]|END",
             concat!(
-                "<p>BEGIN|[[raw]]<br>\n",
+                "<p>BEGIN|[[raw]]<br />\n",
                 "<a href=\"/component:image-block\">Standard Image Block</a>",
-                "<br>\n[[/raw]]|END</p>",
+                "<br />\n[[/raw]]|END</p>",
             ),
         ),
         (
@@ -1701,9 +1701,9 @@ fn delayed_slots_preserve_the_frozen_listpages_owner_boundaries() {
         (
             "BEGIN|[[raw]]\n%%tags_linked%%\n[[/raw]]|END",
             concat!(
-                "<p>BEGIN|[[raw]]<br>\n",
+                "<p>BEGIN|[[raw]]<br />\n",
                 "<a href=\"/system:page-tags/tag/component\">component</a>",
-                "<br>\n[[/raw]]|END</p>",
+                "<br />\n[[/raw]]|END</p>",
             ),
         ),
         (
@@ -1766,9 +1766,12 @@ fn left_angle_and_ellipsis_runs_touching_a_suppressed_seam_convert_with_joined_g
         render("<[!-- %%title_linked%% --]<<<"),
         "<p>&#171;&#171;</p>"
     );
-    assert_eq!(render(".[!-- %%title_linked%% --]..."), "<p>….</p>");
-    assert_eq!(render(".[!-- %%title_linked%% --]....."), "<p>……</p>");
-    assert_eq!(render("a[!-- %%title_linked%% --]..."), "<p>a…</p>");
+    assert_eq!(render(".[!-- %%title_linked%% --]..."), "<p>&#8230;.</p>");
+    assert_eq!(
+        render(".[!-- %%title_linked%% --]....."),
+        "<p>&#8230;&#8230;</p>"
+    );
+    assert_eq!(render("a[!-- %%title_linked%% --]..."), "<p>a&#8230;</p>");
     assert_eq!(
         render("<[!-- %%title_linked%% --]\u{ab}<"),
         "<p>&lt;&#171;&lt;</p>",
@@ -1786,11 +1789,11 @@ fn runtime_origin_text_stays_a_typography_barrier_at_a_seam() {
 fn suppressed_delayed_owners_apply_typography_only_across_authored_text() {
     assert_eq!(
         render("left-[[iftags +missing]]\n%%title_linked%%\n[[/iftags]]-right"),
-        "<p>left—right</p>",
+        "<p>left&#8212;right</p>",
     );
     assert_eq!(
         render("left.[!-- %%title_linked%% --]..right"),
-        "<p>left…right</p>",
+        "<p>left&#8230;right</p>",
     );
 
     let source = "`[!-- %%title_linked%% --]`quoted'[!-- %%title_linked%% --]'";
@@ -1820,7 +1823,7 @@ fn suppressed_delayed_owners_apply_typography_only_across_authored_text() {
     ));
     let input =
         DelayedInput::new(source, segments).expect("valid repeated suppression input");
-    assert_eq!(render_input(&input), "<p>“quoted”</p>");
+    assert_eq!(render_input(&input), "<p>&#8220;quoted&#8221;</p>");
 
     let source = "runtime-[!-- %%title_linked%% --]-authored";
     let input = page_link_input_with_runtime_prefix(source, "runtime-");
@@ -1872,7 +1875,7 @@ fn delayed_suppression_binding_is_atomic_and_rolls_back_hidden_metadata() {
         .bind(&page_bindings())
         .expect("the same parsed tree must bind after a rejected candidate");
     let sealed = bound.render_html(&page_info, &settings);
-    assert_eq!(sealed.body(), "<p>start—middle</p>");
+    assert_eq!(sealed.body(), "<p>start&#8212;middle</p>");
     assert!(sealed.html_blocks().is_empty());
 }
 
@@ -1929,7 +1932,7 @@ fn many_adjacent_suppressed_delayed_nodes_resolve_within_a_bounded_budget() {
     let bound = delayed.bind(&bindings).expect("dense delayed input binds");
     let body = bound.render_html(&page_info, &settings);
 
-    assert_eq!(body.body(), "<p>left—right</p>");
+    assert_eq!(body.body(), "<p>left&#8212;right</p>");
     assert!(
         started.elapsed() < Duration::from_secs(10),
         "dense delayed suppression exceeded its bounded budget: {:?}",
@@ -1947,13 +1950,13 @@ fn delayed_list_keeps_non_forming_css_openers_in_body_literal() {
     let e9 = "BEFORE lpuncprobe:ant\n  [[module CSS]]\n.seg-i { color: rgb(8, 8, 8); }\nAFTER lpuncprobe:ant";
     assert_eq!(
         render_authored(e9),
-        "<p>BEFORE lpuncprobe:ant<br>\n[[module CSS]]<br>\n.seg-i { color: rgb(8, 8, 8); }<br>\nAFTER lpuncprobe:ant</p>",
+        "<p>BEFORE lpuncprobe:ant<br />\n[[module CSS]]<br />\n.seg-i { color: rgb(8, 8, 8); }<br />\nAFTER lpuncprobe:ant</p>",
     );
     // Sibling shape muse-probe-lp-unc-e16: a tailed opener at a line start
     // with no closer of its own is literal too.
     let e16 = "BEFORE lpuncprobe:ant\n[[module CSS]].seg-u { color: rgb(5, 5, 5); }\nAFTER lpuncprobe:ant";
     assert_eq!(
         render_authored(e16),
-        "<p>BEFORE lpuncprobe:ant<br>\n[[module CSS]].seg-u { color: rgb(5, 5, 5); }<br>\nAFTER lpuncprobe:ant</p>",
+        "<p>BEFORE lpuncprobe:ant<br />\n[[module CSS]].seg-u { color: rgb(5, 5, 5); }<br />\nAFTER lpuncprobe:ant</p>",
     );
 }

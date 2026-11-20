@@ -417,7 +417,7 @@ mod tests {
             "{html}"
         );
         assert!(html.contains(
-            r#"X<a class="eref" href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference(&#39;equation-2&#39;)">2</a>Y<a class="eref" href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference(&#39;equation-&#39;)"></a>Z"#,
+            r#"X<a class="eref" href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('equation-2')">2</a>Y<a class="eref" href="javascript:;" onclick="WIKIDOT.page.utils.scrollToReference('equation-')"></a>Z"#,
         ), "{html}");
         assert!(
             html.contains(
@@ -546,7 +546,7 @@ mod tests {
         ));
         assert!(errors.is_empty(), "{errors:#?}");
         assert!(
-            html.contains("<p><br>\ntail</p>"),
+            html.contains("<p><br />\ntail</p>"),
             "expected live-style br before tail in next paragraph: {html}"
         );
     }
@@ -642,7 +642,7 @@ mod tests {
             "<span class=\"equation-number\">(1)</span>\n<div class=\"math-equation\" id=\"equation-1\">\\begin{align} A = \\pi \\cdot r^2 [[/math]] [[math]] C = 2\\pi r \\end{align}</div>",
         ), "{html}");
         assert!(html.contains(
-            "<p>Apple<a class=\"eref\" href=\"javascript:;\" onclick=\"WIKIDOT.page.utils.scrollToReference(&#39;equation-&#39;)\"></a></p>",
+            "<p>Apple<a class=\"eref\" href=\"javascript:;\" onclick=\"WIKIDOT.page.utils.scrollToReference('equation-')\"></a></p>",
         ), "{html}");
         assert!(
             html.contains(
@@ -651,7 +651,7 @@ mod tests {
             "{html}"
         );
         assert!(html.contains(
-            "<p>Pineapple<a class=\"eref\" href=\"javascript:;\" onclick=\"WIKIDOT.page.utils.scrollToReference(&#39;equation-&#39;)\"></a>Blueberry</p>",
+            "<p>Pineapple<a class=\"eref\" href=\"javascript:;\" onclick=\"WIKIDOT.page.utils.scrollToReference('equation-')\"></a>Blueberry</p>",
         ), "{html}");
     }
 

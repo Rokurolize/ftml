@@ -843,7 +843,7 @@ mod tests {
         assert!(!errors.is_empty());
         assert_eq!(html.matches("class=\"footnotes-footer\"").count(), 1);
         assert!(html.contains("Beta<sup class=\"footnoteref\""), "{html}");
-        assert!(html.contains("<br>\n[[footnoteblock]]</p>"), "{html}");
+        assert!(html.contains("<br />\n[[footnoteblock]]</p>"), "{html}");
     }
 
     #[test]
@@ -854,7 +854,9 @@ mod tests {
 
         assert!(errors.is_empty(), "{errors:#?}");
         assert!(
-            html.contains("\">1</a>. first line\n<p>second paragraph<br>\nlast line</p>"),
+            html.contains(
+                "\">1</a>. first line\n<p>second paragraph<br />\nlast line</p>"
+            ),
             "{html}",
         );
         assert!(!html.contains("\">1</a>. <p>first line</p>"), "{html}");

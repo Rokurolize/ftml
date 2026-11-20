@@ -2848,11 +2848,11 @@ mod tests {
         let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
         assert!(
-            html.contains("</sup></p><br>\n||"),
+            html.contains("</sup></p><br />\n||"),
             "break and row marker stay outside the footnote paragraph: {html}",
         );
         assert!(
-            !html.contains("</sup><br>"),
+            !html.contains("</sup><br />"),
             "break must not stay inside the footnote paragraph: {html}",
         );
         let ordinary = "n[[footnote]]x[[/footnote]]\ny\n[[footnoteblock]]";
@@ -2860,7 +2860,7 @@ mod tests {
         let (tree, _errors) = crate::parse(&tokenization, &page_info, &settings).into();
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
         assert!(
-            html.contains("</sup><br>\ny</p>"),
+            html.contains("</sup><br />\ny</p>"),
             "an ordinary footnote newline stays inside the paragraph: {html}",
         );
     }

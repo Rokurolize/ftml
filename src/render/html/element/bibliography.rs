@@ -229,8 +229,8 @@ fn render_wikidot_bibcite(ctx: &mut HtmlContext, index: usize, brackets: bool) {
             "href" => "javascript:;",
             "class" => "bibcite",
             "id" => &id,
-            "onclick" => &onclick,
         ))
+        .attr_wikidot_attribute("onclick", &onclick)
         .inner(|ctx| str_write!(ctx, "{index}"));
 
     if brackets {

@@ -922,7 +922,7 @@ mod tests {
         assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
         assert!(html.contains("inline body"), "{html}");
         assert!(
-            html.contains("</blockquote><br>\nfollowing content"),
+            html.contains("</blockquote><br />\nfollowing content"),
             "{html}"
         );
         assert!(!html.contains("<p>following content</p>"), "{html}");
@@ -963,8 +963,11 @@ mod tests {
             ),
             "{html}"
         );
-        assert!(html.contains("stray<br>\nbody after false close"), "{html}");
-        assert!(html.contains("[[/collapsible]]<br>"), "{html}");
+        assert!(
+            html.contains("stray<br />\nbody after false close"),
+            "{html}"
+        );
+        assert!(html.contains("[[/collapsible]]<br />"), "{html}");
         assert!(html.contains("body after false close"), "{html}");
         assert!(html.contains("following quote"), "{html}");
         assert!(!text.contains("[[/collapsible]] stray"), "{text}");
@@ -1005,7 +1008,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
         assert!(
-            html.contains("</blockquote><p>unquoted body</p><br>\nfollowing page"),
+            html.contains("</blockquote><p>unquoted body</p><br />\nfollowing page"),
             "{html}"
         );
         assert!(!html.contains("[[collapsible"), "{html}");
@@ -1068,7 +1071,10 @@ mod tests {
             1,
             "{html}"
         );
-        assert!(html.contains("<strong>alpha<br>\nbeta</strong>"), "{html}");
+        assert!(
+            html.contains("<strong>alpha<br />\nbeta</strong>"),
+            "{html}"
+        );
         assert!(html.contains("following quote"), "{html}");
         assert!(!html.contains("&gt; beta"), "{html}");
     }
@@ -1137,7 +1143,7 @@ mod tests {
         assert!(html.contains("following quote"), "{html}");
         assert!(
             html.contains(
-                "</blockquote><p>outer body<br>\n[[/collapsible]]<br>\nfollowing quote</p>"
+                "</blockquote><p>outer body<br />\n[[/collapsible]]<br />\nfollowing quote</p>"
             ),
             "{html}"
         );
@@ -1339,7 +1345,7 @@ mod tests {
 
         assert_eq!(html.matches("class=\"collapsible-block\"").count(), 1);
         assert!(
-            html.contains("<p>[[raw]]<br>\nraw body<br>\n[[/raw]]</p>"),
+            html.contains("<p>[[raw]]<br />\nraw body<br />\n[[/raw]]</p>"),
             "{html}"
         );
     }
@@ -1371,7 +1377,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:?}");
         assert!(
             html.starts_with(
-                "<ul>\n<li><span><br>\n<br></span><div class=\"collapsible-block\">"
+                "<ul>\n<li><span><br />\n<br /></span><div class=\"collapsible-block\">"
             ),
             "{html}"
         );

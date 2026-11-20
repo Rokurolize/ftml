@@ -318,7 +318,7 @@ mod tests {
             (
                 "trailing space at line end is dropped",
                 "x [[a]]one [[/a]]\ny",
-                "<p>x <a href=\"\">one</a><br>\ny</p>",
+                "<p>x <a href=\"\">one</a><br />\ny</p>",
             ),
             (
                 "adjacent anchors share one separator",
@@ -358,7 +358,7 @@ mod tests {
             (
                 "nonbreaking spaces stay inside",
                 "x [[a]]\u{a0}two\u{a0}[[/a]]y",
-                "<p>x <a href=\"\">\u{a0}two\u{a0}</a>y</p>",
+                "<p>x <a href=\"\">&#160;two&#160;</a>y</p>",
             ),
             (
                 "tab",

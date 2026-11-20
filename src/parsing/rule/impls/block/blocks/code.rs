@@ -396,7 +396,7 @@ mod tests {
             concat!(
                 "<div class=\"code\">
 <pre><code>====</code></pre></div>",
-                "<br>\n<span style=\"white-space: pre-wrap;\">====</span>",
+                "<br />\n<span style=\"white-space: pre-wrap;\">====</span>",
             ),
         );
     }
@@ -424,7 +424,7 @@ mod tests {
 
         assert_eq!(
             html,
-            "<p>[[ code ]]<br>\nNESTED</p><div class=\"code\"></div>",
+            "<p>[[ code ]]<br />\nNESTED</p><div class=\"code\"></div>",
         );
     }
 

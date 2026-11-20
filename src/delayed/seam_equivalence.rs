@@ -311,8 +311,8 @@ fn plain_parse_hidden_iftags_typography_matches_joined_text() {
     const HIDDEN: &str = "[[iftags +zz-no-such-tag]]x[[/iftags]]";
 
     assert_eq!(render(&format!("<{HIDDEN}<<<")), "<p>&#171;&#171;</p>");
-    assert_eq!(render(&format!(".{HIDDEN}...")), "<p>….</p>");
-    assert_eq!(render(&format!(".{HIDDEN}.....")), "<p>……</p>");
+    assert_eq!(render(&format!(".{HIDDEN}...")), "<p>&#8230;.</p>");
+    assert_eq!(render(&format!(".{HIDDEN}.....")), "<p>&#8230;&#8230;</p>");
     assert_eq!(
         render(&format!("\"{HIDDEN}>>>>")),
         "<p>&quot;&#187;&#187;</p>"
@@ -328,11 +328,11 @@ fn plain_parse_hidden_iftags_typography_matches_joined_text() {
     );
     assert_eq!(
         render(".[[iftags -zz-no-such-tag]]...[[/iftags]]"),
-        "<p>….</p>",
+        "<p>&#8230;.</p>",
     );
     assert_eq!(
         render(".[[iftags -zz-no-such-tag]]x[[/iftags]]..."),
-        "<p>.x…</p>",
+        "<p>.x&#8230;</p>",
     );
 
     assert_eq!(
@@ -340,10 +340,10 @@ fn plain_parse_hidden_iftags_typography_matches_joined_text() {
         "<p>&lt;<strong>b</strong>&#171;&lt;</p>",
     );
 
-    assert_eq!(render("[[/iftags]]..."), "<p>[[/iftags]]…</p>");
+    assert_eq!(render("[[/iftags]]..."), "<p>[[/iftags]]&#8230;</p>");
     assert_eq!(
         render("[[ifcategory x]]y[[/ifcategory]]..."),
-        "<p>[[ifcategory x]]y[[/ifcategory]]…</p>",
+        "<p>[[ifcategory x]]y[[/ifcategory]]&#8230;</p>",
     );
     let unclosed = render("<[[iftags -zz-no-such-tag]]<<<");
     assert!(

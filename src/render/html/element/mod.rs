@@ -588,7 +588,7 @@ fn wikidot_layout_preserves_the_text_node_after_a_line_break() {
     assert!(errors.is_empty(), "{errors:?}");
 
     let output = HtmlRender.render(&tree, &page_info, &settings);
-    assert_eq!(output.body, "<p>A<br>\nB</p>");
+    assert_eq!(output.body, "<p>A<br />\nB</p>");
 }
 
 fn render_partial(ctx: &mut HtmlContext, partial: &PartialElement) {

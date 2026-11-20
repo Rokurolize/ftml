@@ -366,7 +366,7 @@ mod tests {
             crate::render::html::HtmlRender
                 .render(&tree, &page_info, &settings)
                 .body,
-            "<p>[[html]]<br>\n&lt;strong&gt;isolated&lt;/strong&gt;<br>\n[[/html]]</p>",
+            "<p>[[html]]<br />\n&lt;strong&gt;isolated&lt;/strong&gt;<br />\n[[/html]]</p>",
         );
     }
 
@@ -384,23 +384,23 @@ mod tests {
             ),
             (
                 "BEFORE|[[html]]\n<b>X</b>\n[[/html]]|AFTER",
-                "<p>BEFORE|[[html]]<br>\n&lt;b&gt;X&lt;/b&gt;<br>\n[[/html]]|AFTER</p>",
+                "<p>BEFORE|[[html]]<br />\n&lt;b&gt;X&lt;/b&gt;<br />\n[[/html]]|AFTER</p>",
             ),
             (
                 " [[html]]\n<b>X</b>\n[[/html]]",
-                "<p>[[html]]<br>\n&lt;b&gt;X&lt;/b&gt;<br>\n[[/html]]</p>",
+                "<p>[[html]]<br />\n&lt;b&gt;X&lt;/b&gt;<br />\n[[/html]]</p>",
             ),
             (
                 "> [[html]]\n> <b>X</b>\n> [[/html]]",
-                "<blockquote><p>[[html]]<br>\n&lt;b&gt;X&lt;/b&gt;<br>\n[[/html]]</p></blockquote>",
+                "<blockquote><p>[[html]]<br />\n&lt;b&gt;X&lt;/b&gt;<br />\n[[/html]]</p></blockquote>",
             ),
             (
                 "[[html class=\"probe\"]]\n<b>X</b>\n[[/html]]",
-                "<p>[[html class=&quot;probe&quot;]]<br>\n&lt;b&gt;X&lt;/b&gt;<br>\n[[/html]]</p>",
+                "<p>[[html class=&quot;probe&quot;]]<br />\n&lt;b&gt;X&lt;/b&gt;<br />\n[[/html]]</p>",
             ),
             (
                 "[[html]]\n<b>unclosed</b>",
-                "<p>[[html]]<br>\n&lt;b&gt;unclosed&lt;/b&gt;</p>",
+                "<p>[[html]]<br />\n&lt;b&gt;unclosed&lt;/b&gt;</p>",
             ),
         ] {
             let tokenization = crate::tokenize(source);
@@ -437,7 +437,7 @@ mod tests {
                 crate::render::html::HtmlRender
                     .render(&tree, &page_info, &settings)
                     .body,
-                format!("<p>{source}</p>"),
+                format!("<p>{}</p>", source.replace('\u{a0}', "&#160;")),
                 "{source:?}",
             );
         }
@@ -470,7 +470,9 @@ mod tests {
             "{errors:#?}",
         );
         assert!(
-            html.contains("[[\u{2003}html]]<br>\n&lt;b&gt;X&lt;/b&gt;<br>\n[[/html]]"),
+            html.contains(
+                "[[\u{2003}html]]<br />\n&lt;b&gt;X&lt;/b&gt;<br />\n[[/html]]"
+            ),
             "{html}",
         );
         assert!(
@@ -501,7 +503,7 @@ mod tests {
         assert!(tree.html_blocks.is_empty(), "{tree:#?}");
         assert_eq!(
             html,
-            "<p>[[html]]<br>\n[[module ListPages]]<br>\n%%title%%<br>\n[[/module]]<br>\n[[/html]]</p>",
+            "<p>[[html]]<br />\n[[module ListPages]]<br />\n%%title%%<br />\n[[/module]]<br />\n[[/html]]</p>",
         );
     }
 
@@ -523,7 +525,7 @@ mod tests {
             crate::render::html::HtmlRender
                 .render(&tree, &page_info, &settings)
                 .body,
-            "<p>before<br>\n[[html]]<br>\n&lt;b&gt;X&lt;/b&gt;<br>\n[[/html]]</p>",
+            "<p>before<br />\n[[html]]<br />\n&lt;b&gt;X&lt;/b&gt;<br />\n[[/html]]</p>",
         );
     }
 
@@ -584,44 +586,44 @@ mod tests {
             (
                 "[[html]]\n[[bibliography]]\n: a : A\n[[/bibliography]]\n[[/html]]\nafter",
                 vec!["\n[[bibliography]]\n: a : A\n[[/bibliography]]\n"],
-                format!("<p>{iframe}</iframe><br>\nafter</p>"),
+                format!("<p>{iframe}</iframe><br />\nafter</p>"),
             ),
             (
                 "[[html]]\n[[bibliography]]\nu0\n[[/html]]\nafter",
                 vec!["\n[[bibliography]]\nu0\n"],
-                format!("<p>{iframe}</iframe><br>\nafter</p>"),
+                format!("<p>{iframe}</iframe><br />\nafter</p>"),
             ),
             (
                 "[[html]]\n[[bibliography]]\nu0\n[[/html]]\n: a : A\n[[/bibliography]]\nafter",
                 vec!["\n[[bibliography]]\nu0\n"],
                 format!(
-                    "{iframe}</iframe><br>\n<dl>\n<dt>a</dt>\n<dd>A</dd>\n</dl>\n<p>[[/bibliography]]<br>\nafter</p>"
+                    "{iframe}</iframe><br />\n<dl>\n<dt>a</dt>\n<dd>A</dd>\n</dl>\n<p>[[/bibliography]]<br />\nafter</p>"
                 ),
             ),
             (
                 "[[size 120%]]\n[[html]]z[[/html]]\n[[/size]]",
                 vec!["z"],
                 format!(
-                    "<p><span style=\"font-size:120%;\">{iframe}<br></iframe></span></p>"
+                    "<p><span style=\"font-size:120%;\">{iframe}<br /></iframe></span></p>"
                 ),
             ),
             (
                 "[[size 120%]]\n[[html]]z[[/html]]\nafter\n[[/size]]",
                 vec!["z"],
                 format!(
-                    "<p><span style=\"font-size:120%;\">{iframe}<br>\nafter<br></iframe></span></p>"
+                    "<p><span style=\"font-size:120%;\">{iframe}<br />\nafter<br /></iframe></span></p>"
                 ),
             ),
             (
                 "[[span]]\n[[html]]z[[/html]]\n[[/span]]",
                 vec!["z"],
-                format!("<p><span>{iframe}<br></iframe></span></p>"),
+                format!("<p><span>{iframe}<br /></iframe></span></p>"),
             ),
             (
                 "[[size 120%]]\nbefore\n[[html]]z[[/html]]\nafter\n[[/size]]",
                 vec!["z"],
                 format!(
-                    "<p><span style=\"font-size:120%;\"><br>\nbefore</span></p><p><span style=\"font-size:120%;\">{iframe}<br>\nafter<br></iframe></span></p>"
+                    "<p><span style=\"font-size:120%;\"><br />\nbefore</span></p><p><span style=\"font-size:120%;\">{iframe}<br />\nafter<br /></iframe></span></p>"
                 ),
             ),
         ];

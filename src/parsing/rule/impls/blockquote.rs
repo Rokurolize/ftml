@@ -3588,7 +3588,7 @@ mod tests {
                 25,
                 "{quoted_line}: {html}",
             );
-            assert_eq!(html.matches("<br>").count(), 1, "{quoted_line}: {html}",);
+            assert_eq!(html.matches("<br />").count(), 1, "{quoted_line}: {html}",);
             let expected_paragraphs = usize::from(quoted_line.starts_with('='));
             assert_eq!(
                 html.matches("<p").count(),
@@ -3649,7 +3649,7 @@ mod tests {
             assert!(errors.is_empty(), "{open}: {errors:#?}");
             assert_eq!(html.matches("<blockquote>").count(), 1, "{open}: {html}");
             assert_eq!(html.matches("<p>").count(), 1, "{open}: {html}");
-            assert_eq!(html.matches("<br>").count(), 127, "{open}: {html}");
+            assert_eq!(html.matches("<br />").count(), 127, "{open}: {html}");
             assert_eq!(html.matches("quoted text").count(), 64, "{open}: {html}");
         }
     }

@@ -237,7 +237,7 @@ mod tests {
             "{html}"
         );
         assert!(
-            html.contains("<div class=\"content\"><p><br>\nbody</p>"),
+            html.contains("<div class=\"content\"><p><br />\nbody</p>"),
             "{html}"
         );
         assert!(!html.contains("font-size:larger;\">body"), "{html}");

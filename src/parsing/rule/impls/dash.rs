@@ -119,14 +119,14 @@ mod tests {
     #[test]
     fn wikidot_long_dash_runs_use_five_hyphen_strikethrough_chunks() {
         for (count, expected) in [
-            (4, "<p>raw ——] tail</p>"),
+            (4, "<p>raw &#8212;&#8212;] tail</p>"),
             (
                 5,
                 "<p>raw <span style=\"text-decoration: line-through;\">-</span>] tail</p>",
             ),
             (
                 9,
-                "<p>raw <span style=\"text-decoration: line-through;\">-</span>——] tail</p>",
+                "<p>raw <span style=\"text-decoration: line-through;\">-</span>&#8212;&#8212;] tail</p>",
             ),
             (
                 10,

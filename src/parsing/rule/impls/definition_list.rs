@@ -937,7 +937,7 @@ fn wikidot_definition_lists_leave_adjacent_prose_unwrapped() {
     assert!(errors.is_empty(), "{errors:?}");
     assert_eq!(
         html,
-        "ALPHA<br>\n<dl>\n<dt>Key</dt>\n<dd>Value</dd>\n<dt><strong>Apple</strong></dt>\n<dd><em>Banana</em> split</dd>\n</dl>\nBETA<br>\n<dl>\n<dt>Pineapple</dt>\n<dd>Very long</dd>\n</dl>\n",
+        "ALPHA<br />\n<dl>\n<dt>Key</dt>\n<dd>Value</dd>\n<dt><strong>Apple</strong></dt>\n<dd><em>Banana</em> split</dd>\n</dl>\nBETA<br />\n<dl>\n<dt>Pineapple</dt>\n<dd>Very long</dd>\n</dl>\n",
     );
 }
 

@@ -2904,7 +2904,7 @@ mod tests {
         let html = HtmlRender.render(&tree, &page_info, &settings).body;
         assert!(html.contains("<p>[[iftags +missing]]</p>"), "{html}");
         assert!(html.contains("<div><p>hidden child"), "{html}");
-        assert!(html.contains("[[/iftags_]]<br>"), "{html}");
+        assert!(html.contains("[[/iftags_]]<br />"), "{html}");
         assert!(html.contains("visible</p></div>"), "{html}");
     }
 

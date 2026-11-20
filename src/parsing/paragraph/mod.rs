@@ -2390,7 +2390,7 @@ mod tests {
     fn wikidot_nbsp_only_line_stays_in_its_surrounding_paragraph() {
         assert_eq!(
             render_wikidot("Alpha\n\u{00a0}\nBeta"),
-            "<p>Alpha<br>\n\u{00a0}<br>\nBeta</p>",
+            "<p>Alpha<br />\n&#160;<br />\nBeta</p>",
         );
     }
 
@@ -2402,9 +2402,9 @@ mod tests {
             ),
             concat!(
                 "<p>before</p>",
-                "<p><iframe src=\"https://example.com/\" allowtransparency=\"true\" frameborder=\"0\" class=\"html-block-iframe\"></iframe><br>\n",
+                "<p><iframe src=\"https://example.com/\" allowtransparency=\"true\" frameborder=\"0\" class=\"html-block-iframe\"></iframe><br />\n",
                 "middle</p>",
-                "<p><iframe src=\"https://example.com/\" allowtransparency=\"true\" frameborder=\"0\" class=\"html-block-iframe\"></iframe><br>\n",
+                "<p><iframe src=\"https://example.com/\" allowtransparency=\"true\" frameborder=\"0\" class=\"html-block-iframe\"></iframe><br />\n",
                 "after</p>",
             ),
         );
@@ -2430,7 +2430,7 @@ mod tests {
 
     #[test]
     fn discarded_controls_are_invisible_without_losing_physical_line_occupancy() {
-        assert_eq!(render_wikidot("\0\t \t\t\nΩ"), "<p><br>\nΩ</p>",);
+        assert_eq!(render_wikidot("\0\t \t\t\nΩ"), "<p><br />\nΩ</p>",);
         assert_eq!(
             render_wikidot("\u{0007}\talpha \u{000b} beta"),
             "<p>alpha beta</p>",
@@ -2446,32 +2446,32 @@ mod tests {
     fn discarded_control_does_not_preserve_leading_line_whitespace() {
         assert_eq!(
             render_wikidot("a\r\u{0001}\t\u{fffd}\0b"),
-            "<p>a<br>\nb</p>",
+            "<p>a<br />\nb</p>",
         );
     }
 
     #[test]
     fn wikidot_preserves_an_underscore_at_the_start_of_a_line() {
-        assert_eq!(render_wikidot("_\na"), "<p>_<br>\na</p>");
-        assert_eq!(render_wikidot(" _\na"), "<p><br>\na</p>");
+        assert_eq!(render_wikidot("_\na"), "<p>_<br />\na</p>");
+        assert_eq!(render_wikidot(" _\na"), "<p><br />\na</p>");
     }
 
     #[test]
     fn wikidot_terminal_spaced_underscore_emits_two_line_breaks() {
-        assert_eq!(render_wikidot("a\\ _"), "\n\na\\<br>\n<br>\n");
+        assert_eq!(render_wikidot("a\\ _"), "\n\na\\<br />\n<br />\n");
     }
 
     #[test]
     fn wikidot_terminal_backslash_becomes_an_unwrapped_line_break() {
         assert_eq!(render_wikidot("\\"), "");
-        assert_eq!(render_wikidot("alpha\\"), "\n\nalpha<br>\n");
+        assert_eq!(render_wikidot("alpha\\"), "\n\nalpha<br />\n");
         assert_eq!(
             render_wikidot("first\nsecond\\"),
-            "\n\nfirst<br>\nsecond<br>\n",
+            "\n\nfirst<br />\nsecond<br />\n",
         );
         assert_eq!(
             render_wikidot("paragraph\n\nlast\\"),
-            "<p>paragraph</p>\nlast<br>\n",
+            "<p>paragraph</p>\nlast<br />\n",
         );
         assert_eq!(render_wikidot("a\u{fffd}\\"), "\n\na1");
     }
@@ -2480,7 +2480,7 @@ mod tests {
     fn wikidot_comment_only_line_does_not_leave_a_line_break() {
         assert_eq!(
             render_wikidot("alpha\n[!-- hidden --]\nomega"),
-            "<p>alpha<br>\nomega</p>",
+            "<p>alpha<br />\nomega</p>",
         );
         assert_eq!(
             render_wikidot("alpha\n[!-- hidden --]\n\nomega"),
@@ -2488,7 +2488,7 @@ mod tests {
         );
         assert_eq!(
             render_wikidot("alpha\n[!-- hidden --] visible\nomega"),
-            "<p>alpha visible<br>\nomega</p>",
+            "<p>alpha visible<br />\nomega</p>",
         );
         assert_eq!(
             render_wikidot("before [!-- hidden --] after"),
@@ -2498,7 +2498,7 @@ mod tests {
             render_wikidot(
                 "[!-- --]OMEGA_TRUE[!-- --]\n[!-- OMEGA_FALSE[!-- --]\n[!-- 2 OMEGA_COMMENT --]\nOMEGA_AFTER",
             ),
-            "<p>OMEGA_TRUE<br>\nOMEGA_AFTER</p>",
+            "<p>OMEGA_TRUE<br />\nOMEGA_AFTER</p>",
         );
         assert_eq!(
             render_wikidot("before\n\n[!-- --]\nbranch body\n[!----]\n\n\nmiddle"),
@@ -2512,7 +2512,7 @@ mod tests {
             render_wikidot(
                 "[[ol]][[li]]before[[/li]][[/ol]]\n\n[!-- hidden --]\n[[ul]][[li]]after[[/li]][[/ul]]",
             ),
-            "<ol>\n<li>before</li>\n</ol><br>\n<ul>\n<li>after</li>\n</ul><br>\n",
+            "<ol>\n<li>before</li>\n</ol><br />\n<ul>\n<li>after</li>\n</ul><br />\n",
         );
     }
 
@@ -2580,7 +2580,7 @@ mod tests {
 
         let wikidot = render(Layout::Wikidot);
         let wikijump = render(Layout::Wikijump);
-        assert!(wikidot.contains("</div><br>\nafter"), "{wikidot}");
+        assert!(wikidot.contains("</div><br />\nafter"), "{wikidot}");
         assert!(!wikidot.contains("<p>after</p>"), "{wikidot}");
         assert!(wikijump.contains("</div><p>after</p>"), "{wikijump}");
     }

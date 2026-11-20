@@ -2633,11 +2633,11 @@ mod tests {
 
         assert!(errors.is_empty(), "{errors:#?}");
         assert!(
-            html.starts_with("NAME:<br>\nFoo Foo\n<div id=\"wiki-tabview-"),
+            html.starts_with("NAME:<br />\nFoo Foo\n<div id=\"wiki-tabview-"),
             "{html}",
         );
         assert!(html.contains("<em>Bar</em>"), "{html}");
-        assert!(html.contains("NO LABEL:<br>\n"), "{html}");
+        assert!(html.contains("NO LABEL:<br />\n"), "{html}");
         assert!(html.contains("<em>untitled</em>"), "{html}");
         assert!(!html.contains("<p>NAME:"), "{html}");
         assert!(!html.contains("<script"), "{html}");

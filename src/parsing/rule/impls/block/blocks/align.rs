@@ -356,7 +356,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:?}");
         assert_eq!(
             html,
-            "<div style=\"text-align: center;\"><div class=\"blockquote\"><p>card body 0</p></div></div><br>\n<div style=\"text-align: center;\"><div class=\"blockquote\"><p>card body 1</p></div></div>",
+            "<div style=\"text-align: center;\"><div class=\"blockquote\"><p>card body 0</p></div></div><br />\n<div style=\"text-align: center;\"><div class=\"blockquote\"><p>card body 1</p></div></div>",
         );
     }
 
@@ -374,7 +374,7 @@ mod tests {
 
         assert_eq!(
             render("[[=]]\ncentered\n[[/=]]\nafter"),
-            "<div style=\"text-align: center;\"><p>centered</p></div><br>\nafter",
+            "<div style=\"text-align: center;\"><p>centered</p></div><br />\nafter",
         );
         assert_eq!(
             render("[[=]]\ncentered\n[[/=]]"),
@@ -418,7 +418,11 @@ mod tests {
         assert!(html.contains("outside-sentinel"), "{html}");
         assert!(!html.contains("[[>]]"), "{html}");
         assert!(!html.contains("[[/>]]"), "{html}");
-        assert_eq!(html.matches("<br>").count(), BLOCK_COUNT * 2 - 1, "{html}");
+        assert_eq!(
+            html.matches("<br />").count(),
+            BLOCK_COUNT * 2 - 1,
+            "{html}"
+        );
         assert_eq!(html.matches("<p>").count(), BLOCK_COUNT + 1, "{html}");
     }
 
@@ -463,7 +467,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:?}");
         assert_eq!(
             html,
-            "<div style=\"text-align: right;\"><p>Right</p></div><div style=\"text-align: left;\"><p>Left</p></div><div style=\"text-align: center;\"><p>Center</p></div><div style=\"text-align: justify;\"><p>Justify</p></div><p>Deep align blocks:<br></p><div style=\"text-align: center;\"><p>Apple<br></p><div style=\"text-align: right;\"><p>Banana<br></p><div style=\"text-align: justify;\"><p>Cherry<br></p><div style=\"text-align: left;\"><p>Blueberry</p></div></div></div></div>",
+            "<div style=\"text-align: right;\"><p>Right</p></div><div style=\"text-align: left;\"><p>Left</p></div><div style=\"text-align: center;\"><p>Center</p></div><div style=\"text-align: justify;\"><p>Justify</p></div><p>Deep align blocks:<br /></p><div style=\"text-align: center;\"><p>Apple<br /></p><div style=\"text-align: right;\"><p>Banana<br /></p><div style=\"text-align: justify;\"><p>Cherry<br /></p><div style=\"text-align: left;\"><p>Blueberry</p></div></div></div></div>",
         );
     }
 
@@ -478,7 +482,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:?}");
         assert_eq!(
             html,
-            "<div style=\"text-align: center;\"><p>A</p></div><br>\n<div style=\"text-align: center;\"><p>B</p></div>",
+            "<div style=\"text-align: center;\"><p>A</p></div><br />\n<div style=\"text-align: center;\"><p>B</p></div>",
         );
     }
 
@@ -495,7 +499,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:?}");
         assert_eq!(
             html,
-            "<div style=\"text-align: center;\"><div style=\"text-align: center;\"><p><span><br></span></p><div style=\"text-align: center;\"><span><br>\n<br></span><h1 id=\"toc0\"><span><span>h</span></span></h1></div><br>\n</div></div>",
+            "<div style=\"text-align: center;\"><div style=\"text-align: center;\"><p><span><br /></span></p><div style=\"text-align: center;\"><span><br />\n<br /></span><h1 id=\"toc0\"><span><span>h</span></span></h1></div><br />\n</div></div>",
         );
     }
 }

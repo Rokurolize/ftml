@@ -159,13 +159,14 @@ fn try_consume_link<'r, 't>(
         (url, last, authored)
     };
 
+    let collected_empty = url.is_empty();
     let leading_space = url.trim_start_matches([' ', '\t']).len() != url.len();
     let url = trim_wikidot_ascii_cow(url);
 
     if url.is_empty()
         && parser.settings().layout.legacy()
-        && target.is_some()
         && last.token == Token::Pipe
+        && (target.is_some() || !collected_empty)
     {
         return build_separate(
             parser,
@@ -181,6 +182,19 @@ fn try_consume_link<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
+    let mut spare_openers = 0usize;
+    let url = if parser.settings().layout.legacy() {
+        let stripped = url.trim_start_matches('[');
+        spare_openers = url.len() - stripped.len();
+        if spare_openers > 0 {
+            Cow::Owned(stripped.to_owned())
+        } else {
+            url
+        }
+    } else {
+        url
+    };
+
     if parser.settings().layout.legacy()
         && target.is_none()
         && !leading_space
@@ -189,7 +203,7 @@ fn try_consume_link<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    match last.token {
+    let result = match last.token {
         Token::RightLink => build_same(
             parser,
             url,
@@ -209,7 +223,21 @@ fn try_consume_link<'r, 't>(
         ),
 
         _ => unreachable!(),
+    };
+
+    if spare_openers == 0 {
+        return result;
     }
+    let mut success = result?;
+    let built = std::mem::replace(&mut success.item, Elements::None);
+    let mut elements = vec![Element::Text(Cow::Owned("[".repeat(spare_openers)))];
+    match built {
+        Elements::None => {}
+        Elements::Single(element) => elements.push(element),
+        Elements::Multiple(mut rest) => elements.append(&mut rest),
+    }
+    success.item = Elements::Multiple(elements);
+    Ok(success)
 }
 
 fn build_same<'r, 't>(

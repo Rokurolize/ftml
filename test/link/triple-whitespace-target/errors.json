@@ -1,0 +1,29 @@
+[
+    {
+        "token": "identifier",
+        "rule": "link-triple",
+        "span": [
+            5,
+            10
+        ],
+        "kind": "rule-failed"
+    },
+    {
+        "token": "left-link",
+        "rule": "fallback",
+        "span": [
+            0,
+            3
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-link",
+        "rule": "fallback",
+        "span": [
+            10,
+            13
+        ],
+        "kind": "no-rules-match"
+    }
+]

@@ -56,7 +56,9 @@ pub fn render_math_block(
 
     let index = assigned_index.unwrap_or_else(|| ctx.next_equation_index());
     if ctx.layout().legacy() {
-        if let Some(name) = name {
+        if let Some(name) = name
+            && ctx.get_named_equation(name).is_none()
+        {
             ctx.register_named_equation(name, index);
         }
         render_wikidot_math_block(

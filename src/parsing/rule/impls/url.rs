@@ -345,7 +345,10 @@ where
         .and_then(|index| source.as_bytes().get(index).copied())
         == Some(b'[');
     loop {
-        if preceded_by_left_bracket && parser.current().token == Token::Pipe {
+        if preceded_by_left_bracket
+            && parser.current().token == Token::Pipe
+            && wikidot_pipe_precedes_raw(parser)
+        {
             break;
         }
         if parser.current_generated().is_some()
@@ -422,7 +425,11 @@ where
 
     let at_sentence_boundary = matches!(
         parser.current().token,
-        Token::Whitespace | Token::InputEnd | Token::LineBreak | Token::ParagraphBreak
+        Token::Whitespace
+            | Token::InputEnd
+            | Token::LineBreak
+            | Token::ParagraphBreak
+            | Token::RightBlock
     ) || suffix.is_some();
     let mut trailing = Vec::new();
     if at_sentence_boundary {
@@ -493,6 +500,20 @@ fn without_last_character(value: Cow<'_, str>) -> Cow<'_, str> {
             Cow::Owned(value)
         }
     }
+}
+
+fn wikidot_pipe_precedes_raw<'r, 't>(parser: &mut Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    let mut probe = parser.clone();
+    if probe.step().is_err() {
+        return false;
+    }
+    if !matches!(probe.current().token, Token::Raw | Token::LeftRaw) {
+        return false;
+    }
+    super::raw::RULE_RAW.try_consume(&mut probe).is_ok()
 }
 
 fn wikidot_automatic_url_end(source: &str, mut end: usize, limit: usize) -> usize {

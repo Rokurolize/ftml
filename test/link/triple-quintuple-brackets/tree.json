@@ -1,0 +1,40 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "["
+                    },
+                    {
+                        "element": "link",
+                        "data": {
+                            "type": "page",
+                            "link": {
+                                "site": null,
+                                "page": "scp-001-ex",
+                                "extra": null
+                            },
+                            "label": {
+                                "slug": "[SCP-001-EX"
+                            },
+                            "target": null
+                        }
+                    },
+                    {
+                        "element": "text",
+                        "data": "]"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]"
+                    }
+                ]
+            }
+        }
+    ]
+}

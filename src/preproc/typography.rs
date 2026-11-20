@@ -329,7 +329,7 @@ fn ranges_contain(ranges: &[Range<usize>], offset: usize) -> bool {
 /// The `[[date]]` head is not typographed by live: `[[date 123 45]]` still
 /// reads its first token as the timestamp. Nested gate seams can sit inside
 /// the head, so the closing `]]` is found with bracket nesting.
-fn wikidot_date_head_ranges(text: &str) -> Vec<Range<usize>> {
+pub(crate) fn wikidot_date_head_ranges(text: &str) -> Vec<Range<usize>> {
     let mut ranges = Vec::new();
     let mut cursor = 0usize;
     while let Some(relative_open) = text[cursor..].find("[[") {

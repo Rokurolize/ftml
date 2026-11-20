@@ -3,8 +3,8 @@
         "token": "input-end",
         "rule": "block-include-elements",
         "span": [
-            214,
-            214
+            219,
+            219
         ],
         "kind": "block-malformed-arguments"
     },
@@ -21,8 +21,8 @@
         "token": "right-block",
         "rule": "fallback",
         "span": [
-            212,
-            214
+            217,
+            219
         ],
         "kind": "no-rules-match"
     }

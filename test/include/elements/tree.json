@@ -148,11 +148,23 @@
                     },
                     {
                         "element": "text",
-                        "data": "site"
+                        "data": "scp"
+                    },
+                    {
+                        "element": "text",
+                        "data": "-"
+                    },
+                    {
+                        "element": "text",
+                        "data": "wiki"
                     },
                     {
                         "element": "text",
                         "data": ":"
+                    },
+                    {
+                        "element": "text",
+                        "data": "/"
                     },
                     {
                         "element": "text",

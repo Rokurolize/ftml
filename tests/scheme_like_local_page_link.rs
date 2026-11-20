@@ -8,12 +8,19 @@ use std::borrow::Cow;
 
 fn render(source: &str) -> String {
     let info = PageInfo {
-        page: Cow::Borrowed("scheme-link"), category: Some(Cow::Borrowed("test")),
-        site: Cow::Borrowed("ast-test"), title: Cow::Borrowed("Scheme link"), alt_title: None,
-        score: ScoreValue::Integer(0), tags: vec![], language: Cow::Borrowed("default"),
+        page: Cow::Borrowed("scheme-link"),
+        category: Some(Cow::Borrowed("test")),
+        site: Cow::Borrowed("ast-test"),
+        title: Cow::Borrowed("Scheme link"),
+        alt_title: None,
+        score: ScoreValue::Integer(0),
+        tags: vec![],
+        language: Cow::Borrowed("default"),
     };
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-    let (mut text, _p) = ftml::include(source, &settings, NullIncluder, || unreachable!()).unwrap_or_else(|x| match x {});
+    let (mut text, _p) =
+        ftml::include(source, &settings, NullIncluder, || unreachable!())
+            .unwrap_or_else(|x| match x {});
     ftml::preprocess(&mut text);
     let tokens = ftml::tokenize(&text);
     let (tree, _errors) = ftml::parse(&tokens, &info, &settings).into();

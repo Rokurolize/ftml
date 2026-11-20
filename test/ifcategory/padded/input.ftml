@@ -1,0 +1,7 @@
+[[ifcategory   test   ]]
+Shown for the padded matching condition.
+[[/ifcategory]]
+
+[[ifcategory   other   ]]
+Hidden for the padded non-matching condition.
+[[/ifcategory]]

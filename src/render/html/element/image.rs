@@ -195,15 +195,31 @@ fn render_image_element_wikidot(ctx: &mut HtmlContext, args: ImageRenderArgs<'_,
 
     let build_image = |ctx: &mut HtmlContext| {
         let mut image = ctx.html().img();
-        image.attr(attr!(
-            "src" => image_src.as_ref(),
-            "width" => width.unwrap_or(""); if width.is_some(),
-            "height" => height.unwrap_or(""); if height.is_some(),
-            "title" => title.unwrap_or(""); if title.is_some(),
-            "style" => style.unwrap_or(""); if style.is_some(),
-            "class" => class,
-        ));
-        image.attr_quoted("alt", alt);
+        image.attr(attr!("src" => image_src.as_ref()));
+        if let Some(title) = title {
+            image.attr_quoted("title", title);
+        }
+        if let Some(style) = style {
+            image.attr_quoted("style", style);
+        }
+        if let Some(authored_class) = get("class") {
+            image.attr_quoted("class", authored_class);
+        }
+        if let Some(authored_alt) = get("alt") {
+            image.attr_quoted("alt", authored_alt);
+        }
+        if let Some(height) = height {
+            image.attr_quoted("height", height);
+        }
+        if let Some(width) = width {
+            image.attr_quoted("width", width);
+        }
+        if get("alt").is_none() {
+            image.attr_quoted("alt", alt);
+        }
+        if get("class").is_none() {
+            image.attr_quoted("class", class);
+        }
     };
 
     let build_link = |ctx: &mut HtmlContext| match link {
@@ -230,7 +246,9 @@ fn render_image_element_wikidot(ctx: &mut HtmlContext, args: ImageRenderArgs<'_,
     match alignment {
         None => build_link(ctx),
         Some(align) => {
-            let class = if align.float && align.align == crate::tree::Alignment::Center {
+            let class = if !align.recognized
+                || (align.float && align.align == crate::tree::Alignment::Center)
+            {
                 str!("image-container")
             } else {
                 format!("image-container {}", align.wd_html_class())

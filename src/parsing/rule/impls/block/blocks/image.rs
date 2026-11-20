@@ -77,16 +77,34 @@ fn parse_fn<'r, 't>(
 
     let (source, source_prefix_is_url, mut arguments) =
         if parser.settings().layout.legacy() {
-            let (source, arguments) =
-                parser.get_head_field_map_wikidot(&BLOCK_IMAGE, in_head)?;
-            let source_prefix_is_url = is_url(source.prefix_before_first_comment());
-            (
-                split_wikidot_image_head_field(discard_wikidot_controls(
-                    source.into_cow(),
-                )),
-                source_prefix_is_url,
-                arguments,
-            )
+            let mut probe = parser.clone();
+            match probe.get_head_field_map_wikidot(&BLOCK_IMAGE, in_head) {
+                Ok((source, arguments)) => {
+                    parser.update(&probe);
+                    let source_prefix_is_url =
+                        is_url(source.prefix_before_first_comment());
+                    (
+                        split_wikidot_image_head_field(discard_wikidot_controls(
+                            source.into_cow(),
+                        )),
+                        source_prefix_is_url,
+                        arguments,
+                    )
+                }
+                Err(error) => {
+                    if !in_head || !generated.is_empty() {
+                        return Err(error);
+                    }
+                    match raw_image_head(parser) {
+                        Some((source, arguments)) => {
+                            let source = discard_wikidot_controls(source);
+                            let source_prefix_is_url = is_url(&source);
+                            (source, source_prefix_is_url, arguments)
+                        }
+                        None => return Err(error),
+                    }
+                }
+            }
         } else {
             let (source, arguments) = parser.get_head_field_map(&BLOCK_IMAGE, in_head)?;
             let source_prefix_is_url = is_url(&source);
@@ -186,6 +204,107 @@ fn parse_fn<'r, 't>(
     };
 
     success_elements(element)
+}
+
+fn raw_image_head<'t>(
+    parser: &mut Parser<'_, 't>,
+) -> Option<(Cow<'t, str>, Arguments<'t>)> {
+    let text = parser.full_text().inner();
+    let start = parser.current().span.start;
+    let close = text[start..].find("]]")? + start;
+    let raw_head = &text[start..close];
+    if !raw_head.contains('\n') {
+        return None;
+    }
+    let head = raw_head.trim();
+    if head.is_empty() {
+        return None;
+    }
+    while parser.current().span.start < close {
+        if matches!(parser.current().token, Token::LeftComment | Token::InputEnd,) {
+            return None;
+        }
+        parser.step().ok()?;
+    }
+    if parser.current().token != Token::RightBlock || parser.current().span.start != close
+    {
+        return None;
+    }
+    parser.step().ok()?;
+
+    let (source, attribute_text) = match head.find(' ') {
+        Some(index) => (&head[..index], &head[index + 1..]),
+        None => (head, ""),
+    };
+    let mut arguments = Arguments::new();
+    parse_raw_image_attributes(attribute_text, &mut arguments);
+    Some((Cow::Borrowed(source), arguments))
+}
+
+fn parse_raw_image_attributes<'t>(text: &'t str, arguments: &mut Arguments<'t>) {
+    let bytes = text.as_bytes();
+    let mut index = 0;
+    while index < bytes.len() {
+        while index < bytes.len() && bytes[index].is_ascii_whitespace() {
+            index += 1;
+        }
+        if index >= bytes.len() {
+            break;
+        }
+        let key_start = index;
+        while index < bytes.len()
+            && bytes[index] != b'='
+            && !bytes[index].is_ascii_whitespace()
+        {
+            index += 1;
+        }
+        let key = &text[key_start..index];
+        let mut probe = index;
+        while probe < bytes.len() && bytes[probe].is_ascii_whitespace() {
+            probe += 1;
+        }
+        if probe >= bytes.len() || bytes[probe] != b'=' {
+            if !key.is_empty() {
+                arguments.insert_bare(key, Cow::Borrowed(""));
+            }
+            index = probe;
+            continue;
+        }
+        probe += 1;
+        while probe < bytes.len() && bytes[probe].is_ascii_whitespace() {
+            probe += 1;
+        }
+        if probe < bytes.len() && matches!(bytes[probe], b'"' | b'\'') {
+            let quote = bytes[probe];
+            let value_start = probe + 1;
+            let mut value_end = value_start;
+            while value_end < bytes.len() && bytes[value_end] != quote {
+                value_end += 1;
+            }
+            if !key.is_empty() {
+                let value = &text[value_start..value_end];
+                arguments.insert(key, Cow::Borrowed(value));
+                if value.is_empty() {
+                    arguments.mark_explicit_empty(Cow::Borrowed(key));
+                }
+            }
+            index = if value_end < bytes.len() {
+                value_end + 1
+            } else {
+                value_end
+            };
+        } else {
+            let value_start = probe;
+            let mut value_end = value_start;
+            while value_end < bytes.len() && !bytes[value_end].is_ascii_whitespace() {
+                value_end += 1;
+            }
+            if !key.is_empty() {
+                arguments.insert(key, Cow::Borrowed(&text[value_start..value_end]));
+            }
+            index = value_end;
+        }
+    }
 }
 
 /// Live takes only the first whitespace-delimited token of an image head as
@@ -578,17 +697,27 @@ mod tests {
     fn expected_v7_attachment(name: &str, file: &str, alt: &str, class: &str) -> String {
         let file = escape_html_attribute(file);
         let alt = escape_html_attribute(alt);
-        wrap_v7_image(
-            name,
+        let image = if class == "image" {
             format!(
-                concat!(
-                    r#"<a href="https://scp-wiki.wjfiles.com/local--files//{file}">"#,
-                    r#"<img src="https://scp-wiki.wjfiles.com/local--resized-images//{file}/medium.jpg" class="{class}" alt="{alt}">"#,
-                    "</a>",
-                ),
+                r#"<img src="https://scp-wiki.wjfiles.com/local--resized-images//{file}/medium.jpg" alt="{alt}" class="{class}">"#,
                 file = file,
                 class = class,
                 alt = alt,
+            )
+        } else {
+            format!(
+                r#"<img src="https://scp-wiki.wjfiles.com/local--resized-images//{file}/medium.jpg" class="{class}" alt="{alt}">"#,
+                file = file,
+                class = class,
+                alt = alt,
+            )
+        };
+        wrap_v7_image(
+            name,
+            format!(
+                r#"<a href="https://scp-wiki.wjfiles.com/local--files//{file}">{image}</a>"#,
+                file = file,
+                image = image,
             ),
         )
     }
@@ -715,7 +844,7 @@ mod tests {
             } else {
                 wrap_v7_image(
                     name,
-                    r##"<img src="#invalid-url" class="image" alt="">"##.to_owned(),
+                    r##"<img src="#invalid-url" alt="" class="image">"##.to_owned(),
                 )
             };
             assert_eq!(html, expected, "{percent_encoded:?}");
@@ -753,7 +882,7 @@ mod tests {
             assert_eq!(
                 html,
                 format!(
-                    r#"<a href="{expected_href}"><img src="https://example.com/x.png" class="image" alt="x.png"></a>"#,
+                    r#"<a href="{expected_href}"><img src="https://example.com/x.png" alt="x.png" class="image"></a>"#,
                 ),
                 "{target:?}",
             );
@@ -841,7 +970,7 @@ mod tests {
                 assert!(errors.is_empty(), "{argument}: {errors:#?}");
                 assert_eq!(
                     html,
-                    r#"<img src="https://example.com/x.png" class="image" alt="x.png">"#,
+                    r#"<img src="https://example.com/x.png" alt="x.png" class="image">"#,
                     "{argument}",
                 );
             }
@@ -961,7 +1090,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(
             html,
-            "<img src=\"https://sandbox.wjfiles.com/local--files/my-picture.png\" class=\"image\" alt=\"my-picture.png\">",
+            "<img src=\"https://sandbox.wjfiles.com/local--files/my-picture.png\" alt=\"my-picture.png\" class=\"image\">",
         );
     }
 
@@ -983,7 +1112,7 @@ mod tests {
             html,
             concat!(
                 "<a href=\"https://sandbox-for-codex.wjfiles.com/local--files//fog-green.svg\">",
-                "<img src=\"https://sandbox-for-codex.wjfiles.com/local--resized-images//fog-green.svg/medium.jpg\" class=\"image\" alt=\"fog-green.svg\">",
+                "<img src=\"https://sandbox-for-codex.wjfiles.com/local--resized-images//fog-green.svg/medium.jpg\" alt=\"fog-green.svg\" class=\"image\">",
                 "</a>",
             ),
         );
@@ -1230,7 +1359,7 @@ mod tests {
             html,
             concat!(
                 "<a href=\"https://sandbox.wjfiles.com/local--files/other-page/photo.jpeg\">",
-                "<img src=\"https://sandbox.wjfiles.com/local--resized-images/other-page/photo.jpeg/medium.jpg\" class=\"image\" alt=\"photo.jpeg\">",
+                "<img src=\"https://sandbox.wjfiles.com/local--resized-images/other-page/photo.jpeg/medium.jpg\" alt=\"photo.jpeg\" class=\"image\">",
                 "</a>",
             ),
         );
@@ -1240,7 +1369,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(
             html,
-            r#"<img src="https://sandbox.wjfiles.com/local--files/other-page/photo.png" class="image" alt="photo.png">"#,
+            r#"<img src="https://sandbox.wjfiles.com/local--files/other-page/photo.png" alt="photo.png" class="image">"#,
         );
     }
 
@@ -1249,19 +1378,19 @@ mod tests {
         for (source, expected) in [
             (
                 "[[image other-page/photo.png]]",
-                r#"<img src="https://sandbox.wjfiles.com/local--files/other-page/photo.png" class="image" alt="photo.png">"#,
+                r#"<img src="https://sandbox.wjfiles.com/local--files/other-page/photo.png" alt="photo.png" class="image">"#,
             ),
             (
                 "[[image /photo.png]]",
-                r#"<img src="https://sandbox.wjfiles.com/local--files/photo.png" class="image" alt="photo.png">"#,
+                r#"<img src="https://sandbox.wjfiles.com/local--files/photo.png" alt="photo.png" class="image">"#,
             ),
             (
                 "[[image /local--files/source-page/photo.png]]",
-                r#"<img src="https://sandbox.wjfiles.com/local--files/local--files/source-page/photo.png" class="image" alt="photo.png">"#,
+                r#"<img src="https://sandbox.wjfiles.com/local--files/local--files/source-page/photo.png" alt="photo.png" class="image">"#,
             ),
             (
                 "[[image https://example.com/photo.png]]",
-                r#"<img src="https://example.com/photo.png" class="image" alt="photo.png">"#,
+                r#"<img src="https://example.com/photo.png" alt="photo.png" class="image">"#,
             ),
         ] {
             let (html, errors) = render_image(source, Layout::Wikidot);
@@ -1287,7 +1416,7 @@ mod tests {
             html,
             concat!(
                 r#"<a href="/Target%20Page">"#,
-                r#"<img src="https://sandbox.wjfiles.com/local--resized-images/some-page/photo.jpeg/medium.jpg" class="image" alt="photo.jpeg">"#,
+                r#"<img src="https://sandbox.wjfiles.com/local--resized-images/some-page/photo.jpeg/medium.jpg" alt="photo.jpeg" class="image">"#,
                 "</a>",
             ),
         );
@@ -1302,7 +1431,7 @@ mod tests {
             html,
             concat!(
                 r#"<a href="/Target%20Page">"#,
-                r#"<img src="https://sandbox.wjfiles.com/local--files/some-page/photo.png" class="image" alt="photo.png">"#,
+                r#"<img src="https://sandbox.wjfiles.com/local--files/some-page/photo.png" alt="photo.png" class="image">"#,
                 "</a>",
             ),
         );
@@ -1373,11 +1502,11 @@ mod tests {
         for (source, expected) in [
             (
                 r#"[[image "https://example.com/a.png"]]"#,
-                r#"<img src="&quot;https://example.com/a.png&quot;" class="image" alt="a.png&quot;">"#,
+                r#"<img src="&quot;https://example.com/a.png&quot;" alt="a.png&quot;" class="image">"#,
             ),
             (
                 "[[image 'https://example.com/a.png']]",
-                r#"<img src="&#39;https://example.com/a.png&#39;" class="image" alt="a.png&#39;">"#,
+                r#"<img src="&#39;https://example.com/a.png&#39;" alt="a.png&#39;" class="image">"#,
             ),
         ] {
             let tokenization = crate::tokenize(source);
@@ -1452,7 +1581,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(
             html,
-            "\n\nBASIC <img src=\"https://sandbox.wjfiles.com/local--files/local--files/source-page/filename.png\" class=\"image\" alt=\"filename.png\">",
+            "\n\nBASIC <img src=\"https://sandbox.wjfiles.com/local--files/local--files/source-page/filename.png\" alt=\"filename.png\" class=\"image\">",
         );
     }
 
@@ -1471,7 +1600,7 @@ mod tests {
         assert_eq!(
             html,
             concat!(
-                "\n\nBASIC <img src=\"https://sandbox.wjfiles.com/local--files/some-page/filename.png\" class=\"image\" alt=\"filename.png\">",
+                "\n\nBASIC <img src=\"https://sandbox.wjfiles.com/local--files/some-page/filename.png\" alt=\"filename.png\" class=\"image\">",
                 "<p>LEFT</p>",
             ),
         );
@@ -1497,7 +1626,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert!(html.contains("<div class=\"name\">\n\nNFSI<br>"), "{html}");
         assert!(
-            html.contains("NFSI.png\" class=\"image\" alt=\"NFSI.png\"><br>\n<span"),
+            html.contains("NFSI.png\" alt=\"NFSI.png\" class=\"image\"><br>\n<span"),
             "{html}",
         );
         assert!(!html.contains("<div class=\"name\"><p>"), "{html}");
@@ -1523,7 +1652,7 @@ mod tests {
         assert!(errors.is_empty(), "{errors:#?}");
         assert_eq!(
             html,
-            "<div class=\"picture\"><p><span class=\"heading2\">BREAKING</span></p><img src=\"https://sandbox.wjfiles.com/local--files/local--files/scp-9506/fog.jpg\" class=\"image\" alt=\"fog.jpg\"></div>",
+            "<div class=\"picture\"><p><span class=\"heading2\">BREAKING</span></p><img src=\"https://sandbox.wjfiles.com/local--files/local--files/scp-9506/fog.jpg\" alt=\"fog.jpg\" class=\"image\"></div>",
         );
     }
 
@@ -1544,7 +1673,7 @@ mod tests {
             concat!(
                 "<p>FLOAT CENTER</p>",
                 "<div class=\"image-container\">",
-                "<img src=\"https://sandbox-for-codex.wjfiles.com/local--files/some-page/landscape.jpg\" class=\"image\" alt=\"landscape.jpg\">",
+                "<img src=\"https://sandbox-for-codex.wjfiles.com/local--files/some-page/landscape.jpg\" alt=\"landscape.jpg\" class=\"image\">",
                 "</div>",
             ),
         );

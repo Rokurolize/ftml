@@ -106,6 +106,7 @@ fn apply(stack: &mut ParagraphStack<'static>, op: usize) {
             image(Some(FloatAlignment {
                 align: Alignment::Left,
                 float: false,
+                recognized: true,
             })),
             true,
         ),

@@ -78,6 +78,16 @@ impl TryFrom<&'_ str> for Alignment {
 pub struct FloatAlignment {
     pub align: Alignment,
     pub float: bool,
+    #[serde(default = "default_recognized", skip_serializing_if = "is_recognized")]
+    pub recognized: bool,
+}
+
+fn default_recognized() -> bool {
+    true
+}
+
+fn is_recognized(recognized: &bool) -> bool {
+    *recognized
 }
 
 impl FloatAlignment {
@@ -120,17 +130,24 @@ impl TryFrom<&'_ str> for FloatAlignment {
     type Error = ();
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let (align, float) = match value {
-            "=" => (Alignment::Center, false),
-            "<" => (Alignment::Left, false),
-            ">" => (Alignment::Right, false),
-            "f<" | "F<" => (Alignment::Left, true),
-            "f=" | "F=" => (Alignment::Center, true),
-            "f>" | "F>" => (Alignment::Right, true),
+        let (align, float, recognized) = match value {
+            "=" => (Alignment::Center, false, true),
+            "<" => (Alignment::Left, false, true),
+            ">" => (Alignment::Right, false, true),
+            "f<" => (Alignment::Left, true, true),
+            "f=" => (Alignment::Center, true, true),
+            "f>" => (Alignment::Right, true, true),
+            "F<" => (Alignment::Left, true, false),
+            "F=" => (Alignment::Center, true, false),
+            "F>" => (Alignment::Right, true, false),
             _ => return Err(()),
         };
 
-        Ok(FloatAlignment { align, float })
+        Ok(FloatAlignment {
+            align,
+            float,
+            recognized,
+        })
     }
 }
 
@@ -145,6 +162,15 @@ fn image_alignment() {
             test!($input => Some(FloatAlignment {
                 align: $align,
                 float: $float,
+                recognized: true,
+            }))
+        };
+
+        ($input:expr, $align:expr, $float:expr, $recognized:expr) => {
+            test!($input => Some(FloatAlignment {
+                align: $align,
+                float: $float,
+                recognized: $recognized,
             }))
         };
 
@@ -176,9 +202,9 @@ fn image_alignment() {
     test!("f<IMAGE", Alignment::Left, true);
     test!("f=IMAGE", Alignment::Center, true);
 
-    test!("F>IMAGE", Alignment::Right, true);
-    test!("F<IMAGE", Alignment::Left, true);
-    test!("F=IMAGE", Alignment::Center, true);
+    test!("F>IMAGE", Alignment::Right, true, false);
+    test!("F<IMAGE", Alignment::Left, true, false);
+    test!("F=IMAGE", Alignment::Center, true, false);
 }
 
 #[test]
@@ -257,6 +283,7 @@ fn float_alignment_helpers_cover_classes() {
             FloatAlignment {
                 align: Alignment::Center,
                 float: true,
+                recognized: true,
             },
             "floatcenter",
             "wj-float-center",
@@ -271,10 +298,12 @@ fn float_alignment_helpers_cover_classes() {
     let justify_float = FloatAlignment {
         align: Alignment::Justify,
         float: true,
+        recognized: true,
     };
     let justify = FloatAlignment {
         align: Alignment::Justify,
         float: false,
+        recognized: true,
     };
     assert_eq!(justify.wd_html_class(), "aligncenter");
     assert_eq!(justify_float.wd_html_class(), "floatcenter");
@@ -284,6 +313,7 @@ fn float_alignment_helpers_cover_classes() {
         Ok(FloatAlignment {
             align: Alignment::Left,
             float: true,
+            recognized: false,
         }),
     );
     assert_eq!(
@@ -291,6 +321,7 @@ fn float_alignment_helpers_cover_classes() {
         Ok(FloatAlignment {
             align: Alignment::Center,
             float: true,
+            recognized: true,
         }),
     );
     assert_eq!(FloatAlignment::try_from("=="), Err(()));

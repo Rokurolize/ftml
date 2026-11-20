@@ -863,8 +863,8 @@ fn page_slot_recovers_image_owner_while_tag_slot_stays_attribute_text() {
             "BEGIN|[[image https://example.com/x.png alt=\"%%tags_linked%%\"]]|END",
         ),
         concat!(
-            "\n\nBEGIN|<img src=\"https://example.com/x.png\" class=\"image\" ",
-            "alt=\"[/system:page-tags/tag/component component]\">|END",
+            "\n\nBEGIN|<img src=\"https://example.com/x.png\" alt=\"[/system:page-tags/tag/component component]\" ",
+            "class=\"image\">|END",
         ),
     );
 }
@@ -877,7 +877,7 @@ fn generated_image_attributes_preserve_implicit_attachment_disposition() {
             "<div class=\"image-container aligncenter\">",
             "<a href=\"https://sandbox.wjfiles.com/local--files/some-page/photo.jpeg\">",
             "<img src=\"https://sandbox.wjfiles.com/local--resized-images/some-page/photo.jpeg/medium.jpg\" ",
-            "class=\"image\" alt=\"[/system:page-tags/tag/component component]\">",
+            "alt=\"[/system:page-tags/tag/component component]\" class=\"image\">",
             "</a></div>",
         ),
     );
@@ -886,7 +886,7 @@ fn generated_image_attributes_preserve_implicit_attachment_disposition() {
         concat!(
             "<a href=\"/[/system:page-tags/tag/component%20component]\">",
             "<img src=\"https://sandbox.wjfiles.com/local--resized-images/some-page/photo.jpeg/medium.jpg\" ",
-            "class=\"image\" alt=\"photo.jpeg\">",
+            "alt=\"photo.jpeg\" class=\"image\">",
             "</a>",
         ),
     );
@@ -895,7 +895,7 @@ fn generated_image_attributes_preserve_implicit_attachment_disposition() {
         concat!(
             "<div class=\"image-container aligncenter\">",
             "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/photo.png\" ",
-            "class=\"image\" alt=\"[/system:page-tags/tag/component component]\">",
+            "alt=\"[/system:page-tags/tag/component component]\" class=\"image\">",
             "</div>",
         ),
     );
@@ -904,7 +904,7 @@ fn generated_image_attributes_preserve_implicit_attachment_disposition() {
         concat!(
             "<a href=\"/[/system:page-tags/tag/component%20component]\">",
             "<img src=\"https://sandbox.wjfiles.com/local--files/some-page/photo.png\" ",
-            "class=\"image\" alt=\"photo.png\">",
+            "alt=\"photo.png\" class=\"image\">",
             "</a>",
         ),
     );
@@ -1718,7 +1718,7 @@ fn delayed_slots_preserve_the_frozen_listpages_owner_boundaries() {
             "BEGIN|[[image https://example.com/x.png link=\"%%tags_linked%%\"]]|END",
             concat!(
                 "\n\nBEGIN|<a href=\"/[/system:page-tags/tag/component%20component]\">",
-                "<img src=\"https://example.com/x.png\" class=\"image\" alt=\"x.png\">",
+                "<img src=\"https://example.com/x.png\" alt=\"x.png\" class=\"image\">",
                 "</a>|END",
             ),
         ),

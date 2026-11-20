@@ -162,7 +162,11 @@ fn parse_media_alignment<'r, 't>(
     };
 
     let float = false;
-    Ok(Some(FloatAlignment { align, float }))
+    Ok(Some(FloatAlignment {
+        align,
+        float,
+        recognized: true,
+    }))
 }
 
 #[cfg(test)]
@@ -208,6 +212,7 @@ mod tests {
             Some(FloatAlignment {
                 align: Alignment::Right,
                 float: false,
+                recognized: true,
             }),
         );
         assert_eq!(
@@ -245,6 +250,7 @@ mod tests {
             Some(FloatAlignment {
                 align: Alignment::Center,
                 float: false,
+                recognized: true,
             }),
         );
         assert_eq!(

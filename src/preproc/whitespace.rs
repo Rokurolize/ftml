@@ -411,6 +411,10 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
         replace!(WHITESPACE_ONLY_LINE);
     }
 
+    if wikidot_compatibility {
+        wikidot_truncate_iframe_url_continuations(text);
+    }
+
     join_continued_lines(text, &mut buffer, wikidot_compatibility);
 
     if wikidot_compatibility {
@@ -1415,11 +1419,33 @@ fn join_continued_lines(
     };
     let mut raw_body_index = 0usize;
 
+    let date_head_ranges = if wikidot_compatibility {
+        crate::preproc::typography::wikidot_date_head_ranges(text)
+    } else {
+        Vec::new()
+    };
+    let mut date_head_index = 0usize;
+
+    let html_body_ranges = if wikidot_compatibility {
+        wikidot_html_body_ranges(text)
+    } else {
+        Vec::new()
+    };
+    let mut html_body_index = 0usize;
+
     buffer.clear();
     buffer.reserve(text.len());
 
+    let mut previous: Option<char> = None;
+
     for (index, character) in text.char_indices() {
-        if character == '\n' && buffer.as_bytes().last() == Some(&b'\\') {
+        let paired = character == '\n'
+            && if wikidot_compatibility {
+                previous == Some('\\')
+            } else {
+                buffer.as_bytes().last() == Some(&b'\\')
+            };
+        if paired {
             while raw_body_ranges
                 .get(raw_body_index)
                 .is_some_and(|range| range.end <= index)
@@ -1429,21 +1455,143 @@ fn join_continued_lines(
             let in_raw_body = raw_body_ranges
                 .get(raw_body_index)
                 .is_some_and(|range| range.contains(&index));
+            while date_head_ranges
+                .get(date_head_index)
+                .is_some_and(|range| range.end <= index)
+            {
+                date_head_index += 1;
+            }
+            let in_date_head = date_head_ranges
+                .get(date_head_index)
+                .is_some_and(|range| range.contains(&index));
+            while html_body_ranges
+                .get(html_body_index)
+                .is_some_and(|range| range.end <= index)
+            {
+                html_body_index += 1;
+            }
+            let in_html_body = html_body_ranges
+                .get(html_body_index)
+                .is_some_and(|range| range.contains(&index));
             if in_raw_body
                 || (wikidot_compatibility
                     && wikidot_continued_div_opener(&text[index + 1..]))
             {
+                buffer.push(character);
+            } else if wikidot_compatibility && in_date_head && !in_html_body {
+                let removed = buffer.pop();
+                debug_assert_eq!(removed, Some('\\'));
+                buffer.push('\u{0001}');
+            } else if wikidot_compatibility
+                && wikidot_continued_literal_block_opener(&text[index + 1..])
+            {
+                let removed = buffer.pop();
+                debug_assert_eq!(removed, Some('\\'));
                 buffer.push(character);
             } else {
                 let removed = buffer.pop();
                 debug_assert_eq!(removed, Some('\\'));
             }
         } else {
+            if character == '\n'
+                && wikidot_compatibility
+                && buffer.as_bytes().last() == Some(&b'\\')
+            {
+                buffer.push('\u{0001}');
+            }
             buffer.push(character);
         }
+        previous = Some(character);
     }
 
     std::mem::swap(text, buffer);
+}
+
+fn wikidot_continued_literal_block_opener(text: &str) -> bool {
+    let line = text.split_once('\n').map_or(text, |(line, _)| line);
+    let marker = line.trim_matches([' ', '\t']);
+    let Some(head) = marker
+        .strip_prefix("[[")
+        .and_then(|rest| rest.strip_suffix("]]"))
+    else {
+        return false;
+    };
+    if head.contains("[[") || head.contains("]]") {
+        return false;
+    }
+    let mut parts = head.split_whitespace();
+    parts.next().is_some_and(|name| {
+        name.eq_ignore_ascii_case("code") || name.eq_ignore_ascii_case("math")
+    })
+}
+
+fn wikidot_truncate_iframe_url_continuations(text: &mut String) {
+    if !text
+        .as_bytes()
+        .windows(8)
+        .any(|window| window.eq_ignore_ascii_case(b"[[iframe"))
+    {
+        return;
+    }
+
+    let mut ranges = wikidot_literal_body_ranges(text);
+    ranges.extend(wikidot_html_body_ranges(text));
+    ranges.sort_by_key(|range| range.start);
+
+    let bytes = text.as_bytes();
+    let mut deletions: Vec<Range<usize>> = Vec::new();
+    let mut cursor = 0usize;
+    while cursor + 8 <= bytes.len() {
+        let Some(relative) = bytes[cursor..]
+            .windows(8)
+            .position(|window| window.eq_ignore_ascii_case(b"[[iframe"))
+        else {
+            break;
+        };
+        let open = cursor + relative;
+        cursor = open + 2;
+        if ranges.iter().any(|range| range.contains(&open)) {
+            continue;
+        }
+        let name_end = open + 8;
+        if !matches!(bytes.get(name_end), Some(b' ' | b'\t')) {
+            continue;
+        }
+        let mut index = name_end;
+        while matches!(bytes.get(index), Some(b' ' | b'\t')) {
+            index += 1;
+        }
+        let mut first_continuation = None::<usize>;
+        while index < bytes.len() {
+            if bytes[index] == b'\\' && bytes.get(index + 1) == Some(&b'\n') {
+                if first_continuation.is_none() {
+                    first_continuation = Some(index + 1);
+                }
+                index += 2;
+                continue;
+            }
+            if matches!(bytes[index], b' ' | b'\t' | b'\n' | b'\r' | b']') {
+                break;
+            }
+            index += 1;
+        }
+        if let Some(continuation) = first_continuation {
+            deletions.push(continuation..index);
+        }
+        cursor = cursor.max(index);
+    }
+
+    if deletions.is_empty() {
+        return;
+    }
+    let mut output = String::with_capacity(text.len());
+    let mut copied = 0usize;
+    for range in deletions {
+        output.push_str(&text[copied..range.start]);
+        copied = range.end;
+    }
+    output.push_str(&text[copied..]);
+    *text = output;
 }
 
 /// Body ranges of Wikidot's literal code-like and standalone math blocks, in
@@ -1588,8 +1736,8 @@ const TEST_CASES: [(&str, &str); 10] = [
         "\u{00a0}\u{00a0}\u{2007} apple",
         "\u{00a0}\u{00a0}\u{2007} apple",
     ),
-    ("x\\\\\n\ny", "xy"),
-    ("\\\\\n\nX", "X"),
+    ("x\\\\\n\ny", "x\\\u{1}\ny"),
+    ("\\\\\n\nX", "\\\u{1}\nX"),
     (
         "\u{00a0}apple\n\u{2007}\u{00a0}banana\ncherry\u{00a0}",
         "\u{00a0}apple\n\u{2007}\u{00a0}banana\ncherry\u{00a0}",

@@ -65,9 +65,84 @@ fn block_regular<'r, 't>(
         && let Some(elements) = wikidot_double_bracket_interwiki(parser)
     {
         success_elements(elements)
+    } else if parser.settings().layout.legacy()
+        && let Some(elements) = wikidot_double_bracket_single_link(parser)
+    {
+        success_elements(elements)
     } else {
         parse_block(parser, false)
     }
+}
+
+fn wikidot_double_bracket_single_link<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Option<Elements<'t>>
+where
+    'r: 't,
+{
+    if parser.current().token != Token::LeftBlock {
+        return None;
+    }
+    let source = parser.full_text().inner();
+    let start = parser.current().span.start;
+    let inner = source.get(start + 1..)?;
+    let bytes = inner.as_bytes();
+    if bytes.first() != Some(&b'[') {
+        return None;
+    }
+    let mut index = 1;
+    while index < bytes.len()
+        && !matches!(bytes[index], b' ' | b'\t' | b'\n' | b'\r' | b'[' | b']')
+    {
+        index += 1;
+    }
+    let target = &inner[1..index];
+    if target.is_empty()
+        || !["http://", "https://", "ftp://", "mailto:"]
+            .iter()
+            .any(|scheme| target.starts_with(scheme))
+    {
+        return None;
+    }
+    let whitespace_start = index;
+    while index < bytes.len() && matches!(bytes[index], b' ' | b'\t') {
+        index += 1;
+    }
+    if index == whitespace_start {
+        return None;
+    }
+    let label_start = index;
+    while index < bytes.len() && !matches!(bytes[index], b']' | b'\n' | b'[') {
+        index += 1;
+    }
+    let label = crate::parsing::trim_wikidot_ascii(&inner[label_start..index]);
+    if label.is_empty()
+        || bytes.get(index) != Some(&b']')
+        || bytes.get(index + 1) != Some(&b']')
+    {
+        return None;
+    }
+    let end = start + 1 + index + 2;
+
+    let mut attempt = parser.clone();
+    attempt.step().ok()?;
+    while attempt.current().span.start < end {
+        if attempt.current().token == Token::InputEnd {
+            return None;
+        }
+        attempt.step().ok()?;
+    }
+    parser.update(&attempt);
+    Some(Elements::Multiple(vec![
+        text!("["),
+        Element::Link {
+            ltype: crate::tree::LinkType::Direct,
+            link: crate::tree::LinkLocation::Url(Cow::Borrowed(target)),
+            label: crate::tree::LinkLabel::Text(Cow::Borrowed(label)),
+            target: None,
+        },
+        text!("]"),
+    ]))
 }
 
 fn wikidot_double_bracket_interwiki<'r, 't>(

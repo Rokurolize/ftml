@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use std::borrow::Cow;
 
 pub const BLOCK_EQUATION_REF: BlockRule = BlockRule {
     name: "block-equation-ref",
@@ -46,13 +47,90 @@ fn parse_fn<'r, 't>(
     }
 
     let block = &BLOCK_EQUATION_REF;
-    let name = parser.get_head_value_resolved(
+    let checkpoint = parser.clone();
+    let name = match parser.get_head_value_resolved(
         block,
         in_head,
         require_trimmed_block_argument_resolved,
-    )?;
+    ) {
+        Ok(name) => name,
+        Err(error) => {
+            if !parser.settings().layout.legacy() || !in_head {
+                return Err(error);
+            }
+            parser.update(&checkpoint);
+            match wikidot_freelink_head_value(parser) {
+                Some(name) => name,
+                None => return Err(error),
+            }
+        }
+    };
 
     success_elements(Element::EquationReference(name))
+}
+
+fn wikidot_freelink_head_value<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Option<Cow<'t, str>>
+where
+    'r: 't,
+{
+    let source = parser.full_text().inner();
+    let start = parser.current().span.start;
+    let mut attempt = parser.clone();
+    let mut depth = 0usize;
+    let close_end;
+    loop {
+        let token = attempt.current();
+        match token.token {
+            Token::LeftLink => {
+                depth += 1;
+                attempt.step().ok()?;
+            }
+            Token::RightLink => {
+                if depth == 0 {
+                    return None;
+                }
+                depth -= 1;
+                attempt.step().ok()?;
+            }
+            Token::RightBlock => {
+                if depth != 0 {
+                    return None;
+                }
+                close_end = token.span.start;
+                attempt.step().ok()?;
+                break;
+            }
+            Token::RightBracket => {
+                if depth != 0 {
+                    return None;
+                }
+                let first_end = token.span.end;
+                attempt.step().ok()?;
+                let next = attempt.current();
+                if next.token != Token::RightBracket || next.span.start != first_end {
+                    return None;
+                }
+                close_end = token.span.start;
+                attempt.step().ok()?;
+                break;
+            }
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd => return None,
+            _ => {
+                attempt.step().ok()?;
+            }
+        }
+    }
+    let value = &source[start..close_end];
+    if !value.contains("[[[") {
+        return None;
+    }
+    let name =
+        require_trimmed_block_argument_resolved(&attempt, Some(Cow::Borrowed(value)))
+            .ok()?;
+    parser.update(&attempt);
+    Some(name)
 }
 
 #[cfg(test)]

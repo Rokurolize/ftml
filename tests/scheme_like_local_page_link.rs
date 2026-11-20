@@ -39,3 +39,17 @@ fn local_page_link_with_scheme_like_category_is_not_blocked() {
         "scheme-like local page link must not be blocked, got {html:?}"
     );
 }
+
+#[test]
+fn dangerous_url_targets_stay_blocked() {
+    for source in [
+        r#"[[a href="javascript:alert(1)"]]XSS[[/a]]"#,
+        r#"[[a href="data:text/plain;base64,SGVsbG8="]]XSS[[/a]]"#,
+    ] {
+        let html = render(source);
+        assert!(
+            html.contains("href=\"#invalid-url\""),
+            "dangerous URL target must stay blocked for {source:?}, got {html:?}"
+        );
+    }
+}

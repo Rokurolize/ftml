@@ -88,6 +88,7 @@ fn try_consume_fn<'r, 't>(
             Elements::Single(Element::Container(container)) if container.elements().is_empty()
         )
     {
+        super::inline_delimiter::note_vanished_empty_pair(parser);
         return ok!(paragraph_safe; Elements::None, errors);
     }
     let elements =

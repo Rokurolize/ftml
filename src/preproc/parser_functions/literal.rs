@@ -55,6 +55,7 @@ impl LiteralRegionIndex {
     pub(crate) fn for_typography(source: &str) -> Self {
         let mut ranges = Self::new(source).ranges;
         collect_module_body_ranges(source, &mut ranges);
+        collect_rawold_ranges(source, &mut ranges);
         ranges.sort_unstable_by_key(|range| (range.start, range.end));
 
         let mut merged: Vec<Range<usize>> = Vec::with_capacity(ranges.len());
@@ -101,6 +102,35 @@ impl LiteralRegionIndex {
 
 const BODYLESS_MODULES: [&str; 5] =
     ["rate", "backlinks", "categories", "join", "pagetree"];
+
+fn collect_rawold_ranges(source: &str, ranges: &mut Vec<Range<usize>>) {
+    let bytes = source.as_bytes();
+    let mut cursor = 0usize;
+    while let Some(relative) = source[cursor..].find("``") {
+        let start = cursor + relative;
+        if start > 0 && bytes[start - 1] == b'`' {
+            cursor = start + 1;
+            continue;
+        }
+        let body_start = start + 2;
+        let Some(relative_close) = source[body_start..].find("``") else {
+            break;
+        };
+        let body_end = body_start + relative_close;
+        let body = &source[body_start..body_end];
+        if !body.is_empty()
+            && !body
+                .chars()
+                .any(|c| matches!(c, '\'' | '\u{2018}' | '\u{2019}'))
+            && !body.ends_with('`')
+        {
+            ranges.push(start..body_end + 2);
+            cursor = body_end + 2;
+        } else {
+            cursor = start + 1;
+        }
+    }
+}
 
 fn collect_module_body_ranges(source: &str, ranges: &mut Vec<Range<usize>>) {
     let lower = source.to_ascii_lowercase();

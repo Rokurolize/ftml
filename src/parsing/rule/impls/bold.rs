@@ -542,6 +542,9 @@ fn finish_collected<'r, 't>(
             Some(leftover) => append_split_close_leftover(base, leftover),
             None => base,
         };
+        if matches!(elements, Elements::None) {
+            super::inline_delimiter::note_vanished_empty_pair(parser);
+        }
         return ok!(paragraph_safe; elements, errors);
     }
     let elements =

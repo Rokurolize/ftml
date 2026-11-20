@@ -396,6 +396,8 @@ pub(super) struct BlockScanCache<'t> {
     line_follows_block: Cell<bool>,
     wikidot_math_closer_line_br_prefix: Cell<bool>,
     bare_div_literal: Cell<bool>,
+    vanished_pair_line: Cell<bool>,
+    comma_run_body: Cell<bool>,
     inline_container_body_names: Vec<&'static str>,
     pub(super) body_end_boundaries: Vec<BodyEndBoundary>,
     /// `span_body_depth` snapshot taken at each advanced-table-cell body

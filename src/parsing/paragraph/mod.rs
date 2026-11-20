@@ -864,6 +864,9 @@ where
             let mixed_paragraph_ownership =
                 parser.take_wikidot_mixed_paragraph_ownership();
             let div_literal_recovered = parser.take_wikidot_div_literal_recovered();
+            if parser.take_wikidot_vanished_pair_line() {
+                stack.mark_wikidot_invisible_line_occupancy();
+            }
             let colon_line_vanished = parser.take_wikidot_colon_line_vanished();
             let quote_boundary_break_leads_paragraph =
                 parser.take_wikidot_quote_boundary_break_leads_paragraph();

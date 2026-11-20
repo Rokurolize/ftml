@@ -924,6 +924,28 @@ impl Parser<'_, '_> {
             .replace(false)
     }
 
+    pub(crate) fn mark_wikidot_vanished_pair_line(&mut self) {
+        self.block_end_scan_cache
+            .borrow()
+            .vanished_pair_line
+            .set(true);
+    }
+
+    pub(crate) fn wikidot_in_comma_run_body(&self) -> bool {
+        self.block_end_scan_cache.borrow().comma_run_body.get()
+    }
+
+    pub(crate) fn set_wikidot_comma_run_body(&mut self, value: bool) {
+        self.block_end_scan_cache.borrow().comma_run_body.set(value);
+    }
+
+    pub(crate) fn take_wikidot_vanished_pair_line(&mut self) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .vanished_pair_line
+            .replace(false)
+    }
+
     pub(crate) fn mark_wikidot_colon_line_vanished(&mut self) {
         self.block_end_scan_cache
             .borrow()

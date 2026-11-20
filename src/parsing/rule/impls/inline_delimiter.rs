@@ -29,6 +29,12 @@ use std::borrow::Cow;
 
 /// Wikidot's table rule runs before inline pairing and splits a glued marker
 /// onto its own paragraph. A format whose body holds that table never pairs.
+pub(super) fn note_vanished_empty_pair(parser: &mut Parser<'_, '_>) {
+    if parser.current().token == Token::LineBreak {
+        parser.mark_wikidot_vanished_pair_line();
+    }
+}
+
 pub(super) fn legacy_format_body_contains_table(elements: &Elements<'_>) -> bool {
     let Elements::Single(Element::Container(container)) = elements else {
         return false;

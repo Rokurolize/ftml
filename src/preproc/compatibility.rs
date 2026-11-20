@@ -1398,8 +1398,7 @@ fn remove_tight_quote_lines(lines: &mut [String], literal_lines: &[bool]) {
         }
 
         let (body, ending) = split_line(line);
-        let trimmed = body.trim_start_matches([' ', '\t']);
-        if !trimmed.starts_with('>') {
+        if !body.starts_with('>') {
             active_quote_depth = 0;
             continue;
         }
@@ -1409,24 +1408,17 @@ fn remove_tight_quote_lines(lines: &mut [String], literal_lines: &[bool]) {
             continue;
         }
 
-        let indentation = body
-            .strip_suffix(trimmed)
-            .expect("trimmed quote body must remain a suffix of the source line");
         // Live extracts a footnote body before a tight quote line is dropped,
         // so the body survives even though the line renders nothing. Keep a
         // tight line that opens with a footnote reference in the spaced-quote
         // shape the footnote-first ownership rule understands: the parser then
         // drops the reference with the row and leaves the body registered.
-        let marker_depth = trimmed.bytes().take_while(|byte| *byte == b'>').count();
-        if trimmed[marker_depth..].starts_with(FOOTNOTE_HEAD) {
+        let marker_depth = body.bytes().take_while(|byte| *byte == b'>').count();
+        if body[marker_depth..].starts_with(FOOTNOTE_HEAD) {
             let depth = marker_depth
                 .max(active_quote_depth)
                 .clamp(1, MAX_SYNTHESIZED_QUOTE_DEPTH);
-            *line = format!(
-                "{indentation}{} {}{ending}",
-                ">".repeat(depth),
-                &trimmed[marker_depth..],
-            );
+            *line = format!("{} {}{ending}", ">".repeat(depth), &body[marker_depth..]);
             active_quote_depth = depth;
             continue;
         }
@@ -1434,7 +1426,7 @@ fn remove_tight_quote_lines(lines: &mut [String], literal_lines: &[bool]) {
             *line = ending.to_owned();
         } else {
             let synthesized_depth = active_quote_depth.min(MAX_SYNTHESIZED_QUOTE_DEPTH);
-            *line = format!("{indentation}{}{ending}", ">".repeat(synthesized_depth));
+            *line = format!("{}{ending}", ">".repeat(synthesized_depth));
         }
     }
 }

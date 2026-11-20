@@ -84,14 +84,15 @@ pub(crate) fn rewrite(text: &mut String) {
 
     while pos + OPENER.len() <= source.len() {
         let at_line_start = pos == 0 || matches!(source[pos - 1], b'\n' | b'\r');
-        if at_line_start && source[pos..].starts_with(OPENER) {
-            if let Some(end) = match_end(source, pos) {
-                output.push_str(&text[copied..pos]);
-                output.push_str("[[module");
-                copied = pos + OPENER.len();
-                pos = end;
-                continue;
-            }
+        if at_line_start
+            && source[pos..].starts_with(OPENER)
+            && let Some(end) = match_end(source, pos)
+        {
+            output.push_str(&text[copied..pos]);
+            output.push_str("[[module");
+            copied = pos + OPENER.len();
+            pos = end;
+            continue;
         }
         pos += 1;
     }

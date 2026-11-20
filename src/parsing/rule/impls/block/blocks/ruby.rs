@@ -170,7 +170,15 @@ fn parse_shortcut<'r, 't>(
                 let parts = value.split('|').collect::<Vec<_>>();
                 match parts.as_slice() {
                     // Exactly one pipe, split in the middle
-                    [base, ruby] => Ok((base.trim(), ruby.trim())),
+                    [base, ruby] => {
+                        let base = base.trim();
+                        let ruby = ruby.trim();
+                        if base.is_empty() || ruby.is_empty() {
+                            Err(parser.make_err(ParseErrorKind::BlockMalformedArguments))
+                        } else {
+                            Ok((base, ruby))
+                        }
+                    }
 
                     // Too many or too few pipes, invalid
                     _ => Err(parser.make_err(ParseErrorKind::BlockMalformedArguments)),

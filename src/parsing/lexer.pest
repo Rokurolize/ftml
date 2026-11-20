@@ -197,7 +197,7 @@ left_block_end = @{ "[[/" }
 // `[[#`; `[[#if` is the delayed conditional): the second `#` begins a
 // `##` color token, mirroring the fast scanner's guard.
 left_block_anchor = @{ "[[#" ~ !("#") }
-left_block_star = @{ "[[*" }
+left_block_star = @{ "[[*" ~ !"*" }
 left_math = @{ "[[$" }
 left_link = @{ "[[[" }
 left_link_star = @{ "[[[*" }

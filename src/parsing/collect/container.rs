@@ -116,10 +116,6 @@ impl QuoteBodyCursorInstallation {
         QuoteBodyCursorInstallation { installed }
     }
 
-    pub(crate) fn installed(&self) -> bool {
-        self.installed
-    }
-
     pub(crate) fn uninstall(self, parser: &mut Parser<'_, '_>) {
         if self.installed {
             parser.set_quote_body_cursor(None);

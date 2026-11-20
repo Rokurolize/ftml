@@ -276,21 +276,21 @@ mod tests {
         for (source, expected) in [
             (
                 "[[code]]apple[[/code]]",
-                r#"<div class="code"><pre><code>apple</code></pre></div>"#,
+                "<div class=\"code\">\n<pre><code>apple</code></pre></div>",
             ),
             ("[[code]][[/code]]", r#"<div class="code"></div>"#),
             (
                 "[[code type=\"rust\"]]fn main() {}[[/code]]",
-                r#"<div class="code"><pre><code>fn main() {}</code></pre></div>"#,
+                "<div class=\"code\">\n<pre><code>fn main() {}</code></pre></div>",
             ),
             (
                 "[[code type=\"python\"]]import antigravity[[/code]]",
-                r#"<div class="code"><div class="hl-main"><pre><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">antigravity</span></pre></div></div>"#,
+                "<div class=\"code\">\n<div class=\"hl-main\">\n<pre><span class=\"hl-reserved\">import</span><span class=\"hl-code\"> </span><span class=\"hl-identifier\">antigravity</span></pre></div>\n</div>",
             ),
             (
                 "[[code type=\"css\"]]:root {\n     --right-1: 0%;\n}[[/code]]",
                 concat!(
-                    r#"<div class="code"><div class="hl-main"><pre>"#,
+                    "<div class=\"code\">\n<div class=\"hl-main\">\n<pre>",
                     r#"<span class="hl-special">:root</span>"#,
                     r#"<span class="hl-code"> </span>"#,
                     r#"<span class="hl-brackets">{</span>"#,
@@ -301,7 +301,7 @@ mod tests {
                     r#"<span class="hl-string">%</span>"#,
                     "<span class=\"hl-code\">;\n</span>",
                     r#"<span class="hl-brackets">}</span>"#,
-                    "</pre></div></div>",
+                    "</pre></div>\n</div>",
                 ),
             ),
         ] {
@@ -323,7 +323,9 @@ mod tests {
             (
                 "[[code type=\"python\"[[iftags -zzz]][[/iftags]]]]x = 1[[/code]]",
                 concat!(
-                    "<div class=\"code\"><div class=\"hl-main\"><pre>",
+                    "<div class=\"code\">
+<div class=\"hl-main\">
+<pre>",
                     "<span class=\"hl-brackets\">[[</span>",
                     "<span class=\"hl-code\">/</span>",
                     "<span class=\"hl-identifier\">iftags</span>",
@@ -332,20 +334,23 @@ mod tests {
                     "<span class=\"hl-identifier\">x</span>",
                     "<span class=\"hl-code\"> = </span>",
                     "<span class=\"hl-number\">1</span>",
-                    "</pre></div></div>",
+                    "</pre></div>\n</div>",
                 ),
             ),
             (
                 "[[code [[iftags -zzz]][[/iftags]]]]x = 1[[/code]]",
-                "<div class=\"code\"><pre><code>[[/iftags]]]]x = 1</code></pre></div>",
+                "<div class=\"code\">
+<pre><code>[[/iftags]]]]x = 1</code></pre></div>",
             ),
             (
                 "[[code [[iftags +zzz]]zzz[[/iftags]]]]x = 1[[/code]]",
-                "<div class=\"code\"><pre><code>zzz[[/iftags]]]]x = 1</code></pre></div>",
+                "<div class=\"code\">
+<pre><code>zzz[[/iftags]]]]x = 1</code></pre></div>",
             ),
             (
                 "[[code [[iftags -zzz]]type=\"python\"[[/iftags]]]]x = 1[[/code]]",
-                "<div class=\"code\"><pre><code>type=&quot;python&quot;[[/iftags]]]]x = 1</code></pre></div>",
+                "<div class=\"code\">
+<pre><code>type=&quot;python&quot;[[/iftags]]]]x = 1</code></pre></div>",
             ),
         ] {
             let tokenization = crate::tokenize(source);
@@ -389,7 +394,8 @@ mod tests {
         assert_eq!(
             html,
             concat!(
-                "<div class=\"code\"><pre><code>====</code></pre></div>",
+                "<div class=\"code\">
+<pre><code>====</code></pre></div>",
                 "<br>\n<span style=\"white-space: pre-wrap;\">====</span>",
             ),
         );

@@ -46,7 +46,7 @@ impl<'t> ElementCondition<'t> {
 
     pub fn parse_with_commas(raw_spec: &'t str) -> Vec<ElementCondition<'t>> {
         raw_spec
-            .split(|c: char| c == ' ' || c == ',')
+            .split([' ', ','])
             .filter(|s| !s.is_empty())
             .map(Self::new_from_value)
             .collect()
@@ -98,7 +98,7 @@ impl<'t> ElementCondition<'t> {
         match spec {
             Cow::Borrowed(spec) => Self::parse_with_commas(spec),
             Cow::Owned(spec) => spec
-                .split(|c: char| c == ' ' || c == ',')
+                .split([' ', ','])
                 .filter(|s| !s.is_empty())
                 .map(|part| {
                     if let Some(value) = part.strip_prefix('+') {

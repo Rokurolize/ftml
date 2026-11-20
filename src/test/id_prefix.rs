@@ -20,6 +20,7 @@
 
 use crate::data::{PageInfo, ScoreValue};
 use crate::layout::Layout;
+use crate::render::{Render, html::HtmlRender};
 use crate::settings::{EMPTY_INTERWIKI, WikitextMode, WikitextSettings};
 use crate::tree::{
     AttributeMap, Container, ContainerType, Element, FileSource, ListItem, ListType,
@@ -365,5 +366,36 @@ fn isolate_user_ids() {
             }),
             url: cow!("https://example.com/"),
         }],
+    );
+}
+
+#[test]
+fn isolate_user_ids_rendered_output() {
+    let page_info = PageInfo::dummy();
+    let settings = WikitextSettings {
+        mode: WikitextMode::Page,
+        layout: Layout::Wikidot,
+        enable_page_syntax: true,
+        use_true_ids: true,
+        isolate_user_ids: true,
+        minify_css: false,
+        allow_local_paths: true,
+        interwiki: EMPTY_INTERWIKI.clone(),
+    };
+
+    let mut text = str!(r#"[[div id="a b"]]body[[/div]]"#);
+    crate::preprocess(&mut text);
+    let tokens = crate::tokenize(&text);
+    let (tree, errors) = crate::parse(&tokens, &page_info, &settings).into();
+    assert!(errors.is_empty(), "Errors produced during parsing!");
+
+    let html = HtmlRender.render(&tree, &page_info, &settings).body;
+    assert!(
+        html.contains("id=\"u-a b\""),
+        "rendered id must be prefixed once, got {html:?}"
+    );
+    assert!(
+        !html.contains("id=\"u-a u-b\""),
+        "rendered id must not be prefixed per word, got {html:?}"
     );
 }

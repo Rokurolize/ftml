@@ -1,0 +1,5 @@
+BEFORE
+[[code]]
+>>[[include muse-probe-g14-target |marker=PROBE]]
+[[/code]]
+AFTER

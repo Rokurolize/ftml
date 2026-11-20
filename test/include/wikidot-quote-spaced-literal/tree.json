@@ -1,0 +1,116 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "BEFORE"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "blockquote",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "paragraph",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": ">"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "[["
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "include"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "muse"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "-"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "probe"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "-"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "g14"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "-"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "target"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": " "
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "|"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "marker"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "="
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "PROBE"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "]]"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "AFTER"
+                    }
+                ]
+            }
+        }
+    ]
+}

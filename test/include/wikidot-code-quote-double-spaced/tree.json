@@ -1,0 +1,45 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "BEFORE"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "code",
+            "data": {
+                "contents": "> >[[include muse-probe-g14-target |marker=PROBE]]",
+                "language": null,
+                "name": null
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "AFTER"
+                    }
+                ]
+            }
+        }
+    ],
+    "code-blocks": [
+        {
+            "contents": "> >[[include muse-probe-g14-target |marker=PROBE]]",
+            "language": null,
+            "name": null
+        }
+    ]
+}

@@ -227,21 +227,26 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
     }
 
     pub fn attr(&mut self, attributes: AddedAttributes) -> &mut Self {
-        let Some(attribute_map) = attributes.map else {
+        let Some(map_ref) = attributes.map else {
             for (key, value_parts) in filter_attribute_entries(&attributes) {
                 self.attr_single(key, value_parts);
             }
 
             return self.chain();
         };
-        let attribute_map = attribute_map.get();
+        let attribute_map = map_ref.get();
         let legacy = self.ctx.layout().legacy();
         // Attributes whose Wikidot value evaluated to empty through raw inline
         // markup are written `key=""` by live, whatever the attribute name.
         let explicit_empty = explicit_empty_names(attribute_map, legacy);
 
         if attributes.entries.is_empty() {
-            for (key, value) in attribute_map {
+            let ordered_entries = if legacy && map_ref.wikidot_ordered() {
+                map_ref.ordered_entries_wikidot()
+            } else {
+                attribute_map.iter().collect()
+            };
+            for (key, value) in ordered_entries {
                 if omit_internal_attribute_marker(key)
                     || omit_empty_user_class(key, value)
                     || explicit_empty.iter().any(|name| *name == key.as_ref())
@@ -297,7 +302,12 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
             }
         }
 
-        for (key, value) in attribute_map {
+        let ordered_entries = if legacy && map_ref.wikidot_ordered() {
+            map_ref.ordered_entries_wikidot()
+        } else {
+            attribute_map.iter().collect()
+        };
+        for (key, value) in ordered_entries {
             if !merged.contains(key.as_ref())
                 && !omit_internal_attribute_marker(key)
                 && !explicit_empty.iter().any(|name| *name == key.as_ref())

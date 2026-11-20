@@ -1,0 +1,39 @@
+{
+    "elements": [
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {
+                    "data-a": "2",
+                    "data-mixed": "4",
+                    "data-upper": "3",
+                    "data-z": "1"
+                },
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {
+                            "class": "upper",
+                            "data-k": "v"
+                        },
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "data"
+                            },
+                            {
+                                "element": "text",
+                                "data": "-"
+                            },
+                            {
+                                "element": "text",
+                                "data": "attrs"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

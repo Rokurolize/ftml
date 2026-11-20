@@ -711,6 +711,11 @@ fn parse_tabview<'r, 't>(
             .wikidot_block_pair_at_head_byte(opener_start)
             .is_some_and(|pair| pair.kind == WikidotBlockKind::TabView);
 
+    if !native && !quote_ejection && !scan_paired {
+        restore_wikidot_tabview_split_state(parser, previous_split.clone());
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     // Leftmost Text_Wiki precedence: a nested view only forms when the
     // block-pair scan paired it. A nested view whose greedy closer is the
     // enclosing view's closer (inner view unterminated, detached, or

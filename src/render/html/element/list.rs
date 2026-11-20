@@ -190,8 +190,17 @@ pub fn render_list(
                         Layout::Wikijump => attr!(),
                     };
                     ctx.html().li().attr(attributes).inner(|ctx| {
+                        if ctx.layout().legacy() {
+                            ctx.push_raw('\n');
+                        }
                         render_element(ctx, element);
+                        if ctx.layout().legacy() {
+                            ctx.push_raw('\n');
+                        }
                     });
+                    if ctx.layout().legacy() {
+                        ctx.push_raw('\n');
+                    }
                 }
             }
         }

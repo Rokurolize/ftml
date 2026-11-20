@@ -57,6 +57,16 @@ pub fn render_table(ctx: &mut HtmlContext, table: &Table) {
     });
 }
 
+fn cell_content_is_block(element: &Element) -> bool {
+    match element {
+        Element::List { .. } | Element::Table(_) => true,
+        Element::Container(container) => {
+            container.ctype() == crate::tree::ContainerType::Paragraph
+        }
+        _ => false,
+    }
+}
+
 fn render_rows(
     ctx: &mut HtmlContext,
     table: &Table,
@@ -96,15 +106,28 @@ fn render_rows(
                             &cell.attributes,
                         ),
                     };
+                    let core = elements
+                        .iter()
+                        .filter(|element| !element.is_whitespace())
+                        .collect::<Vec<_>>();
+                    let pad = layout.legacy()
+                        && core.len() == 1
+                        && cell_content_is_block(core[0]);
                     let mut table_cell = ctx.html().table_cell(cell.header);
                     table_cell.attr(attributes);
                     table_cell.inner(|ctx| {
+                        if pad {
+                            ctx.push_raw('\n');
+                        }
                         if layout.legacy() {
                             super::container::render_contents_dropping_final_break_newline(
                                 ctx, elements,
                             );
                         } else {
                             render_elements(ctx, elements);
+                        }
+                        if pad {
+                            ctx.push_raw('\n');
                         }
                     });
                     drop(table_cell);

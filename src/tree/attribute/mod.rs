@@ -42,6 +42,8 @@ pub struct AttributeMap<'t> {
     inner: BTreeMap<Cow<'t, str>, Cow<'t, str>>,
     #[serde(skip)]
     order: Vec<Cow<'t, str>>,
+    #[serde(skip)]
+    wikidot_ordered: bool,
 }
 
 impl PartialEq for AttributeMap<'_> {
@@ -101,6 +103,43 @@ impl<'t> AttributeMap<'t> {
             self.order.push(key.clone());
         }
         self.inner.insert(key, value);
+    }
+
+    pub fn set_wikidot_ordered(&mut self, wikidot_ordered: bool) {
+        self.wikidot_ordered = wikidot_ordered;
+    }
+
+    pub fn wikidot_ordered(&self) -> bool {
+        self.wikidot_ordered
+    }
+
+    pub fn ordered_entries_wikidot(&self) -> Vec<(&Cow<'t, str>, &Cow<'t, str>)> {
+        fn rank(key: &str) -> u8 {
+            match key {
+                "id" => 0,
+                "class" => 1,
+                "style" => 2,
+                "role" => 3,
+                "type" => 4,
+                _ if key.starts_with("data-") => 5,
+                _ => 6,
+            }
+        }
+
+        let mut entries: Vec<(&Cow<'t, str>, &Cow<'t, str>)> =
+            self.inner.iter().collect();
+        entries.sort_by(|(a_key, _), (b_key, _)| {
+            rank(a_key)
+                .cmp(&rank(b_key))
+                .then_with(|| {
+                    self.order
+                        .iter()
+                        .position(|key| key == *a_key)
+                        .cmp(&self.order.iter().position(|key| key == *b_key))
+                })
+                .then_with(|| a_key.cmp(b_key))
+        });
+        entries
     }
 
     pub(crate) fn ordered_keys(&self) -> impl Iterator<Item = &Cow<'t, str>> {
@@ -167,7 +206,11 @@ impl<'t> AttributeMap<'t> {
 
         let order = self.order.iter().map(|key| string_to_owned(key)).collect();
 
-        AttributeMap { inner, order }
+        AttributeMap {
+            inner,
+            order,
+            wikidot_ordered: self.wikidot_ordered,
+        }
     }
 }
 

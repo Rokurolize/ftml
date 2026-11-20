@@ -1,0 +1,3 @@
+[[ul id="my-list" class="a" style="color: red;" role="list" type="disc" data-x="1" title="ignored" hidden="yes"]]
+[[li id="item-1" class="b" style="color: blue;" data-Y="2" value="9"]]One[[/li]]
+[[/ul]]

@@ -146,13 +146,14 @@ where
     let (arguments, body_start) =
         parser.get_head_map_with_body_start_wikidot(block_rule, in_head)?;
     let has_arguments = arguments.has_source();
-    let attributes = if parser.settings().layout.legacy() {
+    let mut attributes = if parser.settings().layout.legacy() {
         arguments.to_attribute_map_without_bare_where(parser.settings(), |key, value| {
             attribute_owner.accepts_attribute(key, value)
         })
     } else {
         arguments.to_attribute_map(parser.settings())
     };
+    attributes.set_wikidot_ordered(false);
 
     let as_paragraphs = parser.settings().layout.legacy()
         && attribute_owner == AdvancedTableElement::Cell;

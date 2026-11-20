@@ -1,0 +1,38 @@
+{
+    "elements": [
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {
+                    "class": "a",
+                    "data-x": "1",
+                    "hidden": "",
+                    "id": "my-list",
+                    "role": "list",
+                    "style": "color: red;",
+                    "title": "ignored",
+                    "type": "disc"
+                },
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {
+                            "class": "b",
+                            "data-y": "2",
+                            "id": "item-1",
+                            "style": "color: blue;",
+                            "value": "9"
+                        },
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "One"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

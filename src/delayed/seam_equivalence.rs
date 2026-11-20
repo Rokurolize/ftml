@@ -310,18 +310,21 @@ fn plain_parse_hidden_iftags_typography_matches_joined_text() {
 
     const HIDDEN: &str = "[[iftags +zz-no-such-tag]]x[[/iftags]]";
 
-    assert_eq!(render(&format!("<{HIDDEN}<<<")), "<p>««</p>");
+    assert_eq!(render(&format!("<{HIDDEN}<<<")), "<p>&#171;&#171;</p>");
     assert_eq!(render(&format!(".{HIDDEN}...")), "<p>….</p>");
     assert_eq!(render(&format!(".{HIDDEN}.....")), "<p>……</p>");
-    assert_eq!(render(&format!("\"{HIDDEN}>>>>")), "<p>&quot;»»</p>");
+    assert_eq!(
+        render(&format!("\"{HIDDEN}>>>>")),
+        "<p>&quot;&#187;&#187;</p>"
+    );
 
     assert_eq!(
         render("<[[iftags -zz-no-such-tag]]<<<[[/iftags]]"),
-        "<p>««</p>",
+        "<p>&#171;&#171;</p>",
     );
     assert_eq!(
         render("<[[iftags -zz-no-such-tag]]x[[/iftags]]<<<"),
-        "<p>&lt;x«&lt;</p>",
+        "<p>&lt;x&#171;&lt;</p>",
     );
     assert_eq!(
         render(".[[iftags -zz-no-such-tag]]...[[/iftags]]"),
@@ -334,7 +337,7 @@ fn plain_parse_hidden_iftags_typography_matches_joined_text() {
 
     assert_eq!(
         render("<[[iftags -zz-no-such-tag]]**b**[[/iftags]]<<<"),
-        "<p>&lt;<strong>b</strong>«&lt;</p>",
+        "<p>&lt;<strong>b</strong>&#171;&lt;</p>",
     );
 
     assert_eq!(render("[[/iftags]]..."), "<p>[[/iftags]]…</p>");
@@ -347,7 +350,13 @@ fn plain_parse_hidden_iftags_typography_matches_joined_text() {
         !unclosed.contains("<<<"),
         "an unclosed opener must not defer the run: {unclosed}",
     );
-    assert!(unclosed.contains('«'), "the run still converts: {unclosed}");
+    assert!(
+        unclosed.contains("&#171;"),
+        "the run still converts: {unclosed}"
+    );
 
-    assert_eq!(render(&format!("<\u{ab}{HIDDEN}<")), "<p>&lt;«&lt;</p>",);
+    assert_eq!(
+        render(&format!("<\u{ab}{HIDDEN}<")),
+        "<p>&lt;&#171;&lt;</p>",
+    );
 }

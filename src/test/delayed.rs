@@ -1737,23 +1737,41 @@ fn delayed_slots_preserve_the_frozen_listpages_owner_boundaries() {
 
 #[test]
 fn right_angle_run_touching_a_suppressed_seam_converts_every_pair() {
-    assert_eq!(render("a[!-- %%title_linked%% --]>>>>"), "<p>a»»</p>");
-    assert_eq!(render("a>[!-- %%title_linked%% --]>>>"), "<p>a»»</p>");
-    assert_eq!(render("a>>[!-- %%title_linked%% --]>>>>"), "<p>a»»»</p>");
-    assert_eq!(render("\"[!-- %%title_linked%% --]>>>>"), "<p>&quot;»»</p>");
-    assert_eq!(render("a>[!-- %%title_linked%% --]>>>>"), "<p>a»»&gt;</p>");
+    assert_eq!(
+        render("a[!-- %%title_linked%% --]>>>>"),
+        "<p>a&#187;&#187;</p>"
+    );
+    assert_eq!(
+        render("a>[!-- %%title_linked%% --]>>>"),
+        "<p>a&#187;&#187;</p>"
+    );
+    assert_eq!(
+        render("a>>[!-- %%title_linked%% --]>>>>"),
+        "<p>a&#187;&#187;&#187;</p>"
+    );
+    assert_eq!(
+        render("\"[!-- %%title_linked%% --]>>>>"),
+        "<p>&quot;&#187;&#187;</p>"
+    );
+    assert_eq!(
+        render("a>[!-- %%title_linked%% --]>>>>"),
+        "<p>a&#187;&#187;&gt;</p>"
+    );
 }
 
 #[test]
 fn left_angle_and_ellipsis_runs_touching_a_suppressed_seam_convert_with_joined_grouping()
 {
-    assert_eq!(render("<[!-- %%title_linked%% --]<<<"), "<p>««</p>");
+    assert_eq!(
+        render("<[!-- %%title_linked%% --]<<<"),
+        "<p>&#171;&#171;</p>"
+    );
     assert_eq!(render(".[!-- %%title_linked%% --]..."), "<p>….</p>");
     assert_eq!(render(".[!-- %%title_linked%% --]....."), "<p>……</p>");
     assert_eq!(render("a[!-- %%title_linked%% --]..."), "<p>a…</p>");
     assert_eq!(
         render("<[!-- %%title_linked%% --]\u{ab}<"),
-        "<p>&lt;«&lt;</p>",
+        "<p>&lt;&#171;&lt;</p>",
     );
 }
 
@@ -1761,7 +1779,7 @@ fn left_angle_and_ellipsis_runs_touching_a_suppressed_seam_convert_with_joined_g
 fn runtime_origin_text_stays_a_typography_barrier_at_a_seam() {
     let source = "runtime-<[!-- %%title_linked%% --]<<";
     let input = page_link_input_with_runtime_prefix(source, "runtime-<");
-    assert_eq!(render_input(&input), "<p>runtime-&lt;«</p>");
+    assert_eq!(render_input(&input), "<p>runtime-&lt;&#171;</p>");
 }
 
 #[test]

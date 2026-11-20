@@ -15,7 +15,7 @@ use crate::tree::Module;
 
 pub fn render_module(ctx: &mut HtmlContext, module: &Module<'_>) {
     match (ctx.layout(), module) {
-        (Layout::Wikidot, Module::Runtime { name, .. }) => {
+        (Layout::Wikidot, Module::Runtime { name, body, .. }) => {
             ctx.html()
                 .div()
                 .attr(attr!("class" => "error-block"))
@@ -32,6 +32,9 @@ pub fn render_module(ctx: &mut HtmlContext, module: &Module<'_>) {
                         .contents("check available modules");
                     ctx.push_escaped(" and fix this page.");
                 });
+            if body.is_empty() {
+                ctx.html().tag("p").contents("[[/module]]");
+            }
         }
         _ => ctx.handle().render_module(ctx.buffer(), module),
     }

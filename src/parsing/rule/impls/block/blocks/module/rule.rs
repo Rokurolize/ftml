@@ -114,9 +114,6 @@ fn parse_fn<'r, 't>(
             if has_body_end && body_start == BlockBodyStart::NextPhysicalLine {
                 let mut probe = parser.clone();
                 let mut body = probe.get_body_text(&BLOCK_MODULE)?;
-                if body.is_empty() {
-                    return ok!(false; wikidot_unknown_module_error(subname));
-                }
                 if wikidot_module_body_has_nested_opener(&body) {
                     while wikidot_module_extra_closer_ahead(&probe) {
                         let extra = probe.get_body_text(&BLOCK_MODULE)?;
@@ -367,6 +364,25 @@ mod tests {
                 r#"<a href="https://www.wikidot.com/doc:modules" target="_blank">check available modules</a>"#,
                 " and fix this page.</div>",
             ),
+        );
+    }
+
+    #[test]
+    fn wikidot_empty_unknown_module_body_is_a_runtime_element() {
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize("[[module Nosuch]]\n[[/module]]");
+        let (tree, errors) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(errors.is_empty(), "{errors:#?}");
+        assert_eq!(tree.elements.len(), 1, "{tree:#?}");
+        assert!(
+            matches!(
+                &tree.elements[0],
+                Element::Module(Module::Runtime { name, body, .. })
+                    if name == "Nosuch" && body.is_empty()
+            ),
+            "{tree:#?}",
         );
     }
 

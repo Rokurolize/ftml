@@ -103,9 +103,20 @@ pub fn normalize_link<'a>(
             let (site, page, extra) = page_ref.fields();
             match site {
                 Some(site) => Cow::Owned(helper.build_url(site, page, extra)),
-                None => normalize_href(page, extra),
+                None => normalize_page_href(page, extra),
             }
         }
+    }
+}
+
+#[cfg(feature = "html")]
+fn normalize_page_href<'a>(page: &'a str, extra: Option<&'a str>) -> Cow<'a, str> {
+    let extra = extra.unwrap_or("");
+
+    if page.starts_with('/') {
+        Cow::Owned(format!("{page}{extra}"))
+    } else {
+        Cow::Owned(format!("/{page}{extra}"))
     }
 }
 

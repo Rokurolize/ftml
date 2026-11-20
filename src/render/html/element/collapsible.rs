@@ -253,7 +253,7 @@ fn render_wikidot_collapsible_link(ctx: &mut HtmlContext, label: &str) {
                     '\0'..='\u{001F}' | '\u{007F}' => {}
                     _ => {
                         let mut buffer = [0; 4];
-                        ctx.push_escaped(ch.encode_utf8(&mut buffer));
+                        ctx.push_escaped_text(ch.encode_utf8(&mut buffer));
                     }
                 }
             }

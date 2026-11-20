@@ -20,9 +20,9 @@ pub fn render_module(ctx: &mut HtmlContext, module: &Module<'_>) {
                 .div()
                 .attr(attr!("class" => "error-block"))
                 .inner(|ctx| {
-                    ctx.push_escaped("[[module ");
+                    ctx.push_escaped_text("[[module ");
                     ctx.html().em().contents(name);
-                    ctx.push_escaped("]] No such module, please ");
+                    ctx.push_escaped_text("]] No such module, please ");
                     ctx.html()
                         .a()
                         .attr(attr!(
@@ -30,7 +30,7 @@ pub fn render_module(ctx: &mut HtmlContext, module: &Module<'_>) {
                             "target" => "_blank",
                         ))
                         .contents("check available modules");
-                    ctx.push_escaped(" and fix this page.");
+                    ctx.push_escaped_text(" and fix this page.");
                 });
             if body.is_empty() {
                 ctx.html().tag("p").contents("[[/module]]");

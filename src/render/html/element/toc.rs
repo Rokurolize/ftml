@@ -68,7 +68,7 @@ pub fn render_table_of_contents(
             ctx.html()
                 .div()
                 .attr(attr!("class" => "title"))
-                .inner(|ctx| ctx.push_escaped(table_of_contents_title));
+                .inner(|ctx| ctx.push_escaped_text(table_of_contents_title));
 
             ctx.html()
                 .div()

@@ -125,7 +125,7 @@ fn render_missing_footnote(ctx: &mut HtmlContext, index: usize) {
     ctx.html()
         .span()
         .attr(attr!("class" => "wj-error-inline"))
-        .inner(|ctx| ctx.push_escaped(message));
+        .inner(|ctx| ctx.push_escaped_text(message));
 }
 
 fn render_tooltip_text(ctx: &mut HtmlContext, text: &str) {
@@ -133,7 +133,7 @@ fn render_tooltip_text(ctx: &mut HtmlContext, text: &str) {
         if index > 0 {
             ctx.html().br();
         }
-        ctx.push_escaped(line);
+        ctx.push_escaped_text(line);
     }
 }
 
@@ -191,7 +191,7 @@ pub fn render_footnote_block(
                             .attr(attr!("class" => "title"))
                             .inner(|ctx| {
                                 render_wikidot_wrapped(ctx, wrappers, &mut |ctx| {
-                                    ctx.push_escaped(title);
+                                    ctx.push_escaped_text(title);
                                 });
                             });
                     }
@@ -341,13 +341,13 @@ fn render_wikidot_footnote_tier(
                 if prev_is_block {
                     if let Some(rest) = run.strip_prefix('\n') {
                         ctx.push_raw('\n');
-                        ctx.push_escaped(rest.trim_start_matches([' ', '\t']));
+                        ctx.push_escaped_text(rest.trim_start_matches([' ', '\t']));
                     } else {
                         ctx.push_raw('\n');
-                        ctx.push_escaped(&run);
+                        ctx.push_escaped_text(&run);
                     }
                 } else {
-                    ctx.push_escaped(&run);
+                    ctx.push_escaped_text(&run);
                 }
                 has_content |= !run.is_empty();
                 prev_is_block = false;

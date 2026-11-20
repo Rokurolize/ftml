@@ -27,7 +27,7 @@ pub fn render_file_link(ctx: &mut HtmlContext, file: &str, label: &str) {
         )
     };
     let Some(url) = url else {
-        ctx.push_escaped(label);
+        ctx.push_escaped_text(label);
         return;
     };
     let url = if ctx.layout().legacy() {

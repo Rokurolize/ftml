@@ -30,28 +30,28 @@ pub trait ItemRender {
 impl ItemRender for &'_ str {
     #[inline]
     fn render(&self, ctx: &mut HtmlContext) {
-        ctx.push_escaped(self);
+        ctx.push_escaped_text(self);
     }
 }
 
 impl ItemRender for &'_ Cow<'_, str> {
     #[inline]
     fn render(&self, ctx: &mut HtmlContext) {
-        ctx.push_escaped(self);
+        ctx.push_escaped_text(self);
     }
 }
 
 impl ItemRender for String {
     #[inline]
     fn render(&self, ctx: &mut HtmlContext) {
-        ctx.push_escaped(self);
+        ctx.push_escaped_text(self);
     }
 }
 
 impl ItemRender for &'_ String {
     #[inline]
     fn render(&self, ctx: &mut HtmlContext) {
-        ctx.push_escaped(self);
+        ctx.push_escaped_text(self);
     }
 }
 

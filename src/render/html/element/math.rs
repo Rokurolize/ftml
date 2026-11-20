@@ -338,7 +338,7 @@ pub fn render_math_inline(ctx: &mut HtmlContext, latex_source: &str) {
             .attr(attr!("class" => "math-inline"))
             .inner(|ctx| {
                 ctx.push_raw('$');
-                ctx.push_escaped(latex_source);
+                ctx.push_escaped_text(latex_source);
                 ctx.push_raw('$');
             });
         return;

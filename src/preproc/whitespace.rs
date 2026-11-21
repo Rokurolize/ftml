@@ -84,9 +84,6 @@ pub fn substitute(text: &mut String) {
     // Replace DOS and Mac newlines
     replace!(DOS_MAC_NEWLINES);
 
-    // Saved pages trim ASCII whitespace at the start of the document while
-    // preserving indentation on later lines, so a leading structural marker
-    // is recognised the same way it is on a saved wiki page.
     replace!(LEADING_DOCUMENT_WHITESPACE);
 
     // Replace leading non-standard spaces with regular spaces

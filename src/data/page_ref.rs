@@ -230,9 +230,8 @@ impl PageRef {
         }
 
         fn include_site_charset(s: &str) -> bool {
-            s.bytes().all(|byte| {
-                byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'.')
-            })
+            s.bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'.'))
         }
 
         let s = s.trim();
@@ -270,7 +269,6 @@ impl PageRef {
 
         Ok(PageRef::page_only(s))
     }
-
 }
 
 impl Display for PageRef {
@@ -536,8 +534,7 @@ fn parse_include_keeps_the_site_segment_verbatim() {
         (":sandbox.:other-page", "sandbox.", "other-page"),
         (":SANDBOX.WIKIDOT.COM:other-page", "SANDBOX", "other-page"),
     ] {
-        let actual =
-            PageRef::parse_include(input).expect("site pair should resolve");
+        let actual = PageRef::parse_include(input).expect("site pair should resolve");
         assert_eq!(actual.site(), Some(site), "{input:?}");
         assert_eq!(actual.page(), page, "{input:?}");
     }
@@ -545,7 +542,11 @@ fn parse_include_keeps_the_site_segment_verbatim() {
 
 #[test]
 fn parse_include_site_gate_failures() {
-    for input in [":foo/bar:other-page", ":foo#bar:other-page", ":café:other-page"] {
+    for input in [
+        ":foo/bar:other-page",
+        ":foo#bar:other-page",
+        ":café:other-page",
+    ] {
         assert!(PageRef::parse_include(input).is_err(), "{input:?}");
     }
 

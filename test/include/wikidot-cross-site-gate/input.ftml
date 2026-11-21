@@ -1,0 +1,9 @@
+[[include :FOO:fruit]]
+
+[[include :a.b:fruit]]
+
+[[include :foo_bar:fruit]]
+
+[[include :foo/bar:fruit]]
+
+[[include :sandbox-for-codex:---]]

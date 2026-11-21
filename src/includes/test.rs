@@ -680,7 +680,8 @@ fn include_swallowed_by_multiline_argument_does_not_overlap() {
 #[test]
 fn include_after_a_failed_candidate_expands_on_the_next_line() {
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-    let input = "[[include bad.page\n[[include muse-probe-audit-g13-target | marker=SURVIVED]]";
+    let input =
+        "[[include bad.page\n[[include muse-probe-audit-g13-target | marker=SURVIVED]]";
 
     let (output, pages) = include(
         input,
@@ -722,13 +723,17 @@ fn include_after_an_unterminated_candidate_expands_on_the_next_line() {
         output.contains("<INCLUDED-PAGE other-page {}>"),
         "second line include must expand: {output}",
     );
-    assert!(output.ends_with("Y"), "trailing text must survive: {output}");
+    assert!(
+        output.ends_with("Y"),
+        "trailing text must survive: {output}"
+    );
 }
 
 #[test]
 fn includes_after_repeated_failed_candidates_expand() {
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
-    let input = "[[include bad.page\n[[include also.bad\n[[include muse-probe-audit-g13-target]]";
+    let input =
+        "[[include bad.page\n[[include also.bad\n[[include muse-probe-audit-g13-target]]";
 
     let (output, pages) = include(
         input,

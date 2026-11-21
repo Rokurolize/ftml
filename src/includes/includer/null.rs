@@ -44,3 +44,37 @@ impl<'t> Includer<'t> for NullIncluder {
         Ok(Cow::Borrowed(""))
     }
 }
+
+#[cfg(test)]
+mod r11_tests {
+    use super::NullIncluder;
+    use crate::data::{PageInfo, ScoreValue};
+    use crate::includes::Includer;
+    use crate::layout::Layout;
+    use crate::settings::{WikitextMode, WikitextSettings};
+    use std::borrow::Cow;
+
+    #[test]
+    fn null_includer_handles_include_blocks() {
+        let info = PageInfo {
+            page: Cow::Borrowed("r11"),
+            category: None,
+            site: Cow::Borrowed("s"),
+            title: Cow::Borrowed("t"),
+            alt_title: None,
+            score: ScoreValue::Integer(0),
+            tags: vec![],
+            language: Cow::Borrowed("default"),
+        };
+        let mut settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        settings.enable_page_syntax = true;
+        let (text, _) = crate::include(
+            "Before\n[[include component:example]]\nafter",
+            &settings,
+            NullIncluder,
+            || panic!("invalid include return"),
+        )
+        .expect("NullIncluder must handle include blocks without an invalid-return error");
+        assert_eq!(text.trim(), "Before\n\nafter");
+    }
+}

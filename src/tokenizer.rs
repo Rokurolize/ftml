@@ -30,7 +30,9 @@ pub struct Tokenization<'t> {
     tokens: Vec<ExtractedToken<'t>>,
     full_text: FullText<'t>,
     delayed_markers: BTreeMap<usize, DelayedMarker>,
+    #[allow(dead_code)]
     quote_paragraph_breaks: Vec<ExtractedToken<'t>>,
+    #[allow(dead_code)]
     quote_indents: Vec<ExtractedToken<'t>>,
 }
 
@@ -100,11 +102,13 @@ impl<'t> Tokenization<'t> {
             .any(|marker| marker.generated().is_some())
     }
 
+    #[allow(dead_code)]
     pub(crate) fn quote_paragraph_breaks<'r>(&'r self) -> &'r [ExtractedToken<'t>] {
         &self.quote_paragraph_breaks
     }
 
     #[inline]
+    #[allow(dead_code)]
     pub(crate) fn quote_indents<'r>(&'r self) -> &'r [ExtractedToken<'t>] {
         &self.quote_indents
     }

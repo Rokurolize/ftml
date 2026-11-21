@@ -1,0 +1,29 @@
+[
+    {
+        "token": "input-end",
+        "rule": "block-bibcite",
+        "span": [
+            14,
+            14
+        ],
+        "kind": "block-missing-arguments"
+    },
+    {
+        "token": "left-block",
+        "rule": "fallback",
+        "span": [
+            0,
+            2
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-block",
+        "rule": "fallback",
+        "span": [
+            12,
+            14
+        ],
+        "kind": "no-rules-match"
+    }
+]

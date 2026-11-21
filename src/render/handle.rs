@@ -104,8 +104,10 @@ impl Handle {
             LinkLabel::Text(text) | LinkLabel::Slug(text) => text,
             LinkLabel::Url => match link {
                 LinkLocation::Url(url) => url.as_ref(),
-                LinkLocation::Page(_) => {
-                    panic!("Requested a URL link label for a page");
+                LinkLocation::Page(page_ref) => {
+                    page_title = page_ref.to_string();
+
+                    &page_title
                 }
             },
             LinkLabel::Page => match link {
@@ -118,9 +120,7 @@ impl Handle {
 
                     &page_title
                 }
-                LinkLocation::Url(_) => {
-                    panic!("Requested a page title link label for a URL");
-                }
+                LinkLocation::Url(url) => url.as_ref(),
             },
         };
 

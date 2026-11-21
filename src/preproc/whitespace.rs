@@ -169,3 +169,17 @@ fn test_substitute() {
 
     test_substitution("miscellaneous", substitute, &TEST_CASES);
 }
+
+#[test]
+fn strips_leading_ascii_whitespace_from_document_start() {
+    let mut text = "\n\t  > first\n  > second".to_owned();
+    substitute(&mut text);
+    assert_eq!(text, "> first\n  > second");
+}
+
+#[test]
+fn keeps_indentation_after_non_whitespace_content() {
+    let mut text = "[!-- comment --]\n  > literal".to_owned();
+    substitute(&mut text);
+    assert_eq!(text, "[!-- comment --]\n  > literal");
+}

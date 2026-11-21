@@ -47,6 +47,9 @@ fn parse_fn<'r, 't>(
     let conditions =
         parser.get_head_value(&BLOCK_IFCATEGORY, in_head, |parser, spec| match spec {
             None => Err(parser.make_err(ParseErrorKind::BlockMissingArguments)),
+            Some(spec) if spec.trim().is_empty() => {
+                Err(parser.make_err(ParseErrorKind::BlockMissingArguments))
+            }
             Some(spec) => {
                 let mut conditions = ElementCondition::parse(spec);
 

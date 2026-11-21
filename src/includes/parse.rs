@@ -76,7 +76,7 @@ pub fn parse_include_block<'t>(
 /// Creates an [`IncludeRef`] out of pest [`Pairs`].
 fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError> {
     let page_raw = pairs.next().ok_or(IncludeParseError)?.as_str();
-    let page_ref = PageRef::parse(page_raw)?;
+    let page_ref = validate_include_page_ref(PageRef::parse(page_raw)?)?;
 
     trace!("Got page for include {page_ref:?}");
     let mut arguments = HashMap::new();
@@ -130,6 +130,14 @@ fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError
     Ok(IncludeRef::new(page_ref, arguments))
 }
 
+fn validate_include_page_ref(page_ref: PageRef) -> Result<PageRef, IncludeParseError> {
+    if page_ref.page().is_empty() {
+        return Err(IncludeParseError);
+    }
+
+    Ok(page_ref)
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct IncludeParseError;
 
@@ -137,5 +145,24 @@ impl From<PageRefParseError> for IncludeParseError {
     #[inline]
     fn from(_: PageRefParseError) -> Self {
         IncludeParseError
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_include_block_rejects_empty_page_reference() {
+        for input in [
+            "[[include :scp-wiki:/]]",
+            "[[include /]]",
+            "[[include :scp-wiki:#frag]]",
+        ] {
+            let error = parse_include_block(input, 0)
+                .expect_err("empty include page reference should reject");
+
+            assert_eq!(error, IncludeParseError, "{input} should reject");
+        }
     }
 }

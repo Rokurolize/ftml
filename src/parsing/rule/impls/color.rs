@@ -82,3 +82,15 @@ fn hexify_color(color: &str) -> Cow<'_, str> {
         Cow::Borrowed(color)
     }
 }
+
+#[cfg(test)]
+mod r10_tests {
+    use super::hexify_color;
+
+    #[test]
+    fn hex_colors_are_serialized_lowercase() {
+        assert_eq!(hexify_color("ABC"), "#abc");
+        assert_eq!(hexify_color("#B01"), "#b01");
+        assert_eq!(hexify_color("abc"), "#abc");
+    }
+}

@@ -91,7 +91,7 @@ fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError
             pair.as_str()
         })
         .unwrap_or_default();
-    scan_include_arguments(argument_tail, &mut raw_arguments)?;
+    scan_include_arguments(argument_tail, &mut raw_arguments);
 
     let spaced_empty_separator = argument_tail.strip_prefix('|').is_some_and(|spacing| {
         !spacing.is_empty() && spacing.bytes().all(|byte| matches!(byte, b' ' | b'\t'))
@@ -115,28 +115,10 @@ fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError
 fn scan_include_arguments<'t>(
     tail: &'t str,
     arguments: &mut Vec<RawIncludeArgument<'t>>,
-) -> Result<(), IncludeParseError> {
-    let bytes = tail.as_bytes();
-    let mut segment_start = 0;
-    let mut index = 0;
-
-    while index < bytes.len() {
-        if bytes[index..].starts_with(b"[!--") {
-            if let Some(end) = complete_comment_end(bytes, index) {
-                index = end;
-                continue;
-            }
-            return Err(IncludeParseError);
-        }
-        if bytes[index] == b'|' {
-            scan_include_argument_segment(&tail[segment_start..index], arguments);
-            segment_start = index + 1;
-        }
-        index += 1;
+) {
+    for segment in tail.split('|') {
+        scan_include_argument_segment(segment, arguments);
     }
-
-    scan_include_argument_segment(&tail[segment_start..], arguments);
-    Ok(())
 }
 
 fn scan_include_argument_segment<'t>(
@@ -216,21 +198,6 @@ fn trim_include_space_start(source: &str) -> &str {
     }
 
     &source[index..]
-}
-
-fn complete_comment_end(bytes: &[u8], start: usize) -> Option<usize> {
-    if !bytes.get(start..)?.starts_with(b"[!--") {
-        return None;
-    }
-
-    let mut index = start + 4;
-    while index + 3 <= bytes.len() {
-        if bytes[index..].starts_with(b"--]") {
-            return Some(index + 3);
-        }
-        index += 1;
-    }
-    None
 }
 
 fn validate_include_page_ref(page_ref: PageRef) -> Result<PageRef, IncludeParseError> {
@@ -337,7 +304,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_include_block_ignores_commented_arguments() {
+    fn parse_include_block_splits_arguments_at_pipes_inside_comments() {
         let source = concat!(
             "[[include :scp-wiki:component:mapping-source\n",
             "facility=-- |\n",
@@ -347,8 +314,8 @@ mod tests {
             "]]\n",
         );
 
-        let (include, end) = parse_include_block(source, 0)
-            .expect("comments may disable arguments inside an include");
+        let (include, end) =
+            parse_include_block(source, 0).expect("include should parse");
 
         assert_eq!(end, source.len() - 1);
         assert_eq!(
@@ -361,7 +328,35 @@ mod tests {
         );
         assert_eq!(include.variables().get("x").map(Cow::as_ref), Some("66"));
         assert!(!include.variables().contains_key("textclass"));
-        assert!(!include.variables().contains_key("text"));
+        assert_eq!(
+            include.variables().get("text").map(Cow::as_ref),
+            Some("G-GOC")
+        );
+    }
+
+    #[test]
+    fn parse_include_block_cuts_argument_values_at_pipes_inside_comments() {
+        let (include, _) =
+            parse_include_block("[[include page | marker=[!-- a|b --]HELLO]]", 0)
+                .expect("include should parse");
+
+        assert_eq!(
+            include.variables().get("marker").map(Cow::as_ref),
+            Some("[!-- a"),
+        );
+        assert!(!include.variables().contains_key("b"));
+    }
+
+    #[test]
+    fn parse_include_block_accepts_unterminated_comments_in_arguments() {
+        let (include, _) =
+            parse_include_block("[[include page | marker=[!-- unclosed]]", 0)
+                .expect("include should parse");
+
+        assert_eq!(
+            include.variables().get("marker").map(Cow::as_ref),
+            Some("[!-- unclosed"),
+        );
     }
 
     #[test]
@@ -436,7 +431,11 @@ mod tests {
         assert_eq!(include.variables().get("x").map(Cow::as_ref), Some("2"));
         assert_eq!(include.variables().get("n").map(Cow::as_ref), Some("\"A"),);
         assert_eq!(include.variables().get("z").map(Cow::as_ref), Some("4"));
-        for inert in ["FLAG", "日本語", "quoted-suffix", "ignored", "also-ignored"] {
+        assert_eq!(
+            include.variables().get("also-ignored").map(Cow::as_ref),
+            Some("2 --]"),
+        );
+        for inert in ["FLAG", "日本語", "quoted-suffix", "ignored"] {
             assert!(!include.variables().contains_key(inert), "{inert}");
         }
     }
@@ -467,16 +466,18 @@ mod tests {
             started.elapsed(),
         );
 
-        let mut incomplete = String::from("[[include page ");
+        let mut unterminated = String::from("[[include page ");
         for _ in 0..RUNS {
-            incomplete.push_str("|FLAG|x=|日本語=1|\"A|B\"|[!--");
+            unterminated.push_str("|FLAG|x=|日本語=1|\"A|B\"|[!--");
         }
-        incomplete.push(']');
+        unterminated.push_str("]]");
         let started = std::time::Instant::now();
-        assert!(parse_include_block(&incomplete, 0).is_err());
+        let (_, end) = parse_include_block(&unterminated, 0)
+            .expect("unterminated comments should not reject an include");
+        assert_eq!(end, unterminated.len());
         assert!(
             started.elapsed() < std::time::Duration::from_secs(5),
-            "incomplete include scan took {:?}",
+            "unterminated include scan took {:?}",
             started.elapsed(),
         );
     }

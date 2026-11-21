@@ -45,10 +45,11 @@ static WHITESPACE_ONLY_LINE: LazyLock<Replacer> =
             .unwrap(),
         replacement: "",
     });
-static LEADING_NEWLINES: LazyLock<Replacer> = LazyLock::new(|| Replacer::RegexReplace {
-    regex: Regex::new(r"^\n+").unwrap(),
-    replacement: "",
-});
+static LEADING_DOCUMENT_WHITESPACE: LazyLock<Replacer> =
+    LazyLock::new(|| Replacer::RegexReplace {
+        regex: Regex::new(r"^[ \t\n]+").unwrap(),
+        replacement: "",
+    });
 static TRAILING_NEWLINES: LazyLock<Replacer> = LazyLock::new(|| Replacer::RegexReplace {
     regex: Regex::new(r"\n+$").unwrap(),
     replacement: "",
@@ -83,6 +84,11 @@ pub fn substitute(text: &mut String) {
     // Replace DOS and Mac newlines
     replace!(DOS_MAC_NEWLINES);
 
+    // Saved pages trim ASCII whitespace at the start of the document while
+    // preserving indentation on later lines, so a leading structural marker
+    // is recognised the same way it is on a saved wiki page.
+    replace!(LEADING_DOCUMENT_WHITESPACE);
+
     // Replace leading non-standard spaces with regular spaces
     // Leave other non-standard spaces as-is (such as nbsp in
     // the middle of paragraphs)
@@ -100,8 +106,7 @@ pub fn substitute(text: &mut String) {
     // Null characters to spaces
     replace!(NULL_SPACE);
 
-    // Remove leading and trailing newlines
-    replace!(LEADING_NEWLINES);
+    // Remove trailing newlines
     replace!(TRAILING_NEWLINES);
 }
 
@@ -127,10 +132,7 @@ fn replace_leading_spaces(text: &mut String) {
 
 #[cfg(test)]
 const TEST_CASES: [(&str, &str); 7] = [
-    (
-        "\tapple\n\tbanana\tcherry\n",
-        "    apple\n    banana    cherry",
-    ),
+    ("\tapple\n\tbanana\tcherry\n", "apple\n    banana    cherry"),
     (
         "newlines:\r\n* apple\r* banana\r\ncherry\n\r* durian",
         "newlines:\n* apple\n* banana\ncherry\n\n* durian",
@@ -155,7 +157,7 @@ const TEST_CASES: [(&str, &str); 7] = [
 fn regexes() {
     let _ = &*LEADING_NONSTANDARD_WHITESPACE;
     let _ = &*WHITESPACE_ONLY_LINE;
-    let _ = &*LEADING_NEWLINES;
+    let _ = &*LEADING_DOCUMENT_WHITESPACE;
     let _ = &*TRAILING_NEWLINES;
     let _ = &*DOS_MAC_NEWLINES;
     let _ = &*CONCAT_LINES;

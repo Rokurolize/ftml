@@ -69,7 +69,7 @@ const PREFILTER_TEST_CASES: [(&str, &str); 10] = [
     ),
     (
         " . . . I'm not sure about this,",
-        " … I'm not sure about this,",
+        "… I'm not sure about this,",
     ),
 ];
 

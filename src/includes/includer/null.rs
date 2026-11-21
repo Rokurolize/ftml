@@ -72,7 +72,8 @@ mod r11_tests {
             tags: vec![],
             language: Cow::Borrowed("default"),
         };
-        let mut settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut settings =
+            WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
         settings.enable_page_syntax = true;
         let (text, _) = crate::include(
             "Before\n[[include component:example]]\nafter",
@@ -80,7 +81,9 @@ mod r11_tests {
             NullIncluder,
             || panic!("invalid include return"),
         )
-        .expect("NullIncluder must handle include blocks without an invalid-return error");
+        .expect(
+            "NullIncluder must handle include blocks without an invalid-return error",
+        );
         assert_eq!(text.trim(), "Before\n\nafter");
     }
 }

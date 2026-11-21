@@ -24,18 +24,20 @@ use wikidot_normalize::normalize;
 
 /// Canonicalizes an `[[include]]` site segment: a host-form
 /// `<slug>.wikidot.com` spelling (ASCII case-insensitive, with an optional
-/// single trailing `.`) becomes `<slug>`, before slug normalization runs.
+/// single trailing `.`) becomes `<slug>`.
 ///
 /// Wikidot looks an include site segment up as a site *or a host*, so the
 /// full domain spelling names the same site as the bare slug. The strip must
-/// happen here, on the raw segment: after `wikidot_normalize::normalize`
-/// runs, `scp-jp.wikidot.com` has already become `scp-jp-wikidot-com`, a
-/// legal slug that Wikidot treats as a different, nonexistent site.
+/// happen here, on the raw segment: `wikidot_normalize::normalize` would
+/// turn `scp-jp.wikidot.com` into `scp-jp-wikidot-com`, a legal slug that
+/// Wikidot treats as a different, nonexistent site. The result is the site
+/// segment include resolution uses as-is; no slug normalization is applied
+/// to it afterwards, so case and dots survive verbatim.
 ///
 /// The prefix is accepted only when it is non-empty and matches
 /// `[A-Za-z0-9-]+` (no further dots). Anything else — including the dashed
 /// spelling, `*.wdfiles.com`, custom domains, and bare `wikidot.com` — is
-/// returned unchanged. Case is preserved; `normalize` case-folds afterwards.
+/// returned unchanged. Case is preserved.
 ///
 /// This is include-specific: triple-bracket links keep the dotted spelling in
 /// their local slug, so link parsing must keep using [`PageRef::parse`].
@@ -206,20 +208,30 @@ impl PageRef {
     }
 
     /// Parses an `[[include]]` target, canonicalizing a host-form
-    /// `<slug>.wikidot.com` site segment to `<slug>` before normalization.
+    /// `<slug>.wikidot.com` site segment to `<slug>`.
     ///
-    /// Live resolves a site pair only when both segments are non-empty and
-    /// the page segment consists of ASCII alphanumerics, `-`, `_`, and `:`;
-    /// any other run resolves as a page name only when the whole run uses
-    /// that same character set, and a run in that set whose normalized form
-    /// is empty still resolves, to the empty page name. [`PageRef::parse`]
-    /// stays untouched for triple-bracket links, where Wikidot keeps the
-    /// dotted spelling in the local slug.
+    /// Live resolves a site pair only when the site segment is non-empty
+    /// with every character in `[A-Za-z0-9.-]` and the page segment is
+    /// non-empty over ASCII alphanumerics, `-`, `_`, and `:`. The site is
+    /// canonicalized by [`canonical_include_site`] alone and is never
+    /// slug-normalized, so it is looked up and named verbatim apart from
+    /// the host-form strip. A pair whose page segment normalizes to empty
+    /// still resolves, to the empty page name. A run whose site segment
+    /// fails the gate resolves as a page name only when the whole run
+    /// uses the page character set, and a run in that set whose
+    /// normalized form is empty still resolves, to the empty page name.
+    /// [`PageRef::parse`] stays untouched for triple-bracket links,
+    /// where Wikidot keeps the dotted spelling in the local slug.
     pub fn parse_include(s: &str) -> Result<PageRef, PageRefParseError> {
         fn include_target_charset(s: &str) -> bool {
             s.bytes().all(|byte| {
                 byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b':')
             })
+        }
+
+        fn include_site_charset(s: &str) -> bool {
+            s.bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'.'))
         }
 
         let s = s.trim();
@@ -232,16 +244,22 @@ impl PageRef {
         {
             let site = rest[..idx].trim();
             let page = rest[idx + 1..].trim();
-            if !site.is_empty() && !page.is_empty() {
-                if include_target_charset(page) {
-                    let site = canonical_include_site(site);
-                    let result = PageRef::page_and_site(site.into_owned(), page);
-                    if !result.page().is_empty() {
-                        return Ok(result);
-                    }
-                }
+            if !site.is_empty()
+                && !page.is_empty()
+                && include_site_charset(site)
+                && include_target_charset(page)
+            {
+                let site = canonical_include_site(site).into_owned();
+                let (page, extra) = Self::split_page(page);
+                let mut page = str!(page);
+                let extra = extra.map(String::from);
+                normalize(&mut page);
 
-                return Err(PageRefParseError);
+                return Ok(PageRef {
+                    site: Some(site),
+                    page,
+                    extra,
+                });
             }
         }
 
@@ -429,8 +447,10 @@ fn canonical_include_site_leaves_non_ascii_segments_alone() {
         Cow::Borrowed("ああああx.wikidot.com"),
     );
 
-    // The public include path reaches the same code.
-    assert!(PageRef::parse_include(":ああああx:page").is_ok());
+    // The public include path reaches the same code: a non-ASCII site
+    // segment fails the site gate and the whole run fails the page
+    // character set, so the pair does not resolve.
+    assert!(PageRef::parse_include(":ああああx:page").is_err());
 }
 
 #[test]
@@ -439,10 +459,10 @@ fn parse_include_canonicalizes_dotted_site_segments() {
         PageRef::parse_include(":scp-jp.wikidot.com:component:jstyles"),
         PageRef::parse(":scp-jp:component:jstyles"),
     );
-    assert_eq!(
-        PageRef::parse_include(":SCP-JP.WIKIDOT.COM:component:jstyles"),
-        PageRef::parse(":scp-jp:component:jstyles"),
-    );
+    let upper = PageRef::parse_include(":SCP-JP.WIKIDOT.COM:component:jstyles")
+        .expect("host-form pair should resolve");
+    assert_eq!(upper.site(), Some("SCP-JP"));
+    assert_eq!(upper.page(), "component:jstyles");
     assert_eq!(
         PageRef::parse_include(":scp-jp-sandbox3:component:jstyles"),
         PageRef::parse(":scp-jp-sandbox3:component:jstyles"),
@@ -502,4 +522,44 @@ mod prop {
             let _ = canonical_include_site(&s);
         }
     }
+}
+
+#[test]
+fn parse_include_keeps_the_site_segment_verbatim() {
+    for (input, site, page) in [
+        (":FOO:page", "FOO", "page"),
+        (":a.b:other-page", "a.b", "other-page"),
+        (":---:page", "---", "page"),
+        (":-.wikidot.com:page", "-", "page"),
+        (":sandbox.:other-page", "sandbox.", "other-page"),
+        (":SANDBOX.WIKIDOT.COM:other-page", "SANDBOX", "other-page"),
+    ] {
+        let actual = PageRef::parse_include(input).expect("site pair should resolve");
+        assert_eq!(actual.site(), Some(site), "{input:?}");
+        assert_eq!(actual.page(), page, "{input:?}");
+    }
+}
+
+#[test]
+fn parse_include_site_gate_failures() {
+    for input in [
+        ":foo/bar:other-page",
+        ":foo#bar:other-page",
+        ":café:other-page",
+    ] {
+        assert!(PageRef::parse_include(input).is_err(), "{input:?}");
+    }
+
+    let fallback = PageRef::parse_include(":foo_bar:some-page")
+        .expect("underscore site run should resolve as a page");
+    assert_eq!(fallback.site(), None);
+    assert_eq!(fallback.page(), "foo-bar:some-page");
+}
+
+#[test]
+fn parse_include_pair_page_may_normalize_to_empty() {
+    let actual = PageRef::parse_include(":sandbox-for-codex:---")
+        .expect("pair should resolve with an empty page name");
+    assert_eq!(actual.site(), Some("sandbox-for-codex"));
+    assert_eq!(actual.page(), "");
 }

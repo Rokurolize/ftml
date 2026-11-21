@@ -678,6 +678,103 @@ fn include_swallowed_by_multiline_argument_does_not_overlap() {
 }
 
 #[test]
+fn include_after_a_failed_candidate_expands_on_the_next_line() {
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let input =
+        "[[include bad.page\n[[include muse-probe-audit-g13-target | marker=SURVIVED]]";
+
+    let (output, pages) = include(
+        input,
+        &settings,
+        DebugIncluder::all_present(),
+        || unreachable!(),
+    )
+    .expect("include failed");
+
+    assert_eq!(
+        pages,
+        vec![PageRef::page_only("muse-probe-audit-g13-target")],
+    );
+    assert_eq!(
+        output,
+        "[[include bad.page\n\n<INCLUDED-PAGE muse-probe-audit-g13-target {\"marker\" => \"SURVIVED\"}>",
+    );
+}
+
+#[test]
+fn include_after_an_unterminated_candidate_expands_on_the_next_line() {
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let input = "[[include muse-probe-g14-target]]x\n[[include other-page]]\nY";
+
+    let (output, pages) = include(
+        input,
+        &settings,
+        DebugIncluder::all_present(),
+        || unreachable!(),
+    )
+    .expect("include failed");
+
+    assert_eq!(pages, vec![PageRef::page_only("other-page")]);
+    assert!(
+        output.starts_with("[[include muse-probe-g14-target]]x\n"),
+        "failed candidate line must stay literal: {output}",
+    );
+    assert!(
+        output.contains("<INCLUDED-PAGE other-page {}>"),
+        "second line include must expand: {output}",
+    );
+    assert!(
+        output.ends_with("Y"),
+        "trailing text must survive: {output}"
+    );
+}
+
+#[test]
+fn includes_after_repeated_failed_candidates_expand() {
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let input =
+        "[[include bad.page\n[[include also.bad\n[[include muse-probe-audit-g13-target]]";
+
+    let (output, pages) = include(
+        input,
+        &settings,
+        DebugIncluder::all_present(),
+        || unreachable!(),
+    )
+    .expect("include failed");
+
+    assert_eq!(
+        pages,
+        vec![PageRef::page_only("muse-probe-audit-g13-target")],
+    );
+    assert!(
+        output.starts_with("[[include bad.page\n[[include also.bad\n"),
+        "failed candidate lines must stay literal: {output}",
+    );
+    assert!(
+        output.contains("<INCLUDED-PAGE muse-probe-audit-g13-target {}>"),
+        "third line include must expand: {output}",
+    );
+}
+
+#[test]
+fn include_on_a_failed_candidates_own_line_stays_literal() {
+    let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+    let input = "[[include bad.page]] same line [[include muse-probe-audit-g13-target]]";
+
+    let (output, pages) = include(
+        input,
+        &settings,
+        DebugIncluder::all_present(),
+        || unreachable!(),
+    )
+    .expect("include failed");
+
+    assert!(pages.is_empty());
+    assert_eq!(output, input);
+}
+
+#[test]
 fn tight_quoted_include_is_not_consumed_by_the_include_scanner() {
     let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
     let input = "BEFORE\n>[[include muse-probe-g14-target |x=1]]\nAFTER\n";

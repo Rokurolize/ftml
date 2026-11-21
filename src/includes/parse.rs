@@ -80,7 +80,7 @@ pub fn parse_include_block<'t>(
 
 fn process_pairs(mut pairs: Pairs<Rule>) -> Result<IncludeRef, IncludeParseError> {
     let page_raw = pairs.next().ok_or(IncludeParseError)?.as_str();
-    let page_ref = validate_include_page_ref(PageRef::parse_include(page_raw)?)?;
+    let page_ref = PageRef::parse_include(page_raw)?;
 
     trace!("Got page for include {page_ref:?}");
     let mut raw_arguments = Vec::new();
@@ -200,14 +200,6 @@ fn trim_include_space_start(source: &str) -> &str {
     &source[index..]
 }
 
-fn validate_include_page_ref(page_ref: PageRef) -> Result<PageRef, IncludeParseError> {
-    if page_ref.site().is_some() && page_ref.page().is_empty() {
-        return Err(IncludeParseError);
-    }
-
-    Ok(page_ref)
-}
-
 #[derive(Debug, PartialEq, Eq)]
 pub struct IncludeParseError;
 
@@ -230,44 +222,6 @@ mod tests {
     }
 
     #[test]
-    fn validate_include_page_ref_rejects_empty_page() {
-        let empty = PageRef {
-            site: Some(str!("scp-wiki")),
-            page: String::new(),
-            extra: None,
-        };
-
-        assert_eq!(
-            validate_include_page_ref(empty),
-            Err(IncludeParseError),
-            "empty include page references should reject",
-        );
-    }
-
-    #[test]
-    fn validate_include_page_ref_accepts_a_siteless_empty_page() {
-        let page_ref = PageRef::page_only(":::");
-
-        assert_eq!(page_ref.page(), "");
-        assert_eq!(
-            validate_include_page_ref(page_ref.clone()),
-            Ok(page_ref),
-            "site-less empty page references should pass through",
-        );
-    }
-
-    #[test]
-    fn validate_include_page_ref_accepts_non_empty_page() {
-        let page_ref = PageRef::page_only("component:ok");
-
-        assert_eq!(
-            validate_include_page_ref(page_ref.clone()),
-            Ok(page_ref),
-            "non-empty include page references should pass through",
-        );
-    }
-
-    #[test]
     fn parse_include_block_rejects_empty_page_reference() {
         let error = parse_include_block("[[include :scp-wiki:/]]", 0)
             .expect_err("empty include page should reject");
@@ -281,6 +235,15 @@ mod tests {
             .expect("a colon run should parse as an empty page name");
 
         assert_eq!(include.page_ref().site(), None);
+        assert_eq!(include.page_ref().page(), "");
+    }
+
+    #[test]
+    fn parse_include_block_accepts_a_pair_page_that_normalizes_to_empty() {
+        let (include, _) = parse_include_block("[[include :sandbox-for-codex:---]]", 0)
+            .expect("a pair whose page normalizes to empty should parse");
+
+        assert_eq!(include.page_ref().site(), Some("sandbox-for-codex"));
         assert_eq!(include.page_ref().page(), "");
     }
 

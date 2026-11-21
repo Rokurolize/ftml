@@ -86,11 +86,11 @@ where
         let slice = mtch.as_str();
         trace!("Found include regex match (start {start}, slice '{slice}')");
 
-        let Some(candidate_end) = find_include_end(input, mtch.end(), input.len()) else {
+        if find_include_end(input, mtch.end(), input.len()).is_none() {
             warn!("Unable to find include terminator, skipping remaining input");
             search_start = input.len();
             continue;
-        };
+        }
 
         let parsed = parse_include_block(input, start).ok();
 
@@ -101,7 +101,7 @@ where
                 search_start = end;
             }
             None => {
-                search_start = candidate_end;
+                search_start = next_line_start(input, start);
                 warn!("Unable to parse include regex match, resuming at {search_start}");
             }
         }
@@ -195,6 +195,13 @@ where
     pages.reverse();
 
     Ok((output, pages))
+}
+
+fn next_line_start(input: &str, line_start: usize) -> usize {
+    match input[line_start..].find('\n') {
+        Some(index) => line_start + index + 1,
+        None => input.len(),
+    }
 }
 
 fn find_include_end(input: &str, start: usize, end_bound: usize) -> Option<usize> {

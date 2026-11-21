@@ -75,10 +75,23 @@ fn try_consume_fn<'r, 't>(
 /// but if a hex specification is passed, and it doesn't already begin with
 /// `#`, then one should be prepended.
 fn hexify_color(color: &str) -> Cow<'_, str> {
+    let hex = color.strip_prefix('#').unwrap_or(color);
     let hex_color_regex = regex!(r"^([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$");
-    if hex_color_regex.is_match(color) {
-        Cow::Owned(format!("#{color}"))
+    if hex_color_regex.is_match(hex) {
+        Cow::Owned(format!("#{}", hex.to_ascii_lowercase()))
     } else {
         Cow::Borrowed(color)
+    }
+}
+
+#[cfg(test)]
+mod r10_tests {
+    use super::hexify_color;
+
+    #[test]
+    fn hex_colors_are_serialized_lowercase() {
+        assert_eq!(hexify_color("ABC"), "#abc");
+        assert_eq!(hexify_color("#B01"), "#b01");
+        assert_eq!(hexify_color("abc"), "#abc");
     }
 }

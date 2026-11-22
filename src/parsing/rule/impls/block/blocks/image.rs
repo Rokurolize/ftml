@@ -544,14 +544,11 @@ fn split_image_link_target(value: Cow<'_, str>) -> (Cow<'_, str>, Option<AnchorT
 }
 
 fn parse_wikidot_image_link_target<'t>(target: Cow<'t, str>) -> Option<LinkLocation<'t>> {
-    if target.starts_with("http://") || target.starts_with("https://") {
-        let authority = target
-            .split_once("://")
-            .expect("qualified HTTP URL has a separator")
-            .1
-            .split(['/', '?', '#'])
-            .next()
-            .unwrap_or_default();
+    if let Some((scheme, rest)) = target.split_once("://") {
+        if !matches!(scheme, "http" | "https" | "ftp" | "gopher" | "news") {
+            return None;
+        }
+        let authority = rest.split(['/', '?', '#']).next().unwrap_or_default();
         let host = authority.rsplit('@').next().unwrap_or_default();
         let host = host
             .strip_prefix('[')

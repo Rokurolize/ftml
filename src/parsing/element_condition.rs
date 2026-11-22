@@ -45,11 +45,42 @@ impl<'t> ElementCondition<'t> {
     }
 
     pub fn parse_with_commas(raw_spec: &'t str) -> Vec<ElementCondition<'t>> {
-        raw_spec
-            .split([' ', ','])
-            .filter(|s| !s.is_empty())
-            .map(Self::new_from_value)
-            .collect()
+        let mut conditions = Vec::new();
+
+        for field in raw_spec.split(',') {
+            let mut tokens = field.split(' ').filter(|s| !s.is_empty());
+
+            match tokens.next() {
+                Some(first) => {
+                    conditions.push(Self::new_from_value(first));
+                    conditions.extend(tokens.map(Self::new_from_value));
+                }
+                None => conditions.push(Self::new(ElementConditionType::Present, "")),
+            }
+        }
+
+        conditions
+    }
+
+    fn new_from_owned(value: &str) -> Self {
+        if let Some(value) = value.strip_prefix('+') {
+            return ElementCondition {
+                ctype: ElementConditionType::Required,
+                value: Cow::Owned(value.to_owned()),
+            };
+        }
+
+        if let Some(value) = value.strip_prefix('-') {
+            return ElementCondition {
+                ctype: ElementConditionType::Prohibited,
+                value: Cow::Owned(value.to_owned()),
+            };
+        }
+
+        ElementCondition {
+            ctype: ElementConditionType::Present,
+            value: Cow::Owned(value.to_owned()),
+        }
     }
 
     fn new_from_value(value: &'t str) -> Self {
@@ -97,30 +128,26 @@ impl<'t> ElementCondition<'t> {
     pub fn parse_cow_with_commas(spec: Cow<'t, str>) -> Vec<ElementCondition<'t>> {
         match spec {
             Cow::Borrowed(spec) => Self::parse_with_commas(spec),
-            Cow::Owned(spec) => spec
-                .split([' ', ','])
-                .filter(|s| !s.is_empty())
-                .map(|part| {
-                    if let Some(value) = part.strip_prefix('+') {
-                        return ElementCondition {
-                            ctype: ElementConditionType::Required,
-                            value: Cow::Owned(value.to_owned()),
-                        };
-                    }
+            Cow::Owned(spec) => {
+                let mut conditions = Vec::new();
 
-                    if let Some(value) = part.strip_prefix('-') {
-                        return ElementCondition {
-                            ctype: ElementConditionType::Prohibited,
-                            value: Cow::Owned(value.to_owned()),
-                        };
-                    }
+                for field in spec.split(',') {
+                    let mut tokens = field.split(' ').filter(|s| !s.is_empty());
 
-                    ElementCondition {
-                        ctype: ElementConditionType::Present,
-                        value: Cow::Owned(part.to_owned()),
+                    match tokens.next() {
+                        Some(first) => {
+                            conditions.push(Self::new_from_owned(first));
+                            conditions.extend(tokens.map(Self::new_from_owned));
+                        }
+                        None => conditions.push(ElementCondition {
+                            ctype: ElementConditionType::Present,
+                            value: Cow::Owned(String::new()),
+                        }),
                     }
-                })
-                .collect(),
+                }
+
+                conditions
+            }
         }
     }
 

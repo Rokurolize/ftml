@@ -218,6 +218,34 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
         self.chain()
     }
 
+    fn attr_value_wikidot(&mut self, value_parts: &[&str]) {
+        self.ctx.push_raw('"');
+
+        for part in value_parts {
+            self.ctx.push_escaped_wikidot_attribute(part);
+        }
+
+        self.ctx.push_raw('"');
+    }
+
+    fn attr_single_mode(
+        &mut self,
+        key: &str,
+        value_parts: &[&str],
+        wikidot_values: bool,
+    ) {
+        let has_value = !value_parts.iter().all(|s| s.is_empty());
+        self.attr_key(key, has_value);
+
+        if has_value {
+            if wikidot_values {
+                self.attr_value_wikidot(value_parts);
+            } else {
+                self.attr_value(value_parts);
+            }
+        }
+    }
+
     pub fn attr_wikidot_attribute(&mut self, key: &str, value: &str) -> &mut Self {
         self.attr_key(key, true);
         self.ctx.push_raw('"');
@@ -227,9 +255,21 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
     }
 
     pub fn attr(&mut self, attributes: AddedAttributes) -> &mut Self {
+        self.attr_impl(attributes, false)
+    }
+
+    pub fn attr_wikidot(&mut self, attributes: AddedAttributes) -> &mut Self {
+        self.attr_impl(attributes, true)
+    }
+
+    fn attr_impl(
+        &mut self,
+        attributes: AddedAttributes,
+        wikidot_values: bool,
+    ) -> &mut Self {
         let Some(map_ref) = attributes.map else {
             for (key, value_parts) in filter_attribute_entries(&attributes) {
-                self.attr_single(key, value_parts);
+                self.attr_single_mode(key, value_parts, wikidot_values);
             }
 
             return self.chain();
@@ -261,7 +301,7 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
                     self.attr_single_quoted(key, &[]);
                     continue;
                 }
-                self.attr_single(key, &[value]);
+                self.attr_single_mode(key, &[value], wikidot_values);
             }
 
             for name in &explicit_empty {
@@ -281,7 +321,7 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
             }
             if let Some(map_value) = attribute_map.get(&cow!(key)) {
                 if omit_empty_user_class(key, map_value) {
-                    self.attr_single(key, value_parts);
+                    self.attr_single_mode(key, value_parts, wikidot_values);
                     merged.insert(key);
                     continue;
                 }
@@ -291,14 +331,14 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
                 merged_value.push(" ");
                 merged_value.push(map_value);
 
-                self.attr_single(key, &merged_value);
+                self.attr_single_mode(key, &merged_value, wikidot_values);
                 merged.insert(key);
             }
         }
 
         for (key, value_parts) in filter_attribute_entries(&attributes) {
             if !merged.contains(key) {
-                self.attr_single(key, value_parts);
+                self.attr_single_mode(key, value_parts, wikidot_values);
             }
         }
 
@@ -321,7 +361,7 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
                     self.attr_single_quoted(key, &[]);
                     continue;
                 }
-                self.attr_single(key, &[value]);
+                self.attr_single_mode(key, &[value], wikidot_values);
             }
         }
 

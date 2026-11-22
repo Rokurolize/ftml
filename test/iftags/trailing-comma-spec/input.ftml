@@ -1,0 +1,2 @@
+A [[iftags -foo,]]KEPT[[/iftags]] B
+C [[iftags -foo]]KEPT[[/iftags]] D

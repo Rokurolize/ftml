@@ -64,6 +64,11 @@ fn parse_fn<'r, 't>(
 
     let (value, mut arguments) =
         parser.get_head_name_map_wikidot(&BLOCK_DATE, in_head)?;
+    let value = if parser.settings().layout.legacy() {
+        wikidot_timestamp_value(value, &mut arguments)
+    } else {
+        value
+    };
     if parser.settings().layout.legacy() && wikidot_blank_date_head(&value) {
         return ok!(Elements::None);
     }
@@ -123,6 +128,34 @@ fn parse_fn<'r, 't>(
         format,
         hover
     })
+}
+
+fn wikidot_timestamp_value<'t>(
+    value: Cow<'t, str>,
+    arguments: &mut Arguments<'t>,
+) -> Cow<'t, str> {
+    if let Some(timestamp) = arguments.get("timestamp") {
+        return timestamp;
+    }
+
+    if let Some(assignment) = value.strip_prefix("timestamp=") {
+        let assignment = strip_assignment_quotes(assignment);
+        return Cow::Owned(assignment.to_owned());
+    }
+
+    value
+}
+
+fn strip_assignment_quotes(value: &str) -> &str {
+    if let Some(rest) = value.strip_prefix('"') {
+        return rest.strip_suffix('"').unwrap_or(value);
+    }
+
+    if let Some(rest) = value.strip_prefix('\'') {
+        return rest.strip_suffix('\'').unwrap_or(value);
+    }
+
+    value
 }
 
 fn wikidot_blank_date_head(value: &str) -> bool {

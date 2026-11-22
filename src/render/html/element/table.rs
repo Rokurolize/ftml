@@ -45,7 +45,13 @@ pub fn render_table(ctx: &mut HtmlContext, table: &Table) {
         )
     };
 
-    ctx.html().table().attr(table_attributes).inner(|ctx| {
+    let mut table_tag = ctx.html().table();
+    if layout.legacy() {
+        table_tag.attr_wikidot(table_attributes);
+    } else {
+        table_tag.attr(table_attributes);
+    }
+    table_tag.inner(|ctx| {
         if layout.legacy() {
             ctx.push_raw('\n');
             render_rows(ctx, table, layout, &mut column_span_buf, value_one);
@@ -75,10 +81,13 @@ fn render_rows(
     value_one: NonZeroU32,
 ) {
     for row in &table.rows {
-        ctx.html()
-            .tr()
-            .attr(attr!(;; &row.attributes))
-            .inner(|ctx| {
+        let mut row_tag = ctx.html().tr();
+        if layout.legacy() {
+            row_tag.attr_wikidot(attr!(;; &row.attributes));
+        } else {
+            row_tag.attr(attr!(;; &row.attributes));
+        }
+        row_tag.inner(|ctx| {
                 if layout.legacy() {
                     ctx.push_raw('\n');
                 }
@@ -114,7 +123,11 @@ fn render_rows(
                         && core.len() == 1
                         && cell_content_is_block(core[0]);
                     let mut table_cell = ctx.html().table_cell(cell.header);
-                    table_cell.attr(attributes);
+                    if layout.legacy() {
+                        table_cell.attr_wikidot(attributes);
+                    } else {
+                        table_cell.attr(attributes);
+                    }
                     table_cell.inner(|ctx| {
                         if pad {
                             ctx.push_raw('\n');
@@ -136,6 +149,7 @@ fn render_rows(
                     }
                 }
             });
+        drop(row_tag);
         if layout.legacy() {
             ctx.push_raw('\n');
         }

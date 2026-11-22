@@ -61,14 +61,47 @@ fn wikidot_onclick(action: &StandaloneButtonAction<'_>) -> String {
         StandaloneButtonAction::Edit => {
             "WIKIDOT.page.listeners.editClick(event)".to_owned()
         }
+        StandaloneButtonAction::EditAppend => {
+            "WIKIDOT.page.listeners.append(event)".to_owned()
+        }
+        StandaloneButtonAction::EditSections => {
+            "WIKIDOT.page.listeners.toggleEditSections(event)".to_owned()
+        }
         StandaloneButtonAction::History => {
             "WIKIDOT.page.listeners.historyClick(event)".to_owned()
+        }
+        StandaloneButtonAction::Print => {
+            "WIKIDOT.page.listeners.printClick(event)".to_owned()
+        }
+        StandaloneButtonAction::Files => {
+            "WIKIDOT.page.listeners.filesClick(event)".to_owned()
+        }
+        StandaloneButtonAction::Tags => {
+            "WIKIDOT.page.listeners.editTags(event)".to_owned()
         }
         StandaloneButtonAction::Source => {
             "WIKIDOT.page.listeners.viewSourceClick(event)".to_owned()
         }
-        StandaloneButtonAction::Print => {
-            "WIKIDOT.page.listeners.printClick(event)".to_owned()
+        StandaloneButtonAction::Talk => {
+            "window.location.href='/talk:'+WIKIREQUEST.info.pageUnixName".to_owned()
+        }
+        StandaloneButtonAction::Backlinks => {
+            "WIKIDOT.page.listeners.backlinksClick(event)".to_owned()
+        }
+        StandaloneButtonAction::Rename => {
+            "WIKIDOT.page.listeners.renamePage(event)".to_owned()
+        }
+        StandaloneButtonAction::Delete => {
+            "WIKIDOT.page.listeners.deletePage(event)".to_owned()
+        }
+        StandaloneButtonAction::Parent => {
+            "WIKIDOT.page.listeners.parentClick(event)".to_owned()
+        }
+        StandaloneButtonAction::EditMeta => {
+            "WIKIDOT.page.listeners.editMetaClick(event)".to_owned()
+        }
+        StandaloneButtonAction::Watchers => {
+            "WIKIDOT.page.listeners.watchersClick(event)".to_owned()
         }
         StandaloneButtonAction::SetTags(alterations) => {
             let alterations = alterations

@@ -42,9 +42,20 @@ impl StandaloneButton<'_> {
 #[serde(rename_all = "kebab-case", tag = "type", content = "data")]
 pub enum StandaloneButtonAction<'t> {
     Edit,
+    EditAppend,
+    EditSections,
     History,
-    Source,
     Print,
+    Files,
+    Tags,
+    Source,
+    Talk,
+    Backlinks,
+    Rename,
+    Delete,
+    Parent,
+    EditMeta,
+    Watchers,
     SetTags(Vec<TagAlteration<'t>>),
 }
 
@@ -52,9 +63,20 @@ impl StandaloneButtonAction<'_> {
     pub fn to_owned(&self) -> StandaloneButtonAction<'static> {
         match self {
             Self::Edit => StandaloneButtonAction::Edit,
+            Self::EditAppend => StandaloneButtonAction::EditAppend,
+            Self::EditSections => StandaloneButtonAction::EditSections,
             Self::History => StandaloneButtonAction::History,
-            Self::Source => StandaloneButtonAction::Source,
             Self::Print => StandaloneButtonAction::Print,
+            Self::Files => StandaloneButtonAction::Files,
+            Self::Tags => StandaloneButtonAction::Tags,
+            Self::Source => StandaloneButtonAction::Source,
+            Self::Talk => StandaloneButtonAction::Talk,
+            Self::Backlinks => StandaloneButtonAction::Backlinks,
+            Self::Rename => StandaloneButtonAction::Rename,
+            Self::Delete => StandaloneButtonAction::Delete,
+            Self::Parent => StandaloneButtonAction::Parent,
+            Self::EditMeta => StandaloneButtonAction::EditMeta,
+            Self::Watchers => StandaloneButtonAction::Watchers,
             Self::SetTags(alterations) => StandaloneButtonAction::SetTags(
                 alterations.iter().map(TagAlteration::to_owned).collect(),
             ),

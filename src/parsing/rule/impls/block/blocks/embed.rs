@@ -226,6 +226,15 @@ fn wikidot_embed_body(body: &str) -> WikidotEmbedBody {
         return WikidotEmbedBody::NoMatch;
     }
 
+    if attributes.iter().any(|(name, value)| {
+        value.is_some()
+            && name.len() > 2
+            && name.starts_with("on")
+            && name[2..].bytes().all(|byte| byte.is_ascii_alphabetic())
+    }) {
+        return WikidotEmbedBody::NoMatch;
+    }
+
     let source = attributes
         .iter()
         .find(|(name, _)| name == "src")

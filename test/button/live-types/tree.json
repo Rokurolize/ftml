@@ -1,0 +1,219 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "standalone-button",
+                        "data": {
+                            "action": {
+                                "type": "rename"
+                            },
+                            "label": "rename"
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "standalone-button",
+                        "data": {
+                            "action": {
+                                "type": "delete"
+                            },
+                            "label": "delete"
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "standalone-button",
+                        "data": {
+                            "action": {
+                                "type": "parent"
+                            },
+                            "label": "parent"
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "standalone-button",
+                        "data": {
+                            "action": {
+                                "type": "edit-meta"
+                            },
+                            "label": "edit meta"
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "standalone-button",
+                        "data": {
+                            "action": {
+                                "type": "watchers"
+                            },
+                            "label": "watchers"
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "standalone-button",
+                        "data": {
+                            "action": {
+                                "type": "edit-append"
+                            },
+                            "label": "append"
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "standalone-button",
+                        "data": {
+                            "action": {
+                                "type": "edit-sections"
+                            },
+                            "label": "edit sections"
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "standalone-button",
+                        "data": {
+                            "action": {
+                                "type": "files"
+                            },
+                            "label": "files"
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "standalone-button",
+                        "data": {
+                            "action": {
+                                "type": "tags"
+                            },
+                            "label": "tags"
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "standalone-button",
+                        "data": {
+                            "action": {
+                                "type": "talk"
+                            },
+                            "label": "talk"
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "standalone-button",
+                        "data": {
+                            "action": {
+                                "type": "backlinks"
+                            },
+                            "label": "backlinks"
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {
+                    "class": "error-block"
+                },
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "italics",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "lock"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "text",
+                        "data": " is not a valid button type"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {
+                    "class": "error-block"
+                },
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "italics",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "foo-bar"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "text",
+                        "data": " is not a valid button type"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "standalone-button",
+                        "data": {
+                            "action": {
+                                "type": "edit-meta"
+                            },
+                            "label": "edit meta"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

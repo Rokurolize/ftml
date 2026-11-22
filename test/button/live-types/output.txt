@@ -1,0 +1,18 @@
+rename
+delete
+parent
+edit meta
+watchers
+append
+edit sections
+files
+tags
+talk
+backlinks
+
+
+lock is not a valid button type
+
+foo-bar is not a valid button type
+
+edit meta

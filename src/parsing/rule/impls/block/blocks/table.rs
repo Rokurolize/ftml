@@ -944,20 +944,63 @@ fn next_cell_closer(haystack: &str) -> Option<(usize, usize)> {
 /// that table's end.
 fn legacy_table_region_end(parser: &Parser<'_, '_>, from: usize) -> usize {
     let source = parser.full_text().inner();
+    let mut depth = 0usize;
+    let mut first_end = None;
     let mut search = from;
     while search < source.len() {
-        let Some(rel) = find_ignore_ascii_case(&source[search..], "[[/table]]") else {
-            return source.len();
+        let closer = find_ignore_ascii_case(&source[search..], "[[/table]]")
+            .map(|rel| search + rel);
+        let opener = nested_table_opener(&source[search..]).map(|rel| search + rel);
+        if let (Some(open), Some(close)) = (opener, closer)
+            && open < close
+        {
+            if table_head_completes(source, open, close) {
+                depth += 1;
+            }
+            search = open + 2;
+            continue;
+        }
+        let Some(at) = closer else {
+            break;
         };
-        let at = search + rel;
         let after = at + "[[/table]]".len();
         let content_of_cell = source[after..].starts_with("||");
-        if !parser.wikidot_byte_on_list_item_line(at) && !content_of_cell {
-            return at;
+        let qualifies = !parser.wikidot_byte_on_list_item_line(at) && !content_of_cell;
+        if depth == 0 {
+            if qualifies {
+                return at;
+            }
+        } else {
+            if qualifies && first_end.is_none() {
+                first_end = Some(at);
+            }
+            depth -= 1;
         }
         search = after;
     }
-    source.len()
+    first_end.unwrap_or(source.len())
+}
+
+fn nested_table_opener(source: &str) -> Option<usize> {
+    let bytes = source.as_bytes();
+    let mut search = 0usize;
+    while let Some(rel) = find_ignore_ascii_case(&source[search..], "[[table") {
+        let at = search + rel;
+        let after = at + "[[table".len();
+        let boundary = bytes.get(after).is_none_or(|byte| {
+            !(byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_'))
+        });
+        if boundary {
+            return Some(at);
+        }
+        search = at + 2;
+    }
+    None
+}
+
+fn table_head_completes(source: &str, opener: usize, closer: usize) -> bool {
+    let limit = (closer + "[[/table]]".len()).min(source.len());
+    find_ignore_ascii_case(&source[opener..limit], "]]").is_some()
 }
 
 /// List runs before Tableadv and wraps a bullet line in list-end tokens.

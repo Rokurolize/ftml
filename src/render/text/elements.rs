@@ -19,6 +19,10 @@
  */
 
 use super::TextContext;
+use crate::render::html::element::text::{
+    wikidot_obfuscated_email, wikidot_obfuscated_email_claimed,
+    wikidot_obfuscated_email_described,
+};
 use crate::tree::{
     CodeBlock, ContainerType, DefinitionListItem, Element, ListItem, Module,
     PartialElement, TabViewItem,
@@ -98,32 +102,25 @@ pub fn render_element(ctx: &mut TextContext, element: &Element) {
             // Table-of-contents entries show the rendered heading text, so
             // an email reads as its obfuscated form, matching live Wikidot.
             if ctx.title_mode() && ctx.settings().layout.legacy() {
-                // Mirror the Wikidot legacy email obfuscation (see
-                // `wikidot_obfuscated_email` in the HTML element renderer);
-                // the span wrapper is presentation, not plain-text title.
-                match email.split_once('@') {
-                    Some((local, domain)) => {
-                        let local_rev: String = local.chars().rev().collect();
-                        let domain_rev: String = domain.chars().rev().collect();
-                        ctx.push_str(&format!(
-                            "{domain_rev}|{local_rev}#{domain_rev}|{local_rev}"
-                        ));
-                    }
-                    None => ctx.push_str(email),
-                }
+                ctx.push_str(&wikidot_obfuscated_email(email));
             } else {
                 ctx.push_str(email);
             }
         }
-        Element::EmailDescribed { email, label } => {
+        Element::EmailDescribed {
+            email,
+            label,
+            claimed_placeholder,
+        } => {
             if ctx.title_mode() && ctx.settings().layout.legacy() {
-                if let Some((local, domain)) = email.split_once('@') {
-                    let local_rev: String = local.chars().rev().collect();
-                    let domain_rev: String = domain.chars().rev().collect();
-                    let label_rev: String = label.chars().rev().collect();
-                    ctx.push_str(&format!("{domain_rev}|{local_rev}#{label_rev}"));
-                } else {
-                    ctx.push_str(label);
+                match claimed_placeholder {
+                    Some(index) => {
+                        ctx.push_str(&wikidot_obfuscated_email_claimed(email, *index));
+                    }
+                    None if email.contains('@') => {
+                        ctx.push_str(&wikidot_obfuscated_email_described(email, label));
+                    }
+                    None => ctx.push_str(label),
                 }
             } else {
                 ctx.push_str(label);

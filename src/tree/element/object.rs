@@ -109,9 +109,12 @@ pub enum Element<'t> {
     /// is up to the render implementation.
     Email(Cow<'t, str>),
 
+    #[serde(rename_all = "kebab-case")]
     EmailDescribed {
         email: Cow<'t, str>,
         label: Cow<'t, str>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        claimed_placeholder: Option<usize>,
     },
 
     #[serde(skip)]
@@ -683,9 +686,14 @@ impl Element<'_> {
             Element::Form(text) => Element::Form(string_to_owned(text)),
             Element::Variable(name) => Element::Variable(string_to_owned(name)),
             Element::Email(email) => Element::Email(string_to_owned(email)),
-            Element::EmailDescribed { email, label } => Element::EmailDescribed {
+            Element::EmailDescribed {
+                email,
+                label,
+                claimed_placeholder,
+            } => Element::EmailDescribed {
                 email: string_to_owned(email),
                 label: string_to_owned(label),
+                claimed_placeholder: *claimed_placeholder,
             },
             Element::Delayed(delayed) => Element::Delayed(delayed.to_owned()),
             Element::ContentSeparator => Element::ContentSeparator,

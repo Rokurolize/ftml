@@ -45,7 +45,7 @@ mod social;
 mod style;
 mod table;
 mod tabs;
-mod text;
+pub(crate) mod text;
 mod toc;
 mod user;
 mod video;
@@ -320,9 +320,11 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
         Element::Form(text) => render_form_line(ctx, text),
         Element::Variable(name) => render_variable(ctx, name),
         Element::Email(email) => render_email(ctx, email),
-        Element::EmailDescribed { email, label } => {
-            render_email_described(ctx, email, label)
-        }
+        Element::EmailDescribed {
+            email,
+            label,
+            claimed_placeholder,
+        } => render_email_described(ctx, email, label, *claimed_placeholder),
         Element::Delayed(_) => {
             panic!("unbound delayed element reached the HTML renderer")
         }

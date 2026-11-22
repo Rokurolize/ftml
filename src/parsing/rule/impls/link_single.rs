@@ -208,6 +208,12 @@ fn try_consume_wikidot_link<'r, 't>(
 where
     'r: 't,
 {
+    if target.is_none()
+        && let Some(elements) = wikidot_described_email_claim(parser)
+    {
+        return success_elements(elements);
+    }
+
     if single_link_raw_forbids_link(parser)? {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
@@ -259,7 +265,127 @@ where
     }
 
     parser.update(&attempt);
-    Some(Elements::Single(Element::EmailDescribed { email, label }))
+    Some(Elements::Single(Element::EmailDescribed {
+        email,
+        label,
+        claimed_placeholder: None,
+    }))
+}
+
+fn wikidot_described_email_claim<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Option<Elements<'t>>
+where
+    'r: 't,
+{
+    use super::raw::RULE_RAW;
+
+    if parser.current().token != Token::Email {
+        return None;
+    }
+    let email = cow!(parser.current().slice);
+
+    let mut attempt = parser.clone();
+    attempt.step().ok()?;
+    if attempt.current().token != Token::Whitespace || attempt.current().slice != " " {
+        return None;
+    }
+    attempt.step().ok()?;
+
+    let claim_start = attempt.current().span.start;
+    let (label, claimed_raw) = match attempt.current().token {
+        Token::Url => {
+            let label = cow!(attempt.current().slice);
+            attempt.step().ok()?;
+            if attempt.current().token != Token::RightBracket {
+                return None;
+            }
+            attempt.step().ok()?;
+            (label, false)
+        }
+        Token::Raw | Token::LeftRaw => {
+            let mut raw_attempt = attempt.clone();
+            let elements = RULE_RAW.try_consume(&mut raw_attempt).ok()?.item;
+            let Elements::Single(Element::Raw(label)) = elements else {
+                return None;
+            };
+            if raw_attempt.current().token != Token::RightBracket {
+                return None;
+            }
+            raw_attempt.step().ok()?;
+            attempt = raw_attempt;
+            (label, true)
+        }
+        _ => return None,
+    };
+
+    let index = wikidot_claimed_placeholder_index(parser, claim_start, claimed_raw);
+    parser.update(&attempt);
+    Some(Elements::Single(Element::EmailDescribed {
+        email,
+        label,
+        claimed_placeholder: Some(index),
+    }))
+}
+
+fn wikidot_claimed_placeholder_index(
+    parser: &Parser<'_, '_>,
+    claim_start: usize,
+    claimed_raw: bool,
+) -> usize {
+    let mut raw_total = 0usize;
+    let mut raw_before = 0usize;
+    let mut url_before = 0usize;
+    let mut paragraphs = 1usize;
+    let mut raw_state = 0u8;
+    let mut raw_opener_before_claim = false;
+
+    let tokenization = crate::tokenize(parser.full_text().inner());
+    for token in tokenization.tokens() {
+        match raw_state {
+            1 => {
+                if token.token == Token::Raw {
+                    raw_state = 0;
+                    raw_total += 1;
+                    if raw_opener_before_claim {
+                        raw_before += 1;
+                    }
+                }
+            }
+            2 => {
+                if token.token == Token::RightRaw {
+                    raw_state = 0;
+                    raw_total += 1;
+                    if raw_opener_before_claim {
+                        raw_before += 1;
+                    }
+                }
+            }
+            _ => match token.token {
+                Token::Raw => {
+                    raw_state = 1;
+                    raw_opener_before_claim = token.span.start < claim_start;
+                }
+                Token::LeftRaw => {
+                    raw_state = 2;
+                    raw_opener_before_claim = token.span.start < claim_start;
+                }
+                Token::Url => {
+                    if token.span.start < claim_start {
+                        url_before += 1;
+                    }
+                }
+                Token::ParagraphBreak => paragraphs += 1,
+                _ => {}
+            },
+        }
+    }
+
+    if claimed_raw {
+        raw_before + 1
+    } else {
+        raw_total + 2 * paragraphs + url_before + 1
+    }
 }
 
 // Live's unlabeled form ("[wikipedia:Albert_Einstein]") links the article and

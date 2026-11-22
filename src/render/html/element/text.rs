@@ -78,11 +78,11 @@ pub fn render_email(ctx: &mut HtmlContext, email: &str) {
 
     match ctx.layout() {
         Layout::Wikidot => {
-            let obfuscated = wikidot_obfuscated_email(email);
+            let obfuscated = escape_wikidot_email(&wikidot_obfuscated_email(email));
             ctx.html()
                 .span()
                 .attr(attr!("class" => "wiki-email"))
-                .contents(&obfuscated);
+                .inner(|ctx| ctx.push_raw_str(&obfuscated));
         }
         Layout::Wikijump => {
             ctx.html()
@@ -93,16 +93,24 @@ pub fn render_email(ctx: &mut HtmlContext, email: &str) {
     }
 }
 
-pub fn render_email_described(ctx: &mut HtmlContext, email: &str, label: &str) {
+pub fn render_email_described(
+    ctx: &mut HtmlContext,
+    email: &str,
+    label: &str,
+    claimed_placeholder: Option<usize>,
+) {
     debug!("Rendering described email address '{email}' with label '{label}'");
 
     match ctx.layout() {
         Layout::Wikidot => {
-            let obfuscated = wikidot_obfuscated_email_described(email, label);
+            let obfuscated = escape_wikidot_email(&match claimed_placeholder {
+                Some(index) => wikidot_obfuscated_email_claimed(email, index),
+                None => wikidot_obfuscated_email_described(email, label),
+            });
             ctx.html()
                 .span()
                 .attr(attr!("class" => "wiki-email"))
-                .contents(&obfuscated);
+                .inner(|ctx| ctx.push_raw_str(&obfuscated));
         }
         Layout::Wikijump => {
             ctx.html()
@@ -113,25 +121,52 @@ pub fn render_email_described(ctx: &mut HtmlContext, email: &str, label: &str) {
     }
 }
 
-pub(crate) fn wikidot_obfuscated_email(email: &str) -> String {
-    let Some((local, domain)) = email.split_once('@') else {
-        return email.to_owned();
-    };
-    let reversed_local = local.chars().rev().collect::<String>();
-    let reversed_domain = domain.chars().rev().collect::<String>();
-    format!("{reversed_domain}|{reversed_local}#{reversed_domain}|{reversed_local}")
+fn wikidot_obfuscate_email(email: &str, label: &[u8]) -> String {
+    let mut joined = Vec::with_capacity(email.len() + label.len() + 1);
+    joined.extend(email.bytes().rev());
+    joined.push(b'#');
+    joined.extend_from_slice(label);
+    for byte in &mut joined {
+        if *byte == b'@' {
+            *byte = b'|';
+        }
+    }
+    String::from_utf8_lossy(&joined).into_owned()
 }
 
-fn wikidot_obfuscated_email_described(email: &str, label: &str) -> String {
-    let Some((local, domain)) = email.split_once('@') else {
-        return format!("{email}#{}", label.chars().rev().collect::<String>());
-    };
-    let reversed_local = local.chars().rev().collect::<String>();
-    let reversed_domain = domain.chars().rev().collect::<String>();
-    format!(
-        "{reversed_domain}|{reversed_local}#{}",
-        label.chars().rev().collect::<String>(),
-    )
+pub(crate) fn wikidot_obfuscated_email(email: &str) -> String {
+    if !email.contains('@') {
+        return email.to_owned();
+    }
+    let label = email.bytes().rev().collect::<Vec<u8>>();
+    wikidot_obfuscate_email(email, &label)
+}
+
+pub(crate) fn wikidot_obfuscated_email_described(email: &str, label: &str) -> String {
+    let label = label.bytes().rev().collect::<Vec<u8>>();
+    wikidot_obfuscate_email(email, &label)
+}
+
+pub(crate) fn wikidot_obfuscated_email_claimed(email: &str, index: usize) -> String {
+    let digits = index.to_string();
+    let mut label = Vec::with_capacity(digits.len() + 6);
+    label.extend_from_slice("\u{fffd}".as_bytes());
+    label.extend(digits.bytes().rev());
+    label.extend_from_slice("\u{fffd}".as_bytes());
+    wikidot_obfuscate_email(email, &label)
+}
+
+fn escape_wikidot_email(text: &str) -> String {
+    let mut escaped = String::with_capacity(text.len());
+    for ch in text.chars() {
+        match ch {
+            '&' => escaped.push_str("&amp;"),
+            '<' => escaped.push_str("&lt;"),
+            '>' => escaped.push_str("&gt;"),
+            _ => escaped.push(ch),
+        }
+    }
+    escaped
 }
 
 pub fn render_code(

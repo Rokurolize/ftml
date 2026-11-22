@@ -22,7 +22,7 @@
 mod attributes;
 mod builder;
 mod context;
-mod element;
+pub(crate) mod element;
 mod escape;
 mod meta;
 mod output;

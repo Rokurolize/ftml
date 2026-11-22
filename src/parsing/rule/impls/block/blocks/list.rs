@@ -261,28 +261,29 @@ fn parse_list_block_impl<'r, 't>(
             parser.native_blockquote_depth().unwrap_or(0),
         );
 
-    let body = if wikidot
-        && let Some(depth) = parser.native_blockquote_depth()
-        && (parser.has_native_blockquote_body_end(block_rule, depth)
-            || parser.has_surplus_quote_list_close(block_rule, depth)
-            || parser.has_shallower_quote_list_close(block_rule, depth)
-            || (matches!(
-                block_rule.name,
-                "block-list-unordered" | "block-list-ordered"
-            ) && parser.has_shallower_quote_li_close(depth))
-            || (matches!(
-                block_rule.name,
-                "block-list-unordered" | "block-list-ordered"
-            ) && parser.has_shallower_quote_text_line(block_rule, depth))
-            || (matches!(
-                block_rule.name,
-                "block-list-unordered" | "block-list-ordered"
-            ) && parser.has_shallower_quote_evaporation(block_rule, depth))
-            || (matches!(
-                block_rule.name,
-                "block-list-unordered" | "block-list-ordered"
-            ) && parser.has_li_close_before_list_close(depth).is_some()))
-    {
+    let quote_context_body = wikidot
+        && parser.native_blockquote_depth().is_some_and(|depth| {
+            parser.has_native_blockquote_body_end(block_rule, depth)
+                || parser.has_surplus_quote_list_close(block_rule, depth)
+                || parser.has_shallower_quote_list_close(block_rule, depth)
+                || (matches!(
+                    block_rule.name,
+                    "block-list-unordered" | "block-list-ordered"
+                ) && parser.has_shallower_quote_li_close(depth))
+                || (matches!(
+                    block_rule.name,
+                    "block-list-unordered" | "block-list-ordered"
+                ) && parser.has_shallower_quote_text_line(block_rule, depth))
+                || (matches!(
+                    block_rule.name,
+                    "block-list-unordered" | "block-list-ordered"
+                ) && parser.has_shallower_quote_evaporation(block_rule, depth))
+                || (matches!(
+                    block_rule.name,
+                    "block-list-unordered" | "block-list-ordered"
+                ) && parser.has_li_close_before_list_close(depth).is_some())
+        });
+    let body = if quote_context_body {
         parser.get_body_elements_with_literal_quote_context(
             block_rule,
             false,
@@ -320,15 +321,54 @@ fn parse_list_block_impl<'r, 't>(
         return ok!(false; Elements::None, errors);
     }
 
-    if wikidot && name != block_rule.accepts_names[0] {
-        strip_newlines(&mut elements);
-        if fused_close {
-            elements.push(text!("]"));
+    let never_close = wikidot && name != block_rule.accepts_names[0];
+    let mut never_close_unclosed = false;
+    let mut list_end = list_end;
+    let mut fused_close = fused_close;
+    let mut closer_line_marker = closer_line_marker;
+    if never_close {
+        let has_items = elements.iter().any(|element| {
+            matches!(element, Element::Partial(PartialElement::ListItem(_)))
+        });
+        if has_items {
+            while wikidot_source_ends_with_list_close(
+                parser.full_text().inner(),
+                parser.current().span.start,
+                block_rule,
+            ) {
+                let before = parser.current().span.start;
+                let segment = if quote_context_body {
+                    parser.get_body_elements_with_literal_quote_context(
+                        block_rule,
+                        false,
+                        BlockBodyStart::NextPhysicalLine,
+                        None,
+                    )?
+                } else {
+                    parser.get_body_elements(block_rule, false)?
+                };
+                let (segment_elements, segment_errors, _) = segment.into();
+                let moved = parser.current().span.start != before;
+                elements.extend(segment_elements);
+                errors.extend(segment_errors);
+                if !moved {
+                    break;
+                }
+            }
+            never_close_unclosed = true;
+            list_end = parser.current().span.start;
+            fused_close = false;
+            closer_line_marker = None;
+        } else {
+            strip_newlines(&mut elements);
+            if fused_close {
+                elements.push(text!("]"));
+            }
+            if !closer_has_same_line_residual {
+                elements.push(Element::LineBreak);
+            }
+            return ok!(false; elements, errors);
         }
-        if !closer_has_same_line_residual {
-            elements.push(Element::LineBreak);
-        }
-        return ok!(false; elements, errors);
     }
 
     // BRIEF-MF65b: anchor chromes stamped at this list's depth by numbered
@@ -837,6 +877,13 @@ fn parse_list_block_impl<'r, 't>(
         wikidot_marker_head_spawn: false,
         wikidot_unclosed: false,
     };
+    if never_close_unclosed
+        && let Element::List {
+            wikidot_unclosed, ..
+        } = &mut element
+    {
+        *wikidot_unclosed = true;
+    }
     // Live's inline pairing sees the source whitespace before the first tail
     // content: a marker that opens the post-list tail is padded, which the
     // segment join must know (paragraph gathering trims the space first).
@@ -1282,6 +1329,33 @@ fn wikidot_tail_lead_space(parser: &Parser) -> bool {
         }
     }
     false
+}
+
+fn wikidot_source_ends_with_list_close(
+    source: &str,
+    pos: usize,
+    block_rule: &BlockRule,
+) -> bool {
+    let mut tail = &source[..pos];
+    if let Some(stripped) = tail.strip_suffix("]]]") {
+        tail = stripped;
+    } else if let Some(stripped) = tail.strip_suffix("]]") {
+        tail = stripped;
+    } else {
+        return false;
+    }
+    tail = tail.trim_end_matches([' ', '\t']);
+    if let Some(stripped) = tail.strip_suffix('_') {
+        tail = stripped;
+    }
+    block_rule.accepts_names.iter().any(|name| {
+        let Some(written) = tail.get(tail.len().saturating_sub(name.len())..) else {
+            return false;
+        };
+        let before_name = &tail[..tail.len() - written.len()];
+        written.eq_ignore_ascii_case(name)
+            && before_name.trim_end_matches([' ', '\t']).ends_with("[[/")
+    })
 }
 
 fn record_wikidot_explicit_list_end(parser: &Parser) {

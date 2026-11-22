@@ -36,7 +36,7 @@ pub const BLOCK_BUTTON: BlockRule = BlockRule {
 
 enum ParsedButton<'t> {
     Active(StandaloneButton<'t>),
-    Unknown(&'t str),
+    Unknown(Cow<'t, str>),
     MissingSetTagsText,
 }
 
@@ -159,9 +159,7 @@ fn parse_fn<'r, 't>(
         let element = match head {
             Cow::Borrowed(head) => match parse_button_head(head, legacy) {
                 Some(ParsedButton::Active(button)) => Element::StandaloneButton(button),
-                Some(ParsedButton::Unknown(action)) => {
-                    unknown_button_error(Cow::Borrowed(action))
-                }
+                Some(ParsedButton::Unknown(action)) => unknown_button_error(action),
                 Some(ParsedButton::MissingSetTagsText) => missing_set_tags_text_error(),
                 None => {
                     return Err(parser.make_err(ParseErrorKind::BlockMissingArguments));
@@ -172,7 +170,7 @@ fn parse_fn<'r, 't>(
                     Element::StandaloneButton(button.to_owned())
                 }
                 Some(ParsedButton::Unknown(action)) => {
-                    unknown_button_error(Cow::Owned(action.to_owned()))
+                    unknown_button_error(Cow::Owned(action.into_owned()))
                 }
                 Some(ParsedButton::MissingSetTagsText) => missing_set_tags_text_error(),
                 None => {
@@ -204,8 +202,9 @@ fn parse_button_head(head: &str, wikidot: bool) -> Option<ParsedButton<'_>> {
     .unwrap_or(head.len());
     let action = &head[..action_end];
     let tail = wikidot_trim_argument_fragment(&head[action_end..]);
+    let action = normalize_button_type(action);
 
-    if action.eq_ignore_ascii_case("set-tags") {
+    if action.as_ref() == "set-tags" {
         return Some(parse_set_tags(tail, wikidot));
     }
 
@@ -217,33 +216,28 @@ fn parse_button_head(head: &str, wikidot: bool) -> Option<ParsedButton<'_>> {
             value
         }
     }))
-    .unwrap_or_else(|| {
-        Cow::Borrowed(if action.eq_ignore_ascii_case("source") {
-            "view source"
-        } else if action.eq_ignore_ascii_case("edit") {
-            "edit"
-        } else if action.eq_ignore_ascii_case("history") {
-            "history"
-        } else if action.eq_ignore_ascii_case("print") {
-            "print"
-        } else {
-            ""
-        })
-    });
+    .unwrap_or_else(|| Cow::Borrowed(default_button_label(&action).unwrap_or("")));
     let class = nonempty(arguments.get("class"));
     let style = nonempty(arguments.get("style"))
         .filter(|value| is_safe_standalone_button_style(value));
 
-    let action = if action.eq_ignore_ascii_case("edit") {
-        StandaloneButtonAction::Edit
-    } else if action.eq_ignore_ascii_case("history") {
-        StandaloneButtonAction::History
-    } else if action.eq_ignore_ascii_case("source") {
-        StandaloneButtonAction::Source
-    } else if action.eq_ignore_ascii_case("print") {
-        StandaloneButtonAction::Print
-    } else {
-        return Some(ParsedButton::Unknown(action));
+    let action = match action.as_ref() {
+        "edit" => StandaloneButtonAction::Edit,
+        "edit-append" => StandaloneButtonAction::EditAppend,
+        "edit-sections" => StandaloneButtonAction::EditSections,
+        "history" => StandaloneButtonAction::History,
+        "print" => StandaloneButtonAction::Print,
+        "files" => StandaloneButtonAction::Files,
+        "tags" => StandaloneButtonAction::Tags,
+        "source" => StandaloneButtonAction::Source,
+        "talk" => StandaloneButtonAction::Talk,
+        "backlinks" => StandaloneButtonAction::Backlinks,
+        "rename" => StandaloneButtonAction::Rename,
+        "delete" => StandaloneButtonAction::Delete,
+        "parent" => StandaloneButtonAction::Parent,
+        "edit-meta" => StandaloneButtonAction::EditMeta,
+        "watchers" => StandaloneButtonAction::Watchers,
+        _ => return Some(ParsedButton::Unknown(action)),
     };
 
     Some(ParsedButton::Active(StandaloneButton {
@@ -316,7 +310,50 @@ fn head_prefix_is_set_tags(head: &str) -> bool {
     let action_end = head
         .find(is_wikidot_set_tags_separator)
         .unwrap_or(head.len());
-    head[..action_end].eq_ignore_ascii_case("set-tags")
+    normalize_button_type(&head[..action_end]).as_ref() == "set-tags"
+}
+
+fn normalize_button_type(action: &str) -> Cow<'_, str> {
+    if action
+        .bytes()
+        .all(|byte| !byte.is_ascii_uppercase() && byte != b'_')
+    {
+        Cow::Borrowed(action)
+    } else {
+        Cow::Owned(
+            action
+                .chars()
+                .map(|character| {
+                    if character == '_' {
+                        '-'
+                    } else {
+                        character.to_ascii_lowercase()
+                    }
+                })
+                .collect(),
+        )
+    }
+}
+
+fn default_button_label(action: &str) -> Option<&'static str> {
+    match action {
+        "edit" => Some("edit"),
+        "edit-append" => Some("append"),
+        "edit-sections" => Some("edit sections"),
+        "history" => Some("history"),
+        "print" => Some("print"),
+        "files" => Some("files"),
+        "tags" => Some("tags"),
+        "source" => Some("view source"),
+        "talk" => Some("talk"),
+        "backlinks" => Some("backlinks"),
+        "rename" => Some("rename"),
+        "delete" => Some("delete"),
+        "parent" => Some("parent"),
+        "edit-meta" => Some("edit meta"),
+        "watchers" => Some("watchers"),
+        _ => None,
+    }
 }
 
 fn is_wikidot_set_tags_separator(character: char) -> bool {

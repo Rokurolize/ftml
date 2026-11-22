@@ -42,11 +42,14 @@ fn parse_fn<'r, 't>(
     assert_block_name(&BLOCK_USER, name);
 
     let block = &BLOCK_USER;
-    let name = parser.get_head_value_resolved(
-        block,
-        in_head,
-        require_trimmed_block_argument_resolved,
-    )?;
+    let name =
+        parser.get_head_value_resolved_multiline(block, in_head, |parser, value| {
+            let name = require_trimmed_block_argument_resolved(parser, value)?;
+            if name.contains(']') {
+                return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
+            }
+            Ok(name)
+        })?;
 
     let element = Element::User {
         name,

@@ -11543,6 +11543,19 @@ where
             .map(|(value, _)| value)
     }
 
+    pub fn get_head_value_resolved_multiline<F, T>(
+        &mut self,
+        block_rule: &BlockRule,
+        in_head: bool,
+        convert: F,
+    ) -> Result<T, ParseError>
+    where
+        F: FnOnce(&Self, Option<Cow<'t, str>>) -> Result<T, ParseError>,
+    {
+        self.get_head_value_resolved_impl(block_rule, in_head, convert, true)
+            .map(|(value, _)| value)
+    }
+
     pub(crate) fn get_head_value_resolved_with_body_start<F, T>(
         &mut self,
         block_rule: &BlockRule,
@@ -11552,15 +11565,29 @@ where
     where
         F: FnOnce(&Self, Option<Cow<'t, str>>) -> Result<T, ParseError>,
     {
+        self.get_head_value_resolved_impl(block_rule, in_head, convert, false)
+    }
+
+    fn get_head_value_resolved_impl<F, T>(
+        &mut self,
+        block_rule: &BlockRule,
+        in_head: bool,
+        convert: F,
+        allow_line_break: bool,
+    ) -> Result<(T, BlockBodyStart), ParseError>
+    where
+        F: FnOnce(&Self, Option<Cow<'t, str>>) -> Result<T, ParseError>,
+    {
         let argument = if in_head {
             let end_conditions = [
                 ParseCondition::current(Token::RightBlock),
                 ParseCondition::current(Token::RightLink),
             ];
-            let reject_conditions = [
-                ParseCondition::current(Token::ParagraphBreak),
-                ParseCondition::current(Token::LineBreak),
-            ];
+            let mut reject_conditions =
+                vec![ParseCondition::current(Token::ParagraphBreak)];
+            if !allow_line_break {
+                reject_conditions.push(ParseCondition::current(Token::LineBreak));
+            }
             let rule = self.rule();
             let fused_name_close = self.head_had_segment();
             let quoted_head =

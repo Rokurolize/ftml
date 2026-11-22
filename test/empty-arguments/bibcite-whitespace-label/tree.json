@@ -1,0 +1,39 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "[["
+                    },
+                    {
+                        "element": "text",
+                        "data": "bibcite"
+                    },
+                    {
+                        "element": "text",
+                        "data": "   "
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]"
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "bibliography-cite",
+                        "data": {
+                            "label": "valid",
+                            "brackets": true
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

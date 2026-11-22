@@ -3533,6 +3533,7 @@ impl<'t> Scanner<'t> {
         depth: usize,
     ) -> Option<(usize, usize, usize)> {
         let mut j = start;
+        let mut nested_tables = 0usize;
         while j < limit {
             if let Some(zone_end) = self.zone_end(j) {
                 j = zone_end.min(limit);
@@ -3543,13 +3544,30 @@ impl<'t> Scanner<'t> {
                     j = self.skip_comment(j)?;
                 }
                 Token::LeftBlock | Token::LeftBlockStar => {
-                    j = self.skip_construct_in_body(j, limit, depth)?;
+                    if self.segment_at(j).is_none() && self.table_opener_at(j) {
+                        let head = self.read_head(j, false);
+                        match head.as_ref().and_then(|head| {
+                            self.measure_table(j, head, limit, depth + 1)
+                        }) {
+                            Some(measure) => j = measure.end,
+                            None => {
+                                nested_tables += 1;
+                                j = head.map_or(j + 1, |head| head.head_end);
+                            }
+                        }
+                    } else {
+                        j = self.skip_construct_in_body(j, limit, depth)?;
+                    }
                 }
                 Token::LeftBlockEnd => {
                     if let Some(close) = self.read_head(j, true) {
                         match self.classify(&close).and_then(Self::kind_of) {
                             Some(WikidotBlockKind::Cell) => {
                                 return Some((j, j, close.head_end));
+                            }
+                            Some(WikidotBlockKind::Table) if nested_tables > 0 => {
+                                nested_tables -= 1;
+                                j = close.head_end;
                             }
                             Some(WikidotBlockKind::Row)
                             | Some(WikidotBlockKind::Table) => {
@@ -3565,6 +3583,20 @@ impl<'t> Scanner<'t> {
             }
         }
         None
+    }
+
+    fn table_opener_at(&self, start: usize) -> bool {
+        let mut j = start + 1;
+        if self
+            .tokens
+            .get(j)
+            .is_some_and(|token| token.token == Token::Whitespace)
+        {
+            j += 1;
+        }
+        self.tokens.get(j).is_some_and(|token| {
+            token.token == Token::Identifier && token.slice.eq_ignore_ascii_case("table")
+        })
     }
 
     fn find_tab_end(

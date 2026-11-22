@@ -18,6 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::block::{RULE_BLOCK, get_block_rule_with_name_for_layout};
+use super::link_triple::{RULE_LINK_TRIPLE, RULE_LINK_TRIPLE_NEW_TAB};
 use super::prelude::*;
 use super::raw::RULE_RAW;
 use crate::parsing::collect::consume_valid_comment;
@@ -194,6 +196,26 @@ where
                 parser.step()?;
             }
 
+            Token::LeftLink | Token::LeftLinkStar => {
+                let rule = if parser.current().token == Token::LeftLinkStar {
+                    RULE_LINK_TRIPLE_NEW_TAB
+                } else {
+                    RULE_LINK_TRIPLE
+                };
+                let mut link = parser.clone();
+                if rule.try_consume(&mut link).is_ok() {
+                    suppress_formula = true;
+                }
+                parser.step()?;
+            }
+
+            Token::LeftBlock => {
+                if wikidot_image_block_opens(parser) {
+                    suppress_formula = true;
+                }
+                parser.step()?;
+            }
+
             Token::RightBlock
                 if comment_elided.is_none()
                     && parser.current().slice == "]]"
@@ -249,6 +271,30 @@ where
             }
         }
     }
+}
+
+fn wikidot_image_block_opens<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    let Some(name) = parser.block_head_name_here() else {
+        return false;
+    };
+    if !matches!(
+        get_block_rule_with_name_for_layout(&name, parser.settings().layout),
+        Some(rule) if rule.name() == "block-image"
+    ) {
+        return false;
+    }
+    let mut block = parser.clone();
+    let Ok(parsed) = RULE_BLOCK.try_consume(&mut block) else {
+        return false;
+    };
+    parsed
+        .item
+        .as_ref()
+        .iter()
+        .any(|element| matches!(element, Element::Image { .. }))
 }
 
 fn comment_joined_math_close<'r, 't>(

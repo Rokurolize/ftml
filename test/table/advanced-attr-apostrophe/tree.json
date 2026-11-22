@@ -1,0 +1,46 @@
+{
+    "elements": [
+        {
+            "element": "table",
+            "data": {
+                "type": "advanced",
+                "attributes": {},
+                "rows": [
+                    {
+                        "attributes": {},
+                        "cells": [
+                            {
+                                "header": false,
+                                "column-span": 2,
+                                "align": null,
+                                "attributes": {
+                                    "data-name": "it's"
+                                },
+                                "elements": [
+                                    {
+                                        "element": "text",
+                                        "data": "X"
+                                    }
+                                ]
+                            },
+                            {
+                                "header": false,
+                                "column-span": 1,
+                                "align": null,
+                                "attributes": {
+                                    "data-note": "a&b"
+                                },
+                                "elements": [
+                                    {
+                                        "element": "text",
+                                        "data": "Y"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

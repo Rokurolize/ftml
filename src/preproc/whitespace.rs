@@ -123,16 +123,31 @@ pub(super) fn expose_wikidot_replacement_markers(text: &mut String) {
     }
 
     let characters = text.chars().collect::<Vec<_>>();
+    let byte_offsets = text
+        .char_indices()
+        .map(|(offset, _)| offset)
+        .chain([text.len()])
+        .collect::<Vec<_>>();
+    let code_ranges = crate::wikidot_code::active_body_ranges(text);
+    let mut code_index = 0usize;
     let mut output = String::with_capacity(text.len());
     let mut index = 0;
     let mut line_has_content = false;
     let mut paragraph_line = 1;
     let mut document_has_content = false;
+    let mut block_token = 1usize;
+    let mut item_start =
+        wikidot_list_line_marker(&characters, 0).map(|marker| (2, marker));
 
     while index < characters.len() {
         if characters[index] != '\u{fffd}' {
             let character = characters[index];
             if character == '\r' || character == '\n' {
+                let newline_in_code = replacement_marker_in_ranges(
+                    &code_ranges,
+                    &mut code_index,
+                    byte_offsets[index],
+                );
                 let mut newline_end = logical_newline_end(&characters, index);
                 let mut newline_count = 1;
                 while matches!(characters.get(newline_end), Some('\r' | '\n')) {
@@ -140,11 +155,36 @@ pub(super) fn expose_wikidot_replacement_markers(text: &mut String) {
                     newline_count += 1;
                 }
                 output.extend(characters[index..newline_end].iter().copied());
-                if document_has_content {
-                    if newline_count >= 2 {
+                if newline_count >= 2 {
+                    if document_has_content {
                         paragraph_line = 1;
-                    } else {
+                        block_token += 2;
+                    }
+                    if !newline_in_code {
+                        item_start = wikidot_list_line_marker(&characters, newline_end)
+                            .map(|marker| (block_token + 1, marker));
+                    }
+                } else {
+                    if document_has_content {
                         paragraph_line += 1;
+                    }
+                    if !newline_in_code {
+                        item_start = match item_start {
+                            Some((start, _)) => {
+                                wikidot_list_line_marker(&characters, newline_end)
+                                    .map(|marker| (start + 2, marker))
+                            }
+                            None => {
+                                if line_has_content
+                                    && wikidot_list_line_marker(&characters, newline_end)
+                                        .is_some()
+                                {
+                                    block_token += 2;
+                                }
+                                wikidot_list_line_marker(&characters, newline_end)
+                                    .map(|marker| (block_token + 1, marker))
+                            }
+                        };
                     }
                 }
                 line_has_content = false;
@@ -164,13 +204,40 @@ pub(super) fn expose_wikidot_replacement_markers(text: &mut String) {
         while characters.get(index) == Some(&'\u{fffd}') {
             index += 1;
         }
+        if replacement_marker_in_ranges(
+            &code_ranges,
+            &mut code_index,
+            byte_offsets[run_start],
+        ) {
+            output.extend(characters[run_start..index].iter().copied());
+            line_has_content = true;
+            document_has_content = true;
+            continue;
+        }
         if index - run_start != 1 {
+            continue;
+        }
+
+        let bold_close = if characters.get(index) == Some(&'*')
+            && characters.get(index + 1) == Some(&'*')
+        {
+            wikidot_bold_close(&characters, index + 2)
+        } else {
+            None
+        };
+        if let Some(close) = bold_close {
+            let enclosing = item_start.map_or(block_token, |(start, _)| start);
+            output.push_str(&(enclosing + 2).to_string());
+            output.extend(characters[index + 2..close].iter().copied());
+            index = close + 2;
+            line_has_content = true;
+            document_has_content = true;
             continue;
         }
 
         match characters.get(index).copied() {
             None => {
-                output.push('2');
+                output.push_str(&(block_token + 1).to_string());
                 line_has_content = true;
             }
             Some('\\') if index + 1 == characters.len() => {
@@ -181,14 +248,60 @@ pub(super) fn expose_wikidot_replacement_markers(text: &mut String) {
             Some('\r' | '\n') => {
                 let first_end = logical_newline_end(&characters, index);
                 if first_end == characters.len() {
-                    output.push('2');
+                    output.push_str(&(block_token + 1).to_string());
                     index = first_end;
                 } else if matches!(characters.get(first_end), Some('\r' | '\n')) {
-                    output.push_str("23");
+                    output.push_str(&(block_token + 1).to_string());
+                    output.push_str(&(block_token + 2).to_string());
                     index = logical_newline_end(&characters, first_end);
+                    block_token += 2;
+                    item_start = wikidot_list_line_marker(&characters, index)
+                        .map(|marker| (block_token + 1, marker));
                 } else {
-                    output.push(if line_has_content { '1' } else { '2' });
-                    index = first_end;
+                    let merged_item = match item_start {
+                        Some((start, marker))
+                            if wikidot_list_line_marker(&characters, first_end)
+                                == Some(marker) =>
+                        {
+                            Some((start, marker))
+                        }
+                        _ => None,
+                    };
+                    if let Some((start, marker)) = merged_item {
+                        output.push_str(&(start + 1).to_string());
+                        output.push_str(&(start + 2).to_string());
+                        let mut consume = first_end;
+                        while matches!(characters.get(consume), Some(' ' | '\t')) {
+                            consume += 1;
+                        }
+                        while characters.get(consume) == Some(&marker.0) {
+                            consume += 1;
+                        }
+                        if matches!(characters.get(consume), Some(' ' | '\t')) {
+                            consume += 1;
+                        }
+                        item_start = Some((start + 2, marker));
+                        index = consume;
+                    } else {
+                        output.push(if line_has_content { '1' } else { '2' });
+                        index = first_end;
+                        item_start = match item_start {
+                            Some((start, _)) => {
+                                wikidot_list_line_marker(&characters, first_end)
+                                    .map(|marker| (start + 2, marker))
+                            }
+                            None => {
+                                if line_has_content
+                                    && wikidot_list_line_marker(&characters, first_end)
+                                        .is_some()
+                                {
+                                    block_token += 2;
+                                }
+                                wikidot_list_line_marker(&characters, first_end)
+                                    .map(|marker| (block_token + 1, marker))
+                            }
+                        };
+                    }
                 }
                 line_has_content = true;
             }
@@ -197,6 +310,60 @@ pub(super) fn expose_wikidot_replacement_markers(text: &mut String) {
     }
 
     *text = output;
+}
+
+fn replacement_marker_in_ranges(
+    ranges: &[Range<usize>],
+    cursor: &mut usize,
+    offset: usize,
+) -> bool {
+    while ranges.get(*cursor).is_some_and(|range| range.end <= offset) {
+        *cursor += 1;
+    }
+    ranges
+        .get(*cursor)
+        .is_some_and(|range| range.start <= offset && offset < range.end)
+}
+
+fn wikidot_list_line_marker(
+    characters: &[char],
+    line_start: usize,
+) -> Option<(char, usize)> {
+    let mut index = line_start;
+    while matches!(characters.get(index), Some(' ' | '\t')) {
+        index += 1;
+    }
+    let marker = characters.get(index).copied()?;
+    if !matches!(marker, '*' | '#') {
+        return None;
+    }
+    let mut depth = 0usize;
+    while characters.get(index) == Some(&marker) {
+        index += 1;
+        depth += 1;
+    }
+    match characters.get(index) {
+        Some(' ' | '\t') | None => Some((marker, depth)),
+        _ => None,
+    }
+}
+
+fn wikidot_bold_close(characters: &[char], start: usize) -> Option<usize> {
+    let mut index = start;
+    let mut has_content = false;
+    while let Some(&character) = characters.get(index) {
+        if character == '\r' || character == '\n' {
+            return None;
+        }
+        if character == '*' && characters.get(index + 1) == Some(&'*') {
+            return if has_content { Some(index) } else { None };
+        }
+        if !character.is_ascii_whitespace() {
+            has_content = true;
+        }
+        index += 1;
+    }
+    None
 }
 
 pub(super) fn preserve_wikidot_document_indentation_barrier(text: &mut String) {
@@ -1432,7 +1599,28 @@ pub(super) fn filter_characters(text: &mut String, preserve_terminal_marker: boo
     if terminal_marker {
         text.truncate(text.len() - "\u{fffd}\\".len());
     }
-    text.retain(|character| character != '\u{fffd}');
+    if text.contains('\u{fffd}') {
+        let code_ranges = crate::wikidot_code::active_body_ranges(text);
+        if code_ranges.is_empty() {
+            text.retain(|character| character != '\u{fffd}');
+        } else {
+            let mut filtered = String::with_capacity(text.len());
+            let mut code_index = 0usize;
+            for (offset, character) in text.char_indices() {
+                if character == '\u{fffd}'
+                    && !replacement_marker_in_ranges(
+                        &code_ranges,
+                        &mut code_index,
+                        offset,
+                    )
+                {
+                    continue;
+                }
+                filtered.push(character);
+            }
+            *text = filtered;
+        }
+    }
     if terminal_marker {
         text.push_str("\u{fffd}\\");
     }
@@ -2097,6 +2285,14 @@ fn exposes_wikidot_replacement_markers_at_input_boundaries() {
         ("a\rb\rc\u{fffd}\\", "a\rb\rc3\u{fffd}\\"),
         ("a\n\nb\u{fffd}\\", "a\n\nb1\u{fffd}\\"),
         ("\ra\u{fffd}\\", "\ra1\u{fffd}\\"),
+        ("alpha \u{fffd}\n\nbravo \u{fffd}", "alpha 23bravo 4"),
+        ("a\n\nb \u{fffd}", "a\n\nb 4"),
+        ("* item one \u{fffd}\n* item two", "* item one 34item two"),
+        ("alpha \u{fffd}**bold** omega", "alpha 3bold omega"),
+        (
+            "[[code]]\nx \u{fffd} y\n[[/code]]",
+            "[[code]]\nx \u{fffd} y\n[[/code]]",
+        ),
     ] {
         let mut text = input.to_owned();
         expose_wikidot_replacement_markers(&mut text);

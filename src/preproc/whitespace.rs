@@ -1290,7 +1290,7 @@ fn preserve_wikidot_bibcite_tab_separator(text: &mut String) {
     while index + 9 < bytes.len() {
         if bytes[index] == b'('
             && bytes[index + 1] == b'('
-            && text[index + 2..index + 9].eq_ignore_ascii_case("bibcite")
+            && bytes[index + 2..index + 9].eq_ignore_ascii_case(b"bibcite")
             && bytes[index + 9] == b'\t'
             && !index_in_ranges(&protected_ranges, index)
         {
@@ -2450,4 +2450,19 @@ fn wikidot_doubles_lone_tab_after_line_math_closer_before_tab_replacement() {
         suffix, "  ",
         "tab doubled then expanded to two spaces: {text:?}"
     );
+}
+
+#[test]
+fn wikidot_bibcite_tab_scan_tolerates_multibyte_text_after_double_paren() {
+    let mut text = "a\tb\n((민민민".to_owned();
+    preserve_wikidot_bibcite_tab_separator(&mut text);
+    assert_eq!(text, "a\tb\n((민민민");
+
+    let mut control = "((bibcite\tlabel".to_owned();
+    preserve_wikidot_bibcite_tab_separator(&mut control);
+    assert_eq!(control, "((bibcite \tlabel");
+
+    let mut upper = "((BIBCITE\tlabel".to_owned();
+    preserve_wikidot_bibcite_tab_separator(&mut upper);
+    assert_eq!(upper, "((BIBCITE \tlabel");
 }

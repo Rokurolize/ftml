@@ -992,6 +992,7 @@ fn wikidot_head_scan(block_rule: &BlockRule) -> WikidotHeadScan {
         "block-table" | "block-toc" => WikidotHeadScan::QuotedValuesAreLiteral,
         "block-collapsible" => WikidotHeadScan::QuotedLinksPass,
         "block-anchor"
+        | "block-bibliography"
         | "block-span"
         | "block-code"
         | "block-gallery"

@@ -1,0 +1,130 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "footnote",
+                        "data": 1
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "text",
+                        "data": "tail"
+                    },
+                    {
+                        "element": "footnote",
+                        "data": 2
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "text",
+                        "data": "tail"
+                    },
+                    {
+                        "element": "footnote",
+                        "data": 3
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "text",
+                        "data": "tail"
+                    },
+                    {
+                        "element": "footnote",
+                        "data": 4
+                    }
+                ]
+            }
+        }
+    ],
+    "footnotes": [
+        [
+            {
+                "element": "text",
+                "data": "leadtext721"
+            },
+            {
+                "element": "line-break"
+            },
+            {
+                "element": "text",
+                "data": "—"
+            },
+            {
+                "element": "text",
+                "data": "—"
+            }
+        ],
+        [
+            {
+                "element": "text",
+                "data": "leadtext722"
+            },
+            {
+                "element": "text",
+                "data": "="
+            },
+            {
+                "element": "text",
+                "data": "="
+            },
+            {
+                "element": "text",
+                "data": "="
+            },
+            {
+                "element": "text",
+                "data": "="
+            }
+        ],
+        [
+            {
+                "element": "container",
+                "data": {
+                    "type": "paragraph",
+                    "attributes": {},
+                    "elements": [
+                        {
+                            "element": "text",
+                            "data": "leadtext723"
+                        }
+                    ]
+                }
+            },
+            {
+                "element": "clear-float",
+                "data": "both"
+            }
+        ],
+        [
+            {
+                "element": "container",
+                "data": {
+                    "type": "paragraph",
+                    "attributes": {},
+                    "elements": [
+                        {
+                            "element": "text",
+                            "data": "leadtext723b"
+                        }
+                    ]
+                }
+            },
+            {
+                "element": "clear-float",
+                "data": "left"
+            }
+        ]
+    ],
+    "needs-footnote-block": true
+}

@@ -2,7 +2,8 @@ use crate::tree::{
     AnchorTarget, AttributeMap, Bibliography, BibliographyList, BibliographyScopeWrapper,
     Container, ContainerType, Element, Heading, HeadingReopen, InlineFormatKind,
     ListItem, PartialElement, TabViewItem, TableType, WIKIDOT_BLOCK_CHUNK_PREFIX_MARKER,
-    WIKIDOT_EMPTY_FOOTNOTE_TAIL_BARE_MARKER, WIKIDOT_FORMAT_LABEL_INSIDE_LIST_MARKER,
+    WIKIDOT_CENTERED_DIV_CLOSE_PARAGRAPH_MARKER, WIKIDOT_EMPTY_FOOTNOTE_TAIL_BARE_MARKER,
+    WIKIDOT_FORMAT_LABEL_INSIDE_LIST_MARKER,
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER,
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, WIKIDOT_HEADING_REOPEN_MARKER,
@@ -7770,6 +7771,11 @@ fn strip_trailing_run_before_newline_tail(elements: &mut Vec<Element>) {
 
 fn drop_vanished_paragraphs(elements: &mut Vec<Element>) {
     for element in elements.iter_mut() {
+        if let Element::Container(container) = element {
+            container
+                .attributes_mut()
+                .remove(WIKIDOT_CENTERED_DIV_CLOSE_PARAGRAPH_MARKER);
+        }
         visit_children_mut(element, &mut |children| drop_vanished_paragraphs(children));
         if let Element::List { items, .. } = element {
             items.retain(|item| !vanished_list_item(item));
@@ -8890,7 +8896,12 @@ fn is_empty_paragraph(element: &Element<'_>) -> bool {
     matches!(
         element,
         Element::Container(container)
-            if container.ctype() == ContainerType::Paragraph && container.elements().is_empty()
+            if container.ctype() == ContainerType::Paragraph
+                && container.elements().is_empty()
+                && !container
+                    .attributes()
+                    .get()
+                    .contains_key(WIKIDOT_CENTERED_DIV_CLOSE_PARAGRAPH_MARKER)
     )
 }
 

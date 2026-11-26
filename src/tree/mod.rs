@@ -110,6 +110,10 @@ pub(crate) const WIKIDOT_QUOTE_BLANK_ANCHOR_MARKER: &str = "data-ftml-quote-blan
 /// Lists the attributes whose Wikidot head value evaluated to empty, so the
 /// renderer emits `key=""` for them the way live does; stripped when rendered.
 pub(crate) const WIKIDOT_EMPTY_VALUE_ATTRIBUTE_MARKER: &str = "data-ftml-empty-value";
+/// Marks the empty centered paragraph left inside a div whose close tag sat
+/// alone on that centered line; stripped once inline-scope lowering has kept it.
+pub(crate) const WIKIDOT_CENTERED_DIV_CLOSE_PARAGRAPH_MARKER: &str =
+    "data-ftml-centered-div-close-paragraph";
 
 /// Stands in for a label whose Wikidot head value evaluated to empty through
 /// raw inline markup (which live renders as an empty label, unlike an authored

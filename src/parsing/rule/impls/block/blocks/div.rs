@@ -36,8 +36,8 @@ use crate::parsing::parser::block_pairs::WikidotBlockKind;
 use crate::parsing::rule::impls::block::parser::BlockBodyStart;
 use crate::settings::WikitextMode;
 use crate::tree::{
-    AcceptsPartial, AttributeMap, ContainerType, ListItem, ListType, PartialElement,
-    WikidotBlockShell,
+    AcceptsPartial, Alignment, AttributeMap, ContainerType, ListItem, ListType,
+    PartialElement, WikidotBlockShell,
 };
 use std::borrow::Cow;
 
@@ -1268,6 +1268,43 @@ fn quoted_list_item_holds_only_this_div(
     })
 }
 
+fn wikidot_div_close_was_on_centered_line(parser: &Parser<'_, '_>) -> bool {
+    const CLOSE: &str = "[[/div]]";
+
+    let source = parser.full_text().inner();
+    let close_end = parser.current().span.start;
+    if close_end > source.len() {
+        return false;
+    }
+    if close_end < CLOSE.len()
+        || !source[close_end - CLOSE.len()..close_end].eq_ignore_ascii_case(CLOSE)
+    {
+        return false;
+    }
+    let close_start = close_end - CLOSE.len();
+    let line_start = source[..close_start]
+        .rfind('\n')
+        .map_or(0, |offset| offset + 1);
+    let prefix = &source[line_start..close_start];
+    prefix.len() > 1
+        && prefix.starts_with('=')
+        && prefix[1..].chars().all(|ch| matches!(ch, ' ' | '\t'))
+}
+
+fn wikidot_empty_centered_paragraph<'t>() -> Element<'t> {
+    let mut attributes = AttributeMap::new();
+    attributes.insert("style", cow!(Alignment::Center.wd_html_style()));
+    attributes.insert(
+        crate::tree::WIKIDOT_CENTERED_DIV_CLOSE_PARAGRAPH_MARKER,
+        cow!(""),
+    );
+    Element::Container(Container::new(
+        ContainerType::Paragraph,
+        Vec::new(),
+        attributes,
+    ))
+}
+
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &str,
@@ -1705,6 +1742,9 @@ fn parse_fn<'r, 't>(
         }
     };
     if parser.settings().layout.legacy() {
+        if !flag_score && wikidot_div_close_was_on_centered_line(parser) {
+            elements.push(wikidot_empty_centered_paragraph());
+        }
         restore_crossed_li_terminated_body_break(parser, body_start_byte, &mut elements);
         // A frame body ending in a post-list break plus invisible content
         // (a hidden iftags body) keeps no break on live (BRIEF-RMRES fda12,

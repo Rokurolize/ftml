@@ -212,6 +212,7 @@ where
             Token::LeftBlock => {
                 if wikidot_image_block_opens(parser) {
                     suppress_formula = true;
+                    parser.mark_wikidot_math_image_occupied();
                 }
                 parser.step()?;
             }

@@ -392,6 +392,7 @@ pub(super) struct BlockScanCache<'t> {
     /// Ordinals of tabs whose panels render outside the navset (bare panel in
     /// a later quote segment).
     wikidot_tabview_remote_ordinals: Vec<usize>,
+    wikidot_literal_list_close_bytes: BTreeSet<usize>,
     colon_line_vanished: Cell<bool>,
     line_follows_block: Cell<bool>,
     wikidot_math_closer_line_br_prefix: Cell<bool>,

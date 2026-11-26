@@ -1,0 +1,105 @@
+{
+    "elements": [
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "text",
+                                "data": "[["
+                            },
+                            {
+                                "element": "text",
+                                "data": "div"
+                            },
+                            {
+                                "element": "text",
+                                "data": "]]"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "alpha"
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "text",
+                        "data": "beta"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": {
+                    "header": {
+                        "level": 1,
+                        "has-toc": true
+                    }
+                },
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "[[/"
+                    },
+                    {
+                        "element": "text",
+                        "data": "div"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]"
+                    }
+                ]
+            }
+        }
+    ],
+    "table-of-contents": [
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "link",
+                                "data": {
+                                    "type": "table-of-contents",
+                                    "link": "#toc0",
+                                    "label": {
+                                        "text": "[[/div]]"
+                                    },
+                                    "target": null
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

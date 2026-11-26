@@ -305,8 +305,13 @@ fn wikidot_div_block_follows_break(parser: &Parser<'_, '_>) -> bool {
 
 fn wikidot_next_line_opens_div(source: &str, mut position: usize) -> bool {
     let bytes = source.as_bytes();
+    let mut crossed_line = false;
     while matches!(bytes.get(position), Some(b'\n' | b'\r')) {
+        crossed_line = true;
         position += 1;
+    }
+    if !crossed_line {
+        return false;
     }
     let line_end = source[position..]
         .find('\n')
@@ -587,14 +592,21 @@ where
             )));
         } else {
             if parser.current().span.start == closer_start {
-                while parser.current().span.start < owner_end {
-                    if parser.step().is_err() {
-                        break;
+                let leaves_end_block_link = source[owner_end..].starts_with("[[")
+                    && source[owner_end + 2..].find("]]").is_some_and(|relative| {
+                        source[owner_end + 2..owner_end + 2 + relative]
+                            .contains([' ', '\t'])
+                    });
+                if !leaves_end_block_link {
+                    while parser.current().span.start < owner_end {
+                        if parser.step().is_err() {
+                            break;
+                        }
                     }
+                    elements.push(Element::Text(discard_wikidot_controls(
+                        elide_comments_from_literal(&source[closer_start..owner_end]),
+                    )));
                 }
-                elements.push(Element::Text(discard_wikidot_controls(
-                    elide_comments_from_literal(&source[closer_start..owner_end]),
-                )));
             }
             // L85 scope-5: in item bodies the newline after a literal div
             // is left for the real break token (e25/e18/e32 trail it bare);

@@ -175,6 +175,19 @@ fn collect_wikidot_heading_with_barriers<'r, 't>(
     heading: Heading,
     close: &[ParseCondition],
 ) -> ParseResult<'r, 't, CollectedHeading<'t>> {
+    let replacement_merge = {
+        let rest = &parser.full_text().inner()[parser.current().span.start..];
+        match (rest.find('\u{0001}'), rest.find('\n')) {
+            (Some(sentinel), Some(newline)) => sentinel < newline,
+            _ => false,
+        }
+    };
+    if parser.settings().layout.legacy()
+        && !parser.discarding_hidden_body()
+        && replacement_merge
+    {
+        return collect_wikidot_replacement_merged_heading(parser, ctype, close);
+    }
     if parser.settings().layout.legacy() && !parser.discarding_hidden_body() {
         let from = parser.current().span.start;
         let collapsible_head = parser.wikidot_heading_collapsible_head(from);
@@ -216,6 +229,33 @@ fn collect_wikidot_heading_with_barriers<'r, 't>(
     let collected = collect_container(parser, RULE_HEADER, ctype, close, &[], None)?;
     let (elements, errors, paragraph_safe) = collected.into();
     Ok(ParseSuccess::new((elements, None), errors, paragraph_safe))
+}
+
+fn collect_wikidot_replacement_merged_heading<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    ctype: ContainerType,
+    close: &[ParseCondition],
+) -> ParseResult<'r, 't, CollectedHeading<'t>> {
+    let first = collect_container(parser, RULE_HEADER, ctype, close, &[], None)?;
+    let (first_elements, mut errors, paragraph_safe) = first.into();
+    let Elements::Single(Element::Container(container)) = first_elements else {
+        unreachable!("header collection always returns one container");
+    };
+    let mut elements = Vec::<Element>::from(container);
+    let second = collect_container(parser, RULE_HEADER, ctype, close, &[], None)?;
+    let (second_elements, second_errors, _) = second.into();
+    errors.extend(second_errors);
+    if let Elements::Single(Element::Container(container)) = second_elements {
+        elements.extend(Vec::<Element>::from(container));
+    }
+    elements.push(Element::LineBreak);
+    elements.push(Element::LineBreak);
+    let content = Elements::Single(Element::Container(Container::new(
+        ctype,
+        elements,
+        AttributeMap::new(),
+    )));
+    Ok(ParseSuccess::new((content, None), errors, paragraph_safe))
 }
 
 /// Collect heading text across `[[/li]]` stops on the heading line: the

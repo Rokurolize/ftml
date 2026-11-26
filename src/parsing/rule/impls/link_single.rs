@@ -856,11 +856,11 @@ where
     'r: 't,
 {
     // The target walk only stops early at whitespace, a line break, a
-    // paragraph break, a valid comment, or a fused segment; the last two
-    // need a later `]`. With none of those left, the walk is certain to
-    // reach `InputEnd` and fail with `EndOfInput`, so reproduce that
-    // error instead of walking (a long unclosed `[` run used to walk the
-    // rest of the document once per opener).
+    // paragraph break, a double quote, a valid comment, or a fused
+    // segment; the last two need a later `]`. With none of those left,
+    // the walk is certain to reach `InputEnd` and fail with `EndOfInput`,
+    // so reproduce that error instead of walking (a long unclosed `[`
+    // run used to walk the rest of the document once per opener).
     if !link_memo
         && parser.link_target_reaches_input_end(parser.current().span.start, false)
     {
@@ -875,11 +875,15 @@ where
         &[ParseCondition::current(Token::Whitespace)]
     };
     let invalids: &[ParseCondition] = if line_break_separator {
-        &[ParseCondition::current(Token::ParagraphBreak)]
+        &[
+            ParseCondition::current(Token::ParagraphBreak),
+            ParseCondition::current(Token::DoubleQuote),
+        ]
     } else {
         &[
             ParseCondition::current(Token::LineBreak),
             ParseCondition::current(Token::ParagraphBreak),
+            ParseCondition::current(Token::DoubleQuote),
         ]
     };
     let memo = link_memo.then(|| LinkTargetScanMemo {

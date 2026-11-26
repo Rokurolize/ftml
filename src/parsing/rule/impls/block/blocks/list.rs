@@ -1364,7 +1364,9 @@ fn wikidot_source_ends_with_list_close(
         let Some(written) = tail.get(tail.len().saturating_sub(name.len())..) else {
             return false;
         };
-        let before_name = &tail[..tail.len() - written.len()];
+        let Some(before_name) = tail.strip_suffix(written) else {
+            return false;
+        };
         written.eq_ignore_ascii_case(name)
             && before_name.trim_end_matches([' ', '\t']).ends_with("[[/")
     })
@@ -2265,11 +2267,15 @@ fn wikidot_li_body_ends_with_dissolved_bare_div(source: &str) -> bool {
         if !text.starts_with("[[") || !text.ends_with("]]") {
             return None;
         }
-        let inner = &text[2..text.len() - 2];
-        if inner.is_empty() || inner.chars().any(|c| c.is_whitespace()) {
+        let inner = text
+            .strip_prefix("[[")
+            .and_then(|inner| inner.strip_suffix("]]"));
+        if inner.is_none_or(|inner| {
+            inner.is_empty() || inner.chars().any(|c| c.is_whitespace())
+        }) {
             return None;
         }
-        Some(inner)
+        inner
     }
 
     let lowered = source.to_ascii_lowercase();
@@ -2356,7 +2362,12 @@ fn wikidot_li_text_is_bare_block_marker(text: &str) -> bool {
     if !text.starts_with("[[") || !text.ends_with("]]") {
         return false;
     }
-    let inner = &text[2..text.len() - 2];
+    let Some(inner) = text
+        .strip_prefix("[[")
+        .and_then(|inner| inner.strip_suffix("]]"))
+    else {
+        return false;
+    };
     let inner = inner.strip_prefix('/').unwrap_or(inner);
     let name = inner.split_whitespace().next().unwrap_or(inner);
     !name.is_empty()
@@ -4188,15 +4199,18 @@ fn assemble_wikidot_li_segments<'t>(
     // (probes muse-probe-plainrun-29/36/41-44/46).
     let trailing_blank_post_list_run = had_trailing_empty
         && kept.len() >= 2
-        && segment_is_inline_content(&kept[kept.len() - 1])
-        && !segment_has_block_marker(&kept[kept.len() - 1])
-        && kept[kept.len() - 2]
-            .iter()
-            .rev()
-            .find(|element| {
-                !matches!(element, Element::LineBreak | Element::LineBreaks(_))
-            })
-            .is_some_and(|element| matches!(element, Element::List { .. }));
+        && kept.last().is_some_and(|last| {
+            segment_is_inline_content(last) && !segment_has_block_marker(last)
+        })
+        && kept.iter().rev().nth(1).is_some_and(|penultimate| {
+            penultimate
+                .iter()
+                .rev()
+                .find(|element| {
+                    !matches!(element, Element::LineBreak | Element::LineBreaks(_))
+                })
+                .is_some_and(|element| matches!(element, Element::List { .. }))
+        });
     let last_plain_run_is_paragraph = matches!(
         kept.as_slice(),
         [.., penultimate, last]

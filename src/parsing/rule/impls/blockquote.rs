@@ -1150,7 +1150,8 @@ fn try_consume_fn<'r, 't>(
                     (true, 0)
                 } else {
                     let after_prefix = row_source.trim_start_matches(['>', ' ', '\t']);
-                    let prefix = &row_source[..row_source.len() - after_prefix.len()];
+                    let prefix =
+                        row_source.strip_suffix(after_prefix).unwrap_or(row_source);
                     let quotes = prefix.matches('>').count();
                     let remainder = after_prefix.trim();
                     (

@@ -349,17 +349,6 @@ where
     .0)
 }
 
-/// Whether this is a valid anchor name for a link.
-///
-/// Like Wikidot, only these characters are allowed in the name.
-/// Anything else means it is not an anchor link, and the
-/// contents are to be interpreted as something else.
-#[allow(dead_code)]
-fn anchor_valid(name: &str) -> bool {
-    name.chars()
-        .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | ':' | '.'))
-}
-
 #[cfg(test)]
 mod tests {
     use crate::data::PageInfo;

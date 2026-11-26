@@ -37,7 +37,7 @@ accepts-star = false
 # type: bool, optional
 accepts-score = true
 
-# Whether this block accepts newline delimition for its sections.
+# Whether this block accepts newline delimitation for its sections.
 #
 # type: bool, optional
 accepts-newlines = true
@@ -103,7 +103,7 @@ special = ""
 # values: "string", "int", "float", "bool"
 type = "string"
 
-# What values this can argument can take, if it's an enum.
+# What values this argument can take, if it's an enum.
 # If this field is excluded, then the argument can take any value.
 #
 # type: $argument_type[], optional

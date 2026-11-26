@@ -145,7 +145,7 @@ body = "none"
 html-output = "html,div,wj-footnotes-list"
 
 [form]
-head = "map"
+head = "none"
 body = "raw"
 html-output = "html,span,wj-raw"
 
@@ -163,7 +163,7 @@ html-output = "html,span,wj-hidden"
 
 [html]
 accepts-newlines = true
-head = "none"
+head = "map"
 body = "raw"
 html-output = "html,iframe"
 
@@ -323,7 +323,7 @@ html-output = "html,input"
 
 [raw]
 accepts-newlines = false
-head = "map"
+head = "none"
 body = "raw"
 html-output = "html,span,wj-raw"
 

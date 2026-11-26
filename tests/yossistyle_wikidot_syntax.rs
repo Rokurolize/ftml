@@ -103,7 +103,7 @@ fn only_the_exact_targetless_marker_bypasses_invalid_include() {
         "[[include ]]",
         "[[include\t]]",
         "[[include | key=value]]",
-        "[[include :scp-wiki:]]",
+        "[[include :scp-wiki:/]]",
     ] {
         let (text, _html, errors, pages) = expand_parse_render(malformed);
         assert!(pages.is_empty(), "{malformed:?}: {pages:?}");

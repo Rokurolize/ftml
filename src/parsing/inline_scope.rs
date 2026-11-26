@@ -7136,9 +7136,11 @@ fn lower_sequence<'t>(
                 // align follows a block+preserved-break sibling, live drops the
                 // align body's leading break-only scope segment.
                 if matches!(&element, Element::Container(c) if matches!(c.ctype(), ContainerType::Align(_)))
-                    && output.len() >= 2
-                    && is_break_only_span(output.last().unwrap())
-                    && is_block_boundary(&output[output.len() - 2])
+                    && matches!(
+                        output.as_slice(),
+                        [.., boundary, last]
+                            if is_break_only_span(last) && is_block_boundary(boundary)
+                    )
                     && let Element::Container(c) = &mut element
                 {
                     while matches!(c.elements().first(), Some(e) if is_break_only_span(e))
@@ -7944,7 +7946,8 @@ fn is_cell_closer_residual_text(text: &str) -> bool {
 fn ends_with_ignore_ascii_case(haystack: &str, needle: &str) -> bool {
     let h = haystack.as_bytes();
     let n = needle.as_bytes();
-    h.len() >= n.len() && h[h.len() - n.len()..].eq_ignore_ascii_case(n)
+    let start = h.len().saturating_sub(n.len());
+    h[start..].eq_ignore_ascii_case(n)
 }
 
 fn strip_trailing_space_from_vec_preserving_residual_newline(
@@ -10824,7 +10827,7 @@ fn outer_close_eof_signals<'t>(children: &[Element<'t>]) -> R3HeadingSignals<'t>
         subtree_has_color(level)
     };
     let cancelled = label_signal || subtree_has_span_rendered(tail);
-    let outer = &chain[..chain.len() - 1];
+    let (_, outer) = chain.split_last().expect("chain checked non-empty");
     let outer_scope = !outer.is_empty();
     let outer_size = outer.iter().rev().find_map(|(ctype, attrs)| {
         if *ctype == ContainerType::Size {

@@ -2883,8 +2883,7 @@ fn try_consume_comma_run_subscript<'r, 't>(
                 true,
             ));
         }
-        let slice = parser.current().slice;
-        &slice[slice.len() - (remaining - 2)..]
+        if remaining == 2 { "" } else { "," }
     } else {
         if !has_later_comma_run(parser) {
             return miss();

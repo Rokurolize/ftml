@@ -46,7 +46,12 @@ pub fn escape_wikidot_raw(buffer: &mut String, s: &str) {
     }
 }
 
-fn escape_with_apostrophe(buffer: &mut String, s: &str, apostrophe: &'static str) {
+fn escape_with_apostrophe_mode(
+    buffer: &mut String,
+    s: &str,
+    apostrophe: &'static str,
+    preserve_nul: bool,
+) {
     let mut start = 0;
 
     for (index, byte) in s.bytes().enumerate() {
@@ -56,7 +61,7 @@ fn escape_with_apostrophe(buffer: &mut String, s: &str, apostrophe: &'static str
             b'&' => "&amp;",
             b'\'' => apostrophe,
             b'"' => "&quot;",
-            b'\0' => " ",
+            b'\0' if !preserve_nul => " ",
             _ => continue,
         };
 
@@ -73,8 +78,16 @@ fn escape_with_apostrophe(buffer: &mut String, s: &str, apostrophe: &'static str
     }
 }
 
+fn escape_with_apostrophe(buffer: &mut String, s: &str, apostrophe: &'static str) {
+    escape_with_apostrophe_mode(buffer, s, apostrophe, false);
+}
+
 pub fn escape(buffer: &mut String, s: &str) {
     escape_with_apostrophe(buffer, s, "&#39;");
+}
+
+pub fn escape_preserving_nul(buffer: &mut String, s: &str) {
+    escape_with_apostrophe_mode(buffer, s, "&#39;", true);
 }
 
 pub fn escape_wikidot_text_content(buffer: &mut String, s: &str) {
@@ -117,7 +130,19 @@ pub fn escape_wikidot_attribute(buffer: &mut String, s: &str) {
     escape_with_apostrophe(buffer, s, "'");
 }
 
+pub fn escape_wikidot_attribute_preserving_nul(buffer: &mut String, s: &str) {
+    escape_with_apostrophe_mode(buffer, s, "'", true);
+}
+
 pub fn escape_wikidot_text(buffer: &mut String, s: &str) {
+    escape_wikidot_text_mode(buffer, s, false);
+}
+
+pub fn escape_wikidot_text_preserving_nul(buffer: &mut String, s: &str) {
+    escape_wikidot_text_mode(buffer, s, true);
+}
+
+fn escape_wikidot_text_mode(buffer: &mut String, s: &str, preserve_nul: bool) {
     let mut start = 0;
 
     for (index, ch) in s.char_indices() {
@@ -127,7 +152,7 @@ pub fn escape_wikidot_text(buffer: &mut String, s: &str) {
             '&' => "&amp;",
             '\'' => "&#39;",
             '"' => "&quot;",
-            '\0' => " ",
+            '\0' if !preserve_nul => " ",
             '\u{ab}' => "&#171;",
             '\u{bb}' => "&#187;",
             '\u{a0}' => "&#160;",

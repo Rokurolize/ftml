@@ -44,6 +44,8 @@ pub struct AttributeMap<'t> {
     order: Vec<Cow<'t, str>>,
     #[serde(skip)]
     wikidot_ordered: bool,
+    #[serde(skip)]
+    raw_nul_attributes: Vec<Cow<'t, str>>,
 }
 
 impl PartialEq for AttributeMap<'_> {
@@ -92,6 +94,23 @@ impl<'t> AttributeMap<'t> {
 
     pub(crate) fn insert_raw(&mut self, key: Cow<'t, str>, value: Cow<'t, str>) {
         self.insert_key(key, value);
+    }
+
+    pub(crate) fn mark_attribute_raw_nul(&mut self, attribute: &str) {
+        let attribute = attribute.to_ascii_lowercase();
+        if !self
+            .raw_nul_attributes
+            .iter()
+            .any(|existing| existing.as_ref() == attribute)
+        {
+            self.raw_nul_attributes.push(Cow::Owned(attribute));
+        }
+    }
+
+    pub(crate) fn attribute_has_raw_nul(&self, attribute: &str) -> bool {
+        self.raw_nul_attributes
+            .iter()
+            .any(|existing| existing.as_ref() == attribute)
     }
 
     pub(crate) fn insert_wikidot_relative_href(&mut self, value: Cow<'t, str>) {
@@ -205,11 +224,17 @@ impl<'t> AttributeMap<'t> {
         }
 
         let order = self.order.iter().map(|key| string_to_owned(key)).collect();
+        let raw_nul_attributes = self
+            .raw_nul_attributes
+            .iter()
+            .map(|key| string_to_owned(key))
+            .collect();
 
         AttributeMap {
             inner,
             order,
             wikidot_ordered: self.wikidot_ordered,
+            raw_nul_attributes,
         }
     }
 }

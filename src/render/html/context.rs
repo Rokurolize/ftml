@@ -20,8 +20,9 @@
 
 use super::builder::HtmlBuilder;
 use super::escape::{
-    escape, escape_wikidot_attribute, escape_wikidot_raw, escape_wikidot_text,
-    escape_wikidot_text_content,
+    escape, escape_preserving_nul, escape_wikidot_attribute,
+    escape_wikidot_attribute_preserving_nul, escape_wikidot_raw, escape_wikidot_text,
+    escape_wikidot_text_content, escape_wikidot_text_preserving_nul,
 };
 use super::meta::{HtmlMeta, HtmlMetaType};
 use super::output::{HtmlOutput, HtmlResourceRequirement};
@@ -536,6 +537,20 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
     #[inline]
     pub fn push_escaped_wikidot_attribute(&mut self, s: &str) {
         escape_wikidot_attribute(self.buffer(), s);
+    }
+
+    #[inline]
+    pub fn push_escaped_wikidot_attribute_preserving_nul(&mut self, s: &str) {
+        escape_wikidot_attribute_preserving_nul(self.buffer(), s);
+    }
+
+    #[inline]
+    pub fn push_escaped_preserving_nul(&mut self, s: &str) {
+        if self.layout().legacy() {
+            escape_wikidot_text_preserving_nul(self.buffer(), s);
+        } else {
+            escape_preserving_nul(self.buffer(), s);
+        }
     }
 
     pub fn push_cached_table_of_contents<F>(&mut self, render: F)

@@ -36,6 +36,12 @@ macro_rules! make_err {
     };
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+enum WikidotAttributeControlPreservation {
+    Strip,
+    PreserveEscapeDelete,
+}
+
 fn normalize_wikidot_html_id_value<'t>(
     value: &Cow<'t, str>,
     settings: &WikitextSettings,
@@ -47,7 +53,27 @@ fn normalize_wikidot_html_id_value<'t>(
     normalize_wikidot_html_attribute_value(&Cow::Owned(isolated))
 }
 
+fn normalize_wikidot_html_id_value_preserving_interior_c0<'t>(
+    value: &Cow<'t, str>,
+    settings: &WikitextSettings,
+) -> Cow<'t, str> {
+    if !(settings.layout.legacy() && settings.isolate_user_ids) {
+        return normalize_wikidot_html_attribute_value(value);
+    }
+    Cow::Owned(isolate_ids_preserving_interior_c0(value.as_ref()))
+}
+
 fn normalize_wikidot_html_attribute_value<'t>(value: &Cow<'t, str>) -> Cow<'t, str> {
+    normalize_wikidot_html_attribute_value_with_preservation(
+        value,
+        WikidotAttributeControlPreservation::Strip,
+    )
+}
+
+fn normalize_wikidot_html_attribute_value_with_preservation<'t>(
+    value: &Cow<'t, str>,
+    preservation: WikidotAttributeControlPreservation,
+) -> Cow<'t, str> {
     let input = value.as_ref();
     let mut output = String::with_capacity(input.len());
     let mut pending_space = false;
@@ -66,7 +92,21 @@ fn normalize_wikidot_html_attribute_value<'t>(value: &Cow<'t, str>) -> Cow<'t, s
                 pending_space = true;
             }
             '\0'..='\u{001F}' | '\u{007F}' => {
-                changed = true;
+                let preserve = match preservation {
+                    WikidotAttributeControlPreservation::Strip => false,
+                    WikidotAttributeControlPreservation::PreserveEscapeDelete => {
+                        matches!(ch, '\u{001B}' | '\u{007F}')
+                    }
+                };
+                if preserve {
+                    if pending_space {
+                        output.push(' ');
+                        pending_space = false;
+                    }
+                    output.push(ch);
+                } else {
+                    changed = true;
+                }
             }
             _ => {
                 if pending_space {
@@ -86,6 +126,80 @@ fn normalize_wikidot_html_attribute_value<'t>(value: &Cow<'t, str>) -> Cow<'t, s
         Cow::Owned(output)
     } else {
         value.clone()
+    }
+}
+
+fn is_c0_control(character: char) -> bool {
+    matches!(character as u32, 0x00..=0x1f)
+}
+
+fn is_stripped_attribute_control(character: char) -> bool {
+    is_c0_control(character) || character == '\u{007F}'
+}
+
+fn is_visible_attribute_character(character: char) -> bool {
+    !character.is_whitespace() && !is_stripped_attribute_control(character)
+}
+
+fn is_interior_c0_control(input: &str, index: usize, character: char) -> bool {
+    is_c0_control(character)
+        && input[..index].chars().any(is_visible_attribute_character)
+        && input[index + character.len_utf8()..]
+            .chars()
+            .any(is_visible_attribute_character)
+}
+
+fn isolate_ids_preserving_interior_c0(id_string: &str) -> String {
+    const PREFIX: &str = "u-";
+    if id_string.is_empty() {
+        return String::new();
+    }
+
+    let mut collapsed = String::with_capacity(id_string.len());
+    let mut pending_space = false;
+    let mut started = false;
+    for (index, ch) in id_string.char_indices() {
+        if ch.is_whitespace() {
+            if started {
+                pending_space = true;
+            }
+            continue;
+        }
+        if is_stripped_attribute_control(ch)
+            && !is_interior_c0_control(id_string, index, ch)
+        {
+            continue;
+        }
+        if pending_space {
+            collapsed.push(' ');
+            pending_space = false;
+        }
+        started = true;
+        collapsed.push(ch);
+    }
+    if collapsed.is_empty() {
+        return PREFIX.to_owned();
+    }
+    if id_string.starts_with(PREFIX) {
+        return collapsed;
+    }
+
+    let mut isolated_ids = String::with_capacity(collapsed.len() + PREFIX.len() + 1);
+    isolated_ids.push_str(PREFIX);
+    if id_string.starts_with(char::is_whitespace) {
+        isolated_ids.push(' ');
+    }
+    isolated_ids.push_str(&collapsed);
+    isolated_ids
+}
+
+fn wikidot_block_attribute_control_preservation(
+    key: &str,
+) -> WikidotAttributeControlPreservation {
+    if matches!(key, "class" | "style" | "role") || key.starts_with("data-") {
+        WikidotAttributeControlPreservation::PreserveEscapeDelete
+    } else {
+        WikidotAttributeControlPreservation::Strip
     }
 }
 
@@ -267,7 +381,10 @@ impl<'t> Arguments<'t> {
             if explicit_empty {
                 Cow::Borrowed("")
             } else {
-                normalize_wikidot_html_attribute_value(&value)
+                normalize_wikidot_html_attribute_value_with_preservation(
+                    &value,
+                    WikidotAttributeControlPreservation::PreserveEscapeDelete,
+                )
             }
         })
     }
@@ -471,6 +588,20 @@ impl<'t> Arguments<'t> {
         map
     }
 
+    pub(crate) fn to_wikidot_block_attribute_map(
+        &self,
+        settings: &WikitextSettings,
+    ) -> AttributeMap<'t> {
+        let mut map = self.attribute_map_from_entries_with_control_preservation(
+            settings,
+            |_, _| true,
+            true,
+        );
+        map.isolate_id(settings);
+        self.insert_explicit_empty_marker(&mut map);
+        map
+    }
+
     pub(crate) fn to_wikidot_iframe_attribute_map(
         &self,
         settings: &WikitextSettings,
@@ -596,6 +727,17 @@ impl<'t> Arguments<'t> {
         settings: &WikitextSettings,
         include: impl Fn(&ArgumentKey<'t>, &Cow<'t, str>) -> bool,
     ) -> AttributeMap<'t> {
+        self.attribute_map_from_entries_with_control_preservation(
+            settings, include, false,
+        )
+    }
+
+    fn attribute_map_from_entries_with_control_preservation(
+        &self,
+        settings: &WikitextSettings,
+        include: impl Fn(&ArgumentKey<'t>, &Cow<'t, str>) -> bool,
+        preserve_block_controls: bool,
+    ) -> AttributeMap<'t> {
         let mut attributes = AttributeMap::new();
 
         let mut ordered: Vec<(&ArgumentKey<'t>, &Cow<'t, str>)> =
@@ -645,14 +787,34 @@ impl<'t> Arguments<'t> {
                 Cow::Borrowed("")
             } else if settings.layout.legacy() {
                 if key.eq_ignore_ascii_case("id") {
-                    normalize_wikidot_html_id_value(value, settings)
+                    if preserve_block_controls {
+                        normalize_wikidot_html_id_value_preserving_interior_c0(
+                            value, settings,
+                        )
+                    } else {
+                        normalize_wikidot_html_id_value(value, settings)
+                    }
                 } else {
-                    normalize_wikidot_html_attribute_value(value)
+                    let preservation = if preserve_block_controls {
+                        wikidot_block_attribute_control_preservation(&key)
+                    } else {
+                        WikidotAttributeControlPreservation::Strip
+                    };
+                    normalize_wikidot_html_attribute_value_with_preservation(
+                        value,
+                        preservation,
+                    )
                 }
             } else {
                 value.clone()
             };
+            let preserve_raw_nul = preserve_block_controls
+                && key.eq_ignore_ascii_case("id")
+                && value.contains('\0');
             attributes.insert(&key, value);
+            if preserve_raw_nul {
+                attributes.mark_attribute_raw_nul("id");
+            }
         }
 
         attributes.set_wikidot_ordered(true);

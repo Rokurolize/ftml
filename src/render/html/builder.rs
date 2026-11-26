@@ -228,17 +228,34 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
         self.ctx.push_raw('"');
     }
 
+    fn attr_value_preserving_nul(&mut self, value_parts: &[&str], wikidot_values: bool) {
+        self.ctx.push_raw('"');
+
+        for part in value_parts {
+            if wikidot_values {
+                self.ctx.push_escaped_wikidot_attribute_preserving_nul(part);
+            } else {
+                self.ctx.push_escaped_preserving_nul(part);
+            }
+        }
+
+        self.ctx.push_raw('"');
+    }
+
     fn attr_single_mode(
         &mut self,
         key: &str,
         value_parts: &[&str],
         wikidot_values: bool,
+        preserve_nul: bool,
     ) {
         let has_value = !value_parts.iter().all(|s| s.is_empty());
         self.attr_key(key, has_value);
 
         if has_value {
-            if wikidot_values {
+            if preserve_nul {
+                self.attr_value_preserving_nul(value_parts, wikidot_values);
+            } else if wikidot_values {
                 self.attr_value_wikidot(value_parts);
             } else {
                 self.attr_value(value_parts);
@@ -269,7 +286,7 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
     ) -> &mut Self {
         let Some(map_ref) = attributes.map else {
             for (key, value_parts) in filter_attribute_entries(&attributes) {
-                self.attr_single_mode(key, value_parts, wikidot_values);
+                self.attr_single_mode(key, value_parts, wikidot_values, false);
             }
 
             return self.chain();
@@ -301,7 +318,12 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
                     self.attr_single_quoted(key, &[]);
                     continue;
                 }
-                self.attr_single_mode(key, &[value], wikidot_values);
+                self.attr_single_mode(
+                    key,
+                    &[value],
+                    wikidot_values,
+                    legacy && map_ref.attribute_has_raw_nul(key),
+                );
             }
 
             for name in &explicit_empty {
@@ -321,7 +343,12 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
             }
             if let Some(map_value) = attribute_map.get(&cow!(key)) {
                 if omit_empty_user_class(key, map_value) {
-                    self.attr_single_mode(key, value_parts, wikidot_values);
+                    self.attr_single_mode(
+                        key,
+                        value_parts,
+                        wikidot_values,
+                        legacy && map_ref.attribute_has_raw_nul(key),
+                    );
                     merged.insert(key);
                     continue;
                 }
@@ -331,14 +358,24 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
                 merged_value.push(" ");
                 merged_value.push(map_value);
 
-                self.attr_single_mode(key, &merged_value, wikidot_values);
+                self.attr_single_mode(
+                    key,
+                    &merged_value,
+                    wikidot_values,
+                    legacy && map_ref.attribute_has_raw_nul(key),
+                );
                 merged.insert(key);
             }
         }
 
         for (key, value_parts) in filter_attribute_entries(&attributes) {
             if !merged.contains(key) {
-                self.attr_single_mode(key, value_parts, wikidot_values);
+                self.attr_single_mode(
+                    key,
+                    value_parts,
+                    wikidot_values,
+                    legacy && map_ref.attribute_has_raw_nul(key),
+                );
             }
         }
 
@@ -361,7 +398,12 @@ impl<'c, 'i, 'h, 'e, 't> HtmlBuilderTag<'c, 'i, 'h, 'e, 't> {
                     self.attr_single_quoted(key, &[]);
                     continue;
                 }
-                self.attr_single_mode(key, &[value], wikidot_values);
+                self.attr_single_mode(
+                    key,
+                    &[value],
+                    wikidot_values,
+                    legacy && map_ref.attribute_has_raw_nul(key),
+                );
             }
         }
 

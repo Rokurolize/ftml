@@ -2733,8 +2733,15 @@ where
                             | "block-align-right"
                             | "block-align-justify"
                     );
+                    let bibliography_fused_footnote_close = block_rule.name
+                        == "block-bibliography"
+                        && parser.in_footnote()
+                        && !parser.wikidot_footnote_zone_blocks(end_start)
+                        && parser.full_text().inner()[parser.current().span.start..]
+                            .starts_with("[[/footnote]]");
                     if parser.settings().layout.legacy()
                         && !parser.discarding_hidden_body()
+                        && !bibliography_fused_footnote_close
                         && (matches!(
                             block_rule.name,
                             "block-code" | "block-math" | "block-bibliography"

@@ -184,7 +184,10 @@ fn strict_url_token_continues(
             byte,
             b'\n' | b'\r' | b' ' | b'\t' | b'"' | b'\'' | b'|' | b'[' | b']'
         ) || character.is_whitespace()
-            || matches!(byte, 0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
+            || matches!(
+                byte,
+                0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1f | 0x7f
+            )
             || source[pos..].starts_with(">@")
             || source[pos..].starts_with("@@")
         {
@@ -404,6 +407,11 @@ where
         if token_text.chars().next().is_some_and(|character| {
             character.is_whitespace() && !character.is_ascii_whitespace()
         }) {
+            if preceded_by_left_bracket
+                && bracketed_unlabeled_terminates_before_close(source, token.span.start)
+            {
+                break;
+            }
             let next_start = token.span.end;
             let Some(next_character) = source[next_start..].chars().next() else {
                 break;
@@ -570,6 +578,17 @@ where
     super::raw::RULE_RAW.try_consume(&mut probe).is_ok()
 }
 
+fn bracketed_unlabeled_terminates_before_close(source: &str, start: usize) -> bool {
+    let mut end = start;
+    while let Some(character) = source[end..].chars().next() {
+        if !matches!(character, '\u{0085}' | '\u{00a0}') {
+            break;
+        }
+        end += character.len_utf8();
+    }
+    end > start && source[end..].starts_with(']') && !source[end..].starts_with("]]")
+}
+
 fn wikidot_automatic_url_end(
     source: &str,
     mut end: usize,
@@ -580,7 +599,10 @@ fn wikidot_automatic_url_end(
     while end < limit {
         let character = source[end..].chars().next().unwrap();
         if matches!(bytes[end], b'\n' | b'\r' | b' ' | b'\t' | b'"' | b'\'')
-            || matches!(bytes[end], 0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
+            || matches!(
+                bytes[end],
+                0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1f | 0x7f
+            )
             || (!bracket_fallback
                 && (source[end..].starts_with("[[")
                     || source[end..].starts_with("]]")

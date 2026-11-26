@@ -11,6 +11,13 @@ name: Full test suite
 # at the per-test 15s bound with the test name attached. All are routed for the
 # parser/parity campaigns; this workflow reports them, it does not adjudicate them.
 
+env:
+  # sccache: store the cache in the GitHub Actions cache service so it
+  # survives the runner. Without this the sccache-action's server keeps
+  # its cache on the ephemeral local disk and every run misses (measured
+  # 2026-11-26: 228 compile requests executed, 0 hits).
+  SCCACHE_GHA_ENABLED: "true"
+
 on:
   schedule:
     # Nightly on main (03:23 JST). Informational only.

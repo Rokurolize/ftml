@@ -403,6 +403,13 @@ fn push_copied_range(
 }
 
 fn line_start_break_drop(source: &str, open: usize) -> Option<std::ops::Range<usize>> {
+    let bytes = source.as_bytes();
+    if let Some(index) = open.checked_sub(1)
+        && bytes.get(index) == Some(&b'\r')
+    {
+        return Some(index..open);
+    }
+
     let line_start = source[..open].rfind('\n').map_or(0, |newline| newline + 1);
     if open != line_start || line_start == 0 {
         return None;
@@ -448,7 +455,13 @@ fn comment_elision_needs_raw_barrier(source: &str, open: usize, close: usize) ->
 }
 
 fn leading_comment_remains_an_owner_barrier(source: &str, open: usize) -> bool {
-    let line_start = source[..open].rfind('\n').map_or(0, |newline| newline + 1);
+    let mut line_start = source[..open].rfind('\n').map_or(0, |newline| newline + 1);
+    if open
+        .checked_sub(1)
+        .is_some_and(|index| source.as_bytes()[index] == b'\r')
+    {
+        line_start = open;
+    }
     if !source[line_start..open]
         .bytes()
         .all(|byte| matches!(byte, b' ' | b'\t'))

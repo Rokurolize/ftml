@@ -1,0 +1,50 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "footnote",
+                        "data": 1
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "text",
+                        "data": "tail"
+                    },
+                    {
+                        "element": "footnote",
+                        "data": 2
+                    }
+                ]
+            }
+        }
+    ],
+    "footnotes": [
+        [
+            {
+                "element": "bibliography-block",
+                "data": {
+                    "index": 0,
+                    "title": null,
+                    "hide": false
+                }
+            }
+        ],
+        [
+            {
+                "element": "text",
+                "data": "second"
+            }
+        ]
+    ],
+    "needs-footnote-block": true,
+    "bibliographies": [
+        []
+    ]
+}

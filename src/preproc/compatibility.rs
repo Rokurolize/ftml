@@ -537,9 +537,11 @@ pub(super) fn substitute_for_layout(text: &mut String, wikidot: bool) {
         let literal_lines = resplit_lines(&mut lines);
         split_merged_div_close_opener_lines(&mut lines, &literal_lines);
     }
-    let literal_lines = literal_line_mask(&lines);
+    let mut literal_lines = literal_line_mask(&lines);
     if wikidot {
         canonicalize_list_cross_div_heading_close(&mut lines, &literal_lines);
+        split_wikidot_quoted_div_footnote_closers(&mut lines, &literal_lines);
+        literal_lines = literal_line_mask(&lines);
     }
     canonicalize_crossed_collapsible_div_closers(&mut lines, &literal_lines, wikidot);
     if wikidot {
@@ -549,6 +551,10 @@ pub(super) fn substitute_for_layout(text: &mut String, wikidot: bool) {
     canonicalize_crossed_center_div_closers(&mut lines, &literal_lines);
     canonicalize_crossed_center_collapsible_closers(&mut lines, &literal_lines, wikidot);
     canonicalize_crossed_bold_size_closers(&mut lines, &literal_lines);
+    if wikidot {
+        split_tight_quote_footnote_closers(&mut lines, &literal_lines);
+        literal_lines = literal_line_mask(&lines);
+    }
     remove_tight_quote_lines(&mut lines, &literal_lines);
     canonicalize_root_collapsible_inline_quoted_closers(&mut lines, &literal_lines);
     if wikidot {
@@ -1384,6 +1390,112 @@ fn close_unclosed_divs_before_collapsible_close(lines: &mut Vec<String>) {
         output.push(line.clone());
     }
     *lines = output;
+}
+
+fn split_tight_quote_footnote_closers(lines: &mut Vec<String>, literal_lines: &[bool]) {
+    fn update_open(body: &str, open: &mut bool) {
+        let mut position = 0;
+        while position < body.len() {
+            let open_at = body[position..].find("[[footnote]]").map(|i| position + i);
+            let close_at = body[position..].find("[[/footnote]]").map(|i| position + i);
+            match (open_at, close_at) {
+                (Some(open_at), Some(close_at)) if open_at < close_at => {
+                    *open = true;
+                    position = open_at + "[[footnote]]".len();
+                }
+                (_, Some(close_at)) => {
+                    *open = false;
+                    position = close_at + "[[/footnote]]".len();
+                }
+                (Some(open_at), None) => {
+                    *open = true;
+                    position = open_at + "[[footnote]]".len();
+                }
+                (None, None) => break,
+            }
+        }
+    }
+
+    let mut out = Vec::with_capacity(lines.len());
+    let mut open = false;
+    for (line, literal) in lines.iter().zip(literal_lines) {
+        let (body, ending) = split_line(line);
+        let was_open = open;
+        if !literal {
+            update_open(body, &mut open);
+        }
+        if !literal
+            && was_open
+            && body.starts_with('>')
+            && valid_quote_depth(body) == 0
+            && body
+                .trim_end_matches([' ', '\t'])
+                .ends_with("[[/footnote]]")
+        {
+            let close_at = body.rfind("[[/footnote]]").unwrap();
+            let first_ending = if ending.is_empty() { "\n" } else { ending };
+            out.push(format!("{}{}", &body[..close_at], first_ending));
+            out.push(format!("[[/footnote]]{ending}"));
+        } else {
+            out.push(line.clone());
+        }
+    }
+    *lines = out;
+}
+
+fn split_wikidot_quoted_div_footnote_closers(
+    lines: &mut Vec<String>,
+    literal_lines: &[bool],
+) {
+    fn update_open(body: &str, open: &mut bool) {
+        let mut position = 0;
+        while position < body.len() {
+            let open_at = body[position..].find("[[footnote]]").map(|i| position + i);
+            let close_at = body[position..].find("[[/footnote]]").map(|i| position + i);
+            match (open_at, close_at) {
+                (Some(open_at), Some(close_at)) if open_at < close_at => {
+                    *open = true;
+                    position = open_at + "[[footnote]]".len();
+                }
+                (_, Some(close_at)) => {
+                    *open = false;
+                    position = close_at + "[[/footnote]]".len();
+                }
+                (Some(open_at), None) => {
+                    *open = true;
+                    position = open_at + "[[footnote]]".len();
+                }
+                (None, None) => break,
+            }
+        }
+    }
+
+    let mut out = Vec::with_capacity(lines.len());
+    let mut open = false;
+    for (line, literal) in lines.iter().zip(literal_lines) {
+        let (body, ending) = split_line(line);
+        let was_open = open;
+        if !literal {
+            update_open(body, &mut open);
+        }
+        const JOINED: &str = "[[/div]][[/footnote]]";
+        let close_at = body.find(JOINED);
+        if !literal
+            && was_open
+            && close_at.is_some_and(|at| {
+                body[..at].trim_end_matches([' ', '\t']).starts_with('>')
+            })
+            && close_at.is_some_and(|at| body[at + JOINED.len()..].trim().is_empty())
+        {
+            let at = close_at.unwrap();
+            let first_ending = if ending.is_empty() { "\n" } else { ending };
+            out.push(format!("{}[[/div]]{}", &body[..at], first_ending));
+            out.push(format!("[[/footnote]]{ending}"));
+        } else {
+            out.push(line.clone());
+        }
+    }
+    *lines = out;
 }
 
 fn remove_tight_quote_lines(lines: &mut [String], literal_lines: &[bool]) {

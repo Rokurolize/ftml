@@ -1,0 +1,56 @@
+[
+    {
+        "token": "identifier",
+        "rule": "block",
+        "span": [
+            12,
+            13
+        ],
+        "kind": "no-such-block"
+    },
+    {
+        "token": "left-block",
+        "rule": "fallback",
+        "span": [
+            0,
+            2
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-block",
+        "rule": "fallback",
+        "span": [
+            10,
+            12
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "identifier",
+        "rule": "block",
+        "span": [
+            25,
+            26
+        ],
+        "kind": "no-such-block"
+    },
+    {
+        "token": "left-block",
+        "rule": "fallback",
+        "span": [
+            13,
+            15
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-block",
+        "rule": "fallback",
+        "span": [
+            23,
+            25
+        ],
+        "kind": "no-rules-match"
+    }
+]

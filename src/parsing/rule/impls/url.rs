@@ -57,7 +57,7 @@ pub(crate) fn is_wikidot_only_autolink_url(url: &str) -> bool {
 pub(crate) fn starts_wikidot_only_scheme_url(source: &str, start: usize) -> bool {
     WIKIDOT_ONLY_AUTOLINK_SCHEMES.iter().any(|scheme| {
         source[start..].starts_with(scheme)
-            && wikidot_automatic_url_end(source, start, source.len())
+            && wikidot_automatic_url_end(source, start, source.len(), false)
                 > start + scheme.len()
     })
 }
@@ -344,6 +344,7 @@ where
         .checked_sub(1)
         .and_then(|index| source.as_bytes().get(index).copied())
         == Some(b'[');
+    let mut bracket_fallback = false;
     loop {
         if parser.current().token == Token::Pipe
             && parser.look_ahead(0).is_some_and(|token| {
@@ -384,6 +385,13 @@ where
         if parser.current().token == Token::InputEnd {
             break;
         }
+        if preceded_by_left_bracket
+            && !bracket_fallback
+            && parser.current().span.start == end
+            && source[parser.current().span.start..].starts_with("]]")
+        {
+            bracket_fallback = true;
+        }
         if matches!(parser.current().token, Token::Raw | Token::LeftRaw) {
             let mut raw_probe = parser.clone();
             if super::raw::RULE_RAW.try_consume(&mut raw_probe).is_ok() {
@@ -401,15 +409,21 @@ where
                 break;
             };
             let next_end = next_start + next_character.len_utf8();
-            if wikidot_automatic_url_end(source, next_start, next_end) == next_start {
+            if wikidot_automatic_url_end(source, next_start, next_end, bracket_fallback)
+                == next_start
+            {
                 break;
             }
             end = token.span.end;
             parser.step()?;
             continue;
         }
-        let fragment_end =
-            wikidot_automatic_url_end(source, token.span.start, token.span.end);
+        let fragment_end = wikidot_automatic_url_end(
+            source,
+            token.span.start,
+            token.span.end,
+            bracket_fallback,
+        );
         if fragment_end != token.span.end {
             break;
         }
@@ -556,15 +570,21 @@ where
     super::raw::RULE_RAW.try_consume(&mut probe).is_ok()
 }
 
-fn wikidot_automatic_url_end(source: &str, mut end: usize, limit: usize) -> usize {
+fn wikidot_automatic_url_end(
+    source: &str,
+    mut end: usize,
+    limit: usize,
+    bracket_fallback: bool,
+) -> usize {
     let bytes = source.as_bytes();
     while end < limit {
         let character = source[end..].chars().next().unwrap();
         if matches!(bytes[end], b'\n' | b'\r' | b' ' | b'\t' | b'"' | b'\'')
             || matches!(bytes[end], 0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
-            || source[end..].starts_with("[[")
-            || source[end..].starts_with("]]")
-            || source[end..].starts_with("||")
+            || (!bracket_fallback
+                && (source[end..].starts_with("[[")
+                    || source[end..].starts_with("]]")
+                    || source[end..].starts_with("||")))
         {
             break;
         }

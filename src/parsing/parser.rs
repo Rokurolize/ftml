@@ -2763,18 +2763,20 @@ impl<'r, 't> Parser<'r, 't> {
     }
 
     /// Whether the `[[/tabview]]` closer at `close_start` attaches to the
-    /// body's last `[[/tab]]` closer: only whitespace and quote-row prefixes
-    /// may sit between the two. Live keeps a non-attached view closer literal
-    /// and the view keeps scanning for a later attached one (recovery), so
-    /// the body walk must not end there (`tabview/tab-stray-fails`).
+    /// body's last `[[/tab]]` closer: only whitespace, discarded vertical
+    /// controls, and quote-row prefixes may sit between the two. Live keeps a
+    /// non-attached view closer literal and the view keeps scanning for a
+    /// later attached one (recovery), so the body walk must not end there
+    /// (`tabview/tab-stray-fails`).
     pub(crate) fn wikidot_tabview_close_follows_tab_close(
         &self,
         close_start: usize,
     ) -> bool {
         let source = self.full_text().inner();
         let prefix = &source[..close_start];
-        let trimmed =
-            prefix.trim_end_matches(|c: char| c.is_ascii_whitespace() || c == '>');
+        let trimmed = prefix.trim_end_matches(|c: char| {
+            c.is_ascii_whitespace() || c == '>' || c == '\u{000B}'
+        });
         trimmed
             .get(trimmed.len().saturating_sub(8)..)
             .is_some_and(|suffix| suffix.eq_ignore_ascii_case("[[/tab]]"))

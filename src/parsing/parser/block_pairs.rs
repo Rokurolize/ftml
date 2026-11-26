@@ -1646,8 +1646,18 @@ impl<'t> Scanner<'t> {
         depth > head_depth || (head_depth > 0 && depth == 0)
     }
 
+    fn skip_tabview_close_space(&self, mut pos: usize, limit: usize) -> Option<usize> {
+        loop {
+            pos = self.skip_structure_space(pos, limit)?;
+            if pos >= limit || self.tokens[pos].token != Token::DiscardedControl {
+                return Some(pos);
+            }
+            pos += 1;
+        }
+    }
+
     fn skip_tabview_structure_space(&self, pos: usize, limit: usize) -> Option<usize> {
-        let next = self.skip_structure_space(pos, limit)?;
+        let next = self.skip_tabview_close_space(pos, limit)?;
         if (pos..next).any(|t| self.tokens[t].token == Token::ParagraphBreak) {
             None
         } else {
@@ -4207,7 +4217,7 @@ impl<'t> Scanner<'t> {
             pos = if head_depth > 0 {
                 self.skip_tabview_structure_space(pos, limit)?
             } else {
-                self.skip_structure_space(pos, limit)?
+                self.skip_tabview_close_space(pos, limit)?
             };
             if let Some(close) = self.read_kind_closer(pos, WikidotBlockKind::TabView) {
                 if self.quote_depth_outside(pos, head_depth) {

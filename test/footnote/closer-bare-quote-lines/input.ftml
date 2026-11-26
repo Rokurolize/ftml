@@ -1,0 +1,11 @@
+[[footnote]]leadtext724
+>[[/footnote]]
+tail[[footnote]]second[[/footnote]]
+[[footnote]]deep
+>>[[/footnote]]
+x[[footnote]]deeper
+>>>[[/footnote]]
+x[[footnote]]textual
+>abc[[/footnote]]
+x[[footnote]]control
+> [[/footnote]]

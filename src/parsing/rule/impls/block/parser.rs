@@ -2325,6 +2325,80 @@ where
         }
     }
 
+    fn wikidot_footnote_marked_close_byte(&self) -> Option<usize> {
+        if !self.start_of_line() {
+            return None;
+        }
+        let source = self.full_text().inner();
+        let start = self.current().span.start;
+        let line_start = source[..start].rfind('\n').map_or(0, |index| index + 1);
+        if line_start != start {
+            return None;
+        }
+        let line_end = source[start..]
+            .find(['\n', '\r'])
+            .map_or(source.len(), |index| start + index);
+        let line = &source[start..line_end];
+        let close_offset = line.find("[[/footnote]]")?;
+        if !line[close_offset + "[[/footnote]]".len()..]
+            .bytes()
+            .all(|byte| matches!(byte, b' ' | b'\t'))
+        {
+            return None;
+        }
+        let raw_prefix = &line[..close_offset];
+        let prefix = raw_prefix.trim_end_matches([' ', '\t']);
+        let marker_count = |prefix: &str, marker: char| {
+            !prefix.is_empty() && prefix.chars().all(|ch| ch == marker)
+        };
+        let heading = prefix.len() <= 6 && marker_count(prefix, '+');
+        let center = prefix == "=";
+        let horizontal_rule = prefix.len() >= 4 && marker_count(prefix, '-');
+        let content_separator = prefix.len() >= 4 && marker_count(prefix, '=');
+        let clear_float = {
+            let marker = prefix.trim_end_matches(['<', '>']);
+            marker.len() >= 4 && marker_count(marker, '~')
+        };
+        let definition_term = (prefix.starts_with(": ") || prefix.starts_with(":\t"))
+            && !prefix[2..].contains(':');
+        let tight_quote = prefix.starts_with('>') && {
+            let quote_len = prefix.bytes().take_while(|byte| *byte == b'>').count();
+            let spaced_marker_only =
+                raw_prefix.len() != prefix.len() && prefix.chars().all(|ch| ch == '>');
+            !prefix[quote_len..].starts_with([' ', '\t']) && !spaced_marker_only
+        };
+        let quoted_div_close = prefix.starts_with('>')
+            && prefix[1..].starts_with([' ', '\t', '>'])
+            && prefix.contains("[[/div]]");
+        if heading
+            || center
+            || horizontal_rule
+            || content_separator
+            || clear_float
+            || definition_term
+            || tight_quote
+            || quoted_div_close
+        {
+            Some(start + close_offset)
+        } else {
+            None
+        }
+    }
+
+    fn consume_wikidot_footnote_marked_close(
+        &mut self,
+        close_byte: usize,
+    ) -> Result<bool, ParseError> {
+        while self.current().span.start < close_byte {
+            self.step()?;
+        }
+        if self.current().span.start != close_byte {
+            return Ok(false);
+        }
+        let name = self.get_end_block()?;
+        Ok(name == "footnote")
+    }
+
     fn verify_end_block(
         &mut self,
         first_iteration: bool,
@@ -2429,6 +2503,15 @@ where
                     parser.step()?;
                     parser.get_optional_space()?;
                 }
+            }
+
+            if parser.settings().layout.legacy()
+                && !parser.discarding_hidden_body()
+                && block_rule.name == "block-footnote"
+                && let Some(close_byte) = parser.wikidot_footnote_marked_close_byte()
+                && parser.consume_wikidot_footnote_marked_close(close_byte)?
+            {
+                return Ok(true);
             }
 
             let end_start = parser.current().span.start;

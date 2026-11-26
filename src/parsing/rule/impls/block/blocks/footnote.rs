@@ -24,7 +24,7 @@ use crate::parsing::body_end::wikidot_footnote_yields_enclosing_closer;
 use crate::parsing::parse_boolean;
 use crate::parsing::rule::impls::comment_closer_token_count;
 use crate::tree::AttributeMap;
-use crate::tree::{InlineFormatKind, PartialElement};
+use crate::tree::{ClearFloat, InlineFormatKind, ListItem, ListType, PartialElement};
 use std::borrow::Cow;
 use std::ops::{Deref, DerefMut};
 
@@ -144,27 +144,62 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
         let repaired =
             crate::parsing::footnote::repair_wikidot_footnote_list_chrome(&mut elements);
         let note_took_the_list_break = parser.take_suppress_footnote_list_break();
-        let closer_marker = wikidot_footnote_closer_line_list_marker(parser);
-        if let Some(marker) = closer_marker {
-            if matches!(elements.last(), Some(Element::List { .. })) {
-                elements.push(Element::Container(Container::new(
-                    ContainerType::Paragraph,
-                    vec![text!(marker)],
-                    AttributeMap::new(),
-                )));
-            } else if !elements.is_empty() {
-                if !matches!(elements.last(), Some(Element::LineBreak)) {
+        let closer_marker = wikidot_footnote_closer_line_marker(parser);
+        match closer_marker {
+            Some(WikidotFootnoteCloserLine::List(marker)) => {
+                if matches!(elements.last(), Some(Element::List { .. })) {
+                    elements.push(Element::Container(Container::new(
+                        ContainerType::Paragraph,
+                        vec![text!(marker)],
+                        AttributeMap::new(),
+                    )));
+                } else if !elements.is_empty() {
+                    if !matches!(elements.last(), Some(Element::LineBreak)) {
+                        elements.push(Element::LineBreak);
+                    }
+                    elements.push(text!(marker));
+                }
+            }
+            Some(WikidotFootnoteCloserLine::Literal(marker)) => {
+                if matches!(elements.as_slice(), [Element::LineBreak]) {
+                    elements.clear();
+                }
+                if !elements.is_empty()
+                    && !matches!(elements.last(), Some(Element::LineBreak))
+                {
                     elements.push(Element::LineBreak);
                 }
-                elements.push(text!(marker));
+                elements.push(Element::Text(marker));
             }
-        } else if !note_took_the_list_break {
-            append_wikidot_footnote_trailing_list_break(&mut elements, !repaired);
+            Some(WikidotFootnoteCloserLine::HorizontalRule) => {
+                elements.push(Element::HorizontalRule);
+            }
+            Some(WikidotFootnoteCloserLine::ContentSeparator) => {
+                elements.push(Element::ContentSeparator);
+            }
+            Some(WikidotFootnoteCloserLine::ClearFloat(kind)) => {
+                elements.push(Element::ClearFloat(kind));
+            }
+            Some(WikidotFootnoteCloserLine::DefinitionTerm(text)) => {
+                if matches!(elements.as_slice(), [Element::LineBreak]) {
+                    elements.clear();
+                }
+                if elements.is_empty() {
+                    elements.push(Element::Text(text));
+                }
+            }
+            Some(WikidotFootnoteCloserLine::Suppressed) => {}
+            None if !note_took_the_list_break => {
+                append_wikidot_footnote_trailing_list_break(&mut elements, !repaired);
+            }
+            None => {}
         }
     }
 
     if parser.settings().layout.legacy() {
         bare_wikidot_footnote_spent_quote_tail(&mut elements);
+        merge_wikidot_footnote_empty_div_tail(&mut elements);
+        repair_wikidot_footnote_bibliography_marker_line(parser, &mut elements);
     }
 
     let row_tail = if parser.settings().layout.legacy() {
@@ -234,9 +269,19 @@ where
     Ok(())
 }
 
-fn wikidot_footnote_closer_line_list_marker(
-    parser: &Parser<'_, '_>,
-) -> Option<&'static str> {
+enum WikidotFootnoteCloserLine<'t> {
+    List(&'static str),
+    Literal(Cow<'t, str>),
+    HorizontalRule,
+    ContentSeparator,
+    ClearFloat(ClearFloat),
+    DefinitionTerm(Cow<'t, str>),
+    Suppressed,
+}
+
+fn wikidot_footnote_closer_line_marker<'r, 't>(
+    parser: &Parser<'r, 't>,
+) -> Option<WikidotFootnoteCloserLine<'t>> {
     let source = parser.full_text().inner();
     let mut end = parser.current().span.start.min(source.len());
     while end > 0 && matches!(source.as_bytes()[end - 1], b' ' | b'\t') {
@@ -248,11 +293,154 @@ fn wikidot_footnote_closer_line_list_marker(
     let lowered = source[..end].to_ascii_lowercase();
     let opener = lowered.rfind("[[/footnote")?;
     let line_start = source[..opener].rfind('\n').map_or(0, |index| index + 1);
-    match source[line_start..opener].trim() {
-        "*" => Some("*"),
-        "#" => Some("#"),
-        _ => None,
+    let raw_prefix = &source[line_start..opener];
+    let prefix = raw_prefix.trim_end_matches([' ', '\t']);
+    let marker_count =
+        |marker: char| !prefix.is_empty() && prefix.chars().all(|ch| ch == marker);
+    match prefix {
+        "*" => return Some(WikidotFootnoteCloserLine::List("*")),
+        "#" => return Some(WikidotFootnoteCloserLine::List("#")),
+        "=" => return Some(WikidotFootnoteCloserLine::Literal(Cow::Borrowed(prefix))),
+        _ => {}
     }
+    if prefix.len() >= 4 && marker_count('-') {
+        return Some(WikidotFootnoteCloserLine::HorizontalRule);
+    }
+    if prefix.len() >= 4 && marker_count('=') {
+        return Some(WikidotFootnoteCloserLine::ContentSeparator);
+    }
+    let clear_marker = prefix.trim_end_matches(['<', '>']);
+    if clear_marker.len() >= 4 && clear_marker.chars().all(|ch| ch == '~') {
+        let kind = if prefix.ends_with('<') {
+            ClearFloat::Left
+        } else if prefix.ends_with('>') {
+            ClearFloat::Right
+        } else {
+            ClearFloat::Both
+        };
+        return Some(WikidotFootnoteCloserLine::ClearFloat(kind));
+    }
+    if prefix.len() <= 6 && marker_count('+') {
+        return Some(WikidotFootnoteCloserLine::Literal(Cow::Borrowed(prefix)));
+    }
+    if (prefix.starts_with(": ") || prefix.starts_with(":\t"))
+        && !prefix[2..].contains(':')
+    {
+        return Some(WikidotFootnoteCloserLine::DefinitionTerm(Cow::Borrowed(
+            prefix,
+        )));
+    }
+    if prefix.starts_with('>') {
+        let quote_len = prefix.bytes().take_while(|byte| *byte == b'>').count();
+        let tight = !prefix[quote_len..].starts_with([' ', '\t']);
+        let spaced_marker_only = raw_prefix.len() != prefix.len()
+            && !prefix.is_empty()
+            && prefix.chars().all(|ch| ch == '>');
+        if (tight && !spaced_marker_only) || prefix.contains("[[/div]]") {
+            return Some(WikidotFootnoteCloserLine::Suppressed);
+        }
+    }
+    None
+}
+
+fn merge_wikidot_footnote_empty_div_tail(elements: &mut Vec<Element<'_>>) {
+    for index in 0..elements.len().saturating_sub(1) {
+        let matches_shape = match (&elements[index], &elements[index + 1]) {
+            (Element::Text(before), Element::Container(container)) => {
+                before.ends_with("[[div]][[/div]]")
+                    && container.ctype() == ContainerType::Paragraph
+                    && matches!(container.elements().first(), Some(Element::Text(_)))
+            }
+            _ => false,
+        };
+        if !matches_shape {
+            continue;
+        }
+        let Element::Container(container) = elements.remove(index + 1) else {
+            unreachable!();
+        };
+        let Element::Text(mut before) = elements.remove(index) else {
+            unreachable!();
+        };
+        let mut children: Vec<Element> = container.into();
+        let Element::Text(tail) = children.remove(0) else {
+            unreachable!();
+        };
+        if index == 0 && before.starts_with('\n') {
+            before.to_mut().remove(0);
+        }
+        before.to_mut().push_str(&tail);
+        elements.insert(index, Element::Text(before));
+        for (offset, child) in children.into_iter().enumerate() {
+            elements.insert(index + 1 + offset, child);
+        }
+        break;
+    }
+}
+
+fn repair_wikidot_footnote_bibliography_marker_line<'t>(
+    parser: &Parser<'_, 't>,
+    elements: &mut Vec<Element<'t>>,
+) {
+    if !elements.iter().any(|element| {
+        matches!(element, Element::Text(text) if text.contains("[[bibliography]]"))
+    }) {
+        return;
+    }
+    let Some(last) = elements.last() else {
+        return;
+    };
+    let matches_shape = matches!(
+        last,
+        Element::Container(container)
+            if container.ctype() == ContainerType::Paragraph
+                && matches!(container.elements(), [Element::Text(text)] if text == "[[/bibliography]]")
+    );
+    if !matches_shape {
+        return;
+    }
+    let source = parser.full_text().inner();
+    let Some(line) = source.lines().find(|line| {
+        line.trim_end_matches([' ', '\t'])
+            .ends_with("[[/bibliography]]")
+            && matches!(line.chars().next(), Some('*' | '#' | '>'))
+    }) else {
+        return;
+    };
+    let marker = line.chars().next().unwrap();
+    let text = text!("[[/bibliography]]");
+    let replacement = match marker {
+        '*' | '#' => Element::List {
+            ltype: if marker == '*' {
+                ListType::Bullet
+            } else {
+                ListType::Numbered
+            },
+            attributes: AttributeMap::new(),
+            items: vec![ListItem::Elements {
+                attributes: AttributeMap::new(),
+                elements: vec![text],
+            }],
+            wikidot_explicit_block: false,
+            wikidot_unclosed: false,
+            wikidot_marker_head_spawn: false,
+        },
+        '>' => Element::Container(Container::new(
+            ContainerType::Blockquote,
+            vec![Element::Container(Container::new(
+                ContainerType::Paragraph,
+                vec![text],
+                AttributeMap::new(),
+            ))],
+            AttributeMap::new(),
+        )),
+        _ => return,
+    };
+    if matches!(elements.get(elements.len() - 2), Some(Element::LineBreak)) {
+        elements.remove(elements.len() - 2);
+    }
+    let last = elements.len() - 1;
+    elements[last] = replacement;
 }
 
 fn bare_wikidot_footnote_spent_quote_tail(elements: &mut Vec<Element>) {

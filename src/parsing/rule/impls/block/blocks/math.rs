@@ -49,7 +49,7 @@ fn parse_fn<'r, 't>(
 
     if parser.settings().layout.legacy()
         && parser.in_footnote()
-        && !math_opener_starts_line(parser, opener_start)
+        && math_opener_starts_line(parser, opener_start)
     {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }

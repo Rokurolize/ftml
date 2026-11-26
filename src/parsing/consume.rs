@@ -56,7 +56,9 @@ where
     let target_start = start + "[[#".len();
     let bytes = source.as_bytes();
     let mut target_end = target_start;
-    while bytes.get(target_end).is_some_and(u8::is_ascii_alphanumeric) {
+    while bytes.get(target_end).is_some_and(|byte| {
+        byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'%')
+    }) {
         target_end += 1;
     }
     if target_end == target_start
@@ -67,13 +69,7 @@ where
         return Ok(None);
     }
 
-    let mut label_start = target_end;
-    while bytes
-        .get(label_start)
-        .is_some_and(|byte| matches!(byte, b' ' | b'\t'))
-    {
-        label_start += 1;
-    }
+    let label_start = target_end + 1;
     let line_end = source[label_start..]
         .find(['\r', '\n'])
         .map_or(source.len(), |offset| label_start + offset);
@@ -82,12 +78,16 @@ where
     };
     let close = label_start + relative_close;
     let raw_label = &source[label_start..close];
-    let trimmed = raw_label.trim_matches([' ', '\t']);
-    if trimmed.is_empty() {
+    if raw_label.is_empty() {
         return Ok(None);
     }
-    let trailing_start = raw_label.trim_end_matches([' ', '\t']).len();
-    let trailing = &raw_label[trailing_start..];
+    let trimmed = raw_label.trim_matches([' ', '\t']);
+    let (label, trailing) = if trimmed.is_empty() {
+        (raw_label, "")
+    } else {
+        let trailing_start = raw_label.trim_end_matches([' ', '\t']).len();
+        (trimmed, &raw_label[trailing_start..])
+    };
 
     if std::iter::once(parser.current())
         .chain(parser.remaining())
@@ -118,7 +118,7 @@ where
         Element::Link {
             ltype: LinkType::Anchor,
             link: LinkLocation::Url(Cow::Owned(format!("#{target}"))),
-            label: LinkLabel::Text(Cow::Borrowed(trimmed)),
+            label: LinkLabel::Text(Cow::Borrowed(label)),
             target: None,
         },
     ];

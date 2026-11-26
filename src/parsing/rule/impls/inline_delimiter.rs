@@ -365,6 +365,18 @@ fn opener_on_wikidot_center_line(parser: &Parser<'_, '_>, byte: usize) -> bool {
         .starts_with("= ")
 }
 
+fn lone_vertical_control_body(token: Token, body: &ExtractedToken<'_>) -> bool {
+    matches!(
+        token,
+        Token::Bold
+            | Token::Italics
+            | Token::Underline
+            | Token::Superscript
+            | Token::Subscript
+    ) && body.token == Token::DiscardedControl
+        && matches!(body.slice, "\u{000b}" | "\u{000c}")
+}
+
 pub(super) fn validate_reachable_close(
     parser: &Parser<'_, '_>,
     token: Token,
@@ -585,6 +597,12 @@ pub(super) fn validate_reachable_close(
                 if index == 1
                     && tokens[0].token == Token::LineBreak
                     && opener_on_wikidot_center_line(parser, opener_start)
+                {
+                    return Err(parser.make_err(ParseErrorKind::RuleFailed));
+                }
+                if index == 1
+                    && parser.settings().layout.legacy()
+                    && lone_vertical_control_body(token, &tokens[0])
                 {
                     return Err(parser.make_err(ParseErrorKind::RuleFailed));
                 }

@@ -91,9 +91,7 @@ where
         return None;
     }
     let mut index = 1;
-    while index < bytes.len()
-        && !matches!(bytes[index], b' ' | b'\t' | b'\n' | b'\r' | b'[' | b']')
-    {
+    while index < bytes.len() && !matches!(bytes[index], b' ' | b'\t' | b'\n' | b'\r') {
         index += 1;
     }
     let target = &inner[1..index];
@@ -112,7 +110,7 @@ where
         return None;
     }
     let label_start = index;
-    while index < bytes.len() && !matches!(bytes[index], b']' | b'\n' | b'[') {
+    while index < bytes.len() && !matches!(bytes[index], b']' | b'\n') {
         index += 1;
     }
     let label = crate::parsing::trim_wikidot_ascii(&inner[label_start..index]);

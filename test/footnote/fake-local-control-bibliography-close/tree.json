@@ -1,0 +1,57 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "[[/"
+                    },
+                    {
+                        "element": "text",
+                        "data": "bibliography"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "bibliography-block",
+            "data": {
+                "index": 1,
+                "title": null,
+                "hide": false
+            }
+        }
+    ],
+    "bibliographies": [
+        [
+            [
+                "\u0000",
+                [
+                    {
+                        "element": "text",
+                        "data": "a"
+                    }
+                ]
+            ]
+        ],
+        [
+            [
+                "\u0000",
+                [
+                    {
+                        "element": "text",
+                        "data": "a"
+                    }
+                ]
+            ]
+        ]
+    ]
+}

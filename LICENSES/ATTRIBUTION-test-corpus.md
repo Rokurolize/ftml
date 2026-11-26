@@ -15,3 +15,5 @@ The fixtures under `test/form/` are reduced from live-measured Wikidot probes on
 The fixtures `table/cell-stray-table-closer` and `table/rowless-nested-table-literal` are reduced from a live-measured synthetic probe on sigma10-jp-test (muse-probe4d-tableadv). Only structural table marker syntax was kept; the expected `wikidot.html` outputs were captured from saved page views.
 
 The fixture `iframe/backslash-normalized` is reduced from a live-measured synthetic probe on sigma10-jp-test (muse-probe4d-nbsp-iframe). Only the synthetic iframe URL fragment was kept; the expected `wikidot.html` output was captured from a saved page view.
+
+The fixtures under `test/footnote/fake-local-*` are reduced from a live-measured synthetic probe on sigma10-jp-test (muse-probe31-fake-footnote-link, saved 2026-11-26). Only the synthetic stray-close and footnote/bibitem/div/span/bibliography fragments were kept; the expected `wikidot.html` outputs were captured from the saved page view.

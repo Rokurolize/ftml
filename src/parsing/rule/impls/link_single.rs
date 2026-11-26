@@ -1104,6 +1104,7 @@ where
                 let mut opener = scan.clone();
                 if let Ok((name, in_head, segment)) = opener.get_block_name(false) {
                     let mut head_complete = !in_head;
+                    let mut head_has_content = false;
                     if in_head {
                         loop {
                             match opener.current().token {
@@ -1122,7 +1123,13 @@ where
                                 | Token::LineBreak
                                 | Token::ParagraphBreak
                                 | Token::InputEnd => break,
+                                Token::Whitespace => {
+                                    if opener.step().is_err() {
+                                        break;
+                                    }
+                                }
                                 _ => {
+                                    head_has_content = true;
                                     if opener.step().is_err() {
                                         break;
                                     }
@@ -1147,8 +1154,9 @@ where
                         }
                         if actionable {
                             span_open |= name.eq_ignore_ascii_case("span");
-                            footnote_open |=
-                                footnote_may_own && name.eq_ignore_ascii_case("footnote");
+                            footnote_open |= footnote_may_own
+                                && name.eq_ignore_ascii_case("footnote")
+                                && !head_has_content;
                             size_open |= name.eq_ignore_ascii_case("size");
                             a_open |= name.eq_ignore_ascii_case("a");
                         }

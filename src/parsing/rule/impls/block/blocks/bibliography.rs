@@ -80,6 +80,9 @@ fn parse_fn<'r, 't>(
     if parser.settings().layout.legacy() && name != "bibliography" {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
+    if parser.settings().layout.legacy() && parser.native_blockquote_depth().is_some() {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     if parser.settings().layout.legacy()
         && !parser.discarding_hidden_body()
         && parser.has_bibliography()

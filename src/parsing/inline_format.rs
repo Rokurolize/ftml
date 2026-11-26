@@ -1823,6 +1823,12 @@ fn script_pair_close(
         close = next_candidates.get(close + 1).copied().flatten()?;
         pieces = shed_text_pair_at(input.get(close)?.as_ref()?, marker)?;
     }
+    if pieces.0.is_empty()
+        && close == index + 2
+        && matches!(input[index + 1].as_ref(), Some(Element::LineBreak))
+    {
+        return None;
+    }
     Some((close, pieces.0.to_string(), pieces.1.to_string()))
 }
 
@@ -2022,6 +2028,7 @@ enum ProjItem<'a> {
     PartialLike,
     ScopeClose,
     Content,
+    LineBreak,
     Barrier,
     EdgeOpen(InlineFormatKind),
     EdgeClose(InlineFormatKind),
@@ -3135,6 +3142,7 @@ fn project_marker_sequence<'a, 't>(
         } else {
             match element {
                 Element::Text(value) => sink.push(ProjItem::Text(value), ctx),
+                Element::LineBreak => sink.push(ProjItem::LineBreak, ctx),
                 Element::Partial(partial) => sink.push(
                     match partial {
                         PartialElement::InlineFormatOpen(kind) => {
@@ -3406,7 +3414,10 @@ fn proj_ends_with_pad(item: &ProjItem<'_>) -> bool {
 fn projection_has_content(items: &[ProjItem<'_>]) -> bool {
     items.iter().any(|item| match item {
         ProjItem::Text(value) => !value.trim().is_empty(),
-        ProjItem::Content | ProjItem::LinkContent | ProjItem::ScopeClose => true,
+        ProjItem::Content
+        | ProjItem::LineBreak
+        | ProjItem::LinkContent
+        | ProjItem::ScopeClose => true,
         ProjItem::PartialLike
         | ProjItem::Barrier
         | ProjItem::EdgeOpen(_)
@@ -3582,6 +3593,19 @@ fn pair_symmetric_markers<'t>(
                     projection_has_content(&projection[open_index + 1..index]);
                 let literal_pair = matches!(projection[open_index], ProjItem::Text(_))
                     && matches!(projection[index], ProjItem::Text(_));
+                let padded_newline_repair = literal_pair
+                    && matches!(
+                        kind,
+                        InlineFormatKind::Bold
+                            | InlineFormatKind::Italics
+                            | InlineFormatKind::Underline
+                            | InlineFormatKind::Superscript
+                            | InlineFormatKind::Subscript
+                    )
+                    && matches!(
+                        &projection[open_index + 1..index],
+                        [ProjItem::LineBreak]
+                    );
                 if index == open_index + 1
                     && literal_pair
                     && scopes.segments.crosses_segment(index)
@@ -3598,7 +3622,8 @@ fn pair_symmetric_markers<'t>(
                     open = None;
                     continue;
                 }
-                if !proj_ends_with_pad(&projection[index - 1])
+                if !padded_newline_repair
+                    && !proj_ends_with_pad(&projection[index - 1])
                     && !scopes.segments.padded_at(index)
                     && has_content
                 {

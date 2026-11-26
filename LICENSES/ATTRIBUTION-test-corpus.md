@@ -13,3 +13,5 @@ The fixtures `list/explicit-item-ends-at-barrier`, `table/quote-row-cell-blank-i
 The fixtures under `test/form/` are reduced from live-measured Wikidot probes on sandbox-for-codex (probes muse-probe-r2formraw-form-basic, -form-no-data, -form-empty, -form-no-sep, -form-unterm, -form-in-code, and muse-probe-r2formraw3-formindent1). Only the synthetic form-field fragments that exercise the block claim were kept; the expected `wikidot.html` outputs were captured from saved page views.
 
 The fixtures `table/cell-stray-table-closer` and `table/rowless-nested-table-literal` are reduced from a live-measured synthetic probe on sigma10-jp-test (muse-probe4d-tableadv). Only structural table marker syntax was kept; the expected `wikidot.html` outputs were captured from saved page views.
+
+The fixture `iframe/backslash-normalized` is reduced from a live-measured synthetic probe on sigma10-jp-test (muse-probe4d-nbsp-iframe). Only the synthetic iframe URL fragment was kept; the expected `wikidot.html` output was captured from a saved page view.

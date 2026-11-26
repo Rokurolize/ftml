@@ -22,6 +22,7 @@ use super::Element;
 use std::slice;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[allow(clippy::large_enum_variant)]
 pub enum Elements<'t> {
     Multiple(Vec<Element<'t>>),
     Single(Element<'t>),

@@ -1384,6 +1384,7 @@ fn seal_hoisted_bare<'t>(
 
 /// One positioned piece of a hoisted chunk item's content: a native list
 /// or a run of non-list elements, in source order.
+#[allow(clippy::large_enum_variant)]
 enum HoistedSeq<'t> {
     List(Element<'t>),
     Rest(Vec<Element<'t>>),

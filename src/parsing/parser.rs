@@ -4743,6 +4743,17 @@ impl<'r, 't> Parser<'r, 't> {
                         .is_some()
                     })
             }
+            ParseCondition::TripleRunClose {
+                token,
+                open_end,
+                run_start,
+                close_byte,
+            } => {
+                self.current.span.start >= open_end
+                    && self.current.token == token
+                    && !(self.current.span.start >= run_start
+                        && self.current.span.end <= close_byte)
+            }
         }
     }
 

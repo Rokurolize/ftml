@@ -20,8 +20,9 @@
 
 use super::inline_delimiter::{
     ReachableCloseMode, append_wikidot_line_close_space, assert_unpadded_open,
-    inline_body_padded_through_seams, legacy_format_body_code_preceded_by_content,
-    legacy_format_body_contains_table, validate_reachable_close,
+    complete_triple_run_close, inline_body_padded_through_seams,
+    legacy_format_body_code_preceded_by_content, legacy_format_body_contains_table,
+    triple_run_close, validate_reachable_close,
 };
 use super::prelude::*;
 
@@ -36,14 +37,24 @@ fn try_consume_fn<'r, 't>(
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create underline container");
     let in_anchor_body = parser.in_wikidot_anchor_body();
+    let triple = triple_run_close(parser, Token::Underline, b'_');
     validate_reachable_close(
         parser,
         Token::Underline,
         None,
         ReachableCloseMode::Standard,
+        triple,
     )?;
     assert_unpadded_open(parser, Token::Underline)?;
-    let close = [ParseCondition::current(Token::Underline)];
+    let close = match triple {
+        Some(close) => [ParseCondition::TripleRunClose {
+            token: Token::Underline,
+            open_end: close.open_end,
+            run_start: close.run_start,
+            close_byte: close.close_byte,
+        }],
+        None => [ParseCondition::current(Token::Underline)],
+    };
     let invalid = [
         ParseCondition::token_pair(Token::Underline, Token::Whitespace),
         ParseCondition::token_pair(Token::Whitespace, Token::Underline),
@@ -51,8 +62,11 @@ fn try_consume_fn<'r, 't>(
     let ctype = ContainerType::Underline;
     let inside_note = parser.in_note()
         || parser.wikidot_note_pair_encloses(parser.current().span.start);
-    let collected =
+    let mut collected =
         collect_container(parser, RULE_UNDERLINE, ctype, &close, &invalid, None)?;
+    if let Some(close) = triple {
+        complete_triple_run_close(parser, &mut collected, close, '_')?;
+    }
     let (elements, errors, paragraph_safe) = collected.into();
     if parser.settings().layout.legacy()
         && matches!(

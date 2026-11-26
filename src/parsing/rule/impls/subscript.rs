@@ -42,6 +42,7 @@ fn try_consume_fn<'r, 't>(
         Token::Subscript,
         None,
         ReachableCloseMode::BlockBarrier,
+        None,
     )?;
     assert_unpadded_open(parser, Token::Subscript)?;
     if parser.settings().layout.legacy()

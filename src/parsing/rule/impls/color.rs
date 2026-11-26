@@ -132,6 +132,7 @@ fn try_consume_fn<'r, 't>(
             Token::Color,
             None,
             ReachableCloseMode::BlockBarrier,
+            None,
         )?;
         if legacy && body_crosses_item_boundary(parser, Token::Color) {
             return Err(parser.make_err(ParseErrorKind::RuleFailed));

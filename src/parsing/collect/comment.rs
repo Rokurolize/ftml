@@ -304,7 +304,8 @@ where
                     | ParseCondition::AtSourceByte(_)
                     | ParseCondition::QuotePreparedListMarker
                     | ParseCondition::SplitClose(_)
-                    | ParseCondition::PaddedSplitClose(_) => None,
+                    | ParseCondition::PaddedSplitClose(_)
+                    | ParseCondition::TripleRunClose { .. } => None,
                 });
                 if let Some(last) = fused {
                     let end = comments

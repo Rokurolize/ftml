@@ -80,7 +80,7 @@ fn try_consume_strikethrough<'r, 't>(
         return success_elements(text!("----"));
     }
     let in_anchor_body = parser.in_wikidot_anchor_body();
-    validate_reachable_close(parser, token, None, ReachableCloseMode::Standard)?;
+    validate_reachable_close(parser, token, None, ReachableCloseMode::Standard, None)?;
     if token == Token::DoubleDash {
         assert_unpadded_open(parser, token)?;
     } else {

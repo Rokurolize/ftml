@@ -377,11 +377,94 @@ fn lone_vertical_control_body(token: Token, body: &ExtractedToken<'_>) -> bool {
         && matches!(body.slice, "\u{000b}" | "\u{000c}")
 }
 
+#[derive(Debug, Copy, Clone)]
+pub(super) struct TripleRunClose {
+    pub open_end: usize,
+    pub run_start: usize,
+    pub close_byte: usize,
+    pub odd: bool,
+}
+
+/// Live closes a format opened by exactly three delimiters at the last two
+/// delimiters of a closing run that follows ASCII whitespace. FTML's scanner
+/// otherwise resolves such a run one pair earlier and rejects that pair for
+/// being padded. Record where the real closer starts so the scan and the
+/// collector can both skip the earlier pairs in the run.
+pub(super) fn triple_run_close(
+    parser: &Parser<'_, '_>,
+    token: Token,
+    delimiter: u8,
+) -> Option<TripleRunClose> {
+    if parser.current().token != token {
+        return None;
+    }
+    let source = parser.full_text().inner();
+    let bytes = source.as_bytes();
+    let open = parser.current().span.start;
+    if bytes.get(open + 2) != Some(&delimiter) || bytes.get(open + 3) == Some(&delimiter)
+    {
+        return None;
+    }
+    let remaining = parser.remaining();
+    for (index, closer) in remaining.iter().enumerate() {
+        if closer.token != token
+            || closer.span.end - closer.span.start != 2
+            || closer.span.start == 0
+            || !matches!(bytes[closer.span.start - 1], b' ' | b'\t')
+        {
+            continue;
+        }
+        let run_start = closer.span.start;
+        let mut run_end = run_start;
+        for following in &remaining[index..] {
+            if following.span.start != run_end
+                || following.slice.is_empty()
+                || !following.slice.bytes().all(|byte| byte == delimiter)
+            {
+                break;
+            }
+            run_end = following.span.end;
+        }
+        let run_len = run_end - run_start;
+        if run_len >= 3 {
+            return Some(TripleRunClose {
+                open_end: parser.current().span.end,
+                run_start,
+                close_byte: run_end - 2,
+                odd: run_len % 2 == 1,
+            });
+        }
+    }
+    None
+}
+
+/// The odd closing run puts one of its delimiters in the second half of the
+/// collected closer pair. Move that byte into the element text and consume the
+/// remaining single delimiter so it does not resurface after the container.
+pub(super) fn complete_triple_run_close<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    collected: &mut ParseSuccess<'r, 't, Elements<'t>>,
+    close: TripleRunClose,
+    delimiter: char,
+) -> Result<(), ParseError> {
+    if !close.odd {
+        return Ok(());
+    }
+    if let Elements::Single(Element::Container(container)) = &mut collected.item {
+        container
+            .elements_mut()
+            .push(Element::Text(Cow::Owned(delimiter.to_string())));
+    }
+    parser.step()?;
+    Ok(())
+}
+
 pub(super) fn validate_reachable_close(
     parser: &Parser<'_, '_>,
     token: Token,
     split: Option<SplitDelimiter>,
     mode: ReachableCloseMode,
+    triple: Option<TripleRunClose>,
 ) -> Result<(), ParseError> {
     let opener_start = parser.current().span.start;
     let tokens = parser.remaining();
@@ -392,7 +475,7 @@ pub(super) fn validate_reachable_close(
     // record: it would hide a `RuleFailed` block end. See
     // `parsing/parser/closer_scan.rs`.
     let blocks_can_reject = block_end_can_reject(parser, mode);
-    let absent = if split.is_some() {
+    let absent = if split.is_some() || triple.is_some() {
         None
     } else {
         parser
@@ -483,7 +566,7 @@ pub(super) fn validate_reachable_close(
         }
         match tokens[index].token {
             Token::InputEnd => {
-                if split.is_none() && !saw_block_pairing {
+                if split.is_none() && triple.is_none() && !saw_block_pairing {
                     if blocks_can_reject {
                         parser.record_delimiter_close_absent(
                             token,
@@ -594,6 +677,18 @@ pub(super) fn validate_reachable_close(
                 if let Some(error) = paragraph_error {
                     return Err(error);
                 }
+                let in_close_run = triple.is_some_and(|close| {
+                    tokens[index].span.start >= close.run_start
+                        && tokens[index].span.start <= close.close_byte
+                });
+                let entirely_before_close = triple.is_some_and(|close| {
+                    tokens[index].span.start >= close.run_start
+                        && tokens[index].span.end <= close.close_byte
+                });
+                if entirely_before_close {
+                    index += 1;
+                    continue;
+                }
                 if index == 1
                     && tokens[0].token == Token::LineBreak
                     && opener_on_wikidot_center_line(parser, opener_start)
@@ -607,6 +702,7 @@ pub(super) fn validate_reachable_close(
                     return Err(parser.make_err(ParseErrorKind::RuleFailed));
                 }
                 if mode == ReachableCloseMode::Standard
+                    && !in_close_run
                     && index > 0
                     && tokens[index - 1].token == Token::Whitespace
                     && !closer_whitespace_is_quote_row_prefix(

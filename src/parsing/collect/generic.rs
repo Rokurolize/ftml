@@ -196,7 +196,14 @@ where
             return Err(parser.make_err(ParseErrorKind::RuleFailed));
         }
 
-        if parser.evaluate_any(invalid_conditions) {
+        let at_triple_run_pad = close_conditions.iter().any(|condition| {
+            matches!(
+                condition,
+                ParseCondition::TripleRunClose { run_start, .. }
+                    if parser.current().span.end == *run_start
+            )
+        });
+        if !at_triple_run_pad && parser.evaluate_any(invalid_conditions) {
             let forgiven_post_list_gap = parser.current().token == Token::ParagraphBreak
                 && matches!(_rule.name(), "bold")
                 && parser.settings().layout.legacy()

@@ -1031,10 +1031,18 @@ fn wikidot_head_terminator_ends_line(parser: &Parser<'_, '_>) -> bool {
 /// own closer instead falls back to the plain first-`]]` scan.
 fn wikidot_line_greedy_head_is_usable(parser: &Parser<'_, '_>) -> bool {
     let mut probe = parser.clone();
+    let mut in_quote = false;
     loop {
         match probe.current().token {
             Token::InputEnd => return true,
-            Token::LeftBlockEnd | Token::LeftLink => return false,
+            Token::DoubleQuote => {
+                in_quote = !in_quote;
+                if probe.step().is_err() {
+                    return true;
+                }
+            }
+            Token::LeftBlockEnd if !in_quote => return false,
+            Token::LeftLink => return false,
             Token::RightBlock | Token::RightLink => {
                 if wikidot_head_terminator_ends_line(&probe) {
                     return true;

@@ -3565,12 +3565,11 @@ impl<'t> Scanner<'t> {
                             Some(WikidotBlockKind::Cell) => {
                                 return Some((j, j, close.head_end));
                             }
-                            Some(WikidotBlockKind::Table) if nested_tables > 0 => {
-                                nested_tables -= 1;
+                            Some(WikidotBlockKind::Table) => {
+                                nested_tables = nested_tables.saturating_sub(1);
                                 j = close.head_end;
                             }
-                            Some(WikidotBlockKind::Row)
-                            | Some(WikidotBlockKind::Table) => {
+                            Some(WikidotBlockKind::Row) => {
                                 return None;
                             }
                             _ => j = close.head_end,

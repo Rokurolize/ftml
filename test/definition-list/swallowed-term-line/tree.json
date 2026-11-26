@@ -1,0 +1,15 @@
+{
+    "elements": [
+        {
+            "element": "text",
+            "data": "a"
+        },
+        {
+            "element": "line-break"
+        },
+        {
+            "element": "text",
+            "data": "b"
+        }
+    ]
+}

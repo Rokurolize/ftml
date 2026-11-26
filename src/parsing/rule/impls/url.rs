@@ -432,6 +432,14 @@ where
             | Token::RightBlock
     ) || suffix.is_some();
     let mut trailing = Vec::new();
+    // Live Wikidot terminates the automatic URL before a pipe that is
+    // immediately followed by a quote; the pipe renders as text outside the link.
+    if url.ends_with('|')
+        && matches!(source[end..].chars().next(), Some('\'') | Some('"'))
+    {
+        trailing.push('|');
+        url = without_last_character(url);
+    }
     if at_sentence_boundary {
         while let Some(last) = url.chars().next_back() {
             if !matches!(

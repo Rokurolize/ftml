@@ -73,6 +73,13 @@ pub enum ParseCondition {
     SplitClose(SplitDelimiter),
 
     PaddedSplitClose(SplitDelimiter),
+
+    TripleRunClose {
+        token: Token,
+        open_end: usize,
+        run_start: usize,
+        close_byte: usize,
+    },
 }
 
 impl ParseCondition {

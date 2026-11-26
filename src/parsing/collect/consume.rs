@@ -72,16 +72,42 @@ pub fn collect_consume_keep<'r, 't>(
             }
             return wikidot_format_body_post_list_blank(parser, &mut all_elements, kind);
         }
+        let in_triple_run_preamble = closes.iter().any(|condition| {
+            matches!(
+                condition,
+                ParseCondition::TripleRunClose {
+                    token,
+                    run_start,
+                    close_byte,
+                    ..
+                } if parser.current().token == *token
+                    && parser.current().span.start >= *run_start
+                    && parser.current().span.end <= *close_byte
+            )
+        });
         let drop_line_break = comment_line_break_pending;
         comment_line_break_pending = false;
         let comment_line = parser.settings().layout.legacy()
             && parser.current().token == Token::LeftComment
             && parser.start_of_line();
-        let success = match delimiter_inert_block_head(parser, rule) {
-            Some(element) => {
-                ParseSuccess::new(Elements::Single(element), Vec::new(), true)
+        let success = if in_triple_run_preamble {
+            let slice = parser.current().slice;
+            parser.step()?;
+            if let Some(Element::Text(last)) = all_elements.last_mut() {
+                let mut merged = last.to_string();
+                merged.push_str(slice);
+                *last = std::borrow::Cow::Owned(merged);
+                ParseSuccess::new(Elements::None, Vec::new(), true)
+            } else {
+                ParseSuccess::new(Elements::Single(text!(slice)), Vec::new(), true)
             }
-            None => consume(parser)?,
+        } else {
+            match delimiter_inert_block_head(parser, rule) {
+                Some(element) => {
+                    ParseSuccess::new(Elements::Single(element), Vec::new(), true)
+                }
+                None => consume(parser)?,
+            }
         };
         if comment_line
             && matches!(

@@ -43,6 +43,7 @@ fn try_consume_fn<'r, 't>(
         Token::RightMonospace,
         None,
         ReachableCloseMode::BlockBarrier,
+        None,
     )?;
     let opening_start = parser.current().span.start;
     assert_step(parser, Token::LeftMonospace)?;

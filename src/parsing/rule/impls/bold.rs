@@ -20,8 +20,8 @@
 
 use super::inline_delimiter::{
     ReachableCloseMode, append_split_close_leftover, append_wikidot_line_close_space,
-    assert_unpadded_open, inline_body_padded_through_seams, prepend_split_close_leftover,
-    validate_reachable_close,
+    assert_unpadded_open, complete_triple_run_close, inline_body_padded_through_seams,
+    prepend_split_close_leftover, triple_run_close, validate_reachable_close,
 };
 use super::prelude::*;
 use crate::parsing::ParseSuccess;
@@ -51,17 +51,30 @@ fn try_consume_fn<'r, 't>(
         parser.step_to_remaining(after);
         return ok!(Elements::None);
     }
+    let triple = triple_run_close(parser, Token::Bold, b'*');
     validate_reachable_close(
         parser,
         Token::Bold,
         Some(SplitDelimiter::Bold),
         ReachableCloseMode::Standard,
+        triple,
     )?;
     assert_unpadded_open(parser, Token::Bold)?;
-    let close = [
-        ParseCondition::current(Token::Bold),
-        ParseCondition::SplitClose(SplitDelimiter::Bold),
-    ];
+    let close = match triple {
+        Some(close) => [
+            ParseCondition::TripleRunClose {
+                token: Token::Bold,
+                open_end: close.open_end,
+                run_start: close.run_start,
+                close_byte: close.close_byte,
+            },
+            ParseCondition::SplitClose(SplitDelimiter::Bold),
+        ],
+        None => [
+            ParseCondition::current(Token::Bold),
+            ParseCondition::SplitClose(SplitDelimiter::Bold),
+        ],
+    };
     let invalid = [
         ParseCondition::token_pair(Token::Bold, Token::Whitespace),
         ParseCondition::token_pair(Token::Whitespace, Token::Bold),
@@ -70,7 +83,11 @@ fn try_consume_fn<'r, 't>(
     let ctype = ContainerType::Bold;
     let inside_note = parser.in_note()
         || parser.wikidot_note_pair_encloses(parser.current().span.start);
-    let collected = collect_container(parser, RULE_BOLD, ctype, &close, &invalid, None)?;
+    let mut collected =
+        collect_container(parser, RULE_BOLD, ctype, &close, &invalid, None)?;
+    if let Some(close) = triple {
+        complete_triple_run_close(parser, &mut collected, close, '*')?;
+    }
     finish_collected(parser, in_anchor_body, collected, inside_note)
 }
 
@@ -430,6 +447,7 @@ fn try_consume_split_delimiter<'r, 't>(
         Token::Bold,
         Some(SplitDelimiter::Bold),
         ReachableCloseMode::Standard,
+        None,
     )?;
     while parser.current().span.start < split_match.consume_end
         && parser.current().token != Token::InputEnd

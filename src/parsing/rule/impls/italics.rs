@@ -20,9 +20,11 @@
 
 use super::inline_delimiter::{
     ReachableCloseMode, append_split_close_leftover, append_wikidot_line_close_space,
-    assert_unpadded_open, block_name_at, inline_body_padded_through_seams, is_block_name,
+    assert_unpadded_open, block_name_at, complete_triple_run_close,
+    inline_body_padded_through_seams, is_block_name,
     legacy_format_body_code_preceded_by_content, legacy_format_body_contains_table,
-    link_name_at, prepend_split_close_leftover, validate_reachable_close,
+    link_name_at, prepend_split_close_leftover, triple_run_close,
+    validate_reachable_close,
 };
 use super::prelude::*;
 use crate::parsing::ParseSuccess;
@@ -57,17 +59,30 @@ fn try_consume_fn<'r, 't>(
         return collect_crossed_bold_italics(parser);
     }
 
+    let triple = triple_run_close(parser, Token::Italics, b'/');
     validate_reachable_close(
         parser,
         Token::Italics,
         Some(SplitDelimiter::Italics),
         ReachableCloseMode::Standard,
+        triple,
     )?;
     assert_unpadded_open(parser, Token::Italics)?;
-    let close = [
-        ParseCondition::current(Token::Italics),
-        ParseCondition::SplitClose(SplitDelimiter::Italics),
-    ];
+    let close = match triple {
+        Some(close) => [
+            ParseCondition::TripleRunClose {
+                token: Token::Italics,
+                open_end: close.open_end,
+                run_start: close.run_start,
+                close_byte: close.close_byte,
+            },
+            ParseCondition::SplitClose(SplitDelimiter::Italics),
+        ],
+        None => [
+            ParseCondition::current(Token::Italics),
+            ParseCondition::SplitClose(SplitDelimiter::Italics),
+        ],
+    };
     let invalid = [
         ParseCondition::token_pair(Token::Italics, Token::Whitespace),
         ParseCondition::token_pair(Token::Whitespace, Token::Italics),
@@ -76,8 +91,11 @@ fn try_consume_fn<'r, 't>(
     let ctype = ContainerType::Italics;
     let inside_note = parser.in_note()
         || parser.wikidot_note_pair_encloses(parser.current().span.start);
-    let collected =
+    let mut collected =
         collect_container(parser, RULE_ITALICS, ctype, &close, &invalid, None)?;
+    if let Some(close) = triple {
+        complete_triple_run_close(parser, &mut collected, close, '/')?;
+    }
     finish_collected(parser, in_anchor_body, collected, inside_note)
 }
 
@@ -106,6 +124,7 @@ fn try_consume_split_delimiter<'r, 't>(
         Token::Italics,
         Some(SplitDelimiter::Italics),
         ReachableCloseMode::Standard,
+        None,
     )?;
     while parser.current().span.start < split_match.consume_end
         && parser.current().token != Token::InputEnd

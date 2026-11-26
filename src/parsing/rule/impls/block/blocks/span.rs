@@ -165,7 +165,7 @@ fn parse_fn<'r, 't>(
         if !has_close {
             return Err(parser.make_err(ParseErrorKind::RuleFailed));
         }
-        let mut attributes = arguments.to_attribute_map(parser.settings());
+        let mut attributes = arguments.to_wikidot_block_attribute_map(parser.settings());
         super::super::arguments::retain_wikidot_html_attributes(&mut attributes);
         arguments.insert_explicit_empty_marker(&mut attributes);
         for key in generated_attributes {
@@ -226,7 +226,7 @@ fn parse_fn<'r, 't>(
     let (elements, paragraph_split) = parser.wrap_body_segments(
         segments,
         ContainerType::Span,
-        arguments.to_attribute_map(parser.settings()),
+        arguments.to_wikidot_block_attribute_map(parser.settings()),
         paragraph_safe,
     );
 

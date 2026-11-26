@@ -333,6 +333,7 @@ fn list_has_tail_lead_space(element: &mut Element<'_>) -> bool {
 /// so join the list (and any further explicit list / paragraph-safe run chain)
 /// into one normalization group.
 fn join_explicit_list_with_following_run<'t>(elements: &mut Vec<Element<'t>>) {
+    #[allow(clippy::large_enum_variant)]
     enum GroupPart<'t> {
         Run(Vec<Element<'t>>),
         List(Element<'t>),

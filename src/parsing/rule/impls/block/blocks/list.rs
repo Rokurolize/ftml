@@ -1533,6 +1533,7 @@ fn wikidot_blank_line_before(source: &str, content_start: usize) -> bool {
 /// MIDBLANK: one blank-delimited piece of pending mid literals. A run
 /// records whether a blank gap precedes it; anything not paragraph-safe
 /// (e.g. a formed div) is its own segment.
+#[allow(clippy::large_enum_variant)]
 enum WikidotBlankSegment<'t> {
     Run {
         elements: Vec<Element<'t>>,

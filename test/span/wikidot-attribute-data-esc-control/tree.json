@@ -1,0 +1,34 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "span",
+                            "attributes": {
+                                "data-x": "a\u001bb"
+                            },
+                            "elements": [
+                                {
+                                    "element": "line-break"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "x"
+                                },
+                                {
+                                    "element": "line-break"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

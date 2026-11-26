@@ -45,6 +45,11 @@ pub const RULE_LINK_TRIPLE_NEW_TAB: Rule = Rule {
 };
 
 fn link<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t>> {
+    if parser.settings().layout.legacy()
+        && let Some(elements) = super::block::wikidot_extra_bracket_single_link(parser)
+    {
+        return success_elements(elements);
+    }
     let source_start = parser.current().span.start;
     assert_step(parser, Token::LeftLink)?;
     if parser.settings().layout.legacy()

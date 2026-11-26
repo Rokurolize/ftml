@@ -288,7 +288,8 @@ impl Token {
             | Rule::comment_interior
             | Rule::comment_close
             | Rule::url_char
-            | Rule::url_dash_body => {
+            | Rule::url_dash_body
+            | Rule::leading_host_char => {
                 panic!("Received invalid pest rule: {rule:?}")
             }
         }

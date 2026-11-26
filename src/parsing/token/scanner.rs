@@ -437,7 +437,30 @@ fn scan_url(bytes: &[u8], start: usize) -> Option<usize> {
         return None;
     };
 
-    let mut end = body_start;
+    let Some(first) = char_at(bytes, body_start) else {
+        return scan_url_body(bytes, body_start);
+    };
+
+    if matches!(first, '|' | '[' | ']')
+        || is_leading_host_whitespace(first)
+        || is_discarded_control(bytes[body_start])
+    {
+        return scan_url_body(bytes, body_start + first.len_utf8());
+    }
+
+    scan_url_body(bytes, body_start)
+}
+
+fn is_leading_host_whitespace(character: char) -> bool {
+    matches!(
+        character,
+        '\u{00a0}' | '\u{0085}' | '\u{1680}' | '\u{2000}'
+            ..='\u{200a}' | '\u{202f}' | '\u{205f}' | '\u{3000}'
+    )
+}
+
+fn scan_url_body(bytes: &[u8], start: usize) -> Option<usize> {
+    let mut end = start;
     let mut raw_alt_checked = false;
     while end < bytes.len() {
         let character = char_at(bytes, end)?;
@@ -473,7 +496,7 @@ fn scan_url(bytes: &[u8], start: usize) -> Option<usize> {
         end += character.len_utf8();
     }
 
-    (end > body_start).then_some(end)
+    (end > start).then_some(end)
 }
 
 fn char_at(bytes: &[u8], index: usize) -> Option<char> {

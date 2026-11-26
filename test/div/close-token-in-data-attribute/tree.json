@@ -1,0 +1,14 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "div",
+                "attributes": {
+                    "data-x": "[[/div]]"
+                },
+                "elements": []
+            }
+        }
+    ]
+}

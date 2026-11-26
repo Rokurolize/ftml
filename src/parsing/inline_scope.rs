@@ -2,8 +2,8 @@ use crate::tree::{
     AnchorTarget, AttributeMap, Bibliography, BibliographyList, BibliographyScopeWrapper,
     Container, ContainerType, Element, Heading, HeadingReopen, InlineFormatKind,
     ListItem, PartialElement, TabViewItem, TableType, WIKIDOT_BLOCK_CHUNK_PREFIX_MARKER,
-    WIKIDOT_CENTERED_DIV_CLOSE_PARAGRAPH_MARKER, WIKIDOT_EMPTY_FOOTNOTE_TAIL_BARE_MARKER,
-    WIKIDOT_FORMAT_LABEL_INSIDE_LIST_MARKER,
+    WIKIDOT_CENTERED_DIV_CLOSE_PARAGRAPH_MARKER, WIKIDOT_CENTERED_RUN_PARAGRAPH_MARKER,
+    WIKIDOT_EMPTY_FOOTNOTE_TAIL_BARE_MARKER, WIKIDOT_FORMAT_LABEL_INSIDE_LIST_MARKER,
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER,
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, WIKIDOT_HEADING_REOPEN_MARKER,
@@ -5845,14 +5845,17 @@ fn flush_paragraph_group<'t>(
     // block rule that inserts a blank line in front of itself, so the span
     // chunk before it does get its paragraph wrapper.
     let wrapped = wrapped && !(ends_with_scored_span && !ends_at_advanced_table);
-    if elements.is_empty() {
+    let keep_empty = attributes
+        .get()
+        .contains_key(WIKIDOT_CENTERED_RUN_PARAGRAPH_MARKER);
+    if elements.is_empty() && !keep_empty {
         return;
     }
     eject_segment_trailing_space(&mut elements);
     if !keep_trailing_space {
         strip_trailing_run_before_newline_tail(&mut elements);
     }
-    if elements.is_empty() {
+    if elements.is_empty() && !keep_empty {
         return;
     }
     if wrapped {
@@ -7775,6 +7778,9 @@ fn drop_vanished_paragraphs(elements: &mut Vec<Element>) {
             container
                 .attributes_mut()
                 .remove(WIKIDOT_CENTERED_DIV_CLOSE_PARAGRAPH_MARKER);
+            container
+                .attributes_mut()
+                .remove(WIKIDOT_CENTERED_RUN_PARAGRAPH_MARKER);
         }
         visit_children_mut(element, &mut |children| drop_vanished_paragraphs(children));
         if let Element::List { items, .. } = element {
@@ -8902,6 +8908,10 @@ fn is_empty_paragraph(element: &Element<'_>) -> bool {
                     .attributes()
                     .get()
                     .contains_key(WIKIDOT_CENTERED_DIV_CLOSE_PARAGRAPH_MARKER)
+                && !container
+                    .attributes()
+                    .get()
+                    .contains_key(WIKIDOT_CENTERED_RUN_PARAGRAPH_MARKER)
     )
 }
 

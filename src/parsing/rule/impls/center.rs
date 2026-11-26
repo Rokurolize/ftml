@@ -40,6 +40,14 @@ fn step_expected<'r, 't>(
     Ok(())
 }
 
+fn wikidot_self_removing_run_body(parser: &Parser<'_, '_>, from: usize) -> bool {
+    let Some(body_source) = parser.full_text().inner().get(from..) else {
+        return false;
+    };
+    let end = body_source.find(['\n', '\r']).unwrap_or(body_source.len());
+    matches!(&body_source[..end], "****" | "@@@@" | "____")
+}
+
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
@@ -63,6 +71,7 @@ fn try_consume_fn<'r, 't>(
         ParseCondition::current(Token::InputEnd),
     ];
     if parser.settings().layout.legacy() {
+        let body_start = parser.current().span.start;
         let collected = collect_container(
             parser,
             RULE_CENTER,
@@ -80,6 +89,11 @@ fn try_consume_fn<'r, 't>(
                 .attributes_mut()
                 .insert("style", cow!(Alignment::Center.wd_html_style()))
         );
+        if wikidot_self_removing_run_body(parser, body_start) {
+            paragraph
+                .attributes_mut()
+                .insert(crate::tree::WIKIDOT_CENTERED_RUN_PARAGRAPH_MARKER, cow!(""));
+        }
         ok!(false; elements, errors)
     } else {
         let ctype = ContainerType::Align(Alignment::Center);

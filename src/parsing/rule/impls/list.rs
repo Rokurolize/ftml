@@ -230,6 +230,7 @@ fn try_consume_fn<'r, 't>(
         if parser.settings().layout.legacy()
             && parser.current().span.start > entry_parser.current().span.start
         {
+            parser.mark_wikidot_empty_list_marker_boundary();
             return Ok(ParseSuccess::new(Vec::new().into(), errors, true));
         }
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -307,6 +308,9 @@ fn try_consume_fn<'r, 't>(
     }
     if elements.is_empty() && parser.settings().layout.legacy() {
         paragraph_safe = true;
+        if parser.current().span.start > entry_parser.current().span.start {
+            parser.mark_wikidot_empty_list_marker_boundary();
+        }
     }
 
     let mut result = ParseSuccess::new(elements.into(), errors, paragraph_safe);

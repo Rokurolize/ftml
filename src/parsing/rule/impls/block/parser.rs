@@ -2432,6 +2432,13 @@ where
             }
 
             let end_start = parser.current().span.start;
+            if matches!(
+                block_rule.name,
+                "block-list-unordered" | "block-list-ordered"
+            ) && parser.take_wikidot_literal_list_close_at(end_start)
+            {
+                return Ok(false);
+            }
             if parser.settings().layout.legacy()
                 && !parser.discarding_hidden_body()
                 && parser.current().token == Token::LeftBlockEnd

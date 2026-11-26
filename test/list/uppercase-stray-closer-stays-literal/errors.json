@@ -1,0 +1,65 @@
+[
+    {
+        "token": "left-block",
+        "rule": "page",
+        "span": [
+            30,
+            32
+        ],
+        "kind": "list-item-outside-list"
+    },
+    {
+        "token": "left-block",
+        "rule": "fallback",
+        "span": [
+            30,
+            32
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-block",
+        "rule": "fallback",
+        "span": [
+            34,
+            36
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "left-block-end",
+        "rule": "fallback",
+        "span": [
+            37,
+            40
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-block",
+        "rule": "fallback",
+        "span": [
+            42,
+            44
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "left-block-end",
+        "rule": "fallback",
+        "span": [
+            45,
+            48
+        ],
+        "kind": "no-rules-match"
+    },
+    {
+        "token": "right-block",
+        "rule": "fallback",
+        "span": [
+            50,
+            52
+        ],
+        "kind": "no-rules-match"
+    }
+]

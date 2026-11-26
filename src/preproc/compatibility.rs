@@ -538,6 +538,9 @@ pub(super) fn substitute_for_layout(text: &mut String, wikidot: bool) {
         split_merged_div_close_opener_lines(&mut lines, &literal_lines);
     }
     let literal_lines = literal_line_mask(&lines);
+    if wikidot {
+        canonicalize_list_cross_div_heading_close(&mut lines, &literal_lines);
+    }
     canonicalize_crossed_collapsible_div_closers(&mut lines, &literal_lines, wikidot);
     if wikidot {
         canonicalize_crossed_outer_owner_closers(&mut lines, &literal_lines);
@@ -1936,6 +1939,59 @@ fn formed_collapsible_open_before(lines: &[String], literal_lines: &[bool]) -> V
         }
     }
     before
+}
+
+fn canonicalize_list_cross_div_heading_close(
+    lines: &mut [String],
+    literal_lines: &[bool],
+) {
+    let mut index = 0;
+    while index < lines.len() {
+        if literal_lines[index] {
+            index += 1;
+            continue;
+        }
+        let (body, ending) = split_line(&lines[index]);
+        if !body.trim_end().eq_ignore_ascii_case("* [[div]]") {
+            index += 1;
+            continue;
+        }
+        let mut close_index = None;
+        for candidate in index + 1..lines.len() {
+            if literal_lines[candidate] {
+                break;
+            }
+            let (candidate_body, _) = split_line(&lines[candidate]);
+            let Some(close_at) = candidate_body.find("[[/div]]") else {
+                if candidate_body.contains("[[") {
+                    break;
+                }
+                continue;
+            };
+            let head = &candidate_body[..close_at];
+            let plus_count = head.bytes().take_while(|byte| *byte == b'+').count();
+            let after_plus = &head[plus_count..];
+            if (1..=6).contains(&plus_count)
+                && !after_plus.is_empty()
+                && after_plus.chars().all(|ch| matches!(ch, ' ' | '\t'))
+                && candidate_body[close_at + "[[/div]]".len()..]
+                    .chars()
+                    .all(|ch| matches!(ch, ' ' | '\t'))
+            {
+                close_index = Some((candidate, close_at));
+                break;
+            }
+            break;
+        }
+        if let Some((close_index, close_at)) = close_index {
+            lines[index] = ending.to_owned();
+            let (close_body, close_ending) = split_line(&lines[close_index]);
+            let head = close_body[..close_at].to_owned();
+            let tail = &close_body[close_at + "[[/div]]".len()..];
+            lines[close_index] = format!("{head}{tail}{close_ending}");
+        }
+        index += 1;
+    }
 }
 
 fn canonicalize_crossed_outer_owner_closers(

@@ -253,7 +253,12 @@ pub(super) fn expose_wikidot_replacement_markers(text: &mut String) {
                 } else if matches!(characters.get(first_end), Some('\r' | '\n')) {
                     output.push_str(&(block_token + 1).to_string());
                     output.push_str(&(block_token + 2).to_string());
-                    index = logical_newline_end(&characters, first_end);
+                    let second_end = logical_newline_end(&characters, first_end);
+                    if wikidot_heading_line_before(&characters, run_start) {
+                        output.push('\u{0001}');
+                        output.extend(characters[index..second_end].iter().copied());
+                    }
+                    index = second_end;
                     block_token += 2;
                     item_start = wikidot_list_line_marker(&characters, index)
                         .map(|marker| (block_token + 1, marker));
@@ -310,6 +315,20 @@ pub(super) fn expose_wikidot_replacement_markers(text: &mut String) {
     }
 
     *text = output;
+}
+
+fn wikidot_heading_line_before(characters: &[char], end: usize) -> bool {
+    let line_start = characters[..end]
+        .iter()
+        .rposition(|character| matches!(character, '\r' | '\n'))
+        .map_or(0, |index| index + 1);
+    let mut index = line_start;
+    let mut plus_count = 0usize;
+    while characters.get(index) == Some(&'+') {
+        plus_count += 1;
+        index += 1;
+    }
+    (1..=6).contains(&plus_count) && matches!(characters.get(index), Some(' ' | '\t'))
 }
 
 fn replacement_marker_in_ranges(

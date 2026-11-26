@@ -863,6 +863,9 @@ where
         if let Some(consumed) = consumed {
             let mixed_paragraph_ownership =
                 parser.take_wikidot_mixed_paragraph_ownership();
+            let math_image_occupied = parser.take_wikidot_math_image_occupied();
+            let empty_list_marker_boundary =
+                parser.take_wikidot_empty_list_marker_boundary();
             let div_literal_recovered = parser.take_wikidot_div_literal_recovered();
             if parser.take_wikidot_vanished_pair_line() {
                 stack.mark_wikidot_invisible_line_occupancy();
@@ -1118,6 +1121,12 @@ where
                         stack.set_wikidot_toc_next_paragraph_leads_with_br(true);
                     }
                 }
+            }
+            if math_image_occupied {
+                stack.mark_next_unwrapped();
+            }
+            if empty_list_marker_boundary {
+                stack.end_paragraph_at_break();
             }
             if quote_boundary_break_leads_paragraph {
                 stack.set_wikidot_quote_boundary_next_paragraph_leads_with_br(true);

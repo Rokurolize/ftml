@@ -336,6 +336,13 @@ fn parse_list_block_impl<'r, 't>(
                 parser.current().span.start,
                 block_rule,
             ) {
+                if let Some(close_byte) = wikidot_next_list_close(
+                    parser.full_text().inner(),
+                    parser.current().span.start,
+                    block_rule,
+                ) {
+                    parser.set_wikidot_literal_list_close_at(close_byte);
+                }
                 let before = parser.current().span.start;
                 let segment = if quote_context_body {
                     parser.get_body_elements_with_literal_quote_context(
@@ -2520,6 +2527,44 @@ fn list_marker_at(text: &str, start: usize, kind: &str) -> Option<bool> {
     } else {
         None
     }
+}
+
+fn wikidot_next_list_close(
+    source: &str,
+    start: usize,
+    block_rule: &BlockRule,
+) -> Option<usize> {
+    let bytes = source.as_bytes();
+    for (relative, _) in source[start..].match_indices("[[/") {
+        let position = start + relative;
+        let mut cursor = position + 3;
+        while matches!(bytes.get(cursor), Some(b' ' | b'\t' | b'\n' | b'\r')) {
+            cursor += 1;
+        }
+        if matches!(bytes.get(cursor), Some(b'_')) {
+            cursor += 1;
+        }
+        let name_start = cursor;
+        while matches!(bytes.get(cursor), Some(byte) if byte.is_ascii_alphanumeric()) {
+            cursor += 1;
+        }
+        if cursor == name_start {
+            continue;
+        }
+        let name = &source[name_start..cursor];
+        while matches!(bytes.get(cursor), Some(b' ' | b'\t' | b'\n' | b'\r' | b'_')) {
+            cursor += 1;
+        }
+        if source[cursor..].starts_with("]]")
+            && block_rule
+                .accepts_names
+                .iter()
+                .any(|accepted| accepted.eq_ignore_ascii_case(name))
+        {
+            return Some(position);
+        }
+    }
+    None
 }
 
 fn parse_list_item<'r, 't>(

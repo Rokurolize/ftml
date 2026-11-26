@@ -1,0 +1,95 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": {
+                    "header": {
+                        "level": 1,
+                        "has-toc": true
+                    }
+                },
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "Head"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "Word"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "�"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "body"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "alpha"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "bravo"
+                    }
+                ]
+            }
+        }
+    ],
+    "table-of-contents": [
+        {
+            "element": "list",
+            "data": {
+                "type": "bullet",
+                "attributes": {},
+                "items": [
+                    {
+                        "item-type": "elements",
+                        "attributes": {},
+                        "elements": [
+                            {
+                                "element": "link",
+                                "data": {
+                                    "type": "table-of-contents",
+                                    "link": "#toc0",
+                                    "label": {
+                                        "text": "Head Word �"
+                                    },
+                                    "target": null
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

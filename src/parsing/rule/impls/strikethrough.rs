@@ -64,6 +64,21 @@ fn try_consume_strikethrough<'r, 't>(
     token: Token,
 ) -> ParseResult<'r, 't, Elements<'t>> {
     debug!("Trying to create a strikethrough (token {})", token.name());
+    if token == Token::DoubleDash
+        && parser.settings().layout.legacy()
+        && parser.look_ahead(0).is_some_and(|next| {
+            next.token == Token::DiscardedControl
+                && matches!(next.slice, "\u{000b}" | "\u{000c}")
+        })
+        && parser
+            .look_ahead(1)
+            .is_some_and(|next| next.token == Token::DoubleDash)
+    {
+        parser.step()?;
+        parser.step()?;
+        parser.step()?;
+        return success_elements(text!("----"));
+    }
     let in_anchor_body = parser.in_wikidot_anchor_body();
     validate_reachable_close(parser, token, None, ReachableCloseMode::Standard)?;
     if token == Token::DoubleDash {

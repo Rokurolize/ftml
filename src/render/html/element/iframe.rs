@@ -44,6 +44,15 @@ pub(super) fn render_legacy_iframe(
     omit_close: bool,
 ) {
     let src = crate::url::percent_encode_non_ascii(url);
+    let src = if src.contains('\\') {
+        let (body, terminal) = match src.strip_suffix('\\') {
+            Some(body) => (body, "\\"),
+            None => (src.as_ref(), ""),
+        };
+        Cow::Owned(format!("{}{terminal}", body.replace('\\', "/")))
+    } else {
+        src
+    };
     let get = |name| {
         attributes
             .get()

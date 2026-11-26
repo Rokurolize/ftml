@@ -945,25 +945,44 @@ fn next_cell_closer(haystack: &str) -> Option<(usize, usize)> {
 fn legacy_table_region_end(parser: &Parser<'_, '_>, from: usize) -> usize {
     let source = parser.full_text().inner();
     let mut depth = 0usize;
+    let mut in_cell = true;
     let mut first_end = None;
     let mut search = from;
     while search < source.len() {
-        let closer = find_ignore_ascii_case(&source[search..], "[[/table]]")
-            .map(|rel| search + rel);
-        let opener = nested_table_opener(&source[search..]).map(|rel| search + rel);
-        if let (Some(open), Some(close)) = (opener, closer)
-            && open < close
-        {
-            if table_head_completes(source, open, close) {
+        let rest = &source[search..];
+        let closer = find_ignore_ascii_case(rest, "[[/table]]").map(|rel| search + rel);
+        let opener = nested_table_opener(rest).map(|rel| search + rel);
+        let cell_closer = next_cell_closer(rest).map(|(rel, _)| search + rel);
+        let next = [closer, opener, cell_closer].into_iter().flatten().min();
+        let Some(next) = next else {
+            break;
+        };
+
+        if cell_closer == Some(next) {
+            if depth == 0 {
+                in_cell = false;
+            }
+            search = next + 2;
+            continue;
+        }
+        if opener == Some(next) {
+            if let Some(close) = closer
+                && next < close
+                && table_head_completes(source, next, close)
+            {
                 depth += 1;
             }
-            search = open + 2;
+            search = next + 2;
             continue;
         }
         let Some(at) = closer else {
             break;
         };
         let after = at + "[[/table]]".len();
+        if depth == 0 && in_cell {
+            search = after;
+            continue;
+        }
         let content_of_cell = source[after..].starts_with("||");
         let qualifies = !parser.wikidot_byte_on_list_item_line(at) && !content_of_cell;
         if depth == 0 {

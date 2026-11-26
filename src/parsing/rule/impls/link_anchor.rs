@@ -206,11 +206,6 @@ where
                 parser.step()?;
                 return Ok((finish!(end), separator_width));
             }
-            Token::Other if parser.current().slice == "\u{a0}" => {
-                let end = parser.current().span.start;
-                parser.step()?;
-                return Ok((finish!(end), 0));
-            }
             Token::RightBracket | Token::LineBreak | Token::ParagraphBreak => {
                 return Err(parser.make_err(ParseErrorKind::RuleFailed));
             }

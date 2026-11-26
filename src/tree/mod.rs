@@ -114,6 +114,10 @@ pub(crate) const WIKIDOT_EMPTY_VALUE_ATTRIBUTE_MARKER: &str = "data-ftml-empty-v
 /// alone on that centered line; stripped once inline-scope lowering has kept it.
 pub(crate) const WIKIDOT_CENTERED_DIV_CLOSE_PARAGRAPH_MARKER: &str =
     "data-ftml-centered-div-close-paragraph";
+/// Marks the empty centered paragraph whose whole source line was one of the
+/// self-removing four-character runs; stripped once inline-scope lowering has kept it.
+pub(crate) const WIKIDOT_CENTERED_RUN_PARAGRAPH_MARKER: &str =
+    "data-ftml-centered-run-paragraph";
 
 /// Stands in for a label whose Wikidot head value evaluated to empty through
 /// raw inline markup (which live renders as an empty label, unlike an authored

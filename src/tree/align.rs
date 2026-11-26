@@ -20,6 +20,7 @@
 
 use regex::Regex;
 use std::convert::TryFrom;
+use std::str::FromStr;
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, Hash, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
@@ -70,6 +71,14 @@ impl TryFrom<&'_ str> for Alignment {
             "==" => Ok(Alignment::Justify),
             _ => Err(()),
         }
+    }
+}
+
+impl FromStr for Alignment {
+    type Err = ();
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        Self::try_from(value)
     }
 }
 
@@ -148,6 +157,14 @@ impl TryFrom<&'_ str> for FloatAlignment {
             float,
             recognized,
         })
+    }
+}
+
+impl FromStr for FloatAlignment {
+    type Err = ();
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        Self::try_from(value)
     }
 }
 

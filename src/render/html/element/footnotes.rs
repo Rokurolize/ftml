@@ -299,7 +299,8 @@ fn wikidot_footnote_block(element: &Element) -> bool {
         Element::Code(_)
         | Element::List { .. }
         | Element::Table(_)
-        | Element::TabView(_) => true,
+        | Element::TabView(_)
+        | Element::BibliographyBlock { .. } => true,
         Element::Container(container) => matches!(
             container.ctype(),
             ContainerType::Div

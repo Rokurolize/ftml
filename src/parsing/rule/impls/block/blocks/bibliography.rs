@@ -103,7 +103,10 @@ fn parse_fn<'r, 't>(
             .expect("parsed bibliography opener has closing brackets")
         + "]]".len();
 
-    if parser.settings().layout.legacy() && parser.in_footnote() {
+    if parser.settings().layout.legacy()
+        && parser.in_footnote()
+        && parser.wikidot_footnote_zone_blocks(opener_start)
+    {
         let body_start = parser.current().span.start;
         let body = parser.get_body_elements(&BLOCK_BIBLIOGRAPHY, true)?;
         let (mut elements, errors, _) = body.into();

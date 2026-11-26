@@ -1768,14 +1768,32 @@ where
             }
             Token::Equals => {
                 !(parser.settings().layout.legacy() && next_offset == 1)
-                    && (following == Some(Token::Whitespace)
-                        || parser
+                    && (following == Some(Token::Whitespace) || {
+                        let equals_after = parser
                             .remaining()
                             .iter()
                             .skip(next_offset + 1)
                             .take_while(|next| next.token == Token::Equals)
-                            .count()
-                            >= 3)
+                            .count();
+                        equals_after >= 3 && {
+                            let mut index = next_offset + 1 + equals_after;
+                            if !parser.settings().layout.legacy()
+                                && parser
+                                    .look_ahead(index)
+                                    .is_some_and(|token| token.token == Token::Whitespace)
+                            {
+                                index += 1;
+                            }
+                            matches!(
+                                parser.look_ahead(index).map(|token| token.token),
+                                Some(
+                                    Token::LineBreak
+                                        | Token::ParagraphBreak
+                                        | Token::InputEnd
+                                )
+                            )
+                        }
+                    })
             }
             Token::TripleDash => matches!(
                 following,

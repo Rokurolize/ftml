@@ -71,6 +71,9 @@
                 "data": "leadtext722"
             },
             {
+                "element": "line-break"
+            },
+            {
                 "element": "text",
                 "data": "="
             },

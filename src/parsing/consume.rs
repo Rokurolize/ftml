@@ -2663,6 +2663,20 @@ fn has_later_comma_close(parser: &Parser<'_, '_>) -> bool {
     }
 }
 
+fn comma_run_break_padded_body(body: &[Element<'_>]) -> bool {
+    let [Element::LineBreak, rest @ ..] = body else {
+        return false;
+    };
+    rest.iter().all(|element| {
+        matches!(
+            element,
+            Element::Text(value)
+                if !value.is_empty()
+                    && value.bytes().all(|byte| matches!(byte, b' ' | b'\t'))
+        )
+    })
+}
+
 /// `,,,a,,,` is a subscript of `,a` plus a leftover comma.
 /// `a,,,b` has no second run, so it stays one literal token.
 /// A lone `,,,,` run is an empty subscript.
@@ -2772,18 +2786,34 @@ fn try_consume_comma_run_subscript<'r, 't>(
         parser.update(&checkpoint);
         return miss();
     }
+    let mut consumed_commas = 2;
     if bare_marker {
         let start = parser.current().span.start;
-        if start > 0
-            && parser.full_text().inner().as_bytes()[start - 1].is_ascii_whitespace()
-        {
-            parser.update(&checkpoint);
-            return miss();
+        if start > 0 {
+            let preceding = parser.full_text().inner().as_bytes()[start - 1];
+            if matches!(preceding, b' ' | b'\t') {
+                if comma_run_len(parser.current()).is_some_and(|len| len >= 3)
+                    && comma_run_break_padded_body(&body)
+                {
+                    body.push(text!(","));
+                    consumed_commas = 3;
+                } else {
+                    parser.update(&checkpoint);
+                    return miss();
+                }
+            } else if preceding.is_ascii_whitespace()
+                && !matches!(preceding, b'\r' | b'\n')
+            {
+                parser.update(&checkpoint);
+                return miss();
+            }
         }
     }
 
-    let tail: &'t str = if comma_run_len(parser.current()).is_some() {
-        &parser.current().slice[2..]
+    let tail: &'t str = if let Some(run_len) = comma_run_len(parser.current()) {
+        // Live re-pairs each leftover quad as an empty subscript.
+        let tail_len = (run_len - consumed_commas) % 4;
+        &parser.current().slice[consumed_commas..consumed_commas + tail_len]
     } else if subscript_close_ahead(parser) {
         ""
     } else {
@@ -2795,15 +2825,23 @@ fn try_consume_comma_run_subscript<'r, 't>(
         return miss();
     }
 
+    let closes_at_line_start = matches!(body.last(), Some(Element::LineBreak));
     let element = Element::Container(crate::tree::Container::new(
         crate::tree::ContainerType::Subscript,
         body,
         crate::tree::AttributeMap::new(),
     ));
-    let elements = if tail.is_empty() {
-        Elements::Single(element)
+    let mut items = vec![element];
+    if closes_at_line_start {
+        items.push(text!(" "));
+    }
+    if !tail.is_empty() {
+        items.push(text!(tail));
+    }
+    let elements = if items.len() == 1 {
+        Elements::Single(items.remove(0))
     } else {
-        Elements::Multiple(vec![element, text!(tail)])
+        Elements::Multiple(items)
     };
     paragraph_safe &= elements.paragraph_safe();
     Ok(ParseSuccess::new(

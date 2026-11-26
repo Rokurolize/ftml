@@ -2514,6 +2514,22 @@ where
                 return Ok(true);
             }
 
+            let centered_div_close = parser.settings().layout.legacy()
+                && !parser.discarding_hidden_body()
+                && block_rule.name == "block-div"
+                && parser.start_of_line()
+                && parser.current().token == Token::Equals
+                && parser
+                    .look_ahead(0)
+                    .is_some_and(|token| token.token == Token::Whitespace)
+                && parser
+                    .look_ahead(1)
+                    .is_some_and(|token| token.token == Token::LeftBlockEnd);
+            if centered_div_close {
+                parser.step()?;
+                parser.get_optional_space()?;
+            }
+
             let end_start = parser.current().span.start;
             if matches!(
                 block_rule.name,
@@ -2560,6 +2576,19 @@ where
             } else {
                 parser.get_end_block()?
             };
+
+            if centered_div_close {
+                let mut remainder = parser.clone();
+                if remainder.current().token == Token::Whitespace {
+                    remainder.step()?;
+                }
+                if !matches!(
+                    remainder.current().token,
+                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                ) {
+                    return Ok(false);
+                }
+            }
 
             // Live pairs a tabview closer only when it attaches directly after
             // the body's last tab closer. A closer after prose stays literal

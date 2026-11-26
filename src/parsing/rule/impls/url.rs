@@ -345,6 +345,14 @@ where
         .and_then(|index| source.as_bytes().get(index).copied())
         == Some(b'[');
     loop {
+        if parser.current().token == Token::Pipe
+            && parser.look_ahead(0).is_some_and(|token| {
+                token.token == Token::EscapedDoubleQuote
+                    && token.span.start == parser.current().span.end
+            })
+        {
+            break;
+        }
         if preceded_by_left_bracket
             && parser.current().token == Token::Pipe
             && wikidot_pipe_precedes_raw(parser)
@@ -464,6 +472,30 @@ where
                 break;
             }
             trailing.push(last);
+            url = without_last_character(url);
+        }
+    }
+    let mut pipe_backslash_cut = None;
+    let mut position = url.len();
+    for character in url.chars().rev() {
+        if matches!(
+            character,
+            'A'..='Z' | 'a'..='z' | '0'..='9' | '%' | '/' | '?' | '=' | '&' | '~' | '_'
+        ) {
+            break;
+        }
+        position -= character.len_utf8();
+        if character == '\\' && position > 0 && url.as_bytes()[position - 1] == b'|' {
+            pipe_backslash_cut = Some(position - 1);
+            break;
+        }
+    }
+    if let Some(cut) = pipe_backslash_cut {
+        let tail: Vec<char> = url[cut + 1..].chars().rev().collect();
+        let removed_characters = url[cut..].chars().count();
+        trailing.extend(tail);
+        trailing.push('|');
+        for _ in 0..removed_characters {
             url = without_last_character(url);
         }
     }

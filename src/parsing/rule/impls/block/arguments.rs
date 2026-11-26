@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use crate::id_prefix::isolate_ids;
+use crate::id_prefix::{is_id_whitespace, isolate_ids};
 use crate::parsing::rule::impls::contains_wikidot_code_token;
 use crate::parsing::{ParseError, ParseErrorKind, Parser, parse_boolean};
 use crate::settings::WikitextSettings;
@@ -160,7 +160,7 @@ fn isolate_ids_preserving_interior_c0(id_string: &str) -> String {
     let mut pending_space = false;
     let mut started = false;
     for (index, ch) in id_string.char_indices() {
-        if ch.is_whitespace() {
+        if is_id_whitespace(ch) {
             if started {
                 pending_space = true;
             }
@@ -187,7 +187,7 @@ fn isolate_ids_preserving_interior_c0(id_string: &str) -> String {
 
     let mut isolated_ids = String::with_capacity(collapsed.len() + PREFIX.len() + 1);
     isolated_ids.push_str(PREFIX);
-    if id_string.starts_with(char::is_whitespace) {
+    if id_string.starts_with(is_id_whitespace) {
         isolated_ids.push(' ');
     }
     isolated_ids.push_str(&collapsed);
@@ -1005,6 +1005,35 @@ mod tests {
     use crate::data::PageInfo;
     use crate::layout::Layout;
     use crate::settings::{WikitextMode, WikitextSettings};
+
+    #[test]
+    fn wikidot_id_isolation_keeps_unicode_separators_and_interior_c0() {
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let isolate = |input: &str| {
+            normalize_wikidot_html_id_value_preserving_interior_c0(
+                &Cow::Borrowed(input),
+                &settings,
+            )
+            .into_owned()
+        };
+
+        assert_eq!(isolate("a\u{2003}b"), "u-a\u{2003}b");
+        assert_eq!(isolate("a\u{00a0}b"), "u-a\u{00a0}b");
+        assert_eq!(isolate("a\u{3000}b"), "u-a\u{3000}b");
+        assert_eq!(isolate("\u{2003}a"), "u-\u{2003}a");
+        assert_eq!(isolate("a\u{2003}"), "u-a\u{2003}");
+        assert_eq!(isolate("\u{00a0}"), "u-\u{00a0}");
+        assert_eq!(isolate("a \u{2003}  b\u{00a0}"), "u-a \u{2003} b\u{00a0}");
+        assert_eq!(isolate("  a\tb  "), "u- a b");
+        assert_eq!(isolate("a\u{0000}b"), "u-a\u{0000}b");
+        assert_eq!(isolate("a\u{001b}b"), "u-a\u{001b}b");
+        assert_eq!(
+            isolate("a\u{2003}\u{0000}\u{2003}b"),
+            "u-a\u{2003}\u{0000}\u{2003}b"
+        );
+        assert_eq!(isolate("a\u{007f}b"), "u-ab");
+        assert_eq!(isolate("\u{0000}b"), "u-b");
+    }
 
     #[test]
     fn get_bool_rejects_malformed_boolean_argument() {

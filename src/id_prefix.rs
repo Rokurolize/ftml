@@ -26,6 +26,10 @@
 //! However it is intelligent, and doesn't add the `u-` if
 //! it's already prefixed with that.
 
+pub(crate) fn is_id_whitespace(character: char) -> bool {
+    character.is_ascii() && character.is_whitespace()
+}
+
 pub fn isolate_ids(id_string: &str) -> String {
     const PREFIX: &str = "u-";
     if id_string.is_empty() {
@@ -36,7 +40,7 @@ pub fn isolate_ids(id_string: &str) -> String {
     let mut pending_space = false;
     let mut started = false;
     for ch in id_string.chars() {
-        if ch.is_whitespace() {
+        if is_id_whitespace(ch) {
             if started {
                 pending_space = true;
             }
@@ -60,7 +64,7 @@ pub fn isolate_ids(id_string: &str) -> String {
 
     let mut isolated_ids = String::with_capacity(collapsed.len() + PREFIX.len() + 1);
     isolated_ids.push_str(PREFIX);
-    if id_string.starts_with(char::is_whitespace) {
+    if id_string.starts_with(is_id_whitespace) {
         isolated_ids.push(' ');
     }
     isolated_ids.push_str(&collapsed);
@@ -102,4 +106,14 @@ fn test_isolate_ids() {
     test!("u-", "u-");
     test!("u-u-apple", "u-u-apple");
     test!(" u-a", "u- u-a");
+    test!("a\u{000b}b", "u-a b");
+    test!("a\u{000c}b", "u-a b");
+    test!("a\u{2003}b", "u-a\u{2003}b");
+    test!("a\u{00a0}b", "u-a\u{00a0}b");
+    test!("a\u{3000}b", "u-a\u{3000}b");
+    test!("\u{2003}a", "u-\u{2003}a");
+    test!("a\u{2003}", "u-a\u{2003}");
+    test!("\u{00a0}", "u-\u{00a0}");
+    test!("a \u{2003}  b\u{00a0}", "u-a \u{2003} b\u{00a0}");
+    test!("u-a\u{2003}b", "u-a\u{2003}b");
 }

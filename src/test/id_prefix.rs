@@ -152,6 +152,20 @@ fn isolate_user_ids() {
         ))],
     );
     test!(
+        "[[a id=\"a\u{2003}b\"]]X[[/a]]",
+        vec![Element::Container(Container::new(
+            ContainerType::Paragraph,
+            vec![Element::Anchor {
+                target: None,
+                attributes: AttributeMap::from(btreemap! {
+                    cow!("id") => cow!("u-a\u{2003}b"),
+                }),
+                elements: vec![text!("X")],
+            }],
+            AttributeMap::new(),
+        ))],
+    );
+    test!(
         r#"[[a id="u-apple"]]X[[/a]]"#,
         vec![Element::Container(Container::new(
             ContainerType::Paragraph,

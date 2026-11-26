@@ -25,7 +25,7 @@ use crate::parsing::{ParagraphSplitEntry, ParagraphSplitKind, ParseSuccess};
 
 type SplitEscapeLayout<'t> = (Vec<Element<'t>>, Vec<ParagraphSplitEntry>, bool);
 use crate::parsing::{Token, strip_whitespace};
-use crate::tree::{DefinitionListItem, ListType};
+use crate::tree::{DefinitionListItem, ListType, PartialElement};
 
 pub const RULE_DEFINITION_LIST: Rule = Rule {
     name: "definition-list",
@@ -94,6 +94,7 @@ fn parse_definition_list<'r, 't>(
     let mut paragraph_safe = false;
     let mut escape: Option<SplitEscapeLayout<'t>> = None;
     let mut residue_vanished = false;
+    let mut residue_span_close = None;
 
     loop {
         if parser.settings().layout.legacy() && starts_definition_item(parser) {
@@ -112,7 +113,7 @@ fn parse_definition_list<'r, 't>(
                 None => {}
             }
         }
-        let next = match scan_item(parser, &mut escape) {
+        let next = match scan_item(parser, &mut escape, &mut residue_span_close) {
             Ok(success) => success.chain(&mut errors, &mut paragraph_safe),
             Err(error) => {
                 if !items.is_empty()
@@ -145,7 +146,11 @@ fn parse_definition_list<'r, 't>(
         if residue_vanished {
             parser.mark_wikidot_colon_line_vanished();
         }
-        ok!(false; Elements::None, errors)
+        if let Some(close) = residue_span_close {
+            ok!(close, errors)
+        } else {
+            ok!(false; Elements::None, errors)
+        }
     } else if parser.bibliography_split_tail() {
         let elements =
             crate::parsing::rule::impls::block::blocks::wikidot_split_tail_bibitems(
@@ -386,6 +391,7 @@ where
 fn scan_item<'r, 't>(
     parser: &mut Parser<'r, 't>,
     escape: &mut Option<SplitEscapeLayout<'t>>,
+    residue_span_close: &mut Option<Element<'t>>,
 ) -> ParseResult<'r, 't, Option<(DefinitionListItem<'t>, bool)>>
 where
     'r: 't,
@@ -418,6 +424,8 @@ where
     } else {
         None
     };
+    let span_open_at_line_start =
+        parser.settings().layout.legacy() && parser.in_wikidot_span_body();
     let scan =
         collect_key_scanning(parser, prefix_ws_extra, &mut errors, &mut paragraph_safe);
     let parts = match scan {
@@ -432,7 +440,14 @@ where
             }
             Some((key_elements, key_string, value_elements, last))
         }
-        Ok(KeyScan::Residue) => None,
+        Ok(KeyScan::Residue {
+            swallowed_span_close,
+        }) => {
+            if span_open_at_line_start {
+                *residue_span_close = swallowed_span_close;
+            }
+            None
+        }
         Err(error) => {
             if let Some(previous) = restore_line {
                 parser.set_in_wikidot_definition_list_line(previous);
@@ -464,8 +479,10 @@ fn parse_item<'r, 't>(
 ) -> ParseResult<'r, 't, (DefinitionListItem<'t>, bool)> {
     let mut errors = Vec::new();
     let mut paragraph_safe = false;
+    let mut residue_span_close = None;
 
-    let item = scan_item(parser, &mut None)?.chain(&mut errors, &mut paragraph_safe);
+    let item = scan_item(parser, &mut None, &mut residue_span_close)?
+        .chain(&mut errors, &mut paragraph_safe);
     match item {
         Some(pair) => ok!(false; pair, errors),
         None => Err(parser.make_err(ParseErrorKind::RuleFailed)),
@@ -722,7 +739,9 @@ enum KeyScan<'t> {
         key_elements: Vec<Element<'t>>,
         key_string: std::borrow::Cow<'t, str>,
     },
-    Residue,
+    Residue {
+        swallowed_span_close: Option<Element<'t>>,
+    },
 }
 
 fn collect_key_scanning<'r, 't>(
@@ -803,7 +822,9 @@ where
                     if last.token == Token::LineBreak {
                         parser.step()?;
                     }
-                    return Ok(KeyScan::Residue);
+                    return Ok(KeyScan::Residue {
+                        swallowed_span_close: take_swallowed_span_close(key_elements),
+                    });
                 }
 
                 crossed = true;
@@ -817,10 +838,25 @@ where
                 key_elements.push(Element::Text(parser.current().slice.into()));
                 parser.step()?;
             }
-            Token::InputEnd => return Ok(KeyScan::Residue),
+            Token::InputEnd => {
+                return Ok(KeyScan::Residue {
+                    swallowed_span_close: take_swallowed_span_close(key_elements),
+                });
+            }
             _ => return Err(parser.make_err(ParseErrorKind::RuleFailed)),
         }
     }
+}
+
+fn take_swallowed_span_close<'t>(elements: Vec<Element<'t>>) -> Option<Element<'t>> {
+    for element in elements {
+        match element {
+            Element::Partial(PartialElement::InlineSpanOpen(..)) => return None,
+            Element::Partial(PartialElement::InlineSpanClose(_)) => return Some(element),
+            _ => {}
+        }
+    }
+    None
 }
 
 fn build_key_string<'t>(

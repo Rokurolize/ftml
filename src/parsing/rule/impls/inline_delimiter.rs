@@ -353,12 +353,25 @@ fn block_start_at_line_start(text: &str, span_start: usize) -> bool {
     true
 }
 
+fn opener_on_wikidot_center_line(parser: &Parser<'_, '_>, byte: usize) -> bool {
+    if !parser.settings().layout.legacy() {
+        return false;
+    }
+    let source = parser.full_text().inner();
+    let end = byte.min(source.len());
+    let line_start = source[..end].rfind('\n').map_or(0, |offset| offset + 1);
+    source[line_start..end]
+        .trim_start_matches([' ', '\t'])
+        .starts_with("= ")
+}
+
 pub(super) fn validate_reachable_close(
     parser: &Parser<'_, '_>,
     token: Token,
     split: Option<SplitDelimiter>,
     mode: ReachableCloseMode,
 ) -> Result<(), ParseError> {
+    let opener_start = parser.current().span.start;
     let tokens = parser.remaining();
     let scan_start = parser.ahead_token_index();
     // Block ends change the result only when `end_block_fails` can return
@@ -568,6 +581,12 @@ pub(super) fn validate_reachable_close(
             current if current == token => {
                 if let Some(error) = paragraph_error {
                     return Err(error);
+                }
+                if index == 1
+                    && tokens[0].token == Token::LineBreak
+                    && opener_on_wikidot_center_line(parser, opener_start)
+                {
+                    return Err(parser.make_err(ParseErrorKind::RuleFailed));
                 }
                 if mode == ReachableCloseMode::Standard
                     && index > 0

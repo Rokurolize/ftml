@@ -27,15 +27,9 @@ pub const RULE_RAWOLD: Rule = Rule {
     try_consume_fn,
 };
 
-pub(crate) fn backtick_starts_rawold(parser: &Parser<'_, '_>) -> bool {
-    if !parser.settings().layout.legacy() {
-        return false;
-    }
-
-    let source = parser.full_text().inner();
-    let start = parser.current().span.start;
+pub(crate) fn wikidot_code_token_at(source: &str, start: usize) -> bool {
     let bytes = source.as_bytes();
-    if start > 0 && bytes[start - 1] == b'`' {
+    if start > 0 && bytes.get(start - 1) == Some(&b'`') {
         return false;
     }
     if bytes.get(start + 1) != Some(&b'`') {
@@ -53,6 +47,20 @@ pub(crate) fn backtick_starts_rawold(parser: &Parser<'_, '_>) -> bool {
             .chars()
             .any(|c| matches!(c, '\'' | '\u{2018}' | '\u{2019}'))
         && !body.ends_with('`')
+}
+
+pub(crate) fn contains_wikidot_code_token(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    (0..bytes.len())
+        .any(|start| bytes[start] == b'`' && wikidot_code_token_at(value, start))
+}
+
+pub(crate) fn backtick_starts_rawold(parser: &Parser<'_, '_>) -> bool {
+    if !parser.settings().layout.legacy() {
+        return false;
+    }
+
+    wikidot_code_token_at(parser.full_text().inner(), parser.current().span.start)
 }
 
 fn try_consume_fn<'r, 't>(

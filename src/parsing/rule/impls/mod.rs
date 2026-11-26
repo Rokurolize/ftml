@@ -134,7 +134,7 @@ pub use self::null::RULE_NULL;
 pub use self::page::RULE_PAGE;
 pub use self::raw::RULE_RAW;
 pub use self::rawold::RULE_RAWOLD;
-pub(crate) use self::rawold::backtick_starts_rawold;
+pub(crate) use self::rawold::{backtick_starts_rawold, contains_wikidot_code_token};
 pub use self::section_marker::RULE_SECTION_MARKER;
 pub use self::strikethrough::{RULE_STRIKETHROUGH_DASH, RULE_STRIKETHROUGH_TILDE};
 pub use self::subscript::RULE_SUBSCRIPT;

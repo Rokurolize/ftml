@@ -120,7 +120,7 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_end_of_input_err());
     }
     let generated = parser.generated_until_right_block();
-    let arguments = parser.get_head_map_wikidot(&BLOCK_SPAN, in_head)?;
+    let mut arguments = parser.get_head_map_wikidot(&BLOCK_SPAN, in_head)?;
     let head_source = if wikidot_head_source(parser, opener_start).is_empty() {
         Cow::Borrowed("")
     } else {
@@ -165,7 +165,8 @@ fn parse_fn<'r, 't>(
         if !has_close {
             return Err(parser.make_err(ParseErrorKind::RuleFailed));
         }
-        let mut attributes = arguments.to_wikidot_block_attribute_map(parser.settings());
+        let mut attributes =
+            arguments.take_wikidot_block_attribute_map(parser.settings());
         super::super::arguments::retain_wikidot_html_attributes(&mut attributes);
         arguments.insert_explicit_empty_marker(&mut attributes);
         for key in generated_attributes {
@@ -226,7 +227,7 @@ fn parse_fn<'r, 't>(
     let (elements, paragraph_split) = parser.wrap_body_segments(
         segments,
         ContainerType::Span,
-        arguments.to_wikidot_block_attribute_map(parser.settings()),
+        arguments.take_wikidot_block_attribute_map(parser.settings()),
         paragraph_safe,
     );
 

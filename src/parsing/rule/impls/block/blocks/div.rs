@@ -1880,7 +1880,7 @@ pub(crate) fn wikidot_div_head_attributes<'r, 't>(
     parser: &Parser<'r, 't>,
     arguments: &mut Arguments<'t>,
 ) -> AttributeMap<'t> {
-    let mut attributes = arguments.to_wikidot_block_attribute_map(parser.settings());
+    let mut attributes = arguments.take_wikidot_block_attribute_map(parser.settings());
     if parser.settings().layout.legacy() {
         super::super::arguments::retain_wikidot_html_attributes(&mut attributes);
         if !attributes.get().contains_key("class")

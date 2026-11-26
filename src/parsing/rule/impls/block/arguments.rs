@@ -19,6 +19,7 @@
  */
 
 use crate::id_prefix::isolate_ids;
+use crate::parsing::rule::impls::contains_wikidot_code_token;
 use crate::parsing::{ParseError, ParseErrorKind, Parser, parse_boolean};
 use crate::settings::WikitextSettings;
 use crate::tree::{AttributeMap, RawModuleArgument};
@@ -588,16 +589,39 @@ impl<'t> Arguments<'t> {
         map
     }
 
-    pub(crate) fn to_wikidot_block_attribute_map(
-        &self,
+    pub(crate) fn take_wikidot_block_attribute_map(
+        &mut self,
         settings: &WikitextSettings,
     ) -> AttributeMap<'t> {
+        if settings.layout.legacy() {
+            let keys: Vec<Cow<'t, str>> = self
+                .raw
+                .iter()
+                .filter(|argument| contains_wikidot_code_token(&argument.value))
+                .map(|argument| argument.name.clone())
+                .collect();
+            for key in keys {
+                self.mark_explicit_empty(key);
+            }
+        }
         let mut map = self.attribute_map_from_entries_with_control_preservation(
             settings,
             |_, _| true,
             true,
         );
         map.isolate_id(settings);
+        // Live keeps an emptied id present, so retain the key that the
+        // isolation pass drops. The explicit-empty marker makes the renderer
+        // spell it `id=""` rather than an isolated value.
+        if settings.layout.legacy()
+            && !map.get().contains_key("id")
+            && self
+                .explicit_empty
+                .iter()
+                .any(|key| key.as_str().eq_ignore_ascii_case("id"))
+        {
+            map.insert("id", Cow::Borrowed(""));
+        }
         self.insert_explicit_empty_marker(&mut map);
         map
     }

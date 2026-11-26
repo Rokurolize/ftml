@@ -1,0 +1,29 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "span",
+                            "attributes": {
+                                "class": "plain",
+                                "id": "``x``"
+                            },
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "b"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

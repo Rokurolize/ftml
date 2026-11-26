@@ -216,7 +216,13 @@ pub fn render_link(
     ctx.add_link(link);
 
     let site = ctx.info().site.as_ref().to_string();
-    let url = normalize_link(link, ctx.handle());
+    let normalized_url = normalize_link(link, ctx.handle());
+    let url = match (label, link) {
+        (LinkLabel::Url, LinkLocation::Url(_)) if normalized_url.contains('\\') => {
+            Cow::Owned(normalized_url.replace('\\', "/"))
+        }
+        _ => normalized_url,
+    };
 
     let target_value = match target {
         Some(target) => target.html_attr(),

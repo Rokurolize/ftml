@@ -464,6 +464,7 @@ fn scan_url(bytes: &[u8], start: usize) -> Option<usize> {
             b'\n' | b'\r' | b' ' | b'\t' | b'"' | b'\'' | b'|' | b'[' | b']'
         ) || character.is_whitespace()
             || is_discarded_control(bytes[end])
+            || matches!(bytes[end], 0x1b | 0x7f)
             || has(bytes, end, b">@")
             || has(bytes, end, b"@@")
         {

@@ -143,8 +143,16 @@ email = @{
     (ASCII_ALPHANUMERIC | "-")+ ~ ("." ~ (ASCII_ALPHANUMERIC | "-")+)+
 }
 
+leading_host_char = _{
+    "|" | "[" | "]" |
+    "\u{00a0}" | "\u{0085}" | "\u{1680}" |
+    '\u{2000}'..'\u{200a}' | "\u{202f}" | "\u{205f}" | "\u{3000}" |
+    discarded_control
+}
+
 url = @{
     (((("http" ~ "s"?) | "ftp") ~ "://") | "mailto:") ~
+    leading_host_char? ~
     (!(NEWLINE | " " | "\t" | "\"" | "'" | "|" | "[" | "]" | ">@" | "@@" | ("@" ~ "<" ~ (!(">" ~ "@") ~ !NEWLINE ~ ANY)* ~ ">" ~ "@") | discarded_control | WHITE_SPACE | "\u{001b}" | "\u{007f}") ~ ANY)+
 }
 

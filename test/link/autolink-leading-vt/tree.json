@@ -1,0 +1,22 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "link",
+                        "data": {
+                            "type": "direct",
+                            "link": "http://\u000bx",
+                            "label": "url",
+                            "target": null
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

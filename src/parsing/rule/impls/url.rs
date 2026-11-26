@@ -20,7 +20,7 @@
 
 use super::prelude::*;
 use crate::parsing::collect::{CommentElidedText, consume_valid_comment};
-use crate::parsing::discard_wikidot_controls;
+use crate::parsing::{discard_wikidot_controls, is_discarded_control};
 use crate::tree::{AnchorTarget, LinkLabel, LinkLocation, LinkType};
 use std::borrow::Cow;
 
@@ -56,9 +56,18 @@ pub(crate) fn is_wikidot_only_autolink_url(url: &str) -> bool {
 
 pub(crate) fn starts_wikidot_only_scheme_url(source: &str, start: usize) -> bool {
     WIKIDOT_ONLY_AUTOLINK_SCHEMES.iter().any(|scheme| {
-        source[start..].starts_with(scheme)
-            && wikidot_automatic_url_end(source, start, source.len(), false)
-                > start + scheme.len()
+        if !source[start..].starts_with(scheme) {
+            return false;
+        }
+        let host = start + scheme.len();
+        let scan_from = host
+            + usize::from(
+                source[host..]
+                    .chars()
+                    .next()
+                    .is_some_and(is_discarded_control),
+            );
+        wikidot_automatic_url_end(source, scan_from, source.len(), false) > scan_from
     })
 }
 
@@ -440,7 +449,7 @@ where
     }
 
     let field = CommentElidedText::new(source, url_start..end, comments);
-    let mut url = discard_wikidot_controls(field.into_cow());
+    let mut url = url_with_leading_host_control(field.into_cow());
     let previous = start
         .checked_sub(1)
         .and_then(|index| source.as_bytes().get(index));
@@ -562,6 +571,32 @@ fn without_last_character(value: Cow<'_, str>) -> Cow<'_, str> {
             Cow::Owned(value)
         }
     }
+}
+
+fn url_with_leading_host_control<'t>(raw: Cow<'t, str>) -> Cow<'t, str> {
+    let Some(colon) = raw.find(':') else {
+        return discard_wikidot_controls(raw);
+    };
+    let host = colon
+        + 1
+        + if raw[colon + 1..].starts_with("//") {
+            2
+        } else {
+            0
+        };
+    let Some(control) = raw[host..]
+        .chars()
+        .next()
+        .filter(|&ch| is_discarded_control(ch))
+    else {
+        return discard_wikidot_controls(raw);
+    };
+    let stripped = discard_wikidot_controls(raw.clone());
+    let mut restored = String::with_capacity(stripped.len() + control.len_utf8());
+    restored.push_str(&raw[..host]);
+    restored.push(control);
+    restored.push_str(&stripped[host..]);
+    Cow::Owned(restored)
 }
 
 fn wikidot_pipe_precedes_raw<'r, 't>(parser: &mut Parser<'r, 't>) -> bool

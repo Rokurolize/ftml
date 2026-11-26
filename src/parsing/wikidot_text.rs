@@ -39,7 +39,7 @@ pub(crate) fn discard_wikidot_controls<'a>(value: Cow<'a, str>) -> Cow<'a, str> 
 }
 
 #[inline]
-fn is_discarded_control(ch: char) -> bool {
+pub(crate) fn is_discarded_control(ch: char) -> bool {
     matches!(ch as u32, 0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
 }
 

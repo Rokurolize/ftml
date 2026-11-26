@@ -19,6 +19,7 @@
  */
 
 use std::convert::TryFrom;
+use std::str::FromStr;
 use strum_macros::IntoStaticStr;
 
 #[derive(
@@ -79,6 +80,14 @@ impl<'a> TryFrom<&'a str> for AnchorTarget {
         }
 
         Err(())
+    }
+}
+
+impl FromStr for AnchorTarget {
+    type Err = ();
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        Self::try_from(value)
     }
 }
 

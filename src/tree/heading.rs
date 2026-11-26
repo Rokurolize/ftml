@@ -21,6 +21,7 @@
 use super::HtmlTag;
 use crate::next_index::{NextIndex, TableOfContentsIndex};
 use std::convert::TryFrom;
+use std::str::FromStr;
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, Hash, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
@@ -58,6 +59,14 @@ impl TryFrom<&'_ str> for Heading {
 
         let level = HeadingLevel::try_from(len)?;
         Ok(Heading { level, has_toc })
+    }
+}
+
+impl FromStr for Heading {
+    type Err = ();
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        Self::try_from(value)
     }
 }
 

@@ -18,9 +18,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#[cfg(test)]
-mod test;
-
 mod scanner;
 
 #[cfg(test)]
@@ -313,3 +310,6 @@ fn lexer_error_tokens<'a>(text: &'a str, error: impl Display) -> Vec<ExtractedTo
     };
     vec![token]
 }
+
+#[cfg(test)]
+mod test;

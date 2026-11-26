@@ -606,13 +606,28 @@ fn wikidot_automatic_url_end(
             || (!bracket_fallback
                 && (source[end..].starts_with("[[")
                     || source[end..].starts_with("]]")
-                    || source[end..].starts_with("||")))
+                    || (source[end..].starts_with("||")
+                        && !wikidot_pipe_run_continues(source, end))))
         {
             break;
         }
         end += character.len_utf8();
     }
     end
+}
+
+fn wikidot_pipe_run_continues(source: &str, start: usize) -> bool {
+    let bytes = source.as_bytes();
+    let mut end = start;
+    while bytes.get(end) == Some(&b'|') {
+        end += 1;
+    }
+    source[end..].chars().next().is_some_and(|character| {
+        matches!(
+            character,
+            'A'..='Z' | 'a'..='z' | '0'..='9' | '%' | '/' | '?' | '=' | '&' | '~' | '_'
+        )
+    })
 }
 
 fn try_consume_fn<'r, 't>(

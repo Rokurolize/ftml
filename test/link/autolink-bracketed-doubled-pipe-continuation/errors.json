@@ -1,0 +1,20 @@
+[
+    {
+        "token": "table-column",
+        "rule": "page",
+        "span": [
+            9,
+            11
+        ],
+        "kind": "not-start-of-line"
+    },
+    {
+        "token": "table-column",
+        "rule": "fallback",
+        "span": [
+            9,
+            11
+        ],
+        "kind": "no-rules-match"
+    }
+]

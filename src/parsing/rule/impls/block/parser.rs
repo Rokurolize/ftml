@@ -2435,7 +2435,7 @@ where
             if matches!(
                 block_rule.name,
                 "block-list-unordered" | "block-list-ordered"
-            ) && parser.take_wikidot_literal_list_close_at(end_start)
+            ) && parser.is_wikidot_literal_list_close_at(end_start)
             {
                 return Ok(false);
             }

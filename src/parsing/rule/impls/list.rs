@@ -75,6 +75,46 @@ pub const RULE_LIST: Rule = Rule {
     try_consume_fn,
 };
 
+fn wikidot_empty_marker_line(source: &str, marker_start: usize) -> bool {
+    let line_end = source[marker_start..]
+        .find('\n')
+        .map_or(source.len(), |offset| marker_start + offset);
+    let line = &source[marker_start..line_end];
+    let bytes = line.as_bytes();
+    let mut cursor = 1;
+    if !matches!(bytes.get(cursor), Some(b' ' | b'\t')) {
+        return false;
+    }
+    while matches!(bytes.get(cursor), Some(b' ' | b'\t')) {
+        cursor += 1;
+    }
+    loop {
+        while matches!(bytes.get(cursor), Some(b' ' | b'\t')) {
+            cursor += 1;
+        }
+        if cursor == line.len() {
+            return true;
+        }
+        let empty_pair = match bytes.get(cursor) {
+            Some(b'*' | b'/' | b'^' | b',' | b'_' | b'-') => {
+                bytes.get(cursor + 1) == bytes.get(cursor)
+                    && bytes.get(cursor + 2) == bytes.get(cursor)
+                    && bytes.get(cursor + 3) == bytes.get(cursor)
+            }
+            Some(b'{') => {
+                bytes.get(cursor + 1) == Some(&b'{')
+                    && bytes.get(cursor + 2) == Some(&b'}')
+                    && bytes.get(cursor + 3) == Some(&b'}')
+            }
+            _ => false,
+        };
+        if !empty_pair {
+            return false;
+        }
+        cursor += 4;
+    }
+}
+
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
@@ -87,6 +127,11 @@ fn try_consume_fn<'r, 't>(
     }
     let entry_parser = parser.clone();
     let entry_state = parser.get_mutable_state();
+    let empty_marker_line = parser.settings().layout.legacy()
+        && wikidot_empty_marker_line(
+            parser.full_text().inner(),
+            entry_parser.current().span.start,
+        );
 
     let mut start_parser = parser.clone();
     if let Some(start_depth) = parse_list_depth(&mut start_parser)? {
@@ -230,7 +275,9 @@ fn try_consume_fn<'r, 't>(
         if parser.settings().layout.legacy()
             && parser.current().span.start > entry_parser.current().span.start
         {
-            parser.mark_wikidot_empty_list_marker_boundary();
+            if empty_marker_line {
+                parser.mark_wikidot_empty_list_marker_boundary();
+            }
             return Ok(ParseSuccess::new(Vec::new().into(), errors, true));
         }
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -308,7 +355,9 @@ fn try_consume_fn<'r, 't>(
     }
     if elements.is_empty() && parser.settings().layout.legacy() {
         paragraph_safe = true;
-        if parser.current().span.start > entry_parser.current().span.start {
+        if empty_marker_line
+            && parser.current().span.start > entry_parser.current().span.start
+        {
             parser.mark_wikidot_empty_list_marker_boundary();
         }
     }

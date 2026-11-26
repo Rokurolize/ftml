@@ -336,24 +336,29 @@ fn parse_list_block_impl<'r, 't>(
                 parser.current().span.start,
                 block_rule,
             ) {
-                if let Some(close_byte) = wikidot_next_list_close(
+                let close_byte = wikidot_next_list_close(
                     parser.full_text().inner(),
                     parser.current().span.start,
                     block_rule,
-                ) {
+                );
+                if let Some(close_byte) = close_byte {
                     parser.set_wikidot_literal_list_close_at(close_byte);
                 }
                 let before = parser.current().span.start;
-                let segment = if quote_context_body {
+                let segment_result = if quote_context_body {
                     parser.get_body_elements_with_literal_quote_context(
                         block_rule,
                         false,
                         BlockBodyStart::NextPhysicalLine,
                         None,
-                    )?
+                    )
                 } else {
-                    parser.get_body_elements(block_rule, false)?
+                    parser.get_body_elements(block_rule, false)
                 };
+                if let Some(close_byte) = close_byte {
+                    parser.clear_wikidot_literal_list_close_at(close_byte);
+                }
+                let segment = segment_result?;
                 let (segment_elements, segment_errors, _) = segment.into();
                 let moved = parser.current().span.start != before;
                 elements.extend(segment_elements);

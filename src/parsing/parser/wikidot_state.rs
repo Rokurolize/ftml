@@ -58,8 +58,9 @@ const QUOTE_BOUNDARY_BREAK_LEADS_PARAGRAPH: u16 = 1 << 12;
 /// CROSS_LIST_TERMINATED_BODY (PR #1242); 14 and 15 are free on main.
 const EVAPORATED_LIST: u16 = 1 << 14;
 
-const WIKIDOT_MATH_IMAGE_OCCUPIED: u8 = 1;
-const WIKIDOT_EMPTY_LIST_MARKER_BOUNDARY: u8 = 1 << 1;
+const SIMPLE_TABLE_CROSS_CLOSERS_MASK: u16 = (1 << 10) - 1;
+const WIKIDOT_MATH_IMAGE_OCCUPIED: u16 = 1 << 14;
+const WIKIDOT_EMPTY_LIST_MARKER_BOUNDARY: u16 = 1 << 15;
 
 /// A note/div/collapsible body that was terminated by an item's own
 /// `[[/li]]` close inside a list item: its body's final paragraph keeps
@@ -117,8 +118,6 @@ pub(super) struct WikidotState {
     row_suffix_at: u32,
     row_suffix_cut: RowSuffixCut,
     render_interior_row_cut: RowSuffixCut,
-    wikidot_shape_flags: u8,
-    wikidot_literal_list_close_at: Option<usize>,
 }
 
 impl Default for WikidotState {
@@ -144,8 +143,6 @@ impl Default for WikidotState {
             row_suffix_at: ROW_SUFFIX_INACTIVE,
             row_suffix_cut: RowSuffixCut::None,
             render_interior_row_cut: RowSuffixCut::None,
-            wikidot_shape_flags: 0,
-            wikidot_literal_list_close_at: None,
         }
     }
 }
@@ -175,37 +172,47 @@ impl WikidotState {
 
 impl Parser<'_, '_> {
     pub(crate) fn mark_wikidot_math_image_occupied(&mut self) {
-        self.wikidot.wikidot_shape_flags |= WIKIDOT_MATH_IMAGE_OCCUPIED;
+        self.wikidot.simple_table_crossed_closers |= WIKIDOT_MATH_IMAGE_OCCUPIED;
     }
 
     pub(crate) fn take_wikidot_math_image_occupied(&mut self) -> bool {
-        let marked = self.wikidot.wikidot_shape_flags & WIKIDOT_MATH_IMAGE_OCCUPIED != 0;
-        self.wikidot.wikidot_shape_flags &= !WIKIDOT_MATH_IMAGE_OCCUPIED;
+        let marked =
+            self.wikidot.simple_table_crossed_closers & WIKIDOT_MATH_IMAGE_OCCUPIED != 0;
+        self.wikidot.simple_table_crossed_closers &= !WIKIDOT_MATH_IMAGE_OCCUPIED;
         marked
     }
 
     pub(crate) fn mark_wikidot_empty_list_marker_boundary(&mut self) {
-        self.wikidot.wikidot_shape_flags |= WIKIDOT_EMPTY_LIST_MARKER_BOUNDARY;
+        self.wikidot.simple_table_crossed_closers |= WIKIDOT_EMPTY_LIST_MARKER_BOUNDARY;
     }
 
     pub(crate) fn take_wikidot_empty_list_marker_boundary(&mut self) -> bool {
-        let marked =
-            self.wikidot.wikidot_shape_flags & WIKIDOT_EMPTY_LIST_MARKER_BOUNDARY != 0;
-        self.wikidot.wikidot_shape_flags &= !WIKIDOT_EMPTY_LIST_MARKER_BOUNDARY;
+        let marked = self.wikidot.simple_table_crossed_closers
+            & WIKIDOT_EMPTY_LIST_MARKER_BOUNDARY
+            != 0;
+        self.wikidot.simple_table_crossed_closers &= !WIKIDOT_EMPTY_LIST_MARKER_BOUNDARY;
         marked
     }
 
     pub(crate) fn set_wikidot_literal_list_close_at(&mut self, byte: usize) {
-        self.wikidot.wikidot_literal_list_close_at = Some(byte);
+        self.block_end_scan_cache
+            .borrow_mut()
+            .wikidot_literal_list_close_bytes
+            .insert(byte);
     }
 
-    pub(crate) fn take_wikidot_literal_list_close_at(&mut self, byte: usize) -> bool {
-        if self.wikidot.wikidot_literal_list_close_at == Some(byte) {
-            self.wikidot.wikidot_literal_list_close_at = None;
-            true
-        } else {
-            false
-        }
+    pub(crate) fn clear_wikidot_literal_list_close_at(&mut self, byte: usize) {
+        self.block_end_scan_cache
+            .borrow_mut()
+            .wikidot_literal_list_close_bytes
+            .remove(&byte);
+    }
+
+    pub(crate) fn is_wikidot_literal_list_close_at(&self, byte: usize) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_literal_list_close_bytes
+            .contains(&byte)
     }
     #[inline]
     pub(crate) fn in_wikidot_bibliography_body(&self) -> bool {
@@ -1013,7 +1020,10 @@ impl Parser<'_, '_> {
     }
 
     pub(crate) fn take_wikidot_simple_table_crossed_closers(&mut self) -> u16 {
-        std::mem::take(&mut self.wikidot.simple_table_crossed_closers)
+        let closers =
+            self.wikidot.simple_table_crossed_closers & SIMPLE_TABLE_CROSS_CLOSERS_MASK;
+        self.wikidot.simple_table_crossed_closers &= !SIMPLE_TABLE_CROSS_CLOSERS_MASK;
+        closers
     }
 
     pub(crate) fn wikidot_simple_table_closer_bit(token: Token) -> u16 {

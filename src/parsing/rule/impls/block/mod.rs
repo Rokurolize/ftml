@@ -38,8 +38,10 @@ pub(crate) use self::mapping::{
 };
 pub(crate) use self::parser::BlockBodyStart;
 pub(crate) use self::parser::{head_seam_forms_block, head_word_never_resolves};
-pub(crate) use self::rule::head_word_names_known_block;
 pub use self::rule::{RULE_BLOCK, RULE_BLOCK_SKIP_NEWLINE, RULE_BLOCK_STAR};
+pub(crate) use self::rule::{
+    head_word_names_known_block, wikidot_extra_bracket_single_link,
+};
 
 #[derive(Clone)]
 pub struct BlockRule {

@@ -66,7 +66,7 @@ fn block_regular<'r, 't>(
     {
         success_elements(elements)
     } else if parser.settings().layout.legacy()
-        && let Some(elements) = wikidot_double_bracket_single_link(parser)
+        && let Some(elements) = wikidot_extra_bracket_single_link(parser)
     {
         success_elements(elements)
     } else {
@@ -74,15 +74,17 @@ fn block_regular<'r, 't>(
     }
 }
 
-fn wikidot_double_bracket_single_link<'r, 't>(
+pub(crate) fn wikidot_extra_bracket_single_link<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> Option<Elements<'t>>
 where
     'r: 't,
 {
-    if parser.current().token != Token::LeftBlock {
-        return None;
-    }
+    let triple_open = match parser.current().token {
+        Token::LeftBlock => false,
+        Token::LeftLink => true,
+        _ => return None,
+    };
     let source = parser.full_text().inner();
     let start = parser.current().span.start;
     let inner = source.get(start + 1..)?;
@@ -90,11 +92,16 @@ where
     if bytes.first() != Some(&b'[') {
         return None;
     }
-    let mut index = 1;
+    let open_count = source[start..]
+        .bytes()
+        .take_while(|byte| *byte == b'[')
+        .count();
+    let target_start = open_count - 1;
+    let mut index = target_start;
     while index < bytes.len() && !matches!(bytes[index], b' ' | b'\t' | b'\n' | b'\r') {
         index += 1;
     }
-    let target = &inner[1..index];
+    let target = &inner[target_start..index];
     if target.is_empty()
         || !["http://", "https://", "ftp://", "mailto:"]
             .iter()
@@ -114,14 +121,18 @@ where
         index += 1;
     }
     let label = crate::parsing::trim_wikidot_ascii(&inner[label_start..index]);
-    if label.is_empty()
-        || bytes.get(index) != Some(&b']')
-        || bytes.get(index + 1) != Some(&b']')
-    {
+    let close_len =
+        if bytes.get(index) == Some(&b']') && bytes.get(index + 1) == Some(&b']') {
+            2
+        } else if bytes.get(index) == Some(&b']') {
+            1
+        } else {
+            return None;
+        };
+    if label.is_empty() || (triple_open && close_len != 1) {
         return None;
     }
-    let end = start + 1 + index + 2;
-
+    let end = start + 1 + index + close_len;
     let mut attempt = parser.clone();
     attempt.step().ok()?;
     while attempt.current().span.start < end {
@@ -131,16 +142,19 @@ where
         attempt.step().ok()?;
     }
     parser.update(&attempt);
-    Some(Elements::Multiple(vec![
-        text!("["),
+    let mut elements = vec![
+        Element::Text(Cow::Owned("[".repeat(open_count - 1))),
         Element::Link {
             ltype: crate::tree::LinkType::Direct,
             link: crate::tree::LinkLocation::Url(Cow::Borrowed(target)),
             label: crate::tree::LinkLabel::Text(Cow::Borrowed(label)),
             target: None,
         },
-        text!("]"),
-    ]))
+    ];
+    if close_len == 2 {
+        elements.push(text!("]"));
+    }
+    Some(Elements::Multiple(elements))
 }
 
 fn wikidot_double_bracket_interwiki<'r, 't>(

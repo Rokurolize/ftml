@@ -2724,11 +2724,6 @@ fn literal_line_mask(lines: &[String]) -> Vec<bool> {
             continue;
         }
 
-        if is_tight_first_quote(body) {
-            mask.push(false);
-            continue;
-        }
-
         if let Some(close) = literal_block_close(&lower) {
             mask.push(true);
             if !lower.contains(close) {
@@ -2737,11 +2732,32 @@ fn literal_line_mask(lines: &[String]) -> Vec<bool> {
             continue;
         }
 
-        if let Some(open) = logical.find("[!--") {
-            mask.push(true);
-            if !logical[open + 4..].contains("--]") {
-                in_comment = true;
+        if let Some(after_open) = logical.strip_prefix("[!--") {
+            match after_open.find("--]") {
+                Some(close)
+                    if after_open[close + "--]".len()..]
+                        .bytes()
+                        .all(|byte| matches!(byte, b' ' | b'\t' | b'\r')) =>
+                {
+                    mask.push(true);
+                    continue;
+                }
+                None => {
+                    mask.push(true);
+                    in_comment = true;
+                    continue;
+                }
+                _ => {}
             }
+        }
+
+        if is_tight_first_quote(body) {
+            mask.push(false);
+            continue;
+        }
+
+        if logical.contains("[!--") {
+            mask.push(true);
             continue;
         }
 

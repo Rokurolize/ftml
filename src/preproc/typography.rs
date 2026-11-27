@@ -781,10 +781,65 @@ pub(crate) fn substitute_wikidot_deferring_conditionals(text: &mut String) {
     substitute_wikidot_impl(text, true);
 }
 
+fn remove_empty_inline_tokens_in_typography_runs(text: &mut String) {
+    if !text.contains("{{}}")
+        && !text.contains("****")
+        && !text.contains("////")
+        && !text.contains("____")
+        && !text.contains("^^^^")
+        && !text.contains(",,,,")
+    {
+        return;
+    }
+    let literal_regions = LiteralRegionIndex::for_typography(text);
+    let protected_ranges = typography_protected_ranges(text, true);
+    let bytes = text.as_bytes();
+    let mut output = String::with_capacity(text.len());
+    let mut cursor = 0usize;
+    let mut index = 0usize;
+    while index + 4 <= bytes.len() {
+        let token = &bytes[index..index + 4];
+        if token != b"{{}}"
+            && token != b"****"
+            && token != b"////"
+            && token != b"____"
+            && token != b"^^^^"
+            && token != b",,,,"
+        {
+            index += 1;
+            continue;
+        }
+        let previous = index.checked_sub(1).and_then(|at| bytes.get(at)).copied();
+        let next = bytes.get(index + 4).copied();
+        let typography_pair = matches!(
+            (previous, next),
+            (Some(b'-'), Some(b'-')) | (Some(b'.'), Some(b'.'))
+        );
+        let enclosed = literal_regions
+            .ranges()
+            .iter()
+            .chain(protected_ranges.iter())
+            .any(|range| range.start < index && index + 4 < range.end);
+        if typography_pair && !enclosed {
+            output.push_str(&text[cursor..index]);
+            cursor = index + 4;
+            index += 4;
+        } else {
+            index += 1;
+        }
+    }
+    if cursor == 0 {
+        return;
+    }
+    output.push_str(&text[cursor..]);
+    *text = output;
+}
+
 fn substitute_wikidot_impl(text: &mut String, defer_conditionals: bool) {
     let mut buffer = String::new();
     debug!("Performing typography substitutions");
 
+    remove_empty_inline_tokens_in_typography_runs(text);
     if text.contains("``") {
         replace_within_paragraphs(&DOUBLE_QUOTES, text, &mut buffer);
     }

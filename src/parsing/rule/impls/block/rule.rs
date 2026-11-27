@@ -75,6 +75,25 @@ fn block_regular<'r, 't>(
     }
 }
 
+fn wikidot_extra_bracket_complete_block_open(parser: &Parser<'_, '_>) -> bool {
+    if parser.current().token != Token::LeftBlock {
+        return false;
+    }
+    let source = parser.full_text().inner();
+    let Some(rest) = source.get(parser.current().span.end..) else {
+        return false;
+    };
+    let Some(close) = rest.find("]]") else {
+        return false;
+    };
+    let head = &rest[..close];
+    if head.is_empty() || head.bytes().any(|byte| byte.is_ascii_whitespace()) {
+        return false;
+    }
+    let name = head.strip_suffix('_').unwrap_or(head);
+    get_block_rule_with_name_for_layout(name, parser.settings().layout).is_some()
+}
+
 pub(crate) fn wikidot_extra_bracket_single_link<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> Option<Elements<'t>>
@@ -86,6 +105,9 @@ where
         Token::LeftLink => true,
         _ => return None,
     };
+    if !triple_open && wikidot_extra_bracket_complete_block_open(parser) {
+        return None;
+    }
     let source = parser.full_text().inner();
     let start = parser.current().span.start;
     let inner = source.get(start + 1..)?;

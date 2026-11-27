@@ -1335,6 +1335,11 @@ impl<'t> Scanner<'t> {
                 | Token::LineBreak
                 | Token::ParagraphBreak
                 | Token::RightBlock => break (j, token.token),
+                Token::DiscardedControl
+                    if matches!(token.slice, "\u{000b}" | "\u{000c}") =>
+                {
+                    break (j, token.token);
+                }
                 Token::InputEnd => return None,
                 Token::LeftComment => {
                     j = self.skip_comment(j)?;
@@ -1663,6 +1668,16 @@ impl<'t> Scanner<'t> {
         } else {
             Some(next)
         }
+    }
+
+    fn bare_tabview_closer(&self, close: &HeadRead) -> bool {
+        (close.name_end..close.head_end.saturating_sub(1)).all(|token| {
+            matches!(
+                self.tokens[token].token,
+                Token::DiscardedControl
+                    if matches!(self.tokens[token].slice, "\u{000b}" | "\u{000c}")
+            )
+        })
     }
 
     fn head_valid(
@@ -3622,6 +3637,24 @@ impl<'t> Scanner<'t> {
         result
     }
 
+    fn crossed_view_closer_recovers(&self, from: usize, limit: usize) -> bool {
+        let mut saw_tab_close = false;
+        for token in from..limit.min(self.tokens.len()) {
+            if self.tokens[token].token != Token::LeftBlockEnd {
+                continue;
+            }
+            let Some(close) = self.read_head(token, true) else {
+                continue;
+            };
+            match self.classify(&close).and_then(Self::kind_of) {
+                Some(WikidotBlockKind::Tab) => saw_tab_close = true,
+                Some(WikidotBlockKind::TabView) if saw_tab_close => return true,
+                _ => {}
+            }
+        }
+        false
+    }
+
     fn find_tab_end_inner(
         &self,
         start: usize,
@@ -3647,7 +3680,22 @@ impl<'t> Scanner<'t> {
                             Some(WikidotBlockKind::Tab) => {
                                 return Some((j, j, close.head_end));
                             }
-                            Some(WikidotBlockKind::TabView) => return None,
+                            Some(WikidotBlockKind::TabView) => {
+                                let nested_view = (start..j).any(|token| {
+                                    self.read_kind_head(token, WikidotBlockKind::TabView)
+                                        .is_some()
+                                });
+                                if !nested_view
+                                    && self.crossed_view_closer_recovers(
+                                        close.head_end,
+                                        limit,
+                                    )
+                                {
+                                    j = close.head_end;
+                                    continue;
+                                }
+                                return None;
+                            }
                             _ => j = close.head_end,
                         }
                     } else {
@@ -4222,6 +4270,10 @@ impl<'t> Scanner<'t> {
             if let Some(close) = self.read_kind_closer(pos, WikidotBlockKind::TabView) {
                 if self.quote_depth_outside(pos, head_depth) {
                     return None;
+                }
+                if !self.bare_tabview_closer(&close) {
+                    pos = close.head_end;
+                    continue;
                 }
                 if !last_tab_close {
                     // Not attached: the closer stays literal body content and

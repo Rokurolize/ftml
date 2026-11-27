@@ -2184,6 +2184,11 @@ where
         }
     }
 
+    fn at_wikidot_vertical_control_remainder(&self) -> bool {
+        self.current().token == Token::DiscardedControl
+            && matches!(self.current().slice, "\u{000b}" | "\u{000c}")
+    }
+
     fn at_wikidot_code_close_terminator(&self) -> bool {
         // The parser sits on the token after a `[[/code]]` end block. Live
         // Wikidot ends the code body there when the byte after the marker
@@ -2192,7 +2197,7 @@ where
         let source = self.full_text().inner();
         match source[self.current().span.start..].bytes().next() {
             None => true,
-            Some(byte) => matches!(byte, b' ' | b'\t' | b'\r' | b'\n'),
+            Some(byte) => matches!(byte, b' ' | b'\t' | b'\r' | b'\n' | 0x0b | 0x0c),
         }
     }
 
@@ -2767,6 +2772,11 @@ where
                             && (parser.at_blank_line_remainder()
                                 || (block_rule.name == "block-code"
                                     && parser.at_wikidot_code_close_terminator())
+                                || (matches!(
+                                    block_rule.name,
+                                    "block-code" | "block-math"
+                                ) && parser
+                                    .at_wikidot_vertical_control_remainder())
                                 || (block_rule.name == "block-math"
                                     && parser.current().token == Token::Whitespace))))
                     {

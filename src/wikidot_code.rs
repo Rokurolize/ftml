@@ -305,7 +305,9 @@ fn code_opener_end_checked(
     let head_end = head_start + relative_end;
     let head = &source[head_start..head_end];
     let name_end = head
-        .find(|character: char| character.is_ascii_whitespace())
+        .find(|character: char| {
+            character.is_ascii_whitespace() || character == '\u{000b}'
+        })
         .unwrap_or(head.len());
     let name = &head[..name_end];
 
@@ -349,7 +351,7 @@ fn code_closer_terminates(source: &str, closer_end: usize) -> bool {
     // any other byte (a letter, `[[`, `]`) is body text instead.
     match source[closer_end..].bytes().next() {
         None => true,
-        Some(byte) => matches!(byte, b' ' | b'\t' | b'\r' | b'\n'),
+        Some(byte) => matches!(byte, b' ' | b'\t' | b'\r' | b'\n' | 0x0b | 0x0c),
     }
 }
 

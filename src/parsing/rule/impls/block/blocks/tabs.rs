@@ -584,6 +584,10 @@ fn parse_tabview<'r, 't>(
         in_head,
         |_, value| Ok(value),
     )?;
+    let tabview_name = tabview_name.filter(|name| {
+        name.chars()
+            .any(|character| !matches!(character, '\u{000b}' | '\u{000c}'))
+    });
 
     let records_at_entry = parser.degraded_title_record_count();
 
@@ -1808,6 +1812,16 @@ where
             Token::InputEnd => {
                 return Err(parser.make_err(ParseErrorKind::EndOfInput));
             }
+            Token::LineBreak
+                if parser.settings().layout.legacy()
+                    && !parser.discarding_hidden_body() =>
+            {
+                let out = output.get_or_insert_with(String::new);
+                out.push_str(&source[copied_until..current.span.start]);
+                out.push(' ');
+                copied_until = current.span.end;
+                parser.step()?;
+            }
             Token::LineBreak | Token::ParagraphBreak => {
                 return Err(parser.make_err(ParseErrorKind::BlockMalformedArguments));
             }
@@ -2145,6 +2159,7 @@ fn wikidot_tab_head_normalize(text: &str) -> String {
 }
 
 fn wikidot_tab_head_label(text: &str) -> String {
+    let text = text.trim_start_matches(['\u{000b}', '\u{000c}']);
     let tokens = wikidot_tab_head_tokens(text);
     if tokens.is_empty() {
         return "untitled".to_owned();

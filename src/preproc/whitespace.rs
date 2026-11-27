@@ -1753,6 +1753,14 @@ fn join_continued_lines(
                     && wikidot_continued_div_opener(&text[index + 1..]))
             {
                 buffer.push(character);
+            } else if wikidot_compatibility
+                && buffer.ends_with("\\\\")
+                && wikidot_continued_block_at_column_zero(&text[index + 1..])
+            {
+                let removed = buffer.pop();
+                debug_assert_eq!(removed, Some('\\'));
+                buffer.push('\u{0001}');
+                buffer.push(character);
             } else if wikidot_compatibility && in_date_head && !in_html_body {
                 let removed = buffer.pop();
                 debug_assert_eq!(removed, Some('\\'));
@@ -1780,6 +1788,18 @@ fn join_continued_lines(
     }
 
     std::mem::swap(text, buffer);
+}
+
+fn wikidot_continued_block_at_column_zero(text: &str) -> bool {
+    let line = text.split_once('\n').map_or(text, |(line, _)| line);
+    let Some(rest) = line.strip_prefix("[[") else {
+        return false;
+    };
+    let Some(head_end) = rest.find("]]") else {
+        return false;
+    };
+    let name = rest[..head_end].split_whitespace().next().unwrap_or("");
+    name.eq_ignore_ascii_case("code") || name.eq_ignore_ascii_case("math")
 }
 
 fn wikidot_continued_literal_block_opener(text: &str) -> bool {

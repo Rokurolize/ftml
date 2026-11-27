@@ -155,6 +155,12 @@ pub(crate) struct NumberedEscape {
     pub(crate) ordinal: usize,
 }
 
+pub(crate) fn rawold_escapes(source: &str) -> Vec<RawEscape> {
+    let html = scan_raw_html_escapes(source);
+    let at = scan_raw_at_escapes(source, &html);
+    scan_rawold_escapes(source, &html, &at)
+}
+
 /// Placeholder ordinals for attribute-value encoding.
 ///
 /// Live numbers `@<...>@` escapes first, then reserves one number for each
@@ -218,20 +224,26 @@ fn scan_rawold_escapes(
             continue;
         }
         let body_start = index + 2;
-        let Some(offset) = source[body_start..].find("``") else {
-            break;
-        };
-        let body_end = body_start + offset;
-        let body = &source[body_start..body_end];
-        if body.is_empty()
-            || body
-                .chars()
-                .any(|c| matches!(c, '\'' | '\u{2018}' | '\u{2019}'))
-            || body.ends_with('`')
-        {
+        let mut cursor = body_start;
+        let mut body_end = None;
+        while let Some(offset) = source.get(cursor..).and_then(|rest| rest.find("``")) {
+            let candidate_end = cursor + offset;
+            let body = &source[body_start..candidate_end];
+            if !body.is_empty()
+                && !body
+                    .chars()
+                    .any(|c| matches!(c, '\'' | '\u{2018}' | '\u{2019}'))
+                && !body.ends_with('`')
+            {
+                body_end = Some(candidate_end);
+                break;
+            }
+            cursor = candidate_end + 1;
+        }
+        let Some(body_end) = body_end else {
             index += 1;
             continue;
-        }
+        };
         let end = body_end + 2;
         if html
             .iter()

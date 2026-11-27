@@ -64,6 +64,12 @@ fn try_consume_fn<'r, 't>(
             _ if let Some(token_count) = comment_closer_token_count(parser) => {
                 trace!("Reached Wikidot comment closer, returning");
                 parser.step_n(token_count)?;
+                let close_end = parser.current().span.start;
+                if close_end >= "--]".len()
+                    && parser.comment_literal_region_contains(close_end - "--]".len())
+                {
+                    continue;
+                }
                 if opener_at_line_start
                     && matches!(
                         parser.current().token,

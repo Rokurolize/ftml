@@ -181,6 +181,7 @@ pub(super) struct BlockScanCache<'t> {
     wikidot_tabview_failures: BTreeMap<(usize, bool, bool), ParseError>,
     wikidot_collapsible_failures: BTreeMap<(usize, bool), ParseError>,
     literal_region_index: Option<crate::preproc::LiteralRegionIndex>,
+    comment_literal_region_index: Option<crate::preproc::LiteralRegionIndex>,
     raw_escapes_cache: Option<Vec<crate::wikidot_raw_escape::RawEscape>>,
     wikidot_collapsible_outer_div_memo: BTreeMap<(usize, usize), (bool, bool)>,
     wikidot_div_bounded_span: BTreeMap<usize, bool>,
@@ -4151,6 +4152,20 @@ impl<'r, 't> Parser<'r, 't> {
             .wikidot_collapsible_outer_div_memo
             .insert((collapsible_head_byte, collapsible_close_byte), outcome);
         outcome
+    }
+
+    pub(crate) fn comment_literal_region_contains(&self, offset: usize) -> bool {
+        if !self.settings().layout.legacy() {
+            return false;
+        }
+        let source = self.full_text().inner();
+        self.block_end_scan_cache
+            .borrow_mut()
+            .comment_literal_region_index
+            .get_or_insert_with(|| {
+                crate::preproc::LiteralRegionIndex::for_comments(source)
+            })
+            .contains(offset)
     }
 
     pub(crate) fn raw_escapes(&self) -> Vec<crate::wikidot_raw_escape::RawEscape> {

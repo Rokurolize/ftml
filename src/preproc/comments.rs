@@ -11,7 +11,7 @@ pub(super) fn substitute_wikidot(text: &mut String) {
         return;
     }
 
-    let literal_regions = LiteralRegionIndex::new(text);
+    let literal_regions = LiteralRegionIndex::for_comments(text);
     let block_name_comments = regular_block_name_comment_starts(text);
     let spec_comments = iftags_spec_comment_starts(text);
     let code_closer_comments = code_closer_comment_starts(text);
@@ -34,10 +34,9 @@ pub(super) fn substitute_wikidot(text: &mut String) {
         }
 
         let close_search = open + "[!--".len();
-        let Some(relative_close) = text[close_search..].find("--]") else {
+        let Some(close) = comment_close_end(text, close_search, &literal_regions) else {
             break;
         };
-        let close = close_search + relative_close + "--]".len();
         if has_raw_escape(&text[open..close]) {
             scan = close;
             continue;
@@ -59,7 +58,7 @@ pub(super) fn substitute_wikidot(text: &mut String) {
             scan = close;
             continue;
         }
-        if leading_comment_remains_an_owner_barrier(text, open) {
+        if leading_comment_remains_an_owner_barrier(text, open, &literal_regions) {
             if line_remainder_splices(text, close, &literal_regions, &block_name_comments)
                 && let Some(drop) = line_start_break_drop(text, open)
             {
@@ -96,7 +95,7 @@ pub(super) fn substitute_wikidot(text: &mut String) {
 /// ordinary comment path. Comments that open inside another comment (a closer
 /// written as `[!----]`) are never treated as lines of their own.
 fn elide_comment_only_lines(text: &mut String) {
-    let literal_regions = LiteralRegionIndex::new(text);
+    let literal_regions = LiteralRegionIndex::for_comments(text);
     let block_name_comments = regular_block_name_comment_starts(text);
     let spec_comments = iftags_spec_comment_starts(text);
     let code_closer_comments = code_closer_comment_starts(text);
@@ -121,10 +120,9 @@ fn elide_comment_only_lines(text: &mut String) {
             continue;
         }
         let close_search = open + "[!--".len();
-        let Some(relative_close) = text[close_search..].find("--]") else {
+        let Some(close) = comment_close_end(text, close_search, &literal_regions) else {
             break;
         };
-        let close = close_search + relative_close + "--]".len();
         if comment_contains_iftags_head(&text[open..close])
             || has_raw_escape(&text[open..close])
         {
@@ -161,6 +159,23 @@ fn elide_comment_only_lines(text: &mut String) {
         output.push_str(&text[copied_until..]);
         *text = output;
     }
+}
+
+fn comment_close_end(
+    source: &str,
+    search_start: usize,
+    literal_regions: &LiteralRegionIndex,
+) -> Option<usize> {
+    let mut cursor = search_start;
+    while let Some(relative_close) = source[cursor..].find("--]") {
+        let close_start = cursor + relative_close;
+        if literal_regions.contains(close_start) {
+            cursor = close_start + "--]".len();
+            continue;
+        }
+        return Some(close_start + "--]".len());
+    }
+    None
 }
 
 fn has_raw_escape(comment: &str) -> bool {
@@ -393,8 +408,7 @@ fn chained_comment_close(
     {
         return None;
     }
-    let relative_close = source[open + "[!--".len()..].find("--]")?;
-    let close = open + "[!--".len() + relative_close + "--]".len();
+    let close = comment_close_end(source, open + "[!--".len(), literal_regions)?;
     if comment_contains_iftags_head(&source[open..close]) {
         return None;
     }
@@ -477,7 +491,11 @@ fn comment_elision_needs_raw_barrier(source: &str, open: usize, close: usize) ->
     )
 }
 
-fn leading_comment_remains_an_owner_barrier(source: &str, open: usize) -> bool {
+fn leading_comment_remains_an_owner_barrier(
+    source: &str,
+    open: usize,
+    literal_regions: &LiteralRegionIndex,
+) -> bool {
     let mut line_start = source[..open].rfind('\n').map_or(0, |newline| newline + 1);
     if open
         .checked_sub(1)
@@ -492,10 +510,10 @@ fn leading_comment_remains_an_owner_barrier(source: &str, open: usize) -> bool {
         return false;
     }
     let close_search = open + "[!--".len();
-    let Some(relative_close) = source[close_search..].find("--]") else {
+    let Some(close) = comment_close_end(source, close_search, literal_regions) else {
         return true;
     };
-    let rest = &source[close_search + relative_close + "--]".len()..];
+    let rest = &source[close..];
     !["====", "~~~~", "----"]
         .iter()
         .any(|marker| rest.starts_with(marker))

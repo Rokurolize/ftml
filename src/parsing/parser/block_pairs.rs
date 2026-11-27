@@ -639,6 +639,7 @@ struct Scanner<'t> {
     closer_event_bytes: BTreeSet<(WikidotBlockKind, usize)>,
     greedy_ranges: Vec<(usize, usize)>,
     iftags_elisions: Vec<Range<usize>>,
+    comment_literal_regions: LiteralRegionIndex,
 }
 
 impl<'t> Scanner<'t> {
@@ -648,6 +649,7 @@ impl<'t> Scanner<'t> {
         page_info: &PageInfo<'t>,
     ) -> Self {
         let literal = LiteralRegionIndex::new(source);
+        let comment_literal_regions = LiteralRegionIndex::for_comments(source);
         let mut zones: Vec<(usize, usize)> = Vec::new();
         for range in literal.ranges() {
             if non_opaque_literal_start(&source[range.start..]) {
@@ -832,6 +834,7 @@ impl<'t> Scanner<'t> {
             closer_event_bytes: BTreeSet::new(),
             greedy_ranges: Vec::new(),
             iftags_elisions: Vec::new(),
+            comment_literal_regions,
         };
         scanner.footnote_zones = scanner.compute_footnote_zones();
         scanner.iftags_elisions = scanner.compute_iftags_elisions();
@@ -1141,11 +1144,18 @@ impl<'t> Scanner<'t> {
 
     fn skip_comment(&self, index: usize) -> Option<usize> {
         let tokens = self.tokens;
-        let mut index = index + 1;
+        if self
+            .comment_literal_regions
+            .contains(tokens.get(index)?.span.start)
+        {
+            return Some(index + 1);
+        }
+        let literal_index = index + 1;
+        let mut index = literal_index;
         let mut hyphens = 0_usize;
         while let Some(token) = tokens.get(index) {
             if token.token == Token::InputEnd {
-                return None;
+                return Some(literal_index);
             }
             let trailing_hyphens = token
                 .slice
@@ -1159,6 +1169,16 @@ impl<'t> Scanner<'t> {
                     next.token == Token::RightBracket && next.slice == "]"
                 })
             {
+                let close_end = tokens[index + 1].span.end;
+                if close_end >= "--]".len()
+                    && self
+                        .comment_literal_regions
+                        .contains(close_end - "--]".len())
+                {
+                    hyphens = 0;
+                    index += 2;
+                    continue;
+                }
                 return Some(index + 2);
             }
             if !token.slice.is_empty() && token.slice.bytes().all(|byte| byte == b'-') {
@@ -1167,12 +1187,22 @@ impl<'t> Scanner<'t> {
                 continue;
             }
             if hyphens >= 2 && token.token == Token::RightBracket && token.slice == "]" {
+                let close_end = token.span.end;
+                if close_end >= "--]".len()
+                    && self
+                        .comment_literal_regions
+                        .contains(close_end - "--]".len())
+                {
+                    hyphens = 0;
+                    index += 1;
+                    continue;
+                }
                 return Some(index + 1);
             }
             hyphens = 0;
             index += 1;
         }
-        None
+        Some(literal_index)
     }
 
     fn compute_iftags_elisions(&self) -> Vec<Range<usize>> {

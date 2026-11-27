@@ -103,12 +103,7 @@ where
         index += 1;
     }
     let target = &inner[target_start..index];
-    if target.is_empty()
-        || !(is_wikidot_only_autolink_url(target)
-            || ["http://", "https://", "ftp://", "mailto:"]
-                .iter()
-                .any(|scheme| target.starts_with(scheme)))
-    {
+    if target.is_empty() {
         return None;
     }
     let whitespace_start = index;
@@ -123,18 +118,59 @@ where
         index += 1;
     }
     let label = crate::parsing::trim_wikidot_ascii(&inner[label_start..index]);
-    let close_len =
-        if bytes.get(index) == Some(&b']') && bytes.get(index + 1) == Some(&b']') {
-            2
-        } else if bytes.get(index) == Some(&b']') {
-            1
-        } else {
-            return None;
-        };
-    if label.is_empty() || (triple_open && close_len != 1) {
+    let close_start = index;
+    while index < bytes.len() && bytes[index] == b']' {
+        index += 1;
+    }
+    let close_len = index - close_start;
+    if close_len == 0 || label.is_empty() {
         return None;
     }
-    let end = start + 1 + index + close_len;
+    let end = start + 1 + index;
+
+    let is_scheme = is_wikidot_only_autolink_url(target)
+        || ["http://", "https://", "ftp://", "mailto:"]
+            .iter()
+            .any(|scheme| target.starts_with(scheme));
+    let is_email = {
+        let mut parts = target.split('@');
+        matches!(
+            (parts.next(), parts.next(), parts.next()),
+            (Some(local), Some(domain), None)
+                if !local.is_empty() && domain.contains('.') && !domain.starts_with('.') && !domain.ends_with('.')
+        )
+    };
+    if triple_open && (!is_scheme || close_len != 1) {
+        return None;
+    }
+
+    let element = if is_scheme || target.starts_with('/') {
+        Element::Link {
+            ltype: crate::tree::LinkType::Direct,
+            link: crate::tree::LinkLocation::Url(Cow::Borrowed(target)),
+            label: crate::tree::LinkLabel::Text(Cow::Borrowed(label)),
+            target: None,
+        }
+    } else if is_email {
+        Element::EmailDescribed {
+            email: Cow::Borrowed(target),
+            label: Cow::Borrowed(label),
+            claimed_placeholder: None,
+        }
+    } else if target.contains(':') {
+        match parser.settings().interwiki.build_ignore_ascii_case(target) {
+            Some(expanded) => Element::Link {
+                ltype: crate::tree::LinkType::Interwiki,
+                link: crate::tree::LinkLocation::Url(Cow::Owned(expanded)),
+                label: crate::tree::LinkLabel::Text(Cow::Borrowed(label)),
+                target: None,
+            },
+            None => Element::Text(Cow::Borrowed(label)),
+        }
+    } else {
+        return None;
+    };
+
     let mut attempt = parser.clone();
     attempt.step().ok()?;
     while attempt.current().span.start < end {
@@ -146,15 +182,10 @@ where
     parser.update(&attempt);
     let mut elements = vec![
         Element::Text(Cow::Owned("[".repeat(open_count - 1))),
-        Element::Link {
-            ltype: crate::tree::LinkType::Direct,
-            link: crate::tree::LinkLocation::Url(Cow::Borrowed(target)),
-            label: crate::tree::LinkLabel::Text(Cow::Borrowed(label)),
-            target: None,
-        },
+        element,
     ];
-    if close_len == 2 {
-        elements.push(text!("]"));
+    if close_len > 1 {
+        elements.push(Element::Text(Cow::Owned("]".repeat(close_len - 1))));
     }
     Some(Elements::Multiple(elements))
 }
@@ -584,11 +615,28 @@ where
     if !single_separator && !any_whitespace {
         return false;
     }
-    match parser.wikidot_head_space_region(opener_start, flag_star) {
+    let fails = match parser.wikidot_head_space_region(opener_start, flag_star) {
         WikidotHeadSpaceRegion::SingleSeparator => true,
         WikidotHeadSpaceRegion::WhitespaceOnly => any_whitespace,
         WikidotHeadSpaceRegion::Other => false,
+    };
+    if fails {
+        let source = parser.full_text().inner().as_bytes();
+        let mut close = opener_start + 2;
+        while close < source.len() && source[close] != b']' {
+            close += 1;
+        }
+        if source[close..].starts_with(b"]][!--ftml-residual-bracket--]]")
+            || source[close..]
+                .iter()
+                .take_while(|byte| **byte == b']')
+                .count()
+                >= 3
+        {
+            return false;
+        }
     }
+    fails
 }
 
 fn wikidot_note_head_with_arguments_fails<'r, 't>(
@@ -736,8 +784,7 @@ where
     if parser.settings().layout.legacy()
         && matches!(
             block.name,
-            "block-math"
-                | "block-div"
+            "block-div"
                 | "block-table"
                 | "block-tabview"
                 | "block-note"
@@ -912,8 +959,7 @@ where
     if result.is_ok()
         && matches!(
             block.name,
-            "block-math"
-                | "block-div"
+            "block-div"
                 | "block-table"
                 | "block-tabview"
                 | "block-note"

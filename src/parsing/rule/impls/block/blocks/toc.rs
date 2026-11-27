@@ -19,6 +19,7 @@
  */
 
 use super::prelude::*;
+use crate::parsing::rule::impls::block::BlockBodyStart;
 use crate::tree::{ClearFloat, FloatAlignment};
 
 pub const BLOCK_TABLE_OF_CONTENTS: BlockRule = BlockRule {
@@ -29,6 +30,18 @@ pub const BLOCK_TABLE_OF_CONTENTS: BlockRule = BlockRule {
     accepts_newlines_outside_body: true,
     parse_fn,
 };
+
+fn wikidot_toc_opener_line_start(source: &str, opener_start: usize) -> bool {
+    let line_start = source[..opener_start]
+        .rfind('\n')
+        .map_or(0, |index| index + 1);
+    let prefix = &source[line_start..opener_start];
+    prefix.is_empty()
+        || (prefix.starts_with('>')
+            && prefix
+                .bytes()
+                .all(|byte| matches!(byte, b'>' | b' ' | b'\t')))
+}
 
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
@@ -50,7 +63,24 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    let arguments = parser.get_head_map_wikidot(&BLOCK_TABLE_OF_CONTENTS, in_head)?;
+    if parser.settings().layout.legacy()
+        && !wikidot_toc_opener_line_start(parser.full_text().inner(), opener_start)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    let (arguments, body_start) =
+        parser.get_head_map_with_body_start_wikidot(&BLOCK_TABLE_OF_CONTENTS, in_head)?;
+    if parser.settings().layout.legacy()
+        && arguments.has_source()
+        && body_start == BlockBodyStart::Inline
+    {
+        while !matches!(
+            parser.current().token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        ) {
+            parser.step()?;
+        }
+    }
     let attributes = arguments.to_attribute_map(parser.settings());
     let align = FloatAlignment::parse(name).map(|float| float.align);
     let element = Element::TableOfContents { align, attributes };

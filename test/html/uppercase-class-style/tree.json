@@ -1,0 +1,26 @@
+{
+    "elements": [
+        {
+            "element": "html",
+            "data": {
+                "contents": "y",
+                "attributes": {
+                    "class": "a"
+                }
+            }
+        },
+        {
+            "element": "html",
+            "data": {
+                "contents": "y",
+                "attributes": {
+                    "style": "color:red"
+                }
+            }
+        }
+    ],
+    "html-blocks": [
+        "y",
+        "y"
+    ]
+}

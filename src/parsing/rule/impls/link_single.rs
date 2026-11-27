@@ -30,8 +30,8 @@ use crate::parsing::collect::{
 };
 use crate::parsing::unmatched_close_scan::{LinkLabelScanMemo, LinkTargetScanMemo};
 use crate::parsing::{
-    ParseSuccess, discard_wikidot_controls, trim_cow, trim_wikidot_ascii_cow,
-    trim_wikidot_ascii_end_cow,
+    ParseSuccess, discard_wikidot_controls, is_discarded_control, trim_cow,
+    trim_wikidot_ascii_cow, trim_wikidot_ascii_end_cow,
 };
 use crate::tree::{AnchorTarget, LinkLabel, LinkLocation, LinkType};
 use crate::url::is_url;
@@ -469,7 +469,9 @@ pub fn try_consume_wikidot_end_block_link<'r, 't>(
 where
     'r: 't,
 {
-    if parser.current().token != Token::LeftBlockEnd || parser.at_body_end_boundary() {
+    if parser.current().token != Token::LeftBlockEnd
+        || (parser.at_body_end_boundary() && !voided_wikidot_line_owned_close(parser))
+    {
         return Ok(None);
     }
     if end_block_name_at(parser.remaining(), 0)
@@ -576,6 +578,33 @@ where
     Ok(Some(elements))
 }
 
+fn voided_wikidot_line_owned_close<'r, 't>(parser: &Parser<'r, 't>) -> bool
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlockEnd
+    {
+        return false;
+    }
+    let mut probe = parser.clone();
+    let Ok(name) = probe.get_end_block() else {
+        return false;
+    };
+    if !name.eq_ignore_ascii_case("bibliography") {
+        return false;
+    }
+    if matches!(
+        probe.current().token,
+        Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+    ) {
+        return false;
+    }
+    let source = parser.full_text().inner();
+    let tail = &source[probe.current().span.start..];
+    let line = tail.split(['\r', '\n']).next().unwrap_or(tail);
+    !line.bytes().all(|byte| matches!(byte, b' ' | b'\t'))
+}
+
 fn end_block_scope_blocked(parser: &Parser<'_, '_>, name: &str) -> bool {
     let name = name.to_ascii_lowercase();
     parser.body_end_boundary_accepts(&name)
@@ -588,7 +617,6 @@ fn end_block_scope_blocked(parser: &Parser<'_, '_>, name: &str) -> bool {
             && (parser.in_wikidot_div_body() || parser.in_wikidot_literal_alias_body()))
         || (name == "size" && parser.in_wikidot_size_body())
         || (name == "center" && parser.in_wikidot_center_body())
-        || (name == "bibliography" && parser.in_wikidot_bibliography_body())
 }
 
 fn end_block_name_at(tokens: &[ExtractedToken<'_>], index: usize) -> Option<String> {
@@ -728,7 +756,7 @@ where
                 .bytes()
                 .take_while(|byte| matches!(byte, b' ' | b'\t'))
                 .count();
-            run_len > 1 || rest[..run_len].contains('\t')
+            !link_memo && (run_len > 1 || rest[..run_len].contains('\t'))
         }
         None => false,
     };
@@ -748,7 +776,7 @@ where
         text: label,
         residual_closer,
     } = collect_wikidot_label(parser, link_memo, label_start)?;
-    let label = discard_wikidot_controls(label);
+    let label = discard_wikidot_link_label_controls(label);
     let label = if label_start.is_some() {
         trim_wikidot_ascii_end_cow(label)
     } else {
@@ -792,6 +820,21 @@ where
     } else {
         success_elements(vec![element, text!(residual_closer)])
     }
+}
+
+fn discard_wikidot_link_label_controls<'a>(value: Cow<'a, str>) -> Cow<'a, str> {
+    if !value
+        .chars()
+        .any(|ch| is_discarded_control(ch) && ch != '\u{b}' && ch != '\u{c}')
+    {
+        return value;
+    }
+    Cow::Owned(
+        value
+            .chars()
+            .filter(|&ch| !is_discarded_control(ch) || ch == '\u{b}' || ch == '\u{c}')
+            .collect(),
+    )
 }
 
 fn wikidot_interwiki_url(parser: &Parser<'_, '_>, url: &str) -> Option<String> {

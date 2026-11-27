@@ -18,8 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::clear_wikidot_space_only_fused_open;
 use super::prelude::*;
 use crate::delayed::DelayedElement;
+use crate::parsing::collect::consume_valid_comment;
 use crate::parsing::inline_scope::WIKIDOT_SCORE_SPAN_UNWRAPPED_ATTRIBUTE;
 use crate::parsing::strip_newlines;
 use crate::tree::{PartialElement, WIKIDOT_GENERATED_EMPTY_CLASS_MARKER};
@@ -121,6 +123,41 @@ fn parse_fn<'r, 't>(
     }
     let generated = parser.generated_until_right_block();
     let mut arguments = parser.get_head_map_wikidot(&BLOCK_SPAN, in_head)?;
+    if parser.settings().layout.legacy() {
+        let source = parser.full_text().inner();
+        let head_start = opener_start + 2 + name.len();
+        let space_only_head = source[head_start..].find("]]").is_some_and(|end| {
+            end > 0
+                && source[head_start..head_start + end]
+                    .bytes()
+                    .all(|byte| matches!(byte, b' ' | b'\t'))
+        });
+        if space_only_head {
+            clear_wikidot_space_only_fused_open(parser, opener_start, name)?;
+            if source[parser.current().span.start..]
+                .starts_with("[!--ftml-residual-bracket--]]")
+            {
+                consume_valid_comment(parser)?;
+                if matches!(
+                    parser.current().token,
+                    Token::RightBracket | Token::RightBlock | Token::RightLink
+                ) {
+                    parser.step()?;
+                }
+            }
+            let close_start = source[head_start..]
+                .find(']')
+                .map_or(head_start, |offset| head_start + offset);
+            let close_len = source[close_start..]
+                .bytes()
+                .take_while(|byte| *byte == b']')
+                .count();
+            let end = close_start + close_len;
+            while close_len > 2 && parser.current().span.start < end {
+                parser.step()?;
+            }
+        }
+    }
     let head_source = if wikidot_head_source(parser, opener_start).is_empty() {
         Cow::Borrowed("")
     } else {

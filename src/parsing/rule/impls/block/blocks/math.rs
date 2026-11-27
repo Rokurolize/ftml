@@ -54,7 +54,24 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    let head = get_math_head(parser, in_head)?;
+    let fused_empty_head = parser.settings().layout.legacy()
+        && in_head
+        && parser.current().token == Token::RightLink
+        && parser
+            .full_text()
+            .inner()
+            .get(opener_start + 2 + name.len()..parser.current().span.start)
+            .is_some_and(str::is_empty);
+    let head = if fused_empty_head {
+        parser.note_fused_name_residual(parser.current().span.end);
+        parser.step()?;
+        MathHead {
+            name: None,
+            environment: None,
+        }
+    } else {
+        get_math_head(parser, in_head)?
+    };
     if parser.settings().layout.legacy()
         && head
             .name
@@ -64,7 +81,17 @@ fn parse_fn<'r, 't>(
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
-    let latex_source = trim_cow(parser.get_body_text(&BLOCK_MATH)?);
+    let fused_opener_residual = parser.settings().layout.legacy()
+        && parser
+            .fused_name_residual()
+            .is_some_and(|position| position <= parser.current().span.start);
+    if fused_opener_residual {
+        parser.clear_fused_name_residual();
+    }
+    let mut latex_source = trim_cow(parser.get_body_text(&BLOCK_MATH)?);
+    if fused_opener_residual {
+        latex_source = Cow::Owned(format!("]{latex_source}"));
+    }
     let closer_line_br_prefix = parser.take_wikidot_math_closer_line_br_prefix();
     if parser.settings().layout.legacy()
         && wikidot_math_crosses_bold_owner(parser, latex_source.as_ref())

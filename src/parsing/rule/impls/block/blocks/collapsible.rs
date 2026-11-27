@@ -656,9 +656,52 @@ fn parse_fn<'r, 't>(
         parser.step()?;
     }
 
+    let inline_quote_body = parser.settings().layout.legacy()
+        && in_quote_rows
+        && body_start == BlockBodyStart::Inline
+        && elements.is_empty();
+    let mut collected_suffix = Vec::new();
+    if inline_quote_body
+        && parser.native_blockquote_depth().is_some()
+        && !parser.start_of_line()
+        && !matches!(
+            parser.current().token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        )
+    {
+        let mut paragraph_safe = true;
+        while !matches!(
+            parser.current().token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        ) {
+            collected_suffix
+                .extend(consume(parser)?.chain(&mut errors, &mut paragraph_safe));
+        }
+        if parser.current().token == Token::LineBreak {
+            parser.step()?;
+        }
+        if matches!(
+            collected_suffix.first(),
+            Some(Element::Text(text)) if text.as_ref() == "\n"
+        ) {
+            collected_suffix.remove(0);
+        }
+    }
+    if collected_suffix.len() == 1
+        && matches!(collected_suffix.first(), Some(Element::Text(_)))
+    {
+        let body = std::mem::take(&mut collected_suffix);
+        elements = vec![Element::Container(Container::new(
+            ContainerType::Paragraph,
+            body,
+            AttributeMap::new(),
+        ))];
+    }
+
     let element = head.into_element_with_unfolded_tail(elements, unfolded_tail_start);
 
     let mut output = vec![element];
+    output.extend(collected_suffix);
     if fused_close {
         output.push(text!("]"));
     }
